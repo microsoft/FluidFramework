@@ -38,7 +38,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"concurrently": "^8.2.1",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"rimraf": "^4.4.0"
 	},

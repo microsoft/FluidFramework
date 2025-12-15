@@ -90,7 +90,7 @@
 		"c8": "^10.1.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"events_pkg": "npm:events@^3.1.0",
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",

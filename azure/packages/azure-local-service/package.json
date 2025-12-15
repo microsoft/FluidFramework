@@ -35,7 +35,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.61.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"eslint-config-prettier": "~10.1.8",
 		"jiti": "^2.6.1",
 		"pm2": "^5.4.2",

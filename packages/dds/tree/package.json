@@ -214,7 +214,7 @@
 		"dependency-cruiser": "^17.1.0",
 		"diff": "^3.5.0",
 		"easy-table": "^1.1.1",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"eslint-config-prettier": "~10.1.8",
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
