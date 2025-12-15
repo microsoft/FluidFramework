@@ -129,7 +129,7 @@ describe("Container Runtime", () => {
 		}
 
 		before(() => {
-			clock = useFakeTimers({ shouldAdvanceTime: true });
+			clock = useFakeTimers({ shouldAdvanceTime: true, toFake: ["setTimeout", "setInterval", "Date"] });
 		});
 
 		beforeEach(async () => {

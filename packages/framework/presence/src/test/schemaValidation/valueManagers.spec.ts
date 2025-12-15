@@ -192,7 +192,7 @@ describe("Presence", () => {
 		let point3DValidatorFunction: ReturnType<typeof createSpiedValidator<Point3D>>;
 
 		before(async () => {
-			clock = useFakeTimers();
+			clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 		});
 
 		/**

@@ -230,7 +230,7 @@ describe("Garbage Collection Tests", () => {
 	let gc: GcWithPrivates | undefined;
 
 	before(() => {
-		clock = useFakeTimers();
+		clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 	});
 
 	beforeEach(() => {

@@ -74,7 +74,7 @@ describe("Runtime batching", () => {
 	}
 
 	before(() => {
-		clock = useFakeTimers();
+		clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 		sandbox = createSandbox();
 	});
 

@@ -63,7 +63,7 @@ class MockRuntime {
 describe("Summary Manager", () => {
 	let clock: sinon.SinonFakeTimers;
 	before(() => {
-		clock = sinon.useFakeTimers();
+		clock = sinon.useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 	});
 	after(() => clock.restore());
 	const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));

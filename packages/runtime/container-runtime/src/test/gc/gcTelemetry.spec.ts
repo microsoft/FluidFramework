@@ -165,7 +165,7 @@ describe("GC Telemetry Tracker", () => {
 	}
 
 	before(() => {
-		clock = useFakeTimers();
+		clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 	});
 
 	beforeEach(() => {

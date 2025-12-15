@@ -276,7 +276,7 @@ describe("TelemetryEventBatcher", () => {
 			threshold,
 		);
 
-		const clock = sinon.useFakeTimers();
+		const clock = sinon.useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 		const startingPoint = 50; // Arbitrary starting point.
 		let totalTime = 0; // Sum of all durations.
 

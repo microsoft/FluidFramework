@@ -23,7 +23,7 @@ describe("Runtime", () => {
 		describe("Summarize Heuristic Runner", () => {
 			let clock: sinon.SinonFakeTimers;
 			before(() => {
-				clock = sinon.useFakeTimers();
+				clock = sinon.useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 			});
 			after(() => {
 				clock.restore();

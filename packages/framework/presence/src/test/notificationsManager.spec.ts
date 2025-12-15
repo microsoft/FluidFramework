@@ -47,7 +47,7 @@ describe("Presence", () => {
 		let notificationsWorkspace: NotificationsWorkspace<{}>;
 
 		before(async () => {
-			clock = useFakeTimers();
+			clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 		});
 
 		beforeEach(() => {

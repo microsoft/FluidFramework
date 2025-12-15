@@ -252,7 +252,7 @@ describe("PromiseCache", () => {
 		}
 
 		before(() => {
-			clock = useFakeTimers();
+			clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 		});
 
 		after(() => {

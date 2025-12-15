@@ -104,7 +104,7 @@ describe("ConnectionStateHandler Tests", () => {
 	}
 
 	before(() => {
-		clock = useFakeTimers();
+		clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 	});
 
 	beforeEach(() => {

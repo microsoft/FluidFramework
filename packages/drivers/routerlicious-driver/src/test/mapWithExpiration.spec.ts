@@ -13,7 +13,7 @@ describe("MapWithExpiration", () => {
 	let clock: SinonFakeTimers;
 
 	before(() => {
-		clock = useFakeTimers();
+		clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 	});
 
 	afterEach(() => {

@@ -255,7 +255,7 @@ describe("SampledTelemetryHelper", () => {
 			true /* includeAggregateMetrics */,
 		);
 
-		const clock = sinon.useFakeTimers();
+		const clock = sinon.useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 		const startingPoint = 50; // Arbitrary starting point.
 		let totalDuration = 0;
 		let maxDuration = Number.MIN_VALUE;

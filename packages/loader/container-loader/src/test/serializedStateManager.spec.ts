@@ -926,7 +926,7 @@ describe("serializedStateManager", () => {
 		const snapshotRefreshTimeoutMs = 10;
 
 		before(() => {
-			clock = useFakeTimers();
+			clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 		});
 
 		afterEach(() => {

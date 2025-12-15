@@ -144,7 +144,7 @@ describe("Garbage Collection configurations", () => {
 	}
 
 	before(() => {
-		clock = useFakeTimers();
+		clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
 	});
 
 	beforeEach(() => {
