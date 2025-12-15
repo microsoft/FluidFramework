@@ -13,7 +13,7 @@ describe("Idle task scheduler", () => {
 	let clock: SinonFakeTimers;
 
 	before(() => {
-		clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
+		clock = useFakeTimers();
 	});
 
 	beforeEach("setClock", () => {
