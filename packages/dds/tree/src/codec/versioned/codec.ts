@@ -14,7 +14,10 @@ import {
 import { Type, type TSchema } from "@sinclair/typebox";
 import { gt } from "semver-ts";
 
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
+import type {
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
+} from "../../util/index.js";
 import {
 	type ICodecFamily,
 	type ICodecOptions,
@@ -32,9 +35,14 @@ import { Versioned } from "./format.js";
 import { pkgVersion } from "../../packageVersion.js";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
+/**
+ * Json compatible data with a format version.
+ */
+type VersionedJson = JsonCompatibleReadOnlyObject & Versioned;
+
 function makeVersionedCodec<
 	TDecoded,
-	TEncoded extends Versioned = JsonCompatibleReadOnly & Versioned,
+	TEncoded extends Versioned = VersionedJson,
 	TValidate = TEncoded,
 	TContext = void,
 >(
@@ -75,7 +83,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 export function makeVersionedValidatedCodec<
 	EncodedSchema extends TSchema,
 	TDecoded,
-	TEncoded extends Versioned = JsonCompatibleReadOnly & Versioned,
+	TEncoded extends Versioned = VersionedJson,
 	TValidate = TEncoded,
 	TContext = void,
 >(
@@ -99,7 +107,7 @@ export function makeVersionedValidatedCodec<
  */
 export function makeDiscontinuedCodecVersion<
 	TDecoded,
-	TEncoded extends Versioned = JsonCompatibleReadOnly & Versioned,
+	TEncoded extends Versioned = VersionedJson,
 	TContext = unknown,
 >(
 	options: ICodecOptions,
@@ -197,8 +205,12 @@ export interface CodecVersion<
 		TFormatVersion
 	> {}
 
-type VersionedJson = JsonCompatibleReadOnly & Versioned;
-
+/**
+ * {@link CodecVersion} after normalization into a consistent type.
+ * @remarks
+ * Produced by {@link normalizeCodecVersion}.
+ * Includes schema validation.
+ */
 export interface NormalizedCodecVersion<
 	TDecoded,
 	TContext,
@@ -211,6 +223,11 @@ export interface NormalizedCodecVersion<
 		TFormatVersion
 	> {}
 
+/**
+ * {@link NormalizedCodecVersion} after applying the build options.
+ * @remarks
+ * Produced by {@link ClientVersionDispatchingCodecBuilder.applyOptions}.
+ */
 export interface EvaluatedCodecVersion<
 	TDecoded,
 	TContext,
@@ -333,6 +350,9 @@ export class ClientVersionDispatchingCodecBuilder<
 		);
 	}
 
+	/**
+	 * Produce a single codec which can read any supported format, and writes a version selected based on the provided options.
+	 */
 	public build(
 		options: TBuildOptions,
 	): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
@@ -409,6 +429,11 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 	}
 }
 
+/**
+ * Selects which format should be used when writing data.
+ * @remarks
+ * This either uses the override specified in the options, or selects the newest format compatible with the provided minVersionForCollab.
+ */
 function getWriteVersion<T extends CodecVersionBase>(
 	name: CodecName,
 	options: CodecWriteOptions,
@@ -445,6 +470,9 @@ function getWriteVersion<T extends CodecVersionBase>(
 	return result;
 }
 
+/**
+ * Formats a list of versions for use in UsageErrors.
+ */
 function versionList(
 	versions: readonly [
 		MinimumMinorSemanticVersion | MinimumVersionForCollab,
