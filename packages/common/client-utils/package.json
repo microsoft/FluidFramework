@@ -261,9 +261,9 @@
 		}
 	},
 	"fluidCompatMetadata": {
-		"generation": 2,
-		"releaseDate": "2025-11-10",
-		"releasePkgVersion": "2.73.0"
+		"generation": 3,
+		"releaseDate": "2025-12-15",
+		"releasePkgVersion": "2.74.0"
 	},
 	"typeValidation": {
 		"broken": {},
