@@ -118,7 +118,7 @@ describe("generate:assertTags", () => {
 			);
 		});
 
-		it("prefers .cjs over .mjs when both exist", async () => {
+		it("respects config loading order", async () => {
 			const testDir = await mkdtemp(path.join(tmpdir(), "assertTagging-test-"));
 			testDirs.push(testDir);
 
