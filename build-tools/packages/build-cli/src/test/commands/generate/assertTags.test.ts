@@ -112,10 +112,7 @@ describe("generate:assertTags", () => {
 			const result = await config.search(testDir);
 
 			// Should return null when no config is found
-			assert(
-				result === null,
-				"Should return null when no config exists",
-			);
+			assert(result === null, "Should return null when no config exists");
 		});
 
 		it("respects config loading order", async () => {
