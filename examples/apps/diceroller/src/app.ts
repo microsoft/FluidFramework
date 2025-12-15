@@ -81,7 +81,7 @@ const mountableView = await getMountableDefaultView();
 
 // Render view
 const appDiv = document.createElement("div");
-document.body.appendChild(appDiv);
+document.body.append(appDiv);
 mountableView.mount(appDiv);
 
 // Update url and tab title

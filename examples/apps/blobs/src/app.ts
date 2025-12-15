@@ -58,6 +58,7 @@ const doAttach = async (): Promise<void> => {
 		if (container.resolvedUrl === undefined) {
 			throw new Error("Resolved Url unexpectedly missing!");
 		}
+		// eslint-disable-next-line require-atomic-updates -- no other flows may set id
 		id = container.resolvedUrl.id;
 	}
 	// Update url and tab title
@@ -98,12 +99,12 @@ const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
 
 // Render view
 const debugDiv = document.createElement("div");
-document.body.appendChild(debugDiv);
+document.body.append(debugDiv);
 const debugRoot = createRoot(debugDiv);
 debugRoot.render(createElement(DebugView, { attach }));
 
 const appDiv = document.createElement("div");
-document.body.appendChild(appDiv);
+document.body.append(appDiv);
 const appRoot = createRoot(appDiv);
 appRoot.render(createElement(BlobCollectionView, { blobCollection }));
 

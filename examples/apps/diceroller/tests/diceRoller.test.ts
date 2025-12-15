@@ -27,7 +27,8 @@ describe("diceroller", () => {
 		const diceValueP = page.evaluate(async () => {
 			// Load an additional container, and use it to watch for an expected roll
 			const container = await globalThis.loadAdditionalContainer();
-			const { getDefaultDataObject } = (await container.getEntryPoint()) as IFluidMountableViewEntryPoint;
+			const { getDefaultDataObject } =
+				(await container.getEntryPoint()) as IFluidMountableViewEntryPoint;
 			const diceRoller = (await getDefaultDataObject()) as IDiceRoller;
 			return new Promise<number>((resolve) => {
 				diceRoller.on("diceRolled", () => resolve(diceRoller.value));

@@ -80,7 +80,7 @@ const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 
 // Render view
 const appDiv = document.createElement("div");
-document.body.appendChild(appDiv);
+document.body.append(appDiv);
 const appRoot = createRoot(appDiv);
 appRoot.render(createElement(DiceRollerView, { diceRoller }));
 
