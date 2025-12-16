@@ -20,13 +20,13 @@ import { pkgVersion } from "./packageVersion.js";
  */
 export const dataStoreCoreCompatDetails = {
 	/**
-	 * The package version of the Runtime layer.
+	 * The package version of the DataStore layer.
 	 */
 	pkgVersion,
 	/**
-	 * The current generation of the Runtime layer.
+	 * The current generation of the DataStore layer.
 	 */
-	generation: 2,
+	generation: 3,
 };
 
 /**

@@ -6,21 +6,18 @@
 import { type Static, Type } from "@sinclair/typebox";
 
 import { schemaFormatV1 } from "../../core/index.js";
-import type { Brand } from "../../util/index.js";
+import { strictEnum, type Values } from "../../util/index.js";
 import { EncodedFieldBatch } from "../chunked-forest/index.js";
 
 /**
  * The format version for the forest.
  */
-export const ForestFormatVersion = {
+export const ForestFormatVersion = strictEnum("ForestFormatVersion", {
 	v1: 1,
 	/** This format supports incremental encoding */
 	v2: 2,
-} as const;
-export type ForestFormatVersion = Brand<
-	(typeof ForestFormatVersion)[keyof typeof ForestFormatVersion],
-	"ForestFormatVersion"
->;
+});
+export type ForestFormatVersion = Values<typeof ForestFormatVersion>;
 
 export const validVersions = new Set([...Object.values(ForestFormatVersion)]);
 
