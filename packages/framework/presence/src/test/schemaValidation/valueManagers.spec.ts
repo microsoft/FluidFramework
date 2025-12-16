@@ -651,7 +651,7 @@ describe("Presence", () => {
 				assert.equal(keyValidatorCallExpectedCount, 0);
 			}
 
-			describe("no validator is not called", () => {
+			describe("no validator is called", () => {
 				beforeEach(() => {
 					validatorCallExpected = false;
 				});
@@ -988,8 +988,8 @@ describe("Presence", () => {
 				});
 			});
 
-			// Not this block is after "is called" as it is only valid when those tests are passing.
-			describe("no validator is not called", () => {
+			// Note this block is after "value validator is called" as it is only valid when those tests are passing.
+			describe("no validator is called", () => {
 				it("during .value() call for unchanged keys", () => {
 					// Setup
 					keyValidatorCallExpectedCount = 3;

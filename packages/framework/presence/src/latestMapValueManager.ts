@@ -655,8 +655,9 @@ export interface LatestMapArgumentsRaw<T, Keys extends string = string> {
 export interface LatestMapArguments<T, Keys extends string = string>
 	extends LatestMapArgumentsRaw<T, Keys> {
 	/**
-	 * An optional function that will be called at runtime to validate the key presence data value. A runtime validator is strongly
-	 * recommended. See {@link StateSchemaValidator}.
+	 * An optional function that will be called at runtime to validate data value
+	 * under a key. A runtime validator is strongly recommended.
+	 * See {@link StateSchemaValidator}.
 	 */
 	validator: StateSchemaValidator<T>;
 	/**
