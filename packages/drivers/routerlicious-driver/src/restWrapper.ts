@@ -22,7 +22,7 @@ import {
 	PerformanceEvent,
 	numberFromString,
 } from "@fluidframework/telemetry-utils/internal";
-import fetch from "cross-fetch";
+import fetch, { type Headers as NodeFetchHeaders, type RequestInit as NodeFetchRequestInit } from "node-fetch";
 import safeStringify from "json-stringify-safe";
 
 import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
@@ -44,8 +44,8 @@ const buildRequestUrl = (requestConfig: AxiosRequestConfig): string =>
 		? `${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`
 		: (requestConfig.url ?? "");
 
-const axiosBuildRequestInitConfig = (requestConfig: AxiosRequestConfig): RequestInit => {
-	const requestInit: RequestInit = {
+const axiosBuildRequestInitConfig = (requestConfig: AxiosRequestConfig): NodeFetchRequestInit => {
+	const requestInit: NodeFetchRequestInit = {
 		method: requestConfig.method,
 		// NOTE: I believe that although the Axios type permits non-string values in the header, here we are
 		// guaranteed the requestConfig only has string values in its header.
@@ -76,7 +76,7 @@ export function createR11sResponseFromContent<T>(content: T): IR11sResponse<T> {
 	};
 }
 
-function headersToMap(headers: Headers): Map<string, string> {
+function headersToMap(headers: NodeFetchHeaders): Map<string, string> {
 	const newHeaders = new Map<string, string>();
 	for (const [key, value] of headers.entries()) {
 		newHeaders.set(key, value);
