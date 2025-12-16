@@ -301,7 +301,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			this.runtime,
 		);
 		this.runningSummarizer = runningSummarizer;
-		this.setupForwardedEvents();
+		this.setupForwardedEvents(runningSummarizer);
 		this.starting = false;
 		return runningSummarizer;
 	}
@@ -399,24 +399,26 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		this._heuristicData?.recordAttempt(summaryRefSeqNum);
 	}
 
-	private readonly forwardedEvents = new Map<string, () => void>();
+	private readonly forwardedEventsCleanup: (() => void)[] = [];
 
-	private setupForwardedEvents(): void {
-		for (const event of ["summarize", "summarizeAllAttemptsFailed"]) {
+	private setupForwardedEvents(runningSummarizer: RunningSummarizer): void {
+		for (const event of [
+			"summarize",
+			"summarizeAllAttemptsFailed",
+			"summarizeTimeout",
+		] as const) {
 			const listener = (...args: unknown[]): void => {
 				this.emit(event, ...args);
 			};
-			// TODO: better typing here
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-			this.runningSummarizer?.on(event as any, listener);
-			this.forwardedEvents.set(event, listener);
+			runningSummarizer.on(event, listener);
+			this.forwardedEventsCleanup.push(() => runningSummarizer.off(event, listener));
 		}
 	}
 
 	private cleanupForwardedEvents(): void {
-		for (const [event, listener] of this.forwardedEvents.entries()) {
-			this.runningSummarizer?.off(event, listener);
+		for (const cleanup of this.forwardedEventsCleanup) {
+			cleanup();
 		}
-		this.forwardedEvents.clear();
+		this.forwardedEventsCleanup.length = 0;
 	}
 }
