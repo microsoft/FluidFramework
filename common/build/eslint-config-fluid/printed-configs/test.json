@@ -6,7 +6,7 @@
     "plugins": [
         "@",
         "@eslint-community/eslint-comments",
-        "@typescript-eslint:@typescript-eslint/eslint-plugin@8.50.0",
+        "@typescript-eslint:@typescript-eslint/eslint-plugin@8.18.2",
         "depend",
         "import-x:eslint-plugin-import-x@4.16.1",
         "unicorn:eslint-plugin-unicorn@54.0.0",
@@ -1397,9 +1397,6 @@
         "no-const-assign": [
             "off"
         ],
-        "no-constant-binary-expression": [
-            "error"
-        ],
         "no-constant-condition": [
             "error",
             {
@@ -1458,9 +1455,6 @@
                 "allowObjectPatternsAsParameters": false
             }
         ],
-        "no-empty-static-block": [
-            "error"
-        ],
         "no-eval": [
             "error",
             {
@@ -1504,6 +1498,13 @@
         ],
         "no-import-assign": [
             "off"
+        ],
+        "no-inner-declarations": [
+            "error",
+            "functions",
+            {
+                "blockScopedFunctions": "allow"
+            }
         ],
         "no-invalid-regexp": [
             "error",
@@ -1729,9 +1730,6 @@
         "no-unused-labels": [
             "error"
         ],
-        "no-unused-private-class-members": [
-            "error"
-        ],
         "no-unused-vars": [
             "off"
         ],
@@ -1760,7 +1758,7 @@
             "off"
         ],
         "no-with": [
-            "off"
+            "error"
         ],
         "no-wrap-func": [
             "off"
