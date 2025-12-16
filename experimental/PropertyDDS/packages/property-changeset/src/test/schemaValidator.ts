@@ -21,7 +21,7 @@ export class SchemaValidator {
 		in_templateTypeid: string,
 		in_baseTypeid: string | number,
 		in_options?: { includeSelf?: any },
-	): boolean {
+	) {
 		in_options = in_options || {};
 
 		if (
@@ -37,11 +37,11 @@ export class SchemaValidator {
 		return parents[in_baseTypeid] !== undefined;
 	}
 
-	hasSchema(typeid: string | number): boolean {
+	hasSchema(typeid: string | number) {
 		return this.schemaMap[typeid] !== undefined;
 	}
 
-	register(schema): void {
+	register(schema) {
 		this.schemaMap[schema.typeid] = schema;
 	}
 
@@ -59,14 +59,14 @@ export class SchemaValidator {
 		});
 	}
 
-	hasSchemaAsync = async (typeid): Promise<boolean> =>
+	hasSchemaAsync = async (typeid) =>
 		new Promise((resolve, reject) => {
 			setTimeout(() => {
 				resolve(this.schemaMap[typeid] !== undefined);
 			}, 5);
 		});
 
-	getAllParentsForTemplate(in_typeid: string, out_parents, in_includeBaseProperty): void {
+	getAllParentsForTemplate(in_typeid: string, out_parents, in_includeBaseProperty) {
 		if (TypeIdHelper.isPrimitiveType(in_typeid)) {
 			// Everything inherits from BaseProperty.
 			if (in_includeBaseProperty) {
@@ -124,7 +124,7 @@ export class SchemaValidator {
 		in_async?: boolean,
 		in_skipSemver?: boolean,
 		in_allowDraft?: boolean,
-	): SchemaValidationResult | Promise<SchemaValidationResult> {
+	) {
 		in_skipSemver = in_skipSemver || false;
 
 		if (in_async) {

@@ -142,7 +142,7 @@ export class Chronometer {
 	/**
 	 * Sets the chronometer start time.
 	 */
-	start(): void {
+	start() {
 		return impl._start.call(this);
 	}
 

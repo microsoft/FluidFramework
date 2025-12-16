@@ -42,7 +42,7 @@ export class SortedCollection<T> extends Collection<T> {
 	 *
 	 * - if a == b, then the return value must be 0.
 	 */
-	setComparisonFunction(in_fn?: (x: string, y: string) => number): void {
+	setComparisonFunction(in_fn?: (x: string, y: string) => number) {
 		console.assert(_.isFunction(in_fn), "Must provide a function");
 		this._comparisonFunction = in_fn;
 	}
@@ -55,7 +55,7 @@ export class SortedCollection<T> extends Collection<T> {
 	 *
 	 * @returns The value passed in.
 	 */
-	add(in_key: string | number, in_value: T): T {
+	add(in_key: string | number, in_value: T) {
 		const toReturn = super.add(in_key, in_value);
 
 		this._sortedKeys.push(in_key.toString());
@@ -76,7 +76,7 @@ export class SortedCollection<T> extends Collection<T> {
 	 * @param in_key - the key we wish to remove
 	 * @returns true if the key exists and was removed, false otherwise.
 	 */
-	remove(in_key: string): boolean {
+	remove(in_key: string) {
 		const toReturn = super.remove(in_key);
 		this._sortedKeys = _.without(this._sortedKeys, in_key);
 		return toReturn;
@@ -145,7 +145,7 @@ export class SortedCollection<T> extends Collection<T> {
 	 * @param in_key - The key to check against in order to get the nearest next item
 	 * @returns The nearest next item
 	 */
-	getNearestNextItem(in_key: string): T | undefined {
+	getNearestNextItem(in_key: string) {
 		const closestNextIndex = this._binarySearchNearestIndex(
 			this._sortedKeys,
 			in_key.toString(),
@@ -162,7 +162,7 @@ export class SortedCollection<T> extends Collection<T> {
 	 * @param in_key - The key to check against in order to get the nearest previous item
 	 * @returns The nearest previous item
 	 */
-	getNearestPreviousItem(in_key: string | number): T | undefined {
+	getNearestPreviousItem(in_key: string | number) {
 		const closestPreviousIndex = this._binarySearchNearestIndex(
 			this._sortedKeys,
 			in_key.toString(),

@@ -131,7 +131,7 @@ export interface ISharedObjectRegistry {
 export const mixinRequestHandler: (requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
 
 // @beta @legacy
-export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime) => Promise<{
+export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime, setCurrentSummarizeStep: (currentStep: string) => void) => Promise<{
     path: string[];
     content: string;
 } | undefined>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
