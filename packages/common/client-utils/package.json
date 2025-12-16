@@ -97,7 +97,7 @@
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"layerGeneration:gen": "flub generate layerCompatGeneration --dir . -v",
+		"layerGeneration:gen": "flub generate compatLayerGeneration --dir . -v",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha && npm run test:jest",
@@ -261,9 +261,9 @@
 		}
 	},
 	"fluidCompatMetadata": {
-		"generation": 2,
-		"releaseDate": "2025-11-10",
-		"releasePkgVersion": "2.73.0"
+		"generation": 3,
+		"releaseDate": "2025-12-15",
+		"releasePkgVersion": "2.74.0"
 	},
 	"typeValidation": {
 		"broken": {},
