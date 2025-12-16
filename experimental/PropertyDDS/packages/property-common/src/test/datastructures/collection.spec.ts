@@ -13,7 +13,7 @@ import _ from "lodash";
 import { Collection } from "../../index";
 
 describe("collection", function () {
-	const createObject = (): Record<string, unknown> => ({
+	const createObject = () => ({
 		item4: Number.NaN,
 		item5: undefined,
 		item6: null,
@@ -26,7 +26,7 @@ describe("collection", function () {
 		item13: 1,
 	});
 
-	it("should add a value under a key", function (done): void {
+	it("should add a value under a key", function (done) {
 		const collection = new Collection<string>();
 
 		expect(collection.add("item1", "test")).to.equal("test");
@@ -83,7 +83,7 @@ describe("collection", function () {
 		done();
 	});
 
-	it("should check for emptyness", function (done): void {
+	it("should check for emptyness", function (done) {
 		const collection = new Collection<string>();
 
 		expect(collection.isEmpty()).to.equal(true);
@@ -94,7 +94,7 @@ describe("collection", function () {
 		done();
 	});
 
-	it("should get the first value in the collection", function (done): void {
+	it("should get the first value in the collection", function (done) {
 		const collection = new Collection<string>();
 
 		collection.add("item1", "test1");
@@ -104,7 +104,7 @@ describe("collection", function () {
 		done();
 	});
 
-	it("should get the last value in the collection", function (done): void {
+	it("should get the last value in the collection", function (done) {
 		const collection = new Collection<string>();
 
 		collection.add("item1", "test1");

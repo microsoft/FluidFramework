@@ -195,11 +195,7 @@ export class SharedPropertyTree extends SharedObject {
 	 * @param id - optional name of the shared map
 	 * @returns newly create shared map (but not attached yet)
 	 */
-	public static create(
-		runtime: IFluidDataStoreRuntime,
-		id?: string,
-		queryString?: string,
-	): SharedPropertyTree {
+	public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
 		return runtime.createChannel(id, PropertyTreeFactory.Type) as SharedPropertyTree;
 	}
 
@@ -215,13 +211,13 @@ export class SharedPropertyTree extends SharedObject {
 	/**
 	 * in case of partial checkout we want to send the paths we are interested in once we are connected
 	 */
-	protected onConnect(): void {
+	protected onConnect() {
 		// on connect we scope all deltas such that we only get relevant changes
 		// since we know the paths already at construction time this is okay
 		this.scopeFutureDeltasToPaths(this.options.paths);
 	}
 
-	private scopeFutureDeltasToPaths(paths?: string[]): void {
+	private scopeFutureDeltasToPaths(paths?: string[]) {
 		// Backdoor to emit "partial_checkout" events on the socket. The delta manager at container runtime layer is
 		// a proxy and the delta manager at the container context layer is yet another proxy, so account for that.
 		if (!this.options.disablePartialCheckout) {
@@ -234,7 +230,7 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
-	public _reportDirtinessToView(): void {
+	public _reportDirtinessToView() {
 		// Check whether anybody is listening. If not, we don't want to pay the price
 		// for the serialization of the data structure
 		if (this.listenerCount("localModification") > 0) {
@@ -267,7 +263,7 @@ export class SharedPropertyTree extends SharedObject {
 		return this._root as NodeProperty;
 	}
 
-	public commit(metadata?: Metadata, submitEmptyChange?: boolean): void {
+	public commit(metadata?: Metadata, submitEmptyChange?: boolean) {
 		const changes = this._root._serialize(
 			true,
 			false,
@@ -303,7 +299,7 @@ export class SharedPropertyTree extends SharedObject {
 		return this.propertyTreeConfig.encDec.messageEncoder.decode(transferChange);
 	}
 
-	private applyChangeSet(changeSet: SerializedChangeSet, metadata: Metadata): void {
+	private applyChangeSet(changeSet: SerializedChangeSet, metadata: Metadata) {
 		const _changeSet = new ChangeSet(changeSet);
 		_changeSet._toReversibleChangeSet(this.tipView);
 
@@ -332,7 +328,7 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
-	stopTransmission(stop: boolean): void {
+	stopTransmission(stop: boolean) {
 		this.transmissionsHaveBeenStopped = stop;
 		if (stop === false) {
 			for (const message of this.enqueuedMessages) {
@@ -345,7 +341,7 @@ export class SharedPropertyTree extends SharedObject {
 	 * Delays notifications until popNotificationDelayScope has been called the same number of times as
 	 * pushNotificationDelayScope.
 	 */
-	public pushNotificationDelayScope(): void {
+	public pushNotificationDelayScope() {
 		// set the scope counter
 		this.notificationDelayScope++;
 
@@ -359,7 +355,7 @@ export class SharedPropertyTree extends SharedObject {
 	 * Re-enables notifications when popNotificationDelayScope has been called the same number of times as
 	 * pushNotificationDelayScope.
 	 */
-	public popNotificationDelayScope(): void {
+	public popNotificationDelayScope() {
 		if (this.notificationDelayScope === 0) {
 			console.error("Unbalanced push/pop calls.");
 		}
@@ -377,7 +373,7 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
-	private processMessage(messageEnvelope: ISequencedMessageEnvelope, contents: unknown): void {
+	private processMessage(messageEnvelope: ISequencedMessageEnvelope, contents: unknown) {
 		if (
 			messageEnvelope.type === MessageType.Operation &&
 			messageEnvelope.sequenceNumber > this.skipSequenceNumber
@@ -401,12 +397,12 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
-	private addRemoteChange(change: IPropertyTreeMessage): void {
+	private addRemoteChange(change: IPropertyTreeMessage) {
 		this.remoteChanges.push(change);
 		this.updateRemoteHeadGuid();
 	}
 
-	private updateRemoteHeadGuid(): void {
+	private updateRemoteHeadGuid() {
 		this.headCommitGuid =
 			this.remoteChanges.length > 0
 				? this.remoteChanges[this.remoteChanges.length - 1].guid
@@ -418,11 +414,7 @@ export class SharedPropertyTree extends SharedObject {
 		remoteChanges: IPropertyTreeMessage[],
 		unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage>,
 		remoteHeadGuid: string,
-	): {
-		remoteChanges: IPropertyTreeMessage[];
-		unrebasedRemoteChanges: Record<string, IRemotePropertyTreeMessage>;
-		prunedCount: number;
-	} {
+	) {
 		// for faster lookup of remote change guids
 		const remoteChangeMap = new Map<string, number>();
 		remoteChanges.forEach((change, index) => {
@@ -505,7 +497,7 @@ export class SharedPropertyTree extends SharedObject {
 			prunedCount: pruned,
 		};
 	}
-	public pruneHistory(): void {
+	public pruneHistory() {
 		const msn = this.deltaManager.minimumSequenceNumber;
 
 		let lastKnownRemoteGuid = this.headCommitGuid;
@@ -535,7 +527,7 @@ export class SharedPropertyTree extends SharedObject {
 	 * @param summary - The local summary (snapshot)representation.
 	 * @returns The serialized summary representation.
 	 */
-	private encodeSummary(summary: ISnapshotSummary): IsoBuffer {
+	private encodeSummary(summary: ISnapshotSummary) {
 		return this.propertyTreeConfig.encDec.summaryEncoder.encode(summary);
 	}
 
@@ -553,7 +545,7 @@ export class SharedPropertyTree extends SharedObject {
 	 * The logging is not enabled in the default Property DDS
 	 * @param message - The message to be logged.
 	 */
-	protected logIfEnabled(message): void {}
+	protected logIfEnabled(message) {}
 
 	/**
 	 * This method encodes the binary representation of the
@@ -777,9 +769,9 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
-	protected onDisconnect(): void {}
+	protected onDisconnect() {}
 
-	private _applyLocalChangeSet(change: IPropertyTreeMessage): void {
+	private _applyLocalChangeSet(change: IPropertyTreeMessage) {
 		const changeSetWrapper = new ChangeSet(this.tipView);
 		changeSetWrapper.applyChangeSet(change.changeSet);
 
@@ -791,7 +783,7 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
-	private _applyRemoteChangeSet(change: IRemotePropertyTreeMessage): void {
+	private _applyRemoteChangeSet(change: IRemotePropertyTreeMessage) {
 		this.unrebasedRemoteChanges[change.guid] = cloneDeep(change);
 
 		// This is the first message in the history of the document.
@@ -832,11 +824,11 @@ export class SharedPropertyTree extends SharedObject {
 		// assert(JSON.stringify(this.root.serialize()) === JSON.stringify(this.tipView));
 	}
 
-	getUnrebasedChange(guid: string): IRemotePropertyTreeMessage | undefined {
+	getUnrebasedChange(guid: string) {
 		return this.unrebasedRemoteChanges[guid];
 	}
 
-	getRebasedChanges(startGuid: string, endGuid?: string): IPropertyTreeMessage[] {
+	getRebasedChanges(startGuid: string, endGuid?: string) {
 		const startIndex = findIndex(this.remoteChanges, (c) => c.guid === startGuid);
 		if (
 			startIndex === -1 &&
@@ -952,7 +944,7 @@ export class SharedPropertyTree extends SharedObject {
 		return true;
 	}
 
-	protected reSubmitCore(content: any, localOpMetadata: unknown): void {
+	protected reSubmitCore(content: any, localOpMetadata: unknown) {
 		// We have to provide our own implementation of the resubmit core function, to
 		// handle the case where an operation is no longer referencing a commit within
 		// the collaboration window as its referenceGuid. Other clients would not be

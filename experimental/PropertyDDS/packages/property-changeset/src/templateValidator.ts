@@ -84,7 +84,7 @@ const CHANGE_LEVEL = {
 
 const VALID_CONTEXTS = ["single", "array", "map", "set", "enum"];
 
-const _extractTypeid = function (typeidOrReference: string): string {
+const _extractTypeid = function (typeidOrReference: string) {
 	// Take Reference<strong-type-id> and return strong-type-id
 	if (!isString(typeidOrReference)) {
 		throw new Error(MSG.TYPEID_MUST_BE_STRING + typeidOrReference);
@@ -273,7 +273,7 @@ const _stripSemverFromTypeId = function (in_typeid: string): string | null {
 	return match ? match[1] : null;
 };
 
-const _unresolvedTypes = function (in_template: PropertySchema): string[] {
+const _unresolvedTypes = function (in_template: PropertySchema) {
 	let first = true;
 	const that = this;
 	const accSet = traverse(in_template).reduce(function (
@@ -301,7 +301,7 @@ const _unresolvedTypes = function (in_template: PropertySchema): string[] {
  * Performs basic template validation.
  * @param in_template - The template object to validate.
  */
-const _validateBasic = function (in_template: PropertySchema): void {
+const _validateBasic = function (in_template: PropertySchema) {
 	if (!in_template) {
 		this._resultBuilder.addError(new Error(MSG.NO_TEMPLATE));
 	} else if (!in_template.typeid) {
@@ -328,7 +328,7 @@ const _validatePositiveIncrement = function (
 	in_templatePrevious: PropertySchema,
 	in_version: string,
 	in_versionPrevious: string,
-): void {
+) {
 	ConsoleUtils.assert(
 		gt(in_version, in_versionPrevious),
 		"property-changeset.TemplateValidator._validatePositiveIncrement called on non incremental " +
@@ -353,7 +353,7 @@ const _validatePositiveIncrement = function (
 		id: string,
 		sourceObj: SchemaEntityType,
 		targetObj: SchemaEntityType,
-	): void {
+	) {
 		if (id === "annotation") {
 			// Here, we know that the version has increased (patch, prepatch or prerelease), so
 			// there's no need to check inside comments for changes.
@@ -562,7 +562,7 @@ const _validatePositiveIncrement = function (
 const _validateSameVersion = function (
 	in_template: PropertySchema,
 	in_templatePrevious: PropertySchema,
-): void {
+) {
 	const result = _psetDeepEquals.call(this, in_templatePrevious, in_template);
 	if (!result.isEqual) {
 		// Violates rule 3a.
@@ -596,7 +596,7 @@ const _validateSameVersion = function (
  * ```
  * @throws if context validation fails
  */
-const _validateSemanticAndSyntax = function (in_template: PropertySchema): void {
+const _validateSemanticAndSyntax = function (in_template: PropertySchema) {
 	_validateSyntax.call(this, in_template);
 	_validateConstants.call(this, in_template);
 	// TODO: _validateSemantic
@@ -623,7 +623,7 @@ const _validateSemanticAndSyntaxAsync = async function (
  * @this TemplateValidator
  * @ignore
  */
-const _validateSemverFormat = function (in_template): string | null {
+const _validateSemverFormat = function (in_template) {
 	const templateVersion = _getSemverFromTypeId.call(this, in_template.typeid);
 	if (!templateVersion) {
 		this._resultBuilder.addError(new Error(MSG.MISSING_VERSION + in_template.typeid));
@@ -642,7 +642,7 @@ const _validateSemverFormat = function (in_template): string | null {
  * @private
  * @this TemplateValidator
  */
-const _validateSkipSemver = function (in_template, in_templatePrevious): void {
+const _validateSkipSemver = function (in_template, in_templatePrevious) {
 	// Skipping the semver validation. Ignore the root typeid field.
 	const result = _psetDeepEquals.call(this, in_template, in_templatePrevious);
 	if (!result.isEqual) {
@@ -659,7 +659,7 @@ const _validateSkipSemver = function (in_template, in_templatePrevious): void {
  * @private
  * @this TemplateValidator
  */
-const getInvalidContextError = function (in_context): Error | undefined {
+const getInvalidContextError = function (in_context) {
 	if (in_context && !includes(VALID_CONTEXTS, in_context)) {
 		return new Error(`${MSG.NOT_A_VALID_CONTEXT} ${in_context}`);
 	}
@@ -674,7 +674,7 @@ const getInvalidContextError = function (in_context): Error | undefined {
  * @ignore
  * @throws if the context is invalid.
  */
-const _validateContext = function (in_template): void {
+const _validateContext = function (in_template) {
 	const context = in_template.context;
 
 	const error = getInvalidContextError(context);
@@ -696,7 +696,7 @@ const _validateContext = function (in_template): void {
  * @return {Promise} promise that returns without any value and rejects in case of validation error
  * @ignore
  */
-const _validateContextAsync = async function (in_template): Promise<void> {
+const _validateContextAsync = async function (in_template) {
 	const that = this;
 	const context = in_template.context;
 
@@ -777,7 +777,7 @@ const _validateContextAsync = async function (in_template): Promise<void> {
  * @ignore
  * @throws if the context is invalid.
  */
-let _validateConstants = function (in_template): void {
+let _validateConstants = function (in_template) {
 	const that = this;
 	if (in_template.constants && Array.isArray(in_template.constants)) {
 		for (let i = 0; i < in_template.constants.length; i++) {
@@ -800,7 +800,7 @@ let _validateConstants = function (in_template): void {
  *
  * @param in_template - The template that was analyzed
  */
-const _processValidationResults = function (in_template: PropertySchema): void {
+const _processValidationResults = function (in_template: PropertySchema) {
 	let that = this;
 	let result = this._resultBuilder.result;
 
@@ -891,10 +891,10 @@ const _processValidationResults = function (in_template: PropertySchema): void {
  * @throws if a property with context set is not an instance of NamedProperties
  * @ignore
  */
-let _validateSyntax = function (in_template: PropertySchema): void {
+let _validateSyntax = function (in_template: PropertySchema) {
 	const that = this;
 	// recursively test all properties for context
-	let recursiveContextCheck = function (template): void {
+	let recursiveContextCheck = function (template) {
 		_validateContext.call(that, template);
 		if (template.properties) {
 			template.properties.forEach(function (property) {
@@ -911,9 +911,9 @@ let _validateSyntax = function (in_template: PropertySchema): void {
 	result.unresolvedTypes = _unresolvedTypes.call(this, in_template);
 };
 
-const createContextCheckAsyncQueue = function (): any {
+const createContextCheckAsyncQueue = function () {
 	const that = this;
-	const contextCheckWorker = function (in_task, in_callback): void {
+	const contextCheckWorker = function (in_task, in_callback) {
 		const property = in_task.property;
 		_validateContextAsync
 			.call(that, property)
@@ -953,7 +953,7 @@ let _validateSyntaxAsync = async function (
 		const contextCheckAsyncQueue = createContextCheckAsyncQueue.call(that);
 
 		// recursively test all properties for context
-		let recursiveContextCheck = function (template): void {
+		let recursiveContextCheck = function (template) {
 			// Does the call to _validateContextAsync
 			contextCheckAsyncQueue.push({ property: template }, function (error) {
 				if (error !== undefined) {

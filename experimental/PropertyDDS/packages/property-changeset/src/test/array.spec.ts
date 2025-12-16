@@ -18,17 +18,8 @@ import { ChangeSet, SerializedChangeSet } from "../changeset.js";
 describe("Array Operations", function () {
 	let guidCounter = 1;
 
-	type NamedEntity =
-		| number
-		| {
-				String: {
-					guid: string;
-				};
-				typeid: string;
-		  };
-
-	const generateNamedEntities = (count, offsets?, type?): (NamedEntity | undefined)[] =>
-		range(count).map((i): NamedEntity | undefined => {
+	const generateNamedEntities = (count, offsets?, type?) =>
+		range(count).map((i) => {
 			const offsetShift = offsets !== undefined ? offsets.shift() : undefined;
 			const id = offsetShift !== undefined ? guidCounter - offsetShift : guidCounter++;
 			if (type === undefined) {
@@ -40,8 +31,6 @@ describe("Array Operations", function () {
 				};
 			} else if (type === "number") {
 				return id;
-			} else {
-				return undefined;
 			}
 		});
 
@@ -64,11 +53,11 @@ describe("Array Operations", function () {
 		if (isEmpty(CS)) {
 			return {};
 		}
-		const first = (x): unknown => Object.values(x)[0];
+		const first = (x) => Object.values(x)[0];
 		return first(first(first(CS)));
 	}
 
-	it("Avoid merging of adjacent remove operations with an insert in between", (): void => {
+	it("Avoid merging of adjacent remove operations with an insert in between", () => {
 		// This test creates a condition where there are two adjacent removes, with an insert
 		// in between. Those two removes must not be merged when applying the two changesets
 		// as otherwise overlapping ranges would be created in the result, which are not allowed
@@ -179,7 +168,7 @@ describe("Array Operations", function () {
 		expect(arrayCS.insert.length).to.equal(1);
 	});
 
-	function testRebasedApplies(localBranchChangeSet, baseChangeSet, baseState): ChangeSet {
+	function testRebasedApplies(localBranchChangeSet, baseChangeSet, baseState) {
 		const conflicts = [];
 		const rebaseMetaInformation = new Map();
 		const originalRebaseChangeSet = cloneDeep(localBranchChangeSet);
@@ -224,9 +213,9 @@ describe("Array Operations", function () {
 		rebasedInsertPositions,
 		baseOperation = "insert",
 		baseCount = 1,
-	): void {
-		const createInserts = (positions, count): any[] =>
-			positions.map((x): any => [x, generateNamedEntities(count)]);
+	) {
+		const createInserts = (positions, count) =>
+			positions.map((x) => [x, generateNamedEntities(count)]);
 
 		const baseChangeSet = createArrayCS({
 			[baseOperation]: createInserts(baseInsertPositions, baseCount),
@@ -280,7 +269,7 @@ describe("Array Operations", function () {
 		});
 	});
 
-	function testRebaseDistributivity(baseChangesets, rebaseChangeSet, base): ChangeSet {
+	function testRebaseDistributivity(baseChangesets, rebaseChangeSet, base) {
 		// First rebase with each CS independently
 		const rebasedCS1 = cloneDeep(rebaseChangeSet);
 		for (const baseChangeSet of baseChangesets) {
@@ -575,7 +564,7 @@ describe("Array Operations", function () {
 		});
 	});
 
-	function validateChangeSet(CS): void {
+	function validateChangeSet(CS) {
 		const arrayCS = getArrayCS(CS);
 
 		const insertPositions = new Set<number>();
@@ -620,7 +609,7 @@ describe("Array Operations", function () {
 		}
 	}
 
-	function testApplyAssociativity(base, operations, customValidator?): void {
+	function testApplyAssociativity(base, operations, customValidator?) {
 		const combinedCS = new ChangeSet();
 		operations.forEach(combinedCS.applyChangeSet.bind(combinedCS));
 		validateChangeSet(combinedCS);

@@ -41,18 +41,18 @@ export class OperationError extends Error {
 		this.stack = Error(message).stack;
 	}
 
-	isQuiet(): boolean {
+	isQuiet() {
 		return FlaggedError.prototype.isQuiet.call(this);
 	}
 
-	isTransient(): boolean {
+	isTransient() {
 		return FlaggedError.prototype.isTransient.call(this);
 	}
 
 	/**
 	 * @returns A string representation of the error flags.
 	 */
-	private _flagsToString(): string {
+	private _flagsToString() {
 		const flagArray: string[] = [];
 		_.mapValues(FlaggedError.FLAGS, (flagValue, flagName) => {
 			// eslint-disable-next-line no-bitwise

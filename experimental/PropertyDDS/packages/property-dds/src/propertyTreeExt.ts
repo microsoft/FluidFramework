@@ -20,11 +20,7 @@ import {
  * @internal
  */
 export class DeflatedPropertyTree extends SharedPropertyTree {
-	public static create(
-		runtime: IFluidDataStoreRuntime,
-		id?: string,
-		queryString?: string,
-	): DeflatedPropertyTree {
+	public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
 		return runtime.createChannel(id, DeflatedPropertyTreeFactory.Type) as DeflatedPropertyTree;
 	}
 
@@ -37,11 +33,7 @@ export class DeflatedPropertyTree extends SharedPropertyTree {
  * @internal
  */
 export class LZ4PropertyTree extends SharedPropertyTree {
-	public static create(
-		runtime: IFluidDataStoreRuntime,
-		id?: string,
-		queryString?: string,
-	): LZ4PropertyTree {
+	public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
 		return runtime.createChannel(id, LZ4PropertyTreeFactory.Type) as LZ4PropertyTree;
 	}
 
