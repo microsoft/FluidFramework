@@ -26,10 +26,12 @@ import type {
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import { type ISharedDirectory, type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type {
-	IFluidDataStoreContext,
-} from "@fluidframework/runtime-definitions/internal";
+import {
+	type ISharedDirectory,
+	type ISharedMap,
+	SharedMap,
+} from "@fluidframework/map/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
