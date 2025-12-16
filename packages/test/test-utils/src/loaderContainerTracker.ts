@@ -515,9 +515,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		for (const container of containersToApply) {
 			const record = this.containers.get(container);
 			if (record !== undefined && !record.paused) {
-				if (record.pauseP === undefined) {
-					record.pauseP = this.pauseContainer(container, record);
-				}
+				record.pauseP ??= this.pauseContainer(container, record);
 				waitP.push(record.pauseP);
 			}
 		}

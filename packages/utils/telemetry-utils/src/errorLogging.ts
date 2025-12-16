@@ -194,9 +194,7 @@ export function generateErrorWithStack(stackTraceLimit?: number): Error {
 	}
 	const err = new Error("<<generated stack>>");
 
-	if (stackPopulatedOnCreation === undefined) {
-		stackPopulatedOnCreation = err.stack !== undefined;
-	}
+	stackPopulatedOnCreation ??= err.stack !== undefined;
 
 	if (stackPopulatedOnCreation) {
 		ErrorConfig.stackTraceLimit = originalStackTraceLimit;

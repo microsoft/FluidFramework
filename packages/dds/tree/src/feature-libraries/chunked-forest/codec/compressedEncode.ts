@@ -590,9 +590,7 @@ class LazyFieldEncoder implements FieldEncoder {
 	}
 
 	private get encoder(): FieldEncoder {
-		if (this.encoderLazy === undefined) {
-			this.encoderLazy = this.fieldEncoderFromPolicy(this.nodeBuilder, this.fieldSchema);
-		}
+		this.encoderLazy ??= this.fieldEncoderFromPolicy(this.nodeBuilder, this.fieldSchema);
 		return this.encoderLazy;
 	}
 

@@ -175,8 +175,7 @@ export class SharedCounter
 				const messageId = messageContent.localOpMetadata;
 				assert(typeof messageId === "number", 0xc8e /* localOpMetadata should be a number */);
 				assert(
-					pendingOp !== undefined &&
-						pendingOp.messageId === messageId &&
+					pendingOp?.messageId === messageId &&
 						pendingOp.type === op.type &&
 						pendingOp.incrementAmount === op.incrementAmount,
 					0xc8f /* local op mismatch */,
@@ -221,8 +220,7 @@ export class SharedCounter
 		);
 		const pendingOp = this.pendingOps.pop();
 		assert(
-			pendingOp !== undefined &&
-				pendingOp.messageId === localOpMetadata &&
+			pendingOp?.messageId === localOpMetadata &&
 				pendingOp.type === content.type &&
 				pendingOp.incrementAmount === content.incrementAmount,
 			0xc91 /* op to rollback mismatch with pending op */,
