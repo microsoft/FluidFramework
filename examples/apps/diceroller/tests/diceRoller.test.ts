@@ -16,6 +16,7 @@ describe("diceroller", () => {
 		browser = await puppeteer.launch();
 		page = await browser.newPage();
 		await page.goto(globals.PATH);
+		await page.waitForFunction(() => typeof globalThis.loadAdditionalContainer === "function");
 	});
 
 	it("The page loads and there's a button with Roll", async () => {

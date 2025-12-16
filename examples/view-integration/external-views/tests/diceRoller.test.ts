@@ -15,6 +15,7 @@ describe("app-integration-external-views", () => {
 		browser = await puppeteer.launch();
 		page = await browser.newPage();
 		await page.goto(globals.PATH);
+		await page.waitForFunction(() => typeof globalThis.loadAdditionalContainer === "function");
 	});
 
 	it("loads and there's a button with Roll", async () => {

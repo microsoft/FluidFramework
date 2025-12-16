@@ -58,7 +58,7 @@ const doAttach = async (): Promise<void> => {
 		if (container.resolvedUrl === undefined) {
 			throw new Error("Resolved Url unexpectedly missing!");
 		}
-		// eslint-disable-next-line require-atomic-updates -- no other flows may set id
+		// eslint-disable-next-line require-atomic-updates -- No other flows may set id during the attach flow (the await above), and this would be the authoritative value for id even if they did.
 		id = container.resolvedUrl.id;
 	}
 	// Update url and tab title
