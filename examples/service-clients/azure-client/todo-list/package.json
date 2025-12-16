@@ -95,8 +95,7 @@
 		"typescript": "~5.4.5",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4",
-		"webpack-dev-server": "~4.15.2",
-		"webpack-merge": "^6.0.1"
+		"webpack-dev-server": "~4.15.2"
 	},
 	"typeValidation": {
 		"disabled": true
