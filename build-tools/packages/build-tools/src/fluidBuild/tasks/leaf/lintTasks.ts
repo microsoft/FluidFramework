@@ -16,8 +16,8 @@ export class EsLintTask extends TscDependentTask {
 			}
 		}
 
-		// Include local config file and shared eslint-config-fluid files
-		return [this._configFileFullPath, ...this.getAdditionalConfigFiles()];
+		// Return only the local config file
+		return [this._configFileFullPath];
 	}
 
 	protected get useWorker() {
