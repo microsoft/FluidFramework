@@ -190,8 +190,8 @@ export interface CodecVersionBase<
  * A particular version of a codec and when to use it.
  * @privateRemarks
  * This allows lazy building of the codec with options.
- * This optional can likely be removed as the codec handling is made simpler and more consistent.
- * Removing support for this laziness would be nice help prevent unexpected coupling and alteration to codec behavior,
+ * This option can likely be removed as the codec handling is made simpler and more consistent.
+ * Removing support for this laziness would be nice to help prevent unexpected coupling and alteration to codec behavior,
  * helping ensure that tests and production code behave the same.
  */
 export interface CodecVersion<
