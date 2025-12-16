@@ -177,11 +177,6 @@ export class RunningSummarizer
 	private totalSuccessfulAttempts = 0;
 	private initialized = false;
 
-	private readonly runtimeListener: (
-		op: ISequencedDocumentMessage,
-		runtimeMessage?: boolean,
-	) => void;
-
 	/**
 	 * The maximum number of summary attempts to do when submit summary fails.
 	 */
@@ -295,12 +290,6 @@ export class RunningSummarizer
 			this.mc.logger,
 		);
 
-		// Listen to runtime for ops
-		this.runtimeListener = (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
-			this.handleOp(op, runtimeMessage === true);
-		};
-		this.runtime.on("op", this.runtimeListener);
-
 		// The max attempts for submit failures can be overridden via a feature flag. This allows us to
 		// tweak this as per telemetry data until we arrive at a stable number.
 		// If its set to a number higher than `defaultMaxAttemptsForSubmitFailures`, it will be ignored.
@@ -312,6 +301,8 @@ export class RunningSummarizer
 			overrideMaxAttempts < defaultMaxAttemptsForSubmitFailures
 				? overrideMaxAttempts
 				: defaultMaxAttemptsForSubmitFailures;
+
+		this.setupEventListeners();
 	}
 
 	private async handleSummaryAck(ack: IAckedSummary): Promise<void> {
@@ -397,7 +388,7 @@ export class RunningSummarizer
 	}
 
 	public dispose(): void {
-		this.runtime.off("op", this.runtimeListener);
+		this.cleanupEventListeners();
 		this.summaryWatcher.dispose();
 		this.heuristicRunner?.dispose();
 		this.heuristicRunner = undefined;
@@ -406,6 +397,33 @@ export class RunningSummarizer
 		this.disposeEnqueuedSummary();
 		this._disposed = true;
 		this.stopping = true;
+	}
+
+	private readonly eventsCleanup: (() => void)[] = [];
+
+	private setupEventListeners(): void {
+		const runtimeListener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void =
+			(op: ISequencedDocumentMessage, runtimeMessage?: boolean) => {
+				this.handleOp(op, runtimeMessage === true);
+			};
+		this.runtime.on("op", runtimeListener);
+		this.eventsCleanup.push(() => this.runtime.off("op", runtimeListener));
+
+		// Forward events
+		for (const event of ["summarizeTimeout"] as const) {
+			const listener = (...args: unknown[]): void => {
+				this.emit(event, ...args);
+			};
+			this.generator.on(event, listener);
+			this.eventsCleanup.push(() => this.generator.off(event, listener));
+		}
+	}
+
+	private cleanupEventListeners(): void {
+		for (const cleanup of this.eventsCleanup) {
+			cleanup();
+		}
+		this.eventsCleanup.length = 0;
 	}
 
 	/**
