@@ -134,7 +134,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"best-random": "^1.0.0",
 		"debug": "^4.3.4",
-		"mocha": "^10.8.2",
+		"mocha": "^11.7.5",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
