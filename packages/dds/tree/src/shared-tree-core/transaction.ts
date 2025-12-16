@@ -300,7 +300,9 @@ export class SquashingTransactionStack<
 								[transactionBranch.getHead(), removedCommits],
 								(c) => c === startHead,
 							);
-							this.branch.apply(squash(removedCommits));
+							if (removedCommits.length > 0) {
+								this.branch.apply(squash(removedCommits));
+							}
 							break;
 						}
 						default:
