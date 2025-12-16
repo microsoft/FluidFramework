@@ -130,7 +130,7 @@ export type OnPop = (result: TransactionResult) => void;
  * @remarks Using a stack allows transactions to nest - i.e. an inner transaction may be started while an outer transaction is already in progress.
  */
 export class TransactionStack implements Transactor, IDisposable {
-	readonly #stack: (Callbacks | void)[] = [];
+	readonly #stack: Callbacks[] = [];
 	readonly #onPush?: OnPush;
 
 	readonly #events = createEmitter<TransactionEvents>();
@@ -158,7 +158,7 @@ export class TransactionStack implements Transactor, IDisposable {
 
 	public start(): void {
 		this.ensureNotDisposed();
-		const onPushCurrent = hasSome(this.#stack) ? getLast(this.#stack)?.onPush : this.#onPush;
+		const onPushCurrent = hasSome(this.#stack) ? getLast(this.#stack).onPush : this.#onPush;
 		const { onPush, onPop } = onPushCurrent?.() ?? {};
 		this.#stack.push({ onPop, onPush: onPush ?? onPushCurrent });
 		this.#events.emit("started");
