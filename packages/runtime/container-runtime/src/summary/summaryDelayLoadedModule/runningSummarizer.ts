@@ -673,11 +673,12 @@ export class RunningSummarizer
 						numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
 						isLastSummary,
 					});
-					this.mc.logger.sendErrorEvent(
+					summaryLogger.sendErrorEvent(
 						{
 							eventName: "SummarizeFailed",
 							maxAttempts: 1,
 							summaryAttempts: 1,
+							isLastSummary,
 						},
 						result.error,
 					);
@@ -726,7 +727,10 @@ export class RunningSummarizer
 				this.afterSummaryAction();
 			},
 		).catch((error) => {
-			this.mc.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
+			this.mc.logger.sendErrorEvent(
+				{ eventName: "UnexpectedSummarizeError", summarizeReason: reason },
+				error,
+			);
 		});
 	}
 
@@ -890,6 +894,8 @@ export class RunningSummarizer
 					eventName: "SummarizeFailed",
 					maxAttempts,
 					summaryAttempts: currentAttempt,
+					summarizeReason: reason,
+					isLastSummary: reason === "lastSummary",
 				},
 				error,
 			);
