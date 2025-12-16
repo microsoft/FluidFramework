@@ -259,16 +259,7 @@ describe("TransactionStacks", () => {
 		const transaction = new TransactionStack(() => {
 			return {
 				onPop: () => {
-					assert.equal(aborted, 1);
 					aborted += 1;
-				},
-				onPush: () => {
-					return {
-						onPop: () => {
-							assert.equal(aborted, 0);
-							aborted += 1;
-						},
-					};
 				},
 			};
 		});
