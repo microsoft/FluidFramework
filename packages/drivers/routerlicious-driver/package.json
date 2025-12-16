@@ -139,6 +139,7 @@
 		"@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@2.73.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
+		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
 		"axios": "^1.8.4",
@@ -150,7 +151,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
-		"nock": "^14.0.10",
+		"nock": "^13.3.3",
 		"rimraf": "^6.1.2",
 		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"
