@@ -572,9 +572,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/apps/contact-collection:
     dependencies:
@@ -699,9 +696,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/apps/data-object-grid:
     dependencies:
@@ -883,9 +877,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/apps/diceroller:
     dependencies:
@@ -1143,9 +1134,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/apps/staging:
     dependencies:
@@ -1300,9 +1288,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/apps/task-selection:
     dependencies:
@@ -1424,9 +1409,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/apps/tree-cli-app:
     dependencies:
@@ -1642,9 +1624,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/benchmarks/bubblebench/baseline:
     dependencies:
@@ -2499,9 +2478,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/data-objects/canvas:
     dependencies:
@@ -4589,9 +4565,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/service-clients/azure-client/todo-list:
     dependencies:
@@ -4758,9 +4731,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/service-clients/odsp-client/shared-tree-demo:
     dependencies:
@@ -4849,9 +4819,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/utils/bundle-size-tests:
     dependencies:
@@ -5661,9 +5628,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/version-migration/same-container:
     dependencies:
@@ -5830,9 +5794,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/version-migration/separate-container:
     dependencies:
@@ -6011,9 +5972,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/version-migration/tree-shim:
     dependencies:
@@ -6174,9 +6132,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/view-integration/container-views:
     dependencies:
@@ -6295,9 +6250,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   examples/view-integration/external-views:
     dependencies:
@@ -6561,9 +6513,6 @@ importers:
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.103.0)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
 
   experimental/PropertyDDS/packages/property-changeset:
     dependencies:
