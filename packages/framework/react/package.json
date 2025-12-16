@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/react",
-	"version": "2.74.0",
+	"version": "2.80.0",
 	"description": "Utilities for integrating content powered by the Fluid Framework into React applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -146,7 +146,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"eslint-config-prettier": "~10.1.8",
 		"global-jsdom": "^26.0.0",
 		"jiti": "^2.6.1",

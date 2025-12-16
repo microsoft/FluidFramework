@@ -1,5 +1,9 @@
 # @fluidframework/odsp-doclib-utils
 
+## 2.74.0
+
+Dependency updates only.
+
 ## 2.73.0
 
 Dependency updates only.

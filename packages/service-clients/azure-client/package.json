@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-client",
-	"version": "2.74.0",
+	"version": "2.80.0",
 	"description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -119,7 +119,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"eslint-config-prettier": "~10.1.8",
 		"fluid-framework": "workspace:~",
 		"jiti": "^2.6.1",

@@ -685,8 +685,8 @@ export class MapKernel {
 				local: boolean,
 				localOpMetadata: PendingLocalOpMetadata | undefined,
 			) => {
-				this.sequencedData.clear();
 				if (local) {
+					this.sequencedData.clear();
 					const pendingClear = this.pendingData.shift();
 					assert(
 						pendingClear !== undefined &&
@@ -695,10 +695,35 @@ export class MapKernel {
 						0xbf6 /* Got a local clear message we weren't expecting */,
 					);
 				} else {
+					const keysToDelete: { key: string; previousValue: unknown }[] = [];
+					for (const [key, value] of this.sequencedData) {
+						// Check if this key has pending local operations that supersede the remote op
+						const hasPendingOps = this.pendingData.some(
+							(entry) =>
+								(entry.type === "delete" && entry.key === key) ||
+								(entry.type === "lifetime" && entry.key === key),
+						);
+						// Only collect keys without pending operations (i.e., actually deleted)
+						if (!hasPendingOps) {
+							keysToDelete.push({ key, previousValue: value.value });
+						}
+					}
+					this.sequencedData.clear();
+
 					// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
 					// is no optimistically-applied local pending clear that would supersede this remote clear.
 					if (!this.pendingData.some((entry) => entry.type === "clear")) {
 						this.eventEmitter.emit("clear", local, this.eventEmitter);
+
+						// Emit delete-like valueChanged events for keys that were removed
+						for (const { key, previousValue } of keysToDelete) {
+							this.eventEmitter.emit(
+								"valueChanged",
+								{ key, previousValue },
+								local,
+								this.eventEmitter,
+							);
+						}
 					}
 				}
 			},

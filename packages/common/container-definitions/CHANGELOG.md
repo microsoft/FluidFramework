@@ -1,5 +1,18 @@
 # @fluidframework/container-definitions
 
+## 2.74.0
+
+### Minor Changes
+
+- Some keys in IFluidCodeDetailsConfig are now reserved for Fluid Framework use ([#25641](https://github.com/microsoft/FluidFramework/pull/25641)) [1eaf526c813](https://github.com/microsoft/FluidFramework/commit/1eaf526c813c8e36fc0ad52649b80e2b0c055853)
+
+  The keys of [`IFluidCodeDetailsConfig`](https://fluidframework.com/docs/api/container-definitions/ifluidcodedetailsconfig-interface)
+  (the [type of the `config` property on `IFluidCodeDetails`](https://fluidframework.com/docs/api/container-definitions/ifluidcodedetails-interface#config-propertysignature))
+  used to be entirely free for consumer use.
+  Going forward, keys with the `"FluidFramework."` prefix are reserved for Fluid Framework's internal use.
+
+  We do not expect this to affect any consumers.
+
 ## 2.73.0
 
 Dependency updates only.
