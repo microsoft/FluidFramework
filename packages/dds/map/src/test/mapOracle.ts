@@ -42,9 +42,7 @@ export class SharedMapOracle {
 	};
 
 	private readonly onClear = (local: boolean): void => {
-		if (local) {
-			this.oracle.clear();
-		}
+		this.oracle.clear();
 	};
 
 	public validate(): void {
