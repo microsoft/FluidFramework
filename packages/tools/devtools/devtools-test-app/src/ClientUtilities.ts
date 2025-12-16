@@ -96,7 +96,7 @@ export async function loadExistingContainer(
 	console.log("Container loaded!");
 	const container = model.container;
 
-	if (container.connectionState !== ConnectionState.Connected) {
+	if ((container.connectionState as ConnectionState) !== ConnectionState.Connected) {
 		console.log("Connecting to container...");
 		await new Promise<void>((resolve) => {
 			container.once("connected", () => {

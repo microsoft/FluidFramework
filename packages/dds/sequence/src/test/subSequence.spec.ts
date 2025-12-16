@@ -46,7 +46,7 @@ class SubSequenceTestClient extends TestClient {
 		this.walkSegments(
 			(s) => {
 				if (SubSequence.is(s)) {
-					items += s.items.toString();
+					items += JSON.stringify(s.items);
 				}
 				return true;
 			},

@@ -121,7 +121,7 @@
 		"dotenv-webpack": "^7.0.3",
 		"eslint": "~9.39.1",
 		"eslint-config-prettier": "~10.1.8",
-		"eslint-plugin-chai-expect": "~3.0.0",
+		"eslint-plugin-chai-expect": "~3.1.0",
 		"expect-puppeteer": "^9.0.2",
 		"good-fences": "^1.1.1",
 		"html-webpack-plugin": "^5.6.0",

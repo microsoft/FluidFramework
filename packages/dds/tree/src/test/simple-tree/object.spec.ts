@@ -211,7 +211,7 @@ function testObjectLike(testCases: TestCaseErased[]) {
 			test1((subject) => {
 				const all = Object.getOwnPropertyDescriptors(subject);
 				return Object.fromEntries(
-					Object.entries(all).filter(([key, descriptor]) => descriptor.enumerable),
+					Object.entries(all).filter(([key, descriptor]) => descriptor.enumerable === true),
 				);
 			});
 		});

@@ -141,7 +141,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
-			if (container.connectionState !== ConnectionState.Connected) {
+			if ((container.connectionState as ConnectionState) !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,
 					errorMsg: "container connect() timeout",
@@ -166,7 +166,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
-			if (container.connectionState !== ConnectionState.Connected) {
+			if ((container.connectionState as ConnectionState) !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,
 					errorMsg: "container connect() timeout",
@@ -199,7 +199,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 			const containerId = await newContainer.attach();
 
-			if (newContainer.connectionState !== ConnectionState.Connected) {
+			if ((newContainer.connectionState as ConnectionState) !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,
 					errorMsg: "container connect() timeout",

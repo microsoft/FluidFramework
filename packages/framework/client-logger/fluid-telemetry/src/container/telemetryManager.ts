@@ -58,7 +58,7 @@ export class ContainerTelemetryManager {
 	 */
 	private setupHeartbeatTelemetryEmission(): void {
 		setInterval(() => {
-			if (this.container.connectionState === ConnectionState.Connected) {
+			if ((this.container.connectionState as ConnectionState) === ConnectionState.Connected) {
 				const telemetry = this.telemetryProducer.produceHeartbeatTelemetry();
 				for (const consumer of this.telemetryConsumers) {
 					consumer.consume(telemetry);

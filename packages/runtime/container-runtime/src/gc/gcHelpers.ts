@@ -251,9 +251,7 @@ export function unpackChildNodesGCDetails(
 		}
 
 		let childGCDetails = childGCDetailsMap.get(childId);
-		if (childGCDetails === undefined) {
-			childGCDetails = { gcData: { gcNodes: {} }, usedRoutes: [] };
-		}
+		childGCDetails ??= { gcData: { gcNodes: {} }, usedRoutes: [] };
 		// gcData should not undefined as its always at least initialized as  empty above.
 		assert(
 			childGCDetails.gcData !== undefined,

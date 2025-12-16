@@ -194,10 +194,10 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				};
 
 				await Promise.all([
-					await createAliasedDataStore(),
-					await createAliasedDataStore(),
-					await createAliasedDataStore(),
-					await createAliasedDataStore(),
+					createAliasedDataStore(),
+					createAliasedDataStore(),
+					createAliasedDataStore(),
+					createAliasedDataStore(),
 				]);
 
 				assert.equal(datastores.length, 1);
