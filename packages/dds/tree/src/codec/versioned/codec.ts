@@ -450,13 +450,17 @@ function getWriteVersion<T extends CodecVersionBase>(
 			);
 		} else if (options.allowPossiblyIncompatibleWriteVersionOverrides !== true) {
 			const selectedMinVersionForCollab = selected[0];
+			// Currently all versions must specify a minVersionForCollab, so undefined is not expected here.
+			// TODO: It should be possible to have a version which would never be automatically selected for write (and thus does not have or need a minVersionForCollab), but can be selected via override.
+			// Use-cases for this include experimental versions not yet stable, and discontinued or intermediate versions which are mainly being kept for read compatibility but still support writing (perhaps for round-trip testing).
+			// For now, this check should never pass, and there is no way to create such a version yet.
 			if (selectedMinVersionForCollab === undefined) {
 				throw new UsageError(
-					`Codec "${name}" does not support requested format version ${selectedFormatVersion} because it does not specify an oldest compatible client. Use "allowPossiblyIncompatibleWriteVersionOverrides" to override this error.`,
+					`Codec "${name}" does not support requested format version ${selectedFormatVersion} because it does not specify a minVersionForCollab. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
 			} else if (gt(selectedMinVersionForCollab, options.minVersionForCollab)) {
 				throw new UsageError(
-					`Codec "${name}" does not support requested format version ${selectedFormatVersion} because it is only compatible back to client version ${selectedMinVersionForCollab} and the requested oldest compatible client was ${options.minVersionForCollab}. Use "allowPossiblyIncompatibleWriteVersionOverrides" to override this error.`,
+					`Codec "${name}" does not support requested format version ${selectedFormatVersion} because it is only compatible back to client version ${selectedMinVersionForCollab} and the requested oldest compatible client was ${options.minVersionForCollab}. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
 			}
 		}

@@ -31,6 +31,15 @@ export function makeSchemaChangeCodecs(
 ): ICodecFamily<SchemaChange> {
 	return makeCodecFamily([
 		[SchemaFormatVersion.v1, makeSchemaChangeCodecV1(options, SchemaFormatVersion.v1)],
+		// This code  (makeSchemaChangeCodecs) is constructing a SchemaFormatVersion.v2 codec, regardless of the requested write version.
+		// It then trusts the user of the produced makeCodecFamily to only select if when it is valid to do so.
+		// This trust is manifests in having to use `allowPossiblyIncompatibleWriteVersionOverrides`
+		// here as it needs to build the v2 codec regardless of if its valid to use.
+		// TODO: There should not be two separate places selecting the write version for this codec. Such cases should instead adopt one of the following patterns:
+		// 1. The outer coded should let the inner one do its own version selection instead of forcing it.
+		// 2. The outer codec should fully handle version selection and embed the inner content directly (referencing its format not codec) and not involve the codec at all.
+		// TODO: fix this up when migrating SchemaChangeCodec to use ClientVersionDispatchingCodecBuilder.
+		// This should probably use pattern 1 above, which will result in this codec having two identical versions.
 		[
 			SchemaFormatVersion.v2,
 			makeSchemaChangeCodecV1(
