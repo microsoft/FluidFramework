@@ -14,7 +14,7 @@ import {
 	type GraphCommit,
 	type TaggedChange,
 } from "../core/index.js";
-import { getOrCreate, hasSome } from "../util/index.js";
+import { getLast, getOrCreate, hasSome } from "../util/index.js";
 
 import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 
@@ -101,10 +101,13 @@ export interface Callbacks {
 	 */
 	readonly onPop?: OnPop;
 	/**
-	 * The function to call when a nested transaction is next pushed onto the {@link TransactionStack | stack}.
-	 * This function will keep being called for each nested transaction unless overridden by the returned `Callbacks`.
-	 * If none is provided, the parent transaction's {@link onPush} (if any) will be used,
-	 * eventually falling back to the {@link onPush} parameter passed to the {@link TransactionStack | stack} constructor (if any).
+	 * Called when a nested transaction is pushed onto the {@link TransactionStack | stack}.
+	 * @remarks
+	 * Transactions may be arbitrarily nested (by {@link TransactionStack.start | start}ing a transaction within a transaction that is already in progress).
+	 * The `OnPush` callback for an (outer) transaction may optionally return another `OnPush` callback that is associated with any nested (inner) transaction(s).
+	 * In that case, the inner `OnPush` will be called when those inner transactions are pushed and the outer `OnPush` will not be called.
+	 * Put another way, a transaction always results in a call to exactly one `OnPush` callback - whichever is closest to the transaction.
+	 * The event "bubbles up" to (and no further past) its first registered callback.
 	 */
 	readonly onPush?: OnPush;
 }
@@ -155,11 +158,7 @@ export class TransactionStack implements Transactor, IDisposable {
 
 	public start(): void {
 		this.ensureNotDisposed();
-		const onPushCurrent = hasSome(this.#stack)
-			? // No `at` method available
-				// eslint-disable-next-line unicorn/prefer-at
-				this.#stack[this.#stack.length - 1]?.onPush
-			: this.#onPush;
+		const onPushCurrent = hasSome(this.#stack) ? getLast(this.#stack)?.onPush : this.#onPush;
 		const { onPush, onPop } = onPushCurrent?.() ?? {};
 		this.#stack.push({ onPop, onPush: onPush ?? onPushCurrent });
 		this.#events.emit("started");
