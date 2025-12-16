@@ -68,7 +68,7 @@ export namespace InternalTypes {
         manager: StateValue<TManager>;
     });
     // @system
-    export interface MapValueState<T, Keys extends string | number> {
+    export interface MapValueState<T, Keys extends string> {
         // (undocumented)
         items: {
             [name in Keys]: ValueOptionalState<T>;
@@ -135,6 +135,9 @@ export namespace InternalUtilityTypes {
     };
 }
 
+// @beta
+export type KeySchemaValidator<Keys extends string> = (unvalidatedKey: string) => unvalidatedKey is Keys;
+
 // @beta @sealed
 export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     readonly controls: BroadcastControls;
@@ -186,7 +189,7 @@ export interface LatestFactory {
 }
 
 // @beta @sealed
-export interface LatestMap<T, Keys extends string | number = string | number, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
+export interface LatestMap<T, Keys extends string = string, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     readonly controls: BroadcastControls;
     readonly events: Listenable<LatestMapEvents<T, Keys, TRemoteAccessor>>;
     getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, TRemoteAccessor>>;
@@ -197,12 +200,13 @@ export interface LatestMap<T, Keys extends string | number = string | number, TR
 }
 
 // @beta @input
-export interface LatestMapArguments<T, Keys extends string | number = string | number> extends LatestMapArgumentsRaw<T, Keys> {
+export interface LatestMapArguments<T, Keys extends string = string> extends LatestMapArgumentsRaw<T, Keys> {
+    keyValidator?: KeySchemaValidator<Keys>;
     validator: StateSchemaValidator<T>;
 }
 
 // @beta @input
-export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
+export interface LatestMapArgumentsRaw<T, Keys extends string = string> {
     local?: {
         [K in Keys]: JsonSerializable<T>;
     };
@@ -210,13 +214,13 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
 }
 
 // @beta @sealed
-export interface LatestMapClientData<T, Keys extends string | number, TValueAccessor extends ValueAccessor<T>, SpecificAttendeeId extends AttendeeId = AttendeeId> {
+export interface LatestMapClientData<T, Keys extends string, TValueAccessor extends ValueAccessor<T>, SpecificAttendeeId extends AttendeeId = AttendeeId> {
     attendee: Attendee<SpecificAttendeeId>;
     items: ReadonlyMap<Keys, LatestData<T, TValueAccessor>>;
 }
 
 // @beta @sealed
-export interface LatestMapEvents<T, K extends string | number, TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
+export interface LatestMapEvents<T, K extends string, TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     // @eventProperty
     localItemRemoved: (removedItem: {
         key: K;
@@ -236,27 +240,27 @@ export interface LatestMapEvents<T, K extends string | number, TRemoteValueAcces
 
 // @beta @sealed
 export interface LatestMapFactory {
-    <T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
-    <T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArgumentsRaw<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+    <T, Keys extends string = string, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+    <T, Keys extends string = string, RegistrationKey extends string = string>(args?: LatestMapArgumentsRaw<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 }
 
 // @beta @sealed
-export interface LatestMapItemRemovedClientData<K extends string | number> {
+export interface LatestMapItemRemovedClientData<K extends string> {
     attendee: Attendee;
     key: K;
     metadata: LatestMetadata;
 }
 
 // @beta @sealed
-export interface LatestMapItemUpdatedClientData<T, K extends string | number, TValueAccessor extends ValueAccessor<T>> extends LatestClientData<T, TValueAccessor> {
+export interface LatestMapItemUpdatedClientData<T, K extends string, TValueAccessor extends ValueAccessor<T>> extends LatestClientData<T, TValueAccessor> {
     key: K;
 }
 
 // @beta @sealed
-export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<T, Keys, RawValueAccessor<T>>;
+export type LatestMapRaw<T, Keys extends string = string> = LatestMap<T, Keys, RawValueAccessor<T>>;
 
 // @beta @sealed
-export type LatestMapRawEvents<T, K extends string | number> = LatestMapEvents<T, K, RawValueAccessor<T>>;
+export type LatestMapRawEvents<T, K extends string> = LatestMapEvents<T, K, RawValueAccessor<T>>;
 
 // @beta @sealed
 export interface LatestMetadata {
@@ -367,7 +371,7 @@ export const StateFactory: {
 };
 
 // @beta @sealed
-export interface StateMap<K extends string | number, V> {
+export interface StateMap<K extends string, V> {
     clear(): void;
     delete(key: K): boolean;
     forEach(callbackfn: (value: DeepReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
