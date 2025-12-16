@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/replay-tool",
-	"version": "2.74.0",
+	"version": "2.80.0",
 	"private": true,
 	"description": "A tool that lets the user to replay ops.",
 	"homepage": "https://fluidframework.com",
@@ -85,7 +85,7 @@
 		"@types/json-stable-stringify": "^1.0.32",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"

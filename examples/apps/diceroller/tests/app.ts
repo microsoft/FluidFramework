@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import {
+	createExampleDriver,
+	getSpecifiedServiceFromWebpack,
+} from "@fluid-example/example-driver";
 import type { IFluidMountableViewEntryPoint } from "@fluid-example/example-utils";
 import type {
 	ICodeDetailsLoader,
@@ -14,21 +18,18 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
-// eslint-disable-next-line import-x/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
-import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
-import {
-	LocalDocumentServiceFactory,
-	LocalResolver,
-	createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver/legacy";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 import { v4 as uuid } from "uuid";
 
 import { fluidExport } from "../src/container/index.js";
 
-const urlResolver = new LocalResolver();
-const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
+const service = getSpecifiedServiceFromWebpack();
+const {
+	urlResolver,
+	documentServiceFactory,
+	createCreateNewRequest,
+	createLoadExistingRequest,
+} = await createExampleDriver(service);
 const codeLoader: ICodeDetailsLoader = {
 	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
@@ -52,11 +53,11 @@ async function createOrLoadContainerAndRenderInElement(
 		container = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
 			urlResolver,
-			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
+			documentServiceFactory,
 			codeLoader,
 		});
 		const documentId = uuid();
-		await container.attach(createLocalResolverCreateNewRequest(documentId));
+		await container.attach(createCreateNewRequest(documentId));
 		if (container.resolvedUrl === undefined) {
 			throw new Error("Resolved Url not available on attached container");
 		}
@@ -65,9 +66,9 @@ async function createOrLoadContainerAndRenderInElement(
 	} else {
 		id = location.hash.slice(1);
 		container = await loadExistingContainer({
-			request: { url: `${window.location.origin}/${id}` },
+			request: await createLoadExistingRequest(id),
 			urlResolver,
-			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
+			documentServiceFactory,
 			codeLoader,
 		});
 	}
