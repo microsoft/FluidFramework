@@ -11,7 +11,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspSampleCache } from "./odspPersistantCache.js";
 
-export function start(div: HTMLDivElement, odspAccessToken: string) {
+export function start(div: HTMLDivElement, odspAccessToken: string): void {
 	const binaryDiv = document.createElement("div");
 	binaryDiv.style.minHeight = "400px";
 	const binaryText = document.createElement("div");
@@ -90,7 +90,7 @@ export function start(div: HTMLDivElement, odspAccessToken: string) {
 }
 
 // eslint-disable-next-line import-x/no-deprecated
-function fetchButtonClick(mockLogger: MockLogger, div: HTMLDivElement) {
+function fetchButtonClick(mockLogger: MockLogger, div: HTMLDivElement): void {
 	const fields = new Set([
 		"eventName",
 		"attempts",

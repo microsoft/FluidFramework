@@ -31,7 +31,6 @@ import { JsonAsTree } from "../../../jsonDomainSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
 import { currentVersion, type CodecWriteOptions } from "../../../codec/index.js";
-import { brand } from "../../../util/index.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
@@ -39,8 +38,8 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const schemaCodecs = makeSchemaCodecs(codecOptions);
-const codecV1 = makeSchemaCodec(codecOptions, brand(SchemaFormatVersion.v1));
-const codecV2 = makeSchemaCodec(codecOptions, brand(SchemaFormatVersion.v2));
+const codecV1 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v1);
+const codecV2 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v2);
 
 const schema2 = toInitialSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 
@@ -68,7 +67,7 @@ describe("SchemaIndex", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [
 			{
-				version: 1 as const,
+				version: SchemaFormatVersion.v1,
 				nodes: {},
 				root: { kind: "x" as FieldKindIdentifier, types: [] },
 			} satisfies FormatV1,
@@ -82,7 +81,7 @@ describe("SchemaIndex", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [
 			{
-				version: 2 as const,
+				version: SchemaFormatVersion.v2,
 				nodes: {},
 				root: {
 					kind: "x" as FieldKindIdentifier,

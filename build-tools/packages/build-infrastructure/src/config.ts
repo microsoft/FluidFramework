@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { cosmiconfigSync } from "cosmiconfig";
+import { lilconfigSync } from "lilconfig";
 
 import {
 	type IPackage,
@@ -188,11 +188,11 @@ export function findReleaseGroupForPackage(
 const configName = "buildProject";
 
 /**
- * A cosmiconfig explorer to find the buildProject config. First looks for JavaScript config files and falls back to the
- * `buildProject` property in package.json. We create a single explorer here because cosmiconfig internally caches
+ * A lilconfig explorer to find the buildProject config. First looks for JavaScript config files and falls back to the
+ * `buildProject` property in package.json. We create a single explorer here because lilconfig internally caches
  * configs for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
  */
-const configExplorer = cosmiconfigSync(configName, {
+const configExplorer = lilconfigSync(configName, {
 	searchPlaces: [
 		`${configName}.config.cjs`,
 		`${configName}.config.js`,
