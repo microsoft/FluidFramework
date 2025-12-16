@@ -415,6 +415,287 @@ describe("treeApi", () => {
 		assert.equal(TreeAlpha.branch(new Array([1, 2, 3])), undefined);
 	});
 
+	it("getParentObject", () => {
+		const schemaFactory = new SchemaFactory(undefined);
+		class ChildNode extends schemaFactory.object("ChildNode", {
+			value: schemaFactory.number,
+		}) {}
+		class ParentNode extends schemaFactory.object("ParentNode", {
+			child: ChildNode,
+		}) {}
+
+		const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
+		view.initialize({ child: { value: 1 } });
+
+		const root = view.root;
+		const child = root.child;
+
+		// For a non-root node, getParentObject should return the parent TreeNode
+		const childParent = TreeAlpha.getParentObject(child);
+		assert.equal(childParent, root);
+		assert(Tree.is(childParent, ParentNode));
+
+		// For the root node, getParentObject should return the TreeView
+		const rootParent = TreeAlpha.getParentObject(root);
+		assert.equal(rootParent, view);
+	});
+
+	describe("on", () => {
+		it("works with both TreeNode and TreeView ParentObjects", () => {
+			const schemaFactory = new SchemaFactory(undefined);
+			class ChildNode extends schemaFactory.object("ChildNode", {
+				value: schemaFactory.number,
+			}) {}
+			class ParentNode extends schemaFactory.object("ParentNode", {
+				child: ChildNode,
+			}) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: ParentNode }));
+			view.initialize({ child: { value: 1 } });
+
+			const root = view.root;
+			const child = root.child;
+
+			// Set up event listeners.
+
+			// rootChanged
+			let rootChangedCount = 0;
+			const unsubscribeRootChanged = TreeAlpha.on(view, "rootChanged", () => {
+				rootChangedCount++;
+			});
+
+			// nodeChanged using a TreeNode ParentObject
+			let childNodeChangedCount = 0;
+			const unsubscribeChildNodeChanged = TreeAlpha.on(child, "nodeChanged", () => {
+				childNodeChangedCount++;
+			});
+
+			// nodeChanged using a TreeView ParentObject
+			let rootNodeChangedCount = 0;
+			const unsubscribeRootNodeChanged = TreeAlpha.on(view, "nodeChanged", () => {
+				rootNodeChangedCount++;
+			});
+
+			// treeChanged using a TreeView ParentObject
+			let rootTreeChangedCount = 0;
+			const unsubscribeRootTreeChanged = TreeAlpha.on(view, "treeChanged", () => {
+				rootTreeChangedCount++;
+			});
+
+			// Modify the child node's value (deep change)
+			child.value = 2;
+			assert.equal(childNodeChangedCount, 1, "childNodeChanged should have fired once");
+			assert.equal(rootChangedCount, 0, "rootChanged should not fire for property changes");
+			assert.equal(
+				rootNodeChangedCount,
+				0,
+				"nodeChanged on root node should not fire for deep changes",
+			);
+			assert.equal(
+				rootTreeChangedCount,
+				1,
+				"rootTreeChanged should fire for deep changes",
+			);
+
+			// Modify the root node's child property (shallow change)
+			root.child = new ChildNode({ value: 3 });
+			assert.equal(
+				rootNodeChangedCount,
+				1,
+				"nodeChanged on root node should fire for shallow changes",
+			);
+			assert.equal(
+				rootTreeChangedCount,
+				2,
+				"rootTreeChanged should fire after root property change",
+			);
+
+			// Unsubscribe and verify no more events are received
+			unsubscribeChildNodeChanged();
+			// Modify the new child (the old one is no longer in the document after the replacement)
+			root.child.value = 44;
+			assert.equal(
+				childNodeChangedCount,
+				1,
+				"childNodeChanged should not fire after unsubscribe",
+			);
+
+			unsubscribeRootChanged();
+			unsubscribeRootNodeChanged();
+			unsubscribeRootTreeChanged();
+		});
+
+		it("treeChanged on TreeView handles optional root fields", () => {
+			const schemaFactory = new SchemaFactory(undefined);
+			class ChildNode extends schemaFactory.object("ChildNode", {
+				value: schemaFactory.number,
+			}) {}
+
+			// Set up a TreeView with an optional root field.
+			const rootSchema = schemaFactory.optional(ChildNode);
+			const view = getView(new TreeViewConfiguration({ schema: rootSchema }));
+			view.initialize(undefined);
+
+			// Listen to treeChanged on an empty optional root field
+			let treeChangedCount = 0;
+			const unsubscribeTreeChanged = TreeAlpha.on(view, "treeChanged", () => {
+				treeChangedCount++;
+			});
+
+			// Populate the optional root field
+			view.root = { value: 1 };
+
+			// treeChanged should fire when root field is populated
+			assert.equal(
+				treeChangedCount,
+				1,
+				"treeChanged should fire when optional root is populated",
+			);
+
+			// Modify the root node
+			const root = view.root;
+			assert(root !== undefined);
+			root.value = 2;
+
+			// treeChanged should fire for changes within the root node
+			assert.equal(
+				treeChangedCount,
+				2,
+				"treeChanged should fire for changes in populated root",
+			);
+
+			// Clean up
+			unsubscribeTreeChanged();
+		});
+
+		it("on() method with nodeChanged/treeChanged requires compatible schema", () => {
+			const schemaFactory = new SchemaFactory(undefined);
+			class Node extends schemaFactory.object("Node", {
+				value: schemaFactory.number,
+			}) {}
+
+			// Create a view with a specific schema
+			const view = getView(new TreeViewConfiguration({ schema: Node }));
+			view.initialize({ value: 42 });
+
+			// Verify the schema is compatible
+			assert.equal(
+				view.compatibility.canView,
+				true,
+				"Test setup: schema should be compatible",
+			);
+
+			// When the view schema is compatible, on() should succeed
+			let eventFired = false;
+			const unsubscribe = TreeAlpha.on(view, "treeChanged", () => {
+				eventFired = true;
+			});
+
+			// Make a change to verify the listener works
+			view.root.value = 50;
+			assert.equal(
+				eventFired,
+				true,
+				"listener should fire when schema is compatible",
+			);
+
+			// Clean up
+			unsubscribe();
+		});
+
+		it("treeChanged properly handles rebase operations", () => {
+			const schemaFactory = new SchemaFactory(undefined);
+			class ChildNode extends schemaFactory.object("ChildNode", {
+				value: schemaFactory.number,
+			}) {}
+			class RootNode extends schemaFactory.object("RootNode", {
+				child: ChildNode,
+			}) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: RootNode }));
+			view.initialize({ child: { value: 1 } });
+
+			const forkedView = view.fork();
+
+			// Set up event listener on the forked branch before making changes
+			let forkTreeChangedCount = 0;
+			const unsubscribeForkTreeChanged = TreeAlpha.on(forkedView, "treeChanged", () => {
+				forkTreeChangedCount++;
+			});
+
+			// Make a change on the forked branch
+			forkedView.root.child.value = 2;
+			assert.equal(forkTreeChangedCount, 1, "fork listener should fire for changes on fork");
+
+			// Make changes on the main branch
+			view.root.child.value = 3;
+			assert.equal(forkTreeChangedCount, 1, "fork should not receive main branch changes");
+
+			// Rebase the fork onto the main branch
+			forkedView.rebaseOnto(view);
+			assert.equal(
+				forkedView.root.child.value,
+				2,
+				"fork should retain its changes after rebase",
+			);
+
+			// Check that listener still works after rebase
+			forkedView.root.child.value = 150;
+			assert.equal(forkTreeChangedCount, 2, "fork listener should still work after rebase");
+
+			unsubscribeForkTreeChanged();
+		});
+
+		it("treeChanged fires when root is replaced during rebase", () => {
+			const schemaFactory = new SchemaFactory(undefined);
+			class ChildNode extends schemaFactory.object("ChildNode", {
+				value: schemaFactory.number,
+			}) {}
+			class RootNode extends schemaFactory.object("RootNode", {
+				child: ChildNode,
+			}) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: RootNode }));
+			view.initialize({ child: { value: 42 } });
+
+			const forkedView = view.fork();
+
+			// Set up event listener on the forked branch
+			let forkTreeChangedCount = 0;
+			const unsubscribeForkTreeChanged = TreeAlpha.on(forkedView, "treeChanged", () => {
+				forkTreeChangedCount++;
+			});
+
+			// Make a change on the forked branch
+			forkedView.root.child.value = 50;
+			assert.equal(forkTreeChangedCount, 1, "listener fires for change on fork");
+
+			// Replace root node on main branch
+			view.root = new RootNode({ child: { value: 100 } });
+			assert.equal(
+				forkTreeChangedCount,
+				1,
+				"listener does not fire for main branch root replacement",
+			);
+
+			// Rebase the fork onto the main branch
+			forkedView.rebaseOnto(view);
+			// Check that listener fires due to root replacement during rebase, and has correct new root
+			assert.equal(
+				forkTreeChangedCount,
+				2,
+				"listener fires when root is replaced during rebase",
+			);
+			assert.equal(forkedView.root.child.value, 100, "fork has new root after rebase");
+
+			// Make another change to verify listener still works after rebase
+			forkedView.root.child.value = 200;
+			assert.equal(forkTreeChangedCount, 3, "listener still works after root replacement");
+
+			unsubscribeForkTreeChanged();
+		});
+	});
+
 	it("can cast to alpha", () => {
 		const schemaFactory = new SchemaFactory(undefined);
 		const view = getView(

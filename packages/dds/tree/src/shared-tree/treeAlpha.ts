@@ -60,6 +60,10 @@ import {
 	borrowCursorFromTreeNodeOrValue,
 	contentSchemaSymbol,
 	type TreeNodeSchema,
+	type TreeBranchAlpha,
+	type TreeView,
+	type TreeChangeEvents,
+	type TreeViewEvents,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -84,7 +88,6 @@ import {
 	type Observer,
 	withObservation,
 } from "../feature-libraries/index.js";
-import type { TreeBranchAlpha } from "../simple-tree/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
@@ -124,6 +127,8 @@ identifier.create = (branch: TreeBranch): string => {
 };
 
 Object.freeze(identifier);
+
+export type ParentObject = TreeView<ImplicitFieldSchema> | TreeNode;
 
 /**
  * A utility interface for retrieving or converting node identifiers.
@@ -551,6 +556,33 @@ export interface TreeAlpha {
 		schema: TSchema,
 		content: TContent,
 	): TContent;
+
+	/**
+	 * Retrieve the parent object (either a {@link TreeNode} or {@link TreeView}) for the given node.
+	 * @param node - The node to get the parent object for.
+	 * @returns The parent {@link TreeNode} if a parent node exists, or the {@link TreeView} otherwise.
+	 *
+	 * @throws An assertion error if the node is not hydrated (not part of a tree).
+	 *
+	 * TODO: Add support for the following cases:
+	 * - Retrieving the parent of a deleted node.
+	 * - Retrieving the parent of an unhydrated node.
+	 */
+	getParentObject(node: TreeNode): ParentObject;
+
+	/**
+	 * Register an event listener on the given parent object (either a TreeNode or TreeView).
+	 *
+	 * For `nodeChanged` and `treeChanged` events:
+	 * If the parent object is a TreeNode, the event listener will be registered on that node.
+	 * If the parent object is a TreeView, the event listener will be registered on the root node of that view.
+	 * 
+	 */
+	on<K extends keyof (TreeChangeEvents & TreeViewEvents)>(
+		parent: ParentObject,
+		eventName: K,
+		listener: (TreeChangeEvents & TreeViewEvents)[K],
+	): () => void;
 }
 
 /**
@@ -1052,7 +1084,105 @@ export const TreeAlpha: TreeAlpha = {
 		}
 		return node;
 	},
+
+	getParentObject(node: TreeNode): ParentObject {
+		const parent = treeNodeApi.parent(node);
+		if (parent !== undefined) {
+			return parent;
+		}
+		// Node is at the root, so return the TreeView
+		return getViewFromNode(node);
+	},
+
+	on<K extends keyof (TreeChangeEvents & TreeViewEvents)>(
+		parent: ParentObject,
+		eventName: K,
+		listener: (TreeChangeEvents & TreeViewEvents)[K],
+	): () => void {
+		if (isTreeNode(parent)) {
+			// Parent is a TreeNode - only TreeChangeEvents keys are valid here
+			const nodeEventName = eventName as K & keyof TreeChangeEvents;
+			assert(
+				nodeEventName === "nodeChanged" || nodeEventName === "treeChanged",
+				0xa60 /* Invalid event for TreeNode */,
+			);
+			const nodeListener = listener as TreeChangeEvents[typeof nodeEventName];
+			return treeNodeApi.on(parent, nodeEventName, nodeListener);
+		} else {
+			// Parent is a TreeView
+			const view = parent as TreeView<ImplicitFieldSchema>;
+			if (eventName === "nodeChanged" || eventName === "treeChanged") {
+				const nodeEventName = eventName as K & keyof TreeChangeEvents;
+				const nodeListener = listener as TreeChangeEvents[typeof nodeEventName];
+				let isSubscribed = true;
+				let currentNodeUnsubscribe: (() => void) | undefined;
+
+				// Helper function to subscribe and re-subscribe to the root node.
+				const subscribeToRoot = (): void => {
+					if (!isSubscribed) {
+						return;
+					}
+
+					assert(
+						view.compatibility.canView,
+						0xa5f /* Cannot subscribe to node events on a TreeView with incompatible schema */,
+					);
+					const rootNode = view.root;
+					// rootNode may be undefined if the root is optional.
+					currentNodeUnsubscribe = isTreeNode(rootNode)
+						? treeNodeApi.on(rootNode, nodeEventName, nodeListener)
+						: undefined;
+				};
+
+				// Initial subscription
+				subscribeToRoot();
+
+				// Subscribe to rootChanged to handle cases where the root is replaced
+				const unsubscribeRootChanged = view.events.on("rootChanged", () => {
+					(listener as (...args: unknown[]) => void)();
+
+					// Unsubscribe from the old root's events
+					if (currentNodeUnsubscribe !== undefined) {
+						currentNodeUnsubscribe();
+						currentNodeUnsubscribe = undefined;
+					}
+					// Subscribe to the new root's events
+					subscribeToRoot();
+				});
+
+				// Return a combined unsubscribe function
+				return () => {
+					isSubscribed = false;
+					if (currentNodeUnsubscribe !== undefined) {
+						currentNodeUnsubscribe();
+						currentNodeUnsubscribe = undefined;
+					}
+					unsubscribeRootChanged();
+				};
+			}
+			// For view-level events (rootChanged, schemaChanged, commitApplied)
+			const viewEventName = eventName as K & keyof TreeViewEvents;
+			const viewListener = listener as TreeViewEvents[typeof viewEventName];
+			return view.events.on(viewEventName, viewListener);
+		}
+	},
 };
+
+/**
+ * This function gets the TreeView from a TreeNode.
+ * TODO: If the kernel is not hydrated, this will throw an assertion error.
+ * We may want a parent object for unhydrated nodes as well, so we will need to handle that case.
+ *
+ * @param node - The TreeNode to get the view from.
+ * @returns TreeView associated with the node.
+ */
+function getViewFromNode(node: TreeNode): TreeView<ImplicitFieldSchema> {
+	const kernel = getKernel(node);
+	assert(kernel.isHydrated(), 0xa5d /* Node must be hydrated to get its view */);
+	const view = kernel.anchorNode.anchorSet.slots.get(ViewSlot);
+	assert(view !== undefined, 0xa5e /* Expected TreeView to be present in ViewSlot */);
+	return view;
+}
 
 /**
  * Borrow a cursor from a field.
