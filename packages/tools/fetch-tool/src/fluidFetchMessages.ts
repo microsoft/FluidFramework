@@ -33,7 +33,7 @@ async function* loadAllSequencedMessages(
 	documentService?: IDocumentService,
 	dir?: string,
 	files?: string[],
-) {
+): AsyncGenerator<ISequencedDocumentMessage[]> {
 	let lastSeq = 0;
 	// flag for mismatch between last sequence number read and new one to be read
 	let seqNumMismatch = false;
@@ -210,10 +210,10 @@ async function* loadAllSequencedMessages(
 }
 
 async function* saveOps(
-	gen, // AsyncGenerator<ISequencedDocumentMessage[]>,
+	gen: AsyncGenerator<ISequencedDocumentMessage[]>,
 	dir: string,
 	files: string[],
-) {
+): AsyncGenerator<ISequencedDocumentMessage[]> {
 	// Split into 100K ops
 	const chunk = 100 * 1000;
 
@@ -287,7 +287,7 @@ async function* saveOps(
 export async function fluidFetchMessages(
 	documentService?: IDocumentService,
 	saveDir?: string,
-) {
+): Promise<void> {
 	const messageStats = dumpMessageStats || dumpMessages;
 	if (!messageStats && (saveDir === undefined || documentService === undefined)) {
 		return;
