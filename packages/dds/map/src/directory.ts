@@ -1405,13 +1405,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		if (!this.directory.isAttached()) {
 			const previousValue = this._sequencedSubdirectories.get(subdirName);
-			if (previousValue !== undefined) {
+			const successfullyRemoved = this._sequencedSubdirectories.delete(subdirName);
+			// Only emit if we actually deleted something.
+			if (successfullyRemoved) {
 				this.disposeSubDirectoryTree(previousValue);
-				this._sequencedSubdirectories.delete(subdirName);
 				this.emit("subDirectoryDeleted", subdirName, true, this);
-				return true;
 			}
-			return false;
+			return successfullyRemoved;
 		}
 
 		const previousOptimisticSubDirectory = this.getOptimisticSubDirectory(subdirName);
@@ -1434,9 +1434,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.emit("subDirectoryDeleted", subdirName, true, this);
 		// We don't want to fully dispose the subdir tree since this is only a pending
 		// local delete. Instead we will only emit the dispose event to reflect the
-		// local state. Actual disposal happens when the delete message is sequenced.
-		// This creates a timing window where disposed=false but getWorkingDirectory
-		// returns undefined (optimistic view).
+		// local state.
 		this.emitDisposeForSubdirTree(previousOptimisticSubDirectory);
 		return true;
 	}
@@ -1853,9 +1851,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			subdir = latestPendingEntry.subdir;
 			assert(subdir !== undefined, 0xc2f /* Subdirectory should exist in pending data */);
 		} else {
-			// Pending delete: return undefined to reflect optimistic view.
-			// The directory object still exists (not yet disposed) but is
-			// invisible to getWorkingDirectory and user-facing APIs.
+			// Pending delete
 			return undefined;
 		}
 
@@ -1885,7 +1881,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param directoryPath - The absolute path of the directory to check
 	 * @returns true if the directory is visible in the optimistic view, false otherwise
 	 */
-	private isDirectoryVisibleInOptimisticView(directoryPath: string): boolean {
+	private shouldEmitForDirectory(directoryPath: string): boolean {
 		return !this.disposed && this.directory.getWorkingDirectory(directoryPath) !== undefined;
 	}
 
@@ -1946,7 +1942,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// For pending set operations, emit valueChanged events
 			// Include 'path' so listeners can identify which subdirectory the change occurred in
 			for (const { key, previousValue } of pendingSets) {
-				if (!this.isDirectoryVisibleInOptimisticView(this.absolutePath)) {
+				// Stop emitting events if this directory has been disposed or is no longer reachable
+				if (!this.shouldEmitForDirectory(this.absolutePath)) {
 					break;
 				}
 				this.directory.emit(
@@ -2001,7 +1998,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.sequencedStorageData.delete(op.key);
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
-				this.isDirectoryVisibleInOptimisticView(this.absolutePath) &&
+				this.shouldEmitForDirectory(this.absolutePath) &&
 				!this.pendingStorageData.some(
 					(entry) => entry.type === "clear" || entry.key === op.key,
 				)
@@ -2067,7 +2064,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
-				this.isDirectoryVisibleInOptimisticView(this.absolutePath) &&
+				this.shouldEmitForDirectory(this.absolutePath) &&
 				!this.pendingStorageData.some((entry) => entry.type === "clear" || entry.key === key)
 			) {
 				const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
@@ -2161,7 +2158,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// in the optimistic view (parent or ancestor could have pending delete making this invisible).
 			if (
 				!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName) &&
-				this.isDirectoryVisibleInOptimisticView(subDir.absolutePath)
+				!this.disposed
 			) {
 				this.emit("subDirectoryCreated", op.subdirName, local, this);
 			}
@@ -2225,11 +2222,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return;
 		}
 
-		// Dispose the subdirectory tree before removing from map. This ensures disposed=true
-		// before the directory becomes inaccessible. This closes the timing
-		// window created by pending deletes where disposed=false but deleted.
-		this.disposeSubDirectoryTree(previousValue);
 		this._sequencedSubdirectories.delete(op.subdirName);
+		this.disposeSubDirectoryTree(previousValue);
 
 		if (local) {
 			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
@@ -2245,16 +2239,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 		} else {
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
-			// Check both: pending delete on this subdirectory AND whether this parent directory is visible
-			// (parent could have pending delete making this entire subtree invisible).
 			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
 				(entry) => entry.subdirName === op.subdirName && entry.type === "deleteSubDirectory",
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
-			if (
-				pendingEntry === undefined &&
-				this.isDirectoryVisibleInOptimisticView(this.absolutePath)
-			) {
+			if (pendingEntry === undefined && !this.disposed) {
 				this.emit("subDirectoryDeleted", op.subdirName, local, this);
 			}
 		}
@@ -2644,7 +2633,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// (e.g., this directory or an ancestor has a pending delete).
 			// Check the full path to the child directory being created.
 			const childPath = posix.join(this.absolutePath, subDirName, relativePath);
-			if (this.isDirectoryVisibleInOptimisticView(childPath)) {
+			if (this.shouldEmitForDirectory(childPath)) {
 				this.emit("subDirectoryCreated", posix.join(subDirName, relativePath), local, this);
 			}
 		});
@@ -2652,7 +2641,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Don't forward events if this directory has been disposed or is invisible in the optimistic view
 			// (e.g., this directory or an ancestor has a pending delete).
 			// For deletes, check if this parent directory is visible (child is being deleted so can't check it).
-			if (this.isDirectoryVisibleInOptimisticView(this.absolutePath)) {
+			if (this.shouldEmitForDirectory(this.absolutePath)) {
 				this.emit("subDirectoryDeleted", posix.join(subDirName, relativePath), local, this);
 			}
 		});
