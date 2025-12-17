@@ -140,34 +140,32 @@ _See code: [src/commands/generate/bundleStats.ts](https://github.com/microsoft/F
 
 ## `flub generate changelog`
 
-Generate a changelog for packages based on changesets.
+Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
 
 ```
 USAGE
-  $ flub generate changelog -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--version <value>]
-    [--install]
+  $ flub generate changelog -g <value> [-v | --quiet] [--version <value>]
 
 FLAGS
-  -g, --releaseGroup=<option>  (required) Name of a release group.
-                               <options: client|server|azure|build-tools|gitrest|historian>
-      --[no-]install           Update lockfiles by running 'npm install' automatically.
-      --version=<value>        The version for which to generate the changelog. If this is not provided, the version of
-                               the package according to package.json will be used.
+  -g, --releaseGroup=<value>  (required) The name of a release group.
+      --version=<value>       The version for which to generate the changelog. If this is not provided, the version of
+                              the package according to package.json will be used.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Generate a changelog for packages based on changesets.
+  Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
+
+ALIASES
+  $ flub generate changelog
 
 EXAMPLES
   Generate changelogs for the client release group.
 
     $ flub generate changelog --releaseGroup client
 ```
-
-_See code: [src/commands/generate/changelog.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changelog.ts)_
 
 ## `flub generate changeset`
 
