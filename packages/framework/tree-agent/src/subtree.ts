@@ -19,8 +19,8 @@ import type {
 	TreeBranchAlpha,
 } from "@fluidframework/tree/alpha";
 
-import { getNodeOnBranch } from "./getNodeOnBranch.js";
 import type { TreeView, ViewOrTree } from "./api.js";
+import { getNodeOnBranch } from "./getNodeOnBranch.js";
 
 /**
  * Wraps either a {@link TreeView} or a {@link TreeNode} and provides a common interface over them.
