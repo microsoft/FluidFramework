@@ -19,12 +19,14 @@ import {
 	IFluidCodeDetails,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { ConnectionState,
+import {
+	ConnectionState,
 	asLegacyAlpha,
 	ContainerAlpha,
 	ILoaderProps,
 	Loader,
-	waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
+	waitContainerToCatchUp,
+} from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";

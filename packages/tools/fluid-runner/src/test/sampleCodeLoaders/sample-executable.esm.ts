@@ -8,5 +8,4 @@ import { fluidRunner } from "@fluidframework/fluid-runner/internal";
 
 import { fluidExport } from "./sampleCodeLoader.js";
 
-
 await fluidRunner(fluidExport);
