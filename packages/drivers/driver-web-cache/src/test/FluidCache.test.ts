@@ -215,6 +215,38 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 			expect(await fluidCache.get(docId2Entry1)).toEqual({ data: "entry3" }); // Still exists
 		});
 
+		it("does not throw when attempting to remove a non-existent entry", async () => {
+			const fluidCache = getFluidCache();
+
+			const nonExistentEntry = getMockCacheEntry("nonExistent");
+
+			// Should not throw even though the entry doesn't exist
+			await expect(fluidCache.removeEntry(nonExistentEntry)).resolves.not.toThrow();
+		});
+
+		it("does not throw when removeEntry is called and the database has been upgraded by another client", async () => {
+			// Create a DB with a much newer version number to simulate an old client
+			await openDB(FluidDriverCacheDBName, 1000000);
+
+			const fluidCache = getFluidCache();
+
+			const cacheEntry = getMockCacheEntry("someKey");
+
+			// Should not throw even when the database version is incompatible
+			await expect(fluidCache.removeEntry(cacheEntry)).resolves.not.toThrow();
+		});
+
+		it("does not hang when removeEntry is called and an older client is blocking the database from opening", async () => {
+			await openDB(FluidDriverCacheDBName, 1);
+
+			const fluidCache = getFluidCache();
+
+			const cacheEntry = getMockCacheEntry("someKey");
+
+			// Should not hang or throw
+			await expect(fluidCache.removeEntry(cacheEntry)).resolves.not.toThrow();
+		});
+
 		// The tests above test the public API of Fluid Cache.
 		//  Those tests should not break if we changed the implementation.
 		// The tests below test implementation details of the Fluid Cache, such as the usage of indexedDB.
