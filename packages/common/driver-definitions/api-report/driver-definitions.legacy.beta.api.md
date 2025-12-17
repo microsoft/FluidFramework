@@ -373,6 +373,7 @@ export interface IPersistedCache {
     get(entry: ICacheEntry): Promise<unknown>;
     put(entry: ICacheEntry, value: unknown): Promise<void>;
     removeEntries(file: IFileEntry): Promise<void>;
+    removeEntry?(entry: ICacheEntry): Promise<void>;
 }
 
 // @beta @legacy (undocumented)
