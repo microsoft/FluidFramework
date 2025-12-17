@@ -7,10 +7,10 @@ import {
 	ModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import { IContainer } from "@fluidframework/container-definitions/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
-import { IDiceRoller } from "./interface.js";
+import type { IDiceRoller } from "./interface.js";
 import { OldestClientDiceRollerInstantiationFactory } from "./oldestClientDiceRoller.js";
 import { TaskManagerDiceRollerInstantiationFactory } from "./taskManagerDiceRoller.js";
 
@@ -51,7 +51,7 @@ export class TaskSelectionContainerRuntimeFactory extends ModelContainerRuntimeF
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const taskManagerDiceRoller = await runtime.createDataStore(
 			TaskManagerDiceRollerInstantiationFactory.type,
 		);
@@ -65,7 +65,10 @@ export class TaskSelectionContainerRuntimeFactory extends ModelContainerRuntimeF
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	): Promise<ITaskSelectionAppModel> {
 		return new TaskSelectionAppModel(
 			await getDataStoreEntryPoint<IDiceRoller>(runtime, taskManagerDiceId),
 			await getDataStoreEntryPoint<IDiceRoller>(runtime, oldestClientDiceId),

@@ -24,8 +24,7 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"start": "node dist/www.js",
-		"tsc": "tsc",
-		"tslint": "tslint \"src/**/*.ts\""
+		"tsc": "tsc"
 	},
 	"dependencies": {
 		"@fluidframework/historian-base": "workspace:~",
@@ -59,7 +58,6 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^5.0.0",
 		"supertest": "^3.3.0",
-		"tslint": "^5.12.0",
 		"typescript": "~5.1.6"
 	}
 }

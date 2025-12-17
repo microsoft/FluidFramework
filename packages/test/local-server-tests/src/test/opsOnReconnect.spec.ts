@@ -111,7 +111,7 @@ describe("Ops on Reconnect", () => {
 
 	async function setupFirstContainer(
 		runtimeOptions: IContainerRuntimeOptionsInternal = { flushMode: FlushMode.Immediate },
-	) {
+	): Promise<void> {
 		// Create the first container, dataObject and DDSes.
 		container1 = await createContainer(runtimeOptions);
 		container1Object1 = (await container1.getEntryPoint()) as ITestFluidObject;

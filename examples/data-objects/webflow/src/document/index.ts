@@ -196,24 +196,27 @@ export class FlowDocument extends DataObject {
 		});
 	}
 
-	public async getComponentFromMarker(marker: Marker) {
+	public async getComponentFromMarker(marker: Marker): Promise<unknown> {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return marker.properties.handle.get();
 	}
 
-	public getSegmentAndOffset(position: number) {
+	public getSegmentAndOffset(position: number): {
+		segment: SharedStringSegment;
+		offset?: number;
+	} {
 		// Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
 		return position === this.length
 			? { segment: endOfTextSegment, offset: 0 }
 			: this.sharedString.getContainingSegment(position);
 	}
 
-	public getPosition(segment: ISegment) {
+	public getPosition(segment: ISegment): number {
 		// Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
 		return segment === endOfTextSegment ? this.length : this.sharedString.getPosition(segment);
 	}
 
-	public addLocalRef(position: number) {
+	public addLocalRef(position: number): LocalReferencePosition {
 		// Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
 		if (position >= this.length) {
 			return endOfTextReference;
@@ -230,7 +233,7 @@ export class FlowDocument extends DataObject {
 		return localRef;
 	}
 
-	public removeLocalRef(localRef: LocalReferencePosition) {
+	public removeLocalRef(localRef: LocalReferencePosition): void {
 		const segment = localRef.getSegment();
 
 		// Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
@@ -239,7 +242,7 @@ export class FlowDocument extends DataObject {
 		}
 	}
 
-	public localRefToPosition(localRef: ReferencePosition) {
+	public localRefToPosition(localRef: ReferencePosition): number {
 		// Special case for ReferencePosition to end of document.  (See comments on 'endOfTextSegment').
 		if (localRef.getSegment() === endOfTextSegment) {
 			return this.length;
@@ -247,17 +250,17 @@ export class FlowDocument extends DataObject {
 		return this.sharedString.localReferencePositionToPosition(localRef);
 	}
 
-	public insertText(position: number, text: string) {
+	public insertText(position: number, text: string): void {
 		debug(`insertText(${position},"${text}")`);
 		this.sharedString.insertText(position, text);
 	}
 
-	public replaceWithText(start: number, end: number, text: string) {
+	public replaceWithText(start: number, end: number, text: string): void {
 		debug(`replaceWithText(${start}, ${end}, "${text}")`);
 		this.sharedString.replaceText(start, end, text);
 	}
 
-	public remove(start: number, end: number) {
+	public remove(start: number, end: number): void {
 		let _start = start;
 		debug(`remove(${_start},${end})`);
 		const ops: IMergeTreeRemoveMsg[] = [];
@@ -328,7 +331,7 @@ export class FlowDocument extends DataObject {
 		});
 	}
 
-	public insertParagraph(position: number, tag?: TagName) {
+	public insertParagraph(position: number, tag?: TagName): void {
 		debug(`insertParagraph(${position})`);
 		this.sharedString.insertMarker(
 			position,
@@ -337,7 +340,7 @@ export class FlowDocument extends DataObject {
 		);
 	}
 
-	public insertLineBreak(position: number) {
+	public insertLineBreak(position: number): void {
 		debug(`insertLineBreak(${position})`);
 		this.sharedString.insertMarker(
 			position,
@@ -346,7 +349,7 @@ export class FlowDocument extends DataObject {
 		);
 	}
 
-	public setFormat(position: number, tag: TagName) {
+	public setFormat(position: number, tag: TagName): void {
 		const { start } = this.findParagraph(position);
 
 		// If inside an existing paragraph marker, update it with the new formatting tag.
@@ -363,30 +366,30 @@ export class FlowDocument extends DataObject {
 		this.insertParagraph(start, tag);
 	}
 
-	public getStart(marker: Marker) {
+	public getStart(marker: Marker): ISegment | undefined {
 		return this.getOppositeMarker(marker, /* "end".length = */ 3, "begin");
 	}
 
-	public getEnd(marker: Marker) {
+	public getEnd(marker: Marker): ISegment | undefined {
 		return this.getOppositeMarker(marker, /* "begin".length = */ 5, "end");
 	}
 
-	public annotate(start: number, end: number, props: PropertySet) {
+	public annotate(start: number, end: number, props: PropertySet): void {
 		this.sharedString.annotateRange(start, end, props);
 	}
 
-	public setCssStyle(start: number, end: number, style: string) {
+	public setCssStyle(start: number, end: number, style: string): void {
 		this.sharedString.annotateRange(start, end, { style });
 	}
 
-	public addCssClass(start: number, end: number, ...classNames: string[]) {
+	public addCssClass(start: number, end: number, ...classNames: string[]): void {
 		if (classNames.length > 0) {
 			const newClasses = classNames.join(" ");
 			this.updateCssClassList(start, end, (classList) => TokenList.set(classList, newClasses));
 		}
 	}
 
-	public removeCssClass(start: number, end: number, ...classNames: string[]) {
+	public removeCssClass(start: number, end: number, ...classNames: string[]): void {
 		this.updateCssClassList(start, end, (classList) =>
 			classNames.reduce(
 				(updatedList, className) => TokenList.unset(updatedList, className),
@@ -395,7 +398,7 @@ export class FlowDocument extends DataObject {
 		);
 	}
 
-	public toggleCssClass(start: number, end: number, ...classNames: string[]) {
+	public toggleCssClass(start: number, end: number, ...classNames: string[]): void {
 		// Pre-visit the range to see if any of the new styles have already been set.
 		// If so, change the add to a removal by setting the map value to 'undefined'.
 		const toAdd = classNames.slice(0);
@@ -410,15 +413,15 @@ export class FlowDocument extends DataObject {
 		this.addCssClass(start, end, ...toAdd);
 	}
 
-	public setAttr(start: number, end: number, attr: IHTMLAttributes) {
+	public setAttr(start: number, end: number, attr: IHTMLAttributes): void {
 		this.sharedString.annotateRange(start, end, { attr });
 	}
 
-	public searchForMarker(startPos: number, markerLabel: string, forwards: boolean) {
+	public searchForMarker(startPos: number, markerLabel: string, forwards: boolean): Marker {
 		return this.sharedString.searchForMarker(startPos, markerLabel, forwards);
 	}
 
-	public findParagraph(position: number) {
+	public findParagraph(position: number): { start: number; end: number } {
 		const maybeStart = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ true);
 		const start = maybeStart
 			? this.sharedString.localReferencePositionToPosition(maybeStart)
@@ -432,7 +435,7 @@ export class FlowDocument extends DataObject {
 		return { start, end };
 	}
 
-	public visitRange(callback: LeafAction, start = 0, end = this.length) {
+	public visitRange(callback: LeafAction, start = 0, end = this.length): void {
 		const _end = clamp(0, end, this.length);
 		const _start = clamp(0, start, end);
 
@@ -480,7 +483,11 @@ export class FlowDocument extends DataObject {
 		return s.join("");
 	}
 
-	private getOppositeMarker(marker: Marker, oldPrefixLength: number, newPrefix: string) {
+	private getOppositeMarker(
+		marker: Marker,
+		oldPrefixLength: number,
+		newPrefix: string,
+	): ISegment | undefined {
 		return this.sharedString.getMarkerFromId(
 			`${newPrefix}${marker.getId().slice(oldPrefixLength)}`,
 		);
@@ -490,7 +497,7 @@ export class FlowDocument extends DataObject {
 		start: number,
 		end: number,
 		callback: (classList: string) => string,
-	) {
+	): void {
 		const updates: { span: SegmentSpan; classList: string }[] = [];
 
 		this.visitRange(

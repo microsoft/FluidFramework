@@ -3,11 +3,17 @@
  * Licensed under the MIT License.
  */
 
+const {
+	createExampleDriverServiceWebpackPlugin,
+	createOdspMiddlewares,
+} = require("@fluid-example/example-webpack-integration");
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 
 module.exports = (env) => {
+	const { service } = env;
+
 	return {
 		entry: {
 			app: "./tests/app.ts",
@@ -35,11 +41,6 @@ module.exports = (env) => {
 			devtoolNamespace: "fluid-example/blobs",
 			libraryTarget: "umd",
 		},
-		devServer: {
-			static: {
-				directory: path.join(__dirname, "tests"),
-			},
-		},
 		plugins: [
 			new webpack.ProvidePlugin({
 				process: "process/browser.js",
@@ -47,7 +48,19 @@ module.exports = (env) => {
 			new HtmlWebpackPlugin({
 				template: "./tests/index.html",
 			}),
+			createExampleDriverServiceWebpackPlugin(service),
 		],
+		devServer: {
+			static: {
+				directory: path.join(__dirname, "tests"),
+			},
+			setupMiddlewares: (middlewares) => {
+				if (service === "odsp") {
+					middlewares.push(...createOdspMiddlewares());
+				}
+				return middlewares;
+			},
+		},
 		mode: "development",
 		devtool: "inline-source-map",
 	};

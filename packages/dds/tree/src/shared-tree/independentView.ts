@@ -48,7 +48,6 @@ import {
 	type JsonCompatible,
 	Breakable,
 	oneFromIterable,
-	brand,
 } from "../util/index.js";
 import {
 	buildConfiguredForest,
@@ -72,7 +71,7 @@ import { combineChunks } from "../feature-libraries/index.js";
  */
 export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & { idCompressor?: IIdCompressor | undefined },
+	options?: ForestOptions & { idCompressor?: IIdCompressor | undefined },
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
 }
@@ -206,7 +205,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 			...options,
 			minVersionForCollab: FluidClientVersion.v2_0,
 		};
-		const schemaCodec = makeSchemaCodec(writeOptions, brand(SchemaFormatVersion.v1));
+		const schemaCodec = makeSchemaCodec(writeOptions, SchemaFormatVersion.v1);
 		const fieldBatchCodec = makeFieldBatchCodec(writeOptions);
 		const newSchema = schemaCodec.decode(options.content.schema as Format);
 

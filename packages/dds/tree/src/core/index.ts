@@ -83,6 +83,8 @@ export {
 	CursorMarker,
 	isCursor,
 	DetachedFieldIndex,
+	type ReadOnlyDetachedFieldIndex,
+	type DetachedFieldIndexCheckpoint,
 	type ForestRootId,
 	getDetachedFieldContainingPath,
 	aboveRootPlaceholder,
@@ -102,7 +104,7 @@ export {
 	cursorChunk,
 	tryGetChunk,
 	type ChunkedCursor,
-	type DetachedFieldIndexFormatVersion,
+	DetachedFieldIndexFormatVersion,
 	getCodecTreeForDetachedFieldIndexFormat,
 } from "./tree/index.js";
 
@@ -173,7 +175,7 @@ export {
 	type GraphCommit,
 	CommitKind,
 	type CommitMetadata,
-	type CommitMetadataAlpha,
+	type ChangeMetadata,
 	type RevisionTag,
 	RevisionTagSchema,
 	RevisionTagCodec,

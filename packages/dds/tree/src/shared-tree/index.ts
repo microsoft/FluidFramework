@@ -13,7 +13,6 @@ export {
 	type ForestType,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
-	SharedTreeFormatVersion,
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	type ForestOptions,

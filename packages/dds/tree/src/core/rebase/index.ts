@@ -12,7 +12,7 @@ export {
 	type GraphCommit,
 	CommitKind,
 	type CommitMetadata,
-	type CommitMetadataAlpha,
+	type ChangeMetadata,
 	type RevisionTag,
 	RevisionTagSchema,
 	type EncodedRevisionTag,

@@ -394,14 +394,14 @@ type JsonDeserializedTypeWith<T> =
 
 type NonSymbolWithDefinedNonFunctionPropertyOf<T extends object> = Exclude<
 	{
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 		[K in keyof T]: undefined extends T[K] ? never : T[K] extends Function ? never : K;
 	}[keyof T],
 	undefined | symbol
 >;
 type NonSymbolWithUndefinedNonFunctionPropertyOf<T extends object> = Exclude<
 	{
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 		[K in keyof T]: undefined extends T[K] ? (T[K] extends Function ? never : K) : never;
 	}[keyof T],
 	undefined | symbol
@@ -437,8 +437,7 @@ type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean exten
 					| string
 					| TReplaced
 			? /* primitive types => */ T
-			: // eslint-disable-next-line @typescript-eslint/ban-types
-				/* test for not a function */ Extract<T, Function> extends never
+			: /* test for not a function */ Extract<T, Function> extends never
 				? /* not a function => test for object */ T extends object
 					? /* object => test for array */ T extends (infer E)[]
 						? /* array => */ JsonDeserialized<E, TReplaced>[]
