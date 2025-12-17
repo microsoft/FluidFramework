@@ -111,6 +111,8 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 			fullTree: summarizeOptions.fullTree ?? false,
 			timeSinceLastAttempt,
 			timeSinceLastSummary,
+			nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
+			runtimeOpsSinceLastSummary: this.heuristicData.numRuntimeOps,
 		};
 
 		const summarizeEvent = PerformanceEvent.start(
@@ -412,8 +414,6 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 					clientSequenceNumber: summaryData.clientSequenceNumber,
 					hasMissingOpData: this.heuristicData.hasMissingOpData,
 					opsSizesSinceLastSummary: this.heuristicData.totalOpsSize,
-					nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
-					runtimeOpsSinceLastSummary: this.heuristicData.numRuntimeOps,
 				};
 			}
 

@@ -1385,7 +1385,7 @@ export class IdCompressor {
 			return { break: true };
 		};
 
-		const compareCompressionMappings = (a, b) => {
+		const compareCompressionMappings = (a, b): boolean => {
 			const unfinalizedA = IdCompressor.isUnfinalizedOverride(a);
 			const unfinalizedB = IdCompressor.isUnfinalizedOverride(b);
 			if (unfinalizedA) {

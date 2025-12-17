@@ -45,6 +45,7 @@ export {
 } from "./getPresence.js";
 
 export type {
+	KeySchemaValidator,
 	LatestMap,
 	LatestMapArguments,
 	LatestMapArgumentsRaw,
