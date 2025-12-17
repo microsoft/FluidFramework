@@ -134,9 +134,7 @@ export function maybeGetNewGeneration(
 
 	const previousReleaseDate = parseISO(metadata.releaseDate);
 	if (!isValid(previousReleaseDate) || !isDate(previousReleaseDate)) {
-		throw new Error(
-			`Previous release date "${metadata.releaseDate}" is not a valid date.`,
-		);
+		throw new Error(`Previous release date "${metadata.releaseDate}" is not a valid date.`);
 	}
 
 	const today = new Date();

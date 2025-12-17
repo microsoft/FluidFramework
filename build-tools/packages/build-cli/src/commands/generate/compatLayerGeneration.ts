@@ -69,7 +69,9 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 		// Check if package has opted in via metadata
 		const { fluidCompatMetadata } = pkg.packageJson;
 		if (fluidCompatMetadata === undefined) {
-			this.verbose(`No fluidCompatMetadata found in package.json; skipping (opt-in required).`);
+			this.verbose(
+				`No fluidCompatMetadata found in package.json; skipping (opt-in required).`,
+			);
 			return;
 		}
 
