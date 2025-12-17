@@ -4,11 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+
 import { EmptyKey, type ITreeCursorSynchronous } from "../../../core/index.js";
+import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 import {
 	type ChunkShape,
 	TreeShape,
@@ -22,15 +23,15 @@ import {
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { numberSchema, stringSchema } from "../../../simple-tree/leafNodeSchema.js";
-import { brand } from "../../../util/index.js";
 import { testSpecializedFieldCursor } from "../../cursorTestSuite.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sum } from "../../domains/json/benchmarks.js";
-import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 
 import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData.js";
+import { brand } from "../../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { numberSchema, stringSchema } from "../../../simple-tree/leafNodeSchema.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
 function validateShape(shape: ChunkShape): void {

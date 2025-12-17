@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-
 import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
 import {
 	type DeltaDetachedNodeId,

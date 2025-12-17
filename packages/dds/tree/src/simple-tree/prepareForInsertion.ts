@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { debugAssert, fail, oob } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
 import type {
 	SchemaAndPolicy,
 	IForestSubscription,
@@ -28,20 +25,21 @@ import {
 	getOrCreateHydratedFlexTreeNode,
 	assertFlexTreeEntityNotFreed,
 } from "../feature-libraries/index.js";
-import { isFieldInSchema } from "../feature-libraries/index.js";
+import type { ImplicitFieldSchema } from "./fieldSchema.js";
+import {
+	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
+} from "./unhydratedFlexTreeFromInsertable.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand, type Mutable } from "../util/index.js";
-
 import {
 	getKernel,
 	type ImplicitAllowedTypes,
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
-import type { ImplicitFieldSchema } from "./fieldSchema.js";
-import {
-	type InsertableContent,
-	unhydratedFlexTreeFromInsertable,
-} from "./unhydratedFlexTreeFromInsertable.js";
+import { debugAssert, fail, oob } from "@fluidframework/core-utils/internal";
+import { isFieldInSchema } from "../feature-libraries/index.js";
 
 /**
  * For now, schema validation for inserted content is always enabled.

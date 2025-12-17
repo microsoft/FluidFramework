@@ -4,7 +4,6 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
-
 import type {
 	AnchorNode,
 	FieldKey,
@@ -20,19 +19,18 @@ import {
 	type TreeIndexKey,
 	type KeyFinder,
 } from "../../feature-libraries/index.js";
-import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import { brand } from "../../util/index.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import {
 	treeNodeFromAnchor,
 	type TreeNode,
 	type TreeNodeSchema,
 	type NodeFromSchema,
 } from "../core/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
-import { walkFieldSchema } from "../walkFieldSchema.js";
-
-import type { TreeView } from "./tree.js";
 import { treeNodeApi } from "./treeNodeApi.js";
+import type { TreeView } from "./tree.js";
+import { walkFieldSchema } from "../walkFieldSchema.js";
+import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 
 /**
  * A {@link TreeIndex} that returns tree nodes given their associated keys.

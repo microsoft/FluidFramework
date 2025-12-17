@@ -11,7 +11,6 @@ import {
 	SchemaFactory,
 	treeNodeApi as Tree,
 } from "../../simple-tree/index.js";
-
 import { hydrate } from "./utils.js";
 
 describe("SharedTreeObject factories", () => {
@@ -145,7 +144,7 @@ describe("SharedTreeObject factories", () => {
 		function readData() {
 			const objectContent = root.child.content;
 			assert(objectContent !== undefined);
-			const listContent = root.grand.child.list.at(-1);
+			const listContent = root.grand.child.list[root.grand.child.list.length - 1];
 			assert(listContent !== undefined);
 			const mapContent = root.grand.child.map.get("a");
 			assert(mapContent !== undefined);

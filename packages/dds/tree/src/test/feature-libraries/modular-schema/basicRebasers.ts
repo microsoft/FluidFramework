@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import { type TUnsafe, Type } from "@sinclair/typebox";
 
 import { makeCodecFamily } from "../../../codec/index.js";

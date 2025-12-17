@@ -6,14 +6,17 @@
 import { assert, fail, oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { getOrCreate } from "../../util/index.js";
-import type { MakeNominal } from "../../util/index.js";
+import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
 import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
 	type TreeNodeSchema,
 } from "../core/index.js";
-import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
+import {
+	toInitialSchema,
+	toUnhydratedSchema,
+	transformSimpleSchema,
+} from "../toStoredSchema.js";
 import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
@@ -24,14 +27,11 @@ import {
 	type ObjectNodeSchema,
 	type RecordNodeSchema,
 } from "../node-kinds/index.js";
-import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
-import {
-	toInitialSchema,
-	toUnhydratedSchema,
-	transformSimpleSchema,
-} from "../toStoredSchema.js";
-import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
+import { getOrCreate } from "../../util/index.js";
+import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
+import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
 
 /**
  * Options when constructing a tree view.

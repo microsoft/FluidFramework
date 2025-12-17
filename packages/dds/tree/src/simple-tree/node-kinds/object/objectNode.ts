@@ -4,8 +4,8 @@
  */
 
 import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import {
 	ObjectNodeStoredSchema,
@@ -26,7 +26,7 @@ import type {
 	JsonCompatibleReadOnlyObject,
 } from "../../../util/index.js";
 import { brand } from "../../../util/index.js";
-import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
+
 import {
 	CompatibilityLevel,
 	type TreeNodeSchema,
@@ -56,6 +56,13 @@ import {
 	getTreeNodeSchemaInitializedData,
 	getUnhydratedContext,
 } from "../../createContext.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import type {
+	ObjectNodeSchema,
+	ObjectNodeSchemaInternalData,
+	ObjectNodeSchemaPrivate,
+} from "./objectNodeTypes.js";
+import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
 	type ImplicitFieldSchema,
 	getStoredKey,
@@ -71,10 +78,7 @@ import {
 	extractFieldProvider,
 	isConstant,
 } from "../../fieldSchema.js";
-import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
-import { prepareForInsertion } from "../../prepareForInsertion.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
-import { convertFieldKind } from "../../toStoredSchema.js";
 import {
 	unhydratedFlexTreeFromInsertable,
 	unhydratedFlexTreeFromInsertableNode,
@@ -82,12 +86,8 @@ import {
 	type FactoryContentObject,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-
-import type {
-	ObjectNodeSchema,
-	ObjectNodeSchemaInternalData,
-	ObjectNodeSchemaPrivate,
-} from "./objectNodeTypes.js";
+import { convertFieldKind } from "../../toStoredSchema.js";
+import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -99,7 +99,8 @@ import type {
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
 	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? {}
+		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+			{}
 		: {
 				-readonly [Property in keyof T]: Property extends string
 					? TreeFieldFromImplicitField<T[Property]>

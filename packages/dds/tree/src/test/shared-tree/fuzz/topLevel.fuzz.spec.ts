@@ -11,7 +11,6 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { baseTreeModel, optimizedForestTreeModel, runsPerBatch } from "./baseModel.js";
 import {
 	deterministicIdCompressorFactory,
 	failureDirectory,
@@ -19,6 +18,7 @@ import {
 	SharedTreeFuzzTestFactory,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
+import { baseTreeModel, optimizedForestTreeModel, runsPerBatch } from "./baseModel.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,

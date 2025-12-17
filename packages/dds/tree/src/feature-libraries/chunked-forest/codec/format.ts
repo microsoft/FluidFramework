@@ -6,7 +6,6 @@
 import { type Static, Type } from "@sinclair/typebox";
 
 import { unionOptions } from "../../../codec/index.js";
-import { strictEnum, type Values } from "../../../util/index.js";
 
 import {
 	Count,
@@ -14,6 +13,7 @@ import {
 	IdentifierOrIndex,
 	ShapeIndex,
 } from "./formatGeneric.js";
+import { strictEnum, type Values } from "../../../util/index.js";
 
 /**
  * The format version for the field batch.

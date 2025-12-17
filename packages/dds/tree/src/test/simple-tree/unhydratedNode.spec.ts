@@ -4,25 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import { isStableId } from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { rootFieldKey } from "../../core/index.js";
-import { TreeStatus } from "../../feature-libraries/index.js";
-import { Tree } from "../../shared-tree/index.js";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
-// eslint-disable-next-line import-x/no-internal-modules
-import { unhydratedFlexTreeFromCursor } from "../../simple-tree/api/create.js";
-import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { getUnhydratedContext } from "../../simple-tree/createContext.js";
-import type {
-	ConstantFieldProvider,
-	ContextualFieldProvider,
-	FieldProvider,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/fieldSchema.js";
+import { Tree } from "../../shared-tree/index.js";
+import { rootFieldKey } from "../../core/index.js";
 import {
 	getInnerNode,
 	SchemaFactory,
@@ -31,9 +18,21 @@ import {
 	type FieldProps,
 	type TreeNode,
 } from "../../simple-tree/index.js";
-import { singleJsonCursor } from "../json/index.js";
-
+import type {
+	ConstantFieldProvider,
+	ContextualFieldProvider,
+	FieldProvider,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/fieldSchema.js";
 import { hydrate } from "./utils.js";
+import { TreeStatus } from "../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
+import { singleJsonCursor } from "../json/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { unhydratedFlexTreeFromCursor } from "../../simple-tree/api/create.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactoryAlpha("undefined");

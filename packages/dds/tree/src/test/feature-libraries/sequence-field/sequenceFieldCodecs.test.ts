@@ -4,9 +4,6 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-
-import { withSchemaValidation } from "../../../codec/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	type FieldChangeEncodingContext,
 	SequenceField as SF,
@@ -15,7 +12,6 @@ import {
 import type { Changeset } from "../../../feature-libraries/sequence-field/index.js";
 import { brand, type JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
-import { TestNodeId } from "../../testNodeId.js";
 import {
 	type EncodingTestData,
 	makeEncodingTestSuite,
@@ -23,10 +19,12 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-
+import { TestNodeId } from "../../testNodeId.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases, MarkMaker as Mark } from "./testEdits.js";
 import { assertChangesetsEqual, inlineRevision } from "./utils.js";
+import { withSchemaValidation } from "../../../codec/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 
 type TestCase = [string, Changeset, FieldChangeEncodingContext];
 

@@ -26,7 +26,6 @@ import {
 	Shape as ShapeGeneric,
 	updateShapesAndIdentifiersEncoding,
 } from "./chunkEncodingGeneric.js";
-import type { IncrementalEncoder } from "./codecs.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
@@ -37,6 +36,7 @@ import {
 	FieldBatchFormatVersion,
 	SpecialField,
 } from "./format.js";
+import type { IncrementalEncoder } from "./codecs.js";
 
 /**
  * Encode data from `FieldBatch` into an `EncodedFieldBatch`.

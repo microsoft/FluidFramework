@@ -4,15 +4,13 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
 import type { TreeIndexKey } from "../../feature-libraries/index.js";
-import type { TreeNode } from "../core/index.js";
 import { FieldKind, type ImplicitFieldSchema } from "../fieldSchema.js";
+import type { TreeNode } from "../core/index.js";
 import { ObjectNodeSchema } from "../node-kinds/index.js";
-import { walkFieldSchema } from "../walkFieldSchema.js";
-
-import { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
 import type { TreeView } from "./tree.js";
+import { walkFieldSchema } from "../walkFieldSchema.js";
+import { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
 
 /**
  * An index that returns tree nodes given their associated identifiers.

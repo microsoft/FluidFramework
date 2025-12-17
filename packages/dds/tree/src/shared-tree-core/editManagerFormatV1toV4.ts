@@ -7,7 +7,6 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import { type ObjectOptions, type TSchema, Type } from "@sinclair/typebox";
 
 import { SessionIdSchema } from "../core/index.js";
-
 import {
 	EditManagerFormatVersion,
 	type EncodedSummarySessionBranch,

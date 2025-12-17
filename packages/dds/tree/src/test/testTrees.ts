@@ -5,10 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ICodecOptions } from "../codec/index.js";
 import {
 	type ITreeCursorSynchronous,
 	type JsonableTree,
@@ -20,7 +18,6 @@ import {
 	TreeStoredSchemaRepository,
 	type TreeTypeSet,
 } from "../core/index.js";
-import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
 	FieldKinds,
 	type FullSchemaPolicy,
@@ -41,7 +38,7 @@ import {
 	SchematizingSimpleTreeView,
 	type ForestOptions,
 } from "../shared-tree/index.js";
-import { isLazy } from "../simple-tree/core/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	numberSchema,
 	SchemaFactoryAlpha,
@@ -61,10 +58,14 @@ import {
 	permissiveStoredSchemaGenerationOptions,
 	type TreeViewConfiguration,
 } from "../simple-tree/index.js";
-import { brand, Breakable } from "../util/index.js";
-
+// eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
+import { brand, Breakable } from "../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { isLazy } from "../simple-tree/core/index.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
+import type { ICodecOptions } from "../codec/index.js";
 
 interface TestSimpleTree {
 	readonly name: string;

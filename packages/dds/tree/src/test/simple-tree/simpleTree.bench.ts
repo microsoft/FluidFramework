@@ -6,10 +6,6 @@
 import { strict as assert, fail } from "node:assert";
 
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-
-import { SchemaFactory, SchemaFactoryAlpha } from "../../simple-tree/index.js";
-import { configureBenchmarkHooks } from "../utils.js";
-
 import {
 	type DeepTreeNode,
 	generateDeepSimpleTree,
@@ -20,7 +16,9 @@ import {
 	writeWideSimpleTreeNewValue,
 	type WideTreeNode,
 } from "./benchmarkUtilities.js";
+import { SchemaFactory, SchemaFactoryAlpha } from "../../simple-tree/index.js";
 import { hydrate, hydrateUnsafe } from "./utils.js";
+import { configureBenchmarkHooks } from "../utils.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -426,7 +424,7 @@ describe("SimpleTree benchmarks", () => {
 					writeWideSimpleTreeNewValue(tree, changedLeafValue, tree.length - 1);
 				},
 				after: () => {
-					const actual = tree.at(-1);
+					const actual = tree[tree.length - 1];
 					assert.equal(actual, changedLeafValue);
 				},
 			});
@@ -486,7 +484,8 @@ describe("SimpleTree benchmarks", () => {
 					tree.moveToIndex(tree.length - 2, tree.length - 1);
 				},
 				after: () => {
-					if (!isInPerformanceTestingMode) assert.equal(tree.at(-1), changedLeafValue);
+					if (!isInPerformanceTestingMode)
+						assert.equal(tree[tree.length - 1], changedLeafValue);
 				},
 			});
 		}

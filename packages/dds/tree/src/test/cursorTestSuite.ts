@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 
 import {
@@ -27,16 +26,15 @@ import {
 	prefixFieldPath,
 	prefixPath,
 } from "../feature-libraries/index.js";
-import { JsonAsTree } from "../jsonDomainSchema.js";
+import { brand } from "../util/index.js";
+import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
 import {
 	booleanSchema,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
 } from "../simple-tree/index.js";
-import { brand } from "../util/index.js";
-
-import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 
 const sf = new SchemaFactory("Cursor Test Suite");
 

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { rootFieldKey, type UpPath } from "../../../core/index.js";
+import { SchemaFactory, TreeBeta, TreeViewConfiguration } from "../../../simple-tree/index.js";
 import {
 	getKernel,
 	isTreeNode,
@@ -13,9 +13,10 @@ import {
 	// TODO: test other things from "treeNodeKernel" file.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNodeKernel.js";
-import { SchemaFactory, TreeBeta, TreeViewConfiguration } from "../../../simple-tree/index.js";
-import { getView } from "../../utils.js";
+
 import { describeHydration, hydrate } from "../utils.js";
+import { getView } from "../../utils.js";
+import { rootFieldKey, type UpPath } from "../../../core/index.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");

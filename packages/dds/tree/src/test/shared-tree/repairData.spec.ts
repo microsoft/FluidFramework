@@ -4,14 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { rootFieldKey } from "../../core/index.js";
-import { TreeStatus } from "../../feature-libraries/index.js";
-import { TreeViewConfiguration } from "../../simple-tree/index.js";
-import { TestAnchor } from "../testAnchor.js";
 import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
+import { TreeStatus } from "../../feature-libraries/index.js";
+import { TestAnchor } from "../testAnchor.js";
+import { TreeViewConfiguration } from "../../simple-tree/index.js";
 
 const enableSchemaValidation = true;
 

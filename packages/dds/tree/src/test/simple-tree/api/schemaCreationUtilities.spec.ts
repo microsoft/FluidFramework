@@ -4,16 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	adaptEnum,
-	enumEntries,
-	enumFromStrings,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/schemaCreationUtilities.js";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	type NodeFromSchema,
 	SchemaFactory,
@@ -24,13 +18,19 @@ import {
 	SchemaFactoryBeta,
 } from "../../../simple-tree/index.js";
 import {
+	adaptEnum,
+	enumEntries,
+	enumFromStrings,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/schemaCreationUtilities.js";
+import { getView } from "../../utils.js";
+import {
 	unsafeArrayToTuple,
 	type areSafelyAssignable,
 	type isAssignableTo,
 	type requireFalse,
 	type requireTrue,
 } from "../../../util/index.js";
-import { getView } from "../../utils.js";
 
 const schema = new SchemaFactory("test");
 

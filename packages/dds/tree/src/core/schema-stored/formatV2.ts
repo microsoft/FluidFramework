@@ -5,14 +5,13 @@
 
 import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
-import { unionOptions } from "../../codec/index.js";
 import { JsonCompatibleReadOnlySchema } from "../../util/index.js";
-
 import {
 	FieldKindIdentifierSchema,
 	PersistedValueSchema,
 	TreeNodeSchemaIdentifierSchema,
 } from "./formatV1.js";
+import { unionOptions } from "../../codec/index.js";
 
 export const PersistedMetadataFormat = Type.Optional(JsonCompatibleReadOnlySchema);
 

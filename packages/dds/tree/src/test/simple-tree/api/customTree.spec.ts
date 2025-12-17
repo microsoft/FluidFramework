@@ -5,17 +5,12 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
-
 import {
-	EmptyKey,
-	LeafNodeStoredSchema,
-	ObjectNodeStoredSchema,
-	ValueSchema,
-	type TreeFieldStoredSchema,
-} from "../../../core/index.js";
-import { FieldKinds } from "../../../feature-libraries/index.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
+	numberSchema,
+	SchemaFactoryAlpha,
+	toInitialSchema,
+} from "../../../simple-tree/index.js";
+
 import {
 	customFromCursor,
 	customFromCursorStored,
@@ -24,15 +19,21 @@ import {
 	tryStoredSchemaAsArray,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/customTree.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
-import {
-	numberSchema,
-	SchemaFactoryAlpha,
-	toInitialSchema,
-} from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
 import { singleJsonCursor } from "../../json/index.js";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { fieldCursorFromInsertable } from "../../utils.js";
+import {
+	EmptyKey,
+	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	ValueSchema,
+	type TreeFieldStoredSchema,
+} from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
+import { FieldKinds } from "../../../feature-libraries/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("Test");
 

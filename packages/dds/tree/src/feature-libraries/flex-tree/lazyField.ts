@@ -23,7 +23,6 @@ import {
 	rootFieldKey,
 } from "../../core/index.js";
 import { disposeSymbol, getOrCreate } from "../../util/index.js";
-import { combineChunks } from "../chunked-forest/index.js";
 import {
 	FieldKinds,
 	MappedEditBuilder,
@@ -54,6 +53,7 @@ import {
 import { LazyEntity } from "./lazyEntity.js";
 import { type LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
+import { combineChunks } from "../chunked-forest/index.js";
 
 /**
  * Reuse fields.

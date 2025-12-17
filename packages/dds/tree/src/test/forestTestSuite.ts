@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { FluidClientVersion } from "../codec/index.js";
 import {
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
@@ -35,14 +34,6 @@ import {
 	cursorForJsonableTreeField,
 	jsonableTreeFromCursor,
 } from "../feature-libraries/index.js";
-import { JsonAsTree } from "../jsonDomainSchema.js";
-import {
-	booleanSchema,
-	numberSchema,
-	SchemaFactory,
-	stringSchema,
-	toInitialSchema,
-} from "../simple-tree/index.js";
 import {
 	type IdAllocator,
 	type JsonCompatible,
@@ -51,9 +42,6 @@ import {
 } from "../util/index.js";
 
 import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite.js";
-import { initializeForest } from "./feature-libraries/index.js";
-import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
-import { jsonSequenceRootSchema } from "./sequenceRootUtils.js";
 import {
 	applyTestDelta,
 	chunkFromJsonableTrees,
@@ -63,6 +51,18 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "./utils.js";
+import {
+	booleanSchema,
+	numberSchema,
+	SchemaFactory,
+	stringSchema,
+	toInitialSchema,
+} from "../simple-tree/index.js";
+import { jsonSequenceRootSchema } from "./sequenceRootUtils.js";
+import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
+import { FluidClientVersion } from "../codec/index.js";
+import { initializeForest } from "./feature-libraries/index.js";
 
 /**
  * Configuration for the forest test suite.
@@ -103,6 +103,7 @@ export function testForest(config: ForestTestConfiguration): void {
 
 	// Use Json Cursor to insert and extract some Json data
 	describe("insert and extract json", () => {
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		const testCases: [string, {} | number][] = [
 			["primitive", 5],
 			["array", [1, 2, 3]],

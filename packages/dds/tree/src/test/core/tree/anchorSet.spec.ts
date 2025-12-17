@@ -27,7 +27,6 @@ import {
 	makeDetachedFieldIndex,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { stringSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	applyTestDelta,
@@ -36,6 +35,7 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
+import { stringSchema } from "../../../simple-tree/index.js";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");

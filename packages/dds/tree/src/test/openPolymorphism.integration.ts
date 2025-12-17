@@ -4,11 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { Tree } from "../shared-tree/index.js";
 import {
 	allowUnused,
 	evaluateLazySchema,
@@ -21,7 +18,9 @@ import {
 	type TreeNodeSchema,
 	type Unhydrated,
 } from "../simple-tree/index.js";
+import { Tree } from "../shared-tree/index.js";
 import { getOrAddInMap, type requireAssignableTo } from "../util/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Examples and tests for open polymorphism design patterns for schema.

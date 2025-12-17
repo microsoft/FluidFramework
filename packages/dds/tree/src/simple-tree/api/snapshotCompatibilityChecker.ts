@@ -5,9 +5,8 @@
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { toInitialSchema } from "../toStoredSchema.js";
-import { createTreeSchema } from "../treeSchema.js";
-
 import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
+import { createTreeSchema } from "../treeSchema.js";
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {

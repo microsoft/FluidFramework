@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ChangeEncodingContext,
@@ -23,6 +22,7 @@ import type { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUti
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { TestChange } from "./testChange.js";
 import { mintRevisionTag, testIdCompressor } from "./utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 describe("TestChange", () => {
 	it("can be composed", () => {

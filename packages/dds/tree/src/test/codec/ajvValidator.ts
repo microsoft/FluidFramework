@@ -21,7 +21,6 @@ import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { toFormatValidator, type JsonValidator } from "../../codec/index.js";
 import { mockSerializer } from "../mockSerializer.js";
-
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 // See: https://github.com/sinclairzx81/typebox#ajv

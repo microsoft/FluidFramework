@@ -6,15 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { SharedTreeTestFactory } from "../utils.js";
+
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 const sf = new SchemaFactory("Test");
 class TestNode extends sf.objectRecursive("test node", {

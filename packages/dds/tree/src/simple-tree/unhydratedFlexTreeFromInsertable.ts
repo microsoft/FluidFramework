@@ -4,11 +4,12 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import { filterIterable, hasSingle, oneFromIterable } from "../util/index.js";
 
+import { normalizeFieldSchema, FieldKind, type ImplicitFieldSchema } from "./fieldSchema.js";
 import {
 	CompatibilityLevel,
 	getKernel,
@@ -21,7 +22,6 @@ import {
 	UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { getUnhydratedContext } from "./createContext.js";
-import { normalizeFieldSchema, FieldKind, type ImplicitFieldSchema } from "./fieldSchema.js";
 
 /**
  * Transforms an input {@link TypedNode} tree to an {@link UnhydratedFlexTreeNode}.

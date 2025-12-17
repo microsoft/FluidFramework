@@ -18,9 +18,7 @@ import {
 	identifierFieldKindIdentifier,
 	type SchemaPolicy,
 } from "../../../core/index.js";
-import { brand, oneFromIterable } from "../../../util/index.js";
 
-import type { IncrementalEncoder } from "./codecs.js";
 import {
 	EncoderContext,
 	type FieldEncoder,
@@ -41,8 +39,10 @@ import {
 	FieldBatchFormatVersion,
 	SpecialField,
 } from "./format.js";
-import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
+import type { IncrementalEncoder } from "./codecs.js";
 import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
+import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
+import { brand, oneFromIterable } from "../../../util/index.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.

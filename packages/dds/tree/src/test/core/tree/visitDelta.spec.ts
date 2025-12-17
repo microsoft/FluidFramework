@@ -5,8 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-
 import {
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
@@ -21,7 +19,6 @@ import {
 	makeDetachedFieldIndex,
 	visitDelta,
 } from "../../../core/index.js";
-import { mapTreeFromCursor } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	chunkFromJsonTrees,
@@ -32,6 +29,8 @@ import {
 	testRevisionTagCodec,
 	type DeltaParams,
 } from "../../utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import { mapTreeFromCursor } from "../../../feature-libraries/index.js";
 
 function visit(
 	delta: DeltaRoot,

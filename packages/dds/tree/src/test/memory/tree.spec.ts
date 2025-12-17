@@ -4,21 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import {
 	type IMemoryTestObject,
 	benchmarkMemory,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import { testIdCompressor } from "../utils.js";
 
-import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
 import type { NodeBuilderData } from "../../internalTypes.js";
-import {
-	ForestTypeOptimized,
-	ForestTypeReference,
-	type SharedTreeOptions,
-} from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -26,8 +20,13 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type TreeView,
 } from "../../simple-tree/index.js";
+import {
+	ForestTypeOptimized,
+	ForestTypeReference,
+	type SharedTreeOptions,
+} from "../../shared-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
-import { testIdCompressor } from "../utils.js";
+import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
 
 const builder = new SchemaFactory("shared-tree-test");
 

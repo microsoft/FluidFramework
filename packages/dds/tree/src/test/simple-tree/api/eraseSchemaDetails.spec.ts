@@ -5,13 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { requireAssignableTo } from "@fluidframework/build-tools";
-
-import { Tree } from "../../../shared-tree/index.js";
-import {
-	SchemaFactory,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/schemaFactory.js";
 import {
 	TreeBeta,
 	TreeViewConfiguration,
@@ -28,8 +21,15 @@ import {
 	type WithType,
 	type typeSchemaSymbol,
 } from "../../../simple-tree/index.js";
-import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
+import {
+	SchemaFactory,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/schemaFactory.js";
+
 import { getView } from "../../utils.js";
+import type { requireAssignableTo } from "@fluidframework/build-tools";
+import { Tree } from "../../../shared-tree/index.js";
+import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 
 describe("eraseSchemaDetails", () => {
 	describe("eraseSchemaDetails", () => {

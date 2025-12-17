@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/index.js";
 import {
 	EmptyKey,
 	type ExclusiveMapTree,
@@ -12,16 +13,17 @@ import {
 	type MapTree,
 	type Value,
 } from "../../../core/index.js";
-import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/index.js";
-import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
+import { brand } from "../../../util/index.js";
 import {
 	UnhydratedFlexTreeNode,
 	type UnhydratedOptionalField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
-import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
 import { expectEqualCursors } from "../../utils.js";
 
 describe("unhydratedFlexTree", () => {

@@ -488,7 +488,7 @@ export function runUnitTestScenario(
 		// reference sequence number.
 		let bunch: UnitTestScenarioStepWithIntention[] = [];
 		const isSameBunch = (step: UnitTestScenarioStepWithIntention) => {
-			const previousStep = bunch.length > 0 ? bunch.at(-1) : undefined;
+			const previousStep = bunch.length > 0 ? bunch[bunch.length - 1] : undefined;
 			if (previousStep === undefined) {
 				return true;
 			}

@@ -4,9 +4,19 @@
  */
 
 import { strict as assert } from "node:assert";
-
+import {
+	SquashingTransactionStack,
+	SharedTreeBranch,
+	TransactionResult,
+	TransactionStack,
+} from "../../shared-tree-core/index.js";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-
+import {
+	DefaultChangeFamily,
+	type DefaultChangeset,
+	type DefaultEditBuilder,
+} from "../../feature-libraries/index.js";
+import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
 import {
 	findAncestor,
 	rootFieldKey,
@@ -15,19 +25,7 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 } from "../../core/index.js";
-import {
-	DefaultChangeFamily,
-	type DefaultChangeset,
-	type DefaultEditBuilder,
-} from "../../feature-libraries/index.js";
-import {
-	SquashingTransactionStack,
-	SharedTreeBranch,
-	TransactionResult,
-	TransactionStack,
-} from "../../shared-tree-core/index.js";
 import { brand } from "../../util/index.js";
-import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
 
 describe("TransactionStacks", () => {
 	it("emit an event after starting a transaction", () => {

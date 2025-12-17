@@ -4,22 +4,15 @@
  */
 
 import { strict as assert, fail } from "node:assert";
-
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
-import {
-	ForestTypeExpensiveDebug,
-	ForestTypeReference,
-	Tree,
-	type TreeCheckout,
-} from "../../shared-tree/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
-import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -35,11 +28,6 @@ import {
 	toUpgradeSchema,
 	SchemaFactoryBeta,
 } from "../../simple-tree/index.js";
-import type { Mutable } from "../../util/index.js";
-import { brand } from "../../util/index.js";
-import { fieldJsonCursor } from "../json/index.js";
-import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
-import { testDocumentIndependentView } from "../testTrees.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
@@ -49,6 +37,19 @@ import {
 	validateViewConsistency,
 	type TreeStoredContentStrict,
 } from "../utils.js";
+import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
+import {
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
+	Tree,
+	type TreeCheckout,
+} from "../../shared-tree/index.js";
+import type { Mutable } from "../../util/index.js";
+import { brand } from "../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
+import { testDocumentIndependentView } from "../testTrees.js";
+import { fieldJsonCursor } from "../json/index.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });

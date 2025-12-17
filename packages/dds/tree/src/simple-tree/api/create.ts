@@ -15,11 +15,7 @@ import {
 	type SchemaAndPolicy,
 	type TreeFieldStoredSchema,
 } from "../../core/index.js";
-import {
-	defaultSchemaPolicy,
-	isFieldInSchema,
-	throwOutOfSchema,
-} from "../../feature-libraries/index.js";
+import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
 import {
 	type Context,
 	getOrCreateNodeFromInnerNode,
@@ -27,9 +23,12 @@ import {
 	UnhydratedFlexTreeNode,
 	createField,
 } from "../core/index.js";
+import {
+	defaultSchemaPolicy,
+	isFieldInSchema,
+	throwOutOfSchema,
+} from "../../feature-libraries/index.js";
 import { getUnhydratedContext } from "../createContext.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
-
 import { unknownTypeError } from "./customTree.js";
 
 /**

@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { exportSimpleSchema } from "../../../shared-tree/index.js";
 import {
 	generateSchemaFromSimpleSchema,
 	getSimpleSchema,
@@ -18,6 +17,7 @@ import {
 	SchemaFactoryAlpha,
 	SchemaUpgrade,
 } from "../../../simple-tree/index.js";
+import { exportSimpleSchema } from "../../../shared-tree/index.js";
 import { testTreeSchema } from "../../cursorTestSuite.js";
 import { HasUnknownOptionalFields, testSimpleTrees } from "../../testTrees.js";
 

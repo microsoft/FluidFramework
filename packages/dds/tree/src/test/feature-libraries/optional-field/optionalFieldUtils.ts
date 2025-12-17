@@ -16,7 +16,6 @@ import {
 	tagRollbackInverse,
 	taggedAtomId,
 } from "../../../core/index.js";
-import type { NodeId } from "../../../feature-libraries/index.js";
 import {
 	type Move,
 	type OptionalChangeset,
@@ -31,6 +30,7 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { type Mutable, brand } from "../../../util/index.js";
+import type { NodeId } from "../../../feature-libraries/index.js";
 
 const dummyDetachId: ChangeAtomId = { localId: brand(0) };
 

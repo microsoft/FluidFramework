@@ -4,10 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import type { FormatValidator } from "../../../codec/index.js";
-import { ValueSchema } from "../../../core/index.js";
-import { createSchemaUpgrade, Unchanged } from "../../../simple-tree/core/index.js";
 import {
 	decodeSchemaCompatibilitySnapshot,
 	FieldKind,
@@ -28,10 +24,14 @@ import {
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { transformSimpleSchema } from "../../../simple-tree/toStoredSchema.js";
-import type { Mutable } from "../../../util/index.js";
-import { ajvValidator } from "../../codec/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { createSchemaUpgrade, Unchanged } from "../../../simple-tree/core/index.js";
+import { ValueSchema } from "../../../core/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { HasUnknownOptionalFields } from "../../testTrees.js";
+import { ajvValidator } from "../../codec/index.js";
+import type { FormatValidator } from "../../../codec/index.js";
+import type { Mutable } from "../../../util/index.js";
 
 const simpleString: SimpleLeafNodeSchema<SchemaType.View> = {
 	leafKind: ValueSchema.String,

@@ -4,13 +4,27 @@
  */
 
 import { strict as assert, fail } from "node:assert";
-
 import {
 	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import {
+	createTreeNodeSchemaPrivateData,
+	type MostDerivedData,
+	TreeNodeValid,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/core/treeNodeValid.js";
+
 import type { FlexTreeNode } from "../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
+import { brand } from "../../util/index.js";
+import {
+	getTreeNodeSchemaInitializedData,
+	getUnhydratedContext,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/createContext.js";
 import {
 	inPrototypeChain,
 	NodeKind,
@@ -25,19 +39,6 @@ import {
 	type TreeNodeSchemaPrivateData,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
-import {
-	createTreeNodeSchemaPrivateData,
-	type MostDerivedData,
-	TreeNodeValid,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/core/treeNodeValid.js";
-import {
-	getTreeNodeSchemaInitializedData,
-	getUnhydratedContext,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/createContext.js";
-import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
-import { brand } from "../../util/index.js";
 
 describe("TreeNodeValid", () => {
 	class MockFlexNode extends UnhydratedFlexTreeNode {

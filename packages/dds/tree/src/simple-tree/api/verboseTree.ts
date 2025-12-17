@@ -4,8 +4,8 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, fail } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -18,16 +18,15 @@ import {
 	type ITreeCursorSynchronous,
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
+import { brand } from "../../util/index.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import type { Context, TreeLeafValue, TreeNodeSchema } from "../core/index.js";
 import {
 	isTreeValue,
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 	type CursorAdapter,
 } from "../../feature-libraries/index.js";
-import { brand } from "../../util/index.js";
-import type { Context, TreeLeafValue, TreeNodeSchema } from "../core/index.js";
-import { getUnhydratedContext } from "../createContext.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -36,7 +35,6 @@ import {
 	stringSchema,
 } from "../leafNodeSchema.js";
 import { isObjectNodeSchema } from "../node-kinds/index.js";
-
 import {
 	customFromCursor,
 	KeyEncodingOptions,
@@ -47,6 +45,7 @@ import {
 	type SchemalessParseOptions,
 	type TreeEncodingOptions,
 } from "./customTree.js";
+import { getUnhydratedContext } from "../createContext.js";
 
 /**
  * Verbose encoding of a {@link TreeNode} or {@link TreeLeafValue}.

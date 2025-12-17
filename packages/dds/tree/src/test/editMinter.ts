@@ -10,7 +10,6 @@ import type {
 	DefaultChangeset,
 	DefaultEditBuilder,
 } from "../feature-libraries/index.js";
-
 import { mintRevisionTag } from "./utils.js";
 
 export type Editor = (builder: DefaultEditBuilder) => void;

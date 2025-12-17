@@ -8,6 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { FieldKey } from "../../core/index.js";
 import { FieldKinds } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
+
 import {
 	createField,
 	type UnhydratedFlexTreeField,
@@ -19,7 +20,6 @@ import {
 	unhydratedFlexTreeFromInsertableNode,
 	type InsertableContent,
 } from "../unhydratedFlexTreeFromInsertable.js";
-
 import type { MapNodeSchema } from "./map/index.js";
 import type { RecordNodeSchema } from "./record/index.js";
 

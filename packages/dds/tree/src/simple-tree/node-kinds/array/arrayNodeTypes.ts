@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { TreeArrayNode } from "./arrayNode.js";
 import { NodeKind } from "../../core/index.js";
 import type {
 	TreeNodeSchemaClass,
@@ -12,9 +13,8 @@ import type {
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../../core/index.js";
-import type { SchemaType, SimpleArrayNodeSchema } from "../../simpleSchema.js";
 
-import type { TreeArrayNode } from "./arrayNode.js";
+import type { SchemaType, SimpleArrayNodeSchema } from "../../simpleSchema.js";
 
 /**
  * A schema for customizable {@link (TreeArrayNode:interface)}s.

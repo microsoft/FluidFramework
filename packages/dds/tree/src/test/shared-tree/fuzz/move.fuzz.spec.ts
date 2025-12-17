@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	type DDSFuzzHarnessEvents,
@@ -29,6 +28,7 @@ import {
 	populatedInitialState,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
 describe("Fuzz - move", () => {
 	const runsPerBatch = 50;

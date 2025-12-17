@@ -12,9 +12,6 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
-import { readAndParseSnapshotBlob } from "../util/index.js";
-
 import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
@@ -22,6 +19,7 @@ import {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 } from "./summaryTypes.js";
+import { readAndParseSnapshotBlob } from "../util/index.js";
 
 /**
  * Utility for implementing {@link Summarizable}s classes with versioning.

@@ -5,17 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { TreeAlpha } from "../../shared-tree/index.js";
-import {
-	type FieldKind,
-	type FieldSchema,
-	type ImplicitFieldSchema,
-	type InsertableField,
-	type InsertableTreeFieldFromImplicitField,
-	type TreeFieldFromImplicitField,
-	areImplicitFieldSchemaEqual,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/fieldSchema.js";
 import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -28,11 +17,24 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
+
+import {
+	type FieldKind,
+	type FieldSchema,
+	type ImplicitFieldSchema,
+	type InsertableField,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
+	areImplicitFieldSchemaEqual,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/fieldSchema.js";
+
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
 } from "../../util/index.js";
+import { TreeAlpha } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -81,6 +83,7 @@ describe("fieldSchema", () => {
 			type _check7 = requireTrue<areSafelyAssignable<I9, never>>;
 			type _check8 = requireTrue<areSafelyAssignable<I10, never>>;
 
+			// eslint-disable-next-line no-inner-declarations
 			function _generic<T extends ImplicitAllowedTypes>() {
 				type I14 = InsertableTreeFieldFromImplicitField<T>;
 				type IOptional = InsertableTreeFieldFromImplicitField<
@@ -117,6 +120,7 @@ describe("fieldSchema", () => {
 			type I13 = InsertableField<typeof booleanSchema>;
 			type _check13 = requireTrue<areSafelyAssignable<I13, boolean>>;
 
+			// eslint-disable-next-line no-inner-declarations
 			function _generic<T extends ImplicitAllowedTypes>() {
 				type I14 = InsertableField<T>;
 				type IOptional = InsertableField<FieldSchema<FieldKind.Optional, T>>;

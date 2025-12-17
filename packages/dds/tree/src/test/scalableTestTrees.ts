@@ -19,6 +19,7 @@ import {
 	type Context,
 	type FlexTreeNode,
 } from "../feature-libraries/index.js";
+import { brand } from "../util/index.js";
 import {
 	SchemaFactory,
 	toInitialSchema,
@@ -26,7 +27,6 @@ import {
 	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
-import { brand } from "../util/index.js";
 
 import type {
 	TreeSimpleContent,

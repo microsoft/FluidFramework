@@ -5,14 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-
 import type { ChangesetLocalId } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
-import { mintRevisionTag } from "../../utils.js";
-
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { MarkMaker as Mark } from "./testEdits.js";
+import { mintRevisionTag } from "../../utils.js";
 
 const id: ChangesetLocalId = brand(0);
 

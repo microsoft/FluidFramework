@@ -13,7 +13,6 @@ import {
 	SessionIdSchema,
 } from "../core/index.js";
 import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
-
 import type { EncodedBranchId } from "./branch.js";
 
 /**

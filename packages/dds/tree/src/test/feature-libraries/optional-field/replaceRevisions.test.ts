@@ -4,14 +4,13 @@
  */
 
 import type { ChangeAtomId, RevisionTag } from "../../../core/index.js";
+import { mintRevisionTag } from "../../utils.js";
+import { type Mutable, brand } from "../../../util/index.js";
 import {
 	type OptionalChangeset,
 	optionalChangeRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { type Mutable, brand } from "../../../util/index.js";
-import { mintRevisionTag } from "../../utils.js";
-
 import { Change, assertEqual } from "./optionalFieldUtils.js";
 
 const tag0: RevisionTag = mintRevisionTag();

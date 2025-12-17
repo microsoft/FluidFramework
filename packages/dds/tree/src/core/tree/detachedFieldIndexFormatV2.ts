@@ -5,10 +5,9 @@
 
 import { Type, type Static } from "@sinclair/typebox";
 
-import { brand } from "../../util/index.js";
-import { RevisionTagSchema, StableIdSchema } from "../rebase/index.js";
-
 import { DetachedFieldIndexFormatVersion, Format } from "./detachedFieldIndexFormatCommon.js";
+import { RevisionTagSchema, StableIdSchema } from "../rebase/index.js";
+import { brand } from "../../util/index.js";
 
 export const StableOrFinalRevisionTag = Type.Union([RevisionTagSchema, StableIdSchema]);
 

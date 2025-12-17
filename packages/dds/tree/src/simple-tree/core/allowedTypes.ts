@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { Lazy } from "@fluidframework/core-utils/internal";
+
 import {
 	type ErasedBaseType,
 	ErasedTypeImplementation,
 } from "@fluidframework/core-interfaces/internal";
-import { Lazy } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	getOrCreate,
@@ -16,8 +17,6 @@ import {
 	type IsUnion,
 	type MakeNominal,
 } from "../../util/index.js";
-import type { SchemaType, SimpleAllowedTypeAttributes } from "../simpleSchema.js";
-
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import {
 	NodeKind,
@@ -26,6 +25,7 @@ import {
 	type TreeNodeSchema,
 } from "./treeNodeSchema.js";
 import { schemaAsTreeNodeValid } from "./treeNodeValid.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../simpleSchema.js";
 
 /**
  * Schema for types allowed in some location in a tree (like a field, map entry or array).

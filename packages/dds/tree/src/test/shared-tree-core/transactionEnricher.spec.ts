@@ -4,12 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import type { RevisionTag } from "../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { TransactionEnricher } from "../../shared-tree-core/transactionEnricher.js";
 import { TestChange, TestChangeRebaser } from "../testChange.js";
+import type { RevisionTag } from "../../core/index.js";
 import { mintRevisionTag } from "../utils.js";
-
 import { TestChangeEnricher } from "./utils.js";
 
 const rebaser = new TestChangeRebaser();

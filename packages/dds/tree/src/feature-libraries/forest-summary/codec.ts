@@ -18,7 +18,6 @@ import {
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
-import { brand } from "../../util/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import {
@@ -27,6 +26,7 @@ import {
 	type Format,
 	FormatCommon,
 } from "./formatCommon.js";
+import { brand } from "../../util/index.js";
 
 /**
  * Uses field cursors

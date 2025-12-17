@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { MapNodeInsertableData, TreeMapNode } from "./mapNode.js";
 import { NodeKind } from "../../core/index.js";
 import type {
 	TreeNodeSchemaClass,
@@ -11,9 +12,8 @@ import type {
 	WithType,
 	ImplicitAllowedTypes,
 } from "../../core/index.js";
-import type { SchemaType, SimpleMapNodeSchema } from "../../simpleSchema.js";
 
-import type { MapNodeInsertableData, TreeMapNode } from "./mapNode.js";
+import type { SchemaType, SimpleMapNodeSchema } from "../../simpleSchema.js";
 
 /**
  * A schema for customizable {@link (TreeMapNode:interface)}s.

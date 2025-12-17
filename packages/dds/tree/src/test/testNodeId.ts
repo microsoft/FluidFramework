@@ -4,7 +4,7 @@
  */
 
 import { fail } from "node:assert";
-
+import type { NodeId } from "../feature-libraries/index.js";
 import {
 	type ChangeEncodingContext,
 	type DeltaFieldMap,
@@ -12,10 +12,9 @@ import {
 	type FieldKindIdentifier,
 	makeAnonChange,
 } from "../core/index.js";
-import type { NodeId } from "../feature-libraries/index.js";
-import type { EncodedNodeChangeset } from "../feature-libraries/modular-schema/modularChangeFormat.js";
 import { type JsonCompatibleReadOnly, brand } from "../util/index.js";
-
+// eslint-disable-next-line import-x/no-internal-modules
+import type { EncodedNodeChangeset } from "../feature-libraries/modular-schema/modularChangeFormat.js";
 import { TestChange } from "./testChange.js";
 
 /**

@@ -4,10 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { Tree } from "../../../shared-tree/index.js";
+import { describeHydration } from "../utils.js";
 import {
 	SchemaFactoryAlpha,
 	TreeBeta,
@@ -18,7 +17,7 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
-import { describeHydration } from "../utils.js";
+import { Tree } from "../../../shared-tree/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
 const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);

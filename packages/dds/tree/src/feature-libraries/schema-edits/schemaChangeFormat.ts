@@ -4,7 +4,6 @@
  */
 
 import { type Static, Type } from "@sinclair/typebox";
-
 import { JsonCompatibleReadOnlySchema } from "../../util/index.js";
 
 export const EncodedSchemaChange = Type.Object({

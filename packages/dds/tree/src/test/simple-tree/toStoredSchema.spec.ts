@@ -4,23 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { EmptyKey } from "../../core/index.js";
-import {
-	cursorForJsonableTreeField,
-	defaultSchemaPolicy,
-	FieldKinds,
-	isFieldInSchema,
-	mapTreeFieldFromCursor,
-} from "../../feature-libraries/index.js";
-import { exportSimpleSchema } from "../../shared-tree/index.js";
-import {
-	ExpectStored,
-	Unchanged,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/core/index.js";
 import {
 	generateSchemaFromSimpleSchema,
 	SchemaFactory,
@@ -38,12 +23,26 @@ import {
 	filterAllowedTypes,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/toStoredSchema.js";
+import {
+	ExpectStored,
+	Unchanged,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/core/index.js";
+import {
+	cursorForJsonableTreeField,
+	defaultSchemaPolicy,
+	FieldKinds,
+	isFieldInSchema,
+	mapTreeFieldFromCursor,
+} from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
 	HasStagedAllowedTypes,
 	HasStagedAllowedTypesAfterUpdate,
 	testDocuments,
 } from "../testTrees.js";
+import { EmptyKey } from "../../core/index.js";
+import { exportSimpleSchema } from "../../shared-tree/index.js";
 
 describe("toStoredSchema", () => {
 	describe("toStoredSchema", () => {

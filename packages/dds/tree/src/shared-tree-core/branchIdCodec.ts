@@ -8,7 +8,6 @@ import type {
 	OpSpaceCompressedId,
 	SessionId,
 } from "@fluidframework/id-compressor";
-
 import type { BranchId } from "./branch.js";
 
 export function encodeBranchId(

@@ -4,7 +4,6 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-
 import type { ImplicitAllowedTypes } from "../core/index.js";
 import { FieldKind, getDefaultProvider, createFieldSchema } from "../fieldSchema.js";
 import type {
@@ -22,7 +21,6 @@ import {
 	nullSchema,
 	handleSchema,
 } from "../leafNodeSchema.js";
-
 import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 
 /**

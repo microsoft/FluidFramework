@@ -4,7 +4,6 @@
  */
 
 import type { FieldKindIdentifier } from "../../core/index.js";
-
 import type { FlexFieldKind } from "./fieldKind.js";
 
 /**

@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import {
 	type ChangeAtomIdMap,
 	type RevisionTag,
@@ -21,7 +20,6 @@ import type {
 	NodeId,
 	ToDelta,
 } from "../feature-libraries/index.js";
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 import {
 	forEachInNestedMap,
 	nestedMapFromFlatList,
@@ -29,8 +27,9 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../util/index.js";
-
 import { TestChange } from "./testChange.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 export interface ChangesetWrapper<T> {
 	fieldChange: T;

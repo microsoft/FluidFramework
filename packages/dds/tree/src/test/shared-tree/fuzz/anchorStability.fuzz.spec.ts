@@ -15,8 +15,6 @@ import {
 } from "@fluid-private/test-dds-utils";
 
 import type { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js";
-import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
-import type { NodeBuilderData } from "../../../internalTypes.js";
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
 
 import {
@@ -36,6 +34,9 @@ import {
 	createOnCreate,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
+import type { NodeBuilderData } from "../../../internalTypes.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
 
 interface AnchorFuzzTestState extends FuzzTestState {
 	// Parallel array to `clients`: set in testStart

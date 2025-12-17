@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import {
 	forbiddenFieldKindIdentifier,
 	LeafNodeStoredSchema,
@@ -19,11 +18,7 @@ import {
 	allowsRepoSuperset,
 	FieldKinds,
 } from "../../../feature-libraries/index.js";
-import {
-	findExtraAllowedTypes,
-	getDiscrepanciesInAllowedContent,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/discrepancies.js";
+import { brand } from "../../../util/index.js";
 import {
 	SchemaFactoryAlpha,
 	type AnnotatedAllowedType,
@@ -33,8 +28,13 @@ import {
 	NodeKind,
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { LeafNodeSchema } from "../../../simple-tree/leafNodeSchema.js";
-import { brand } from "../../../util/index.js";
+import {
+	findExtraAllowedTypes,
+	getDiscrepanciesInAllowedContent,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/discrepancies.js";
 import { fieldSchema } from "../../utils.js";
 
 // Arbitrary schema name used in tests

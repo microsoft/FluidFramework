@@ -4,7 +4,6 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
 import type { TreeNodeSchema } from "./core/index.js";
 import {
 	type FieldSchemaAlpha,

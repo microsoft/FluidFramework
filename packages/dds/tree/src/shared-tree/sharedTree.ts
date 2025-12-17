@@ -98,6 +98,13 @@ import {
 	type SimpleAllowedTypeAttributes,
 	type SchemaType,
 } from "../simple-tree/index.js";
+
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
 import {
 	brand,
 	type Breakable,
@@ -105,17 +112,10 @@ import {
 	type JsonCompatible,
 	throwIfBroken,
 } from "../util/index.js";
-
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	getCodecTreeForChangeFormat,
 	type SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
-import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
-import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
-import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
