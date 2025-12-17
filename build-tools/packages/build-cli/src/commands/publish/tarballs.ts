@@ -153,9 +153,10 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 					this.error(
 						`Fatal error publishing ${toPublish.fileName}, total attempts: ${tryCount}`,
 					);
-					break;
+					// this.error() throws, so fallthrough is intentional
 				}
 
+				// eslint-disable-next-line no-fallthrough
 				default: {
 					this.error(`Unexpected publish status: ${status}`, { exit: 1 });
 				}
