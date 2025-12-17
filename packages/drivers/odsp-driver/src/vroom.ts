@@ -13,7 +13,6 @@ import {
 	type ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
-
 import { v4 as uuid } from "uuid";
 
 import type { EpochTracker } from "./epochTracker.js";

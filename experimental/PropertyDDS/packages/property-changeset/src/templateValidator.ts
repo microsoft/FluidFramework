@@ -14,7 +14,6 @@
 /* eslint-disable jsdoc/check-line-alignment */
 
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
-
 import { queue } from "async";
 import cloneDeep from "lodash/cloneDeep.js";
 import difference from "lodash/difference.js";

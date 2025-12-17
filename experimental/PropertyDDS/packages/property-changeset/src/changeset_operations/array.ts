@@ -7,7 +7,6 @@
  * @fileoverview Helper functions and classes to work with array ChangeSets
  */
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
-
 import cloneDeep from "lodash/cloneDeep.js";
 import isEqual from "lodash/isEqual.js";
 import isNumber from "lodash/isNumber.js";

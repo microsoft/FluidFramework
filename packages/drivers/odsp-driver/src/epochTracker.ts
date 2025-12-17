@@ -33,7 +33,6 @@ import {
 	normalizeError,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
-
 import { v4 as uuid } from "uuid";
 
 import { type IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";

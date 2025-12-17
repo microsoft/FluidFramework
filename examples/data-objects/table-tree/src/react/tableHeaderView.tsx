@@ -13,8 +13,8 @@ import {
 	Option,
 } from "@fluentui/react-components";
 import { Add24Regular, Checkmark24Regular, Delete24Regular } from "@fluentui/react-icons";
-import React, { type DragEvent, useState } from "react";
 import { useTree } from "@fluidframework/react/alpha";
+import React, { type DragEvent, useState } from "react";
 
 import { Column, type Table } from "../schema.js";
 

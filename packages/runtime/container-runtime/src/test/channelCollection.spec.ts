@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
+import type { ConfigTypes } from "@fluidframework/core-interfaces";
 import type {
 	ISnapshotTree,
 	ISequencedDocumentMessage,
@@ -16,7 +17,6 @@ import type {
 	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
-import type { ConfigTypes } from "@fluidframework/core-interfaces";
 import {
 	DataCorruptionError,
 	DataProcessingError,
@@ -31,6 +31,7 @@ import {
 	type IFluidRootParentContextPrivate,
 } from "../channelCollection.js";
 import type { LocalFluidDataStoreContext } from "../dataStoreContext.js";
+import type { DataStoreContexts } from "../dataStoreContexts.js";
 import { ContainerMessageType } from "../messageTypes.js";
 import { type IContainerRuntimeMetadata, nonDataStorePaths } from "../summary/index.js";
 
@@ -38,7 +39,6 @@ import {
 	createParentContext,
 	createSummarizerNodeAndGetCreateFn,
 } from "./dataStoreCreationHelper.js";
-import type { DataStoreContexts } from "../dataStoreContexts.js";
 
 describe("Runtime", () => {
 	describe("ChannelCollection", () => {

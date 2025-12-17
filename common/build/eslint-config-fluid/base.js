@@ -152,6 +152,7 @@ module.exports = {
 		],
 
 		// #region eslint-plugin-import-x
+		// Note: Additional import-x settings are in the `settings` section below
 
 		"import-x/no-default-export": "error",
 		"import-x/no-deprecated": "off",
@@ -168,8 +169,16 @@ module.exports = {
 		"import-x/order": [
 			"error",
 			{
-				"newlines-between": "ignore",
-				"groups": [["builtin", "external", "internal", "parent", "sibling", "index"]],
+				"groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
+				"newlines-between": "always",
+				"alphabetize": {
+					order: "asc",
+					// Sorting is case-sensitive by default, which is the same as Biome. To avoid
+					// another huge set of changes to order things case-insensitively, we'll just
+					// use the rule with this config for now. This decision should be considered
+					// pragmatic and not a statement of preference, and we should revisit this.
+					caseInsensitive: false,
+				},
 			},
 		],
 
@@ -349,6 +358,9 @@ module.exports = {
 		},
 	],
 	settings: {
+		// #region eslint-plugin-import-x settings
+		// "import-x/internal-regex":
+		// 	"^(@fluidframework|@fluid-experimental|@fluid-example|@fluid-internal|@fluid-private|@fluid-tools|fluid-framework|tinylicious)/",
 		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
 		"import-x/parsers": {
 			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts", ".cts", ".mts"],
@@ -385,5 +397,6 @@ module.exports = {
 				],
 			},
 		},
+		// #endregion
 	},
 };

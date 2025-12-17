@@ -1251,17 +1251,20 @@
         "import-x/order": [
             "error",
             {
-                "newlines-between": "ignore",
                 "groups": [
-                    [
-                        "builtin",
-                        "external",
-                        "internal",
-                        "parent",
-                        "sibling",
-                        "index"
-                    ]
+                    "builtin",
+                    "external",
+                    "internal",
+                    "parent",
+                    "sibling",
+                    "index"
                 ],
+                "newlines-between": "always",
+                "alphabetize": {
+                    "order": "asc",
+                    "caseInsensitive": false,
+                    "orderImportKind": "ignore"
+                },
                 "distinctGroup": true,
                 "sortTypesGroup": false,
                 "named": false,

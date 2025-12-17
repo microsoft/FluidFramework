@@ -8,13 +8,13 @@ import type { ISummarizerEvents } from "@fluidframework/container-runtime-defini
 import { assert, type IPromiseTimer, Timer } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, MessageType } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
+import { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import {
 	isFluidError,
 	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
-import { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 
 import type {
 	IRefreshSummaryAckOptions,
