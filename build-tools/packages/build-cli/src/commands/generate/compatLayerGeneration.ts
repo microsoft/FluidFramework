@@ -3,16 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
-import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
-import type {
-	IFluidCompatibilityMetadata,
-	Package,
-	PackageJson,
-} from "@fluidframework/build-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import { formatISO } from "date-fns";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
 import {
@@ -20,8 +12,8 @@ import {
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 	checkPackageCompatLayerGeneration,
-	generateLayerFileContent,
-	maybeGetNewGeneration,
+	deleteCompatLayerGenerationFile,
+	writePackageCompatLayerGeneration,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/compatLayerGeneration.js";
 
@@ -57,11 +49,8 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { generationDir, outFile, minimumCompatWindowMonths } = this.flags;
-		const generationFileFullPath = path.join(pkg.directory, generationDir, outFile);
 
-		// Use the shared check logic to determine if update is needed
-		// This eliminates duplicate opt-in and patch version checks
-		const checkResult = await checkPackageCompatLayerGeneration(
+		const result = await checkPackageCompatLayerGeneration(
 			pkg,
 			generationDir,
 			outFile,
@@ -69,52 +58,19 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 			this.logger,
 		);
 
-		if (!checkResult.needsUpdate) {
-			// No update needed; early exit.
-			this.verbose(`No generation update needed; skipping.`);
-			return;
-		}
-
-		const currentPkgVersion = pkg.version;
-		const { fluidCompatMetadata } = pkg.packageJson;
-
-		// At this point we know fluidCompatMetadata exists because checkPackageCompatLayerGeneration
-		// would have returned needsUpdate: false otherwise
-		if (fluidCompatMetadata === undefined) {
-			// This should not happen since the check said we need an update
-			this.warning(
-				`Unexpected: check said update needed but fluidCompatMetadata is undefined`,
+		if (result.needsUpdate) {
+			await writePackageCompatLayerGeneration(
+				pkg,
+				result.newGeneration,
+				generationDir,
+				outFile,
 			);
-			return;
+			this.info(`Layer generation updated to ${result.newGeneration}`);
+		} else if (result.needsDeletion) {
+			await deleteCompatLayerGenerationFile(result.filePath);
+			this.info(`Deleted orphaned generation file: ${result.filePath}`);
+		} else {
+			this.verbose(`No update needed for ${pkg.name}`);
 		}
-
-		const newGeneration = maybeGetNewGeneration(
-			currentPkgVersion,
-			fluidCompatMetadata,
-			minimumCompatWindowMonths,
-			this.logger,
-		);
-
-		// This should not be undefined since checkPackageCompatLayerGeneration said we need an update
-		if (newGeneration === undefined) {
-			this.warning(
-				`Unexpected: check said update needed but maybeGetNewGeneration returned undefined`,
-			);
-			return;
-		}
-
-		const currentReleaseDate = formatISO(new Date(), { representation: "date" });
-		const newFluidCompatMetadata: IFluidCompatibilityMetadata = {
-			generation: newGeneration,
-			releaseDate: currentReleaseDate,
-			releasePkgVersion: currentPkgVersion,
-		};
-		updatePackageJsonFile(pkg.directory, (json: PackageJson) => {
-			json.fluidCompatMetadata = newFluidCompatMetadata;
-		});
-		await writeFile(generationFileFullPath, generateLayerFileContent(newGeneration), {
-			encoding: "utf8",
-		});
-		this.info(`Layer generation updated to ${newGeneration}`);
 	}
 }

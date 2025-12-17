@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidCompatibilityMetadata, Logger } from "@fluidframework/build-tools";
-import { isDate, isValid, parseISO } from "date-fns";
+import type {
+	IFluidCompatibilityMetadata,
+	Logger,
+	PackageJson,
+} from "@fluidframework/build-tools";
+import { formatISO, isDate, isValid, parseISO } from "date-fns";
 import { diff, parse } from "semver";
 
 /**
@@ -169,16 +173,37 @@ export type LayerCompatCheckResult =
 			 * Package does not need updates.
 			 */
 			needsUpdate: false;
+			needsDeletion: false;
 	  }
 	| {
 			/**
 			 * Package needs updates to its layer generation metadata or files.
 			 */
 			needsUpdate: true;
+			needsDeletion: false;
 			/**
 			 * Reason why the package needs an update.
 			 */
 			reason: string;
+			/**
+			 * The new generation number to write.
+			 */
+			newGeneration: number;
+	  }
+	| {
+			/**
+			 * Package is not opted in but has an orphaned generation file that should be deleted.
+			 */
+			needsUpdate: false;
+			needsDeletion: true;
+			/**
+			 * Reason why the file should be deleted.
+			 */
+			reason: string;
+			/**
+			 * Path to the file that should be deleted.
+			 */
+			filePath: string;
 	  };
 
 /**
@@ -210,46 +235,50 @@ export async function checkPackageCompatLayerGeneration(
 	minimumCompatWindowMonths: number,
 	log?: Logger,
 ): Promise<LayerCompatCheckResult> {
-	const { readFile } = await import("node:fs/promises");
+	const { readFile, access } = await import("node:fs/promises");
 	const path = await import("node:path");
+
+	const generationFileFullPath = path.default.join(
+		pkg.directory,
+		generationDir,
+		generationFileName,
+	);
 
 	const currentPkgVersion = pkg.version;
 
 	// Skip patch versions (they don't trigger generation updates)
 	if (isCurrentPackageVersionPatch(currentPkgVersion)) {
 		log?.verbose(`Patch version detected; skipping check.`);
-		return { needsUpdate: false };
+		return { needsUpdate: false, needsDeletion: false };
 	}
 
-	// Check if package has the required metadata
+	// Check if package has the required metadata (opt-in check)
 	const { fluidCompatMetadata } = pkg.packageJson;
 	if (fluidCompatMetadata === undefined) {
-		// Lenient check - skip packages without metadata
-		log?.verbose(`No fluidCompatMetadata found in package.json; skipping (lenient check).`);
-		return { needsUpdate: false };
+		// Package is not opted in - check if there's an orphaned generation file to clean up
+		try {
+			await access(generationFileFullPath);
+			// File exists but package is not opted in - needs deletion
+			log?.verbose(
+				`Package not opted in but generation file exists at ${generationFileFullPath}; flagging for deletion.`,
+			);
+			return {
+				needsUpdate: false,
+				needsDeletion: true,
+				reason: `Generation file exists but package is not opted in (no fluidCompatMetadata)`,
+				filePath: generationFileFullPath,
+			};
+		} catch {
+			// File doesn't exist and package is not opted in - nothing to do
+			log?.verbose(`No fluidCompatMetadata found in package.json; skipping.`);
+			return { needsUpdate: false, needsDeletion: false };
+		}
 	}
 
 	log?.verbose(
 		`Checking generation metadata - Generation: ${fluidCompatMetadata.generation}, ` +
 			`Release Date: ${fluidCompatMetadata.releaseDate}, Package Version: ${fluidCompatMetadata.releasePkgVersion}`,
 	);
-
-	// Check if the generation file exists
-	const generationFileFullPath = path.default.join(
-		pkg.directory,
-		generationDir,
-		generationFileName,
-	);
-	let fileContent: string;
-	try {
-		fileContent = await readFile(generationFileFullPath, "utf8");
-	} catch {
-		// Lenient check - skip packages without generation files
-		log?.verbose(
-			`Generation file not found at ${generationFileFullPath}; skipping (lenient check).`,
-		);
-		return { needsUpdate: false };
-	}
 
 	// Check if a new generation should be created based on version/time
 	const newGeneration = maybeGetNewGeneration(
@@ -262,21 +291,38 @@ export async function checkPackageCompatLayerGeneration(
 	if (newGeneration !== undefined) {
 		return {
 			needsUpdate: true,
+			needsDeletion: false,
 			reason: `Generation should be updated from ${fluidCompatMetadata.generation} to ${newGeneration}`,
+			newGeneration,
 		};
 	}
 
 	// Verify the file content matches the expected generation
+	let fileContent: string;
+	try {
+		fileContent = await readFile(generationFileFullPath, "utf8");
+	} catch {
+		// File doesn't exist - needs to be created
+		return {
+			needsUpdate: true,
+			needsDeletion: false,
+			reason: `Generation file not found at ${generationFileFullPath}`,
+			newGeneration: fluidCompatMetadata.generation,
+		};
+	}
+
 	const expectedContent = generateLayerFileContent(fluidCompatMetadata.generation);
 	if (fileContent !== expectedContent) {
 		return {
 			needsUpdate: true,
+			needsDeletion: false,
 			reason: `Generation file content does not match expected content for generation ${fluidCompatMetadata.generation}`,
+			newGeneration: fluidCompatMetadata.generation,
 		};
 	}
 
 	log?.verbose(`Layer generation metadata is up to date.`);
-	return { needsUpdate: false };
+	return { needsUpdate: false, needsDeletion: false };
 }
 
 /**
@@ -301,21 +347,41 @@ export interface MultiPackageLayerCompatCheckResult {
 		 */
 		reason: string;
 	}[];
+	/**
+	 * Packages with orphaned generation files that should be deleted.
+	 */
+	packagesNeedingDeletion: {
+		/**
+		 * The package with an orphaned file.
+		 */
+		pkg: {
+			name: string;
+			directory: string;
+		};
+		/**
+		 * Reason why the file should be deleted.
+		 */
+		reason: string;
+		/**
+		 * Path to the file that should be deleted.
+		 */
+		filePath: string;
+	}[];
 }
 
 /**
  * Checks if multiple packages need compat layer generation metadata updates.
  *
- * This is a lenient check - packages without metadata or generation files are considered
- * as not needing updates (they are skipped). This implements an opt-in model where packages
- * must have `fluidCompatMetadata` in their package.json to be checked.
+ * This implements an opt-in model where packages must have `fluidCompatMetadata`
+ * in their package.json to be checked. Packages without metadata but with orphaned
+ * generation files will be flagged for deletion.
  *
  * @param packages - The packages to check
  * @param generationDir - Directory where the generation file is located
  * @param generationFileName - Name of the generation file
  * @param minimumCompatWindowMonths - Minimum compatibility window in months
  * @param log - Optional logger for verbose output
- * @returns Result containing packages that need updates and their reasons
+ * @returns Result containing packages that need updates or deletion
  */
 export async function checkPackagesCompatLayerGeneration(
 	packages: Iterable<{
@@ -329,15 +395,10 @@ export async function checkPackagesCompatLayerGeneration(
 	minimumCompatWindowMonths: number,
 	log?: Logger,
 ): Promise<MultiPackageLayerCompatCheckResult> {
-	const packagesNeedingUpdate: {
-		pkg: {
-			name: string;
-			version: string;
-			packageJson: { fluidCompatMetadata?: IFluidCompatibilityMetadata };
-			directory: string;
-		};
-		reason: string;
-	}[] = [];
+	const packagesNeedingUpdate: MultiPackageLayerCompatCheckResult["packagesNeedingUpdate"] =
+		[];
+	const packagesNeedingDeletion: MultiPackageLayerCompatCheckResult["packagesNeedingDeletion"] =
+		[];
 
 	for (const pkg of packages) {
 		// eslint-disable-next-line no-await-in-loop -- Need to check files sequentially
@@ -354,8 +415,96 @@ export async function checkPackagesCompatLayerGeneration(
 				pkg,
 				reason: result.reason,
 			});
+		} else if (result.needsDeletion) {
+			packagesNeedingDeletion.push({
+				pkg,
+				reason: result.reason,
+				filePath: result.filePath,
+			});
 		}
 	}
 
-	return { packagesNeedingUpdate };
+	return { packagesNeedingUpdate, packagesNeedingDeletion };
+}
+
+/**
+ * Writes the compat layer generation update for a package.
+ *
+ * This function performs the actual update - writing the new metadata to package.json
+ * and the generation file. Call this after `checkPackageCompatLayerGeneration` returns
+ * `needsUpdate: true`.
+ *
+ * @param pkg - The package to update
+ * @param newGeneration - The new generation number to write
+ * @param generationDir - Directory where the generation file is located
+ * @param generationFileName - Name of the generation file
+ */
+export async function writePackageCompatLayerGeneration(
+	pkg: {
+		version: string;
+		directory: string;
+	},
+	newGeneration: number,
+	generationDir: string,
+	generationFileName: string,
+): Promise<void> {
+	const { writeFile } = await import("node:fs/promises");
+	const path = await import("node:path");
+	const { updatePackageJsonFile } = await import("@fluid-tools/build-infrastructure");
+
+	const generationFileFullPath = path.default.join(
+		pkg.directory,
+		generationDir,
+		generationFileName,
+	);
+
+	const currentReleaseDate = formatISO(new Date(), { representation: "date" });
+	const newFluidCompatMetadata: IFluidCompatibilityMetadata = {
+		generation: newGeneration,
+		releaseDate: currentReleaseDate,
+		releasePkgVersion: pkg.version,
+	};
+
+	updatePackageJsonFile(pkg.directory, (json: PackageJson) => {
+		json.fluidCompatMetadata = newFluidCompatMetadata;
+	});
+
+	await writeFile(generationFileFullPath, generateLayerFileContent(newGeneration), {
+		encoding: "utf8",
+	});
+}
+
+/**
+ * Deletes an orphaned compat layer generation file.
+ *
+ * Call this after `checkPackageCompatLayerGeneration` returns `needsDeletion: true`.
+ *
+ * @param filePath - Path to the file to delete
+ */
+export async function deleteCompatLayerGenerationFile(filePath: string): Promise<void> {
+	const { unlink } = await import("node:fs/promises");
+	await unlink(filePath);
+}
+
+/**
+ * Formats an error message for packages that need compat layer generation updates.
+ *
+ * @param packagesNeedingUpdate - Array of packages that need updates with their reasons
+ * @param releaseGroup - Optional release group name to include in fix command
+ * @returns Object with formatted message and fix command
+ */
+export function formatCompatLayerGenerationError(
+	packagesNeedingUpdate: { pkg: { name: string }; reason: string }[],
+	releaseGroup?: string,
+): { message: string; fixCommand: string } {
+	const fixCommand =
+		releaseGroup !== undefined
+			? `pnpm flub generate compatLayerGeneration -g ${releaseGroup}`
+			: "pnpm flub generate compatLayerGeneration";
+
+	const message = `Some packages need compat layer generation updates:\n${packagesNeedingUpdate
+		.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`)
+		.join("\n")}`;
+
+	return { message, fixCommand };
 }

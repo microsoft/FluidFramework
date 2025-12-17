@@ -18,6 +18,7 @@ import {
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 	checkPackagesCompatLayerGeneration,
+	formatCompatLayerGenerationError,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../library/compatLayerGeneration.js";
 import {
@@ -944,7 +945,6 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			[context.fullPackageMap.get(releaseGroup)!];
 
-	// Check all packages using the validation logic
 	const { packagesNeedingUpdate } = await checkPackagesCompatLayerGeneration(
 		packagesToCheck,
 		DEFAULT_GENERATION_DIR,
@@ -953,9 +953,14 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 	);
 
 	if (packagesNeedingUpdate.length > 0) {
+		const releaseGroupName = isReleaseGroup(releaseGroup) ? releaseGroup : undefined;
+		const { message, fixCommand } = formatCompatLayerGenerationError(
+			packagesNeedingUpdate,
+			releaseGroupName,
+		);
 		log.logHr();
 		log.errorLog(
-			`Layer generation needs to be updated. Please create a PR for the changes and merge before retrying.\n${packagesNeedingUpdate.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`).join("\n")}`,
+			`Layer generation needs to be updated. Please create a PR for the changes and merge before retrying.\n${message}\n\nRun '${fixCommand}' to update them.`,
 		);
 		BaseStateHandler.signalFailure(machine, state);
 		return false;

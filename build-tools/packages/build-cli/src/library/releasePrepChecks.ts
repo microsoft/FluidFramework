@@ -11,6 +11,7 @@ import {
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 	checkPackagesCompatLayerGeneration,
+	formatCompatLayerGenerationError,
 } from "./compatLayerGeneration.js";
 import type { Context } from "./context.js";
 import { getPreReleaseDependencies } from "./package.js";
@@ -263,17 +264,8 @@ export const CheckCompatLayerGeneration: CheckFunction = async (
 	);
 
 	if (packagesNeedingUpdate.length > 0) {
-		// Build fix command with release group option if applicable
-		const fixCommand =
-			releaseGroupOrPackage instanceof MonoRepo
-				? `pnpm flub generate compatLayerGeneration -g ${releaseGroupOrPackage.kind}`
-				: "pnpm flub generate compatLayerGeneration";
-
-		return {
-			message: `Some packages need compat layer generation updates:\n${packagesNeedingUpdate
-				.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`)
-				.join("\n")}`,
-			fixCommand,
-		};
+		const releaseGroup =
+			releaseGroupOrPackage instanceof MonoRepo ? releaseGroupOrPackage.kind : undefined;
+		return formatCompatLayerGenerationError(packagesNeedingUpdate, releaseGroup);
 	}
 };
