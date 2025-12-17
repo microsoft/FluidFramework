@@ -153,6 +153,7 @@ export default class PublishTarballCommand extends BaseCommand<typeof PublishTar
 					this.error(
 						`Fatal error publishing ${toPublish.fileName}, total attempts: ${tryCount}`,
 					);
+					break;
 				}
 
 				default: {
@@ -184,7 +185,6 @@ async function extractPackageJsonFromTarball(
 	}
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const data = untar(unzipped!);
-	// eslint-disable-next-line unicorn/prefer-string-slice -- substring is clearer than slice in this case
 	const prefix = data[0].filename.substring(0, data[0].filename.indexOf("/") + 1);
 	const packageJsonText = data.find((f) => f.filename === `${prefix}package.json`)?.fileData;
 	const packageJson = JSON.parse(new TextDecoder().decode(packageJsonText)) as PackageJson;

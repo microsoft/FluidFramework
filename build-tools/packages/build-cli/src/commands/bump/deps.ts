@@ -21,7 +21,6 @@ import {
 } from "../../flags.js";
 import {
 	BaseCommand,
-	// eslint-disable-next-line import-x/no-deprecated
 	MonoRepoKind,
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
@@ -29,7 +28,6 @@ import {
 	isDependencyUpdateType,
 	npmCheckUpdates,
 } from "../../library/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { npmCheckUpdatesHomegrown } from "../../library/package.js";
 import type { ReleaseGroup } from "../../releaseGroups.js";
 
@@ -140,7 +138,6 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		const gitRepo = await context.getGitRepository();
 		const branchName = await gitRepo.getCurrentBranchName();
 
-		// eslint-disable-next-line import-x/no-deprecated
 		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { confirmed } = await prompts({

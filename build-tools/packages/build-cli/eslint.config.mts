@@ -4,8 +4,9 @@
  */
 
 import js from "@eslint/js";
-import tseslint from "typescript-eslint";
 import type { Linter } from "eslint";
+import prettier from "eslint-config-prettier";
+import tseslint from "typescript-eslint";
 
 const config: Linter.Config[] = [
 	{
@@ -20,6 +21,7 @@ const config: Linter.Config[] = [
 	},
 	js.configs.recommended,
 	...tseslint.configs.recommended,
+	prettier,
 	{
 		linterOptions: {
 			// Don't report unused disable directives for rules we no longer have
@@ -58,6 +60,18 @@ const config: Linter.Config[] = [
 			// Superseded by chai-friendly/no-unused-expressions
 			"no-unused-expressions": "off",
 			"@typescript-eslint/no-unused-expressions": "off",
+		},
+	},
+	{
+		// Rules for CommonJS config/test files
+		files: ["**/*.cjs", "**/*.cts"],
+		languageOptions: {
+			globals: {
+				module: "readonly",
+				require: "readonly",
+				__dirname: "readonly",
+				exports: "readonly",
+			},
 		},
 	},
 ];

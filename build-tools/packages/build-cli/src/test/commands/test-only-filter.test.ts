@@ -93,7 +93,6 @@ describe("flub test-only-filter", () => {
 			"@fluid-private/changelog-generator-wrapper",
 			"@fluid-tools/build-cli",
 			"fluid-framework",
-			// eslint-disable-next-line unicorn/no-array-for-each
 		].forEach((item) => {
 			expect(names).to.be.containing(item);
 		});

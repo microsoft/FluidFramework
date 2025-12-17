@@ -81,6 +81,7 @@ export const checkBranchName: StateHandlerFunction = async (
 					BaseStateHandler.signalFailure(machine, state);
 					return true;
 				}
+				break;
 			}
 
 			default: {
@@ -894,7 +895,6 @@ export const checkValidReleaseGroup: StateHandlerFunction = async (
 
 	if (isReleaseGroup(releaseGroup)) {
 		BaseStateHandler.signalSuccess(machine, state);
-		// eslint-disable-next-line unicorn/no-negated-condition
 	} else if (context.fullPackageMap.get(releaseGroup) !== undefined) {
 		BaseStateHandler.signalSuccess(machine, state);
 	} else {

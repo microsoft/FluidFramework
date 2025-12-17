@@ -4,8 +4,8 @@
  */
 
 import js from "@eslint/js";
-import tseslint from "typescript-eslint";
 import type { Linter } from "eslint";
+import tseslint from "typescript-eslint";
 
 const config: Linter.Config[] = [
 	{

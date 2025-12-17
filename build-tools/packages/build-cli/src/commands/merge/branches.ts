@@ -116,7 +116,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const [owner, repo] = gitRepo.upstreamRemotePartialUrl.split("/");
 		this.verbose(`owner: ${owner} and repo: ${repo}`);
 
-		// eslint-disable-next-line unicorn/no-await-expression-member
 		this.initialBranch = (await gitRepo.gitClient.status()).current ?? "main";
 
 		this.remote = flags.remote ?? (await gitRepo.getRemote(gitRepo.upstreamRemotePartialUrl));

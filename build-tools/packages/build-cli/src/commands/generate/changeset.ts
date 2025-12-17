@@ -149,11 +149,13 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		this.log(`Remote for ${repo.upstreamRemotePartialUrl} is: ${chalk.bold(remote)}`);
 
 		ux.action.start(`Comparing local changes to remote for branch ${branch}`);
-		const {
+		/* eslint-disable prefer-const -- using let for changedFiles and changedReleaseGroups which are reassigned */
+		let {
 			packages: initialBranchChangedPackages,
 			files: changedFiles,
 			releaseGroups: changedReleaseGroups,
 		} = await repo.getChangedSinceRef(branch, remote, context);
+		/* eslint-enable prefer-const */
 		ux.action.stop();
 
 		// Separate definition to address no-atomic-updates lint rule
