@@ -193,7 +193,6 @@ export function toInternalScheme(
  * This function is not typically used. {@link isInternalVersionScheme} is more useful since it does not throw.
  */
 export function validateVersionScheme(
-	// eslint-disable-next-line @rushstack/no-new-null
 	version: semver.SemVer | string | null,
 	allowPrereleases = false,
 	prereleaseIdentifiers?: readonly string[],
@@ -430,7 +429,6 @@ export function changePreReleaseIdentifier(
 	const identifier = pr[0];
 
 	if (typeof identifier === "number") {
-		// eslint-disable-next-line unicorn/prefer-type-error
 		throw new Error(`Prerelease identifier is numeric; it should be a string: ${version}`);
 	}
 

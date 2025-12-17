@@ -113,18 +113,7 @@ The following dependencies are pinned to older major versions because newer vers
 
 #### API/Structure Breaking Changes
 
-16. **eslint** - Pinned to `~8.57.0`
-    - Latest: `~9.x`
-    - Issue: Version 9 uses flat config system incompatible with existing configuration
-    - Error: `ESLint configuration is invalid: Unexpected top-level property "__esModule"`
-    - Used in: `build-cli` (devDependency)
-
-17. **eslint-config-oclif** - Pinned to `^5.x`
-    - Latest: `^6.x`
-    - Issue: Version 6 requires ESLint 9
-    - Used in: `build-cli`, `version-tools` (devDependency)
-
-18. **npm-check-updates** - Pinned to `^16.x`
+16. **npm-check-updates** - Pinned to `^16.x`
     - Latest: `^19.x`
     - Highest compatible: `^16.x` (v17+ changed internal module structure)
     - Issue: Version 17+ changed internal module structure and removed exported types

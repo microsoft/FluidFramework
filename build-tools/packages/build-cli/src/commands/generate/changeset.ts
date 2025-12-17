@@ -149,7 +149,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		this.log(`Remote for ${repo.upstreamRemotePartialUrl} is: ${chalk.bold(remote)}`);
 
 		ux.action.start(`Comparing local changes to remote for branch ${branch}`);
-		let {
+		const {
 			packages: initialBranchChangedPackages,
 			files: changedFiles,
 			releaseGroups: changedReleaseGroups,

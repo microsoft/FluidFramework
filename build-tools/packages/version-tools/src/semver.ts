@@ -88,9 +88,7 @@ export function bumpRange(
  * @returns The bump type, or undefined if it can't be determined.
  */
 export function detectBumpType(
-	// eslint-disable-next-line @rushstack/no-new-null
 	v1: semver.SemVer | string | null,
-	// eslint-disable-next-line @rushstack/no-new-null
 	v2: semver.SemVer | string | null,
 ): VersionBumpType | undefined {
 	let v1Parsed = semver.parse(v1);

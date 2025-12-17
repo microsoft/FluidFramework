@@ -152,7 +152,6 @@ function parseFileVersion(
 		const r = releaseVersion.split(".");
 		if (r.length !== 3) {
 			console.error(`ERROR: Invalid format for release version ${releaseVersion}`);
-			// eslint-disable-next-line unicorn/no-process-exit
 			process.exit(9);
 		}
 		r[2] = (Number.parseInt(r[2], 10) + buildId).toString();

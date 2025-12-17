@@ -118,7 +118,6 @@ export function bumpVersionScheme(
 				case "major":
 				case "minor":
 				case "patch": {
-					// eslint-disable-next-line unicorn/no-null
 					return sv?.inc(bumpType) ?? null;
 				}
 				default: {

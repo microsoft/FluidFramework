@@ -79,10 +79,10 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.4",
+		"@eslint/js": "^9.39.0",
 		"@fluid-tools/api-markdown-documenter": "^0.23.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.49.0",
-		"@fluidframework/eslint-config-fluid": "^8.1.0",
 		"@microsoft/api-extractor": "^7.55.1",
 		"@types/chai": "^5.2.3",
 		"@types/chai-arrays": "^2.0.3",
@@ -96,15 +96,17 @@
 		"chai-arrays": "^2.2.0",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.57.0",
+		"eslint": "~9.39.1",
 		"eslint-plugin-chai-friendly": "~1.1.0",
+		"jiti": "^2.6.1",
 		"memfs": "^4.51.0",
 		"mocha": "^11.7.5",
 		"rimraf": "^6.1.2",
 		"ts-node": "^10.9.2",
 		"type-fest": "^2.19.0",
 		"typedoc": "^0.28.14",
-		"typedoc-plugin-markdown": "^4.9.0"
+		"typedoc-plugin-markdown": "^4.9.0",
+		"typescript-eslint": "^8.18.0"
 	},
 	"oclif": {
 		"bin": "buildProject",
