@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-container-views",
-	"version": "2.74.0",
+	"version": "2.80.0",
 	"private": true,
 	"description": "Minimal Fluid Container & data store sample to implement a collaborative dice roller as a standalone app.",
 	"homepage": "https://fluidframework.com",
@@ -58,7 +58,7 @@
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"expect-puppeteer": "^9.0.2",
 		"html-webpack-plugin": "^5.6.0",
 		"jest": "^29.6.2",
@@ -73,18 +73,7 @@
 		"typescript": "~5.4.5",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4",
-		"webpack-dev-server": "~4.15.2",
-		"webpack-merge": "^6.0.1"
-	},
-	"fluid": {
-		"browser": {
-			"umd": {
-				"files": [
-					"main.bundle.js"
-				],
-				"library": "main"
-			}
-		}
+		"webpack-dev-server": "~4.15.2"
 	},
 	"typeValidation": {
 		"disabled": true
