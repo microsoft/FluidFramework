@@ -95,7 +95,7 @@ export const generation = ${generation};
  * but capped at (minimumCompatWindowMonths - 1) to maintain compatibility requirements.
  *
  * @param currentPkgVersion - The current package version to compare against the stored version
- * @param packageJson - The package.json content containing fluidCompatMetadata
+ * @param fluidCompatMetadata - The existing Fluid compatibility metadata, or an empty object for newly opted-in packages
  * @param minimumCompatWindowMonths - The minimum number of months of compatibility to maintain across layers
  * @param log - Optional logger instance for verbose output about the calculation process
  * @returns The new generation number if an update is needed, or undefined if no update is required
@@ -104,42 +104,38 @@ export const generation = ${generation};
  */
 export function maybeGetNewGeneration(
 	currentPkgVersion: string,
-	packageJson: { fluidCompatMetadata?: IFluidCompatibilityMetadata | object },
+	fluidCompatMetadata: IFluidCompatibilityMetadata | object,
 	minimumCompatWindowMonths: number,
 	log?: Logger,
 ): number | undefined {
-	if (packageJson.fluidCompatMetadata === undefined) {
-		return undefined;
-	}
-
 	// If the fluidCompatMetadata is an empty object, this indicates opt-in with no prior data.
 	// Return initial generation of 1.
-	if (Object.keys(packageJson.fluidCompatMetadata).length === 0) {
+	if (Object.keys(fluidCompatMetadata).length === 0) {
 		return 1;
 	}
 
-	const fluidCompatMetadata = packageJson.fluidCompatMetadata as IFluidCompatibilityMetadata;
+	const metadata = fluidCompatMetadata as IFluidCompatibilityMetadata;
 
 	log?.verbose(
-		`Layer compatibility metadata from package.json: Generation: ${fluidCompatMetadata.generation}, ` +
-			`Release Date: ${fluidCompatMetadata.releaseDate}, Package Version: ${fluidCompatMetadata.releasePkgVersion}`,
+		`Layer compatibility metadata from package.json: Generation: ${metadata.generation}, ` +
+			`Release Date: ${metadata.releaseDate}, Package Version: ${metadata.releasePkgVersion}`,
 	);
 
 	// Only "minor" or "major" version changes trigger generation updates.
-	const result = diff(currentPkgVersion, fluidCompatMetadata.releasePkgVersion);
+	const result = diff(currentPkgVersion, metadata.releasePkgVersion);
 	if (result === null || (result !== "minor" && result !== "major")) {
 		log?.verbose(`No minor or major release since last update; skipping generation update.`);
 		return undefined;
 	}
 
 	log?.verbose(
-		`Previous package version: ${fluidCompatMetadata.releasePkgVersion}, Current package version: ${currentPkgVersion}`,
+		`Previous package version: ${metadata.releasePkgVersion}, Current package version: ${currentPkgVersion}`,
 	);
 
-	const previousReleaseDate = parseISO(fluidCompatMetadata.releaseDate);
+	const previousReleaseDate = parseISO(metadata.releaseDate);
 	if (!isValid(previousReleaseDate) || !isDate(previousReleaseDate)) {
 		throw new Error(
-			`Previous release date "${fluidCompatMetadata.releaseDate}" is not a valid date.`,
+			`Previous release date "${metadata.releaseDate}" is not a valid date.`,
 		);
 	}
 
@@ -156,9 +152,8 @@ export function maybeGetNewGeneration(
 	);
 
 	const newGeneration =
-		fluidCompatMetadata.generation +
-		Math.min(monthsBetweenReleases, minimumCompatWindowMonths - 1);
-	if (newGeneration === fluidCompatMetadata.generation) {
+		metadata.generation + Math.min(monthsBetweenReleases, minimumCompatWindowMonths - 1);
+	if (newGeneration === metadata.generation) {
 		log?.verbose(
 			`Generation remains the same (${newGeneration}); skipping generation update.`,
 		);
@@ -261,7 +256,7 @@ export async function checkPackageCompatLayerGeneration(
 	// Check if a new generation should be created based on version/time
 	const newGeneration = maybeGetNewGeneration(
 		currentPkgVersion,
-		pkg.packageJson,
+		fluidCompatMetadata,
 		minimumCompatWindowMonths,
 		log,
 	);

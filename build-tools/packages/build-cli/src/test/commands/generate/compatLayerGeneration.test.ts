@@ -49,7 +49,7 @@ describe("generate:compatLayerGeneration", () => {
 
 		const result = maybeGetNewGeneration(
 			currentVersion,
-			{ fluidCompatMetadata: mockMetadata },
+			mockMetadata,
 			minimumCompatWindowMonths,
 		);
 
@@ -73,7 +73,7 @@ describe("generate:compatLayerGeneration", () => {
 
 		const result = maybeGetNewGeneration(
 			currentVersion,
-			{ fluidCompatMetadata: mockMetadata },
+			mockMetadata,
 			minimumCompatWindowMonths,
 		);
 
@@ -97,7 +97,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 		const result = maybeGetNewGeneration(
 			"1.1.0", // Minor version change
-			{ fluidCompatMetadata: mockMetadata },
+			mockMetadata,
 			minimumCompatWindowMonths,
 		);
 
@@ -121,7 +121,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 		const result = maybeGetNewGeneration(
 			"2.0.0", // Major version change
-			{ fluidCompatMetadata: mockMetadata },
+			mockMetadata,
 			minimumCompatWindowMonths,
 		);
 
@@ -143,7 +143,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 		const result = maybeGetNewGeneration(
 			"1.1.0", // Minor version change but not enough time elapsed
-			{ fluidCompatMetadata: mockMetadata },
+			mockMetadata,
 			minimumCompatWindowMonths,
 		);
 
@@ -164,7 +164,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 		const result = maybeGetNewGeneration(
 			"2.0.0", // Major version change
-			{ fluidCompatMetadata: mockMetadata },
+			mockMetadata,
 			minimumCompatWindowMonths,
 		);
 
@@ -180,11 +180,7 @@ describe("generate:compatLayerGeneration", () => {
 		};
 
 		assert.throws(() => {
-			maybeGetNewGeneration(
-				"2.0.0",
-				{ fluidCompatMetadata: invalidMetadata },
-				minimumCompatWindowMonths,
-			);
+			maybeGetNewGeneration("2.0.0", invalidMetadata, minimumCompatWindowMonths);
 		}, /not a valid date/);
 	});
 
@@ -197,83 +193,45 @@ describe("generate:compatLayerGeneration", () => {
 		};
 
 		assert.throws(() => {
-			maybeGetNewGeneration(
-				"2.0.0",
-				{ fluidCompatMetadata: invalidMetadata },
-				minimumCompatWindowMonths,
-			);
+			maybeGetNewGeneration("2.0.0", invalidMetadata, minimumCompatWindowMonths);
 		}, /Invalid Version/);
 	});
 
-	it("should return undefined when fluidCompatMetadata is not present in package.json", () => {
-		const packageJson = {}; // No fluidCompatMetadata property
-
-		const result = maybeGetNewGeneration(
-			"2.0.0",
-			packageJson,
-			minimumCompatWindowMonths,
-		);
-
-		assert.strictEqual(result, undefined);
-	});
-
 	it("should return generation 1 when fluidCompatMetadata is an empty object (opt-in)", () => {
-		const packageJson = {
-			fluidCompatMetadata: {}, // Empty object indicates opt-in
-		};
+		const emptyMetadata = {}; // Empty object indicates opt-in
 
-		const result = maybeGetNewGeneration(
-			"2.0.0",
-			packageJson,
-			minimumCompatWindowMonths,
-		);
+		const result = maybeGetNewGeneration("2.0.0", emptyMetadata, minimumCompatWindowMonths);
 
 		assert.strictEqual(result, 1);
 	});
 
 	it("should return generation 1 for opt-in regardless of package version", () => {
-		const packageJson = {
-			fluidCompatMetadata: {}, // Empty object indicates opt-in
-		};
+		const emptyMetadata = {}; // Empty object indicates opt-in
 
 		// Test with patch version
-		let result = maybeGetNewGeneration(
-			"1.0.1",
-			packageJson,
-			minimumCompatWindowMonths,
-		);
+		let result = maybeGetNewGeneration("1.0.1", emptyMetadata, minimumCompatWindowMonths);
 		assert.strictEqual(result, 1);
 
 		// Test with minor version
-		result = maybeGetNewGeneration(
-			"1.1.0",
-			packageJson,
-			minimumCompatWindowMonths,
-		);
+		result = maybeGetNewGeneration("1.1.0", emptyMetadata, minimumCompatWindowMonths);
 		assert.strictEqual(result, 1);
 
 		// Test with major version
-		result = maybeGetNewGeneration(
-			"2.0.0",
-			packageJson,
-			minimumCompatWindowMonths,
-		);
+		result = maybeGetNewGeneration("2.0.0", emptyMetadata, minimumCompatWindowMonths);
 		assert.strictEqual(result, 1);
 	});
 
 	it("should return generation 1 for opt-in with any minimumCompatWindowMonths value", () => {
-		const packageJson = {
-			fluidCompatMetadata: {}, // Empty object indicates opt-in
-		};
+		const emptyMetadata = {}; // Empty object indicates opt-in
 
 		// Test with different minimumCompatWindowMonths values
-		let result = maybeGetNewGeneration("2.0.0", packageJson, 1);
+		let result = maybeGetNewGeneration("2.0.0", emptyMetadata, 1);
 		assert.strictEqual(result, 1);
 
-		result = maybeGetNewGeneration("2.0.0", packageJson, 6);
+		result = maybeGetNewGeneration("2.0.0", emptyMetadata, 6);
 		assert.strictEqual(result, 1);
 
-		result = maybeGetNewGeneration("2.0.0", packageJson, 12);
+		result = maybeGetNewGeneration("2.0.0", emptyMetadata, 12);
 		assert.strictEqual(result, 1);
 	});
 
@@ -292,7 +250,7 @@ describe("generate:compatLayerGeneration", () => {
 			() =>
 				maybeGetNewGeneration(
 					"2.0.0", // Major version change
-					{ fluidCompatMetadata: mockMetadata },
+					mockMetadata,
 					minimumCompatWindowMonths,
 				),
 			/Current date is older than previous release date/,
