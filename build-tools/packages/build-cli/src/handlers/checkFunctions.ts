@@ -14,6 +14,14 @@ import { bumpVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo } from "@fluidframework/build-tools";
 
 import {
+	DEFAULT_GENERATION_DIR,
+	DEFAULT_GENERATION_FILE_NAME,
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	checkPackagesCompatLayerGeneration,
+	formatCompatLayerGenerationError,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../library/compatLayerGeneration.js";
+import {
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
 	generateBumpVersionBranchName,
@@ -923,7 +931,7 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { context, bumpType } = data;
+	const { context, releaseGroup, bumpType } = data;
 
 	if (bumpType === "patch") {
 		log.verbose(`Skipping layer compat generation check for patch release.`);
@@ -931,21 +939,28 @@ export const checkCompatLayerGeneration: StateHandlerFunction = async (
 		return true;
 	}
 
-	// layerGeneration:gen should be run from the root. It will only update packages that have the layerGeneration:gen
-	// script defined in their package.json.
-	const result = await execa.command(`pnpm run -r layerGeneration:gen`, {
-		cwd: context.root,
-	});
-	log.verbose(result.stdout);
+	// Get packages to check based on release group or individual package
+	const packagesToCheck = isReleaseGroup(releaseGroup)
+		? context.packagesInReleaseGroup(releaseGroup)
+		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			[context.fullPackageMap.get(releaseGroup)!];
 
-	// check for policy check violation
-	const gitRepo = await context.getGitRepository();
-	const afterPolicyCheckStatus = await gitRepo.gitClient.status();
-	const isClean = afterPolicyCheckStatus.isClean();
-	if (!isClean) {
+	const { packagesNeedingUpdate } = await checkPackagesCompatLayerGeneration(
+		packagesToCheck,
+		DEFAULT_GENERATION_DIR,
+		DEFAULT_GENERATION_FILE_NAME,
+		DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	);
+
+	if (packagesNeedingUpdate.length > 0) {
+		const releaseGroupName = isReleaseGroup(releaseGroup) ? releaseGroup : undefined;
+		const { message, fixCommand } = formatCompatLayerGenerationError(
+			packagesNeedingUpdate,
+			releaseGroupName,
+		);
 		log.logHr();
 		log.errorLog(
-			`Layer generation needs to be updated. Please create a PR for the changes and merge before retrying.\n${afterPolicyCheckStatus.files.map((fileStatus) => `${fileStatus.index} ${fileStatus.path}`).join("\n")}`,
+			`Layer generation needs to be updated. Please create a PR for the changes and merge before retrying.\n${message}\n\nRun '${fixCommand}' to update them.`,
 		);
 		BaseStateHandler.signalFailure(machine, state);
 		return false;

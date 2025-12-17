@@ -28,7 +28,7 @@ function insertMarkers(
 	treeRangeLabel: string,
 	position: number,
 	nodeType: string,
-) {
+): void {
 	const endMarkerProps = {};
 	endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	endMarkerProps[nodeTypeKey] = nodeType;
@@ -53,7 +53,10 @@ export class ProseMirror
 	extends EventEmitter
 	implements IFluidLoadable, IProvideRichTextEditor
 {
-	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
+	public static async load(
+		runtime: IFluidDataStoreRuntime,
+		existing: boolean,
+	): Promise<ProseMirror> {
 		const collection = new ProseMirror(runtime);
 		await collection.initialize(existing);
 
@@ -64,11 +67,11 @@ export class ProseMirror
 		return this.innerHandle;
 	}
 
-	public get IFluidLoadable() {
+	public get IFluidLoadable(): IFluidLoadable {
 		return this;
 	}
 
-	public get IRichTextEditor() {
+	public get IRichTextEditor(): FluidCollabManager {
 		return this._collabManager!;
 	}
 
@@ -89,7 +92,7 @@ export class ProseMirror
 		this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
 	}
 
-	private async initialize(existing: boolean) {
+	private async initialize(existing: boolean): Promise<void> {
 		if (!existing) {
 			this.root = SharedMap.create(this.runtime, "root");
 			const text = SharedString.create(this.runtime);
@@ -119,11 +122,14 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 	public static readonly type = "@fluid-example/prosemirror";
 	public readonly type = ProseMirrorFactory.type;
 
-	public get IFluidDataStoreFactory() {
+	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
 		return this;
 	}
 
-	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<FluidDataStoreRuntime> {
 		return new FluidDataStoreRuntime(
 			context,
 			new Map(
@@ -168,7 +174,7 @@ class ProseMirrorView {
 		}
 	}
 
-	public remove() {
+	public remove(): void {
 		// Maybe implement this some time.
 	}
 }

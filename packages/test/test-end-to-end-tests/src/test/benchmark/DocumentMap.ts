@@ -26,7 +26,13 @@ import {
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import {
+	type ISharedDirectory,
+	type ISharedMap,
+	SharedMap,
+} from "@fluidframework/map/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
@@ -70,27 +76,27 @@ function validateMapKeys(map: ISharedMap, count: number, expectedSize: number): 
 }
 
 class TestDataObject extends DataObject {
-	public get _root() {
+	public get _root(): ISharedDirectory {
 		return this.root;
 	}
 
-	public get _runtime() {
+	public get _runtime(): IFluidDataStoreRuntime {
 		return this.runtime;
 	}
 
-	public get _context() {
+	public get _context(): IFluidDataStoreContext {
 		return this.context;
 	}
 
 	private readonly mapKey = mapId;
 	public map!: ISharedMap;
 
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		const sharedMap = SharedMap.create(this.runtime, this.mapKey);
 		this.root.set(this.mapKey, sharedMap.handle);
 	}
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.mapKey);
 		assert(mapHandle !== undefined, "SharedMap not found");
 		this.map = await mapHandle.get();
@@ -117,7 +123,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 	private containerRuntime: ContainerRuntime | undefined;
 	private mainDataStore: TestDataObject | undefined;
 	private readonly _dataObjectFactory: DataObjectFactory<TestDataObject>;
-	public get dataObjectFactory() {
+	public get dataObjectFactory(): DataObjectFactory<TestDataObject> {
 		return this._dataObjectFactory;
 	}
 	private readonly runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
@@ -160,7 +166,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		}
 	}
 
-	private async populateMap() {
+	private async populateMap(): Promise<void> {
 		assert(
 			this._mainContainer !== undefined,
 			"Container should be initialized before creating data stores",
@@ -179,7 +185,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 	}
 
 	private async ensureContainerConnectedWriteMode(container: IContainer): Promise<void> {
-		const resolveIfActive = (res: () => void) => {
+		const resolveIfActive = (res: () => void): void => {
 			if (container.deltaManager.active) {
 				res();
 			}
@@ -194,14 +200,14 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		}
 	}
 
-	private async waitForContainerSave(c: IContainer) {
+	private async waitForContainerSave(c: IContainer): Promise<void> {
 		if (!c.isDirty) {
 			return;
 		}
 		await new Promise<void>((resolve) => c.on("saved", () => resolve()));
 	}
 
-	public async initializeDocument() {
+	public async initializeDocument(): Promise<void> {
 		const loader = this.props.provider.createLoader(
 			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
 			{ logger: this.props.logger, configProvider: configProvider(featureGates) },

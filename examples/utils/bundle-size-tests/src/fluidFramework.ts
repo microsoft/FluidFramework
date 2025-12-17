@@ -7,7 +7,10 @@ import { SharedTree } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SharedMap } from "fluid-framework/legacy";
 
-export function apisToBundle() {
+export function apisToBundle(): {
+	SharedMap: typeof SharedMap;
+	SharedTree: typeof SharedTree;
+} {
 	return {
 		SharedMap,
 		SharedTree,

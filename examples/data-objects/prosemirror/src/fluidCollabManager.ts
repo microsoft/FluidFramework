@@ -57,7 +57,7 @@ export interface IRichTextEditor extends IProvideRichTextEditor {
 }
 
 export class FluidCollabManager extends EventEmitter implements IRichTextEditor {
-	public get IRichTextEditor() {
+	public get IRichTextEditor(): IRichTextEditor {
 		return this;
 	}
 
@@ -229,7 +229,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 		this.apply(tr);
 	}
 
-	public setupEditor(textArea: HTMLDivElement) {
+	public setupEditor(textArea: HTMLDivElement): EditorView {
 		const editorView = new EditorView(textArea, {
 			state: this.state,
 		});
@@ -242,11 +242,11 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 		return editorView;
 	}
 
-	private getCurrentState() {
+	private getCurrentState(): EditorState {
 		return this.editorView ? this.editorView.state : this.state;
 	}
 
-	private apply(tr: Transaction) {
+	private apply(tr: Transaction): void {
 		if (this.editorView) {
 			this.editorView.dispatch(tr);
 		} else {
@@ -254,7 +254,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 		}
 	}
 
-	private applyTransaction(tr: Transaction) {
+	private applyTransaction(tr: Transaction): void {
 		if (tr.getMeta("fluid-local")) {
 			return;
 		}

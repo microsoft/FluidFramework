@@ -200,7 +200,7 @@ const makeAfterMiddlewares = (
 		};
 	}
 
-	const isReady = async (req, res) => {
+	const isReady = async (req, res): Promise<boolean> => {
 		if (readyP !== undefined) {
 			let canContinue = false;
 			try {
@@ -376,7 +376,7 @@ const fluid = (
 	res: express.Response,
 	baseDir: string,
 	options: RouteOptions,
-) => {
+): void => {
 	const documentId = req.params.id;
 	// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
 	const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;

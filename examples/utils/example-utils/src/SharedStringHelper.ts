@@ -82,7 +82,7 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
 	 * Most of the work is to build up the appropriate transformPosition function, which allows the caller to translate
 	 * pre-update positions to post-update positions (e.g. to find where a caret should move to).
 	 */
-	private readonly sequenceDeltaHandler = (event: SequenceDeltaEvent) => {
+	private readonly sequenceDeltaHandler = (event: SequenceDeltaEvent): void => {
 		// const previousText = this._latestText;
 		this._latestText = this._sharedString.getText();
 		const isLocal = event.isLocal;

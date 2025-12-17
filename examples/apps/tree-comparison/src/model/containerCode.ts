@@ -33,10 +33,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 		);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const legacyTreeInventoryList = await runtime.createDataStore(
 			LegacyTreeInventoryListFactory.type,
 		);
@@ -47,10 +44,10 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 		await newTreeInventoryList.trySetAlias(newTreeInventoryListId);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	): Promise<IInventoryListAppModel> {
 		const legacyTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
 			runtime,
 			legacyTreeInventoryListId,

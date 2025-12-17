@@ -56,7 +56,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const inventoryList = await runtime.createDataStore(
 			InventoryListInstantiationFactory.type,
 		);
@@ -70,7 +70,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerHasInitialized}
 	 */
-	protected async containerHasInitialized(runtime: IContainerRuntime) {
+	protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {
 		console.info("Using runtime factory version one");
 		// Force the MigrationTool to instantiate in all cases.  The Quorum it uses must be loaded and running in
 		// order to respond with accept ops, and without this call the MigrationTool won't be instantiated on the
@@ -81,7 +81,10 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	): Promise<InventoryListAppModel> {
 		// TODO: remove, just for debugging purposes
 		// eslint-disable-next-line @typescript-eslint/dot-notation
 		window["interactiveContainer"] ??= container;

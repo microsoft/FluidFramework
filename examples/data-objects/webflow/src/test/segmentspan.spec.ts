@@ -24,7 +24,7 @@ describeCompat("SegmentSpan", "LoaderCompat", (getTestObjectProvider) => {
 		doc = await getContainerEntryPointBackCompat<FlowDocument>(container);
 	});
 
-	function setup(chunks: string[]) {
+	function setup(chunks: string[]): void {
 		// Remove all content from the previous test (also removes EOF marker).
 		doc.remove(0, doc.length);
 
@@ -34,7 +34,7 @@ describeCompat("SegmentSpan", "LoaderCompat", (getTestObjectProvider) => {
 		}
 	}
 
-	function test(chunks: string[], start: number, end: number) {
+	function test(chunks: string[], start: number, end: number): void {
 		const expected = chunks.join("").slice(start, end);
 
 		it(`${JSON.stringify(chunks)}: [${start}..${end}) -> ${JSON.stringify(expected)}`, () => {

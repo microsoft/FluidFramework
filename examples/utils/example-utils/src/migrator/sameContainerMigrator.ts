@@ -87,7 +87,7 @@ export class SameContainerMigrator
 			});
 	}
 
-	private readonly startMigration = async () => {
+	private readonly startMigration = async (): Promise<void> => {
 		this.emit("migrating");
 
 		const migratable = this._currentModel;
@@ -103,7 +103,7 @@ export class SameContainerMigrator
 		}
 	};
 
-	private readonly loadPausedModel = async () => {
+	private readonly loadPausedModel = async (): Promise<void> => {
 		const acceptedSeqNum = this.currentModel.migrationTool.acceptedSeqNum;
 		assert(acceptedSeqNum !== undefined, "acceptedSeqNum should be defined");
 		this._pausedModel = await this.modelLoader.loadExistingPaused(
@@ -116,12 +116,12 @@ export class SameContainerMigrator
 		);
 	};
 
-	private readonly getExportedData = async () => {
+	private readonly getExportedData = async (): Promise<void> => {
 		assert(this._pausedModel !== undefined, "this._pausedModel should be defined");
 		this._exportedData = await this._pausedModel.exportData();
 	};
 
-	private readonly loadDetachedModel = async () => {
+	private readonly loadDetachedModel = async (): Promise<void> => {
 		// It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.
 		// Currently this fails the migration gracefully and emits an event so the app developer can know
 		// they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
@@ -133,7 +133,7 @@ export class SameContainerMigrator
 		this._detachedModel = await this.modelLoader.createDetached(this._acceptedVersion);
 	};
 
-	private readonly generateTransformedData = async () => {
+	private readonly generateTransformedData = async (): Promise<void> => {
 		// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
 		// exported data into a format that the new model can import?  If we can determine it early, then
 		// clients with old ModelLoaders can use that opportunity to dispose early and try to get new
@@ -168,7 +168,7 @@ export class SameContainerMigrator
 		}
 	};
 
-	private readonly importDataIntoDetachedModel = async () => {
+	private readonly importDataIntoDetachedModel = async (): Promise<void> => {
 		assert(this._detachedModel !== undefined, "this._detachedModel should be defined");
 		assert(this._transformedData !== undefined, "this._transformedData should be defined");
 		await this._detachedModel.model.importData(this._transformedData);
@@ -176,7 +176,7 @@ export class SameContainerMigrator
 		this._preparedDetachedModel = this._detachedModel;
 	};
 
-	private readonly getV2Summary = async () => {
+	private readonly getV2Summary = async (): Promise<void> => {
 		// TODO: Actually generate the v2 summary, currently we wait for a manual button press
 		if (this.currentModel.migrationTool.migrationState !== "migrated") {
 			await new Promise<void>((resolve) => {
@@ -185,11 +185,11 @@ export class SameContainerMigrator
 		}
 	};
 
-	private readonly finalizeMigration = async () => {
+	private readonly finalizeMigration = async (): Promise<void> => {
 		// TODO: Real stuff
 	};
 
-	private readonly loadMigration = async () => {
+	private readonly loadMigration = async (): Promise<void> => {
 		// TODO: Add check here to ensure finalizeMigration() executed as intended
 
 		const migratable = this._currentModel;
@@ -223,7 +223,7 @@ export class SameContainerMigrator
 		this._preparedDetachedModel = undefined;
 	};
 
-	private readonly monitorMigration = async () => {
+	private readonly monitorMigration = async (): Promise<void> => {
 		// Ensure we are connected
 		if (!this.currentModel.connected()) {
 			await new Promise<void>((resolve) => this.currentModel.once("connected", resolve));
