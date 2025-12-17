@@ -1031,16 +1031,15 @@ export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 
 const assertDeepEqual = (a: unknown, b: unknown): void => assert.deepEqual(a, b);
 
-/**
- * Tracks tested versions and registers an after hook to validate that all supported
- * versions in the codec family have corresponding tests.
- */
 const testedVersionsByFamily = new WeakMap<
 	ICodecFamily<unknown, unknown>,
 	Set<FormatVersion>
 >();
-const validateRegistered = new WeakSet<ICodecFamily<unknown, unknown>>();
-
+const testedFamilies = new WeakSet<ICodecFamily<unknown, unknown>>();
+/**
+ * Tracks tested versions and registers an after hook to validate that all supported
+ * versions in the codec family have corresponding tests.
+ */
 function registerValidationHook<TDecoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	versions: Iterable<FormatVersion>,
@@ -1053,8 +1052,8 @@ function registerValidationHook<TDecoded, TContext>(
 	for (const version of versions) {
 		tested.add(version);
 	}
-	if (!validateRegistered.has(family)) {
-		validateRegistered.add(family);
+	if (!testedFamilies.has(family)) {
+		testedFamilies.add(family);
 		after("validate all versions tested", () => {
 			const supportedVersions = Array.from(family.getSupportedFormats());
 			const missingVersions = supportedVersions.filter((version) => !tested.has(version));
