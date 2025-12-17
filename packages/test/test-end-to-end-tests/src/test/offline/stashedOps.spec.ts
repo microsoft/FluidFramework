@@ -1157,7 +1157,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// TODO: Remove usage of "resolveHandle" AB#6340
 		const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
 		const map2 = response.value as ISharedMap;
-		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
