@@ -452,6 +452,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 			const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 
+			await waitForContainerConnection(container2, true);
 			await provider.ensureSynchronized();
 			assert.strictEqual(map.get(testKey), testValue);
 			assert.strictEqual(map2.get(testKey), testValue);
@@ -799,6 +800,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		[...Array(lots).keys()].map((i) => assert.strictEqual(map1.get(i.toString()), testValue));
 		[...Array(lots).keys()].map((i) => assert.strictEqual(map2.get(i.toString()), testValue));
@@ -857,6 +859,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
 		assert.strictEqual(map2.get(testKey), testValue);
@@ -1154,6 +1157,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// TODO: Remove usage of "resolveHandle" AB#6340
 		const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
 		const map2 = response.value as ISharedMap;
+		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
@@ -1627,7 +1631,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-
+		await waitForContainerConnection(container2);
 		await timeoutAwait(provider.ensureSynchronized(), {
 			errorMsg: "Timeout on waiting for ensureSynchronized after creating container2",
 		});
@@ -1670,6 +1674,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
+		await waitForContainerConnection(container2);
+		await waitForContainerConnection(container3);
 		await provider.ensureSynchronized();
 		assert.strictEqual(
 			bufferToString(await map1.get("blob handle").get(), "utf8"),
@@ -1726,6 +1732,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
+		await waitForContainerConnection(container2);
+		await waitForContainerConnection(container3);
 		await provider.ensureSynchronized();
 		for (let i = 1; i <= 3; i++) {
 			assert.strictEqual(
@@ -1778,6 +1786,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container3 = await loader.resolve({ url });
 		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
+		await waitForContainerConnection(container3);
 		await provider.ensureSynchronized();
 
 		assert.strictEqual(
@@ -1816,7 +1825,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container3 = await loader.resolve({ url });
 		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
-
+		await waitForContainerConnection(container2);
+		await waitForContainerConnection(container3);
 		await provider.ensureSynchronized();
 
 		// Blob is uploaded and accessible by all clients
@@ -1990,6 +2000,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		for (let i = 5; i--; ) {
 			// local value is what we expect
@@ -2032,6 +2043,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		// local value is what we expect
 		assert.strictEqual(counter2.value, 5);
@@ -2345,6 +2357,7 @@ describeCompat(
 				const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 				const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 
+				await waitForContainerConnection(container2);
 				await provider.ensureSynchronized();
 				assert.strictEqual(counter1.value, incrementValue);
 				assert.strictEqual(counter2.value, incrementValue);
