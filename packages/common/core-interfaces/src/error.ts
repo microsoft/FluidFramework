@@ -36,8 +36,10 @@ export const FluidErrorTypes = {
 	usageError: "usageError",
 
 	/**
-	 * Error indicating that two Fluid layers are incompatible. For instance, if the Loader layer is
-	 * not compatible with the Runtime layer, the container create / load will fail with an error of this type.
+	 * Error indicating that two Fluid layers are incompatible.
+	 * @remarks
+	 * For instance, if the Loader layer is not compatible with the Runtime layer, the container create / load
+	 * will fail with an error of this type.
 	 * In most cases, the layer compatibility validation happens during container load / create causing it to
 	 * fail with this error type.
 	 * In some cases such as for the Runtime and DataStore layer compatibility, the incompatibility may be detected
