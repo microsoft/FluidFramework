@@ -14,6 +14,7 @@ module.exports = {
 	rules: {
 		// Many rules are disabled in PropertyDDS projects. See https://github.com/microsoft/FluidFramework/pull/10272
 		"@typescript-eslint/dot-notation": "off",
+		"@typescript-eslint/explicit-function-return-type": "warn",
 		"@typescript-eslint/no-dynamic-delete": "off",
 		"@typescript-eslint/no-extraneous-class": "off",
 		"@typescript-eslint/no-implied-eval": "off",

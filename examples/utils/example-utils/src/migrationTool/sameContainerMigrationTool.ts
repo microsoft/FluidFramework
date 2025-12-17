@@ -88,7 +88,7 @@ export class SameContainerMigrationTool
 	 */
 	private _v2SummaryDone: boolean = false;
 
-	private get pactMap() {
+	private get pactMap(): IPactMap<string> {
 		if (this._pactMap === undefined) {
 			throw new Error("Couldn't retrieve the PactMap");
 		}
@@ -126,7 +126,7 @@ export class SameContainerMigrationTool
 	// Once we have the v2 contents in hand, we can work on sending it as the next summary (which will look like a v2
 	// summary, due to the v2 code details being in the quorum).  This is the final step.
 	// TODO: Real param typing
-	public async finalizeMigration(v2Summary: string) {
+	public async finalizeMigration(v2Summary: string): Promise<void> {
 		// TODO: Start by awaiting connected?
 		// If someone else finishes this while the local client is still working on it, the local
 		// client should immediately abort this step and move on to the next one.
@@ -142,14 +142,14 @@ export class SameContainerMigrationTool
 			throw new Error("Not ready to finalize until quorum approval has completed");
 		}
 		// TODO: Also guard against repeat calls
-		const uploadV2Summary = async (_v2Summary) => {
+		const uploadV2Summary = async (_v2Summary): Promise<string> => {
 			// Do upload of v2Summary
 			// TODO: Retry also
 			this.emit("uploadingV2Summary");
 			console.log(_v2Summary);
 			return "This is the handle I got back after successfully uploading the v2 summary";
 		};
-		const submitV2Summary = async (_v2SummaryHandle) => {
+		const submitV2Summary = async (_v2SummaryHandle): Promise<void> => {
 			// Submit summarize op for v2Summary
 			this.emit("submittingV2Summary");
 			// TODO: Retry also
@@ -166,15 +166,15 @@ export class SameContainerMigrationTool
 		await Promise.race([submitV2Summary(v2SummaryHandle), this._v2SummaryP]);
 	}
 
-	public get proposedVersion() {
+	public get proposedVersion(): string | undefined {
 		return this.pactMap.getPending(newVersionKey) ?? this.pactMap.get(newVersionKey);
 	}
 
-	public get acceptedVersion() {
+	public get acceptedVersion(): string | undefined {
 		return this.pactMap.get(newVersionKey);
 	}
 
-	public readonly proposeVersion = (newVersion: string) => {
+	public readonly proposeVersion = (newVersion: string): void => {
 		// Don't permit changes to the version once the migration starts.
 		if (this.migrationState !== "collaborating") {
 			throw new Error("Migration already in progress");
@@ -182,7 +182,7 @@ export class SameContainerMigrationTool
 
 		// TODO: Consider retry logic here.
 		this._proposalP = new Promise<void>((resolve) => {
-			const watchForPending = (key: string) => {
+			const watchForPending = (key: string): void => {
 				if (key === newVersionKey) {
 					this.pactMap.off("pending", watchForPending);
 					resolve();
@@ -198,12 +198,12 @@ export class SameContainerMigrationTool
 		this.emit("proposingMigration");
 	};
 
-	private readonly stopCollaboration = () => {
+	private readonly stopCollaboration = (): void => {
 		// TODO Actually force the container to go silent and kill summarizers
 		this.emit("stoppingCollaboration");
 	};
 
-	private readonly ensureQuorumCodeDetails = async () => {
+	private readonly ensureQuorumCodeDetails = async (): Promise<void> => {
 		// TODO implement for real
 		// TODO Here probably need to have the container reference on the providers, in order to make the proposal?
 		// Or at least a callback for it.
@@ -230,12 +230,12 @@ export class SameContainerMigrationTool
 		this.emit("readyForMigration");
 	};
 
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		const pactMap = PactMap.create(this.runtime);
 		this.root.set(pactMapKey, pactMap.handle);
 	}
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		const pactMapHandle = this.root.get<IFluidHandle<IPactMap<string>>>(pactMapKey);
 		this._pactMap = await pactMapHandle?.get();
 
@@ -245,7 +245,7 @@ export class SameContainerMigrationTool
 
 	// TODO: Consider splitting into two parts - a sync setupMigration that sets up the promises, vs. the async overseeMigration.
 	// This might make it more obvious/protected that the setup of promises must happen synchronously before awaiting anything.
-	private async overseeMigration() {
+	private async overseeMigration(): Promise<void> {
 		// The overall strategy here is to set up all of our state observers synchronously during initialization.
 		// This lets us get them ALL ready BEFORE we start processing ANY ops on top of the summary, including
 		// logTail ops.  If we were to instead defer setting each one up until its respective phase starts, we'll
@@ -268,7 +268,7 @@ export class SameContainerMigrationTool
 
 			// If no proposal has been accepted or is pending, we wait for the proposal to be made.
 			// The proposal will be set by someone calling proposeVersion().
-			const watchForPending = (key: string) => {
+			const watchForPending = (key: string): void => {
 				if (key === newVersionKey) {
 					this.pactMap.off("pending", watchForPending);
 					console.log("Resolving this._pendingP: Saw pending proposal during run time");
@@ -290,7 +290,7 @@ export class SameContainerMigrationTool
 				return;
 			}
 
-			const watchForAccepted = (key: string) => {
+			const watchForAccepted = (key: string): void => {
 				if (key === newVersionKey) {
 					this.pactMap.off("accepted", watchForAccepted);
 					this._acceptedSeqNum =
@@ -313,7 +313,7 @@ export class SameContainerMigrationTool
 			// This is also awkward because the only clean eventing is on the QuorumProposals itself, or the Container.
 			// For now, spying on the deltaManager and using insider knowledge about how the QuorumProposals works.
 			// TODO: Consider if there is any better way to watch this happen
-			const watchForQuorumProposal = (op: ISequencedDocumentMessage) => {
+			const watchForQuorumProposal = (op: ISequencedDocumentMessage): void => {
 				if (
 					op.type === MessageType.Propose &&
 					(op.contents as { key?: unknown }).key === "code"
@@ -336,7 +336,7 @@ export class SameContainerMigrationTool
 			// Again for now, spying on the deltaManager and using insider knowledge.
 			// TODO: Consider if there is any better way to watch this happen
 			const proposalSequenceNumbers: number[] = [];
-			const watchForLastQuorumAccept = (op: ISequencedDocumentMessage) => {
+			const watchForLastQuorumAccept = (op: ISequencedDocumentMessage): void => {
 				if (
 					op.type === MessageType.Propose &&
 					(op.contents as { key?: unknown }).key === "code"
@@ -374,7 +374,7 @@ export class SameContainerMigrationTool
 			// detection as in "is this at least the second summaryAck we've seen"
 			// TODO Figure out plan for when the summaryAck is missing entirely
 			let acksSeen = 0;
-			const watchForV2Ack = (op: ISequencedDocumentMessage) => {
+			const watchForV2Ack = (op: ISequencedDocumentMessage): void => {
 				// TODO: This should also be checking that the summaryAck is actually the one we expect to see, not just some
 				// random ack.  Probably means storing the Quorum code accept sequence number and verifying the summary is based on that sequence number.
 				// Would be good if we can verify the contents somehow too.

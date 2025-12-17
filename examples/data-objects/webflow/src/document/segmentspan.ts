@@ -10,27 +10,27 @@ export class SegmentSpan {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this._segments;
 	}
-	public get startOffset() {
+	public get startOffset(): number {
 		return this._startOffset;
 	}
-	public get startPosition() {
+	public get startPosition(): number {
 		return this.firstPosition + this._startOffset;
 	}
-	public get endPosition() {
+	public get endPosition(): number {
 		return this.lastPosition + Math.min(this._endOffset, this.lastSegment.cachedLength);
 	}
-	public get isEmpty() {
+	public get isEmpty(): boolean {
 		return isNaN(this.firstPosition);
 	}
 
-	public get firstSegment() {
+	public get firstSegment(): ISegment {
 		return this.segments[0];
 	}
-	public get lastSegment() {
+	public get lastSegment(): ISegment {
 		return this.segments[this.segments.length - 1];
 	}
 
-	public get length() {
+	public get length(): number {
 		return this.endPosition - this.startPosition;
 	}
 

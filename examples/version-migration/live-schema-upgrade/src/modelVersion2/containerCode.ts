@@ -56,11 +56,11 @@ class DiceRollerAppModel implements IDiceRollerAppModel {
 		});
 	}
 
-	public getCurrentVersion() {
+	public getCurrentVersion(): string {
 		return this.container.getSpecifiedCodeDetails()?.package as string;
 	}
 
-	public async upgrade(targetVersion: string) {
+	public async upgrade(targetVersion: string): Promise<void> {
 		const currentVersion = this.getCurrentVersion();
 		if (currentVersion === targetVersion) {
 			// We shouldn't try to upgrade if we are already on the latest version.
@@ -107,7 +107,7 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
 		await diceRoller.trySetAlias(diceRollerId);
 		const diceCounter = await runtime.createDataStore(DiceCounterInstantiationFactory.type);
@@ -117,7 +117,10 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+	protected async createModel(
+		runtime: IContainerRuntime,
+		container: IContainer,
+	): Promise<IDiceRollerAppModel> {
 		const diceRoller = await getDataStoreEntryPoint<IDiceRoller>(runtime, diceRollerId);
 
 		// Note: Since at this point is unclear whether or not this is the first time the app is being loaded with the

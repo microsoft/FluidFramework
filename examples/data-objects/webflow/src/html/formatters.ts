@@ -25,7 +25,10 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
 
 	public end(): void {}
 
-	public visit(layout: Layout, state: Readonly<IFormatterState>) {
+	public visit(
+		layout: Layout,
+		state: Readonly<IFormatterState>,
+	): { state: Readonly<IFormatterState>; consumed: boolean } {
 		const segment = layout.segment;
 		const kind = getDocSegmentKind(segment);
 
@@ -97,7 +100,10 @@ class TagsFormatter extends Formatter<ITagsState> {
 		return state as ITagsState;
 	}
 
-	public visit(layout: Layout, state: Readonly<ITagsState>) {
+	public visit(
+		layout: Layout,
+		state: Readonly<ITagsState>,
+	): { consumed: boolean; state: Readonly<ITagsState> } {
 		const segment = layout.segment;
 		const kind = getDocSegmentKind(segment);
 
@@ -162,7 +168,10 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
 		return state as IParagraphState;
 	}
 
-	public visit(layout: Layout, state: Readonly<IParagraphState>) {
+	public visit(
+		layout: Layout,
+		state: Readonly<IParagraphState>,
+	): { consumed: boolean; state: Readonly<IParagraphState> } {
 		const segment = layout.segment;
 		const kind = getDocSegmentKind(segment);
 
@@ -214,7 +223,10 @@ class TextFormatter extends Formatter<ITextState> {
 		return state as ITextState;
 	}
 
-	public visit(layout: Layout, state: Readonly<ITextState>) {
+	public visit(
+		layout: Layout,
+		state: Readonly<ITextState>,
+	): { consumed: boolean; state: Readonly<ITextState> } {
 		const segment = layout.segment;
 		const kind = getDocSegmentKind(segment);
 
