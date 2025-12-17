@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 import {
 	SquashingTransactionStack,
 	SharedTreeBranch,
+	TransactionResult,
 	TransactionStack,
-	type OnPop,
 } from "../../shared-tree-core/index.js";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
@@ -77,41 +77,144 @@ describe("TransactionStacks", () => {
 	});
 
 	it("run a function when a transaction begins", () => {
-		let invoked = false;
+		let invoked = 0;
 		const transaction = new TransactionStack((): void => {
-			invoked = true;
+			invoked += 1;
 			assert.equal(transaction.isInProgress(), false);
 		});
 		transaction.start();
-		assert.equal(invoked, true);
+		assert.equal(invoked, 1);
+	});
+
+	it("run the top-level push function by default when a nested transaction begins", () => {
+		let invoked = 0;
+		const transaction = new TransactionStack((): void => {
+			invoked += 1;
+			assert.equal(transaction.isInProgress(), invoked > 1);
+		});
+		transaction.start();
+		assert.equal(invoked, 1);
+		transaction.start();
+		assert.equal(invoked, 2);
+		transaction.start();
+		assert.equal(invoked, 3);
+	});
+
+	it("run a provided nested push function when a nested transaction begins", () => {
+		let invokedOuter = 0;
+		let invokedInner1 = 0;
+		let invokedInner2 = 0;
+		const transaction: TransactionStack = new TransactionStack(() => {
+			invokedOuter += 1;
+			assert.equal(transaction.isInProgress(), false);
+			return {
+				onPush: () => {
+					invokedInner1 += 1;
+					assert.equal(transaction.isInProgress(), true);
+					return {
+						onPush: () => {
+							invokedInner2 += 1;
+							assert.equal(transaction.isInProgress(), true);
+						},
+					};
+				},
+			};
+		});
+		transaction.start();
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 0);
+		assert.equal(invokedInner2, 0);
+		transaction.start();
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 0);
+		transaction.start();
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 1);
+		transaction.start();
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 2);
+	});
+
+	it("run a provided nested pop function when a nested transaction ends", () => {
+		let invokedOuter = 0;
+		let invokedInner1 = 0;
+		let invokedInner2 = 0;
+		const transaction: TransactionStack = new TransactionStack(() => {
+			return {
+				onPop: () => {
+					invokedOuter += 1;
+					assert.equal(transaction.isInProgress(), false);
+				},
+				onPush: () => {
+					return {
+						onPop: () => {
+							invokedInner1 += 1;
+							assert.equal(transaction.isInProgress(), true);
+						},
+						onPush: () => {
+							return {
+								onPop: () => {
+									invokedInner2 += 1;
+									assert.equal(transaction.isInProgress(), true);
+								},
+							};
+						},
+					};
+				},
+			};
+		});
+		transaction.start();
+		transaction.start();
+		transaction.start();
+		transaction.commit();
+		assert.equal(invokedOuter, 0);
+		assert.equal(invokedInner1, 0);
+		assert.equal(invokedInner2, 1);
+		transaction.commit();
+		assert.equal(invokedOuter, 0);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 1);
+		transaction.commit();
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 1);
 	});
 
 	it("run a function when a transaction aborts", () => {
-		let invoked = false;
-		const transaction = new TransactionStack((): OnPop => {
-			return () => {
-				invoked = true;
-				assert.equal(transaction.isInProgress(), false);
+		let invoked = 0;
+		const transaction: TransactionStack = new TransactionStack(() => {
+			return {
+				onPop: (result) => {
+					invoked += 1;
+					assert.equal(result, TransactionResult.Abort);
+					assert.equal(transaction.isInProgress(), false);
+				},
 			};
 		});
 		transaction.start();
-		assert.equal(invoked, false);
+		assert.equal(invoked, 0);
 		transaction.abort();
-		assert.equal(invoked, true);
+		assert.equal(invoked, 1);
 	});
 
 	it("run a function when a transaction commits", () => {
-		let invoked = false;
-		const transaction = new TransactionStack((): OnPop => {
-			return () => {
-				invoked = true;
-				assert.equal(transaction.isInProgress(), false);
+		let invoked = 0;
+		const transaction: TransactionStack = new TransactionStack(() => {
+			return {
+				onPop: (result) => {
+					invoked += 1;
+					assert.equal(result, TransactionResult.Commit);
+					assert.equal(transaction.isInProgress(), false);
+				},
 			};
 		});
 		transaction.start();
-		assert.equal(invoked, false);
+		assert.equal(invoked, 0);
 		transaction.commit();
-		assert.equal(invoked, true);
+		assert.equal(invoked, 1);
 	});
 
 	it("throw an error if committing without starting a transaction", () => {
@@ -154,8 +257,10 @@ describe("TransactionStacks", () => {
 	it("abort all transactions when disposed", () => {
 		let aborted = 0;
 		const transaction = new TransactionStack(() => {
-			return () => {
-				aborted += 1;
+			return {
+				onPop: () => {
+					aborted += 1;
+				},
 			};
 		});
 		transaction.start();
