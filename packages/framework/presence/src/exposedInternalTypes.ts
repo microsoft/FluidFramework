@@ -93,7 +93,7 @@ export namespace InternalTypes {
 	 *
 	 * @system
 	 */
-	export interface MapValueState<T, Keys extends string | number> {
+	export interface MapValueState<T, Keys extends string> {
 		rev: number;
 		items: {
 			// Caution: any particular item may or may not exist
