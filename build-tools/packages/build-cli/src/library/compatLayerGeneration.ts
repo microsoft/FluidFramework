@@ -498,9 +498,9 @@ export function formatCompatLayerGenerationError(
 	releaseGroup?: string,
 ): { message: string; fixCommand: string } {
 	const fixCommand =
-		releaseGroup !== undefined
-			? `pnpm flub generate compatLayerGeneration -g ${releaseGroup}`
-			: "pnpm flub generate compatLayerGeneration";
+		releaseGroup === undefined
+			? "pnpm flub generate compatLayerGeneration"
+			: `pnpm flub generate compatLayerGeneration -g ${releaseGroup}`;
 
 	const message = `Some packages need compat layer generation updates:\n${packagesNeedingUpdate
 		.map(({ pkg, reason }) => `  - ${pkg.name}: ${reason}`)
