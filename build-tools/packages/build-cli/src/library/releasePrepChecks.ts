@@ -10,7 +10,7 @@ import {
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-	checkPackageCompatLayerGeneration,
+	checkPackagesCompatLayerGeneration,
 } from "./compatLayerGeneration.js";
 import type { Context } from "./context.js";
 import { getPreReleaseDependencies } from "./package.js";
@@ -248,24 +248,12 @@ export const CheckCompatLayerGeneration: CheckFunction = async (
 			? releaseGroupOrPackage.packages
 			: [releaseGroupOrPackage];
 
-	const packagesNeedingUpdate: { pkg: Package; reason: string }[] = [];
-
-	for (const pkg of packagesToCheck) {
-		// eslint-disable-next-line no-await-in-loop -- Need to check files sequentially
-		const result = await checkPackageCompatLayerGeneration(
-			pkg,
-			DEFAULT_GENERATION_DIR,
-			DEFAULT_GENERATION_FILE_NAME,
-			DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-		);
-
-		if (result.needsUpdate) {
-			packagesNeedingUpdate.push({
-				pkg,
-				reason: result.reason,
-			});
-		}
-	}
+	const { packagesNeedingUpdate } = await checkPackagesCompatLayerGeneration(
+		packagesToCheck,
+		DEFAULT_GENERATION_DIR,
+		DEFAULT_GENERATION_FILE_NAME,
+		DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	);
 
 	if (packagesNeedingUpdate.length > 0) {
 		// Build fix command with release group option if applicable
