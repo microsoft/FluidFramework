@@ -6,7 +6,6 @@
 import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/core-interfaces";
 
 import type {
-	CommitMetadata,
 	ChangeMetadata,
 	RevertibleAlphaFactory,
 	RevertibleFactory,
@@ -542,7 +541,7 @@ export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> 
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 */
-	commitApplied(data: CommitMetadataAlpha, getRevertible?: RevertibleAlphaFactory): void;
+	commitApplied(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 /**
@@ -586,7 +585,7 @@ export interface TreeViewEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 */
-	commitApplied(data: CommitMetadataAlpha, getRevertible?: RevertibleFactory): void;
+	commitApplied(data: ChangeMetadata, getRevertible?: RevertibleFactory): void;
 }
 
 /**

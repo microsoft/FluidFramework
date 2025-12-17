@@ -560,7 +560,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						};
 
 				let withinEventContext = true;
-				
+
 				const metadata: ChangeMetadata = {
 					kind,
 					isLocal: true,
@@ -593,10 +593,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
-			const metaData: CommitMetadataAlpha = {
+			const metaData: ChangeMetadata = {
 				isLocal: false,
 				kind: CommitKind.Default,
-				label: this.transactionLabel,
+				label: undefined,
 			};
 			this.#events.emit("changed", metaData);
 		}
