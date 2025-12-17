@@ -12,6 +12,9 @@ import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
 
+import type { Attendee, Latest, LatestMap } from "@fluidframework/presence/beta";
+import { StateFactory } from "@fluidframework/presence/beta";
+
 import { toOpaqueJson } from "../../internalUtils.js";
 import type { Presence } from "../../presence.js";
 import type { SignalMessages } from "../../protocol.js";
@@ -26,9 +29,6 @@ import {
 	createSpiedValidator,
 	prepareConnectedPresence,
 } from "../testUtils.js";
-
-import type { Attendee, Latest, LatestMap } from "@fluidframework/presence/beta";
-import { StateFactory } from "@fluidframework/presence/beta";
 
 /**
  * Workspace updates
