@@ -29,7 +29,7 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
 	);
 
 	useEffect(() => {
-		const migrationStateChangedHandler = () => {
+		const migrationStateChangedHandler = (): void => {
 			setDisableInput(model.migrationTool.migrationState !== "collaborating");
 		};
 		model.migrationTool.on("proposingMigration", migrationStateChangedHandler);

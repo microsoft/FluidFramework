@@ -12,7 +12,7 @@ import { DiceRollerContainerRuntimeFactory, IMountableViewAppModel } from "./con
  *
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
-async function start() {
+async function start(): Promise<void> {
 	const tinyliciousModelLoader = new TinyliciousModelLoader<IMountableViewAppModel>(
 		new StaticCodeLoader(new DiceRollerContainerRuntimeFactory()),
 	);

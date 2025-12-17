@@ -57,7 +57,7 @@ class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
 					}),
 				) as any;
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				let getMountableDefaultView = async () => view;
+				let getMountableDefaultView = async (): Promise<any> => view;
 				if (MountableView.canMount(view)) {
 					getMountableDefaultView = async () => new MountableView(view);
 				}

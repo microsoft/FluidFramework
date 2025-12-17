@@ -25,7 +25,7 @@ function dispatchCaretEvent(
 	target: Element,
 	direction: Direction,
 	caretBounds: ICaretBounds,
-) {
+): boolean {
 	return !target.dispatchEvent(
 		new CustomEvent(type, {
 			detail: { direction, caretBounds },
