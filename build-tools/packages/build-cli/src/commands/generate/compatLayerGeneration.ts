@@ -32,7 +32,8 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 	typeof UpdateGenerationLayerCommand
 > {
 	static readonly description =
-		"Updates the generation and release date for layer compatibility. Only processes packages that have fluidCompatMetadata in their package.json (opt-in model).";
+		`Updates the generation of a package for layer compatibility.` +
+		` To opt in a package, add an empty "fluidCompatMetadata" object to its package.json.`;
 
 	static readonly flags = {
 		generationDir: Flags.directory({
@@ -45,8 +46,9 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 			default: DEFAULT_GENERATION_FILE_NAME,
 		}),
 		minimumCompatWindowMonths: Flags.integer({
-			description: `The minimum compatibility window in months that is supported across all Fluid layers.`,
+			description: `The minimum compatibility window in months that is supported across all Fluid layers. Must be at least 1`,
 			default: DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+			min: 1,
 		}),
 		...PackageCommand.flags,
 	} as const;
@@ -64,23 +66,13 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 			return;
 		}
 
-		// Check if package has opted in via metadata
-		const { fluidCompatMetadata } = pkg.packageJson;
-		if (fluidCompatMetadata === undefined) {
-			this.verbose(`No fluidCompatMetadata found in package.json; skipping (opt-in required).`);
-			return;
-		}
-
-		this.verbose(
-			`Layer compatibility metadata from package.json: Generation: ${fluidCompatMetadata.generation}, ` +
-				`Release Date: ${fluidCompatMetadata.releaseDate}, Package Version: ${fluidCompatMetadata.releasePkgVersion}`,
-		);
 		const newGeneration = maybeGetNewGeneration(
 			currentPkgVersion,
-			fluidCompatMetadata,
+			pkg.packageJson,
 			minimumCompatWindowMonths,
 			this.logger,
 		);
+
 		if (newGeneration === undefined) {
 			// No update needed; early exit.
 			this.verbose(`No generation update needed; skipping.`);
