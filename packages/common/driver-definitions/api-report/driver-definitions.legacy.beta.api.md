@@ -30,6 +30,7 @@ export const DriverErrorTypes: {
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
     readonly usageError: "usageError";
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
 };
 
 // @beta @legacy

@@ -81,6 +81,7 @@ export const ContainerErrorTypes: {
     readonly dataCorruptionError: "dataCorruptionError";
     readonly dataProcessingError: "dataProcessingError";
     readonly usageError: "usageError";
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
 };
 
 // @beta @legacy
