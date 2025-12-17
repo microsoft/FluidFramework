@@ -9,7 +9,8 @@ import type { InboundExtensionMessage } from "@fluidframework/container-runtime-
 import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
-import { useFakeTimers, type SinonFakeTimers } from "sinon";
+import type { SinonFakeTimers } from "sinon";
+import { useFakeTimers } from "sinon";
 
 import { toOpaqueJson } from "../../internalUtils.js";
 import type { Presence } from "../../presence.js";
@@ -70,6 +71,11 @@ const latestMapUpdate = {
 					"rev": 1,
 					"timestamp": 0,
 					"value": toOpaqueJson({ x: 2, y: 2, z: 2 }),
+				},
+				"invalidKey": {
+					"rev": 1,
+					"timestamp": 0,
+					"value": toOpaqueJson({ x: -1, y: -1, z: -1 }),
 				},
 			},
 		},
@@ -553,13 +559,25 @@ describe("Presence", () => {
 		});
 
 		describe("LatestMap with validation", () => {
-			let latestMap: LatestMap<Point3D, string>;
+			let latestMap: LatestMap<Point3D, `key${string}`>;
+			let keyValidatorCallExpectedCount: number;
+
+			function keyValidatorFunction(key: string): key is `key${string}` {
+				assert(
+					keyValidatorCallExpectedCount > 0,
+					"keyValidatorFunction should not be called at this time",
+				);
+				keyValidatorCallExpectedCount--;
+				return key.startsWith("key");
+			}
 
 			/**
 			 * This beforeEach sets up the presence workspace itself and gets a
 			 * reference to it.
 			 */
 			beforeEach(() => {
+				keyValidatorCallExpectedCount = 0;
+
 				// workspace setup's initialization signal
 				runtime.signalsExpected.push([
 					{
@@ -605,6 +623,7 @@ describe("Presence", () => {
 					latestMap: StateFactory.latestMap({
 						local: { "key1": { x: 0, y: 0, z: 0 }, "key2": { x: 0, y: 0, z: 0 } },
 						validator: point3DValidatorFunction,
+						keyValidator: keyValidatorFunction,
 						settings: { allowableUpdateLatencyMs: 0 },
 					}),
 				});
@@ -613,6 +632,7 @@ describe("Presence", () => {
 			});
 
 			function sendInvalidData(key: string = "key1"): void {
+				keyValidatorCallExpectedCount = 1;
 				const timestamp = clock.now - 15;
 				processSignal(
 					[],
@@ -628,9 +648,10 @@ describe("Presence", () => {
 					}),
 					false,
 				);
+				assert.equal(keyValidatorCallExpectedCount, 0);
 			}
 
-			describe("validator is not called", () => {
+			describe("no validator is called", () => {
 				beforeEach(() => {
 					validatorCallExpected = false;
 				});
@@ -686,18 +707,65 @@ describe("Presence", () => {
 					// Verify
 					assert.equal(point3DValidatorFunction.callCount, 0);
 				});
+			});
 
-				it("when calling .get() on remote map", () => {
-					const remoteData = latestMap.getRemote(remoteAttendee);
+			it("update with invalid key invokes key validator per key and does not raise events", () => {
+				// Setup
+				for (const event of [
+					"remoteUpdated",
+					"remoteItemUpdated",
+					"remoteItemRemoved",
+				] as const) {
+					afterCleanUp.push(
+						latestMap.events.on(event, () => {
+							assert.fail(`${event} event should not be raised for invalid key`);
+						}),
+					);
+				}
+				keyValidatorCallExpectedCount = 1;
+				// Act
+				sendInvalidData("invalidKey");
+				// Verify
+				assert.equal(keyValidatorCallExpectedCount, 0); // all expected calls were made
+				assert.equal(point3DValidatorFunction.callCount, 0);
+			});
+
+			/**
+			 * Sets validator call expectations and gets remote value data.
+			 * @returns `latestMap.getRemote(remoteAttendee)`
+			 * @remarks
+			 * `validatorCallExpected` will be `false` and `keyValidatorCallExpectedCount`
+			 * will be `0` after the call.
+			 */
+			function getRemoteValue(): ReturnType<typeof latestMap.getRemote> {
+				validatorCallExpected = false;
+				keyValidatorCallExpectedCount = 3;
+				const remoteData = latestMap.getRemote(remoteAttendee);
+				assert.equal(keyValidatorCallExpectedCount, 0);
+				return remoteData;
+			}
+
+			it(".getRemote call invokes key validator per key but not value validator", () => {
+				// Setup and Act
+				getRemoteValue();
+				// Verify
+				assert.equal(keyValidatorCallExpectedCount, 0); // all expected calls were made
+				assert.equal(point3DValidatorFunction.callCount, 0);
+			});
+
+			describe("remote value map", () => {
+				it(".get() does not call any validator", () => {
+					// Setup
+					const remoteData = getRemoteValue();
 					// Act
 					remoteData.get("key1");
 					// Verify
 					assert.equal(point3DValidatorFunction.callCount, 0);
 				});
 
-				it("when accessing keys only in .forEach()", () => {
+				it(".forEach() iteration does not call any validator", () => {
 					// Setup
-					const remoteData = latestMap.getRemote(remoteAttendee);
+					const remoteData = getRemoteValue();
 					let counter = 0;
 					const expectedValues = [
 						["key1", { x: 1, y: 1, z: 1 }],
@@ -718,198 +786,215 @@ describe("Presence", () => {
 						"counter should match expected values length",
 					);
 				});
-			});
 
-			describe("validator is called", () => {
-				beforeEach(() => {
-					validatorCallExpected = "once";
-				});
-
-				for (const { desc, setup, expectedValue } of [
-					{
-						desc: "for valid value",
-						setup: () => {},
-						expectedValue: { x: 1, y: 1, z: 1 },
-					},
-					{
-						desc: "for invalid value",
-						setup: sendInvalidData,
-						expectedValue: undefined,
-					},
-				] as const) {
-					it(`once when key.value() is called ${desc}`, () => {
-						setup();
-						const remoteData = latestMap.getRemote(remoteAttendee);
-						runValidatorTest({
-							getRemoteValue: () => remoteData.get("key1")?.value(),
-							expectedCallCount: 1,
-							expectedValue,
-							validatorFunction: point3DValidatorFunction,
-						});
-					});
-
-					it(`only once for multiple key.value() calls in series and .value() always returned same result ${desc}`, () => {
-						setup();
-						const remoteData = latestMap.getRemote(remoteAttendee);
-						runMultipleCallsTest({
-							getRemoteValue: () => remoteData.get("key1")?.value(),
-							expectedValue,
-							validatorFunction: point3DValidatorFunction,
-						});
-					});
-
-					it(`exactly once for each value's .value() calls in .forEach() and .value() always returns same result ${desc}`, () => {
-						setup();
-						const remoteData = latestMap.getRemote(remoteAttendee);
-						let counter = 0;
-						const expectedValues = [
-							// only key1 value might be altered by the setup function
-							["key1", expectedValue],
-							// key2 value will always be the valid
-							["key2", { x: 2, y: 2, z: 2 }],
-						];
-						// eslint-disable-next-line unicorn/no-array-for-each -- forEach is being tested here
-						remoteData.forEach((value, key) => {
-							assert.equal(key, expectedValues[counter][0]);
-							// reset call expectations/count for each iteration
+				describe("value validator is called", () => {
+					for (const { desc, setup, expectedValue } of [
+						{
+							desc: "for valid value",
+							setup: () => {},
+							expectedValue: { x: 1, y: 1, z: 1 },
+						},
+						{
+							desc: "for invalid value",
+							setup: sendInvalidData,
+							expectedValue: undefined,
+						},
+					] as const) {
+						it(`once when key.value() is called ${desc}`, () => {
+							// Setup
+							setup();
+							const remoteData = getRemoteValue();
 							validatorCallExpected = "once";
+							// Act
+							runValidatorTest({
+								getRemoteValue: () => remoteData.get("key1")?.value(),
+								expectedCallCount: 1,
+								expectedValue,
+								validatorFunction: point3DValidatorFunction,
+							});
+						});
+
+						it(`only once for multiple key.value() calls in series and .value() always returned same result ${desc}`, () => {
+							// Setup
+							setup();
+							const remoteData = getRemoteValue();
+							validatorCallExpected = "once";
+							// Act
+							runMultipleCallsTest({
+								getRemoteValue: () => remoteData.get("key1")?.value(),
+								expectedValue,
+								validatorFunction: point3DValidatorFunction,
+							});
+						});
+
+						it(`exactly once for each value's .value() calls in .forEach() and .value() always returns same result ${desc}`, () => {
+							// Setup
+							setup();
+							const remoteData = getRemoteValue();
+							let counter = 0;
+							const expectedValues = [
+								// only key1 value might be altered by the setup function
+								["key1", expectedValue],
+								// key2 value will always be the valid
+								["key2", { x: 2, y: 2, z: 2 }],
+							];
+							// Act
+							// eslint-disable-next-line unicorn/no-array-for-each -- forEach is being tested here
+							remoteData.forEach((value, key) => {
+								assert.equal(key, expectedValues[counter][0]);
+								// reset call expectations/count for each iteration
+								validatorCallExpected = "once";
+								point3DValidatorFunction.callCount = 0;
+
+								// Act - first call
+								const valueData = value?.value();
+								// Verify
+								assert.equal(
+									point3DValidatorFunction.callCount,
+									1,
+									"validator was not called",
+								);
+								// double check value
+								assert.deepEqual(
+									valueData,
+									expectedValues[counter][1],
+									`value at key "${key}" is wrong`,
+								);
+
+								// Act - second call
+								// Access value a second time; should not affect validator call count
+								const valueDataRedux = value?.value();
+								// Verify
+								assert.equal(
+									point3DValidatorFunction.callCount,
+									1,
+									"validator was called a second time",
+								);
+								assert.strictEqual(
+									valueDataRedux,
+									valueData,
+									`value at key "${key}" is wrong`,
+								);
+
+								counter++;
+							});
+							// Make sure forEach iterated through all keys
+							assert.equal(
+								counter,
+								expectedValues.length,
+								"counter should match expected values length",
+							);
+						});
+					}
+
+					for (const { desc, setup, expectedInitialValue, newData, expectedValue } of [
+						{
+							desc: "from valid to different valid value",
+							setup: () => {},
+							expectedInitialValue: { x: 1, y: 1, z: 1 },
+							newData: { x: 4, y: 4, z: 4 },
+							expectedValue: { x: 4, y: 4, z: 4 },
+						},
+						{
+							desc: "from valid to same valid value",
+							setup: () => {},
+							expectedInitialValue: { x: 1, y: 1, z: 1 },
+							newData: { x: 1, y: 1, z: 1 },
+							expectedValue: { x: 1, y: 1, z: 1 },
+						},
+						{
+							desc: "from valid to invalid value",
+							setup: () => {},
+							expectedInitialValue: { x: 1, y: 1, z: 1 },
+							newData: "invalid",
+							expectedValue: undefined,
+						},
+						{
+							desc: "from invalid to valid value",
+							setup: sendInvalidData,
+							expectedInitialValue: undefined,
+							newData: { x: 4, y: 4, z: 4 },
+							expectedValue: { x: 4, y: 4, z: 4 },
+						},
+						{
+							desc: "from invalid to invalid value",
+							setup: sendInvalidData,
+							expectedInitialValue: undefined,
+							newData: "invalid",
+							expectedValue: undefined,
+						},
+					] as const) {
+						it(`during .value() call after remote key data has changed ${desc}`, () => {
+							// Setup
+							setup();
+
+							const originalMap = getRemoteValue();
+							validatorCallExpected = "once";
+							// Get the remote data and read it, expect that the validator is called once.
+							const key1Value = originalMap.get("key1")?.value();
+							assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
+							assert.deepEqual(key1Value, expectedInitialValue);
+							// Reset call count for next verification
 							point3DValidatorFunction.callCount = 0;
 
-							// Act - first call
-							const valueData = value?.value();
-							// Verify
-							assert.equal(point3DValidatorFunction.callCount, 1, "validator was not called");
-							// double check value
-							assert.deepEqual(
-								valueData,
-								expectedValues[counter][1],
-								`value at key "${key}" is wrong`,
+							// Process updated key data from remote client
+							keyValidatorCallExpectedCount = 1;
+							const timestamp = clock.now - 15;
+							processSignal(
+								[],
+								datastoreUpdateSignal(timestamp, "latestMap", {
+									"rev": 3,
+									"items": {
+										"key1": {
+											"rev": 3,
+											timestamp,
+											"value": toOpaqueJson(newData),
+										},
+									},
+								}),
+								false,
+							);
+							assert.equal(keyValidatorCallExpectedCount, 0);
+
+							// Verify no call yet
+							assert.equal(
+								point3DValidatorFunction.callCount,
+								0,
+								"call count after update is wrong",
 							);
 
-							// Act - second call
-							// Access value a second time; should not affect validator call count
-							const valueDataRedux = value?.value();
+							// Reading the remote value should cause the validator to be
+							// called since the data has been changed.
+							const updatedMap = getRemoteValue();
+
+							validatorCallExpected = "once";
+
+							// Act - read updated key value
+							const updatedKey1Value = updatedMap.get("key1")?.value();
+
 							// Verify
 							assert.equal(
 								point3DValidatorFunction.callCount,
 								1,
-								"validator was called a second time",
+								"validator should be called twice",
 							);
-							assert.strictEqual(valueDataRedux, valueData, `value at key "${key}" is wrong`);
-
-							counter++;
+							assert.deepEqual(
+								updatedKey1Value,
+								expectedValue,
+								"updated remote key value is wrong",
+							);
 						});
-						// Make sure forEach iterated through all keys
-						assert.equal(
-							counter,
-							expectedValues.length,
-							"counter should match expected values length",
-						);
-					});
-				}
-
-				for (const { desc, setup, expectedInitialValue, newData, expectedValue } of [
-					{
-						desc: "from valid to different valid value",
-						setup: () => {},
-						expectedInitialValue: { x: 1, y: 1, z: 1 },
-						newData: { x: 4, y: 4, z: 4 },
-						expectedValue: { x: 4, y: 4, z: 4 },
-					},
-					{
-						desc: "from valid to same valid value",
-						setup: () => {},
-						expectedInitialValue: { x: 1, y: 1, z: 1 },
-						newData: { x: 1, y: 1, z: 1 },
-						expectedValue: { x: 1, y: 1, z: 1 },
-					},
-					{
-						desc: "from valid to invalid value",
-						setup: () => {},
-						expectedInitialValue: { x: 1, y: 1, z: 1 },
-						newData: "invalid",
-						expectedValue: undefined,
-					},
-					{
-						desc: "from invalid to valid value",
-						setup: sendInvalidData,
-						expectedInitialValue: undefined,
-						newData: { x: 4, y: 4, z: 4 },
-						expectedValue: { x: 4, y: 4, z: 4 },
-					},
-					{
-						desc: "from invalid to invalid value",
-						setup: sendInvalidData,
-						expectedInitialValue: undefined,
-						newData: "invalid",
-						expectedValue: undefined,
-					},
-				] as const) {
-					it(`during .value() call after remote key data has changed ${desc}`, () => {
-						// Setup
-						setup();
-
-						const originalMap = latestMap.getRemote(remoteAttendee);
-						// Get the remote data and read it, expect that the validator is called once.
-						const key1Value = originalMap.get("key1")?.value();
-						assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
-						assert.deepEqual(key1Value, expectedInitialValue);
-						// Reset call count for next verification
-						point3DValidatorFunction.callCount = 0;
-
-						// Process updated key data from remote client
-						const timestamp = clock.now - 15;
-						processSignal(
-							[],
-							datastoreUpdateSignal(timestamp, "latestMap", {
-								"rev": 3,
-								"items": {
-									"key1": {
-										"rev": 3,
-										timestamp,
-										"value": toOpaqueJson(newData),
-									},
-								},
-							}),
-							false,
-						);
-
-						// Verify no call yet
-						assert.equal(
-							point3DValidatorFunction.callCount,
-							0,
-							"call count after update is wrong",
-						);
-
-						// Reading the remote value should cause the validator to be
-						// called since the data has been changed.
-						const updatedMap = latestMap.getRemote(remoteAttendee);
-
-						validatorCallExpected = "once";
-
-						// Act - read updated key value
-						const updatedKey1Value = updatedMap.get("key1")?.value();
-
-						// Verify
-						assert.equal(
-							point3DValidatorFunction.callCount,
-							1,
-							"validator should be called twice",
-						);
-						assert.deepEqual(
-							updatedKey1Value,
-							expectedValue,
-							"updated remote key value is wrong",
-						);
-					});
-				}
+					}
+				});
 			});
 
-			// Not this block is after "is called" as it is only valid when those tests are passing.
-			describe("validator is not called", () => {
+			// Note this block is after "value validator is called" as it is only valid when those tests are passing.
+			describe("no validator is called", () => {
 				it("during .value() call for unchanged keys", () => {
 					// Setup
+					keyValidatorCallExpectedCount = 3;
 					const originalMap = latestMap.getRemote(remoteAttendee);
+					assert.equal(keyValidatorCallExpectedCount, 0);
 					validatorCallExpected = "once";
 					// Read key1 value - should call validator once
 					const key1Value = originalMap.get("key1")?.value();
@@ -921,6 +1006,7 @@ describe("Presence", () => {
 					assert.deepEqual(key1Value, { x: 1, y: 1, z: 1 });
 
 					// Update key2 (different key) with new data, keeping key1 unchanged
+					keyValidatorCallExpectedCount = 1;
 					const timestamp = clock.now - 15;
 					processSignal(
 						[],
@@ -936,12 +1022,15 @@ describe("Presence", () => {
 						}),
 						false,
 					);
+					assert.equal(keyValidatorCallExpectedCount, 0);
 
-					const updatedMap = latestMap.getRemote(remoteAttendee);
+					const updatedMap = getRemoteValue();
 					const key1Redux = updatedMap.get("key1");
 					assert.ok(key1Redux);
 
-					// Verify
+					assert.equal(keyValidatorCallExpectedCount, 0);
+					assert.equal(point3DValidatorFunction.callCount, 1);
+					// Act & Verify
 					// Read key1 value (again) but from updated map - should NOT call validator again since key1 data hasn't changed
 					const key1ValueRedux = key1Redux.value();
 					assert.equal(

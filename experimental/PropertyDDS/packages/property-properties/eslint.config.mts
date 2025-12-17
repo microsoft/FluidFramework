@@ -11,6 +11,7 @@ const config: Linter.Config[] = [
 	{
 		rules: {
 			"@typescript-eslint/dot-notation": "off",
+			"@typescript-eslint/explicit-function-return-type": "warn",
 			"@typescript-eslint/no-dynamic-delete": "off",
 			"@typescript-eslint/no-extraneous-class": "off",
 			"@typescript-eslint/no-implied-eval": "off",

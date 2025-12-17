@@ -375,7 +375,11 @@ function breakOnDifference(): { break: boolean } {
  * Helper that returns whether two b-trees are equal.
  * Accelerated when large portions of the tree are shared between the two.
  */
-export function compareBtrees<K, V>(treeA: BTree<K, V>, treeB: BTree<K, V>, compare: (valA: V, valB: V) => boolean) {
+export function compareBtrees<K, V>(
+	treeA: BTree<K, V>,
+	treeB: BTree<K, V>,
+	compare: (valA: V, valB: V) => boolean
+): boolean {
 	const diff = treeA.diffAgainst(treeB, breakOnDifference, breakOnDifference, (_, valA, valB) => {
 		if (!compare(valA, valB)) {
 			return { break: true };

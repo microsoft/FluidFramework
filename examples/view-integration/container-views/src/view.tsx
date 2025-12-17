@@ -20,7 +20,7 @@ export const DiceRollerView: React.FC<IDiceRollerViewProps> = (
 		// useEffect runs async after render, so it's possible for the dice value to update after render but
 		// before we get our event listener registered.  We refresh our dice value in case that happened.
 		setDiceValue(props.model.value);
-		const onDiceRolled = () => {
+		const onDiceRolled = (): void => {
 			setDiceValue(props.model.value);
 		};
 		props.model.on("diceRolled", onDiceRolled);

@@ -23,7 +23,7 @@ import { InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFa
 // This ICodeDetailsLoader specifically supports versions one and two.  Other approaches might have network calls to
 // dynamically load in the appropriate code for unknown versions.
 export class DemoCodeLoader implements ICodeDetailsLoader {
-	public get IFluidCodeDetailsComparer() {
+	public get IFluidCodeDetailsComparer(): this {
 		return this;
 	}
 
@@ -56,10 +56,10 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
 	// TODO: Think about the right implementation here.  For the main flow we want to always satisfies() because
 	// it's not safe to reload until the v2 summary is done.  But, for clients on 1.0 trying to get to 1.1 they may
 	// want a real answer.
-	public async satisfies() {
+	public async satisfies(): Promise<boolean> {
 		return true;
 	}
-	public async compare() {
+	public async compare(): Promise<undefined> {
 		return undefined;
 	}
 }

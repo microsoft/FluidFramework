@@ -13,7 +13,7 @@ import { IDiceRoller } from "../dataObject.js";
  * @param diceRoller - The dice roller to be rendered
  * @param div - The HTMLElement to render into
  */
-export function reactRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
+export function reactRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement): void {
 	ReactDOM.render(<DiceRollerView model={diceRoller} />, div);
 }
 
@@ -23,14 +23,14 @@ interface IDiceRollerViewProps {
 
 export const DiceRollerView: React.FC<IDiceRollerViewProps> = (
 	props: IDiceRollerViewProps,
-) => {
+): React.JSX.Element => {
 	const [diceValue, setDiceValue] = React.useState(props.model.value);
 
 	React.useEffect(() => {
 		// useEffect runs async after render, so it's possible for the dice value to update after render but
 		// before we get our event listener registered.  We refresh our dice value in case that happened.
 		setDiceValue(props.model.value);
-		const onDiceRolled = () => {
+		const onDiceRolled = (): void => {
 			setDiceValue(props.model.value);
 		};
 		props.model.on("diceRolled", onDiceRolled);
