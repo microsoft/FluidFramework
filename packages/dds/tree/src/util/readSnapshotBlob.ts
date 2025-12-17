@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { bufferToString } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import type { JsonCompatible } from "./utils.js";
-import { bufferToString } from "@fluid-internal/client-utils";
+
 import type { SummaryElementParser } from "../shared-tree-core/index.js";
+
+import type { JsonCompatible } from "./utils.js";
 
 /**
  * Reads and parses a snapshot blob from storage service.

@@ -5,6 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	getConfigForMinVersionForCollab,
 	lowestMinVersionForCollab,
@@ -41,10 +42,9 @@ import {
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV2,
 } from "./format.js";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
-import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode.js";
 import { schemaCompressedEncodeV1, schemaCompressedEncodeV2 } from "./schemaBasedEncode.js";
+import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode.js";
 
 /**
  * Reference ID for a chunk that is incrementally encoded.

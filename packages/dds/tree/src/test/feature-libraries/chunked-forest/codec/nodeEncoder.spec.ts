@@ -24,11 +24,11 @@ import {
 import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
+import { FieldBatchFormatVersion } from "../../../../feature-libraries/index.js";
 import { brand } from "../../../../util/index.js";
+import { testIdCompressor } from "../../../utils.js";
 
 import { checkNodeEncode } from "./checkEncode.js";
-import { testIdCompressor } from "../../../utils.js";
-import { FieldBatchFormatVersion } from "../../../../feature-libraries/index.js";
 
 const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1);
 

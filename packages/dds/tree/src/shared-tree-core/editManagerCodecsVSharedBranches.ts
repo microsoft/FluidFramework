@@ -24,11 +24,11 @@ import {
 	type Mutable,
 } from "../util/index.js";
 
+import type { BranchId } from "./branch.js";
 import type { SharedBranchSummaryData, SummaryData } from "./editManager.js";
-import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
 import { decodeSharedBranch, encodeSharedBranch } from "./editManagerCodecsCommons.js";
 import type { EncodedSharedBranch } from "./editManagerFormatCommons.js";
-import type { BranchId } from "./branch.js";
+import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;

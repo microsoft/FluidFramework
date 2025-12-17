@@ -59,9 +59,9 @@ import {
 	type MessageEncodingContext,
 	makeMessageCodec,
 } from "./messageCodecs.js";
+import type { MessageFormatVersion } from "./messageFormat.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
-import type { MessageFormatVersion } from "./messageFormat.js";
 import {
 	minVersionToSharedTreeSummaryFormatVersion,
 	summarizablesTreeKey,

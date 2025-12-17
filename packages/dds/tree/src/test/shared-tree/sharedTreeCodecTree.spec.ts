@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { FluidClientVersion, jsonableCodecTree } from "../../codec/index.js";
 import { getCodecTreeForSharedTreeFormat } from "../../shared-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
-import { FluidClientVersion, jsonableCodecTree } from "../../codec/index.js";
 
 describe("SharedTree Codec Tree", () => {
 	useSnapshotDirectory(`codec-tree`);

@@ -15,11 +15,11 @@ import {
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../../codec/index.js";
+import { SchemaFormatVersion } from "../../core/index.js";
 import { makeSchemaCodec, schemaCodecBuilder } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
-import { SchemaFormatVersion } from "../../core/index.js";
 
 /**
  * Create a family of schema change codecs.

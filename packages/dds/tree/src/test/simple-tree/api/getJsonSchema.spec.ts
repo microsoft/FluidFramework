@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	getJsonSchema,
 	KeyEncodingOptions,
@@ -12,8 +13,8 @@ import {
 	SchemaFactoryAlpha,
 	type JsonTreeSchema,
 } from "../../../simple-tree/index.js";
-
 import { hydrate } from "../utils.js";
+
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 
 // TODO: consolidate these tests with those in src/test/simple-tree/api/simpleSchemaToJsonSchema.spec.ts

@@ -4,18 +4,18 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidClientVersion, Versioned } from "../../../codec/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-
 import {
 	ClientVersionDispatchingCodecBuilder,
 	type CodecAndSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../codec/versioned/codec.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { pkgVersion } from "../../../packageVersion.js";
-import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 describe("versioned Codecs", () => {
 	describe("ClientVersionDispatchingCodecBuilder", () => {

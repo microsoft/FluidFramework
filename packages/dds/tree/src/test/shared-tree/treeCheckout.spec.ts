@@ -14,6 +14,7 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { asAlpha } from "../../api.js";
 import {
 	type Revertible,
 	rootFieldKey,
@@ -34,19 +35,6 @@ import {
 	type BranchableTree,
 	createTreeCheckout,
 } from "../../shared-tree/index.js";
-import {
-	TestTreeProviderLite,
-	buildTestForest,
-	chunkFromJsonableTrees,
-	createTestUndoRedoStacks,
-	expectSchemaEqual,
-	getView,
-	mintRevisionTag,
-	testIdCompressor,
-	testRevisionTagCodec,
-	viewCheckout,
-} from "../utils.js";
-import { brand } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
@@ -61,7 +49,19 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
-import { asAlpha } from "../../api.js";
+import { brand } from "../../util/index.js";
+import {
+	TestTreeProviderLite,
+	buildTestForest,
+	chunkFromJsonableTrees,
+	createTestUndoRedoStacks,
+	expectSchemaEqual,
+	getView,
+	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
+	viewCheckout,
+} from "../utils.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,

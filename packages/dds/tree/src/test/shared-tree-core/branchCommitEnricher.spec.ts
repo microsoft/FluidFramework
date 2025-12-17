@@ -4,12 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import { TestChange, TestChangeRebaser } from "../testChange.js";
+
 import { CommitKind, type GraphCommit } from "../../core/index.js";
-import { mintRevisionTag } from "../utils.js";
-import { TestChangeEnricher } from "./utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { BranchCommitEnricher } from "../../shared-tree-core/branchCommitEnricher.js";
+import { TestChange, TestChangeRebaser } from "../testChange.js";
+import { mintRevisionTag } from "../utils.js";
+
+import { TestChangeEnricher } from "./utils.js";
 
 const rebaser = new TestChangeRebaser();
 const enricher = new TestChangeEnricher();

@@ -28,6 +28,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import type { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import {
 	Change,
@@ -36,7 +37,6 @@ import {
 	tagChangeInline,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../optional-field/optionalFieldUtils.js";
-import { TestNodeId } from "../../testNodeId.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.

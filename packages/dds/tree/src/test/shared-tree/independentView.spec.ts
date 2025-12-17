@@ -5,12 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
+import { FluidClientVersion } from "../../codec/index.js";
 import {
 	independentInitializedView,
 	createIndependentTreeAlpha,
 	createIndependentTreeBeta,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/independentView.js";
+import { ForestTypeExpensiveDebug, TreeAlpha } from "../../shared-tree/index.js";
 import {
 	extractPersistedSchema,
 	FieldKind,
@@ -19,9 +21,7 @@ import {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "../../simple-tree/index.js";
-import { ForestTypeExpensiveDebug, TreeAlpha } from "../../shared-tree/index.js";
 import { ajvValidator } from "../codec/index.js";
-import { FluidClientVersion } from "../../codec/index.js";
 import { testIdCompressor } from "../utils.js";
 
 describe("independentView", () => {

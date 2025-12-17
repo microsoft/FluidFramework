@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { type TAnySchema, Type } from "@sinclair/typebox";
 
 import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
@@ -14,12 +15,11 @@ import type {
 } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
+import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
+import type { MessageEncodingContext } from "./messageCodecs.js";
+import type { MessageFormatVersion } from "./messageFormat.js";
 import { Message } from "./messageFormatVSharedBranches.js";
 import type { DecodedMessage } from "./messageTypes.js";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { MessageEncodingContext } from "./messageCodecs.js";
-import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
-import type { MessageFormatVersion } from "./messageFormat.js";
 
 export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,

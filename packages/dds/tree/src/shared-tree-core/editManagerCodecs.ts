@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	getConfigForMinVersionForCollab,
 	lowestMinVersionForCollab,
@@ -34,7 +35,6 @@ import { brand, unbrand, type JsonCompatibleReadOnly } from "../util/index.js";
 import type { SummaryData } from "./editManager.js";
 import { makeV1CodecWithVersion } from "./editManagerCodecsV1toV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./editManagerCodecsVSharedBranches.js";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	EditManagerFormatVersion,
 	editManagerFormatVersions,

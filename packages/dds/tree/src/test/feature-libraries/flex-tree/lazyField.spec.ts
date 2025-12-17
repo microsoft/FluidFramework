@@ -35,7 +35,17 @@ import {
 	isFlexTreeNode,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import {
+	numberSchema,
+	SchemaFactory,
+	stringSchema,
+	toInitialSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	toStoredSchema,
+} from "../../../simple-tree/index.js";
 import { brand, disposeSymbol } from "../../../util/index.js";
+import { singleJsonCursor } from "../../json/index.js";
 import {
 	fieldCursorFromInsertable,
 	flexTreeViewWithContent,
@@ -49,16 +59,6 @@ import {
 	readonlyTreeWithContent,
 	rootFieldAnchor,
 } from "./utils.js";
-import {
-	numberSchema,
-	SchemaFactory,
-	stringSchema,
-	toInitialSchema,
-	restrictiveStoredSchemaGenerationOptions,
-	toStoredSchema,
-} from "../../../simple-tree/index.js";
-import { singleJsonCursor } from "../../json/index.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };

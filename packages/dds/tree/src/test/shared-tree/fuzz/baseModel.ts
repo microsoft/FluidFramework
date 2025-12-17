@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+
+import { pkgVersion } from "../../../packageVersion.js";
+import { ForestTypeOptimized, ForestTypeReference } from "../../../shared-tree/index.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
+
+import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import { SharedTreeFuzzTestFactory, createOnCreate } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { takeAsync } from "@fluid-private/stochastic-test-utils";
-import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
-import { ForestTypeOptimized, ForestTypeReference } from "../../../shared-tree/index.js";
-import { pkgVersion } from "../../../packageVersion.js";
 
 export const runsPerBatch = 50;
 // TODO: Enable other types of ops.

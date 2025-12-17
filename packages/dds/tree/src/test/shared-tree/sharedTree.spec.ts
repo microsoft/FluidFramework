@@ -5,9 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
+import { AttachState } from "@fluidframework/container-definitions";
 import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -18,8 +24,9 @@ import {
 	type TestFluidObjectInternal,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 
+import { asAlpha } from "../../api.js";
+import { FluidClientVersion } from "../../codec/index.js";
 import {
 	CommitKind,
 	type Revertible,
@@ -47,6 +54,7 @@ import {
 	ObjectForest,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
+import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
 	ForestTypeExpensiveDebug,
 	ForestTypeOptimized,
@@ -62,6 +70,11 @@ import {
 } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
+	TreeBeta,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/api/index.js";
+import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
+import {
 	SchemaFactory,
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
@@ -75,7 +88,16 @@ import {
 	FieldKind,
 	type SimpleLeafNodeSchema,
 } from "../../simple-tree/index.js";
+import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
+import {
+	configuredSharedTree,
+	resolveOptions,
+	SharedTree as SharedTreeKind,
+	type ISharedTree,
+} from "../../treeFactory.js";
 import { brand } from "../../util/index.js";
+import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
+import { TestAnchor } from "../testAnchor.js";
 import {
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
@@ -97,30 +119,8 @@ import {
 	getView,
 	createSnapshotCompressor,
 } from "../utils.js";
-import {
-	configuredSharedTree,
-	resolveOptions,
-	SharedTree as SharedTreeKind,
-	type ISharedTree,
-} from "../../treeFactory.js";
-import type {
-	ISharedObjectKind,
-	SharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
-import { TestAnchor } from "../testAnchor.js";
-import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
-import { AttachState } from "@fluidframework/container-definitions";
-import { JsonAsTree } from "../../jsonDomainSchema.js";
-import {
-	TreeBeta,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/api/index.js";
+
 // eslint-disable-next-line import-x/no-internal-modules
-import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
-import { FluidClientVersion } from "../../codec/index.js";
-import { asAlpha } from "../../api.js";
 
 const enableSchemaValidation = true;
 

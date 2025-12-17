@@ -8,6 +8,7 @@ import { join as pathJoin } from "node:path";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SessionId } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
@@ -24,13 +25,16 @@ import {
 	forEachNodeInSubtree,
 	moveToDetachedField,
 } from "../../../core/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import type {
 	ITreeCheckout,
 	SchematizingSimpleTreeView,
 	TreeCheckout,
 } from "../../../shared-tree/index.js";
-import { testSrcPath } from "../../testSrcPath.cjs";
-import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
+import type {
+	SharedTreeOptionsInternal,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../shared-tree/sharedTree.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -39,15 +43,11 @@ import {
 	type ViewableTree,
 	type NodeBuilderData,
 } from "../../../simple-tree/index.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-
-import type {
-	SharedTreeOptionsInternal,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../shared-tree/sharedTree.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import type { FuzzView } from "./fuzzEditGenerators.js";
 import type { ISharedTree } from "../../../treeFactory.js";
+import { testSrcPath } from "../../testSrcPath.cjs";
+import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
+
+import type { FuzzView } from "./fuzzEditGenerators.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode" as string, {

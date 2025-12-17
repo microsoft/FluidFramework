@@ -4,16 +4,18 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	getConfigForMinVersionForCollabIterable,
 	type ConfigMapEntry,
 	type MinimumMinorSemanticVersion,
 	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { Type, type TSchema } from "@sinclair/typebox";
 import { gt } from "semver-ts";
 
+import { pkgVersion } from "../../packageVersion.js";
 import type {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlyObject,
@@ -32,8 +34,6 @@ import {
 } from "../codec.js";
 
 import { Versioned } from "./format.js";
-import { pkgVersion } from "../../packageVersion.js";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Json compatible data with a format version.

@@ -4,14 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import { getBranch, type SharedTreeOptions, Tree } from "../../shared-tree/index.js";
-import { createSnapshotCompressor, TestTreeProviderLite } from "../utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { configuredSharedTree, type ISharedTree } from "../../treeFactory.js";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { createSnapshotCompressor, TestTreeProviderLite } from "../utils.js";
 
 const enableSchemaValidation = true;
 

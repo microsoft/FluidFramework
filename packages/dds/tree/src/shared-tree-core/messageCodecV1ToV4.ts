@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type TAnySchema, Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils/internal";
+import { type TAnySchema, Type } from "@sinclair/typebox";
 
 import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import type {
@@ -15,10 +15,10 @@ import type {
 } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
-import { Message } from "./messageFormatV1ToV4.js";
-import type { DecodedMessage } from "./messageTypes.js";
 import type { MessageEncodingContext } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
+import { Message } from "./messageFormatV1ToV4.js";
+import type { DecodedMessage } from "./messageTypes.js";
 
 export function makeV1ToV4CodecWithVersion<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,

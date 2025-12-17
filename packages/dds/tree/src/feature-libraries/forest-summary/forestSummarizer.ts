@@ -41,27 +41,27 @@ import {
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import {
 	clientVersionToForestFormatVersion,
 	type ForestCodec,
 	makeForestSummarizerCodec,
 } from "./codec.js";
+import { ForestFormatVersion } from "./formatCommon.js";
 import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
 } from "./incrementalSummaryBuilder.js";
 import {
-	minVersionToForestSummaryFormatVersion,
-	getForestRootSummaryContentKey,
-} from "./summaryTypes.js";
-import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import { ForestFormatVersion } from "./formatCommon.js";
-import {
 	ForestSummaryFormatVersion,
 	forestSummaryKey,
 	supportedForestSummaryFormatVersions,
 } from "./summaryFormatCommon.js";
+import {
+	minVersionToForestSummaryFormatVersion,
+	getForestRootSummaryContentKey,
+} from "./summaryTypes.js";
 
 /**
  * Provides methods for summarizing and loading a forest.

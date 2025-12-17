@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { RestrictiveStringRecord } from "../../../util/index.js";
 import { NodeKind } from "../../core/index.js";
 import type {
 	TreeNodeSchemaClass,
@@ -14,9 +15,7 @@ import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 } from "../../core/index.js";
-
 import type { SchemaType, SimpleRecordNodeSchema } from "../../simpleSchema.js";
-import type { RestrictiveStringRecord } from "../../../util/index.js";
 
 /**
  * A {@link TreeNode} which models a TypeScript {@link https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeys-type | record}.

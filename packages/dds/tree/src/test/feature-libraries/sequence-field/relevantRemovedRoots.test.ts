@@ -4,13 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import type { ChangeAtomId, DeltaDetachedNodeId } from "../../../core/index.js";
 import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { MarkMaker as Mark } from "./testEdits.js";
 import { mintRevisionTag } from "../../utils.js";
+
+import { MarkMaker as Mark } from "./testEdits.js";
 
 const tag = mintRevisionTag();
 const atomId: ChangeAtomId = { localId: brand(0) };

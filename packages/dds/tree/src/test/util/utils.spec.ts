@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { benchmark } from "@fluid-tools/benchmark";
+
 import {
 	balancedReduce,
 	capitalize,
@@ -15,7 +17,6 @@ import {
 	oneFromIterable,
 	transformObjectMap,
 } from "../../util/index.js";
-import { benchmark } from "@fluid-tools/benchmark";
 
 describe("Utils", () => {
 	it("capitalize", () => {

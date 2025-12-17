@@ -10,8 +10,8 @@ import {
 	benchmarkCustom,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -20,8 +20,6 @@ import {
 
 import type { Value } from "../../core/index.js";
 import { Tree, type ITreePrivate } from "../../shared-tree/index.js";
-import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
-import { DefaultTestSharedTreeKind } from "../utils.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -29,6 +27,8 @@ import {
 	type ITree,
 	type TreeView,
 } from "../../simple-tree/index.js";
+import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
+import { DefaultTestSharedTreeKind } from "../utils.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.

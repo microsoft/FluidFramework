@@ -3,9 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
+
+import type { ITreeCursorSynchronous } from "../../core/index.js";
+import type { SummaryElementStringifier } from "../../shared-tree-core/index.js";
 import {
 	brand,
 	setInNestedMap,
@@ -20,13 +28,7 @@ import type {
 	IncrementalEncodingPolicy,
 	TreeChunk,
 } from "../chunked-forest/index.js";
-import type { ITreeCursorSynchronous } from "../../core/index.js";
-import { SummaryType } from "@fluidframework/driver-definitions";
-import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import { LoggingError } from "@fluidframework/telemetry-utils/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SummaryElementStringifier } from "../../shared-tree-core/index.js";
+
 import { summaryContentBlobKey } from "./summaryFormatV3.js";
 
 /**

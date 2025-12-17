@@ -4,10 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
-import { Tree } from "../shared-tree/index.js";
+
 import { JsonAsTree } from "../jsonDomainSchema.js";
-import type { areSafelyAssignable, requireTrue } from "../util/index.js";
+import { Tree } from "../shared-tree/index.js";
 import { TreeBeta } from "../simple-tree/index.js";
+import type { areSafelyAssignable, requireTrue } from "../util/index.js";
 
 describe("JsonDomainSchema", () => {
 	it("examples", () => {

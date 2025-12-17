@@ -4,14 +4,16 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import { Tree } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	type NodeFromSchema,
 	type Unhydrated,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
+
 import { hydrate } from "./utils.js";
-import { Tree } from "../../shared-tree/index.js";
 
 const schemaFactory = new SchemaFactory("test");
 

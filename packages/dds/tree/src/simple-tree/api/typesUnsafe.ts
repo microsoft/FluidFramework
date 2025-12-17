@@ -8,14 +8,6 @@ import type {
 	RestrictiveStringRecord,
 	UnionToIntersection,
 } from "../../util/index.js";
-
-import type {
-	ApplyKind,
-	ApplyKindInput,
-	FieldKind,
-	FieldSchema,
-	FieldSchemaAlpha,
-} from "../fieldSchema.js";
 import type {
 	NodeKind,
 	WithType,
@@ -32,6 +24,13 @@ import type {
 	AnnotatedAllowedType,
 	AnnotatedAllowedTypes,
 } from "../core/index.js";
+import type {
+	ApplyKind,
+	ApplyKindInput,
+	FieldKind,
+	FieldSchema,
+	FieldSchemaAlpha,
+} from "../fieldSchema.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
 import type {
 	SchemaType,

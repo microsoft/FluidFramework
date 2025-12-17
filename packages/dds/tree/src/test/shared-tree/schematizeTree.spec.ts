@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import type { Listenable } from "@fluidframework/core-interfaces";
+
 import {
 	type Anchor,
 	type AnchorNode,
@@ -15,7 +17,6 @@ import {
 	type AnchorSetRootEvents,
 	type TaggedChange,
 } from "../../core/index.js";
-import { fieldJsonCursor } from "../json/index.js";
 import {
 	FieldKinds,
 	allowsRepoSuperset,
@@ -34,7 +35,7 @@ import {
 	initializerFromChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { Transactor } from "../../shared-tree-core/index.js";
 import {
 	SchemaFactory,
 	type ImplicitFieldSchema,
@@ -42,8 +43,8 @@ import {
 	type TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import { toInitialSchema } from "../../simple-tree/index.js";
-import type { Transactor } from "../../shared-tree-core/index.js";
 import { Breakable } from "../../util/index.js";
+import { fieldJsonCursor } from "../json/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeTestDefaultChangeFamily } from "../shared-tree-core/utils.js";
 import {

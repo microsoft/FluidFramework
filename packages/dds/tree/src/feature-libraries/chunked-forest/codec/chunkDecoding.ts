@@ -37,6 +37,7 @@ import {
 	decode as genericDecode,
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric.js";
+import type { IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
 	type EncodedChunkShape,
@@ -49,7 +50,6 @@ import {
 	FieldBatchFormatVersion,
 	SpecialField,
 } from "./format.js";
-import type { IncrementalDecoder } from "./codecs.js";
 
 export interface IdDecodingContext {
 	idCompressor: IIdCompressor;

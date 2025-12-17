@@ -4,11 +4,22 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { isStableId } from "@fluidframework/id-compressor/internal";
+import {
+	validateUsageError,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
+import { FieldKinds } from "../../../../feature-libraries/index.js";
+import { Tree } from "../../../../shared-tree/index.js";
+import {
+	createField,
+	UnhydratedFlexTreeNode,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../simple-tree/core/index.js";
+import { createTreeNodeFromInner } from "../../../../simple-tree/core/treeNodeKernel.js";
+import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
 import {
 	type FieldKind,
 	SchemaFactory,
@@ -37,7 +48,6 @@ import type {
 	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/node-kinds/object/objectNode.js";
-import { describeHydration, hydrate, pretty } from "../../utils.js";
 import { brand } from "../../../../util/index.js";
 import type {
 	areSafelyAssignable,
@@ -48,18 +58,7 @@ import type {
 	RestrictiveStringRecord,
 } from "../../../../util/index.js";
 import { getView } from "../../../utils.js";
-import { Tree } from "../../../../shared-tree/index.js";
-import { FieldKinds } from "../../../../feature-libraries/index.js";
-
-import {
-	createField,
-	UnhydratedFlexTreeNode,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../simple-tree/core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { createTreeNodeFromInner } from "../../../../simple-tree/core/treeNodeKernel.js";
+import { describeHydration, hydrate, pretty } from "../../utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -94,7 +93,6 @@ const schemaFactory = new SchemaFactory("Test");
 
 	// Empty case
 	{
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type result = InsertableObjectFromSchemaRecord<{}>;
 		type _check = requireAssignableTo<result, Record<string, never>>;
 	}
@@ -175,7 +173,7 @@ const schemaFactory = new SchemaFactory("Test");
 	// Generic case
 	{
 		type result = ObjectFromSchemaRecord<RestrictiveStringRecord<ImplicitFieldSchema>>;
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 
 		type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
@@ -183,9 +181,8 @@ const schemaFactory = new SchemaFactory("Test");
 
 	// Empty case
 	{
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type result = ObjectFromSchemaRecord<{}>;
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 		type _check2 = requireFalse<isAssignableTo<result, { x: unknown }>>;
 
@@ -643,9 +640,9 @@ describeHydration(
 				type Create<T extends RecordX> = (data: RecordX extends T ? never : T) => unknown;
 
 				// Two identical interfaces
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+
 				interface X1<T extends RecordX = RecordX> extends Create<T> {}
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+
 				interface X2<T extends RecordX = RecordX> extends Create<T> {}
 
 				// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -698,7 +695,7 @@ describeHydration(
 				}) {
 					// Since fields are own properties, we expect inherited properties (like this) to be shadowed by fields.
 					// However in TypeScript they work like inherited properties, so the types don't make the runtime behavior.
-					// eslint-disable-next-line @typescript-eslint/class-literal-property-style
+
 					public override get foo(): 5 {
 						return 5;
 					}

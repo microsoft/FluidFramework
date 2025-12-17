@@ -14,6 +14,13 @@ import type {
 } from "../../../feature-libraries/index.js";
 import { FieldKinds, isTreeValue } from "../../../feature-libraries/index.js";
 import {
+	brand,
+	validateIndex,
+	validateIndexRange,
+	type JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
+import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
+import {
 	CompatibilityLevel,
 	type WithType,
 	// eslint-disable-next-line import-x/no-deprecated
@@ -49,30 +56,24 @@ import {
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import {
+	getTreeNodeSchemaInitializedData,
+	getUnhydratedContext,
+} from "../../createContext.js";
+import { nullSchema } from "../../leafNodeSchema.js";
+import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
+import {
 	type FactoryContent,
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
 	unhydratedFlexTreeFromInsertableNode,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
-import {
-	getTreeNodeSchemaInitializedData,
-	getUnhydratedContext,
-} from "../../createContext.js";
-import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
+
 import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 } from "./arrayNodeTypes.js";
-import {
-	brand,
-	validateIndex,
-	validateIndexRange,
-	type JsonCompatibleReadOnlyObject,
-} from "../../../util/index.js";
-import { nullSchema } from "../../leafNodeSchema.js";
-import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.

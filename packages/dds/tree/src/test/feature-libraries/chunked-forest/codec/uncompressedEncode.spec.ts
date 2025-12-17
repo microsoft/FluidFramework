@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { currentVersion } from "../../../../codec/index.js";
 import {
 	makeFieldBatchCodec,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -17,7 +18,6 @@ import {
 import { ajvValidator } from "../../../codec/index.js";
 import { testTrees } from "../../../cursorTestSuite.js";
 import { testIdCompressor } from "../../../utils.js";
-import { currentVersion } from "../../../../codec/index.js";
 
 describe("uncompressedEncode", () => {
 	// TODO: test non size 1 batches

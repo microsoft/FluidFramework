@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ICodecFamily } from "../../codec/index.js";
 import type {
 	ChangeFamily,
 	ChangeFamilyEditor,
@@ -13,7 +14,6 @@ import type {
 	RevisionTag,
 } from "../../core/index.js";
 import { makeMitigatedChangeFamily } from "../../feature-libraries/index.js";
-import type { ICodecFamily } from "../../codec/index.js";
 import { mintRevisionTag } from "../utils.js";
 
 const fallback = "Fallback";

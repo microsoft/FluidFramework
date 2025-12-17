@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
 import type { JsonableTree } from "../core/index.js";
 import { brand } from "../util/index.js";
 
@@ -13,7 +15,6 @@ import {
 	prepareTreeForCompare,
 	snapshotSessionId,
 } from "./utils.js";
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 describe("Test utils", () => {
 	describe("prepareTreeForCompare", () => {

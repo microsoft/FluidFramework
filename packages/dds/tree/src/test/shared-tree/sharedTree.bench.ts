@@ -21,6 +21,9 @@ import {
 	type Context,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
+import { TreeViewConfiguration } from "../../simple-tree/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
+import { makeArray } from "../../util/index.js";
 import {
 	type JSDeepTree,
 	type JSWideTree,
@@ -41,6 +44,7 @@ import {
 	readWideFlexTree,
 	readWideTreeAsJSObject,
 } from "../scalableTestTrees.js";
+import { insert } from "../sequenceRootUtils.js";
 import {
 	StringArray,
 	TestTreeProviderLite,
@@ -52,10 +56,6 @@ import {
 	type SharedTreeWithContainerRuntime,
 	fieldCursorFromInsertable,
 } from "../utils.js";
-import { insert } from "../sequenceRootUtils.js";
-import { TreeViewConfiguration } from "../../simple-tree/index.js";
-import { configuredSharedTree } from "../../treeFactory.js";
-import { makeArray } from "../../util/index.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [

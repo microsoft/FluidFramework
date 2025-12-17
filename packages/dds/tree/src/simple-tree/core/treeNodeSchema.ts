@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 
+import type { FieldKey, NodeData } from "../../core/index.js";
+import type { UnionToIntersection } from "../../util/index.js";
+import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
+
+import type { AllowedTypesFullEvaluated, AllowedTypesFull } from "./allowedTypes.js";
+import type { Context } from "./context.js";
 import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
-import type { UnionToIntersection } from "../../util/index.js";
-import type { AllowedTypesFullEvaluated, AllowedTypesFull } from "./allowedTypes.js";
-import type { Context } from "./context.js";
-import type { FieldKey, NodeData } from "../../core/index.js";
 import type { UnhydratedFlexTreeField } from "./unhydratedFlexTree.js";
-import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
 
 /**
  * Schema for a {@link TreeNode} or {@link TreeLeafValue}.

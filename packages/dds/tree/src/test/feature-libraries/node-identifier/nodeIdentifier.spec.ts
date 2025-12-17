@@ -4,10 +4,10 @@
  */
 
 import { strict as assert, fail } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type LocalNodeIdentifier,

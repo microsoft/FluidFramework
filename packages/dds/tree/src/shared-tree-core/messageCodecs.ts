@@ -4,6 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	getConfigForMinVersionForCollab,
@@ -31,11 +32,10 @@ import type {
 } from "../core/index.js";
 import { brand, unbrand, type JsonCompatibleReadOnly } from "../util/index.js";
 
-import type { DecodedMessage } from "./messageTypes.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { makeV1ToV4CodecWithVersion } from "./messageCodecV1ToV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./messageCodecVSharedBranches.js";
 import { MessageFormatVersion, messageFormatVersions } from "./messageFormat.js";
+import type { DecodedMessage } from "./messageTypes.js";
 
 export interface MessageEncodingContext {
 	idCompressor: IIdCompressor;

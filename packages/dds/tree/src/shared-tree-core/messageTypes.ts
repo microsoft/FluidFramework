@@ -6,6 +6,7 @@
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { GraphCommit } from "../core/index.js";
+
 import type { BranchId } from "./branch.js";
 
 export type DecodedMessage<TChange> = CommitMessage<TChange> | BranchMessage;

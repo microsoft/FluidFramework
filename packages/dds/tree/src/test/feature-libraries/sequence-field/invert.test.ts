@@ -12,12 +12,13 @@ import {
 import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { CellId } from "../../../feature-libraries/sequence-field/index.js";
-import { TestChange } from "../../testChange.js";
-import { mintRevisionTag } from "../../utils.js";
 import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { invert as invertChange, assertChangesetsEqual, tagChangeInline } from "./utils.js";
+import { mintRevisionTag } from "../../utils.js";
+
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
+import { invert as invertChange, assertChangesetsEqual, tagChangeInline } from "./utils.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();

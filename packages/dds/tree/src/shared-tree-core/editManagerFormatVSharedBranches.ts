@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type TSchema, Type } from "@sinclair/typebox";
 import type { SessionId } from "@fluidframework/id-compressor";
+import { type ObjectOptions, type TSchema, Type } from "@sinclair/typebox";
+
+import { SessionIdSchema } from "../core/index.js";
 
 import { EncodedSharedBranch, EditManagerFormatVersion } from "./editManagerFormatCommons.js";
-import { SessionIdSchema } from "../core/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 

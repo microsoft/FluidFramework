@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	SummaryType,
 	type ISummaryBlob,
@@ -16,8 +17,22 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
+import {
+	ForestSummaryFormatVersion,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatCommon.js";
+import {
+	summaryContentBlobKey as summaryContentBlobKeyV1ToV2,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatV1ToV2.js";
+import {
+	summaryContentBlobKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
 import {
 	FieldBatchFormatVersion,
 	ForestFormatVersion,
@@ -28,23 +43,16 @@ import {
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
-import { brand } from "../../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
-import {
-	checkoutWithContent,
-	fieldCursorFromInsertable,
-	testIdCompressor,
-	testRevisionTagCodec,
-	type TreeStoredContentStrict,
-} from "../../utils.js";
-import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	type ForestType,
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
+import {
+	summarizablesMetadataKey,
+	type SharedTreeSummarizableMetadata,
+} from "../../../shared-tree-core/index.js";
 import {
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
@@ -57,23 +65,16 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 } from "../../../simple-tree/index.js";
+import { brand } from "../../../util/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
+import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
-	ForestSummaryFormatVersion,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/forest-summary/summaryFormatCommon.js";
-import {
-	summaryContentBlobKey,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
-import {
-	summaryContentBlobKey as summaryContentBlobKeyV1ToV2,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/forest-summary/summaryFormatV1ToV2.js";
-import {
-	summarizablesMetadataKey,
-	type SharedTreeSummarizableMetadata,
-} from "../../../shared-tree-core/index.js";
+	checkoutWithContent,
+	fieldCursorFromInsertable,
+	testIdCompressor,
+	testRevisionTagCodec,
+	type TreeStoredContentStrict,
+} from "../../utils.js";
 
 function createForestSummarizer(args: {
 	// The encoding strategy to use when summarizing the forest.

@@ -29,12 +29,11 @@ import {
 	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
+import { brand, newTupleBTree } from "../../util/index.js";
 import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
-import { brand, newTupleBTree } from "../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,

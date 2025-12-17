@@ -7,10 +7,11 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ChangeAtomId, RevisionTag } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
-import { mintRevisionTag } from "../../utils.js";
 import { type Mutable, brand } from "../../../util/index.js";
-import { assertChangesetsEqual } from "./utils.js";
+import { mintRevisionTag } from "../../utils.js";
+
 import { MarkMaker as Mark } from "./testEdits.js";
+import { assertChangesetsEqual } from "./utils.js";
 
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
