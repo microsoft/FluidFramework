@@ -81,10 +81,10 @@ export interface ValueManager<
 	readonly value?: TValueState;
 
 	/**
-	 * Process an update of value for remote attendee.
-	 * @param attendee - The attendee whose value is being updated
+	 * Process an update of `value` for remote attendee.
+	 * @param attendee - The attendee whose `value` is being updated
 	 * @param received - The revision number received
-	 * @param value - The new value state
+	 * @param value - The new `value` state
 	 */
 	update(attendee: Attendee, received: number, value: TValueState): PostUpdateAction[];
 }

@@ -357,7 +357,7 @@ class ValueMapImpl<T, K extends string> implements StateMap<K, T> {
 	): void {
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				// TODO: try fixing typing of objectEntries to avoid this cast
+				// TODO: AB#55932: try fixing typing of objectEntries to avoid this cast
 				callbackfn(asDeeplyReadonlyDeserializedJson(item.value), key as unknown as K, this);
 			}
 		}
@@ -385,7 +385,7 @@ class ValueMapImpl<T, K extends string> implements StateMap<K, T> {
 		const keys: K[] = [];
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				// TODO: try fixing typing of objectEntries to avoid this cast
+				// TODO: AB#55932: try fixing typing of objectEntries to avoid this cast
 				keys.push(key as unknown as K);
 			}
 		}
@@ -657,13 +657,14 @@ export interface LatestMapArguments<T, Keys extends string = string>
 	/**
 	 * An optional function that will be called at runtime to validate data value
 	 * under a key. A runtime validator is strongly recommended.
-	 * See {@link StateSchemaValidator}.
+	 * @see {@link StateSchemaValidator}.
 	 */
 	validator: StateSchemaValidator<T>;
 	/**
 	 * An optional function that will be called at runtime to validate the presence
 	 * data key. A runtime validator is strongly recommended when key type is not
-	 * simply `string`. See {@link KeySchemaValidator}.
+	 * simply `string`.
+	 * @see {@link KeySchemaValidator}.
 	 */
 	keyValidator?: KeySchemaValidator<Keys>;
 }
@@ -739,7 +740,7 @@ export const latestMap: LatestMapFactory = <
 	// LatestMapRaw takes ownership of values within initialValues.
 	if (initialValues !== undefined) {
 		for (const [key, item] of objectEntries(initialValues)) {
-			// TODO: try fixing typing of objectEntries to avoid this cast
+			// TODO: AB#55932: try fixing typing of objectEntries to avoid this cast
 			const assumedValidKey = key as unknown as Keys;
 			value.items[assumedValidKey] = {
 				rev: 0,
