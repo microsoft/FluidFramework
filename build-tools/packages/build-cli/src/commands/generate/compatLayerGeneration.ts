@@ -19,8 +19,8 @@ import {
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	checkPackageCompatLayerGeneration,
 	generateLayerFileContent,
-	isCurrentPackageVersionPatch,
 	maybeGetNewGeneration,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/compatLayerGeneration.js";
@@ -59,18 +59,31 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 		const { generationDir, outFile, minimumCompatWindowMonths } = this.flags;
 		const generationFileFullPath = path.join(pkg.directory, generationDir, outFile);
 
-		const currentPkgVersion = pkg.version;
-		// "patch" versions do trigger generation updates.
-		if (isCurrentPackageVersionPatch(currentPkgVersion)) {
-			this.verbose(`Patch version detected; skipping generation update.`);
+		// Use the shared check logic to determine if update is needed
+		// This eliminates duplicate opt-in and patch version checks
+		const checkResult = await checkPackageCompatLayerGeneration(
+			pkg,
+			generationDir,
+			outFile,
+			minimumCompatWindowMonths,
+			this.logger,
+		);
+
+		if (!checkResult.needsUpdate) {
+			// No update needed; early exit.
+			this.verbose(`No generation update needed; skipping.`);
 			return;
 		}
 
-		// Check if package has opted in via metadata
+		const currentPkgVersion = pkg.version;
 		const { fluidCompatMetadata } = pkg.packageJson;
+
+		// At this point we know fluidCompatMetadata exists because checkPackageCompatLayerGeneration
+		// would have returned needsUpdate: false otherwise
 		if (fluidCompatMetadata === undefined) {
-			this.verbose(
-				`No fluidCompatMetadata found in package.json; skipping (opt-in required).`,
+			// This should not happen since the check said we need an update
+			this.warning(
+				`Unexpected: check said update needed but fluidCompatMetadata is undefined`,
 			);
 			return;
 		}
@@ -82,9 +95,11 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 			this.logger,
 		);
 
+		// This should not be undefined since checkPackageCompatLayerGeneration said we need an update
 		if (newGeneration === undefined) {
-			// No update needed; early exit.
-			this.verbose(`No generation update needed; skipping.`);
+			this.warning(
+				`Unexpected: check said update needed but maybeGetNewGeneration returned undefined`,
+			);
 			return;
 		}
 

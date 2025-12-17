@@ -104,7 +104,7 @@ export const generation = ${generation};
  */
 export function maybeGetNewGeneration(
 	currentPkgVersion: string,
-	fluidCompatMetadata: IFluidCompatibilityMetadata | {},
+	fluidCompatMetadata: IFluidCompatibilityMetadata | Record<string, never>,
 	minimumCompatWindowMonths: number,
 	log?: Logger,
 ): number | undefined {

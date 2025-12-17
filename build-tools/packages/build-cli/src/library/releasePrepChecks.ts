@@ -16,6 +16,19 @@ import type { Context } from "./context.js";
 import { getPreReleaseDependencies } from "./package.js";
 
 /**
+ * Extracts an array of packages from either a MonoRepo or a single Package.
+ * This is a common pattern in check functions that need to operate on packages.
+ *
+ * @param releaseGroupOrPackage - Either a MonoRepo or a single Package
+ * @returns An array of packages to check
+ */
+function getPackagesToCheck(releaseGroupOrPackage: MonoRepo | Package): Package[] {
+	return releaseGroupOrPackage instanceof MonoRepo
+		? releaseGroupOrPackage.packages
+		: [releaseGroupOrPackage];
+}
+
+/**
  * An async function that executes a release preparation check. The function returns a {@link CheckResult} with details
  * about the results of the check.
  *
@@ -99,10 +112,7 @@ export const CheckDependenciesInstalled: CheckFunction = async (
 	_context: Context,
 	releaseGroupOrPackage: MonoRepo | Package,
 ): Promise<CheckResult> => {
-	const packagesToCheck =
-		releaseGroupOrPackage instanceof MonoRepo
-			? releaseGroupOrPackage.packages
-			: [releaseGroupOrPackage];
+	const packagesToCheck = getPackagesToCheck(releaseGroupOrPackage);
 
 	const installChecks = await Promise.all(
 		packagesToCheck.map(async (pkg) => pkg.checkInstall(false)),
@@ -243,10 +253,7 @@ export const CheckCompatLayerGeneration: CheckFunction = async (
 	_context: Context,
 	releaseGroupOrPackage: MonoRepo | Package,
 ): Promise<CheckResult> => {
-	const packagesToCheck =
-		releaseGroupOrPackage instanceof MonoRepo
-			? releaseGroupOrPackage.packages
-			: [releaseGroupOrPackage];
+	const packagesToCheck = getPackagesToCheck(releaseGroupOrPackage);
 
 	const { packagesNeedingUpdate } = await checkPackagesCompatLayerGeneration(
 		packagesToCheck,
