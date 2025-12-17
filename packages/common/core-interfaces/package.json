@@ -161,7 +161,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_FluidErrorTypes": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

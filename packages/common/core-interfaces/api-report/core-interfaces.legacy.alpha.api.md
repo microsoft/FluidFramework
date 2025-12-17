@@ -29,6 +29,7 @@ export const FluidErrorTypes: {
     readonly dataCorruptionError: "dataCorruptionError";
     readonly dataProcessingError: "dataProcessingError";
     readonly usageError: "usageError";
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
 };
 
 // @beta @legacy (undocumented)
@@ -36,12 +37,12 @@ export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTy
 
 // @alpha @legacy
 export const FluidErrorTypesAlpha: {
-    readonly layerIncompatibilityError: "layerIncompatibilityError";
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
     readonly dataCorruptionError: "dataCorruptionError";
     readonly dataProcessingError: "dataProcessingError";
     readonly usageError: "usageError";
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
 };
 
 // @alpha @legacy (undocumented)
@@ -310,12 +311,12 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
     readonly handle: IFluidHandle;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ILayerIncompatibilityError extends IErrorBase {
     readonly actualDifferenceInMonths: number;
     readonly compatibilityRequirementsInMonths: number;
     readonly details: string;
-    readonly errorType: typeof FluidErrorTypesAlpha.layerIncompatibilityError;
+    readonly errorType: typeof FluidErrorTypes.layerIncompatibilityError;
     readonly incompatibleLayer: string;
     readonly incompatibleLayerVersion: string;
     readonly layer: string;
