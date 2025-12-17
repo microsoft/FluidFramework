@@ -250,6 +250,10 @@ export function createOdspNetworkError(
 				error = new FluidInvalidSchemaError(errorMessage, driverProps);
 				break;
 			}
+			if (innerMostErrorCode === "fluidEpochNotProvided") {
+				error = new RetryableError(errorMessage, OdspErrorTypes.usageError, driverProps);
+				break;
+			}
 			error = new NonRetryableError(
 				errorMessage,
 				DriverErrorTypes.genericNetworkError,

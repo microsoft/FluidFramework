@@ -6,8 +6,28 @@
 import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
 import { ResetMode } from "simple-git";
+import {
+	DEFAULT_GENERATION_DIR,
+	DEFAULT_GENERATION_FILE_NAME,
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	checkPackagesCompatLayerGeneration,
+	formatCompatLayerGenerationError,
+} from "./compatLayerGeneration.js";
 import type { Context } from "./context.js";
 import { getPreReleaseDependencies } from "./package.js";
+
+/**
+ * Extracts an array of packages from either a MonoRepo or a single Package.
+ * This is a common pattern in check functions that need to operate on packages.
+ *
+ * @param releaseGroupOrPackage - Either a MonoRepo or a single Package
+ * @returns An array of packages to check
+ */
+function getPackagesToCheck(releaseGroupOrPackage: MonoRepo | Package): Package[] {
+	return releaseGroupOrPackage instanceof MonoRepo
+		? releaseGroupOrPackage.packages
+		: [releaseGroupOrPackage];
+}
 
 /**
  * An async function that executes a release preparation check. The function returns a {@link CheckResult} with details
@@ -93,10 +113,7 @@ export const CheckDependenciesInstalled: CheckFunction = async (
 	_context: Context,
 	releaseGroupOrPackage: MonoRepo | Package,
 ): Promise<CheckResult> => {
-	const packagesToCheck =
-		releaseGroupOrPackage instanceof MonoRepo
-			? releaseGroupOrPackage.packages
-			: [releaseGroupOrPackage];
+	const packagesToCheck = getPackagesToCheck(releaseGroupOrPackage);
 
 	const installChecks = await Promise.all(
 		packagesToCheck.map(async (pkg) => pkg.checkInstall(false)),
@@ -226,5 +243,29 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 			message: "Found some untagged asserts. These should be tagged before release.",
 			fixCommand: "pnpm run policy-check:asserts",
 		};
+	}
+};
+
+/**
+ * Checks that packages with compat layer metadata have up-to-date generation files.
+ * This check is lenient - packages without metadata or generation files are skipped.
+ */
+export const CheckCompatLayerGeneration: CheckFunction = async (
+	_context: Context,
+	releaseGroupOrPackage: MonoRepo | Package,
+): Promise<CheckResult> => {
+	const packagesToCheck = getPackagesToCheck(releaseGroupOrPackage);
+
+	const { packagesNeedingUpdate } = await checkPackagesCompatLayerGeneration(
+		packagesToCheck,
+		DEFAULT_GENERATION_DIR,
+		DEFAULT_GENERATION_FILE_NAME,
+		DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	);
+
+	if (packagesNeedingUpdate.length > 0) {
+		const releaseGroup =
+			releaseGroupOrPackage instanceof MonoRepo ? releaseGroupOrPackage.kind : undefined;
+		return formatCompatLayerGenerationError(packagesNeedingUpdate, releaseGroup);
 	}
 };

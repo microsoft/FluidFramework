@@ -26,7 +26,7 @@ export class ReplayArgs {
 	public testSummaries = false;
 	public strictChannels = false;
 
-	public checkArgs() {
+	public checkArgs(): void {
 		if (this.from > this.to) {
 			throw new Error(`ERROR: --from argument should be less or equal to --to argument`);
 		}

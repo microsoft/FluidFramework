@@ -113,7 +113,7 @@ async function resolveDriveItemByServerRelativePath(
 	server: string,
 	serverRelativePath: string,
 	clientConfig: IPublicClientConfig,
-) {
+): Promise<IOdspDriveItem> {
 	return resolveWrapper<IOdspDriveItem>(
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		(authRequestInfo) =>
@@ -127,7 +127,7 @@ async function resolveChildrenByDriveItem(
 	server: string,
 	folderDriveItem: IOdspDriveItem,
 	clientConfig: IPublicClientConfig,
-) {
+): Promise<IOdspDriveItem[]> {
 	return resolveWrapper<IOdspDriveItem[]>(
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		(authRequestInfo) => getChildrenByDriveItem(folderDriveItem, server, authRequestInfo),
@@ -140,7 +140,7 @@ export async function getSharepointFiles(
 	server: string,
 	serverRelativePath: string,
 	recurse: boolean,
-) {
+): Promise<IOdspDriveItem[]> {
 	const fileInfo = await resolveDriveItemByServerRelativePath(
 		server,
 		serverRelativePath,
@@ -177,7 +177,11 @@ export async function getSharepointFiles(
 	return files;
 }
 
-export async function getSingleSharePointFile(server: string, drive: string, item: string) {
+export async function getSingleSharePointFile(
+	server: string,
+	drive: string,
+	item: string,
+): Promise<IOdspDriveItem> {
 	return resolveWrapper<IOdspDriveItem>(
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		(authRequestInfo) => getDriveItemFromDriveAndItem(server, drive, item, authRequestInfo),

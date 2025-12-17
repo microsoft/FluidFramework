@@ -105,7 +105,7 @@ export {
 	tryGetChunk,
 	type ChunkedCursor,
 	DetachedFieldIndexFormatVersion,
-	getCodecTreeForDetachedFieldIndexFormat,
+	detachedFieldIndexCodecBuilder,
 } from "./tree/index.js";
 
 export {

@@ -19,7 +19,7 @@ describe("Check Dependencies", () => {
 // Store visited packages so we don't iterate them multiple times
 const visitedPkgDirs: string[] = [];
 
-const verifyNoFluidPackages = async (dir: string) => {
+const verifyNoFluidPackages = async (dir: string): Promise<void> => {
 	const entries = await fs.promises.opendir(dir);
 	const searches: Promise<void>[] = [];
 	for await (const entry of entries) {

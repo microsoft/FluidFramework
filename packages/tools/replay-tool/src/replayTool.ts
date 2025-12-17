@@ -63,7 +63,7 @@ class ReplayProcessArgs extends ReplayArgs {
 		this.parseArguments();
 	}
 
-	public parseArguments() {
+	public parseArguments(): void {
 		if (process.argv.length <= 2) {
 			this.printUsage();
 			process.exit(-1);
@@ -163,7 +163,7 @@ class ReplayProcessArgs extends ReplayArgs {
 		}
 	}
 
-	public parseStrArg(i: number) {
+	public parseStrArg(i: number): string {
 		if (i >= process.argv.length) {
 			console.error(`ERROR: Missing ${process.argv[i - 1]} argument`);
 			this.printUsage();
@@ -172,7 +172,7 @@ class ReplayProcessArgs extends ReplayArgs {
 		return process.argv[i];
 	}
 
-	public parseIntArg(i: number) {
+	public parseIntArg(i: number): number {
 		if (i >= process.argv.length) {
 			console.error(`ERROR: Missing ${process.argv[i - 1]} argument`);
 			this.printUsage();
@@ -188,7 +188,7 @@ class ReplayProcessArgs extends ReplayArgs {
 		return paramNumber;
 	}
 
-	public printUsage() {
+	public printUsage(): void {
 		console.log("Usage: replayTool [options]");
 		const empty = "".padEnd(32);
 		for (const rec of optionsArray) {
