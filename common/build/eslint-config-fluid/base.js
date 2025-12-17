@@ -22,7 +22,8 @@ module.exports = {
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/recommended-type-checked",
 		"plugin:@typescript-eslint/stylistic-type-checked",
-		"plugin:depend/recommended",
+		// NOTE: eslint-plugin-depend is ESM-only and cannot be loaded via legacy config.
+		// It is configured directly in flat.mts for flat config consumers.
 		// import-x/recommended is the combination of import-x/errors and import-x/warnings
 		"plugin:import-x/recommended",
 		"plugin:import-x/typescript",
@@ -40,7 +41,9 @@ module.exports = {
 		sourceType: "module",
 		project: "./tsconfig.json",
 	},
-	plugins: ["depend", "import-x", "unicorn"],
+	// NOTE: eslint-plugin-depend is ESM-only and cannot be loaded via legacy config.
+	// It is configured directly in flat.mts for flat config consumers.
+	plugins: ["import-x", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
 		// Please keep entries alphabetized within a group
@@ -137,19 +140,8 @@ module.exports = {
 			},
 		],
 
-		// eslint-plugin-depend
-		"depend/ban-dependencies": [
-			"error",
-			{
-				allowed: [
-					// axios replacement with fetch is ongoing: https://github.com/microsoft/FluidFramework/pull/25592
-					"axios",
-
-					// fs-extra is well-maintained and provides a useful readJson/writeJson API which is what we mainly use.
-					"fs-extra",
-				],
-			},
-		],
+		// NOTE: eslint-plugin-depend is ESM-only and cannot be loaded via legacy config.
+		// The depend/ban-dependencies rule is configured in flat.mts for flat config consumers.
 
 		// #region eslint-plugin-import-x
 
