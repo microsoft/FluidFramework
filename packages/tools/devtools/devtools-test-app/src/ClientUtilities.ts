@@ -96,7 +96,8 @@ export async function loadExistingContainer(
 	console.log("Container loaded!");
 	const container = model.container;
 
-	if ((container.connectionState as ConnectionState) !== ConnectionState.Connected) {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+	if (container.connectionState !== ConnectionState.Connected) {
 		console.log("Connecting to container...");
 		await new Promise<void>((resolve) => {
 			container.once("connected", () => {

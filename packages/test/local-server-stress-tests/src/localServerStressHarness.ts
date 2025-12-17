@@ -897,9 +897,8 @@ async function synchronizeClients(connectedClients: Client[]): Promise<void> {
 		let pendingTimeout: ReturnType<typeof setTimeout> | undefined;
 
 		const rejectHandler = (error?: IErrorBase | undefined): void => {
-			const client = connectedClients.find(
-				(c) => c.container.closed === true || c.container.disposed === true,
-			);
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+			const client = connectedClients.find((c) => c.container.closed || c.container.disposed);
 			if (client !== undefined) {
 				reject(
 					wrapError(

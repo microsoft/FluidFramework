@@ -211,7 +211,8 @@ function testObjectLike(testCases: TestCaseErased[]) {
 			test1((subject) => {
 				const all = Object.getOwnPropertyDescriptors(subject);
 				return Object.fromEntries(
-					Object.entries(all).filter(([key, descriptor]) => descriptor.enumerable === true),
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+					Object.entries(all).filter(([key, descriptor]) => descriptor.enumerable),
 				);
 			});
 		});

@@ -46,7 +46,8 @@ class SubSequenceTestClient extends TestClient {
 		this.walkSegments(
 			(s) => {
 				if (SubSequence.is(s)) {
-					items += JSON.stringify(s.items);
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
+					items += s.items.toString();
 				}
 				return true;
 			},

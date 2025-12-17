@@ -241,7 +241,8 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	private insertInternal(...values: any[]): void {
 		for (const value of values) {
 			if (value) {
-				value._id ??= uuid();
+				// Explicit empty string check to treat "" as missing (matching behavior elsewhere in this file)
+				value._id = value._id === "" ? uuid() : (value._id ?? uuid());
 				sessionStorage.setItem(`${this.collectionName}-${value._id}`, JSON.stringify(value));
 			}
 		}
