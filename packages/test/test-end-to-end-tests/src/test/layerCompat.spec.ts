@@ -42,7 +42,10 @@ import { localDriverCompatDetailsForLoader } from "@fluidframework/local-driver/
 import { odspDriverCompatDetailsForLoader } from "@fluidframework/odsp-driver/internal";
 import { r11sDriverCompatDetailsForLoader } from "@fluidframework/routerlicious-driver/internal";
 import { isLayerIncompatibilityError } from "@fluidframework/telemetry-utils/internal";
-import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import {
+	createTestConfigProvider,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 type ILayerCompatSupportRequirementsOverride = Omit<
 	ILayerCompatSupportRequirements,
@@ -258,9 +261,7 @@ function getExpectedErrorEvents(
 	let telemetryNamespace: string = ":";
 	switch (layer1) {
 		case "loader":
-			if (layer2 === "runtime") {
-				telemetryNamespace = ":Container:";
-			}
+			telemetryNamespace = ":Container:";
 			break;
 		case "runtime":
 			telemetryNamespace =
@@ -449,4 +450,97 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 			}
 		});
 	}
+
+	describe("Config flag to disable layer compatibility validation", () => {
+		it("DisableLayerCompatibilityValidation set to true disables validation during container creation", async () => {
+			// Get test params for a layer combination that would normally fail validation
+			const testParams = getLayerTestParams("runtime", "dataStore");
+			const layer1SupportRequirements = testParams.layer1SupportRequirements;
+
+			// Set up incompatible configuration
+			const originalMinSupportedGeneration = layer1SupportRequirements.minSupportedGeneration;
+			layer1SupportRequirements.minSupportedGeneration =
+				testParams.layer2CompatDetails.generation + 1;
+
+			try {
+				// Create config provider with validation disabled
+				const configProvider = createTestConfigProvider();
+				configProvider.set("Fluid.DisableLayerCompatibilityValidation", true);
+
+				// This should NOT throw an error even though the layers are incompatible
+				await assert.doesNotReject(
+					provider.makeTestContainer({ loaderProps: { configProvider } }),
+					"Container creation should succeed when layer validation is disabled",
+				);
+			} finally {
+				// Restore original value
+				layer1SupportRequirements.minSupportedGeneration = originalMinSupportedGeneration;
+			}
+		});
+
+		it("DisableLayerCompatibilityValidation set to true disables validation during container load", async () => {
+			// Get test params for a layer combination that would normally fail validation
+			const testParams = getLayerTestParams("runtime", "dataStore");
+			const layer1SupportRequirements = testParams.layer1SupportRequirements;
+
+			// First create a container normally
+			await provider.makeTestContainer();
+
+			// Set up incompatible configuration
+			const originalMinSupportedGeneration = layer1SupportRequirements.minSupportedGeneration;
+			layer1SupportRequirements.minSupportedGeneration =
+				testParams.layer2CompatDetails.generation + 1;
+
+			try {
+				// Create config provider with validation disabled
+				const configProvider = createTestConfigProvider();
+				configProvider.set("Fluid.DisableLayerCompatibilityValidation", true);
+
+				// This should NOT throw an error even though the layers are incompatible
+				await assert.doesNotReject(
+					provider.loadTestContainer({ loaderProps: { configProvider } }),
+					"Container load should succeed when layer validation is disabled",
+				);
+			} finally {
+				// Restore original value
+				layer1SupportRequirements.minSupportedGeneration = originalMinSupportedGeneration;
+			}
+		});
+
+		itExpects(
+			"DisableLayerCompatibilityValidation set to false (default) enables validation",
+			[
+				{ eventName: "fluid:telemetry:FluidDataStoreContext:LayerIncompatibilityError" },
+				{ eventName: "fluid:telemetry:FluidDataStoreContext:AttachRuntimeError" },
+				{ eventName: "fluid:telemetry:Container:ContainerDispose" },
+			],
+			async () => {
+				// Get test params for a layer combination that would normally fail validation
+				const testParams = getLayerTestParams("runtime", "dataStore");
+				const layer1SupportRequirements = testParams.layer1SupportRequirements;
+
+				// Set up incompatible configuration
+				const originalMinSupportedGeneration =
+					layer1SupportRequirements.minSupportedGeneration;
+				layer1SupportRequirements.minSupportedGeneration =
+					testParams.layer2CompatDetails.generation + 1;
+
+				try {
+					// Create config provider with validation explicitly set to false
+					const configProvider = createTestConfigProvider();
+					configProvider.set("Fluid.DisableLayerCompatibilityValidation", false);
+
+					// This SHOULD throw an error because the layers are incompatible
+					await assert.rejects(
+						provider.makeTestContainer({ loaderProps: { configProvider } }),
+						(e: Error) => isLayerIncompatibilityError(e),
+						"Container creation should fail when layer validation is enabled (default behavior)",
+					);
+				} finally {
+					// Restore original value
+					layer1SupportRequirements.minSupportedGeneration = originalMinSupportedGeneration;
+				}
+			},
+		);
+	});
 });
