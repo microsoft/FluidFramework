@@ -112,7 +112,7 @@ function loadWorkspacesFromLegacyConfigEntry(
 
 	// Apply gitignore filtering
 	const packageJsonPaths = filterByGitignoreSync(allFiles, cwd).map(
-		// Make the paths relative to the repo root
+		// Make the paths relative to the buildProject root
 		(filePath) => path.relative(buildProject.root, filePath),
 	);
 	const workspaces = packageJsonPaths.flatMap((pkgPath) => {
