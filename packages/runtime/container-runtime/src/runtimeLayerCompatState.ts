@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	validateLayerCompatibility,
-	type ITelemetryLoggerExt,
+	type MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
@@ -97,7 +97,8 @@ export const dataStoreSupportRequirementsForRuntime: ILayerCompatSupportRequirem
 export function validateLoaderCompatibility(
 	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
-	logger: ITelemetryLoggerExt,
+	mc: MonitoringContext,
+	strictCompatibilityCheck: boolean,
 ): void {
 	validateLayerCompatibility(
 		"runtime",
@@ -106,7 +107,8 @@ export function validateLoaderCompatibility(
 		loaderSupportRequirementsForRuntime,
 		maybeLoaderCompatDetailsForRuntime,
 		disposeFn,
-		logger,
+		mc,
+		strictCompatibilityCheck,
 	);
 }
 
@@ -117,7 +119,7 @@ export function validateLoaderCompatibility(
 export function validateDatastoreCompatibility(
 	maybeDataStoreCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: () => void,
-	logger: ITelemetryLoggerExt,
+	mc: MonitoringContext,
 ): void {
 	validateLayerCompatibility(
 		"runtime",
@@ -126,6 +128,6 @@ export function validateDatastoreCompatibility(
 		dataStoreSupportRequirementsForRuntime,
 		maybeDataStoreCompatDetailsForRuntime,
 		disposeFn,
-		logger,
+		mc,
 	);
 }

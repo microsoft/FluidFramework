@@ -1622,10 +1622,20 @@ export class ContainerRuntime
 
 		// Validate that the Loader is compatible with this Runtime.
 		const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
+
+		// By default, use strictCompatibilityCheck  - If the Loader doesn't provide compatibility details, fail fast as
+		// Loader can drift far from the Runtime causing issues.
+		// Can be disabled via config "Fluid.ContainerRuntime.DisableStrictLoaderLayerCompatibilityCheck".
+		const disableStrictLoaderLayerCompatibilityCheck = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableStrictLoaderLayerCompatibilityCheck",
+		);
 		validateLoaderCompatibility(
 			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
 			this.disposeFn,
-			this.mc.logger,
+			this.mc,
+			disableStrictLoaderLayerCompatibilityCheck === true
+				? false
+				: true /* strictCompatibilityCheck */,
 		);
 
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.

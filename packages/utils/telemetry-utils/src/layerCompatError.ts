@@ -12,12 +12,34 @@ import {
 import type { IErrorBase } from "@fluidframework/core-interfaces";
 
 import { LayerIncompatibilityError } from "./error.js";
-import type { ITelemetryLoggerExt } from "./telemetryTypes.js";
+import type { MonitoringContext } from "./config.js";
+
+/**
+ * The config key to disable layer compatibility validation.
+ */
+const disableLayerCompatibilityValidationKey = "Fluid.DisableLayerCompatibilityValidation";
 
 /**
  * Validates the compatibility between two layers using their compatibility details and support requirements.
  * If the layers are incompatible, it logs an "LayerIncompatibilityError" error event. It will also call the dispose
  * function with the error and throw the error.
+ * @param layer1 - The name of the first layer.
+ * @param layer2 - The name of the second layer.
+ * @param compatDetailsLayer1 - The compatibility details of the first layer.
+ * @param compatSupportRequirementsLayer1 - The support requirements that the second layer must meet to be compatible
+ * with the first layer.
+ * @param maybeCompatDetailsLayer2 - The compatibility details of the second layer. This can be undefined if the
+ * second layer does not provide compatibility details.
+ * @param disposeFn - A function that will be called with the error if the layers are incompatible.
+ * @param mc - The monitoring context for logging and reading configuration.
+ * @param strictCompatibilityCheck - If true, the function will use default compatibility details for the second layer if
+ * they are missing and use it for validation.
+ * If false, it will skip the compatibility check if the details are missing and just log an error.
+ * Defaults to false.
+ *
+ * If true, the function will consider missing compatibility details for the second layer as incompatible and
+ * throw an error if the compatibility details of the
+ * second layer are missing. If false, it will skip the validation if the compatibility details are missing.
  *
  * @internal
  */
@@ -28,8 +50,36 @@ export function validateLayerCompatibility(
 	compatSupportRequirementsLayer1: ILayerCompatSupportRequirements,
 	maybeCompatDetailsLayer2: ILayerCompatDetails | undefined,
 	disposeFn: (error?: IErrorBase) => void,
-	logger: ITelemetryLoggerExt,
+	mc: MonitoringContext,
+	strictCompatibilityCheck: boolean = false,
 ): void {
+	// Check if the validation is disabled via config. This provides a way to bypass compatibility validation
+	// while this feature is being rolled out.
+	if (mc.config.getBoolean(disableLayerCompatibilityValidationKey) === true) {
+		return;
+	}
+
+	if (maybeCompatDetailsLayer2 === undefined && !strictCompatibilityCheck) {
+		// If there is no compatibility details, skip the validation. This can be true for a couple of reasons:
+		// 1. Layer2's version is older than the version where compatibility enforcement was introduced. In this
+		// case, we don't fail fast and the behavior is the same as before compatibility enforcement was introduced.
+		// 2. Layer2 has a custom implementation which doesn't provide compatibility details. In this case, we don't
+		// fail fast because we don't know for sure that it is incompatible. It may fail at a later point when it tries
+		// to use some feature that the Runtime doesn't support.
+		const properties = {
+			layer: layer1,
+			skippedLayer: layer2,
+			layerVersion: compatDetailsLayer1.pkgVersion,
+			layerGeneration: compatDetailsLayer1.generation,
+			minSupportedGeneration: compatSupportRequirementsLayer1.minSupportedGeneration,
+		};
+		mc.logger.sendErrorEvent({
+			eventName: "LayerCompatibilityValidationSkipped",
+			details: JSON.stringify(properties),
+		});
+		return;
+	}
+
 	const layerCheckResult = checkLayerCompatibility(
 		compatSupportRequirementsLayer1,
 		maybeCompatDetailsLayer2,
@@ -61,7 +111,7 @@ export function validateLayerCompatibility(
 				details: JSON.stringify(detailedProperties),
 			},
 		);
-		logger.sendErrorEvent(
+		mc.logger.sendErrorEvent(
 			{
 				eventName: "LayerIncompatibilityError",
 			},

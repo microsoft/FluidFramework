@@ -19,6 +19,7 @@ import {
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import {
 	createChildLogger,
+	createChildMonitoringContext,
 	isLayerIncompatibilityError,
 } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -134,7 +135,7 @@ describe("Runtime Layer compatibility", () => {
 	 * and has the correct error / properties.
 	 */
 	describe("Validation error and properties", () => {
-		const logger = createChildLogger();
+		const mc = createChildMonitoringContext({ logger: createChildLogger() });
 		const testCases: {
 			layerType: "loader" | "dataStore";
 			layerSupportRequirements: ILayerCompatSupportRequirementsOverride;
@@ -146,14 +147,19 @@ describe("Runtime Layer compatibility", () => {
 			{
 				layerType: "loader",
 				validateCompatibility: (maybeCompatDetails, disposeFn) =>
-					validateLoaderCompatibility(maybeCompatDetails, disposeFn, logger),
+					validateLoaderCompatibility(
+						maybeCompatDetails,
+						disposeFn,
+						mc,
+						false /* strictCompatibilityCheck */,
+					),
 				layerSupportRequirements:
 					loaderSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
 			},
 			{
 				layerType: "dataStore",
 				validateCompatibility: (maybeCompatDetails, disposeFn) =>
-					validateDatastoreCompatibility(maybeCompatDetails, disposeFn, logger),
+					validateDatastoreCompatibility(maybeCompatDetails, disposeFn, mc),
 				layerSupportRequirements:
 					dataStoreSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
 			},
