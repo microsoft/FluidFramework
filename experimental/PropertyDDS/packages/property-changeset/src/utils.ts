@@ -1870,6 +1870,7 @@ export namespace Utils {
 				in_options.escapeLeadingDoubleUnderscore &&
 				k &&
 				k.length > 2 &&
+				// eslint-disable-next-line @typescript-eslint/prefer-string-starts-ends-with
 				k[0] === "_" &&
 				k[1] === "_" &&
 				k[2] !== "_"

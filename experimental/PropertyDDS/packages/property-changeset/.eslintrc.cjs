@@ -16,6 +16,7 @@ module.exports = {
 		"@typescript-eslint/ban-ts-comment": "off",
 		"@typescript-eslint/consistent-type-definitions": "off",
 		"@typescript-eslint/dot-notation": "off",
+		"@typescript-eslint/explicit-function-return-type": "warn",
 		"@typescript-eslint/no-dynamic-delete": "off",
 		"@typescript-eslint/no-invalid-this": "off",
 		"@typescript-eslint/no-empty-interface": "off",

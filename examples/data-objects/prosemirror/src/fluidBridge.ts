@@ -121,7 +121,7 @@ export class ProseMirrorTransactionBuilder {
 		return offset + 1;
 	}
 
-	private addRange(range: ISequenceDeltaRange) {
+	private addRange(range: ISequenceDeltaRange): void {
 		// Let's assume some things...
 		// ... we will *never* delete an inserted node.
 		// ... deletes will always apply to the ether
@@ -227,7 +227,7 @@ export class ProseMirrorTransactionBuilder {
 		}
 	}
 
-	public addSequencedDelta(delta: SequenceDeltaEvent) {
+	public addSequencedDelta(delta: SequenceDeltaEvent): void {
 		for (const range of delta.ranges) {
 			// The range has a position
 			// ... range.position
@@ -428,7 +428,7 @@ export function sliceToGroupOps(
 }
 
 // Likely a cleaner way to detect the gap than checking every offset adjust - but brute forcing for now
-function adjustOffset(from, offset, value, insert, gapDistance) {
+function adjustOffset(from, offset, value, insert, gapDistance): number {
 	const newFrom = from + offset + value;
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return newFrom === insert ? offset + value + gapDistance : offset + value;
@@ -443,7 +443,7 @@ function sliceToGroupOpsInternal(
 	ops: IMergeTreeDeltaOp[],
 	insert?: number,
 	gapDistance?: number,
-) {
+): number {
 	let offset = 0;
 
 	let props: any;
@@ -528,7 +528,7 @@ function sliceToGroupOpsInternal(
 	return offset;
 }
 
-function generateFragment(segments: ISegment[]) {
+function generateFragment(segments: ISegment[]): IProseMirrorNode[] {
 	const nodeStack = new Array<IProseMirrorNode>();
 	nodeStack.push({ type: "doc", content: [] });
 

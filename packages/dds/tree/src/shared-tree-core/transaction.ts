@@ -14,7 +14,7 @@ import {
 	type GraphCommit,
 	type TaggedChange,
 } from "../core/index.js";
-import { getOrCreate } from "../util/index.js";
+import { getLast, getOrCreate, hasSome } from "../util/index.js";
 
 import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 
@@ -93,11 +93,31 @@ export interface TransactionEvents {
 }
 
 /**
+ * Callbacks for transaction lifecycle events.
+ */
+export interface Callbacks {
+	/**
+	 * Called when the current transaction is popped from the {@link TransactionStack | stack}.
+	 */
+	readonly onPop?: OnPop;
+	/**
+	 * Called when a nested transaction is pushed onto the {@link TransactionStack | stack}.
+	 * @remarks
+	 * Transactions may be arbitrarily nested (by {@link TransactionStack.start | start}ing a transaction within a transaction that is already in progress).
+	 * The `OnPush` callback for an (outer) transaction may optionally return another `OnPush` callback that is associated with any nested (inner) transaction(s).
+	 * In that case, the inner `OnPush` will be called when those inner transactions are pushed and the outer `OnPush` will not be called.
+	 * Put another way, a transaction always results in a call to exactly one `OnPush` callback - whichever is closest to the transaction.
+	 * The event "bubbles up" to (and no further past) its first registered callback.
+	 */
+	readonly onPush?: OnPush;
+}
+
+/**
  * A function that will be called when a transaction is pushed to the {@link TransactionStack | stack}.
- * @remarks This function may return {@link OnPop | its complement} - another function that will be called when the transaction is popped from the stack.
+ * @remarks This function may return other functions that will be called when the transaction is popped from the stack or a nested transaction is pushed onto the stack.
  * This function runs just before the transaction begins, so if this is the beginning of an outermost (not nested) transaction then {@link Transactor.isInProgress} will be false during its execution.
  */
-export type OnPush = () => OnPop | void;
+export type OnPush = () => Callbacks | void;
 
 /**
  * A function that will be called when a transaction is popped from the {@link TransactionStack | stack}.
@@ -110,8 +130,8 @@ export type OnPop = (result: TransactionResult) => void;
  * @remarks Using a stack allows transactions to nest - i.e. an inner transaction may be started while an outer transaction is already in progress.
  */
 export class TransactionStack implements Transactor, IDisposable {
-	readonly #stack: (OnPop | void)[] = [];
-	readonly #onPush?: () => OnPop | void;
+	readonly #stack: Callbacks[] = [];
+	readonly #onPush?: OnPush;
 
 	readonly #events = createEmitter<TransactionEvents>();
 	public get events(): Listenable<TransactionEvents> {
@@ -127,7 +147,7 @@ export class TransactionStack implements Transactor, IDisposable {
 	 * Construct a new {@link TransactionStack}.
 	 * @param onPush - A {@link OnPush | function} that will be called when a transaction begins.
 	 */
-	public constructor(onPush?: () => OnPop | void) {
+	public constructor(onPush?: OnPush) {
 		this.#onPush = onPush;
 	}
 
@@ -138,7 +158,9 @@ export class TransactionStack implements Transactor, IDisposable {
 
 	public start(): void {
 		this.ensureNotDisposed();
-		this.#stack.push(this.#onPush?.());
+		const onPushCurrent = hasSome(this.#stack) ? getLast(this.#stack).onPush : this.#onPush;
+		const { onPush, onPop } = onPushCurrent?.() ?? {};
+		this.#stack.push({ onPop, onPush: onPush ?? onPushCurrent });
 		this.#events.emit("started");
 	}
 
@@ -148,7 +170,7 @@ export class TransactionStack implements Transactor, IDisposable {
 			throw new UsageError("No transaction to commit");
 		}
 		this.#events.emit("committing");
-		this.#stack.pop()?.(TransactionResult.Commit);
+		this.#stack.pop()?.onPop?.(TransactionResult.Commit);
 	}
 
 	public abort(): void {
@@ -157,7 +179,7 @@ export class TransactionStack implements Transactor, IDisposable {
 			throw new UsageError("No transaction to abort");
 		}
 		this.#events.emit("aborting");
-		this.#stack.pop()?.(TransactionResult.Abort);
+		this.#stack.pop()?.onPop?.(TransactionResult.Abort);
 	}
 
 	public dispose(): void {
@@ -185,7 +207,6 @@ export class SquashingTransactionStack<
 	TEditor extends ChangeFamilyEditor,
 	TChange,
 > extends TransactionStack {
-	public readonly branch: SharedTreeBranch<TEditor, TChange>;
 	#transactionBranch?: SharedTreeBranch<TEditor, TChange>;
 
 	/**
@@ -245,55 +266,77 @@ export class SquashingTransactionStack<
 	 * @param branch - The {@link SquashingTransactionStack.branch | branch} that will be forked off of when a transaction begins.
 	 * @param squash - Called once when the outer-most transaction is committed to produce a single squashed change from the transaction's commits.
 	 * The change will be applied to the original {@link SquashingTransactionStack.branch | branch}.
-	 * @param onPush - {@link OnPush | A function} that will be called when a transaction is pushed to the {@link TransactionStack | stack}.
+	 * @param onPush - A function that will be called when a transaction is pushed to the {@link TransactionStack | stack}.
 	 */
 	public constructor(
-		branch: SharedTreeBranch<TEditor, TChange>,
+		public readonly branch: SharedTreeBranch<TEditor, TChange>,
 		squash: (commits: GraphCommit<TChange>[]) => TaggedChange<TChange>,
-		onPush?: OnPush,
+		onPush?: () => OnPop | void,
 	) {
-		super(() => {
-			// Keep track of the commit that each transaction was on when it started
-			// TODO:#8603: This may need to be computed differently if we allow rebasing during a transaction.
-			const startHead = this.activeBranch.getHead();
-			const onPop = onPush?.();
-			const transactionBranch = this.#transactionBranch ?? this.branch.fork();
-			this.setTransactionBranch(transactionBranch);
-			transactionBranch.editor.enterTransaction();
-			return (result) => {
-				assert(this.#transactionBranch !== undefined, 0xa98 /* Expected transaction branch */);
-				this.#transactionBranch.editor.exitTransaction();
-				switch (result) {
-					case TransactionResult.Abort:
-						// When a transaction is aborted, roll back all the transaction's changes on the current branch
-						this.#transactionBranch.removeAfter(startHead);
-						break;
-					case TransactionResult.Commit:
-						// If this was the outermost transaction closing...
-						if (!this.isInProgress()) {
-							if (this.#transactionBranch.getHead() !== startHead) {
-								// ...squash all the new commits on the transaction branch into a new commit on the original branch
-								const removedCommits: GraphCommit<TChange>[] = [];
-								findAncestor(
-									[this.#transactionBranch.getHead(), removedCommits],
-									(c) => c === startHead,
-								);
-								branch.apply(squash(removedCommits));
+		super(
+			// Invoked when an outer transaction starts
+			(): Callbacks => {
+				// Keep track of the commit that each transaction was on when it started
+				// TODO:#8603: This may need to be computed differently if we allow rebasing during a transaction.
+				const startHead = this.activeBranch.getHead();
+				const outerOnPop = onPush?.();
+				const transactionBranch = this.branch.fork(startHead);
+				this.setTransactionBranch(transactionBranch);
+				transactionBranch.editor.enterTransaction();
+				// Invoked when an outer transaction ends
+				const onOuterTransactionPop: OnPop = (result) => {
+					assert(!this.isInProgress(), "The outer transaction should be ending");
+					transactionBranch.editor.exitTransaction();
+					switch (result) {
+						case TransactionResult.Abort:
+							// When a transaction is aborted, roll back all the transaction's changes on the current branch
+							transactionBranch.removeAfter(startHead);
+							break;
+						case TransactionResult.Commit: {
+							// ...squash all the new commits on the transaction branch into a new commit on the original branch
+							const removedCommits: GraphCommit<TChange>[] = [];
+							findAncestor(
+								[transactionBranch.getHead(), removedCommits],
+								(c) => c === startHead,
+							);
+							if (removedCommits.length > 0) {
+								this.branch.apply(squash(removedCommits));
 							}
+							break;
 						}
-						break;
-					default:
-						unreachableCase(result);
-				}
-				if (!this.isInProgress()) {
-					this.#transactionBranch.dispose();
+						default:
+							unreachableCase(result);
+					}
+					transactionBranch.dispose();
 					this.setTransactionBranch(undefined);
-				}
-				onPop?.(result);
-			};
-		});
-
-		this.branch = branch;
+					outerOnPop?.(result);
+				};
+				// Invoked when a nested transaction begins
+				const onNestedTransactionPush: OnPush = () => {
+					const nestedStartHead = this.activeBranch.getHead();
+					const nestedOuterOnPop = onPush?.();
+					transactionBranch.editor.enterTransaction();
+					return {
+						// Invoked when a nested transaction ends
+						onPop: (result) => {
+							transactionBranch.editor.exitTransaction();
+							switch (result) {
+								case TransactionResult.Abort:
+									// When a transaction is aborted, roll back all the transaction's changes on the current branch
+									transactionBranch.removeAfter(nestedStartHead);
+									break;
+								case TransactionResult.Commit:
+									break;
+								default:
+									unreachableCase(result);
+							}
+							nestedOuterOnPop?.(result);
+						},
+					};
+				};
+				return { onPop: onOuterTransactionPop, onPush: onNestedTransactionPush };
+			},
+		);
 	}
 
 	/** Updates the transaction branch (and therefore the active branch) and rebinds the branch events. */

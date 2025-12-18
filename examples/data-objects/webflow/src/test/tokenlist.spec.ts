@@ -51,7 +51,7 @@ describe("TokenList", () => {
 	});
 
 	describe("set", () => {
-		function test(tokens: string[], token: string) {
+		function test(tokens: string[], token: string): void {
 			const tokenList = tokens.join(" ");
 			tokens.push(token);
 			const expected = tokens.join(" ");
@@ -92,7 +92,7 @@ describe("TokenList", () => {
 	});
 
 	describe("unset", () => {
-		function test(tokens: string[], token: string) {
+		function test(tokens: string[], token: string): void {
 			const tokenList = tokens.join(" ");
 			const toRemove = tokens.indexOf(token);
 			if (toRemove >= 0) {
@@ -120,7 +120,7 @@ describe("TokenList", () => {
 	});
 
 	describe("computeToggle", () => {
-		function test(testCase: string, tokens: string[], toToggle: string[]) {
+		function test(testCase: string, tokens: string[], toToggle: string[]): void {
 			const tokenList = tokens.join(" ");
 			const expectedAdd = toToggle.filter((token) => !tokens.includes(token));
 			const expectedRemove = toToggle.filter((token) => tokens.includes(token));
