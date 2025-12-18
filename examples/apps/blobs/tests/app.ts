@@ -90,7 +90,7 @@ async function createOrLoadContainerAndRenderInElement(
 	}
 
 	const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
-	const render = (blobCollection: IBlobCollection) => {
+	const render = (blobCollection: IBlobCollection): void => {
 		const appElement = document.createElement("div");
 		const debugElement = document.createElement("div");
 		element.append(debugElement, appElement);

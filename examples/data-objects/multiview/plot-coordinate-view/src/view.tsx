@@ -24,7 +24,7 @@ export const PlotCoordinateView: React.FC<IPlotCoordinateViewProps> = (
 	const [x, setX] = React.useState(props.model.x);
 	const [y, setY] = React.useState(props.model.y);
 
-	React.useEffect(() => {
+	React.useEffect((): (() => void) => {
 		const onCoordinateChanged = (): void => {
 			setX(props.model.x);
 			setY(props.model.y);

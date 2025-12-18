@@ -83,9 +83,10 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 					/>
 				) as any;
 
-				let getMountableDefaultView = async () => view;
+				let getMountableDefaultView = async (): Promise<any> => view;
 				if (MountableView.canMount(view)) {
-					getMountableDefaultView = async () => new MountableView(view);
+					getMountableDefaultView = async (): Promise<MountableView> =>
+						new MountableView(view);
 				}
 
 				return {

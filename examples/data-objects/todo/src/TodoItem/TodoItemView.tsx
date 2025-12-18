@@ -30,14 +30,14 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 
 	useTree(todoItemModel);
 
-	useEffect(() => {
-		void Promise.resolve(todoItemModel.title.get()).then((text) => {
+	useEffect((): void => {
+		void Promise.resolve(todoItemModel.title.get()).then((text): void => {
 			setItemTitle(text as SharedString);
 		});
 	}, [todoItemModel.title]);
 
-	useEffect(() => {
-		void Promise.resolve(todoItemModel.description.get()).then((text) => {
+	useEffect((): void => {
+		void Promise.resolve(todoItemModel.description.get()).then((text): void => {
 			setItemDescription(text as SharedString);
 		});
 	}, [todoItemModel.description]);
@@ -62,7 +62,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 				<button
 					className="todo-item-expand-button"
 					name="toggleDetailsVisible"
-					onClick={() => {
+					onClick={(): void => {
 						setDetailsVisible(!detailsVisible);
 					}}
 				>
