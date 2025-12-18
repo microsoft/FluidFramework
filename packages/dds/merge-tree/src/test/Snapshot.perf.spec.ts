@@ -36,7 +36,7 @@ describe("MergeTree snapshots", () => {
 
 		if (summarySize > 5000) {
 			const currentTimeout = test.timeout();
-			// Default value of 2 seconds causes failure around P95 for the largest snapshot size.
+			// Default value of 2 seconds causes failure around P95 for large snapshot sizes.
 			test.timeout(currentTimeout === 0 ? 0 : Math.max(5000, currentTimeout));
 		}
 	}
