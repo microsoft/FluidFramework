@@ -267,25 +267,30 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 				tree.root = undefined;
 				break;
 			}
-			default:
+			default: {
 				assert.fail("Invalid edit.");
+			}
 		}
 		return;
 	}
 	assert(Tree.is(parentNode, tree.currentSchema));
 
 	switch (fieldEdit.change.type) {
-		case "sequence":
+		case "sequence": {
 			applySequenceFieldEdit(tree, parentNode, fieldEdit.change.edit);
 			break;
-		case "required":
+		}
+		case "required": {
 			applyRequiredFieldEdit(tree, parentNode, fieldEdit.change.edit);
 			break;
-		case "optional":
+		}
+		case "optional": {
 			applyOptionalFieldEdit(tree, parentNode, fieldEdit.change.edit);
 			break;
-		default:
+		}
+		default: {
 			break;
+		}
 	}
 }
 
@@ -328,8 +333,9 @@ function applySequenceFieldEdit(
 
 			break;
 		}
-		default:
+		default: {
 			assert.fail("Invalid edit.");
+		}
 	}
 }
 
@@ -339,8 +345,9 @@ function applyRequiredFieldEdit(tree: FuzzView, parentNode: FuzzNode, change: Se
 			parentNode.requiredChild = generateFuzzNode(change.value, tree.currentSchema);
 			break;
 		}
-		default:
+		default: {
 			assert.fail("Invalid edit.");
+		}
 	}
 }
 
@@ -358,8 +365,9 @@ function applyOptionalFieldEdit(
 			parentNode.optionalChild = undefined;
 			break;
 		}
-		default:
+		default: {
 			assert.fail("Invalid edit.");
+		}
 	}
 }
 
@@ -397,8 +405,9 @@ export function applyTransactionBoundary(
 			checkout.transaction.abort();
 			break;
 		}
-		default:
+		default: {
 			unreachableCase(boundary);
+		}
 	}
 
 	if (!checkout.transaction.isInProgress()) {
@@ -423,8 +432,9 @@ export function applyUndoRedoEdit(
 			redoStack.pop()?.revert();
 			break;
 		}
-		default:
+		default: {
 			unreachableCase(operation);
+		}
 	}
 }
 
@@ -443,8 +453,9 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 			}
 			break;
 		}
-		default:
+		default: {
 			unreachableCase(constraint.content.type);
+		}
 	}
 }
 
@@ -452,12 +463,14 @@ function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
 	let currentNode = tree.root as TreeNode;
 	for (const pathStep of path) {
 		switch (pathStep.field) {
-			case "rootFieldKey":
+			case "rootFieldKey": {
 				break;
-			case "":
+			}
+			case "": {
 				assert(pathStep.index !== undefined);
 				currentNode = (currentNode as ArrayChildren).at(pathStep.index) as TreeNode;
 				break;
+			}
 			case "arrayChildren": {
 				const arrayChildren =
 					(currentNode as FuzzNode).arrayChildren ??
@@ -481,8 +494,9 @@ function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
 				currentNode = requiredChild as FuzzNode;
 				break;
 			}
-			default:
+			default: {
 				assert.fail(`Unexpected field type: ${pathStep.field}`);
+			}
 		}
 	}
 
@@ -503,12 +517,15 @@ function nodeSchemaForNodeType(nodeSchema: typeof FuzzNode, nodeType: string) {
 
 function generateFuzzNode(node: GeneratedFuzzNode, nodeSchema: typeof FuzzNode) {
 	switch (node.type) {
-		case GeneratedFuzzValueType.String:
+		case GeneratedFuzzValueType.String: {
 			return node.value as string;
-		case GeneratedFuzzValueType.Number:
+		}
+		case GeneratedFuzzValueType.Number: {
 			return node.value as number;
-		case GeneratedFuzzValueType.Handle:
+		}
+		case GeneratedFuzzValueType.Handle: {
 			return node.value as IFluidHandle;
+		}
 		case GeneratedFuzzValueType.NodeObject: {
 			const nodeObjectSchema = nodeSchemaForNodeType(nodeSchema, "treeFuzz.node");
 			return new nodeObjectSchema({
@@ -523,7 +540,8 @@ function generateFuzzNode(node: GeneratedFuzzNode, nodeSchema: typeof FuzzNode) 
 				value: guid,
 			}) as GUIDNode;
 		}
-		default:
+		default: {
 			unreachableCase(node.type, "invalid GeneratedFuzzNode");
+		}
 	}
 }

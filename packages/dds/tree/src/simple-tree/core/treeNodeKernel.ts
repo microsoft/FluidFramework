@@ -448,13 +448,16 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	): void {
 		this.#assertNotDisposed();
 		switch (eventName) {
-			case "childrenChangedAfterBatch":
+			case "childrenChangedAfterBatch": {
 				assert(arg !== undefined, 0xc50 /* childrenChangedAfterBatch should have arg */);
 				return this.#handleChildrenChangedAfterBatch(arg.changedFields);
-			case "subtreeChangedAfterBatch":
+			}
+			case "subtreeChangedAfterBatch": {
 				return this.#handleSubtreeChangedAfterBatch();
-			default:
+			}
+			default: {
 				unreachableCase(eventName);
+			}
 		}
 	}
 
