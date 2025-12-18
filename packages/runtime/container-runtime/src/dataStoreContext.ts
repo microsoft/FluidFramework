@@ -1096,7 +1096,7 @@ export abstract class FluidDataStoreContext
 	public reSubmit(
 		message: FluidDataStoreMessage,
 		localOpMetadata: unknown,
-		squash?: boolean,
+		squash: boolean,
 	): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
 		this.channel.reSubmit(message.type, message.content, localOpMetadata, squash);

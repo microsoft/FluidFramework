@@ -1820,7 +1820,7 @@ export class ComposableChannelCollection
 		type: string,
 		content: unknown,
 		localOpMetadata: unknown,
-		squash?: boolean,
+		squash: boolean,
 	): void {
 		// If the cast is incorrect and type is not one of the three supported,
 		// reSubmitContainerMessage will assert.
