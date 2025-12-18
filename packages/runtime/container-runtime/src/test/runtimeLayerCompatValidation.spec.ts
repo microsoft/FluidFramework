@@ -370,7 +370,7 @@ describe("Runtime Layer compatibility", () => {
 
 			configProvider = createTestConfigProvider();
 			logger = new MockLogger();
-			mc = mixinMonitoringContext(logger, configProvider);
+			mc = mixinMonitoringContext(logger.toTelemetryLogger(), configProvider);
 		});
 
 		afterEach(() => {

@@ -68,7 +68,6 @@ export {
 	tagCodeArtifacts,
 	TelemetryDataTag,
 	type TelemetryEventPropertyTypes,
-	TelemetryLogger,
 } from "./logger.js";
 export {
 	createMockLoggerExt,
@@ -99,4 +98,4 @@ export type {
 	TelemetryEventCategory,
 } from "./telemetryTypes.js";
 export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
-export { validateLayerCompatibility } from "./layerCompatError.js";
+export { allowIncompatibleLayerKey, validateLayerCompatibility } from "./layerCompatError.js";

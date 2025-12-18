@@ -16,8 +16,9 @@ import type { MonitoringContext } from "./config.js";
 
 /**
  * The config key to disable layer compatibility validation.
+ * @internal
  */
-const disableLayerCompatibilityValidationKey = "Fluid.DisableLayerCompatibilityValidation";
+export const allowIncompatibleLayerKey = "Fluid.AllowIncompatibleLayer";
 
 /**
  * Validates the compatibility between two layers using their compatibility details and support requirements.
@@ -49,33 +50,6 @@ export function validateLayerCompatibility(
 	mc: MonitoringContext,
 	strictCompatibilityCheck: boolean = false,
 ): void {
-	// Check if the validation is disabled via config. This provides a way to bypass compatibility validation
-	// while this feature is being rolled out.
-	if (mc.config.getBoolean(disableLayerCompatibilityValidationKey) === true) {
-		return;
-	}
-
-	if (maybeCompatDetailsLayer2 === undefined && !strictCompatibilityCheck) {
-		// If there is no compatibility details, skip the validation. This can be true for a couple of reasons:
-		// 1. Layer2's version is older than the version where compatibility enforcement was introduced. In this
-		// case, we don't fail fast and the behavior is the same as before compatibility enforcement was introduced.
-		// 2. Layer2 has a custom implementation which doesn't provide compatibility details. In this case, we don't
-		// fail fast because we don't know for sure that it is incompatible. It may fail at a later point when it tries
-		// to use some feature that the Runtime doesn't support.
-		const properties = {
-			layer: layer1,
-			skippedLayer: layer2,
-			layerVersion: compatDetailsLayer1.pkgVersion,
-			layerGeneration: compatDetailsLayer1.generation,
-			minSupportedGeneration: compatSupportRequirementsLayer1.minSupportedGeneration,
-		};
-		mc.logger.sendErrorEvent({
-			eventName: "LayerCompatibilityValidationSkipped",
-			details: JSON.stringify(properties),
-		});
-		return;
-	}
-
 	const layerCheckResult = checkLayerCompatibility(
 		compatSupportRequirementsLayer1,
 		maybeCompatDetailsLayer2,
@@ -107,6 +81,30 @@ export function validateLayerCompatibility(
 				details: JSON.stringify(detailedProperties),
 			},
 		);
+
+		if (
+			mc.config.getBoolean(allowIncompatibleLayerKey) === true ||
+			(maybeCompatDetailsLayer2 === undefined && !strictCompatibilityCheck)
+		) {
+			// Bypass disposal and throwing of the error in the following conditions:
+			// 1. Validation is explicitly disabled via config which provides a way to bypass compatibility validation
+			//    while this feature is being rolled out.
+			// 2. There is no compatibility details for layer2. This can be true for a couple of reasons:
+			//    2.1. layer2's version is older than the version where compatibility enforcement was introduced.
+			//         In this case, we don't fail fast and the behavior is the same as before compatibility enforcement
+			//         was introduced.
+			//    2.2. layer2 has a custom implementation which doesn't provide compatibility details. In this case,
+			//         we don't fail fast because we don't know for sure that it is incompatible. It may fail at a
+			//         later point when it tries to use some feature that the Runtime doesn't support.
+			mc.logger.sendTelemetryEvent(
+				{
+					eventName: "LayerIncompatibilityDetectedButBypassed",
+				},
+				error,
+			);
+			return;
+		}
+
 		mc.logger.sendErrorEvent(
 			{
 				eventName: "LayerIncompatibilityError",

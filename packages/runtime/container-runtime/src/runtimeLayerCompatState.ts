@@ -105,8 +105,9 @@ export function validateLoaderCompatibility(
 	disposeFn: (error?: ICriticalContainerError) => void,
 	mc: MonitoringContext,
 ): void {
-	// By default, use strictCompatibilityCheck  - If the Loader doesn't provide compatibility details, fail fast as
-	// Loader can drift far from the Runtime causing issues.
+	// By default, use strictCompatibilityCheck here - If the Loader doesn't provide compatibility details,
+	// assume it's a very old version and should be considered incompatible,
+	// since Loader can drift far from the Runtime causing issues.
 	// Can be disabled via config `disableStrictLoaderLayerCompatibilityCheckKey`.
 	const disableStrictLoaderLayerCompatibilityCheck = mc.config.getBoolean(
 		disableStrictLoaderLayerCompatibilityCheckKey,
