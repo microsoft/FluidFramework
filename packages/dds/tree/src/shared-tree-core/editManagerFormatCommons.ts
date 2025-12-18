@@ -157,23 +157,23 @@ export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", 
 	 */
 	v5: 5,
 	/**
+	 * Introduced and made available for writing in 2.80.0
+	 * Adds support for "no change" constraints.
+	 */
+	v6: 6,
+	/**
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
 	vSharedBranches: "shared-branches|v0.1",
-	/**
-	 * Not yet released.
-	 * Used for new constraints.
-	 */
-	vAlphaConstraints: "alphaconstraints|v0.1",
 });
 export type EditManagerFormatVersion = Values<typeof EditManagerFormatVersion>;
 export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> =
 	new Set([
 		EditManagerFormatVersion.v3,
 		EditManagerFormatVersion.v4,
+		EditManagerFormatVersion.v6,
 		EditManagerFormatVersion.vSharedBranches,
-		EditManagerFormatVersion.vAlphaConstraints,
 	]);
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(
 	Object.values(EditManagerFormatVersion),

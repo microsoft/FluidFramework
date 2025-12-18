@@ -58,6 +58,7 @@ export function clientVersionToEditManagerFormatVersion(
 		getConfigForMinVersionForCollab(clientVersion, {
 			[lowestMinVersionForCollab]: EditManagerFormatVersion.v3,
 			[FluidClientVersion.v2_43]: EditManagerFormatVersion.v4,
+			[FluidClientVersion.v2_80]: EditManagerFormatVersion.v6,
 		}),
 	);
 
@@ -71,15 +72,6 @@ export function editManagerFormatVersionSelectorForSharedBranches(
 	clientVersion: MinimumVersionForCollab,
 ): EditManagerFormatVersion {
 	return brand(EditManagerFormatVersion.vSharedBranches);
-}
-
-/**
- * Returns the version that should be used for testing alpha constraints.
- */
-export function editManagerFormatVersionSelectorForConstraints(
-	clientVersion: MinimumVersionForCollab,
-): EditManagerFormatVersion {
-	return brand(EditManagerFormatVersion.vAlphaConstraints);
 }
 
 export interface EditManagerCodecOptions {
@@ -147,7 +139,8 @@ export function makeEditManagerCodecs<TChangeset>(
 			case unbrand(EditManagerFormatVersion.v2):
 				return [version, makeDiscontinuedCodecVersion(options, version, "2.73.0")];
 			case unbrand(EditManagerFormatVersion.v3):
-			case unbrand(EditManagerFormatVersion.v4): {
+			case unbrand(EditManagerFormatVersion.v4):
+			case unbrand(EditManagerFormatVersion.v6): {
 				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,
@@ -161,13 +154,6 @@ export function makeEditManagerCodecs<TChangeset>(
 				return [
 					version,
 					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
-				];
-			}
-			case unbrand(EditManagerFormatVersion.vAlphaConstraints): {
-				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
-				return [
-					version,
-					makeV1CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
 			default:
