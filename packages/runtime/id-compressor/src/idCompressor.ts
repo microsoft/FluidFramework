@@ -41,6 +41,7 @@ import {
 import type {
 	IIdCompressor,
 	IIdCompressorCore,
+	IIdCompressorInternal,
 	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressor,
@@ -76,7 +77,7 @@ function rangeFinalizationError(expectedStart: number, actualStart: number): Log
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
  */
-export class IdCompressor implements IIdCompressor, IIdCompressorCore {
+export class IdCompressor implements IIdCompressor, IIdCompressorCore, IIdCompressorInternal {
 	/**
 	 * Max allowed initial cluster size.
 	 */
@@ -181,6 +182,15 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			this.telemetryLocalIdCount++;
 			return this.generateNextLocalId();
 		}
+	}
+
+	public burnIds(count: number = 1000): number {
+		// assert no ghost session ongoing
+		assert(!this.ongoingGhostSession, "Ids should not be burned during a ghost session");
+		const firstId = this.localGenCount + 1;
+		this.localGenCount += count;
+		this.normalizer.addLocalRange(this.localGenCount, count);
+		return localIdFromGenCount(firstId);
 	}
 
 	public generateDocumentUniqueId():

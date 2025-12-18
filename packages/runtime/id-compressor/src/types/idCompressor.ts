@@ -261,3 +261,18 @@ export interface IIdCompressor {
 	 */
 	tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
+
+/**
+ * Internal interface for advanced ID compressor operations that should not be publicly exported.
+ * This interface provides functionality needed for sandbox isolation and other internal use cases.
+ * @internal
+ */
+export interface IIdCompressorInternal {
+	/**
+	 * Burns a range of IDs to reserve them for sandboxed environments.
+	 * This allows creating isolated ID spaces that won't collide with the main session.
+	 * @param count - Number of IDs to burn (default: 1000)
+	 * @returns The first local ID of the burned range
+	 */
+	burnIds(count?: number): number;
+}

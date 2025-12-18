@@ -14,9 +14,11 @@ export {
 	generateStableId,
 	isStableId,
 } from "./utilities.js";
+export { SandboxedIdCompressor } from "./sandboxedIdCompressor.js";
 export type {
 	IIdCompressorCore,
 	IIdCompressor,
+	IIdCompressorInternal,
 	SerializedIdCompressor,
 	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,

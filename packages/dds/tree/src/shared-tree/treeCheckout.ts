@@ -7,6 +7,7 @@ import { assert, unreachableCase, fail } from "@fluidframework/core-utils/intern
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorInternal } from "@fluidframework/id-compressor/internal";
 import {
 	UsageError,
 	type ITelemetryLoggerExt,
@@ -267,6 +268,13 @@ export interface ITreeCheckout extends AnchorLocator, ViewableTree, WithBreakabl
 	 * This is only intended for use in testing and exceptional code paths: it is not performant.
 	 */
 	getRemovedRoots(): [string | number | undefined, number, JsonableTree][];
+
+	/**
+	 * Prepares this checkout for sandbox isolation by burning IDs in the ID compressor.
+	 * @param burnCount - Number of IDs to burn (default: 1000)
+	 * @returns Object containing the base ID of the sandbox and the number of IDs burned
+	 */
+	prepareForSandbox(burnCount?: number): { baseId: number; count: number };
 }
 
 /**
@@ -905,6 +913,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 		cursor.free();
 		return trees;
+	}
+
+	public prepareForSandbox(burnCount: number = 1000): { baseId: number; count: number } {
+		// Cast to access internal burnIds method
+		const internalCompressor = this.idCompressor as IIdCompressor & IIdCompressorInternal;
+
+		// Burn IDs to reserve a range for sandboxed environments
+		const firstId = internalCompressor.burnIds(burnCount);
+
+		return { baseId: firstId, count: burnCount };
 	}
 
 	/**

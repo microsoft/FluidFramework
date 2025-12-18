@@ -10,7 +10,11 @@ export type {
 	SerializedIdCompressorWithOngoingSession,
 } from "./persisted-types/index.js";
 
-export type { IIdCompressorCore, IIdCompressor } from "./idCompressor.js";
+export type {
+	IIdCompressorCore,
+	IIdCompressor,
+	IIdCompressorInternal,
+} from "./idCompressor.js";
 
 export type {
 	SessionSpaceCompressedId,

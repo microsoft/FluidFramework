@@ -196,6 +196,9 @@ describe("schematizeTree", () => {
 			getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
 				throw new Error("Function not implemented.");
 			},
+			prepareForSandbox(_burnCount?: number): { baseId: number; count: number } {
+				throw new Error("Function not implemented.");
+			},
 			locate(anchor: Anchor): AnchorNode | undefined {
 				throw new Error("Function not implemented.");
 			},

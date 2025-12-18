@@ -1421,6 +1421,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
 		throw new Error("Method 'getRemovedRoots' not implemented in MockTreeCheckout.");
 	}
+	public prepareForSandbox(_burnCount?: number): { baseId: number; count: number } {
+		throw new Error("Method 'prepareForSandbox' not implemented in MockTreeCheckout.");
+	}
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		throw new Error("Method 'locate' not implemented in MockTreeCheckout.");
 	}
