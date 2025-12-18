@@ -41,7 +41,7 @@ export class Constellation extends DataObject implements IConstellation {
 		this.root.on("valueChanged", (changed: IValueChanged): void => {
 			if (changed.key === starListKey) {
 				this.updateStarsFromRoot()
-					.then((): void => this.emit("constellationChanged"))
+					.then((): boolean => this.emit("constellationChanged"))
 					.catch((error): void => console.error(error));
 			}
 		});
