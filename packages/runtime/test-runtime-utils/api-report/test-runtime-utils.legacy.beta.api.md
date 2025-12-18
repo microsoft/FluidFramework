@@ -191,7 +191,7 @@ export class MockDeltaConnection implements IDeltaConnection {
     // (undocumented)
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
-    reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void;
+    reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void;
     // (undocumented)
     rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -490,7 +490,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void;
+    reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void;
     // (undocumented)
     rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)

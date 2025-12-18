@@ -429,7 +429,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash: boolean): void;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;

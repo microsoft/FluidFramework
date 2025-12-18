@@ -114,7 +114,7 @@ export interface ClientSpec {
 export interface ChangeConnectionState {
 	type: "changeConnectionState";
 	connected: boolean;
-	squash?: boolean;
+	squash: boolean;
 }
 
 /**
@@ -685,6 +685,7 @@ export function mixinReconnect<
 					const op: ChangeConnectionState = {
 						type: "changeConnectionState",
 						connected: !state.client.containerRuntime.connected,
+						squash: false,
 					};
 					if (options.testSquashResubmit === true && op.connected && state.random.bool(0.5)) {
 						op.squash = true;

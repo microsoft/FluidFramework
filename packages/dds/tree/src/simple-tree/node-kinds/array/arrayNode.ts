@@ -972,14 +972,14 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 	public removeRange(start?: number, end?: number): void {
 		const field = getSequenceField(this);
-		const { length } = field;
+		const { length, editor } = field;
 		const removeStart = start ?? 0;
 		validateIndex(removeStart, field, "TreeArrayNode.removeRange", true);
 
 		const removeEnd = Math.min(length, end ?? length);
 		validateIndexRange(removeStart, removeEnd, field, "TreeArrayNode.removeRange");
 
-		field.editor.remove(removeStart, removeEnd - removeStart);
+		editor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
