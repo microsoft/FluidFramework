@@ -55,6 +55,7 @@ export function clientVersionToMessageFormatVersion(
 		getConfigForMinVersionForCollab(clientVersion, {
 			[lowestMinVersionForCollab]: MessageFormatVersion.v3,
 			[FluidClientVersion.v2_43]: MessageFormatVersion.v4,
+			[FluidClientVersion.v2_80]: MessageFormatVersion.v6,
 		}),
 	);
 	return writeVersionOverride ?? compatibleVersion;
@@ -80,15 +81,6 @@ export function messageFormatVersionSelectorForSharedBranches(
 	clientVersion: MinimumVersionForCollab,
 ): MessageFormatVersion {
 	return brand(MessageFormatVersion.vSharedBranches);
-}
-
-/**
- * Returns the version that should be used for testing table constraints.
- */
-export function messageFormatVersionSelectorForConstraints(
-	clientVersion: MinimumVersionForCollab,
-): MessageFormatVersion {
-	return brand(MessageFormatVersion.vAlphaConstraints);
 }
 
 export function makeMessageCodec<TChangeset>(
@@ -152,7 +144,8 @@ export function makeMessageCodecs<TChangeset>(
 				];
 			}
 			case unbrand(MessageFormatVersion.v3):
-			case unbrand(MessageFormatVersion.v4): {
+			case unbrand(MessageFormatVersion.v4):
+			case unbrand(MessageFormatVersion.v6): {
 				const changeCodec = changeCodecs.resolve(
 					dependentChangeFormatVersion.lookup(version),
 				).json;
@@ -170,15 +163,6 @@ export function makeMessageCodecs<TChangeset>(
 				return [
 					version,
 					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
-				];
-			}
-			case unbrand(MessageFormatVersion.vAlphaConstraints): {
-				const changeCodec = changeCodecs.resolve(
-					dependentChangeFormatVersion.lookup(version),
-				).json;
-				return [
-					version,
-					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
 			default:

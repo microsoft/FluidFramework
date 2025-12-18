@@ -411,6 +411,7 @@ export const FluidClientVersion: {
     readonly v2_52: "2.52.0";
     readonly v2_73: "2.73.0";
     readonly v2_74: "2.74.0";
+    readonly v2_80: "2.80.0";
 };
 
 // @public
@@ -1441,7 +1442,6 @@ export interface SharedTreeFormatOptions {
 
 // @alpha @input
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
-    readonly enableAlphaConstraints?: boolean;
     readonly enableSharedBranches?: boolean;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 }
