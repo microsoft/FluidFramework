@@ -18,7 +18,13 @@ import { z } from "zod";
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
 import { getExposedProperties, type PropertyDef } from "./propertyBinding.js";
-import { getFriendlyName, isNamedSchema, llmDefault, unqualifySchema } from "./utils.js";
+import {
+	getFriendlyName,
+	isNamedSchema,
+	llmDefault,
+	resolveShortNameCollisions,
+	unqualifySchema,
+} from "./utils.js";
 import { instanceOfs, renderZodTypeScript } from "./renderZodTypeScript.js";
 
 interface BoundMembers {
@@ -66,9 +72,14 @@ export function renderSchemaTypeScript(
 	const friendlyNames = new Map<string, string>();
 	let hasHelperMethods = false;
 
-	for (const identifier of definitions.keys()) {
-		if (isNamedSchema(identifier)) {
-			friendlyNames.set(identifier, unqualifySchema(identifier));
+	// Resolve short name collisions for all named schemas
+	const namedIdentifiers = [...definitions.keys()].filter((element) => isNamedSchema(element));
+	const collisionResolvedNames = resolveShortNameCollisions(namedIdentifiers);
+
+	for (const identifier of namedIdentifiers) {
+		const resolvedName = collisionResolvedNames.get(identifier);
+		if (resolvedName !== undefined) {
+			friendlyNames.set(identifier, resolvedName);
 		}
 	}
 
