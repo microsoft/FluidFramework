@@ -21,7 +21,7 @@ const disableLayerCompatibilityValidationKey = "Fluid.DisableLayerCompatibilityV
 
 /**
  * Validates the compatibility between two layers using their compatibility details and support requirements.
- * If the layers are incompatible, it logs an "LayerIncompatibilityError" error event. It will also call the dispose
+ * If the layers are incompatible, it logs a "LayerIncompatibilityError" error event. It will also call the dispose
  * function with the error and throw the error.
  * @param layer1 - The name of the first layer.
  * @param layer2 - The name of the second layer.
@@ -36,10 +36,6 @@ const disableLayerCompatibilityValidationKey = "Fluid.DisableLayerCompatibilityV
  * they are missing and use it for validation.
  * If false, it will skip the compatibility check if the details are missing and just log an error.
  * Defaults to false.
- *
- * If true, the function will consider missing compatibility details for the second layer as incompatible and
- * throw an error if the compatibility details of the
- * second layer are missing. If false, it will skip the validation if the compatibility details are missing.
  *
  * @internal
  */

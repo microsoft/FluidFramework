@@ -3,14 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ITelemetryBaseEvent,
-	type ITelemetryBaseLogger,
-	LogLevel,
-} from "@fluidframework/core-interfaces";
+import { type ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { createChildLogger } from "./logger.js";
+import { createChildLogger, TelemetryLogger } from "./logger.js";
 import type {
 	ITelemetryEventExt,
 	ITelemetryLoggerExt,
@@ -25,7 +21,7 @@ import type {
  *
  * @internal
  */
-export class MockLogger implements ITelemetryBaseLogger {
+export class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
 	/**
 	 * Gets an immutable copy of the events logged thus far.
 	 */
@@ -41,6 +37,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	public readonly minLogLevel: LogLevel;
 
 	public constructor(minLogLevel?: LogLevel) {
+		super();
 		this.minLogLevel = minLogLevel ?? LogLevel.default;
 	}
 

@@ -20,6 +20,12 @@ import {
 import { pkgVersion } from "./packageVersion.js";
 
 /**
+ * The config key to disable strict loader layer compatibility check.
+ */
+export const disableStrictLoaderLayerCompatibilityCheckKey =
+	"Fluid.ContainerRuntime.DisableStrictLoaderLayerCompatibilityCheck";
+
+/**
  * The core compatibility details of the Runtime layer that is the same across all layer boundaries.
  * @internal
  */
@@ -98,8 +104,13 @@ export function validateLoaderCompatibility(
 	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
 	mc: MonitoringContext,
-	strictCompatibilityCheck: boolean,
 ): void {
+	// By default, use strictCompatibilityCheck  - If the Loader doesn't provide compatibility details, fail fast as
+	// Loader can drift far from the Runtime causing issues.
+	// Can be disabled via config `disableStrictLoaderLayerCompatibilityCheckKey`.
+	const disableStrictLoaderLayerCompatibilityCheck = mc.config.getBoolean(
+		disableStrictLoaderLayerCompatibilityCheckKey,
+	);
 	validateLayerCompatibility(
 		"runtime",
 		"loader",
@@ -108,7 +119,7 @@ export function validateLoaderCompatibility(
 		maybeLoaderCompatDetailsForRuntime,
 		disposeFn,
 		mc,
-		strictCompatibilityCheck,
+		disableStrictLoaderLayerCompatibilityCheck !== true /* strictCompatibilityCheck */,
 	);
 }
 
