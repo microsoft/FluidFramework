@@ -174,6 +174,7 @@ export class SharedCounter
 				const pendingOp = this.pendingOps.shift();
 				const messageId = messageContent.localOpMetadata;
 				assert(typeof messageId === "number", 0xc8e /* localOpMetadata should be a number */);
+				// FIXME: Changed from explicit undefined check to optional chaining. Relies on messageId never being undefined.
 				assert(
 					pendingOp?.messageId === messageId &&
 						pendingOp.type === op.type &&
@@ -219,6 +220,7 @@ export class SharedCounter
 			0xc90 /* localOpMetadata should be a number */,
 		);
 		const pendingOp = this.pendingOps.pop();
+		// FIXME: Changed from explicit undefined check to optional chaining. Relies on localOpMetadata never being undefined.
 		assert(
 			pendingOp?.messageId === localOpMetadata &&
 				pendingOp.type === content.type &&

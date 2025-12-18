@@ -278,6 +278,8 @@ export class SharedPropertyTree extends SharedObject {
 		}
 
 		if (doSubmit || !isEmpty(changes)) {
+			// FIXME: Changed from `||` to `??`. If metadata could be an empty object, behavior is the same,
+			// but if it could be falsy like 0 or "", this differs. Review if metadata type allows such values.
 			this.applyChangeSet(changes, metadata ?? {});
 			this.root.cleanDirty();
 		}

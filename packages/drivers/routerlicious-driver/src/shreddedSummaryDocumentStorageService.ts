@@ -76,6 +76,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 	}
 
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+		// FIXME: Changed from `?:` to `??`. If versionId is empty string "", behavior differs.
 		const id = versionId ?? this.id;
 		const commits = await PerformanceEvent.timedExecAsync(
 			this.logger,

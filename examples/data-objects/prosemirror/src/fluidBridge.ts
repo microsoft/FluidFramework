@@ -450,6 +450,7 @@ function sliceToGroupOpsInternal(
 	if (value.marks) {
 		props = {};
 		for (const mark of value.marks) {
+			// FIXME: Changed from `||` to `??`. If attrs could be null, behavior differs.
 			props[mark.type] = mark.attrs ?? true;
 		}
 	}

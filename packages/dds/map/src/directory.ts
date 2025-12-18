@@ -1886,6 +1886,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (local) {
 			this.sequencedStorageData.clear();
 			const pendingClear = this.pendingStorageData.shift();
+			// FIXME: Changed from explicit undefined check to optional chaining in assertion
 			assert(
 				pendingClear?.type === "clear" && pendingClear === localOpMetadata,
 				0xc04 /* Got a local clear message we weren't expecting */,
@@ -1950,6 +1951,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.type !== "clear" && entry.key === op.key,
 			);
 			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
+			// FIXME: Changed from explicit undefined check to optional chaining in assertion
 			assert(
 				pendingEntry?.type === "delete" && pendingEntry.key === op.key,
 				0xc05 /* Got a local delete message we weren't expecting */,
@@ -2006,6 +2008,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.type !== "clear" && entry.key === key,
 			);
 			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
+			// FIXME: Changed from explicit undefined check to optional chaining in assertion
 			assert(
 				pendingEntry?.type === "lifetime",
 				0xc06 /* Couldn't match local set message to pending lifetime */,
@@ -2070,6 +2073,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.subdirName === op.subdirName,
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+			// FIXME: Changed from explicit undefined check to optional chaining in assertion
 			assert(
 				pendingEntry?.type === "createSubDirectory",
 				0xc30 /* Got a local subdir create message we weren't expecting */,
@@ -2167,6 +2171,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					(entry) => entry.subdirName === op.subdirName,
 				);
 				const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+				// FIXME: Changed from explicit undefined check to optional chaining in assertion
 				assert(
 					pendingEntry?.type === "deleteSubDirectory" &&
 						pendingEntry.subdirName === op.subdirName,
@@ -2185,6 +2190,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.subdirName === op.subdirName,
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+			// FIXME: Changed from explicit undefined check to optional chaining in assertion
 			assert(
 				pendingEntry?.type === "deleteSubDirectory" &&
 					pendingEntry.subdirName === op.subdirName,

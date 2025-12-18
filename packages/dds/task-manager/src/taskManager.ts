@@ -903,6 +903,7 @@ export class TaskManagerClass
 		const latestPendingOps = this.latestPendingOps.get(content.taskId);
 		assert(latestPendingOps !== undefined, 0xc46 /* No pending ops when trying to rollback */);
 		const pendingOpToRollback = latestPendingOps.pop();
+		// FIXME: Changed from explicit undefined check to optional chaining in assertion
 		assert(
 			pendingOpToRollback?.messageId === localOpMetadata,
 			0xc47 /* pending op mismatch */,

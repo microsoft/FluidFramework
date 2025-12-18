@@ -354,6 +354,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 				}
 
 				case "addMark": {
+					// FIXME: Changed from `||` to `??`. If attrs could be null, behavior differs.
 					const attrs = stepAsJson.mark.attrs ?? true;
 
 					this.text.annotateRange(stepAsJson.from, stepAsJson.to, {

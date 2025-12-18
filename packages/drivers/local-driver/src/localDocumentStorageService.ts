@@ -57,6 +57,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	}
 
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+		// FIXME: Changed from `?:` to `??`. If versionId is empty string "", behavior differs.
 		const id = versionId ?? this.id;
 		const commits = await this.manager.getCommits(id, count);
 		return commits.map((commit) => ({

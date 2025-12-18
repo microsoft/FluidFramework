@@ -615,6 +615,7 @@ export class MapKernel {
 		if (mapOp.type === "clear") {
 			// A pending clear will be last in the list, since it terminates all prior lifetimes.
 			const pendingClear = this.pendingData.pop();
+			// FIXME: Changed from explicit undefined check to optional chaining in assertion
 			assert(
 				pendingClear?.type === "clear" && pendingClear === typedLocalOpMetadata,
 				0xbf2 /* Unexpected clear rollback */,
@@ -686,6 +687,7 @@ export class MapKernel {
 				if (local) {
 					this.sequencedData.clear();
 					const pendingClear = this.pendingData.shift();
+					// FIXME: Changed from explicit undefined check to optional chaining in assertion
 					assert(
 						pendingClear?.type === "clear" && pendingClear === localOpMetadata,
 						0xbf6 /* Got a local clear message we weren't expecting */,
@@ -740,6 +742,7 @@ export class MapKernel {
 						(entry) => entry.type !== "clear" && entry.key === key,
 					);
 					const pendingEntry = this.pendingData[pendingEntryIndex];
+					// FIXME: Changed from explicit undefined check to optional chaining in assertion
 					assert(
 						pendingEntry?.type === "delete" && pendingEntry === localOpMetadata,
 						0xbf7 /* Got a local delete message we weren't expecting */,
@@ -778,6 +781,7 @@ export class MapKernel {
 						(entry) => entry.type !== "clear" && entry.key === key,
 					);
 					const pendingEntry = this.pendingData[pendingEntryIndex];
+					// FIXME: Changed from explicit undefined check to optional chaining in assertion
 					assert(
 						pendingEntry?.type === "lifetime",
 						0xbf8 /* Couldn't match local set message to pending lifetime */,
