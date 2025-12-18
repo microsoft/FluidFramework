@@ -57,7 +57,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	}
 
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
-		const id = versionId ?? this.id;
+		const id = versionId ? versionId : this.id;
 		const commits = await this.manager.getCommits(id, count);
 		return commits.map((commit) => ({
 			date: commit.commit.author.date,

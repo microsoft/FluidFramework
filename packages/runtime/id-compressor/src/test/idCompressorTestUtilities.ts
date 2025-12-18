@@ -538,7 +538,9 @@ export class IdCompressorTestNetwork {
 				assert(range.sessionId === compressor.localSessionId);
 				if (range.ids !== undefined) {
 					// initialize firstGenCount if not set
-					firstGenCount ??= range.ids.firstGenCount;
+					if (firstGenCount === undefined) {
+						firstGenCount = range.ids.firstGenCount;
+					}
 					totalCount += range.ids.count;
 					for (const [genCount, count] of range.ids.localIdRanges) {
 						unionedLocalRanges.addLocalRange(genCount, count);

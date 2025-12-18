@@ -187,8 +187,10 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<SF.MoveOut> = { ...effect };
-				// Use the idOverride so we don't normalize the output cell ID
-				normalized.idOverride ??= effectId;
+				if (normalized.idOverride === undefined) {
+					// Use the idOverride so we don't normalize the output cell ID
+					normalized.idOverride = effectId;
+				}
 				normalized.finalEndpoint =
 					normalized.finalEndpoint !== undefined
 						? normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Source)
@@ -201,8 +203,10 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<SF.Remove> = { ...effect };
-				// Use the idOverride so we don't normalize the output cell ID
-				normalized.idOverride ??= effectId;
+				if (normalized.idOverride === undefined) {
+					// Use the idOverride so we don't normalize the output cell ID
+					normalized.idOverride = effectId;
+				}
 				normalized.id = atom.localId;
 				normalized.revision = atom.revision;
 				return normalized as TEffect;

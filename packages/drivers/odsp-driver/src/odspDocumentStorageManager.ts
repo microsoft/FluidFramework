@@ -724,7 +724,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		this.checkSnapshotUrl();
 
 		// Set the module promise right away, so as to not call it twice.
-		this.summaryModuleP ??= this.getDelayLoadedSummaryManager();
+		if (this.summaryModuleP === undefined) {
+			this.summaryModuleP = this.getDelayLoadedSummaryManager();
+		}
 
 		// Enable flushing only if we have single commit summary and this is not the initial summary for an empty file
 		if (".protocol" in summary.tree && context.ackHandle !== undefined) {
@@ -758,15 +760,17 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			}
 		}
 
-		this.odspSummaryUploadManager ??= await this.summaryModuleP
-			.then(async (m) => {
-				this.odspSummaryModuleLoaded = true;
-				return m;
-			})
-			.catch((error) => {
-				this.odspSummaryModuleLoaded = false;
-				throw error;
-			});
+		if (!this.odspSummaryUploadManager) {
+			this.odspSummaryUploadManager = await this.summaryModuleP
+				.then(async (m) => {
+					this.odspSummaryModuleLoaded = true;
+					return m;
+				})
+				.catch((error) => {
+					this.odspSummaryModuleLoaded = false;
+					throw error;
+				});
+		}
 
 		assert(
 			this.odspSummaryUploadManager !== undefined,

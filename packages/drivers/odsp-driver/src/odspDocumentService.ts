@@ -172,27 +172,29 @@ export class OdspDocumentService
 	 * @returns returns the document storage service for sharepoint driver.
 	 */
 	public async connectToStorage(): Promise<IDocumentStorageService> {
-		this.storageManager ??= new OdspDocumentStorageService(
-			this.odspResolvedUrl,
-			this.getAuthHeader,
-			this.mc.logger,
-			true,
-			this.cache,
-			this.hostPolicy,
-			this.epochTracker,
-			// flushCallback
-			async () => {
-				const currentConnection = this.odspDelayLoadedDeltaStream?.currentDeltaConnection;
-				if (currentConnection !== undefined && !currentConnection.disposed) {
-					return currentConnection.flush();
-				}
-				throw new Error("Disconnected while uploading summary (attempt to perform flush())");
-			},
-			() => {
-				return this.odspDelayLoadedDeltaStream?.relayServiceTenantAndSessionId;
-			},
-			this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
-		);
+		if (!this.storageManager) {
+			this.storageManager = new OdspDocumentStorageService(
+				this.odspResolvedUrl,
+				this.getAuthHeader,
+				this.mc.logger,
+				true,
+				this.cache,
+				this.hostPolicy,
+				this.epochTracker,
+				// flushCallback
+				async () => {
+					const currentConnection = this.odspDelayLoadedDeltaStream?.currentDeltaConnection;
+					if (currentConnection !== undefined && !currentConnection.disposed) {
+						return currentConnection.flush();
+					}
+					throw new Error("Disconnected while uploading summary (attempt to perform flush())");
+				},
+				() => {
+					return this.odspDelayLoadedDeltaStream?.relayServiceTenantAndSessionId;
+				},
+				this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
+			);
+		}
 
 		return new RetryErrorsStorageAdapter(this.storageManager, this.mc.logger);
 	}
@@ -245,7 +247,9 @@ export class OdspDocumentService
 	 * @returns returns the document delta stream service for onedrive/sharepoint driver.
 	 */
 	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-		this.socketModuleP ??= this.getDelayLoadedDeltaStream();
+		if (this.socketModuleP === undefined) {
+			this.socketModuleP = this.getDelayLoadedDeltaStream();
+		}
 		return this.socketModuleP
 			.then(async (m) => {
 				this.odspSocketModuleLoaded = true;

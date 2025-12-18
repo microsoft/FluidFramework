@@ -580,20 +580,22 @@ export abstract class FluidDataStoreContext
 			!this.detachedRuntimeCreation,
 			0x13d /* "Detached runtime creation on realize()" */,
 		);
-		this.channelP ??= this.realizeCore(this.existing).catch((error) => {
-			const errorWrapped = DataProcessingError.wrapIfUnrecognized(
-				error,
-				"realizeFluidDataStoreContext",
-			);
-			errorWrapped.addTelemetryProperties(
-				tagCodeArtifacts({
-					fullPackageName: this.pkg?.join("/"),
-					fluidDataStoreId: this.id,
-				}),
-			);
-			this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
-			throw errorWrapped;
-		});
+		if (!this.channelP) {
+			this.channelP = this.realizeCore(this.existing).catch((error) => {
+				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
+					error,
+					"realizeFluidDataStoreContext",
+				);
+				errorWrapped.addTelemetryProperties(
+					tagCodeArtifacts({
+						fullPackageName: this.pkg?.join("/"),
+						fluidDataStoreId: this.id,
+					}),
+				);
+				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
+				throw errorWrapped;
+			});
+		}
 		return this.channelP;
 	}
 

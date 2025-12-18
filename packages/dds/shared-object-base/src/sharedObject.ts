@@ -238,7 +238,9 @@ export abstract class SharedObjectCore<
 	 * @param error - error object that is thrown whenever an attempt is made to modify this object
 	 */
 	private closeWithError(error: IFluidErrorBase | undefined): void {
-		this.closeError ??= error;
+		if (this.closeError === undefined) {
+			this.closeError = error;
+		}
 	}
 
 	/**

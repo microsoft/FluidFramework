@@ -171,7 +171,9 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 		this.walkSegments(
 			(segment: ISegment) => {
 				if (SubSequence.is(segment)) {
-					firstSegment ??= segment;
+					if (firstSegment === undefined) {
+						firstSegment = segment;
+					}
 					// Condition above checks that segment is a SubSequence but not that
 					// generic T matches. Since SubSequence is already deprecated, assume
 					// that walk only has SubSequence<T> segments and just cast here.

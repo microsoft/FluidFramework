@@ -72,8 +72,12 @@ function LinearDictionary<TKey, TData>(
 			return;
 		}
 
-		_start ??= min()!.key;
-		_end ??= max()!.key;
+		if (_start === undefined) {
+			_start = min()!.key;
+		}
+		if (_end === undefined) {
+			_end = max()!.key;
+		}
 		for (let i = 0, len = props.length; i < len; i++) {
 			if (compareKeys(_start, props[i].key) <= 0) {
 				const ecmp = compareKeys(_end, props[i].key);

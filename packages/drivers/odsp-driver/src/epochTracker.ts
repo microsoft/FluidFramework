@@ -140,7 +140,7 @@ export class EpochTracker implements IPersistedFileCache {
 			)) as IVersionedValueWithEpoch;
 			// Version mismatch between what the runtime expects and what it recieved.
 			// The cached value should not be used
-			if (value?.version !== persistedCacheValueVersion) {
+			if (value === undefined || value.version !== persistedCacheValueVersion) {
 				return undefined;
 			}
 			assert(value.fluidEpoch !== undefined, 0x1dc /* "all entries have to have epoch" */);
@@ -295,7 +295,9 @@ export class EpochTracker implements IPersistedFileCache {
 			.catch(async (error) => {
 				// Get the server epoch from error in case we don't have it as if undefined we won't be able
 				// to mark it as epoch error.
-				epochFromResponse ??= (error as IOdspError).serverEpoch;
+				if (epochFromResponse === undefined) {
+					epochFromResponse = (error as IOdspError).serverEpoch;
+				}
 				await this.checkForEpochError(error, epochFromResponse, fetchType);
 				throw error;
 			})

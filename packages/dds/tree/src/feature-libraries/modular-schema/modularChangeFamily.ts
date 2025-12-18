@@ -462,7 +462,9 @@ export class ModularChangeFamily
 				setInChangeAtomIdMap(composedNodes, nodeId, nodeChangeset);
 			}
 
-			nodeChangeset.fieldChanges ??= new Map();
+			if (nodeChangeset.fieldChanges === undefined) {
+				nodeChangeset.fieldChanges = new Map();
+			}
 
 			nodeChangeset.fieldChanges.set(fieldId.field, composedField);
 		}

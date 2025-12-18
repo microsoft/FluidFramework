@@ -82,7 +82,7 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 
 	constructor(random: IRandom = makeRandom(1), chain?: Record<string, [string, number][]>) {
 		super();
-		this.chain = chain ?? {};
+		this.chain = chain ? chain : {};
 
 		this.random = random;
 	}
@@ -97,7 +97,9 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 			let prevWord: string | null = null;
 			for (let i = 0; i < sentence.length; i++) {
 				const word = sentence[i];
-				initialChain[word] ??= {};
+				if (initialChain[word] === undefined) {
+					initialChain[word] = {};
+				}
 
 				// This case will occur at the beginning of a sentence which is why the given word is added to the
 				// MARKOV_SENTENCE_BEGIN_KEY within the markov chain.
@@ -218,7 +220,7 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 
 	constructor(random: IRandom = makeRandom(1), chain?: Record<string, string[]>) {
 		super();
-		this.chain = chain ?? {};
+		this.chain = chain ? chain : {};
 		this.random = random;
 	}
 
@@ -231,7 +233,9 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 			let prevWord: string | null = null;
 			for (let i = 0; i < sentence.length; i++) {
 				const word = sentence[i];
-				this.chain[word] ??= [];
+				if (this.chain[word] === undefined) {
+					this.chain[word] = [];
+				}
 				// This case will occur at the beginning of a sentence which is why the given word is added to the
 				// MARKOV_SENTENCE_BEGIN_KEY within the markov chain.
 				if (i === 0) {

@@ -278,7 +278,7 @@ export class SharedPropertyTree extends SharedObject {
 		}
 
 		if (doSubmit || !isEmpty(changes)) {
-			this.applyChangeSet(changes, metadata ?? {});
+			this.applyChangeSet(changes, metadata || {});
 			this.root.cleanDirty();
 		}
 	}
@@ -644,19 +644,21 @@ export class SharedPropertyTree extends SharedObject {
 					throw new Error("Invalid Snapshot.");
 				}
 
-				// The summary does not contain a remoteHeadGuid. This means the summary has
-				// been created by an old version of PropertyDDS, that did not yet have this patch.
-				snapshotSummary.remoteHeadGuid ??=
-					snapshotSummary.remoteChanges.length > 0
-						? // If there are remote changes in the
-							// summary we can deduce the head GUID from these changes.
-							snapshotSummary.remoteChanges[snapshotSummary.remoteChanges.length - 1].guid
-						: // If no remote head GUID is available, we will fall back to the old behaviour,
-							// where the head GUID was set to an empty string. However, this could lead to
-							// divergence between the clients, if there is still a client in the session
-							// that is using a version of this library without this patch and which
-							// has started the session at a different summary.
-							"";
+				if (snapshotSummary.remoteHeadGuid === undefined) {
+					// The summary does not contain a remoteHeadGuid. This means the summary has
+					// been created by an old version of PropertyDDS, that did not yet have this patch.
+					snapshotSummary.remoteHeadGuid =
+						snapshotSummary.remoteChanges.length > 0
+							? // If there are remote changes in the
+								// summary we can deduce the head GUID from these changes.
+								snapshotSummary.remoteChanges[snapshotSummary.remoteChanges.length - 1].guid
+							: // If no remote head GUID is available, we will fall back to the old behaviour,
+								// where the head GUID was set to an empty string. However, this could lead to
+								// divergence between the clients, if there is still a client in the session
+								// that is using a version of this library without this patch and which
+								// has started the session at a different summary.
+								"";
+				}
 
 				this.remoteTipView = snapshotSummary.remoteTipView;
 				this.remoteChanges = snapshotSummary.remoteChanges;

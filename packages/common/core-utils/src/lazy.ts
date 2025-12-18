@@ -81,7 +81,9 @@ export class LazyPromise<T> implements Promise<T> {
 	}
 
 	private async getPromise(): Promise<T> {
-		this.result ??= this.execute();
+		if (this.result === undefined) {
+			this.result = this.execute();
+		}
 		return this.result;
 	}
 }

@@ -1211,7 +1211,7 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 function binaryFind(sorted: readonly PathNode[], index: number): PathNode | undefined {
 	// Try guessing the list is not sparse as a starter:
 	const guess = sorted[index];
-	if (guess?.parentIndex === index) {
+	if (guess !== undefined && guess.parentIndex === index) {
 		return guess;
 	}
 

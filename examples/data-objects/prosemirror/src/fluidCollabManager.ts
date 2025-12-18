@@ -354,7 +354,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 				}
 
 				case "addMark": {
-					const attrs = stepAsJson.mark.attrs ?? true;
+					const attrs = stepAsJson.mark.attrs || true;
 
 					this.text.annotateRange(stepAsJson.from, stepAsJson.to, {
 						[stepAsJson.mark.type]: attrs,

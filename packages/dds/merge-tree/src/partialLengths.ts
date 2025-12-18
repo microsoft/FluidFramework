@@ -861,7 +861,7 @@ export class PartialSequenceLengths {
 		// eslint-disable-next-line unicorn/no-array-for-each
 		this.perClientAdjustments.forEach((clientAdjustments) => {
 			const leqPartial = clientAdjustments.latestLeq(seq);
-			if (leqPartial?.seq === seq) {
+			if (leqPartial && leqPartial.seq === seq) {
 				this.addClientAdjustment(clientId, seq, -leqPartial.seglen);
 			}
 		});
@@ -928,7 +928,7 @@ export class PartialSequenceLengths {
 				}
 				const partialLengths = branchPartialLengths.partialLengths;
 				const leqPartial = partialLengths.latestLeq(seq);
-				if (leqPartial?.seq === seq) {
+				if (leqPartial && leqPartial.seq === seq) {
 					seqSeglen += leqPartial.seglen;
 				}
 				segCount += branchPartialLengths.segmentCount;
@@ -937,7 +937,7 @@ export class PartialSequenceLengths {
 				// eslint-disable-next-line unicorn/no-array-for-each
 				branchPartialLengths.perClientAdjustments.forEach((clientAdjustments) => {
 					const leqBranchPartial = clientAdjustments.latestLeq(seq);
-					if (leqBranchPartial?.seq === seq) {
+					if (leqBranchPartial && leqBranchPartial.seq === seq) {
 						this.addClientAdjustment(clientId, seq, leqBranchPartial.seglen);
 					}
 				});

@@ -1159,7 +1159,7 @@ export class Container
 			0x0d1 /* "Container should be attached before close" */,
 		);
 		assert(
-			this.resolvedUrl?.type === "fluid",
+			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
 		const pendingState = await this.serializedStateManager.getPendingLocalState(
@@ -2249,7 +2249,9 @@ export class Container
 		// know when the protocol tree is included
 		// this can be removed once all clients send
 		// protocol tree by default
-		summary.details ??= {};
+		if (summary.details === undefined) {
+			summary.details = {};
+		}
 		summary.details.includesProtocolTree = this.storageAdapter.summarizeProtocolTree;
 		return this.submitMessage(
 			MessageType.Summarize,
