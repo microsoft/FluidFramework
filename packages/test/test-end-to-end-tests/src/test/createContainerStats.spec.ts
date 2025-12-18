@@ -14,6 +14,8 @@ import {
 	ISummaryConfiguration,
 	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
+import { ISharedDirectory } from "@fluidframework/map/internal";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
@@ -27,11 +29,11 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
 	} = apis;
 	class TestDataObject extends DataObject {
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 
-		public get containerRuntime() {
+		public get containerRuntime(): IContainerRuntimeBase {
 			return this.context.containerRuntime;
 		}
 	}
@@ -102,7 +104,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		referencedDataStoreCount: number,
 		message: string,
 		summarizer: boolean = false,
-	) {
+	): void {
 		mockLogger.assertMatch(
 			[
 				{

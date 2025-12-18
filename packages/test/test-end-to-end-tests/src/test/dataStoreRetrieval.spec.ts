@@ -7,12 +7,15 @@ import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ISharedDirectory } from "@fluidframework/map/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 
 /**
  * These tests retrieve a data store after its creation but at different stages of visibility.
@@ -29,15 +32,15 @@ describeCompat(
 			containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
 		} = apis;
 		class InnerDataObject extends DataObject implements ITestDataObject {
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
 
-			public get _context() {
+			public get _context(): IFluidDataStoreContext {
 				return this.context;
 			}
 
-			public get _runtime() {
+			public get _runtime(): IFluidDataStoreRuntime {
 				return this.runtime;
 			}
 		}
@@ -49,15 +52,15 @@ describeCompat(
 		);
 
 		class OuterDataObject extends DataObject implements ITestDataObject {
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
 
-			public get _context() {
+			public get _context(): IFluidDataStoreContext {
 				return this.context;
 			}
 
-			public get _runtime() {
+			public get _runtime(): IFluidDataStoreRuntime {
 				return this.runtime;
 			}
 
