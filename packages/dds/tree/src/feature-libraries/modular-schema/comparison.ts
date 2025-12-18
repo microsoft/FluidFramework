@@ -163,7 +163,8 @@ export function allowsFieldSuperset(
 	if (monotonicOnly) {
 		return supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind);
 	} else {
-		const originalKind = policy.fieldKinds.get(original.kind) ?? fail("missing kind");
+		const originalKind =
+			policy.fieldKinds.get(original.kind) ?? fail(0xcab /* missing kind */);
 		return allowsMultiplicitySuperset(originalKind.multiplicity, supersetKind.multiplicity);
 	}
 }

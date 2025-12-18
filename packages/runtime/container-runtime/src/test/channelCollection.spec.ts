@@ -5,14 +5,43 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { AttachState } from "@fluidframework/container-definitions";
+import type {
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+	ITree,
+} from "@fluidframework/driver-definitions/internal";
+import type {
+	IAttachMessage,
+	IRuntimeMessageCollection,
+} from "@fluidframework/runtime-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import type { ConfigTypes } from "@fluidframework/core-interfaces";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+	MockLogger,
+	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 
-import { detectOutboundReferences, getSummaryForDatastores } from "../channelCollection.js";
+import {
+	ChannelCollection,
+	detectOutboundReferences,
+	getSummaryForDatastores,
+	type IFluidRootParentContextPrivate,
+} from "../channelCollection.js";
+import type { LocalFluidDataStoreContext } from "../dataStoreContext.js";
+import { ContainerMessageType } from "../messageTypes.js";
 import { type IContainerRuntimeMetadata, nonDataStorePaths } from "../summary/index.js";
 
+import {
+	createParentContext,
+	createSummarizerNodeAndGetCreateFn,
+} from "./dataStoreCreationHelper.js";
+import type { DataStoreContexts } from "../dataStoreContexts.js";
+
 describe("Runtime", () => {
-	describe("Container Runtime", () => {
+	describe("ChannelCollection", () => {
 		describe("getSummaryForDatastores", () => {
 			const enabledMetadata: IContainerRuntimeMetadata = {
 				summaryFormatVersion: 1,
@@ -198,6 +227,196 @@ describe("Runtime", () => {
 					assert.fail("Should not be called");
 				});
 			});
+		});
+
+		describe("processAttachMessages - Duplicate ID Detection", () => {
+			/* eslint-disable @typescript-eslint/consistent-type-assertions */
+			let channelCollection: ChannelCollection;
+			let mockLogger: MockLogger;
+			let parentContext: IFluidRootParentContextPrivate;
+
+			const createMockAttachMessage = (
+				id: string,
+				type: string = "TestDataStore",
+			): IAttachMessage => {
+				const message: IAttachMessage = {
+					id,
+					type,
+					snapshot: { id: "snapshot-id", entries: [], blobs: [] } as ITree,
+				};
+				return message;
+			};
+			const createMockMessageCollection = (
+				attachMessage: IAttachMessage,
+				local: boolean = false,
+				sequenceNumber: number = 1,
+			): IRuntimeMessageCollection => {
+				const messageCollection: IRuntimeMessageCollection = {
+					envelope: {
+						type: ContainerMessageType.Attach,
+						contents: attachMessage,
+						sequenceNumber,
+						clientId: local ? "local-client" : "remote-client",
+						timestamp: Date.now(),
+					} as ISequencedDocumentMessage,
+					messagesContent: [
+						{
+							contents: attachMessage,
+							localOpMetadata: undefined,
+							clientSequenceNumber: 1,
+						},
+					],
+					local,
+				};
+				return messageCollection;
+			};
+			const configProvider = (settings: Record<string, ConfigTypes>) => ({
+				getRawConfig: (name: string): ConfigTypes => settings[name],
+			});
+			beforeEach(() => {
+				mockLogger = new MockLogger();
+				const mc = mixinMonitoringContext(
+					mockLogger,
+					configProvider({
+						"Fluid.Runtime.DisableShortIds": true,
+					}),
+				);
+				const baseParentContext = createParentContext(mc.logger);
+
+				// Create a proper IFluidRootParentContextPrivate with root-level submitMessage/submitSignal
+				parentContext = {
+					...baseParentContext,
+					attachState: AttachState.Attached,
+					submitMessage: (_containerRuntimeMessage: unknown, _localOpMetadata: unknown) => {},
+					submitSignal: (_envelope: unknown, _targetClientId?: string) => {},
+					addedGCOutboundRoute: () => {},
+					makeLocallyVisible: () => {},
+					getExtension: () => undefined,
+					getCreateChildSummarizerNodeFn: (id: string) => {
+						const fn = createSummarizerNodeAndGetCreateFn(id).createSummarizerNodeFn;
+						return fn;
+					},
+				} as unknown as IFluidRootParentContextPrivate;
+
+				channelCollection = new ChannelCollection(
+					undefined, // baseSnapshot
+					parentContext,
+					mockLogger,
+					() => {}, // gcNodeUpdated
+					() => false, // isDataStoreDeleted
+					new Map(), // aliasMap
+				);
+			});
+
+			it("should throw DataProcessingError for duplicate ID with unbound (not-yet-attached) DataStore", () => {
+				// Create a local DataStore context (it's unbound) and get its ID so we can simulate a remote attach with the same ID
+				const localContext = channelCollection.createDataStoreContext(["TestPackage"]);
+				const dataStoreId = localContext.id;
+
+				// Try to process a remote attach message with the same ID
+				const attachMessage = createMockAttachMessage(dataStoreId);
+				const messageCollection = createMockMessageCollection(attachMessage, false);
+
+				// Should throw DataProcessingError
+				assert.throws(
+					() => {
+						channelCollection.processMessages(messageCollection);
+					},
+					(error: Error) => {
+						assert(error instanceof DataProcessingError, "Expected DataProcessingError");
+						assert(
+							error.message.includes("Local DataStore matches remote DataStore id"),
+							`Expected error message about local DataStore match, got: ${error.message}`,
+						);
+						return true;
+					},
+					"Should throw DataProcessingError for unbound context collision",
+				);
+			});
+
+			for (const state of [AttachState.Attaching, AttachState.Attached]) {
+				it(`should throw DataCorruptionError for duplicate ID with ${state} DataStore`, () => {
+					// Create a local DataStore context and make it bound/attached
+					const localContext = channelCollection.createDataStoreContext([
+						"TestPackage",
+					]) as LocalFluidDataStoreContext;
+					const dataStoreId = localContext.id;
+
+					// Simulate localContext.makeLocallyVisible()
+					localContext.setAttachState(AttachState.Attaching);
+					(
+						channelCollection as unknown as { readonly contexts: DataStoreContexts }
+					).contexts.bind(dataStoreId);
+
+					// If we're testing Attaching state, we're already there.
+					// If testing Attached, simulate receiving the attach op and transitioning to that state.
+					if (state === AttachState.Attached) {
+						localContext.setAttachState(AttachState.Attached);
+					}
+
+					// Try to process a remote attach message with the same ID
+					const attachMessage = createMockAttachMessage(dataStoreId);
+					const messageCollection = createMockMessageCollection(attachMessage, false);
+
+					// Should throw DataCorruptionError
+					assert.throws(
+						() => {
+							channelCollection.processMessages(messageCollection);
+						},
+						(error: Error) => {
+							assert(error instanceof DataCorruptionError, "Expected DataCorruptionError");
+							assert(
+								error.message.includes("Duplicate DataStore created with existing id"),
+								`Expected error message about duplicate DataStore, got: ${error.message}`,
+							);
+							return true;
+						},
+						"Should throw DataCorruptionError for bound context collision",
+					);
+				});
+			}
+
+			it("should throw DataCorruptionError for duplicate ID with aliased DataStore", () => {
+				const alias = "my-alias";
+
+				// Create a datastore and alias it
+				const localContext = channelCollection.createDataStoreContext([
+					"TestPackage",
+				]) as LocalFluidDataStoreContext;
+				const dataStoreId = localContext.id;
+
+				localContext.setAttachState(AttachState.Attaching);
+				localContext.setAttachState(AttachState.Attached);
+				(
+					channelCollection as unknown as { readonly contexts: DataStoreContexts }
+				).contexts.bind(dataStoreId);
+
+				// Simulate aliasing (which is usually mediated by ops)
+				(
+					channelCollection as unknown as { readonly aliasMap: Map<string, string> }
+				).aliasMap.set(alias, dataStoreId);
+
+				// Simulate an incoming attach message with the same alias
+				const attachMessage = createMockAttachMessage(alias);
+				const messageCollection = createMockMessageCollection(attachMessage, false);
+
+				// Should throw DataCorruptionError
+				assert.throws(
+					() => {
+						channelCollection.processMessages(messageCollection);
+					},
+					(error: Error) => {
+						assert(error instanceof DataCorruptionError, "Expected DataCorruptionError");
+						assert(
+							error.message.includes("Duplicate DataStore created with existing id"),
+							`Expected error message about duplicate DataStore, got: ${error.message}`,
+						);
+						return true;
+					},
+					"Should throw DataCorruptionError for aliased context collision",
+				);
+			});
+			/* eslint-enable @typescript-eslint/consistent-type-assertions */
 		});
 	});
 });

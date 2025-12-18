@@ -559,7 +559,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							.resolve(4)
 							.json.encode(change, context);
 
-						assert(commit.parent !== undefined, "Expected applied commit to be parented");
+						assert(
+							commit.parent !== undefined,
+							0xca4 /* Expected applied commit to be parented */,
+						);
 						return {
 							version: 1,
 							revision,

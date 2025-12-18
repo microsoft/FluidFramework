@@ -7,7 +7,6 @@
         "@",
         "@eslint-community/eslint-comments",
         "@typescript-eslint:@typescript-eslint/eslint-plugin@8.18.2",
-        "depend",
         "import-x:eslint-plugin-import-x@4.16.1",
         "unicorn:eslint-plugin-unicorn@54.0.0",
         "@rushstack",
@@ -15,7 +14,8 @@
         "promise",
         "tsdoc",
         "unused-imports:unused-imports",
-        "@fluid-internal/fluid"
+        "@fluid-internal/fluid",
+        "depend:eslint-plugin-depend@1.4.0"
     ],
     "rules": {
         "@babel/object-curly-spacing": [

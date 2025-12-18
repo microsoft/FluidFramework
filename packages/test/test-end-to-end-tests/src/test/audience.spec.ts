@@ -7,6 +7,8 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -19,11 +21,11 @@ import { pkgVersion } from "../packageVersion.js";
 
 describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends apis.dataRuntime.DataObject {
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 
-		public get _context() {
+		public get _context(): IFluidDataStoreContext {
 			return this.context;
 		}
 	}
@@ -42,11 +44,15 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		provider.loadTestContainer(testContainerConfig);
 
 	/** Function to wait for a client with the given clientId to be added to the audience of the given container. */
-	async function waitForClientAdd(container: IContainer, clientId: string, errorMsg: string) {
+	async function waitForClientAdd(
+		container: IContainer,
+		clientId: string,
+		errorMsg: string,
+	): Promise<void> {
 		if (container.audience.getMember(clientId) === undefined) {
 			return timeoutPromise(
 				(resolve) => {
-					const listener = (newClientId: string) => {
+					const listener = (newClientId: string): void => {
 						if (newClientId === clientId) {
 							container.audience.off("addMember", listener);
 							resolve();
@@ -68,7 +74,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		container: IContainer,
 		clientId: string,
 		errorMsg: string,
-	) {
+	): Promise<void> {
 		if (container.audience.getMember(clientId) !== undefined) {
 			return timeoutPromise(
 				(resolve) => {

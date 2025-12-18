@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/shared-tree-demo",
-	"version": "2.74.0",
+	"version": "2.80.0",
 	"private": true,
 	"description": "A shared tree demo using react and odsp client",
 	"homepage": "https://fluidframework.com",
@@ -51,7 +51,7 @@
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
 		"dotenv-webpack": "^7.0.3",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"html-webpack-plugin": "^5.6.0",
 		"jiti": "^2.6.1",
 		"process": "^0.11.10",
@@ -61,18 +61,7 @@
 		"typescript": "~5.4.5",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4",
-		"webpack-dev-server": "~4.15.2",
-		"webpack-merge": "^6.0.1"
-	},
-	"fluid": {
-		"browser": {
-			"umd": {
-				"files": [
-					"dist/main.bundle.js"
-				],
-				"library": "main"
-			}
-		}
+		"webpack-dev-server": "~4.15.2"
 	},
 	"typeValidation": {
 		"disabled": true

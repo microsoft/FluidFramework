@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/routerlicious-urlresolver",
-	"version": "2.74.0",
+	"version": "2.80.0",
 	"description": "Url Resolver for routerlicious urls.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -86,7 +86,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.61.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@2.73.0",
+		"@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@2.74.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/nconf": "^0.10.0",
@@ -95,7 +95,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",

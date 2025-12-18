@@ -1,5 +1,9 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## 2.74.0
+
+Dependency updates only.
+
 ## Unreleased
 
 ### Removed Rushstack Dependencies

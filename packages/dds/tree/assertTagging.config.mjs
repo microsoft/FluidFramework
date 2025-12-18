@@ -4,7 +4,7 @@
  */
 
 /**
- * @type {import("@fluid-tools/build-cli").AssertTaggingConfig}
+ * @type {import("@fluid-tools/build-cli").AssertTaggingPackageConfig}
  */
 export default {
 	assertionFunctions: {

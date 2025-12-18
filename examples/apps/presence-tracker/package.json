@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/presence-tracker",
-	"version": "2.74.0",
+	"version": "2.80.0",
 	"private": true,
 	"description": "Example application that tracks page focus and mouse position using the Fluid Framework presence features.",
 	"homepage": "https://fluidframework.com",
@@ -68,7 +68,7 @@
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/node": "^18.19.0",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"expect-puppeteer": "^9.0.2",
 		"html-webpack-plugin": "^5.6.0",
 		"jest": "^29.6.2",
@@ -86,18 +86,7 @@
 		"typescript": "~5.4.5",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4",
-		"webpack-dev-server": "~4.15.2",
-		"webpack-merge": "^6.0.1"
-	},
-	"fluid": {
-		"browser": {
-			"umd": {
-				"files": [
-					"dist/main.bundle.js"
-				],
-				"library": "main"
-			}
-		}
+		"webpack-dev-server": "~4.15.2"
 	},
 	"typeValidation": {
 		"disabled": true

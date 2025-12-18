@@ -9,7 +9,7 @@ import { Decoration, DecorationSet } from "prosemirror-view";
 // Sample from
 // https://github.com/PierBover/prosemirror-cookbook
 
-export const create = () =>
+export const create = (): Plugin =>
 	new Plugin({
 		props: {
 			decorations(state) {
