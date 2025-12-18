@@ -1724,7 +1724,7 @@ describe("SharedTree", () => {
 				2,
 				configuredSharedTree({
 					jsonValidator: FormatValidatorBasic,
-					enableAlphaConstraints: true,
+					minVersionForCollab: FluidClientVersion.v2_80,
 				}).getFactory(),
 			);
 			const config = new TreeViewConfiguration({
@@ -1778,7 +1778,7 @@ describe("SharedTree", () => {
 				2,
 				configuredSharedTree({
 					jsonValidator: FormatValidatorBasic,
-					enableAlphaConstraints: true,
+					minVersionForCollab: FluidClientVersion.v2_80,
 				}).getFactory(),
 			);
 			const config = new TreeViewConfiguration({
