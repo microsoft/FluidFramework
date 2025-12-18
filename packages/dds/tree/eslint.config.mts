@@ -38,7 +38,6 @@ const config: Linter.Config[] = [
 			"import/order": "off",
 			"jsdoc/multiline-blocks": "off",
 			"jsdoc/require-description": "warn",
-			"unicorn/consistent-destructuring": "off",
 			"unicorn/consistent-function-scoping": "off",
 			"unicorn/explicit-length-check": "off",
 			"unicorn/no-array-callback-reference": "off",
