@@ -383,9 +383,8 @@ export async function fluidFetchSnapshot(
 		if (version === undefined) {
 			console.log("No snapshot tree");
 		} else {
-			if (blobsToDump === undefined) {
-				blobsToDump = await fetchBlobsFromVersion(storage, version);
-			}
+			// Safe: blobsToDump is typed as Map | undefined
+			blobsToDump ??= await fetchBlobsFromVersion(storage, version);
 			console.log(`\n\nSnapshot version ${version.id}`);
 			await dumpSnapshotTreeVerbose(version.id, blobsToDump);
 		}

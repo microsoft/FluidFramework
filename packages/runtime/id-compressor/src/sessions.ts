@@ -107,7 +107,8 @@ export class Sessions {
 		// the next lower session (which is B) and erroneously determine we do not collide
 		// with any other session, but this situation is impossible to get into as B would
 		// have detected that it collided with A (or the other way around, depending on ordering).
-		while (closestMatch !== undefined && closestMatch[1] === owningSession) {
+		// Safe: optional chaining - if closestMatch is undefined, undefined === owningSession is false
+		while (closestMatch?.[1] === owningSession) {
 			closestMatch = this.uuidSpace.nextLowerPair(closestMatch[0]);
 		}
 		if (closestMatch === undefined) {

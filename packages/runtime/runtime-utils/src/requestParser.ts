@@ -57,9 +57,8 @@ export class RequestParser implements IRequest {
 	 * Returns the decoded path parts of the request's url
 	 */
 	public get pathParts(): readonly string[] {
-		if (this.requestPathParts === undefined) {
-			this.requestPathParts = RequestParser.getPathParts(this.url);
-		}
+		// Safe: requestPathParts is typed as string[] | undefined
+		this.requestPathParts ??= RequestParser.getPathParts(this.url);
 		return this.requestPathParts;
 	}
 

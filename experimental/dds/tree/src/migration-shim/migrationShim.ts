@@ -158,9 +158,8 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.closeWithError}
 	 */
 	private closeWithError(error: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>): void {
-		if (this.closeError === undefined) {
-			this.closeError = error;
-		}
+		// Safe: closeError is typed as error type | undefined, preserving first error
+		this.closeError ??= error;
 	}
 
 	/**

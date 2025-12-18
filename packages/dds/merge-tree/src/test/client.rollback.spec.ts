@@ -172,9 +172,11 @@ describe("client.rollback", () => {
 		client.annotateRangeLocal(1, 3, { foo: "bar" });
 		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 
+		// Note: All props?.foo checks in this file are safe - if props is undefined,
+		// props?.foo is undefined, which correctly compares to expected values.
 		for (let i = 0; i < 4; i++) {
 			const props = client.getPropertiesAtPosition(i);
-			assert(props === undefined || props.foo === undefined);
+			assert(props?.foo === undefined);
 		}
 	});
 	it("Should rollback annotate over split string", () => {
@@ -185,7 +187,7 @@ describe("client.rollback", () => {
 
 		for (let i = 0; i < 7; i++) {
 			const props = client.getPropertiesAtPosition(i);
-			assert(props === undefined || props.foo === undefined);
+			assert(props?.foo === undefined);
 		}
 	});
 	it("Should rollback annotate that later gets split", () => {
@@ -198,7 +200,7 @@ describe("client.rollback", () => {
 		assert.equal(client.getText(), "abfg");
 		for (let i = 0; i < 4; i++) {
 			const props = client.getPropertiesAtPosition(i);
-			assert(props === undefined || props.foo === undefined);
+			assert(props?.foo === undefined);
 		}
 	});
 	it("Should rollback annotates with multiple previous property sets", () => {
@@ -210,35 +212,35 @@ describe("client.rollback", () => {
 
 		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		let props = client.getPropertiesAtPosition(3);
-		assert(props !== undefined && props.foo === "two");
+		assert(props?.foo === "two");
 		for (let i = 0; i < 3; i++) {
 			props = client.getPropertiesAtPosition(i);
-			assert(props !== undefined && props.foo === "three");
+			assert(props?.foo === "three");
 		}
 
 		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		for (let i = 0; i < 2; i++) {
 			props = client.getPropertiesAtPosition(i);
-			assert(props !== undefined && props.foo === "one");
+			assert(props?.foo === "one");
 		}
 		for (let i = 2; i < 4; i++) {
 			props = client.getPropertiesAtPosition(i);
-			assert(props !== undefined && props.foo === "two");
+			assert(props?.foo === "two");
 		}
 
 		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		props = client.getPropertiesAtPosition(3);
-		assert(props === undefined || props.foo === undefined);
+		assert(props?.foo === undefined);
 		for (let i = 0; i < 3; i++) {
 			props = client.getPropertiesAtPosition(i);
-			assert(props !== undefined && props.foo === "one");
+			assert(props?.foo === "one");
 		}
 
 		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "acde");
 		for (let i = 0; i < 4; i++) {
 			props = client.getPropertiesAtPosition(i);
-			assert(props === undefined || props.foo === undefined);
+			assert(props?.foo === undefined);
 		}
 	});
 	it("Should rollback annotate with same prop", () => {
@@ -252,7 +254,7 @@ describe("client.rollback", () => {
 			if (i === 2) {
 				assert.equal(props?.foo, "bar");
 			} else {
-				assert(props === undefined || props.foo === undefined);
+				assert(props?.foo === undefined);
 			}
 		}
 	});
@@ -455,14 +457,14 @@ describe("client.rollback", () => {
 			if (i >= 2 && i < 5) {
 				assert.equal(props?.foo, "bar");
 			} else {
-				assert(props === undefined || props.foo === undefined);
+				assert(props?.foo === undefined);
 			}
 		}
 
 		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		for (let i = 0; i < client.getText().length; i++) {
 			const props = client.getPropertiesAtPosition(i);
-			assert(props === undefined || props.foo === undefined);
+			assert(props?.foo === undefined);
 		}
 
 		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
@@ -505,14 +507,14 @@ describe("client.rollback", () => {
 			if (i >= 2 && i < 8) {
 				assert.equal(props?.foo, "bar");
 			} else {
-				assert(props === undefined || props.foo === undefined);
+				assert(props?.foo === undefined);
 			}
 		}
 
 		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		for (let i = 0; i < client.getText().length; i++) {
 			const props = client.getPropertiesAtPosition(i);
-			assert(props === undefined || props.foo === undefined);
+			assert(props?.foo === undefined);
 		}
 		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "abcdefg");
@@ -533,13 +535,13 @@ describe("client.rollback", () => {
 			if (i >= 0 && i < 6) {
 				assert.equal(props?.foo, "one");
 			} else {
-				assert(props === undefined || props.foo === undefined);
+				assert(props?.foo === undefined);
 			}
 		}
 		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		for (let i = 0; i < client.getText().length; i++) {
 			const props = client.getPropertiesAtPosition(i);
-			assert(props === undefined || props.foo === undefined);
+			assert(props?.foo === undefined);
 		}
 		client.rollback({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "");
@@ -559,7 +561,7 @@ describe("client.rollback", () => {
 			if (i >= 2 && i < 5) {
 				assert.equal(props?.foo, "bar");
 			} else {
-				assert(props === undefined || props.foo === undefined);
+				assert(props?.foo === undefined);
 			}
 		}
 
@@ -603,7 +605,7 @@ describe("client.rollback", () => {
 				if (i >= 0 && i < 3) {
 					assert.equal(props?.foo, "bar");
 				} else {
-					assert(props === undefined || props.foo === undefined);
+					assert(props?.foo === undefined);
 				}
 			}
 		}

@@ -422,9 +422,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		let workspaceDatastore: ValueElementMap<StatesWorkspaceSchema> | undefined =
 			this.datastore[internalWorkspaceAddress];
-		if (workspaceDatastore === undefined) {
-			workspaceDatastore = this.datastore[internalWorkspaceAddress] = {};
-		}
+		// Safe: workspaceDatastore is typed as ValueElementMap | undefined
+		workspaceDatastore ??= this.datastore[internalWorkspaceAddress] = {};
 
 		const localUpdate = (
 			states: { [key: string]: ClientUpdateEntry },

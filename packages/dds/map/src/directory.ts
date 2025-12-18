@@ -1033,9 +1033,8 @@ export class SharedDirectory
 			const [currentSubDir, currentSubDirObject] = stack.pop()!;
 			currentSubDirObject.ci = currentSubDir.getSerializableCreateInfo();
 			for (const [key, value] of currentSubDir.getSerializedStorage(serializer)) {
-				if (!currentSubDirObject.storage) {
-					currentSubDirObject.storage = {};
-				}
+				// Safe: storage is typed as optional object, initializing when undefined
+				currentSubDirObject.storage ??= {};
 				// eslint-disable-next-line import-x/no-deprecated
 				const result: ISerializableValue = {
 					type: value.type,
@@ -1062,9 +1061,8 @@ export class SharedDirectory
 			}
 
 			for (const [subdirName, subdir] of currentSubDir.subdirectories()) {
-				if (!currentSubDirObject.subdirectories) {
-					currentSubDirObject.subdirectories = {};
-				}
+				// Safe: subdirectories is typed as optional object, initializing when undefined
+				currentSubDirObject.subdirectories ??= {};
 				const subDataObject: IDirectoryDataObject = {};
 				currentSubDirObject.subdirectories[subdirName] = subDataObject;
 				stack.push([subdir as SubDirectory, subDataObject]);
@@ -1889,9 +1887,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.sequencedStorageData.clear();
 			const pendingClear = this.pendingStorageData.shift();
 			assert(
-				pendingClear !== undefined &&
-					pendingClear.type === "clear" &&
-					pendingClear === localOpMetadata,
+				pendingClear?.type === "clear" && pendingClear === localOpMetadata,
 				0xc04 /* Got a local clear message we weren't expecting */,
 			);
 		} else {
@@ -1955,9 +1951,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			);
 			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
 			assert(
-				pendingEntry !== undefined &&
-					pendingEntry.type === "delete" &&
-					pendingEntry.key === op.key,
+				pendingEntry?.type === "delete" && pendingEntry.key === op.key,
 				0xc05 /* Got a local delete message we weren't expecting */,
 			);
 			this.pendingStorageData.splice(pendingEntryIndex, 1);
@@ -2013,7 +2007,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			);
 			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
 			assert(
-				pendingEntry !== undefined && pendingEntry.type === "lifetime",
+				pendingEntry?.type === "lifetime",
 				0xc06 /* Couldn't match local set message to pending lifetime */,
 			);
 			const pendingKeySet = pendingEntry.keySets.shift();
@@ -2077,7 +2071,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
 			assert(
-				pendingEntry !== undefined && pendingEntry.type === "createSubDirectory",
+				pendingEntry?.type === "createSubDirectory",
 				0xc30 /* Got a local subdir create message we weren't expecting */,
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
@@ -2174,8 +2168,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				);
 				const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
 				assert(
-					pendingEntry !== undefined &&
-						pendingEntry.type === "deleteSubDirectory" &&
+					pendingEntry?.type === "deleteSubDirectory" &&
 						pendingEntry.subdirName === op.subdirName,
 					0xc31 /* Got a local deleteSubDirectory message we weren't expecting */,
 				);
@@ -2193,8 +2186,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
 			assert(
-				pendingEntry !== undefined &&
-					pendingEntry.type === "deleteSubDirectory" &&
+				pendingEntry?.type === "deleteSubDirectory" &&
 					pendingEntry.subdirName === op.subdirName,
 				0xc32 /* Got a local deleteSubDirectory message we weren't expecting */,
 			);

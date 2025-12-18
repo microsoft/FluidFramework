@@ -227,7 +227,8 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 			if (i >= 2 && i < 5) {
 				assert.equal(props?.foo, "old");
 			} else {
-				assert(props === undefined || props.foo === undefined);
+				// Safe: optional chaining - if props is undefined, props?.foo is undefined
+				assert(props?.foo === undefined);
 			}
 		}
 		assert.equal(sharedMap.size, 1);

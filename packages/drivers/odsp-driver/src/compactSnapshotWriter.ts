@@ -159,12 +159,11 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshot): Uint8Arra
 	);
 
 	let latestSequenceNumber = snapshotContents.latestSequenceNumber;
-	if (latestSequenceNumber === undefined) {
-		latestSequenceNumber =
-			snapshotContents.ops.length > 0
-				? snapshotContents.ops[snapshotContents.ops.length - 1].sequenceNumber
-				: snapshotContents.sequenceNumber;
-	}
+	// Safe: latestSequenceNumber is typed as number | undefined
+	latestSequenceNumber ??=
+		snapshotContents.ops.length > 0
+			? snapshotContents.ops[snapshotContents.ops.length - 1].sequenceNumber
+			: snapshotContents.sequenceNumber;
 
 	writeSnapshotProps(rootNode, latestSequenceNumber);
 

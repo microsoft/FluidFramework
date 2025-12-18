@@ -503,9 +503,8 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 * {@inheritDoc ITestObjectProvider.documentServiceFactory}
 	 */
 	public get documentServiceFactory(): IDocumentServiceFactory {
-		if (!this._documentServiceFactory) {
-			this._documentServiceFactory = this.driver.createDocumentServiceFactory();
-		}
+		// Safe: _documentServiceFactory is typed as IDocumentServiceFactory | undefined
+		this._documentServiceFactory ??= this.driver.createDocumentServiceFactory();
 		return this._documentServiceFactory;
 	}
 
@@ -513,9 +512,8 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 * {@inheritDoc ITestObjectProvider.urlResolver}
 	 */
 	public get urlResolver(): IUrlResolver {
-		if (!this._urlResolver) {
-			this._urlResolver = this.driver.createUrlResolver();
-		}
+		// Safe: _urlResolver is typed as IUrlResolver | undefined
+		this._urlResolver ??= this.driver.createUrlResolver();
 		return this._urlResolver;
 	}
 
@@ -819,9 +817,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 * {@inheritDoc ITestObjectProvider.documentServiceFactory}
 	 */
 	public get documentServiceFactory(): IDocumentServiceFactory {
-		if (!this._documentServiceFactory) {
-			this._documentServiceFactory = this.driverForCreating.createDocumentServiceFactory();
-		}
+		// Safe: _documentServiceFactory is typed as IDocumentServiceFactory | undefined
+		this._documentServiceFactory ??= this.driverForCreating.createDocumentServiceFactory();
 		return this._documentServiceFactory;
 	}
 
@@ -829,9 +826,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 * {@inheritDoc ITestObjectProvider.urlResolver}
 	 */
 	public get urlResolver(): IUrlResolver {
-		if (!this._urlResolver) {
-			this._urlResolver = this.driverForCreating.createUrlResolver();
-		}
+		// Safe: _urlResolver is typed as IUrlResolver | undefined
+		this._urlResolver ??= this.driverForCreating.createUrlResolver();
 		return this._urlResolver;
 	}
 

@@ -1249,9 +1249,8 @@ describe("sharedTreeView", () => {
 				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
 					assert(getRevertible !== undefined, "Expected commit to be revertible.");
 					// Only save off the first revertible, as it's the only one we'll use.
-					if (revertible === undefined) {
-						revertible = getRevertible();
-					}
+					// Safe: revertible is typed as Revertible | undefined
+					revertible ??= getRevertible();
 				});
 
 				// Insert (`ageToTest` + 1) nodes, then revert the first.
