@@ -127,7 +127,7 @@ export interface SerializedSnapshotInfo extends SnapshotWithBlobs {
 	snapshotSequenceNumber: number;
 }
 
-export interface ISnapshotInfo {
+interface ISnapshotInfo {
 	snapshotSequenceNumber: number;
 	snapshotFetchedTime?: number | undefined;
 	snapshot: ISnapshot | ISnapshotTree;
