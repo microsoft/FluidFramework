@@ -32,13 +32,12 @@ import * as registerCollection from "@fluidframework/register-collection/interna
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import * as sequence from "@fluidframework/sequence/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
+// TypeScript generates incorrect imports in the d.ts file if this is not included.
 import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
 import * as treeCurrent from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 import * as semver from "semver";
-
-// TypeScript generates incorrect imports in the d.ts file if this is not included.
 
 // Since this project has a TypeScript configuration which errors on unused imports and types, to avoid the above import causing a compile error, a dummy usage is included.
 // For this to avoid a compile error, it also has to be used somehow: exporting it is the simplest way to "use" it.
