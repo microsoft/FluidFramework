@@ -173,7 +173,7 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"puppeteer": "^23.6.0",
-		"rewire": "^5.0.0",
+		"rewire": "^9.0.1",
 		"rimraf": "^6.1.2",
 		"sinon": "^18.0.1",
 		"ts-jest": "^29.1.1",
