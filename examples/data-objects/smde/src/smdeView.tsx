@@ -27,7 +27,9 @@ class SmdeView {
 
 	public render(elm: HTMLElement): void {
 		// Create base textarea
-		this.textArea ??= document.createElement("textarea");
+		if (!this.textArea) {
+			this.textArea = document.createElement("textarea");
+		}
 
 		// Reparent if needed
 		if (this.textArea.parentElement !== elm) {

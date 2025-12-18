@@ -103,7 +103,9 @@ export class ReplayControllerStatic extends ReplayController {
 		if (this.unitIsTime === true) {
 			for (const [i, { timestamp }] of fetchedOps.entries()) {
 				if (timestamp !== undefined) {
-					this.firstTimeStamp ??= timestamp;
+					if (this.firstTimeStamp === undefined) {
+						this.firstTimeStamp = timestamp;
+					}
 					if (timestamp - this.firstTimeStamp >= this.replayFrom) {
 						return i;
 					}

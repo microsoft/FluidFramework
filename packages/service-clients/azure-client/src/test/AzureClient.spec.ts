@@ -141,7 +141,6 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 			if (container.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,
@@ -167,7 +166,6 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 			if (container.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,
@@ -201,7 +199,6 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 			const containerId = await newContainer.attach();
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 			if (newContainer.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,

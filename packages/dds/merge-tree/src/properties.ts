@@ -118,7 +118,9 @@ export function extendIfUndefined<T>(
 ): MapLike<T> {
 	if (extension !== undefined) {
 		for (const [key, value] of Object.entries(extension)) {
-			base[key] ??= value;
+			if (base[key] === undefined) {
+				base[key] = value;
+			}
 		}
 	}
 	return base;

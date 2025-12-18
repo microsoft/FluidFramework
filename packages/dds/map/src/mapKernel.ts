@@ -616,7 +616,9 @@ export class MapKernel {
 			// A pending clear will be last in the list, since it terminates all prior lifetimes.
 			const pendingClear = this.pendingData.pop();
 			assert(
-				pendingClear?.type === "clear" && pendingClear === typedLocalOpMetadata,
+				pendingClear !== undefined &&
+					pendingClear.type === "clear" &&
+					pendingClear === typedLocalOpMetadata,
 				0xbf2 /* Unexpected clear rollback */,
 			);
 			for (const [key] of this.internalIterator()) {
@@ -687,7 +689,9 @@ export class MapKernel {
 					this.sequencedData.clear();
 					const pendingClear = this.pendingData.shift();
 					assert(
-						pendingClear?.type === "clear" && pendingClear === localOpMetadata,
+						pendingClear !== undefined &&
+							pendingClear.type === "clear" &&
+							pendingClear === localOpMetadata,
 						0xbf6 /* Got a local clear message we weren't expecting */,
 					);
 				} else {
@@ -741,7 +745,9 @@ export class MapKernel {
 					);
 					const pendingEntry = this.pendingData[pendingEntryIndex];
 					assert(
-						pendingEntry?.type === "delete" && pendingEntry === localOpMetadata,
+						pendingEntry !== undefined &&
+							pendingEntry.type === "delete" &&
+							pendingEntry === localOpMetadata,
 						0xbf7 /* Got a local delete message we weren't expecting */,
 					);
 					this.pendingData.splice(pendingEntryIndex, 1);
@@ -779,7 +785,7 @@ export class MapKernel {
 					);
 					const pendingEntry = this.pendingData[pendingEntryIndex];
 					assert(
-						pendingEntry?.type === "lifetime",
+						pendingEntry !== undefined && pendingEntry.type === "lifetime",
 						0xbf8 /* Couldn't match local set message to pending lifetime */,
 					);
 					const pendingKeySet = pendingEntry.keySets.shift();

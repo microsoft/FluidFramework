@@ -580,7 +580,6 @@ export abstract class FluidDataStoreContext
 			!this.detachedRuntimeCreation,
 			0x13d /* "Detached runtime creation on realize()" */,
 		);
-		// eslint-disable-next-line unicorn/prefer-logical-operator-over-ternary, logical-assignment-operators -- Using ??= here breaks memoization in concurrent scenarios
 		if (!this.channelP) {
 			this.channelP = this.realizeCore(this.existing).catch((error) => {
 				const errorWrapped = DataProcessingError.wrapIfUnrecognized(

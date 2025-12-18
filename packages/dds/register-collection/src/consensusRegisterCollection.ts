@@ -295,7 +295,9 @@ export class ConsensusRegisterCollection<T>
 				case "write": {
 					// backward compatibility: File at rest written with runtime <= 0.13 do not have refSeq
 					// when the refSeq property didn't exist
-					op.refSeq ??= messageEnvelope.referenceSequenceNumber;
+					if (op.refSeq === undefined) {
+						op.refSeq = messageEnvelope.referenceSequenceNumber;
+					}
 					// Message can be delivered with delay - e.g. resubmitted on reconnect.
 					// Use the refSeq from when the op was created, not when it was transmitted
 					const refSeqWhenCreated = op.refSeq;

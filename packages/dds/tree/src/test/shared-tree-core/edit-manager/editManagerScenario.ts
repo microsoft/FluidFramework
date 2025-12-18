@@ -292,11 +292,13 @@ export function runUnitTestScenario(
 				switch (type) {
 					case "Push": {
 						let seq = step.seq;
-						seq ??=
-							iNextAck < acks.length
-								? acks[iNextAck].seq
-								: // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
-									finalSequencedEdit + 1 + iNextAck - acks.length;
+						if (seq === undefined) {
+							seq =
+								iNextAck < acks.length
+									? acks[iNextAck].seq
+									: // If the pushed edit is never Ack-ed, assign the next available sequence number to it.
+										finalSequencedEdit + 1 + iNextAck - acks.length;
+						}
 						const intention =
 							iNextAck < acks.length
 								? acks[iNextAck].intention

@@ -750,17 +750,20 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	public get disposed(): boolean {
 		if (!(this._disposed || this.socket.connected)) {
 			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
-			this.connectionNotYetDisposedTimeout ??= setTimeout(() => {
-				if (!this._disposed) {
-					this.logger.sendErrorEvent({
-						eventName: "ConnectionNotYetDisposed",
-						driverVersion: pkgVersion,
-						details: JSON.stringify({
-							...this.getConnectionDetailsProps(),
-						}),
-					});
-				}
-			}, 15000);
+			// eslint-disable-next-line unicorn/no-lonely-if
+			if (this.connectionNotYetDisposedTimeout === undefined) {
+				this.connectionNotYetDisposedTimeout = setTimeout(() => {
+					if (!this._disposed) {
+						this.logger.sendErrorEvent({
+							eventName: "ConnectionNotYetDisposed",
+							driverVersion: pkgVersion,
+							details: JSON.stringify({
+								...this.getConnectionDetailsProps(),
+							}),
+						});
+					}
+				}, 15000);
+			}
 		}
 		return this._disposed;
 	}

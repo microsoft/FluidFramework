@@ -142,7 +142,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		}
 
 		// Otherwise, get the latest version of the document as normal.
-		const id = versionId ?? this.id;
+		const id = versionId ? versionId : this.id;
 		const commits = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{

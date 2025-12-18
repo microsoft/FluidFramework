@@ -169,7 +169,9 @@ class ProseMirrorView {
 			elm.appendChild(this.content!);
 		}
 
-		this.editorView ??= this.collabManager.setupEditor(this.textArea);
+		if (!this.editorView) {
+			this.editorView = this.collabManager.setupEditor(this.textArea);
+		}
 	}
 
 	public remove(): void {
