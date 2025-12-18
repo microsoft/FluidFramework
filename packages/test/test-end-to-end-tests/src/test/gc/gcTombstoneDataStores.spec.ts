@@ -116,7 +116,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		summaryVersion: string,
 		disableTombstoneFailureViaGCGenerationOption: boolean = false,
 		logger?: ITelemetryBaseLogger,
-	) {
+	): Promise<IContainer> {
 		const config = disableTombstoneFailureViaGCGenerationOption
 			? testContainerConfigWithFutureGCGenerationOption
 			: testContainerConfig;
@@ -132,7 +132,9 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		});
 	}
 
-	const makeContainer = async (config: ITestContainerConfig = testContainerConfig) => {
+	const makeContainer = async (
+		config: ITestContainerConfig = testContainerConfig,
+	): Promise<IContainer> => {
 		return provider.makeTestContainer(config);
 	};
 
@@ -140,10 +142,13 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		container: IContainer,
 		summaryVersion?: string,
 		logger?: MockLogger,
-	) => {
+	): Promise<{ container: IContainer; summarizer: ISummarizer }> => {
 		return createSummarizer(provider, container, summarizerTestConfig, summaryVersion, logger);
 	};
-	const summarize = async (summarizer: ISummarizer, options?: IOnDemandSummarizeOptions) => {
+	const summarize = async (
+		summarizer: ISummarizer,
+		options?: IOnDemandSummarizeOptions,
+	): Promise<ReturnType<typeof summarizeNow>> => {
 		await provider.ensureSynchronized();
 		return summarizeNow(summarizer, options);
 	};
@@ -152,7 +157,12 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 	// datastore was unreferenced in.
 	const summarizationWithUnreferencedDataStoreAfterTime = async (
 		approximateUnreferenceTimestampMs: number,
-	) => {
+	): Promise<{
+		unreferencedId: string;
+		summarizingContainer: IContainer;
+		summarizer: ISummarizer;
+		summaryVersion: string;
+	}> => {
 		const container = await makeContainer();
 		const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(container);
@@ -202,7 +212,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 	const sendOpToUpdateSummaryTimestampToNow = async (
 		container: IContainer,
 		isSummarizerContainer = false,
-	) => {
+	): Promise<void> => {
 		let defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
 		if (isSummarizerContainer) {
 			const runtime = (defaultDataObject as any).runtime as ContainerRuntime;
@@ -217,7 +227,10 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		defaultDataObject._root.set("send a", `op ${opCount++}`);
 	};
 
-	const getTombstonedDataObjectFromSummary = async (summaryVersion: string, id: string) => {
+	const getTombstonedDataObjectFromSummary = async (
+		summaryVersion: string,
+		id: string,
+	): Promise<ITestDataObject> => {
 		// Load a container with the data store tombstoned
 		const container = await loadContainer(summaryVersion);
 
@@ -232,7 +245,10 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		return (await dataStoreRuntime.entryPoint?.get()) as ITestDataObject;
 	};
 
-	const setupContainerCloseErrorValidation = (container: IContainer, expectedCall: string) => {
+	const setupContainerCloseErrorValidation = (
+		container: IContainer,
+		expectedCall: string,
+	): void => {
 		container.on("closed", (error) => {
 			assert(error !== undefined, `Expecting an error!`);
 			assert(error.errorType === FluidErrorTypes.dataProcessingError);
@@ -240,7 +256,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		});
 	};
 
-	async function createDataStore(sourceDataStore: ITestDataObject) {
+	async function createDataStore(sourceDataStore: ITestDataObject): Promise<ITestDataObject> {
 		const ds =
 			await sourceDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
 		const dataStore = (await ds.entryPoint.get()) as ITestDataObject;
@@ -1280,7 +1296,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			summaryTree: ISummaryTree,
 			tombstones: string[] | undefined,
 			notTombstones: string[],
-		) {
+		): void {
 			const actualTombstones = getGCTombstoneStateFromSummary(summaryTree);
 			if (tombstones === undefined) {
 				assert(
