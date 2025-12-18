@@ -1,0 +1,7 @@
+{
+	"src/insecureTinyliciousUrlResolver.ts": {
+		"@typescript-eslint/prefer-optional-chain": {
+			"count": 1
+		}
+	}
+}

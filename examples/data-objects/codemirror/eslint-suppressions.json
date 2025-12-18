@@ -1,0 +1,7 @@
+{
+	"src/codeMirrorView.tsx": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	}
+}

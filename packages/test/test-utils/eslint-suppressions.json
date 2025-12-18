@@ -1,0 +1,12 @@
+{
+	"src/loaderContainerTracker.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	},
+	"src/testObjectProvider.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 4
+		}
+	}
+}

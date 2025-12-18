@@ -1,0 +1,12 @@
+{
+	"src/AzureUrlResolver.ts": {
+		"@typescript-eslint/prefer-optional-chain": {
+			"count": 1
+		}
+	},
+	"src/test/AzureClient.spec.ts": {
+		"@typescript-eslint/no-unsafe-enum-comparison": {
+			"count": 3
+		}
+	}
+}

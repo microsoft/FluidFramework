@@ -1,0 +1,7 @@
+{
+	"src/ClientUtilities.ts": {
+		"@typescript-eslint/no-unsafe-enum-comparison": {
+			"count": 1
+		}
+	}
+}
