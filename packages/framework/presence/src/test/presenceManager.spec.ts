@@ -483,7 +483,7 @@ describe("Presence", () => {
 							// Act - disconnect & reconnect local client
 							runtime.disconnect(); // Simulate local client disconnect
 							clock.tick(1000);
-							runtime.connect("client6"); // Simulate local client reconnect with new connection id
+							runtime.connect("client8", "client2"); // Simulate local client reconnect with new connection id
 
 							// Verify - attendee with stale connection should still be 'Connected' after 15 seconds
 							clock.tick(15_001);
@@ -528,7 +528,7 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect for 15 second, disconnect local client again, then advance timer
 							runtime.disconnect(); // First disconnect
 							clock.tick(1000);
-							runtime.connect("client6"); // Reconnect
+							runtime.connect("client8", "client2"); // Reconnect
 							clock.tick(15_000); // Advance 15 seconds
 							runtime.disconnect(); // Disconnect again
 							clock.tick(600_000); // Advance 10 minutes
@@ -556,7 +556,7 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect, process rejoin signal from known attendee after 15s, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client6");
+							runtime.connect("client8", "client2");
 							clock.tick(15_000);
 							processJoinSignals([rejoinAttendeeSignal]);
 							clock.tick(600_000);
@@ -584,7 +584,7 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect, process datatstore update signal from known attendee before 30s delay, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client6");
+							runtime.connect("client8", "client2");
 							clock.tick(15_000);
 							processSignal(
 								[],
@@ -624,7 +624,7 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect, remove remote client connection, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client6");
+							runtime.connect("client8", "client2");
 							clock.tick(15_001);
 							runtime.audience.removeMember(initialAttendeeConnectionId); // Remove remote client connection before 30s timeout
 							// Confirm that `attendeeDisconnected` is announced for when active attendee disconnects
@@ -660,13 +660,13 @@ describe("Presence", () => {
 							// Act - disconnect & reconnect local client multiple times with 15s delay
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client6");
+							runtime.connect("client8", "client2");
 
 							clock.tick(15_001);
 
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client7");
+							runtime.connect("client9", "client8");
 
 							// Verify - attendee with stale connection should still be connected after 15 seconds
 							clock.tick(15_001);
