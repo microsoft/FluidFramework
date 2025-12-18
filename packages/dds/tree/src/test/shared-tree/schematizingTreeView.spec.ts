@@ -92,10 +92,9 @@ describe("SchematizingSimpleTreeView", () => {
 				new MockNodeIdentifierManager(),
 			);
 
-			const { compatibility } = view;
-			assert.equal(compatibility.canView, false);
-			assert.equal(compatibility.canUpgrade, false);
-			assert.equal(compatibility.canInitialize, true);
+			assert.equal(view.compatibility.canView, false);
+			assert.equal(view.compatibility.canUpgrade, false);
+			assert.equal(view.compatibility.canInitialize, true);
 
 			view.initialize(5);
 			assert.equal(view.root, 5);
@@ -122,10 +121,9 @@ describe("SchematizingSimpleTreeView", () => {
 					new MockNodeIdentifierManager(),
 				);
 
-				const { compatibility } = view;
-				assert.equal(compatibility.canView, false);
-				assert.equal(compatibility.canUpgrade, false);
-				assert.equal(compatibility.canInitialize, true);
+				assert.equal(view.compatibility.canView, false);
+				assert.equal(view.compatibility.canUpgrade, false);
+				assert.equal(view.compatibility.canInitialize, true);
 
 				view.initialize({ content: 5 });
 				assert.equal(view.root.content, 5);
@@ -138,10 +136,9 @@ describe("SchematizingSimpleTreeView", () => {
 					new MockNodeIdentifierManager(),
 				);
 
-				const { compatibility } = view;
-				assert.equal(compatibility.canView, false);
-				assert.equal(compatibility.canUpgrade, false);
-				assert.equal(compatibility.canInitialize, true);
+				assert.equal(view.compatibility.canView, false);
+				assert.equal(view.compatibility.canUpgrade, false);
+				assert.equal(view.compatibility.canInitialize, true);
 
 				const node = new SimpleTestObject({ content: 5 });
 				assert.equal(Tree.status(node), TreeStatus.New);

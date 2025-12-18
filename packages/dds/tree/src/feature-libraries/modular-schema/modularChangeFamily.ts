@@ -1990,6 +1990,9 @@ export function updateRefreshers(
 	const {
 		fieldChanges,
 		nodeChanges,
+		nodeToParent,
+		nodeAliases,
+		crossFieldKeys,
 		maxId,
 		revisions,
 		constraintViolationCount,
@@ -2001,9 +2004,9 @@ export function updateRefreshers(
 	return makeModularChangeset({
 		fieldChanges,
 		nodeChanges,
-		nodeToParent: change.nodeToParent,
-		nodeAliases: change.nodeAliases,
-		crossFieldKeys: change.crossFieldKeys,
+		nodeToParent,
+		nodeAliases,
+		crossFieldKeys,
 		maxId: maxId as number,
 		revisions,
 		constraintViolationCount,
@@ -2932,9 +2935,13 @@ function buildModularChangesetFromNode(props: {
 }): ModularChangeset {
 	const {
 		path,
-		nodeId = { localId: brand(props.idAllocator.allocate()), revision: props.revision },
+		idAllocator,
+		revision,
+		nodeChanges,
+		nodeChange,
+		nodeId = { localId: brand(idAllocator.allocate()), revision },
 	} = props;
-	setInChangeAtomIdMap(props.nodeChanges, nodeId, props.nodeChange);
+	setInChangeAtomIdMap(nodeChanges, nodeId, nodeChange);
 	const fieldChangeset = genericFieldKind.changeHandler.editor.buildChildChanges([
 		[path.parentIndex, nodeId],
 	]);
