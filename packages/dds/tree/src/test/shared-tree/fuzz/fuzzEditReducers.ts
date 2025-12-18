@@ -75,8 +75,9 @@ const syncFuzzReducer = combineReducers<
 				applyFieldEdit(viewFromState(state, state.client, forkedViewIndex), edit);
 				break;
 			}
-			default:
+			default: {
 				break;
+			}
 		}
 	},
 	transactionBoundary: (state, { boundary }) => {
@@ -242,8 +243,9 @@ export function applyForkMergeOperation(state: FuzzTestState, branchEdit: ForkMe
 			state.forkedViews = forkedViews;
 			break;
 		}
-		default:
+		default: {
 			break;
+		}
 	}
 }
 
