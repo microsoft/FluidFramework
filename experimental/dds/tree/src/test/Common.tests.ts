@@ -20,7 +20,7 @@ import {
 describe('Common', () => {
 	it('function memoizeGetter() correctly memoizes', () => {
 		let x = 0;
-		const getAndInc = () => x++;
+		const getAndInc = (): number => x++;
 		const obj = {
 			get getUncached(): number {
 				return getAndInc();
@@ -65,18 +65,18 @@ describe('Common', () => {
 
 	it('maps iterables correctly', () => {
 		const inputs = [0, 1, 2, 3];
-		const mapper = (n: number) => n * 2;
+		const mapper = (n: number): number => n * 2;
 		expect([...map(inputs, mapper)]).to.deep.equal(inputs.map(mapper));
 	});
 
 	it('filters iterables correctly', () => {
 		const inputs = [0, 1, 2, 3];
-		const predicate = (n: number) => n < 2;
+		const predicate = (n: number): boolean => n < 2;
 		expect([...filter(inputs, predicate)]).to.deep.equal(inputs.filter(predicate));
 	});
 
 	describe('reduces iterables', () => {
-		const reducer = (p: number, c: number) => p + c;
+		const reducer = (p: number, c: number): number => p + c;
 
 		it('that are empty', () => {
 			const inputs: number[] = [];
@@ -101,7 +101,7 @@ describe('Common', () => {
 
 	it('finds elements in iterables', () => {
 		const inputs = [0, 1, 2, 3];
-		const predicateFind = (n: number) => n >= 2;
+		const predicateFind = (n: number): boolean => n >= 2;
 		expect(find(inputs, predicateFind)).to.equal(inputs.find(predicateFind));
 		const predicateNever = (n: number) => n < 0;
 		expect(find(inputs, predicateNever)).to.equal(inputs.find(predicateNever));

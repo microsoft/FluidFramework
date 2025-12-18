@@ -51,7 +51,10 @@ export class BootstrapFormatter<
 		throw new Error();
 	}
 
-	public visit(layout: Layout, state: Readonly<IFormatterState>) {
+	public visit(
+		layout: Layout,
+		state: Readonly<IFormatterState>,
+	): { consumed: boolean; state: Readonly<IFormatterState> } {
 		layout.pushFormat(this.formatter, emptyObject);
 		return { state, consumed: false };
 	}

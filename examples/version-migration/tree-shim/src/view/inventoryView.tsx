@@ -18,7 +18,7 @@ export const InventoryItemView: FC<IInventoryItemViewProps> = ({
 }: IInventoryItemViewProps) => {
 	const quantityRef = useRef<HTMLInputElement>(null);
 	useEffect(() => {
-		const updateFromRemoteQuantity = () => {
+		const updateFromRemoteQuantity = (): void => {
 			if (quantityRef.current !== null) {
 				quantityRef.current.value = inventoryItem.quantity.toString();
 			}
@@ -30,8 +30,8 @@ export const InventoryItemView: FC<IInventoryItemViewProps> = ({
 		};
 	}, [inventoryItem]);
 
-	const inputHandler = (e) => {
-		const newValue = parseInt(e.target.value, 10);
+	const inputHandler = (e: React.FormEvent<HTMLInputElement>): void => {
+		const newValue = parseInt(e.currentTarget.value, 10);
 		inventoryItem.quantity = newValue;
 	};
 
@@ -69,7 +69,7 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewP
 	const nameRef = useRef<HTMLInputElement>(null);
 	const quantityRef = useRef<HTMLInputElement>(null);
 
-	const onAddItemButtonClick = () => {
+	const onAddItemButtonClick = (): void => {
 		if (nameRef.current === null || quantityRef.current === null) {
 			throw new Error("Couldn't get the new item info");
 		}
@@ -130,12 +130,12 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 	);
 	const [disabled, setDisabled] = useState<boolean>(!migratingInventoryList.writeOk);
 	useEffect(() => {
-		const updateItems = () => {
+		const updateItems = (): void => {
 			// TODO: This blows away all the inventory items, making the granular add/delete events
 			// not so useful.  Is there a good way to make a more granular change?
 			setInventoryItems(migratingInventoryList.getItems());
 		};
-		const updateDisabled = () => {
+		const updateDisabled = (): void => {
 			setDisabled(!migratingInventoryList.writeOk);
 		};
 		migratingInventoryList.on("itemAdded", updateItems);

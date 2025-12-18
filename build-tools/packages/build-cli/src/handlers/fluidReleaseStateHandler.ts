@@ -159,7 +159,7 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 		["CheckBranchName3", checkBranchName],
 		["CheckBranchUpToDate", checkBranchUpToDate],
 		["CheckChangelogs", checkChangelogs],
-		["checkCompatLayerGeneration", checkCompatLayerGeneration],
+		["CheckCompatLayerGeneration", checkCompatLayerGeneration],
 		["CheckDependenciesInstalled", checkDependenciesInstalled],
 		["CheckDoesReleaseFromReleaseBranch", checkDoesReleaseFromReleaseBranch],
 		["CheckDoesReleaseFromReleaseBranch2", checkDoesReleaseFromReleaseBranch],

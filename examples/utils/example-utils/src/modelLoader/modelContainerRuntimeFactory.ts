@@ -29,7 +29,7 @@ export interface IModelContainerRuntimeEntryPoint<ModelType> {
  * @internal
  */
 export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory {
-	public get IRuntimeFactory() {
+	public get IRuntimeFactory(): IRuntimeFactory {
 		return this;
 	}
 
