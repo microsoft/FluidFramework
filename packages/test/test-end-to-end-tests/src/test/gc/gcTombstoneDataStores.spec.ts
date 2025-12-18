@@ -97,7 +97,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 	let provider: ITestObjectProvider;
 
-	beforeEach("setup", async function () {
+	beforeEach("setup", async function (): Promise<void> {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		if (provider.driver.type !== "local") {
 			this.skip();
@@ -108,7 +108,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		);
 	});
 
-	afterEach(() => {
+	afterEach((): void => {
 		configProvider.clear();
 	});
 
@@ -249,7 +249,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		container: IContainer,
 		expectedCall: string,
 	): void => {
-		container.on("closed", (error) => {
+		container.on("closed", (error): void => {
 			assert(error !== undefined, `Expecting an error!`);
 			assert(error.errorType === FluidErrorTypes.dataProcessingError);
 			assert(error.message === `Context is tombstoned! Call site [${expectedCall}]`);
