@@ -1159,6 +1159,7 @@ export class Container
 			0x0d1 /* "Container should be attached before close" */,
 		);
 		assert(
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
@@ -2249,6 +2250,7 @@ export class Container
 		// know when the protocol tree is included
 		// this can be removed once all clients send
 		// protocol tree by default
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (summary.details === undefined) {
 			summary.details = {};
 		}

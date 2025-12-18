@@ -57,6 +57,7 @@ export class RequestParser implements IRequest {
 	 * Returns the decoded path parts of the request's url
 	 */
 	public get pathParts(): readonly string[] {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (this.requestPathParts === undefined) {
 			this.requestPathParts = RequestParser.getPathParts(this.url);
 		}

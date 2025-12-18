@@ -194,6 +194,7 @@ export function generateErrorWithStack(stackTraceLimit?: number): Error {
 	}
 	const err = new Error("<<generated stack>>");
 
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 	if (stackPopulatedOnCreation === undefined) {
 		stackPopulatedOnCreation = err.stack !== undefined;
 	}

@@ -194,9 +194,13 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				};
 
 				await Promise.all([
+					// eslint-disable-next-line @typescript-eslint/await-thenable
 					await createAliasedDataStore(),
+					// eslint-disable-next-line @typescript-eslint/await-thenable
 					await createAliasedDataStore(),
+					// eslint-disable-next-line @typescript-eslint/await-thenable
 					await createAliasedDataStore(),
+					// eslint-disable-next-line @typescript-eslint/await-thenable
 					await createAliasedDataStore(),
 				]);
 

@@ -422,6 +422,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		let workspaceDatastore: ValueElementMap<StatesWorkspaceSchema> | undefined =
 			this.datastore[internalWorkspaceAddress];
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (workspaceDatastore === undefined) {
 			workspaceDatastore = this.datastore[internalWorkspaceAddress] = {};
 		}

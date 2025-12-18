@@ -158,6 +158,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.closeWithError}
 	 */
 	private closeWithError(error: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>): void {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (this.closeError === undefined) {
 			this.closeError = error;
 		}

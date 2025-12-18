@@ -695,9 +695,11 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 		if (!node) {
 			return true;
 		}
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (_start === undefined) {
 			_start = this.nodeMin(node).key;
 		}
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (_end === undefined) {
 			_end = this.nodeMax(node).key;
 		}

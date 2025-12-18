@@ -57,6 +57,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	}
 
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		const id = versionId ? versionId : this.id;
 		const commits = await this.manager.getCommits(id, count);
 		return commits.map((commit) => ({

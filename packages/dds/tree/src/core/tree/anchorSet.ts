@@ -1211,6 +1211,7 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 function binaryFind(sorted: readonly PathNode[], index: number): PathNode | undefined {
 	// Try guessing the list is not sparse as a starter:
 	const guess = sorted[index];
+	// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 	if (guess !== undefined && guess.parentIndex === index) {
 		return guess;
 	}
