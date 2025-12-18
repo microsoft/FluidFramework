@@ -19,6 +19,7 @@ import {
 } from "../../core/index.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
+import { FluidClientVersion } from "../../codec/index.js";
 import {
 	checkoutWithContent,
 	chunkFromJsonableTrees,
@@ -3340,7 +3341,9 @@ describe("Editing", () => {
 
 		describe("No Change constraint", () => {
 			it("gets violated when a change is rebased", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"]);
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
 				const branch = tree.branch();
 
 				// Add a No Change constraint and make an edit
@@ -3361,7 +3364,9 @@ describe("Editing", () => {
 			});
 
 			it("remains violated once violated", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"]);
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
 				const branch = tree.branch();
 
 				// Add a No Change constraint and make an edit
@@ -3383,7 +3388,9 @@ describe("Editing", () => {
 			});
 
 			it("is not violated if no rebase occurs", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"]);
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
 				const branch = tree.branch();
 
 				// Add a No Change constraint and make an edit
@@ -3399,7 +3406,9 @@ describe("Editing", () => {
 			});
 
 			it("multiple No Change constraints in same transaction", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"]);
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
 				const branch = tree.branch();
 
 				// Add multiple No Change constraints and make edits
@@ -3418,7 +3427,9 @@ describe("Editing", () => {
 			});
 
 			it("violation during composition", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"]);
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
 				const branch1 = tree.branch();
 				const branch2 = tree.branch();
 
@@ -3443,7 +3454,9 @@ describe("Editing", () => {
 
 		describe("No Change constraint on revert", () => {
 			it("Should not revert when constraint is violated", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"]);
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
 				const branch = tree.branch();
 
 				// Add a No Change constraint and make an edit
@@ -3472,7 +3485,9 @@ describe("Editing", () => {
 			});
 
 			it("Should not be violated when there's no rebase", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"]);
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
 				const branch = tree.branch();
 
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);

@@ -5,8 +5,14 @@
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecFamily } from "../../codec/index.js";
+import {
+	FluidClientVersion,
+	currentVersion,
+	type CodecWriteOptions,
+	type ICodecFamily,
+} from "../../codec/index.js";
 import {
 	type ChangeEncodingContext,
 	type ChangeFamily,
@@ -101,12 +107,15 @@ export class ModularChangeFamily
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
 	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
+	private readonly minVersionForCollab: CodecWriteOptions["minVersionForCollab"];
 
 	public constructor(
 		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+		codecOptions?: Pick<CodecWriteOptions, "minVersionForCollab">,
 	) {
 		this.fieldKinds = fieldKinds;
+		this.minVersionForCollab = codecOptions?.minVersionForCollab ?? currentVersion;
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
@@ -1669,7 +1678,12 @@ export class ModularChangeFamily
 	public buildEditor(
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	): ModularEditBuilder {
-		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver);
+		return new ModularEditBuilder(
+			this,
+			this.fieldKinds,
+			changeReceiver,
+			this.minVersionForCollab,
+		);
 	}
 
 	private createEmptyFieldChange(fieldKind: FieldKindIdentifier): FieldChange {
@@ -2697,14 +2711,17 @@ function makeModularChangeset(
 export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	private transactionDepth: number = 0;
 	private idAllocator: IdAllocator;
+	private readonly minVersionForCollab: CodecWriteOptions["minVersionForCollab"];
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
+		minVersionForCollab: CodecWriteOptions["minVersionForCollab"] = currentVersion,
 	) {
 		super(family, changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
+		this.minVersionForCollab = minVersionForCollab;
 	}
 
 	public override enterTransaction(): void {
@@ -2877,6 +2894,12 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public addNoChangeConstraint(revision: RevisionTag): void {
+		if (this.minVersionForCollab < FluidClientVersion.v2_80) {
+			throw new UsageError(
+				`No change constraints require minVersionForCollab of at least ${FluidClientVersion.v2_80}`,
+			);
+		}
+
 		const changeset = makeModularChangeset({
 			maxId: -1,
 			noChangeConstraint: { violated: false },
@@ -2886,6 +2909,12 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public addNoChangeConstraintOnRevert(revision: RevisionTag): void {
+		if (this.minVersionForCollab < FluidClientVersion.v2_80) {
+			throw new UsageError(
+				`No change constraints require minVersionForCollab of at least ${FluidClientVersion.v2_80}`,
+			);
+		}
+
 		const changeset = makeModularChangeset({
 			maxId: -1,
 			noChangeConstraintOnRevert: { violated: false },
