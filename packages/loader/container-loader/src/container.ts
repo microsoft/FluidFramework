@@ -2249,6 +2249,7 @@ export class Container
 		// know when the protocol tree is included
 		// this can be removed once all clients send
 		// protocol tree by default
+		// Safe: details is typed as optional object
 		summary.details ??= {};
 		summary.details.includesProtocolTree = this.storageAdapter.summarizeProtocolTree;
 		return this.submitMessage(

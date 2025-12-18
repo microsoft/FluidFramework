@@ -646,6 +646,7 @@ export class SharedPropertyTree extends SharedObject {
 
 				// The summary does not contain a remoteHeadGuid. This means the summary has
 				// been created by an old version of PropertyDDS, that did not yet have this patch.
+				// Safe: remoteHeadGuid is typed as `string | undefined`, assigning default when undefined
 				snapshotSummary.remoteHeadGuid ??=
 					snapshotSummary.remoteChanges.length > 0
 						? // If there are remote changes in the

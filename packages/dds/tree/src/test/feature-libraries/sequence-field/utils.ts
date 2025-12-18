@@ -188,6 +188,7 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<SF.MoveOut> = { ...effect };
 				// Use the idOverride so we don't normalize the output cell ID
+				// Safe: idOverride is typed as optional property
 				normalized.idOverride ??= effectId;
 				normalized.finalEndpoint =
 					normalized.finalEndpoint !== undefined
@@ -202,6 +203,7 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<SF.Remove> = { ...effect };
 				// Use the idOverride so we don't normalize the output cell ID
+				// Safe: idOverride is typed as optional property
 				normalized.idOverride ??= effectId;
 				normalized.id = atom.localId;
 				normalized.revision = atom.revision;

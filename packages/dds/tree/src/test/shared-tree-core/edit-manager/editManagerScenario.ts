@@ -292,6 +292,7 @@ export function runUnitTestScenario(
 				switch (type) {
 					case "Push": {
 						let seq = step.seq;
+						// Safe: seq is typed as number | undefined
 						seq ??=
 							iNextAck < acks.length
 								? acks[iNextAck].seq

@@ -91,6 +91,7 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
 
 	private startAutoRollTask(): void {
 		console.log("Starting autoroll from TaskManagerDiceRoller");
+		// Safe: autoRollInterval is typed as `ReturnType<typeof setInterval> | undefined`
 		this.autoRollInterval ??= setInterval(() => {
 			this.roll();
 		}, 1000);

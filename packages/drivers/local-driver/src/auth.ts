@@ -21,6 +21,7 @@ export function generateToken(
 	lifetime: number = 60 * 60,
 	ver: string = "1.0",
 ): string {
+	// Safe: user is typed as IUser | undefined, providing default when undefined
 	let userClaim = user ?? generateUser();
 	if (userClaim.id === "" || userClaim.id === undefined) {
 		userClaim = generateUser();

@@ -661,6 +661,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			throw new Error("Delta manager is not attached");
 		}
 
+		// Safe: deltaStorage is typed as IDocumentDeltaStorageService | undefined
 		this.deltaStorage ??= await docService.connectToDeltaStorage();
 
 		let cancelFetch: (op: ISequencedDocumentMessage) => boolean;
@@ -912,6 +913,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					duplicate++;
 				} else if (message.sequenceNumber !== prev + 1) {
 					gap++;
+					// Safe: firstMissing is typed as number | undefined
 					firstMissing ??= prev + 1;
 				}
 				prev = message.sequenceNumber;

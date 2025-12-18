@@ -695,6 +695,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 		if (!node) {
 			return true;
 		}
+		// Safe: _start and _end are typed as TKey | undefined, providing defaults when undefined
 		_start ??= this.nodeMin(node).key;
 		_end ??= this.nodeMax(node).key;
 		const cmpStart = this.compareKeys(_start, node.key);

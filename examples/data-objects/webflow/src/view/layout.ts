@@ -321,6 +321,7 @@ export class Layout extends EventEmitter {
 		const candidate = stack?.[this.formatStack.length];
 
 		// If we find the same kind of formatter at the expected depth, pass the previous output state.
+		// Safe: optional chaining - if candidate is undefined, candidate?.formatter is undefined !== formatter
 		const prevOut = (
 			candidate?.formatter === formatter ? candidate.state : undefined
 		) as TState;

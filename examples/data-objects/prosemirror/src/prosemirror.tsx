@@ -163,6 +163,7 @@ class ProseMirrorView {
 			elm.appendChild(this.content!);
 		}
 
+		// Safe: editorView is typed as `EditorView | undefined`
 		this.editorView ??= this.collabManager.setupEditor(this.textArea);
 	}
 

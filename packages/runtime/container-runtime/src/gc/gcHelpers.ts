@@ -251,6 +251,7 @@ export function unpackChildNodesGCDetails(
 		}
 
 		let childGCDetails = childGCDetailsMap.get(childId);
+		// Safe: childGCDetails is typed as IGarbageCollectionDetailsBase | undefined
 		childGCDetails ??= { gcData: { gcNodes: {} }, usedRoutes: [] };
 		// gcData should not undefined as its always at least initialized as  empty above.
 		assert(

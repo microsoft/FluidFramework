@@ -172,6 +172,8 @@ describe("client.rollback", () => {
 		client.annotateRangeLocal(1, 3, { foo: "bar" });
 		client.rollback({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 
+		// Note: All props?.foo checks in this file are safe - if props is undefined,
+		// props?.foo is undefined, which correctly compares to expected values.
 		for (let i = 0; i < 4; i++) {
 			const props = client.getPropertiesAtPosition(i);
 			assert(props?.foo === undefined);

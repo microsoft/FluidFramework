@@ -227,6 +227,7 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 			if (i >= 2 && i < 5) {
 				assert.equal(props?.foo, "old");
 			} else {
+				// Safe: optional chaining - if props is undefined, props?.foo is undefined
 				assert(props?.foo === undefined);
 			}
 		}

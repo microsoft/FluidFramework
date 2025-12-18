@@ -58,6 +58,7 @@ class CodeMirrorView {
 
 	public render(elm: HTMLElement): void {
 		// Create base textarea
+		// Safe: textArea is typed as `HTMLTextAreaElement | undefined`
 		this.textArea ??= document.createElement("textarea");
 
 		// Reparent if needed

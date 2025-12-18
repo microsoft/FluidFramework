@@ -81,6 +81,7 @@ export class LazyPromise<T> implements Promise<T> {
 	}
 
 	private async getPromise(): Promise<T> {
+		// Safe: result is typed as `Promise<T> | undefined`, lazy initialization pattern
 		this.result ??= this.execute();
 		return this.result;
 	}

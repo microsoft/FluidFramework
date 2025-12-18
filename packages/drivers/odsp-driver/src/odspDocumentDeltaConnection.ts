@@ -750,6 +750,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	public get disposed(): boolean {
 		if (!(this._disposed || this.socket.connected)) {
 			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
+			// Safe: connectionNotYetDisposedTimeout is typed as ReturnType<typeof setTimeout> | undefined
 			this.connectionNotYetDisposedTimeout ??= setTimeout(() => {
 				if (!this._disposed) {
 					this.logger.sendErrorEvent({

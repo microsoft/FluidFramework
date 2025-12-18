@@ -743,6 +743,7 @@ function calcChannelStats(
 	const channelStats = new Map<string, [number, number]>();
 	for (const [objectId, type] of dataType) {
 		let value = objectStats.get(objectId);
+		// Safe: value is typed as [number, number] | undefined
 		value ??= [0, 0];
 		if (type === objectId) {
 			channelStats.set(`${objectId}`, value);

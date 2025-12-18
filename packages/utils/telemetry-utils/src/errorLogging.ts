@@ -194,6 +194,7 @@ export function generateErrorWithStack(stackTraceLimit?: number): Error {
 	}
 	const err = new Error("<<generated stack>>");
 
+	// Safe: stackPopulatedOnCreation is typed as boolean | undefined (module-level cache)
 	stackPopulatedOnCreation ??= err.stack !== undefined;
 
 	if (stackPopulatedOnCreation) {

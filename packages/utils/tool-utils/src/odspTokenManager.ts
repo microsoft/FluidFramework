@@ -378,6 +378,7 @@ export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens
 	},
 	async save(key: IOdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
 		const rc = await loadAndPatchRC();
+		// Safe: rc.tokens is typed as TokensData | undefined
 		rc.tokens ??= {
 			version: 1,
 			data: {},

@@ -172,6 +172,7 @@ export class OdspDocumentService
 	 * @returns returns the document storage service for sharepoint driver.
 	 */
 	public async connectToStorage(): Promise<IDocumentStorageService> {
+		// Safe: storageManager is typed as OdspDocumentStorageService | undefined
 		this.storageManager ??= new OdspDocumentStorageService(
 			this.odspResolvedUrl,
 			this.getAuthHeader,
@@ -245,6 +246,7 @@ export class OdspDocumentService
 	 * @returns returns the document delta stream service for onedrive/sharepoint driver.
 	 */
 	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+		// Safe: socketModuleP is typed as Promise | undefined
 		this.socketModuleP ??= this.getDelayLoadedDeltaStream();
 		return this.socketModuleP
 			.then(async (m) => {

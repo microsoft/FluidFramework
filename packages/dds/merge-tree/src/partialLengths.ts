@@ -861,6 +861,7 @@ export class PartialSequenceLengths {
 		// eslint-disable-next-line unicorn/no-array-for-each
 		this.perClientAdjustments.forEach((clientAdjustments) => {
 			const leqPartial = clientAdjustments.latestLeq(seq);
+			// Safe: optional chaining - if leqPartial is undefined, undefined !== seq
 			if (leqPartial?.seq === seq) {
 				this.addClientAdjustment(clientId, seq, -leqPartial.seglen);
 			}

@@ -171,6 +171,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 		this.walkSegments(
 			(segment: ISegment) => {
 				if (SubSequence.is(segment)) {
+					// Safe: firstSegment is typed as SubSequence<T> | undefined
 					firstSegment ??= segment;
 					// Condition above checks that segment is a SubSequence but not that
 					// generic T matches. Since SubSequence is already deprecated, assume

@@ -24,6 +24,7 @@ export class AzureUrlResolver implements IUrlResolver {
 		const { ordererUrl, storageUrl, tenantId, containerId } = decodeAzureUrl(request.url);
 		// determine whether the request is for creating of a new container.
 		// such request has the `createNew` header set to true and doesn't have a container ID.
+		// Safe: optional chaining - if headers is undefined, undefined === true is false
 		if (request.headers?.[DriverHeader.createNew] === true) {
 			return {
 				endpoints: {

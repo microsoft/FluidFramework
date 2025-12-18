@@ -96,6 +96,7 @@ class LocalReference implements LocalReferencePosition {
 		| undefined;
 	private _trackingCollection?: TrackingGroupCollection;
 	public get trackingCollection(): TrackingGroupCollection {
+		// Safe: _trackingCollection is typed as TrackingGroupCollection | undefined
 		return (this._trackingCollection ??= new TrackingGroupCollection(this));
 	}
 
@@ -232,6 +233,7 @@ export function setValidateRefCount(
 export class LocalReferenceCollection {
 	public static append(seg1: ISegmentInternal, seg2: ISegmentInternal): void {
 		if (seg2.localRefs && !seg2.localRefs.empty) {
+			// Safe: localRefs is typed as LocalReferenceCollection | undefined
 			seg1.localRefs ??= new LocalReferenceCollection(seg1);
 			assert(
 				seg1.localRefs.refsByOffset.length === seg1.cachedLength,
@@ -248,6 +250,7 @@ export class LocalReferenceCollection {
 	}
 
 	public static setOrGet(segment: ISegmentInternal): LocalReferenceCollection {
+		// Safe: localRefs is typed as LocalReferenceCollection | undefined
 		return (segment.localRefs ??= new LocalReferenceCollection(segment));
 	}
 
@@ -487,6 +490,7 @@ export class LocalReferenceCollection {
 		const beforeRefs = this.refsByOffset[0]?.before ?? new DoublyLinkedList();
 
 		if (this.refsByOffset[0]?.before === undefined) {
+			// Safe: refsByOffset elements are typed as IRefsAtOffset | undefined
 			const refsAtOffset = (this.refsByOffset[0] ??= { before: beforeRefs });
 			refsAtOffset.before ??= beforeRefs;
 		}
@@ -522,6 +526,7 @@ export class LocalReferenceCollection {
 		const afterRefs = this.refsByOffset[lastOffset]?.after ?? new DoublyLinkedList();
 
 		if (this.refsByOffset[lastOffset]?.after === undefined) {
+			// Safe: refsByOffset elements are typed as IRefsAtOffset | undefined
 			const refsAtOffset = (this.refsByOffset[lastOffset] ??= { after: afterRefs });
 			refsAtOffset.after ??= afterRefs;
 		}

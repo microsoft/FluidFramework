@@ -1033,6 +1033,7 @@ export class SharedDirectory
 			const [currentSubDir, currentSubDirObject] = stack.pop()!;
 			currentSubDirObject.ci = currentSubDir.getSerializableCreateInfo();
 			for (const [key, value] of currentSubDir.getSerializedStorage(serializer)) {
+				// Safe: storage is typed as optional object, initializing when undefined
 				currentSubDirObject.storage ??= {};
 				// eslint-disable-next-line import-x/no-deprecated
 				const result: ISerializableValue = {
@@ -1060,6 +1061,7 @@ export class SharedDirectory
 			}
 
 			for (const [subdirName, subdir] of currentSubDir.subdirectories()) {
+				// Safe: subdirectories is typed as optional object, initializing when undefined
 				currentSubDirObject.subdirectories ??= {};
 				const subDataObject: IDirectoryDataObject = {};
 				currentSubDirObject.subdirectories[subdirName] = subDataObject;

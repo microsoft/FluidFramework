@@ -72,6 +72,7 @@ function LinearDictionary<TKey, TData>(
 			return;
 		}
 
+		// Safe: _start and _end are typed as TKey | undefined
 		_start ??= min()!.key;
 		_end ??= max()!.key;
 		for (let i = 0, len = props.length; i < len; i++) {

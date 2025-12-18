@@ -580,6 +580,7 @@ export abstract class FluidDataStoreContext
 			!this.detachedRuntimeCreation,
 			0x13d /* "Detached runtime creation on realize()" */,
 		);
+		// Safe: channelP is typed as Promise | undefined
 		this.channelP ??= this.realizeCore(this.existing).catch((error) => {
 			const errorWrapped = DataProcessingError.wrapIfUnrecognized(
 				error,

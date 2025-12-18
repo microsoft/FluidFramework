@@ -69,6 +69,7 @@ export class DeltaScheduler {
 	}
 
 	private readonly batchBegin = (message: ISequencedDocumentMessage): void => {
+		// Safe: processingStartTime is typed as number | undefined
 		this.processingStartTime ??= performanceNow();
 		if (this.schedulingLog === undefined && this.schedulingCount % 500 === 0) {
 			// Every 500th time we are scheduling the inbound queue, we log telemetry for the

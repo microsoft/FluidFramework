@@ -82,6 +82,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 
 	private startAutoRollTask(): void {
 		console.log("Starting autoroll from OldestClientDiceRoller");
+		// Safe: autoRollInterval is typed as `ReturnType<typeof setInterval> | undefined`
 		this.autoRollInterval ??= setInterval(() => {
 			this.roll();
 		}, 1000);

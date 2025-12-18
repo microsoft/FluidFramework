@@ -564,6 +564,7 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendTelemetryEvent(
 					{
 						eventName: "ConnectionReceived",
+						// Safe: optional chaining - if connection is undefined, undefined === false is false
 						connected: connection?.disposed === false,
 					},
 					undefined,
@@ -573,6 +574,7 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendTelemetryEvent(
 					{
 						eventName: "ConnectToDeltaStreamException",
+						// Safe: optional chaining - if connection is undefined, undefined === false is false
 						connected: connection?.disposed === false,
 					},
 					undefined,

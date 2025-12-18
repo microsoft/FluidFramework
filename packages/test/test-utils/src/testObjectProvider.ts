@@ -503,6 +503,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 * {@inheritDoc ITestObjectProvider.documentServiceFactory}
 	 */
 	public get documentServiceFactory(): IDocumentServiceFactory {
+		// Safe: _documentServiceFactory is typed as IDocumentServiceFactory | undefined
 		this._documentServiceFactory ??= this.driver.createDocumentServiceFactory();
 		return this._documentServiceFactory;
 	}
@@ -511,6 +512,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 * {@inheritDoc ITestObjectProvider.urlResolver}
 	 */
 	public get urlResolver(): IUrlResolver {
+		// Safe: _urlResolver is typed as IUrlResolver | undefined
 		this._urlResolver ??= this.driver.createUrlResolver();
 		return this._urlResolver;
 	}
@@ -815,6 +817,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 * {@inheritDoc ITestObjectProvider.documentServiceFactory}
 	 */
 	public get documentServiceFactory(): IDocumentServiceFactory {
+		// Safe: _documentServiceFactory is typed as IDocumentServiceFactory | undefined
 		this._documentServiceFactory ??= this.driverForCreating.createDocumentServiceFactory();
 		return this._documentServiceFactory;
 	}
@@ -823,6 +826,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 * {@inheritDoc ITestObjectProvider.urlResolver}
 	 */
 	public get urlResolver(): IUrlResolver {
+		// Safe: _urlResolver is typed as IUrlResolver | undefined
 		this._urlResolver ??= this.driverForCreating.createUrlResolver();
 		return this._urlResolver;
 	}
