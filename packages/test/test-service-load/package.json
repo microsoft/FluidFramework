@@ -38,6 +38,8 @@
 		"start:frs": "node ./dist/main.js --driver routerlicious --driverEndpoint frs --profile ci_frs",
 		"start:frs:canary": "node ./dist/main.js --driver routerlicious --driverEndpoint frsCanary --profile ci_frs",
 		"start:mini": "node ./dist/main.js  --profile mini",
+		"start:mixedVersion": "node ./dist/main.js --profile mixedVersion --mixedVersions",
+		"start:mixedVersion:custom": "node ./dist/main.js --profile mini --mixedVersions --previousVersionRatio 0.3",
 		"start:odsp": "node ./dist/main.js --driver odsp",
 		"start:odspdf": "node ./dist/main.js --driver odsp --driverEndpoint odsp-df",
 		"start:reauth": "node ./dist/main.js --profile mini --browserAuth",
