@@ -580,21 +580,23 @@ export abstract class FluidDataStoreContext
 			!this.detachedRuntimeCreation,
 			0x13d /* "Detached runtime creation on realize()" */,
 		);
-		// Safe: channelP is typed as Promise | undefined
-		this.channelP ??= this.realizeCore(this.existing).catch((error) => {
-			const errorWrapped = DataProcessingError.wrapIfUnrecognized(
-				error,
-				"realizeFluidDataStoreContext",
-			);
-			errorWrapped.addTelemetryProperties(
-				tagCodeArtifacts({
-					fullPackageName: this.pkg?.join("/"),
-					fluidDataStoreId: this.id,
-				}),
-			);
-			this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
-			throw errorWrapped;
-		});
+		// eslint-disable-next-line unicorn/prefer-logical-operator-over-ternary, logical-assignment-operators -- Using ??= here breaks memoization in concurrent scenarios
+		if (!this.channelP) {
+			this.channelP = this.realizeCore(this.existing).catch((error) => {
+				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
+					error,
+					"realizeFluidDataStoreContext",
+				);
+				errorWrapped.addTelemetryProperties(
+					tagCodeArtifacts({
+						fullPackageName: this.pkg?.join("/"),
+						fluidDataStoreId: this.id,
+					}),
+				);
+				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
+				throw errorWrapped;
+			});
+		}
 		return this.channelP;
 	}
 
