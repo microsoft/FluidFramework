@@ -204,6 +204,69 @@ export function unqualifySchema(schemaIdentifier: string): string {
 }
 
 /**
+ * Resolves short name collisions by appending counters to colliding short names.
+ * @param identifiers - An array of schema identifiers to be converted to unique short names.
+ * @returns A map from each identifier to its unique, collision-resolved short name
+ *
+ * @remarks
+ * When multiple identifiers produce the same short name, the colliding identifiers get a counter appended to its name.
+ * Non-colliding identifiers keep their original short name.
+ * The algorithm ensures collision-resolved names don't conflict with other existing short names.
+ * Example:
+ * - "scope.Foo" and "scope2.Foo" resolve to "Foo_1" and "Foo_2"
+ * - If "scope3.Foo_1" also exists, it stays as "Foo_1" (no collision), but the other "Foo" instances will resolve to "Foo_2" and "Foo_3" to avoid conflicts.
+ */
+export function resolveShortNameCollisions(identifiers: string[]): Map<string, string> {
+	const shortNameToIdentifiers = new Map<string, string[]>();
+	const allShortNames = new Set<string>();
+
+	// Populate the map of short names to their corresponding identifiers
+	for (const identifier of identifiers) {
+		const shortName = unqualifySchema(identifier);
+		allShortNames.add(shortName);
+		if (shortNameToIdentifiers.has(shortName) === false) {
+			shortNameToIdentifiers.set(shortName, []);
+		}
+		const identifierList = shortNameToIdentifiers.get(shortName);
+		if (identifierList !== undefined) {
+			identifierList.push(identifier);
+		}
+	}
+
+	// Append and underscore and counter to colliding short names.
+	const result = new Map<string, string>();
+	for (const [shortName, identifierList] of shortNameToIdentifiers) {
+		if (identifierList.length === 1) {
+			// No collision, unchanged short name.
+			for (const identifier of identifierList) {
+				result.set(identifier, shortName);
+			}
+		} else {
+			// Collision, append counters to conflicting short names
+			let counter = 1;
+			for (const identifier of identifierList) {
+				let candidateName = `${shortName}_${counter}`;
+				while (allShortNames.has(candidateName) && candidateName !== shortName) {
+					counter += 1;
+					candidateName = `${shortName}_${counter}`;
+				}
+				result.set(identifier, candidateName);
+				counter += 1;
+			}
+		}
+	}
+
+	return result;
+}
+
+/**
+ * Converts a TreeNodeSchema set to an array of their identifiers.
+ */
+export function schemaSetToIdentifiers(schemas: Set<TreeNodeSchema>): string[] {
+	return Array.from(schemas, (s) => s.identifier);
+}
+
+/**
  * Adds all (optionally filtered) schemas reachable from the given schema to the given set.
  * @returns The set of schemas added (same as the `schemas` parameter, if supplied).
  */

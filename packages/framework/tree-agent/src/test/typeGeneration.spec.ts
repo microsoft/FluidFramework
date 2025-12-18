@@ -282,6 +282,161 @@ type MapWithProperty = Map<string, string> & {
 		`,
 		);
 	});
+
+	it("handles schema short name collisions by appending a counter", () => {
+		// Create two schemas with the same short name but different scopes
+		const schemaFactory1 = new SchemaFactory("test");
+		const schemaFactory2 = new SchemaFactory("test2");
+
+		class Foo1 extends schemaFactory1.object("Foo", {
+			value: schemaFactory1.number,
+		}) {}
+
+		class Foo2 extends schemaFactory2.object("Foo", {
+			value: schemaFactory2.number,
+		}) {}
+
+		class TestObject extends sf.object("Container", {
+			item1: Foo1,
+			item2: Foo2,
+		}) {}
+
+		const view = independentView(new TreeViewConfiguration({ schema: TestObject }));
+		view.initialize({
+			item1: { value: 1 },
+			item2: { value: 2 },
+		});
+
+		const schema = getSimpleSchema(view.schema);
+		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
+
+		assert.ok(
+			schemaText.includes("interface Foo_1"),
+			"Name should have suffix _1",
+		);
+		assert.ok(
+			schemaText.includes("interface Foo_2"),
+			"Name should have suffix _2",
+		);
+
+		assert.ok(
+			!schemaText.includes("interface Foo {"),
+			"Original name without suffix should not appear",
+		);
+	});
+
+	it("handles mixed colliding and non-colliding schema names", () => {
+		// Create schemas where some collide and others don't
+		const schemaFactory1 = new SchemaFactory("scope1");
+		const schemaFactory2 = new SchemaFactory("scope2");
+
+		class Foo1 extends schemaFactory1.object("Foo", { value: schemaFactory1.number }) {}
+		class Foo2 extends schemaFactory2.object("Foo", { value: schemaFactory2.number }) {}
+		class Bar extends schemaFactory1.object("Bar", { value: schemaFactory1.number }) {} // Unique name
+
+		class TestObject extends schemaFactory1.object("Container", {
+			fooItem1: Foo1,
+			fooItem2: Foo2,
+			barItem: Bar,
+		}) {}
+
+		const view = independentView(new TreeViewConfiguration({ schema: TestObject }));
+		view.initialize({
+			fooItem1: { value: 1 },
+			fooItem2: { value: 2 },
+			barItem: { value: 3 },
+		});
+
+		const schema = getSimpleSchema(view.schema);
+		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
+
+		assert.ok(schemaText.includes("interface Foo_1"), "Name should have suffix _1");
+		assert.ok(schemaText.includes("interface Foo_2"), "Name should have suffix _2");
+		assert.ok(schemaText.includes("interface Bar"), "Unique name Bar should not have suffix");
+	});
+
+	it("distinguishes collision-resolved names from naturally-named schemas", () => {
+		// "scope.Foo_1", "scope.Foo", and "scope2.Foo_1" should resolve distinctly
+		const sf1 = new SchemaFactory("scope");
+		const sf2 = new SchemaFactory("scope2");
+
+		class Foo_1_1 extends sf1.object("Foo_1", { value: sf1.number }) {}
+		class Foo extends sf1.object("Foo", { value: sf1.number }) {}
+		class Foo_1_2 extends sf2.object("Foo_1", { value: sf2.number }) {}
+
+		class TestObject extends sf.object("Container", {
+			item1: Foo_1_1,
+			item2: Foo,
+			item3: Foo_1_2,
+		}) {}
+
+		const view = independentView(new TreeViewConfiguration({ schema: TestObject }));
+		view.initialize({
+			item1: { value: 1 },
+			item2: { value: 2 },
+			item3: { value: 3 },
+		});
+
+		const schema = getSimpleSchema(view.schema);
+		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
+
+		assert.ok(schemaText.includes("interface Foo {"), "Unique Foo should not have suffix");
+
+		assert.ok(
+			schemaText.includes("interface Foo_1_1"),
+			"First Foo_1 collision should have _1",
+		);
+		assert.ok(
+			schemaText.includes("interface Foo_1_2"),
+			"Second Foo_1 collision should have _2",
+		);
+	});
+
+	it("avoids duplicate names when collision-resolved suffix conflicts with existing schema", () => {
+		// Edge case: scope1.foo and scope2.foo collide, but scope3.foo_1 exists
+		// This tests that we don't create "foo_1" twice
+		const sf1 = new SchemaFactory("scope1");
+		const sf2 = new SchemaFactory("scope2");
+		const sf3 = new SchemaFactory("scope3");
+
+		class Foo1 extends sf1.object("Foo", { value: sf1.number }) {}
+		class Foo2 extends sf2.object("Foo", { value: sf2.number }) {}
+		class FooSuffixed extends sf3.object("Foo_1", { value: sf3.number }) {} // Natural "foo_1"
+
+		class TestObject extends sf.object("Container", {
+			item1: Foo1,
+			item2: Foo2,
+			item3: FooSuffixed,
+		}) {}
+
+		const view = independentView(new TreeViewConfiguration({ schema: TestObject }));
+		view.initialize({
+			item1: { value: 1 },
+			item2: { value: 2 },
+			item3: { value: 3 },
+		});
+
+		const schema = getSimpleSchema(view.schema);
+		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
+
+		// The two "foo" schemas collide, so they need suffixes
+		// "foo_1" is already taken by the natural "foo_1", so the collision-resolved names
+		// should skip it and use "foo_2" and "foo_3" (or similar)
+		const hasFoo = schemaText.includes("interface Foo {");
+		const hasFooSuffixed = schemaText.includes("interface Foo_1 {");
+		const hasFooResolved2 = schemaText.includes("interface Foo_2 {");
+		const hasFooResolved3 = schemaText.includes("interface Foo_3 {");
+
+		assert.ok(
+			!hasFoo,
+			"There should be no unsuffixed 'Foo' since both scope1.Foo and scope2.Foo collide",
+		);
+		assert.ok(hasFooSuffixed, "Natural Foo_1 should exist without modification");
+		assert.ok(
+			(hasFooResolved2 && hasFooResolved3),
+			"Both collision-resolved 'Foo' instances should have unique names avoiding Foo_1",
+		);
+	});
 });
 
 function getDomainSchemaString<TSchema extends ImplicitFieldSchema>(
