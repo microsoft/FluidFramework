@@ -142,6 +142,18 @@ export interface GlobFnOptions {
 	follow?: boolean;
 }
 
+/**
+ * Glob files using tinyglobby.
+ *
+ * @param pattern - Glob pattern to match files
+ * @param options - Options to pass to glob
+ * @returns Promise resolving to array of matched file paths
+ *
+ * @remarks
+ * When the environment variable `FLUID_BUILD_TEST_RANDOM_ORDER` is set to "true", results will be
+ * randomly shuffled to expose code that incorrectly depends on glob result ordering. This should only
+ * be used in test/CI environments.
+ */
 export async function globFn(pattern: string, options: GlobFnOptions = {}): Promise<string[]> {
 	const { cwd, nodir = true, dot = false, absolute = false, ignore, follow = true } = options;
 
