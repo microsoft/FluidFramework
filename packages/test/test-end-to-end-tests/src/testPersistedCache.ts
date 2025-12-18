@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import {
-	type ICacheEntry,
-	type IFileEntry,
-	type IPersistedCache,
+import type {
+	ICacheEntry,
+	IFileEntry,
+	IPersistedCache,
+	ISnapshot
 } from "@fluidframework/driver-definitions/internal";
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 
@@ -61,7 +61,7 @@ export class TestPersistedCache implements IPersistedCache {
 	public clearCache(): void {
 		this.cache.clear();
 	}
-	public reset() {
+	public reset(): void {
 		this.cache.clear();
 		this.versionCache.clear();
 		this.versionToCacheKey.clear();

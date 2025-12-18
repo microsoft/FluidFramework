@@ -258,7 +258,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					);
 				});
 
-				const checkForDetachedHandles = (dds: ISharedMap | ISharedDirectory) => {
+				const checkForDetachedHandles = (dds: ISharedMap | ISharedDirectory): void => {
 					assert.strictEqual(
 						container.attachState,
 						AttachState.Detached,
@@ -273,7 +273,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					assert.strictEqual(blobHandle.isAttached, false, "blob handle should be detached");
 				};
 
-				const checkForAttachedHandles = (dds: ISharedMap | ISharedDirectory) => {
+				const checkForAttachedHandles = (dds: ISharedMap | ISharedDirectory): void => {
 					assert.strictEqual(
 						container.attachState,
 						AttachState.Attached,

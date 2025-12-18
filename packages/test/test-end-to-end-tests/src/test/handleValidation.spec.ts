@@ -48,6 +48,7 @@ import {
 	type TreeView,
 } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
+import type { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 
 const mapId = "map";
 const stringId = "sharedString";
@@ -65,7 +66,7 @@ const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {
 	h: builder.optional(builder.handle),
 }) {}
-function treeSetup(dds: ITree) {
+function treeSetup(dds: ITree): TreeView<typeof Bar> {
 	const config = new TreeViewConfiguration({ schema: Bar });
 
 	const view = dds.viewWith(config);
@@ -435,7 +436,11 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 		},
 	};
 
-	async function setup() {
+	async function setup(): Promise<{
+		loader: IHostLoader;
+		provider: ITestObjectProvider;
+		container1: IContainer;
+	}> {
 		const loader = provider.makeTestLoader(testContainerConfig);
 		const container1 = await createAndAttachContainer(
 			provider.defaultCodeDetails,
