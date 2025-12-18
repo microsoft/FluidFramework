@@ -7,7 +7,7 @@ import type {
 	ICacheEntry,
 	IFileEntry,
 	IPersistedCache,
-	ISnapshot
+	ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 
