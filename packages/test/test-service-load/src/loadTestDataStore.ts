@@ -926,7 +926,7 @@ const LoadTestDataStoreInstantiationFactory = new DataObjectFactory({
 	sharedObjects: [SharedCounter.getFactory(), TaskManager.getFactory()],
 });
 
-export const createFluidExport = (runtimeOptions?: IContainerRuntimeOptions | undefined) =>
+export const createFluidExport = (runtimeOptions?: IContainerRuntimeOptions | undefined): ContainerRuntimeFactoryWithDefaultDataStore =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
 		registryEntries: [
