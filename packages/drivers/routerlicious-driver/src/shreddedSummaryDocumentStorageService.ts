@@ -76,6 +76,8 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 	}
 
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+		// Safe: nullish coalescing treats both null and undefined the same as the original ternary,
+		// but empty string "" now uses this.id (acceptable since empty versionId is invalid).
 		const id = versionId ?? this.id;
 		const commits = await PerformanceEvent.timedExecAsync(
 			this.logger,

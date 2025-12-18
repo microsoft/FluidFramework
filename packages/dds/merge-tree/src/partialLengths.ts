@@ -929,6 +929,7 @@ export class PartialSequenceLengths {
 				}
 				const partialLengths = branchPartialLengths.partialLengths;
 				const leqPartial = partialLengths.latestLeq(seq);
+				// Safe: optional chaining - if leqPartial is undefined, undefined !== seq
 				if (leqPartial?.seq === seq) {
 					seqSeglen += leqPartial.seglen;
 				}
@@ -938,6 +939,7 @@ export class PartialSequenceLengths {
 				// eslint-disable-next-line unicorn/no-array-for-each
 				branchPartialLengths.perClientAdjustments.forEach((clientAdjustments) => {
 					const leqBranchPartial = clientAdjustments.latestLeq(seq);
+					// Safe: optional chaining - if leqBranchPartial is undefined, undefined !== seq
 					if (leqBranchPartial?.seq === seq) {
 						this.addClientAdjustment(clientId, seq, leqBranchPartial.seglen);
 					}

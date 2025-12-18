@@ -142,6 +142,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		}
 
 		// Otherwise, get the latest version of the document as normal.
+		// Safe: nullish coalescing treats both null and undefined the same as the original ternary,
+		// but empty string "" now uses this.id (acceptable since empty versionId is invalid).
 		const id = versionId ?? this.id;
 		const commits = await PerformanceEvent.timedExecAsync(
 			this.logger,

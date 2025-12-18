@@ -1159,6 +1159,7 @@ export class Container
 			0x0d1 /* "Container should be attached before close" */,
 		);
 		assert(
+			// Safe: optional chaining - if resolvedUrl is undefined, undefined !== "fluid" so assert triggers.
 			this.resolvedUrl?.type === "fluid",
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
