@@ -444,7 +444,7 @@ function rollbackFromCommit<TChange>(
 	}
 	const tag = mintRevisionTag();
 	const rollback = tagRollbackInverse(
-		changeRebaser.invert(commit, true, tag, false),
+		changeRebaser.invert(commit, true, tag),
 		tag,
 		commit.revision,
 	);

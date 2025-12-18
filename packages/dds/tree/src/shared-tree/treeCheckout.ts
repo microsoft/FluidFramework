@@ -1006,7 +1006,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const revisionForInvert = this.mintRevisionTag();
 
 		let change = tagChange(
-			this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert, true),
+			this.changeFamily.rebaser.invert(commitToRevert, false, revisionForInvert),
 			revisionForInvert,
 		);
 

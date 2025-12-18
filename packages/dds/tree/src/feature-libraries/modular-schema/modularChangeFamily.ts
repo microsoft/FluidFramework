@@ -670,13 +670,11 @@ export class ModularChangeFamily
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
 	 * @param revisionForInvert - The revision for the invert changeset.
-	 * @param isRevert - Whether the change has been inverted as a result of a revert
 	 */
 	public invert(
 		change: TaggedChange<ModularChangeset>,
 		isRollback: boolean,
 		revisionForInvert: RevisionTag,
-		isRevert: boolean,
 	): ModularChangeset {
 		// Rollback changesets destroy the nodes created by the change being rolled back.
 		const destroys = isRollback ? invertBuilds(change.change.builds) : undefined;
@@ -691,16 +689,14 @@ export class ModularChangeFamily
 			? [{ revision: revisionForInvert, rollbackOf: change.revision }]
 			: [{ revision: revisionForInvert }];
 
-		// If this invert is the result of a revert, then we need to ensure noChangeConstraintOnRevert
-		// is applied under noChangeConstraint, so that if this is then rebased, the noChangeConstraint will be violated.
-		const noChangeConstraint = isRevert ? change.change.noChangeConstraintOnRevert : undefined;
+		const noChangeConstraint = change.change.noChangeConstraintOnRevert;
 		const noChangeConstraintOnRevert = change.change.noChangeConstraint;
 
 		if (hasConflicts(change.change)) {
 			return makeModularChangeset({
 				maxId: change.change.maxId as number,
 				revisions: revInfos,
-				noChangeConstraint,
+				noChangeConstraint: change.change.noChangeConstraintOnRevert,
 				noChangeConstraintOnRevert,
 				destroys,
 			});

@@ -922,7 +922,7 @@ describe("ModularChangeFamily", () => {
 			};
 
 			assertEqual(
-				family.invert(makeAnonChange(rootChange1a), false, revisionForInvert, false),
+				family.invert(makeAnonChange(rootChange1a), false, revisionForInvert),
 				expectedInverse,
 			);
 		});
@@ -951,7 +951,7 @@ describe("ModularChangeFamily", () => {
 			};
 
 			assertEqual(
-				family.invert(makeAnonChange(rootChange1aGeneric), false, revisionForInvert, false),
+				family.invert(makeAnonChange(rootChange1aGeneric), false, revisionForInvert),
 				expectedInverse,
 			);
 		});
@@ -969,8 +969,8 @@ describe("ModularChangeFamily", () => {
 			);
 			deepFreeze(change1);
 			const revisionForInvert = mintRevisionTag();
-			const actualRollback = family.invert(change1, true, revisionForInvert, false);
-			const actualUndo = family.invert(change1, false, revisionForInvert, false);
+			const actualRollback = family.invert(change1, true, revisionForInvert);
+			const actualUndo = family.invert(change1, false, revisionForInvert);
 
 			const expectedRollback: ModularChangeset = {
 				...Change.empty(),
