@@ -1,3 +1,138 @@
+## [0.61.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.60.0...build-tools_v0.61.0) (2025-12-03)
+
+No documented changes.
+
+## [0.60.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.59.0...build-tools_v0.60.0) (2025-11-06)
+
+
+### Features
+
+* **build-cli:** New vnext generate:changelog command ([#24899](https://github.com/microsoft/FluidFramework/issues/24899)) ([1f7db33](https://github.com/microsoft/FluidFramework/commit/1f7db33691c55a035e44d2678642959b96fa8818))
+
+
+### Bug Fixes
+
+* **build-tools:** Fix typetests header version format ([#25830](https://github.com/microsoft/FluidFramework/issues/25830)) ([45f8a0d](https://github.com/microsoft/FluidFramework/commit/45f8a0dcedacc7603b1f06a682fdfbf65b8973a2))
+
+## [0.59.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.58.0...build-tools_v0.59.0) (2025-11-05)
+
+
+### Features
+
+* **build-cli:** add version header to generated type test files ([#25712](https://github.com/microsoft/FluidFramework/issues/25712)) ([360887b](https://github.com/microsoft/FluidFramework/commit/360887b87c8285ef42a3085bfe0e5453875780a0))
+* **build-tools:** Support new release tag scheme ([#24963](https://github.com/microsoft/FluidFramework/issues/24963)) ([acd2fbb](https://github.com/microsoft/FluidFramework/commit/acd2fbbd81c851856cf8416a9bc0c6cb571d3362))
+* **layer-check:** add enhanced duplicate package detection ([#25792](https://github.com/microsoft/FluidFramework/issues/25792)) ([6f67216](https://github.com/microsoft/FluidFramework/commit/6f6721631b9800e792dbed92d3e2afef756f4424))
+
+
+### Bug Fixes
+
+* **build-cli:** Ensure generated rollup paths are explicitly relative ([#25431](https://github.com/microsoft/FluidFramework/issues/25431)) ([3d5e8ef](https://github.com/microsoft/FluidFramework/commit/3d5e8ef7bd73f9e77ea54d540c22f73f9903fcd2)), closes [AB#47852](https://github.com/microsoft/AB/issues/47852)
+* **build-cli:** Fix `readArgValues` in `generateEntrypoints` ([#25340](https://github.com/microsoft/FluidFramework/issues/25340)) ([9b2b57c](https://github.com/microsoft/FluidFramework/commit/9b2b57cae515a29e34616d27a06939ac2fe5b0fb))
+
+
+## [0.57.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.56.0...build-tools_v0.57.0) (2025-07-28)
+
+
+### Features
+
+* **fluid-build:** Leaf Task File Dependencies ([#24929](https://github.com/microsoft/FluidFramework/issues/24929)) ([7463585](https://github.com/microsoft/FluidFramework/commit/74635852c60bbe4414279339a46b244eda6f6cc5))
+
+
+### Bug Fixes
+
+* **build-cli:** Use correct line endings ([#24594](https://github.com/microsoft/FluidFramework/issues/24594)) ([de998d0](https://github.com/microsoft/FluidFramework/commit/de998d08d1e80c2825c0310325de5fa71ea4006b))
+* **check:policy:** Use relative paths in package.json repository field ([#24887](https://github.com/microsoft/FluidFramework/issues/24887)) ([67fc07d](https://github.com/microsoft/FluidFramework/commit/67fc07dfe509b1fb1eb7574b4bb61b266666a9c7))
+* **fluid-build:** Declarative tasks depend on the lock file by default ([#24955](https://github.com/microsoft/FluidFramework/issues/24955)) ([4d8f694](https://github.com/microsoft/FluidFramework/commit/4d8f6946e2be25fad00c11e082fbdba817a8305c))
+* **fluid-build:** Support alternate tsBuildInfo path in config ([#24911](https://github.com/microsoft/FluidFramework/issues/24911)) ([bba8017](https://github.com/microsoft/FluidFramework/commit/bba801716c140156e01ed545183bbeda30fac816))
+
+## [0.56.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.55.0...build-tools_v0.56.0) (2025-04-15)
+
+
+### Features
+
+* **fluid-build:** Per package Declarative Tasks ([#24100](https://github.com/microsoft/FluidFramework/issues/24100)) ([b5ce3f0](https://github.com/microsoft/FluidFramework/commit/b5ce3f03f5613e6995a8b415e39fcdb83e90d3ad))
+
+
+### Bug Fixes
+
+* **check:policy:** Support running checks from the routerlicious folder ([#24249](https://github.com/microsoft/FluidFramework/issues/24249)) ([f38e5ec](https://github.com/microsoft/FluidFramework/commit/f38e5ec55f7c228ec01dc27b3368ab9fc52c18c9)), closes [#24072](https://github.com/microsoft/FluidFramework/issues/24072)
+* **release:** Fix check for git tag ([#24372](https://github.com/microsoft/FluidFramework/issues/24372)) ([02c5170](https://github.com/microsoft/FluidFramework/commit/02c5170a39c4b7993814bf78e3a001d02406d5b1))
+
+## [0.56.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.55.0...build-tools_v0.56.0) (2025-12-11)
+
+
+### Bug Fixes
+
+* **build-cli:** Fix up-to-date branch check ([#23968](https://github.com/microsoft/FluidFramework/issues/23968)) ([d096359](https://github.com/microsoft/FluidFramework/commit/d096359bc0742a0617be2af4dd5d12c93dada58d))
+* **build-tools:** Stop spinner before logging more ([#23912](https://github.com/microsoft/FluidFramework/issues/23912)) ([a3b4aad](https://github.com/microsoft/FluidFramework/commit/a3b4aada7b58caec3bb34f9c2fd789499b8d81ac))
+* **check:policy:** Handle root package.json correctly ([#24228](https://github.com/microsoft/FluidFramework/issues/24228)) ([4097057](https://github.com/microsoft/FluidFramework/commit/4097057a1fb4fa7537250ad46535112a3680a1c7))
+* **publish:tarballs:** Fix unhandled exception when publish fails ([#23953](https://github.com/microsoft/FluidFramework/issues/23953)) ([dd71612](https://github.com/microsoft/FluidFramework/commit/dd71612350833dba875dfc3bba8438f02544824e))
+
+## [0.55.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.54.0...build-tools_v0.55.0) (2025-12-11)
+
+
+### Bug Fixes
+
+* **build-tools:** display BuildGraph errors ([#23875](https://github.com/microsoft/FluidFramework/issues/23875)) ([6ec9c4f](https://github.com/microsoft/FluidFramework/commit/6ec9c4f09070a23d737b3aadaa7f1007232b57e5))
+
+## [0.53.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.52.0...build-tools_v0.53.0) (2025-12-11)
+
+
+### Features
+
+* **build-infrastructure:** Add selection and filtering APIs ([#22866](https://github.com/microsoft/FluidFramework/issues/22866)) ([1b75f54](https://github.com/microsoft/FluidFramework/commit/1b75f54f1a7e4ce636db0c777a61a525078ad852))
+* **generate:assertTags:** Enable per package assert tagging configuration ([#23452](https://github.com/microsoft/FluidFramework/issues/23452)) ([39954b2](https://github.com/microsoft/FluidFramework/commit/39954b2b94234f7508dbd7cdaf06d1b9859ae2ba))
+
+
+### Bug Fixes
+
+* **build-cli:** Only update range for workspace:*|^|~ dependencies ([#23669](https://github.com/microsoft/FluidFramework/issues/23669)) ([fe80bd8](https://github.com/microsoft/FluidFramework/commit/fe80bd8fb11566fa21341bd798c54612b80dc068))
+* **build-cli:** Update promptToGenerateReleaseNotes to use non-deprecated flag ([#23482](https://github.com/microsoft/FluidFramework/issues/23482)) ([c55eaac](https://github.com/microsoft/FluidFramework/commit/c55eaac80d2a931ce5cfd49b29eea0376bf40301))
+* **check:policy:** Correct calculation of repo root ([#23839](https://github.com/microsoft/FluidFramework/issues/23839)) ([4343d43](https://github.com/microsoft/FluidFramework/commit/4343d4327c76be93fbf23c41727236824e57069a)), closes [#22695](https://github.com/microsoft/FluidFramework/issues/22695)
+* **generate:releaseNotes:** Include changesets with no packages in release notes ([#23273](https://github.com/microsoft/FluidFramework/issues/23273)) ([8e95ada](https://github.com/microsoft/FluidFramework/commit/8e95ada420fb45e0f3ec9974c96efa0fc7a78954))
+
+## [0.52.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.51.0...build-tools_v0.52.0) (2025-02-11)
+
+
+### Features
+
+* **build-infrastructure:** Add selection and filtering APIs ([#22866](https://github.com/microsoft/FluidFramework/issues/22866)) ([1b75f54](https://github.com/microsoft/FluidFramework/commit/1b75f54f1a7e4ce636db0c777a61a525078ad852))
+* **generate:assertTags:** Enable per package assert tagging configuration ([#23452](https://github.com/microsoft/FluidFramework/issues/23452)) ([39954b2](https://github.com/microsoft/FluidFramework/commit/39954b2b94234f7508dbd7cdaf06d1b9859ae2ba))
+
+
+### Bug Fixes
+
+* **build-cli:** Only update range for workspace:*|^|~ dependencies ([#23669](https://github.com/microsoft/FluidFramework/issues/23669)) ([fe80bd8](https://github.com/microsoft/FluidFramework/commit/fe80bd8fb11566fa21341bd798c54612b80dc068))
+* **build-cli:** Update promptToGenerateReleaseNotes to use non-deprecated flag ([#23482](https://github.com/microsoft/FluidFramework/issues/23482)) ([c55eaac](https://github.com/microsoft/FluidFramework/commit/c55eaac80d2a931ce5cfd49b29eea0376bf40301))
+* **generate:releaseNotes:** Include changesets with no packages in release notes ([#23273](https://github.com/microsoft/FluidFramework/issues/23273)) ([8e95ada](https://github.com/microsoft/FluidFramework/commit/8e95ada420fb45e0f3ec9974c96efa0fc7a78954))
+
+## [0.51.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.50.0...build-tools_v0.51.0) (2025-12-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* **build-tools:** was to remove support for node<18, so I don't expect
+issues.
+
+### Features
+
+* **build-infrastructure:** Add default implementations for core interfaces ([#22865](https://github.com/microsoft/FluidFramework/issues/22865)) ([199b9d0](https://github.com/microsoft/FluidFramework/commit/199b9d051239d8dba8215153e565c2cadbc1ecef))
+* **build-tools:** Add build-infrastructure package ([#22853](https://github.com/microsoft/FluidFramework/issues/22853)) ([b8e887e](https://github.com/microsoft/FluidFramework/commit/b8e887ead4e4a10c537e12fbe43d66ea83f7e25a))
+* **build-tools:** Add generate:node10Entrypoints command ([#22937](https://github.com/microsoft/FluidFramework/issues/22937)) ([533de79](https://github.com/microsoft/FluidFramework/commit/533de791802eaa0eb0b55f8a222d38e9a0822741))
+
+
+### Bug Fixes
+
+* **build-tools:** Run install with `--no-frozen-lockfile` ([#22814](https://github.com/microsoft/FluidFramework/issues/22814)) ([0334d00](https://github.com/microsoft/FluidFramework/commit/0334d003b0e4876e4d3925002c863eeaa78177fb))
+* **fluid-build:** Load default config when no config is found ([#22825](https://github.com/microsoft/FluidFramework/issues/22825)) ([8884365](https://github.com/microsoft/FluidFramework/commit/88843657f4be9fa1fa4fe5e0370b6f120ee3b090))
+* **release:** Check release notes and changelog generation in release tool ([#22811](https://github.com/microsoft/FluidFramework/issues/22811)) ([2d98e6c](https://github.com/microsoft/FluidFramework/commit/2d98e6cc681ac39786510e659f62fa7606a1edff))
+
+
+### Build System
+
+* **build-tools:** Upgrade danger to 12.x ([#22904](https://github.com/microsoft/FluidFramework/issues/22904)) ([0ec024d](https://github.com/microsoft/FluidFramework/commit/0ec024d3669adc4d75afd24daae9017593153db2))
+
+
 ## [0.50.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.49.0...build-tools_v0.50.0) (2024-11-04)
 
 
