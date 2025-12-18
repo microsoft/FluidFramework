@@ -69,7 +69,9 @@ export const TodoListView: React.FC<TodoListProps> = (props: TodoListProps) => {
 					name="OpenInNewTab"
 					id={id}
 					className="action-button"
-					onClick={(): Window | null => window.open(getDirectLink(id), "_blank")}
+					onClick={(): void => {
+						window.open(getDirectLink(id), "_blank");
+					}}
 				>
 					↗
 				</button>
