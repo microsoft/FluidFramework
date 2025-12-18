@@ -415,7 +415,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			// If the child route used routes are not defined, initialize it now and it can be used for all child nodes
 			// created until this summarization process is completed. This is an optimization to unpack the used routes
 			// only when needed.
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 			if (this.wipChildNodesUsedRoutes === undefined) {
 				this.wipChildNodesUsedRoutes = unpackChildNodesUsedRoutes(this.usedRoutes);
 			}

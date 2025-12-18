@@ -72,11 +72,9 @@ function LinearDictionary<TKey, TData>(
 			return;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (_start === undefined) {
 			_start = min()!.key;
 		}
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (_end === undefined) {
 			_end = max()!.key;
 		}

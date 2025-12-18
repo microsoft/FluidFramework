@@ -142,7 +142,6 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		}
 
 		// Otherwise, get the latest version of the document as normal.
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		const id = versionId ? versionId : this.id;
 		const commits = await PerformanceEvent.timedExecAsync(
 			this.logger,

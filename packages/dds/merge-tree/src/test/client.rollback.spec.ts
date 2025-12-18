@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/prefer-optional-chain */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "node:assert";
 

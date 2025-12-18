@@ -169,7 +169,6 @@ class ProseMirrorView {
 			elm.appendChild(this.content!);
 		}
 
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (!this.editorView) {
 			this.editorView = this.collabManager.setupEditor(this.textArea);
 		}

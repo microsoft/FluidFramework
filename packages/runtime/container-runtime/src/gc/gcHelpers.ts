@@ -251,7 +251,6 @@ export function unpackChildNodesGCDetails(
 		}
 
 		let childGCDetails = childGCDetailsMap.get(childId);
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (childGCDetails === undefined) {
 			childGCDetails = { gcData: { gcNodes: {} }, usedRoutes: [] };
 		}

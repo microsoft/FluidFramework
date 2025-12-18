@@ -750,7 +750,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	public get disposed(): boolean {
 		if (!(this._disposed || this.socket.connected)) {
 			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
-			// eslint-disable-next-line unicorn/no-lonely-if, @typescript-eslint/prefer-nullish-coalescing
+			// eslint-disable-next-line unicorn/no-lonely-if
 			if (this.connectionNotYetDisposedTimeout === undefined) {
 				this.connectionNotYetDisposedTimeout = setTimeout(() => {
 					if (!this._disposed) {

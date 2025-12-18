@@ -103,7 +103,6 @@ export class ReplayControllerStatic extends ReplayController {
 		if (this.unitIsTime === true) {
 			for (const [i, { timestamp }] of fetchedOps.entries()) {
 				if (timestamp !== undefined) {
-					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 					if (this.firstTimeStamp === undefined) {
 						this.firstTimeStamp = timestamp;
 					}

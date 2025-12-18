@@ -278,7 +278,6 @@ export class SharedPropertyTree extends SharedObject {
 		}
 
 		if (doSubmit || !isEmpty(changes)) {
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 			this.applyChangeSet(changes, metadata || {});
 			this.root.cleanDirty();
 		}
@@ -645,7 +644,6 @@ export class SharedPropertyTree extends SharedObject {
 					throw new Error("Invalid Snapshot.");
 				}
 
-				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 				if (snapshotSummary.remoteHeadGuid === undefined) {
 					// The summary does not contain a remoteHeadGuid. This means the summary has
 					// been created by an old version of PropertyDDS, that did not yet have this patch.

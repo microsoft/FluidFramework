@@ -904,7 +904,6 @@ export class TaskManagerClass
 		assert(latestPendingOps !== undefined, 0xc46 /* No pending ops when trying to rollback */);
 		const pendingOpToRollback = latestPendingOps.pop();
 		assert(
-			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 			pendingOpToRollback !== undefined && pendingOpToRollback.messageId === localOpMetadata,
 			0xc47 /* pending op mismatch */,
 		);

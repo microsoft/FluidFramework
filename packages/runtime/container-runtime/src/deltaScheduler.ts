@@ -69,11 +69,9 @@ export class DeltaScheduler {
 	}
 
 	private readonly batchBegin = (message: ISequencedDocumentMessage): void => {
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (this.processingStartTime === undefined) {
 			this.processingStartTime = performanceNow();
 		}
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (this.schedulingLog === undefined && this.schedulingCount % 500 === 0) {
 			// Every 500th time we are scheduling the inbound queue, we log telemetry for the
 			// number of ops processed, the time and number of turns it took to process the ops.

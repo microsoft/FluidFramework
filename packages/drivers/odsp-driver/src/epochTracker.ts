@@ -140,7 +140,6 @@ export class EpochTracker implements IPersistedFileCache {
 			)) as IVersionedValueWithEpoch;
 			// Version mismatch between what the runtime expects and what it recieved.
 			// The cached value should not be used
-			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 			if (value === undefined || value.version !== persistedCacheValueVersion) {
 				return undefined;
 			}
@@ -296,7 +295,6 @@ export class EpochTracker implements IPersistedFileCache {
 			.catch(async (error) => {
 				// Get the server epoch from error in case we don't have it as if undefined we won't be able
 				// to mark it as epoch error.
-				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 				if (epochFromResponse === undefined) {
 					epochFromResponse = (error as IOdspError).serverEpoch;
 				}

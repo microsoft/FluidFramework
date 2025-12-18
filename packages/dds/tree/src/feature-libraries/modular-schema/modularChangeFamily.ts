@@ -462,7 +462,6 @@ export class ModularChangeFamily
 				setInChangeAtomIdMap(composedNodes, nodeId, nodeChangeset);
 			}
 
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 			if (nodeChangeset.fieldChanges === undefined) {
 				nodeChangeset.fieldChanges = new Map();
 			}

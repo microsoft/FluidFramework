@@ -82,7 +82,6 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 
 	constructor(random: IRandom = makeRandom(1), chain?: Record<string, [string, number][]>) {
 		super();
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		this.chain = chain ? chain : {};
 
 		this.random = random;
@@ -98,7 +97,6 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 			let prevWord: string | null = null;
 			for (let i = 0; i < sentence.length; i++) {
 				const word = sentence[i];
-				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 				if (initialChain[word] === undefined) {
 					initialChain[word] = {};
 				}
@@ -110,7 +108,6 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 					const markovChainRoot = initialChain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY];
 					if (markovChainRoot !== undefined) {
 						const currentCount = markovChainRoot[word];
-						// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 						markovChainRoot[word] = currentCount === undefined ? 1 : currentCount + 1;
 					} else {
 						initialChain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] = { [word]: 1 };
@@ -125,7 +122,6 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 					}
 
 					const currentWordCount = initialChain[prevWord][word];
-					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 					initialChain[prevWord][word] =
 						currentWordCount === undefined ? 1 : currentWordCount + 1;
 					prevWord = word;
@@ -224,7 +220,6 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 
 	constructor(random: IRandom = makeRandom(1), chain?: Record<string, string[]>) {
 		super();
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		this.chain = chain ? chain : {};
 		this.random = random;
 	}
@@ -238,7 +233,6 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 			let prevWord: string | null = null;
 			for (let i = 0; i < sentence.length; i++) {
 				const word = sentence[i];
-				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 				if (this.chain[word] === undefined) {
 					this.chain[word] = [];
 				}

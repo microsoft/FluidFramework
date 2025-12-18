@@ -450,7 +450,6 @@ function sliceToGroupOpsInternal(
 	if (value.marks) {
 		props = {};
 		for (const mark of value.marks) {
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 			props[mark.type] = mark.attrs || true;
 		}
 	}

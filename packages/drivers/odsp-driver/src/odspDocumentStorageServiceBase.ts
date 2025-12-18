@@ -241,7 +241,6 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 
 	private async readTree(id: string, scenarioName?: string): Promise<ISnapshotTree | null> {
 		let tree = this.commitCache.get(id);
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (!tree) {
 			tree = await this.fetchTreeFromSnapshot(id, scenarioName);
 		}

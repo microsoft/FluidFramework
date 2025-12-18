@@ -724,7 +724,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		this.checkSnapshotUrl();
 
 		// Set the module promise right away, so as to not call it twice.
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (this.summaryModuleP === undefined) {
 			this.summaryModuleP = this.getDelayLoadedSummaryManager();
 		}
@@ -761,7 +760,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			}
 		}
 
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (!this.odspSummaryUploadManager) {
 			this.odspSummaryUploadManager = await this.summaryModuleP
 				.then(async (m) => {

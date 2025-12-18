@@ -159,7 +159,6 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshot): Uint8Arra
 	);
 
 	let latestSequenceNumber = snapshotContents.latestSequenceNumber;
-	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 	if (latestSequenceNumber === undefined) {
 		latestSequenceNumber =
 			snapshotContents.ops.length > 0

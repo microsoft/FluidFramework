@@ -172,7 +172,6 @@ export class OdspDocumentService
 	 * @returns returns the document storage service for sharepoint driver.
 	 */
 	public async connectToStorage(): Promise<IDocumentStorageService> {
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (!this.storageManager) {
 			this.storageManager = new OdspDocumentStorageService(
 				this.odspResolvedUrl,
@@ -248,7 +247,6 @@ export class OdspDocumentService
 	 * @returns returns the document delta stream service for onedrive/sharepoint driver.
 	 */
 	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (this.socketModuleP === undefined) {
 			this.socketModuleP = this.getDelayLoadedDeltaStream();
 		}
