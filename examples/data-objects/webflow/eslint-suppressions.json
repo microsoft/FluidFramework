@@ -1,0 +1,7 @@
+{
+	"src/view/layout.ts": {
+		"@typescript-eslint/prefer-optional-chain": {
+			"count": 1
+		}
+	}
+}

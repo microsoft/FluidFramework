@@ -1,0 +1,7 @@
+{
+	"src/describeE2eDocs.ts": {
+		"@typescript-eslint/no-base-to-string": {
+			"count": 1
+		}
+	}
+}

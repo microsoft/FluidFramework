@@ -1,0 +1,15 @@
+{
+	"src/directory.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 2
+		},
+		"@typescript-eslint/prefer-optional-chain": {
+			"count": 6
+		}
+	},
+	"src/mapKernel.ts": {
+		"@typescript-eslint/prefer-optional-chain": {
+			"count": 4
+		}
+	}
+}

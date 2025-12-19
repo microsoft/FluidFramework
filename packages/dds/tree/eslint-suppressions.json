@@ -1,0 +1,37 @@
+{
+	"src/core/tree/anchorSet.ts": {
+		"@typescript-eslint/prefer-optional-chain": {
+			"count": 1
+		}
+	},
+	"src/feature-libraries/chunked-forest/codec/compressedEncode.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	},
+	"src/feature-libraries/modular-schema/modularChangeFamily.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	},
+	"src/test/feature-libraries/sequence-field/utils.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 2
+		}
+	},
+	"src/test/shared-tree-core/edit-manager/editManagerScenario.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	},
+	"src/test/shared-tree/treeCheckout.spec.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	},
+	"src/test/simple-tree/object.spec.ts": {
+		"@typescript-eslint/strict-boolean-expressions": {
+			"count": 1
+		}
+	}
+}

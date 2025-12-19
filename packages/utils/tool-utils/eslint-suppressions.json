@@ -1,0 +1,7 @@
+{
+	"src/odspTokenManager.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	}
+}

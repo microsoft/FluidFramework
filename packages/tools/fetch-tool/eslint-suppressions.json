@@ -1,0 +1,12 @@
+{
+	"src/fluidAnalyzeMessages.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	},
+	"src/fluidFetchSnapshot.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	}
+}

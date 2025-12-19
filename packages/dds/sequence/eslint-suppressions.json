@@ -1,0 +1,12 @@
+{
+	"src/sharedSequence.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	},
+	"src/test/subSequence.spec.ts": {
+		"@typescript-eslint/no-base-to-string": {
+			"count": 1
+		}
+	}
+}

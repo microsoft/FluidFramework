@@ -1,0 +1,7 @@
+{
+	"src/localServerStressHarness.ts": {
+		"@typescript-eslint/strict-boolean-expressions": {
+			"count": 1
+		}
+	}
+}

@@ -1,0 +1,7 @@
+{
+	"src/container/telemetryManager.ts": {
+		"@typescript-eslint/no-unsafe-enum-comparison": {
+			"count": 1
+		}
+	}
+}

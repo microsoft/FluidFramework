@@ -1,0 +1,17 @@
+{
+	"src/auth.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	},
+	"src/localDocumentStorageService.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	},
+	"src/localSessionStorageDb.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	}
+}

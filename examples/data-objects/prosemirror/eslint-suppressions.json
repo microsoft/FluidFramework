@@ -1,0 +1,17 @@
+{
+	"src/fluidBridge.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	},
+	"src/fluidCollabManager.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	},
+	"src/prosemirror.tsx": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	}
+}

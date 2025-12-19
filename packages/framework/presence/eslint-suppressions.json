@@ -1,0 +1,7 @@
+{
+	"src/presenceDatastoreManager.ts": {
+		"@typescript-eslint/prefer-nullish-coalescing": {
+			"count": 1
+		}
+	}
+}
