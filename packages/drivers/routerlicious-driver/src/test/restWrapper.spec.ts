@@ -76,6 +76,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 		nock.restore();
 	});
 	afterEach(() => {
+		nock.cleanAll();
 		logger.assertMatchNone([{ category: "error" }]);
 	});
 
@@ -136,7 +137,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
-			nock(testHost).get(testPath).replyWithError({ code: "ECONNRESET" });
+			nock(testHost).get(testPath).replyWithError(Object.assign(new Error("ECONNRESET"), { code: "ECONNRESET" }));
 			await assert.rejects(restWrapper.get(testUrl), {
 				canRetry: true,
 				errorType: RouterliciousErrorTypes.genericNetworkError,
@@ -274,7 +275,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
-			nock(testHost).post(testPath).replyWithError({ code: "ECONNRESET" });
+			nock(testHost).post(testPath).replyWithError(Object.assign(new Error("ECONNRESET"), { code: "ECONNRESET" }));
 			await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
 				canRetry: true,
 				errorType: RouterliciousErrorTypes.genericNetworkError,
@@ -339,7 +340,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
-			nock(testHost).patch(testPath).replyWithError({ code: "ECONNRESET" });
+			nock(testHost).patch(testPath).replyWithError(Object.assign(new Error("ECONNRESET"), { code: "ECONNRESET" }));
 			await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
 				canRetry: true,
 				errorType: RouterliciousErrorTypes.genericNetworkError,
@@ -404,7 +405,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			});
 		});
 		it("throws retriable error on Network Error", async () => {
-			nock(testHost).delete(testPath).replyWithError({ code: "ECONNRESET" });
+			nock(testHost).delete(testPath).replyWithError(Object.assign(new Error("ECONNRESET"), { code: "ECONNRESET" }));
 			await assert.rejects(restWrapper.delete(testUrl), {
 				canRetry: true,
 				errorType: RouterliciousErrorTypes.genericNetworkError,

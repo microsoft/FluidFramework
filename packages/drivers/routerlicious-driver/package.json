@@ -123,7 +123,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/server-services-client": "^7.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"cross-fetch": "^3.1.5",
+		"node-fetch": "^2.7.0",
 		"json-stringify-safe": "5.0.1",
 		"socket.io-client": "~4.7.5",
 		"uuid": "^11.1.0"
@@ -139,7 +139,7 @@
 		"@fluidframework/routerlicious-driver-previous": "npm:@fluidframework/routerlicious-driver@2.74.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
-		"@types/nock": "^9.3.0",
+		"@types/node-fetch": "^2.6.11",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
 		"axios": "^1.8.4",
@@ -151,7 +151,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"nock": "^13.3.3",
+		"nock": "^14.0.0",
 		"rimraf": "^4.4.0",
 		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"
