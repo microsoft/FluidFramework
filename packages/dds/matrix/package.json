@@ -176,7 +176,7 @@
 		"eslint": "~9.39.1",
 		"hotloop": "^1.2.0",
 		"jiti": "^2.6.1",
-		"mocha": "^11.7.5",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.2",
 		"ts-node": "^10.9.2",

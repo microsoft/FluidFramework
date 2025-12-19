@@ -167,7 +167,7 @@
 		"diff": "^3.5.0",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
-		"mocha": "^11.7.5",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.2",
 		"typescript": "~5.4.5"

@@ -64,7 +64,7 @@
 		"@types/node": "^18.19.0",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
-		"mocha": "^11.7.5",
+		"mocha": "^10.8.2",
 		"puppeteer": "^23.6.0",
 		"rimraf": "^6.1.2",
 		"source-map-explorer": "^2.5.3",

@@ -88,8 +88,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@20.17.9)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.17.9)(typescript@5.4.5))
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -281,7 +281,7 @@ importers:
         version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       prettier:
         specifier: ~3.6.2
         version: 3.6.2
@@ -1453,11 +1453,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -2304,11 +2304,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -3781,11 +3781,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -4180,11 +4180,11 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2(jsdom@16.7.0)
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -4899,8 +4899,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -5218,11 +5218,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -5478,11 +5478,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -6584,11 +6584,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -6684,11 +6684,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -6844,11 +6844,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -6920,11 +6920,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -7020,11 +7020,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       quill-delta:
         specifier: ^4.2.2
         version: 4.2.2
@@ -7114,11 +7114,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -7208,11 +7208,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -7359,11 +7359,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -7620,11 +7620,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -7750,11 +7750,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -7825,11 +7825,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -7974,11 +7974,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8074,11 +8074,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8165,11 +8165,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8274,11 +8274,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8392,11 +8392,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8528,11 +8528,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8646,11 +8646,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8752,11 +8752,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8846,11 +8846,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8946,11 +8946,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -9073,11 +9073,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       random-js:
         specifier: ^2.1.0
         version: 2.1.0
@@ -9194,11 +9194,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -9297,11 +9297,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -9406,11 +9406,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -9454,8 +9454,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -9513,7 +9513,7 @@ importers:
         version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -9675,11 +9675,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -9824,11 +9824,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10085,11 +10085,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10191,11 +10191,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10328,11 +10328,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10513,11 +10513,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -10601,11 +10601,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10686,8 +10686,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10883,11 +10883,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10998,11 +10998,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11086,8 +11086,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11174,8 +11174,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11353,11 +11353,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11553,11 +11553,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11729,11 +11729,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11835,11 +11835,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11923,11 +11923,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -12002,11 +12002,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -12111,11 +12111,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       prettier:
         specifier: ~3.6.2
         version: 3.6.2
@@ -12214,11 +12214,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       prettier:
         specifier: ~3.6.2
         version: 3.6.2
@@ -12293,11 +12293,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       prettier:
         specifier: ~3.6.2
         version: 3.6.2
@@ -12387,11 +12387,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -12508,11 +12508,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -12605,11 +12605,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -12802,11 +12802,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -12978,11 +12978,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13133,11 +13133,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13300,11 +13300,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13421,11 +13421,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13524,8 +13524,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13617,11 +13617,11 @@ importers:
         specifier: ^10.1.0
         version: 10.1.0
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       sinon:
         specifier: ^18.0.1
         version: 18.0.1
@@ -13735,11 +13735,11 @@ importers:
         specifier: ^17.0.3
         version: 17.0.3
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       sinon:
         specifier: ^18.0.1
         version: 18.0.1
@@ -13884,8 +13884,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13987,8 +13987,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -14113,11 +14113,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -14270,11 +14270,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -14399,11 +14399,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -14426,8 +14426,8 @@ importers:
         specifier: workspace:~
         version: link:../../common/core-interfaces
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21
@@ -14543,9 +14543,6 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../test-utils
-      mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -14586,9 +14583,12 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -14663,11 +14663,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       random-js:
         specifier: ^2.1.0
         version: 2.1.0
@@ -14980,8 +14980,8 @@ importers:
         specifier: ^10.1.0
         version: 10.1.0
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       semver:
         specifier: ^7.7.1
         version: 7.7.3
@@ -15036,7 +15036,7 @@ importers:
         version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -15102,8 +15102,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -15232,8 +15232,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -15310,8 +15310,8 @@ importers:
         specifier: ^4.3.4
         version: 4.4.3(supports-color@8.1.1)
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -15378,7 +15378,7 @@ importers:
         version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -15540,11 +15540,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -15689,11 +15689,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -15876,8 +15876,8 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2(jsdom@16.7.0)
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -16033,11 +16033,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -16401,11 +16401,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       playwright:
         specifier: ^1.36.0
         version: 1.49.1
@@ -16601,11 +16601,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -16819,11 +16819,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -16910,11 +16910,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -17007,11 +17007,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^11.7.5
-        version: 11.7.5
+        specifier: ^10.8.2
+        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -22034,10 +22034,6 @@ packages:
     resolution: {integrity: sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==}
     engines: {node: '>=0.3.1'}
 
-  diff@7.0.0:
-    resolution: {integrity: sha512-PJWHUb1RFevKCwaFA9RlG5tCd+FO5iRh9A8HEtkmBH2Li03iJriB6m6JIN4rGz3K3JLawI7/veA1xzRKP6ISBw==}
-    engines: {node: '>=0.3.1'}
-
   diff@8.0.2:
     resolution: {integrity: sha512-sSuxWU5j5SR9QQji/o2qMvqRNYRDOcBTgsJ/DeCf4iSN4gW+gNMXM7wFIP+fdXZxoNiAnHUTGjCr+TSWXdRDKg==}
     engines: {node: '>=0.3.1'}
@@ -24933,11 +24929,6 @@ packages:
   mocha@10.8.2:
     resolution: {integrity: sha512-VZlYo/WE8t1tstuRmqgeyBgCbJc/lEdopaa+axcKzTBJ+UIdlAB9XnmvTCAH4pwR4ElNInaedhEBmZD8iCSVEg==}
     engines: {node: '>= 14.0.0'}
-    hasBin: true
-
-  mocha@11.7.5:
-    resolution: {integrity: sha512-mTT6RgopEYABzXWFx+GcJ+ZQ32kp4fMf0xvpZIIfSq9Z8lC/++MtcCnQ9t5FP2veYEP95FIYSvW+U9fV4xrlig==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     hasBin: true
 
   module-details-from-path@1.0.3:
@@ -28051,9 +28042,6 @@ packages:
 
   workerpool@6.5.1:
     resolution: {integrity: sha512-Fs4dNYcsdpYSAfVxhnl1L5zTksjvOJxtC5hzMNl+1t9B8hTJTdKDyZ5ju7ztgPy+ft9tBFXoOlDNiOT9WUXZlA==}
-
-  workerpool@9.3.4:
-    resolution: {integrity: sha512-TmPRQYYSAnnDiEB0P/Ytip7bFGvqnSU6I2BcuSw7Hx+JSg/DsUi5ebYfc8GYaSdpuvOcEs6dXxPurOYpe9QFwg==}
 
   wrap-ansi@6.2.0:
     resolution: {integrity: sha512-r6lPcBGxZXlIcymEu7InxDMhdW0KDxpLgoFLcguasxCaJ/SOIZwINatK9KY/tf+ZrlywOKU0UDj3ATXUBfxJXA==}
@@ -36394,8 +36382,6 @@ snapshots:
 
   diff@5.2.0: {}
 
-  diff@7.0.0: {}
-
   diff@8.0.2: {}
 
   dir-glob@3.0.1:
@@ -40234,14 +40220,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  mocha-multi-reporters@1.5.1(mocha@11.7.5):
-    dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
-      lodash: 4.17.21
-      mocha: 11.7.5
-    transitivePeerDependencies:
-      - supports-color
-
   mocha@10.8.2:
     dependencies:
       ansi-colors: 4.1.3
@@ -40263,30 +40241,6 @@ snapshots:
       workerpool: 6.5.1
       yargs: 16.2.0
       yargs-parser: 20.2.9
-      yargs-unparser: 2.0.0
-
-  mocha@11.7.5:
-    dependencies:
-      browser-stdout: 1.3.1
-      chokidar: 4.0.3
-      debug: 4.4.3(supports-color@8.1.1)
-      diff: 7.0.0
-      escape-string-regexp: 4.0.0
-      find-up: 5.0.0
-      glob: 10.5.0
-      he: 1.2.0
-      is-path-inside: 3.0.3
-      js-yaml: 4.1.1
-      log-symbols: 4.1.0
-      minimatch: 9.0.5
-      ms: 2.1.3
-      picocolors: 1.1.1
-      serialize-javascript: 6.0.2
-      strip-json-comments: 3.1.1
-      supports-color: 8.1.1
-      workerpool: 9.3.4
-      yargs: 17.7.2
-      yargs-parser: 21.1.1
       yargs-unparser: 2.0.0
 
   module-details-from-path@1.0.3: {}
@@ -44298,8 +44252,6 @@ snapshots:
   wordwrap@1.0.0: {}
 
   workerpool@6.5.1: {}
-
-  workerpool@9.3.4: {}
 
   wrap-ansi@6.2.0:
     dependencies:

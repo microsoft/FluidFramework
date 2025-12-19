@@ -110,7 +110,7 @@
 		"eslint-plugin-react": "~7.37.5",
 		"eslint-plugin-react-hooks": "~7.0.1",
 		"jiti": "^2.6.1",
-		"mocha": "^11.7.5",
+		"mocha": "^10.8.2",
 		"rimraf": "^6.1.2",
 		"sinon": "^18.0.1",
 		"tslib": "^1.10.0",
