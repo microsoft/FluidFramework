@@ -22,6 +22,7 @@
 		"build:readme:disabled": "markdown-magic --files \"**/*.md\"",
 		"clean": "rimraf --glob dist \"**/*.build.log\"",
 		"format": "npm run prettier:fix",
+		"generate-deprecated-rules": "tsx scripts/generate-deprecated-rules.ts",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"print-configs": "cross-env ESLINT_USE_FLAT_CONFIG=true tsx scripts/print-configs.ts printed-configs",

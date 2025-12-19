@@ -1,0 +1,547 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"description": "Auto-generated list of deprecated ESLint rules. Do not edit manually. Run: tsx scripts/generate-deprecated-rules.ts",
+	"generatedAt": "2025-12-19T22:40:08.199Z",
+	"deprecatedRules": [
+		{
+			"rule": "@typescript-eslint/no-empty-interface",
+			"isConfigured": false,
+			"replacedBy": [
+				"@typescript-eslint/no-empty-object-type"
+			]
+		},
+		{
+			"rule": "@typescript-eslint/no-loss-of-precision",
+			"isConfigured": false
+		},
+		{
+			"rule": "@typescript-eslint/no-type-alias",
+			"isConfigured": false
+		},
+		{
+			"rule": "@typescript-eslint/no-var-requires",
+			"isConfigured": false,
+			"replacedBy": [
+				"@typescript-eslint/no-require-imports"
+			]
+		},
+		{
+			"rule": "@typescript-eslint/prefer-ts-expect-error",
+			"isConfigured": false,
+			"replacedBy": [
+				"@typescript-eslint/ban-ts-comment"
+			]
+		},
+		{
+			"rule": "@typescript-eslint/sort-type-constituents",
+			"isConfigured": false,
+			"replacedBy": [
+				"perfectionist/sort-intersection-types",
+				"perfectionist/sort-union-types"
+			]
+		},
+		{
+			"rule": "array-bracket-newline",
+			"isConfigured": true
+		},
+		{
+			"rule": "array-bracket-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "array-element-newline",
+			"isConfigured": true
+		},
+		{
+			"rule": "arrow-parens",
+			"isConfigured": true
+		},
+		{
+			"rule": "arrow-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "block-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "brace-style",
+			"isConfigured": true
+		},
+		{
+			"rule": "callback-return",
+			"isConfigured": false
+		},
+		{
+			"rule": "comma-dangle",
+			"isConfigured": true
+		},
+		{
+			"rule": "comma-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "comma-style",
+			"isConfigured": true
+		},
+		{
+			"rule": "computed-property-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "dot-location",
+			"isConfigured": true
+		},
+		{
+			"rule": "eol-last",
+			"isConfigured": true
+		},
+		{
+			"rule": "func-call-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "function-call-argument-newline",
+			"isConfigured": true
+		},
+		{
+			"rule": "function-paren-newline",
+			"isConfigured": true
+		},
+		{
+			"rule": "generator-star-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "global-require",
+			"isConfigured": false
+		},
+		{
+			"rule": "handle-callback-err",
+			"isConfigured": false
+		},
+		{
+			"rule": "id-blacklist",
+			"isConfigured": false
+		},
+		{
+			"rule": "implicit-arrow-linebreak",
+			"isConfigured": true
+		},
+		{
+			"rule": "import-x/imports-first",
+			"isConfigured": false
+		},
+		{
+			"rule": "indent",
+			"isConfigured": true
+		},
+		{
+			"rule": "indent-legacy",
+			"isConfigured": true
+		},
+		{
+			"rule": "jsx-quotes",
+			"isConfigured": true
+		},
+		{
+			"rule": "key-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "keyword-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "line-comment-position",
+			"isConfigured": false
+		},
+		{
+			"rule": "linebreak-style",
+			"isConfigured": true
+		},
+		{
+			"rule": "lines-around-comment",
+			"isConfigured": true
+		},
+		{
+			"rule": "lines-around-directive",
+			"isConfigured": false
+		},
+		{
+			"rule": "lines-between-class-members",
+			"isConfigured": false
+		},
+		{
+			"rule": "max-len",
+			"isConfigured": true
+		},
+		{
+			"rule": "max-statements-per-line",
+			"isConfigured": true
+		},
+		{
+			"rule": "multiline-comment-style",
+			"isConfigured": false
+		},
+		{
+			"rule": "multiline-ternary",
+			"isConfigured": true
+		},
+		{
+			"rule": "new-parens",
+			"isConfigured": true
+		},
+		{
+			"rule": "newline-after-var",
+			"isConfigured": false
+		},
+		{
+			"rule": "newline-before-return",
+			"isConfigured": false
+		},
+		{
+			"rule": "newline-per-chained-call",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-buffer-constructor",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-catch-shadow",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-confusing-arrow",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-extra-parens",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-extra-semi",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-floating-decimal",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-mixed-operators",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-mixed-requires",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-mixed-spaces-and-tabs",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-multi-spaces",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-multiple-empty-lines",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-native-reassign",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-negated-in-lhs",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-new-object",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-new-require",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-new-symbol",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-path-concat",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-process-env",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-process-exit",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-restricted-modules",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-return-await",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-spaced-func",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-sync",
+			"isConfigured": false
+		},
+		{
+			"rule": "no-tabs",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-trailing-spaces",
+			"isConfigured": true
+		},
+		{
+			"rule": "no-whitespace-before-property",
+			"isConfigured": true
+		},
+		{
+			"rule": "nonblock-statement-body-position",
+			"isConfigured": true
+		},
+		{
+			"rule": "object-curly-newline",
+			"isConfigured": true
+		},
+		{
+			"rule": "object-curly-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "object-property-newline",
+			"isConfigured": true
+		},
+		{
+			"rule": "one-var-declaration-per-line",
+			"isConfigured": true
+		},
+		{
+			"rule": "operator-linebreak",
+			"isConfigured": true
+		},
+		{
+			"rule": "padded-blocks",
+			"isConfigured": true
+		},
+		{
+			"rule": "padding-line-between-statements",
+			"isConfigured": false
+		},
+		{
+			"rule": "prefer-reflect",
+			"isConfigured": false
+		},
+		{
+			"rule": "quote-props",
+			"isConfigured": true
+		},
+		{
+			"rule": "quotes",
+			"isConfigured": true
+		},
+		{
+			"rule": "react/jsx-sort-default-props",
+			"isConfigured": false,
+			"replacedBy": [
+				"sort-default-props"
+			]
+		},
+		{
+			"rule": "react/jsx-space-before-closing",
+			"isConfigured": true,
+			"replacedBy": [
+				"jsx-tag-spacing"
+			]
+		},
+		{
+			"rule": "rest-spread-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "semi",
+			"isConfigured": true
+		},
+		{
+			"rule": "semi-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "semi-style",
+			"isConfigured": true
+		},
+		{
+			"rule": "space-before-blocks",
+			"isConfigured": true
+		},
+		{
+			"rule": "space-before-function-paren",
+			"isConfigured": true
+		},
+		{
+			"rule": "space-in-parens",
+			"isConfigured": true
+		},
+		{
+			"rule": "space-infix-ops",
+			"isConfigured": true
+		},
+		{
+			"rule": "space-unary-ops",
+			"isConfigured": true
+		},
+		{
+			"rule": "spaced-comment",
+			"isConfigured": false
+		},
+		{
+			"rule": "switch-colon-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "template-curly-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "template-tag-spacing",
+			"isConfigured": true
+		},
+		{
+			"rule": "unicorn/import-index",
+			"isConfigured": false
+		},
+		{
+			"rule": "unicorn/no-array-instanceof",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/no-instanceof-array"
+			]
+		},
+		{
+			"rule": "unicorn/no-fn-reference-in-iterator",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/no-array-callback-reference"
+			]
+		},
+		{
+			"rule": "unicorn/no-reduce",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/no-array-reduce"
+			]
+		},
+		{
+			"rule": "unicorn/no-unsafe-regex",
+			"isConfigured": false
+		},
+		{
+			"rule": "unicorn/prefer-dataset",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/prefer-dom-node-dataset"
+			]
+		},
+		{
+			"rule": "unicorn/prefer-event-key",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/prefer-keyboard-event-key"
+			]
+		},
+		{
+			"rule": "unicorn/prefer-exponentiation-operator",
+			"isConfigured": false,
+			"replacedBy": [
+				"prefer-exponentiation-operator"
+			]
+		},
+		{
+			"rule": "unicorn/prefer-flat-map",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/prefer-array-flat-map"
+			]
+		},
+		{
+			"rule": "unicorn/prefer-node-append",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/prefer-dom-node-append"
+			]
+		},
+		{
+			"rule": "unicorn/prefer-node-remove",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/prefer-dom-node-remove"
+			]
+		},
+		{
+			"rule": "unicorn/prefer-object-has-own",
+			"isConfigured": false,
+			"replacedBy": [
+				"prefer-object-has-own"
+			]
+		},
+		{
+			"rule": "unicorn/prefer-replace-all",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/prefer-string-replace-all"
+			]
+		},
+		{
+			"rule": "unicorn/prefer-starts-ends-with",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/prefer-string-starts-ends-with"
+			]
+		},
+		{
+			"rule": "unicorn/prefer-text-content",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/prefer-dom-node-text-content"
+			]
+		},
+		{
+			"rule": "unicorn/prefer-trim-start-end",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/prefer-string-trim-start-end"
+			]
+		},
+		{
+			"rule": "unicorn/regex-shorthand",
+			"isConfigured": false,
+			"replacedBy": [
+				"unicorn/better-regex"
+			]
+		},
+		{
+			"rule": "wrap-iife",
+			"isConfigured": true
+		},
+		{
+			"rule": "wrap-regex",
+			"isConfigured": true
+		},
+		{
+			"rule": "yield-star-spacing",
+			"isConfigured": true
+		}
+	]
+}

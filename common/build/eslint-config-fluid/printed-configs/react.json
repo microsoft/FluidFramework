@@ -1022,8 +1022,7 @@
             "as-needed"
         ],
         "arrow-parens": [
-            "off",
-            "always"
+            "off"
         ],
         "arrow-spacing": [
             "off"
@@ -1555,12 +1554,7 @@
             "off"
         ],
         "no-multiple-empty-lines": [
-            "off",
-            {
-                "max": 1,
-                "maxBOF": 0,
-                "maxEOF": 0
-            }
+            "off"
         ],
         "no-negated-condition": [
             "off"
@@ -1790,16 +1784,7 @@
             "off"
         ],
         "padded-blocks": [
-            "off",
-            "never"
-        ],
-        "padding-line-between-statements": [
-            "off",
-            {
-                "blankLine": "always",
-                "prev": "*",
-                "next": "return"
-            }
+            "off"
         ],
         "prefer-arrow-callback": [
             "error",
@@ -1837,8 +1822,7 @@
             "warn"
         ],
         "quote-props": [
-            "off",
-            "consistent-as-needed"
+            "off"
         ],
         "quotes": [
             "off"
@@ -2058,8 +2042,7 @@
             "off"
         ],
         "space-in-parens": [
-            "off",
-            "never"
+            "off"
         ],
         "space-infix-ops": [
             "off"
@@ -2072,18 +2055,6 @@
         ],
         "space-unary-word-ops": [
             "off"
-        ],
-        "spaced-comment": [
-            "error",
-            "always",
-            {
-                "block": {
-                    "markers": [
-                        "!"
-                    ],
-                    "balanced": true
-                }
-            }
         ],
         "standard/array-bracket-even-spacing": [
             "off"

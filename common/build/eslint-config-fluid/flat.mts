@@ -33,6 +33,9 @@ import unusedImportsPlugin from "eslint-plugin-unused-imports";
 import prettierConfig from "eslint-config-prettier";
 import type { Linter } from "eslint";
 
+// Auto-generated list of deprecated rules from all plugins
+import deprecatedRulesData from "./printed-configs/deprecated-rules.json" with { type: "json" };
+
 // Re-export minimalDeprecated from compat for backward compatibility
 export { minimalDeprecated } from "./flat-compat.mts";
 
@@ -274,10 +277,10 @@ const baseRules: Linter.RulesRecord = {
 
 	// Core ESLint rules
 	"arrow-body-style": "off",
-	"arrow-parens": ["error", "always"],
 	"camelcase": "off",
 	"capitalized-comments": "off",
 	"complexity": "off",
+	"constructor-super": "off",
 	"default-case": "error",
 	"eqeqeq": ["error", "smart"],
 	"guard-for-in": "error",
@@ -294,7 +297,6 @@ const baseRules: Linter.RulesRecord = {
 	"no-magic-numbers": "off",
 	"no-multi-spaces": ["error", { ignoreEOLComments: true }],
 	"no-multi-str": "off",
-	"no-multiple-empty-lines": ["error", { max: 1, maxBOF: 0, maxEOF: 0 }],
 	"no-new-func": "error",
 	"no-new-wrappers": "error",
 	"no-octal-escape": "error",
@@ -315,16 +317,11 @@ const baseRules: Linter.RulesRecord = {
 	"no-underscore-dangle": "off",
 	"object-shorthand": "error",
 	"one-var": ["error", "never"],
-	"padded-blocks": ["error", "never"],
-	"padding-line-between-statements": ["off", { blankLine: "always", prev: "*", next: "return" }],
 	"prefer-arrow-callback": "error",
 	"prefer-object-spread": "error",
 	"prefer-promise-reject-errors": "error",
 	"prefer-template": "error",
-	"quote-props": ["error", "consistent-as-needed"],
 	"radix": "error",
-	"space-in-parens": ["error", "never"],
-	"spaced-comment": ["error", "always", { block: { markers: ["!"], balanced: true } }],
 	"yoda": "off",
 };
 
@@ -387,6 +384,22 @@ const recommendedRules: Linter.RulesRecord = {
 	"jsdoc/require-description": ["error", { checkConstructors: false }],
 	"no-void": "error",
 	"require-atomic-updates": "error",
+};
+
+/**
+ * Deprecated rules config object.
+ * Disables all deprecated ESLint rules from core and plugins.
+ */
+const deprecatedRulesConfig: Linter.Config = {
+	/**
+	 * Auto-generated from plugin metadata. To regenerate:
+	 * `tsx scripts/generate-deprecated-rules.ts`
+	 */
+	rules: Object.fromEntries(
+		deprecatedRulesData.deprecatedRules
+			.filter((entry) => entry.isConfigured === true)
+			.map((entry) => [entry.rule, "off"]),
+	),
 };
 
 /**
@@ -570,7 +583,6 @@ const tsOverrideConfig: Linter.Config = {
 		"@typescript-eslint/no-unsafe-assignment": "off",
 		"@typescript-eslint/no-unsafe-call": "off",
 		"@typescript-eslint/no-unsafe-member-access": "off",
-		"func-call-spacing": "off",
 	},
 };
 
@@ -677,6 +689,7 @@ function createRecommendedConfig(): FlatConfigArray {
 		internalModulesConfig,
 		cjsConfig,
 		jsConfig,
+		deprecatedRulesConfig,
 	];
 }
 
@@ -690,6 +703,7 @@ function createStrictConfig(): FlatConfigArray {
 		...createRecommendedConfig(),
 		{ rules: strictRules },
 		{ files: tsFilePatterns, rules: strictTsRules },
+		deprecatedRulesConfig,
 	];
 }
 
