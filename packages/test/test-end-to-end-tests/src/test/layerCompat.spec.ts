@@ -466,18 +466,32 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 			layer1SupportRequirements.minSupportedGeneration =
 				testParams.layer2CompatDetails.generation + 1;
 
-			const logger = new MockLogger();
 			try {
 				// Create config provider with validation disabled
 				const configProvider = createTestConfigProvider();
 				configProvider.set(allowIncompatibleLayersKey, true);
 
 				// This should NOT throw an error even though the layers are incompatible
+				const logger = new MockLogger();
 				await assert.doesNotReject(
 					provider.makeTestContainer({ loaderProps: { configProvider, logger } }),
 					"Container creation should succeed when layer validation is disabled",
 				);
 				logger.assertMatch([
+					{
+						eventName:
+							"fluid:telemetry:FluidDataStoreContext:LayerIncompatibilityDetectedButBypassed",
+					},
+				]);
+
+				// Try again and make sure the bypass event is not logged again because it should only be logged
+				// once per session.
+				const logger2 = new MockLogger();
+				await assert.doesNotReject(
+					provider.loadTestContainer({ loaderProps: { configProvider, logger: logger2 } }),
+					"Container load should succeed when layer validation is disabled",
+				);
+				logger2.assertMatchNone([
 					{
 						eventName:
 							"fluid:telemetry:FluidDataStoreContext:LayerIncompatibilityDetectedButBypassed",
