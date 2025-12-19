@@ -1672,7 +1672,9 @@ describe("SharedTree", () => {
 				assert.deepEqual(mainView2.root[0], ["A", "B", "C"]);
 			});
 		});
+	});
 
+	describe("Constraints", () => {
 		it("revert constraint", () => {
 			// This test ensures that the feature works across peers as opposed to solely across branches.
 			const provider = new TestTreeProviderLite(2);

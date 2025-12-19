@@ -3188,6 +3188,148 @@ describe("Editing", () => {
 			rootTree.merge(partiallyRebasedRestoreC);
 			expectJsonTree(rootTree, ["B", "C"]);
 		});
+
+		describe("No Change constraint", () => {
+			it("gets violated when a change is rebased", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.branch();
+
+				// Add a No Change constraint and make an edit
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraint();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
+				branch.transaction.commit();
+				expectJsonTree(branch, ["A", "X", "B"]);
+
+				// Make a concurrent edit on the main tree to force a rebase
+				tree.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Y"]));
+				expectJsonTree(tree, ["Y", "A", "B"]);
+
+				// When rebasing, the No Change constraint should be violated
+				// and the transaction should be dropped
+				branch.rebaseOnto(tree);
+				expectJsonTree(branch, ["Y", "A", "B"]);
+			});
+
+			it("remains violated once violated", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.branch();
+
+				// Add a No Change constraint and make an edit
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraint();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
+				branch.transaction.commit();
+				expectJsonTree(branch, ["A", "X", "B"]);
+
+				// Make first concurrent edit to violate constraint
+				tree.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Y"]));
+				branch.rebaseOnto(tree);
+				expectJsonTree(branch, ["Y", "A", "B"]);
+
+				// Make second concurrent edit - constraint should remain violated
+				tree.editor.sequenceField(rootField).insert(3, chunkFromJsonTrees(["Z"]));
+				branch.rebaseOnto(tree);
+				expectJsonTree(branch, ["Y", "A", "B", "Z"]);
+			});
+
+			it("is not violated if no rebase occurs", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.branch();
+
+				// Add a No Change constraint and make an edit
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraint();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
+				branch.transaction.commit();
+				expectJsonTree(branch, ["A", "X", "B"]);
+
+				// No concurrent edits, so no rebase needed
+				tree.merge(branch, false);
+				expectJsonTree(tree, ["A", "X", "B"]);
+			});
+
+			it("multiple No Change constraints in same transaction", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.branch();
+
+				// Add multiple No Change constraints and make edits
+				branch.transaction.start();
+				branch.editor.addNoChangeConstraint();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
+				branch.editor.addNoChangeConstraint();
+				branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["Y"]));
+				branch.transaction.commit();
+				expectJsonTree(branch, ["A", "X", "Y", "B"]);
+
+				// Concurrent edit forces rebase and violates all constraints
+				tree.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Z"]));
+				branch.rebaseOnto(tree);
+				expectJsonTree(branch, ["Z", "A", "B"]);
+			});
+		});
+
+		describe("No Change constraint on revert", () => {
+			it("Should not revert when constraint is violated", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.branch();
+
+				// Add a No Change constraint and make an edit
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
+				branch.transaction.start();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.transaction.commit();
+				expectJsonTree(branch, ["A", "X", "B"]);
+				const revertible = undoStack.pop();
+				assert(revertible !== undefined, "Missing revertible");
+				revertible.revert();
+
+				// Revert should go through on the branch since the constraint shouldnt be violated yet
+				expectJsonTree(branch, ["A", "B"]);
+
+				// Make an edit on the main tree to force a rebase
+				tree.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Y"]));
+				expectJsonTree(tree, ["Y", "A", "B"]);
+
+				// When rebasing, the No Change constraint should be violated
+				// and the revert transaction should be dropped
+				branch.rebaseOnto(tree);
+				expectJsonTree(branch, ["Y", "A", "X", "B"]);
+				unsubscribe();
+			});
+
+			it("Should not be violated when there's no rebase", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"], {
+					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+				});
+				const branch = tree.branch();
+
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
+				branch.transaction.start();
+				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.transaction.commit();
+				const revertible = undoStack.pop();
+				assert(revertible !== undefined, "Missing revertible");
+				revertible.revert();
+
+				expectJsonTree(branch, ["A", "B"]);
+				branch.rebaseOnto(tree);
+				expectJsonTree(branch, ["A", "B"]);
+				unsubscribe();
+			});
+		});
 	});
 
 	it.skip("edit removed content", () => {
@@ -3337,173 +3479,6 @@ describe("Editing", () => {
 			const tree = makeTreeFromJsonSequence([initialState]);
 			const child = tree.branch();
 			abortTransaction(child);
-		});
-
-		describe("No Change constraint", () => {
-			it("gets violated when a change is rebased", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
-				});
-				const branch = tree.branch();
-
-				// Add a No Change constraint and make an edit
-				branch.transaction.start();
-				branch.editor.addNoChangeConstraint();
-				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
-				branch.transaction.commit();
-				expectJsonTree(branch, ["A", "X", "B"]);
-
-				// Make a concurrent edit on the main tree to force a rebase
-				tree.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Y"]));
-				expectJsonTree(tree, ["Y", "A", "B"]);
-
-				// When rebasing, the No Change constraint should be violated
-				// and the transaction should be dropped
-				branch.rebaseOnto(tree);
-				expectJsonTree(branch, ["Y", "A", "B"]);
-			});
-
-			it("remains violated once violated", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
-				});
-				const branch = tree.branch();
-
-				// Add a No Change constraint and make an edit
-				branch.transaction.start();
-				branch.editor.addNoChangeConstraint();
-				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
-				branch.transaction.commit();
-				expectJsonTree(branch, ["A", "X", "B"]);
-
-				// Make first concurrent edit to violate constraint
-				tree.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Y"]));
-				branch.rebaseOnto(tree);
-				expectJsonTree(branch, ["Y", "A", "B"]);
-
-				// Make second concurrent edit - constraint should remain violated
-				tree.editor.sequenceField(rootField).insert(3, chunkFromJsonTrees(["Z"]));
-				branch.rebaseOnto(tree);
-				expectJsonTree(branch, ["Y", "A", "B", "Z"]);
-			});
-
-			it("is not violated if no rebase occurs", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
-				});
-				const branch = tree.branch();
-
-				// Add a No Change constraint and make an edit
-				branch.transaction.start();
-				branch.editor.addNoChangeConstraint();
-				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
-				branch.transaction.commit();
-				expectJsonTree(branch, ["A", "X", "B"]);
-
-				// No concurrent edits, so no rebase needed
-				tree.merge(branch, false);
-				expectJsonTree(tree, ["A", "X", "B"]);
-			});
-
-			it("multiple No Change constraints in same transaction", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
-				});
-				const branch = tree.branch();
-
-				// Add multiple No Change constraints and make edits
-				branch.transaction.start();
-				branch.editor.addNoChangeConstraint();
-				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
-				branch.editor.addNoChangeConstraint();
-				branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["Y"]));
-				branch.transaction.commit();
-				expectJsonTree(branch, ["A", "X", "Y", "B"]);
-
-				// Concurrent edit forces rebase and violates all constraints
-				tree.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Z"]));
-				branch.rebaseOnto(tree);
-				expectJsonTree(branch, ["Z", "A", "B"]);
-			});
-
-			it("violation during composition", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
-				});
-				const branch1 = tree.branch();
-				const branch2 = tree.branch();
-
-				// Branch 1: Add constraint and edit
-				branch1.transaction.start();
-				branch1.editor.addNoChangeConstraint();
-				branch1.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
-				branch1.transaction.commit();
-
-				// Branch 2: Make concurrent edit
-				branch2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Y"]));
-
-				// Merge branch2 first to establish new base
-				tree.merge(branch2, false);
-				expectJsonTree(tree, ["Y", "A", "B"]);
-
-				// Branch1 rebase will violate constraint and drop the transaction
-				branch1.rebaseOnto(tree);
-				expectJsonTree(branch1, ["Y", "A", "B"]);
-			});
-		});
-
-		describe("No Change constraint on revert", () => {
-			it("Should not revert when constraint is violated", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
-				});
-				const branch = tree.branch();
-
-				// Add a No Change constraint and make an edit
-				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
-				branch.transaction.start();
-				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
-				branch.editor.addNoChangeConstraintOnRevert();
-				branch.transaction.commit();
-				expectJsonTree(branch, ["A", "X", "B"]);
-				const revertible = undoStack.pop();
-				assert(revertible !== undefined, "Missing revertible");
-				revertible.revert();
-
-				// Revert should go through on the branch since the constraint shouldnt be violated yet
-				expectJsonTree(branch, ["A", "B"]);
-
-				// Make an edit on the main tree to force a rebase
-				tree.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Y"]));
-				expectJsonTree(tree, ["Y", "A", "B"]);
-
-				// When rebasing, the No Change constraint should be violated
-				// and the revert transaction should be dropped
-				branch.rebaseOnto(tree);
-				expectJsonTree(branch, ["Y", "A", "X", "B"]);
-				unsubscribe();
-			});
-
-			it("Should not be violated when there's no rebase", () => {
-				const tree = makeTreeFromJsonSequence(["A", "B"], {
-					codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
-				});
-				const branch = tree.branch();
-
-				const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
-				branch.transaction.start();
-				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
-				branch.editor.addNoChangeConstraintOnRevert();
-				branch.transaction.commit();
-				const revertible = undoStack.pop();
-				assert(revertible !== undefined, "Missing revertible");
-				revertible.revert();
-
-				expectJsonTree(branch, ["A", "B"]);
-				branch.rebaseOnto(tree);
-				expectJsonTree(branch, ["A", "B"]);
-				unsubscribe();
-			});
 		});
 	});
 
