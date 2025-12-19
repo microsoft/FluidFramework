@@ -11,8 +11,8 @@ import {
 } from "@fluid-internal/client-utils";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
 
-import { LayerIncompatibilityError } from "./error.js";
 import type { MonitoringContext } from "./config.js";
+import { LayerIncompatibilityError } from "./error.js";
 
 /**
  * The config key to disable layer compatibility validation.
