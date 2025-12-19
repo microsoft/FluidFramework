@@ -28291,7 +28291,7 @@ snapshots:
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       '@loaderkit/resolve': 1.0.4
-      cjs-module-lexer: 1.4.1
+      cjs-module-lexer: 1.4.3
       fflate: 0.8.2
       lru-cache: 11.2.4
       semver: 7.7.3
@@ -38145,7 +38145,7 @@ snapshots:
   ink@5.0.1(@types/react@18.3.15)(react@18.3.1):
     dependencies:
       '@alcalzone/ansi-tokenize': 0.1.3
-      ansi-escapes: 7.0.0
+      ansi-escapes: 7.2.0
       ansi-styles: 6.2.3
       auto-bind: 5.0.1
       chalk: 5.6.2
@@ -39645,8 +39645,8 @@ snapshots:
 
   marked-terminal@7.3.0(marked@9.1.6):
     dependencies:
-      ansi-escapes: 7.0.0
-      ansi-regex: 6.1.0
+      ansi-escapes: 7.2.0
+      ansi-regex: 6.2.2
       chalk: 5.6.2
       cli-highlight: 2.1.11
       cli-table3: 0.6.5
@@ -42489,7 +42489,7 @@ snapshots:
   slice-ansi@7.1.0:
     dependencies:
       ansi-styles: 6.2.3
-      is-fullwidth-code-point: 5.0.0
+      is-fullwidth-code-point: 5.1.0
 
   smart-buffer@4.2.0: {}
 
