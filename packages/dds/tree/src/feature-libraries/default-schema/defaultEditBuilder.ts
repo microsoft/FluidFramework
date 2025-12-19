@@ -6,7 +6,7 @@
 import { assert, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecFamily } from "../../codec/index.js";
+import type { CodecWriteOptions, ICodecFamily } from "../../codec/index.js";
 import {
 	type ChangeAtomId,
 	type ChangeEncodingContext,
@@ -58,8 +58,11 @@ export class DefaultChangeFamily
 {
 	private readonly modularFamily: ModularChangeFamily;
 
-	public constructor(codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>) {
-		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs);
+	public constructor(
+		codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+		codecOptions: Pick<CodecWriteOptions, "minVersionForCollab">,
+	) {
+		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs, codecOptions);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {
@@ -74,7 +77,12 @@ export class DefaultChangeFamily
 		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
 	): DefaultEditBuilder {
-		return new DefaultEditBuilder(this, mintRevisionTag, changeReceiver);
+		return new DefaultEditBuilder(
+			this,
+			mintRevisionTag,
+			changeReceiver,
+			this.modularFamily.minVersionForCollab,
+		);
 	}
 }
 
@@ -196,8 +204,14 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
+		minVersionForCollab: CodecWriteOptions["minVersionForCollab"],
 	) {
-		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
+		this.modularBuilder = new ModularEditBuilder(
+			family,
+			fieldKinds,
+			changeReceiver,
+			minVersionForCollab,
+		);
 	}
 
 	public enterTransaction(): void {

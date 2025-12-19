@@ -1719,6 +1719,48 @@ describe("SharedTree", () => {
 			stack.unsubscribe();
 		});
 
+		it("throws a usage error when the version is too low", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_74,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const tree1 = provider.trees[0];
+			const view1 = asAlpha(tree1.viewWith(config));
+			view1.initialize(["A", "B"]);
+			provider.synchronizeMessages();
+			const fork = view1.fork();
+
+			// Adding the noChange constraint should throw since the client version is too low
+			assert.throws(() => {
+				fork.runTransaction(
+					() => {
+						fork.root.insertAt(1, "X");
+						return;
+					},
+					{
+						preconditions: [{ type: "noChange" }],
+					},
+				);
+			});
+
+			// Same for on revert
+			assert.throws(() => {
+				fork.runTransaction(() => {
+					fork.root.insertAt(1, "X");
+					return {
+						preconditionsOnRevert: [{ type: "noChange" }],
+					};
+				});
+			});
+		});
+
 		it("gets violated when a change is rebased", () => {
 			const provider = new TestTreeProviderLite(
 				2,

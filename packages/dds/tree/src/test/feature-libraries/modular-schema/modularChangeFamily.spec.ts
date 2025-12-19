@@ -191,7 +191,7 @@ const codec = makeModularChangeCodecFamily(
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
-const family = new ModularChangeFamily(fieldKinds, codec);
+const family = new ModularChangeFamily(fieldKinds, codec, codecOptions);
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();

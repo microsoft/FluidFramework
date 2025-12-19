@@ -107,12 +107,12 @@ export class ModularChangeFamily
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
 	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
-	private readonly minVersionForCollab: CodecWriteOptions["minVersionForCollab"];
+	public readonly minVersionForCollab: CodecWriteOptions["minVersionForCollab"];
 
 	public constructor(
 		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
-		codecOptions?: Pick<CodecWriteOptions, "minVersionForCollab">,
+		codecOptions: Pick<CodecWriteOptions, "minVersionForCollab">,
 	) {
 		this.fieldKinds = fieldKinds;
 		this.minVersionForCollab = codecOptions?.minVersionForCollab ?? currentVersion;
@@ -2717,7 +2717,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
-		minVersionForCollab: CodecWriteOptions["minVersionForCollab"] = currentVersion,
+		minVersionForCollab: CodecWriteOptions["minVersionForCollab"],
 	) {
 		super(family, changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
@@ -2896,7 +2896,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public addNoChangeConstraint(revision: RevisionTag): void {
 		if (this.minVersionForCollab < FluidClientVersion.v2_80) {
 			throw new UsageError(
-				`No change constraints require minVersionForCollab of at least ${FluidClientVersion.v2_80}`,
+				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
 			);
 		}
 
@@ -2911,7 +2911,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public addNoChangeConstraintOnRevert(revision: RevisionTag): void {
 		if (this.minVersionForCollab < FluidClientVersion.v2_80) {
 			throw new UsageError(
-				`No change constraints require minVersionForCollab of at least ${FluidClientVersion.v2_80}`,
+				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
 			);
 		}
 

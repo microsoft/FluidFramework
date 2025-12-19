@@ -171,6 +171,7 @@ export function makeTestDefaultChangeFamily(options?: {
 			codecOptions,
 			options?.chunkCompressionStrategy ?? TreeCompressionStrategy.Compressed,
 		),
+		codecOptions,
 	);
 }
 
