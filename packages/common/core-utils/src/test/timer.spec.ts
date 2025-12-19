@@ -22,7 +22,7 @@ describe("Timers", () => {
 	let timeoutSpy: SinonSpy;
 
 	before(() => {
-		clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
+		clock = useFakeTimers();
 		sandbox = createSandbox();
 	});
 

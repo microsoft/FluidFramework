@@ -105,7 +105,9 @@ describe("DeltaConnectionMetadata update tests", () => {
 	});
 
 	beforeEach(async () => {
-		clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
+		clock = useFakeTimers({
+			toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+		});
 		odspDocumentServiceFactory = new OdspDocumentServiceFactory(
 			async (_options) => "token",
 			async (_options) => "token",

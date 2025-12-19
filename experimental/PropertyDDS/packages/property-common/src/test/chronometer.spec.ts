@@ -55,7 +55,9 @@ describe("property-common.Chronometer", function () {
 		});
 
 		it("times promises", async function () {
-			const clock = sinon.useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
+			const clock = sinon.useFakeTimers({
+				toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+			});
 			const expectedElapsedMilliSec = 50;
 			const expectedResult = 199999;
 			let resolve;

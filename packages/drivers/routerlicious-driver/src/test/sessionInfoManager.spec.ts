@@ -28,7 +28,9 @@ describe("SessionInfoManager", () => {
 	const documentIdB = "documentB";
 
 	before(() => {
-		clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
+		clock = useFakeTimers({
+			toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+		});
 	});
 
 	beforeEach(() => {

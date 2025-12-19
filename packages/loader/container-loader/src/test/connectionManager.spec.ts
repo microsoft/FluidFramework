@@ -71,7 +71,9 @@ describe("connectionManager", () => {
 	}
 
 	before(() => {
-		clock = useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
+		clock = useFakeTimers({
+			toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+		});
 	});
 
 	beforeEach(() => {

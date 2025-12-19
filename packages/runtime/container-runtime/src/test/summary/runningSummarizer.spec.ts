@@ -306,7 +306,9 @@ describe("Runtime", () => {
 			};
 
 			before(() => {
-				clock = sinon.useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
+				clock = sinon.useFakeTimers({
+					toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+				});
 			});
 
 			after(() => {

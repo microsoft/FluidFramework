@@ -243,7 +243,9 @@ describe("Runtime", () => {
 	let clock: SinonFakeTimers;
 
 	before(() => {
-		clock = Sinon.useFakeTimers({ toFake: ["setTimeout", "setInterval", "Date"] });
+		clock = Sinon.useFakeTimers({
+			toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+		});
 	});
 
 	beforeEach(() => {
