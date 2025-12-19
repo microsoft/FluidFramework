@@ -982,13 +982,15 @@ describe("schemaFactory", () => {
 				const childB = createComboChild();
 				let parent: ComboParent;
 				switch (layout.parentType) {
-					case "object":
+					case "object": {
 						parent = new ComboParentObject({ childA, childB });
 						break;
-					case "list":
+					}
+					case "list": {
 						parent = new ComboParentList([childA, childB]);
 						break;
-					case "map":
+					}
+					case "map": {
 						parent = new ComboParentMap(
 							new Map([
 								["childA", childA],
@@ -996,8 +998,10 @@ describe("schemaFactory", () => {
 							]),
 						);
 						break;
-					default:
+					}
+					default: {
 						unreachableCase(layout.parentType);
+					}
 				}
 				nodes.push(parent);
 				assert.equal(Tree.status(parent), TreeStatus.New);
@@ -1007,17 +1011,21 @@ describe("schemaFactory", () => {
 			function createComboChild(): ComboChild {
 				let child: ComboChild;
 				switch (layout.childType) {
-					case "object":
+					case "object": {
 						child = new ComboChildObject({});
 						break;
-					case "list":
+					}
+					case "list": {
 						child = new ComboChildList([]);
 						break;
-					case "map":
+					}
+					case "map": {
 						child = new ComboChildMap(new Map());
 						break;
-					default:
+					}
+					default: {
 						unreachableCase(layout.childType);
+					}
 				}
 				nodes.push(child);
 				assert.equal(Tree.status(child), TreeStatus.New);
@@ -1842,11 +1850,14 @@ function getKeys(node: TreeNode): string[] | number[] {
 			}
 			return keys;
 		}
-		case NodeKind.Map:
+		case NodeKind.Map: {
 			return [...(node as TreeMapNode).keys()];
-		case NodeKind.Object:
+		}
+		case NodeKind.Object: {
 			return Object.keys(node);
-		default:
+		}
+		default: {
 			throw new Error("Unsupported Kind");
+		}
 	}
 }

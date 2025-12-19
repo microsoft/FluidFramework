@@ -177,12 +177,15 @@ export function deaggregateChunks(chunk: TreeChunk): TreeChunk[] {
 export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 	const chunks = input.flatMap(deaggregateChunks);
 	switch (chunks.length) {
-		case 0:
+		case 0: {
 			return emptyChunk;
-		case 1:
+		}
+		case 1: {
 			return chunks[0] ?? oob();
-		default:
+		}
+		default: {
 			return new SequenceChunk(chunks);
+		}
 	}
 }
 
