@@ -189,7 +189,7 @@ export function transformSimpleSchema(
 	const queue = Array.from(root.simpleAllowedTypes.keys());
 	for (const identifier of queue) {
 		getOrCreate(simpleNodeSchema, identifier, (id) => {
-			const nodeSchema = schema.definitions.get(id) ?? fail("missing schema");
+			const nodeSchema = schema.definitions.get(id) ?? fail(0xca8 /* missing schema */);
 			const transformed = transformSimpleNodeSchema(nodeSchema, options);
 			const kind = transformed.kind;
 			switch (kind) {
@@ -216,12 +216,12 @@ export function transformSimpleSchema(
 	const definitions = new Map<string, SimpleNodeSchema>(
 		mapIterable(
 			filterIterable(schema.definitions.keys(), (id) => simpleNodeSchema.has(id)),
-			(id) => [id, simpleNodeSchema.get(id) ?? fail("missing schema")],
+			(id) => [id, simpleNodeSchema.get(id) ?? fail(0xca9 /* missing schema */)],
 		),
 	);
 	assert(
 		definitions.size === simpleNodeSchema.size,
-		"Reachable schema missing from input TreeSchema",
+		0xcaa /* Reachable schema missing from input TreeSchema */,
 	);
 	return { root, definitions };
 }

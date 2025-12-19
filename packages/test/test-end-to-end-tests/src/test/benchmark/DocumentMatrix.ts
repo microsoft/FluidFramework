@@ -26,7 +26,10 @@ import {
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -51,15 +54,15 @@ const featureGates = {
 // Tests usually make use of the default data object provided by the test object provider.
 // However, it only creates a single DDS and in these tests we create multiple (3) DDSes per data store.
 class TestDataObject extends DataObject {
-	public get _root() {
+	public get _root(): ISharedDirectory {
 		return this.root;
 	}
 
-	public get _runtime() {
+	public get _runtime(): IFluidDataStoreRuntime {
 		return this.runtime;
 	}
 
-	public get _context() {
+	public get _context(): IFluidDataStoreContext {
 		return this.context;
 	}
 
@@ -69,7 +72,7 @@ class TestDataObject extends DataObject {
 	private readonly sharedStringKey = "sharedString";
 	public sharedString!: SharedString;
 
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
 		this.root.set(this.matrixKey, sharedMatrix.handle);
 
@@ -77,7 +80,7 @@ class TestDataObject extends DataObject {
 		this.root.set(this.sharedStringKey, sharedString.handle);
 	}
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
 		assert(matrixHandle !== undefined, "SharedMatrix not found");
 		this.matrix = await matrixHandle.get();
@@ -104,7 +107,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 	private readonly columnSize: number;
 	private readonly stringSize: number;
 	private readonly _dataObjectFactory: DataObjectFactory<TestDataObject>;
-	public get dataObjectFactory() {
+	public get dataObjectFactory(): DataObjectFactory<TestDataObject> {
 		return this._dataObjectFactory;
 	}
 	private readonly runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
@@ -118,7 +121,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 	}
 
 	private async ensureContainerConnectedWriteMode(container: IContainer): Promise<void> {
-		const resolveIfActive = (res: () => void) => {
+		const resolveIfActive = (res: () => void): void => {
 			if (container.deltaManager.active) {
 				res();
 			}
@@ -143,7 +146,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 		return result;
 	}
 
-	private async createDataStores() {
+	private async createDataStores(): Promise<void> {
 		assert(
 			this._mainContainer !== undefined,
 			"Container should be initialized before creating data stores",
@@ -170,7 +173,7 @@ export class DocumentMatrix implements IDocumentLoaderAndSummarizer {
 		}
 	}
 
-	private async waitForContainerSave(c: IContainer) {
+	private async waitForContainerSave(c: IContainer): Promise<void> {
 		if (!c.isDirty) {
 			return;
 		}

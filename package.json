@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.74.0",
+	"version": "2.80.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -180,7 +180,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"danger": "^13.0.4",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"jest": "^29.6.2",
 		"mocha": "^10.8.2",
 		"puppeteer": "^23.6.0",
@@ -193,7 +193,7 @@
 	},
 	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
 	"engines": {
-		"node": ">=20.15.1",
+		"node": ">=20.19.0",
 		"pnpm": "10"
 	},
 	"fluidBuild": {
@@ -366,7 +366,6 @@
 			"@biomejs/biome": "~2.3.8",
 			"@types/node@<18": "^18.19.0",
 			"@types/node@>=22": "^20.0.0",
-			"eslint": "~9.39.1",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",
 			"simplemde>codemirror": "^5.65.11",

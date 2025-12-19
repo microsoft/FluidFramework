@@ -94,12 +94,11 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		numberOfEditsToRebase,
 		numberOfEditsToVerifyAssociativity,
 		groupSubSuites,
+		skipRebaseOverCompose,
 	} = definedOptions;
 
 	// Skip the "Rebase over compose" suite if specified to in the suite options.
-	const rebaseOverComposeDescribe = definedOptions.skipRebaseOverCompose
-		? describe.skip
-		: describe;
+	const rebaseOverComposeDescribe = skipRebaseOverCompose ? describe.skip : describe;
 
 	const [outerFixture, innerFixture] = groupSubSuites
 		? [it, (title: string, fn: () => void) => fn()]

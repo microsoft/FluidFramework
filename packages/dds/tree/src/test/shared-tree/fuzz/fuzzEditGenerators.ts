@@ -741,15 +741,15 @@ export function makeOpGenerator(
 					(): Synchronize => ({
 						type: "synchronizeTrees",
 					}),
-					weights.synchronizeTrees,
+					synchronizeTrees,
 				],
-				[() => schemaEditGenerator, weights.schema],
+				[() => schemaEditGenerator, schema],
 				[
 					() => makeConstraintEditGenerator(weights),
 					constraintWeight,
 					(state: FuzzTestState) => viewFromState(state).checkout.transaction.isInProgress(),
 				],
-				[() => makeBranchEditGenerator(weights), weights.fork + weights.merge],
+				[() => makeBranchEditGenerator(weights), fork + merge],
 			] as const
 		)
 			.filter(([, weight]) => weight > 0)

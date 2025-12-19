@@ -2294,7 +2294,10 @@ export class ContainerRuntime
 
 			const defaultAction = (): void => {
 				if (summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-					this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
+					this.mc.logger.sendTelemetryEvent({
+						eventName: "SummaryStatus:Behind",
+						opsWithoutSummary: summaryCollection.opsSinceLastAck,
+					});
 					// unregister default to no log on every op after falling behind
 					// and register summary ack handler to re-register this handler
 					// after successful summary
@@ -2336,8 +2339,9 @@ export class ContainerRuntime
 				"summarizerStop",
 				"summarizerStart",
 				"summarizerStartupFailed",
-			]) {
-				this.summaryManager?.on(eventName, (...args: unknown[]) => {
+				"summarizeTimeout",
+			] as const) {
+				this.summaryManager.on(eventName, (...args: unknown[]) => {
 					this.emit(eventName, ...args);
 				});
 			}
@@ -3930,6 +3934,10 @@ export class ContainerRuntime
 		 * True to run GC sweep phase after the mark phase
 		 */
 		runSweep?: boolean;
+		/**
+		 * Telemetry context to populate during summarization.
+		 */
+		telemetryContext?: TelemetryContext;
 	}): Promise<ISummaryTreeWithStats> {
 		this.verifyNotClosed();
 
@@ -3940,9 +3948,9 @@ export class ContainerRuntime
 			runGC = this.garbageCollector.shouldRunGC,
 			runSweep,
 			fullGC,
+			telemetryContext = new TelemetryContext(),
 		} = options;
 
-		const telemetryContext = new TelemetryContext();
 		// Add the options that are used to generate this summary to the telemetry context.
 		telemetryContext.setMultiple("fluid_Summarize", "Options", {
 			fullTree,
@@ -4183,6 +4191,7 @@ export class ContainerRuntime
 			finalAttempt = false,
 			summaryLogger,
 			latestSummaryRefSeqNum,
+			telemetryContext = new TelemetryContext(),
 		} = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
@@ -4372,6 +4381,7 @@ export class ContainerRuntime
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
+					telemetryContext,
 				});
 			} catch (error) {
 				return {

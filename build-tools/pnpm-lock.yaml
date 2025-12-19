@@ -143,9 +143,6 @@ importers:
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
-      cosmiconfig:
-        specifier: ^9.0.0
-        version: 9.0.0(typescript@5.4.5)
       danger:
         specifier: ^13.0.5
         version: 13.0.5(encoding@0.1.13)
@@ -191,6 +188,9 @@ importers:
       latest-version:
         specifier: ^9.0.0
         version: 9.0.0
+      lilconfig:
+        specifier: ^3.1.3
+        version: 3.1.3
       mdast:
         specifier: ^3.0.0
         version: 3.0.0
@@ -393,9 +393,6 @@ importers:
       '@oclif/core':
         specifier: ^4.8.0
         version: 4.8.0
-      cosmiconfig:
-        specifier: ^9.0.0
-        version: 9.0.0(typescript@5.4.5)
       detect-indent:
         specifier: ^6.1.0
         version: 6.1.0
@@ -408,6 +405,9 @@ importers:
       globby:
         specifier: ^11.1.0
         version: 11.1.0
+      lilconfig:
+        specifier: ^3.1.3
+        version: 3.1.3
       micromatch:
         specifier: ^4.0.8
         version: 4.0.8
@@ -526,9 +526,6 @@ importers:
       async:
         specifier: ^3.2.6
         version: 3.2.6
-      cosmiconfig:
-        specifier: ^9.0.0
-        version: 9.0.0(typescript@5.4.5)
       date-fns:
         specifier: ^3.6.0
         version: 3.6.0
@@ -556,6 +553,9 @@ importers:
       json5:
         specifier: ^2.2.3
         version: 2.2.3
+      lilconfig:
+        specifier: ^3.1.3
+        version: 3.1.3
       lodash.isequal:
         specifier: ^4.5.0
         version: 4.5.0

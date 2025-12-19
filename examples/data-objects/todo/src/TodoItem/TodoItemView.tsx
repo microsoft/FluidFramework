@@ -8,9 +8,9 @@ import {
 	CollaborativeTextArea,
 	SharedStringHelper,
 } from "@fluid-example/example-utils";
+import { useTree } from "@fluidframework/react/alpha";
 import type { SharedString } from "@fluidframework/sequence/legacy";
 import React, { useEffect, useState } from "react";
-import { useTree } from "@fluidframework/react/alpha";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";

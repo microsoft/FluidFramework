@@ -56,7 +56,7 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 	 * 1. Store the text and selection state in React
 	 * 2. Store the text state in the SharedString
 	 */
-	const handleChange = (ev: React.FormEvent<HTMLTextAreaElement>) => {
+	const handleChange = (ev: React.FormEvent<HTMLTextAreaElement>): void => {
 		// First get and stash the new textarea state
 		if (!textareaRef.current) {
 			throw new Error("Handling change without current textarea ref?");
@@ -98,7 +98,7 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 	/**
 	 * Set the selection in the DOM textarea itself (updating the UI).
 	 */
-	const setTextareaSelection = (newStart: number, newEnd: number) => {
+	const setTextareaSelection = (newStart: number, newEnd: number): void => {
 		if (!textareaRef.current) {
 			throw new Error("Trying to set selection without current textarea ref?");
 		}
@@ -111,7 +111,7 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 	/**
 	 * Take the current selection from the DOM textarea and store it in our React ref.
 	 */
-	const storeSelectionInReact = () => {
+	const storeSelectionInReact = (): void => {
 		if (!textareaRef.current) {
 			throw new Error("Trying to remember selection without current textarea ref?");
 		}
@@ -133,7 +133,7 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 		 * 2. If the change came from a remote source, it may have moved our selection.
 		 * Compute it, update the textarea, and store it in React
 		 */
-		const handleTextChanged = (event: ISharedStringHelperTextChangedEventArgs) => {
+		const handleTextChanged = (event: ISharedStringHelperTextChangedEventArgs): void => {
 			const newText = sharedStringHelper.getText();
 			setText(newText);
 

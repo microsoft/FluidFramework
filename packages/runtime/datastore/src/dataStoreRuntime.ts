@@ -65,6 +65,8 @@ import {
 	type IFluidDataStorePolicies,
 	type MinimumVersionForCollab,
 	asLegacyAlpha,
+	currentSummarizeStepPrefix,
+	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -1280,7 +1282,7 @@ export class FluidDataStoreRuntime
 		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 		content: any,
 		localOpMetadata: unknown,
-		squash?: boolean,
+		squash: boolean,
 	): void {
 		this.verifyNotClosed();
 
@@ -1560,6 +1562,7 @@ export const mixinRequestHandler = (
 export const mixinSummaryHandler = (
 	handler: (
 		runtime: FluidDataStoreRuntime,
+		setCurrentSummarizeStep: (currentStep: string) => void,
 	) => Promise<{ path: string[]; content: string } | undefined>,
 	Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ): typeof FluidDataStoreRuntime =>
@@ -1587,12 +1590,21 @@ export const mixinSummaryHandler = (
 			summary.summary.tree[firstName] = blob;
 		}
 
-		async summarize(...args: any[]): Promise<ISummaryTreeWithStats> {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			const summary = await super.summarize(...args);
+		async summarize(
+			fullTree: boolean = false,
+			trackState: boolean = true,
+			telemetryContext?: ITelemetryContext,
+		): Promise<ISummaryTreeWithStats> {
+			const summary = await super.summarize(fullTree, trackState, telemetryContext);
 
 			try {
-				const content = await handler(this);
+				const content = await handler(this, (currentStep: string) =>
+					telemetryContext?.set(
+						currentSummarizeStepPrefix,
+						currentSummarizeStepPropertyName,
+						`mixinSummaryHandler:${currentStep}`,
+					),
+				);
 				if (content !== undefined) {
 					this.addBlob(summary, content.path, content.content);
 				}
