@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ILayerCompatDetails,
-	ILayerCompatSupportRequirements,
+import {
+	generation,
+	type ILayerCompatDetails,
+	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import {
 	validateLayerCompatibility,
@@ -26,7 +27,7 @@ export const dataStoreCoreCompatDetails = {
 	/**
 	 * The current generation of the DataStore layer.
 	 */
-	generation: 3,
+	generation,
 };
 
 /**

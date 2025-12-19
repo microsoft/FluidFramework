@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ILayerCompatDetails,
-	ILayerCompatSupportRequirements,
+import {
+	generation,
+	type ILayerCompatDetails,
+	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
@@ -31,7 +32,7 @@ export const runtimeCoreCompatDetails = {
 	/**
 	 * The current generation of the Runtime layer.
 	 */
-	generation: 3,
+	generation,
 } as const;
 
 /**
