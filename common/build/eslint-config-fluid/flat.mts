@@ -39,50 +39,77 @@ export { minimalDeprecated } from "./flat-compat.mts";
 // Import compat configs for A/B testing
 import { recommended as compatRecommended, strict as compatStrict } from "./flat-compat.mts";
 
+/**
+ * Array of ESLint flat config objects.
+ */
 type FlatConfigArray = Linter.Config[];
 
 // #region Shared Constants
 
 /**
  * Global ignores for all configs.
+ * In flat config, a config object with only `ignores` is treated as a global ignore pattern.
+ * See: https://eslint.org/docs/latest/use/configure/configuration-files#globally-ignoring-files-with-ignores
  */
 const globalIgnores: Linter.Config = {
 	ignores: [
+		// Build output directories
 		"**/dist/**",
 		"**/lib/**",
 		"**/build/**",
+
+		// Dependencies
 		"**/node_modules/**",
+
+		// Generated files (from minimal-deprecated.js ignorePatterns)
 		"**/packageVersion.ts",
 		"**/layerGenerationState.ts",
 		"**/*.generated.ts",
 		"**/*.generated.js",
+
+		// Common non-source directories
 		"**/coverage/**",
 		"**/.nyc_output/**",
 	],
 };
 
 /**
- * Permitted imports for `import-x/no-internal-modules` rule.
+ * Permitted internal module imports for `import-x/no-internal-modules` rule.
+ * Allows imports from Fluid Framework packages' `/internal` and `/legacy` entry points.
  */
 const permittedImports = [
-	// Allow /internal and /legacy imports from FF packages
+	// Within Fluid Framework allow import of '/internal' from other FF packages.
 	"@fluid-example/*/internal",
 	"@fluid-experimental/*/internal",
 	"@fluid-internal/*/internal",
 	"@fluid-private/*/internal",
 	"@fluid-tools/*/internal",
 	"@fluidframework/*/internal",
+
+	// Allow /legacy imports for backwards compatibility during API transition
 	"@fluid-example/*/legacy",
 	"@fluid-experimental/*/legacy",
 	"@fluid-internal/*/legacy",
 	"@fluid-private/*/legacy",
 	"@fluid-tools/*/legacy",
 	"@fluidframework/*/legacy",
+
+	// Experimental package APIs and exports are unknown, so allow any imports from them.
 	"@fluid-experimental/**",
+
+	// Allow imports from sibling and ancestral sibling directories,
+	// but not from cousin directories. Parent is allowed but only
+	// because there isn't a known way to deny it.
 	"*/index.js",
 ];
 
+/**
+ * Restricted import paths that apply to both production and test code.
+ * Enforces use of strict assertions from node:assert.
+ */
 const restrictedImportPaths = [
+	// Prefer strict assertions
+	// See: <https://nodejs.org/api/assert.html#strict-assertion-mode>
 	{
 		name: "assert",
 		importNames: ["default"],
@@ -95,6 +122,9 @@ const restrictedImportPaths = [
 	},
 ];
 
+/**
+ * Import patterns restricted in production code to prevent cyclic dependencies.
+ */
 const restrictedImportPatternsForProductionCode = [
 	{
 		group: ["./index.js", "**/../index.js"],
@@ -103,9 +133,13 @@ const restrictedImportPatternsForProductionCode = [
 	},
 ];
 
+/** Glob patterns matching test files. */
 const testFilePatterns = ["src/test/**", "*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"];
+/** Glob patterns matching standard TypeScript files (.ts, .tsx). */
 const tsFilePatterns = ["**/*.ts", "**/*.tsx"];
+/** Glob patterns matching all TypeScript file extensions including ESM/CJS variants. */
 const allTsFilePatterns = ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"];
+/** Glob patterns matching all JavaScript and TypeScript source files. */
 const allSourcePatterns = [
 	"**/*.ts",
 	"**/*.tsx",
@@ -295,7 +329,8 @@ const baseRules: Linter.RulesRecord = {
 };
 
 /**
- * Unicorn rule overrides (applied on top of unicorn/recommended preset).
+ * Unicorn plugin rule overrides applied on top of unicorn/recommended preset.
+ * Relaxes or adjusts rules that conflict with Fluid Framework conventions.
  */
 const unicornOverrides: Linter.RulesRecord = {
 	"unicorn/consistent-function-scoping": "warn",
@@ -320,7 +355,8 @@ const unicornOverrides: Linter.RulesRecord = {
 };
 
 /**
- * Additional rules for recommended config (beyond base).
+ * Additional rules for the recommended config (beyond base).
+ * Enables stricter type safety and documentation requirements.
  */
 const recommendedRules: Linter.RulesRecord = {
 	"@rushstack/no-new-null": "error",
@@ -354,7 +390,8 @@ const recommendedRules: Linter.RulesRecord = {
 };
 
 /**
- * Strict-only rules.
+ * Rules exclusive to the strict config.
+ * Requires JSDoc on all public exports.
  */
 const strictRules: Linter.RulesRecord = {
 	"jsdoc/require-jsdoc": [
@@ -382,7 +419,13 @@ const strictRules: Linter.RulesRecord = {
 	],
 };
 
+/**
+ * TypeScript-specific strict rules.
+ * Enforces explicit member accessibility and stricter type checking.
+ */
 const strictTsRules: Linter.RulesRecord = {
+	"@typescript-eslint/consistent-generic-constructors": "error",
+	"@typescript-eslint/consistent-indexed-object-style": "error",
 	"@typescript-eslint/explicit-member-accessibility": [
 		"error",
 		{
@@ -391,15 +434,46 @@ const strictTsRules: Linter.RulesRecord = {
 				accessors: "explicit",
 				constructors: "explicit",
 				methods: "explicit",
-				properties: "explicit",
 				parameterProperties: "explicit",
+				properties: "explicit",
 			},
 		},
 	],
-	"@typescript-eslint/consistent-indexed-object-style": "error",
-	"@typescript-eslint/no-unsafe-enum-comparison": "error",
-	"@typescript-eslint/consistent-generic-constructors": "error",
 	"@typescript-eslint/no-redundant-type-constituents": "error",
+	"@typescript-eslint/no-unsafe-enum-comparison": "error",
+};
+
+/**
+ * Test file rule overrides.
+ * Relaxes production restrictions: allows Node.js modules, deprecated APIs,
+ * and test-specific imports. Uses explicit project paths instead of projectService.
+ */
+const testRules: Linter.RulesRecord = {
+	// Rules disabled for test files
+	"@typescript-eslint/consistent-type-exports": "off",
+	"@typescript-eslint/consistent-type-imports": "off",
+	"@typescript-eslint/no-invalid-this": "off",
+	// This rule has false positives in many of our test projects.
+	"@typescript-eslint/unbound-method": "off",
+
+	// For test files, remove the pattern restriction that blocks importing from parent index files.
+	// Only keep the paths restriction (about assert imports).
+	"@typescript-eslint/no-restricted-imports": ["error", { paths: restrictedImportPaths }],
+
+	// Node libraries are OK for test files.
+	"import-x/no-nodejs-modules": "off",
+	// Deprecated APIs are OK to use in test files.
+	"import-x/no-deprecated": "off",
+	// For test files only, additionally allow import of '/test*' and '/internal/test*' exports.
+	"import-x/no-internal-modules": [
+		"error",
+		{ allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*", ...permittedImports] },
+	],
+	// Test code may leverage dev dependencies
+	"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
+
+	"unicorn/consistent-function-scoping": "off",
+	"unicorn/prefer-module": "off",
 };
 
 // #endregion
@@ -407,7 +481,8 @@ const strictTsRules: Linter.RulesRecord = {
 // #region Config Objects
 
 /**
- * Import-X settings for TypeScript resolution.
+ * Import-X plugin settings for TypeScript module resolution.
+ * Configures file extensions, parsers, and resolver with Fluid-specific condition names.
  */
 const importXSettings = {
 	"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
@@ -432,6 +507,9 @@ const importXSettings = {
 	},
 };
 
+/**
+ * JSDoc plugin settings enforcing standardized tag names.
+ */
 const jsdocSettings = {
 	tagNamePreference: {
 		arg: { message: "Please use @param instead of @arg.", replacement: "param" },
@@ -441,7 +519,8 @@ const jsdocSettings = {
 };
 
 /**
- * Base config: ESLint core + TypeScript-ESLint + all plugins.
+ * Base configuration array combining ESLint core, TypeScript-ESLint, and all plugins.
+ * Serves as the foundation for both recommended and strict configs.
  */
 const baseConfig: FlatConfigArray = [
 	globalIgnores,
@@ -462,13 +541,13 @@ const baseConfig: FlatConfigArray = [
 			"@fluid-internal/fluid": fluidPlugin,
 			"@rushstack": rushstackPlugin,
 			"@typescript-eslint": tseslint.plugin,
+			"depend": dependPlugin,
 			"import-x": importXPlugin,
 			"jsdoc": jsdocPlugin,
 			"promise": promisePlugin,
 			"tsdoc": tsdocPlugin,
 			"unicorn": unicornPlugin,
 			"unused-imports": unusedImportsPlugin,
-			"depend": dependPlugin,
 		},
 		settings: { ...importXSettings, jsdoc: jsdocSettings },
 		rules: baseRules,
@@ -478,24 +557,26 @@ const baseConfig: FlatConfigArray = [
 ];
 
 /**
- * TypeScript file overrides (disable some strict checks for base config).
+ * TypeScript file overrides for the base config.
+ * Disables certain strict type checks that are only enabled in recommended/strict.
  */
 const tsOverrideConfig: Linter.Config = {
 	files: tsFilePatterns,
 	settings: { jsdoc: { mode: "typescript" } },
 	rules: {
-		"@typescript-eslint/indent": "off",
-		"func-call-spacing": "off",
 		"@typescript-eslint/explicit-module-boundary-types": "off",
+		"@typescript-eslint/indent": "off",
 		"@typescript-eslint/no-unsafe-argument": "off",
 		"@typescript-eslint/no-unsafe-assignment": "off",
 		"@typescript-eslint/no-unsafe-call": "off",
 		"@typescript-eslint/no-unsafe-member-access": "off",
+		"func-call-spacing": "off",
 	},
 };
 
 /**
- * React/JSX file configuration.
+ * React/JSX configuration for .jsx and .tsx files.
+ * Applies React and React Hooks recommended rules with incremental ESLint 9 adoption.
  */
 const reactConfig: Linter.Config = {
 	files: ["**/*.jsx", "**/*.tsx"],
@@ -515,7 +596,8 @@ const reactConfig: Linter.Config = {
 };
 
 /**
- * Test file configuration.
+ * Test file configuration with relaxed rules and explicit tsconfig paths.
+ * Uses project paths instead of projectService due to TypeScript project references.
  */
 const testConfig: Linter.Config = {
 	files: testFilePatterns,
@@ -525,26 +607,12 @@ const testConfig: Linter.Config = {
 			project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 		},
 	},
-	rules: {
-		"@typescript-eslint/no-invalid-this": "off",
-		"@typescript-eslint/unbound-method": "off",
-		"@typescript-eslint/consistent-type-exports": "off",
-		"@typescript-eslint/consistent-type-imports": "off",
-		"@typescript-eslint/no-restricted-imports": ["error", { paths: restrictedImportPaths }],
-		"import-x/no-nodejs-modules": "off",
-		"import-x/no-deprecated": "off",
-		"import-x/no-internal-modules": [
-			"error",
-			{ allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*", ...permittedImports] },
-		],
-		"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
-		"unicorn/consistent-function-scoping": "off",
-		"unicorn/prefer-module": "off",
-	},
+	rules: testRules,
 };
 
 /**
- * Type validation files (special linting exceptions).
+ * Type validation file configuration for API compatibility checks.
+ * Disables rules that conflict with generated type validation files.
  */
 const typeValidationConfig: Linter.Config = {
 	files: ["**/types/*validate*Previous*.ts"],
@@ -556,7 +624,8 @@ const typeValidationConfig: Linter.Config = {
 };
 
 /**
- * Internal modules config for non-test source files.
+ * Internal modules configuration for production source files.
+ * Restricts imports to permitted Fluid Framework internal modules.
  */
 const internalModulesConfig: Linter.Config = {
 	files: allSourcePatterns,
@@ -565,7 +634,8 @@ const internalModulesConfig: Linter.Config = {
 };
 
 /**
- * CommonJS files.
+ * CommonJS file configuration (.cts, .cjs).
+ * Disables ES module preference rules.
  */
 const cjsConfig: Linter.Config = {
 	files: ["**/*.cts", "**/*.cjs"],
@@ -573,7 +643,8 @@ const cjsConfig: Linter.Config = {
 };
 
 /**
- * JS and .d.ts files: disable type-aware parsing and rules.
+ * JavaScript and declaration file configuration.
+ * Disables type-aware parsing and type-checked rules.
  */
 const jsConfig: Linter.Config = {
 	files: ["**/*.js", "**/*.cjs", "**/*.mjs", "**/*.d.ts"],
@@ -585,6 +656,10 @@ const jsConfig: Linter.Config = {
 
 // #region Build Configs
 
+/**
+ * Creates the recommended ESLint configuration array.
+ * @returns Complete flat config array for the recommended preset.
+ */
 function createRecommendedConfig(): FlatConfigArray {
 	return [
 		...baseConfig,
@@ -605,6 +680,11 @@ function createRecommendedConfig(): FlatConfigArray {
 	];
 }
 
+/**
+ * Creates the strict ESLint configuration array.
+ * Extends recommended with additional strictness for public APIs.
+ * @returns Complete flat config array for the strict preset.
+ */
 function createStrictConfig(): FlatConfigArray {
 	return [
 		...createRecommendedConfig(),
@@ -617,17 +697,25 @@ function createStrictConfig(): FlatConfigArray {
 
 // #region Exports
 
+/**
+ * Flag to use FlatCompat-based config for A/B testing.
+ * Set `ESLINT_USE_COMPAT=true` to use the legacy wrapped config.
+ */
 const useCompat = process.env.ESLINT_USE_COMPAT === "true";
 
 /**
- * Recommended ESLint configuration for Fluid Framework.
+ * Recommended ESLint flat configuration for Fluid Framework.
+ * Includes type safety, import validation, documentation rules, and React support.
+ * Spread into your `eslint.config.js`: `export default [...recommended];`
  */
 export const recommended: FlatConfigArray = useCompat
 	? compatRecommended
 	: createRecommendedConfig();
 
 /**
- * Strict ESLint configuration for Fluid Framework.
+ * Strict ESLint flat configuration for Fluid Framework.
+ * Extends recommended with mandatory JSDoc, explicit member accessibility,
+ * and stricter TypeScript checks. Use for packages with public APIs.
  */
 export const strict: FlatConfigArray = useCompat ? compatStrict : createStrictConfig();
 
