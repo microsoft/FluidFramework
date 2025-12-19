@@ -52,9 +52,12 @@ const fieldBatchCodec = {
 	decode: () => assert.fail("Unexpected decode"),
 };
 
-const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
-const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (taggedChange) =>
-	dataChanges.push(taggedChange.change),
+const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily, codecOptions);
+const defaultEditor = new DefaultEditBuilder(
+	modularFamily,
+	mintRevisionTag,
+	(taggedChange) => dataChanges.push(taggedChange.change),
+	codecOptions.minVersionForCollab,
 );
 
 // Side effects results in `dataChanges` being populated

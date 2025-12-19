@@ -26,6 +26,7 @@ import {
 	type TaggedChange,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
+import { FluidClientVersion } from "../../index.js";
 
 describe("TransactionStacks", () => {
 	it("emit an event after starting a transaction", () => {
@@ -354,7 +355,9 @@ describe("SquashingTransactionStacks", () => {
 	});
 
 	type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
-	const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
+	const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
+		minVersionForCollab: FluidClientVersion.v2_0,
+	});
 	const initialRevision = mintRevisionTag();
 
 	function createBranch(): DefaultBranch {

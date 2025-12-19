@@ -50,6 +50,7 @@ import {
 
 import {
 	currentVersion,
+	type CodecWriteOptions,
 	type FormatVersion,
 	type ICodecFamily,
 	type IJsonCodec,
@@ -816,6 +817,7 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 		forestType?: ForestType;
 		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -830,6 +832,7 @@ function createCheckoutWithContent(
 			HasListeners<CheckoutEvents>;
 		forestType?: ForestType;
 		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);

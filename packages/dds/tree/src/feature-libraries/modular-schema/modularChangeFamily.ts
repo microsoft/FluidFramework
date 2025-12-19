@@ -5,8 +5,14 @@
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecFamily } from "../../codec/index.js";
+import {
+	FluidClientVersion,
+	currentVersion,
+	type CodecWriteOptions,
+	type ICodecFamily,
+} from "../../codec/index.js";
 import {
 	type ChangeEncodingContext,
 	type ChangeFamily,
@@ -83,6 +89,7 @@ import {
 	type FieldId,
 	type ModularChangeset,
 	newCrossFieldKeyTable,
+	type NoChangeConstraint,
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
@@ -100,12 +107,15 @@ export class ModularChangeFamily
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
 	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
+	public readonly minVersionForCollab: CodecWriteOptions["minVersionForCollab"];
 
 	public constructor(
 		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+		codecOptions: Pick<CodecWriteOptions, "minVersionForCollab">,
 	) {
 		this.fieldKinds = fieldKinds;
+		this.minVersionForCollab = codecOptions?.minVersionForCollab ?? currentVersion;
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
@@ -199,6 +209,11 @@ export class ModularChangeFamily
 			change2,
 		);
 
+		// The composed changeset has a "no change" constraint if either change has one
+		const noChangeConstraint = change1.noChangeConstraint ?? change2.noChangeConstraint;
+		const noChangeConstraintOnRevert =
+			change1.noChangeConstraintOnRevert ?? change2.noChangeConstraintOnRevert;
+
 		return makeModularChangeset({
 			fieldChanges,
 			nodeChanges,
@@ -207,6 +222,8 @@ export class ModularChangeFamily
 			crossFieldKeys,
 			maxId: idState.maxId,
 			revisions: revInfos,
+			noChangeConstraint,
+			noChangeConstraintOnRevert,
 			builds: allBuilds,
 			destroys: allDestroys,
 			refreshers: allRefreshers,
@@ -660,8 +677,8 @@ export class ModularChangeFamily
 	/**
 	 * @param change - The change to invert.
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
-	 * @param revisionForInvert - The revision for the invert changeset.
 	 * performing a sandwich rebase.
+	 * @param revisionForInvert - The revision for the invert changeset.
 	 */
 	public invert(
 		change: TaggedChange<ModularChangeset>,
@@ -681,10 +698,15 @@ export class ModularChangeFamily
 			? [{ revision: revisionForInvert, rollbackOf: change.revision }]
 			: [{ revision: revisionForInvert }];
 
+		const noChangeConstraint = change.change.noChangeConstraintOnRevert;
+		const noChangeConstraintOnRevert = change.change.noChangeConstraint;
+
 		if (hasConflicts(change.change)) {
 			return makeModularChangeset({
 				maxId: change.change.maxId as number,
 				revisions: revInfos,
+				noChangeConstraint: change.change.noChangeConstraintOnRevert,
+				noChangeConstraintOnRevert,
 				destroys,
 			});
 		}
@@ -764,6 +786,8 @@ export class ModularChangeFamily
 			revisions: revInfos,
 			constraintViolationCount: change.change.constraintViolationCountOnRevert,
 			constraintViolationCountOnRevert: change.change.constraintViolationCount,
+			noChangeConstraint,
+			noChangeConstraintOnRevert,
 			destroys,
 		});
 	}
@@ -911,6 +935,13 @@ export class ModularChangeFamily
 		const revertConstraintState = newConstraintState(
 			change.constraintViolationCountOnRevert ?? 0,
 		);
+
+		let noChangeConstraint = change.noChangeConstraint;
+		if (noChangeConstraint !== undefined && !noChangeConstraint.violated) {
+			noChangeConstraint = { violated: true };
+			constraintState.violationCount += 1;
+		}
+
 		this.updateConstraintsForFields(
 			rebasedFields,
 			NodeAttachState.Attached,
@@ -930,6 +961,8 @@ export class ModularChangeFamily
 			revisions: change.revisions,
 			constraintViolationCount: constraintState.violationCount,
 			constraintViolationCountOnRevert: revertConstraintState.violationCount,
+			noChangeConstraint,
+			noChangeConstraintOnRevert: change.noChangeConstraintOnRevert,
 			builds: change.builds,
 			destroys: change.destroys,
 			refreshers: change.refreshers,
@@ -1645,7 +1678,12 @@ export class ModularChangeFamily
 	public buildEditor(
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	): ModularEditBuilder {
-		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver);
+		return new ModularEditBuilder(
+			this,
+			this.fieldKinds,
+			changeReceiver,
+			this.minVersionForCollab,
+		);
 	}
 
 	private createEmptyFieldChange(fieldKind: FieldKindIdentifier): FieldChange {
@@ -2623,6 +2661,8 @@ function makeModularChangeset(
 		revisions?: readonly RevisionInfo[];
 		constraintViolationCount?: number;
 		constraintViolationCountOnRevert?: number;
+		noChangeConstraint?: NoChangeConstraint;
+		noChangeConstraintOnRevert?: NoChangeConstraint;
 		builds?: ChangeAtomIdBTree<TreeChunk>;
 		destroys?: ChangeAtomIdBTree<number>;
 		refreshers?: ChangeAtomIdBTree<TreeChunk>;
@@ -2653,6 +2693,12 @@ function makeModularChangeset(
 	) {
 		changeset.constraintViolationCountOnRevert = props.constraintViolationCountOnRevert;
 	}
+	if (props.noChangeConstraint !== undefined) {
+		changeset.noChangeConstraint = props.noChangeConstraint;
+	}
+	if (props.noChangeConstraintOnRevert !== undefined) {
+		changeset.noChangeConstraintOnRevert = props.noChangeConstraintOnRevert;
+	}
 	if (props.builds !== undefined && props.builds.size > 0) {
 		changeset.builds = props.builds;
 	}
@@ -2668,14 +2714,17 @@ function makeModularChangeset(
 export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	private transactionDepth: number = 0;
 	private idAllocator: IdAllocator;
+	private readonly minVersionForCollab: CodecWriteOptions["minVersionForCollab"];
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
+		minVersionForCollab: CodecWriteOptions["minVersionForCollab"],
 	) {
 		super(family, changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
+		this.minVersionForCollab = minVersionForCollab;
 	}
 
 	public override enterTransaction(): void {
@@ -2845,6 +2894,36 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 				revision,
 			),
 		);
+	}
+
+	public addNoChangeConstraint(revision: RevisionTag): void {
+		if (this.minVersionForCollab < FluidClientVersion.v2_80) {
+			throw new UsageError(
+				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
+			);
+		}
+
+		const changeset = makeModularChangeset({
+			maxId: -1,
+			noChangeConstraint: { violated: false },
+		});
+
+		this.applyChange(tagChange(changeset, revision));
+	}
+
+	public addNoChangeConstraintOnRevert(revision: RevisionTag): void {
+		if (this.minVersionForCollab < FluidClientVersion.v2_80) {
+			throw new UsageError(
+				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
+			);
+		}
+
+		const changeset = makeModularChangeset({
+			maxId: -1,
+			noChangeConstraintOnRevert: { violated: false },
+		});
+
+		this.applyChange(tagChange(changeset, revision));
 	}
 }
 

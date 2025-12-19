@@ -48,16 +48,21 @@ export const MessageFormatVersion = strictEnum("MessageFormatVersion", {
 	 */
 	v5: 5,
 	/**
+	 * Introduced and made available for writing in 2.80.0
+	 * Adds support for "no change" constraints.
+	 */
+	v6: 6,
+	/**
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
 	vSharedBranches: "shared-branches|v0.1",
 });
 export type MessageFormatVersion = Values<typeof MessageFormatVersion>;
-
 export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
 	MessageFormatVersion.v3,
 	MessageFormatVersion.v4,
+	MessageFormatVersion.v6,
 	MessageFormatVersion.vSharedBranches,
 ]);
 export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set(

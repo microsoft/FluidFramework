@@ -23,9 +23,10 @@ export {
 	ChangesetLocalIdSchema,
 	EncodedChangeAtomId,
 	EncodedRevisionInfo,
-	EncodedModularChangeset,
+	EncodedModularChangesetV1,
 	EncodedNodeChangeset,
-} from "./modularChangeFormat.js";
+} from "./modularChangeFormatV1.js";
+export { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export {
 	type FieldChangeHandler,
@@ -52,6 +53,7 @@ export type {
 	FieldChangeset,
 	HasFieldChanges,
 	ModularChangeset,
+	NoChangeConstraint,
 	NodeExistsConstraint,
 	NodeId,
 } from "./modularChangeTypes.js";
