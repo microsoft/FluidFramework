@@ -154,16 +154,20 @@ function doesNodeKindMatchStoredNodeKind(
 	storedType: SchemaFactoryNodeKind,
 ): boolean {
 	switch (viewKind) {
-		case NodeKind.Leaf:
+		case NodeKind.Leaf: {
 			return storedType === LeafNodeStoredSchema;
+		}
 		case NodeKind.Array:
-		case NodeKind.Object:
+		case NodeKind.Object: {
 			return storedType === ObjectNodeStoredSchema;
+		}
 		case NodeKind.Map:
-		case NodeKind.Record:
+		case NodeKind.Record: {
 			return storedType === MapNodeStoredSchema;
-		default:
+		}
+		default: {
 			unreachableCase(viewKind);
+		}
 	}
 }
 
@@ -291,8 +295,9 @@ function* getNodeDiscrepancies(
 			}
 			break;
 		}
-		default:
+		default: {
 			break;
+		}
 	}
 }
 
