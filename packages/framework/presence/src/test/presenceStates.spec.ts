@@ -10,14 +10,14 @@ import type {
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
+import { StateFactory } from "@fluidframework/presence/beta";
+
 import type { InternalTypes } from "../exposedInternalTypes.js";
 import type { Presence } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-
-import { StateFactory } from "@fluidframework/presence/beta";
 
 const testWorkspaceName = "name:testWorkspaceA";
 

@@ -26,7 +26,7 @@ const StarView: React.FC<IStarViewProps> = (props: IStarViewProps) => {
 	const [y, setY] = React.useState(props.model.y);
 
 	React.useEffect(() => {
-		const onCoordinateChanged = () => {
+		const onCoordinateChanged = (): void => {
 			setX(props.model.x);
 			setY(props.model.y);
 		};
@@ -62,7 +62,7 @@ export const ConstellationView: React.FC<IConstellationViewProps> = (
 ) => {
 	const [starList, setStarList] = React.useState<ICoordinate[]>(props.model.stars);
 	React.useEffect(() => {
-		const onConstellationChanged = () => {
+		const onConstellationChanged = (): void => {
 			setStarList(props.model.stars);
 		};
 		props.model.on("constellationChanged", onConstellationChanged);
@@ -77,15 +77,15 @@ export const ConstellationView: React.FC<IConstellationViewProps> = (
 		let dragging: boolean = false;
 		const starStart = { x: star.x, y: star.y };
 		const dragStart = { x: 0, y: 0 };
-		const pointerDownHandler = (event) => {
-			event.target.setPointerCapture(event.pointerId);
+		const pointerDownHandler = (event: React.PointerEvent<HTMLDivElement>): void => {
+			(event.target as Element).setPointerCapture(event.pointerId);
 			starStart.x = star.x;
 			starStart.y = star.y;
 			dragStart.x = event.pageX;
 			dragStart.y = event.pageY;
 			dragging = true;
 		};
-		const pointerMoveHandler = (event) => {
+		const pointerMoveHandler = (event: React.PointerEvent<HTMLDivElement>): void => {
 			if (dragging) {
 				const totalDragDelta = {
 					x: event.pageX - dragStart.x,
@@ -95,7 +95,7 @@ export const ConstellationView: React.FC<IConstellationViewProps> = (
 				star.y = Math.min(Math.max(starStart.y + totalDragDelta.y, 0), 100);
 			}
 		};
-		const pointerUpHandler = (event) => {
+		const pointerUpHandler = (event: React.PointerEvent<HTMLDivElement>): void => {
 			dragging = false;
 		};
 		starViews.push(

@@ -74,7 +74,7 @@ class LoadTestDataStoreModel {
 		runtime: IFluidDataStoreRuntime,
 	): Promise<void> {
 		await new Promise<void>((resolve) => {
-			const resolveIfConnectedOrDisposed = () => {
+			const resolveIfConnectedOrDisposed = (): void => {
 				if (runtime.connected || runtime.disposed) {
 					runtime.off("dispose", resolveIfConnectedOrDisposed);
 					runtime.off("connected", resolveIfConnectedOrDisposed);
@@ -94,7 +94,7 @@ class LoadTestDataStoreModel {
 		);
 
 		await new Promise<void>((resolve) => {
-			const resolveIfDisposedOrCaughtUp = (op?: ISequencedDocumentMessage) => {
+			const resolveIfDisposedOrCaughtUp = (op?: ISequencedDocumentMessage): void => {
 				if (runtime.disposed || (op !== undefined && lastKnownSeq <= op.sequenceNumber)) {
 					deltaManager.off("op", resolveIfDisposedOrCaughtUp);
 					runtime.off("dispose", resolveIfDisposedOrCaughtUp);
@@ -151,7 +151,7 @@ class LoadTestDataStoreModel {
 		root: ISharedDirectory,
 		runtime: IFluidDataStoreRuntime,
 		containerRuntime: IContainerRuntimeBase,
-	) {
+	): Promise<LoadTestDataStoreModel | undefined> {
 		await LoadTestDataStoreModel.waitForCatchupOrDispose(runtime);
 		if (runtime.disposed) {
 			return;
@@ -250,7 +250,7 @@ class LoadTestDataStoreModel {
 		// The runners are paired up and each pair shares a single taskId
 		this.taskId = `op_sender${config.runId % halfClients}`;
 		this.partnerId = (this.config.runId + halfClients) % this.config.testConfig.numClients;
-		const changed = (taskId) => {
+		const changed = (taskId: string): void => {
 			this.deferUntilConnected(
 				() => {
 					if (taskId === this.taskId && this.taskStartTime !== 0) {
@@ -323,7 +323,7 @@ class LoadTestDataStoreModel {
 				? 1
 				: 0);
 
-		const readBlob = (key: string) => {
+		const readBlob = (key: string): void => {
 			if (key.startsWith(this.partnerBlobKeyPrefix)) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				this.root
@@ -351,7 +351,7 @@ class LoadTestDataStoreModel {
 		}
 	}
 
-	private deferUntilConnected(callback: () => void, errorHandler: (error) => void) {
+	private deferUntilConnected(callback: () => void, errorHandler: (error: any) => void): void {
 		Promise.resolve()
 			.then(() => {
 				if (this.runtime.connected) {
@@ -375,14 +375,14 @@ class LoadTestDataStoreModel {
 		return Date.now() - (this.assigned() ? this.taskStartTime : this.startTime);
 	}
 
-	private blobKey(id): string {
+	private blobKey(id: number): string {
 		return `blob_${this.config.runId}_${id}`;
 	}
 	private get partnerBlobKeyPrefix(): string {
 		return `blob_${this.partnerId}_`;
 	}
 
-	public async blobFinish() {
+	public async blobFinish(): Promise<void[]> {
 		const p = Promise.all(this.blobUploads);
 		this.blobUploads.length = 0;
 		return p;
@@ -391,7 +391,7 @@ class LoadTestDataStoreModel {
 	/**
 	 * Upload a unique attachment blob and store the handle in a unique key on the root map
 	 */
-	public async writeBlob(blobNumber: number) {
+	public async writeBlob(blobNumber: number): Promise<void> {
 		if (this.runtime.disposed) {
 			return;
 		}
@@ -405,7 +405,7 @@ class LoadTestDataStoreModel {
 		}
 	}
 
-	public async getPartnerCounter() {
+	public async getPartnerCounter(): Promise<ISharedCounter | undefined> {
 		if (this.runtime.disposed) {
 			return undefined;
 		}
@@ -420,14 +420,14 @@ class LoadTestDataStoreModel {
 		return handle.get();
 	}
 
-	public assigned() {
+	public assigned(): boolean {
 		if (this.runtime.disposed) {
 			return false;
 		}
 		return this.taskManager.assigned(this.taskId);
 	}
 
-	public abandonTask() {
+	public abandonTask(): void {
 		if (this.assigned()) {
 			// We are becoming the reader. Remove the reference to the GC data store.
 			this.runDir.delete(gcDataStoreKey);
@@ -435,7 +435,7 @@ class LoadTestDataStoreModel {
 		}
 	}
 
-	public async volunteerForTask() {
+	public async volunteerForTask(): Promise<void> {
 		if (this.runtime.disposed) {
 			return;
 		}
@@ -443,13 +443,13 @@ class LoadTestDataStoreModel {
 			try {
 				if (!this.runtime.connected) {
 					await new Promise<void>((resolve, reject) => {
-						const resAndClear = () => {
+						const resAndClear = (): void => {
 							resolve();
 							this.runtime.off("connected", resAndClear);
 							this.runtime.off("disconnected", rejAndClear);
 							this.runtime.off("dispose", rejAndClear);
 						};
-						const rejAndClear = () => {
+						const rejAndClear = (): void => {
 							reject(new Error("failed to connect"));
 							resAndClear();
 						};
@@ -474,7 +474,7 @@ class LoadTestDataStoreModel {
 		}
 	}
 
-	public printStatus() {
+	public printStatus(): void {
 		if (this.config.verbose) {
 			const formatBytes = (bytes: number, decimals = 1): string => {
 				if (bytes === 0) {
@@ -517,7 +517,7 @@ class LoadTestDataStoreModel {
 class LoadTestDataStore extends DataObject implements ILoadTest {
 	public static DataStoreName = "StressTestDataStore";
 
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
 		const virtualDataStore = await VirtualDataStoreFactory.createInstance(
 			this.context.containerRuntime,
@@ -530,7 +530,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		dataStoresMap.set("0", virtualDataStore.handle);
 	}
 
-	public async detached(config: Omit<IRunConfig, "runId">) {
+	public async detached(
+		config: Omit<IRunConfig, "runId">,
+	): Promise<LoadTestDataStoreModel | undefined> {
 		return LoadTestDataStoreModel.createRunnerInstance(
 			{ ...config, runId: -1 },
 			false,
@@ -540,7 +542,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		);
 	}
 
-	public async run(config: IRunConfig, reset: boolean) {
+	public async run(config: IRunConfig, reset: boolean): Promise<boolean> {
 		const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
 			config,
 			reset,
@@ -559,7 +561,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
 		let timeout: NodeJS.Timeout | undefined;
 		if (config.verbose) {
-			const printProgress = () => {
+			const printProgress = (): void => {
 				dataModel.printStatus();
 				timeout = setTimeout(printProgress, config.testConfig.progressIntervalMs);
 			};
@@ -580,13 +582,13 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		return runResult[0];
 	}
 
-	async getRuntime() {
+	async getRuntime(): Promise<IFluidDataStoreRuntime | undefined> {
 		if (!this.runtime.disposed) {
 			return this.runtime;
 		}
 	}
 
-	async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig) {
+	async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig): Promise<boolean> {
 		const cycleMs = config.testConfig.readWriteCycleMs;
 		const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
 		const opsSendType = config.testConfig.opsSendType ?? "staggeredReadWrite";
@@ -606,7 +608,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			config.testConfig.content?.useRandomContent === true
 				? generateRandomStringOfSize
 				: generateStringOfSize;
-		const getOpSizeInBytes = () =>
+		const getOpSizeInBytes = (): number =>
 			config.testConfig.content?.useVariableOpSize === true
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
@@ -635,7 +637,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		let virtualDataStoresCreated = 0;
 		let virtualDataStoresLoaded = 0;
 
-		const reportOpCount = (reason: string, error?: Error) => {
+		const reportOpCount = (reason: string, error?: Error): void => {
 			config.logger.sendTelemetryEvent(
 				{
 					eventName: "OpCount",
@@ -654,7 +656,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		this.runtime.once("dispose", () => reportOpCount("Disposed"));
 		this.runtime.once("disconnected", () => reportOpCount("Disconnected"));
 
-		const sendSingleOp = () => {
+		const sendSingleOp = (): void => {
 			if (
 				this.shouldSendLargeOp(
 					opSizeinBytes,
@@ -777,7 +779,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			opsSent++;
 		};
 
-		const enableQuickRampDown = () => {
+		const enableQuickRampDown = (): boolean => {
 			return opsSendType === "staggeredReadWrite" && opSizeinBytes === 0 ? true : false;
 		};
 
@@ -846,7 +848,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		largeOpJitter: number,
 		maxClients: number,
 		runId: number,
-	) {
+	): boolean {
 		return (
 			runId < maxClients &&
 			opSizeinBytes > 0 &&
@@ -868,7 +870,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		opsSent: number,
 		maxClients: number,
 		runId: number,
-	) {
+	): boolean {
 		return runId < maxClients && createRate !== undefined && opsSent % createRate === 0;
 	}
 
@@ -885,11 +887,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		opsSent: number,
 		maxClients: number,
 		runId: number,
-	) {
+	): boolean {
 		return runId < maxClients && loadRate !== undefined && opsSent % loadRate === 0;
 	}
 
-	async sendSignals(config: IRunConfig) {
+	async sendSignals(config: IRunConfig): Promise<void> {
 		const clientSignalsSendCount =
 			typeof config.testConfig.totalSignalsSendCount === "undefined"
 				? 0

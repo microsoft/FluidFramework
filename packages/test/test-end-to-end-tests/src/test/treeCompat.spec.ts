@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { lt } from "semver";
 
 import { describeCompat, type CompatApis } from "@fluid-private/test-version-utils";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	DataObjectFactoryType,
 	getContainerEntryPointBackCompat,
@@ -14,8 +14,8 @@ import {
 	type ITestFluidObject,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { type ITree } from "@fluidframework/tree";
+import { lt } from "semver";
 
 const treeId = "sharedTree";
 const baseTestContainerConfig: ITestContainerConfig = {

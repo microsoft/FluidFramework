@@ -12,7 +12,7 @@ import type { DataTransformationCallback } from "@fluid-example/example-utils";
  * @param stringData - The string data to examine
  * @returns The version string
  */
-export function readVersion(stringData: string) {
+export function readVersion(stringData: string): string {
 	const lines = stringData.split("\n");
 	const [versionTag, version] = lines[0].split(":");
 	if (versionTag !== "version" || typeof version !== "string" || version === "") {
@@ -27,7 +27,9 @@ export function readVersion(stringData: string) {
  * @param stringData - version:one formatted string data
  * @returns An array of objects, each representing a single inventory item
  */
-export function parseStringDataVersionOne(stringData: string) {
+export function parseStringDataVersionOne(
+	stringData: string,
+): { name: string; quantity: number }[] {
 	const version = readVersion(stringData);
 	if (version !== "one") {
 		throw new Error(`Expected to parse version one, got version ${version}`);
@@ -52,7 +54,9 @@ export function parseStringDataVersionOne(stringData: string) {
  * @param stringData - version:two formatted string data
  * @returns An array of objects, each representing a single inventory item
  */
-export function parseStringDataVersionTwo(stringData: string) {
+export function parseStringDataVersionTwo(
+	stringData: string,
+): { name: string; quantity: number }[] {
 	const version = readVersion(stringData);
 	if (version !== "two") {
 		throw new Error(`Expected to parse version two, got version ${version}`);
@@ -71,7 +75,7 @@ export function parseStringDataVersionTwo(stringData: string) {
 	});
 }
 
-function parseStringData(stringData: string) {
+function parseStringData(stringData: string): { name: string; quantity: number }[] {
 	const version = readVersion(stringData);
 	if (version === "one") {
 		return parseStringDataVersionOne(stringData);
@@ -82,7 +86,7 @@ function parseStringData(stringData: string) {
 	}
 }
 
-function transformToOne(stringData: string) {
+function transformToOne(stringData: string): string {
 	const inventoryItems = parseStringData(stringData);
 	const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
 		return `${inventoryItem.name}:${inventoryItem.quantity.toString()}`;
@@ -90,7 +94,7 @@ function transformToOne(stringData: string) {
 	return `version:one\n${inventoryItemStrings.join("\n")}`;
 }
 
-function transformToTwo(stringData: string) {
+function transformToTwo(stringData: string): string {
 	const inventoryItems = parseStringData(stringData);
 	const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
 		return `${inventoryItem.name}\t${inventoryItem.quantity.toString()}`;

@@ -217,7 +217,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 	 * Noop if such a tree was already in the set.
 	 * @param tree - The tree to log merge health telemetry for.
 	 */
-	public attachTree(tree: SharedTree) {
+	public attachTree(tree: SharedTree): void {
 		if (this.treeData.has(tree) === false) {
 			this.resetTreeData(tree);
 			tree.on(SharedTreeEvent.SequencedEditApplied, this.sequencedEditHandler);
@@ -229,7 +229,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 	 * Noop if such a tree was never in the set.
 	 * @param tree - The tree to stop logging merge health telemetry for.
 	 */
-	public detachTree(tree: SharedTree) {
+	public detachTree(tree: SharedTree): void {
 		if (this.treeData.has(tree)) {
 			tree.off(SharedTreeEvent.SequencedEditApplied, this.sequencedEditHandler);
 			this.treeData.delete(tree);
@@ -248,7 +248,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 	/**
 	 * Removes all trees from the set of tree to log merge health telemetry for.
 	 */
-	public detachAllTrees() {
+	public detachAllTrees(): void {
 		for (const tree of this.treeData.keys()) {
 			this.detachTree(tree);
 		}
@@ -332,7 +332,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 	/**
 	 * Receives SequencedEditApplied events from trees.
 	 */
-	private readonly sequencedEditHandler = (params: SequencedEditAppliedEventArguments) => {
+	private readonly sequencedEditHandler = (params: SequencedEditAppliedEventArguments): void => {
 		const { edit, tree, wasLocal, logger, outcome, reconciliationPath } = params;
 		if (wasLocal) {
 			const tallyAndLogger = this.treeData.get(tree) ?? fail('Should only receive events for registered trees');
@@ -429,7 +429,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 	/**
 	 * Logs the accumulated merge health data to each tree's designated logger.
 	 */
-	private readonly logHeartbeat = () => {
+	private readonly logHeartbeat = (): void => {
 		for (const [tree, { tally, logger }] of this.treeData) {
 			if (logger && tally.editCount > 0) {
 				// Note: all this data is for sequenced edits that were originally produced by the local client.
