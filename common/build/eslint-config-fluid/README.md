@@ -16,7 +16,21 @@ import { strict } from "@fluidframework/eslint-config-fluid/flat.mjs";
 export default [...strict];
 ```
 
-The flat config exports use `FlatCompat` to wrap the legacy configs and add necessary overrides for type-aware parsing in JavaScript files and test files.
+The flat config exports are native ESLint 9 flat configs. For backward compatibility, a `FlatCompat`-based wrapper is also available at `@fluidframework/eslint-config-fluid/flat-compat.mjs`.
+
+### Comparing Native vs Compat Configs
+
+For testing or comparison purposes, you can toggle between the native and compat configs using an environment variable:
+
+```bash
+# Use native ESLint 9 config (default)
+eslint .
+
+# Use FlatCompat-based config for comparison
+ESLINT_USE_COMPAT=true eslint .
+```
+
+This is useful when migrating to ensure the native config produces equivalent linting results.
 
 ## Configurations
 

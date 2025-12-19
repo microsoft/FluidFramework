@@ -5,17 +5,17 @@
     },
     "plugins": [
         "@",
-        "@eslint-community/eslint-comments",
+        "@eslint-community/eslint-comments:@eslint-community/eslint-plugin-eslint-comments@4.5.0",
         "@typescript-eslint:@typescript-eslint/eslint-plugin@8.18.2",
-        "import-x:eslint-plugin-import-x@4.16.1",
-        "unicorn:eslint-plugin-unicorn@54.0.0",
+        "@fluid-internal/fluid",
         "@rushstack",
+        "depend:eslint-plugin-depend@1.4.0",
+        "import-x:eslint-plugin-import-x@4.16.1",
         "jsdoc",
         "promise",
         "tsdoc",
-        "unused-imports:unused-imports",
-        "@fluid-internal/fluid",
-        "depend:eslint-plugin-depend@1.4.0"
+        "unicorn:eslint-plugin-unicorn@54.0.0",
+        "unused-imports:unused-imports"
     ],
     "rules": {
         "@babel/object-curly-spacing": [
@@ -1011,8 +1011,7 @@
             "as-needed"
         ],
         "arrow-parens": [
-            "off",
-            "always"
+            "off"
         ],
         "arrow-spacing": [
             "off"
@@ -1062,7 +1061,7 @@
             "off"
         ],
         "constructor-super": [
-            "error"
+            "off"
         ],
         "curly": [
             "off",
@@ -1245,20 +1244,17 @@
         "import-x/order": [
             "error",
             {
+                "newlines-between": "ignore",
                 "groups": [
-                    "builtin",
-                    "external",
-                    "internal",
-                    "parent",
-                    "sibling",
-                    "index"
+                    [
+                        "builtin",
+                        "external",
+                        "internal",
+                        "parent",
+                        "sibling",
+                        "index"
+                    ]
                 ],
-                "newlines-between": "always",
-                "alphabetize": {
-                    "order": "asc",
-                    "caseInsensitive": false,
-                    "orderImportKind": "ignore"
-                },
                 "distinctGroup": true,
                 "sortTypesGroup": false,
                 "named": false,
@@ -1337,12 +1333,7 @@
             "off"
         ],
         "max-len": [
-            "off",
-            {
-                "ignoreRegExpLiterals": false,
-                "ignoreStrings": false,
-                "code": 120
-            }
+            "off"
         ],
         "max-lines": [
             "off"
@@ -1548,7 +1539,7 @@
             "off"
         ],
         "no-multi-spaces": [
-            "error",
+            "off",
             {
                 "ignoreEOLComments": true
             }
@@ -1557,12 +1548,7 @@
             "off"
         ],
         "no-multiple-empty-lines": [
-            "off",
-            {
-                "max": 1,
-                "maxBOF": 0,
-                "maxEOF": 0
-            }
+            "off"
         ],
         "no-negated-condition": [
             "off"
@@ -1792,16 +1778,7 @@
             "off"
         ],
         "padded-blocks": [
-            "off",
-            "never"
-        ],
-        "padding-line-between-statements": [
-            "off",
-            {
-                "blankLine": "always",
-                "prev": "*",
-                "next": "return"
-            }
+            "off"
         ],
         "prefer-arrow-callback": [
             "error",
@@ -1839,8 +1816,7 @@
             "warn"
         ],
         "quote-props": [
-            "off",
-            "consistent-as-needed"
+            "off"
         ],
         "quotes": [
             "off"
@@ -1943,8 +1919,7 @@
             "off"
         ],
         "space-in-parens": [
-            "off",
-            "never"
+            "off"
         ],
         "space-infix-ops": [
             "off"
@@ -1957,18 +1932,6 @@
         ],
         "space-unary-word-ops": [
             "off"
-        ],
-        "spaced-comment": [
-            "error",
-            "always",
-            {
-                "block": {
-                    "markers": [
-                        "!"
-                    ],
-                    "balanced": true
-                }
-            }
         ],
         "standard/array-bracket-even-spacing": [
             "off"
@@ -2515,10 +2478,6 @@
             ".d.ts",
             ".js",
             ".jsx"
-        ],
-        "import-x/external-module-folders": [
-            "node_modules",
-            "node_modules/@types"
         ],
         "import-x/parsers": {
             "@typescript-eslint/parser": [
