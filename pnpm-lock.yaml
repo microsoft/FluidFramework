@@ -14543,6 +14543,9 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../test-utils
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -14583,9 +14586,6 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
-      mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)

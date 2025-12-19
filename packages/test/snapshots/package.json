@@ -81,7 +81,8 @@
 		"@fluidframework/replay-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.0",
-		"@fluidframework/test-utils": "workspace:~"
+		"@fluidframework/test-utils": "workspace:~",
+		"mocha": "^10.8.2"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
