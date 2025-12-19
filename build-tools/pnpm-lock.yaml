@@ -33,7 +33,7 @@ importers:
         version: 20.1.0(@types/node@22.19.1)(commitizen@4.3.1(@types/node@22.19.1)(typescript@5.4.5))(inquirer@9.3.8(@types/node@22.19.1))(typescript@5.4.5)
       '@fluid-tools/build-cli':
         specifier: ~0.60.0
-        version: 0.60.0(@types/node@22.19.1)(encoding@0.1.13)(typescript@5.4.5)
+        version: 0.60.0(@types/node@22.19.1)(typescript@5.4.5)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7418,7 +7418,7 @@ snapshots:
       - '@types/node'
       - supports-color
 
-  '@fluid-tools/build-cli@0.60.0(@types/node@22.19.1)(encoding@0.1.13)(typescript@5.4.5)':
+  '@fluid-tools/build-cli@0.60.0(@types/node@22.19.1)(typescript@5.4.5)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       '@fluid-tools/build-infrastructure': 0.60.0(@types/node@22.19.1)
