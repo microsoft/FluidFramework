@@ -421,7 +421,7 @@ describe("Runtime Layer compatibility", () => {
 			assert(disposeFn.notCalled, "Dispose should not be called");
 			logger.assertMatch([
 				{
-					eventName: "LayerCompatibilityValidationSkipped",
+					eventName: "LayerIncompatibilityDetectedButBypassed",
 				},
 			]);
 		});

@@ -42,8 +42,9 @@ import { localDriverCompatDetailsForLoader } from "@fluidframework/local-driver/
 import { odspDriverCompatDetailsForLoader } from "@fluidframework/odsp-driver/internal";
 import { r11sDriverCompatDetailsForLoader } from "@fluidframework/routerlicious-driver/internal";
 import {
-	allowIncompatibleLayerKey,
+	allowIncompatibleLayersKey,
 	isLayerIncompatibilityError,
+	MockLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	createTestConfigProvider,
@@ -455,7 +456,7 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 	}
 
 	describe("Config flag to disable layer compatibility validation", () => {
-		it("allowIncompatibleLayerKey set to true disables validation during container creation", async () => {
+		it("allowIncompatibleLayersKey set to true disables validation during container creation", async () => {
 			// Get test params for a layer combination that would normally fail validation
 			const testParams = getLayerTestParams("runtime", "dataStore");
 			const layer1SupportRequirements = testParams.layer1SupportRequirements;
@@ -465,23 +466,30 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 			layer1SupportRequirements.minSupportedGeneration =
 				testParams.layer2CompatDetails.generation + 1;
 
+			const logger = new MockLogger();
 			try {
 				// Create config provider with validation disabled
 				const configProvider = createTestConfigProvider();
-				configProvider.set(allowIncompatibleLayerKey, true);
+				configProvider.set(allowIncompatibleLayersKey, true);
 
 				// This should NOT throw an error even though the layers are incompatible
 				await assert.doesNotReject(
-					provider.makeTestContainer({ loaderProps: { configProvider } }),
+					provider.makeTestContainer({ loaderProps: { configProvider, logger } }),
 					"Container creation should succeed when layer validation is disabled",
 				);
+				logger.assertMatch([
+					{
+						eventName:
+							"fluid:telemetry:FluidDataStoreContext:LayerIncompatibilityDetectedButBypassed",
+					},
+				]);
 			} finally {
 				// Restore original value
 				layer1SupportRequirements.minSupportedGeneration = originalMinSupportedGeneration;
 			}
 		});
 
-		it("allowIncompatibleLayerKey set to true disables validation during container load", async () => {
+		it("allowIncompatibleLayersKey set to true disables validation during container load", async () => {
 			// Get test params for a layer combination that would normally fail validation
 			const testParams = getLayerTestParams("runtime", "dataStore");
 			const layer1SupportRequirements = testParams.layer1SupportRequirements;
@@ -497,7 +505,7 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 			try {
 				// Create config provider with validation disabled
 				const configProvider = createTestConfigProvider();
-				configProvider.set(allowIncompatibleLayerKey, true);
+				configProvider.set(allowIncompatibleLayersKey, true);
 
 				// This should NOT throw an error even though the layers are incompatible
 				await assert.doesNotReject(
@@ -511,7 +519,7 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 		});
 
 		itExpects(
-			"allowIncompatibleLayerKey set to false (default) enables validation",
+			"allowIncompatibleLayersKey set to false (default) enables validation",
 			[
 				{ eventName: "fluid:telemetry:FluidDataStoreContext:LayerIncompatibilityError" },
 				{ eventName: "fluid:telemetry:FluidDataStoreContext:AttachRuntimeError" },
@@ -531,7 +539,7 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 				try {
 					// Create config provider with validation explicitly set to false
 					const configProvider = createTestConfigProvider();
-					configProvider.set(allowIncompatibleLayerKey, false);
+					configProvider.set(allowIncompatibleLayersKey, false);
 
 					// This SHOULD throw an error because the layers are incompatible
 					await assert.rejects(

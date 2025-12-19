@@ -18,7 +18,20 @@ import type { MonitoringContext } from "./config.js";
  * The config key to disable layer compatibility validation.
  * @internal
  */
-export const allowIncompatibleLayerKey = "Fluid.AllowIncompatibleLayer";
+export const allowIncompatibleLayersKey = "Fluid.AllowIncompatibleLayers";
+
+/**
+ * Tracks whether the event is logged when failing on layer incompatibility is bypassed via global config.
+ * This is used to ensure that the bypass event is only logged once per session so it does not flood telemetry.
+ */
+let globalBypassLogged = false;
+
+/**
+ * Tracks whether the event is logged when failing on layer incompatibility is bypassed due to missing
+ * compatibility details for each layer pair.
+ * This is used to ensure that the bypass event is only logged once per layer pair so it does not flood telemetry.
+ */
+const strictCheckBypassLoggedForPair: Set<string> = new Set<string>();
 
 /**
  * Validates the compatibility between two layers using their compatibility details and support requirements.
@@ -82,26 +95,42 @@ export function validateLayerCompatibility(
 			},
 		);
 
-		if (
-			mc.config.getBoolean(allowIncompatibleLayerKey) === true ||
-			(maybeCompatDetailsLayer2 === undefined && !strictCompatibilityCheck)
-		) {
-			// Bypass disposal and throwing of the error in the following conditions:
-			// 1. Validation is explicitly disabled via config which provides a way to bypass compatibility validation
-			//    while this feature is being rolled out.
-			// 2. There is no compatibility details for layer2. This can be true for a couple of reasons:
-			//    2.1. layer2's version is older than the version where compatibility enforcement was introduced.
-			//         In this case, we don't fail fast and the behavior is the same as before compatibility enforcement
-			//         was introduced.
-			//    2.2. layer2 has a custom implementation which doesn't provide compatibility details. In this case,
-			//         we don't fail fast because we don't know for sure that it is incompatible. It may fail at a
-			//         later point when it tries to use some feature that the Runtime doesn't support.
-			mc.logger.sendTelemetryEvent(
-				{
-					eventName: "LayerIncompatibilityDetectedButBypassed",
-				},
-				error,
-			);
+		if (mc.config.getBoolean(allowIncompatibleLayersKey) === true) {
+			// If the validation is explicitly disabled via config, do not fail. This config provides a way to bypass
+			// compatibility validation while this feature is being rolled out.
+			if (!globalBypassLogged) {
+				// This event is only logged once per session to avoid flooding telemetry.
+				globalBypassLogged = true;
+				mc.logger.sendTelemetryEvent(
+					{
+						eventName: "LayerIncompatibilityDetectedButBypassed",
+						reason: `${allowIncompatibleLayersKey} config is set to true`,
+					},
+					error,
+				);
+			}
+			return;
+		}
+
+		if (maybeCompatDetailsLayer2 === undefined && !strictCompatibilityCheck) {
+			// If there is no compatibility details for layer2 and strictCompatibilityCheck is false, do not fail.
+			// There can be a couple of scenarios where this can happen:
+			// 1. layer2's version is older than the version where compatibility enforcement was introduced. In this
+			//    case, the behavior is the same as before compatibility enforcement was introduced.
+			// 2. layer2 has a custom implementation which doesn't provide compatibility details. In this case,
+			//    we don't know for sure that it is incompatible. It may fail at a later point when it tries to use
+			//    some feature that the Runtime doesn't support.
+			if (!strictCheckBypassLoggedForPair.has(`${layer1}-${layer2}`)) {
+				// This event is only logged once per session per layer combination to avoid flooding telemetry.
+				strictCheckBypassLoggedForPair.add(`${layer1}-${layer2}`);
+				mc.logger.sendTelemetryEvent(
+					{
+						eventName: "LayerIncompatibilityDetectedButBypassed",
+						reason: `No compatibility details provided for ${layer2} and strictCompatibilityCheck is false`,
+					},
+					error,
+				);
+			}
 			return;
 		}
 

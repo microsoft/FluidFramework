@@ -112,6 +112,7 @@ export function validateLoaderCompatibility(
 	const disableStrictLoaderLayerCompatibilityCheck = mc.config.getBoolean(
 		disableStrictLoaderLayerCompatibilityCheckKey,
 	);
+
 	validateLayerCompatibility(
 		"runtime",
 		"loader",
