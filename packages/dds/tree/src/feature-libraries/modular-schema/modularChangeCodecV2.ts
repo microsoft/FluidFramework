@@ -48,6 +48,8 @@ import {
 	encodeDetachedNodes,
 	encodeFieldChangesForJson,
 	encodeRevisionInfos,
+	encodeChange,
+	decodeChange,
 } from "./modularChangeCodecV1.js";
 
 type ModularChangeCodec = IJsonCodec<
@@ -110,95 +112,30 @@ export function makeModularChangeCodecV2(
 
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
-			// Destroys only exist in rollback changesets, which are never sent.
-			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
-			return {
-				maxId: change.maxId,
-				revisions:
-					change.revisions === undefined
-						? undefined
-						: encodeRevisionInfos(change.revisions, context, revisionTagCodec),
-				changes: encodeFieldChangesForJson(
-					change.fieldChanges,
-					context,
-					change.nodeChanges,
-					fieldChangesetCodecs,
-				),
-				builds: encodeDetachedNodes(
-					change.builds,
-					context,
-					revisionTagCodec,
-					fieldsCodec,
-					chunkCompressionStrategy,
-				),
-				refreshers: encodeDetachedNodes(
-					change.refreshers,
-					context,
-					revisionTagCodec,
-					fieldsCodec,
-					chunkCompressionStrategy,
-				),
-				violations: change.constraintViolationCount,
-				noChangeConstraint: change.noChangeConstraint,
-			};
+			const encoded = encodeChange(
+				change,
+				context,
+				fieldChangesetCodecs,
+				revisionTagCodec,
+				fieldsCodec,
+				chunkCompressionStrategy,
+			) as EncodedModularChangesetV2;
+			encoded.noChangeConstraint = change.noChangeConstraint;
+			return encoded;
 		},
 
 		decode: (encodedChange: EncodedModularChangesetV2, context) => {
-			const decoded: Mutable<ModularChangeset> = {
-				fieldChanges: new Map(),
-				nodeChanges: newTupleBTree(),
-				nodeToParent: newTupleBTree(),
-				nodeAliases: newTupleBTree(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-			};
-
-			decoded.fieldChanges = decodeFieldChangesFromJson(
-				encodedChange.changes,
-				undefined,
-				decoded,
+			const decoded = decodeChange(
+				encodedChange,
 				context,
-				idAllocatorFromMaxId(encodedChange.maxId),
 				fieldKinds,
 				fieldChangesetCodecs,
+				revisionTagCodec,
+				fieldsCodec,
+				chunkCompressionStrategy,
 			);
-
-			if (encodedChange.builds !== undefined) {
-				decoded.builds = decodeDetachedNodes(
-					encodedChange.builds,
-					context,
-					revisionTagCodec,
-					fieldsCodec,
-					chunkCompressionStrategy,
-				);
-			}
-			if (encodedChange.refreshers !== undefined) {
-				decoded.refreshers = decodeDetachedNodes(
-					encodedChange.refreshers,
-					context,
-					revisionTagCodec,
-					fieldsCodec,
-					chunkCompressionStrategy,
-				);
-			}
-
-			if (encodedChange.violations !== undefined) {
-				decoded.constraintViolationCount = encodedChange.violations;
-			}
-
 			if (encodedChange.noChangeConstraint !== undefined) {
 				decoded.noChangeConstraint = encodedChange.noChangeConstraint;
-			}
-
-			const decodedRevInfos = decodeRevisionInfos(
-				encodedChange.revisions,
-				context,
-				revisionTagCodec,
-			);
-			if (decodedRevInfos !== undefined) {
-				decoded.revisions = decodedRevInfos;
-			}
-			if (encodedChange.maxId !== undefined) {
-				decoded.maxId = encodedChange.maxId;
 			}
 			return decoded;
 		},

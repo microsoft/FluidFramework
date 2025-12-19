@@ -451,6 +451,132 @@ export function decodeRevisionInfos(
 	return decodedRevisions;
 }
 
+export function encodeChange(
+	change: ModularChangeset,
+	context: ChangeEncodingContext,
+	fieldChangesetCodecs: Map<
+		FieldKindIdentifier,
+		{
+			compiledSchema?: SchemaValidationFunction<TAnySchema>;
+			codec: FieldCodec;
+		}
+	>,
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+	fieldsCodec: FieldBatchCodec,
+	chunkCompressionStrategy: TreeCompressionStrategy,
+) {
+	// Destroys only exist in rollback changesets, which are never sent.
+	assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
+	return {
+		maxId: change.maxId,
+		revisions:
+			change.revisions === undefined
+				? undefined
+				: encodeRevisionInfos(change.revisions, context, revisionTagCodec),
+		changes: encodeFieldChangesForJson(
+			change.fieldChanges,
+			context,
+			change.nodeChanges,
+			fieldChangesetCodecs,
+		),
+		builds: encodeDetachedNodes(
+			change.builds,
+			context,
+			revisionTagCodec,
+			fieldsCodec,
+			chunkCompressionStrategy,
+		),
+		refreshers: encodeDetachedNodes(
+			change.refreshers,
+			context,
+			revisionTagCodec,
+			fieldsCodec,
+			chunkCompressionStrategy,
+		),
+		violations: change.constraintViolationCount,
+	};
+}
+
+export function decodeChange(
+	encodedChange: EncodedModularChangesetV1,
+	context: ChangeEncodingContext,
+	fieldKinds: FieldKindConfiguration,
+	fieldChangesetCodecs: Map<
+		FieldKindIdentifier,
+		{
+			compiledSchema?: SchemaValidationFunction<TAnySchema>;
+			codec: FieldCodec;
+		}
+	>,
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+	fieldsCodec: FieldBatchCodec,
+	chunkCompressionStrategy: TreeCompressionStrategy,
+) {
+	const decoded: Mutable<ModularChangeset> = {
+		fieldChanges: new Map(),
+		nodeChanges: newTupleBTree(),
+		nodeToParent: newTupleBTree(),
+		nodeAliases: newTupleBTree(),
+		crossFieldKeys: newCrossFieldKeyTable(),
+	};
+
+	decoded.fieldChanges = decodeFieldChangesFromJson(
+		encodedChange.changes,
+		undefined,
+		decoded,
+		context,
+		idAllocatorFromMaxId(encodedChange.maxId),
+		fieldKinds,
+		fieldChangesetCodecs,
+	);
+
+	if (encodedChange.builds !== undefined) {
+		decoded.builds = decodeDetachedNodes(
+			encodedChange.builds,
+			context,
+			revisionTagCodec,
+			fieldsCodec,
+			chunkCompressionStrategy,
+		);
+	}
+	if (encodedChange.refreshers !== undefined) {
+		decoded.refreshers = decodeDetachedNodes(
+			encodedChange.refreshers,
+			context,
+			revisionTagCodec,
+			fieldsCodec,
+			chunkCompressionStrategy,
+		);
+	}
+
+	if (encodedChange.violations !== undefined) {
+		decoded.constraintViolationCount = encodedChange.violations;
+	}
+
+	const decodedRevInfos = decodeRevisionInfos(
+		encodedChange.revisions,
+		context,
+		revisionTagCodec,
+	);
+	if (decodedRevInfos !== undefined) {
+		decoded.revisions = decodedRevInfos;
+	}
+	if (encodedChange.maxId !== undefined) {
+		decoded.maxId = encodedChange.maxId;
+	}
+	return decoded;
+}
+
 export function makeModularChangeCodecV1(
 	fieldKinds: FieldKindConfiguration,
 	revisionTagCodec: IJsonCodec<
@@ -496,94 +622,25 @@ export function makeModularChangeCodecV1(
 	});
 
 	const modularChangeCodec: ModularChangeCodec = {
-		encode: (change, context) => {
-			// Destroys only exist in rollback changesets, which are never sent.
-			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
-			return {
-				maxId: change.maxId,
-				revisions:
-					change.revisions === undefined
-						? undefined
-						: encodeRevisionInfos(change.revisions, context, revisionTagCodec),
-				changes: encodeFieldChangesForJson(
-					change.fieldChanges,
-					context,
-					change.nodeChanges,
-					fieldChangesetCodecs,
-				),
-				builds: encodeDetachedNodes(
-					change.builds,
-					context,
-					revisionTagCodec,
-					fieldsCodec,
-					chunkCompressionStrategy,
-				),
-				refreshers: encodeDetachedNodes(
-					change.refreshers,
-					context,
-					revisionTagCodec,
-					fieldsCodec,
-					chunkCompressionStrategy,
-				),
-				violations: change.constraintViolationCount,
-			};
-		},
-
-		decode: (encodedChange: EncodedModularChangesetV1, context) => {
-			const decoded: Mutable<ModularChangeset> = {
-				fieldChanges: new Map(),
-				nodeChanges: newTupleBTree(),
-				nodeToParent: newTupleBTree(),
-				nodeAliases: newTupleBTree(),
-				crossFieldKeys: newCrossFieldKeyTable(),
-			};
-
-			decoded.fieldChanges = decodeFieldChangesFromJson(
-				encodedChange.changes,
-				undefined,
-				decoded,
+		encode: (change, context) =>
+			encodeChange(
+				change,
 				context,
-				idAllocatorFromMaxId(encodedChange.maxId),
+				fieldChangesetCodecs,
+				revisionTagCodec,
+				fieldsCodec,
+				chunkCompressionStrategy,
+			),
+		decode: (encodedChange, context) =>
+			decodeChange(
+				encodedChange,
+				context,
 				fieldKinds,
 				fieldChangesetCodecs,
-			);
-
-			if (encodedChange.builds !== undefined) {
-				decoded.builds = decodeDetachedNodes(
-					encodedChange.builds,
-					context,
-					revisionTagCodec,
-					fieldsCodec,
-					chunkCompressionStrategy,
-				);
-			}
-			if (encodedChange.refreshers !== undefined) {
-				decoded.refreshers = decodeDetachedNodes(
-					encodedChange.refreshers,
-					context,
-					revisionTagCodec,
-					fieldsCodec,
-					chunkCompressionStrategy,
-				);
-			}
-
-			if (encodedChange.violations !== undefined) {
-				decoded.constraintViolationCount = encodedChange.violations;
-			}
-
-			const decodedRevInfos = decodeRevisionInfos(
-				encodedChange.revisions,
-				context,
 				revisionTagCodec,
-			);
-			if (decodedRevInfos !== undefined) {
-				decoded.revisions = decodedRevInfos;
-			}
-			if (encodedChange.maxId !== undefined) {
-				decoded.maxId = encodedChange.maxId;
-			}
-			return decoded;
-		},
+				fieldsCodec,
+				chunkCompressionStrategy,
+			),
 	};
 
 	return withSchemaValidation(
