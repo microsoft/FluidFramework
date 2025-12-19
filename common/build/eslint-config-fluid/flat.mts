@@ -133,39 +133,25 @@ const baseRules: Linter.RulesRecord = {
 	"@fluid-internal/fluid/no-member-release-tags": "error",
 	"@fluid-internal/fluid/no-unchecked-record-access": "error",
 
-	// @rushstack rules
-	"@rushstack/no-new-null": "warn",
 	"@rushstack/typedef-var": "off",
 
 	"@eslint-community/eslint-comments/disable-enable-pair": [
 		"error",
 		{
+			// allow whole-file disables
 			allowWholeFile: true,
 		},
 	],
 
 	// TypeScript-ESLint rules
+	"@typescript-eslint/consistent-generic-constructors": "off",
+	"@typescript-eslint/consistent-indexed-object-style": "off",
 	"@typescript-eslint/consistent-type-assertions": [
 		"error",
 		{ assertionStyle: "as", objectLiteralTypeAssertions: "never" },
 	],
-	"@typescript-eslint/no-dynamic-delete": "error",
-	"@typescript-eslint/no-empty-function": "off",
-	"@typescript-eslint/no-extraneous-class": "error",
-	"@typescript-eslint/no-inferrable-types": "off",
-	"@typescript-eslint/no-invalid-this": "off",
-	"@typescript-eslint/no-magic-numbers": "off",
-	"@typescript-eslint/no-shadow": ["error", { hoist: "all", ignoreTypeValueShadow: true }],
-	"@typescript-eslint/no-unnecessary-qualifier": "error",
-	"@typescript-eslint/no-unnecessary-type-arguments": "error",
-	"@typescript-eslint/prefer-readonly": "error",
-	"@typescript-eslint/promise-function-async": "error",
-	"@typescript-eslint/require-await": "off",
-	"@typescript-eslint/restrict-template-expressions": "off",
-	"@typescript-eslint/return-await": "error",
-	"@typescript-eslint/strict-boolean-expressions": "error",
-	"@typescript-eslint/unbound-method": ["error", { ignoreStatic: true }],
-	"@typescript-eslint/unified-signatures": "off",
+	"@typescript-eslint/explicit-member-accessibility": "off",
+	"@typescript-eslint/member-ordering": "off",
 	"@typescript-eslint/naming-convention": [
 		"error",
 		{
@@ -175,35 +161,48 @@ const baseRules: Linter.RulesRecord = {
 			leadingUnderscore: "allow",
 		},
 	],
-	"@typescript-eslint/no-non-null-assertion": "error",
-	"@typescript-eslint/no-restricted-imports": [
-		"error",
-		{ paths: restrictedImportPaths, patterns: restrictedImportPatternsForProductionCode },
-	],
-	"@typescript-eslint/consistent-generic-constructors": "off",
-	"@typescript-eslint/consistent-indexed-object-style": "off",
-	"@typescript-eslint/explicit-member-accessibility": "off",
-	"@typescript-eslint/member-ordering": "off",
 	"@typescript-eslint/no-duplicate-type-constituents": "off",
+	"@typescript-eslint/no-dynamic-delete": "error",
+	"@typescript-eslint/no-empty-function": "off",
+	"@typescript-eslint/no-extraneous-class": "error",
+	"@typescript-eslint/no-inferrable-types": "off",
+	"@typescript-eslint/no-invalid-this": "off",
+	"@typescript-eslint/no-magic-numbers": "off",
+	"@typescript-eslint/no-non-null-assertion": "error",
 	"@typescript-eslint/no-redundant-type-constituents": "off",
+	"@typescript-eslint/no-shadow": ["error", { hoist: "all", ignoreTypeValueShadow: true }],
+	"@typescript-eslint/no-unnecessary-qualifier": "error",
+	"@typescript-eslint/no-unnecessary-type-arguments": "error",
 	"@typescript-eslint/no-unsafe-enum-comparison": "off",
 	"@typescript-eslint/no-unused-vars": "off",
 	"@typescript-eslint/no-use-before-define": "off",
 	"@typescript-eslint/non-nullable-type-assertion-style": "off",
+	"@typescript-eslint/prefer-readonly": "error",
+	"@typescript-eslint/promise-function-async": "error",
+	"@typescript-eslint/require-await": "off",
+	"@typescript-eslint/restrict-template-expressions": "off",
+	"@typescript-eslint/return-await": "error",
+	"@typescript-eslint/strict-boolean-expressions": "error",
 	"@typescript-eslint/typedef": "off",
+	"@typescript-eslint/unbound-method": ["error", { ignoreStatic: true }],
+	"@typescript-eslint/unified-signatures": "off",
+	"@typescript-eslint/no-restricted-imports": [
+		"error",
+		{ paths: restrictedImportPaths, patterns: restrictedImportPatternsForProductionCode },
+	],
 
 	// Import rules
 	"import-x/default": "error",
 	"import-x/export": "error",
 	"import-x/named": "off", // TypeScript handles this
 	"import-x/namespace": "error",
-	"import-x/no-duplicates": "warn",
-	"import-x/no-named-as-default": "warn",
-	"import-x/no-named-as-default-member": "warn",
 	"import-x/no-default-export": "error",
 	"import-x/no-deprecated": "error",
+	"import-x/no-duplicates": "warn",
 	"import-x/no-extraneous-dependencies": "error",
 	"import-x/no-internal-modules": ["error", { allow: permittedImports }],
+	"import-x/no-named-as-default-member": "warn",
+	"import-x/no-named-as-default": "warn",
 	"import-x/no-nodejs-modules": "error",
 	"import-x/no-unassigned-import": "error",
 	"import-x/no-unresolved": ["error", { caseSensitive: true }],
@@ -239,19 +238,12 @@ const baseRules: Linter.RulesRecord = {
 	// Depend plugin
 	"depend/ban-dependencies": ["error", { allowed: ["axios", "fs-extra"] }],
 
-	// Unicorn overrides (applied on top of unicorn/recommended in createRecommendedConfig)
-	"unicorn/filename-case": ["error", { cases: { camelCase: true, pascalCase: true } }],
-
 	// Core ESLint rules
 	"arrow-body-style": "off",
 	"arrow-parens": ["error", "always"],
-	"brace-style": "off",
 	"camelcase": "off",
 	"capitalized-comments": "off",
-	"comma-dangle": "off",
-	"comma-spacing": "off",
 	"complexity": "off",
-	"curly": "error",
 	"default-case": "error",
 	"eol-last": "error",
 	"eqeqeq": ["error", "smart"],
@@ -356,7 +348,17 @@ const unicornOverrides: Linter.RulesRecord = {
  */
 const recommendedRules: Linter.RulesRecord = {
 	"@rushstack/no-new-null": "error",
-	"no-empty": "error",
+	"@typescript-eslint/consistent-type-imports": ["error", { fixStyle: "separate-type-imports" }],
+	"@typescript-eslint/explicit-module-boundary-types": "error",
+	"@typescript-eslint/no-explicit-any": ["error", { ignoreRestArgs: true }],
+	"@typescript-eslint/no-import-type-side-effects": "error",
+	"@typescript-eslint/no-unsafe-argument": "error",
+	"@typescript-eslint/no-unsafe-assignment": "error",
+	"@typescript-eslint/no-unsafe-call": "error",
+	"@typescript-eslint/no-unsafe-member-access": "error",
+	"@typescript-eslint/no-unsafe-return": "error",
+	"jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
+	"jsdoc/require-description": ["error", { checkConstructors: false }],
 	"no-void": "error",
 	"require-atomic-updates": "error",
 	"@typescript-eslint/explicit-function-return-type": [
@@ -369,21 +371,10 @@ const recommendedRules: Linter.RulesRecord = {
 			allowConciseArrowFunctionExpressionsStartingWithVoid: false,
 		},
 	],
-	"@typescript-eslint/no-explicit-any": ["error", { ignoreRestArgs: true }],
-	"@typescript-eslint/explicit-module-boundary-types": "error",
-	"@typescript-eslint/no-unsafe-argument": "error",
-	"@typescript-eslint/no-unsafe-assignment": "error",
-	"@typescript-eslint/no-unsafe-call": "error",
-	"@typescript-eslint/no-unsafe-member-access": "error",
-	"@typescript-eslint/no-unsafe-return": "error",
-	"jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
-	"jsdoc/require-description": ["error", { checkConstructors: false }],
 	"@typescript-eslint/consistent-type-exports": [
 		"error",
 		{ fixMixedExportsWithInlineTypeSpecifier: true },
 	],
-	"@typescript-eslint/consistent-type-imports": ["error", { fixStyle: "separate-type-imports" }],
-	"@typescript-eslint/no-import-type-side-effects": "error",
 };
 
 /**
