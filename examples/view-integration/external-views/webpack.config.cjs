@@ -46,7 +46,7 @@ module.exports = (env) => {
 				process: "process/browser.js",
 			}),
 			new HtmlWebpackPlugin({
-				template: "./src/index.html",
+				title: "app-integration-external-views",
 			}),
 			createExampleDriverServiceWebpackPlugin(service),
 		],

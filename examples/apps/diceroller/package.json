@@ -30,7 +30,7 @@
 		"start:local": "webpack serve --env service=local",
 		"start:odsp": "webpack serve --env service=odsp",
 		"start:t9s": "webpack serve --env service=t9s",
-		"start:test": "webpack serve --env service=local --config webpack.test.cjs",
+		"start:test": "webpack serve --env service=local",
 		"test": "npm run test:jest",
 		"test:jest": "jest --ci",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --ci",
