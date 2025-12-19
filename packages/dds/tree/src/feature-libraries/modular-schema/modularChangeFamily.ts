@@ -209,7 +209,7 @@ export class ModularChangeFamily
 			change2,
 		);
 
-		// Compose "no change" constraints - violated if either change has it violated
+		// The composed changeset has a "no change" constraint if either change has one
 		const noChangeConstraint = change1.noChangeConstraint ?? change2.noChangeConstraint;
 		const noChangeConstraintOnRevert =
 			change1.noChangeConstraintOnRevert ?? change2.noChangeConstraintOnRevert;

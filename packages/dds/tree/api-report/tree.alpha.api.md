@@ -1394,7 +1394,7 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ({
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 
-// @alpha
+// @alpha @sealed
 export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
 
 // @alpha

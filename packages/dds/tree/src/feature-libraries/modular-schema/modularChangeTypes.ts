@@ -62,7 +62,7 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly constraintViolationCount?: number;
 	/** Global no change constraint that gets violated whenever the changeset is rebased */
 	readonly noChangeConstraint?: NoChangeConstraint;
-	/** Global no change constraint for reverts that gets violated whenever the changeset is reverted */
+	/** Global no change constraint for reverts that gets violated whenever the reverted is rebased */
 	readonly noChangeConstraintOnRevert?: NoChangeConstraint;
 	/**
 	 * The number of constraint violations that apply to the revert of the changeset. If this count is greater than 0, it will

@@ -25,7 +25,7 @@ export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more 
 
 /**
  * Type for alpha version {@link TransactionConstraint | constraint}s
- * @alpha
+ * @sealed @alpha
  */
 export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint; // TODO: Add more constraint types here
 
@@ -40,7 +40,7 @@ export interface NodeInDocumentConstraint {
 }
 
 /**
- * A transaction {@link TransactionConstraintAlpha | constraint} which requires that no changes which require rebasing are made.
+ * A transaction {@link TransactionConstraintAlpha | constraint} which requires that no other changes are applied to the document before this transaction is sequenced and applied.
  * @alpha
  */
 export interface NoChangeConstraint {

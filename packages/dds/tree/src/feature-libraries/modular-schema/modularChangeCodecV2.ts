@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import {
@@ -20,12 +19,7 @@ import type {
 	FieldKindIdentifier,
 	RevisionTag,
 } from "../../core/index.js";
-import {
-	type JsonCompatibleReadOnly,
-	type Mutable,
-	idAllocatorFromMaxId,
-	newTupleBTree,
-} from "../../util/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
@@ -36,21 +30,8 @@ import type {
 } from "./fieldKindConfiguration.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
-import {
-	newCrossFieldKeyTable,
-	type FieldChangeset,
-	type ModularChangeset,
-} from "./modularChangeTypes.js";
-import {
-	decodeDetachedNodes,
-	decodeFieldChangesFromJson,
-	decodeRevisionInfos,
-	encodeDetachedNodes,
-	encodeFieldChangesForJson,
-	encodeRevisionInfos,
-	encodeChange,
-	decodeChange,
-} from "./modularChangeCodecV1.js";
+import type { FieldChangeset, ModularChangeset } from "./modularChangeTypes.js";
+import { encodeChange, decodeChange } from "./modularChangeCodecV1.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,

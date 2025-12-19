@@ -469,7 +469,7 @@ export function encodeChange(
 	>,
 	fieldsCodec: FieldBatchCodec,
 	chunkCompressionStrategy: TreeCompressionStrategy,
-) {
+): EncodedModularChangesetV1 {
 	// Destroys only exist in rollback changesets, which are never sent.
 	assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
 	return {
@@ -521,7 +521,7 @@ export function decodeChange(
 	>,
 	fieldsCodec: FieldBatchCodec,
 	chunkCompressionStrategy: TreeCompressionStrategy,
-) {
+): Mutable<ModularChangeset> {
 	const decoded: Mutable<ModularChangeset> = {
 		fieldChanges: new Map(),
 		nodeChanges: newTupleBTree(),
