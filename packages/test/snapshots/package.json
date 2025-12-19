@@ -82,7 +82,7 @@
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.0",
 		"@fluidframework/test-utils": "workspace:~",
-		"mocha": "^10.8.2"
+		"mocha": "^11.7.5"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
