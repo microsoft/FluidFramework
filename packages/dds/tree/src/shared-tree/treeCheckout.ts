@@ -451,15 +451,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	): SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange> {
 		return new SquashingTransactionStack(
 			branch,
-			(commits) => {
-				const revision = this.mintRevisionTag();
-				for (const transactionStep of commits) {
-					this._removedRoots.updateMajor(transactionStep.revision, revision);
-				}
-
+			this.mintRevisionTag,
+			(commits, revision) => {
 				const squashedChange = this.changeFamily.rebaser.compose(commits);
-				const change = this.changeFamily.rebaser.changeRevision(squashedChange, revision);
-				return tagChange(change, revision);
+				return tagChange(squashedChange, revision);
 			},
 			() => {
 				const disposeForks = this.disposeForksAfterTransaction
@@ -824,7 +819,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		);
 		this.editLock.checkUnlocked("Branching");
 		const anchors = new AnchorSet();
-		const branch = this.#transaction.activeBranch.fork();
+		const branch = this.#transaction.activeBranch.fork(undefined, this.mintRevisionTag);
 		const storedSchema = this.storedSchema.clone();
 		const forest = this.forest.clone(storedSchema, anchors);
 		const checkout = new TreeCheckout(

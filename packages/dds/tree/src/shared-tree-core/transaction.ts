@@ -12,6 +12,7 @@ import {
 	findAncestor,
 	type ChangeFamilyEditor,
 	type GraphCommit,
+	type RevisionTag,
 	type TaggedChange,
 } from "../core/index.js";
 import { getLast, getOrCreate, hasSome } from "../util/index.js";
@@ -270,7 +271,8 @@ export class SquashingTransactionStack<
 	 */
 	public constructor(
 		public readonly branch: SharedTreeBranch<TEditor, TChange>,
-		squash: (commits: GraphCommit<TChange>[]) => TaggedChange<TChange>,
+		mintRevisionTag: () => RevisionTag,
+		squash: (commits: GraphCommit<TChange>[], revision: RevisionTag) => TaggedChange<TChange>,
 		onPush?: () => OnPop | void,
 	) {
 		super(
@@ -280,7 +282,17 @@ export class SquashingTransactionStack<
 				// TODO:#8603: This may need to be computed differently if we allow rebasing during a transaction.
 				const startHead = this.activeBranch.getHead();
 				const outerOnPop = onPush?.();
-				const transactionBranch = this.branch.fork(startHead);
+				const transactionRevision = mintRevisionTag();
+				const transactionBranch = this.branch.fork(startHead, {
+					mintEditTag: () => transactionRevision,
+					mintCommitTag: (changeTag: RevisionTag) => {
+						assert(
+							changeTag === transactionRevision,
+							"Unexpected change tag during transaction",
+						);
+						return mintRevisionTag();
+					},
+				});
 				this.setTransactionBranch(transactionBranch);
 				transactionBranch.editor.enterTransaction();
 				// Invoked when an outer transaction ends
@@ -300,7 +312,7 @@ export class SquashingTransactionStack<
 								(c) => c === startHead,
 							);
 							if (removedCommits.length > 0) {
-								this.branch.apply(squash(removedCommits));
+								this.branch.apply(squash(removedCommits, transactionRevision));
 							}
 							break;
 						}
