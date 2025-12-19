@@ -11,7 +11,7 @@ export { Editor } from "./editor/index.js";
 import { WebFlow, WebflowView } from "./host/index.js";
 export { htmlFormatter } from "./html/formatters.js";
 
-const webFlowViewCallback = (webFlow: WebFlow) =>
+const webFlowViewCallback = (webFlow: WebFlow): React.ReactElement =>
 	React.createElement(WebflowView, { docP: webFlow.getFlowDocument() });
 
 /**

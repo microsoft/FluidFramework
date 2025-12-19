@@ -97,7 +97,7 @@
 		"cross-env": "^7.0.3",
 		"easy-table": "^1.1.1",
 		"env-cmd": "^10.1.0",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",

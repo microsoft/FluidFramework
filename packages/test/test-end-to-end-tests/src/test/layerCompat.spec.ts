@@ -30,7 +30,7 @@ import {
 	runtimeCoreCompatDetails,
 } from "@fluidframework/container-runtime/internal";
 import {
-	FluidErrorTypesAlpha,
+	FluidErrorTypes,
 	type ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces/internal";
 import {
@@ -225,7 +225,7 @@ function getExpectedErrorEvents(
 	const expectedErrorEvents: ExpectedEvents = [
 		{
 			eventName: "fluid:telemetry:Container:ContainerDispose",
-			errorType: FluidErrorTypesAlpha.layerIncompatibilityError,
+			errorType: FluidErrorTypes.layerIncompatibilityError,
 		},
 	];
 
@@ -242,7 +242,7 @@ function getExpectedErrorEvents(
 		// during data store realization, so we expect this error event to be logged.
 		expectedErrorEvents.unshift({
 			eventName: "fluid:telemetry:FluidDataStoreContext:RealizeError",
-			errorType: FluidErrorTypesAlpha.layerIncompatibilityError,
+			errorType: FluidErrorTypes.layerIncompatibilityError,
 		});
 	} else if (layer2 === "dataStore" && flow === "create") {
 		// In create flows, the layer compat validation in the Runtime layer happens during data store runtime
@@ -251,7 +251,7 @@ function getExpectedErrorEvents(
 		// data store runtime attach flow, so we do not expect this error event to be logged.
 		expectedErrorEvents.unshift({
 			eventName: "fluid:telemetry:FluidDataStoreContext:AttachRuntimeError",
-			errorType: FluidErrorTypesAlpha.layerIncompatibilityError,
+			errorType: FluidErrorTypes.layerIncompatibilityError,
 		});
 	}
 

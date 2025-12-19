@@ -22,7 +22,7 @@ import { DemoCodeLoader } from "./demoCodeLoader.js";
 import type { IInventoryListAppModel } from "./modelInterfaces.js";
 import { DebugView, InventoryListAppView } from "./view/index.js";
 
-const updateTabForId = (id: string) => {
+const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
 	location.hash = id;
 
@@ -34,9 +34,9 @@ const isIInventoryListAppModel = (model: IVersionedModel): model is IInventoryLi
 	return model.version === "one" || model.version === "two";
 };
 
-const getUrlForContainerId = (containerId: string) => `/#${containerId}`;
+const getUrlForContainerId = (containerId: string): string => `/#${containerId}`;
 
-const render = (model: IVersionedModel) => {
+const render = (model: IVersionedModel): void => {
 	const appDiv = document.getElementById("app") as HTMLDivElement;
 	ReactDOM.unmountComponentAtNode(appDiv);
 	// This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model

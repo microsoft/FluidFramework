@@ -5,6 +5,6 @@
 
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 
-export function apisToBundle() {
+export function apisToBundle(): void {
 	SharedMatrix.getFactory();
 }

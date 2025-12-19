@@ -9,6 +9,13 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
+import type {
+	LatestRaw,
+	LatestMapRaw,
+	NotificationsManager,
+} from "@fluidframework/presence/alpha";
+import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
+
 import type { Attendee, PresenceWithNotifications, WorkspaceAddress } from "../index.js";
 import { toOpaqueJson } from "../internalUtils.js";
 import type { GeneralDatastoreMessageContent, InternalWorkspaceAddress } from "../protocol.js";
@@ -20,13 +27,6 @@ import {
 	prepareConnectedPresence,
 	attendeeId1,
 } from "./testUtils.js";
-
-import type {
-	LatestRaw,
-	LatestMapRaw,
-	NotificationsManager,
-} from "@fluidframework/presence/alpha";
-import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";
 
@@ -260,6 +260,7 @@ describe("Presence", () => {
 						newId: (_attendee: Attendee, _id: number) => {},
 					}),
 				);
+
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				notificationManager = workspace.states.testEvents;
 			}

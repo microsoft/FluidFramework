@@ -54,7 +54,7 @@
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@types/react": "^18.3.11",
 		"css-loader": "^7.1.2",
-		"eslint": "~8.57.1",
+		"eslint": "~9.39.1",
 		"html-loader": "^5.1.0",
 		"jiti": "^2.6.1",
 		"loader-utils": "^1.1.0",
