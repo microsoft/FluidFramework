@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { ISharedCell } from "@fluidframework/cell/internal";
+import type { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import {
 	IFluidHandle,
 	IFluidLoadable,
@@ -48,7 +49,6 @@ import {
 	type TreeView,
 } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
-import type { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 
 const mapId = "map";
 const stringId = "sharedString";

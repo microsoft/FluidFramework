@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type {
 	IFluidDataStoreContext,
@@ -16,7 +17,6 @@ import type {
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 import { createSandbox } from "sinon";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 
 describeCompat(
 	"Ops for DDSes are bunched together",
