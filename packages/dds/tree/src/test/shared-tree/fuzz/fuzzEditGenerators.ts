@@ -330,24 +330,27 @@ export const makeTreeEditGenerator = (
 		const nodeTypeToGenerate = state.random.pick(allowableNodeTypes);
 
 		switch (nodeTypeToGenerate) {
-			case "com.fluidframework.leaf.string":
+			case "com.fluidframework.leaf.string": {
 				return {
 					type: GeneratedFuzzValueType.String,
 					value: state.random
 						.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
 						.toString(),
 				};
-			case "com.fluidframework.leaf.number":
+			}
+			case "com.fluidframework.leaf.number": {
 				return {
 					type: GeneratedFuzzValueType.Number,
 					value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
 				};
-			case "com.fluidframework.leaf.handle":
+			}
+			case "com.fluidframework.leaf.handle": {
 				return {
 					type: GeneratedFuzzValueType.Handle,
 					value: state.random.handle(),
 				};
-			case "treeFuzz.node":
+			}
+			case "treeFuzz.node": {
 				return {
 					type: GeneratedFuzzValueType.NodeObject,
 					value: {
@@ -358,9 +361,11 @@ export const makeTreeEditGenerator = (
 						arrayChildren: [],
 					},
 				};
-			default:
+			}
+			default: {
 				// This would be the for the case when the node type was one of our custom node with GUID as the identifier
 				return { type: GeneratedFuzzValueType.GUIDNode, value: { guid: nodeTypeToGenerate } };
+			}
 		}
 	};
 
@@ -472,22 +477,25 @@ export const makeTreeEditGenerator = (
 					(edit) => ({ type: "sequence", edit }),
 				);
 			}
-			case "optional":
+			case "optional": {
 				return {
 					type: "optional",
 					edit: assertNotDone(
 						optionalFieldEditGenerator(state as FuzzTestStateForFieldEdit<OptionalFuzzField>),
 					),
 				};
-			case "required":
+			}
+			case "required": {
 				return {
 					type: "required",
 					edit: assertNotDone(
 						requiredFieldEditGenerator(state as FuzzTestStateForFieldEdit<RequiredFuzzField>),
 					),
 				};
-			default:
+			}
+			default: {
 				assert.fail("Unknown field type");
+			}
 		}
 	}
 
@@ -918,8 +926,9 @@ function trySelectTreeField(
 
 				break;
 			}
-			default:
+			default: {
 				assert.fail(`Invalid option: ${option}`);
+			}
 		}
 	}
 

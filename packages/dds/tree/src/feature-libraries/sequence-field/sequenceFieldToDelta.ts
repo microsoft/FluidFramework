@@ -158,19 +158,22 @@ export function sequenceFieldToDelta(
 					local.push(deltaMark);
 					break;
 				}
-				case NoopMarkType:
+				case NoopMarkType: {
 					if (inputCellId === undefined) {
 						local.push(deltaMark);
 					}
 					break;
-				case "Rename":
+				}
+				case "Rename": {
 					assert(
 						mark.cellId !== undefined,
 						0x9f9 /* Renames should only target empty cells */,
 					);
 					break;
-				default:
+				}
+				default: {
 					unreachableCase(type);
+				}
 			}
 		}
 	}

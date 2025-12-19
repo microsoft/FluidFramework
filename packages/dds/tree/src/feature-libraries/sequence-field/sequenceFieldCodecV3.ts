@@ -50,14 +50,16 @@ export function makeV3Codec(
 		encode(effect: MarkEffect, context: ChangeEncodingContext): Encoded.MarkEffect {
 			const type = effect.type;
 			switch (type) {
-				case "Rename":
+				case "Rename": {
 					return {
 						rename: {
 							idOverride: atomIdCodec.encode(effect.idOverride, context),
 						},
 					};
-				default:
+				}
+				default: {
 					return markEffectV2Codec.encode(effect, context);
+				}
 			}
 		},
 		decode(encoded: Encoded.MarkEffect, context: ChangeEncodingContext): MarkEffect {

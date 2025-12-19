@@ -44,7 +44,8 @@ export function tryGetTreeNodeForField(
 			return (field as FlexTreeRequiredField).content as string;
 		}
 
-		default:
+		default: {
 			fail(0xadf /* invalid field kind */);
+		}
 	}
 }

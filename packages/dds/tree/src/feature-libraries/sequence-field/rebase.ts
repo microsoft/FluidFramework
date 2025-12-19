@@ -172,14 +172,18 @@ class RebaseQueue {
 				this.metadata,
 			);
 			switch (comparison) {
-				case CellOrder.SameCell:
+				case CellOrder.SameCell: {
 					return this.dequeueBoth();
-				case CellOrder.OldThenNew:
+				}
+				case CellOrder.OldThenNew: {
 					return this.dequeueBase();
-				case CellOrder.NewThenOld:
+				}
+				case CellOrder.NewThenOld: {
 					return this.dequeueNew();
-				default:
+				}
+				default: {
 					unreachableCase(comparison);
+				}
 			}
 		} else if (areInputCellsEmpty(newMark)) {
 			return this.dequeueNew();
@@ -368,13 +372,16 @@ function separateEffectsForMove(mark: MarkEffect): {
 			}
 			return { follows: mark };
 		}
-		case "AttachAndDetach":
+		case "AttachAndDetach": {
 			return { follows: mark.detach, remains: mark.attach };
+		}
 		case "MoveIn":
-		case "Rename":
+		case "Rename": {
 			return { remains: mark };
-		case NoopMarkType:
+		}
+		case NoopMarkType: {
 			return {};
+		}
 		case "Insert": {
 			const follows: MoveOut = {
 				type: "MoveOut",
@@ -390,8 +397,9 @@ function separateEffectsForMove(mark: MarkEffect): {
 			}
 			return { remains, follows };
 		}
-		default:
+		default: {
 			unreachableCase(type);
+		}
 	}
 }
 

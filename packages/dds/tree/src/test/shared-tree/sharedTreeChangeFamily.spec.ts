@@ -301,12 +301,15 @@ describe("SharedTreeChangeFamily", () => {
 				// Mock for getDetachedNode
 				(id): TreeChunk | undefined => {
 					switch (id) {
-						case idInForest1:
+						case idInForest1: {
 							return refresher1;
-						case idInForest2:
+						}
+						case idInForest2: {
 							return refresher2;
-						default:
+						}
+						default: {
 							return undefined;
+						}
 					}
 				},
 				// Mock for relevantRemovedRootsFromDataChange

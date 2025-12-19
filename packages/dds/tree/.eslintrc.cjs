@@ -90,7 +90,6 @@ module.exports = {
 		"unicorn/prefer-set-has": "off",
 		"unicorn/prefer-spread": "off",
 		"unicorn/prefer-string-slice": "off",
-		"unicorn/switch-case-braces": "off",
 		"unicorn/text-encoding-identifier-case": "off",
 
 		// #endregion

@@ -58,18 +58,22 @@ import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index
 
 function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): void {
 	switch (count) {
-		case 0:
+		case 0: {
 			assert(item.isUnreferenced());
 			break;
-		case 1:
+		}
+		case 1: {
 			assert(!item.isUnreferenced());
 			assert(!item.isShared());
 			break;
-		case "shared":
+		}
+		case "shared": {
 			assert(item.isShared());
 			break;
-		default:
+		}
+		default: {
 			break;
+		}
 	}
 }
 

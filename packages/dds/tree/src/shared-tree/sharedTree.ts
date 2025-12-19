@@ -841,21 +841,26 @@ function exportSimpleFieldSchemaStored(
 ): SimpleFieldSchema<SchemaType.Stored> {
 	let kind: FieldKind;
 	switch (schema.kind) {
-		case FieldKinds.identifier.identifier:
+		case FieldKinds.identifier.identifier: {
 			kind = FieldKind.Identifier;
 			break;
-		case FieldKinds.optional.identifier:
+		}
+		case FieldKinds.optional.identifier: {
 			kind = FieldKind.Optional;
 			break;
-		case FieldKinds.required.identifier:
+		}
+		case FieldKinds.required.identifier: {
 			kind = FieldKind.Required;
 			break;
-		case FieldKinds.forbidden.identifier:
+		}
+		case FieldKinds.forbidden.identifier: {
 			kind = FieldKind.Optional;
 			assert(schema.types.size === 0, 0xa94 /* invalid forbidden field */);
 			break;
-		default:
+		}
+		default: {
 			fail(0xaca /* invalid field kind */);
+		}
 	}
 	return {
 		kind,

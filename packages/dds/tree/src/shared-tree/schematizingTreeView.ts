@@ -61,6 +61,7 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
+	type TreeBranchAlpha,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -72,7 +73,6 @@ import {
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import type { TreeBranchAlpha } from "../simple-tree/index.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -580,8 +580,9 @@ export function addConstraintsToTransaction(
 				}
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(constraint.type);
+			}
 		}
 	}
 }

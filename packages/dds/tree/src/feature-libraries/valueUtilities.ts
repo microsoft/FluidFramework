@@ -21,18 +21,24 @@ export function valueSchemaAllows<TSchema extends ValueSchema>(
 	nodeValue: Value,
 ): nodeValue is TreeValue<TSchema> {
 	switch (schema) {
-		case ValueSchema.String:
+		case ValueSchema.String: {
 			return typeof nodeValue === "string";
-		case ValueSchema.Number:
+		}
+		case ValueSchema.Number: {
 			return typeof nodeValue === "number";
-		case ValueSchema.Boolean:
+		}
+		case ValueSchema.Boolean: {
 			return typeof nodeValue === "boolean";
-		case ValueSchema.FluidHandle:
+		}
+		case ValueSchema.FluidHandle: {
 			return isFluidHandle(nodeValue);
-		case ValueSchema.Null:
+		}
+		case ValueSchema.Null: {
 			return nodeValue === null;
-		default:
+		}
+		default: {
 			unreachableCase(schema);
+		}
 	}
 }
 
@@ -67,9 +73,11 @@ export function isTreeValue(nodeValue: unknown): nodeValue is TreeValue {
 	switch (typeof nodeValue) {
 		case "string":
 		case "number":
-		case "boolean":
+		case "boolean": {
 			return true;
-		default:
+		}
+		default: {
 			return nodeValue === null || isFluidHandle(nodeValue);
+		}
 	}
 }

@@ -99,9 +99,8 @@ function createRecordNodeProxy(
 						}
 						break;
 					}
-					default: {
-						// No-op
-					}
+					default:
+					// No-op
 				}
 			}
 

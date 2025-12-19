@@ -373,8 +373,9 @@ export function setField(
 			break;
 		}
 
-		default:
+		default: {
 			fail(0xade /* invalid FieldKind */);
+		}
 	}
 }
 

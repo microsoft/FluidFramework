@@ -111,16 +111,21 @@ export function decodeSchemaCompatibilitySnapshot(
 function encodeNodeSchema(schema: SimpleNodeSchema): Format.SimpleNodeSchemaUnionFormat {
 	const kind = schema.kind;
 	switch (kind) {
-		case NodeKind.Leaf:
+		case NodeKind.Leaf: {
 			return { leaf: encodeLeafNode(schema) };
-		case NodeKind.Array:
+		}
+		case NodeKind.Array: {
 			return { array: encodeContainerNode(schema) };
-		case NodeKind.Map:
+		}
+		case NodeKind.Map: {
 			return { map: encodeContainerNode(schema) };
-		case NodeKind.Record:
+		}
+		case NodeKind.Record: {
 			return { record: encodeContainerNode(schema) };
-		case NodeKind.Object:
+		}
+		case NodeKind.Object: {
 			return { object: encodeObjectNode(schema) };
+		}
 		default: {
 			unreachableCase(kind);
 		}

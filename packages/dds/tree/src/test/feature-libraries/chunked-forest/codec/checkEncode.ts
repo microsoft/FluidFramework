@@ -168,14 +168,16 @@ function testDecode(
  */
 function assertJsonish(data: unknown, stack: Set<unknown>): void {
 	switch (typeof data) {
-		case "number":
+		case "number": {
 			assert(Number.isFinite(data));
 			assert(!Object.is(data, -0));
 			return;
+		}
 		case "string":
 		// TODO: could test that string is valid unicode here.
-		case "boolean":
+		case "boolean": {
 			return;
+		}
 		case "object": {
 			if (data === null) {
 				return;
@@ -206,7 +208,8 @@ function assertJsonish(data: unknown, stack: Set<unknown>): void {
 				stack.delete(data);
 			}
 		}
-		default:
+		default: {
 			fail();
+		}
 	}
 }

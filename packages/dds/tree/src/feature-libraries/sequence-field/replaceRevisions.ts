@@ -64,27 +64,32 @@ function updateEffect<TMark extends MarkEffect>(
 	const type = mark.type;
 	switch (type) {
 		case "Rename":
-		case NoopMarkType:
+		case NoopMarkType: {
 			return mark;
-		case "AttachAndDetach":
+		}
+		case "AttachAndDetach": {
 			return {
 				...mark,
 				attach: updateEffect(mark.attach, revisionsToReplace, newRevision),
 				detach: updateEffect(mark.detach, revisionsToReplace, newRevision),
 			};
+		}
 		case "MoveIn":
-		case "MoveOut":
+		case "MoveOut": {
 			return updateMoveEffect<TMark & MoveMarkEffect>(
 				// For some reason, TypeScript is not able to infer that `mark` cannot be a `NoopMark` here.
 				mark as MoveMarkEffect,
 				revisionsToReplace,
 				newRevision,
 			);
+		}
 		case "Insert":
-		case "Remove":
+		case "Remove": {
 			return updateRevision<TMark & HasRevisionTag>(mark, revisionsToReplace, newRevision);
-		default:
+		}
+		default: {
 			unreachableCase(type);
+		}
 	}
 }
 

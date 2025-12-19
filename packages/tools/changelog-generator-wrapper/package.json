@@ -28,7 +28,7 @@
 		"tsc": "echo \"No build required.\""
 	},
 	"dependencies": {
-		"@changesets/cli": "^2.27.8",
+		"@changesets/cli": "^2.29.8",
 		"@changesets/types": "^6.0.0",
 		"changesets-format-with-issue-links": "^0.3.0",
 		"typescript": "~5.4.5"
@@ -37,10 +37,10 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"concurrently": "^8.2.1",
+		"concurrently": "^9.2.1",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
-		"rimraf": "^4.4.0"
+		"rimraf": "^6.1.2"
 	},
 	"typeValidation": {
 		"disabled": true

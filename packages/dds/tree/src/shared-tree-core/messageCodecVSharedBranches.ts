@@ -79,8 +79,9 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 							version,
 						} satisfies Message & JsonCompatibleReadOnly;
 					}
-					default:
+					default: {
 						unreachableCase(type);
+					}
 				}
 			},
 			decode: (

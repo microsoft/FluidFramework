@@ -206,13 +206,16 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 		},
 		type: (node: VerboseTree) => {
 			switch (typeof node) {
-				case "number":
+				case "number": {
 					return brand(numberSchema.identifier);
-				case "string":
+				}
+				case "string": {
 					return brand(stringSchema.identifier);
-				case "boolean":
+				}
+				case "boolean": {
 					return brand(booleanSchema.identifier);
-				default:
+				}
+				default: {
 					if (node === null) {
 						return brand(nullSchema.identifier);
 					}
@@ -220,6 +223,7 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 						return brand(handleSchema.identifier);
 					}
 					return brand(node.type);
+				}
 			}
 		},
 		keysFromNode: (node: VerboseTree): readonly FieldKey[] => {
@@ -242,8 +246,9 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 					}
 					return inputKeys.map((k) => converter.parse(node.type, k));
 				}
-				default:
+				default: {
 					return [];
+				}
 			}
 		},
 		getFieldFromNode: (node: VerboseTree, key: FieldKey): readonly VerboseTree[] => {

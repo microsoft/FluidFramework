@@ -124,12 +124,15 @@ export function isMoveIn(effect: MarkEffect): effect is MoveIn {
 
 export function getMoveIn(effect: MarkEffect): MoveIn | undefined {
 	switch (effect.type) {
-		case "MoveIn":
+		case "MoveIn": {
 			return effect;
-		case "AttachAndDetach":
+		}
+		case "AttachAndDetach": {
 			return getMoveIn(effect.attach);
-		default:
+		}
+		default: {
 			return undefined;
+		}
 	}
 }
 
@@ -196,12 +199,15 @@ function getFirstMoveEffectLength(
 export function getCrossFieldTargetFromMove(mark: MoveMarkEffect): CrossFieldTarget {
 	const type = mark.type;
 	switch (type) {
-		case "MoveIn":
+		case "MoveIn": {
 			return CrossFieldTarget.Destination;
-		case "MoveOut":
+		}
+		case "MoveOut": {
 			return CrossFieldTarget.Source;
-		default:
+		}
+		default: {
 			unreachableCase(type);
+		}
 	}
 }
 

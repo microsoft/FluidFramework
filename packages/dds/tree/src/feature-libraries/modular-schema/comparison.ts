@@ -239,15 +239,20 @@ export function allowsMultiplicitySuperset(
 	}
 
 	switch (superset) {
-		case Multiplicity.Forbidden:
+		case Multiplicity.Forbidden: {
 			return false;
-		case Multiplicity.Optional:
+		}
+		case Multiplicity.Optional: {
 			return original === Multiplicity.Single || original === Multiplicity.Forbidden;
-		case Multiplicity.Single:
+		}
+		case Multiplicity.Single: {
 			return false;
-		case Multiplicity.Sequence:
+		}
+		case Multiplicity.Sequence: {
 			return true;
-		default:
+		}
+		default: {
 			return unreachableCase(superset);
+		}
 	}
 }

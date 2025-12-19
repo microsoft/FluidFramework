@@ -98,12 +98,15 @@ type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableT
 	// eslint-disable-next-line no-inner-declarations
 	function switchLiterals(x: TestA) {
 		switch (x) {
-			case 1:
+			case 1: {
 				return "a";
-			case 2:
+			}
+			case 2: {
 				return "b";
-			default:
+			}
+			default: {
 				unreachableCase(x);
+			}
 		}
 	}
 
@@ -111,13 +114,16 @@ type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableT
 	// eslint-disable-next-line no-inner-declarations
 	function switchConstants(x: TestA) {
 		switch (x) {
-			case TestA.a:
+			case TestA.a: {
 				return "a";
-			case TestA.b:
+			}
+			case TestA.b: {
 				return "b";
-			default:
+			}
+			default: {
 				// @ts-expect-error - should be unreachable, but narrowing fails without using `unbrand`
 				unreachableCase(x);
+			}
 		}
 	}
 
@@ -125,12 +131,15 @@ type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableT
 	// eslint-disable-next-line no-inner-declarations
 	function switchUnbrand(x: TestA) {
 		switch (x) {
-			case unbrand(TestA.a):
+			case unbrand(TestA.a): {
 				return "a";
-			case unbrand(TestA.b):
+			}
+			case unbrand(TestA.b): {
 				return "b";
-			default:
+			}
+			default: {
 				unreachableCase(x);
+			}
 		}
 	}
 }

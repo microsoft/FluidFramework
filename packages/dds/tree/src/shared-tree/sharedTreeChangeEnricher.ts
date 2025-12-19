@@ -116,14 +116,16 @@ export class SharedTreeMutableChangeEnricher
 					visitor.free();
 					break;
 				}
-				case "schema":
+				case "schema": {
 					// This enricher doesn't need to maintain schema information.
 					// Note that the refreshers being generated through `updateChangeEnrichments` will be encoded using
 					// the schema that was used in the input context of the data changeset these refreshers are on.
 					// See the encoding logic in SharedTreeCore for details.
 					break;
-				default:
+				}
+				default: {
 					unreachableCase(type);
+				}
 			}
 		}
 	}
