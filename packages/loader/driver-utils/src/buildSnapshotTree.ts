@@ -13,7 +13,6 @@ import {
 	ITreeEntry,
 	TreeEntry,
 } from "@fluidframework/driver-definitions/internal";
-
 import { v4 as uuid } from "uuid";
 
 import { buildGitTreeHierarchy } from "./protocol/index.js";

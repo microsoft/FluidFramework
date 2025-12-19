@@ -20,6 +20,7 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
+	ConnectionState,
 	asLegacyAlpha,
 	ConnectionState,
 	type ContainerAlpha,
