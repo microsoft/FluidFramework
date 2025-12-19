@@ -40,9 +40,6 @@ parameters:
   type: string
   default: "@fluid-private/test-end-to-end-tests"
 
-- name: testWorkspace
-  type: string
-
 - name: timeoutInMinutes
   type: number
   default: 60
@@ -233,7 +230,6 @@ stages:
 
               Pipeline Variables:
                 isTestBranch=${{ variables.isTestBranch }}
-                testWorkspace=${{ parameters.testWorkspace }}
                 testPackageFilePattern=${{ variables.testPackageFilePattern }}
                 testCommand=${{ parameters.testCommand }}
                 continueOnError=${{ parameters.continueOnError }}
