@@ -62,7 +62,7 @@
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"react": "^18.3.1",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.2",
 		"simplemde": "^1.11.2",
 		"style-loader": "^4.0.0",
 		"ts-loader": "^9.5.1",

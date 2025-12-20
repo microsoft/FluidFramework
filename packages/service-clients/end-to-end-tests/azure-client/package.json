@@ -83,7 +83,7 @@
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"axios": "^1.8.4",
-		"cross-env": "^7.0.3",
+		"cross-env": "^10.1.0",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"sinon": "^18.0.1",
@@ -105,7 +105,7 @@
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"nock": "^13.3.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.2",
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {

@@ -99,7 +99,7 @@
 		"@fluidframework/tinylicious-driver": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.17.1",
+		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-tools/build-cli": "^0.62.0",
 		"@fluidframework/aqueduct": "workspace:~",
@@ -113,12 +113,12 @@
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
-		"concurrently": "^8.2.1",
+		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.2",
 		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^7.0.0",
 		"typescript": "~5.4.5"

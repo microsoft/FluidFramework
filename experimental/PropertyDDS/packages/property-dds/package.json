@@ -73,7 +73,7 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.17.1",
+		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-experimental/property-common": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
@@ -94,14 +94,14 @@
 		"@types/node": "^18.19.0",
 		"chai": "^4.2.0",
 		"copyfiles": "^2.4.1",
-		"cross-env": "^7.0.3",
-		"easy-table": "^1.1.1",
+		"cross-env": "^10.1.0",
+		"easy-table": "^1.2.0",
 		"env-cmd": "^10.1.0",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.2",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {

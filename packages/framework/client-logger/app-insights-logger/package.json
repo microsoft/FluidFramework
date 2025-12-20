@@ -89,7 +89,7 @@
 		"@ungap/structured-clone": "^1.2.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.17.1",
+		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.62.0",
@@ -101,9 +101,9 @@
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
 		"@types/ungap__structured-clone": "^1.2.0",
-		"concurrently": "^8.2.1",
+		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
-		"cross-env": "^7.0.3",
+		"cross-env": "^10.1.0",
 		"eslint": "~9.39.1",
 		"eslint-config-prettier": "~10.1.8",
 		"eslint-plugin-jest": "~29.5.0",
@@ -111,7 +111,7 @@
 		"eslint-plugin-react-hooks": "~7.0.1",
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.2",
 		"sinon": "^18.0.1",
 		"tslib": "^1.10.0",
 		"typescript": "~5.4.5"
