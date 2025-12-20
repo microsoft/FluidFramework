@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.62.0",
+	"version": "0.63.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -181,7 +181,7 @@
 		"typescript": "~5.4.5"
 	},
 	"engines": {
-		"node": ">=20.15.1"
+		"node": ">=20.19.0"
 	},
 	"fluidBuild": {
 		"tasks": {

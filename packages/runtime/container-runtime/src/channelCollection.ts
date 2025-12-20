@@ -793,7 +793,7 @@ export class ChannelCollection
 			| OutboundContainerRuntimeAttachMessage
 			| ContainerRuntimeAliasMessage,
 		localOpMetadata: unknown,
-		squash: boolean | undefined,
+		squash: boolean,
 	): void => {
 		switch (message.type) {
 			case ContainerMessageType.Attach:
@@ -813,7 +813,7 @@ export class ChannelCollection
 	protected readonly resubmitDataStoreOp = (
 		envelope: IEnvelope<FluidDataStoreMessage>,
 		localOpMetadata: unknown,
-		squash: boolean | undefined,
+		squash: boolean,
 	): void => {
 		const context = this.contexts.get(envelope.address);
 		// If the data store has been deleted, log an error and throw an error. If there are local changes for a
@@ -1820,7 +1820,7 @@ export class ComposableChannelCollection
 		type: string,
 		content: unknown,
 		localOpMetadata: unknown,
-		squash?: boolean,
+		squash: boolean,
 	): void {
 		// If the cast is incorrect and type is not one of the three supported,
 		// reSubmitContainerMessage will assert.

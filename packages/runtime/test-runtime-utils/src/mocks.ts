@@ -115,7 +115,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.processMessages?.(messageCollection);
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void {
+	public reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void {
 		this.handler?.reSubmit(content, localOpMetadata, squash);
 	}
 
@@ -426,7 +426,11 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			if (pendingMessage.content.type === "idAllocation") {
 				this.submit(pendingMessage.content, pendingMessage.localOpMetadata);
 			} else {
-				this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
+				this.dataStoreRuntime.reSubmit(
+					pendingMessage.content,
+					pendingMessage.localOpMetadata,
+					false,
+				);
 			}
 		});
 	}
@@ -1191,7 +1195,7 @@ export class MockFluidDataStoreRuntime
 		return null as any as IResponse;
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void {
+	public reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void {
 		this.deltaConnections.forEach((dc) => {
 			dc.reSubmit(content, localOpMetadata, squash);
 		});

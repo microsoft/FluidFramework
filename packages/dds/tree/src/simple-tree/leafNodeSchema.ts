@@ -224,14 +224,17 @@ function mapValueWithFallbacks(
 		// TODO:
 		// This should detect invalid strings. Something like @stdlib/regexp-utf16-unpaired-surrogate could be used to do this.
 		// See SchemaFactory.string for details.
-		case "boolean":
+		case "boolean": {
 			return value;
+		}
 		case "object": {
 			if (value === null || isFluidHandle(value)) {
 				return value;
 			}
 		}
-		default:
+		// fallthrough
+		default: {
 			throw new UsageError(`Received unsupported leaf value: ${value}.`);
+		}
 	}
 }
