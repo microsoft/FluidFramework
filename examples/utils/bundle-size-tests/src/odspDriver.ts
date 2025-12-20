@@ -5,7 +5,7 @@
 
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
 
-export function apisToBundle() {
+export function apisToBundle(): void {
 	// Pass through dummy parameters, this file is only used for bundle analysis
 	new OdspDocumentServiceFactory(undefined as any, undefined as any);
 }

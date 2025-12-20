@@ -85,7 +85,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
-    reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown, squash?: boolean): void;
+    reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown, squash: boolean): void;
     rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rootRoutingContext(): this;
@@ -131,7 +131,7 @@ export interface ISharedObjectRegistry {
 export const mixinRequestHandler: (requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
 
 // @beta @legacy
-export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime) => Promise<{
+export const mixinSummaryHandler: (handler: (runtime: FluidDataStoreRuntime, setCurrentSummarizeStep: (currentStep: string) => void) => Promise<{
     path: string[];
     content: string;
 } | undefined>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;

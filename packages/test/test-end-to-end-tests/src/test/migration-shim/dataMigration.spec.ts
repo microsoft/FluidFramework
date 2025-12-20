@@ -21,6 +21,7 @@ import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
@@ -57,7 +58,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends DataObject {
 		private channel?: IChannel;
 
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 

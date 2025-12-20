@@ -244,6 +244,26 @@ export class FluidCache implements IPersistedCache {
 		}
 	}
 
+	public async removeEntry(entry: ICacheEntry): Promise<void> {
+		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+		try {
+			db = await this.openDb();
+
+			const key = getKeyForCacheEntry(entry);
+			await db.delete(FluidDriverObjectStoreName, key);
+		} catch (error: any) {
+			this.logger.sendErrorEvent(
+				{
+					eventName: FluidCacheErrorEvent.FluidCacheDeleteSingleEntryError,
+					pkgVersion,
+				},
+				error,
+			);
+		} finally {
+			this.closeDb(db);
+		}
+	}
+
 	public async get(cacheEntry: ICacheEntry): Promise<any> {
 		const startTime = performance.now();
 

@@ -159,9 +159,14 @@ export function cloneWithReplacements(root: unknown, rootKey: string, replacer: 
     value: unknown;
 }): unknown;
 
+// @alpha
+export type CodecName = string;
+
 // @alpha @input
 export interface CodecWriteOptions extends ICodecOptions {
+    readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
     readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
 }
 
 // @public
@@ -472,6 +477,9 @@ export const FormatValidatorBasic: FormatValidator_2;
 
 // @alpha
 export const FormatValidatorNoOp: FormatValidator;
+
+// @alpha
+export type FormatVersion = number | string | undefined;
 
 // @alpha
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema;

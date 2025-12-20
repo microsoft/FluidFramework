@@ -41,7 +41,7 @@ import {
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
 	type TreeTypeSet,
-	getCodecTreeForDetachedFieldIndexFormat,
+	detachedFieldIndexCodecBuilder,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
@@ -57,7 +57,6 @@ import {
 	defaultSchemaPolicy,
 	getCodecTreeForFieldBatchFormat,
 	getCodecTreeForForestFormat,
-	getCodecTreeForSchemaFormat,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
@@ -66,7 +65,7 @@ import {
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
+import { schemaCodecBuilder, type FormatV1 } from "../feature-libraries/schema-index/index.js";
 import {
 	type BranchId,
 	clientVersionToEditManagerFormatVersion,
@@ -643,8 +642,8 @@ export function getCodecTreeForSharedTreeFormat(
 ): CodecTree {
 	const children: CodecTree[] = [];
 	children.push(getCodecTreeForForestFormat(clientVersion));
-	children.push(getCodecTreeForSchemaFormat(clientVersion));
-	children.push(getCodecTreeForDetachedFieldIndexFormat(clientVersion));
+	children.push(schemaCodecBuilder.getCodecTree(clientVersion));
+	children.push(detachedFieldIndexCodecBuilder.getCodecTree(clientVersion));
 	children.push(getCodecTreeForEditManagerFormat(clientVersion));
 	children.push(getCodecTreeForMessageFormat(clientVersion));
 	children.push(getCodecTreeForFieldBatchFormat(clientVersion));
@@ -815,6 +814,8 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
 	messageFormatSelector: clientVersionToMessageFormatVersion,
 	enableSharedBranches: false,
+	writeVersionOverrides: new Map(),
+	allowPossiblyIncompatibleWriteVersionOverrides: false,
 };
 
 /**
@@ -840,21 +841,26 @@ function exportSimpleFieldSchemaStored(
 ): SimpleFieldSchema<SchemaType.Stored> {
 	let kind: FieldKind;
 	switch (schema.kind) {
-		case FieldKinds.identifier.identifier:
+		case FieldKinds.identifier.identifier: {
 			kind = FieldKind.Identifier;
 			break;
-		case FieldKinds.optional.identifier:
+		}
+		case FieldKinds.optional.identifier: {
 			kind = FieldKind.Optional;
 			break;
-		case FieldKinds.required.identifier:
+		}
+		case FieldKinds.required.identifier: {
 			kind = FieldKind.Required;
 			break;
-		case FieldKinds.forbidden.identifier:
+		}
+		case FieldKinds.forbidden.identifier: {
 			kind = FieldKind.Optional;
 			assert(schema.types.size === 0, 0xa94 /* invalid forbidden field */);
 			break;
-		default:
+		}
+		default: {
 			fail(0xaca /* invalid field kind */);
+		}
 	}
 	return {
 		kind,

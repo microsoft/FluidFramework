@@ -16,6 +16,7 @@ import {
 	itExpects,
 	type ExpectedEvents,
 } from "@fluid-private/test-version-utils";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	driverSupportRequirementsForLoader,
 	loaderCompatDetailsForRuntime,
@@ -30,7 +31,7 @@ import {
 	runtimeCoreCompatDetails,
 } from "@fluidframework/container-runtime/internal";
 import {
-	FluidErrorTypesAlpha,
+	FluidErrorTypes,
 	type ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces/internal";
 import {
@@ -225,7 +226,7 @@ function getExpectedErrorEvents(
 	const expectedErrorEvents: ExpectedEvents = [
 		{
 			eventName: "fluid:telemetry:Container:ContainerDispose",
-			errorType: FluidErrorTypesAlpha.layerIncompatibilityError,
+			errorType: FluidErrorTypes.layerIncompatibilityError,
 		},
 	];
 
@@ -242,7 +243,7 @@ function getExpectedErrorEvents(
 		// during data store realization, so we expect this error event to be logged.
 		expectedErrorEvents.unshift({
 			eventName: "fluid:telemetry:FluidDataStoreContext:RealizeError",
-			errorType: FluidErrorTypesAlpha.layerIncompatibilityError,
+			errorType: FluidErrorTypes.layerIncompatibilityError,
 		});
 	} else if (layer2 === "dataStore" && flow === "create") {
 		// In create flows, the layer compat validation in the Runtime layer happens during data store runtime
@@ -251,7 +252,7 @@ function getExpectedErrorEvents(
 		// data store runtime attach flow, so we do not expect this error event to be logged.
 		expectedErrorEvents.unshift({
 			eventName: "fluid:telemetry:FluidDataStoreContext:AttachRuntimeError",
-			errorType: FluidErrorTypesAlpha.layerIncompatibilityError,
+			errorType: FluidErrorTypes.layerIncompatibilityError,
 		});
 	}
 
@@ -351,7 +352,7 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 			type CreateOrLoad = "create" | "load";
 
 			// In the validation step, we create or load a container based on the flow type.
-			async function validationStep(flow: CreateOrLoad) {
+			async function validationStep(flow: CreateOrLoad): Promise<IContainer> {
 				return flow === "create" ? provider.makeTestContainer() : provider.loadTestContainer();
 			}
 

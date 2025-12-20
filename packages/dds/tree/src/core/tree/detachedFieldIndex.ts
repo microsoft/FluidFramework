@@ -35,7 +35,7 @@ import type {
 	Major,
 	Minor,
 } from "./detachedFieldIndexTypes.js";
-import { makeDetachedFieldIndexCodec } from "./detachedFieldIndexCodecs.js";
+import { detachedFieldIndexCodecBuilder } from "./detachedFieldIndexCodecs.js";
 
 /**
  * Readonly interface for {@link DetachedFieldIndex}.
@@ -120,7 +120,11 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 			jsonValidator: FormatValidatorNoOp,
 			minVersionForCollab: FluidClientVersion.v2_0,
 		};
-		this.codec = makeDetachedFieldIndexCodec(revisionTagCodec, this.options, idCompressor);
+		this.codec = detachedFieldIndexCodecBuilder.build({
+			...this.options,
+			revisionTagCodec,
+			idCompressor,
+		});
 	}
 
 	public clone(): DetachedFieldIndex {

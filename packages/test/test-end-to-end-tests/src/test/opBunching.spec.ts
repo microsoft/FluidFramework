@@ -8,8 +8,12 @@ import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
-import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IFluidDataStoreContext,
+	IRuntimeMessageCollection,
+} from "@fluidframework/runtime-definitions/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 import { createSandbox } from "sinon";
@@ -23,13 +27,13 @@ describeCompat(
 		const { SharedMap } = apis.dds;
 
 		class TestDataObject extends DataObject {
-			public get _context() {
+			public get _context(): IFluidDataStoreContext {
 				return this.context;
 			}
-			public get _runtime() {
+			public get _runtime(): IFluidDataStoreRuntime {
 				return this.runtime;
 			}
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
 		}
