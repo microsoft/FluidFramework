@@ -25,6 +25,7 @@ const baseTestContainerConfig: ITestContainerConfig = {
 	},
 };
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: extract schema definition and provide explicit return type
 async function createTreeView(
 	container: IContainer,
 	dataRuntimeApi: CompatApis["dataRuntime"],
@@ -42,6 +43,7 @@ async function createTreeView(
 	return tree.viewWith(treeViewConfig);
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: extract schema definition and provide explicit return type
 async function createContainerAndGetTreeView(provider: ITestObjectProvider, apis: CompatApis) {
 	const { SharedTree } = apis.dataRuntime.dds;
 	const testContainerConfig: ITestContainerConfig = {
@@ -53,6 +55,7 @@ async function createContainerAndGetTreeView(provider: ITestObjectProvider, apis
 	return createTreeView(container, apis.dataRuntime);
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: extract schema definition and provide explicit return type
 async function loadContainerAndGetTreeView(provider: ITestObjectProvider, apis: CompatApis) {
 	const dataRuntimeApi = apis.dataRuntimeForLoading ?? apis.dataRuntime;
 	const { SharedTree } = dataRuntimeApi.dds;

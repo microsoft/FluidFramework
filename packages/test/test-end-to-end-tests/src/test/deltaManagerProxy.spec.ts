@@ -37,7 +37,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 		runtimeOptions,
 	});
 
-	const assertConsistent = (...sharedStrings: SharedString[]) => {
+	const assertConsistent = (...sharedStrings: SharedString[]): void => {
 		const text = sharedStrings[0].getText();
 		for (let i = 1; i < sharedStrings.length; i++) {
 			assert.equal(sharedStrings[i].getText(), text, `SharedString ${i} is inconsistent`);

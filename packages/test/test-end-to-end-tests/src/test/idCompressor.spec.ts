@@ -33,8 +33,11 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
-import { ISharedMap } from "@fluidframework/map/internal";
-import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definitions/internal";
+import { ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
+import type {
+	IFluidDataStoreContext,
+	IRuntimeMessageCollection,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -55,7 +58,7 @@ describeCompat(
 	"Runtime IdCompressor - Schema changes",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		function runTests(explicitSchemaCreation: boolean, explicitSchemaLoading: boolean) {
+		function runTests(explicitSchemaCreation: boolean, explicitSchemaLoading: boolean): void {
 			let provider: ITestObjectProvider;
 
 			beforeEach("setupContainers", async () => {
@@ -139,11 +142,11 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		dds: { SharedMap, SharedCell },
 	} = apis;
 	class TestDataObject extends DataObject {
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 
-		public get _context() {
+		public get _context(): IFluidDataStoreContext {
 			return this.context;
 		}
 
@@ -153,7 +156,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		private readonly sharedCellKey = "sharedCell";
 		public sharedCell!: ISharedCell;
 
-		protected async initializingFirstTime() {
+		protected async initializingFirstTime(): Promise<void> {
 			const sharedMap = SharedMap.create(this.runtime);
 			this.root.set(this.sharedMapKey, sharedMap.handle);
 
@@ -161,7 +164,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 			this.root.set(this.sharedCellKey, sharedCell.handle);
 		}
 
-		protected async hasInitialized() {
+		protected async hasInitialized(): Promise<void> {
 			const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.sharedMapKey);
 			assert(mapHandle !== undefined, "SharedMap not found");
 			this.map = await mapHandle.get();
@@ -486,7 +489,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	async function assureAlignment(
 		maps: ISharedMap[],
 		idPairs: [SessionSpaceCompressedId, IIdCompressor][],
-	) {
+	): Promise<void> {
 		maps.forEach((map) => {
 			map.set("key", "value");
 		});
@@ -578,7 +581,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		)}`, async () => {
 			const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
 
-			const simulateAllocation = (map: ISharedMap) => {
+			const simulateAllocation = (map: ISharedMap): void => {
 				const idCompressor = getIdCompressor(map);
 				const id = idCompressor.generateCompressedId();
 				idPairs.push([id, idCompressor]);
@@ -631,7 +634,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	it("Reentrant ops do not cause resubmission of ID allocation ops", async () => {
 		const idPairs: [SessionSpaceCompressedId, IIdCompressor][] = [];
 
-		const simulateAllocation = (map: ISharedMap) => {
+		const simulateAllocation = (map: ISharedMap): void => {
 			const idCompressor = getIdCompressor(map);
 			const id = idCompressor.generateCompressedId();
 			idPairs.push([id, idCompressor]);
@@ -948,7 +951,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		);
 	});
 
-	async function TestCompactIds(enableRuntimeIdCompressor: IdCompressorMode) {
+	async function TestCompactIds(enableRuntimeIdCompressor: IdCompressorMode): Promise<void> {
 		const container = await createContainer({
 			runtimeOptions: { enableRuntimeIdCompressor },
 		});
