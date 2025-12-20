@@ -244,68 +244,127 @@ export async function globWithGitignore(
 
 /**
  * Filters an array of absolute file paths using gitignore rules.
- * Reads .gitignore files from the filesystem and applies them to filter files.
+ * Reads .gitignore files from the filesystem hierarchy and applies them correctly
+ * relative to each .gitignore file's directory.
  */
 async function filterByGitignore(files: string[], cwd: string): Promise<string[]> {
-	const ig = createIgnore();
-
-	// Find and read .gitignore files in the cwd and parent directories
-	const gitignorePatterns = await readGitignorePatterns(cwd);
-	if (gitignorePatterns.length > 0) {
-		ig.add(gitignorePatterns);
+	// Read .gitignore rule sets for the cwd and its parent directories
+	const ruleSets = await readGitignoreRuleSets(cwd);
+	if (ruleSets.length === 0) {
+		return files;
 	}
 
-	// Convert absolute paths to relative paths for filtering, then convert back
 	return files.filter((file) => {
-		const relativePath = path.relative(cwd, file);
+		const relativeToCwd = path.relative(cwd, file);
 		// Only filter files that are within the cwd
-		if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+		if (relativeToCwd.startsWith("..") || path.isAbsolute(relativeToCwd)) {
 			return true;
 		}
-		return !ig.ignores(toPosixPath(relativePath));
+
+		const absoluteFilePath = path.resolve(file);
+		let isIgnored = false;
+
+		for (const { dir, ig } of ruleSets) {
+			const relativeToRuleDir = path.relative(dir, absoluteFilePath);
+			// Skip rule sets whose directory does not contain this file
+			if (relativeToRuleDir.startsWith("..") || path.isAbsolute(relativeToRuleDir)) {
+				continue;
+			}
+
+			const testResult = ig.test(toPosixPath(relativeToRuleDir));
+			if (testResult.ignored) {
+				isIgnored = true;
+			} else if (testResult.unignored) {
+				isIgnored = false;
+			}
+		}
+
+		return !isIgnored;
 	});
 }
 
 /**
- * Cache for gitignore patterns per directory path.
- * This avoids re-reading .gitignore files for the same directory.
+ * A gitignore rule set binds a directory to an `ignore` instance configured
+ * with the patterns from that directory's .gitignore file.
  */
-const gitignorePatternsCache = new Map<string, string[]>();
+type GitignoreRuleSet = {
+	dir: string;
+	ig: ReturnType<typeof createIgnore>;
+};
 
 /**
- * Reads gitignore patterns from .gitignore files in the given directory and its parents.
+ * Cache for gitignore rule sets per directory path.
+ *
+ * This avoids re-reading .gitignore files for the same directory.
+ * Note: This cache is scoped to the module lifecycle. If .gitignore files
+ * are modified while a process is running, the cached patterns may become
+ * stale. Long-running processes that need to reflect .gitignore changes
+ * should call {@link clearGitignoreRuleSetsCache} when appropriate.
+ */
+const gitignoreRuleSetsCache = new Map<string, GitignoreRuleSet[]>();
+
+/**
+ * Clears the cached gitignore rule sets.
+ *
+ * This can be used by long-running processes (e.g. watch modes) that need to
+ * pick up changes to .gitignore files without restarting the process.
+ */
+export function clearGitignoreRuleSetsCache(): void {
+	gitignoreRuleSetsCache.clear();
+}
+
+/**
+ * Reads gitignore patterns from .gitignore files in the given directory and its
+ * parents, returning a list of rule sets ordered from ancestor to descendant.
  * Results are cached per directory path to avoid repeated filesystem reads.
  */
-async function readGitignorePatterns(dir: string): Promise<string[]> {
+async function readGitignoreRuleSets(dir: string): Promise<GitignoreRuleSet[]> {
 	// Check cache first
-	const cached = gitignorePatternsCache.get(dir);
+	const cached = gitignoreRuleSetsCache.get(dir);
 	if (cached !== undefined) {
 		return cached;
 	}
 
-	const patterns: string[] = [];
-	let currentDir = dir;
+	const ruleSets: GitignoreRuleSet[] = [];
+	const dirs: string[] = [];
 
-	// Walk up the directory tree to find .gitignore files
-	while (currentDir !== path.dirname(currentDir)) {
-		const gitignorePath = path.join(currentDir, ".gitignore");
-		if (existsSync(gitignorePath)) {
-			try {
-				const content = await readFile(gitignorePath, "utf8");
-				// Parse gitignore content - each non-empty, non-comment line is a pattern
-				const filePatterns = content
-					.split("\n")
-					.map((line) => line.trim())
-					.filter((line) => line && !line.startsWith("#"));
-				patterns.push(...filePatterns);
-			} catch {
-				// Ignore errors reading .gitignore files
-			}
+	// Collect directory chain from dir up to filesystem root
+	let currentDir = dir;
+	while (true) {
+		dirs.push(currentDir);
+		const parentDir = path.dirname(currentDir);
+		if (parentDir === currentDir) {
+			break;
 		}
-		currentDir = path.dirname(currentDir);
+		currentDir = parentDir;
+	}
+
+	// Walk from the highest ancestor down to the provided dir
+	for (const directory of dirs.reverse()) {
+		const gitignorePath = path.join(directory, ".gitignore");
+		if (!existsSync(gitignorePath)) {
+			continue;
+		}
+
+		try {
+			const content = await readFile(gitignorePath, "utf8");
+			// Parse gitignore content - each non-empty, non-comment line is a pattern
+			const filePatterns = content
+				.split("\n")
+				.map((line) => line.trim())
+				.filter((line) => line && !line.startsWith("#"));
+
+			if (filePatterns.length > 0) {
+				const ig = createIgnore();
+				ig.add(filePatterns);
+				ruleSets.push({ dir: directory, ig });
+			}
+		} catch {
+			// Ignore errors reading .gitignore files
+		}
 	}
 
 	// Cache the result
-	gitignorePatternsCache.set(dir, patterns);
-	return patterns;
+	gitignoreRuleSetsCache.set(dir, ruleSets);
+	return ruleSets;
 }

@@ -25,7 +25,7 @@ export const getRunPolicyCheckDefault = (
 	}
 
 	for (const [branchPattern, shouldRunPolicy] of defaults) {
-		if (picomatch.isMatch(branch, branchPattern) === true) {
+		if (picomatch.isMatch(branch, branchPattern)) {
 			return shouldRunPolicy.includes(releaseGroupOrPackage);
 		}
 	}
