@@ -20,10 +20,10 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
-	ConnectionState,
 	asLegacyAlpha,
-	ContainerAlpha,
-	ILoaderProps,
+	ConnectionState,
+	type ContainerAlpha,
+	type ILoaderProps,
 	Loader,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
@@ -95,7 +95,10 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	afterEach(() => {
 		loaderContainerTracker.reset();
 	});
-	async function loadContainer(props?: Partial<ILoaderProps>, headers?: IRequestHeader) {
+	async function loadContainer(
+		props?: Partial<ILoaderProps>,
+		headers?: IRequestHeader,
+	): Promise<IContainer> {
 		const loader = new Loader({
 			...props,
 			logger: provider.logger,
@@ -294,6 +297,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	it("Delta manager receives readonly event when calling container.forceReadonly()", async () => {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Intentionally implicit type returned from constructor
 		const runtimeFactory = (_?: unknown) =>
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
@@ -319,6 +323,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	it("getPendingLocalState() called on container", async () => {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Intentionally implicit type returned from constructor
 		const runtimeFactory = (_?: unknown) =>
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory());
 
@@ -370,6 +375,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	it("can control op processing with connect() and disconnect()", async () => {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Intentionally implicit type returned from constructor
 		const runtimeFactory = (_?: unknown) =>
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
@@ -888,7 +894,7 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 	async function loadContainer(
 		documentServiceFactory?: IDocumentServiceFactory,
 		deltaConnection?: "delayed" | "none",
-	) {
+	): Promise<IContainer> {
 		const headers: IRequestHeader = {
 			[LoaderHeader.cache]: false,
 			[LoaderHeader.loadMode]: { deltaConnection },
@@ -993,7 +999,7 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 	function wrapFactory(
 		deltaStreamHandler: (v: IDocumentDeltaConnection) => Promise<void>,
 		snapshotHandler: (v: ISnapshotTree | null) => Promise<void>,
-	) {
+	): IDocumentServiceFactory {
 		return wrapObjectAndOverride<IDocumentServiceFactory>(provider.documentServiceFactory, {
 			createDocumentService:
 				(factory) =>
@@ -1020,7 +1026,10 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 		});
 	}
 
-	async function finishLoadingTestContainers(container: IContainer, container2: IContainer) {
+	async function finishLoadingTestContainers(
+		container: IContainer,
+		container2: IContainer,
+	): Promise<void> {
 		container2.connect();
 		await waitForContainerConnection(container2);
 
@@ -1121,7 +1130,7 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 		assert(connectionCount === 3, "initial connect, reconnect, `write` reconnect");
 	}).timeout(62000); // this is actual 2 second timeout, 60 seconds are fake
 
-	async function testEarlySnapshot(deltaConnection?: "delayed" | "none") {
+	async function testEarlySnapshot(deltaConnection?: "delayed" | "none"): Promise<void> {
 		// Create container
 		const container = await provider.makeTestContainer();
 		await waitForContainerConnection(container);

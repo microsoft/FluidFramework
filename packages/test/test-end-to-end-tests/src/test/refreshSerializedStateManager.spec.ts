@@ -58,7 +58,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		enableRuntimeIdCompressor: "on",
 	};
 
-	const waitForSummary = async (container) => {
+	const waitForSummary = async (container): Promise<void> => {
 		await timeoutPromise((resolve, reject) => {
 			let summarized = false;
 			container.on("op", (op) => {

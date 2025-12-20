@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestContainerConfig,
@@ -27,20 +28,20 @@ describeCompat(
 		let entry: TestDataObject;
 
 		class TestDataObject extends apis.dataRuntime.DataObject {
-			public get root() {
+			public get root(): ISharedDirectory {
 				return super.root;
 			}
 		}
 
-		function generateStringOfSize(sizeInBytes: number) {
+		function generateStringOfSize(sizeInBytes: number): string {
 			return new Array(sizeInBytes + 1).join("0");
 		}
 
-		async function loadContainer(options: ITestContainerConfig) {
+		async function loadContainer(options: ITestContainerConfig): Promise<IContainer> {
 			return provider.loadTestContainer(options);
 		}
 
-		async function getEntryPoint(container: IContainer) {
+		async function getEntryPoint(container: IContainer): Promise<TestDataObject> {
 			return getContainerEntryPointBackCompat<TestDataObject>(container);
 		}
 
@@ -52,7 +53,7 @@ describeCompat(
 			explicitSchemaControl: boolean,
 			compression: boolean,
 			chunking: boolean,
-		) {
+		): Promise<void> {
 			let crash = false;
 			let crash2 = false;
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
@@ -201,11 +202,11 @@ describeCompat(
 describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 
-	async function loadContainer(options: ITestContainerConfig) {
+	async function loadContainer(options: ITestContainerConfig): Promise<IContainer> {
 		return provider.loadTestContainer(options);
 	}
 
-	async function getEntryPoint(container: IContainer) {
+	async function getEntryPoint(container: IContainer): Promise<ITestDataObject> {
 		return getContainerEntryPointBackCompat<ITestDataObject>(container);
 	}
 
@@ -221,7 +222,7 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		await testUpgrade(true);
 	});
 
-	async function testUpgrade(explicitSchemaControl: boolean) {
+	async function testUpgrade(explicitSchemaControl: boolean): Promise<void> {
 		const options: ITestContainerConfig = {
 			runtimeOptions: {
 				explicitSchemaControl: true,

@@ -20,7 +20,7 @@ export function wrapObjectAndOverride<T extends Record<string, any>>(
 	overrides: NestedOverrides<T>,
 ): T {
 	return new Proxy(obj, {
-		get: (target: T, property: string, r) => {
+		get: (target: T, property: string, r): any => {
 			const override = overrides[property as keyof T];
 			// check if the current property has an override
 			if (override) {
@@ -40,7 +40,7 @@ export function wrapObjectAndOverride<T extends Record<string, any>>(
 				// call it, so whatever it returns can have
 				// the nested overrides applied to it
 				if (typeof real === "function") {
-					return (...args: any) => {
+					return (...args: any): any => {
 						const res = real.bind(target)(...args);
 						// unwrap promises to keep typing simple
 						if (isPromiseLike(res)) {

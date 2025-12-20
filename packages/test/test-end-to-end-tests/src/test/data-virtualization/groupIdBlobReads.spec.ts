@@ -47,7 +47,7 @@ describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider) => {
 	const createDataObjectsWithGroupIds = async (
 		mainObject: ITestDataObject,
 		containerRuntime: IContainerRuntimeBase,
-	) => {
+	): Promise<void> => {
 		const dataStoreA = await containerRuntime.createDataStore(
 			TestDataObjectType,
 			loadingGroupId,

@@ -468,7 +468,7 @@ function serializationTests({
 	testContainerConfig,
 }: {
 	testContainerConfig: ITestContainerConfig;
-}) {
+}): Mocha.Suite | void {
 	return describeCompat(
 		`Detached Container Serialization`,
 		"NoCompat",

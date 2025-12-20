@@ -84,7 +84,10 @@ describeCompat(
 			fetchSnapshotRefSeq: number;
 		}
 
-		async function createSummarizerWithConfig(summaryVersion?: string) {
+		async function createSummarizerWithConfig(summaryVersion?: string): Promise<{
+			summarizer: ISummarizer;
+			container: IContainer;
+		}> {
 			return createSummarizer(
 				provider,
 				mainContainer,
@@ -93,7 +96,10 @@ describeCompat(
 			);
 		}
 
-		async function waitForSummary(summarizer: ISummarizer) {
+		async function waitForSummary(summarizer: ISummarizer): Promise<{
+			summaryVersion: string;
+			summaryRefSeq: number;
+		}> {
 			// Wait for all pending ops to be processed by all clients.
 			await provider.ensureSynchronized();
 			const summaryResult = await summarizeNow(summarizer);
@@ -132,8 +138,8 @@ describeCompat(
 		async function getSnapshotSequenceNumber(
 			containerRuntime: IContainerRuntime,
 			snapshotTree: ISnapshotTree,
-		) {
-			const readAndParseBlob = async <T>(id: string) =>
+		): Promise<number> {
+			const readAndParseBlob = async <T>(id: string): Promise<T> =>
 				readAndParse<T>(containerRuntime.storage, id);
 			return seqFromTree(snapshotTree, readAndParseBlob);
 		}
@@ -224,7 +230,10 @@ describeCompat(
 				const containerRuntime = (summarizer as any).runtime as IContainerRuntime;
 				let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
 				let lastSummaryVersion: string | undefined;
-				const func = async (summary: ISummaryTree, context: ISummaryContext) => {
+				const func = async (
+					summary: ISummaryTree,
+					context: ISummaryContext,
+				): Promise<never> => {
 					uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
 					const response = await uploadSummaryUploaderFunc(summary, context);
 					// ODSP has single commit summary enabled by default and

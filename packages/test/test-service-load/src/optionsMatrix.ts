@@ -42,7 +42,7 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptionsExperimental> = {
 export function applyOverrides<T extends Record<string, any>>(
 	options: OptionsMatrix<T>,
 	optionsOverrides: Partial<OptionsMatrix<T>> | undefined,
-) {
+): OptionsMatrix<T> {
 	const realOptions: OptionsMatrix<T> = { ...options };
 	if (optionsOverrides !== undefined) {
 		// The cast is required because TS5 infers that 'key' must be in the set 'keyof T' and
@@ -88,7 +88,7 @@ const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
 export function generateRuntimeOptions(
 	seed: number,
 	overrides: Partial<OptionsMatrix<ContainerRuntimeOptionsInternal>> | undefined,
-) {
+): IContainerRuntimeOptionsInternal[] {
 	const gcOptions = generatePairwiseOptions(
 		applyOverrides(gcOptionsMatrix, overrides?.gcOptions as any),
 		seed,

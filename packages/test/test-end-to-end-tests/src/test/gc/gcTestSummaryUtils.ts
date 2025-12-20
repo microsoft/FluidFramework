@@ -140,17 +140,19 @@ export function getGCDeletedStateFromSummary(summaryTree: ISummaryTree): string[
 	return JSON.parse(sweepBlob.content as string) as string[];
 }
 
-export const waitForContainerWriteModeConnectionWrite = async (container: IContainer) => {
-	const resolveIfActive = (res: () => void) => {
+export const waitForContainerWriteModeConnectionWrite = async (
+	container: IContainer,
+): Promise<void> => {
+	const resolveIfActive = (res: () => void): void => {
 		if (container.deltaManager.active) {
 			res();
 		}
 	};
 	if (!container.deltaManager.active) {
-		await new Promise<void>((resolve, reject) => {
-			container.on("connected", () => resolveIfActive(resolve));
+		await new Promise<void>((resolve, reject): void => {
+			container.on("connected", (): void => resolveIfActive(resolve));
 			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-			container.once("closed", (error) => reject(error));
+			container.once("closed", (error): void => reject(error));
 		});
 	}
 };
@@ -185,7 +187,7 @@ export function manufactureHandle<T>(
  * is closed, the main container is still chosen as the summarizer due to a bug. If we reconnect a new summarizer
  * after this happens, it will be chosen as the summarizer client and can do on-demand summaries.
  */
-export async function reconnectSummarizerToBeElected(container: IContainer) {
+export async function reconnectSummarizerToBeElected(container: IContainer): Promise<void> {
 	container.disconnect();
 	container.connect();
 	await waitForContainerConnection(container);

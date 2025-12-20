@@ -23,6 +23,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestObjectProvider,
@@ -75,7 +76,7 @@ describeCompat(
 
 		// A Test Data Object that exposes some basic functionality.
 		class TestDataObject extends DataObject {
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
 

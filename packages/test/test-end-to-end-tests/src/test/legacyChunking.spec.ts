@@ -75,7 +75,7 @@ describeInstallVersions(
 		return provider.createContainer(oldRuntimeFactory);
 	};
 
-	const setupContainers = async () => {
+	const setupContainers = async (): Promise<void> => {
 		const oldContainer = await createOldContainer();
 		const oldDataObject =
 			await getContainerEntryPointBackCompat<ITestFluidObject>(oldContainer);

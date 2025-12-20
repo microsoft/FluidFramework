@@ -40,7 +40,9 @@ export interface ISingleHandleItem {
 	handle: IFluidHandle;
 }
 
-function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
+function createSingleHandleItem(
+	subFactory: IFluidDataStoreFactory,
+): (context: IFluidDataStoreContext) => Promise<ISingleHandleItem> {
 	return async (context: IFluidDataStoreContext): Promise<ISingleHandleItem> => {
 		const packagePath = [...context.packagePath, subFactory.type];
 		const dataStore = await context.containerRuntime.createDataStore(packagePath);

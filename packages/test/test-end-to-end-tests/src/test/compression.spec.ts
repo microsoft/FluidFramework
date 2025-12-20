@@ -31,7 +31,7 @@ import {
 
 import { pkgVersion } from "../packageVersion.js";
 
-const compressionSuite = (getProvider, apis?) => {
+const compressionSuite = (getProvider, apis?): void => {
 	describe("Compression", () => {
 		let provider: ITestObjectProvider;
 		let localDataObject: ITestFluidObject;
@@ -59,7 +59,7 @@ const compressionSuite = (getProvider, apis?) => {
 		async function setupContainers(
 			runtimeOptions: IContainerRuntimeOptionsInternal = defaultRuntimeOptions,
 			minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
-		) {
+		): Promise<void> {
 			const containerConfig: ITestContainerConfig = {
 				registry: [["mapKey", SharedMap.getFactory()]],
 				runtimeOptions,

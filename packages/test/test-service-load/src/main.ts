@@ -12,6 +12,7 @@ import { getTestUsers } from "./getTestUsers.js";
 import { stressTest } from "./stressTest.js";
 import { createTestDriver } from "./utils.js";
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: Add explicit return type
 const readRunOptions = () => {
 	commander
 		.version("0.0.1")
@@ -72,7 +73,7 @@ const readRunOptions = () => {
 	};
 };
 
-const main = async () => {
+const main = async (): Promise<void> => {
 	const {
 		driver,
 		endpoint,

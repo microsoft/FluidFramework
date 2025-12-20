@@ -53,6 +53,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: Add explicit return type
 	const runtimeOptions = (idCompressorEnabled) => {
 		return {
 			summaryOptions: {
@@ -70,7 +71,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 		};
 	};
 
-	const waitForSummary = async (container) => {
+	const waitForSummary = async (container): Promise<void> => {
 		await timeoutPromise((resolve, reject) => {
 			let summarized = false;
 			container.on("op", (op: { type: string }) => {
@@ -85,7 +86,10 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 		});
 	};
 
-	const createDataStoreWithGroupId = async (dataObject: ITestFluidObject, groupId: string) => {
+	const createDataStoreWithGroupId = async (
+		dataObject: ITestFluidObject,
+		groupId: string,
+	): Promise<ITestFluidObject> => {
 		const containerRuntime = dataObject.context.containerRuntime;
 		const packagePath = dataObject.context.packagePath;
 		const dataStore = await containerRuntime.createDataStore(packagePath, groupId);
@@ -93,7 +97,10 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 		return (await dataStore.entryPoint.get()) as ITestFluidObject;
 	};
 
-	const getDataStoreWithGroupId = async (dataObject: ITestFluidObject, groupId: string) => {
+	const getDataStoreWithGroupId = async (
+		dataObject: ITestFluidObject,
+		groupId: string,
+	): Promise<ITestFluidObject> => {
 		const handle = dataObject.root.get<IFluidHandle<ITestFluidObject>>(groupId);
 		assert(handle !== undefined, "groupId handle should exist");
 		const dataStore = await handle.get();

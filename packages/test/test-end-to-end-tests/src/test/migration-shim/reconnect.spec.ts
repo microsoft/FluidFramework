@@ -22,6 +22,7 @@ import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-lo
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	type ITestObjectProvider,
 	toIDeltaManagerFull,
@@ -79,7 +80,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends DataObject {
 		private channel?: IChannel;
 
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 

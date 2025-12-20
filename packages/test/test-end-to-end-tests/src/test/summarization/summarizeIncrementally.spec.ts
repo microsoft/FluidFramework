@@ -35,7 +35,7 @@ function validateDataStoreStateInSummary(
 	summaryTree: ISummaryTree,
 	dataStoreId: string,
 	expectHandle: boolean,
-) {
+): void {
 	const channelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
 	const dataStoreSummaryObject = channelsTree[dataStoreId];
 
@@ -73,7 +73,7 @@ function validateDDSStateInSummary(
 	dataStoreId: string,
 	ddsId: string,
 	expectHandle: boolean,
-) {
+): void {
 	const dataStoreChannelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
 	const dataStoreSummaryTree = dataStoreChannelsTree[dataStoreId];
 	assert.strictEqual(

@@ -16,6 +16,7 @@ import {
 	itExpects,
 	type ExpectedEvents,
 } from "@fluid-private/test-version-utils";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	driverSupportRequirementsForLoader,
 	loaderCompatDetailsForRuntime,
@@ -351,7 +352,7 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 			type CreateOrLoad = "create" | "load";
 
 			// In the validation step, we create or load a container based on the flow type.
-			async function validationStep(flow: CreateOrLoad) {
+			async function validationStep(flow: CreateOrLoad): Promise<IContainer> {
 				return flow === "create" ? provider.makeTestContainer() : provider.loadTestContainer();
 			}
 

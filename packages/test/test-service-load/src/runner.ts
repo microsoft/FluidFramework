@@ -583,7 +583,7 @@ async function setupOpsMetrics(
 	logger: ITelemetryLoggerExt,
 	progressIntervalMs: number,
 	testRuntime: IFluidDataStoreRuntime,
-) {
+): Promise<() => void> {
 	// Use map to cache userName instead of recomputing.
 	const clientIdUserNameMap: { [clientId: string]: string } = {};
 

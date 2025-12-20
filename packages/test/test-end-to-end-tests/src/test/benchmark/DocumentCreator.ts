@@ -113,7 +113,7 @@ export interface IBenchmarkParameters {
  * @param obj - The test object that will be persisted across runs (mainly used on Memory runs).
  * @param params - The {@link IBenchmarkParameters} parameters for the test.
  */
-export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj: T) {
+export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj: T): void {
 	if (isMemoryTest()) {
 		const t: IMemoryTestObject = {
 			title,

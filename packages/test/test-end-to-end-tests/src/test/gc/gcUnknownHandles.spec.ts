@@ -72,7 +72,7 @@ describeCompat("GC unknown handles", "FullCompat", (getTestObjectProvider) => {
 	/**
 	 * Submits a summary and returns the paths of all GC nodes in the GC data in summary.
 	 */
-	async function getGCNodesFromSummary() {
+	async function getGCNodesFromSummary(): Promise<Set<string>> {
 		await provider.ensureSynchronized();
 		const { summary } = await summarizerRuntime.summarize({
 			runGC: true,
