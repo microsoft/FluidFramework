@@ -123,7 +123,7 @@
 		"eslint-config-prettier": "~10.1.8",
 		"fluid-framework": "workspace:~",
 		"jiti": "^2.6.1",
-		"mocha": "^11.7.5",
+		"mocha": "^10.8.2",
 		"rimraf": "^6.1.2",
 		"start-server-and-test": "^2.0.3",
 		"typescript": "~5.4.5",

@@ -84,7 +84,7 @@
 		"@fluidframework/tree": "workspace:~",
 		"axios": "^1.8.4",
 		"cross-env": "^10.1.0",
-		"mocha": "^11.7.5",
+		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
