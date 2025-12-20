@@ -1,8 +1,8 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
 import { recommended } from "../../common/build/eslint-config-fluid/flat.mts";
 import sharedConfig, { importInternalModulesAllowedForTest } from "../eslint.config.data.mts";
@@ -12,18 +12,12 @@ const config: Linter.Config[] = [
 	...sharedConfig,
 	{
 		rules: {
-			"import-x/no-nodejs-modules": [
-				"error",
-				{
-					"allow": ["node:http"],
-				},
-			],
-			"depend/ban-dependencies": [
-				"error",
-				{
-					"allowed": ["lodash.isequal"],
-				},
-			],
+			"import-x/no-nodejs-modules": ["error", {
+				"allow": ["node:http"],
+			}],
+			"depend/ban-dependencies": ["error", {
+				"allowed": ["lodash.isequal"],
+			}],
 		},
 	},
 	{
@@ -40,17 +34,14 @@ const config: Linter.Config[] = [
 	{
 		files: ["tests/**"],
 		rules: {
-			"import-x/no-extraneous-dependencies": [
-				"error",
-				{
-					"devDependencies": true,
-				},
-			],
+			"import-x/no-extraneous-dependencies": ["error", {
+				"devDependencies": true,
+			}],
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [...importInternalModulesAllowedForTest, "**/src/*/*.js"],
-				},
+				"allow": [...importInternalModulesAllowedForTest, "**/src/*/*.js"],
+			},
 			],
 			"import-x/no-nodejs-modules": "off",
 		},

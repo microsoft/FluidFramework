@@ -1,8 +1,8 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
 import { strict } from "../../../../common/build/eslint-config-fluid/flat.mts";
 
@@ -15,12 +15,9 @@ const config: Linter.Config[] = [
 			"unicorn/no-nested-ternary": "off",
 			"unicorn/no-useless-undefined": "off",
 			"no-restricted-imports": ["error", "@fluentui/react"],
-			"import-x/no-unassigned-import": [
-				"error",
-				{
-					"allow": ["@testing-library/jest-dom"],
-				},
-			],
+			"import-x/no-unassigned-import": ["error", {
+				"allow": ["@testing-library/jest-dom"],
+			}],
 		},
 	},
 	{

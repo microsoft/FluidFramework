@@ -1,8 +1,8 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
 import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
@@ -17,18 +17,15 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unused-vars": [
 				"error",
 				{
-					"argsIgnorePattern": "^",
-					"varsIgnorePattern": "^_",
-					"caughtErrorsIgnorePattern": "^_",
-				},
+				"argsIgnorePattern": "^",
+				"varsIgnorePattern": "^_",
+				"caughtErrorsIgnorePattern": "^_",
+			},
 			],
 			"@typescript-eslint/explicit-member-accessibility": "error",
-			"@typescript-eslint/consistent-type-imports": [
-				"error",
-				{
-					"fixStyle": "inline-type-imports",
-				},
-			],
+			"@typescript-eslint/consistent-type-imports": ["error", {
+				"fixStyle": "inline-type-imports",
+			}],
 			"@typescript-eslint/no-import-type-side-effects": "error",
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
@@ -73,8 +70,8 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/consistent-type-exports": [
 				"error",
 				{
-					"fixMixedExportsWithInlineTypeSpecifier": true,
-				},
+				"fixMixedExportsWithInlineTypeSpecifier": true,
+			},
 			],
 		},
 	},
