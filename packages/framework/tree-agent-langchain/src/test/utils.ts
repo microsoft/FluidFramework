@@ -29,6 +29,8 @@ import { ChatOpenAI } from "@langchain/openai";
 
 import { createLangchainChatModel } from "../chatModel.js";
 
+import { _dirname } from "./dirname.cjs";
+
 /**
  * Throw an error with the given message
  */
@@ -158,20 +160,7 @@ interface TestResult {
 	readonly duration: number;
 }
 
-/**
- * Determines the correct path for the integration test results folder based on the
- * current working directory. When running via npm, cwd is the package root
- * (tree-agent-langchain). When running via VS Code test runner, cwd is the test
- * root (tree-agent-langchain/src/test).
- */
-function getResultsFolderPath(): string {
-	const cwd = process.cwd();
-	return cwd.endsWith("tree-agent-langchain")
-		? join(cwd, "src/test/integration-test-results")
-		: join(cwd, "integration-test-results");
-}
-
-const resultsFolderPath = getResultsFolderPath();
+const resultsFolderPath = join(_dirname, "../../src/test/integration-test-results");
 
 function formatDate(date: Date): string {
 	return date
@@ -199,7 +188,7 @@ export function describeIntegrationTests(
 		let startTime: Date | undefined;
 		before(() => {
 			startTime = new Date();
-			mkdirSync(`${resultsFolderPath}/${formatDate(startTime)}`, { recursive: true });
+			mkdirSync(join(resultsFolderPath, formatDate(startTime)), { recursive: true });
 		});
 
 		after(() => {
@@ -211,7 +200,7 @@ export function describeIntegrationTests(
 				table += `| ${result.name} | ${result.provider} | ${(result.score * 100).toFixed(2)}% | ${Math.ceil(result.duration / 1000)} |\n`;
 			}
 			const resultsFile = openSync(
-				`${resultsFolderPath}/${formatDate(startTime)}/results.md`,
+				join(resultsFolderPath, formatDate(startTime), "results.md"),
 				"a",
 			);
 			appendFileSync(resultsFile, "# Results\n\n", { encoding: "utf8" });
@@ -359,7 +348,7 @@ export function describeIntegrationTests(
 			assert(startTime !== undefined, "Expected startTime to be set");
 			const { name, schema, initialTree, prompt, expected, options } = test;
 			const fd = openSync(
-				`${resultsFolderPath}/${formatDate(startTime)}/${name}-${provider}.md`,
+				join(resultsFolderPath, formatDate(startTime), `${name}-${provider}.md`),
 				"w",
 			);
 			const view = await queryDomain(
