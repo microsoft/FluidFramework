@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { appendFileSync, closeSync, mkdirSync, openSync } from "node:fs";
+import { join } from "node:path";
 
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
@@ -157,7 +158,20 @@ interface TestResult {
 	readonly duration: number;
 }
 
-const resultsFolderPath = "./src/test/integration-test-results";
+/**
+ * Determines the correct path for the integration test results folder based on the
+ * current working directory. When running via npm, cwd is the package root
+ * (tree-agent-langchain). When running via VS Code test runner, cwd is the test
+ * root (tree-agent-langchain/src/test).
+ */
+function getResultsFolderPath(): string {
+	const cwd = process.cwd();
+	return cwd.endsWith("tree-agent-langchain")
+		? join(cwd, "src/test/integration-test-results")
+		: join(cwd, "integration-test-results");
+}
+
+const resultsFolderPath = getResultsFolderPath();
 
 function formatDate(date: Date): string {
 	return date
