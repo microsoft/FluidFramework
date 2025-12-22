@@ -16,15 +16,19 @@ USAGE
     --githubRepositoryName <value> --targetBranchName <value> [-v | --quiet]
 
 FLAGS
-  --adoApiToken=<value>                     (required) Token to get auth for accessing ADO builds.
-  --adoBuildId=<value>                      (required) Azure DevOps build ID.
-  --adoCIBuildDefinitionIdBaseline=<value>  (required) Build definition/pipeline number/id for the baseline build.
-  --adoCIBuildDefinitionIdPR=<value>        (required) Build definition/pipeline number/id for the PR build.
-  --githubApiToken=<value>                  (required) Token to get auth for accessing Github PR.
-  --githubPRNumber=<value>                  (required) Github PR number.
-  --githubRepositoryName=<value>            (required) Github repository name. It should be in this format:
-                                            <org_or_owner>/<name>. For example: microsoft/FluidFramework
-  --targetBranchName=<value>                (required) Target branch name.
+  --adoApiToken=<value>                     (required) [env: ADO_API_TOKEN] Token to get auth for accessing ADO builds.
+  --adoBuildId=<value>                      (required) [env: ADO_BUILD_ID] Azure DevOps build ID.
+  --adoCIBuildDefinitionIdBaseline=<value>  (required) [env: ADO_CI_BUILD_DEFINITION_ID_BASELINE] Build
+                                            definition/pipeline number/id for the baseline build.
+  --adoCIBuildDefinitionIdPR=<value>        (required) [env: ADO_CI_BUILD_DEFINITION_ID_PR] Build definition/pipeline
+                                            number/id for the PR build.
+  --githubApiToken=<value>                  (required) [env: GITHUB_API_TOKEN] Token to get auth for accessing Github
+                                            PR.
+  --githubPRNumber=<value>                  (required) [env: GITHUB_PR_NUMBER] Github PR number.
+  --githubRepositoryName=<value>            (required) [env: GITHUB_REPOSITORY_NAME] Github repository name. It should
+                                            be in this format: <org_or_owner>/<name>. For example:
+                                            microsoft/FluidFramework
+  --targetBranchName=<value>                (required) [env: TARGET_BRANCH_NAME] Target branch name.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

@@ -34,6 +34,9 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-explicit-any": "error",
 
+				// TODO: There are several violations, mostly in test code. Set to warn to enable cleanup while unblocking lint upgrades.
+				"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+
 				// Test files are run in node only so additional node libraries can be used.
 				"import-x/no-nodejs-modules": ["error", { allow: ["node:assert"] }],
 			},

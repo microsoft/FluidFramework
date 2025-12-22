@@ -13,11 +13,14 @@ import {
 
 import { IBenchmarkParameters, benchmarkAll } from "./DocumentCreator.js";
 
-function createLocalMatrix(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
+function createLocalMatrix(
+	id: string,
+	dataStoreRuntime: MockFluidDataStoreRuntime,
+): SharedMatrix {
 	return SharedMatrix.create(dataStoreRuntime, id);
 }
 
-function createString(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
+function createString(id: string, dataStoreRuntime: MockFluidDataStoreRuntime): SharedString {
 	return SharedString.create(dataStoreRuntime, id);
 }
 

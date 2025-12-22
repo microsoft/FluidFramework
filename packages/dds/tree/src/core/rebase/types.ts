@@ -13,6 +13,7 @@ import { Type } from "@sinclair/typebox";
 
 import {
 	type Brand,
+	type JsonCompatibleReadOnly,
 	type NestedMap,
 	RangeMap,
 	brand,
@@ -182,6 +183,30 @@ export interface CommitMetadata {
 	 */
 	readonly isLocal: boolean;
 }
+
+/**
+ * Information about a commit that has been applied.
+ *
+ * @sealed @alpha
+ */
+export type ChangeMetadata = CommitMetadata &
+	(
+		| {
+				readonly isLocal: true;
+				/**
+				 * A serializable object that encodes the change.
+				 * @remarks This change object can be {@link TreeBranchAlpha.applyChange | applied to another branch} in the same state as the one which generated it.
+				 * The change object must be applied to a SharedTree with the same IdCompressor session ID as it was created from.
+				 * @privateRemarks
+				 * This is a `SerializedChange` from treeCheckout.ts.
+				 */
+				getChange(): JsonCompatibleReadOnly;
+		  }
+		| {
+				readonly isLocal: false;
+				readonly getChange?: undefined;
+		  }
+	);
 
 /**
  * Creates a new graph commit object. This is useful for creating copies of commits with different parentage.

@@ -564,14 +564,18 @@ export class ComposeQueue {
 				this.revisionMetadata,
 			);
 			switch (comparison) {
-				case CellOrder.SameCell:
+				case CellOrder.SameCell: {
 					return this.dequeueBoth();
-				case CellOrder.OldThenNew:
+				}
+				case CellOrder.OldThenNew: {
 					return this.dequeueBase();
-				case CellOrder.NewThenOld:
+				}
+				case CellOrder.NewThenOld: {
 					return this.dequeueNew();
-				default:
+				}
+				default: {
 					unreachableCase(comparison);
+				}
 			}
 		} else if (areOutputCellsEmpty(baseMark)) {
 			return this.dequeueBase();

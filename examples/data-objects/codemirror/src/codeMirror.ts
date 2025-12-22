@@ -25,14 +25,17 @@ import { PresenceManager } from "./presence.js";
  * @internal
  */
 export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable {
-	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
+	public static async load(
+		runtime: IFluidDataStoreRuntime,
+		existing: boolean,
+	): Promise<CodeMirrorComponent> {
 		const collection = new CodeMirrorComponent(runtime);
 		await collection.initialize(existing);
 
 		return collection;
 	}
 
-	public get IFluidLoadable() {
+	public get IFluidLoadable(): IFluidLoadable {
 		return this;
 	}
 
@@ -58,7 +61,7 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable 
 		this.presenceManager = new PresenceManager(runtime);
 	}
 
-	private async initialize(existing: boolean) {
+	private async initialize(existing: boolean): Promise<void> {
 		if (!existing) {
 			this.root = SharedMap.create(this.runtime, "root");
 			const text = SharedString.create(this.runtime);
@@ -82,11 +85,14 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 	public static readonly type = "@fluid-example/codemirror";
 	public readonly type = SmdeFactory.type;
 
-	public get IFluidDataStoreFactory() {
+	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
 		return this;
 	}
 
-	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<FluidDataStoreRuntime> {
 		return new FluidDataStoreRuntime(
 			context,
 			new Map(

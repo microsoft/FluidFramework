@@ -411,4 +411,49 @@ describe("SharedString IntervalCollection rollback", () => {
 			"Interval should not be restored after remote delete and rollback",
 		);
 	});
+
+	it("emits deleteInterval event during rollback of add operation", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
+		sharedString.insertText(0, "ABCD");
+		containerRuntimeFactory.processAllMessages();
+
+		// Track deleteInterval events
+		let deleteEventFired = false;
+		let deletedIntervalId: string | undefined;
+		collection.on("deleteInterval", (deletedInterval, local, op) => {
+			if (deletedInterval !== undefined) {
+				deleteEventFired = true;
+				deletedIntervalId = deletedInterval.getIntervalId();
+			}
+		});
+
+		// Add interval locally
+		const interval = collection.add({ start: 1, end: 3 });
+		const intervalId = interval.getIntervalId();
+
+		assert.notEqual(
+			collection.getIntervalById(intervalId),
+			undefined,
+			"interval should exist",
+		);
+
+		// Rollback the add operation
+		containerRuntime.rollback?.();
+
+		// Verify deleteInterval event was emitted during rollback
+		assert.equal(
+			deleteEventFired,
+			true,
+			"deleteInterval event should be emitted during rollback",
+		);
+		assert.equal(deletedIntervalId, intervalId, "deleted interval ID should match");
+
+		// Verify interval was removed
+		assert.equal(
+			collection.getIntervalById(intervalId),
+			undefined,
+			"interval should be removed after rollback",
+		);
+	});
 });

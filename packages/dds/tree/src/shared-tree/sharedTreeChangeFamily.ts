@@ -23,7 +23,7 @@ import {
 	ModularChangeFamily,
 	type ModularChangeset,
 	type TreeChunk,
-	type TreeCompressionStrategyPrivate,
+	type TreeCompressionStrategy,
 	fieldKindConfigurations,
 	fieldKinds,
 	makeModularChangeCodecFamily,
@@ -61,7 +61,7 @@ export class SharedTreeChangeFamily
 		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: CodecWriteOptions,
-		chunkCompressionStrategy?: TreeCompressionStrategyPrivate,
+		chunkCompressionStrategy?: TreeCompressionStrategy,
 		private readonly idCompressor?: IIdCompressor,
 	) {
 		const modularChangeCodec = makeModularChangeCodecFamily(
@@ -127,7 +127,7 @@ export class SharedTreeChangeFamily
 			innerChange: SharedTreeChange["changes"][number],
 		) => SharedTreeChange["changes"][number] = (innerChange) => {
 			switch (innerChange.type) {
-				case "data":
+				case "data": {
 					return {
 						type: "data",
 						innerChange: this.modularChangeFamily.invert(
@@ -136,6 +136,7 @@ export class SharedTreeChangeFamily
 							revision,
 						),
 					};
+				}
 				case "schema": {
 					return {
 						type: "schema",
@@ -148,8 +149,9 @@ export class SharedTreeChangeFamily
 						},
 					};
 				}
-				default:
+				default: {
 					fail(0xacc /* Unknown SharedTree change type. */);
+				}
 			}
 		};
 		return {

@@ -9,6 +9,7 @@ import {
 	NetworkError,
 	isNetworkError,
 } from "@fluidframework/server-services-client";
+import { StageTrace } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 import type { IRepositoryManager, IFileSystemManager } from "./definitions";
@@ -18,6 +19,7 @@ import {
 	Constants,
 	type ISummaryWriteFeatureFlags,
 	type IWriteSummaryInfo,
+	WriteSummaryTraceStage,
 	isChannelSummary,
 	isContainerSummary,
 	readSummary,
@@ -106,6 +108,9 @@ export class GitWholeSummaryManager {
 			GitRestLumberEventName.WholeSummaryManagerWriteSummary,
 			lumberjackProperties,
 		);
+		const writeSummaryTrace = new StageTrace<WriteSummaryTraceStage>(
+			WriteSummaryTraceStage.WriteSummaryStarted,
+		);
 		try {
 			if (isChannelSummary(payload)) {
 				lumberjackProperties.summaryType = "channel";
@@ -119,7 +124,9 @@ export class GitWholeSummaryManager {
 						lumberjackProperties,
 					},
 					this.summaryWriteFeatureFlags,
+					writeSummaryTrace,
 				);
+				writeSummaryMetric.setProperty("summaryTrace", writeSummaryTrace);
 				writeSummaryMetric.setProperty("treeSha", writeSummaryInfo.writeSummaryResponse.id);
 				writeSummaryMetric.success(
 					"GitWholeSummaryManager succeeded in writing channel summary",
@@ -140,6 +147,7 @@ export class GitWholeSummaryManager {
 					},
 					this.summaryWriteFeatureFlags,
 				);
+				writeSummaryMetric.setProperty("summaryTrace", writeSummaryTrace);
 				writeSummaryMetric.setProperty("newDocument", writeSummaryInfo.isNew);
 				writeSummaryMetric.setProperty(
 					"commitSha",
@@ -156,6 +164,7 @@ export class GitWholeSummaryManager {
 			});
 			throw new NetworkError(400, `Unknown Summary Type: ${payload.type}`);
 		} catch (error: any) {
+			writeSummaryMetric.setProperty("summaryTrace", writeSummaryTrace);
 			writeSummaryMetric.error("GitWholeSummaryManager failed to write summary", error);
 			throw error;
 		}

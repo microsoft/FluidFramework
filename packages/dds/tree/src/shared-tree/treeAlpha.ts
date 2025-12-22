@@ -50,8 +50,6 @@ import {
 	isObjectNodeSchema,
 	isTreeNode,
 	toInitialSchema,
-	convertField,
-	toUnhydratedSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
 	type ConciseTree,
@@ -60,6 +58,8 @@ import {
 	borrowCursorFromTreeNodeOrValue,
 	contentSchemaSymbol,
 	type TreeNodeSchema,
+	getUnhydratedContext,
+	type TreeBranchAlpha,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -84,7 +84,6 @@ import {
 	type Observer,
 	withObservation,
 } from "../feature-libraries/index.js";
-import type { TreeBranchAlpha } from "../simple-tree/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
@@ -824,7 +823,7 @@ export const TreeAlpha: TreeAlpha = {
 		return createFromCursor(
 			schema,
 			cursor,
-			convertField(normalizeFieldSchema(schema), toUnhydratedSchema),
+			getUnhydratedContext(schema).flexContext.schema.rootFieldSchema,
 		);
 	},
 
@@ -944,11 +943,12 @@ export const TreeAlpha: TreeAlpha = {
 
 				return getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
 			}
-			case NodeKind.Map:
+			case NodeKind.Map: {
 				if (typeof propertyKey !== "string") {
 					// Map nodes only support string keys.
 					return undefined;
 				}
+			}
 			// Fall through
 			case NodeKind.Record:
 			case NodeKind.Object: {

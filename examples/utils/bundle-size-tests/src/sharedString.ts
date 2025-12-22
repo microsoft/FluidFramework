@@ -5,6 +5,6 @@
 
 import { SharedString } from "@fluidframework/sequence/internal";
 
-export function apisToBundle() {
+export function apisToBundle(): void {
 	SharedString.getFactory();
 }

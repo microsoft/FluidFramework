@@ -173,7 +173,7 @@ export class FluidCache implements IPersistedCache {
 		});
 	}
 
-	private async openDb() {
+	private async openDb(): Promise<IDBPDatabase<FluidCacheDBSchema>> {
 		if (this.closeDbImmediately) {
 			return getFluidCacheIndexedDbInstance(this.logger);
 		}
@@ -213,7 +213,7 @@ export class FluidCache implements IPersistedCache {
 		return this.db;
 	}
 
-	private closeDb(db?: IDBPDatabase<FluidCacheDBSchema>) {
+	private closeDb(db?: IDBPDatabase<FluidCacheDBSchema>): void {
 		if (this.closeDbImmediately) {
 			db?.close();
 		}
@@ -244,6 +244,26 @@ export class FluidCache implements IPersistedCache {
 		}
 	}
 
+	public async removeEntry(entry: ICacheEntry): Promise<void> {
+		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+		try {
+			db = await this.openDb();
+
+			const key = getKeyForCacheEntry(entry);
+			await db.delete(FluidDriverObjectStoreName, key);
+		} catch (error: any) {
+			this.logger.sendErrorEvent(
+				{
+					eventName: FluidCacheErrorEvent.FluidCacheDeleteSingleEntryError,
+					pkgVersion,
+				},
+				error,
+			);
+		} finally {
+			this.closeDb(db);
+		}
+	}
+
 	public async get(cacheEntry: ICacheEntry): Promise<any> {
 		const startTime = performance.now();
 
@@ -264,7 +284,7 @@ export class FluidCache implements IPersistedCache {
 		return cachedItem?.cachedObject;
 	}
 
-	private async getItemFromCache(cacheEntry: ICacheEntry) {
+	private async getItemFromCache(cacheEntry: ICacheEntry): Promise<any> {
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		try {
 			const key = getKeyForCacheEntry(cacheEntry);

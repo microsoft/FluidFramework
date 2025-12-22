@@ -36,7 +36,7 @@ export type StressOperations = StressDataObjectOperations | DDSModelOp | OrderSe
 const orderSequentiallyReducer = async (
 	state: LocalServerStressState,
 	op: OrderSequentially,
-) => {
+): Promise<void> => {
 	const { baseModel, taggedHandles } = await loadAllHandles(state);
 	const ddsState = await covertLocalServerStateToDdsState(state);
 	const rollbackError = new Error("rollback");

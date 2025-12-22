@@ -2,6 +2,10 @@
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 	"extends": ["../../../biome.jsonc"],
 	"files": {
-		"ignore": ["src/test/data/biome/empty.jsonc"]
+		"ignore": [
+			"src/test/data/biome/empty.jsonc",
+			// Biome 2.x test data - these configs use Biome 2.x syntax that Biome 1.x can't parse
+			"src/test/data/biome2/**"
+		]
 	}
 }

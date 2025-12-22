@@ -20,23 +20,9 @@ export enum TreeCompressionStrategy {
 	 * Use this when debugging or testing and needing to inspect encoded tree content.
 	 */
 	Uncompressed = 1,
-}
-
-/**
- * A private extension of {@link TreeCompressionStrategy} for strategies that are not intended for public use just yet.
- */
-export enum TreeCompressionStrategyExtended {
 	/**
-	 * Optimized for encoded size, same as TreeCompressionStrategy.Compressed. It also enables incremental encoding
+	 * Optimized for encoded size, same as TreeCompressionStrategy.Compressed but it enables incremental encoding
 	 * of the data.
-	 * @remarks
-	 * TODO: AB#41865
-	 * This needs to be stabilized to allow opting into it.
-	 * It could possibly be made the default instead of {@link TreeCompressionStrategy.Compressed}.
 	 */
 	CompressedIncremental = 2,
 }
-
-export type TreeCompressionStrategyPrivate =
-	| TreeCompressionStrategy
-	| TreeCompressionStrategyExtended;

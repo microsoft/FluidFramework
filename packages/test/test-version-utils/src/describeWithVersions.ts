@@ -34,7 +34,7 @@ export interface IRequestedFluidVersions {
 	requestAbsoluteVersions?: string[];
 }
 
-const installRequiredVersions = async (config: IRequestedFluidVersions) => {
+const installRequiredVersions = async (config: IRequestedFluidVersions): Promise<void> => {
 	const installPromises: Promise<InstalledPackage | undefined>[] = [];
 	if (config.requestAbsoluteVersions !== undefined) {
 		installPromises.push(

@@ -7,24 +7,27 @@ import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	createSchemaUpgrade,
-	ExpectStored,
-	FieldKind,
 	generateSchemaFromSimpleSchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	type SimpleFieldSchema,
+	type SimpleAllowedTypeAttributes,
 } from "../../simple-tree/index.js";
 import {
-	convertField,
 	getStoredSchema,
 	permissiveStoredSchemaGenerationOptions,
 	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	simpleStoredSchemaToStoredSchema,
 	toStoredSchema,
+	transformSimpleNodeSchema,
+	filterAllowedTypes,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/toStoredSchema.js";
+import {
+	ExpectStored,
+	Unchanged,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/core/index.js";
 import {
 	cursorForJsonableTreeField,
 	defaultSchemaPolicy,
@@ -246,107 +249,64 @@ describe("toStoredSchema", () => {
 		});
 	});
 
-	describe("convertField", () => {
+	describe("filterAllowedTypes", () => {
 		it("minimal", () => {
-			const stored = convertField(
-				SchemaFactoryAlpha.required(SchemaFactory.number),
+			const stored = filterAllowedTypes(
+				SchemaFactoryAlpha.required(SchemaFactory.number).simpleAllowedTypes,
 				restrictiveStoredSchemaGenerationOptions,
 			);
-			assert.equal(stored.kind, FieldKinds.required.identifier);
-			assert.deepEqual(stored.types, new Set([SchemaFactory.number.identifier]));
+			assert.deepEqual(
+				stored,
+				new Map([[SchemaFactory.number.identifier, { isStaged: undefined }]]),
+			);
 		});
 
 		it("staged", () => {
-			const storedRestrictive = convertField(
+			const storedRestrictive = filterAllowedTypes(
 				SchemaFactoryAlpha.required(
 					SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactory.number)]),
-				),
+				).simpleAllowedTypes,
 				restrictiveStoredSchemaGenerationOptions,
 			);
-			const storedPermissive = convertField(
-				SchemaFactoryAlpha.required(
-					SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactory.number)]),
-				),
+			const staged = SchemaFactoryAlpha.staged(SchemaFactory.number);
+			const storedPermissive = filterAllowedTypes(
+				SchemaFactoryAlpha.required(SchemaFactoryAlpha.types([staged])).simpleAllowedTypes,
 				permissiveStoredSchemaGenerationOptions,
 			);
-			assert.equal(storedRestrictive.kind, FieldKinds.required.identifier);
-			assert.deepEqual(storedRestrictive.types, new Set([]));
-			assert.equal(storedPermissive.kind, FieldKinds.required.identifier);
-			assert.deepEqual(storedPermissive.types, new Set([SchemaFactory.number.identifier]));
-		});
+			const view = filterAllowedTypes(
+				SchemaFactoryAlpha.required(
+					SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactory.number)]),
+				).simpleAllowedTypes,
+				Unchanged,
+			);
+			assert.deepEqual(storedRestrictive, new Map());
+			assert.deepEqual(
+				storedPermissive,
+				new Map([[SchemaFactory.number.identifier, { isStaged: undefined }]]),
+			);
+			assert.deepEqual(
+				view,
+				new Map([
+					[
+						SchemaFactory.number.identifier,
+						{
+							isStaged: staged.metadata.stagedSchemaUpgrade,
+						} satisfies SimpleAllowedTypeAttributes,
+					],
+				]),
+			);
 
-		it(" StoredSchemaGenerationOptions cases", () => {
-			const stagedFalse: SimpleFieldSchema = {
-				kind: FieldKind.Optional,
-				simpleAllowedTypes: new Map([["X", { isStaged: false }]]),
-				metadata: {},
-			};
-
-			const upgrade = createSchemaUpgrade();
-			const stagedUpgrade: SimpleFieldSchema = {
-				kind: FieldKind.Optional,
-				simpleAllowedTypes: new Map([["X", { isStaged: upgrade }]]),
-				metadata: {},
-			};
-
-			const stagedUndefined: SimpleFieldSchema = {
-				kind: FieldKind.Optional,
-				simpleAllowedTypes: new Map([["X", { isStaged: undefined }]]),
-				metadata: {},
-			};
-
-			// Valid cases:
-			const f1 = convertField(stagedFalse, { includeStaged: () => assert.fail() });
-			const f2 = convertField(stagedUpgrade, {
-				includeStaged: (u) => {
-					assert.equal(u, upgrade);
-					return true;
-				},
-			});
-			const f3 = convertField(stagedUpgrade, {
-				includeStaged: (u) => {
-					assert.equal(u, upgrade);
-					return false;
-				},
-			});
-			const f4 = convertField(stagedUndefined, ExpectStored);
-			assert.deepEqual(f1, {
-				kind: "Optional",
-				persistedMetadata: undefined,
-				types: new Set(["X"]),
-			});
-			assert.deepEqual(f2, {
-				kind: "Optional",
-				persistedMetadata: undefined,
-				types: new Set(["X"]),
-			});
-			assert.deepEqual(f3, {
-				kind: "Optional",
-				persistedMetadata: undefined,
-				types: new Set(),
-			});
-			assert.deepEqual(f4, {
-				kind: "Optional",
-				persistedMetadata: undefined,
-				types: new Set(["X"]),
-			});
-
-			// invalid cases
 			assert.throws(
-				() => convertField(stagedFalse, ExpectStored),
+				() =>
+					filterAllowedTypes(
+						SchemaFactoryAlpha.required(
+							SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactory.number)]),
+						).simpleAllowedTypes,
+						ExpectStored,
+					),
 				validateUsageError(
 					/use of `ExpectStored`, but view schema specific content was encountered/,
 				),
-			);
-			assert.throws(
-				() => convertField(stagedUpgrade, ExpectStored),
-				validateUsageError(
-					/use of `ExpectStored`, but view schema specific content was encountered/,
-				),
-			);
-			assert.throws(
-				() => convertField(stagedUndefined, { includeStaged: () => assert.fail() }),
-				validateUsageError(/view schema was actually a stored schema/),
 			);
 		});
 	});
@@ -354,16 +314,22 @@ describe("toStoredSchema", () => {
 	describe("getStoredSchema", () => {
 		it("options", () => {
 			const v1 = getStoredSchema(
-				HasStagedAllowedTypes,
-				restrictiveStoredSchemaGenerationOptions,
+				transformSimpleNodeSchema(
+					HasStagedAllowedTypes,
+					restrictiveStoredSchemaGenerationOptions,
+				),
 			);
 			const v2 = getStoredSchema(
-				HasStagedAllowedTypesAfterUpdate,
-				restrictiveStoredSchemaGenerationOptions,
+				transformSimpleNodeSchema(
+					HasStagedAllowedTypesAfterUpdate,
+					restrictiveStoredSchemaGenerationOptions,
+				),
 			);
 			const v1Permissive = getStoredSchema(
-				HasStagedAllowedTypes,
-				permissiveStoredSchemaGenerationOptions,
+				transformSimpleNodeSchema(
+					HasStagedAllowedTypes,
+					permissiveStoredSchemaGenerationOptions,
+				),
 			);
 			assert.notDeepEqual(v1.encodeV1(), v1Permissive.encodeV1());
 			assert.deepEqual(v1Permissive.encodeV1(), v2.encodeV1());

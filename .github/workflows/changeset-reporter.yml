@@ -20,13 +20,14 @@ jobs:
       pull-requests: write # for marocchino/sticky-pull-request-comment to create or update PR comment
     runs-on: ubuntu-latest
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
         with:
           persist-credentials: false
 
       - name: Download results
-        uses: dawidd6/action-download-artifact@bd10f381a96414ce2b13a11bfa89902ba7cea07f # ratchet:dawidd6/action-download-artifact@v2.24.3
+        # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v11
+        uses: dawidd6/action-download-artifact@ac66b43f0e6a346234dd65d4d0c8fbb31cb316e5 # ratchet:dawidd6/action-download-artifact@v11
         with:
           workflow: pr-check-changeset.yml
           run_id: ${{ github.event.workflow_run.id }}
@@ -38,8 +39,8 @@ jobs:
 
       - name: Required but missing
         if: fromJson(steps.changeset.outputs.CHANGESET).required == true && fromJson(steps.changeset.outputs.CHANGESET).changesetFound == false
-        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.0
-        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # ratchet:marocchino/sticky-pull-request-comment@v2.9.0
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.4
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # ratchet:marocchino/sticky-pull-request-comment@v2
         with:
           header: changeset
           number: ${{ fromJson(steps.changeset.outputs.CHANGESET).pr }}
@@ -47,8 +48,8 @@ jobs:
 
       - name: Required and present
         if: fromJson(steps.changeset.outputs.CHANGESET).required == true && fromJson(steps.changeset.outputs.CHANGESET).changesetFound == true
-        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.0
-        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # ratchet:marocchino/sticky-pull-request-comment@v2.9.0
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.4
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # ratchet:marocchino/sticky-pull-request-comment@v2
         with:
           header: changeset
           number: ${{ fromJson(steps.changeset.outputs.CHANGESET).pr }}
@@ -58,8 +59,8 @@ jobs:
 
       - name: Changeset not required
         if: fromJson(steps.changeset.outputs.CHANGESET).required == false && fromJson(steps.changeset.outputs.CHANGESET).changesetFound == true
-        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.0
-        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # ratchet:marocchino/sticky-pull-request-comment@v2.9.0
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.4
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # ratchet:marocchino/sticky-pull-request-comment@v2
         with:
           header: changeset
           number: ${{ fromJson(steps.changeset.outputs.CHANGESET).pr }}

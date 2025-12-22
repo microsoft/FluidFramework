@@ -57,7 +57,7 @@ export const XSadd: XSaddCtor = function (...seed: number[]): Random {
 		w: seed[3] | 0,
 	};
 
-	const uint32 = () => {
+	const uint32 = (): number => {
 		let t = s.x;
 		s.x = s.y;
 		s.y = s.z;
@@ -79,7 +79,7 @@ export const XSadd: XSaddCtor = function (...seed: number[]): Random {
 
 	// Note: XSadd is known to produce weak lower bits.  To help compensate, we discard
 	//       the low bits of both 32b samples when constructing a 53b value.
-	const uint53 = () => (uint32() >>> 6) * 0x8000000 + (uint32() >>> 5);
+	const uint53 = (): number => (uint32() >>> 6) * 0x8000000 + (uint32() >>> 5);
 
 	return {
 		uint32,

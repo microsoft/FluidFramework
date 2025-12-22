@@ -28,7 +28,7 @@ import type {
 	SimpleRecordNodeSchema,
 } from "../simpleSchema.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
-import type { TreeSchema } from "./configuration.js";
+import type { TreeSchema } from "../treeSchema.js";
 import type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 import {
 	ArrayNodeSchema,
@@ -132,22 +132,28 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JsonLeafNodeSchema {
 	let type: JsonLeafSchemaType;
 	switch (schema.leafKind) {
-		case ValueSchema.String:
+		case ValueSchema.String: {
 			type = "string";
 			break;
-		case ValueSchema.Number:
+		}
+		case ValueSchema.Number: {
 			type = "number";
 			break;
-		case ValueSchema.Boolean:
+		}
+		case ValueSchema.Boolean: {
 			type = "boolean";
 			break;
-		case ValueSchema.Null:
+		}
+		case ValueSchema.Null: {
 			type = "null";
 			break;
-		case ValueSchema.FluidHandle:
+		}
+		case ValueSchema.FluidHandle: {
 			throw new UsageError("Fluid handles are not supported via JSON Schema.");
-		default:
+		}
+		default: {
 			unreachableCase(schema.leafKind);
+		}
 	}
 
 	return {
