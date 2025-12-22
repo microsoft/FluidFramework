@@ -65,7 +65,12 @@ module.exports = {
 		{
 			label: "Ignore unsupported pnpm override entries",
 			dependencyTypes: ["pnpmOverrides"],
-			dependencies: ["json5@<1.0.2", "json5@>=2.0.0 <2.2.2", "oclif>@aws-sdk/client*"],
+			dependencies: [
+				"json5@<1.0.2",
+				"json5@>=2.0.0 <2.2.2",
+				"oclif>@aws-sdk/client*",
+				"@types/glob>@types/minimatch",
+			],
 			packages: ["build-tools-release-group-root"],
 			isIgnored: true,
 		},

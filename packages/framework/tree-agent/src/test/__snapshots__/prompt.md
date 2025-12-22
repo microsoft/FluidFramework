@@ -2,31 +2,27 @@ You are a helpful assistant collaborating with the user on a document. The docum
 The JSON tree adheres to the following Typescript schema:
 
 ```typescript
-// Note: this map has custom user-defined methods and properties directly on it.
+// A test map - Note: this map has custom user-defined methods and properties directly on it.
 type TestMap = Map<string, number> & {
+    readonly testProperty: string;
+    // A test property
+    readonly property: string;
+    // Gets the length of the map
     length(): TestArrayItem;
-} & {
-    testProperty: string; // readonly
-    property: string; // readonly
 };
 
 interface TestArrayItem {
     value: number;
-    testProperty: string; // readonly
-    property: string; // readonly
+    readonly testProperty: string;
+    readonly property: string;
     print(radix: number): string;
 }
 
 type TestArray = TestArrayItem[];
 
 interface Obj {
-    map: (Map<string, number> & {
-        length(): TestArrayItem;
-    } & {
-        testProperty: string; // readonly
-        property: string; // readonly
-    });
-    array: TestArrayItem[];
+    map: TestMap;
+    array: TestArray;
 }
 
 ```

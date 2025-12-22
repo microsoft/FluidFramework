@@ -23,12 +23,14 @@ import type { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
 import { TestChange } from "../testChange.js";
 import {
 	type EncodingTestData,
+	makeDiscontinuedEncodingTestSuite,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
 import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
+import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -149,8 +151,17 @@ describe("message codec", () => {
 			jsonValidator: FormatValidatorBasic,
 		},
 	);
-
-	makeEncodingTestSuite(family, testCases, undefined, [3, 4, 5], [undefined, 1, 2]);
+	makeEncodingTestSuite(family, testCases, undefined, [
+		MessageFormatVersion.v3,
+		MessageFormatVersion.v4,
+		MessageFormatVersion.vSharedBranches,
+	]);
+	makeDiscontinuedEncodingTestSuite(family, [
+		undefined,
+		MessageFormatVersion.v1,
+		MessageFormatVersion.v2,
+		MessageFormatVersion.v5,
+	]);
 
 	describe("dispatching codec", () => {
 		const codec = makeMessageCodec(

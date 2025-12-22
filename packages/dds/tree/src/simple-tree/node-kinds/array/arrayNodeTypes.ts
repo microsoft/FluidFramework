@@ -14,7 +14,7 @@ import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../../core/index.js";
 
-import type { SimpleArrayNodeSchema } from "../../simpleSchema.js";
+import type { SchemaType, SimpleArrayNodeSchema } from "../../simpleSchema.js";
 
 /**
  * A schema for customizable {@link (TreeArrayNode:interface)}s.
@@ -35,7 +35,7 @@ export interface ArrayNodeCustomizableSchema<
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleArrayNodeSchema<TCustomMetadata> {}
+		SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * A schema for POJO emulation mode {@link (TreeArrayNode:interface)}s.
@@ -56,7 +56,7 @@ export interface ArrayNodePojoEmulationSchema<
 			undefined,
 			TCustomMetadata
 		>,
-		SimpleArrayNodeSchema<TCustomMetadata> {}
+		SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {}
 
 /**
  * A schema for {@link (TreeArrayNode:interface)}s.

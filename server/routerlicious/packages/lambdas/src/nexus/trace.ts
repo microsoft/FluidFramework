@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluidframework/common-utils";
 import type { IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { getRandomInt } from "@fluidframework/server-services-client";
 import { DefaultServiceConfiguration } from "@fluidframework/server-services-core";
@@ -51,32 +50,4 @@ export function addNexusMessageTrace(
 	}
 
 	return message;
-}
-
-interface IStageTrace {
-	/**
-	 * Name of the Stage.
-	 */
-	stage: string;
-	/**
-	 * Start time of the stage relative to the previous stage's start time.
-	 */
-	ts: number;
-}
-export class StageTrace<T extends { toString(): string }> {
-	private readonly traces: IStageTrace[] = [];
-	private lastStampedTraceTime: number = performance.now();
-	constructor(initialStage?: T) {
-		if (initialStage) {
-			this.traces.push({ stage: initialStage.toString(), ts: 0 });
-		}
-	}
-	public get trace(): IStageTrace[] {
-		return this.traces;
-	}
-	public stampStage(stage: T): void {
-		const now = performance.now();
-		this.traces.push({ stage: stage.toString(), ts: now - this.lastStampedTraceTime });
-		this.lastStampedTraceTime = now;
-	}
 }

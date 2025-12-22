@@ -15,10 +15,9 @@ import {
 	type IDocumentRepository,
 	type IClusterDrainingChecker,
 	type ICache,
+	type StageTrace,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-
-import type { StageTrace } from "./trace";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
 const defaultGetSessionCacheTtlInSeconds = 5 * 60; // 5 mins

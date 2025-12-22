@@ -20,7 +20,7 @@ let currentTestFile: string | undefined;
 // Simple filter to avoid tests with a name that would accidentally be parsed as directory traversal or other confusing things.
 const nameCheck = new RegExp(/^[^"/\\]+$/);
 
-assert(_dirname.match(/(dist|lib)[/\\]test[/\\]snapshots$/));
+assert(/(dist|lib)[/\\]test[/\\]snapshots$/.exec(_dirname));
 const snapshotsFolder = path.join(_dirname, `../../../src/test/snapshots`);
 assert(existsSync(snapshotsFolder));
 

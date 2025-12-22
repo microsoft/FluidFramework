@@ -7,7 +7,10 @@ import { strict as assert } from "assert";
 
 import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import {
+	IContainerRuntimeOptions,
+	ISummarizer,
+} from "@fluidframework/container-runtime/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -174,7 +177,7 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 		}
 	}
 
-	public createBlobOp(content: string) {
+	public createBlobOp(content: string): void {
 		const op: ICreateBlobOp = {
 			type: "blobStorage",
 			value: content,
@@ -182,8 +185,8 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 		this.submitLocalMessage(op);
 	}
 
-	protected onDisconnect() {}
-	protected applyStashedOp(content: any): unknown {
+	protected onDisconnect(): void {}
+	protected applyStashedOp(content: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 }
@@ -419,7 +422,7 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 	}
 
 	// searches the node tree for a given path to insure the path can be reached
-	private validatePath(path: string[], current: ITreeNode) {
+	private validatePath(path: string[], current: ITreeNode): void {
 		const name = path[0];
 		assert(name === current.name, "Path is incorrect!");
 		const newPath = path.slice(1);
@@ -444,7 +447,7 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 	 * All this does is creates a new node attached to some parent with the path starting from the root node
 	 * Note: The name of the node should be unique, it may cause issues if it is not.
 	 */
-	public createTreeOp(parentPath: string[], name: string) {
+	public createTreeOp(parentPath: string[], name: string): void {
 		this.validatePath(parentPath, this.root);
 		const op: ICreateTreeNodeOp = {
 			type: "treeOp",
@@ -454,8 +457,8 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 		this.submitLocalMessage(op);
 	}
 
-	protected onDisconnect() {}
-	protected applyStashedOp(content: any): unknown {
+	protected onDisconnect(): void {}
+	protected applyStashedOp(content: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 }
@@ -494,13 +497,16 @@ describeCompat(
 			return provider.createContainer(runtimeFactory);
 		};
 
-		async function loadContainer(summaryVersion: string) {
+		async function loadContainer(summaryVersion: string): Promise<IContainer> {
 			return provider.loadContainer(runtimeFactory, undefined, {
 				[LoaderHeader.version]: summaryVersion,
 			});
 		}
 
-		async function createSummarizer(container: IContainer, summaryVersion?: string) {
+		async function createSummarizer(
+			container: IContainer,
+			summaryVersion?: string,
+		): Promise<ISummarizer> {
 			const createSummarizerResult = await createSummarizerFromFactory(
 				provider,
 				container,
@@ -520,7 +526,7 @@ describeCompat(
 			ddsId: string,
 			subDDSId: string,
 			messagePrefix: string,
-		) {
+		): void {
 			// The handle id for sub-DDS should be under ".channels/<dataStoreId>/.channels/<ddsId>" as that is where
 			// the summary tree for a sub-DDS is.
 			const expectedHandleId = `/${channelsTreeName}/${dataStoreId}/${channelsTreeName}/${ddsId}/${subDDSId}`;

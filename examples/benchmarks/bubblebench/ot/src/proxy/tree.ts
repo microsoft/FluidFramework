@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/ban-types */
 import * as json1 from "ot-json1";
 
 const contextSym = Symbol("proxy.context");

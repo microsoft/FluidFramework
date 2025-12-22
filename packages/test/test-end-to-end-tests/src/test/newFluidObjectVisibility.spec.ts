@@ -40,6 +40,7 @@ async function resolveHandleWithoutWait(
 		}
 		return response.value as ITestDataObject;
 	} catch (e) {
+		// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 		return Promise.reject(e);
 	}
 }
@@ -137,7 +138,7 @@ describeCompat(
 		 * If detachedMode is true, the test creates new data stores in detached container and validates their visibility.
 		 * If detachedMode is false, the tests creates new data stores in attached container and validates their visibility.
 		 */
-		const tests = (detachedMode: boolean) => {
+		const tests = (detachedMode: boolean): void => {
 			beforeEach("setup", async function () {
 				provider = getTestObjectProvider();
 				if (provider.driver.type !== "local") {

@@ -17,6 +17,10 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 
 		// This package is exclusively used in a Node.js context
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
+
+		"import-x/no-default-export": "off",
+		"import-x/no-deprecated": "off",
+		"import-x/no-named-as-default-member": "off",
 	},
 };

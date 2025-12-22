@@ -188,7 +188,7 @@ export const socketIoPath = "socket.io";
  */
 export function getUrlForTelemetry(hostName: string, path: string = ""): string | undefined {
 	// Strip off "http://" or "https://"
-	const hostNameMatch = hostName.match(/^(?:https?:\/\/)?([^/]+)/);
+	const hostNameMatch = /^(?:https?:\/\/)?([^/]+)/.exec(hostName);
 	if (!hostNameMatch) {
 		return undefined;
 	}

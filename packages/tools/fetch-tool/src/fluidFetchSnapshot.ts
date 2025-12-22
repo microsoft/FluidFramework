@@ -66,7 +66,7 @@ function fetchBlobs(
 	tree: ISnapshotTree,
 	storage: IDocumentStorageService,
 	blobIdMap: Map<string, number>,
-) {
+): IFetchedBlob[] {
 	const result: IFetchedBlob[] = [];
 	for (const [item, blobId] of Object.entries(tree.blobs)) {
 		const treePath = `${prefix}${item}`;
@@ -150,12 +150,15 @@ async function fetchBlobsFromSnapshotTree(
 	return result;
 }
 
-function getDumpFetchedData(fetchedData: IFetchedData[]) {
+function getDumpFetchedData(fetchedData: IFetchedData[]): IFetchedData[] {
 	const sorted = fetchedData.sort((a, b) => a.treePath.localeCompare(b.treePath));
 	return sorted.filter((item) => !isFetchedTree(item) || !item.patched);
 }
 
-async function dumpSnapshotTreeVerbose(name: string, fetchedData: IFetchedData[]) {
+async function dumpSnapshotTreeVerbose(
+	name: string,
+	fetchedData: IFetchedData[],
+): Promise<void> {
 	let size = 0;
 	const sorted = getDumpFetchedData(fetchedData);
 
@@ -214,7 +217,11 @@ async function dumpSnapshotTree(
 	return { blobCountNew, blobCount: sorted.length, size, sizeNew };
 }
 
-async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: string) {
+async function saveSnapshot(
+	name: string,
+	fetchedData: IFetchedData[],
+	saveDir: string,
+): Promise<void> {
 	const outDir = `${saveDir}/${name}/`;
 	const mkdir = util.promisify(fs.mkdir);
 
@@ -255,7 +262,10 @@ async function saveSnapshot(name: string, fetchedData: IFetchedData[], saveDir: 
 	);
 }
 
-async function fetchBlobsFromVersion(storage: IDocumentStorageService, version: IVersion) {
+async function fetchBlobsFromVersion(
+	storage: IDocumentStorageService,
+	version: IVersion,
+): Promise<IFetchedData[]> {
 	const tree = await reportErrors(
 		`getSnapshotTree ${version.id}`,
 		storage.getSnapshotTree(version),
@@ -266,7 +276,7 @@ async function fetchBlobsFromVersion(storage: IDocumentStorageService, version: 
 	return fetchBlobsFromSnapshotTree(storage, tree);
 }
 
-async function reportErrors<T>(message: string, res: Promise<T>) {
+async function reportErrors<T>(message: string, res: Promise<T>): Promise<T> {
 	try {
 		return await res;
 	} catch (error) {
@@ -278,7 +288,7 @@ async function reportErrors<T>(message: string, res: Promise<T>) {
 export async function fluidFetchSnapshot(
 	documentService?: IDocumentService,
 	saveDir?: string,
-) {
+): Promise<void> {
 	if (
 		!dumpSnapshotStats &&
 		!dumpSnapshotTrees &&

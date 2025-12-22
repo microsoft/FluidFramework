@@ -28,12 +28,9 @@ import {
 	brandedNumberType,
 	type Brand,
 	type JsonCompatibleReadOnly,
+	unbrand,
 } from "../../../util/index.js";
-import {
-	TreeCompressionStrategy,
-	TreeCompressionStrategyExtended,
-	type TreeCompressionStrategyPrivate,
-} from "../../treeCompressionUtils.js";
+import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
@@ -109,7 +106,7 @@ export interface IncrementalDecoder {
 export interface IncrementalEncoderDecoder extends IncrementalEncoder, IncrementalDecoder {}
 
 export interface FieldBatchEncodingContext {
-	readonly encodeType: TreeCompressionStrategyPrivate;
+	readonly encodeType: TreeCompressionStrategy;
 	readonly idCompressor: IIdCompressor;
 	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;
@@ -162,18 +159,21 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 		| typeof schemaCompressedEncodeV2;
 	let encodedFieldBatchType: typeof EncodedFieldBatchV1 | typeof EncodedFieldBatchV2;
 	switch (writeVersion) {
-		case FieldBatchFormatVersion.v1:
+		case unbrand(FieldBatchFormatVersion.v1): {
 			uncompressedEncodeFn = uncompressedEncodeV1;
 			schemaCompressedEncodeFn = schemaCompressedEncodeV1;
 			encodedFieldBatchType = EncodedFieldBatchV1;
 			break;
-		case FieldBatchFormatVersion.v2:
+		}
+		case unbrand(FieldBatchFormatVersion.v2): {
 			uncompressedEncodeFn = uncompressedEncodeV2;
 			schemaCompressedEncodeFn = schemaCompressedEncodeV2;
 			encodedFieldBatchType = EncodedFieldBatchV2;
 			break;
-		default:
+		}
+		default: {
 			unreachableCase(writeVersion);
+		}
 	}
 
 	return makeVersionedValidatedCodec(options, validVersions, encodedFieldBatchType, {
@@ -187,17 +187,20 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 			let encoded: EncodedFieldBatch;
 			let incrementalEncoder: IncrementalEncoder | undefined;
 			switch (context.encodeType) {
-				case TreeCompressionStrategy.Uncompressed:
+				case TreeCompressionStrategy.Uncompressed: {
 					encoded = uncompressedEncodeFn(data);
 					break;
-				case TreeCompressionStrategyExtended.CompressedIncremental:
+				}
+				case TreeCompressionStrategy.CompressedIncremental: {
 					assert(
 						writeVersion >= FieldBatchFormatVersion.v2,
 						0xca0 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
 					);
 					// Incremental encoding is only supported for CompressedIncremental.
 					incrementalEncoder = context.incrementalEncoderDecoder;
-				case TreeCompressionStrategy.Compressed:
+				}
+				// fallthrough
+				case TreeCompressionStrategy.Compressed: {
 					// eslint-disable-next-line unicorn/prefer-ternary
 					if (context.schema !== undefined) {
 						encoded = schemaCompressedEncodeFn(
@@ -213,8 +216,10 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 					}
 
 					break;
-				default:
+				}
+				default: {
 					unreachableCase(context.encodeType);
+				}
 			}
 
 			// TODO: consider checking input data was in schema.

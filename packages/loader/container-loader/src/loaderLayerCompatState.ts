@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ILayerCompatDetails,
-	ILayerCompatSupportRequirements,
+import {
+	generation,
+	type ILayerCompatDetails,
+	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	validateLayerCompatibility,
-	type ITelemetryLoggerExt,
+	type MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
@@ -27,7 +28,7 @@ export const loaderCoreCompatDetails = {
 	/**
 	 * The current generation of the Loader layer.
 	 */
-	generation: 2,
+	generation,
 };
 
 /**
@@ -80,7 +81,7 @@ export const driverSupportRequirementsForLoader: ILayerCompatSupportRequirements
  */
 export function validateRuntimeCompatibility(
 	maybeRuntimeCompatDetails: ILayerCompatDetails | undefined,
-	logger: ITelemetryLoggerExt,
+	mc: MonitoringContext,
 ): void {
 	validateLayerCompatibility(
 		"loader",
@@ -89,7 +90,7 @@ export function validateRuntimeCompatibility(
 		runtimeSupportRequirementsForLoader,
 		maybeRuntimeCompatDetails,
 		() => {} /* disposeFn - no op. This will be handled by the caller */,
-		logger,
+		mc,
 	);
 }
 
@@ -100,7 +101,7 @@ export function validateRuntimeCompatibility(
 export function validateDriverCompatibility(
 	maybeDriverCompatDetails: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
-	logger: ITelemetryLoggerExt,
+	mc: MonitoringContext,
 ): void {
 	validateLayerCompatibility(
 		"loader",
@@ -109,6 +110,6 @@ export function validateDriverCompatibility(
 		driverSupportRequirementsForLoader,
 		maybeDriverCompatDetails,
 		disposeFn,
-		logger,
+		mc,
 	);
 }

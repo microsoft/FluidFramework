@@ -36,7 +36,7 @@ function getChild(
 	}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-wrapper-object-types, @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
 export const TreeObjectProxy = <T extends Object>(
 	tree: SharedTree,
 	nodeId: NodeId,

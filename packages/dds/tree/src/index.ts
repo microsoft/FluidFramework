@@ -9,6 +9,7 @@ export {
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	type ChangeMetadata,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
@@ -52,6 +53,7 @@ export {
 	type TreeIndex,
 	type TreeIndexKey,
 	type TreeIndexNodes,
+	type IncrementalEncodingPolicy,
 } from "./feature-libraries/index.js";
 
 export {
@@ -184,6 +186,7 @@ export {
 	type AnnotateAllowedTypesList,
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
+	type SchemaType,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
@@ -282,15 +285,20 @@ export {
 	type SchemaFactory_base,
 	type NumberKeys,
 	type SimpleAllowedTypeAttributes,
-	encodeSimpleSchema,
-	decodeSimpleSchema,
+	encodeSchemaCompatibilitySnapshot,
+	decodeSchemaCompatibilitySnapshot,
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
+	incrementalSummaryHint,
+	incrementalEncodingPolicyForAllowedTypes,
+	eraseSchemaDetails,
+	eraseSchemaDetailsSubclassable,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
+	configuredSharedTreeAlpha,
 	configuredSharedTreeBeta,
 	configuredSharedTreeBetaLegacy,
 } from "./treeFactory.js";
@@ -303,6 +311,8 @@ export {
 	FluidClientVersion,
 	type FormatValidator,
 	FormatValidatorNoOp,
+	type CodecName,
+	type FormatVersion,
 } from "./codec/index.js";
 export { FormatValidatorBasic } from "./external-utilities/index.js";
 

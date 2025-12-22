@@ -14,7 +14,6 @@
 /* eslint-disable jsdoc/check-line-alignment */
 
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
-
 import { queue } from "async";
 import cloneDeep from "lodash/cloneDeep.js";
 import difference from "lodash/difference.js";
@@ -820,7 +819,7 @@ const _processValidationResults = function (in_template: PropertySchema) {
 					if (error.instancePath === ".typeid") {
 						// eslint-disable-next-line @typescript-eslint/no-base-to-string
 						error.message = `typeid should have a pattern like: my.example:point-1.0.0 ${error.data} does not match that pattern`;
-					} else if ("pattern" && regexTypeId.test(error.instancePath)) {
+					} else if (regexTypeId.test(error.instancePath)) {
 						error.message =
 							error.schemaPath === "#/definitions/typed-reference-typeid/pattern"
 								? ""

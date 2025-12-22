@@ -1047,7 +1047,7 @@ describe("SchemaFactory Recursive methods", () => {
 				// Check constructor
 				type TBuild = NodeBuilderData<typeof RecordRecursive>;
 				type _check2 = requireAssignableTo<RecordRecursive, TBuild>;
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				type _check3 = requireAssignableTo<{}, TBuild>;
 				type _check4 = requireAssignableTo<{ a: RecordRecursive }, TBuild>;
 				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;

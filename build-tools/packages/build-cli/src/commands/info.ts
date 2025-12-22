@@ -9,7 +9,7 @@ import { type ColumnUserConfig, table } from "table";
 import type { Package } from "@fluidframework/build-tools";
 import * as changeCase from "change-case";
 import { releaseGroupFlag } from "../flags.js";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import { BaseCommand, isMonoRepoKind } from "../library/index.js";
 
 /**
@@ -96,7 +96,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 		const { flags } = this;
 		const context = await this.getContext();
 		let packages =
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)
 				? context.packagesInReleaseGroup(flags.releaseGroup)
 				: [...context.fullPackageMap.values()];

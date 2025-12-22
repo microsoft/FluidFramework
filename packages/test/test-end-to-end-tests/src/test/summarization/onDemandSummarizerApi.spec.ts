@@ -16,6 +16,7 @@ import {
 	ISummarizeResults,
 	ISummaryConfigurationWithSummaryOnRequest,
 } from "@fluidframework/container-runtime/internal";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -41,7 +42,7 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 
 	const summarizerEventName = "fluid:telemetry:SummarizerOnDemand:SummarizerOnDemandSummary";
 
-	function getPerformanceEvents(suffix: "start" | "end" | "cancel") {
+	function getPerformanceEvents(suffix: "start" | "end" | "cancel"): ITelemetryBaseEvent[] {
 		return logger.events.filter((e) => e.eventName === `${summarizerEventName}_${suffix}`);
 	}
 

@@ -23,6 +23,10 @@ steps:
 - ${{ if ne(parameters.taskBuild, 'false') }}:
   - task: Npm@1
     displayName: npm run ${{ parameters.taskBuild }}
+    env:
+      # Set FLUB_TYPETEST_SKIP_VERSION_OUTPUT to 1 when building from test/* branches
+      # This preserves existing version info in generated type test files
+      FLUB_TYPETEST_SKIP_VERSION_OUTPUT: $(testBuild)
     inputs:
       command: 'custom'
       workingDir: ${{ parameters.buildDirectory }}

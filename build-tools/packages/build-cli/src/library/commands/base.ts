@@ -5,7 +5,7 @@
 
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { Command, Flags, type Interfaces } from "@oclif/core";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
 

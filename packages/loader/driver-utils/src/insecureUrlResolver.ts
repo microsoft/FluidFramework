@@ -10,7 +10,6 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-
 import Axios from "axios";
 
 /**
@@ -92,7 +91,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 		documentId: string | null,
 		documentRelativePath: string = "",
 		queryParams: string = "",
-	) {
+	): IResolvedUrl {
 		const encodedTenantId = encodeURIComponent(this.tenantId);
 		const host = new URL(this.ordererUrl).host;
 		// when the document ID is not provided we need to resolve a special create new document URL.

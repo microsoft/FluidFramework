@@ -117,9 +117,14 @@ export {
 	type ChunkedCursor,
 } from "./chunk.js";
 
-export { DetachedFieldIndex } from "./detachedFieldIndex.js";
+export {
+	DetachedFieldIndex,
+	type DetachedFieldIndexCheckpoint,
+	type ReadOnlyDetachedFieldIndex,
+} from "./detachedFieldIndex.js";
 
-export { getCodecTreeForDetachedFieldIndexFormat } from "./detachedFieldIndexCodecs.js";
-export { type DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
+export { detachedFieldIndexCodecBuilder } from "./detachedFieldIndexCodecs.js";
+export { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
+export { type FormatV1 } from "./detachedFieldIndexFormatV1.js";
 
 export { type ForestRootId } from "./detachedFieldIndexTypes.js";

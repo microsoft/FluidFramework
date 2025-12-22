@@ -42,7 +42,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		this.setConnectedState(connected);
 	}
 
-	protected processPendingMessages(pendingMessages: ISequencedDocumentMessage[]) {
+	protected processPendingMessages(pendingMessages: ISequencedDocumentMessage[]): void {
 		for (const remoteMessage of pendingMessages) {
 			this.process(remoteMessage);
 		}
@@ -101,7 +101,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		}
 	}
 
-	override process(message: ISequencedDocumentMessage) {
+	override process(message: ISequencedDocumentMessage): void {
 		if (this.connected) {
 			this.processedOps?.push(message);
 			super.process(message);
@@ -110,7 +110,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		}
 	}
 
-	override submit(messageContent: any, localOpMetadata: unknown) {
+	override submit(messageContent: any, localOpMetadata: unknown): number {
 		// Submit messages only if we are connection, otherwise, just add it to the pending queue.
 		if (this.connected) {
 			return super.submit(messageContent, localOpMetadata);
@@ -120,7 +120,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		return -1;
 	}
 
-	override flush() {
+	override flush(): void {
 		// Flush messages only if we are connected, otherwise, just ignore it.
 		if (this.connected) {
 			super.flush();
@@ -129,7 +129,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 	public async initializeWithStashedOps(
 		fromContainerRuntime: MockContainerRuntimeForReconnection,
-	) {
+	): Promise<void> {
 		if (this.pendingMessages.length !== 0 || this.deltaManager.clientSequenceNumber !== 0) {
 			throw new Error("applyStashedOps must be called first, and once.");
 		}
@@ -189,7 +189,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			stashedOps.set(op.referenceSequenceNumber, ops);
 		});
 
-		const applyStashedOpsAtSeq = async (seq: number) => {
+		const applyStashedOpsAtSeq = async (seq: number): Promise<void> => {
 			const pendingAtSeq = stashedOps.get(seq);
 			for (const message of pendingAtSeq ?? []) {
 				// As in production, do not locally apply any stashed ID allocation messages.
@@ -238,7 +238,7 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 		return containerRuntime;
 	}
 
-	public clearOutstandingClientMessages(clientId: string) {
+	public clearOutstandingClientMessages(clientId: string): void {
 		// Delete all the messages for client with the given clientId.
 		this.messages = this.messages.filter((message: ISequencedDocumentMessage) => {
 			return message.clientId !== clientId;
