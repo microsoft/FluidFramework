@@ -53,7 +53,9 @@ describe("Presence", () => {
 		let runtime: MockEphemeralRuntime;
 
 		before(async () => {
-			clock = useFakeTimers();
+			clock = useFakeTimers({
+				toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+			});
 		});
 
 		beforeEach(() => {

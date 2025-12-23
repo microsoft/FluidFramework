@@ -33,7 +33,9 @@ describe("Presence", () => {
 		let clock: SinonFakeTimers;
 
 		before(async () => {
-			clock = useFakeTimers();
+			clock = useFakeTimers({
+				toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+			});
 		});
 
 		beforeEach(() => {

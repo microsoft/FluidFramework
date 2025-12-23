@@ -14,7 +14,9 @@ describe("InMemoryCache", () => {
 	let cache: ICache<number>;
 
 	before(() => {
-		clock = useFakeTimers();
+		clock = useFakeTimers({
+			toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+		});
 	});
 
 	afterEach(() => {

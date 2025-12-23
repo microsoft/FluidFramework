@@ -912,7 +912,9 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 
 	beforeEach("", async function () {
 		provider = getTestObjectProvider();
-		clock = useFakeTimers();
+		clock = useFakeTimers({
+			toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+		});
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
