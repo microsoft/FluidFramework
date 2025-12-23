@@ -270,16 +270,16 @@ async function connectOrderer(
 	};
 }
 
-function trackSocket(
+async function trackSocket(
 	socket: IWebSocket,
 	tenantId: string,
 	documentId: string,
 	claims: ITokenClaims,
 	{ socketTracker }: INexusLambdaDependencies,
-): void {
+): Promise<void> {
 	// Track socket and tokens for this connection
 	if (socketTracker && claims.jti) {
-		socketTracker.addSocketForToken(
+		return socketTracker.addSocketForToken(
 			createCompositeTokenId(tenantId, documentId, claims.jti),
 			socket,
 		);
@@ -712,7 +712,7 @@ export async function connectDocument(
 		(connectedMessage as any).timestamp = connectedTimestamp;
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientConnected);
 
-		trackSocket(socket, tenantId, documentId, claims, lambdaDependencies);
+		await trackSocket(socket, tenantId, documentId, claims, lambdaDependencies);
 		connectionTrace.stampStage(ConnectDocumentStage.SocketTrackerAppended);
 
 		trackCollaborationSession(
