@@ -152,7 +152,6 @@ module.exports = {
 			dependencies: [
 				"@fluidframework/build-common",
 				"@fluidframework/common-utils",
-				"@fluidframework/eslint-config-fluid",
 			],
 			packages: ["**"],
 		},

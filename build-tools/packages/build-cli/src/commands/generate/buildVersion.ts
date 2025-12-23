@@ -102,7 +102,6 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 
 		const context = await this.getContext();
 		const repo = await context.getGitRepository();
-		// eslint-disable-next-line unicorn/no-await-expression-member
 		const tags = flags.tags ?? (await repo.gitClient.tags()).all;
 
 		if (!useSimplePatchVersion && flags.tag !== undefined) {

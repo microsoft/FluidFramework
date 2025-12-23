@@ -32,7 +32,6 @@ export class ListCommand extends Command {
 
 		// load the BuildProject
 		const repo = loadBuildProject(searchPath);
-		// eslint-disable-next-line unicorn/prefer-ternary
 		if (full) {
 			await this.logFullReport(repo);
 		} else {

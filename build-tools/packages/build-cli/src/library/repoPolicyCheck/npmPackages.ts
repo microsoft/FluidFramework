@@ -489,12 +489,9 @@ function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg):
  * @returns preferred command line
  */
 function getPreferredScriptLine(scriptLine: string): string {
-	return (
-		parseArgs(scriptLine, { onlyDoubleQuotes: false })
-			// eslint-disable-next-line unicorn/no-array-callback-reference
-			.map(quoteAndEscapeArgsForUniversalScriptLine)
-			.join(" ")
-	);
+	return parseArgs(scriptLine, { onlyDoubleQuotes: false })
+		.map(quoteAndEscapeArgsForUniversalScriptLine)
+		.join(" ");
 }
 
 /**
@@ -636,7 +633,6 @@ async function getApiLintElementsMissing(
 			if (exports.some((e) => e.exportPath === ".")) {
 				// Only one file needs to be checked for this. Prefer export that
 				// is not 'require' restricted.
-				// eslint-disable-next-line unicorn/no-lonely-if
 				if (rootLintTarget === undefined || !onlyRequire) {
 					rootLintTarget = relPath;
 				}
@@ -645,7 +641,6 @@ async function getApiLintElementsMissing(
 			// ./internal export should be checked for cross group consistency.
 			// Only one file needs to be checked for this. Prefer export that
 			// is not 'require' restricted.
-			// eslint-disable-next-line unicorn/no-lonely-if
 			if (internalLintTarget === undefined || !onlyRequire) {
 				internalLintTarget = relPath;
 			}
@@ -1234,7 +1229,6 @@ export const handlers: Handler[] = [
 				);
 				const commands = new Set(
 					Object.values(json.scripts)
-						// eslint-disable-next-line unicorn/no-array-callback-reference
 						.filter(isDefined)
 						.map((s) => s.split(" ")[0]),
 				);
@@ -1951,7 +1945,6 @@ export const handlers: Handler[] = [
 					}
 
 					// Applies script corrections as needed for all script requirements
-					// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
 					requirements.requiredScripts.forEach(applyScriptCorrection);
 				}
 

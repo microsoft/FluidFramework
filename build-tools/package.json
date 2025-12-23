@@ -75,6 +75,7 @@
 		"@commitlint/cli": "^20.1.0",
 		"@commitlint/config-conventional": "^20.0.0",
 		"@commitlint/cz-commitlint": "^20.1.0",
+		"@eslint/js": "^9.39.0",
 		"@fluid-tools/build-cli": "~0.60.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "~0.60.0",
@@ -87,12 +88,14 @@
 		"copyfiles": "^2.4.1",
 		"cz-conventional-changelog": "^3.3.0",
 		"cz-customizable": "^7.5.1",
-		"eslint": "~8.57.0",
+		"eslint": "~9.39.1",
 		"inquirer": "^9.3.7",
+		"jiti": "^2.6.1",
 		"rimraf": "^6.1.2",
 		"run-script-os": "^1.1.6",
 		"syncpack": "^13.0.4",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"typescript-eslint": "^8.18.0"
 	},
 	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
 	"engines": {
@@ -138,8 +141,7 @@
 		],
 		"peerDependencyRules": {
 			"allowedVersions": {
-				"eslint": "8.51.0",
-				"@typescript-eslint/parser": "6.21.0"
+				"@typescript-eslint/parser": "8.46.4"
 			},
 			"ignoreMissing": [
 				"@types/node",

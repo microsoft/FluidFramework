@@ -302,7 +302,6 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 
 							// eslint-disable-next-line max-depth
 							if (shouldRemoveSurroundingQuotes(originalErrorText)) {
-								// eslint-disable-next-line unicorn/prefer-string-slice
 								originalErrorText = originalErrorText.substring(
 									1,
 									originalErrorText.length - 1,
@@ -340,10 +339,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		if (templateErrors.length > 0) {
 			errorMessages.push(
 				`Template expressions are not supported in assertions (they'll be replaced by a short code anyway). ` +
-					`Use a string literal instead.\n${templateErrors
-						// eslint-disable-next-line unicorn/no-array-callback-reference
-						.map(getCallsiteString)
-						.join("\n")}`,
+					`Use a string literal instead.\n${templateErrors.map(getCallsiteString).join("\n")}`,
 			);
 		}
 		if (otherErrors.length > 0) {
@@ -368,7 +364,6 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 	private tagAsserts(collected: CollectedData, packageData: PackageData): string[] {
 		const errors: string[] = [];
 
-		// eslint-disable-next-line unicorn/consistent-function-scoping
 		function isStringLiteral(msg: Node): msg is StringLiteral | NoSubstitutionTemplateLiteral {
 			const kind = msg.getKind();
 			return (
@@ -444,10 +439,8 @@ function getAssertMessageParams(
 }
 
 function writeShortCodeMappingFile(codeToMsgMap: Map<string, string>): void {
-	// eslint-disable-next-line unicorn/prefer-spread, @typescript-eslint/no-unsafe-assignment
 	const mapContents = Array.from(codeToMsgMap.entries())
 		.sort()
-		// eslint-disable-next-line unicorn/no-array-reduce
 		.reduce((accum, current) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			accum[current[0]] = current[1];

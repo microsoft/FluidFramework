@@ -171,7 +171,6 @@ function findTscScript(json: Readonly<PackageJson>, project: string): string | u
 interface EslintConfig {
 	parserOptions?: {
 		// https://typescript-eslint.io/packages/parser/#project
-		// eslint-disable-next-line @rushstack/no-new-null
 		project?: string | string[] | boolean | null;
 	};
 }
@@ -646,7 +645,6 @@ function getTscCommandDependencies(
 		},
 	);
 
-	// eslint-disable-next-line unicorn/prefer-spread
 	return deps.concat(
 		[...tscPredecessors].map((group) =>
 			group.map((predecessor) => `${predecessor.packageName}#${predecessor.script}`),

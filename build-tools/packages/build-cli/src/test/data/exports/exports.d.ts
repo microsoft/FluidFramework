@@ -18,7 +18,6 @@ export declare const a: number, b: string;
 export declare const c: number;
 
 import * as InternalTypes from "./innerFile.js";
-// eslint-disable-next-line unicorn/prefer-export-from -- intentional; we are testing this case
 export { InternalTypes };
 
 /**

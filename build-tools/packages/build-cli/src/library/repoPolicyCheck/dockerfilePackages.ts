@@ -73,7 +73,6 @@ export const handler: Handler = {
 				dockerfileContents.slice(0, Math.max(0, insertIndex)) +
 				dockerfileCopyText +
 				localNewline +
-				// eslint-disable-next-line unicorn/prefer-string-slice
 				dockerfileContents.substring(insertIndex, dockerfileContents.length);
 
 			writeFile(dockerFilePath, dockerfileContents);
