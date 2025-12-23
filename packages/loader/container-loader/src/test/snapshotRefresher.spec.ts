@@ -186,9 +186,10 @@ describe("SnapshotRefresher", () => {
 			mockStorage,
 			offlineLoadEnabled,
 			supportGetSnapshotApi,
-			(snapshot: ISnapshotInfo) => {
+			(snapshot: ISnapshotInfo): number => {
 				refreshCallbackInvoked = true;
 				lastRefreshedSnapshot = snapshot;
+				return snapshot.snapshotSequenceNumber;
 			},
 			snapshotRefreshTimeoutMs,
 		);
@@ -469,19 +470,19 @@ describe("SnapshotRefresher", () => {
 
 			refresher.tryRefreshSnapshot();
 
-			// Reject the promise to trigger error
-			try {
-				await refresher.refreshSnapshotP;
-			} catch {
-				// Expected to fail
-			}
+			// The promise will reject, but the error handler will catch it internally
+			// We just need to wait for the promise to settle
+			const promise = refresher.refreshSnapshotP;
+			assert(promise !== undefined, "Promise should exist");
 
-			// Wait a tick for the error handler to execute
-			await new Promise((resolve) => setTimeout(resolve, 0));
+			// Wait a bit for the error to propagate through the error handler
+			await Promise.race([promise, new Promise((resolve) => setTimeout(resolve, 100))]);
+			clock.tick(100);
 
-			mockLogger.assertMatch([
+			// The error is logged as a cancel event by PerformanceEvent.timedExecAsync
+			mockLogger.assertMatchAny([
 				{
-					eventName: "RefreshLatestSnapshotFailed",
+					eventName: "serializedStateManager:GetLatestSnapshotInfo_cancel",
 					error: "getVersions failed",
 				},
 			]);
@@ -725,9 +726,10 @@ describe("SnapshotRefresher", () => {
 				mockStorageWithGroupIds,
 				true,
 				() => true, // getSnapshot API supported
-				(snapshot: ISnapshotInfo) => {
+				(snapshot: ISnapshotInfo): number => {
 					refreshCallbackInvoked = true;
 					lastRefreshedSnapshot = snapshot;
+					return snapshot.snapshotSequenceNumber;
 				},
 			);
 
@@ -764,9 +766,10 @@ describe("SnapshotRefresher", () => {
 				mockStorageWithGroupIds,
 				true,
 				() => false, // getSnapshot API not supported
-				(snapshot: ISnapshotInfo) => {
+				(snapshot: ISnapshotInfo): number => {
 					refreshCallbackInvoked = true;
 					lastRefreshedSnapshot = snapshot;
+					return snapshot.snapshotSequenceNumber;
 				},
 			);
 

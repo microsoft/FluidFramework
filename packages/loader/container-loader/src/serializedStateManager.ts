@@ -304,10 +304,11 @@ export class SerializedStateManager implements IDisposable {
 	/**
 	 * Handles the snapshotRefreshed event from SnapshotRefresher.
 	 * Decides whether to accept the new snapshot based on processed ops.
+	 * @returns The snapshot sequence number if updated, -1 otherwise
 	 */
-	private handleSnapshotRefreshed(latestSnapshot: ISnapshotInfo): void {
+	private handleSnapshotRefreshed(latestSnapshot: ISnapshotInfo): number {
 		this.latestSnapshot = latestSnapshot;
-		this.updateSnapshotAndProcessedOpsMaybe();
+		return this.updateSnapshotAndProcessedOpsMaybe();
 	}
 
 	/**
@@ -342,14 +343,14 @@ export class SerializedStateManager implements IDisposable {
 				stashedSnapshotSequenceNumber: this.snapshotInfo?.snapshotSequenceNumber,
 			});
 			this.latestSnapshot = undefined;
-			this.snapshotRefresher?.restartTimer();
+			this.snapshotRefresher?.clearLatestSnapshot();
 		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
 			this.processedOps.splice(0, snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1);
 			this.snapshotInfo = this.latestSnapshot;
 			this.latestSnapshot = undefined;
-			this.snapshotRefresher?.restartTimer();
+			this.snapshotRefresher?.clearLatestSnapshot();
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SnapshotRefreshed",
 				snapshotSequenceNumber,

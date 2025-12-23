@@ -62,7 +62,7 @@ export class SnapshotRefresher implements IDisposable {
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		private readonly offlineLoadEnabled: boolean,
 		private readonly supportGetSnapshotApi: () => boolean,
-		private readonly onSnapshotRefreshed: (snapshot: ISnapshotInfo) => void,
+		private readonly onSnapshotRefreshed: (snapshot: ISnapshotInfo) => number,
 		snapshotRefreshTimeoutMs?: number,
 	) {
 		this.mc = createChildMonitoringContext({
@@ -131,14 +131,11 @@ export class SnapshotRefresher implements IDisposable {
 		}
 
 		// Notify the manager about the fetched snapshot - let it decide what to do with it
-		// Store the sequence number before calling the callback, as the callback may clear latestSnapshot
-		const snapshotSequenceNumber = this.latestSnapshot?.snapshotSequenceNumber ?? -1;
-		if (this.latestSnapshot !== undefined) {
-			this.onSnapshotRefreshed(this.latestSnapshot);
-		}
+		const result =
+			this.latestSnapshot !== undefined ? this.onSnapshotRefreshed(this.latestSnapshot) : -1;
 
 		this.refreshTimer?.restart();
-		return snapshotSequenceNumber;
+		return result;
 	}
 
 	/**
