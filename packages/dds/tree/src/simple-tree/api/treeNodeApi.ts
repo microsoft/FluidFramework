@@ -357,7 +357,7 @@ export function getIdentifierFromNode(
 		}
 		default: {
 			throw new UsageError(
-				"shortId() may not be called on a node with more than one identifier. Consider converting extraneous identifier fields to string fields.",
+				"The node has more than one identifier. Retrieve identifiers individually via their fields instead.",
 			);
 		}
 	}
