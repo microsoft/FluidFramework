@@ -5,40 +5,36 @@
 
 import { strict as assert } from "assert";
 import type { WebApi } from "azure-devops-node-api";
-import type JSZip from "jszip";
 import type { StatsCompilation } from "webpack";
 
 import type { BundleBuddyConfig } from "../BundleBuddyTypes";
-import { decompressStatsFile, unzipStream } from "../utilities";
+import { type UnzippedContents, decompressStatsFile, unzipStream } from "../utilities";
 import {
 	type BundleFileData,
 	getBundleFilePathsFromFolder,
 } from "./getBundleFilePathsFromFolder";
 
 /**
- * Gets a list of all paths relevant to bundle buddy from the zip archive
- * @param jsZip - A zip file that has been processed with the jszip library
+ * Gets a list of all paths relevant to bundle buddy from the unzipped archive
+ * @param files - The unzipped archive contents as a Map of paths to Buffers
  */
-export function getBundlePathsFromZipObject(jsZip: JSZip): BundleFileData[] {
-	const relativePaths: string[] = [];
-	jsZip.forEach((path) => {
-		relativePaths.push(path);
-	});
-
+export function getBundlePathsFromZipObject(files: UnzippedContents): BundleFileData[] {
+	const relativePaths: string[] = [...files.keys()];
 	return getBundleFilePathsFromFolder(relativePaths);
 }
 
 /**
- * Downloads an Azure Devops artifacts and parses it with the jszip library.
+ * Downloads an Azure Devops artifacts and unzips it.
  * @param adoConnection - A connection to the ADO api.
  * @param buildNumber - The ADO build number that contains the artifact we wish to fetch
+ * @returns A Map of file paths to their contents as Buffers
  */
 export async function getZipObjectFromArtifact(
 	adoConnection: WebApi,
 	projectName: string,
 	buildNumber: number,
 	bundleAnalysisArtifactName: string,
-): Promise<JSZip> {
+): Promise<UnzippedContents> {
 	const buildApi = await adoConnection.getBuildApi();
 
 	// IMPORTANT
@@ -57,10 +53,10 @@ export async function getZipObjectFromArtifact(
 	// Undo hack from above
 	buildApi.createAcceptHeader = originalCreateAcceptHeader;
 
-	// We want our relative paths to be clean, so navigating JsZip into the top level folder
-	const result = (await unzipStream(artifactStream)).folder(bundleAnalysisArtifactName);
+	// We want our relative paths to be clean, so filter to files within the artifact folder
+	const result = await unzipStream(artifactStream, bundleAnalysisArtifactName);
 	assert(
-		result,
+		result.size > 0,
 		`getZipObjectFromArtifact could not find the folder ${bundleAnalysisArtifactName}`,
 	);
 
@@ -68,33 +64,31 @@ export async function getZipObjectFromArtifact(
 }
 
 /**
- * Retrieves a decompressed stats file from a jszip object
- * @param jsZip - A zip file that has been processed with the jszip library
+ * Retrieves a decompressed stats file from an unzipped archive
+ * @param files - The unzipped archive contents as a Map of paths to Buffers
  * @param relativePath - The relative path to the file that will be retrieved
  */
 export async function getStatsFileFromZip(
-	jsZip: JSZip,
+	files: UnzippedContents,
 	relativePath: string,
 ): Promise<StatsCompilation> {
-	const jsZipObject = jsZip.file(relativePath);
-	assert(jsZipObject, `getStatsFileFromZip could not find file ${relativePath}`);
+	const buffer = files.get(relativePath);
+	assert(buffer, `getStatsFileFromZip could not find file ${relativePath}`);
 
-	const buffer = await jsZipObject.async("nodebuffer");
 	return decompressStatsFile(buffer);
 }
 
 /**
- * Retrieves and parses a bundle buddy config file from a jszip object
- * @param jsZip - A zip file that has been processed with the jszip library
+ * Retrieves and parses a bundle buddy config file from an unzipped archive
+ * @param files - The unzipped archive contents as a Map of paths to Buffers
  * @param relativePath - The relative path to the file that will be retrieved
  */
 export async function getBundleBuddyConfigFileFromZip(
-	jsZip: JSZip,
+	files: UnzippedContents,
 	relativePath: string,
 ): Promise<BundleBuddyConfig> {
-	const jsZipObject = jsZip.file(relativePath);
-	assert(jsZipObject, `getBundleBuddyConfigFileFromZip could not find file ${relativePath}`);
+	const buffer = files.get(relativePath);
+	assert(buffer, `getBundleBuddyConfigFileFromZip could not find file ${relativePath}`);
 
-	const buffer = await jsZipObject.async("nodebuffer");
 	return JSON.parse(buffer.toString());
 }

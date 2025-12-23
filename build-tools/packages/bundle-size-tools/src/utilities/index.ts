@@ -14,4 +14,4 @@ export {
 export { getChunkParsedSize } from "./getChunkParsedSize";
 export { getLastCommitHashFromPR } from "./getLastCommitHashFromPR";
 export { getBaselineCommit, getPriorCommit } from "./gitCommands";
-export { unzipStream } from "./unzipStream";
+export { UnzippedContents, unzipStream } from "./unzipStream";
