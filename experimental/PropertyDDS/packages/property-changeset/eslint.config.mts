@@ -1,8 +1,8 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
 import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/flat.mts";
 
@@ -52,12 +52,9 @@ const config: Linter.Config[] = [
 			"tsdoc/syntax": "off",
 			"unicorn/better-regex": "off",
 			"unicorn/filename-case": "off",
-			"depend/ban-dependencies": [
-				"error",
-				{
-					"allowed": ["lodash", "traverse"],
-				},
-			],
+			"depend/ban-dependencies": ["error", {
+				"allowed": ["lodash", "traverse"],
+			}],
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
 	},

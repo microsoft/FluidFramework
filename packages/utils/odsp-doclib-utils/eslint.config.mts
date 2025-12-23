@@ -1,8 +1,8 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
 import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
@@ -13,12 +13,9 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-use-before-define": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"no-case-declarations": "off",
-			"@typescript-eslint/consistent-type-imports": [
-				"error",
-				{
-					"fixStyle": "inline-type-imports",
-				},
-			],
+			"@typescript-eslint/consistent-type-imports": ["error", {
+				"fixStyle": "inline-type-imports",
+			}],
 			"@typescript-eslint/no-import-type-side-effects": "error",
 		},
 	},
@@ -29,8 +26,8 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/consistent-type-exports": [
 				"error",
 				{
-					"fixMixedExportsWithInlineTypeSpecifier": true,
-				},
+				"fixMixedExportsWithInlineTypeSpecifier": true,
+			},
 			],
 		},
 	},
