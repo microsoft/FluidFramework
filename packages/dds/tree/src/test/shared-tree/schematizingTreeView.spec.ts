@@ -1126,7 +1126,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			const labels: unknown[] = [];
 
-			view.events.on("commitApplied", (meta) => {
+			view.checkout.events.on("changed", (meta) => {
 				if (meta.isLocal) {
 					labels.push(meta.label);
 				}
@@ -1152,7 +1152,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			const labels: unknown[] = [];
 
-			view.events.on("commitApplied", (meta) => {
+			view.checkout.events.on("changed", (meta) => {
 				if (meta.isLocal) {
 					labels.push(meta.label);
 				}
@@ -1175,7 +1175,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			const labels: unknown[] = [];
 
-			view.events.on("commitApplied", (meta) => {
+			view.checkout.events.on("changed", (meta) => {
 				if (meta.isLocal) {
 					labels.push(meta.label);
 				}
@@ -1209,6 +1209,54 @@ describe("SchematizingSimpleTreeView", () => {
 			// Check that correct label was exposed.
 			assert.deepEqual(labels, [testLabel1, undefined, testLabel3]);
 		});
+
+		it("nested transactions only expose outer label", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					labels.push(meta.label);
+				}
+			});
+
+			const outerLabel = "outerLabel";
+			const innerLabel1 = "innerLabel1";
+			const innerLabel2 = "innerLabel2";
+
+			const runTransactionResult = view.runTransaction(
+				() => {
+					view.root.content = 1;
+
+					// Nested transaction with different label
+					view.runTransaction(
+						() => {
+							view.root.content = 2;
+						},
+						{ label: innerLabel1 },
+					);
+
+					view.root.content = 3;
+
+					// Another nested transaction with different label
+					view.runTransaction(
+						() => {
+							view.root.content = 4;
+						},
+						{ label: innerLabel2 },
+					);
+				},
+				{ label: outerLabel },
+			);
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+			assert.equal(view.root.content, 4);
+
+			// Check that only the outer label was exposed, not the inner labels
+			assert.deepEqual(labels, [outerLabel]);
+		});
 	});
 
 	describe("label-based grouping for undo", () => {
@@ -1222,7 +1270,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			const undoGroups: LabeledGroup[] = [];
 
-			view.events.on("commitApplied", (meta, getRevertible) => {
+			view.checkout.events.on("changed", (meta, getRevertible) => {
 				// Omit remote, Undo/Redo commits
 				if (meta.isLocal && getRevertible !== undefined && meta.kind === CommitKind.Default) {
 					const label = meta.label;

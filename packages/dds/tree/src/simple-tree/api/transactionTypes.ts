@@ -126,9 +126,8 @@ export interface RunTransactionParams {
 	/**
 	 * An optional user-defined label for this transaction.
 	 *
-	 * This label is associated with the commit produced by this transaction, and is surfaced through {@link CommitMetadataAlpha.label},
-	 * in the `commitApplied` event.
-	 *
+	 * This label is associated with the commit produced by this transaction, and is surfaced through the
+	 * `label` property of {@link ChangeMetadata} in the `commitApplied` event.
 	 */
 	readonly label?: unknown;
 }

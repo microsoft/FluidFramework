@@ -334,10 +334,7 @@ export class SchematizingSimpleTreeView<
 				: { success: true };
 		};
 
-		if (params?.label !== undefined) {
-			return this.checkout.runWithTransactionLabel(params.label, () => executeTransaction());
-		}
-		return executeTransaction();
+		return this.checkout.runWithTransactionLabel(() => executeTransaction(), params?.label);
 	}
 
 	private ensureUndisposed(): void {

@@ -434,9 +434,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public runWithTransactionLabel<TLabel, TResult>(
-		label: TLabel,
-		fn: (label: TLabel) => TResult,
+		fn: (label?: TLabel) => TResult,
+		label?: TLabel,
 	): TResult {
+		// If a transaction label is already set, nesting is occurring, so we should not override it
+		if (this.transactionLabel !== undefined) {
+			return fn(label);
+		}
 		this.transactionLabel = label;
 		try {
 			return fn(label);
