@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { minimatch } from "minimatch";
+import picomatch from "picomatch";
 import type { ReleaseGroup, ReleasePackage } from "./releaseGroups.js";
 
 // Mapping of branch to a list of release groups/packages that should run policy by default.
@@ -25,7 +25,7 @@ export const getRunPolicyCheckDefault = (
 	}
 
 	for (const [branchPattern, shouldRunPolicy] of defaults) {
-		if (minimatch(branch, branchPattern) === true) {
+		if (picomatch.isMatch(branch, branchPattern)) {
 			return shouldRunPolicy.includes(releaseGroupOrPackage);
 		}
 	}
