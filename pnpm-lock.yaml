@@ -88,8 +88,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@20.17.9)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@20.17.9)(typescript@5.4.5))
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -281,7 +281,7 @@ importers:
         version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       prettier:
         specifier: ~3.6.2
         version: 3.6.2
@@ -1453,11 +1453,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -2304,11 +2304,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -3781,11 +3781,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -4180,11 +4180,11 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2(jsdom@16.7.0)
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -4440,7 +4440,7 @@ importers:
         version: 2.1.0
       axios:
         specifier: ^1.8.4
-        version: 1.13.2(debug@4.4.3)
+        version: 1.13.2(debug@4.3.7)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -4588,7 +4588,7 @@ importers:
         version: 2.1.0
       axios:
         specifier: ^1.8.4
-        version: 1.13.2(debug@4.4.3)
+        version: 1.13.2(debug@4.3.7)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -4899,8 +4899,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -5218,11 +5218,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -5403,7 +5403,7 @@ importers:
         version: link:../../../packages/utils/tool-utils
       axios:
         specifier: ^1.8.4
-        version: 1.13.2(debug@4.4.3)
+        version: 1.13.2(debug@4.3.7)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -5478,11 +5478,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -6584,11 +6584,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -6684,11 +6684,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -6745,7 +6745,7 @@ importers:
         version: link:../../../../packages/dds/shared-object-base
       axios:
         specifier: ^1.8.4
-        version: 1.13.2(debug@4.4.3)
+        version: 1.13.2(debug@4.3.7)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -6844,11 +6844,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -6920,11 +6920,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -7020,11 +7020,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       quill-delta:
         specifier: ^4.2.2
         version: 4.2.2
@@ -7114,11 +7114,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -7208,11 +7208,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -7359,11 +7359,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -7620,11 +7620,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -7750,11 +7750,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -7825,11 +7825,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -7974,11 +7974,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8074,11 +8074,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8165,11 +8165,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8274,11 +8274,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8357,7 +8357,7 @@ importers:
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/map-previous':
         specifier: npm:@fluidframework/map@2.74.0
-        version: '@fluidframework/map@2.74.0(debug@4.4.3)'
+        version: '@fluidframework/map@2.74.0'
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -8392,11 +8392,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8528,11 +8528,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8646,11 +8646,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8752,11 +8752,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8846,11 +8846,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -8946,11 +8946,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -9073,11 +9073,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       random-js:
         specifier: ^2.1.0
         version: 2.1.0
@@ -9153,7 +9153,7 @@ importers:
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/shared-object-base-previous':
         specifier: npm:@fluidframework/shared-object-base@2.74.0
-        version: '@fluidframework/shared-object-base@2.74.0(debug@4.4.3)'
+        version: '@fluidframework/shared-object-base@2.74.0'
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -9194,11 +9194,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -9297,11 +9297,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -9406,11 +9406,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -9454,8 +9454,8 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -9513,7 +9513,7 @@ importers:
         version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -9675,11 +9675,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -9792,7 +9792,7 @@ importers:
         version: 0.62.0(@types/node@18.19.130)
       '@fluidframework/driver-base-previous':
         specifier: npm:@fluidframework/driver-base@2.74.0
-        version: '@fluidframework/driver-base@2.74.0(debug@4.4.3)'
+        version: '@fluidframework/driver-base@2.74.0'
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
@@ -9824,11 +9824,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10053,7 +10053,7 @@ importers:
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/local-driver-previous':
         specifier: npm:@fluidframework/local-driver@2.74.0
-        version: '@fluidframework/local-driver@2.74.0(debug@4.4.3)(encoding@0.1.13)'
+        version: '@fluidframework/local-driver@2.74.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.130)
@@ -10085,11 +10085,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10159,7 +10159,7 @@ importers:
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/odsp-driver-previous':
         specifier: npm:@fluidframework/odsp-driver@2.74.0
-        version: '@fluidframework/odsp-driver@2.74.0(debug@4.4.3)(encoding@0.1.13)'
+        version: '@fluidframework/odsp-driver@2.74.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.130)
@@ -10191,11 +10191,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10328,11 +10328,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10475,7 +10475,7 @@ importers:
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/routerlicious-driver-previous':
         specifier: npm:@fluidframework/routerlicious-driver@2.74.0
-        version: '@fluidframework/routerlicious-driver@2.74.0(debug@4.4.3)(encoding@0.1.13)'
+        version: '@fluidframework/routerlicious-driver@2.74.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.130)
@@ -10493,7 +10493,7 @@ importers:
         version: 17.0.3
       axios:
         specifier: ^1.8.4
-        version: 1.13.2(debug@4.4.3)
+        version: 1.13.2(debug@4.3.7)
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -10513,11 +10513,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -10601,11 +10601,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10686,8 +10686,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10883,11 +10883,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -10998,11 +10998,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11086,8 +11086,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11174,8 +11174,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11353,11 +11353,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11553,11 +11553,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11729,11 +11729,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11835,11 +11835,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -11888,7 +11888,7 @@ importers:
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/request-handler-previous':
         specifier: npm:@fluidframework/request-handler@2.74.0
-        version: '@fluidframework/request-handler@2.74.0(debug@4.4.3)'
+        version: '@fluidframework/request-handler@2.74.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.130)
@@ -11923,11 +11923,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -12002,11 +12002,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -12111,11 +12111,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       prettier:
         specifier: ~3.6.2
         version: 3.6.2
@@ -12214,11 +12214,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       prettier:
         specifier: ~3.6.2
         version: 3.6.2
@@ -12293,11 +12293,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       prettier:
         specifier: ~3.6.2
         version: 3.6.2
@@ -12387,11 +12387,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -12508,11 +12508,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -12542,7 +12542,7 @@ importers:
         version: link:../../utils/telemetry-utils
       axios:
         specifier: ^1.8.4
-        version: 1.13.2(debug@4.4.3)
+        version: 1.13.2(debug@4.3.7)
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
@@ -12570,7 +12570,7 @@ importers:
         version: 0.62.0(@types/node@18.19.130)
       '@fluidframework/driver-utils-previous':
         specifier: npm:@fluidframework/driver-utils@2.74.0
-        version: '@fluidframework/driver-utils@2.74.0(debug@4.4.3)'
+        version: '@fluidframework/driver-utils@2.74.0'
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
@@ -12605,11 +12605,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -12758,7 +12758,7 @@ importers:
         version: 0.62.0(@types/node@18.19.130)
       '@fluidframework/container-runtime-previous':
         specifier: npm:@fluidframework/container-runtime@2.74.0
-        version: '@fluidframework/container-runtime@2.74.0(debug@4.4.3)'
+        version: '@fluidframework/container-runtime@2.74.0'
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
@@ -12802,11 +12802,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -12937,7 +12937,7 @@ importers:
         version: 0.62.0(@types/node@18.19.130)
       '@fluidframework/datastore-previous':
         specifier: npm:@fluidframework/datastore@2.74.0
-        version: '@fluidframework/datastore@2.74.0(debug@4.4.3)'
+        version: '@fluidframework/datastore@2.74.0'
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
@@ -12978,11 +12978,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13133,11 +13133,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13268,7 +13268,7 @@ importers:
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/runtime-utils-previous':
         specifier: npm:@fluidframework/runtime-utils@2.74.0
-        version: '@fluidframework/runtime-utils@2.74.0(debug@4.4.3)'
+        version: '@fluidframework/runtime-utils@2.74.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.130)
@@ -13300,11 +13300,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13421,11 +13421,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13524,8 +13524,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13612,16 +13612,16 @@ importers:
         version: link:../../../dds/tree
       axios:
         specifier: ^1.8.4
-        version: 1.13.2(debug@4.4.3)
+        version: 1.13.2(debug@4.3.7)
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       sinon:
         specifier: ^18.0.1
         version: 18.0.1
@@ -13735,11 +13735,11 @@ importers:
         specifier: ^17.0.3
         version: 17.0.3
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       sinon:
         specifier: ^18.0.1
         version: 18.0.1
@@ -13884,8 +13884,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -13987,8 +13987,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -14113,11 +14113,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -14270,11 +14270,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -14399,11 +14399,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -14426,8 +14426,8 @@ importers:
         specifier: workspace:~
         version: link:../../common/core-interfaces
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21
@@ -14544,8 +14544,8 @@ importers:
         specifier: workspace:~
         version: link:../test-utils
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -14588,7 +14588,7 @@ importers:
         version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -14663,11 +14663,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       random-js:
         specifier: ^2.1.0
         version: 2.1.0
@@ -14980,8 +14980,8 @@ importers:
         specifier: ^10.1.0
         version: 10.1.0
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       semver:
         specifier: ^7.7.1
         version: 7.7.3
@@ -15036,7 +15036,7 @@ importers:
         version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -15102,8 +15102,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -15232,8 +15232,8 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -15310,8 +15310,8 @@ importers:
         specifier: ^4.3.4
         version: 4.4.3(supports-color@8.1.1)
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -15378,7 +15378,7 @@ importers:
         version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -15540,11 +15540,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -15689,11 +15689,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -15876,8 +15876,8 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2(jsdom@16.7.0)
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
@@ -16033,11 +16033,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -16401,11 +16401,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       playwright:
         specifier: ^1.36.0
         version: 1.49.1
@@ -16601,11 +16601,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -16787,7 +16787,7 @@ importers:
         version: link:../../../common/build/eslint-config-fluid
       '@fluidframework/odsp-doclib-utils-previous':
         specifier: npm:@fluidframework/odsp-doclib-utils@2.74.0
-        version: '@fluidframework/odsp-doclib-utils@2.74.0(debug@4.4.3)(encoding@0.1.13)'
+        version: '@fluidframework/odsp-doclib-utils@2.74.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.130)
@@ -16819,11 +16819,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -16910,11 +16910,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -17007,11 +17007,11 @@ importers:
         specifier: ^2.6.1
         version: 2.6.1
       mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
+        specifier: ^11.7.5
+        version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
+        version: 1.5.1(mocha@11.7.5)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -21305,8 +21305,8 @@ packages:
   circular_buffer_js@1.10.0:
     resolution: {integrity: sha512-HXSDm8gm3nPog7Sh7kln9yb9dVFYan4nVwF4qOqOkR8YpAN6yJupyccXl9OcuTJfPqie0uRJdjHs44H1oCgBOQ==}
 
-  cjs-module-lexer@1.4.1:
-    resolution: {integrity: sha512-cuSVIHi9/9E/+821Qjdvngor+xpnlwnuwIyZOaLmHBVdXL+gP+I6QQB9VkO7RI77YIcTV+S1W9AreJ5eN63JBA==}
+  cjs-module-lexer@1.4.3:
+    resolution: {integrity: sha512-9z8TZaGM1pfswYeXrUpzPrkx8UnWYdhJclsiYMm6x/w5+nN+8Tf/LnAgfLGQCm59qAOxU8WwHEq2vNwF6i4j+Q==}
 
   classic-level@1.4.1:
     resolution: {integrity: sha512-qGx/KJl3bvtOHrGau2WklEZuXhS3zme+jf+fsu6Ej7W7IP/C49v7KNlWIsT1jZu0YnfzSIYDGcEWpCa1wKGWXQ==}
@@ -22035,6 +22035,10 @@ packages:
 
   diff@5.2.0:
     resolution: {integrity: sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==}
+    engines: {node: '>=0.3.1'}
+
+  diff@7.0.0:
+    resolution: {integrity: sha512-PJWHUb1RFevKCwaFA9RlG5tCd+FO5iRh9A8HEtkmBH2Li03iJriB6m6JIN4rGz3K3JLawI7/veA1xzRKP6ISBw==}
     engines: {node: '>=0.3.1'}
 
   diff@8.0.2:
@@ -24547,11 +24551,11 @@ packages:
   markdown-table@3.0.4:
     resolution: {integrity: sha512-wiYz4+JrLyb/DqW2hkFJxP7Vd7JuTDm77fvbM8VfEQdmSMqcImWeeRbHwZjBjIFki/VaMK2BhFi7oUUZeM5bqw==}
 
-  marked-terminal@7.2.1:
-    resolution: {integrity: sha512-rQ1MoMFXZICWNsKMiiHwP/Z+92PLKskTPXj+e7uwXmuMPkNn7iTqC+IvDekVm1MPeC9wYQeLxeFaOvudRR/XbQ==}
+  marked-terminal@7.3.0:
+    resolution: {integrity: sha512-t4rBvPsHc57uE/2nJOLmMbZCQ4tgAccAED3ngXQqW6g+TxA488JzJ+FK3lQkzBQOI1mRV/r/Kq+1ZlJ4D0owQw==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
-      marked: '>=1 <15'
+      marked: '>=1 <16'
 
   marked@4.3.0:
     resolution: {integrity: sha512-PRsaiG84bK+AMvxziE/lCFss8juXjNaWzVbN5tXAm4XjeaS9NAHhop+PjQxz2A9h8Q4M/xGmzP8vqNwy6JeK0A==}
@@ -24932,6 +24936,11 @@ packages:
   mocha@10.8.2:
     resolution: {integrity: sha512-VZlYo/WE8t1tstuRmqgeyBgCbJc/lEdopaa+axcKzTBJ+UIdlAB9XnmvTCAH4pwR4ElNInaedhEBmZD8iCSVEg==}
     engines: {node: '>= 14.0.0'}
+    hasBin: true
+
+  mocha@11.7.5:
+    resolution: {integrity: sha512-mTT6RgopEYABzXWFx+GcJ+ZQ32kp4fMf0xvpZIIfSq9Z8lC/++MtcCnQ9t5FP2veYEP95FIYSvW+U9fV4xrlig==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     hasBin: true
 
   module-details-from-path@1.0.3:
@@ -27049,8 +27058,8 @@ packages:
     resolution: {integrity: sha512-HHi5kVSefKaJkGYXbDuKbUGRVxqnWGn3J2e39CYcNJEfWciGq2zYtOhXLTlvrOZW1QU7VX67w7fMmWafHX9Pfw==}
     engines: {node: '>=4'}
 
-  supports-hyperlinks@3.1.0:
-    resolution: {integrity: sha512-2rn0BZ+/f7puLOHZm1HOJfwBggfaHXUpPUSSG/SWM4TWp5KCfmNYwnC3hruy2rZlMnmWZ+QAGpZfchu3f3695A==}
+  supports-hyperlinks@3.2.0:
+    resolution: {integrity: sha512-zFObLMyZeEwzAoKCyu1B91U79K2t7ApXuQfo8OuxwXLDgcKxuwM+YvcbIhm6QWqz7mHUH1TVytR1PwVVjEuMig==}
     engines: {node: '>=14.18'}
 
   supports-preserve-symlinks-flag@1.0.0:
@@ -28046,6 +28055,9 @@ packages:
   workerpool@6.5.1:
     resolution: {integrity: sha512-Fs4dNYcsdpYSAfVxhnl1L5zTksjvOJxtC5hzMNl+1t9B8hTJTdKDyZ5ju7ztgPy+ft9tBFXoOlDNiOT9WUXZlA==}
 
+  workerpool@9.3.4:
+    resolution: {integrity: sha512-TmPRQYYSAnnDiEB0P/Ytip7bFGvqnSU6I2BcuSw7Hx+JSg/DsUi5ebYfc8GYaSdpuvOcEs6dXxPurOYpe9QFwg==}
+
   wrap-ansi@6.2.0:
     resolution: {integrity: sha512-r6lPcBGxZXlIcymEu7InxDMhdW0KDxpLgoFLcguasxCaJ/SOIZwINatK9KY/tf+ZrlywOKU0UDj3ATXUBfxJXA==}
     engines: {node: '>=8'}
@@ -28272,14 +28284,14 @@ snapshots:
       cli-table3: 0.6.5
       commander: 10.0.1
       marked: 9.1.6
-      marked-terminal: 7.2.1(marked@9.1.6)
+      marked-terminal: 7.3.0(marked@9.1.6)
       semver: 7.7.3
 
   '@arethetypeswrong/core@0.18.2':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       '@loaderkit/resolve': 1.0.4
-      cjs-module-lexer: 1.4.1
+      cjs-module-lexer: 1.4.3
       fflate: 0.8.2
       lru-cache: 11.2.4
       semver: 7.7.3
@@ -30411,16 +30423,16 @@ snapshots:
       '@azure/identity': 4.5.0
       '@azure/identity-cache-persistence': 1.1.1
       '@fluid-internal/client-utils': 2.74.0
-      '@fluidframework/container-runtime': 2.74.0(debug@4.4.3)
+      '@fluidframework/container-runtime': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
-      '@fluidframework/datastore': 2.74.0(debug@4.4.3)
+      '@fluidframework/datastore': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/odsp-doclib-utils': 2.74.0(debug@4.4.3)(encoding@0.1.13)
-      '@fluidframework/odsp-driver': 2.74.0(debug@4.4.3)(encoding@0.1.13)
+      '@fluidframework/odsp-doclib-utils': 2.74.0(encoding@0.1.13)
+      '@fluidframework/odsp-driver': 2.74.0(encoding@0.1.13)
       '@fluidframework/odsp-driver-definitions': 2.74.0
       '@fluidframework/odsp-urlresolver': 2.74.0(encoding@0.1.13)
-      '@fluidframework/routerlicious-driver': 2.74.0(debug@4.4.3)(encoding@0.1.13)
+      '@fluidframework/routerlicious-driver': 2.74.0(encoding@0.1.13)
       '@fluidframework/routerlicious-urlresolver': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
       '@fluidframework/tool-utils': 2.74.0(encoding@0.1.13)
@@ -30469,12 +30481,12 @@ snapshots:
       '@fluidframework/container-definitions': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
-      '@fluidframework/datastore': 2.74.0(debug@4.4.3)
+      '@fluidframework/datastore': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
-      '@fluidframework/map': 2.74.0(debug@4.4.3)
+      '@fluidframework/map': 2.74.0
       '@fluidframework/register-collection': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/runtime-utils': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       uuid: 11.1.0
     transitivePeerDependencies:
@@ -30515,17 +30527,17 @@ snapshots:
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
       '@fluidframework/container-definitions': 2.74.0
-      '@fluidframework/container-runtime': 2.74.0(debug@4.4.3)
+      '@fluidframework/container-runtime': 2.74.0
       '@fluidframework/container-runtime-definitions': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
-      '@fluidframework/datastore': 2.74.0(debug@4.4.3)
+      '@fluidframework/datastore': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
-      '@fluidframework/map': 2.74.0(debug@4.4.3)
-      '@fluidframework/request-handler': 2.74.0(debug@4.4.3)
+      '@fluidframework/map': 2.74.0
+      '@fluidframework/request-handler': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/runtime-utils': 2.74.0
+      '@fluidframework/shared-object-base': 2.74.0
       '@fluidframework/synthesize': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       '@fluidframework/tree': 2.74.0
@@ -30548,7 +30560,7 @@ snapshots:
       '@fluidframework/routerlicious-driver': 1.4.0(encoding@0.1.13)
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/server-services-client': 0.1036.5002
-      axios: 0.30.2(debug@4.4.3)
+      axios: 0.30.2
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -30563,9 +30575,9 @@ snapshots:
       '@fluidframework/container-loader': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/fluid-static': 2.74.0
-      '@fluidframework/routerlicious-driver': 2.74.0(debug@4.4.3)(encoding@0.1.13)
+      '@fluidframework/routerlicious-driver': 2.74.0(encoding@0.1.13)
       '@fluidframework/telemetry-utils': 2.74.0
     transitivePeerDependencies:
       - bufferutil
@@ -30682,9 +30694,9 @@ snapshots:
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/shared-object-base': 2.74.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30819,6 +30831,29 @@ snapshots:
       - debug
       - supports-color
 
+  '@fluidframework/container-runtime@2.74.0':
+    dependencies:
+      '@fluid-internal/client-utils': 2.74.0
+      '@fluidframework/container-definitions': 2.74.0
+      '@fluidframework/container-runtime-definitions': 2.74.0
+      '@fluidframework/core-interfaces': 2.74.0
+      '@fluidframework/core-utils': 2.74.0
+      '@fluidframework/datastore': 2.74.0
+      '@fluidframework/driver-definitions': 2.74.0
+      '@fluidframework/driver-utils': 2.74.0
+      '@fluidframework/id-compressor': 2.74.0
+      '@fluidframework/runtime-definitions': 2.74.0
+      '@fluidframework/runtime-utils': 2.74.0
+      '@fluidframework/telemetry-utils': 2.74.0
+      '@tylerbu/sorted-btree-es6': 1.8.0
+      double-ended-queue: 2.1.0-0
+      lz4js: 0.2.0
+      semver-ts: 1.0.3
+      uuid: 11.1.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   '@fluidframework/container-runtime@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
@@ -30864,9 +30899,9 @@ snapshots:
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/shared-object-base': 2.74.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30912,6 +30947,24 @@ snapshots:
       - debug
       - supports-color
 
+  '@fluidframework/datastore@2.74.0':
+    dependencies:
+      '@fluid-internal/client-utils': 2.74.0
+      '@fluidframework/container-definitions': 2.74.0
+      '@fluidframework/core-interfaces': 2.74.0
+      '@fluidframework/core-utils': 2.74.0
+      '@fluidframework/datastore-definitions': 2.74.0
+      '@fluidframework/driver-definitions': 2.74.0
+      '@fluidframework/driver-utils': 2.74.0
+      '@fluidframework/id-compressor': 2.74.0
+      '@fluidframework/runtime-definitions': 2.74.0
+      '@fluidframework/runtime-utils': 2.74.0
+      '@fluidframework/telemetry-utils': 2.74.0
+      uuid: 11.1.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   '@fluidframework/datastore@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
@@ -30934,7 +30987,7 @@ snapshots:
     dependencies:
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/replay-driver': 2.74.0
       jsonschema: 1.4.1
     transitivePeerDependencies:
@@ -30948,18 +31001,18 @@ snapshots:
       '@fluidframework/cell': 2.74.0
       '@fluidframework/container-definitions': 2.74.0
       '@fluidframework/container-loader': 2.74.0
-      '@fluidframework/container-runtime': 2.74.0(debug@4.4.3)
+      '@fluidframework/container-runtime': 2.74.0
       '@fluidframework/container-runtime-definitions': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/counter': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/map': 2.74.0(debug@4.4.3)
+      '@fluidframework/map': 2.74.0
       '@fluidframework/matrix': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
       '@fluidframework/sequence': 2.74.0
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/shared-object-base': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       '@fluidframework/tree': 2.74.0
     transitivePeerDependencies:
@@ -30984,6 +31037,18 @@ snapshots:
       '@fluidframework/driver-utils': 1.4.0
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/telemetry-utils': 1.4.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  '@fluidframework/driver-base@2.74.0':
+    dependencies:
+      '@fluid-internal/client-utils': 2.74.0
+      '@fluidframework/core-interfaces': 2.74.0
+      '@fluidframework/core-utils': 2.74.0
+      '@fluidframework/driver-definitions': 2.74.0
+      '@fluidframework/driver-utils': 2.74.0
+      '@fluidframework/telemetry-utils': 2.74.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -31020,8 +31085,22 @@ snapshots:
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/telemetry-utils': 1.4.0
-      axios: 0.30.2(debug@4.4.3)
+      axios: 0.30.2
       uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  '@fluidframework/driver-utils@2.74.0':
+    dependencies:
+      '@fluid-internal/client-utils': 2.74.0
+      '@fluidframework/core-interfaces': 2.74.0
+      '@fluidframework/core-utils': 2.74.0
+      '@fluidframework/driver-definitions': 2.74.0
+      '@fluidframework/telemetry-utils': 2.74.0
+      axios: 1.13.2(debug@4.3.7)
+      lz4js: 0.2.0
+      uuid: 11.1.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -31045,7 +31124,7 @@ snapshots:
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       idb: 6.1.5
     transitivePeerDependencies:
@@ -31058,7 +31137,7 @@ snapshots:
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/replay-driver': 2.74.0
     transitivePeerDependencies:
       - debug
@@ -31071,7 +31150,7 @@ snapshots:
       '@fluidframework/container-loader': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/odsp-driver': 2.74.0(debug@4.4.3)(encoding@0.1.13)
+      '@fluidframework/odsp-driver': 2.74.0(encoding@0.1.13)
       '@fluidframework/odsp-driver-definitions': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       '@json2csv/plainjs': 7.0.6
@@ -31107,16 +31186,16 @@ snapshots:
       '@fluidframework/aqueduct': 2.74.0
       '@fluidframework/container-definitions': 2.74.0
       '@fluidframework/container-loader': 2.74.0
-      '@fluidframework/container-runtime': 2.74.0(debug@4.4.3)
+      '@fluidframework/container-runtime': 2.74.0
       '@fluidframework/container-runtime-definitions': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/request-handler': 2.74.0(debug@4.4.3)
+      '@fluidframework/request-handler': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/runtime-utils': 2.74.0
+      '@fluidframework/shared-object-base': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       '@fluidframework/tree': 2.74.0
     transitivePeerDependencies:
@@ -31168,6 +31247,30 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@fluidframework/local-driver@2.74.0(encoding@0.1.13)':
+    dependencies:
+      '@fluid-internal/client-utils': 2.74.0
+      '@fluidframework/core-interfaces': 2.74.0
+      '@fluidframework/core-utils': 2.74.0
+      '@fluidframework/driver-base': 2.74.0
+      '@fluidframework/driver-definitions': 2.74.0
+      '@fluidframework/driver-utils': 2.74.0
+      '@fluidframework/protocol-base': 7.0.0
+      '@fluidframework/routerlicious-driver': 2.74.0(encoding@0.1.13)
+      '@fluidframework/server-local-server': 7.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-test-utils': 7.0.0
+      '@fluidframework/telemetry-utils': 2.74.0
+      jsrsasign: 11.1.0
+      uuid: 11.1.0
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+
   '@fluidframework/map@1.4.0':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -31180,6 +31283,23 @@ snapshots:
       '@fluidframework/runtime-definitions': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/shared-object-base': 1.4.0
+      path-browserify: 1.0.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  '@fluidframework/map@2.74.0':
+    dependencies:
+      '@fluid-internal/client-utils': 2.74.0
+      '@fluidframework/core-interfaces': 2.74.0
+      '@fluidframework/core-utils': 2.74.0
+      '@fluidframework/datastore-definitions': 2.74.0
+      '@fluidframework/driver-definitions': 2.74.0
+      '@fluidframework/driver-utils': 2.74.0
+      '@fluidframework/runtime-definitions': 2.74.0
+      '@fluidframework/runtime-utils': 2.74.0
+      '@fluidframework/shared-object-base': 2.74.0
+      '@fluidframework/telemetry-utils': 2.74.0
       path-browserify: 1.0.1
     transitivePeerDependencies:
       - debug
@@ -31209,11 +31329,11 @@ snapshots:
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/merge-tree': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/runtime-utils': 2.74.0
+      '@fluidframework/shared-object-base': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       '@tiny-calc/nano': 0.0.0-alpha.5
       double-ended-queue: 2.1.0-0
@@ -31231,8 +31351,8 @@ snapshots:
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/runtime-utils': 2.74.0
+      '@fluidframework/shared-object-base': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
     transitivePeerDependencies:
       - debug
@@ -31245,6 +31365,21 @@ snapshots:
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
       '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/odsp-driver-definitions': 2.74.0
+      '@fluidframework/telemetry-utils': 2.74.0
+      isomorphic-fetch: 3.0.0(encoding@0.1.13)
+    transitivePeerDependencies:
+      - debug
+      - encoding
+      - supports-color
+
+  '@fluidframework/odsp-doclib-utils@2.74.0(encoding@0.1.13)':
+    dependencies:
+      '@fluid-internal/client-utils': 2.74.0
+      '@fluidframework/core-interfaces': 2.74.0
+      '@fluidframework/core-utils': 2.74.0
+      '@fluidframework/driver-definitions': 2.74.0
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/odsp-driver-definitions': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       isomorphic-fetch: 3.0.0(encoding@0.1.13)
@@ -31277,13 +31412,33 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@fluidframework/odsp-driver@2.74.0(encoding@0.1.13)':
+    dependencies:
+      '@fluid-internal/client-utils': 2.74.0
+      '@fluidframework/core-interfaces': 2.74.0
+      '@fluidframework/core-utils': 2.74.0
+      '@fluidframework/driver-base': 2.74.0
+      '@fluidframework/driver-definitions': 2.74.0
+      '@fluidframework/driver-utils': 2.74.0
+      '@fluidframework/odsp-doclib-utils': 2.74.0(encoding@0.1.13)
+      '@fluidframework/odsp-driver-definitions': 2.74.0
+      '@fluidframework/telemetry-utils': 2.74.0
+      socket.io-client: 4.7.5
+      uuid: 11.1.0
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+
   '@fluidframework/odsp-urlresolver@2.74.0(encoding@0.1.13)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/odsp-driver': 2.74.0(debug@4.4.3)(encoding@0.1.13)
+      '@fluidframework/odsp-driver': 2.74.0(encoding@0.1.13)
       '@fluidframework/odsp-driver-definitions': 2.74.0
     transitivePeerDependencies:
       - bufferutil
@@ -31300,8 +31455,8 @@ snapshots:
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/runtime-utils': 2.74.0
+      '@fluidframework/shared-object-base': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       uuid: 11.1.0
     transitivePeerDependencies:
@@ -31339,9 +31494,9 @@ snapshots:
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/shared-object-base': 2.74.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -31352,7 +31507,7 @@ snapshots:
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
     transitivePeerDependencies:
       - debug
@@ -31366,6 +31521,17 @@ snapshots:
       '@fluidframework/runtime-definitions': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
     transitivePeerDependencies:
+      - supports-color
+
+  '@fluidframework/request-handler@2.74.0':
+    dependencies:
+      '@fluidframework/container-runtime-definitions': 2.74.0
+      '@fluidframework/core-interfaces': 2.74.0
+      '@fluidframework/core-utils': 2.74.0
+      '@fluidframework/runtime-definitions': 2.74.0
+      '@fluidframework/runtime-utils': 2.74.0
+    transitivePeerDependencies:
+      - debug
       - supports-color
 
   '@fluidframework/request-handler@2.74.0(debug@4.4.3)':
@@ -31425,6 +31591,27 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@fluidframework/routerlicious-driver@2.74.0(encoding@0.1.13)':
+    dependencies:
+      '@fluid-internal/client-utils': 2.74.0
+      '@fluidframework/core-interfaces': 2.74.0
+      '@fluidframework/core-utils': 2.74.0
+      '@fluidframework/driver-base': 2.74.0
+      '@fluidframework/driver-definitions': 2.74.0
+      '@fluidframework/driver-utils': 2.74.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/telemetry-utils': 2.74.0
+      cross-fetch: 3.1.8(encoding@0.1.13)
+      json-stringify-safe: 5.0.1
+      socket.io-client: 4.7.5
+      uuid: 11.1.0
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+
   '@fluidframework/routerlicious-urlresolver@2.74.0':
     dependencies:
       '@fluidframework/core-interfaces': 2.74.0
@@ -31468,6 +31655,23 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@fluidframework/runtime-utils@2.74.0':
+    dependencies:
+      '@fluid-internal/client-utils': 2.74.0
+      '@fluidframework/container-definitions': 2.74.0
+      '@fluidframework/container-runtime-definitions': 2.74.0
+      '@fluidframework/core-interfaces': 2.74.0
+      '@fluidframework/core-utils': 2.74.0
+      '@fluidframework/datastore-definitions': 2.74.0
+      '@fluidframework/driver-definitions': 2.74.0
+      '@fluidframework/driver-utils': 2.74.0
+      '@fluidframework/runtime-definitions': 2.74.0
+      '@fluidframework/telemetry-utils': 2.74.0
+      semver-ts: 1.0.3
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   '@fluidframework/runtime-utils@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
@@ -31494,8 +31698,8 @@ snapshots:
       '@fluidframework/driver-definitions': 2.74.0
       '@fluidframework/merge-tree': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/runtime-utils': 2.74.0
+      '@fluidframework/shared-object-base': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       double-ended-queue: 2.1.0-0
       uuid: 11.1.0
@@ -31516,6 +31720,35 @@ snapshots:
       nconf: 0.12.1
       serialize-error: 8.1.0
     transitivePeerDependencies:
+      - supports-color
+
+  '@fluidframework/server-lambdas@7.0.0':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 7.0.0
+      '@fluidframework/protocol-base': 7.0.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-lambdas-driver': 7.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
+      '@types/semver': 7.7.0
+      assert: 2.1.0
+      async: 3.2.6
+      axios: 1.13.2(debug@4.3.7)
+      buffer: 6.0.3
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      json-stringify-safe: 5.0.1
+      lodash: 4.17.21
+      nconf: 0.12.1
+      opossum: 8.5.0
+      semver: 7.7.3
+      serialize-error: 8.1.0
+      sha.js: 2.4.12
+      uuid: 11.1.0
+    transitivePeerDependencies:
+      - debug
       - supports-color
 
   '@fluidframework/server-lambdas@7.0.0(debug@4.4.3)':
@@ -31745,6 +31978,24 @@ snapshots:
       - debug
       - supports-color
 
+  '@fluidframework/shared-object-base@2.74.0':
+    dependencies:
+      '@fluid-internal/client-utils': 2.74.0
+      '@fluidframework/container-definitions': 2.74.0
+      '@fluidframework/core-interfaces': 2.74.0
+      '@fluidframework/core-utils': 2.74.0
+      '@fluidframework/datastore': 2.74.0
+      '@fluidframework/datastore-definitions': 2.74.0
+      '@fluidframework/driver-definitions': 2.74.0
+      '@fluidframework/id-compressor': 2.74.0
+      '@fluidframework/runtime-definitions': 2.74.0
+      '@fluidframework/runtime-utils': 2.74.0
+      '@fluidframework/telemetry-utils': 2.74.0
+      uuid: 11.1.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   '@fluidframework/shared-object-base@2.74.0(debug@4.4.3)':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
@@ -31768,9 +32019,9 @@ snapshots:
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/shared-object-base': 2.74.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -31790,9 +32041,9 @@ snapshots:
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/shared-object-base': 2.74.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -31827,11 +32078,11 @@ snapshots:
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/id-compressor': 2.74.0
-      '@fluidframework/routerlicious-driver': 2.74.0(debug@4.4.3)(encoding@0.1.13)
+      '@fluidframework/routerlicious-driver': 2.74.0(encoding@0.1.13)
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/runtime-utils': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       jsrsasign: 11.1.0
       uuid: 11.1.0
@@ -31883,11 +32134,11 @@ snapshots:
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/driver-utils': 2.74.0
       '@fluidframework/fluid-static': 2.74.0
-      '@fluidframework/map': 2.74.0(debug@4.4.3)
-      '@fluidframework/routerlicious-driver': 2.74.0(debug@4.4.3)(encoding@0.1.13)
-      '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
+      '@fluidframework/map': 2.74.0
+      '@fluidframework/routerlicious-driver': 2.74.0(encoding@0.1.13)
+      '@fluidframework/runtime-utils': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       '@fluidframework/tinylicious-driver': 2.74.0(encoding@0.1.13)
     transitivePeerDependencies:
@@ -31901,8 +32152,8 @@ snapshots:
     dependencies:
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
-      '@fluidframework/driver-utils': 2.74.0(debug@4.4.3)
-      '@fluidframework/routerlicious-driver': 2.74.0(debug@4.4.3)(encoding@0.1.13)
+      '@fluidframework/driver-utils': 2.74.0
+      '@fluidframework/routerlicious-driver': 2.74.0(encoding@0.1.13)
       jsrsasign: 11.1.0
       uuid: 11.1.0
     transitivePeerDependencies:
@@ -31928,15 +32179,15 @@ snapshots:
   '@fluidframework/tree@2.74.0':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
-      '@fluidframework/container-runtime': 2.74.0(debug@4.4.3)
+      '@fluidframework/container-runtime': 2.74.0
       '@fluidframework/core-interfaces': 2.74.0
       '@fluidframework/core-utils': 2.74.0
       '@fluidframework/datastore-definitions': 2.74.0
       '@fluidframework/driver-definitions': 2.74.0
       '@fluidframework/id-compressor': 2.74.0
       '@fluidframework/runtime-definitions': 2.74.0
-      '@fluidframework/runtime-utils': 2.74.0(debug@4.4.3)
-      '@fluidframework/shared-object-base': 2.74.0(debug@4.4.3)
+      '@fluidframework/runtime-utils': 2.74.0
+      '@fluidframework/shared-object-base': 2.74.0
       '@fluidframework/telemetry-utils': 2.74.0
       '@sinclair/typebox': 0.34.13
       '@tylerbu/sorted-btree-es6': 1.8.0
@@ -31951,7 +32202,7 @@ snapshots:
   '@fluidframework/undo-redo@2.74.0':
     dependencies:
       '@fluid-internal/client-utils': 2.74.0
-      '@fluidframework/map': 2.74.0(debug@4.4.3)
+      '@fluidframework/map': 2.74.0
       '@fluidframework/matrix': 2.74.0
       '@fluidframework/merge-tree': 2.74.0
       '@fluidframework/sequence': 2.74.0
@@ -34677,7 +34928,7 @@ snapshots:
 
   '@vvago/vale@3.12.0':
     dependencies:
-      axios: 1.13.2(debug@4.4.3)
+      axios: 1.13.2(debug@4.3.7)
       rimraf: 5.0.10
       tar: 6.2.1
       unzipper: 0.10.14
@@ -35120,6 +35371,14 @@ snapshots:
       possible-typed-array-names: 1.0.0
 
   axe-core@4.10.2: {}
+
+  axios@0.30.2:
+    dependencies:
+      follow-redirects: 1.15.11(debug@4.3.7)
+      form-data: 4.0.5
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
 
   axios@0.30.2(debug@4.4.3):
     dependencies:
@@ -35656,7 +35915,7 @@ snapshots:
 
   circular_buffer_js@1.10.0: {}
 
-  cjs-module-lexer@1.4.1: {}
+  cjs-module-lexer@1.4.3: {}
 
   classic-level@1.4.1:
     dependencies:
@@ -36396,6 +36655,8 @@ snapshots:
   diff@4.0.2: {}
 
   diff@5.2.0: {}
+
+  diff@7.0.0: {}
 
   diff@8.0.2: {}
 
@@ -37991,6 +38252,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  http-proxy-middleware@2.0.9(@types/express@4.17.21):
+    dependencies:
+      '@types/http-proxy': 1.17.15
+      http-proxy: 1.18.1
+      is-glob: 4.0.3
+      is-plain-obj: 3.0.0
+      micromatch: 4.0.8
+    optionalDependencies:
+      '@types/express': 4.17.21
+    transitivePeerDependencies:
+      - debug
+
   http-proxy-middleware@2.0.9(@types/express@4.17.21)(debug@4.4.3):
     dependencies:
       '@types/http-proxy': 1.17.15
@@ -38000,6 +38273,14 @@ snapshots:
       micromatch: 4.0.8
     optionalDependencies:
       '@types/express': 4.17.21
+    transitivePeerDependencies:
+      - debug
+
+  http-proxy@1.18.1:
+    dependencies:
+      eventemitter3: 4.0.7
+      follow-redirects: 1.15.11(debug@4.3.7)
+      requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
 
@@ -38706,7 +38987,7 @@ snapshots:
       prompts: 2.4.2
       spawnd: 10.1.4
       tree-kill: 1.2.2
-      wait-on: 8.0.1
+      wait-on: 8.0.1(debug@4.3.7)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -38905,7 +39186,7 @@ snapshots:
       '@jest/types': 29.6.3
       '@types/node': 18.19.130
       chalk: 4.1.2
-      cjs-module-lexer: 1.4.1
+      cjs-module-lexer: 1.4.3
       collect-v8-coverage: 1.0.2
       glob: 7.2.3
       graceful-fs: 4.2.11
@@ -39629,7 +39910,7 @@ snapshots:
 
   markdown-table@3.0.4: {}
 
-  marked-terminal@7.2.1(marked@9.1.6):
+  marked-terminal@7.3.0(marked@9.1.6):
     dependencies:
       ansi-escapes: 7.0.0
       ansi-regex: 6.1.0
@@ -39638,7 +39919,7 @@ snapshots:
       cli-table3: 0.6.5
       marked: 9.1.6
       node-emoji: 2.2.0
-      supports-hyperlinks: 3.1.0
+      supports-hyperlinks: 3.2.0
 
   marked@4.3.0: {}
 
@@ -40235,6 +40516,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  mocha-multi-reporters@1.5.1(mocha@11.7.5):
+    dependencies:
+      debug: 4.4.3(supports-color@8.1.1)
+      lodash: 4.17.21
+      mocha: 11.7.5
+    transitivePeerDependencies:
+      - supports-color
+
   mocha@10.8.2:
     dependencies:
       ansi-colors: 4.1.3
@@ -40256,6 +40545,30 @@ snapshots:
       workerpool: 6.5.1
       yargs: 16.2.0
       yargs-parser: 20.2.9
+      yargs-unparser: 2.0.0
+
+  mocha@11.7.5:
+    dependencies:
+      browser-stdout: 1.3.1
+      chokidar: 4.0.3
+      debug: 4.4.3(supports-color@8.1.1)
+      diff: 7.0.0
+      escape-string-regexp: 4.0.0
+      find-up: 5.0.0
+      glob: 10.5.0
+      he: 1.2.0
+      is-path-inside: 3.0.3
+      js-yaml: 4.1.1
+      log-symbols: 4.1.0
+      minimatch: 9.0.5
+      ms: 2.1.3
+      picocolors: 1.1.1
+      serialize-javascript: 6.0.2
+      strip-json-comments: 3.1.1
+      supports-color: 8.1.1
+      workerpool: 9.3.4
+      yargs: 17.7.2
+      yargs-parser: 21.1.1
       yargs-unparser: 2.0.0
 
   module-details-from-path@1.0.3: {}
@@ -42892,7 +43205,7 @@ snapshots:
       has-flag: 2.0.0
       supports-color: 5.5.0
 
-  supports-hyperlinks@3.1.0:
+  supports-hyperlinks@3.2.0:
     dependencies:
       has-flag: 4.0.0
       supports-color: 7.2.0
@@ -43117,7 +43430,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.0
       '@fluidframework/protocol-base': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 7.0.0(debug@4.4.3)
+      '@fluidframework/server-lambdas': 7.0.0
       '@fluidframework/server-local-server': 7.0.0
       '@fluidframework/server-memory-orderer': 7.0.0
       '@fluidframework/server-services-client': 7.0.0
@@ -43127,7 +43440,7 @@ snapshots:
       '@fluidframework/server-services-utils': 7.0.0
       '@fluidframework/server-test-utils': 7.0.0
       agentkeepalive: 4.6.0
-      axios: 1.13.2(debug@4.4.3)
+      axios: 1.13.2(debug@4.3.7)
       body-parser: 1.20.3
       charwise: 3.0.1
       compression: 1.7.5
@@ -43849,16 +44162,6 @@ snapshots:
     dependencies:
       xml-name-validator: 4.0.0
 
-  wait-on@8.0.1:
-    dependencies:
-      axios: 1.13.2(debug@4.4.3)
-      joi: 17.13.3
-      lodash: 4.17.21
-      minimist: 1.2.8
-      rxjs: 7.8.2
-    transitivePeerDependencies:
-      - debug
-
   wait-on@8.0.1(debug@4.3.7):
     dependencies:
       axios: 1.13.2(debug@4.3.7)
@@ -44057,7 +44360,7 @@ snapshots:
       express: 4.21.2
       graceful-fs: 4.2.11
       html-entities: 2.6.0
-      http-proxy-middleware: 2.0.9(@types/express@4.17.21)(debug@4.4.3)
+      http-proxy-middleware: 2.0.9(@types/express@4.17.21)
       ipaddr.js: 2.2.0
       launch-editor: 2.9.1
       open: 8.4.2
@@ -44267,6 +44570,8 @@ snapshots:
   wordwrap@1.0.0: {}
 
   workerpool@6.5.1: {}
+
+  workerpool@9.3.4: {}
 
   wrap-ansi@6.2.0:
     dependencies:
