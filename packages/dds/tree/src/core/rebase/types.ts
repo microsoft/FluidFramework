@@ -201,10 +201,16 @@ export type ChangeMetadata = CommitMetadata &
 				 * This is a `SerializedChange` from treeCheckout.ts.
 				 */
 				getChange(): JsonCompatibleReadOnly;
+				/**
+				 * Optional label provided by the user when commit was created.
+				 * This can be used by undo/redo to group or classify edits.
+				 */
+				label?: unknown;
 		  }
 		| {
 				readonly isLocal: false;
 				readonly getChange?: undefined;
+				label?: unknown;
 		  }
 	);
 

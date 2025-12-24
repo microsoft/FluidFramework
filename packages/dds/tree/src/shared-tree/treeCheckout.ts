@@ -379,6 +379,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private editLock: EditLock;
 
+	// User-defined label associated with the transaction whose commit is currently being produced for this checkout.
+	public transactionLabel?: unknown;
+
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
@@ -428,6 +431,22 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
+	}
+
+	public runWithTransactionLabel<TLabel, TResult>(
+		fn: (label?: TLabel) => TResult,
+		label?: TLabel,
+	): TResult {
+		// If a transaction label is already set, nesting is occurring, so we should not override it
+		if (this.transactionLabel !== undefined) {
+			return fn(label);
+		}
+		this.transactionLabel = label;
+		try {
+			return fn(label);
+		} finally {
+			this.transactionLabel = undefined;
+		}
 	}
 
 	public get removedRoots(): ReadOnlyDetachedFieldIndex {
@@ -573,6 +592,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							change: encodedChange,
 						} satisfies SerializedChange;
 					},
+					label: this.transactionLabel,
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);
@@ -580,7 +600,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
-			this.#events.emit("changed", { isLocal: false, kind: CommitKind.Default });
+			const metaData: ChangeMetadata = {
+				isLocal: false,
+				kind: CommitKind.Default,
+				label: undefined,
+			};
+			this.#events.emit("changed", metaData);
 		}
 	};
 

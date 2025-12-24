@@ -123,4 +123,11 @@ export interface RunTransactionParams {
 	 * this client and ignored by all other clients.
 	 */
 	readonly preconditions?: readonly TransactionConstraint[];
+	/**
+	 * An optional user-defined label for this transaction.
+	 *
+	 * This label is associated with the commit produced by this transaction, and is surfaced through the
+	 * `label` property of {@link ChangeMetadata} in the `commitApplied` event.
+	 */
+	readonly label?: unknown;
 }
