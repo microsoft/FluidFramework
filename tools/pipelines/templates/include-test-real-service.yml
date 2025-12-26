@@ -140,13 +140,6 @@ jobs:
 
       - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
-      # - task: Bash@3
-      #   displayName: Install npm 10
-      #   retryCountOnTaskFailure: 4
-      #   inputs:
-      #     targetType: 'inline'
-      #     script: 'pnpm install --global npm@^10'
-
       # Download artifact
       - task: DownloadPipelineArtifact@2
         displayName: Download test package
