@@ -131,7 +131,7 @@ describe("TransactionEnricher", () => {
 				const getter = transactionEnricher.commitTransaction();
 				assert.notEqual(getter, undefined);
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const change = getter!(tag1);
+				const change = getter!();
 				const expected = TestChange.mint([], [1000, 3000, 4000]);
 				assert.deepEqual(change, expected);
 			});

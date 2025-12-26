@@ -12,6 +12,7 @@ import {
 	findAncestor,
 	type ChangeFamilyEditor,
 	type GraphCommit,
+	type RevisionTag,
 	type TaggedChange,
 } from "../core/index.js";
 import { getLast, getOrCreate, hasSome } from "../util/index.js";
@@ -270,7 +271,8 @@ export class SquashingTransactionStack<
 	 */
 	public constructor(
 		public readonly branch: SharedTreeBranch<TEditor, TChange>,
-		squash: (commits: GraphCommit<TChange>[]) => TaggedChange<TChange>,
+		mintRevisionTag: () => RevisionTag,
+		squash: (commits: GraphCommit<TChange>[], revision: RevisionTag) => TaggedChange<TChange>,
 		onPush?: () => OnPop | void,
 	) {
 		super(
@@ -280,7 +282,12 @@ export class SquashingTransactionStack<
 				// TODO:#8603: This may need to be computed differently if we allow rebasing during a transaction.
 				const startHead = this.activeBranch.getHead();
 				const outerOnPop = onPush?.();
-				const transactionBranch = this.branch.fork(startHead);
+				let transactionRevision: RevisionTag | undefined;
+				const transactionBranch = this.branch.fork(startHead, () => {
+					// Lazily mint the revision tag for the transaction when it is first needed
+					transactionRevision ??= mintRevisionTag();
+					return transactionRevision;
+				});
 				this.setTransactionBranch(transactionBranch);
 				transactionBranch.editor.enterTransaction();
 				// Invoked when an outer transaction ends
@@ -301,7 +308,11 @@ export class SquashingTransactionStack<
 								(c) => c === startHead,
 							);
 							if (removedCommits.length > 0) {
-								this.branch.apply(squash(removedCommits));
+								assert(
+									transactionRevision !== undefined,
+									"A transaction revision tag should have been minted if there are commits to squash",
+								);
+								this.branch.apply(squash(removedCommits, transactionRevision));
 							}
 							break;
 						}

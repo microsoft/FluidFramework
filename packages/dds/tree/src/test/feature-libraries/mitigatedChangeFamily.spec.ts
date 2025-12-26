@@ -27,9 +27,10 @@ const arg3: any = "arg3";
 
 const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	buildEditor: (
-		mintRevisionTagThrow: () => RevisionTag,
+		mintRevisionTagArg: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<string>) => void,
 	): ChangeFamilyEditor => {
+		assert.equal(mintRevisionTagArg, mintRevisionTag);
 		assert.equal(changeReceiver, arg1);
 		throw new Error("buildEditor");
 	},
@@ -56,9 +57,10 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 };
 const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	buildEditor: (
-		mintRevisionTagRet: () => RevisionTag,
+		mintRevisionTagArg: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<string>) => void,
 	): ChangeFamilyEditor => {
+		assert.equal(mintRevisionTagArg, mintRevisionTag);
 		assert.equal(changeReceiver, arg1);
 		return "buildEditor" as unknown as ChangeFamilyEditor;
 	},

@@ -264,10 +264,10 @@ describe("simple-tree tree", () => {
 
 			view.root = toHydrate;
 			assert.equal(toHydrate, view.root);
-			assert.equal(toHydrate.identifier, "beefbeef-beef-4000-8000-000000000004");
+			assert.equal(toHydrate.identifier, "beefbeef-beef-4000-8000-000000000002");
 
 			view.root = { identifier: undefined };
-			assert.equal(view.root?.identifier, "beefbeef-beef-4000-8000-000000000006");
+			assert.equal(view.root?.identifier, "beefbeef-beef-4000-8000-000000000004");
 		});
 
 		it("populates field when no field defaulter is provided.", () => {
