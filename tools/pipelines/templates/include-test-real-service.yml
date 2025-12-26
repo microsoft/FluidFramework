@@ -186,8 +186,10 @@ jobs:
 
 
       # Pin oteljs to a version that doesn't depend on packages that cause issues in our LTS branch
-      # because they expect everything to be ESM, which we're not using yet in LTS.
+      # because they expect everything to be ESM, which we're not using yet in LTS (we probably can't make such a big
+      # change to how the packages work in LTS, it would almost certainly result in some breaking changes).
       # Note that it needs to be done before running `pnpm install` so that the override is respected during installation.
+      # I
       - task: Bash@3
         displayName: 'Add pnpm override for @microsoft/oteljs@4.20.30'
         inputs:
