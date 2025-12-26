@@ -237,6 +237,20 @@ jobs:
               workingDirectory: ${{ parameters.testWorkspace }}
               script: 'pnpm install ${{ parameters.extraDependencies }}'
 
+      # Install test and logger package
+      # Use a Bash@3 task instead of Npm@1 so we can use pnpm, which will respect the .npmrc file configured globally earlier
+      - task: Bash@3
+        displayName: 'Troubleshooting'
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.testWorkspace }}
+          script: |
+            echo "Contents of directory where module isn't found"
+            ls -Al /mnt/vss/_work/1/test/node_modules/.pnpm/@commonschema+blackstone-core@0.2.0-alpha/node_modules/@commonschema/blackstone-core/dist
+
+            echo "package.json"
+            cat ${{ parameters.testWorkspace }}/package.json
+
       # run the test
       - task: Npm@1
         displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
