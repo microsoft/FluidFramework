@@ -184,6 +184,29 @@ jobs:
               echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
             fi
 
+
+      # Pin oteljs to a version that doesn't depend on packages that cause issues in our LTS branch
+      # because they expect everything to be ESM, which we're not using yet in LTS.
+      # Note that it needs to be done before running `pnpm install` so that the override is respected during installation.
+      - task: Bash@3
+        displayName: 'Add pnpm override for @microsoft/oteljs@4.20.30'
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.testWorkspace }}
+          script: |
+            # Init first so package.json exists.
+            pnpm init
+            # Apply override
+            node -e "
+            const fs = require('fs');
+            const pkgPath = './package.json';
+            const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+            pkg.pnpm = pkg.pnpm || {};
+            pkg.pnpm.overrides = pkg.pnpm.overrides || {};
+            pkg.pnpm.overrides['@microsoft/oteljs'] = '4.20.30';
+            fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
+            "
+
       # Install test and logger package
       # Use a Bash@3 task instead of Npm@1 so we can use pnpm, which will respect the .npmrc file configured globally earlier
       - task: Bash@3
@@ -197,24 +220,6 @@ jobs:
           workingDirectory: ${{ parameters.testWorkspace }}
           script: |
             pnpm install $(Initialize.testPackageTgz) @ff-internal/aria-logger
-
-      # Pin oteljs to a version that doesn't depend on packages that cause issues in our LTS branch
-      # because they expect everything to be ESM, which we're not using yet in LTS.
-      - task: Bash@3
-        displayName: 'Add pnpm override for @microsoft/oteljs@4.20.30'
-        inputs:
-          targetType: 'inline'
-          workingDirectory: ${{ parameters.testWorkspace }}
-          script: |
-            node -e "
-            const fs = require('fs');
-            const pkgPath = './package.json';
-            const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-            pkg.pnpm = pkg.pnpm || {};
-            pkg.pnpm.overrides = pkg.pnpm.overrides || {};
-            pkg.pnpm.overrides['@microsoft/oteljs'] = '4.20.30';
-            fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
-            "
 
       # Download Test Files & Install Extra Dependencies
       # These steps are intended to include extra dependencies that are not available as
