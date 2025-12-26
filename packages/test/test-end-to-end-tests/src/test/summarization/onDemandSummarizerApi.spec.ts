@@ -100,6 +100,20 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		const endEvents = getPerformanceEvents("end");
 		assert.strictEqual(startEvents.length, 1, "start telemetry missing");
 		assert.strictEqual(endEvents.length, 1, "end telemetry missing");
+
+		// Verify that fullTree flag is false (default) in the summarizer telemetry
+		const summarizeGenerateEvents = logger.events.filter(
+			(e) => e.eventName === "fluid:telemetry:Summarizer:Running:Summarize_generate",
+		);
+		assert(
+			summarizeGenerateEvents.length >= 1,
+			"should have at least one Summarize_generate event",
+		);
+		assert.strictEqual(
+			summarizeGenerateEvents[0].fullTree,
+			false,
+			"fullTree flag should be false in Summarize_generate telemetry when config is not enabled",
+		);
 	});
 
 	it("summarizes successfully with fullTree gate on", async function () {
@@ -130,6 +144,21 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		const endEvents = getPerformanceEvents("end");
 		assert.strictEqual(startEvents.length, 1, "start telemetry missing");
 		assert.strictEqual(endEvents.length, 1, "end telemetry missing");
+
+		// Verify that fullTree flag is propagated to the summarizer telemetry
+		// This validates that the fullTree option is properly passed through when retryOnFailure is true
+		const summarizeGenerateEvents = logger.events.filter(
+			(e) => e.eventName === "fluid:telemetry:Summarizer:Running:Summarize_generate",
+		);
+		assert(
+			summarizeGenerateEvents.length >= 1,
+			"should have at least one Summarize_generate event",
+		);
+		assert.strictEqual(
+			summarizeGenerateEvents[0].fullTree,
+			true,
+			"fullTree flag should be true in Summarize_generate telemetry when config is enabled",
+		);
 	});
 
 	it("fails gracefully when summary upload throws", async () => {
