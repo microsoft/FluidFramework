@@ -105,33 +105,6 @@ export interface BranchTrimmingEvents {
 }
 
 /**
- * Minter functions for edit and commit revision tags.
- */
-export interface EditAndCommitTagMinter {
-	/**
-	 * Mint a `RevisionTag` for a new edit.
-	 * May return the same tag as a previous call.
-	 */
-	mintEditTag: () => RevisionTag;
-	/**
-	 * Mint a `RevisionTag` for a new commit.
-	 * Will always return a new tag, no matter the input.
-	 */
-	mintCommitTag: (editTag: RevisionTag) => RevisionTag;
-}
-
-function normalizeTagMinter(
-	input: EditAndCommitTagMinter | (() => RevisionTag),
-): EditAndCommitTagMinter {
-	return typeof input === "function"
-		? {
-				mintEditTag: input,
-				mintCommitTag: (editTag) => editTag,
-			}
-		: input;
-}
-
-/**
  * A branch of changes that can be applied to a SharedTree.
  */
 export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
@@ -140,28 +113,25 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	public readonly editor: TEditor;
 	private disposed = false;
 	private readonly unsubscribeBranchTrimmer?: () => void;
-	private readonly tagMinter: EditAndCommitTagMinter;
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
-	 * @param tagMinter - used to generate a `RevisionTag` for each change and each commit. When a function is provided, it must always return a new tag.
+	 * @param mintRevisionTag - used to generate a `RevisionTag` for each change.
 	 * @param branchTrimmer - an optional event emitter that informs the branch it has been trimmed. If this is not supplied, then the branch must
 	 * never be trimmed. See {@link BranchTrimmingEvents} for details on trimming.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		tagMinter: EditAndCommitTagMinter | (() => RevisionTag),
+		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly branchTrimmer?: Listenable<BranchTrimmingEvents>,
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
 			keyof RebaseStatsWithDuration
 		>,
 	) {
-		this.tagMinter = normalizeTagMinter(tagMinter);
-		this.editor = this.changeFamily.buildEditor(
-			() => this.tagMinter.mintEditTag(),
-			(change) => this.apply(change),
+		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
+			this.apply(change),
 		);
 		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
 			this.#events.emit("ancestryTrimmed", commit);
@@ -187,11 +157,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	public apply(change: TaggedChange<TChange>, kind: CommitKind = CommitKind.Default): void {
 		this.assertNotDisposed();
 
-		const editTag = change.revision;
-		assert(editTag !== undefined, 0xa49 /* Revision tag must be provided */);
+		const revisionTag = change.revision;
+		assert(revisionTag !== undefined, 0xa49 /* Revision tag must be provided */);
 
 		const newHead = mintCommit(this.head, {
-			revision: this.tagMinter.mintCommitTag(editTag),
+			revision: revisionTag,
 			change: change.change,
 		});
 
@@ -217,19 +187,19 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * @param commit - The commit to base the new branch off of. Defaults to the head of this branch.
-	 * @param tagMinter - used to generate a `RevisionTag` for each change and each commit.
+	 * @param mintRevisionTag - used to generate a `RevisionTag` for each change.
 	 * @remarks Changes made to the new branch will not be applied to this branch until the new branch is {@link SharedTreeBranch.merge | merged} back in.
 	 * Forks created during a transaction will be disposed when the transaction ends.
 	 */
 	public fork(
 		commit: GraphCommit<TChange> = this.head,
-		tagMinter: EditAndCommitTagMinter | (() => RevisionTag) = this.tagMinter,
+		mintRevisionTag: () => RevisionTag = this.mintRevisionTag,
 	): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			commit,
 			this.changeFamily,
-			tagMinter,
+			mintRevisionTag,
 			this.branchTrimmer,
 		);
 		this.#events.emit("fork", fork);
@@ -292,7 +262,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		findAncestor([this.head, removedCommits], (c) => {
 			// TODO: Pull this side effect out if/when more diverse ancestry walking helpers are available
 			if (c !== commit) {
-				const revision = this.tagMinter.mintEditTag();
+				const revision = this.mintRevisionTag();
 				const inverse = this.changeFamily.rebaser.invert(c, true, revision);
 				inverses.push(tagRollbackInverse(inverse, revision, c.revision));
 				return false;
@@ -369,7 +339,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 
 		const { duration, output } = measure(() =>
 			rebaseBranch(
-				() => this.tagMinter.mintEditTag(),
+				this.mintRevisionTag,
 				this.changeFamily.rebaser,
 				head,
 				upTo,

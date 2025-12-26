@@ -282,16 +282,11 @@ export class SquashingTransactionStack<
 				// TODO:#8603: This may need to be computed differently if we allow rebasing during a transaction.
 				const startHead = this.activeBranch.getHead();
 				const outerOnPop = onPush?.();
-				const transactionRevision = mintRevisionTag();
-				const transactionBranch = this.branch.fork(startHead, {
-					mintEditTag: () => transactionRevision,
-					mintCommitTag: (changeTag: RevisionTag) => {
-						assert(
-							changeTag === transactionRevision,
-							"Unexpected change tag during transaction",
-						);
-						return mintRevisionTag();
-					},
+				let transactionRevision: RevisionTag | undefined;
+				const transactionBranch = this.branch.fork(startHead, () => {
+					// Lazily mint the revision tag for the transaction when it is first needed
+					transactionRevision ??= mintRevisionTag();
+					return transactionRevision;
 				});
 				this.setTransactionBranch(transactionBranch);
 				transactionBranch.editor.enterTransaction();
@@ -312,6 +307,10 @@ export class SquashingTransactionStack<
 								(c) => c === startHead,
 							);
 							if (removedCommits.length > 0) {
+								assert(
+									transactionRevision !== undefined,
+									"A transaction revision tag should have been minted if there are commits to squash",
+								);
 								this.branch.apply(squash(removedCommits, transactionRevision));
 							}
 							break;
