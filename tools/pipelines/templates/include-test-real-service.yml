@@ -195,7 +195,7 @@ jobs:
         inputs:
           targetType: 'inline'
           workingDirectory: ${{ parameters.testWorkspace }}
-          script: 'pnpm install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
+          script: 'pnpm install $(Initialize.testPackageTgz) @ff-internal/aria-logger@4.20.30'
 
       # Download Test Files & Install Extra Dependencies
       # These steps are intended to include extra dependencies that are not available as
