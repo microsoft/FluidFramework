@@ -257,8 +257,8 @@ jobs:
             echo "/opt/hostedtoolcache/node/20.19.0/x64/bin/npm version"
             /opt/hostedtoolcache/node/20.19.0/x64/bin/npm version
 
-            echo "cat /mnt/vss/_work/1/npm/370652.npmrc"
-            cat /mnt/vss/_work/1/npm/370652.npmrc
+            echo "cat /mnt/vss/_work/1/npm/*.npmrc"
+            cat /mnt/vss/_work/1/npm/*.npmrc
 
       # run the test
       - task: Npm@1
