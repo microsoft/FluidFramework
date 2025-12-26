@@ -257,6 +257,10 @@ jobs:
             echo "/opt/hostedtoolcache/node/20.19.0/x64/bin/npm version"
             /opt/hostedtoolcache/node/20.19.0/x64/bin/npm version
 
+            echo "npm config ls -l"
+            npm config ls -l
+
+
       # run the test
       - task: Npm@1
         displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
