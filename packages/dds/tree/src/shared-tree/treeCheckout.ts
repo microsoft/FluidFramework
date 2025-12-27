@@ -927,8 +927,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				"Views cannot be merged into a view while it has a pending transaction.",
 			);
 		}
-		while (checkout.transaction.isInProgress()) {
-			checkout.transaction.commit();
+		if (checkout.transaction.isInProgress()) {
+			throw new UsageError(
+				"Views with an open transaction cannot be merged into another view.",
+			);
 		}
 		this.#transaction.activeBranch.merge(checkout.#transaction.activeBranch);
 		if (disposeMerged && !checkout.isSharedBranch) {

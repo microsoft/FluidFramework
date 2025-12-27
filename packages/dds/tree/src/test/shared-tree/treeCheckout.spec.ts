@@ -9,10 +9,7 @@ import {
 	type IMockLoggerExt,
 	createMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import {
-	validateAssertionError,
-	validateUsageError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type Revertible,
@@ -668,20 +665,43 @@ describe("sharedTreeView", () => {
 			tree.branch();
 		});
 
-		itView("rejects merges while a transaction is in progress", ({ view, tree }) => {
-			const treeBranch = tree.branch();
-			const viewBranch = treeBranch.viewWith(view.config);
-			viewBranch.root.insertAtEnd("42");
+		itView(
+			"rejects merges while a transaction is in progress on the target view",
+			({ view, tree }) => {
+				const treeBranch = tree.branch();
+				const viewBranch = treeBranch.viewWith(view.config);
+				viewBranch.root.insertAtEnd("42");
 
-			assert.throws(() => {
-				Tree.runTransaction(view, () => {
-					view.root.insertAtEnd("43");
-					tree.merge(treeBranch, true);
+				assert.throws(() => {
+					Tree.runTransaction(view, () => {
+						view.root.insertAtEnd("43");
+						tree.merge(treeBranch, true);
+					});
+				}, validateUsageError(
+					"Views cannot be merged into a view while it has a pending transaction.",
+				));
+			},
+		);
+
+		itView(
+			"rejects merges while a transaction is in progress on the source view",
+			({ view, tree }) => {
+				const treeBranch = tree.branch();
+				const viewBranch = treeBranch.viewWith(view.config);
+				view.root.insertAtEnd("42");
+				viewBranch.root.insertAtEnd("43");
+
+				Tree.runTransaction(viewBranch, () => {
+					assert.throws(
+						() => tree.merge(treeBranch, true),
+						validateUsageError(
+							"Views with an open transaction cannot be merged into another view.",
+						),
+					);
 				});
-			}, validateUsageError(
-				"Views cannot be merged into a view while it has a pending transaction.",
-			));
-		});
+				assert.equal(view.root[0], "42");
+			},
+		);
 
 		itView(
 			"rejects rebases while a transaction is in progress on the source view",
@@ -721,18 +741,6 @@ describe("sharedTreeView", () => {
 			},
 		);
 
-		itView("automatically commit if in progress when view merges", ({ view, tree }) => {
-			const treeBranch = tree.branch();
-			const viewBranch = treeBranch.viewWith(view.config);
-			assert(viewBranch instanceof SchematizingSimpleTreeView);
-			viewBranch.checkout.transaction.start();
-			viewBranch.root.insertAtEnd("42");
-			viewBranch.root.insertAtEnd("43");
-			tree.merge(treeBranch, false);
-			assert.deepEqual(viewBranch.root, ["42", "43"]);
-			assert.equal(viewBranch.checkout.transaction.isInProgress(), false);
-		});
-
 		itView("do not affect pre-existing forks", ({ view, tree }) => {
 			const treeBranch = tree.branch();
 			const viewBranch = treeBranch.viewWith(view.config);
@@ -745,23 +753,6 @@ describe("sharedTreeView", () => {
 			tree.merge(treeBranch);
 			assert.deepEqual(view.root, ["A", "B", "C"]);
 		});
-
-		// Disabled because rebases are not supported while a transaction is in progress
-		// TODO: enable once ADO#8603 is complete.
-		itView(
-			"can handle a pull while in progress",
-			({ view, tree }) => {
-				const treeBranch = tree.branch();
-				const viewBranch = treeBranch.viewWith(view.config);
-				Tree.runTransaction(viewBranch, () => {
-					view.root.insertAtStart("42");
-					treeBranch.rebaseOnto(tree);
-					assert.equal(viewBranch.root[0], "42");
-				});
-				assert.equal(viewBranch.root[0], "42");
-			},
-			{ skip: true },
-		);
 
 		itView("update anchors correctly", ({ view }) => {
 			view.root.insertAtStart("A");
@@ -779,52 +770,6 @@ describe("sharedTreeView", () => {
 			assert.equal(cursor.value, "A");
 			cursor.clear();
 		});
-
-		// Disabled because merges are not supported while a transaction is in progress
-		// TODO: enable once ADO#8602 is complete.
-		itView(
-			"can handle a complicated scenario",
-			({ view, tree }) => {
-				view.root.insertAtEnd("A");
-				Tree.runTransaction(view, () => {
-					view.root.insertAtEnd("B");
-					view.root.insertAtEnd("C");
-					Tree.runTransaction(view, () => {
-						view.root.insertAtEnd("D");
-					});
-					const treeBranch = tree.branch();
-					const viewBranch = treeBranch.viewWith(view.config);
-					viewBranch.root.insertAtEnd("E");
-					Tree.runTransaction(viewBranch, () => {
-						viewBranch.root.insertAtEnd("F");
-					});
-					view.root.insertAtEnd("G");
-					viewBranch.root.insertAtEnd("H");
-					Tree.runTransaction(viewBranch, () => {
-						viewBranch.root.insertAtEnd("I");
-						return Tree.runTransaction.rollback;
-					});
-					tree.merge(treeBranch);
-					view.root.insertAtEnd("J");
-					Tree.runTransaction(view, () => {
-						const treeFork2 = tree.branch();
-						const viewFork2 = treeFork2.viewWith(view.config);
-						viewFork2.root.insertAtEnd("K");
-						viewFork2.root.insertAtEnd("L");
-						tree.merge(treeFork2);
-						return Tree.runTransaction.rollback;
-					});
-					view.root.insertAtEnd("M");
-				});
-				view.root.insertAtEnd("N");
-				view.root.insertAtEnd("O");
-				assert.deepEqual(
-					[...view.root],
-					["A", "B", "C", "D", "G", "E", "F", "H", "J", "M", "N", "O"],
-				);
-			},
-			{ skip: true },
-		);
 
 		itView("statuses are reported correctly", ({ view }) => {
 			assert.equal(view.checkout.transaction.isInProgress(), false);
