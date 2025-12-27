@@ -657,6 +657,17 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(view.root, ["A", "B"]);
 		});
 
+		itView("rejects forks while a transaction is in progress", ({ view, tree }) => {
+			Tree.runTransaction(view, () => {
+				view.root.insertAtEnd("42");
+				assert.throws(
+					() => tree.branch(),
+					validateUsageError("A view cannot be forked while it has a pending transaction."),
+				);
+			});
+			tree.branch();
+		});
+
 		itView("rejects merges while a transaction is in progress", ({ view, tree }) => {
 			const treeBranch = tree.branch();
 			const viewBranch = treeBranch.viewWith(view.config);
@@ -667,27 +678,48 @@ describe("sharedTreeView", () => {
 					view.root.insertAtEnd("43");
 					tree.merge(treeBranch, true);
 				});
-			}, validateAssertionError(
-				"Views cannot be merged into a view while it has a pending transaction",
+			}, validateUsageError(
+				"Views cannot be merged into a view while it has a pending transaction.",
 			));
 		});
 
-		itView("rejects rebases while a transaction is in progress", ({ view, tree }) => {
-			const treeBranch = tree.branch();
-			const viewBranch = treeBranch.viewWith(view.config);
-			view.root.insertAtEnd("42");
+		itView(
+			"rejects rebases while a transaction is in progress on the source view",
+			({ view, tree }) => {
+				const treeBranch = tree.branch();
+				const viewBranch = treeBranch.viewWith(view.config);
+				view.root.insertAtEnd("42");
 
-			Tree.runTransaction(viewBranch, () => {
+				Tree.runTransaction(viewBranch, () => {
+					viewBranch.root.insertAtEnd("43");
+					assert.throws(
+						() => treeBranch.rebaseOnto(tree),
+						validateUsageError("A view cannot be rebased while it has a pending transaction."),
+					);
+				});
+				assert.equal(viewBranch.root[0], "43");
+			},
+		);
+
+		itView(
+			"rejects rebases while a transaction is in progress on the target view",
+			({ view, tree }) => {
+				const treeBranch = tree.branch();
+				const viewBranch = treeBranch.viewWith(view.config);
+				view.root.insertAtEnd("42");
 				viewBranch.root.insertAtEnd("43");
-				assert.throws(
-					() => treeBranch.rebaseOnto(tree),
-					validateAssertionError(
-						"A view cannot be rebased while it has a pending transaction",
-					),
-				);
-			});
-			assert.equal(viewBranch.root[0], "43");
-		});
+
+				Tree.runTransaction(view, () => {
+					assert.throws(
+						() => treeBranch.rebaseOnto(tree),
+						validateUsageError(
+							"Views cannot be rebased onto a view that has a pending transaction.",
+						),
+					);
+				});
+				assert.equal(viewBranch.root[0], "43");
+			},
+		);
 
 		itView("automatically commit if in progress when view merges", ({ view, tree }) => {
 			const treeBranch = tree.branch();
@@ -699,18 +731,6 @@ describe("sharedTreeView", () => {
 			tree.merge(treeBranch, false);
 			assert.deepEqual(viewBranch.root, ["42", "43"]);
 			assert.equal(viewBranch.checkout.transaction.isInProgress(), false);
-		});
-
-		itView("do not close across forks", ({ view, tree }) => {
-			view.checkout.transaction.start();
-			const treeBranch = tree.branch();
-			const viewBranch = treeBranch.viewWith(view.config);
-			assert(viewBranch instanceof SchematizingSimpleTreeView);
-			view.root.insertAtEnd("A");
-			assert.throws(
-				() => viewBranch.checkout.transaction.commit(),
-				validateAssertionError("No transaction to commit"),
-			);
 		});
 
 		itView("do not affect pre-existing forks", ({ view, tree }) => {
@@ -805,25 +825,6 @@ describe("sharedTreeView", () => {
 			},
 			{ skip: true },
 		);
-
-		itView("dispose branches created during the transaction", ({ view, tree }) => {
-			const branchA = tree.branch();
-			view.checkout.transaction.start();
-			const branchB = tree.branch();
-			view.checkout.transaction.start();
-			const branchC = tree.branch();
-			assert.equal(branchA.disposed, false);
-			assert.equal(branchB.disposed, false);
-			assert.equal(branchC.disposed, false);
-			view.checkout.transaction.abort();
-			assert.equal(branchA.disposed, false);
-			assert.equal(branchB.disposed, false);
-			assert.equal(branchC.disposed, true);
-			view.checkout.transaction.commit();
-			assert.equal(branchA.disposed, false);
-			assert.equal(branchB.disposed, true);
-			assert.equal(branchC.disposed, true);
-		});
 
 		itView("statuses are reported correctly", ({ view }) => {
 			assert.equal(view.checkout.transaction.isInProgress(), false);
