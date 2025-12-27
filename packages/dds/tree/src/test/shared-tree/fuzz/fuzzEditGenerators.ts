@@ -617,6 +617,8 @@ export const makeBranchEditGenerator = (
 				};
 			},
 			opWeights.fork,
+			// Can only fork if there is no open transaction
+			(state) => state.transactionViews?.get(state.client.channel) === undefined,
 		],
 		[
 			(state): ForkMergeOperation => {
@@ -646,6 +648,8 @@ export const makeBranchEditGenerator = (
 			},
 			opWeights.merge,
 			(state) =>
+				// Can only merge if there is no open transaction
+				state.transactionViews?.get(state.client.channel) === undefined &&
 				state.forkedViews?.get(state.client.channel) !== undefined &&
 				state.forkedViews.get(state.client.channel)?.length !== 0,
 		],
@@ -757,7 +761,13 @@ export function makeOpGenerator(
 					constraintWeight,
 					(state: FuzzTestState) => viewFromState(state).checkout.transaction.isInProgress(),
 				],
-				[() => makeBranchEditGenerator(weights), fork + merge],
+				[
+					() => makeBranchEditGenerator(weights),
+					fork + merge,
+					// Can only fork/merge if there is no open transaction
+					(state: FuzzTestState) =>
+						state.transactionViews?.get(state.client.channel) === undefined,
+				],
 			] as const
 		)
 			.filter(([, weight]) => weight > 0)
