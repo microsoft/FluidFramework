@@ -16,14 +16,14 @@ export class WebSocketTracker implements IWebSocketTracker {
 	// Map of socketId to token ids. It assumes one socket could be used for connections with multiple tokens
 	private readonly socketIdToTokenIdMap: Map<string, Set<string>>;
 
-	constructor(private readonly useSocketRoomFeature: boolean = false) {
+	constructor(private readonly useSocketIoRoomFeature: boolean = false) {
 		this.socketIdToSocketMap = new Map();
 		this.tokenIdToSocketIdMap = new Map();
 		this.socketIdToTokenIdMap = new Map();
 	}
 
 	public async addSocketForToken(compositeTokenId: string, webSocket: IWebSocket): Promise<void> {
-		if (this.useSocketRoomFeature) {
+		if (this.useSocketIoRoomFeature) {
 			await webSocket.join(compositeTokenId);
 		} else {
 			const socketIds = this.tokenIdToSocketIdMap.get(compositeTokenId);
@@ -45,7 +45,7 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 
 	public getSocketsForToken(compositeTokenId: string): IWebSocket[] {
-		if (this.useSocketRoomFeature) {
+		if (this.useSocketIoRoomFeature) {
 			throw new Error("Method not supported when socket room feature is enabled.");
 		}
 		const socketIds = this.tokenIdToSocketIdMap.get(compositeTokenId);
@@ -65,14 +65,14 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 
 	public addSocket(webSocket: IWebSocket) {
-		if (this.useSocketRoomFeature) {
+		if (this.useSocketIoRoomFeature) {
 			throw new Error("Method not supported when socket room feature is enabled.");
 		}
 		this.socketIdToSocketMap.set(webSocket.id, webSocket);
 	}
 
 	public removeSocket(socketId: string) {
-		if (this.useSocketRoomFeature) {
+		if (this.useSocketIoRoomFeature) {
 			// No need to manually remove socket when socket room feature is enabled
 			return false;
 		}
@@ -94,7 +94,7 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 
 	public getAllSockets(): IWebSocket[] {
-		if (this.useSocketRoomFeature) {
+		if (this.useSocketIoRoomFeature) {
 			throw new Error("Method not supported when socket room feature is enabled.");
 		}
 		return Array.from(this.socketIdToSocketMap.values());
