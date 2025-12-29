@@ -14,6 +14,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISequenceIntervalCollection,
 	ISequenceOverlappingIntervalsIndex,
+	ISharedString,
 	SequenceInterval,
 	SharedString,
 } from "@fluidframework/sequence/internal";
@@ -34,7 +35,7 @@ const assertSequenceIntervals = (
 	overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
-) => {
+): void => {
 	const actual = Array.from(intervalCollection);
 	if (validateOverlapping && sharedString.getLength() > 0) {
 		const overlapping = overlappingIntervalsIndex.findOverlappingIntervals(
@@ -58,7 +59,7 @@ const assertSequenceIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-function testIntervalOperations(intervalCollection: ISequenceIntervalCollection) {
+function testIntervalOperations(intervalCollection: ISequenceIntervalCollection): void {
 	const intervalArray: SequenceInterval[] = [];
 	let interval: SequenceInterval | undefined;
 	let id;
@@ -261,7 +262,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 		let overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex;
 		let dataObject: ITestFluidObject & IFluidLoadable;
 
-		const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
+		const assertIntervals = (expected: readonly { start: number; end: number }[]): void => {
 			assertSequenceIntervals(sharedString, intervals, overlappingIntervalsIndex, expected);
 		};
 
@@ -485,7 +486,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			const intervals2 = sharedString2.getIntervalCollection("intervals");
 
-			const checkIdEquals = (a: SequenceInterval, b: SequenceInterval, s: string) => {
+			const checkIdEquals = (a: SequenceInterval, b: SequenceInterval, s: string): void => {
 				assert.strictEqual(a.getIntervalId(), b.getIntervalId(), s);
 			};
 			let i: number;
@@ -571,7 +572,12 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe("Conflicting ops", () => {
-			async function setupConflictingOps() {
+			async function setupConflictingOps(): Promise<{
+				sharedString1: ISharedString;
+				sharedString2: ISharedString;
+				intervals1: ISequenceIntervalCollection;
+				intervals2: ISequenceIntervalCollection;
+			}> {
 				const stringId = "stringKey";
 				const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 				const testContainerConfig: ITestContainerConfig = {
@@ -715,14 +721,14 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					actual: PropertySet[],
 					expected: PropertySet[],
 					message?: string,
-				) {
+				): void {
 					assert.deepEqual(actual.splice(0), expected, message);
 				}
 				function verifyIntervalProperties(
 					properties1: PropertySet | undefined,
 					properties2: PropertySet | undefined,
 					expected: PropertySet,
-				) {
+				): void {
 					assert.deepStrictEqual(
 						{ ...properties1 },
 						{ ...expected },

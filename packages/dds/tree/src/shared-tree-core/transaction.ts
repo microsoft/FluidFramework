@@ -292,10 +292,11 @@ export class SquashingTransactionStack<
 					assert(!this.isInProgress(), "The outer transaction should be ending");
 					transactionBranch.editor.exitTransaction();
 					switch (result) {
-						case TransactionResult.Abort:
+						case TransactionResult.Abort: {
 							// When a transaction is aborted, roll back all the transaction's changes on the current branch
 							transactionBranch.removeAfter(startHead);
 							break;
+						}
 						case TransactionResult.Commit: {
 							// ...squash all the new commits on the transaction branch into a new commit on the original branch
 							const removedCommits: GraphCommit<TChange>[] = [];
@@ -315,8 +316,9 @@ export class SquashingTransactionStack<
 							}
 							break;
 						}
-						default:
+						default: {
 							unreachableCase(result);
+						}
 					}
 					transactionBranch.dispose();
 					this.setTransactionBranch(undefined);
@@ -332,14 +334,17 @@ export class SquashingTransactionStack<
 						onPop: (result) => {
 							transactionBranch.editor.exitTransaction();
 							switch (result) {
-								case TransactionResult.Abort:
+								case TransactionResult.Abort: {
 									// When a transaction is aborted, roll back all the transaction's changes on the current branch
 									transactionBranch.removeAfter(nestedStartHead);
 									break;
-								case TransactionResult.Commit:
+								}
+								case TransactionResult.Commit: {
 									break;
-								default:
+								}
+								default: {
 									unreachableCase(result);
+								}
 							}
 							nestedOuterOnPop?.(result);
 						},
