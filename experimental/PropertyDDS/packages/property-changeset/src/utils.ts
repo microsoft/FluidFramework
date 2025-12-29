@@ -5,7 +5,6 @@
 
 // @ts-ignore
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
-
 import { ErrorCallback, eachOfSeries, eachSeries, series, timesSeries, whilst } from "async";
 import cloneDeep from "lodash/cloneDeep.js";
 import each from "lodash/each.js";
@@ -1870,6 +1869,7 @@ export namespace Utils {
 				in_options.escapeLeadingDoubleUnderscore &&
 				k &&
 				k.length > 2 &&
+				// eslint-disable-next-line @typescript-eslint/prefer-string-starts-ends-with
 				k[0] === "_" &&
 				k[1] === "_" &&
 				k[2] !== "_"

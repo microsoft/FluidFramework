@@ -15,6 +15,7 @@ import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/i
 import type { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
+	createChildMonitoringContext,
 	isLayerIncompatibilityError,
 } from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
@@ -109,7 +110,7 @@ describe("Loader Layer compatibility", () => {
 	 * and has the correct error / properties.
 	 */
 	describe("Validation error and properties", () => {
-		const logger = createChildLogger();
+		const mc = createChildMonitoringContext({ logger: createChildLogger() });
 		const testCases: {
 			layerType: "runtime" | "driver";
 			layerSupportRequirements: ILayerCompatSupportRequirementsOverride;
@@ -121,14 +122,14 @@ describe("Loader Layer compatibility", () => {
 			{
 				layerType: "runtime",
 				validateCompatibility: (maybeCompatDetails, disposeFn) =>
-					validateRuntimeCompatibility(maybeCompatDetails, logger),
+					validateRuntimeCompatibility(maybeCompatDetails, mc),
 				layerSupportRequirements:
 					runtimeSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 			{
 				layerType: "driver",
 				validateCompatibility: (maybeCompatDetails, disposeFn) =>
-					validateDriverCompatibility(maybeCompatDetails, disposeFn, logger),
+					validateDriverCompatibility(maybeCompatDetails, disposeFn, mc),
 				layerSupportRequirements:
 					driverSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},

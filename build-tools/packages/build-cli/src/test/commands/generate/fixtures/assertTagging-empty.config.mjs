@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	mode: "production",
-	devtool: "source-map",
+export default {
+	assertionFunctions: {},
 };

@@ -18,6 +18,9 @@
 			"**/*.done.build.log",
 			"**/.next", // NextJS
 
+			// Webpack output
+			"**/webpack/**",
+
 			// test collateral
 			"**/_package.json",
 			"**/fluid-runner/src/test/localOdspSnapshots/**",

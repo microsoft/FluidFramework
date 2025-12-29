@@ -54,16 +54,16 @@ class LayoutCheckpoint {
 export const eotSegment = Object.freeze({ cachedLength: 0 }) as ISegment;
 
 export class Layout extends EventEmitter {
-	private get format() {
+	private get format(): Readonly<IFormatInfo> {
 		const stack = this.formatStack;
 		return stack.length > 0 ? stack[stack.length - 1] : this.rootFormatInfo;
 	}
 
-	private get slot() {
+	private get slot(): Element {
 		return this.root;
 	}
 
-	private get next() {
+	private get next(): Node | null {
 		const cursor = this.cursor;
 		const { previous } = cursor;
 
@@ -73,25 +73,25 @@ export class Layout extends EventEmitter {
 	public get cursor(): Readonly<ILayoutCursor> {
 		return this._cursor;
 	}
-	public get position() {
+	public get position(): number {
 		return this._position;
 	}
-	public get segment() {
+	public get segment(): ISegment {
 		return this._segment;
 	}
-	public get startOffset() {
+	public get startOffset(): number {
 		return this._startOffset;
 	}
-	public get endOffset() {
+	public get endOffset(): number {
 		return this._endOffset;
 	}
-	public get segmentStart() {
+	public get segmentStart(): number {
 		return this._segmentStart;
 	}
-	public get segmentEnd() {
+	public get segmentEnd(): number {
 		return this._segmentEnd;
 	}
-	public get rendered() {
+	public get rendered(): Promise<void> {
 		return this.renderPromise;
 	}
 	public renderCallback?: (start, end) => void;
@@ -363,7 +363,7 @@ export class Layout extends EventEmitter {
 		return element;
 	}
 
-	public emitText(text: string): ChildNode {
+	public emitText(text: string): Node {
 		// Note: Removing and inserting a new text node has the side-effect of reseting the caret blink.
 		//       Because text nodes are always leaves, this is harmless.
 		let existing = this.next;
@@ -608,7 +608,7 @@ export class Layout extends EventEmitter {
 		this.segmentToCheckpoint.delete(segment);
 	}
 
-	private readonly onChange = (e: SequenceEvent) => {
+	private readonly onChange = (e: SequenceEvent): void => {
 		debug("onChange(%o)", e);
 
 		(this.rootFormatInfo.formatter as RootFormatter<IFormatterState>).onChange(this, e);

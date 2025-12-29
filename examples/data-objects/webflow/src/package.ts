@@ -5,7 +5,7 @@
 
 import { pkgName, pkgVersion } from "./packageVersion.js";
 
-const makeTypeName = (type: string) => `${pkgName}/${type}@${pkgVersion}`;
+const makeTypeName = (type: string): string => `${pkgName}/${type}@${pkgVersion}`;
 
 export const hostType = makeTypeName("host");
 export const documentType = makeTypeName("flow-document");

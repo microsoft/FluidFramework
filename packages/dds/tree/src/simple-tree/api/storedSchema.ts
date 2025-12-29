@@ -4,12 +4,15 @@
  */
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import { FluidClientVersion, type ICodecOptions } from "../../codec/index.js";
-import { SchemaFormatVersion } from "../../core/index.js";
-import { encodeTreeSchema, makeSchemaCodec } from "../../feature-libraries/index.js";
 import {
-	clientVersionToSchemaVersion,
-	type FormatV1,
+	FluidClientVersion,
+	FormatValidatorNoOp,
+	type ICodecOptions,
+} from "../../codec/index.js";
+import { SchemaFormatVersion } from "../../core/index.js";
+import { makeSchemaCodec } from "../../feature-libraries/index.js";
+import type {
+	FormatV1,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
@@ -59,8 +62,8 @@ export function extractPersistedSchema(
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
 	const stored = toStoredSchema(schema, { includeStaged });
-	const schemaWriteVersion = clientVersionToSchemaVersion(minVersionForCollab);
-	return encodeTreeSchema(stored, schemaWriteVersion);
+	const codec = makeSchemaCodec({ minVersionForCollab, jsonValidator: FormatValidatorNoOp });
+	return codec.encode(stored) as JsonCompatible;
 }
 
 /**

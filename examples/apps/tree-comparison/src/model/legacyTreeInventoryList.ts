@@ -36,13 +36,13 @@ export class LegacyTreeInventoryItem
 	extends TypedEmitter<IInventoryItemEvents>
 	implements IInventoryItem
 {
-	public get id() {
+	public get id(): string {
 		return this._id;
 	}
-	public get name() {
+	public get name(): string {
 		return this._name;
 	}
-	public get quantity() {
+	public get quantity(): number {
 		return this._quantity;
 	}
 	public set quantity(newQuantity: number) {
@@ -56,7 +56,7 @@ export class LegacyTreeInventoryItem
 	 * available to the view.  Instead it is to be called by the backing data when the true value
 	 * of the data changes.
 	 */
-	public handleQuantityUpdate(newQuantity: number) {
+	public handleQuantityUpdate(newQuantity: number): void {
 		this._quantity = newQuantity;
 		this.emit("quantityChanged");
 	}
@@ -75,14 +75,14 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 	private _tree: LegacySharedTree | undefined;
 	private readonly _inventoryItems = new Map<string, LegacyTreeInventoryItem>();
 
-	private get tree() {
+	private get tree(): LegacySharedTree {
 		if (this._tree === undefined) {
 			throw new Error("Not initialized properly");
 		}
 		return this._tree;
 	}
 
-	public readonly addItem = (name: string, quantity: number) => {
+	public readonly addItem = (name: string, quantity: number): void => {
 		const addedNode: BuildNode = {
 			definition: "inventoryItem",
 			traits: {
@@ -186,7 +186,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
 	 * DataObject, by registering an event listener for changes to the inventory list.
 	 */
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._tree = await this.root
 			.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
@@ -284,11 +284,11 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 		const quantityNode = this.tree.currentView.getViewNode(quantityNodeId);
 		const quantity = quantityNode.payload as number;
 
-		const setQuantity = (newQuantity: number) => {
+		const setQuantity = (newQuantity: number): void => {
 			this.tree.applyEdit(Change.setPayload(quantityNodeId, newQuantity));
 		};
 
-		const deleteItem = () => {
+		const deleteItem = (): void => {
 			this.tree.applyEdit(Change.delete(StableRange.only(inventoryItemNode.identifier)));
 		};
 
