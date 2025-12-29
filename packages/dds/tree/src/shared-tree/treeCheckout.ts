@@ -449,45 +449,32 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	private createTransactionStack(
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	): SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange> {
-		return new SquashingTransactionStack(
-			branch,
-			(commits) => {
-				const revision = this.mintRevisionTag();
-				for (const transactionStep of commits) {
-					this._removedRoots.updateMajor(transactionStep.revision, revision);
-				}
-
-				const squashedChange = this.changeFamily.rebaser.compose(commits);
-				const change = this.changeFamily.rebaser.changeRevision(squashedChange, revision);
-				return tagChange(change, revision);
-			},
-			() => {
-				const disposeForks = this.disposeForksAfterTransaction
-					? trackForksForDisposal(this)
-					: undefined;
-				// When each transaction is started, make a restorable checkpoint of the current state of removed roots
-				const restoreRemovedRoots = this._removedRoots.createCheckpoint();
-				return (result) => {
-					switch (result) {
-						case TransactionResult.Abort: {
-							restoreRemovedRoots();
-							break;
-						}
-						case TransactionResult.Commit: {
-							if (!this.transaction.isInProgress()) {
-								// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
-								this.validateCommit(this.#transaction.branch.getHead());
-							}
-							break;
-						}
-						default: {
-							unreachableCase(result);
-						}
+		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
+			const disposeForks = this.disposeForksAfterTransaction
+				? trackForksForDisposal(this)
+				: undefined;
+			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
+			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
+			return (result) => {
+				switch (result) {
+					case TransactionResult.Abort: {
+						restoreRemovedRoots();
+						break;
 					}
-					disposeForks?.();
-				};
-			},
-		);
+					case TransactionResult.Commit: {
+						if (!this.transaction.isInProgress()) {
+							// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
+							this.validateCommit(this.#transaction.branch.getHead());
+						}
+						break;
+					}
+					default: {
+						unreachableCase(result);
+					}
+				}
+				disposeForks?.();
+			};
+		});
 	}
 
 	public exportVerbose(): VerboseTree | undefined {

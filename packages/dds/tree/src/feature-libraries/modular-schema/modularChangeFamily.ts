@@ -1643,6 +1643,7 @@ export class ModularChangeFamily
 	}
 
 	public buildEditor(
+		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	): ModularEditBuilder {
 		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver);
@@ -2982,16 +2983,21 @@ function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]):
 } {
 	let maxId = -1;
 	const revInfos: RevisionInfo[] = [];
+	const revisions = new Set<RevisionTag>();
 	for (const taggedChange of changes) {
 		const change = taggedChange.change;
 		maxId = Math.max(change.maxId ?? -1, maxId);
-		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
+		const infosToAdd = revisionInfoFromTaggedChange(taggedChange);
+		for (const info of infosToAdd) {
+			if (!revisions.has(info.revision)) {
+				revisions.add(info.revision);
+				revInfos.push(info);
+			}
+		}
 	}
 
-	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
 	for (const info of revInfos) {
-		revisions.add(info.revision);
 		if (info.rollbackOf !== undefined) {
 			rolledBackRevisions.push(info.rollbackOf);
 		}
