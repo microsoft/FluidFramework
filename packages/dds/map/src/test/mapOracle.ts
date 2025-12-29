@@ -41,9 +41,7 @@ export class SharedMapOracle {
 		}
 	};
 
-	private readonly onClear = (local: boolean): void => {
-		this.oracle.clear();
-	};
+	private readonly onClear = (local: boolean): void => {};
 
 	public validate(): void {
 		const actual = Object.fromEntries(this.fuzzMap.entries());
