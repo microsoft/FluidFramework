@@ -280,11 +280,11 @@ export class SquashingTransactionStack<
 				const startHead = this.activeBranch.getHead();
 				const outerOnPop = onPush?.();
 				let transactionRevision: RevisionTag | undefined;
-				const transactionBranch = this.branch.fork(startHead, () => {
+				const transactionBranch = this.branch.fork(
+					startHead,
 					// Lazily mint the revision tag for the transaction when it is first needed
-					transactionRevision ??= mintRevisionTag();
-					return transactionRevision;
-				});
+					() => (transactionRevision ??= mintRevisionTag()),
+				);
 				this.setTransactionBranch(transactionBranch);
 				transactionBranch.editor.enterTransaction();
 				// Invoked when an outer transaction ends
@@ -307,7 +307,7 @@ export class SquashingTransactionStack<
 							if (removedCommits.length > 0) {
 								for (const commit of removedCommits) {
 									assert(
-										commit.revision !== transactionRevision,
+										commit.revision === transactionRevision,
 										"Unexpected commit in transaction",
 									);
 								}
