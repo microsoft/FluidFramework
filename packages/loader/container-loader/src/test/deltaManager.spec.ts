@@ -333,129 +333,6 @@ describe("Loader", () => {
 					// make extra sure
 					await tickClock(expectedTimeout);
 				});
-
-				it("Should throw error with gap in client seq num", async () => {
-					await startDeltaManager();
-
-					deltaManager.inbound.on("error", (error: Error) => {
-						expectedError = error;
-					});
-
-					await sendAndReceiveOps(1, MessageType.Operation);
-
-					// send op with gap in clientSeqNum
-					deltaConnection.emitOp(docId, [
-						{
-							clientId: "test",
-							clientSequenceNumber: clientSeqNumber + 2,
-							minimumSequenceNumber: 0,
-							sequenceNumber: seq++,
-							type: MessageType.Operation,
-						} as unknown as ISequencedDocumentMessage,
-					]);
-
-					await yieldEventLoop();
-					assert.strictEqual(expectedError?.message, "gap in client sequence number: 1");
-				});
-
-				it("Should pass with one noop sent, 0 received and one gap", async () => {
-					await startDeltaManager();
-
-					deltaManager.inbound.on("error", (error: Error) => {
-						expectedError = error;
-					});
-
-					await sendAndReceiveOps(1, MessageType.Operation);
-
-					// send 1 noop without receiving
-					deltaManager.submit(MessageType.NoOp);
-
-					// send op with gap in clientSeqNum
-					deltaManager.submit(MessageType.Operation);
-					deltaConnection.emitOp(docId, [
-						{
-							clientId: "test",
-							clientSequenceNumber: clientSeqNumber + 2,
-							minimumSequenceNumber: 0,
-							sequenceNumber: seq,
-							type: MessageType.Operation,
-						} as unknown as ISequencedDocumentMessage,
-					]);
-
-					await yieldEventLoop();
-					assert.strictEqual(
-						deltaManager.lastMessage?.sequenceNumber,
-						seq,
-						"discrepancy in last processed seqNum",
-					);
-					assert.strictEqual(
-						expectedError,
-						undefined,
-						`Error should not happen : ${expectedError}`,
-					);
-				});
-
-				it("Should throw error with one noop sent and received, gap = 1", async () => {
-					await startDeltaManager();
-
-					deltaManager.inbound.on("error", (error: Error) => {
-						expectedError = error;
-					});
-
-					await sendAndReceiveOps(1, MessageType.Operation);
-					await sendAndReceiveOps(1, MessageType.NoOp);
-
-					// send op with gap in clientSeqNum
-					deltaConnection.emitOp(docId, [
-						{
-							clientId: "test",
-							clientSequenceNumber: clientSeqNumber + 2,
-							minimumSequenceNumber: 0,
-							sequenceNumber: seq,
-							type: MessageType.Operation,
-						} as unknown as ISequencedDocumentMessage,
-					]);
-
-					await yieldEventLoop();
-					assert.strictEqual(expectedError?.message, "gap in client sequence number: 1");
-				});
-
-				it("Should pass with 2 noop sent, 1 received, gap = 1", async () => {
-					await startDeltaManager();
-					deltaManager.inbound.on("error", (error: Error) => {
-						expectedError = error;
-					});
-
-					await sendAndReceiveOps(1, MessageType.Operation);
-					await sendAndReceiveOps(1, MessageType.NoOp);
-
-					// send second noop, without receiving
-					deltaManager.submit(MessageType.NoOp);
-
-					// send op with gap in clientSeqNum
-					deltaManager.submit(MessageType.Operation);
-					deltaConnection.emitOp(docId, [
-						{
-							clientId: "test",
-							clientSequenceNumber: clientSeqNumber + 2,
-							minimumSequenceNumber: 0,
-							sequenceNumber: seq,
-							type: MessageType.Operation,
-						} as unknown as ISequencedDocumentMessage,
-					]);
-
-					await yieldEventLoop();
-					assert.strictEqual(
-						deltaManager.lastMessage?.sequenceNumber,
-						seq,
-						"discrepancy in last processed seqNum",
-					);
-					assert.strictEqual(
-						expectedError,
-						undefined,
-						`Error should not happen : ${expectedError}`,
-					);
-				});
 			});
 
 			describe("Readonly API", () => {
@@ -547,6 +424,251 @@ describe("Loader", () => {
 						error: "DeltaManager is closed",
 					},
 				]);
+			});
+
+			describe("Client Sequence Number Validation", () => {
+				it("Should throw error with gap in clientSequenceNumber", async () => {
+					await startDeltaManager();
+
+					deltaManager.on("closed", (error: Error) => {
+						expectedError = error;
+					});
+
+					await sendAndReceiveOps(1, MessageType.Operation);
+
+					// send op with gap in clientSeqNum
+					deltaConnection.emitOp(docId, [
+						{
+							clientId: "test",
+							clientSequenceNumber: clientSeqNumber + 2,
+							minimumSequenceNumber: 0,
+							sequenceNumber: seq++,
+							type: MessageType.Operation,
+						} as unknown as ISequencedDocumentMessage,
+					]);
+
+					await yieldEventLoop();
+
+					// Verify error was raised
+					assert(expectedError !== undefined, "Expected error to be raised");
+					assert.match(
+						expectedError.message,
+						/Found two messages with the same clientSequenceNumber/,
+					);
+				});
+
+				it("should throw error with repeated clientSequenceNumber", async () => {
+					await startDeltaManager();
+
+					deltaManager.on("closed", (error: Error) => {
+						expectedError = error;
+					});
+
+					await sendAndReceiveOps(1, MessageType.Operation);
+
+					// Send second op with the same clientSequenceNumber
+					deltaConnection.emitOp(docId, [
+						{
+							clientId: "test",
+							clientSequenceNumber: clientSeqNumber,
+							minimumSequenceNumber: 0,
+							sequenceNumber: seq++,
+							type: MessageType.Operation,
+							timestamp: 1001,
+							referenceSequenceNumber: 0,
+						} as unknown as ISequencedDocumentMessage,
+					]);
+					await yieldEventLoop();
+
+					// Verify error was raised
+					assert(expectedError !== undefined, "Expected error to be raised");
+					assert.match(
+						expectedError.message,
+						/Found two messages with the same clientSequenceNumber/,
+					);
+				});
+
+				it("Should track different clients independently", async () => {
+					await startDeltaManager();
+
+					deltaManager.on("closed", (error: Error) => {
+						expectedError = error;
+					});
+
+					// Send op from client1
+					deltaConnection.emitOp(docId, [
+						{
+							clientId: "client1",
+							clientSequenceNumber: 5,
+							minimumSequenceNumber: 0,
+							sequenceNumber: seq++,
+							type: MessageType.Operation,
+							timestamp: 1000,
+							referenceSequenceNumber: 0,
+						} as unknown as ISequencedDocumentMessage,
+					]);
+					await yieldEventLoop();
+
+					// Send op from client2 with the same clientSequenceNumber (should be fine)
+					deltaConnection.emitOp(docId, [
+						{
+							clientId: "client2",
+							clientSequenceNumber: 10,
+							minimumSequenceNumber: 0,
+							sequenceNumber: seq++,
+							type: MessageType.Operation,
+							timestamp: 1001,
+							referenceSequenceNumber: 0,
+						} as unknown as ISequencedDocumentMessage,
+					]);
+					await yieldEventLoop();
+
+					// Verify no error was raised
+					assert(
+						expectedError === undefined,
+						`Did not expect error to be raised: ${expectedError}`,
+					);
+				});
+
+				it("Should ignore validation for ops with null clientId", async () => {
+					await startDeltaManager();
+
+					deltaManager.on("closed", (error: Error) => {
+						expectedError = error;
+					});
+
+					// Send op with null clientId (system message)
+					deltaConnection.emitOp(docId, [
+						{
+							// eslint-disable-next-line unicorn/no-null
+							clientId: null,
+							clientSequenceNumber: 1,
+							minimumSequenceNumber: 0,
+							sequenceNumber: seq++,
+							type: MessageType.NoOp,
+							timestamp: 1000,
+							referenceSequenceNumber: 0,
+						} as unknown as ISequencedDocumentMessage,
+					]);
+					await yieldEventLoop();
+
+					// Send another op with null clientId (should not validate)
+					deltaConnection.emitOp(docId, [
+						{
+							// eslint-disable-next-line unicorn/no-null
+							clientId: null,
+							clientSequenceNumber: 1,
+							minimumSequenceNumber: 0,
+							sequenceNumber: seq++,
+							type: MessageType.NoOp,
+							timestamp: 1001,
+							referenceSequenceNumber: 0,
+						} as unknown as ISequencedDocumentMessage,
+					]);
+					await yieldEventLoop();
+
+					// Verify no error was raised
+					assert(
+						expectedError === undefined,
+						`Did not expect error to be raised: ${expectedError}`,
+					);
+				});
+
+				it("Should throw error with one noop sent, 0 received and one gap in clientSequenceNumber", async () => {
+					await startDeltaManager();
+
+					deltaManager.on("closed", (error: Error) => {
+						expectedError = error;
+					});
+
+					await sendAndReceiveOps(1, MessageType.Operation);
+
+					// send 1 noop without receiving
+					deltaManager.submit(MessageType.NoOp);
+
+					// send op with gap in clientSeqNum
+					deltaManager.submit(MessageType.Operation);
+					deltaConnection.emitOp(docId, [
+						{
+							clientId: "test",
+							clientSequenceNumber: clientSeqNumber + 2,
+							minimumSequenceNumber: 0,
+							sequenceNumber: seq,
+							type: MessageType.Operation,
+						} as unknown as ISequencedDocumentMessage,
+					]);
+
+					await yieldEventLoop();
+					// Verify error was raised
+					assert(expectedError !== undefined, "Expected error to be raised");
+					assert.match(
+						expectedError.message,
+						/Found two messages with the same clientSequenceNumber/,
+					);
+				});
+
+				it("Should throw error with one noop sent and received, one gap in clientSequenceNumber", async () => {
+					await startDeltaManager();
+
+					deltaManager.on("closed", (error: Error) => {
+						expectedError = error;
+					});
+
+					await sendAndReceiveOps(1, MessageType.Operation);
+					await sendAndReceiveOps(1, MessageType.NoOp);
+
+					// send op with gap in clientSeqNum
+					deltaConnection.emitOp(docId, [
+						{
+							clientId: "test",
+							clientSequenceNumber: clientSeqNumber + 2,
+							minimumSequenceNumber: 0,
+							sequenceNumber: seq,
+							type: MessageType.Operation,
+						} as unknown as ISequencedDocumentMessage,
+					]);
+
+					await yieldEventLoop();
+					// Verify error was raised
+					assert(expectedError !== undefined, "Expected error to be raised");
+					assert.match(
+						expectedError.message,
+						/Found two messages with the same clientSequenceNumber/,
+					);
+				});
+
+				it("Should throw error with 2 noop sent, 1 received, gap = 1", async () => {
+					await startDeltaManager();
+					deltaManager.on("closed", (error: Error) => {
+						expectedError = error;
+					});
+
+					await sendAndReceiveOps(1, MessageType.Operation);
+					await sendAndReceiveOps(1, MessageType.NoOp);
+
+					// send second noop, without receiving
+					deltaManager.submit(MessageType.NoOp);
+
+					// send op with gap in clientSeqNum
+					deltaManager.submit(MessageType.Operation);
+					deltaConnection.emitOp(docId, [
+						{
+							clientId: "test",
+							clientSequenceNumber: clientSeqNumber + 2,
+							minimumSequenceNumber: 0,
+							sequenceNumber: seq,
+							type: MessageType.Operation,
+						} as unknown as ISequencedDocumentMessage,
+					]);
+
+					await yieldEventLoop();
+					// Verify error was raised
+					assert(expectedError !== undefined, "Expected error to be raised");
+					assert.match(
+						expectedError.message,
+						/Found two messages with the same clientSequenceNumber/,
+					);
+				});
 			});
 		});
 	});

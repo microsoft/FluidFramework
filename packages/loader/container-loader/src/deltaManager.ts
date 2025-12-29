@@ -30,6 +30,7 @@ import {
 	type ISignalMessage,
 	type IClientDetails,
 	type IClientConfiguration,
+	type ISequencedDocumentSystemMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
@@ -147,6 +148,20 @@ function logIfFalse(
 }
 
 /**
+ * Properties of a message that are safe to log for debugging purposes.
+ */
+type SafeMessageProperties = Pick<
+	ISequencedDocumentMessage,
+	| "type"
+	| "clientId"
+	| "sequenceNumber"
+	| "clientSequenceNumber"
+	| "referenceSequenceNumber"
+	| "minimumSequenceNumber"
+	| "timestamp"
+>;
+
+/**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
@@ -188,6 +203,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private lastObservedSeqNumber: number = 0;
 	private lastProcessedSequenceNumber: number = 0;
 	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
+
+	/**
+	 * Map of clientId to the the last observed message from that client. This is used to validate
+	 * that clientSequenceNumbers are monotonically increasing for a given clientId.
+	 */
+	private readonly lastObservedMessageByClient = new Map<string, SafeMessageProperties>();
 
 	/**
 	 * Count the number of noops sent by the client which may not be acked
@@ -860,8 +881,51 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	// reuse.
 	// Also payload goes to telemetry, so no content or anything else that shouldn't be logged for privacy reasons
 	// Note: It's possible for a duplicate op to be broadcasted and have everything the same except the timestamp.
-	private comparableMessagePayload(m: ISequencedDocumentMessage): string {
+	private comparableMessagePayload(m: SafeMessageProperties): string {
 		return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
+	}
+
+	/**
+	 * Validates that the clientSequenceNumber for a given clientId is monotonically increasing.
+	 * @param message - The message to validate.
+	 */
+	private validateClientSequenceNumberConsistency(message: ISequencedDocumentMessage): void {
+		// Once client leaves, we no longer need to track its last observed message as the client won't send messages.
+		if (message.type === MessageType.ClientLeave) {
+			const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
+			const clientId = JSON.parse(systemLeaveMessage.data) as string;
+			this.lastObservedMessageByClient.delete(clientId);
+		}
+
+		if (message.clientId === null) {
+			return;
+		}
+
+		const lastObservedClientMessage = this.lastObservedMessageByClient.get(message.clientId);
+		if (
+			lastObservedClientMessage !== undefined &&
+			message.clientSequenceNumber !== lastObservedClientMessage.clientSequenceNumber + 1
+		) {
+			// This looks like a data corruption issue where the clientSequenceNumber is not monotonically increasing
+			// for a given clientId.
+			// The Fluid Service ensures that is only processes ops with monotonically increasing clientSequenceNumbers
+			// for a given clientId.
+			// So, if we see this error, it is likely a service issue.
+			// One example of this if the service sequences the same op more than once. In this case, all the properties
+			// except the sequenceNumber will be the same.
+			const error = new DataCorruptionError(
+				"Found two messages with the same clientSequenceNumber and clientId but different sequenceNumber. Likely to be a " +
+					"service issue",
+				{
+					clientId: this.connectionManager.clientId,
+					sequenceNumber: message.sequenceNumber,
+					message1: this.comparableMessagePayload(lastObservedClientMessage),
+					message2: this.comparableMessagePayload(message),
+				},
+			);
+			this.close(error);
+		}
+		this.lastObservedMessageByClient.set(message.clientId, message);
 	}
 
 	private enqueueMessages(
@@ -1002,6 +1066,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					}
 				}
 			} else if (message.sequenceNumber === this.lastQueuedSequenceNumber + 1) {
+				this.validateClientSequenceNumberConsistency(message);
 				this.lastQueuedSequenceNumber = message.sequenceNumber;
 				this.previouslyProcessedMessage = message;
 				this._inbound.push(message);
