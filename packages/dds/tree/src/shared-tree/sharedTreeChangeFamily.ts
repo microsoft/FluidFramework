@@ -11,7 +11,6 @@ import {
 	type ChangeEncodingContext,
 	type ChangeFamily,
 	type ChangeRebaser,
-	type ChangesetLocalId,
 	type DeltaDetachedNodeId,
 	type RevisionMetadataSource,
 	type RevisionTag,

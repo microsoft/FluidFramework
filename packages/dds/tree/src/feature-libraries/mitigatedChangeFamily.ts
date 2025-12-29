@@ -7,7 +7,6 @@ import type {
 	ChangeFamily,
 	ChangeFamilyEditor,
 	ChangeRebaser,
-	ChangesetLocalId,
 	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,

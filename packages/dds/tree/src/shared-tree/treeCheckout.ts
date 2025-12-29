@@ -819,7 +819,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 		this.editLock.checkUnlocked("Branching");
 		const anchors = new AnchorSet();
-		const branch = this.#transaction.activeBranch.fork(undefined, this.mintRevisionTag);
+		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
 		const forest = this.forest.clone(storedSchema, anchors);
 		const checkout = new TreeCheckout(

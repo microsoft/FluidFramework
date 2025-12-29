@@ -639,7 +639,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		resubmitMachine?: ResubmitMachine<TChange>,
 	): void {
 		const changeEnricher = enricher ?? new NoOpChangeEnricher();
-		const commitEnricher = new BranchCommitEnricher(changeEnricher);
+		const commitEnricher = new BranchCommitEnricher(this.changeFamily.rebaser, changeEnricher);
 		assert(!this.enrichers.has(branchId), 0xc6d /* Branch already registered */);
 		this.enrichers.set(branchId, {
 			enricher: commitEnricher,

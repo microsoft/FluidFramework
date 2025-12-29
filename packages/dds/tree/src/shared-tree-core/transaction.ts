@@ -5,7 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable, Listenable } from "@fluidframework/core-interfaces";
-import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -209,7 +209,6 @@ export class SquashingTransactionStack<
 	TChange,
 > extends TransactionStack {
 	#transactionBranch?: SharedTreeBranch<TEditor, TChange>;
-	private transactionRevision?: RevisionTag;
 
 	/**
 	 * An editor for whichever branch is currently the {@link SquashingTransactionStack.activeBranch | active branch}.
@@ -354,14 +353,6 @@ export class SquashingTransactionStack<
 				return { onPop: onOuterTransactionPop, onPush: onNestedTransactionPush };
 			},
 		);
-	}
-
-	private onTransactionClose(): void {
-		if (!this.isInProgress()) {
-			this.#transactionBranch?.dispose();
-			this.setTransactionBranch(undefined);
-			this.transactionRevision = undefined;
-		}
 	}
 
 	/** Updates the transaction branch (and therefore the active branch) and rebinds the branch events. */

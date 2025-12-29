@@ -344,6 +344,33 @@ export class SharedTreeKernel
 
 	private registerCheckout(branchId: BranchId, checkout: TreeCheckout): void {
 		this.checkouts.set(branchId, checkout);
+		const enricher = this.getCommitEnricher(branchId);
+		checkout.transaction.events.on("started", () => {
+			if (this.sharedObject.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				enricher.startTransaction();
+			}
+		});
+
+		checkout.transaction.events.on("aborting", () => {
+			if (this.sharedObject.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				enricher.abortTransaction();
+			}
+		});
+		checkout.transaction.events.on("committing", () => {
+			if (this.sharedObject.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				enricher.commitTransaction();
+			}
+		});
+		checkout.events.on("beforeBatch", (event) => {
+			if (event.type === "append" && this.sharedObject.isAttached()) {
+				if (checkout.transaction.isInProgress()) {
+					enricher.addTransactionCommits(event.newCommits);
+				}
+			}
+		});
 	}
 
 	public exportVerbose(): VerboseTree | undefined {

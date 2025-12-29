@@ -491,7 +491,7 @@ describe("visitDelta", () => {
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field0],
-			["destroy", field0, 1, { minor: 42 }],
+			["destroy", field0, 1],
 		];
 		testDeltaVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
@@ -504,8 +504,8 @@ describe("visitDelta", () => {
 			destroy: [{ id, count: 2 }],
 		};
 		const expected: VisitScript = [
-			["destroy", field0, 1, { minor: 42 }],
-			["destroy", field1, 1, { minor: 43 }],
+			["destroy", field0, 1],
+			["destroy", field1, 1],
 		];
 		testDeltaVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
@@ -524,7 +524,7 @@ describe("visitDelta", () => {
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1, detachId, false],
 			["exitField", field0],
-			["destroy", field1, 1, detachId],
+			["destroy", field1, 1],
 		];
 		testDeltaVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
