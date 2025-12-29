@@ -1513,7 +1513,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const successfullyRemoved = this.sequencedStorageData.delete(key);
 			// Only emit if we actually deleted something.
 			if (
-				!this.disposed &&
+				this.isNotDisposedAndReachable(this.absolutePath) &&
 				previousOptimisticLocalValue !== undefined &&
 				successfullyRemoved
 			) {
@@ -1549,7 +1549,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// Only emit if we locally believe we deleted something.  Otherwise we still send the op
 		// (permitting speculative deletion even if we don't see anything locally) but don't emit
 		// a valueChanged since we in fact did not locally observe a value change.
-		if (!this.disposed && previousOptimisticLocalValue !== undefined) {
+		if (
+			this.isNotDisposedAndReachable(this.absolutePath) &&
+			previousOptimisticLocalValue !== undefined
+		) {
 			const event: IDirectoryValueChanged = {
 				key,
 				path: this.absolutePath,
@@ -1934,7 +1937,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
 			// is no optimistically-applied local pending clear that would supersede this remote clear.
 			// Don't emit events if this directory has been disposed or no longer exists
-			if (!this.pendingStorageData.some((entry) => entry.type === "clear") && !this.disposed) {
+			if (!this.pendingStorageData.some((entry) => entry.type === "clear")) {
 				this.directory.emit("clear", local, this.directory);
 				this.directory.emit("clearInternal", this.absolutePath, local, this.directory);
 			}
@@ -2154,11 +2157,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this._sequencedSubdirectories.set(op.subdirName, subDir);
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
-			// Check both: pending operation on this subdirectory AND whether the child directory is visible
-			// in the optimistic view (parent or ancestor could have pending delete making this invisible).
 			if (
 				!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName) &&
-				!this.disposed
+				this.isNotDisposedAndReachable(subDir.absolutePath)
 			) {
 				this.emit("subDirectoryCreated", op.subdirName, local, this);
 			}
@@ -2243,7 +2244,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.subdirName === op.subdirName && entry.type === "deleteSubDirectory",
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
-			if (pendingEntry === undefined && !this.disposed) {
+			if (pendingEntry === undefined) {
 				this.emit("subDirectoryDeleted", op.subdirName, local, this);
 			}
 		}
@@ -2629,21 +2630,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 	private registerEventsOnSubDirectory(subDirectory: SubDirectory, subDirName: string): void {
 		subDirectory.on("subDirectoryCreated", (relativePath: string, local: boolean) => {
-			// Don't forward events if this directory has been disposed or is invisible in the optimistic view
-			// (e.g., this directory or an ancestor has a pending delete).
-			// Check the full path to the child directory being created.
-			const childPath = posix.join(this.absolutePath, subDirName, relativePath);
-			if (this.isNotDisposedAndReachable(childPath)) {
-				this.emit("subDirectoryCreated", posix.join(subDirName, relativePath), local, this);
-			}
+			this.emit("subDirectoryCreated", posix.join(subDirName, relativePath), local, this);
 		});
 		subDirectory.on("subDirectoryDeleted", (relativePath: string, local: boolean) => {
-			// Don't forward events if this directory has been disposed or is invisible in the optimistic view
-			// (e.g., this directory or an ancestor has a pending delete).
-			// For deletes, check if this parent directory is visible (child is being deleted so can't check it).
-			if (this.isNotDisposedAndReachable(this.absolutePath)) {
-				this.emit("subDirectoryDeleted", posix.join(subDirName, relativePath), local, this);
-			}
+			this.emit("subDirectoryDeleted", posix.join(subDirName, relativePath), local, this);
 		});
 	}
 
