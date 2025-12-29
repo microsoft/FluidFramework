@@ -227,16 +227,20 @@ export function getNodeEncoder(
 
 function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | EncodedValueShape {
 	switch (schema) {
-		case undefined:
+		case undefined: {
 			return false;
+		}
 		case ValueSchema.Number:
 		case ValueSchema.String:
 		case ValueSchema.Boolean:
-		case ValueSchema.FluidHandle:
+		case ValueSchema.FluidHandle: {
 			return true;
-		case ValueSchema.Null:
+		}
+		case ValueSchema.Null: {
 			return [null];
-		default:
+		}
+		default: {
 			unreachableCase(schema);
+		}
 	}
 }

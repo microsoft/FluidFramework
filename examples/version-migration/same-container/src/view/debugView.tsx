@@ -48,7 +48,7 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 	);
 
 	useEffect(() => {
-		const migrationStateChangedHandler = () => {
+		const migrationStateChangedHandler = (): void => {
 			setMigrationState(model.migrationTool.migrationState);
 		};
 		model.migrationTool.on("proposingMigration", migrationStateChangedHandler);
@@ -113,7 +113,7 @@ interface IControlsViewProps {
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
 	const { proposeVersion, summarizeOnDemand, addItem } = props;
 
-	const addSampleItems = () => {
+	const addSampleItems = (): void => {
 		addItem("Alpha", 1);
 		addItem("Beta", 2);
 		addItem("Gamma", 3);

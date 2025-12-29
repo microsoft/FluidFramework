@@ -429,7 +429,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash: boolean): void;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
@@ -489,6 +489,7 @@ export interface IPendingMessagesState {
  * partially implemented by ContainerRuntime to provide context to the ChannelCollection.
  *
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
@@ -637,6 +638,7 @@ export type PackagePath = readonly string[];
  * This context is provided to the implementation of {@link IFluidDataStoreChannel} which powers the datastore.
  *
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidDataStoreContext extends IFluidParentContext {
 	readonly id: string;
@@ -712,6 +714,7 @@ export interface FluidDataStoreContextInternal
 
 /**
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 	/**

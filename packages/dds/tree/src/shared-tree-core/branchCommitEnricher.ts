@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { type GraphCommit, replaceChange } from "../core/index.js";
+import { type ChangeRebaser, type GraphCommit, replaceChange } from "../core/index.js";
 
 import type { SharedTreeBranchChange } from "./branch.js";
 import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
@@ -24,7 +24,17 @@ export class BranchCommitEnricher<TChange> {
 	 */
 	readonly #preparedCommits: WeakMap<GraphCommit<TChange>, GraphCommit<TChange>> = new Map();
 
-	public constructor(enricher: ChangeEnricherReadonlyCheckout<TChange>) {
+	/**
+	 * If defined, a top-level transaction has been {@link BranchCommitEnricher.commitTransaction | committed} since the last {@link BranchCommitEnricher.processChange | change has been processed}.
+	 * Calling this function will compute the composition of that transaction's commits.
+	 * @remarks This function will be reset to undefined after each {@link BranchCommitEnricher.processChange | change is processed}.
+	 */
+	#getOuterTransactionChange?: () => TChange;
+
+	public constructor(
+		rebaser: ChangeRebaser<TChange>,
+		enricher: ChangeEnricherReadonlyCheckout<TChange>,
+	) {
 		this.#enricher = enricher;
 	}
 
@@ -35,10 +45,9 @@ export class BranchCommitEnricher<TChange> {
 	public processChange(change: SharedTreeBranchChange<TChange>): void {
 		if (change.type === "append") {
 			for (const newCommit of change.newCommits) {
-				const newChange = this.#enricher.updateChangeEnrichments(
-					newCommit.change,
-					newCommit.revision,
-				);
+				const newChange =
+					this.#getOuterTransactionChange?.() ??
+					this.#enricher.updateChangeEnrichments(newCommit.change, newCommit.revision);
 
 				this.#preparedCommits.set(newCommit, replaceChange(newCommit, newChange));
 			}

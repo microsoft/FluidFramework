@@ -10,6 +10,7 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
+			"@typescript-eslint/explicit-function-return-type": "warn",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"tsdoc/syntax": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",

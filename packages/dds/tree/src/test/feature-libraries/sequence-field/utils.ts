@@ -154,8 +154,9 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 	function normalizeEffect<TEffect extends MarkEffect>(effect: TEffect): TEffect {
 		switch (effect.type) {
 			case "Rename":
-			case NoopMarkType:
+			case NoopMarkType: {
 				return effect;
+			}
 			case "AttachAndDetach": {
 				return {
 					...effect,
@@ -214,8 +215,9 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				normalized.revision = atom.revision;
 				return normalized as TEffect;
 			}
-			default:
+			default: {
 				assert.fail(`Unexpected mark type: ${(effect as SF.Mark).type}`);
+			}
 		}
 	}
 	const output = new MarkListFactory();

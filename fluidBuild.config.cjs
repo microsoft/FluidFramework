@@ -361,6 +361,16 @@ module.exports = {
 
 				// minified DOMPurify is not a source file, so it doesn't need a header.
 				"docs/static/dompurify/purify.min.js",
+
+				// printed ESLint configs do not need headers
+				".*/.eslint-print-configs/.*",
+
+				// test data
+				"^build-tools/packages/build-infrastructure/src/test/data/.*",
+
+				// TODO: Once ESLint 9 flat configs are completely in use and the CJS configs are gone
+				// we can remove these exceptions.
+				".*/eslint.*.mts",
 			],
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
@@ -599,7 +609,8 @@ module.exports = {
 	},
 
 	assertTagging: {
-		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages/i],
+		// TODO: AB#55437: excluding packages under packages/test should not be required: there is a config file at packages/test/assertTagging.config.mjs which used to accomplish this but it stopped working.
+		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages\/(?!test\/)/i],
 	},
 
 	// `flub bump` config. These settings influence `flub bump` behavior for a release group. These settings can be

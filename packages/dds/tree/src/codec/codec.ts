@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { cleanedPackageVersion as runtimeUtilsCleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
 import { assert, fail } from "@fluidframework/core-utils/internal";
@@ -153,6 +154,18 @@ export interface CodecWriteOptions extends ICodecOptions {
 	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
 	readonly minVersionForCollab: MinimumVersionForCollab;
+
+	/**
+	 * Overrides the version of the codec to use for encoding.
+	 * @remarks
+	 * Without an override, the selected version will be based on {@link CodecWriteOptions.minVersionForCollab}.
+	 */
+	readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
+
+	/**
+	 * If true, suppress errors when `writeVersionOverrides` selects a version which may not be compatible with the {@link CodecWriteOptions.minVersionForCollab}.
+	 */
+	readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
 }
 
 /**
@@ -251,12 +264,21 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 
 /**
  * A version stamp for encoded data.
- *
+ * @remarks
  * Strings are used for formats that are not yet officially supported.
  * When such formats become officially supported/stable, they will be switched to using a number.
  * Undefined is tolerated to enable the scenario where data was not initially versioned.
+ * @alpha
  */
 export type FormatVersion = number | string | undefined;
+
+/**
+ * A unique name given to this codec family.
+ * @remarks
+ * This is not persisted: it is only used to specify version overrides and in errors.
+ * @alpha
+ */
+export type CodecName = string;
 
 /**
  * A format version which is dependent on some parent format version.
@@ -373,9 +395,13 @@ function isJsonCodec<TDecoded, TContext>(
  * Constructs a {@link IMultiFormatCodec} from a `IJsonCodec` using a generic binary encoding that simply writes
  * the json representation of the object to a buffer.
  */
-export function withDefaultBinaryEncoding<TDecoded, TContext>(
-	jsonCodec: IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
-): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+export function withDefaultBinaryEncoding<
+	TDecoded,
+	TContext,
+	TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
+>(
+	jsonCodec: IJsonCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext>,
+): IMultiFormatCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext> {
 	return {
 		json: jsonCodec,
 		binary: new DefaultBinaryCodec(jsonCodec),
@@ -386,11 +412,15 @@ export function withDefaultBinaryEncoding<TDecoded, TContext>(
  * Ensures that the provided single or multi-format codec has a binary encoding.
  * Adapts the json encoding using {@link withDefaultBinaryEncoding} if necessary.
  */
-export function ensureBinaryEncoding<TDecoded, TContext>(
+export function ensureBinaryEncoding<
+	TDecoded,
+	TContext,
+	TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
+>(
 	codec:
-		| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
-		| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
-): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+		| IMultiFormatCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext>
+		| IJsonCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext>,
+): IMultiFormatCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext> {
 	return isJsonCodec(codec) ? withDefaultBinaryEncoding(codec) : codec;
 }
 
@@ -550,15 +580,22 @@ export const FluidClientVersion = {
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**
- * An up to date version which includes all the important stable features.
+ * An up to date version which includes all stable features.
  * @remarks
- * Use for cases when data is not persisted and thus would only ever be read by the current version of the framework.
+ * Use for cases when data is not persisted and thus would only ever be read by the the same version of the code which read this value.
+ *
+ * The pkgVersion from this package (tree) can not be used here as it is not guaranteed to be a valid MinimumVersionForCollab
+ * and would also unexpectedly disable features in prereleases and on CI if it didn't fail validation.
+ * See {@link @fluidframework/runtime-utils/internal#cleanedPackageVersion} for more details on why cleanedPackageVersion is preferred over pkgVersion.
  *
  * @privateRemarks
- * Update as needed.
- * TODO: Consider using packageVersion.ts to keep this current.
+ * It is safe to use CleanedPackageVersion from runtime-utils here since features are enabled in minor versions,
+ * and this package (tree) depends on runtime-utils with a `~` semver range
+ * ensuring that the version of runtime-utils this was imported from will match the version of this (tree) package at least up to the minor version.
+ * Reusing this from runtime-utils avoids duplicating the cleanup logic here as well as the cost or recomputing it.
+ * If in the future for some reason this becomes not okay, runtime-utils could instead export a function that performs that cleanup logic which could be reused here.
  */
-export const currentVersion: MinimumVersionForCollab = FluidClientVersion.v2_0;
+export const currentVersion: MinimumVersionForCollab = runtimeUtilsCleanedPackageVersion;
 
 export interface CodecTree {
 	readonly name: string;

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "2.74.0",
+	"version": "2.80.0",
 	"private": true,
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -37,7 +37,7 @@
 		"eslint-plugin-import-x": "~4.16.1",
 		"eslint-plugin-jsdoc": "~61.4.1",
 		"eslint-plugin-promise": "~7.2.1",
-		"eslint-plugin-react": "~7.35.0",
+		"eslint-plugin-react": "~7.37.5",
 		"eslint-plugin-react-hooks": "~7.0.1",
 		"eslint-plugin-tsdoc": "~0.5.0",
 		"eslint-plugin-unicorn": "~54.0.0",
@@ -46,13 +46,13 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
 		"@types/sort-json": "^2.0.3",
-		"concurrently": "^8.2.1",
-		"cross-env": "^7.0.3",
+		"concurrently": "^9.2.1",
+		"cross-env": "^10.1.0",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.6.2",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.2",
 		"sort-json": "^2.0.1",
 		"tsx": "^4.21.0",
 		"typescript": "~5.4.5"

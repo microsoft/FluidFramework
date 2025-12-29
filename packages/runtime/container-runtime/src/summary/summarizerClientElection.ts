@@ -91,6 +91,7 @@ export class SummarizerClientElection
 						lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
 						electionSequenceNumber,
 						nextElectedClientId: this.clientElection.peekNextElectedClient()?.clientId,
+						opsWithoutSummary,
 					});
 					this.lastReportedSeq = sequenceNumber;
 				}

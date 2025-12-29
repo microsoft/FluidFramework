@@ -269,7 +269,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		genId: IdAllocator<ChangesetLocalId>,
 		revision: RevisionTag | undefined,
 	): OptionalChangeset => {
-		const { moves, childChanges } = change;
+		const { moves, childChanges, valueReplace } = change;
 
 		const invertIdMap = new RegisterMap<RegisterId>();
 		const invertedMoves: Move[] = [];
@@ -277,13 +277,13 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			invertIdMap.set(src, dst);
 			invertedMoves.push([dst, src]);
 		}
-		if (change.valueReplace !== undefined) {
-			const effectfulDst = getEffectfulDst(change.valueReplace);
+		if (valueReplace !== undefined) {
+			const effectfulDst = getEffectfulDst(valueReplace);
 			if (effectfulDst !== undefined) {
-				invertIdMap.set("self", change.valueReplace.dst);
+				invertIdMap.set("self", valueReplace.dst);
 			}
-			if (change.valueReplace.src !== undefined) {
-				invertIdMap.set(change.valueReplace.src, "self");
+			if (valueReplace.src !== undefined) {
+				invertIdMap.set(valueReplace.src, "self");
 			}
 		}
 
@@ -294,10 +294,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}),
 		};
 
-		if (change.valueReplace !== undefined) {
-			if (isReplaceEffectful(change.valueReplace)) {
+		if (valueReplace !== undefined) {
+			if (isReplaceEffectful(valueReplace)) {
 				const replace: Mutable<Replace> =
-					change.valueReplace.src === undefined
+					valueReplace.src === undefined
 						? {
 								isEmpty: true,
 								dst: makeChangeAtomId(genId.allocate(), revision),
@@ -305,14 +305,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						: {
 								isEmpty: false,
 								dst: isRollback
-									? change.valueReplace.src
+									? valueReplace.src
 									: makeChangeAtomId(genId.allocate(), revision),
 							};
-				if (change.valueReplace.isEmpty === false) {
-					replace.src = change.valueReplace.dst;
+				if (valueReplace.isEmpty === false) {
+					replace.src = valueReplace.dst;
 				}
 				inverted.valueReplace = replace;
-			} else if (!isRollback && change.valueReplace.src === "self") {
+			} else if (!isRollback && valueReplace.src === "self") {
 				inverted.valueReplace = {
 					isEmpty: false,
 					src: "self",

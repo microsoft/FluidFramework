@@ -94,7 +94,7 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
 
-	const sharedCellFromContainer = async (container: IContainer) => {
+	const sharedCellFromContainer = async (container: IContainer): Promise<ISharedCell> => {
 		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		return dataObject.getSharedObject<ISharedCell>(cellId);
 	};
@@ -116,7 +116,9 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 		},
 	});
 
-	const getAttributorFromContainer = async (container: IContainer) => {
+	const getAttributorFromContainer = async (
+		container: IContainer,
+	): Promise<IRuntimeAttributor> => {
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const containerRuntime = dataStore.context.containerRuntime as ContainerRuntime;
 		const attributor = await getRuntimeAttributor(containerRuntime);

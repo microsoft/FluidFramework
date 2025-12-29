@@ -19,7 +19,7 @@ export const DebugView: React.FC<IDebugViewProps> = ({ model }: IDebugViewProps)
 
 	const [treeType, setTreeType] = useState(DEBUG.isMigrated() ? "New" : "Legacy");
 	useEffect(() => {
-		const onBackingDataChanged = () => {
+		const onBackingDataChanged = (): void => {
 			setTreeType(DEBUG.isMigrated() ? "New" : "Legacy");
 		};
 		model.migratingInventoryList.on("backingDataChanged", onBackingDataChanged);
