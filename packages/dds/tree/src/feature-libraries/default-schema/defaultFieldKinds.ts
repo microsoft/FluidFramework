@@ -204,7 +204,7 @@ export const fieldKindConfigurations: ReadonlyMap<
 		brand(101), // Detached roots
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[required.identifier, { kind: required, formatVersion: 2 }],
-			[optional.identifier, { kind: optional, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 3 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 2 }],
 			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
 			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
