@@ -341,7 +341,7 @@ describe("Loader", () => {
 
 					// TS 5.1.6: Workaround 'TS2339: Property 'readonly' does not exist on type 'never'.'
 					//
-					//           After observering that 'forceReadonly' has been asserted to be both true and
+					//           After observing that 'forceReadonly' has been asserted to be both true and
 					//           false, TypeScript coerces 'connectionManager' to 'never'.  Wrapping the
 					//           assertion in lambda avoids this.
 					const assertReadonlyIs = (expected: boolean): void => {
@@ -453,7 +453,7 @@ describe("Loader", () => {
 					assert(expectedError !== undefined, "Expected error to be raised");
 					assert.match(
 						expectedError.message,
-						/Found two messages with the same clientSequenceNumber/,
+						/Found two messages with non-contiguous clientSequenceNumber/,
 					);
 				});
 
@@ -484,7 +484,7 @@ describe("Loader", () => {
 					assert(expectedError !== undefined, "Expected error to be raised");
 					assert.match(
 						expectedError.message,
-						/Found two messages with the same clientSequenceNumber/,
+						/Found two messages with non-contiguous clientSequenceNumber/,
 					);
 				});
 
@@ -603,7 +603,7 @@ describe("Loader", () => {
 					assert(expectedError !== undefined, "Expected error to be raised");
 					assert.match(
 						expectedError.message,
-						/Found two messages with the same clientSequenceNumber/,
+						/Found two messages with non-contiguous clientSequenceNumber/,
 					);
 				});
 
@@ -633,7 +633,7 @@ describe("Loader", () => {
 					assert(expectedError !== undefined, "Expected error to be raised");
 					assert.match(
 						expectedError.message,
-						/Found two messages with the same clientSequenceNumber/,
+						/Found two messages with non-contiguous clientSequenceNumber/,
 					);
 				});
 
@@ -666,7 +666,7 @@ describe("Loader", () => {
 					assert(expectedError !== undefined, "Expected error to be raised");
 					assert.match(
 						expectedError.message,
-						/Found two messages with the same clientSequenceNumber/,
+						/Found two messages with non-contiguous clientSequenceNumber/,
 					);
 				});
 			});

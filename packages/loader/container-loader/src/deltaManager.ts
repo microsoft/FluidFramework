@@ -205,7 +205,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
 
 	/**
-	 * Map of clientId to the the last observed message from that client. This is used to validate
+	 * Map of clientId to the last observed message from that client. This is used to validate
 	 * that clientSequenceNumbers are monotonically increasing for a given clientId.
 	 */
 	private readonly lastObservedMessageByClient = new Map<string, SafeMessageProperties>();
@@ -886,7 +886,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	/**
-	 * Validates that the clientSequenceNumber for a given clientId is monotonically increasing.
+	 * Validates that the clientSequenceNumber for a given clientId is contiguous.
 	 * @param message - The message to validate.
 	 */
 	private validateClientSequenceNumberConsistency(message: ISequencedDocumentMessage): void {
@@ -906,16 +906,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			lastObservedClientMessage !== undefined &&
 			message.clientSequenceNumber !== lastObservedClientMessage.clientSequenceNumber + 1
 		) {
-			// This looks like a data corruption issue where the clientSequenceNumber is not monotonically increasing
+			// This looks like a data corruption issue where the clientSequenceNumber is not contiguous
 			// for a given clientId.
-			// The Fluid Service ensures that is only processes ops with monotonically increasing clientSequenceNumbers
+			// The Fluid Service ensures that it only processes ops with contiguous clientSequenceNumbers
 			// for a given clientId.
 			// So, if we see this error, it is likely a service issue.
-			// One example of this if the service sequences the same op more than once. In this case, all the properties
+			// One example of this is if the service sequences the same op more than once. In this case, all the properties
 			// except the sequenceNumber will be the same.
 			const error = new DataCorruptionError(
-				"Found two messages with the same clientSequenceNumber and clientId but different sequenceNumber. Likely to be a " +
-					"service issue",
+				"Found two messages with non-contiguous clientSequenceNumber for a given client. Likely to be a service issue",
 				{
 					clientId: this.connectionManager.clientId,
 					sequenceNumber: message.sequenceNumber,
