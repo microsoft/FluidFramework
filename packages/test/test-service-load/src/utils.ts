@@ -13,6 +13,9 @@ import {
 	OdspTestDriver,
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
+	type LocalServerTestDriver,
+	type RouterliciousTestDriver,
+	type TinyliciousTestDriver,
 } from "@fluid-private/test-drivers";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
@@ -42,8 +45,9 @@ const codeDetails: IFluidCodeDetails = {
 	config: {},
 };
 
-export const createCodeLoader = (options?: IContainerRuntimeOptions | undefined) =>
-	new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
+export const createCodeLoader = (
+	options?: IContainerRuntimeOptions | undefined,
+): LocalCodeLoader => new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
 export async function initialize(
 	testDriver: ITestDriver,
@@ -52,7 +56,7 @@ export async function initialize(
 	verbose: boolean,
 	logger: ITelemetryLoggerExt,
 	requestedTestId?: string,
-) {
+): Promise<string> {
 	const random = makeRandom(seed);
 	const optionsOverride = getOptionOverride(
 		testConfig,
@@ -123,7 +127,9 @@ export async function createTestDriver(
 	seed: number,
 	runId: number | undefined,
 	supportsBrowserAuth: boolean,
-) {
+): Promise<
+	LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver
+> {
 	const options = generateOdspHostStoragePolicy(seed);
 	return createFluidTestDriver(driver, {
 		odsp: {
@@ -162,7 +168,7 @@ export const configProvider = (configs: Record<string, ConfigTypes>): IConfigPro
 	};
 };
 
-export function printStatus(runConfig: IRunConfig, message: string) {
+export function printStatus(runConfig: IRunConfig, message: string): void {
 	if (runConfig.verbose) {
 		console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
 	}

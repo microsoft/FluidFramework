@@ -28,7 +28,10 @@ import {
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { type ISharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
@@ -46,27 +49,27 @@ import {
 // Tests usually make use of the default data object provided by the test object provider.
 // However, it only creates a single DDS and in these tests we create multiple (3) DDSes per data store.
 class TestDataObject extends DataObject {
-	public get _root() {
+	public get _root(): ISharedDirectory {
 		return this.root;
 	}
 
-	public get _runtime() {
+	public get _runtime(): IFluidDataStoreRuntime {
 		return this.runtime;
 	}
 
-	public get _context() {
+	public get _context(): IFluidDataStoreContext {
 		return this.context;
 	}
 
 	private readonly matrixKey = "matrix1";
 	public matrix!: SharedMatrix;
 
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
 		this.root.set(this.matrixKey, sharedMatrix.handle);
 	}
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
 		assert(matrixHandle !== undefined, "SharedMatrix not found");
 		this.matrix = await matrixHandle.get();
@@ -111,7 +114,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 	private mainDataStore: TestDataObject | undefined;
 	private readonly docInfo: DocumentMatrixPlainInfo;
 	private readonly _dataObjectFactory: DataObjectFactory<TestDataObject>;
-	public get dataObjectFactory() {
+	public get dataObjectFactory(): DataObjectFactory<TestDataObject> {
 		return this._dataObjectFactory;
 	}
 	private readonly runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
@@ -125,7 +128,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 	}
 
 	private async ensureContainerConnectedWriteMode(container: IContainer): Promise<void> {
-		const resolveIfActive = (res: () => void) => {
+		const resolveIfActive = (res: () => void): void => {
 			if (container.deltaManager.active) {
 				res();
 			}
@@ -150,7 +153,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 		return result;
 	}
 
-	private async waitForContainerSave(c: IContainer) {
+	private async waitForContainerSave(c: IContainer): Promise<void> {
 		if (!c.isDirty) {
 			return;
 		}
@@ -205,7 +208,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 	/**
 	 * Sets the corners of the given matrix.
 	 */
-	private setCorners(matrix: SharedMatrix) {
+	private setCorners(matrix: SharedMatrix): void {
 		matrix.setCell(this.docInfo.beginRow, this.docInfo.beginColumn, "TopLeft" as any);
 		matrix.setCell(this.docInfo.beginRow, this.docInfo.endColumn, "TopRight" as any);
 		matrix.setCell(this.docInfo.endRow, this.docInfo.endColumn, "BottomRight" as any);
@@ -215,7 +218,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 	/**
 	 * Checks the corners of the given matrix.
 	 */
-	private checkCorners(matrix: SharedMatrix) {
+	private checkCorners(matrix: SharedMatrix): void {
 		assert.equal(matrix.getCell(this.docInfo.beginRow, this.docInfo.beginColumn), "TopLeft");
 		assert.equal(matrix.getCell(this.docInfo.beginRow, this.docInfo.endColumn), "TopRight");
 		assert.equal(matrix.getCell(this.docInfo.endRow, this.docInfo.endColumn), "BottomRight");

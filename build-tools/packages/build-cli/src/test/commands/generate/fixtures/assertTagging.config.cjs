@@ -4,6 +4,8 @@
  */
 
 module.exports = {
-	mode: "production",
-	devtool: "source-map",
+	assertionFunctions: {
+		assert: 1,
+		fail: 0,
+	},
 };
