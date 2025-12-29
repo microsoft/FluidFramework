@@ -15,4 +15,4 @@ This breaking change only affects the behavior of `TreeBranch` methods (currentl
 These new restrictions insulate branches and their dependents from experiencing incomplete transaction changes.
 This is important because incomplete transaction changes may not uphold application invariants.
 
-In scenarios that experience the new errors, application authors should consider whether the ongoing transaction can safely by closed before invoking these methods.
+In scenarios that experience the new errors, application authors should consider whether the ongoing transaction can safely be closed before invoking these methods.
