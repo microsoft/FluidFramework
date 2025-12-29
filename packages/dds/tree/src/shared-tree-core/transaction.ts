@@ -10,10 +10,10 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	findAncestor,
+	tagChange,
 	type ChangeFamilyEditor,
 	type GraphCommit,
 	type RevisionTag,
-	type TaggedChange,
 } from "../core/index.js";
 import { getLast, getOrCreate, hasSome } from "../util/index.js";
 
@@ -265,14 +265,11 @@ export class SquashingTransactionStack<
 	/**
 	 * Construct a new {@link SquashingTransactionStack}.
 	 * @param branch - The {@link SquashingTransactionStack.branch | branch} that will be forked off of when a transaction begins.
-	 * @param squash - Called once when the outer-most transaction is committed to produce a single squashed change from the transaction's commits.
-	 * The change will be applied to the original {@link SquashingTransactionStack.branch | branch}.
 	 * @param onPush - A function that will be called when a transaction is pushed to the {@link TransactionStack | stack}.
 	 */
 	public constructor(
 		public readonly branch: SharedTreeBranch<TEditor, TChange>,
 		mintRevisionTag: () => RevisionTag,
-		squash: (commits: GraphCommit<TChange>[], revision: RevisionTag) => TaggedChange<TChange>,
 		onPush?: () => OnPop | void,
 	) {
 		super(
@@ -307,11 +304,14 @@ export class SquashingTransactionStack<
 								(c) => c === startHead,
 							);
 							if (removedCommits.length > 0) {
-								assert(
-									transactionRevision !== undefined,
-									"A transaction revision tag should have been minted if there are commits to squash",
-								);
-								this.branch.apply(squash(removedCommits, transactionRevision));
+								for (const commit of removedCommits) {
+									assert(
+										commit.revision !== transactionRevision,
+										"Unexpected commit in transaction",
+									);
+								}
+								const squash = this.branch.changeFamily.rebaser.compose(removedCommits);
+								this.branch.apply(tagChange(squash, transactionRevision));
 							}
 							break;
 						}
