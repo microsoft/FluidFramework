@@ -168,11 +168,10 @@ export class SharedDirectoryOracle {
 
 		// Validate previousValue matches oracle, except:
 		// - Post-clear events: previousValue from before clear, oracle already cleared
-		// - Remote ops with pending local ops: oracle has optimistic value, event has sequenced value
+		// - Remote ops
 		const oracleValue = dirNode.keys.get(key);
 		const isPostClearEvent = previousValue !== undefined && oracleValue === undefined;
-		const hasPendingLocalOp = !local && oracleValue !== previousValue;
-		if (!isPostClearEvent && !hasPendingLocalOp) {
+		if (local && !isPostClearEvent) {
 			assert.deepStrictEqual(
 				previousValue,
 				oracleValue,
@@ -239,13 +238,10 @@ export class SharedDirectoryOracle {
 
 		const dirNode = this.createDirNode(this.modelFromContainedValueChanged, absolutePath);
 
-		// Validate previousValue matches oracle, except:
-		// - Post-clear events: previousValue from before clear, oracle already cleared
-		// - Remote ops with pending local ops: oracle has optimistic value, event has sequenced value
+		// Validate previousValue matches oracle for local ops only
 		const oracleValue = dirNode.keys.get(key);
 		const isPostClearEvent = previousValue !== undefined && oracleValue === undefined;
-		const hasPendingLocalOp = !local && oracleValue !== previousValue;
-		if (!isPostClearEvent && !hasPendingLocalOp) {
+		if (local && !isPostClearEvent) {
 			assert.deepStrictEqual(
 				previousValue,
 				oracleValue,

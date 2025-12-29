@@ -1881,7 +1881,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param directoryPath - The absolute path of the directory to check
 	 * @returns true if the directory is visible in the optimistic view, false otherwise
 	 */
-	private shouldEmitForDirectory(directoryPath: string): boolean {
+	private isNotDisposedAndReachable(directoryPath: string): boolean {
 		return !this.disposed && this.directory.getWorkingDirectory(directoryPath) !== undefined;
 	}
 
@@ -1943,7 +1943,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Include 'path' so listeners can identify which subdirectory the change occurred in
 			for (const { key, previousValue } of pendingSets) {
 				// Stop emitting events if this directory has been disposed or is no longer reachable
-				if (!this.shouldEmitForDirectory(this.absolutePath)) {
+				if (!this.isNotDisposedAndReachable(this.absolutePath)) {
 					break;
 				}
 				this.directory.emit(
@@ -1998,7 +1998,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.sequencedStorageData.delete(op.key);
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
-				this.shouldEmitForDirectory(this.absolutePath) &&
+				this.isNotDisposedAndReachable(this.absolutePath) &&
 				!this.pendingStorageData.some(
 					(entry) => entry.type === "clear" || entry.key === op.key,
 				)
@@ -2064,7 +2064,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
-				this.shouldEmitForDirectory(this.absolutePath) &&
+				this.isNotDisposedAndReachable(this.absolutePath) &&
 				!this.pendingStorageData.some((entry) => entry.type === "clear" || entry.key === key)
 			) {
 				const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
@@ -2633,7 +2633,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// (e.g., this directory or an ancestor has a pending delete).
 			// Check the full path to the child directory being created.
 			const childPath = posix.join(this.absolutePath, subDirName, relativePath);
-			if (this.shouldEmitForDirectory(childPath)) {
+			if (this.isNotDisposedAndReachable(childPath)) {
 				this.emit("subDirectoryCreated", posix.join(subDirName, relativePath), local, this);
 			}
 		});
@@ -2641,7 +2641,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Don't forward events if this directory has been disposed or is invisible in the optimistic view
 			// (e.g., this directory or an ancestor has a pending delete).
 			// For deletes, check if this parent directory is visible (child is being deleted so can't check it).
-			if (this.shouldEmitForDirectory(this.absolutePath)) {
+			if (this.isNotDisposedAndReachable(this.absolutePath)) {
 				this.emit("subDirectoryDeleted", posix.join(subDirName, relativePath), local, this);
 			}
 		});
