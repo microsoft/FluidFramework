@@ -5,7 +5,7 @@
 
 import type { Invariant } from "../../util/index.js";
 
-import type { RevisionTag } from "./types.js";
+import type { ChangeAtomId, RevisionTag } from "./types.js";
 
 /**
  * Rebasing logic for a particular kind of change.
@@ -92,8 +92,37 @@ export interface ChangeRebaser<TChangeset> {
 	changeRevision(
 		change: TChangeset,
 		newRevision: RevisionTag | undefined,
-		rollBackOf?: RevisionTag,
+		replacer?: RevisionReplacer,
 	): TChangeset;
+}
+
+/**
+ * A type that can update references to a set of old revisions with new ones across multiple changesets.
+ */
+export interface RevisionReplacer {
+	/**
+	 * Predicate to determine if a revision needs replacing.
+	 * @param revision - The revision that may need replacing.
+	 * @returns true iff the given `revision` needs replacing.
+	 */
+	isOldRevision(revision: RevisionTag | undefined): boolean;
+
+	/**
+	 * Returns the updated ID for the given ID.
+	 * @param id - The ID to update.
+	 * @returns an updated ID iff the given `id` needs updating, otherwise returns the given `id`.
+	 * @remarks
+	 * This function always maps the same input {@link ChangeAtomId.revision | revision} and {@link ChangeAtomId.localId | local ID} to the same output revision local ID.
+	 * This means multiple references to the same atom of change will remain consistent after revision replacement.
+	 */
+	getUpdatedAtomId<T extends ChangeAtomId>(id: T): T;
+
+	/**
+	 * Adds a revision to the set of revisions that need replacing.
+	 * Future calls to `isOldRevision` and  `getUpdatedAtomId` will treat this revision as old.
+	 * @param revision - The revision to add.
+	 */
+	addOldRevision(revision: RevisionTag | undefined): void;
 }
 
 export interface TaggedChange<TChangeset, TTag = RevisionTag | undefined> {

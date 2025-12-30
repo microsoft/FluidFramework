@@ -39,6 +39,7 @@ import {
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
 	mapTaggedChange,
+	type RevisionReplacer,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -86,7 +87,7 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import type { FlexFieldKind } from "./fieldKind.js";
-import { DefaultRevisionReplacer, type RevisionReplacer } from "./revisionReplacer.js";
+import { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -1499,15 +1500,12 @@ export class ModularChangeFamily
 	public changeRevision(
 		change: ModularChangeset,
 		newRevision: RevisionTag | undefined,
-		rollbackOf?: RevisionTag,
+		replacer: RevisionReplacer = new DefaultRevisionReplacer(newRevision, new Set()),
 	): ModularChangeset {
-		const oldRevisions = new Set(
-			change.revisions === undefined || change.revisions.length === 0
-				? [undefined]
-				: change.revisions.map((revInfo) => revInfo.revision),
-		);
+		for (const revInfo of change.revisions ?? [{ revision: undefined }]) {
+			replacer.addOldRevision(revInfo.revision);
+		}
 		// Create idAllocator for new revision ids.
-		const replacer = new DefaultRevisionReplacer(newRevision, oldRevisions);
 		const updatedFields = this.replaceFieldMapRevisions(change.fieldChanges, replacer);
 		const updatedNodes = replaceIdMapRevisions(change.nodeChanges, replacer, (nodeChangeset) =>
 			this.replaceNodeChangesetRevisions(nodeChangeset, replacer),
@@ -1548,10 +1546,6 @@ export class ModularChangeFamily
 
 		if (newRevision !== undefined) {
 			const revInfo: Mutable<RevisionInfo> = { revision: newRevision };
-			if (rollbackOf !== undefined) {
-				revInfo.rollbackOf = rollbackOf;
-			}
-
 			updated.revisions = [revInfo];
 		} else {
 			delete updated.revisions;

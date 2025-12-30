@@ -11,6 +11,7 @@ import {
 	type DeltaMark,
 	type FieldKindIdentifier,
 	Multiplicity,
+	type RevisionReplacer,
 } from "../../core/index.js";
 
 import type {
@@ -28,7 +29,6 @@ import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTy
 import type { NodeId } from "./modularChangeTypes.js";
 import { FlexFieldKind } from "./fieldKind.js";
 import { brandConst } from "../../util/index.js";
-import type { RevisionReplacer } from "./revisionReplacer.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.

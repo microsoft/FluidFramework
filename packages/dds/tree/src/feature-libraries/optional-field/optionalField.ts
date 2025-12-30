@@ -12,6 +12,7 @@ import {
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeId,
 	type DeltaMark,
+	type RevisionReplacer,
 	type RevisionTag,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
@@ -39,7 +40,6 @@ import {
 	type ToDelta,
 	type NestedChangesIndices,
 	type FieldChangeDelta,
-	type RevisionReplacer,
 } from "../modular-schema/index.js";
 
 import type {

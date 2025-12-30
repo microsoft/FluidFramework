@@ -8,6 +8,7 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	makeChangeAtomId,
 	type ChangesetLocalId,
+	type RevisionReplacer,
 	type RevisionTag,
 } from "../../core/index.js";
 
@@ -27,7 +28,6 @@ import {
 	type Rename,
 } from "./types.js";
 import { isDetach, isRename } from "./utils.js";
-import type { RevisionReplacer } from "../modular-schema/index.js";
 
 export function replaceRevisions(changeset: Changeset, replacer: RevisionReplacer): Changeset {
 	const updatedMarks = new MarkListFactory();

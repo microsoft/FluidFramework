@@ -9,7 +9,7 @@ import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/
 import { makeChangeAtomId } from "../../../core/index.js";
 import { brandConst } from "../../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { DefaultRevisionReplacer } from "../../../feature-libraries/modular-schema/revisionReplacer.js";
+import { DefaultRevisionReplacer } from "../../../feature-libraries/modular-schema/defaultRevisionReplacer.js";
 
 describe("DefaultRevisionReplacer", () => {
 	const oldRev1: RevisionTag = "oldRev1" as RevisionTag;
@@ -104,6 +104,24 @@ describe("DefaultRevisionReplacer", () => {
 			assert.notEqual(result, id);
 			assert.equal(result.extra, "test");
 			assert.equal(result.revision, newRev);
+		});
+	});
+
+	describe("addOldRevision", () => {
+		it("affects which revisions are considered old", () => {
+			const replacer = new DefaultRevisionReplacer(newRev, new Set([]));
+			replacer.addOldRevision(oldRev1);
+			assert.equal(replacer.isOldRevision(oldRev1), true);
+			const id = makeChangeAtomId(localId1, oldRev1);
+			const result = replacer.getUpdatedAtomId(id);
+			assert.equal(result.revision, newRev);
+			assert.equal(result.localId, id.localId);
+		});
+
+		it("throws when it detects a pattern of replacement that is inconsistent", () => {
+			const replacer = new DefaultRevisionReplacer(newRev, new Set([]));
+			assert.equal(replacer.isOldRevision(oldRev1), false);
+			assert.throws(() => replacer.addOldRevision(oldRev1));
 		});
 	});
 });

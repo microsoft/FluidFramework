@@ -13,6 +13,7 @@ import type {
 	DeltaFieldMap,
 	EncodedRevisionTag,
 	RevisionMetadataSource,
+	RevisionReplacer,
 	RevisionTag,
 } from "../../core/index.js";
 import type { IdAllocator, Invariant } from "../../util/index.js";
@@ -20,7 +21,6 @@ import type { IdAllocator, Invariant } from "../../util/index.js";
 import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
-import type { RevisionReplacer } from "./revisionReplacer.js";
 
 export type NestedChangesIndices = [
 	NodeId,

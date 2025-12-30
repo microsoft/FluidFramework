@@ -3,28 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import type {
+	ChangeAtomId,
+	ChangesetLocalId,
+	RevisionReplacer,
+	RevisionTag,
+} from "../../core/index.js";
 import { brand, brandConst, newTupleBTree, type Mutable } from "../../util/index.js";
 import type { ChangeAtomIdBTree } from "./modularChangeTypes.js";
-
-export interface RevisionReplacer {
-	/**
-	 * Predicate to determine if a revision needs replacing.
-	 * @param revision - The revision that may need replacing.
-	 * @returns true iff the given `revision` needs replacing.
-	 */
-	isOldRevision(revision: RevisionTag | undefined): boolean;
-	/**
-	 * Returns the updated ID for the given ID.
-	 * @param id - The ID to update.
-	 * @returns an updated ID iff the given `id` needs updating, otherwise returns the given `id`.
-	 */
-	getUpdatedAtomId<T extends ChangeAtomId>(id: T): T;
-}
 
 export class DefaultRevisionReplacer implements RevisionReplacer {
 	private readonly newRevisionMap: ChangeAtomIdBTree<ChangesetLocalId>;
 	private readonly localIds: Set<ChangesetLocalId> = new Set();
+	private readonly ignoredRevisions: Set<RevisionTag | undefined> = new Set();
 	private maxSeen: ChangesetLocalId = brandConst(-1)();
 
 	public constructor(
@@ -35,9 +28,22 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 		this.newRevisionMap = newTupleBTree();
 	}
 
-	public isOldRevision(revision: RevisionTag | undefined): boolean {
-		return this.oldRevisions.has(revision);
+	public addOldRevision(revision: RevisionTag | undefined): void {
+		assert(
+			this.ignoredRevisions.has(revision) === false,
+			"Added revision was already encountered",
+		);
+		this.oldRevisions.add(revision);
 	}
+
+	public isOldRevision(revision: RevisionTag | undefined): boolean {
+		const isOld = this.oldRevisions.has(revision);
+		if (!isOld) {
+			this.ignoredRevisions.add(revision);
+		}
+		return isOld;
+	}
+
 	public getUpdatedAtomId<T extends ChangeAtomId>(id: T): T {
 		if (this.isOldRevision(id.revision)) {
 			const updated: Mutable<T> = { ...id, revision: this.newRevision };

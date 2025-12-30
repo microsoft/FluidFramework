@@ -75,11 +75,7 @@ export function makeMitigatedRebaser<TChange>(
 		): TChange => {
 			return withFallback(() => unmitigatedRebaser.rebase(change, over, revisionMetadata));
 		},
-		changeRevision: (
-			change: TChange,
-			newRevision: RevisionTag | undefined,
-			rollbackOf?: RevisionTag,
-		): TChange =>
-			withFallback(() => unmitigatedRebaser.changeRevision(change, newRevision, rollbackOf)),
+		changeRevision: (change: TChange, newRevision: RevisionTag | undefined): TChange =>
+			withFallback(() => unmitigatedRebaser.changeRevision(change, newRevision)),
 	};
 }

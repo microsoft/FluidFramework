@@ -212,6 +212,7 @@ export {
 	newChangeAtomIdRangeMap,
 	compareRevisions,
 	diffHistories,
+	type RevisionReplacer,
 } from "./rebase/index.js";
 
 export {

@@ -43,6 +43,7 @@ export {
 	type TaggedChange,
 	type RevisionMetadataSource,
 	type RevisionInfo,
+	type RevisionReplacer,
 } from "./changeRebaser.js";
 export {
 	findAncestor,
