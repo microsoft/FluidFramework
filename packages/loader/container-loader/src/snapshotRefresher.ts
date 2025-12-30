@@ -34,6 +34,22 @@ class RefreshPromiseTracker {
 	}
 }
 
+/**
+ * Manages periodic refresh of the latest snapshot for a document.
+ *
+ * `SnapshotRefresher` polls the storage service for the most recent snapshot and, when a newer
+ * snapshot is discovered, invokes the provided `onSnapshotRefreshed` callback with the updated
+ * snapshot metadata. It is responsible for:
+ *
+ * - Tracking the most recent snapshot that has been observed.
+ * - Scheduling and managing refresh attempts via an internal timer.
+ * - Emitting telemetry for successful and failed refresh attempts.
+ *
+ * The refresh behavior can be configured via constructor arguments, including whether offline
+ * loading and the `getSnapshot` API are supported, as well as the refresh timeout. Callers
+ * should dispose this instance when snapshot refresh is no longer needed to stop any pending
+ * timers and prevent further refresh attempts.
+ */
 export class SnapshotRefresher implements IDisposable {
 	private readonly mc: MonitoringContext;
 	private latestSnapshot: ISnapshotInfo | undefined;
