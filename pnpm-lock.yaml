@@ -102,6 +102,9 @@ importers:
       syncpack:
         specifier: ^13.0.4
         version: 13.0.4(typescript@5.4.5)
+      type-fest:
+        specifier: ^2.19.0
+        version: 2.19.0
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
