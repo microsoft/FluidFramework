@@ -132,7 +132,7 @@ export class SnapshotRefresher implements IDisposable {
 
 		// Notify the manager about the fetched snapshot - let it decide what to do with it
 		const result =
-			this.latestSnapshot !== undefined ? this.onSnapshotRefreshed(this.latestSnapshot) : -1;
+			this.latestSnapshot === undefined ? -1 : this.onSnapshotRefreshed(this.latestSnapshot);
 
 		this.refreshTimer?.restart();
 		return result;
