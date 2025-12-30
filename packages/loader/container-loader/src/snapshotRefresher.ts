@@ -25,7 +25,9 @@ class RefreshPromiseTracker {
 	#promise: Promise<number> | undefined;
 	setPromise(p: Promise<number>): void {
 		if (this.hasPromise) {
-			throw new Error("Cannot set promise while promise exists");
+			throw new Error(
+				"Cannot start new snapshot refresh while a refresh is already in progress",
+			);
 		}
 		this.#promise = p.finally(() => {
 			this.#promise = undefined;
