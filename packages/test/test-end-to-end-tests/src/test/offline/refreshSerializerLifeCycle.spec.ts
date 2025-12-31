@@ -47,13 +47,15 @@ const testConfigs = generatePairwiseOptions({
 	timeoutRefreshInLoadedContainer: [true, false],
 });
 
+const timeoutMs = 100;
+const realServiceTimeoutMs = 1000;
+
 describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider, apis) => {
 	const mapId = "map";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: Add explicit return type
 	const runtimeOptions = (idCompressorEnabled) => {
 		return {
 			summaryOptions: {
@@ -127,8 +129,8 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 					provider.driver.type === "local" ||
 					provider.driver.type === "t9s" ||
 					provider.driver.type === "tinylicious"
-						? 100
-						: 1000;
+						? timeoutMs
+						: realServiceTimeoutMs;
 			}
 			const getLatestSnapshotInfoP = new Deferred<void>();
 			const testContainerConfig = {
@@ -189,15 +191,15 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 
 			if (testConfig.savedOps) {
 				for (let k = 0; k < 10; k++) {
-					map.set(`${i}`, i++);
-					groupIdDataObject.root.set(`${j}`, j++);
+					map1.set(`${i}`, i++);
+					groupIdDataObject1.root.set(`${j}`, j++);
 				}
 				await waitForSummary(container1);
 				if (testConfig.timeoutRefreshInOriginalContainer) {
 					await timeoutPromise((resolve) => {
 						setTimeout(() => {
 							resolve();
-						}, 105);
+						}, snapshotRefreshTimeoutMs + 10);
 					});
 				}
 				await provider.ensureSynchronized();
@@ -221,7 +223,9 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			assert.ok(pendingOps);
 
 			if (testConfig.summaryWhileOffline) {
-				map.set(`${i}`, i++);
+				for (let k = 0; k < 10; k++) {
+					map.set(`${i}`, i++);
+				}
 				await waitForSummary(container);
 			}
 
@@ -254,7 +258,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 					await timeoutPromise((resolve) => {
 						setTimeout(() => {
 							resolve();
-						}, 105);
+						}, snapshotRefreshTimeoutMs + 10);
 					});
 				}
 			}
