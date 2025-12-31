@@ -108,7 +108,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 	};
 
 	for (const testConfig of testConfigs) {
-		it.skip(`Snapshot refresh life cycle: ${JSON.stringify(
+		it(`Snapshot refresh life cycle: ${JSON.stringify(
 			testConfig ?? "undefined",
 		)}`, async () => {
 			const provider: ITestObjectProvider = getTestObjectProvider();
