@@ -206,7 +206,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	/**
 	 * Map of clientId to the last observed message from that client. This is used to validate
-	 * that clientSequenceNumbers are monotonically increasing for a given clientId.
+	 * that clientSequenceNumbers are always increasing for a given clientId.
 	 */
 	private readonly lastObservedMessageByClient = new Map<string, SafeMessageProperties>();
 
@@ -882,11 +882,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	// Also payload goes to telemetry, so no content or anything else that shouldn't be logged for privacy reasons
 	// Note: It's possible for a duplicate op to be broadcasted and have everything the same except the timestamp.
 	private comparableMessagePayload(m: SafeMessageProperties): string {
-		return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
+		return `${m.clientId}-${m.type}-${m.sequenceNumber}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
 	}
 
 	/**
-	 * Validates that the clientSequenceNumber for a given clientId is contiguous.
+	 * Validates that the clientSequenceNumber for a given clientId is always increasing.
 	 * @param message - The message to validate.
 	 */
 	private validateClientSequenceNumberConsistency(message: ISequencedDocumentMessage): void {
@@ -904,17 +904,18 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		const lastObservedClientMessage = this.lastObservedMessageByClient.get(message.clientId);
 		if (
 			lastObservedClientMessage !== undefined &&
-			message.clientSequenceNumber !== lastObservedClientMessage.clientSequenceNumber + 1
+			message.clientSequenceNumber <= lastObservedClientMessage.clientSequenceNumber
 		) {
-			// This looks like a data corruption issue where the clientSequenceNumber is not contiguous
-			// for a given clientId.
-			// The Fluid Service ensures that it only processes ops with contiguous clientSequenceNumbers
-			// for a given clientId.
+			// This looks like a data corruption issue where the clientSequenceNumber for a given clientId is not
+			// increasing. The Fluid Service ensures that it only processes ops with contiguous increasing
+			// clientSequenceNumbers for a given clientId.
 			// So, if we see this error, it is likely a service issue.
-			// One example of this is if the service sequences the same op more than once. In this case, all the properties
-			// except the sequenceNumber will be the same.
+			// One example of this is if the service sequences the same op more than once. In this case, all the
+			// properties except the sequenceNumber will be the same.
+			// Note that we are not checking for gaps in clientSequenceNumber because very old clients may have gaps
+			// as per the op stream in the snapshot tests under test/snapshots/content.
 			const error = new DataCorruptionError(
-				"Found two messages with non-contiguous clientSequenceNumber for a given client. Likely to be a service issue",
+				"Found two messages with non-increasing clientSequenceNumber for a given client. Likely to be a service issue",
 				{
 					clientId: this.connectionManager.clientId,
 					sequenceNumber: message.sequenceNumber,
