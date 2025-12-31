@@ -1053,7 +1053,10 @@ function tagChangeInline(
 	revision: RevisionTag,
 ): TaggedChange<ModularChangeset> {
 	return tagChange(
-		family.changeRevision(change, new DefaultRevisionReplacer(revision)),
+		family.changeRevision(
+			change,
+			new DefaultRevisionReplacer(revision, family.getRevisions(change)),
+		),
 		revision,
 	);
 }

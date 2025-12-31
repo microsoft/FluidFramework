@@ -20,6 +20,7 @@ import {
 	mapTaggedChange,
 } from "../core/index.js";
 import {
+	DefaultRevisionReplacer,
 	type FieldBatchCodec,
 	ModularChangeFamily,
 	type ModularChangeset,
@@ -206,12 +207,36 @@ export class SharedTreeChangeFamily
 		};
 	}
 
+	public getRevisions(change: SharedTreeChange): Set<RevisionTag | undefined> {
+		const aggregated: Set<RevisionTag | undefined> = new Set();
+		for (const innerChange of change.changes) {
+			if (innerChange.type === "data") {
+				const innerRevisions = this.modularChangeFamily.rebaser.getRevisions(
+					innerChange.innerChange,
+				);
+				for (const tag of innerRevisions) {
+					aggregated.add(tag);
+				}
+			}
+		}
+		return aggregated;
+	}
+
 	public changeRevision(
 		change: SharedTreeChange,
 		replacer: RevisionReplacer,
+	): SharedTreeChange;
+	public changeRevision(change: SharedTreeChange, newRevision: RevisionTag): SharedTreeChange;
+	public changeRevision(
+		change: SharedTreeChange,
+		replacer: RevisionReplacer | RevisionTag,
 	): SharedTreeChange {
+		const actualReplacer: RevisionReplacer =
+			typeof replacer === "object"
+				? replacer
+				: new DefaultRevisionReplacer(replacer, this.getRevisions(change));
 		return mapDataChanges(change, (inner) =>
-			this.modularChangeFamily.rebaser.changeRevision(inner, replacer),
+			this.modularChangeFamily.rebaser.changeRevision(inner, actualReplacer),
 		);
 	}
 

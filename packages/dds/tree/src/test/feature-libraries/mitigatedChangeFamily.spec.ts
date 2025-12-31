@@ -50,6 +50,10 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(over, arg2);
 			throw new Error("rebase");
 		},
+		getRevisions: (change: string): Set<RevisionTag | undefined> => {
+			assert.equal(change, arg1);
+			throw new Error("getRevisions");
+		},
 		changeRevision: (change: string, replacer: RevisionReplacer): string => {
 			assert.equal(change, arg1);
 			assert.equal(replacer, arg2);
@@ -81,6 +85,10 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(change, arg1);
 			assert.equal(over, arg2);
 			return "rebase";
+		},
+		getRevisions: (change: string): Set<RevisionTag | undefined> => {
+			assert.equal(change, arg1);
+			return "getRevisions" as unknown as Set<RevisionTag | undefined>;
 		},
 		changeRevision: (change: string, replacer: RevisionReplacer): string => {
 			assert.equal(change, arg1);
@@ -119,6 +127,10 @@ describe("makeMitigatedChangeFamily", () => {
 		);
 		assert.equal(mitigatedReturningRebaser.compose(arg1), returningRebaser.compose(arg1));
 		assert.equal(
+			mitigatedReturningRebaser.getRevisions(arg1),
+			returningRebaser.getRevisions(arg1),
+		);
+		assert.equal(
 			mitigatedReturningRebaser.changeRevision(arg1, arg2),
 			returningRebaser.changeRevision(arg1, arg2),
 		);
@@ -138,6 +150,11 @@ describe("makeMitigatedChangeFamily", () => {
 			errorLog.length = 0;
 			assert.equal(mitigatedThrowingRebaser.compose(arg1), fallback);
 			assert.deepEqual(errorLog, ["compose"]);
+		});
+		it("getRevisions", () => {
+			errorLog.length = 0;
+			assert.deepEqual(mitigatedThrowingRebaser.getRevisions(arg1), new Set());
+			assert.deepEqual(errorLog, ["getRevisions"]);
 		});
 		it("changeRevision", () => {
 			errorLog.length = 0;

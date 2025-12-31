@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-
 import type {
 	ChangeAtomId,
 	ChangesetLocalId,
@@ -22,18 +20,10 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 
 	public constructor(
 		public readonly newRevision: RevisionTag,
-		private readonly oldRevisions: Set<RevisionTag | undefined> = new Set(),
+		private readonly oldRevisions: Set<RevisionTag | undefined>,
 	) {
 		// Map to keep track of the replaced (revision tag, old id) to the new id.
 		this.newRevisionMap = newTupleBTree();
-	}
-
-	public addOldRevision(revision: RevisionTag | undefined): void {
-		assert(
-			this.ignoredRevisions.has(revision) === false,
-			"Added revision was already encountered",
-		);
-		this.oldRevisions.add(revision);
 	}
 
 	public isOldRevision(revision: RevisionTag | undefined): boolean {

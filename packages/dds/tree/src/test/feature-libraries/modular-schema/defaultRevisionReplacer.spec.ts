@@ -106,22 +106,4 @@ describe("DefaultRevisionReplacer", () => {
 			assert.equal(result.revision, newRev);
 		});
 	});
-
-	describe("addOldRevision", () => {
-		it("affects which revisions are considered old", () => {
-			const replacer = new DefaultRevisionReplacer(newRev);
-			replacer.addOldRevision(oldRev1);
-			assert.equal(replacer.isOldRevision(oldRev1), true);
-			const id = makeChangeAtomId(localId1, oldRev1);
-			const result = replacer.getUpdatedAtomId(id);
-			assert.equal(result.revision, newRev);
-			assert.equal(result.localId, id.localId);
-		});
-
-		it("throws when it detects a pattern of replacement that is inconsistent", () => {
-			const replacer = new DefaultRevisionReplacer(newRev);
-			assert.equal(replacer.isOldRevision(oldRev1), false);
-			assert.throws(() => replacer.addOldRevision(oldRev1));
-		});
-	});
 });

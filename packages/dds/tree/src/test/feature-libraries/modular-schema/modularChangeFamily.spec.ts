@@ -1593,7 +1593,10 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 }
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
-	return family.changeRevision(change, new DefaultRevisionReplacer(revision));
+	return family.changeRevision(
+		change,
+		new DefaultRevisionReplacer(revision, family.getRevisions(change)),
+	);
 }
 
 function tagChangeInline(

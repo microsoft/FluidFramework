@@ -1496,13 +1496,18 @@ export class ModularChangeFamily
 		}
 	}
 
+	public getRevisions(change: ModularChangeset): Set<RevisionTag | undefined> {
+		const aggregated: Set<RevisionTag | undefined> = new Set();
+		for (const revInfo of change.revisions ?? [{ revision: undefined }]) {
+			aggregated.add(revInfo.revision);
+		}
+		return aggregated;
+	}
+
 	public changeRevision(
 		change: ModularChangeset,
 		replacer: RevisionReplacer,
 	): ModularChangeset {
-		for (const revInfo of change.revisions ?? [{ revision: undefined }]) {
-			replacer.addOldRevision(revInfo.revision);
-		}
 		const updatedFields = this.replaceFieldMapRevisions(change.fieldChanges, replacer);
 		const updatedNodes = replaceIdMapRevisions(change.nodeChanges, replacer, (nodeChangeset) =>
 			this.replaceNodeChangesetRevisions(nodeChangeset, replacer),

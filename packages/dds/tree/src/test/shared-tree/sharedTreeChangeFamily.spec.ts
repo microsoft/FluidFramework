@@ -25,7 +25,6 @@ import {
 	fieldKinds,
 	type SchemaChange,
 	intoDelta,
-	DefaultRevisionReplacer,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeChangeFamily,
@@ -429,10 +428,7 @@ describe("SharedTreeChangeFamily", () => {
 				assert.equal(a.minor, b.minor);
 			}
 			const newRevision = mintRevisionTag();
-			const updated = sharedTreeFamily.changeRevision(
-				input,
-				new DefaultRevisionReplacer(newRevision),
-			);
+			const updated = sharedTreeFamily.changeRevision(input, newRevision);
 			// Check the revision change had the intended effect
 			{
 				const [a, b] = getIds(updated);
@@ -464,10 +460,7 @@ describe("SharedTreeChangeFamily", () => {
 			};
 			checkConsistency(input);
 			const newRevision = mintRevisionTag();
-			const updated = sharedTreeFamily.changeRevision(
-				input,
-				new DefaultRevisionReplacer(newRevision),
-			);
+			const updated = sharedTreeFamily.changeRevision(input, newRevision);
 			checkConsistency(updated);
 		});
 	});
