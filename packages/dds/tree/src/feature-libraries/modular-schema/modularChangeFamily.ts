@@ -29,7 +29,6 @@ import {
 	type TaggedChange,
 	type UpPath,
 	makeDetachedNodeId,
-	replaceAtomRevisions,
 	revisionMetadataSourceFromInfo,
 	areEqualChangeAtomIds,
 	type ChangeAtomId,
@@ -40,6 +39,7 @@ import {
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
 	mapTaggedChange,
+	type RevisionReplacer,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -87,6 +87,7 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import type { FlexFieldKind } from "./fieldKind.js";
+import { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -1498,39 +1499,23 @@ export class ModularChangeFamily
 
 	public changeRevision(
 		change: ModularChangeset,
-		newRevision: RevisionTag | undefined,
-		rollbackOf?: RevisionTag,
+		newRevision: RevisionTag,
+		replacer: RevisionReplacer = new DefaultRevisionReplacer(newRevision),
 	): ModularChangeset {
-		const oldRevisions = new Set(
-			change.revisions === undefined || change.revisions.length === 0
-				? [undefined]
-				: change.revisions.map((revInfo) => revInfo.revision),
-		);
-		const updatedFields = this.replaceFieldMapRevisions(
-			change.fieldChanges,
-			oldRevisions,
-			newRevision,
-		);
-
-		const updatedNodes: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
-		for (const [[revision, id], nodeChangeset] of change.nodeChanges.entries()) {
-			updatedNodes.set(
-				[replaceRevision(revision, oldRevisions, newRevision), id],
-				this.replaceNodeChangesetRevisions(nodeChangeset, oldRevisions, newRevision),
-			);
+		for (const revInfo of change.revisions ?? [{ revision: undefined }]) {
+			replacer.addOldRevision(revInfo.revision);
 		}
-
-		const updatedNodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
-		for (const [[revision, id], fieldId] of change.nodeToParent.entries()) {
-			updatedNodeToParent.set(
-				[replaceRevision(revision, oldRevisions, newRevision), id],
-				replaceFieldIdRevision(
-					normalizeFieldId(fieldId, change.nodeAliases),
-					oldRevisions,
-					newRevision,
-				),
-			);
-		}
+		// Create idAllocator for new revision ids.
+		const updatedFields = this.replaceFieldMapRevisions(change.fieldChanges, replacer);
+		const updatedNodes = replaceIdMapRevisions(change.nodeChanges, replacer, (nodeChangeset) =>
+			this.replaceNodeChangesetRevisions(nodeChangeset, replacer),
+		);
+		const updatedNodeToParent = replaceIdMapRevisions(
+			change.nodeToParent,
+			replacer,
+			(fieldId) =>
+				replaceFieldIdRevision(normalizeFieldId(fieldId, change.nodeAliases), replacer),
+		);
 
 		const updated: Mutable<ModularChangeset> = {
 			...change,
@@ -1542,30 +1527,25 @@ export class ModularChangeFamily
 			nodeAliases: newTupleBTree(),
 			crossFieldKeys: replaceCrossFieldKeyTableRevisions(
 				change.crossFieldKeys,
-				oldRevisions,
-				newRevision,
+				replacer,
 				change.nodeAliases,
 			),
 		};
 
 		if (change.builds !== undefined) {
-			updated.builds = replaceIdMapRevisions(change.builds, oldRevisions, newRevision);
+			updated.builds = replaceIdMapRevisions(change.builds, replacer);
 		}
 
 		if (change.destroys !== undefined) {
-			updated.destroys = replaceIdMapRevisions(change.destroys, oldRevisions, newRevision);
+			updated.destroys = replaceIdMapRevisions(change.destroys, replacer);
 		}
 
 		if (change.refreshers !== undefined) {
-			updated.refreshers = replaceIdMapRevisions(change.refreshers, oldRevisions, newRevision);
+			updated.refreshers = replaceIdMapRevisions(change.refreshers, replacer);
 		}
 
 		if (newRevision !== undefined) {
 			const revInfo: Mutable<RevisionInfo> = { revision: newRevision };
-			if (rollbackOf !== undefined) {
-				revInfo.rollbackOf = rollbackOf;
-			}
-
 			updated.revisions = [revInfo];
 		} else {
 			delete updated.revisions;
@@ -1576,15 +1556,13 @@ export class ModularChangeFamily
 
 	private replaceNodeChangesetRevisions(
 		nodeChangeset: NodeChangeset,
-		oldRevisions: Set<RevisionTag | undefined>,
-		newRevision: RevisionTag | undefined,
+		replacer: RevisionReplacer,
 	): NodeChangeset {
 		const updated = { ...nodeChangeset };
 		if (nodeChangeset.fieldChanges !== undefined) {
 			updated.fieldChanges = this.replaceFieldMapRevisions(
 				nodeChangeset.fieldChanges,
-				oldRevisions,
-				newRevision,
+				replacer,
 			);
 		}
 
@@ -1593,15 +1571,14 @@ export class ModularChangeFamily
 
 	private replaceFieldMapRevisions(
 		fields: FieldChangeMap,
-		oldRevisions: Set<RevisionTag | undefined>,
-		newRevision: RevisionTag | undefined,
+		replacer: RevisionReplacer,
 	): FieldChangeMap {
 		const updatedFields: FieldChangeMap = new Map();
 		for (const [field, fieldChange] of fields) {
 			const updatedFieldChange = getChangeHandler(
 				this.fieldKinds,
 				fieldChange.fieldKind,
-			).rebaser.replaceRevisions(fieldChange.change, oldRevisions, newRevision);
+			).rebaser.replaceRevisions(fieldChange.change, replacer);
 
 			updatedFields.set(field, { ...fieldChange, change: brand(updatedFieldChange) });
 		}
@@ -1758,24 +1735,19 @@ export class ModularChangeFamily
 
 function replaceCrossFieldKeyTableRevisions(
 	table: CrossFieldKeyTable,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
+	replacer: RevisionReplacer,
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
 ): CrossFieldKeyTable {
 	const updated: CrossFieldKeyTable = newCrossFieldKeyTable();
 	for (const entry of table.entries()) {
 		const key = entry.start;
-		const updatedKey: CrossFieldKey = {
-			target: key.target,
-			revision: replaceRevision(key.revision, oldRevisions, newRevision),
-			localId: key.localId,
-		};
+		const updatedKey: CrossFieldKey = replacer.getUpdatedAtomId(key);
 
 		const field = entry.value;
 		const normalizedFieldId = normalizeFieldId(field, nodeAliases);
 		const updatedNodeId =
 			normalizedFieldId.nodeId !== undefined
-				? replaceAtomRevisions(normalizedFieldId.nodeId, oldRevisions, newRevision)
+				? replacer.getUpdatedAtomId(normalizedFieldId.nodeId)
 				: undefined;
 
 		const updatedValue: FieldId = {
@@ -1789,22 +1761,15 @@ function replaceCrossFieldKeyTableRevisions(
 	return updated;
 }
 
-function replaceRevision(
-	revision: RevisionTag | undefined,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-): RevisionTag | undefined {
-	return oldRevisions.has(revision) ? newRevision : revision;
-}
-
 function replaceIdMapRevisions<T>(
 	map: ChangeAtomIdBTree<T>,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
+	replacer: RevisionReplacer,
+	valueMapper: (value: T) => T = (value) => value,
 ): ChangeAtomIdBTree<T> {
 	const updated: ChangeAtomIdBTree<T> = newTupleBTree();
-	for (const [[revision, id], value] of map.entries()) {
-		updated.set([replaceRevision(revision, oldRevisions, newRevision), id], value);
+	for (const [[revision, localId], value] of map.entries()) {
+		const newAtom = replacer.getUpdatedAtomId({ revision, localId });
+		updated.set([newAtom.revision, newAtom.localId], valueMapper(value));
 	}
 
 	return updated;
@@ -3083,18 +3048,14 @@ function cloneNodeChangeset(nodeChangeset: NodeChangeset): NodeChangeset {
 	return { ...nodeChangeset };
 }
 
-function replaceFieldIdRevision(
-	fieldId: FieldId,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-): FieldId {
+function replaceFieldIdRevision(fieldId: FieldId, replacer: RevisionReplacer): FieldId {
 	if (fieldId.nodeId === undefined) {
 		return fieldId;
 	}
 
 	return {
 		...fieldId,
-		nodeId: replaceAtomRevisions(fieldId.nodeId, oldRevisions, newRevision),
+		nodeId: replacer.getUpdatedAtomId(fieldId.nodeId),
 	};
 }
 

@@ -13,6 +13,7 @@ import {
 	type ChangeRebaser,
 	type DeltaDetachedNodeId,
 	type RevisionMetadataSource,
+	type RevisionReplacer,
 	type RevisionTag,
 	type RevisionTagCodec,
 	type TaggedChange,
@@ -27,6 +28,7 @@ import {
 	fieldKindConfigurations,
 	fieldKinds,
 	makeModularChangeCodecFamily,
+	DefaultRevisionReplacer,
 } from "../feature-libraries/index.js";
 import {
 	type Mutable,
@@ -207,23 +209,12 @@ export class SharedTreeChangeFamily
 
 	public changeRevision(
 		change: SharedTreeChange,
-		newRevision: RevisionTag | undefined,
-		rollbackOf?: RevisionTag,
+		newRevision: RevisionTag,
+		replacer: RevisionReplacer = new DefaultRevisionReplacer(newRevision),
 	): SharedTreeChange {
-		return {
-			changes: change.changes.map((inner) => {
-				return inner.type === "data"
-					? {
-							...inner,
-							innerChange: this.modularChangeFamily.rebaser.changeRevision(
-								inner.innerChange,
-								newRevision,
-								rollbackOf,
-							),
-						}
-					: inner;
-			}),
-		};
+		return mapDataChanges(change, (inner) =>
+			this.modularChangeFamily.rebaser.changeRevision(inner, newRevision, replacer),
+		);
 	}
 
 	public get rebaser(): ChangeRebaser<SharedTreeChange> {

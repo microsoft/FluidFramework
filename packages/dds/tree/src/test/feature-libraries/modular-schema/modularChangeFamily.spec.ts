@@ -51,7 +51,6 @@ import {
 	type ChangeEncodingContext,
 	type ChangeAtomIdMap,
 	Multiplicity,
-	replaceAtomRevisions,
 	type FieldUpPath,
 	type RevisionInfo,
 } from "../../../core/index.js";
@@ -116,8 +115,8 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	mute: (change: SingleNodeChangeset) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
-	replaceRevisions: (change, oldRevisions, newRevision) =>
-		change !== undefined ? replaceAtomRevisions(change, oldRevisions, newRevision) : undefined,
+	replaceRevisions: (change, replacer) =>
+		change !== undefined ? replacer.getUpdatedAtomId(change) : undefined,
 };
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {

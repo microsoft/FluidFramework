@@ -8,6 +8,7 @@ import type {
 	ChangeFamilyEditor,
 	ChangeRebaser,
 	RevisionMetadataSource,
+	RevisionReplacer,
 	RevisionTag,
 	TaggedChange,
 } from "../core/index.js";
@@ -77,9 +78,9 @@ export function makeMitigatedRebaser<TChange>(
 		},
 		changeRevision: (
 			change: TChange,
-			newRevision: RevisionTag | undefined,
-			rollbackOf?: RevisionTag,
+			newRevision: RevisionTag,
+			replacer?: RevisionReplacer,
 		): TChange =>
-			withFallback(() => unmitigatedRebaser.changeRevision(change, newRevision, rollbackOf)),
+			withFallback(() => unmitigatedRebaser.changeRevision(change, newRevision, replacer)),
 	};
 }

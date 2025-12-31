@@ -87,6 +87,7 @@ export {
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,
+	DefaultRevisionReplacer,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
