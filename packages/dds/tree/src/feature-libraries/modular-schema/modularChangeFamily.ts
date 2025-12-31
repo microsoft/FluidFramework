@@ -1499,7 +1499,7 @@ export class ModularChangeFamily
 
 	public changeRevision(
 		change: ModularChangeset,
-		newRevision: RevisionTag | undefined,
+		newRevision: RevisionTag,
 		replacer: RevisionReplacer = new DefaultRevisionReplacer(newRevision, new Set()),
 	): ModularChangeset {
 		for (const revInfo of change.revisions ?? [{ revision: undefined }]) {

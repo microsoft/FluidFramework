@@ -21,7 +21,7 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 	private maxSeen: ChangesetLocalId = brandConst(-1)();
 
 	public constructor(
-		private readonly newRevision: RevisionTag | undefined,
+		private readonly newRevision: RevisionTag,
 		private readonly oldRevisions: Set<RevisionTag | undefined>,
 	) {
 		// Map to keep track of the replaced (revision tag, old id) to the new id.
@@ -47,9 +47,6 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 	public getUpdatedAtomId<T extends ChangeAtomId>(id: T): T {
 		if (this.isOldRevision(id.revision)) {
 			const updated: Mutable<T> = { ...id, revision: this.newRevision };
-			if (updated.revision === undefined) {
-				delete updated.revision;
-			}
 			const prior: ChangesetLocalId | undefined = this.newRevisionMap.get([
 				id.revision,
 				id.localId,

@@ -209,7 +209,7 @@ export class SharedTreeChangeFamily
 
 	public changeRevision(
 		change: SharedTreeChange,
-		newRevision: RevisionTag | undefined,
+		newRevision: RevisionTag,
 		replacer: RevisionReplacer = new DefaultRevisionReplacer(newRevision, new Set()),
 	): SharedTreeChange {
 		return mapDataChanges(change, (inner) =>
