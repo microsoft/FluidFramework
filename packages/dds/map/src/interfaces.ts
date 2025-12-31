@@ -155,11 +155,16 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	 *
 	 * @remarks Listener parameters:
 	 *
+	 * - `path` - The absolute path to the directory that was cleared.
+	 *
 	 * - `local` - Whether the clear originated from this client.
 	 *
 	 * - `target` - The {@link ISharedDirectory} itself.
 	 */
-	(event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void);
+	(
+		event: "clear",
+		listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void,
+	);
 
 	/**
 	 * Emitted when a subdirectory is created.

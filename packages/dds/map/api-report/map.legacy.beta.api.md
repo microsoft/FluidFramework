@@ -78,7 +78,7 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
 // @beta @sealed @legacy
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "clear", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
