@@ -210,7 +210,7 @@ export class SharedTreeChangeFamily
 	public changeRevision(
 		change: SharedTreeChange,
 		newRevision: RevisionTag,
-		replacer: RevisionReplacer = new DefaultRevisionReplacer(newRevision, new Set()),
+		replacer: RevisionReplacer = new DefaultRevisionReplacer(newRevision),
 	): SharedTreeChange {
 		return mapDataChanges(change, (inner) =>
 			this.modularChangeFamily.rebaser.changeRevision(inner, newRevision, replacer),

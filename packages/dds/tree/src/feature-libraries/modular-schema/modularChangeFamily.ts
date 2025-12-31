@@ -1500,7 +1500,7 @@ export class ModularChangeFamily
 	public changeRevision(
 		change: ModularChangeset,
 		newRevision: RevisionTag,
-		replacer: RevisionReplacer = new DefaultRevisionReplacer(newRevision, new Set()),
+		replacer: RevisionReplacer = new DefaultRevisionReplacer(newRevision),
 	): ModularChangeset {
 		for (const revInfo of change.revisions ?? [{ revision: undefined }]) {
 			replacer.addOldRevision(revInfo.revision);

@@ -22,7 +22,7 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 
 	public constructor(
 		private readonly newRevision: RevisionTag,
-		private readonly oldRevisions: Set<RevisionTag | undefined>,
+		private readonly oldRevisions: Set<RevisionTag | undefined> = new Set(),
 	) {
 		// Map to keep track of the replaced (revision tag, old id) to the new id.
 		this.newRevisionMap = newTupleBTree();
