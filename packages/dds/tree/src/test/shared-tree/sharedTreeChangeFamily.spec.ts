@@ -402,7 +402,7 @@ describe("SharedTreeChangeFamily", () => {
 	});
 
 	describe("changeRevision", () => {
-		it("handles local ID collisions between different revisions", () => {
+		it("handles local ID collisions across separate changes", () => {
 			function getIds(change: SharedTreeChange): [DeltaDetachedNodeId, DeltaDetachedNodeId] {
 				const change1 = change.changes[0];
 				const change3 = change.changes[2];
@@ -438,7 +438,7 @@ describe("SharedTreeChangeFamily", () => {
 			}
 		});
 
-		it("keeps revisions consistent across changes", () => {
+		it("keeps atom IDs consistent across separate changes", () => {
 			function checkConsistency(change: SharedTreeChange): void {
 				const change1 = change.changes[0];
 				const change3 = change.changes[2];
