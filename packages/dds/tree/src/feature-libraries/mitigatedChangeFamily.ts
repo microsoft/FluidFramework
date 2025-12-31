@@ -76,11 +76,7 @@ export function makeMitigatedRebaser<TChange>(
 		): TChange => {
 			return withFallback(() => unmitigatedRebaser.rebase(change, over, revisionMetadata));
 		},
-		changeRevision: (
-			change: TChange,
-			newRevision: RevisionTag,
-			replacer?: RevisionReplacer,
-		): TChange =>
-			withFallback(() => unmitigatedRebaser.changeRevision(change, newRevision, replacer)),
+		changeRevision: (change: TChange, replacer: RevisionReplacer): TChange =>
+			withFallback(() => unmitigatedRebaser.changeRevision(change, replacer)),
 	};
 }

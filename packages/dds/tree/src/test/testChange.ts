@@ -16,7 +16,6 @@ import {
 	type DeltaFieldMap,
 	type DeltaRoot,
 	type FieldKey,
-	type RevisionTag,
 	type TaggedChange,
 	emptyDelta,
 } from "../core/index.js";
@@ -253,7 +252,7 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 		);
 	}
 
-	public changeRevision(change: TestChange, newRevision: RevisionTag): TestChange {
+	public changeRevision(change: TestChange): TestChange {
 		return change;
 	}
 }

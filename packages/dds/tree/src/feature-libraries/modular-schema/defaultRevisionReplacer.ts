@@ -21,7 +21,7 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 	private maxSeen: ChangesetLocalId = brandConst(-1)();
 
 	public constructor(
-		private readonly newRevision: RevisionTag,
+		public readonly newRevision: RevisionTag,
 		private readonly oldRevisions: Set<RevisionTag | undefined> = new Set(),
 	) {
 		// Map to keep track of the replaced (revision tag, old id) to the new id.

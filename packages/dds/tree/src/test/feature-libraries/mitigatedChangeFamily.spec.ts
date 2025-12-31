@@ -50,14 +50,9 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(over, arg2);
 			throw new Error("rebase");
 		},
-		changeRevision: (
-			change: string,
-			newRevision: RevisionTag,
-			replacer?: RevisionReplacer,
-		): string => {
+		changeRevision: (change: string, replacer: RevisionReplacer): string => {
 			assert.equal(change, arg1);
-			assert.equal(newRevision, arg2);
-			assert.equal(replacer, arg3);
+			assert.equal(replacer, arg2);
 			throw new Error("changeRevision");
 		},
 	},
@@ -87,14 +82,9 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(over, arg2);
 			return "rebase";
 		},
-		changeRevision: (
-			change: string,
-			newRevision: RevisionTag,
-			replacer?: RevisionReplacer,
-		): string => {
+		changeRevision: (change: string, replacer: RevisionReplacer): string => {
 			assert.equal(change, arg1);
-			assert.equal(newRevision, arg2);
-			assert.equal(replacer, arg3);
+			assert.equal(replacer, arg2);
 			return "changeRevision";
 		},
 	},
@@ -129,8 +119,8 @@ describe("makeMitigatedChangeFamily", () => {
 		);
 		assert.equal(mitigatedReturningRebaser.compose(arg1), returningRebaser.compose(arg1));
 		assert.equal(
-			mitigatedReturningRebaser.changeRevision(arg1, arg2, arg3),
-			returningRebaser.changeRevision(arg1, arg2, arg3),
+			mitigatedReturningRebaser.changeRevision(arg1, arg2),
+			returningRebaser.changeRevision(arg1, arg2),
 		);
 	});
 	describe("catches errors from", () => {
@@ -151,7 +141,7 @@ describe("makeMitigatedChangeFamily", () => {
 		});
 		it("changeRevision", () => {
 			errorLog.length = 0;
-			assert.equal(mitigatedThrowingRebaser.changeRevision(arg1, arg2, arg3), fallback);
+			assert.equal(mitigatedThrowingRebaser.changeRevision(arg1, arg2), fallback);
 			assert.deepEqual(errorLog, ["changeRevision"]);
 		});
 	});

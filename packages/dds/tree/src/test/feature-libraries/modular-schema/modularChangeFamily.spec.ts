@@ -34,6 +34,7 @@ import {
 	type FieldEditor,
 	type EditDescription,
 	jsonableTreeFromFieldCursor,
+	DefaultRevisionReplacer,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -1592,7 +1593,7 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 }
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
-	return family.changeRevision(change, revision);
+	return family.changeRevision(change, new DefaultRevisionReplacer(revision));
 }
 
 function tagChangeInline(

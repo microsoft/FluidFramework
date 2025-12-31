@@ -89,17 +89,27 @@ export interface ChangeRebaser<TChangeset> {
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
-	changeRevision(
-		change: TChangeset,
-		newRevision: RevisionTag,
-		replacer?: RevisionReplacer,
-	): TChangeset;
+	/**
+	 * Adds the revision associated with the given `change` to the set of revisions to be replaced.
+	 * Produces a changeset that is equivalent to the given `change`, but with all references to its own revision
+	 * replaced according to the given `replacer`.
+	 * @param change - The change to update. Not modified.
+	 * @param replacer - The replacer to use.
+	 * @returns A changeset equivalent to `change`, but with all references to its own revision replaced
+	 * according to `replacer`.
+	 */
+	changeRevision(change: TChangeset, replacer: RevisionReplacer): TChangeset;
 }
 
 /**
  * A type that can update references to a set of old revisions with new ones across multiple changesets.
  */
 export interface RevisionReplacer {
+	/**
+	 * The new revision to use.
+	 */
+	readonly newRevision: RevisionTag;
+
 	/**
 	 * Predicate to determine if a revision needs replacing.
 	 * @param revision - The revision that may need replacing.
@@ -119,7 +129,7 @@ export interface RevisionReplacer {
 
 	/**
 	 * Adds a revision to the set of revisions that need replacing.
-	 * Future calls to `isOldRevision` and  `getUpdatedAtomId` will treat this revision as old.
+	 * Future calls to `isOldRevision` and `getUpdatedAtomId` will treat this revision as old.
 	 * @param revision - The revision to add.
 	 */
 	addOldRevision(revision: RevisionTag | undefined): void;

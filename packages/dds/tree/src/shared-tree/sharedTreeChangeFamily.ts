@@ -28,7 +28,6 @@ import {
 	fieldKindConfigurations,
 	fieldKinds,
 	makeModularChangeCodecFamily,
-	DefaultRevisionReplacer,
 } from "../feature-libraries/index.js";
 import {
 	type Mutable,
@@ -209,11 +208,10 @@ export class SharedTreeChangeFamily
 
 	public changeRevision(
 		change: SharedTreeChange,
-		newRevision: RevisionTag,
-		replacer: RevisionReplacer = new DefaultRevisionReplacer(newRevision),
+		replacer: RevisionReplacer,
 	): SharedTreeChange {
 		return mapDataChanges(change, (inner) =>
-			this.modularChangeFamily.rebaser.changeRevision(inner, newRevision, replacer),
+			this.modularChangeFamily.rebaser.changeRevision(inner, replacer),
 		);
 	}
 
