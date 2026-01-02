@@ -1513,7 +1513,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const successfullyRemoved = this.sequencedStorageData.delete(key);
 			// Only emit if we actually deleted something.
 			if (
-				this.isNotDisposedAndReachable(this.absolutePath) &&
+				this.isNotDisposedAndReachable() &&
 				previousOptimisticLocalValue !== undefined &&
 				successfullyRemoved
 			) {
@@ -1549,10 +1549,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// Only emit if we locally believe we deleted something.  Otherwise we still send the op
 		// (permitting speculative deletion even if we don't see anything locally) but don't emit
 		// a valueChanged since we in fact did not locally observe a value change.
-		if (
-			this.isNotDisposedAndReachable(this.absolutePath) &&
-			previousOptimisticLocalValue !== undefined
-		) {
+		if (this.isNotDisposedAndReachable() && previousOptimisticLocalValue !== undefined) {
 			const event: IDirectoryValueChanged = {
 				key,
 				path: this.absolutePath,
@@ -1867,7 +1864,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	};
 
 	/**
-	 * Checks if a directory at the given path should be considered visible in the optimistic view.
+	 * Checks if this directory should be considered visible in the optimistic view.
 	 * This requires both:
 	 * 1. The directory object must not be disposed (disposed = true means fully deleted)
 	 * 2. The directory must be reachable via getWorkingDirectory (respects pending deletes)
@@ -1881,11 +1878,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * This method should be used before emitting events during remote message processing to ensure
 	 * events aren't emitted for directories that are invisible in the optimistic view.
 	 *
-	 * @param directoryPath - The absolute path of the directory to check
-	 * @returns true if the directory is visible in the optimistic view, false otherwise
+	 * @returns true if this directory is visible in the optimistic view, false otherwise
 	 */
-	private isNotDisposedAndReachable(directoryPath: string): boolean {
-		return !this.disposed && this.directory.getWorkingDirectory(directoryPath) !== undefined;
+	private isNotDisposedAndReachable(): boolean {
+		return (
+			!this.disposed && this.directory.getWorkingDirectory(this.absolutePath) !== undefined
+		);
 	}
 
 	public get sequencedSubdirectories(): ReadonlyMap<string, SubDirectory> {
@@ -1946,7 +1944,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Include 'path' so listeners can identify which subdirectory the change occurred in
 			for (const { key, previousValue } of pendingSets) {
 				// Stop emitting events if this directory has been disposed or is no longer reachable
-				if (!this.isNotDisposedAndReachable(this.absolutePath)) {
+				if (!this.isNotDisposedAndReachable()) {
 					break;
 				}
 				this.directory.emit(
@@ -2001,7 +1999,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.sequencedStorageData.delete(op.key);
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
-				this.isNotDisposedAndReachable(this.absolutePath) &&
+				this.isNotDisposedAndReachable() &&
 				!this.pendingStorageData.some(
 					(entry) => entry.type === "clear" || entry.key === op.key,
 				)
@@ -2067,7 +2065,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
-				this.isNotDisposedAndReachable(this.absolutePath) &&
+				this.isNotDisposedAndReachable() &&
 				!this.pendingStorageData.some((entry) => entry.type === "clear" || entry.key === key)
 			) {
 				const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
@@ -2159,7 +2157,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
 				!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName) &&
-				this.isNotDisposedAndReachable(subDir.absolutePath)
+				subDir.isNotDisposedAndReachable()
 			) {
 				this.emit("subDirectoryCreated", op.subdirName, local, this);
 			}
