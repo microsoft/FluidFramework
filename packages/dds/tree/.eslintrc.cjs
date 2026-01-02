@@ -66,7 +66,6 @@ module.exports = {
 		"jsdoc/require-description": "warn",
 
 		"unicorn/consistent-function-scoping": "off",
-		"unicorn/explicit-length-check": "off",
 		"unicorn/no-array-callback-reference": "off",
 		"unicorn/no-array-for-each": "off",
 		"unicorn/prefer-array-index-of": "off",
