@@ -11,8 +11,18 @@ describe("blobs", () => {
 	let browser: Browser;
 	let page: Page;
 
-	beforeEach(async () => {
+	beforeAll(async () => {
+		// Launch the browser once for all tests
 		browser = await puppeteer.launch();
+		// Load the page once to avoid a cold load on first test - otherwise the first test takes
+		// significantly longer to load. This way we can extend just the timeout for the cold load.
+		page = await browser.newPage();
+		await page.goto(globals.PATH);
+		await page.waitForFunction(() => typeof globalThis.loadAdditionalContainer === "function");
+		await page.close();
+	}, 20_000);
+
+	beforeEach(async () => {
 		page = await browser.newPage();
 		await page.goto(globals.PATH);
 		await page.waitForFunction(() => typeof globalThis.loadAdditionalContainer === "function");
@@ -44,6 +54,10 @@ describe("blobs", () => {
 	}, 10000);
 
 	afterEach(async () => {
+		await page.close();
+	});
+
+	afterAll(async () => {
 		await browser.close();
 	});
 });
