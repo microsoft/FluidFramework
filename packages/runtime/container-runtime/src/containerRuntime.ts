@@ -1622,10 +1622,11 @@ export class ContainerRuntime
 
 		// Validate that the Loader is compatible with this Runtime.
 		const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
+
 		validateLoaderCompatibility(
 			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
 			this.disposeFn,
-			this.mc.logger,
+			this.mc,
 		);
 
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.

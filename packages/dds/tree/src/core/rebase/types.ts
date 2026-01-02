@@ -146,7 +146,12 @@ function atomWithRevision(id: ChangeAtomId, revision: RevisionTag | undefined): 
  * A node in a graph of commits. A commit's parent is the commit on which it was based.
  */
 export interface GraphCommit<TChange> {
-	/** The tag for this commit. If this commit is rebased, the corresponding rebased commit will retain this tag. */
+	/**
+	 * The tag for this commit.
+	 * @remarks
+	 * If this commit is rebased, the corresponding rebased commit will retain this tag.
+	 * With the exception of transaction commits (which all share the same tag), this tag is unique within a given branch history.
+	 */
 	readonly revision: RevisionTag;
 	/** The change that will result from applying this commit */
 	readonly change: TChange;

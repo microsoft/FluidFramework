@@ -58,7 +58,7 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-call": "off",
 		"@typescript-eslint/no-unsafe-member-access": "off",
 
-		"import/order": "off",
+		"import-x/order": "off",
 
 		"jsdoc/multiline-blocks": "off",
 
@@ -89,7 +89,6 @@ module.exports = {
 		"unicorn/prefer-set-has": "off",
 		"unicorn/prefer-spread": "off",
 		"unicorn/prefer-string-slice": "off",
-		"unicorn/switch-case-braces": "off",
 		"unicorn/text-encoding-identifier-case": "off",
 
 		// #endregion
