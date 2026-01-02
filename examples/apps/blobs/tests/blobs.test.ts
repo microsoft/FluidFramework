@@ -51,7 +51,7 @@ describe("blobs", () => {
 		await expect(page).toClick("button", { text: "Add blob" });
 		const blobsCount = await blobsCountP;
 		expect(blobsCount).toBe(1);
-	}, 10000);
+	});
 
 	afterEach(async () => {
 		await page.close();
