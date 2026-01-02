@@ -208,12 +208,12 @@ export function compareCellPositionsUsingTombstones(
 		// If both changesets know of both cells, but we've been asked to compare different cells,
 		// Then either the changesets they originate from do not represent the same context,
 		// or the ordering of their cells in inconsistent.
-		// The only exception to this is when we're composing anonymous changesets in a transaction.
+		// The only exception to this is when we're composing changesets in a transaction since they have the same revision but different sets of cells.
 		assert(
-			oldMarkCell.revision === undefined && newMarkCell.revision === undefined,
+			oldMarkCell.revision === newMarkCell.revision,
 			0x8a0 /* Inconsistent cell ordering */,
 		);
-		// We are composing anonymous changesets in a transaction. The new changeset is creating a cell in a gap
+		// We are composing changesets in a transaction. The new changeset is creating a cell in a gap
 		// where the old changeset knows of some now empty cell. We order the new cell relative to the old cell in a
 		// way that is consistent with its tie-breaking behavior should the old cell be concurrently re-filled.
 		// Since only tie-break left is supported at the moment, the new cell comes first.
