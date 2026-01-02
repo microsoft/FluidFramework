@@ -199,12 +199,9 @@ export function simpleSchemaFromStoredSchema(
 	]);
 	const fuzzNodeSchemas: TreeNodeSchema[] = [];
 	for (const nodeSchema of nodeSchemas) {
-		class GUIDNodeSchema extends schemaFactory.object(
-			nodeSchema.substring("treeFuzz.".length),
-			{
-				value: schemaFactory.number,
-			},
-		) {}
+		class GUIDNodeSchema extends schemaFactory.object(nodeSchema.slice("treeFuzz.".length), {
+			value: schemaFactory.number,
+		}) {}
 		fuzzNodeSchemas.push(GUIDNodeSchema);
 	}
 	return createTreeViewSchema(fuzzNodeSchemas);
