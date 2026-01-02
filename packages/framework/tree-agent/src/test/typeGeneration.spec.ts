@@ -310,14 +310,8 @@ type MapWithProperty = Map<string, string> & {
 		const schema = getSimpleSchema(view.schema);
 		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
 
-		assert.ok(
-			schemaText.includes("interface Foo_1"),
-			"Name should have suffix _1",
-		);
-		assert.ok(
-			schemaText.includes("interface Foo_2"),
-			"Name should have suffix _2",
-		);
+		assert.ok(schemaText.includes("interface Foo_1"), "Name should have suffix _1");
+		assert.ok(schemaText.includes("interface Foo_2"), "Name should have suffix _2");
 
 		assert.ok(
 			!schemaText.includes("interface Foo {"),
@@ -332,7 +326,7 @@ type MapWithProperty = Map<string, string> & {
 
 		class Foo1 extends schemaFactory1.object("Foo", { value: schemaFactory1.number }) {}
 		class Foo2 extends schemaFactory2.object("Foo", { value: schemaFactory2.number }) {}
-		class Bar extends schemaFactory1.object("Bar", { value: schemaFactory1.number }) {} // Unique name
+		class Bar extends schemaFactory1.object("Bar", { value: schemaFactory1.number }) {}
 
 		class TestObject extends schemaFactory1.object("Container", {
 			fooItem1: Foo1,
@@ -401,7 +395,7 @@ type MapWithProperty = Map<string, string> & {
 
 		class Foo1 extends sf1.object("Foo", { value: sf1.number }) {}
 		class Foo2 extends sf2.object("Foo", { value: sf2.number }) {}
-		class FooSuffixed extends sf3.object("Foo_1", { value: sf3.number }) {} // Natural "foo_1"
+		class FooSuffixed extends sf3.object("Foo_1", { value: sf3.number }) {} // Natural "Foo_1"
 
 		class TestObject extends sf.object("Container", {
 			item1: Foo1,
@@ -423,17 +417,17 @@ type MapWithProperty = Map<string, string> & {
 		// "foo_1" is already taken by the natural "foo_1", so the collision-resolved names
 		// should skip it and use "foo_2" and "foo_3" (or similar)
 		const hasFoo = schemaText.includes("interface Foo {");
-		const hasFooSuffixed = schemaText.includes("interface Foo_1 {");
-		const hasFooResolved2 = schemaText.includes("interface Foo_2 {");
-		const hasFooResolved3 = schemaText.includes("interface Foo_3 {");
+		const hasFoo_1 = schemaText.includes("interface Foo_1 {");
+		const hasFoo_2 = schemaText.includes("interface Foo_2 {");
+		const hasFoo_3 = schemaText.includes("interface Foo_3 {");
 
 		assert.ok(
 			!hasFoo,
 			"There should be no unsuffixed 'Foo' since both scope1.Foo and scope2.Foo collide",
 		);
-		assert.ok(hasFooSuffixed, "Natural Foo_1 should exist without modification");
+		assert.ok(hasFoo_1, "Natural Foo_1 should exist without modification");
 		assert.ok(
-			(hasFooResolved2 && hasFooResolved3),
+			hasFoo_2 && hasFoo_3,
 			"Both collision-resolved 'Foo' instances should have unique names avoiding Foo_1",
 		);
 	});
