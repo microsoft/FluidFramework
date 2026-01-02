@@ -19,9 +19,9 @@ import { Loader } from "@fluidframework/container-loader/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import * as counter from "@fluidframework/counter/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { SharedArray, SharedSignal } from "@fluidframework/legacy-dds/internal";
 import * as datastore from "@fluidframework/datastore/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import { SharedArray, SharedSignal } from "@fluidframework/legacy-dds/internal";
 import * as map from "@fluidframework/map/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import * as matrix from "@fluidframework/matrix/internal";
@@ -32,18 +32,18 @@ import * as registerCollection from "@fluidframework/register-collection/interna
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import * as sequence from "@fluidframework/sequence/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
+// TypeScript generates incorrect imports in the d.ts file if this is not included.
+import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
 import * as treeCurrent from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 import * as semver from "semver";
 
-// TypeScript generates incorrect imports in the d.ts file if this is not included.
-import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
-
 // Since this project has a TypeScript configuration which errors on unused imports and types, to avoid the above import causing a compile error, a dummy usage is included.
 // For this to avoid a compile error, it also has to be used somehow: exporting it is the simplest way to "use" it.
 export type _fakeUsage = ISharedObjectKind<unknown>;
 
+import { CompatKind } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,
@@ -52,7 +52,6 @@ import {
 	loadPackage,
 	versionHasMovedSparsedMatrix,
 } from "./versionUtils.js";
-import { CompatKind } from "./compatOptions.js";
 
 /**
  * The details of a package to install for compatibility testing.

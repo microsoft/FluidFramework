@@ -135,7 +135,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
-    reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
+    reSubmit(type: string, content: any, localOpMetadata: unknown, squash: boolean): void;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
@@ -144,7 +144,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
-// @beta @legacy
+// @beta @sealed @legacy
 export interface IFluidDataStoreContext extends IFluidParentContext {
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -159,7 +159,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     readonly packagePath: PackagePath;
 }
 
-// @beta @legacy (undocumented)
+// @beta @sealed @legacy (undocumented)
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
     attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<IDataStore>;
 }
@@ -190,7 +190,7 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
     getSync?(name: string): FluidDataStoreRegistryEntry | undefined;
 }
 
-// @beta @legacy
+// @beta @sealed @legacy
 export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry> {
     addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
     readonly attachState: AttachState;

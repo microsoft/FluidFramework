@@ -7,8 +7,10 @@ const fluidRoute = require("@fluid-example/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
 
-module.exports = (env) =>
-	merge(
+module.exports = (env) => {
+	const { production } = env;
+
+	return merge(
 		{
 			entry: {
 				main: "./src/index.ts",
@@ -41,15 +43,9 @@ module.exports = (env) =>
 			watchOptions: {
 				ignored: "**/node_modules/**",
 			},
+			mode: production ? "production" : "development",
+			devtool: production ? "source-map" : "inline-source-map",
 		},
-		env?.production
-			? {
-					mode: "production",
-					devtool: "source-map",
-				}
-			: {
-					mode: "development",
-					devtool: "inline-source-map",
-				},
 		fluidRoute.devServerConfig(__dirname, env),
 	);
+};

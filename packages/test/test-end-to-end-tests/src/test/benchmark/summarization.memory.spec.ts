@@ -51,7 +51,7 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 	benchmarkMemory(
 		new (class implements IMemoryTestObject {
 			title = "Generate summary tree";
-			async run() {
+			async run(): Promise<void> {
 				const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 				const containerRuntime = defaultDataStore._context
 					.containerRuntime as ContainerRuntime;

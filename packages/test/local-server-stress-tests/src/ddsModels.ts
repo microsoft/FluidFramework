@@ -12,13 +12,13 @@ import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
 import { baseMapModel, baseDirModel } from "@fluidframework/map/internal/test";
 import { baseSharedMatrixModel } from "@fluidframework/matrix/internal/test";
 import { baseConsensusOrderedCollectionModel } from "@fluidframework/ordered-collection/internal/test";
+import { baseRegisterCollectionModel } from "@fluidframework/register-collection/internal/test";
 import {
 	baseSharedStringModel,
 	baseIntervalModel,
 } from "@fluidframework/sequence/internal/test";
 import { baseTaskManagerModel } from "@fluidframework/task-manager/internal/test";
 import { baseTreeModel } from "@fluidframework/tree/internal/test";
-import { baseRegisterCollectionModel } from "@fluidframework/register-collection/internal/test";
 
 function repeatFactoryAsync<T, TState = void>(
 	factory: () => AsyncGenerator<T, TState>,

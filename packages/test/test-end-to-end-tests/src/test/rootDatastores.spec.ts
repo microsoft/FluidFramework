@@ -9,6 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { IDataStore } from "@fluidframework/runtime-definitions/internal";
 import {
 	createSummarizer,
@@ -64,7 +65,10 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 	/**
 	 * Gets an aliased data store with the given id. Throws an error if the data store cannot be retrieved.
 	 */
-	async function getAliasedDataStoreEntryPoint(dataObject: ITestFluidObject, id: string) {
+	async function getAliasedDataStoreEntryPoint(
+		dataObject: ITestFluidObject,
+		id: string,
+	): Promise<IFluidHandle<FluidObject>> {
 		// Back compat support - older versions of the runtime do not have getAliasedDataStoreEntryPoint
 		// Can be removed once we no longer support ^2.0.0-internal.7.0.0
 		const dataStore = await (runtimeOf(dataObject).getAliasedDataStoreEntryPoint?.(id) ??
@@ -182,7 +186,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				"will always return the same datastore",
 			async function () {
 				const datastores: IDataStore[] = [];
-				const createAliasedDataStore = async () => {
+				const createAliasedDataStore = async (): Promise<IFluidHandle<FluidObject> | undefined> => {
 					try {
 						await getAliasedDataStoreEntryPoint(dataObject1, alias);
 					} catch (err) {
