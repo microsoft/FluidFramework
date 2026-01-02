@@ -145,6 +145,7 @@ export interface BranchableTree extends ViewableTree {
 export type ChangeMetadata = CommitMetadata & ({
     readonly isLocal: true;
     getChange(): JsonCompatibleReadOnly;
+    label?: unknown;
 } | {
     readonly isLocal: false;
     readonly getChange?: undefined;
@@ -1896,7 +1897,7 @@ export interface TreeBranchAlpha extends TreeBranch {
 // @alpha @sealed
 export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
-    commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+    commitApplied(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 // @alpha @sealed

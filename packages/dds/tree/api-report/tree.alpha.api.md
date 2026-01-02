@@ -142,7 +142,6 @@ export type ChangeMetadata = CommitMetadata & ({
 } | {
     readonly isLocal: false;
     readonly getChange?: undefined;
-    label?: unknown;
 });
 
 // @alpha
