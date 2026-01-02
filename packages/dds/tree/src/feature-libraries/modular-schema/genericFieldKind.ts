@@ -46,7 +46,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
 		buildChildChanges(changes: Iterable<[number, NodeId]>): GenericChangeset {
-			return newGenericChangeset(Array.from(changes));
+			return newGenericChangeset([...changes]);
 		},
 	},
 	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): FieldChangeDelta => {

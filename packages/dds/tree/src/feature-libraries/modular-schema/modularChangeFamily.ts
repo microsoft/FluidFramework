@@ -2789,7 +2789,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 						}),
 			);
 		});
-		const revInfo = Array.from(revisions).map((revision) => ({ revision }));
+		const revInfo = [...revisions].map((revision) => ({ revision }));
 		const composedChange: Mutable<ModularChangeset> = {
 			...this.changeFamily.rebaser.compose(changeMaps),
 			revisions: revInfo,

@@ -61,7 +61,6 @@ const config: Linter.Config[] = [
 			"unicorn/prefer-math-trunc": "off",
 			"unicorn/prefer-native-coercion-functions": "off",
 			"unicorn/prefer-set-has": "off",
-			"unicorn/prefer-spread": "off",
 			"unicorn/prefer-string-slice": "off",
 			"unicorn/text-encoding-identifier-case": "off",
 		},
