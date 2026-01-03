@@ -37,16 +37,15 @@ export interface SystemWorkspaceDatastore {
 }
 
 class SessionClient implements Attendee {
-	/**
-	 * Order is used to track the most recent client connection
-	 * during a session.
-	 */
-	public order: number = 0;
-
 	private connectionStatus: AttendeeStatus = AttendeeStatus.Disconnected;
 
 	public constructor(
 		public readonly attendeeId: AttendeeId,
+		/**
+		 * Order is used to track the most recent client connection
+		 * during a session.
+		 */
+		public order: number = 0,
 		public connectionId: ClientConnectionId | undefined = undefined,
 	) {}
 
@@ -153,15 +152,13 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			revealOpaqueJson(remoteDatastore.clientToSessionId),
 		)) {
 			const attendeeId = value.value;
-			const { attendee, isJoining } = this.ensureAttendee(
+			const { attendee, isJoining } = this.ensureAttendee({
 				attendeeId,
 				clientConnectionId,
-				/* order */ value.rev,
-				// If the attendee is present in audience OR if the attendee update is from the sending remote client itself,
-				// then the attendee is considered connected.
-				/* isConnected */ senderConnectionId === clientConnectionId ||
-					audienceMembers.has(clientConnectionId),
-			);
+				order: value.rev,
+				isSender: senderConnectionId === clientConnectionId,
+				isInAudience: audienceMembers.has(clientConnectionId),
+			});
 			// If the attendee is joining the session, add them to the list of joining attendees to be announced later.
 			if (isJoining) {
 				postUpdateActions.push(() => this.events.emit("attendeeConnected", attendee));
@@ -184,6 +181,11 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			0xaad /* Local client should be 'Disconnected' before adding new connection. */,
 		);
 
+		assert(
+			this.audience.getMember(clientConnectionId) !== undefined,
+			"Local client must be in audience for presence to handle added connection.",
+		);
+
 		this.datastore.clientToSessionId[clientConnectionId] = {
 			rev: this.selfAttendee.order++,
 			timestamp: Date.now(),
@@ -191,22 +193,40 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		};
 
 		// Mark 'Connected' remote attendees connections as stale
+		// Performance note: This will visit attendees multiple times as the
+		// attendee map has attendeeIds and connectionIds entries that point to
+		// the same attendee. But the getConnectionStatus check is cheap and
+		// staleConnectionClients set will handle duplicates.
+		this.staleConnectionClients.clear();
 		for (const staleConnectionClient of this.attendees.values()) {
 			if (staleConnectionClient.getConnectionStatus() === AttendeeStatus.Connected) {
 				this.staleConnectionClients.add(staleConnectionClient);
 			}
 		}
 
-		// Update the self attendee
+		// Update the self attendee connection information, but not connection
+		// status yet. Connection status will be updated once audience confirms
+		// connection. It is only once our connection is known to audience that
+		// audience can be used to track other attendees' connection statuses
+		// and we seek to present a consistent view.
+		// In between onConnectionAdded and audience confirmation, the audience
+		// will go through a refresh that may remove all members.
 		this.selfAttendee.connectionId = clientConnectionId;
 		this.selfAttendee.setConnected();
 		this.attendees.set(clientConnectionId, this.selfAttendee);
 
 		this.staleConnectionTimer.setTimeout(() => {
+			const consideredDisconnected = [];
 			for (const client of this.staleConnectionClients) {
-				client.setDisconnected();
+				// Confirm that audience no longer has connection. It is possible
+				// but unlikely that no one mentioned the attendee in this period
+				// and that they were never disconnected.
+				if (this.audience.getMember(client.getConnectionId()) === undefined) {
+					consideredDisconnected.push(client);
+					client.setDisconnected();
+				}
 			}
-			for (const client of this.staleConnectionClients) {
+			for (const client of consideredDisconnected) {
 				this.events.emit("attendeeDisconnected", client);
 			}
 			this.staleConnectionClients.clear();
@@ -222,6 +242,13 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		// If the local connection is being removed, clear the stale connection timer
 		if (attendee === this.selfAttendee) {
 			this.staleConnectionTimer.clearTimeout();
+		} else {
+			// When self is not connected, audience may go through a refresh that
+			// removes members and adds them back. Defer any removals until self
+			// is connected implying audience is stable.
+			if (this.selfAttendee.getConnectionStatus() !== AttendeeStatus.Connected) {
+				return;
+			}
 		}
 
 		// If the last known connectionID is different from the connection ID being removed, the attendee has reconnected,
@@ -261,34 +288,61 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	 * in the attendee map. If not present, SessionClient is created and added
 	 * to map. If present, make sure the current connection ID is updated.
 	 */
-	private ensureAttendee(
-		attendeeId: AttendeeId,
-		clientConnectionId: ClientConnectionId,
-		order: number,
-		isConnected: boolean,
-	): { attendee: SessionClient; isJoining: boolean } {
+	private ensureAttendee({
+		attendeeId,
+		clientConnectionId,
+		order,
+		isSender,
+		isInAudience,
+	}: {
+		attendeeId: AttendeeId;
+		clientConnectionId: ClientConnectionId;
+		order: number;
+		isSender: boolean;
+		isInAudience: boolean;
+	}): { attendee: SessionClient; isJoining: boolean } {
 		let attendee = this.attendees.get(attendeeId);
+		let isConnected = false;
 		let isJoining = false;
 
 		if (attendee === undefined) {
 			// New attendee. Create SessionClient and add session ID based
 			// entry to map.
-			attendee = new SessionClient(attendeeId, clientConnectionId);
+			attendee = new SessionClient(attendeeId, order, clientConnectionId);
 			this.attendees.set(attendeeId, attendee);
-			if (isConnected) {
+			// If the attendee update is from the sending remote client itself
+			// OR if the attendee is present in audience,
+			// then the attendee is considered connected. (Otherwise, leave
+			// state as disconnected - default.)
+			if (isSender || isInAudience) {
+				isConnected = true;
 				attendee.setConnected();
 				isJoining = true;
 			}
-		} else if (order > attendee.order) {
-			// The given association is newer than the one we have.
-			// Update the order and current connection ID.
-			attendee.order = order;
-			// Known attendee is joining the session if they are currently disconnected
-			if (attendee.getConnectionStatus() === AttendeeStatus.Disconnected && isConnected) {
+		} else {
+			// Known attendee is considered connected if
+			isConnected =
+				// this information is at least up to date with current knowledge
+				order >= attendee.order &&
+				// AND in the audience OR
+				(isInAudience ||
+					// not in audience, but client is the sender and has newer
+					// info. (Assume that audience is out of date and attendee
+					// is joining.)
+					(isSender && order > attendee.order));
+
+			if (order > attendee.order) {
+				// The given association is newer than the one we have.
+				// Update the order and current connection ID.
+				attendee.order = order;
+				attendee.connectionId = clientConnectionId;
+			}
+
+			// Known attendee is joining the session if they are currently disconnected.
+			if (isConnected && attendee.getConnectionStatus() === AttendeeStatus.Disconnected) {
 				attendee.setConnected();
 				isJoining = true;
 			}
-			attendee.connectionId = clientConnectionId;
 		}
 
 		if (isConnected) {

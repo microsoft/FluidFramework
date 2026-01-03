@@ -306,8 +306,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		const { audience, selfPresent, interactiveMembersExcludingSelf } =
 			this.getAudienceInformation(selfClientId);
 
-		if (interactiveMembersExcludingSelf.all.size === 0 && alternateProvider !== undefined) {
-			if (selfPresent) {
+		if (selfPresent) {
+			if (interactiveMembersExcludingSelf.all.size === 0) {
 				// If there aren't any members connected except self, then this client
 				// must have complete information.
 				this.reasonForCompleteSnapshot = "alone";
@@ -317,9 +317,13 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				// has complete information, but the other(s) should respond to
 				// ClientJoin soon rectifying that and covering for bad incomplete
 				// responses this client sent in the meantime.
-			} else {
-				// No one is known. Not even self. Defer judgement on
-				// complete snapshot until at least self is known to be present.
+			}
+		} else {
+			// When self is not represented, audience is an unreliable state,
+			// especially during a reconnect. Without an alternateProvider,
+			// defer join and judgement on complete snapshot until at least
+			// self is known to be present.
+			if (alternateProvider === undefined) {
 				this.listenForSelfInAudience(selfClientId, audience);
 				return;
 			}

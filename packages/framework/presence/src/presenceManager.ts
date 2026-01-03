@@ -90,10 +90,6 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		);
 		this.attendees = this.systemWorkspace;
 
-		runtime.events.on("joined", ({ clientId: joinedClientId }: { clientId: string }) => {
-			this.onJoin(joinedClientId);
-		});
-
 		runtime.events.on("disconnected", () => {
 			const currentClientId = runtime.getClientId();
 			if (currentClientId !== undefined) {
@@ -102,16 +98,29 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 			this.datastoreManager.onDisconnected();
 		});
 
-		runtime.getAudience().on("removeMember", this.removeClientConnectionId.bind(this));
+		const audience = runtime.getAudience();
+		// Listen for self add to Audience to indicate join (with a stable
+		// audience population).
+		audience.on("addMember", (clientConnectionId: ClientConnectionId) => {
+			if (clientConnectionId === runtime.getClientId()) {
+				this.onJoin(clientConnectionId);
+			}
+		});
+		audience.on("removeMember", this.removeClientConnectionId.bind(this));
 
-		// Check if already connected (can send signals) at the time of construction.
+		// Check if already connected (can send signals and complete audience)
+		// at the time of construction.
 		// If constructed during data store load, the runtime may already be connected
-		// and the "joined" event will be raised during completion. With construction
-		// delayed we expect that "joined" event has passed.
+		// and the self-"addMember" event will be raised during completion. With
+		// construction delayed we expect that self-"addMember" event has passed.
 		// Note: In some manual testing, this does not appear to be enough to
 		// always trigger an initial connect.
 		const clientId = runtime.getClientId();
-		if (clientId !== undefined && runtime.getJoinedStatus() !== "disconnected") {
+		if (
+			clientId !== undefined &&
+			runtime.getJoinedStatus() !== "disconnected" &&
+			audience.getMember(clientId) !== undefined
+		) {
 			this.onJoin(clientId);
 		}
 	}
