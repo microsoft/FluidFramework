@@ -153,6 +153,19 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	/**
 	 * Emitted when the {@link ISharedDirectory} is cleared.
 	 *
+	 * @deprecated Use the "cleared" event instead which provides the path that was cleared.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `local` - Whether the clear originated from this client.
+	 *
+	 * - `target` - The {@link ISharedDirectory} itself.
+	 */
+	(event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void);
+
+	/**
+	 * Emitted when the {@link ISharedDirectory} is cleared.
+	 *
 	 * @remarks Listener parameters:
 	 *
 	 * - `path` - The absolute path to the directory that was cleared.
@@ -162,7 +175,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	 * - `target` - The {@link ISharedDirectory} itself.
 	 */
 	(
-		event: "clear",
+		event: "cleared",
 		listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void,
 	);
 
@@ -280,28 +293,6 @@ export interface IDirectoryEvents extends IEvent {
 	 * - `target` - The {@link IDirectory} itself.
 	 */
 	(event: "undisposed", listener: (target: IEventThisPlaceHolder) => void);
-}
-
-/**
- * Internal events for {@link ISharedDirectory}.
- * @internal
- */
-export interface ISharedDirectoryEventsInternal extends ISharedDirectoryEvents {
-	/**
-	 * Emitted when the {@link ISharedDirectory} is cleared.
-	 *
-	 * @remarks Listener parameters:
-	 *
-	 * - `path` - The absolute path to the directory that was cleared.
-	 *
-	 * - `local` - Whether the clear originated from this client.
-	 *
-	 * - `target` - The {@link ISharedDirectory} itself.
-	 */
-	(
-		event: "clearInternal",
-		listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void,
-	);
 }
 
 /**
