@@ -75,12 +75,15 @@ import { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
  */
 export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 	switch (typeof value) {
-		case "boolean":
+		case "boolean": {
 			return booleanSchema;
-		case "number":
+		}
+		case "number": {
 			return numberSchema;
-		case "string":
+		}
+		case "string": {
 			return stringSchema;
+		}
 		case "object": {
 			if (value === null) {
 				return nullSchema;
@@ -88,8 +91,9 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 			assert(isFluidHandle(value), 0x87e /* invalid TreeValue */);
 			return handleSchema;
 		}
-		default:
+		default: {
 			unreachableCase(value);
+		}
 	}
 }
 
