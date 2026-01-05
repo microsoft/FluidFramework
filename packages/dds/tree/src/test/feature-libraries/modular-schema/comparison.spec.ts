@@ -612,7 +612,7 @@ function intoSimpleObject(obj: unknown): unknown {
 		return obj;
 	}
 	if (Array.isArray(obj)) {
-		return [...obj].map(intoSimpleObject);
+		return obj.map(intoSimpleObject);
 	}
 	if (obj instanceof Map) {
 		return [...obj].map(([key, value]): [unknown, unknown] => [key, intoSimpleObject(value)]);
