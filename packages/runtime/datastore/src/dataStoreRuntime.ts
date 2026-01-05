@@ -65,6 +65,8 @@ import {
 	type IFluidDataStorePolicies,
 	type MinimumVersionForCollab,
 	asLegacyAlpha,
+	currentSummarizeStepPrefix,
+	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -156,7 +158,7 @@ export interface ISharedObjectRegistry {
 }
 
 const defaultPolicies: IFluidDataStorePolicies = {
-	readonlyInStagingMode: true,
+	readonlyInStagingMode: false,
 };
 
 /**
@@ -349,11 +351,7 @@ export class FluidDataStoreRuntime
 		// Validate that the Runtime is compatible with this DataStore.
 		const { ILayerCompatDetails: runtimeCompatDetails } =
 			dataStoreContext as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(
-			runtimeCompatDetails,
-			this.dispose.bind(this),
-			this.mc.logger,
-		);
+		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this), this.mc);
 
 		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
 			this._readonly = dataStoreContext.isReadOnly();
@@ -1280,7 +1278,7 @@ export class FluidDataStoreRuntime
 		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 		content: any,
 		localOpMetadata: unknown,
-		squash?: boolean,
+		squash: boolean,
 	): void {
 		this.verifyNotClosed();
 
@@ -1331,7 +1329,10 @@ export class FluidDataStoreRuntime
 		localOpMetadata: unknown,
 	): void {
 		this.verifyNotClosed();
-		assert(!this.localOpActivity, "localOpActivity must be undefined when entering rollback");
+		assert(
+			!this.localOpActivity,
+			0xca2 /* localOpActivity must be undefined when entering rollback */,
+		);
 		this.localOpActivity = "rollback";
 		try {
 			// The op being rolled back was not/will not be submitted, so decrement the count.
@@ -1361,7 +1362,7 @@ export class FluidDataStoreRuntime
 	public async applyStashedOp(content: any): Promise<unknown> {
 		assert(
 			!this.localOpActivity,
-			"localOpActivity must be undefined when entering applyStashedOp",
+			0xca3 /* localOpActivity must be undefined when entering applyStashedOp */,
 		);
 		this.localOpActivity = "applyStashed";
 		try {
@@ -1557,6 +1558,7 @@ export const mixinRequestHandler = (
 export const mixinSummaryHandler = (
 	handler: (
 		runtime: FluidDataStoreRuntime,
+		setCurrentSummarizeStep: (currentStep: string) => void,
 	) => Promise<{ path: string[]; content: string } | undefined>,
 	Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ): typeof FluidDataStoreRuntime =>
@@ -1584,12 +1586,21 @@ export const mixinSummaryHandler = (
 			summary.summary.tree[firstName] = blob;
 		}
 
-		async summarize(...args: any[]): Promise<ISummaryTreeWithStats> {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			const summary = await super.summarize(...args);
+		async summarize(
+			fullTree: boolean = false,
+			trackState: boolean = true,
+			telemetryContext?: ITelemetryContext,
+		): Promise<ISummaryTreeWithStats> {
+			const summary = await super.summarize(fullTree, trackState, telemetryContext);
 
 			try {
-				const content = await handler(this);
+				const content = await handler(this, (currentStep: string) =>
+					telemetryContext?.set(
+						currentSummarizeStepPrefix,
+						currentSummarizeStepPropertyName,
+						`mixinSummaryHandler:${currentStep}`,
+					),
+				);
 				if (content !== undefined) {
 					this.addBlob(summary, content.path, content.content);
 				}

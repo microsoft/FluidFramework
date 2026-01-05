@@ -23,12 +23,18 @@ export {
 
 export {
 	SharedTreeCore,
+	type ClonableSchemaAndPolicy,
+	type SharedTreeCoreOptionsInternal,
+} from "./sharedTreeCore.js";
+export {
+	SharedTreeSummaryFormatVersion,
+	type SharedTreeSummarizableMetadata,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
-	type ClonableSchemaAndPolicy,
-	type SharedTreeCoreOptionsInternal as SharedTreCoreOptionsInternal,
-} from "./sharedTreeCore.js";
+	summarizablesMetadataKey,
+} from "./summaryTypes.js";
+export { VersionedSummarizer } from "./versionedSummarizer.js";
 
 export type { ResubmitMachine } from "./resubmitMachine.js";
 export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
@@ -48,7 +54,7 @@ export {
 } from "./editManagerCodecs.js";
 export {
 	EditManagerFormatVersion,
-	editManagerFormatVersions,
+	supportedEditManagerFormatVersions,
 } from "./editManagerFormatCommons.js";
 export { EditManagerSummarizer } from "./editManagerSummarizer.js";
 export {
@@ -65,9 +71,16 @@ export type {
 	EncodedCommit,
 } from "./editManagerFormatCommons.js";
 
+export type { DecodedMessage } from "./messageTypes.js";
 export {
 	getCodecTreeForMessageFormatWithChange,
 	clientVersionToMessageFormatVersion,
 	messageFormatVersionSelectorForSharedBranches,
+	makeMessageCodec,
+	type MessageEncodingContext,
 } from "./messageCodecs.js";
-export { MessageFormatVersion, messageFormatVersions } from "./messageFormat.js";
+export {
+	MessageFormatVersion,
+	messageFormatVersions,
+	supportedMessageFormatVersions,
+} from "./messageFormat.js";

@@ -58,18 +58,22 @@ import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index
 
 function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): void {
 	switch (count) {
-		case 0:
+		case 0: {
 			assert(item.isUnreferenced());
 			break;
-		case 1:
+		}
+		case 1: {
 			assert(!item.isUnreferenced());
 			assert(!item.isShared());
 			break;
-		case "shared":
+		}
+		case "shared": {
 			assert(item.isShared());
 			break;
-		default:
+		}
+		default: {
 			break;
+		}
 	}
 }
 
@@ -564,11 +568,9 @@ describe("chunkDecoding", () => {
 
 			assert.throws(
 				() => decoder.decode([], stream),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						"incremental decoder not available for incremental field decoding",
-					),
+				validateAssertionError(
+					"incremental decoder not available for incremental field decoding",
+				),
 			);
 		});
 
@@ -590,7 +592,7 @@ describe("chunkDecoding", () => {
 
 			assert.throws(
 				() => decoder.decode([], stream),
-				(error: Error) => validateAssertionError(error, /Unsupported FieldBatchFormatVersion/),
+				validateAssertionError(/Unsupported FieldBatchFormatVersion/),
 			);
 		});
 	});

@@ -13,6 +13,9 @@ import {
 	TraitLabel,
 } from "@fluid-experimental/tree";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 describeCompat("Can attach Legacy Shared Tree", "NoCompat", (getTestObjectProvider, apis) => {
@@ -20,13 +23,13 @@ describeCompat("Can attach Legacy Shared Tree", "NoCompat", (getTestObjectProvid
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
 	class TestDataObject extends DataObject {
-		public get _context() {
+		public get _context(): IFluidDataStoreContext {
 			return this.context;
 		}
-		public get _runtime() {
+		public get _runtime(): IFluidDataStoreRuntime {
 			return this.runtime;
 		}
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 	}

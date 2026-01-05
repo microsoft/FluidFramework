@@ -6,7 +6,6 @@
 import { strict as assert, fail } from "node:assert";
 
 import type {
-	FieldKey,
 	ITreeCursorSynchronous,
 	TreeChunk,
 	TreeFieldStoredSchema,
@@ -71,12 +70,19 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
-	getStoredSchema,
+	toStoredSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/toStoredSchema.js";
-import { numberSchema, SchemaFactory, stringSchema } from "../../../../simple-tree/index.js";
+import {
+	incrementalEncodingPolicyForAllowedTypes,
+	incrementalSummaryHint,
+	numberSchema,
+	SchemaFactoryAlpha,
+	stringSchema,
+	TreeViewConfigurationAlpha,
+} from "../../../../simple-tree/index.js";
 import { currentVersion } from "../../../../codec/index.js";
 
 const anyNodeShape = new NodeShapeBasedEncoder(undefined, undefined, [], anyFieldEncoder);
@@ -207,11 +213,11 @@ describe("schemaBasedEncoding", () => {
 				fieldBatchVersion,
 			);
 			const log: string[] = [];
-			const storedSchema: TreeFieldStoredSchema = {
-				kind: FieldKinds.identifier.identifier,
-				types: new Set([brand(stringSchema.identifier)]),
-				persistedMetadata: undefined,
-			};
+
+			const storedSchema = toStoredSchema(
+				SchemaFactoryAlpha.identifier(),
+				restrictiveStoredSchemaGenerationOptions,
+			);
 
 			const fieldEncoder = getFieldEncoder(
 				{
@@ -220,16 +226,9 @@ describe("schemaBasedEncoding", () => {
 						return identifierShape;
 					},
 				},
-				storedSchema,
+				storedSchema.rootFieldSchema,
 				context,
-				{
-					nodeSchema: new Map([
-						[
-							brand(stringSchema.identifier),
-							getStoredSchema(stringSchema, restrictiveStoredSchemaGenerationOptions),
-						],
-					]),
-				},
+				storedSchema,
 			);
 			const compressedId = testIdCompressor.generateCompressedId();
 			const stableId = testIdCompressor.decompress(compressedId);
@@ -345,21 +344,20 @@ describe("schemaBasedEncoding", () => {
 		});
 
 		it("incrementalEncoder", () => {
-			const factory = new SchemaFactory("test");
-			class HasOptionalFields extends factory.object("hasOptionalField", {
-				field: factory.optional(factory.number),
-				incrementalField: factory.optional(factory.number),
+			const sf = new SchemaFactoryAlpha("test");
+			class HasOptionalFields extends sf.object("hasOptionalField", {
+				field: sf.optional(sf.number),
+				incrementalField: sf.optional(
+					sf.types([{ type: sf.number, metadata: {} }], {
+						custom: { [incrementalSummaryHint]: true },
+					}),
+				),
 			}) {}
 			const testReferenceId: ChunkReferenceId = brand(123);
 			const mockIncrementalEncoder: IncrementalEncoder = {
-				shouldEncodeIncrementally: (
-					nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
-					fieldKey: FieldKey,
-				): boolean => {
-					return (
-						nodeIdentifier === HasOptionalFields.identifier && fieldKey === "incrementalField"
-					);
-				},
+				shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+					new TreeViewConfigurationAlpha({ schema: HasOptionalFields }),
+				),
 				encodeIncrementalField: (
 					cursor: ITreeCursorSynchronous,
 					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,

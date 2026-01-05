@@ -1,0 +1,7 @@
+{
+	"$schema": "../../../../../../node_modules/@biomejs/biome/configuration_schema.json",
+	"formatter": {
+		"indentStyle": "tab",
+		"lineWidth": 100
+	}
+}

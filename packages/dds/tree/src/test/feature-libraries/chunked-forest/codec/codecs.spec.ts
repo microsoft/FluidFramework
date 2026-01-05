@@ -15,7 +15,6 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/index.js";
 import {
 	TreeCompressionStrategy,
-	TreeCompressionStrategyExtended,
 	cursorForJsonableTreeField,
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
@@ -46,10 +45,10 @@ describe("makeFieldBatchCodec", () => {
 			assert.equal(encoded.version, FieldBatchFormatVersion.v1);
 		});
 
-		it("uses v2 format for FluidClientVersion.v2_73", () => {
+		it("uses v2 format for FluidClientVersion.v2_74", () => {
 			const codec = makeFieldBatchCodec({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_73,
+				minVersionForCollab: FluidClientVersion.v2_74,
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
@@ -64,16 +63,16 @@ describe("makeFieldBatchCodec", () => {
 		});
 	});
 
-	describe("TreeCompressionStrategyExtended.CompressedIncremental", () => {
-		it("succeeds for minVersionForCollab FluidClientVersion.v2_73", () => {
+	describe("TreeCompressionStrategy.CompressedIncremental", () => {
+		it("succeeds for minVersionForCollab FluidClientVersion.v2_74", () => {
 			const codec = makeFieldBatchCodec({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_73,
+				minVersionForCollab: FluidClientVersion.v2_74,
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
 			const context = {
-				encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
+				encodeType: TreeCompressionStrategy.CompressedIncremental,
 				originatorId: testIdCompressor.localSessionId,
 				idCompressor: testIdCompressor,
 			};
@@ -89,14 +88,14 @@ describe("makeFieldBatchCodec", () => {
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
 			const context = {
-				encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
+				encodeType: TreeCompressionStrategy.CompressedIncremental,
 				originatorId: testIdCompressor.localSessionId,
 				idCompressor: testIdCompressor,
 			};
 
 			assert.throws(
 				() => codec.encode([input], context),
-				(error: Error) => validateAssertionError(error, /Unsupported FieldBatchFormatVersion/),
+				validateAssertionError(/Unsupported FieldBatchFormatVersion/),
 			);
 		});
 	});
@@ -124,7 +123,7 @@ describe("makeFieldBatchCodec", () => {
 		it("v2 codec encodes and decodes correctly", () => {
 			const codec = makeFieldBatchCodec({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_73,
+				minVersionForCollab: FluidClientVersion.v2_74,
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);

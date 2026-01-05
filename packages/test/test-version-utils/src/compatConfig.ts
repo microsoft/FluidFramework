@@ -245,7 +245,10 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
  * It helps to filter out lower verions configs that the ones intended to be tested on a
  * particular suite.
  */
-export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
+export function isCompatVersionBelowMinVersion(
+	minVersion: string,
+	config: CompatConfig,
+): boolean {
 	let lowerVersion: string | number = config.compatVersion;
 	// For cross-client there are 2 versions being tested. Get the lower one.
 	if (config.kind === CompatKind.CrossClient) {
@@ -264,7 +267,7 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
  * ! If a summarizer's version is too old (using dual-commit summaries), ODSP will nack the summaries with "Upgrade to a newer version of the Fluid client packages to summarize".
  */
 export function isOdspCompatCompliant(config: CompatConfig): boolean {
-	const versionIsCompliant = (version: string | number | undefined) => {
+	const versionIsCompliant = (version: string | number | undefined): boolean => {
 		// ! Looking at current telemetry, the oldest hit that doesn't use dual-commit summaries was version "2.0.0-rc.5.0.7"
 		// ! Given this, version "2.0.0" is a fine cut off since we currently only test back to N-1
 		const odspMinVersion = "2.0.0";
@@ -506,7 +509,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
  *
  * @internal
  */
-export async function mochaGlobalSetup() {
+export async function mochaGlobalSetup(): Promise<void> {
 	const versions = new Set(configList.value.map((value) => value.compatVersion));
 	if (versions.size === 0) {
 		return;
@@ -527,7 +530,7 @@ export async function mochaGlobalSetup() {
 		}
 	}
 	if (error) {
-		// eslint-disable-next-line @typescript-eslint/no-throw-literal -- rethrowing the originally caught value
+		// eslint-disable-next-line @typescript-eslint/only-throw-error -- rethrowing the originally caught value
 		throw error;
 	}
 }

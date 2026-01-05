@@ -108,55 +108,6 @@ const renameLikeAttachAndDetach: readonly {
 	readonly changeset: JsonCompatibleReadOnly;
 }[] = [
 	{
-		version: 1,
-		changeset: [
-			{
-				"count": 1,
-				"effect": {
-					"attachAndDetach": {
-						"attach": {
-							"moveIn": {
-								"revision": encodedTag1,
-								"id": 0,
-							},
-						},
-						"detach": {
-							"moveOut": {
-								"revision": encodedTag1,
-								"idOverride": {
-									"type": 0,
-									"id": {
-										"atom": [2, encodedTag2],
-									},
-								},
-								"id": 3,
-							},
-						},
-					},
-				},
-				"cellId": {
-					"atom": [1, encodedTag1],
-				},
-				"changes": {
-					"fieldChanges": [
-						{
-							"fieldKey": "",
-							"fieldKind": "",
-							"change": {
-								"localId": 2,
-								"testChange": {
-									"inputContext": [],
-									"intentions": [1],
-									"outputContext": [1],
-								},
-							},
-						},
-					],
-				},
-			},
-		],
-	},
-	{
 		version: 2,
 		changeset: [
 			{

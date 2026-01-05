@@ -13,19 +13,16 @@ import {
 	IdentifierOrIndex,
 	ShapeIndex,
 } from "./formatGeneric.js";
-import { brand, type Brand } from "../../../util/index.js";
+import { strictEnum, type Values } from "../../../util/index.js";
 
 /**
  * The format version for the field batch.
  */
-export const FieldBatchFormatVersion = {
+export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 	v1: 1,
 	v2: 2,
-} as const;
-export type FieldBatchFormatVersion = Brand<
-	(typeof FieldBatchFormatVersion)[keyof typeof FieldBatchFormatVersion],
-	"FieldBatchFormatVersion"
->;
+});
+export type FieldBatchFormatVersion = Values<typeof FieldBatchFormatVersion>;
 
 // Compatible versions used for format/version validation.
 // TODO: A proper version update policy will need to be documented.
@@ -219,13 +216,13 @@ export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
 export type EncodedIncrementalChunkShape = Static<typeof EncodedIncrementalChunkShape>;
 
 export const EncodedFieldBatchV1 = EncodedFieldBatchGeneric(
-	brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1),
+	FieldBatchFormatVersion.v1,
 	EncodedChunkShape,
 );
 export type EncodedFieldBatchV1 = Static<typeof EncodedFieldBatchV1>;
 
 export const EncodedFieldBatchV2 = EncodedFieldBatchGeneric(
-	brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2),
+	FieldBatchFormatVersion.v2,
 	EncodedChunkShape,
 );
 export type EncodedFieldBatchV2 = Static<typeof EncodedFieldBatchV2>;

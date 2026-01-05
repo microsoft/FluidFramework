@@ -196,14 +196,14 @@ export class SerializedStateManager implements IDisposable {
 	/**
 	 * @param subLogger - Container's logger to use as parent for our logger
 	 * @param storageAdapter - Storage adapter for fetching snapshots
-	 * @param _offlineLoadEnabled - Is serializing/rehydrating containers allowed?
+	 * @param offlineLoadEnabled - Is serializing/rehydrating containers allowed?
 	 * @param containerEvent - Source of the "saved" event when the container has all its pending state uploaded
 	 * @param containerDirty - Is the container "dirty"? That's the opposite of "saved" - there is pending state that may not have been received yet by the service.
 	 */
 	constructor(
 		subLogger: ITelemetryBaseLogger,
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
-		private readonly _offlineLoadEnabled: boolean,
+		private readonly offlineLoadEnabled: boolean,
 		containerEvent: IEventProvider<ISerializerEvent>,
 		private readonly containerDirty: () => boolean,
 		private readonly supportGetSnapshotApi: () => boolean,
@@ -217,7 +217,7 @@ export class SerializedStateManager implements IDisposable {
 		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
 
 		this.#snapshotRefreshEnabled =
-			_offlineLoadEnabled &&
+			this.offlineLoadEnabled &&
 			(this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") ??
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull")) === true;
 
@@ -238,10 +238,6 @@ export class SerializedStateManager implements IDisposable {
 		if (this.#disposed) {
 			throw new Error("SerializedStateManager used after dispose.");
 		}
-	}
-
-	public get offlineLoadEnabled(): boolean {
-		return this._offlineLoadEnabled;
 	}
 
 	/**

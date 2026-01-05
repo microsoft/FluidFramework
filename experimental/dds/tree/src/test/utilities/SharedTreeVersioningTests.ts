@@ -7,10 +7,7 @@ import { strict as assert } from 'assert';
 
 import { LoaderHeader } from '@fluidframework/container-definitions/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import {
-	MockFluidDataStoreRuntime,
-	validateAssertionError2 as validateAssertionError,
-} from '@fluidframework/test-runtime-utils/internal';
+import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { BuildNode, Change, StablePlace, StableRange } from '../../ChangeTypes.js';

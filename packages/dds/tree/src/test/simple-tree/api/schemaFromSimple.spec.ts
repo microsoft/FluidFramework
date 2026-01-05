@@ -15,6 +15,7 @@ import {
 	type SimpleObjectNodeSchema,
 	isObjectNodeSchema,
 	SchemaFactoryAlpha,
+	SchemaUpgrade,
 } from "../../../simple-tree/index.js";
 import { exportSimpleSchema } from "../../../shared-tree/index.js";
 import { testTreeSchema } from "../../cursorTestSuite.js";
@@ -124,9 +125,9 @@ describe("schemaFromSimple", () => {
 			const simpleSchema = getSimpleSchema(root);
 			const rootField = simpleSchema.root;
 
-			assert.equal(
-				rootField.simpleAllowedTypes.get("com.fluidframework.leaf.string")?.isStaged,
-				true,
+			assert(
+				rootField.simpleAllowedTypes.get("com.fluidframework.leaf.string")?.isStaged instanceof
+					SchemaUpgrade,
 			);
 
 			assert.equal(
@@ -137,9 +138,9 @@ describe("schemaFromSimple", () => {
 			const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
 			const rootFieldView = viewSchema.root;
 
-			assert.equal(
-				rootFieldView.simpleAllowedTypes.get("com.fluidframework.leaf.string")?.isStaged,
-				true,
+			assert(
+				rootFieldView.simpleAllowedTypes.get("com.fluidframework.leaf.string")
+					?.isStaged instanceof SchemaUpgrade,
 			);
 
 			assert.equal(

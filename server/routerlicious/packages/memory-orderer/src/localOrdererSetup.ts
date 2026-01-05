@@ -87,6 +87,7 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
 
 		const existingRef = await this.gitManager.getRef(encodeURIComponent(this.documentId));
 		if (!existingRef) {
+			// eslint-disable-next-line @typescript-eslint/return-await -- false positive?
 			return -1;
 		}
 

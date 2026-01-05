@@ -71,6 +71,7 @@ export const serverListenAndHandle = async <T>(
 					.finally(() => httpServer.fullyClose())
 					.then(
 						(result) => innerResolve(result),
+						// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 						(error) => innerReject(error),
 					);
 			});
@@ -85,6 +86,7 @@ export const endResponse = async (response: http.ServerResponse): Promise<void> 
 		try {
 			response.end(resolve);
 		} catch (error) {
+			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 			reject(error);
 		}
 	});

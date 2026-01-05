@@ -5,7 +5,7 @@
 
 import type { Params } from "express-serve-static-core";
 
-export function getParam(params: Params, key: string) {
+export function getParam(params: Params, key: string): string | undefined {
 	return Array.isArray(params) ? undefined : params[key];
 }
 
@@ -13,19 +13,19 @@ export function getParam(params: Params, key: string) {
  * Helper function to convert Request's query param to a number.
  * @param value - The value to be converted to number.
  */
-export function queryParamToNumber(value: any): number | undefined {
+export function queryParamToNumber(value: unknown): number | undefined {
 	if (typeof value !== "string") {
 		return undefined;
 	}
-	const parsedValue = parseInt(value, 10);
-	return isNaN(parsedValue) ? undefined : parsedValue;
+	const parsedValue = Number.parseInt(value, 10);
+	return Number.isNaN(parsedValue) ? undefined : parsedValue;
 }
 
 /**
  * Helper function to convert Request's query param to a string.
  * @param value - The value to be converted to number.
  */
-export function queryParamToString(value: any): string | undefined {
+export function queryParamToString(value: unknown): string | undefined {
 	if (typeof value !== "string") {
 		return undefined;
 	}

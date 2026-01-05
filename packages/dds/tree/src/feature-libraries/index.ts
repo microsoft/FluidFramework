@@ -12,7 +12,7 @@ export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.j
 export {
 	ForestSummarizer,
 	getCodecTreeForForestFormat,
-	type ForestFormatVersion,
+	ForestFormatVersion,
 } from "./forest-summary/index.js";
 export {
 	cursorForMapTreeField,
@@ -29,11 +29,8 @@ export {
 export { buildForest } from "./object-forest/index.js";
 export {
 	SchemaSummarizer,
-	encodeTreeSchema,
 	makeSchemaCodec,
-	makeSchemaCodecs,
-	getCodecTreeForSchemaFormat,
-	clientVersionToSchemaVersion,
+	schemaCodecBuilder,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -190,11 +187,7 @@ export {
 	type Observer,
 } from "./flex-tree/index.js";
 
-export {
-	TreeCompressionStrategy,
-	TreeCompressionStrategyExtended,
-	type TreeCompressionStrategyPrivate,
-} from "./treeCompressionUtils.js";
+export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
 
 export { valueSchemaAllows } from "./valueUtilities.js";
 

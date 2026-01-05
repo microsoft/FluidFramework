@@ -61,17 +61,18 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
+	type TreeBranchAlpha,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
 	breakingClass,
 	disposeSymbol,
+	type JsonCompatibleReadOnly,
 	type WithBreakable,
 } from "../util/index.js";
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import type { TreeBranchAlpha } from "../simple-tree/index.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -163,6 +164,10 @@ export class SchematizingSimpleTreeView<
 				this.events.emit("commitApplied", data, getRevertible);
 			}),
 		);
+	}
+
+	public applyChange(change: JsonCompatibleReadOnly): void {
+		this.checkout.applySerializedChange(change);
 	}
 
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
@@ -575,8 +580,9 @@ export function addConstraintsToTransaction(
 				}
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(constraint.type);
+			}
 		}
 	}
 }

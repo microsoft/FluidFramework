@@ -9,6 +9,7 @@ import type {
 	InboundExtensionMessage,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import type {
 	ITelemetryLoggerExt,
@@ -46,9 +47,22 @@ export type PresenceExtensionInterface = Required<
 >;
 
 /**
+ * Confirms that the message is from a client and has a clientId
+ * versus from the system which specifies `null` for clientId.
+ */
+function assertMessageIsFromAClient(
+	message: InboundExtensionMessage<SignalMessages>,
+): asserts message is InboundExtensionMessage<SignalMessages> & {
+	clientId: ClientConnectionId;
+} {
+	assert(message.clientId !== null, 0xa3a /* Presence received signal without clientId */);
+}
+
+/**
  * The Presence manager
  */
 class PresenceManager implements Presence, PresenceExtensionInterface {
+	private joined = false;
 	private readonly datastoreManager: PresenceDatastoreManager;
 	private readonly systemWorkspace: SystemWorkspace;
 
@@ -74,7 +88,10 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 
 	private readonly mc: MonitoringContext | undefined = undefined;
 
-	public constructor(runtime: IEphemeralRuntime, attendeeId: AttendeeId) {
+	public constructor(
+		private readonly runtime: IEphemeralRuntime,
+		attendeeId: AttendeeId,
+	) {
 		const logger = runtime.logger;
 		if (logger) {
 			this.mc = createChildMonitoringContext({ logger, namespace: "Presence" });
@@ -90,40 +107,70 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		);
 		this.attendees = this.systemWorkspace;
 
-		runtime.events.on("joined", ({ clientId: joinedClientId }: { clientId: string }) => {
-			this.onJoin(joinedClientId);
-		});
+		runtime.events.on("disconnected", this.onDisconnected.bind(this));
 
-		runtime.events.on("disconnected", () => {
-			const currentClientId = runtime.getClientId();
-			if (currentClientId !== undefined) {
-				this.removeClientConnectionId(currentClientId);
-			}
-			this.datastoreManager.onDisconnected();
-		});
+		const audience = runtime.getAudience();
+		// Listen for self add to Audience to indicate join (with a stable
+		// audience population).
+		audience.on("addMember", this.addClientConnectionId.bind(this));
+		audience.on("removeMember", this.removeClientConnectionId.bind(this));
 
-		runtime.getAudience().on("removeMember", this.removeClientConnectionId.bind(this));
-
-		// Check if already connected (can send signals) at the time of construction.
+		// Check if already connected (can send signals and complete audience)
+		// at the time of construction.
 		// If constructed during data store load, the runtime may already be connected
-		// and the "joined" event will be raised during completion. With construction
-		// delayed we expect that "joined" event has passed.
+		// and the self-"addMember" event will be raised during completion. With
+		// construction delayed we expect that self-"addMember" event has passed.
 		// Note: In some manual testing, this does not appear to be enough to
 		// always trigger an initial connect.
 		const clientId = runtime.getClientId();
-		if (clientId !== undefined && runtime.getJoinedStatus() !== "disconnected") {
-			this.onJoin(clientId);
+		if (
+			clientId !== undefined &&
+			runtime.getJoinedStatus() !== "disconnected" &&
+			audience.getMember(clientId) !== undefined
+		) {
+			this.onJoin(clientId, /* alternateUpdateProvider */ undefined);
 		}
 	}
 
-	private onJoin(clientConnectionId: ClientConnectionId): void {
-		this.systemWorkspace.onConnectionAdded(clientConnectionId);
-		this.datastoreManager.joinSession(clientConnectionId);
+	private addClientConnectionId(clientConnectionId: ClientConnectionId): void {
+		// Check specifically for self join that indicates stable audience
+		// and is preferred trigger for presence join.
+		if (clientConnectionId === this.runtime.getClientId()) {
+			this.onJoin(clientConnectionId, /* alternateUpdateProvider */ undefined);
+		}
 	}
 
 	private removeClientConnectionId(clientConnectionId: ClientConnectionId): void {
 		this.systemWorkspace.removeClientConnectionId(clientConnectionId);
 	}
+
+	private onJoin(
+		clientConnectionId: ClientConnectionId,
+		alternateUpdateProvider: ClientConnectionId | undefined,
+	): void {
+		// System workspace is notified even if already "joined", to handle the
+		// audience -> attendee status updates.
+		this.systemWorkspace.onConnectionAdded(
+			clientConnectionId,
+			// audienceOutOfDate - out of date when onJoin is forced by receiving
+			// a signal (which calls with alternateUpdateProvider defined).
+			alternateUpdateProvider !== undefined,
+		);
+		if (!this.joined) {
+			this.datastoreManager.joinSession(clientConnectionId, alternateUpdateProvider);
+			this.joined = true;
+		}
+	}
+
+	private onDisconnected(): void {
+		this.joined = false;
+		const currentClientId = this.runtime.getClientId();
+		if (currentClientId !== undefined) {
+			this.removeClientConnectionId(currentClientId);
+		}
+		this.datastoreManager.onDisconnected();
+	}
+
 	/**
 	 * Check for Presence message and process it.
 	 *
@@ -136,6 +183,22 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		message: InboundExtensionMessage<SignalMessages>,
 		local: boolean,
 	): void {
+		assertMessageIsFromAClient(message);
+
+		// Check for undesired case of receiving a remote presence signal
+		// without having been alerted to self audience join that is preferred
+		// trigger for join. (Perhaps join signal was dropped.)
+		// In practice it is commonly observed that local signals can be
+		// returned ahead of audience join notification. So, it is reasonable
+		// to expect that audience join notification may be delayed until after
+		// other presence signals are received. One is enough to get things
+		// rolling.
+		if (!local && !this.joined) {
+			const selfClientId = this.runtime.getClientId();
+			assert(selfClientId !== undefined, "Received signal without clientId");
+			this.onJoin(selfClientId, /* alternateUpdateProvider */ message.clientId);
+		}
+
 		this.datastoreManager.processSignal(
 			message,
 			local,

@@ -29,8 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Check out the repo and set up node and pnpm.
-      # release notes: https://github.com/actions/checkout/releases/tag/v5.0.0
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
         with:
           fetch-depth: "100"
           persist-credentials: false
@@ -87,8 +87,8 @@ jobs:
       # Read the issue intro from a data file and put it in an output variable.
       - name: Read issue intro template
         id: intro
-        # release notes: https://github.com/Lehoczky/render-nunjucks-template-action/releases/tag/v1.0.0
-        uses: Lehoczky/render-nunjucks-template-action@9e23a64f080194d15347e881438ee53201e25c25 # ratchet:Lehoczky/render-nunjucks-template-action@v1.0.0
+        # release notes: https://github.com/Lehoczky/render-nunjucks-template-action/releases/tag/v1.1.0
+        uses: Lehoczky/render-nunjucks-template-action@2012ccb3cdcd8503fa86dd9007255c25139b8f44 # ratchet:Lehoczky/render-nunjucks-template-action@v1.1.0
         with:
           template-path: .github/workflows/data/release-notes-issue-intro.njk
           vars: |

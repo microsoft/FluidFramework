@@ -112,7 +112,6 @@ import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/inde
 import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
-	toSimpleTreeSchema,
 	TreeBeta,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/api/index.js";
@@ -1879,6 +1878,30 @@ describe("SharedTree", () => {
 			};
 			expectEqualPaths(childPath, expected);
 		});
+		it("anchors to content created during a transaction survive the completion of the transaction", () => {
+			const provider = new TestTreeProviderLite(1);
+			const view = provider.trees[0].viewWith(
+				new TreeViewConfiguration({ schema: JsonAsTree.Array }),
+			);
+			view.initialize(new JsonAsTree.Array([new JsonAsTree.JsonObject({ id: "prior" })]));
+
+			let priorNode: JsonAsTree.Tree = null;
+			let newNode1: JsonAsTree.Tree = null;
+			let newNode3: JsonAsTree.Tree = null;
+			Tree.runTransaction(view, (root) => {
+				priorNode = root[0];
+				newNode1 = new JsonAsTree.JsonObject({ child: "new1" });
+				const newNode2 = new JsonAsTree.JsonObject({ child: "new2" });
+				newNode3 = new JsonAsTree.JsonObject({ child: "new3" });
+				root.insertAtEnd(newNode1, newNode2, newNode3);
+			});
+			assert(priorNode !== null);
+			assert(newNode1 !== null);
+			assert(newNode3 !== null);
+			assert(Tree.status(priorNode) === TreeStatus.InDocument);
+			assert(Tree.status(newNode1) === TreeStatus.InDocument);
+			assert(Tree.status(newNode3) === TreeStatus.InDocument);
+		});
 	});
 
 	it("don't send ops before committing", () => {
@@ -2323,8 +2346,8 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("Shared Tree format v5 enablement via `configuredSharedTree`", () => {
-		it("can create a SharedTree with format v5 enabled", async () => {
+	describe("Schema v2 format enablement via `configuredSharedTree`", () => {
+		it("can create a SharedTree with schema format v2 enabled", async () => {
 			// Create and initialize the runtime factory
 			const runtime = new MockSharedTreeRuntime();
 
@@ -2492,10 +2515,15 @@ describe("SharedTree", () => {
 	it("exportVerbose & exportSimpleSchema", () => {
 		const tree = treeTestFactory();
 		assert.deepEqual(tree.exportVerbose(), undefined);
-		assert.deepEqual(
-			tree.exportSimpleSchema(),
-			toSimpleTreeSchema(SchemaFactory.optional([]), true),
-		);
+		assert.deepEqual(tree.exportSimpleSchema(), {
+			definitions: new Map(),
+			root: {
+				kind: FieldKind.Optional,
+				simpleAllowedTypes: new Map(),
+				metadata: {},
+				persistedMetadata: undefined,
+			},
+		} satisfies SimpleTreeSchema);
 
 		const config = new TreeViewConfiguration({
 			schema: numberSchema,

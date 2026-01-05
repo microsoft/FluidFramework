@@ -39,11 +39,10 @@ export async function getDataStoreEntryPoint<T>(
  * @internal
  */
 export interface IFluidMountableViewEntryPoint {
-	getDefaultDataObject(): Promise<FluidObject>;
-	getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
+	getDefaultDataObject: () => Promise<FluidObject>;
+	getMountableDefaultView: (path?: string) => Promise<IFluidMountableView>;
 }
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * The ContainerViewRuntimeFactory is an example utility built to support binding a single model to a single view
  * within the container.  For more-robust implementation of binding views within the container, check out the examples
@@ -51,7 +50,6 @@ export interface IFluidMountableViewEntryPoint {
  * @internal
  */
 export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory {
-	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	constructor(
 		private readonly dataStoreFactory: IFluidDataStoreFactory,
 		viewCallback: ViewCallback<T>,
@@ -68,9 +66,10 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 
 				const view = viewCallback(entryPoint);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				let getMountableDefaultView = async () => view;
+				let getMountableDefaultView = async (): Promise<IFluidMountableView> => view;
 				if (MountableView.canMount(view)) {
-					getMountableDefaultView = async () => new MountableView(view);
+					getMountableDefaultView = async (): Promise<IFluidMountableView> =>
+						new MountableView(view);
 				}
 
 				return {
@@ -85,7 +84,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 	 * Since we're letting the container define the default view it will respond with, it must do whatever setup
 	 * it requires to produce that default view.  We'll create a single data store of the specified type.
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataStore = await runtime.createDataStore(this.dataStoreFactory.type);
 		await dataStore.trySetAlias(dataStoreId);
 	}

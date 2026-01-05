@@ -10,7 +10,7 @@ import {
 	type ILoadExistingContainerProps,
 } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { type FluidObject } from "@fluidframework/core-interfaces/internal";
+import { type FluidObject, type IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type {
@@ -27,13 +27,13 @@ const mapFactory = SharedMap.getFactory();
 const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
 
 class DefaultDataStore {
-	public static create(runtime: IFluidDataStoreRuntime) {
+	public static create(runtime: IFluidDataStoreRuntime): DefaultDataStore {
 		const root = SharedMap.create(runtime, "root");
 		root.bindToContext();
 		return new DefaultDataStore(runtime, root);
 	}
 
-	public static async load(runtime: IFluidDataStoreRuntime) {
+	public static async load(runtime: IFluidDataStoreRuntime): Promise<DefaultDataStore> {
 		const root = (await runtime.getChannel("root")) as unknown as ISharedMap;
 		return new DefaultDataStore(runtime, root);
 	}
@@ -47,14 +47,14 @@ class DefaultDataStore {
 		this.runtime.on("readonly", () => this.readonlyEventCount++);
 	}
 
-	get DefaultDataStore() {
+	get DefaultDataStore(): this {
 		return this;
 	}
-	isReadOnly() {
+	isReadOnly(): boolean {
 		return this.runtime.isReadOnly();
 	}
 
-	get handle() {
+	get handle(): IFluidHandle<FluidObject> {
 		return this.runtime.entryPoint;
 	}
 }
@@ -63,13 +63,13 @@ class DefaultDataStoreFactory implements IFluidDataStoreFactory {
 	static readonly instance = new DefaultDataStoreFactory();
 	private constructor() {}
 
-	get IFluidDataStoreFactory() {
+	get IFluidDataStoreFactory(): this {
 		return this;
 	}
 
 	public readonly type = "DefaultDataStore";
 
-	async instantiateDataStore(context, existing) {
+	async instantiateDataStore(context, existing): Promise<FluidDataStoreRuntime> {
 		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			sharedObjectRegistry,

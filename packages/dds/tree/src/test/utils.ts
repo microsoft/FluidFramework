@@ -34,6 +34,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
@@ -159,9 +160,9 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	type SimpleNodeSchema,
 	type TreeNodeSchema,
-	getStoredSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
+	toStoredSchema,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -531,7 +532,7 @@ export class TestTreeProviderLite {
  * after the spy is no longer needed.
  */
 export function spyOnMethod(
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 	methodClass: Function,
 	methodName: string,
 	spy: () => void,
@@ -663,7 +664,7 @@ const schemaCodec = makeSchemaCodec(
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab: currentVersion,
 	},
-	brand(SchemaFormatVersion.v2),
+	SchemaFormatVersion.v2,
 );
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
@@ -1030,11 +1031,49 @@ export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 
 const assertDeepEqual = (a: unknown, b: unknown): void => assert.deepEqual(a, b);
 
+const testedVersionsByFamily = new WeakMap<
+	ICodecFamily<unknown, unknown>,
+	Set<FormatVersion>
+>();
+const testedFamilies = new WeakSet<ICodecFamily<unknown, unknown>>();
 /**
- * Constructs a basic suite of round-trip tests for all versions of a codec family.
+ * Tracks tested versions and registers an after hook to validate that all supported
+ * versions in the codec family have corresponding tests.
+ */
+function registerValidationHook<TDecoded, TContext>(
+	family: ICodecFamily<TDecoded, TContext>,
+	versions: Iterable<FormatVersion>,
+): void {
+	let tested = testedVersionsByFamily.get(family);
+	if (tested === undefined) {
+		tested = new Set<FormatVersion>();
+		testedVersionsByFamily.set(family, tested);
+	}
+	for (const version of versions) {
+		tested.add(version);
+	}
+	if (!testedFamilies.has(family)) {
+		testedFamilies.add(family);
+		after("validate all versions tested", () => {
+			const supportedVersions = Array.from(family.getSupportedFormats());
+			const missingVersions = supportedVersions.filter((version) => !tested.has(version));
+			if (missingVersions.length > 0) {
+				throw new Error(`Missing codec versions in test: ${missingVersions.join(", ")}`);
+			}
+		});
+	}
+}
+
+/**
+ * Constructs a basic suite of round-trip tests for supported versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
  *
  * Encoded data for JSON codecs within `family` will be validated using `FormatValidatorBasic`.
+ *
+ * @remarks
+ * This function tests actively supported codec versions. For discontinued versions,
+ * use `makeDiscontinuedEncodingTestSuite` separately. Both functions register validation
+ * hooks that ensure all supported versions from `family.getSupportedFormats()` are tested.
  *
  * @privateRemarks It is generally not valid to compare the decoded formats with assert.deepEqual,
  * but since these round trip tests start with the decoded format (not the encoded format),
@@ -1052,10 +1091,12 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
-	versions?: FormatVersion[],
+	supportedVersions?: FormatVersion[],
 ): void {
-	const versionsToTest = versions ?? family.getSupportedFormats();
-	for (const version of versionsToTest) {
+	const supportedVersionsToTest = supportedVersions ?? family.getSupportedFormats();
+	registerValidationHook(family, supportedVersionsToTest);
+
+	for (const version of supportedVersionsToTest) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
 			// A common pattern to avoid validating the same portion of encoded data multiple times
@@ -1115,6 +1156,44 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					}
 				});
 			}
+		});
+	}
+}
+
+/**
+ * Creates test suites for discontinued codec versions that verify they properly reject encode/decode operations.
+ *
+ * @param family - The codec family containing the discontinued versions
+ * @param discontinuedVersions - Array of format versions that are no longer supported
+ *
+ * Use this alongside `makeEncodingTestSuite` for codec families that have deprecated older versions.
+ * This ensures discontinued versions are tracked in validation but don't require full round-trip tests.
+ */
+export function makeDiscontinuedEncodingTestSuite(
+	family: ICodecFamily<unknown, unknown>,
+	discontinuedVersions: FormatVersion[],
+): void {
+	registerValidationHook(family, discontinuedVersions);
+
+	for (const version of discontinuedVersions) {
+		describe(`${version} (discontinued)`, () => {
+			const codec = family.resolve(version);
+			const jsonCodec =
+				codec.json.encodedSchema !== undefined
+					? withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic)
+					: codec.json;
+			it("throws when encoding", () => {
+				assert.throws(
+					() => jsonCodec.encode({}, {}),
+					validateUsageError(/Cannot encode data to format/),
+				);
+			});
+			it("throws when decoding", () => {
+				assert.throws(
+					() => jsonCodec.decode({ version }, {}),
+					validateUsageError(/Cannot decode data to format/),
+				);
+			});
 		});
 	}
 }
@@ -1528,8 +1607,10 @@ export class TestSchemaRepository extends TreeStoredSchemaRepository {
 	 * @returns true iff update was performed.
 	 */
 	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
-		const storedSchema = getStoredSchema(schema, restrictiveStoredSchemaGenerationOptions);
 		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
+		const storedSchema =
+			toStoredSchema(schema, restrictiveStoredSchemaGenerationOptions).nodeSchema.get(name) ??
+			assert.fail();
 		const original = this.nodeSchema.get(name);
 		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
 			this.nodeSchemaData.set(name, storedSchema);

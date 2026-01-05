@@ -12,7 +12,7 @@ import {
 	isPrApprovedByTeam,
 	isPrApprovedByUsers,
 	// We are slowly moving away from barrel files and these APIs are only used here.
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../library/githubRest.js";
 import { BaseCommand } from "../../library/index.js";
 

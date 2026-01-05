@@ -25,7 +25,7 @@ describe("Parallel Requests", () => {
 		expectedRequests: number,
 		knownTo: boolean,
 		howMany: HowMany = HowMany.Exact,
-	) {
+	): Promise<void> {
 		let nextElement = from;
 		let requests = 0;
 		let dispatches = 0;
@@ -97,7 +97,7 @@ describe("Parallel Requests", () => {
 		cancelAt: number,
 		payloadSize,
 		expectedRequests: number,
-	) {
+	): Promise<void> {
 		let nextElement = from;
 		let requests = 0;
 		let dispatches = 0;

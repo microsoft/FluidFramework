@@ -86,7 +86,7 @@ import {
 	type FactoryContentObject,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { convertField, convertFieldKind } from "../../toStoredSchema.js";
+import { convertFieldKind } from "../../toStoredSchema.js";
 import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
 
 /**
@@ -99,7 +99,7 @@ import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
 	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 			{}
 		: {
 				-readonly [Property in keyof T]: Property extends string
@@ -373,8 +373,9 @@ export function setField(
 			break;
 		}
 
-		default:
+		default: {
 			fail(0xade /* invalid FieldKind */);
+		}
 	}
 }
 
@@ -585,20 +586,6 @@ export function objectSchema<
 			return (privateData ??= createTreeNodeSchemaPrivateData(
 				this,
 				Array.from(CustomObjectNode.fields.values(), (schema) => schema.allowedTypesFull),
-				(storedOptions) => {
-					const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
-					for (const fieldSchema of flexKeyMap.values()) {
-						assert(
-							fieldSchema.schema instanceof FieldSchemaAlpha,
-							0xc19 /* Expected FieldSchemaAlpha */,
-						);
-						fields.set(
-							brand(fieldSchema.storedKey),
-							convertField(fieldSchema.schema, storedOptions),
-						);
-					}
-					return new ObjectNodeStoredSchema(fields, nodeOptions.persistedMetadata);
-				},
 			));
 		}
 	}
@@ -665,6 +652,7 @@ function objectToFlexContent(
 		Symbol.iterator in data ||
 		isFluidHandle(data)
 	) {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		throw new UsageError(`Input data is incompatible with Object schema: ${data}`);
 	}
 

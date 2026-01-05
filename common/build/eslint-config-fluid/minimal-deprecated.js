@@ -86,8 +86,6 @@ module.exports = {
 	plugins: [
 		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin
 		"@rushstack/eslint-plugin",
-		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin-security
-		"@rushstack/eslint-plugin-security",
 		// Plugin documentation: https://www.npmjs.com/package/@typescript-eslint/eslint-plugin
 		"@typescript-eslint/eslint-plugin",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-jsdoc
@@ -108,8 +106,16 @@ module.exports = {
 		// Don't lint generated packageVersion files.
 		"**/packageVersion.ts",
 		"**/layerGenerationState.ts",
+		// Don't lint generated test files
+		"**/*.generated.ts",
+		"**/*.generated.js",
 	],
 	rules: {
+		/**
+		 * Disable max-len as it conflicts with biome formatting.
+		 */
+		"max-len": "off",
+
 		/**
 		 * Restricts including release tags inside the member class / interface.
 		 *
@@ -176,17 +182,6 @@ module.exports = {
 
 		"eqeqeq": ["error", "smart"],
 		"import-x/no-deprecated": "error",
-		"max-len": [
-			"error",
-			{
-				code: 120,
-				ignoreTrailingComments: true,
-				ignoreUrls: true,
-				ignoreStrings: true,
-				ignoreTemplateLiterals: true,
-				ignoreRegExpLiterals: true,
-			},
-		],
 		"no-multi-spaces": [
 			"error",
 			{
@@ -232,10 +227,6 @@ module.exports = {
 		"@typescript-eslint/explicit-function-return-type": "off",
 		"@typescript-eslint/explicit-member-accessibility": "off",
 
-		/**
-		 * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
-		 */
-		"@typescript-eslint/indent": "off",
 		"@typescript-eslint/member-ordering": "off",
 		"@typescript-eslint/no-explicit-any": "off",
 		"@typescript-eslint/no-unused-vars": "off",
@@ -288,22 +279,7 @@ module.exports = {
 
 		// #region FORMATTING RULES
 
-		// We use formatting tools like Biome or prettier to format code, so most formatting-related rules are superfluous
-		// and are disabled. Running fewer rules also improves lint performance.
-
-		// The rules below are also deprecated in more recent versions of eslint/plugins
-		"@typescript-eslint/brace-style": "off",
-		"@typescript-eslint/comma-spacing": "off",
-		"@typescript-eslint/func-call-spacing": "off",
-		"@typescript-eslint/keyword-spacing": "off",
-		"@typescript-eslint/member-delimiter-style": "off",
-		"@typescript-eslint/semi": "off",
-		"@typescript-eslint/space-before-function-paren": "off",
-		"@typescript-eslint/space-infix-ops": "off",
-		"@typescript-eslint/type-annotation-spacing": "off",
-
 		// The rules below are deprecated in our current version of eslint/plugins
-		"@typescript-eslint/object-curly-spacing": "off",
 		"array-bracket-spacing": "off",
 		"arrow-spacing": "off",
 		"block-spacing": "off",
@@ -443,6 +419,15 @@ module.exports = {
 				"react-hooks",
 			],
 			extends: ["plugin:react/recommended", "plugin:react-hooks/recommended"],
+			rules: {
+				// TODO: These rules should be re-enabled once we are on eslint 9
+				// and the react plugins are upgraded to more recent versions
+				"react-hooks/immutability": "warn",
+				"react-hooks/refs": "warn",
+				"react-hooks/rules-of-hooks": "warn",
+				"react-hooks/set-state-in-effect": "warn",
+				"react-hooks/static-components": "warn",
+			},
 			settings: {
 				react: {
 					version: "detect",
