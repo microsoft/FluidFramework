@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import type { ICodecOptions } from "../../codec/index.js";
+import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
 import {
 	type DeltaDetachedNodeId,
 	type TreeStoredSchema,
@@ -14,7 +14,7 @@ import {
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
 } from "../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
@@ -27,12 +27,12 @@ import {
 import {
 	SharedTreeChangeFamily,
 	updateRefreshers,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeFamily.js";
 import type {
 	SharedTreeChange,
 	SharedTreeInnerChange,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeTypes.js";
 import { ajvValidator } from "../codec/index.js";
 import {
@@ -43,7 +43,10 @@ import {
 } from "../utils.js";
 
 const dataChanges: ModularChangeset[] = [];
-const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
+const codecOptions: CodecWriteOptions = {
+	jsonValidator: ajvValidator,
+	minVersionForCollab: currentVersion,
+};
 const fieldBatchCodec = {
 	encode: () => assert.fail("Unexpected encode"),
 	decode: () => assert.fail("Unexpected decode"),
@@ -298,12 +301,15 @@ describe("SharedTreeChangeFamily", () => {
 				// Mock for getDetachedNode
 				(id): TreeChunk | undefined => {
 					switch (id) {
-						case idInForest1:
+						case idInForest1: {
 							return refresher1;
-						case idInForest2:
+						}
+						case idInForest2: {
 							return refresher2;
-						default:
+						}
+						default: {
 							return undefined;
+						}
 					}
 				},
 				// Mock for relevantRemovedRootsFromDataChange

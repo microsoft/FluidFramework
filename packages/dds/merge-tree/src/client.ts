@@ -74,10 +74,10 @@ import {
 	type IJSONSegment,
 	type IMergeTreeAnnotateMsg,
 	type IMergeTreeDeltaOp,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	type IMergeTreeGroupMsg,
 	type IMergeTreeInsertMsg,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	type IMergeTreeObliterateMsg,
 	type IMergeTreeOp,
 	type IMergeTreeRemoveMsg,
@@ -323,9 +323,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public obliterateRangeLocal(
 		start: number | InteriorSequencePlace,
 		end: number | InteriorSequencePlace,
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 	): IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg {
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		let obliterateOp: IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
 			obliterateOp = createObliterateRangeOpSided(start, end);
@@ -672,7 +672,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @throws LoggingError if the range is invalid
 	 */
 	private getValidSidedRange(
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		op: IMergeTreeObliterateSidedMsg | IMergeTreeObliterateMsg,
 		perspective: Perspective,
 	): {
@@ -752,7 +752,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			| IMergeTreeAnnotateAdjustMsg
 			| IMergeTreeInsertMsg
 			| IMergeTreeRemoveMsg
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			| IMergeTreeObliterateMsg,
 		perspective: Perspective,
 	): IIntegerRange {
@@ -1595,7 +1595,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return loader.initialize(storage);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	localTransaction(groupOp: IMergeTreeGroupMsg): void {
 		for (const op of groupOp.ops) {
 			const opArgs: IMergeTreeDeltaOpArgs = {

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { TransactionEnricher } from "../../shared-tree-core/transactionEnricher.js";
 import { TestChange, TestChangeRebaser } from "../testChange.js";
 import type { RevisionTag } from "../../core/index.js";
@@ -131,7 +131,7 @@ describe("TransactionEnricher", () => {
 				const getter = transactionEnricher.commitTransaction();
 				assert.notEqual(getter, undefined);
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const change = getter!(tag1);
+				const change = getter!();
 				const expected = TestChange.mint([], [1000, 3000, 4000]);
 				assert.deepEqual(change, expected);
 			});

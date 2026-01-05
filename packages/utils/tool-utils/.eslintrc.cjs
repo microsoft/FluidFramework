@@ -10,6 +10,6 @@ module.exports = {
 	},
 	rules: {
 		// This package is intended to be used in node.js environments
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
 	},
 };

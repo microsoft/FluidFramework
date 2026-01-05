@@ -5,16 +5,15 @@
 
 import {
 	getPresence,
-	// eslint-disable-next-line import/no-deprecated
-	getPresenceViaDataObject,
-	// eslint-disable-next-line import/no-deprecated
-	ExperimentalPresenceManager,
-} from "@fluidframework/presence/alpha";
+	type AttendeeId,
+	type AttendeeStatus,
+} from "@fluidframework/presence/beta";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
+import { EmptyDOEntry } from "./datastoreFactory.js";
 import { initializeReactions } from "./reactions.js";
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 
@@ -26,9 +25,8 @@ import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./
 // data object requires 2.41 or later.
 const containerSchema = {
 	initialObjects: {
-		// Optional Presence Manager object placed within container schema for experimental presence access
-		// eslint-disable-next-line import/no-deprecated
-		presence: ExperimentalPresenceManager,
+		// schema requires at least one initial object
+		nothing: EmptyDOEntry,
 	},
 } satisfies ContainerSchema;
 
@@ -39,7 +37,7 @@ export type PresenceTrackerSchema = typeof containerSchema;
  *
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
-async function start() {
+async function start(): Promise<void> {
 	const client = new TinyliciousClient();
 	let container: IFluidContainer<PresenceTrackerSchema>;
 
@@ -55,6 +53,7 @@ async function start() {
 		// This uploads the container to the service and connects to the collaboration session.
 		id = await container.attach();
 		// The newly attached container is given a unique ID that can be used to access the container in another session
+		// eslint-disable-next-line require-atomic-updates
 		location.hash = id;
 	} else {
 		id = location.hash.slice(1);
@@ -63,12 +62,7 @@ async function start() {
 		({ container } = await client.getContainer(id, containerSchema, "2"));
 	}
 
-	const useDataObject = new URLSearchParams(location.search).has("useDataObject");
-	const presence = useDataObject
-		? // Retrieve a reference to the presence APIs via the data object.
-			// eslint-disable-next-line import/no-deprecated
-			getPresenceViaDataObject(container.initialObjects.presence)
-		: getPresence(container);
+	const presence = getPresence(container);
 
 	// Get the states workspace for the tracker data. This workspace will be created if it doesn't exist.
 	// We create it with no states; we will pass the workspace to the Mouse and Focus trackers, and they will create value
@@ -76,6 +70,7 @@ async function start() {
 	const appPresence = presence.states.getWorkspace("name:trackerData", {});
 
 	// Update the browser URL and the window title with the actual container ID
+	// eslint-disable-next-line require-atomic-updates
 	location.hash = id;
 	document.title = id;
 
@@ -85,21 +80,25 @@ async function start() {
 
 	initializeReactions(presence, mouseTracker);
 
-	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
+	const focusDiv = document.querySelector("#focus-content") as HTMLDivElement;
 	renderFocusPresence(focusTracker, focusDiv);
 
-	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
+	const mouseContentDiv = document.querySelector("#mouse-position") as HTMLDivElement;
 	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
 
-	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
+	const controlPanelDiv = document.querySelector("#control-panel") as HTMLDivElement;
 	renderControlPanel(mouseTracker, controlPanelDiv);
 
 	// Setting "fluid*" and these helpers are just for our test automation
-	const buildAttendeeMap = () => {
-		return [...presence.attendees.getAttendees()].reduce((map, a) => {
-			map[a.attendeeId] = a.getConnectionStatus();
-			return map;
-		}, {});
+	const buildAttendeeMap = (): Record<AttendeeId, AttendeeStatus> => {
+		// eslint-disable-next-line unicorn/no-array-reduce
+		return [...presence.attendees.getAttendees()].reduce<Record<AttendeeId, AttendeeStatus>>(
+			(map, a) => {
+				map[a.attendeeId] = a.getConnectionStatus();
+				return map;
+			},
+			{},
+		);
 	};
 	const checkAttendees = (expected: Record<string, string>): boolean => {
 		const actual = buildAttendeeMap();
@@ -137,4 +136,8 @@ async function start() {
 	/* eslint-enable @typescript-eslint/dot-notation */
 }
 
-start().catch(console.error);
+try {
+	await start();
+} catch (error) {
+	console.error(error);
+}

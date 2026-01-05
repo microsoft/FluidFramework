@@ -24,7 +24,7 @@ import {
 	type FieldChange,
 	type FieldId,
 	type NodeChangeset,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	type IdAllocator,
@@ -37,7 +37,7 @@ import {
 	getChangeHandler,
 	getParentFieldId,
 	normalizeFieldId,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";

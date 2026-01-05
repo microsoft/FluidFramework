@@ -9,7 +9,7 @@ import {
 	independentInitializedView,
 	createIndependentTreeAlpha,
 	createIndependentTreeBeta,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/independentView.js";
 import {
 	extractPersistedSchema,
@@ -165,14 +165,15 @@ describe("independentView", () => {
 		});
 
 		it("initialized", () => {
+			const minVersionForCollab = FluidClientVersion.v2_0;
 			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
 			const tree = createIndependentTreeAlpha({
 				forest: ForestTypeExpensiveDebug,
 				jsonValidator: ajvValidator,
 				content: {
-					schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
+					schema: extractPersistedSchema(config.schema, minVersionForCollab, () => true),
 					tree: TreeAlpha.exportCompressed(1, {
-						minVersionForCollab: FluidClientVersion.v2_0,
+						minVersionForCollab,
 					}),
 					idCompressor: testIdCompressor,
 				},

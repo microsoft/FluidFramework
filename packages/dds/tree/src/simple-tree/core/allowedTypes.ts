@@ -25,7 +25,7 @@ import {
 	type TreeNodeSchema,
 } from "./treeNodeSchema.js";
 import { schemaAsTreeNodeValid } from "./treeNodeValid.js";
-import type { SimpleAllowedTypeAttributes } from "../simpleSchema.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../simpleSchema.js";
 
 /**
  * Schema for types allowed in some location in a tree (like a field, map entry or array).
@@ -57,7 +57,7 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 /**
  * Stores annotations for an individual allowed type.
  * @remarks
- * Create using APIs on {@link SchemaFactoryAlpha}, like {@link SchemaStaticsAlpha.staged}.
+ * Create using APIs on {@link SchemaStaticsBeta}, like {@link SchemaStaticsBeta.staged}.
  * @privateRemarks
  * Since this is sealed, users are not supposed to create instances of it directly.
  * Making it extend ErasedType could enforce that.
@@ -258,11 +258,11 @@ export class AnnotatedAllowedTypesInternal<
 	 */
 	public static evaluateSimpleAllowedTypes(
 		annotatedAllowedTypes: AnnotatedAllowedTypes,
-	): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
-		const simpleAllowedTypes = new Map<string, SimpleAllowedTypeAttributes>();
+	): ReadonlyMap<string, SimpleAllowedTypeAttributes<SchemaType.View>> {
+		const simpleAllowedTypes = new Map<string, SimpleAllowedTypeAttributes<SchemaType.View>>();
 		for (const type of annotatedAllowedTypes.evaluate().types) {
 			simpleAllowedTypes.set(type.type.identifier, {
-				isStaged: type.metadata.stagedSchemaUpgrade !== undefined,
+				isStaged: type.metadata.stagedSchemaUpgrade ?? false,
 			});
 		}
 		return simpleAllowedTypes;
@@ -412,7 +412,7 @@ export interface AllowedTypeMetadata {
 	readonly custom?: unknown;
 
 	/**
-	 * If defined, indicates that an allowed type is {@link SchemaStaticsAlpha.staged | staged}.
+	 * If defined, indicates that an allowed type is {@link SchemaStaticsBeta.staged | staged}.
 	 */
 	readonly stagedSchemaUpgrade?: SchemaUpgrade;
 }
@@ -425,7 +425,7 @@ export let createSchemaUpgrade: () => SchemaUpgrade;
 /**
  * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
  * @remarks
- * Create using {@link SchemaStaticsAlpha.staged}.
+ * Create using {@link SchemaStaticsBeta.staged}.
  * @privateRemarks
  * TODO:#38722 implement runtime schema upgrades.
  * Until then, the class purely behaves mostly as a placeholder.

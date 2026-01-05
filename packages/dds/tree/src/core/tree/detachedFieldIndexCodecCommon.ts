@@ -3,15 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ICodecOptions,
-	type IJsonCodec,
-	makeVersionedValidatedCodec,
-} from "../../codec/index.js";
+import type { IJsonCodec } from "../../codec/index.js";
 import { hasSingle } from "../../util/index.js";
 
 import {
 	Format,
+	type DetachedFieldIndexFormatVersion,
 	type EncodedRootsForRevision,
 	type RootRanges,
 } from "./detachedFieldIndexFormatCommon.js";
@@ -27,15 +24,15 @@ import type { Static, TSchema } from "@sinclair/typebox";
 export function makeDetachedFieldIndexCodecFromMajorCodec<
 	TEncodedRevisionTag,
 	TEncodedRevisionTagSchema extends TSchema,
-	TVersion extends number,
+	TVersion extends DetachedFieldIndexFormatVersion,
 >(
-	options: ICodecOptions,
 	majorCodec: IJsonCodec<Major, TEncodedRevisionTag>,
 	version: TVersion,
 	encodedRevisionTagSchema: TEncodedRevisionTagSchema,
 ) {
 	const formatSchema = Format(version, encodedRevisionTagSchema);
-	return makeVersionedValidatedCodec(options, new Set([version]), formatSchema, {
+	return {
+		schema: formatSchema,
 		encode: (data: DetachedFieldSummaryData): Static<typeof formatSchema> => {
 			const rootsForRevisions: EncodedRootsForRevision[] = [];
 			for (const [major, innerMap] of data.data) {
@@ -83,5 +80,5 @@ export function makeDetachedFieldIndexCodecFromMajorCodec<
 				maxId: parsed.maxId,
 			};
 		},
-	});
+	};
 }

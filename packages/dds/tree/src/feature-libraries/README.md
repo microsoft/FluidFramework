@@ -2,7 +2,7 @@
 
 Libraries which plug into the [Core Libraries](../core/README.md) to provide specializations, either for performance, or compatibility with specific tools or use-cases.
 
-This includes concrete implementations of abstractions used to parameterize `SharedTreeCore` (Like `Index` and `ChangeFamily`), or any other entry points to the `core` libraries] package (like `Forest`).
+This includes concrete implementations of abstractions used to parameterize `SharedTreeCore` (Like `Index` and `ChangeFamily`), or any other entry points to the `core` libraries package (like `Forest`).
 
 `SharedTreeCore` should be usable with alternative versions of anything within this library.
 

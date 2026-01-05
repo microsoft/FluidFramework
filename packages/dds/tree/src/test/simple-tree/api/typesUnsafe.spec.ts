@@ -7,10 +7,10 @@ import type {
 	AnnotatedAllowedTypeUnsafe,
 	System_Unsafe,
 	UnannotateAllowedTypeUnsafe,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/typesUnsafe.js";
 import { allowUnused } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { numberSchema } from "../../../simple-tree/leafNodeSchema.js";
 import type { areSafelyAssignable, requireTrue } from "../../../util/index.js";
 

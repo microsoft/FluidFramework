@@ -6,7 +6,7 @@
 import type { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import React from "react";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
 interface ISliderCoordinateViewProps {
@@ -24,7 +24,7 @@ export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (
 	const [x, setX] = React.useState(props.model.x);
 	const [y, setY] = React.useState(props.model.y);
 
-	React.useEffect(() => {
+	React.useEffect((): (() => void) => {
 		const onCoordinateChanged = (): void => {
 			setX(props.model.x);
 			setY(props.model.y);

@@ -22,7 +22,7 @@ import { TestNodeId } from "../../testNodeId.js";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import { inlineRevision, toDelta } from "./utils.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { FieldChangeDelta } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 const moveId = brand<ChangesetLocalId>(4242);

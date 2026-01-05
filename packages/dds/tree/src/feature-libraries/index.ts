@@ -12,7 +12,7 @@ export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.j
 export {
 	ForestSummarizer,
 	getCodecTreeForForestFormat,
-	type ForestFormatVersion,
+	ForestFormatVersion,
 } from "./forest-summary/index.js";
 export {
 	cursorForMapTreeField,
@@ -29,10 +29,8 @@ export {
 export { buildForest } from "./object-forest/index.js";
 export {
 	SchemaSummarizer,
-	encodeTreeSchema,
 	makeSchemaCodec,
-	makeSchemaCodecs,
-	getCodecTreeForSchemaFormat,
+	schemaCodecBuilder,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -80,7 +78,6 @@ export {
 	genericFieldKind,
 	type HasFieldChanges,
 	type NodeExistsConstraint,
-	FieldKindWithEditor,
 	ModularChangeFamily,
 	type RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
@@ -103,11 +100,10 @@ export {
 	defaultChunkPolicy,
 	type FieldBatch,
 	type FieldBatchCodec,
-	type FieldBatchFormatVersion,
+	FieldBatchFormatVersion,
 	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
 	makeFieldBatchCodec,
-	fluidVersionToFieldBatchCodecWriteVersion,
 	type FieldBatchEncodingContext,
 	emptyChunk,
 	combineChunks,
@@ -145,13 +141,16 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
+	getCodecTreeForModularChangeFormat,
+	type ModularChangeFormatVersion,
+} from "./default-schema/index.js";
+
+export {
 	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,
-	getCodecTreeForModularChangeFormat,
-	type ModularChangeFormatVersion,
-} from "./default-schema/index.js";
+} from "./schemaChecker.js";
 
 export {
 	type FlexTreeOptionalField,
@@ -188,11 +187,7 @@ export {
 	type Observer,
 } from "./flex-tree/index.js";
 
-export {
-	TreeCompressionStrategy,
-	TreeCompressionStrategyExtended,
-	type TreeCompressionStrategyPrivate,
-} from "./treeCompressionUtils.js";
+export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
 
 export { valueSchemaAllows } from "./valueUtilities.js";
 
@@ -203,7 +198,6 @@ export {
 	makeSchemaChangeCodecs,
 	EncodedSchemaChange,
 	getCodecTreeForSchemaChangeFormat,
-	type SchemaChangeFormatVersion,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";

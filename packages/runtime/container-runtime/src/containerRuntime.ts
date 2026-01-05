@@ -44,7 +44,7 @@ import type {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 	IContainerRuntimeInternal,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 	JoinedStatus,
 	OutboundExtensionMessage,
@@ -143,7 +143,7 @@ import {
 	isValidMinVersionForCollab,
 	RequestParser,
 	RuntimeHeaders,
-	semanticVersionToMinimumVersionForCollab,
+	validateMinimumVersionForCollab,
 	seqFromTree,
 	TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
@@ -161,7 +161,7 @@ import {
 	GenericError,
 	LoggingError,
 	PerformanceEvent,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	TaggedLoggerAdapter,
 	UsageError,
 	createChildLogger,
@@ -839,7 +839,7 @@ export class ContainerRuntime
 	implements
 		IContainerRuntimeInternal,
 		IContainerRuntimeBaseInternal,
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		IContainerRuntimeWithResolveHandle_Deprecated,
 		IRuntime,
 		IGarbageCollectionRuntime,
@@ -854,7 +854,6 @@ export class ContainerRuntime
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
 {
-	/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties.
@@ -883,7 +882,6 @@ export class ContainerRuntime
 			registry: new FluidDataStoreRegistry(params.registryEntries),
 		});
 	}
-	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
@@ -926,7 +924,7 @@ export class ContainerRuntime
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,
@@ -1219,6 +1217,7 @@ export class ContainerRuntime
 			createBlobPayloadPending,
 		};
 
+		validateMinimumVersionForCollab(updatedMinVersionForCollab);
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
@@ -1236,7 +1235,7 @@ export class ContainerRuntime
 			documentSchemaController,
 			featureGatesForTelemetry,
 			provideEntryPoint,
-			semanticVersionToMinimumVersionForCollab(updatedMinVersionForCollab),
+			updatedMinVersionForCollab,
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
@@ -1623,10 +1622,11 @@ export class ContainerRuntime
 
 		// Validate that the Loader is compatible with this Runtime.
 		const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
+
 		validateLoaderCompatibility(
 			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
 			this.disposeFn,
-			this.mc.logger,
+			this.mc,
 		);
 
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.
@@ -2295,7 +2295,10 @@ export class ContainerRuntime
 
 			const defaultAction = (): void => {
 				if (summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-					this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
+					this.mc.logger.sendTelemetryEvent({
+						eventName: "SummaryStatus:Behind",
+						opsWithoutSummary: summaryCollection.opsSinceLastAck,
+					});
 					// unregister default to no log on every op after falling behind
 					// and register summary ack handler to re-register this handler
 					// after successful summary
@@ -2337,8 +2340,9 @@ export class ContainerRuntime
 				"summarizerStop",
 				"summarizerStart",
 				"summarizerStartupFailed",
-			]) {
-				this.summaryManager?.on(eventName, (...args: unknown[]) => {
+				"summarizeTimeout",
+			] as const) {
+				this.summaryManager.on(eventName, (...args: unknown[]) => {
 					this.emit(eventName, ...args);
 				});
 			}
@@ -3931,6 +3935,10 @@ export class ContainerRuntime
 		 * True to run GC sweep phase after the mark phase
 		 */
 		runSweep?: boolean;
+		/**
+		 * Telemetry context to populate during summarization.
+		 */
+		telemetryContext?: TelemetryContext;
 	}): Promise<ISummaryTreeWithStats> {
 		this.verifyNotClosed();
 
@@ -3941,9 +3949,9 @@ export class ContainerRuntime
 			runGC = this.garbageCollector.shouldRunGC,
 			runSweep,
 			fullGC,
+			telemetryContext = new TelemetryContext(),
 		} = options;
 
-		const telemetryContext = new TelemetryContext();
 		// Add the options that are used to generate this summary to the telemetry context.
 		telemetryContext.setMultiple("fluid_Summarize", "Options", {
 			fullTree,
@@ -4184,6 +4192,7 @@ export class ContainerRuntime
 			finalAttempt = false,
 			summaryLogger,
 			latestSummaryRefSeqNum,
+			telemetryContext = new TelemetryContext(),
 		} = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
@@ -4348,6 +4357,7 @@ export class ContainerRuntime
 				if (lastAckedContext !== this.lastAckedSummaryContext) {
 					return {
 						continue: false,
+						// eslint-disable-next-line @typescript-eslint/no-base-to-string
 						error: `Last summary changed while summarizing. ${this.lastAckedSummaryContext} !== ${lastAckedContext}`,
 					};
 				}
@@ -4372,6 +4382,7 @@ export class ContainerRuntime
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
+					telemetryContext,
 				});
 			} catch (error) {
 				return {

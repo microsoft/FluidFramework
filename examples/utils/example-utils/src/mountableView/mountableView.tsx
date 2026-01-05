@@ -74,7 +74,7 @@ export class MountableView implements IFluidMountableView {
 		// Render with React if possible.
 		if (this.reactView !== undefined) {
 			// TODO: Remove rule disable once we move to the React 18 APIs.
-			// eslint-disable-next-line import/no-deprecated -- AB#18875
+			// eslint-disable-next-line import-x/no-deprecated -- AB#18875
 			ReactDOM.render(this.reactView, this.containerElement);
 			return;
 		}
@@ -95,7 +95,7 @@ export class MountableView implements IFluidMountableView {
 		// Call appropriate cleanup methods on the view and then remove it from the DOM.
 		if (this.reactView !== undefined) {
 			// TODO: Remove rule disable once we move to the React 18 APIs.
-			// eslint-disable-next-line import/no-deprecated -- AB#18875
+			// eslint-disable-next-line import-x/no-deprecated -- AB#18875
 			ReactDOM.unmountComponentAtNode(this.containerElement);
 		}
 

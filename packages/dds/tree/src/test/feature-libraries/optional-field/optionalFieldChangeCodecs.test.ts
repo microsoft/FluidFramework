@@ -17,7 +17,7 @@ import {
 	type OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	optionalFieldEditor,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
 import { TestNodeId } from "../../testNodeId.js";

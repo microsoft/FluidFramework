@@ -24,7 +24,7 @@ import {
 
 import { TestTreeProviderLite, configureBenchmarkHooks, testIdCompressor } from "../utils.js";
 import { TreeViewConfiguration, type ImplicitFieldSchema } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContentTyped } from "../feature-libraries/flex-tree/utils.js";
 import {
 	LinkedList,
@@ -60,7 +60,7 @@ describe("Summary benchmarks", () => {
 			const { summary } = tree.getAttachSummary(true);
 			const summaryString = JSON.stringify(summary);
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
-			assert(summarySize < 700);
+			assert(summarySize < 900);
 		});
 
 		function processSummary(

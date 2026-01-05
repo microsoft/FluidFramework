@@ -1,5 +1,17 @@
 # @fluidframework/odsp-urlresolver
 
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -147,7 +159,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 

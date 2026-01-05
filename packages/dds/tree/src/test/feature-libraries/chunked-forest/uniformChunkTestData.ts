@@ -4,12 +4,12 @@
  */
 
 import { EmptyKey, type FieldKey, type JsonableTree } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { dummyRoot } from "../../../feature-libraries/chunked-forest/index.js";
 import {
 	TreeShape,
 	UniformChunk,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import { numberSchema } from "../../../simple-tree/index.js";
 import { brand, makeArray } from "../../../util/index.js";

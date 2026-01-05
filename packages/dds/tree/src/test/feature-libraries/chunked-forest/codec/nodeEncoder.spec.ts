@@ -8,26 +8,29 @@ import { strict as assert, fail } from "node:assert";
 import type { JsonableTree } from "../../../../core/index.js";
 import {
 	Counter,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
 	IdentifierToken,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	EncoderContext,
 	type FieldEncoder,
 	asFieldEncoder,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import { brand } from "../../../../util/index.js";
 
 import { checkNodeEncode } from "./checkEncode.js";
 import { testIdCompressor } from "../../../utils.js";
+import { FieldBatchFormatVersion } from "../../../../feature-libraries/index.js";
+
+const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1);
 
 describe("nodeShape", () => {
 	describe("NodeShapeBasedEncoder", () => {
@@ -43,6 +46,7 @@ describe("nodeShape", () => {
 				fieldKinds,
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
+				fieldBatchVersion,
 			);
 
 			const buffer = checkNodeEncode(shape, context, {
@@ -62,6 +66,7 @@ describe("nodeShape", () => {
 				fieldKinds,
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
+				fieldBatchVersion,
 			);
 
 			const encodedChunk = checkNodeEncode(shape, context, {
@@ -78,6 +83,7 @@ describe("nodeShape", () => {
 				fieldKinds,
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
+				fieldBatchVersion,
 			);
 
 			const fieldShapeLocal = context.nestedArrayEncoder(
@@ -115,6 +121,7 @@ describe("nodeShape", () => {
 				fieldKinds,
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
+				fieldBatchVersion,
 			);
 
 			// Shape which encodes to nothing.

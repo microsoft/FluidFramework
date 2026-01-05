@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assertIdenticalTypes, replaceBigInt } from "./testUtils.js";
-
 import type {
 	ErasedType,
 	IFluidHandle,
@@ -24,6 +22,8 @@ import type {
 	OpaqueJsonSerializable,
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+
+import { assertIdenticalTypes, replaceBigInt } from "./testUtils.js";
 
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable unicorn/no-null */

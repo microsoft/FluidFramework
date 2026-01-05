@@ -569,7 +569,7 @@
 				{
 					"kind": "Namespace",
 					"canonicalReference": "test-suite-a!TestBetaNamespace:namespace",
-					"docComment": "/**\n * A namespace tagged as `@beta`.\n *\n * @remarks\n *\n * Tests release level inheritance.\n *\n * @beta\n */\n",
+					"docComment": "/**\n * A namespace tagged as `@beta`.\n *\n * @remarks\n *\n * Tests release level inheritance.\n *\n * @beta @sealed\n */\n",
 					"excerptTokens": [
 						{
 							"kind": "Content",

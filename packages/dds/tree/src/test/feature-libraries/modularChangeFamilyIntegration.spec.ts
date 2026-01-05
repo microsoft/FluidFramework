@@ -20,11 +20,11 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
-	type FieldKindWithEditor,
+	type FlexFieldKind,
 	type ModularChangeset,
 	type SequenceField as SF,
 	type EditDescription,
@@ -33,7 +33,7 @@ import {
 import {
 	ModularChangeFamily,
 	intoDelta,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	type IdAllocator,
@@ -53,16 +53,16 @@ import {
 
 import type {
 	NodeId,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { assertEqual, Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map([
 	[sequence.identifier, sequence],
 ]);
 
@@ -1055,6 +1055,6 @@ function tagChangeInline(
 }
 
 function buildChangeset(edits: EditDescription[]): ModularChangeset {
-	const editor = family.buildEditor(() => undefined);
+	const editor = family.buildEditor(mintRevisionTag, () => undefined);
 	return editor.buildChanges(edits);
 }

@@ -10,7 +10,7 @@ import {
 import {
 	configValueToMinVersionForCollab,
 	getConfigsForMinVersionForCollab,
-	getValidationForRuntimeOptions,
+	validateConfigMapOverrides,
 	type ConfigMap,
 	type ConfigValidationMap,
 } from "@fluidframework/runtime-utils/internal";
@@ -101,60 +101,66 @@ export type RuntimeOptionKeysThatRequireExplicitSchemaControl = keyof Omit<
  * default value for `enableGroupedBatching` will be true because clients running 2.0 or later will be able to understand the format changes associated
  * with the batching feature.
  */
-const runtimeOptionsAffectingDocSchemaConfigMap = {
-	enableGroupedBatching: {
-		"1.0.0": false,
-		"2.0.0-defaults": true,
-	},
-	compressionOptions: {
-		"1.0.0": disabledCompressionConfig,
-		"2.0.0-defaults": enabledCompressionConfig,
-	},
-	enableRuntimeIdCompressor: {
-		// For IdCompressorMode, `undefined` represents a logical state (off).
-		// However, to satisfy the Required<> constraint while
-		// `exactOptionalPropertyTypes` is `false` (TODO: AB#8215), we need
-		// to have it defined, so we trick the type checker here.
-		"1.0.0": undefined,
-		// We do not yet want to enable idCompressor by default since it will
-		// increase bundle sizes, and not all customers will benefit from it.
-		// Therefore, we will require customers to explicitly enable it. We
-		// are keeping it as a DocSchema affecting option for now as this may
-		// change in the future.
-	},
-	explicitSchemaControl: {
-		"1.0.0": false,
-		// This option's intention is to prevent 1.x clients from joining sessions
-		// when enabled. This is set to true when the minVersionForCollab is set
-		// to >=2.0.0 (explicitly). This is different than other 2.0 defaults
-		// because it was not enabled by default prior to the implementation of
-		// `minVersionForCollab`.
-		// `defaultMinVersionForCollab` is set to "2.0.0-defaults" which "2.0.0"
-		// does not satisfy to avoiding enabling this option by default as of
-		// `minVersionForCollab` introduction, which could be unexpected.
-		// Only enable as a default when `minVersionForCollab` is specified at
-		// 2.0.0+.
-		"2.0.0": true,
-	},
-	flushMode: {
-		// Note: 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
-		// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
-		// fewer messages will be included per flush.
-		"1.0.0": FlushMode.Immediate,
-		"2.0.0-defaults": FlushMode.TurnBased,
-	},
-	gcOptions: {
-		"1.0.0": {},
-		// Although sweep is supported in 2.x, it is disabled by default until minVersionForCollab>=3.0.0 to be extra safe.
-		"3.0.0": { enableGCSweep: true },
-	},
-	createBlobPayloadPending: {
-		// This feature is new and disabled by default. In the future we will enable it by default, but we have not
-		// closed on the version where that will happen yet.  Probably a .10 release since blob functionality is not
-		// exposed on the `@public` API surface.
-		"1.0.0": undefined,
-	},
-} as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
+const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffectingDocSchema> =
+	{
+		enableGroupedBatching: {
+			"1.0.0": false,
+			"2.0.0-defaults": true,
+		},
+		compressionOptions: {
+			"1.0.0": disabledCompressionConfig,
+			"2.0.0-defaults": enabledCompressionConfig,
+		},
+		enableRuntimeIdCompressor: {
+			// For IdCompressorMode, `undefined` represents a logical state (off).
+			// However, to satisfy the Required<> constraint while
+			// `exactOptionalPropertyTypes` is `false` (TODO: AB#8215), we need
+			// to have it defined, so we trick the type checker here.
+			"1.0.0": undefined,
+			// We do not yet want to enable idCompressor by default since it will
+			// increase bundle sizes, and not all customers will benefit from it.
+			// Therefore, we will require customers to explicitly enable it. We
+			// are keeping it as a DocSchema affecting option for now as this may
+			// change in the future.
+		},
+		explicitSchemaControl: {
+			"1.0.0": false,
+			// This option's intention is to prevent 1.x clients from joining sessions
+			// when enabled. This is set to true when the minVersionForCollab is set
+			// to >=2.0.0 (explicitly). This is different than other 2.0 defaults
+			// because it was not enabled by default prior to the implementation of
+			// `minVersionForCollab`.
+			// `defaultMinVersionForCollab` is set to "2.0.0-defaults" which "2.0.0"
+			// does not satisfy to avoiding enabling this option by default as of
+			// `minVersionForCollab` introduction, which could be unexpected.
+			// Only enable as a default when `minVersionForCollab` is specified at
+			// 2.0.0+.
+			"2.0.0": true,
+		},
+		flushMode: {
+			// Note: 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
+			// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
+			// fewer messages will be included per flush.
+			"1.0.0": FlushMode.Immediate,
+			"2.0.0-defaults": FlushMode.TurnBased,
+		},
+		gcOptions: {
+			"1.0.0": {},
+			// Although sweep is supported in 2.x, it is disabled by default until minVersionForCollab>=3.0.0 to be extra safe.
+			// Note that enabling this is a significant change, that should likely be announced in the relevant version:
+			// It would be bad if this simple caused the enablement when when the current package version passed this point without anyone being aware.
+			// This is configuration targeting a future versions, which is not supported.
+			// TODO: when preparing 3.0 (or at some later point), consider enabling this by default for clients 3.0 or newer
+			// (and add user facing documentation indicating this is enabled by that version).
+			// "3.0.0": { enableGCSweep: true },
+		},
+		createBlobPayloadPending: {
+			// This feature is new and disabled by default. In the future we will enable it by default, but we have not
+			// closed on the version where that will happen yet.  Probably a .10 release since blob functionality is not
+			// exposed on the `@public` API surface.
+			"1.0.0": undefined,
+		},
+	};
 
 /**
  * Keys of {@link ContainerRuntimeOptionsInternal} that require explicitSchemaControl to be enabled.
@@ -169,37 +175,39 @@ export const runtimeOptionKeysThatRequireExplicitSchemaControl = (
 	);
 }) as RuntimeOptionKeysThatRequireExplicitSchemaControl[];
 
-const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
-	enableGroupedBatching: configValueToMinVersionForCollab([
-		[false, "1.0.0"],
-		[true, "2.0.0-defaults"],
-	]),
-	compressionOptions: configValueToMinVersionForCollab([
-		[{ ...disabledCompressionConfig }, "1.0.0"],
-		[{ ...enabledCompressionConfig }, "2.0.0-defaults"],
-	]),
-	enableRuntimeIdCompressor: configValueToMinVersionForCollab([
-		[undefined, "1.0.0"],
-		["on", "2.0.0-defaults"],
-		["delayed", "2.0.0-defaults"],
-	]),
-	explicitSchemaControl: configValueToMinVersionForCollab([
-		[false, "1.0.0"],
-		[true, "2.0.0-defaults"],
-	]),
-	flushMode: configValueToMinVersionForCollab([
-		[FlushMode.Immediate, "1.0.0"],
-		[FlushMode.TurnBased, "2.0.0-defaults"],
-	]),
-	gcOptions: configValueToMinVersionForCollab([
-		[{ enableGCSweep: undefined }, "1.0.0"],
-		[{ enableGCSweep: true }, "2.0.0-defaults"],
-	]),
-	createBlobPayloadPending: configValueToMinVersionForCollab([
-		[undefined, "1.0.0"],
-		[true, "2.40.0"],
-	]),
-} as const satisfies ConfigValidationMap<RuntimeOptionsAffectingDocSchema>;
+// A lot of the information in this seems redundant with whats defined above. Might be nice to combine them somehow.
+const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<RuntimeOptionsAffectingDocSchema> =
+	{
+		enableGroupedBatching: configValueToMinVersionForCollab([
+			[false, "1.0.0"],
+			[true, "2.0.0-defaults"],
+		]),
+		compressionOptions: configValueToMinVersionForCollab([
+			[{ ...disabledCompressionConfig }, "1.0.0"],
+			[{ ...enabledCompressionConfig }, "2.0.0-defaults"],
+		]),
+		enableRuntimeIdCompressor: configValueToMinVersionForCollab([
+			[undefined, "1.0.0"],
+			["on", "2.0.0-defaults"],
+			["delayed", "2.0.0-defaults"],
+		]),
+		explicitSchemaControl: configValueToMinVersionForCollab([
+			[false, "1.0.0"],
+			[true, "2.0.0-defaults"],
+		]),
+		flushMode: configValueToMinVersionForCollab([
+			[FlushMode.Immediate, "1.0.0"],
+			[FlushMode.TurnBased, "2.0.0-defaults"],
+		]),
+		gcOptions: configValueToMinVersionForCollab([
+			[{ enableGCSweep: undefined }, "1.0.0"],
+			[{ enableGCSweep: true }, "2.0.0-defaults"],
+		]),
+		createBlobPayloadPending: configValueToMinVersionForCollab([
+			[undefined, "1.0.0"],
+			[true, "2.40.0"],
+		]),
+	};
 
 /**
  * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given minVersionForCollab.
@@ -210,9 +218,7 @@ export function getMinVersionForCollabDefaults(
 	return getConfigsForMinVersionForCollab(
 		minVersionForCollab,
 		runtimeOptionsAffectingDocSchemaConfigMap,
-		// This is a bad cast away from Partial that getConfigsForCompatMode provides.
-		// ConfigMap should be restructured to provide RuntimeOptionsAffectingDocSchema guarantee.
-	) as RuntimeOptionsAffectingDocSchema;
+	);
 }
 
 /**
@@ -224,9 +230,9 @@ export function validateRuntimeOptions(
 	minVersionForCollab: MinimumVersionForCollab,
 	runtimeOptions: Partial<ContainerRuntimeOptionsInternal>,
 ): void {
-	getValidationForRuntimeOptions<RuntimeOptionsAffectingDocSchema>(
+	validateConfigMapOverrides<RuntimeOptionsAffectingDocSchema>(
 		minVersionForCollab,
-		runtimeOptions as Partial<RuntimeOptionsAffectingDocSchema>,
+		runtimeOptions,
 		runtimeOptionsAffectingDocSchemaConfigValidationMap,
 	);
 }

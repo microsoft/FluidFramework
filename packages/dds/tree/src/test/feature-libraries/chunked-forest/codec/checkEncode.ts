@@ -6,25 +6,25 @@
 import { strict as assert, fail } from "node:assert";
 
 import type { JsonableTree } from "../../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { updateShapesAndIdentifiersEncoding } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import type {
 	BufferFormat,
 	EncoderContext,
 	FieldEncoder,
 	NodeEncoder,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
-import {
-	type EncodedFieldBatch,
-	version,
-	// eslint-disable-next-line import/no-internal-modules
+import type {
+	EncodedFieldBatch,
+	FieldBatchFormatVersion,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { IncrementalDecoder } from "../../../../feature-libraries/chunked-forest/codec/index.js";
 import {
 	cursorForJsonableTreeField,
@@ -46,7 +46,7 @@ export function checkNodeEncode(
 	nodeEncoder.encodeNode(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [[tree]], undefined, incrementalDecoder);
+	checkDecode([buffer], [[tree]], context.version, undefined, incrementalDecoder);
 
 	return buffer.slice(1);
 }
@@ -63,7 +63,7 @@ export function checkFieldEncode(
 	fieldEncoder.encodeField(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [tree], idCompressor, incrementalDecoder);
+	checkDecode([buffer], [tree], context.version, idCompressor, incrementalDecoder);
 
 	return buffer.slice(1);
 }
@@ -71,12 +71,13 @@ export function checkFieldEncode(
 function checkDecode(
 	buffer: BufferFormat[],
 	tree: JsonableTree[][],
+	version: FieldBatchFormatVersion,
 	idCompressor?: IIdCompressor,
 	incrementalDecoder?: IncrementalDecoder,
 ): void {
 	// Check round-trips with identifiers inline and out of line
-	testDecode(buffer, tree, () => false, idCompressor, incrementalDecoder);
-	testDecode(buffer, tree, () => true, idCompressor, incrementalDecoder);
+	testDecode(buffer, tree, () => false, version, idCompressor, incrementalDecoder);
+	testDecode(buffer, tree, () => true, version, idCompressor, incrementalDecoder);
 }
 
 /**
@@ -90,6 +91,7 @@ function testDecode(
 	buffer: BufferFormat[],
 	expectedTree: JsonableTree[][],
 	identifierFilter: CounterFilter<string>,
+	version: FieldBatchFormatVersion,
 	idCompressor?: IIdCompressor,
 	incrementalDecoder?: IncrementalDecoder,
 ): EncodedFieldBatch {
@@ -166,14 +168,16 @@ function testDecode(
  */
 function assertJsonish(data: unknown, stack: Set<unknown>): void {
 	switch (typeof data) {
-		case "number":
+		case "number": {
 			assert(Number.isFinite(data));
 			assert(!Object.is(data, -0));
 			return;
+		}
 		case "string":
 		// TODO: could test that string is valid unicode here.
-		case "boolean":
+		case "boolean": {
 			return;
+		}
 		case "object": {
 			if (data === null) {
 				return;
@@ -204,7 +208,8 @@ function assertJsonish(data: unknown, stack: Set<unknown>): void {
 				stack.delete(data);
 			}
 		}
-		default:
+		default: {
 			fail();
+		}
 	}
 }

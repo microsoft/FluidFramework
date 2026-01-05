@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/tree-agent/alpha";
 import z from "zod";
 
-// eslint-disable-next-line eslint-comments/disable-enable-pair
+// eslint-disable-next-line @eslint-community/eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */
 
 const sf = new SchemaFactoryAlpha("com.microsoft.fluid.tree-agent.users");

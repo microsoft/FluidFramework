@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import type { ChangeRebaser, RevisionTag } from "../../core/index.js";
 
 // Allow importing from these specific files which are being tested:
-/* eslint-disable-next-line import/no-internal-modules */
+/* eslint-disable-next-line import-x/no-internal-modules */
 import { type GraphCommit, rebaseBranch } from "../../core/rebase/index.js";
 import { mintRevisionTag } from "../utils.js";
 

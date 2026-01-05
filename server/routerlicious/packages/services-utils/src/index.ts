@@ -62,8 +62,10 @@ export {
 } from "./telemetryContext";
 export { bindTimeoutContext } from "./timeoutContext";
 export {
-	type IThrottleConfig,
-	type ISimpleThrottleConfig,
+	type ILegacyThrottleConfig as IThrottleConfig,
+	type ISimpleLegacyThrottleConfig as ISimpleThrottleConfig,
+	type IHybridThrottleConfig,
+	type ISimpleHybridThrottleConfig,
 	getThrottleConfig,
 } from "./throttlerConfigs";
 export { type IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";

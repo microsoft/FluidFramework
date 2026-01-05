@@ -10,6 +10,6 @@ module.exports = {
 	],
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"import/no-nodejs-modules": ["error", { allow: ["fs"] }],
+		"import-x/no-nodejs-modules": ["error", { allow: ["fs"] }],
 	},
 };

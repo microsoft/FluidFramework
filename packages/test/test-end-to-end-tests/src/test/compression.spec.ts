@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-// eslint-disable-next-line import/no-nodejs-modules
+// eslint-disable-next-line import-x/no-nodejs-modules
 import * as crypto from "crypto";
 
 import {
@@ -31,7 +31,7 @@ import {
 
 import { pkgVersion } from "../packageVersion.js";
 
-const compressionSuite = (getProvider, apis?) => {
+const compressionSuite = (getProvider, apis?): void => {
 	describe("Compression", () => {
 		let provider: ITestObjectProvider;
 		let localDataObject: ITestFluidObject;
@@ -59,7 +59,7 @@ const compressionSuite = (getProvider, apis?) => {
 		async function setupContainers(
 			runtimeOptions: IContainerRuntimeOptionsInternal = defaultRuntimeOptions,
 			minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
-		) {
+		): Promise<void> {
 			const containerConfig: ITestContainerConfig = {
 				registry: [["mapKey", SharedMap.getFactory()]],
 				runtimeOptions,

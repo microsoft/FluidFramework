@@ -18,7 +18,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
 
 const emptySchema: TreeStoredSchema = {

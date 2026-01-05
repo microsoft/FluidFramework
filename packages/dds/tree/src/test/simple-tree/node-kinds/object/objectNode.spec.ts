@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { isStableId } from "@fluidframework/id-compressor/internal";
@@ -34,7 +35,7 @@ import type {
 	FieldHasDefault,
 	InsertableObjectFromSchemaRecord,
 	ObjectFromSchemaRecord,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/node-kinds/object/objectNode.js";
 import { describeHydration, hydrate, pretty } from "../../utils.js";
 import { brand } from "../../../../util/index.js";
@@ -46,18 +47,18 @@ import type {
 	requireTrue,
 	RestrictiveStringRecord,
 } from "../../../../util/index.js";
-import { getView, validateUsageError } from "../../../utils.js";
+import { getView } from "../../../utils.js";
 import { Tree } from "../../../../shared-tree/index.js";
 import { FieldKinds } from "../../../../feature-libraries/index.js";
 
 import {
 	createField,
 	UnhydratedFlexTreeNode,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createTreeNodeFromInner } from "../../../../simple-tree/core/treeNodeKernel.js";
 
 const schemaFactory = new SchemaFactory("Test");
@@ -93,7 +94,7 @@ const schemaFactory = new SchemaFactory("Test");
 
 	// Empty case
 	{
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type result = InsertableObjectFromSchemaRecord<{}>;
 		type _check = requireAssignableTo<result, Record<string, never>>;
 	}
@@ -174,7 +175,7 @@ const schemaFactory = new SchemaFactory("Test");
 	// Generic case
 	{
 		type result = ObjectFromSchemaRecord<RestrictiveStringRecord<ImplicitFieldSchema>>;
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 
 		type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
@@ -182,9 +183,9 @@ const schemaFactory = new SchemaFactory("Test");
 
 	// Empty case
 	{
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type result = ObjectFromSchemaRecord<{}>;
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 		type _check2 = requireFalse<isAssignableTo<result, { x: unknown }>>;
 
@@ -203,7 +204,7 @@ describeHydration(
 					// constructor is a special case, since one is built in on the derived type.
 					// Check that it is exposed as expected based on type:
 					const x = n.constructor;
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 					type check_ = requireAssignableTo<typeof x, Function>;
 					assert.equal(x, Schema);
 				});
@@ -267,7 +268,7 @@ describeHydration(
 				const a = hydrate([Schema, Other], { constructor: 5 });
 				const b = hydrate([Schema, Other], { other: 6 });
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 				type check_ = requireAssignableTo<typeof a.constructor, number | Function>;
 				assert.equal(a.constructor, 5);
 				assert.equal(b.constructor, Other);
@@ -718,7 +719,7 @@ describeHydration(
 
 				assert.throws(
 					() => new Schema({ foo: undefined }),
-					(e: Error) => validateAssertionError(e, /this shadowing will not work/),
+					validateAssertionError(/this shadowing will not work/),
 				);
 			});
 		});

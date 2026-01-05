@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { mintRevisionTag } from "../../utils.js";
 import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { type ChangeAtomId, type RevisionTag, makeAnonChange } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {

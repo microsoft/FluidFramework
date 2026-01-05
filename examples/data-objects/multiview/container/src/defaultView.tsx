@@ -13,7 +13,7 @@ import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate
 import { TriangleView } from "@fluid-example/multiview-triangle-view";
 import * as React from "react";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
 /**

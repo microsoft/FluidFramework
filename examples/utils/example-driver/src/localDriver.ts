@@ -8,7 +8,7 @@ import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 	LocalSessionStorageDbFactory,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/local-driver/internal";
 import {
 	LocalDeltaConnectionServer,

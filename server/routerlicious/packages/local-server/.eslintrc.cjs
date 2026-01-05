@@ -20,7 +20,7 @@ module.exports = {
 		{
 			files: ["src/test/**/*.ts"],
 			rules: {
-				"import/no-nodejs-modules": "off",
+				"import-x/no-nodejs-modules": "off",
 			},
 		},
 	],

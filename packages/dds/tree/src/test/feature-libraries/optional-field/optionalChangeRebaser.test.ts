@@ -27,14 +27,14 @@ import {
 	type RebaseRevisionMetadata,
 	type ToDelta,
 	rebaseRevisionMetadataFromInfo,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	type OptionalChangeset,
 	optionalChangeRebaser,
 	optionalFieldEditor,
 	optionalFieldIntoDelta,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import {
 	brand,

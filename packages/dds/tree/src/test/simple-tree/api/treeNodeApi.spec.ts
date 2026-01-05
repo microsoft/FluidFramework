@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import {
 	MockHandle,
 	validateAssertionError,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import { isStableId } from "@fluidframework/id-compressor/internal";
 
@@ -46,7 +47,6 @@ import {
 	getView,
 	testIdCompressor,
 	TestTreeProviderLite,
-	validateUsageError,
 	type TreeStoredContentStrict,
 } from "../../utils.js";
 import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
@@ -58,9 +58,9 @@ import {
 	nullSchema,
 	numberSchema,
 	stringSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/leafNodeSchema.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
 import {
 	testDocumentIndependentView,
@@ -80,16 +80,16 @@ import {
 	createField,
 	UnhydratedContext,
 	UnhydratedFlexTreeNode,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import {
 	createTreeNodeFromInner,
 	getInnerNode,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNodeKernel.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { fieldCursorFromVerbose } from "../../../simple-tree/api/verboseTree.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
@@ -1550,11 +1550,7 @@ describe("treeNodeApi", () => {
 			});
 			assert.throws(
 				() => Tree.shortId(view.root),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						/may not be called on a node with more than one identifier/,
-					),
+				validateAssertionError(/node has more than one identifier/),
 			);
 		});
 
@@ -1661,11 +1657,7 @@ describe("treeNodeApi", () => {
 			});
 			assert.throws(
 				() => TreeAlpha.identifier(view.root),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						/may not be called on a node with more than one identifier/,
-					),
+				validateAssertionError(/node has more than one identifier/),
 			);
 		});
 
@@ -1762,11 +1754,7 @@ describe("treeNodeApi", () => {
 				});
 				assert.throws(
 					() => TreeAlpha.identifier.getShort(view.root),
-					(error: Error) =>
-						validateAssertionError(
-							error,
-							/may not be called on a node with more than one identifier/,
-						),
+					validateAssertionError(/node has more than one identifier/),
 				);
 			});
 
@@ -1792,7 +1780,7 @@ describe("treeNodeApi", () => {
 					assert.equal(TreeAlpha.identifier.getShort(node), undefined);
 				});
 
-				// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
+				// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new as well as `TreeIdentifierUtils.getShort`
 				it("returns undefined when unhydrated then local id when hydrated", () => {
 					const config = new TreeViewConfiguration({ schema: HasIdentifier });
 					const view = getView(config);
@@ -3144,9 +3132,129 @@ describe("treeNodeApi", () => {
 			});
 
 			it("object", () => {
-				const A = schema.object("A", { x: schema.number });
+				class A extends schema.object("A", { x: schema.number }) {}
 				const a = TreeBeta.importConcise(A, { x: 1 });
-				assert.deepEqual(a, { x: 1 });
+				expectTreesEqual(a, new A({ x: 1 }));
+			});
+
+			it("unsupported number", () => {
+				assert.throws(
+					() => TreeBeta.importConcise(schema.number, Number.NaN),
+					validateUsageError(/Received unsupported numeric value: NaN./),
+				);
+			});
+
+			it("unsupported number normalized", () => {
+				assert.deepEqual(
+					TreeBeta.importConcise([schema.number, schema.null], Number.NaN),
+					null,
+				);
+			});
+
+			it("unsupported number as null", () => {
+				assert.throws(
+					() => TreeBeta.importConcise(schema.null, Number.NaN),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+			});
+
+			it("unsupported number field", () => {
+				class A extends schema.object("A", { x: schema.number }) {}
+				const content = { x: Number.NaN };
+				assert.throws(
+					() => TreeBeta.importConcise(A, content),
+					validateUsageError(/Received unsupported numeric value: NaN./),
+				);
+			});
+
+			it("unsupported number field normalized", () => {
+				class A extends schema.object("A", { x: [schema.number, schema.null] }) {}
+				const content = { x: Number.NaN };
+				TreeAlpha.tagContentSchema(A, content);
+				const a = TreeBeta.importConcise(A, content);
+				expectTreesEqual(a, new A({ x: null }));
+			});
+
+			it("out of schema", () => {
+				class A extends schema.object("A", { x: [() => B] }) {}
+				class B extends schema.object("B", { x: schema.number }) {}
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const content = { x: TreeAlpha.tagContentSchema(B, {} as any) };
+				TreeAlpha.tagContentSchema(A, content);
+				assert.throws(
+					() => TreeBeta.importConcise(A, content),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+			});
+
+			it("unsupported number field tagged", () => {
+				class A extends schema.object("A", { x: schema.number }) {}
+				const content = { x: Number.NaN };
+				TreeAlpha.tagContentSchema(A, content);
+				assert.throws(
+					() => TreeBeta.importConcise(A, content),
+					validateUsageError(/Received unsupported numeric value: NaN./),
+				);
+			});
+
+			it("missing field, tagged", () => {
+				class A extends schema.object("A", { x: [() => B] }) {}
+				class B extends schema.object("B", {}) {}
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const content = TreeAlpha.tagContentSchema(A, {} as any);
+				assert.throws(
+					() => TreeBeta.importConcise(A, content),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+			});
+
+			it("does not use type other than tagged", () => {
+				class A extends schema.object("A", { x: [() => B] }) {}
+				class B extends schema.object("B", {}) {}
+				const content = {};
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				TreeAlpha.tagContentSchema(A, content as any);
+				assert.throws(
+					() => TreeBeta.importConcise([A, B], content),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+			});
+
+			// These tests don't really belong here, but they are mostly ensuring that the same validation that importConcise does (checked above) also happens in constructors.
+			it("constructors", () => {
+				class A extends schema.object("A", { x: [() => B] }) {}
+				class B extends schema.object("B", {}) {}
+				class C extends schema.object("C", {}) {}
+
+				assert.throws(
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					() => new A({} as any),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+
+				assert.throws(
+					() => new B(TreeAlpha.tagContentSchema(C, {})),
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+
+				const content2 = { x: new C({}) as TreeNode as B };
+				TreeAlpha.tagContentSchema(A, content2);
+				assert.throws(
+					() => new A(content2),
+					validateUsageError(/Invalid schema for this context/),
+				);
 			});
 		});
 

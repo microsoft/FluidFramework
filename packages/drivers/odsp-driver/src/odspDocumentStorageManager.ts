@@ -41,7 +41,7 @@ import {
 import type {
 	HostStoragePolicyInternal,
 	IDocumentStorageGetVersionsResponse,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	ISnapshotCachedEntry,
 	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
@@ -298,7 +298,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						)
 						.then(
 							async (
-								// eslint-disable-next-line import/no-deprecated
+								// eslint-disable-next-line import-x/no-deprecated
 								snapshotCachedEntry: ISnapshotCachedEntry | ISnapshotCachedEntry2,
 							) => {
 								if (snapshotCachedEntry !== undefined) {

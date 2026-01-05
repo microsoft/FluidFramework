@@ -19,11 +19,11 @@ import {
 
 import type { IFluidFileConverter } from "./codeLoaderBundle.js";
 import { FakeUrlResolver } from "./fakeUrlResolver.js";
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 import type { ITelemetryOptions } from "./logger/fileLogger.js";
 import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils.js";
 import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "./utils.js";
-/* eslint-enable import/no-internal-modules */
+/* eslint-enable import-x/no-internal-modules */
 
 /**
  * @legacy @beta
@@ -119,7 +119,7 @@ export async function createContainerAndExecute(
 	timeout?: number,
 	disableNetworkFetch: boolean = false,
 ): Promise<string> {
-	const fn = async () => {
+	const fn = async (): Promise<string> => {
 		if (disableNetworkFetch) {
 			global.fetch = async () => {
 				throw new Error("Network fetch is not allowed");

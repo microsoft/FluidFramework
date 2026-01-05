@@ -26,7 +26,7 @@ module.exports = {
 			// Rules only for test files
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
-				"import/no-nodejs-modules": [
+				"import-x/no-nodejs-modules": [
 					"error",
 					{ allow: ["node:assert", "node:fs", "node:path"] },
 				],

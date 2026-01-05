@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 export type { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle.js";
 export {
 	createContainerAndExecute,
@@ -25,4 +25,4 @@ export {
 } from "./logger/loggerUtils.js";
 export { parseBundleAndExportFile } from "./parseBundleAndExportFile.js";
 export { getSnapshotFileContent } from "./utils.js";
-/* eslint-enable import/no-internal-modules */
+/* eslint-enable import-x/no-internal-modules */

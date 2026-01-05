@@ -16,16 +16,17 @@ import {
 	RevisionTagCodec,
 } from "../../../core/index.js";
 import {
-	makeDetachedFieldIndexCodec,
-	makeDetachedFieldIndexCodecFamily,
-	// eslint-disable-next-line import/no-internal-modules
+	detachedFieldIndexCodecBuilder,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../core/tree/detachedFieldIndexCodecs.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV1 } from "../../../core/tree/detachedFieldIndexFormatV1.js";
-// eslint-disable-next-line import/no-internal-modules
-import { version2, type FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { DetachedFieldIndexFormatVersion } from "../../../core/tree/detachedFieldIndexFormatCommon.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	type IdAllocator,
@@ -96,7 +97,7 @@ const validV1Data: readonly [string, FormatV1][] = [
 	[
 		"empty data",
 		{
-			version: 1,
+			version: brand(DetachedFieldIndexFormatVersion.v1),
 			data: [],
 			maxId: brand(-1),
 		},
@@ -104,7 +105,7 @@ const validV1Data: readonly [string, FormatV1][] = [
 	[
 		"revision with a single entry",
 		{
-			version: 1,
+			version: brand(DetachedFieldIndexFormatVersion.v1),
 			data: [[brand(finalizedTag), 0, brand(1)]],
 			maxId: brand(-1),
 		},
@@ -112,7 +113,7 @@ const validV1Data: readonly [string, FormatV1][] = [
 	[
 		"revision with multiple entries",
 		{
-			version: 1,
+			version: brand(DetachedFieldIndexFormatVersion.v1),
 			data: [
 				[
 					brand(finalizedTag),
@@ -127,11 +128,14 @@ const validV1Data: readonly [string, FormatV1][] = [
 	],
 ];
 const validV2Data: readonly [string, FormatV2][] = [
-	...validV1Data.map(([name, data]): [string, FormatV2] => [name, { ...data, version: 2 }]),
+	...validV1Data.map(([name, data]): [string, FormatV2] => [
+		name,
+		{ ...data, version: brand(DetachedFieldIndexFormatVersion.v2) },
+	]),
 	[
 		"revision represented as a StableId",
 		{
-			version: 2,
+			version: brand(DetachedFieldIndexFormatVersion.v2),
 			data: [[testIdCompressor.decompress(mintedTag), 0, brand(1)]],
 			maxId: brand(-1),
 		},
@@ -146,7 +150,7 @@ interface TestCase {
 	readonly name: string;
 	readonly data: DetachedFieldSummaryData;
 	/** The set of versions that this test case is valid for */
-	readonly validFor?: ReadonlySet<number>;
+	readonly validFor?: ReadonlySet<number | string>;
 	/** The id compressor to use for this test case */
 	readonly idCompressor: IIdCompressor;
 }
@@ -213,7 +217,7 @@ function generateTestCases(
 		},
 		{
 			name: "Unfinalized id",
-			validFor: new Set([version2]),
+			validFor: new Set([DetachedFieldIndexFormatVersion.v2]),
 			data: {
 				maxId,
 				data: new Map([[unfinalizedRevision, new Map([[0, { root: brand(1) }]])]]),
@@ -260,19 +264,22 @@ describe("DetachedFieldIndex Codecs", () => {
 			unfinalizedIdCompressor,
 		)) {
 			describe(name, () => {
-				const family = makeDetachedFieldIndexCodecFamily(
-					new RevisionTagCodec(idCompressor),
-					options,
-					idCompressor,
-				);
-				for (const version of family.getSupportedFormats()) {
-					if (validFor !== undefined && version !== undefined && !validFor.has(version)) {
+				for (const codec of detachedFieldIndexCodecBuilder.registry.values()) {
+					if (
+						validFor !== undefined &&
+						codec.formatVersion !== undefined &&
+						!validFor.has(codec.formatVersion)
+					) {
 						continue;
 					}
-					it(`version ${version}`, () => {
-						const codec = family.resolve(version);
-						const encoded = codec.json.encode(data);
-						const decoded = codec.json.decode(encoded);
+					it(`version ${codec.formatVersion}`, () => {
+						const inner = codec.codec({
+							...options,
+							revisionTagCodec: new RevisionTagCodec(idCompressor),
+							idCompressor,
+						});
+						const encoded = inner.encode(data);
+						const decoded = inner.decode(encoded);
 						assert.deepEqual(decoded, data);
 					});
 				}
@@ -280,7 +287,11 @@ describe("DetachedFieldIndex Codecs", () => {
 		}
 	});
 	describe("loadData", () => {
-		const codec = makeDetachedFieldIndexCodec(testRevisionTagCodec, options, testIdCompressor);
+		const codec = detachedFieldIndexCodecBuilder.build({
+			...options,
+			revisionTagCodec: testRevisionTagCodec,
+			idCompressor: testIdCompressor,
+		});
 		for (const [version, cases] of validData) {
 			describe(`accepts correct version ${version} data`, () => {
 				for (const [name, data] of cases) {
@@ -308,20 +319,20 @@ describe("DetachedFieldIndex Codecs", () => {
 			unfinalizedIdCompressor,
 		)) {
 			describe(name, () => {
-				const family = makeDetachedFieldIndexCodecFamily(
-					new RevisionTagCodec(idCompressor),
-					options,
-					idCompressor,
-				);
-				for (const version of family.getSupportedFormats()) {
+				for (const format of detachedFieldIndexCodecBuilder.registry.values()) {
+					const version = format.formatVersion;
 					if (validFor !== undefined && version !== undefined && !validFor.has(version)) {
 						continue;
 					}
 					const dir = path.join("detached-field-index", name);
 					useSnapshotDirectory(dir);
 					it(`version ${version}`, () => {
-						const codec = family.resolve(version);
-						const encoded = codec.json.encode(data);
+						const codec = format.codec({
+							...options,
+							revisionTagCodec: new RevisionTagCodec(idCompressor),
+							idCompressor,
+						});
+						const encoded = codec.encode(data);
 						takeJsonSnapshot(encoded);
 					});
 				}
@@ -556,5 +567,71 @@ describe("DetachedFieldIndex methods", () => {
 		const rootId = detachedIndex.createEntry(detachedNodeId);
 		const rootId2 = detachedIndex.createEntry(detachedNodeId2);
 		assert.notEqual(detachedIndex.toFieldKey(rootId), detachedIndex.toFieldKey(rootId2));
+	});
+
+	describe("checkpoints", () => {
+		it("invoking a checkpoint restores the index state", () => {
+			const index = makeDetachedFieldIndex();
+			const revisionTag1 = mintRevisionTag();
+			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
+
+			const originalData = index.encode();
+			const restore = index.createCheckpoint();
+
+			// Make changes to the index
+			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
+			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
+			assert.notDeepEqual(index.encode(), originalData);
+
+			restore();
+			assert.deepEqual(index.encode(), originalData);
+		});
+
+		it("multiple checkpoints can exist for the same index", () => {
+			const index = makeDetachedFieldIndex();
+			const revisionTag1 = mintRevisionTag();
+			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
+
+			const originalData = index.encode();
+			const restore1 = index.createCheckpoint();
+
+			// Make changes to the index
+			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
+			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
+			assert.notDeepEqual(index.encode(), originalData);
+
+			const changedData = index.encode();
+			const restore2 = index.createCheckpoint();
+
+			restore1();
+			assert.deepEqual(index.encode(), originalData);
+
+			restore2();
+			assert.deepEqual(index.encode(), changedData);
+		});
+
+		it("a checkpoint can be restored multiple times", () => {
+			const index = makeDetachedFieldIndex();
+			const revisionTag1 = mintRevisionTag();
+			index.createEntry(makeDetachedNodeId(revisionTag1, 1));
+
+			const originalData = index.encode();
+			const restore = index.createCheckpoint();
+
+			// Make changes to the index
+			index.deleteEntry(makeDetachedNodeId(revisionTag1, 1));
+			index.createEntry(makeDetachedNodeId(revisionTag1, 2), revisionTag1);
+			assert.notDeepEqual(index.encode(), originalData);
+
+			restore();
+			assert.deepEqual(index.encode(), originalData);
+
+			// Make more changes to the index
+			index.createEntry(makeDetachedNodeId(revisionTag1, 3), revisionTag1);
+			assert.notDeepEqual(index.encode(), originalData);
+
+			restore();
+			assert.deepEqual(index.encode(), originalData);
+		});
 	});
 });

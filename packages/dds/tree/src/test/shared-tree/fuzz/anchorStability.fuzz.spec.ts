@@ -35,7 +35,7 @@ import {
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 import type { NodeBuilderData } from "../../../internalTypes.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
 
 interface AnchorFuzzTestState extends FuzzTestState {

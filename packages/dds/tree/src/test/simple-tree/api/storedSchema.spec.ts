@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	comparePersistedSchema,
 	extractPersistedSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/storedSchema.js";
 import { testDocuments } from "../../testTrees.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";

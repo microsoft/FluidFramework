@@ -8,7 +8,7 @@ module.exports = {
 	rules: {
 		"prefer-arrow-callback": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
-		"import/namespace": "off",
+		"import-x/namespace": "off",
 
 		// #region TODO: remove these once this config has been updated to use our "recommended" base instead of our deprecated minimal one.
 		"@typescript-eslint/consistent-type-exports": [

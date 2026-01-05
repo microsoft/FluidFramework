@@ -33,9 +33,13 @@ const presenceCompatibility = {
 	capabilities: new Set([]),
 } as const satisfies ExtensionCompatibilityDetails;
 
-// Compatibility infrastructure was added in 2.71.0. Once version is bumped,
-// this can be used to accept instances from 2.71.0 and newer (up to current).
-// const minimalCompatiblePackageVersion = "2.71.0-0";
+/**
+ * Minimal compatible package version.
+ * If an existing presence extension is registered with this version or higher,
+ * it can be used instead of instantiating new instance from this version of
+ * the package (assuming also capabilities are compatible).
+ */
+const minimalCompatiblePackageVersion = "2.71.0";
 
 function assertCompatibilityInvariants(compatibility: ExtensionCompatibilityDetails): void {
 	assert(
@@ -123,7 +127,7 @@ const ContainerPresenceFactory = {
 		requiredFeatures: [],
 	} as const satisfies ILayerCompatSupportRequirements,
 
-	instanceExpectations: presenceCompatibility,
+	instanceExpectations: { ...presenceCompatibility, version: minimalCompatiblePackageVersion },
 
 	resolvePriorInstantiation(
 		existingInstantiation: ExtensionInstantiationResult<
@@ -144,13 +148,7 @@ const ContainerPresenceFactory = {
 	},
 
 	[Symbol.hasInstance]: (instance: unknown): instance is ContainerPresenceManager => {
-		return (
-			instance instanceof ContainerPresenceManager
-			// typeof instance === "object" &&
-			// instance !== null &&
-			// "extension" in instance &&
-			// instance.extension instanceof ContainerPresenceManager
-		);
+		return instance instanceof ContainerPresenceManager;
 	},
 } as const satisfies ContainerExtensionFactory<
 	PresenceWithNotifications,

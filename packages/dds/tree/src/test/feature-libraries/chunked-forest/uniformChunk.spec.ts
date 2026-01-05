@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
@@ -13,7 +14,7 @@ import {
 	type ChunkShape,
 	TreeShape,
 	uniformChunk,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	type TreeChunk,
@@ -23,14 +24,13 @@ import {
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { testSpecializedFieldCursor } from "../../cursorTestSuite.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { sum } from "../../domains/json/benchmarks.js";
 
 import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData.js";
 import { brand } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { numberSchema, stringSchema } from "../../../simple-tree/leafNodeSchema.js";
-import { validateUsageError } from "../../utils.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.

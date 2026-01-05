@@ -11,19 +11,10 @@ export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string,
 export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg] ? [Single[1]] : T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]] ? [Head[1], ...ArgsTuple<Tail>] : never;
 
 // @alpha
-export type AsynchronousEditor = (context: Record<string, unknown>, code: string) => Promise<void>;
+export type AsynchronousEditor<TSchema extends ImplicitFieldSchema> = (tree: ViewOrTree<TSchema>, code: string) => Promise<void>;
 
 // @alpha
 export type BindableSchema = TreeNodeSchema<string, NodeKind.Object> | TreeNodeSchema<string, NodeKind.Record> | TreeNodeSchema<string, NodeKind.Array> | TreeNodeSchema<string, NodeKind.Map>;
-
-// @alpha
-export const bindEditor: typeof bindEditorImpl;
-
-// @alpha
-export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), editor: AsynchronousEditor): (code: string) => Promise<void>;
-
-// @alpha
-export function bindEditorImpl<TSchema extends ImplicitFieldSchema>(tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), editor: SynchronousEditor): (code: string) => void;
 
 // @alpha
 export function buildFunc<const Return extends z.ZodTypeAny, const Args extends readonly Arg[], const Rest extends z.ZodTypeAny | null = null>(def: {
@@ -33,10 +24,21 @@ export function buildFunc<const Return extends z.ZodTypeAny, const Args extends 
 }, ...args: Args): FunctionDef<Args, Return, Rest>;
 
 // @alpha
-export type Ctor<T = any> = new (...args: any[]) => T;
+export interface Context<TSchema extends ImplicitFieldSchema> {
+    create: Record<string, (input: FactoryContentObject) => TreeNode>;
+    is: Record<string, <T extends TreeNode>(input: T) => input is T>;
+    isArray(value: unknown): boolean;
+    isMap(value: unknown): boolean;
+    key(child: TreeNode): string | number;
+    parent(child: TreeNode): TreeNode | undefined;
+    root: ReadableField<TSchema>;
+}
 
 // @alpha
-export const defaultEditor: AsynchronousEditor;
+export function createContext<TSchema extends ImplicitFieldSchema>(tree: ViewOrTree<TSchema>): Context<TSchema>;
+
+// @alpha
+export type Ctor<T = any> = new (...args: any[]) => T;
 
 // @alpha
 export interface EditResult {
@@ -45,16 +47,33 @@ export interface EditResult {
 }
 
 // @alpha
+export type ExposableKeys<T> = {
+    [K in keyof T]?: T[K] extends (...args: any[]) => any ? never : K;
+}[keyof T];
+
+// @alpha
 export interface ExposedMethods {
     // (undocumented)
-    expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends BindableSchema & Ctor<{
-        [P in K]: Infer<Z>;
-    }> & IExposedMethods, Z extends FunctionDef<any, any, any>>(schema: S, methodName: K, zodFunction: Z): void;
+    expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends BindableSchema & Ctor<Record<K, Infer<Z>>> & IExposedMethods, Z extends FunctionDef<any, any, any>>(schema: S, methodName: K, zodFunction: Z): void;
     instanceOf<T extends TreeNodeSchemaClass>(schema: T): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>>;
 }
 
 // @alpha
+export interface ExposedProperties {
+    // (undocumented)
+    exposeProperty<S extends BindableSchema & Ctor, K extends string & ExposableKeys<InstanceType<S>>, TZ extends ZodTypeAny>(schema: S, name: K, def: {
+        schema: TZ;
+        description?: string;
+    } & ReadOnlyRequirement<InstanceType<S>, K> & TypeMatchOrError<InstanceType<S>[K], infer<TZ>>): void;
+    // (undocumented)
+    instanceOf<T extends TreeNodeSchemaClass>(schema: T): ZodType<InstanceType<T>, ZodTypeDef, InstanceType<T>>;
+}
+
+// @alpha
 export const exposeMethodsSymbol: unique symbol;
+
+// @alpha
+export const exposePropertiesSymbol: unique symbol;
 
 // @alpha
 export interface FunctionDef<Args extends readonly Arg[], Return extends z.ZodTypeAny, Rest extends z.ZodTypeAny | null = null> {
@@ -75,6 +94,15 @@ export interface IExposedMethods {
 }
 
 // @alpha
+export interface IExposedProperties {
+    // (undocumented)
+    [exposePropertiesSymbol]?(properties: ExposedProperties): void;
+}
+
+// @alpha
+export type IfEquals<X, Y, A = true, B = false> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? A : B;
+
+// @alpha
 export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest> ? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>> : never;
 
 // @alpha
@@ -91,9 +119,40 @@ export type MethodKeys<T> = {
 };
 
 // @alpha
-export interface SemanticAgentOptions {
+export class PropertyDef {
+    constructor(name: string, description: string | undefined, schema: ZodTypeAny, readOnly: boolean);
+    // (undocumented)
+    readonly description: string | undefined;
+    // (undocumented)
+    readonly name: string;
+    // (undocumented)
+    readonly readOnly: boolean;
+    // (undocumented)
+    readonly schema: ZodTypeAny;
+}
+
+// @alpha
+export type ReadonlyKeys<T> = {
+    [P in keyof T]-?: IfEquals<{
+        [Q in P]: T[P];
+    }, {
+        -readonly [Q in P]: T[P];
+    }, never, P>;
+}[keyof T];
+
+// @alpha
+export type ReadOnlyRequirement<TObj, K extends keyof TObj> = {
+    [P in K]-?: P extends ReadonlyKeys<TObj> ? {
+        readOnly: true;
+    } : {
+        readOnly?: false;
+    };
+}[K];
+
+// @alpha
+export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
     domainHints?: string;
-    editor?: SynchronousEditor | AsynchronousEditor;
+    editor?: SynchronousEditor<TSchema> | AsynchronousEditor<TSchema>;
     logger?: Logger;
     maximumSequentialEdits?: number;
 }
@@ -114,14 +173,24 @@ export interface SharedTreeChatQuery {
 
 // @alpha @sealed
 export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
-    constructor(client: SharedTreeChatModel, tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), options?: Readonly<SemanticAgentOptions> | undefined);
+    constructor(client: SharedTreeChatModel, tree: ViewOrTree<TSchema>, options?: Readonly<SemanticAgentOptions<TSchema>> | undefined);
     query(userPrompt: string): Promise<string>;
 }
 
 // @alpha
-export type SynchronousEditor = (context: Record<string, unknown>, code: string) => void;
+export type SynchronousEditor<TSchema extends ImplicitFieldSchema> = (tree: ViewOrTree<TSchema>, code: string) => void;
 
 // @alpha
-export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranchAlpha;
+export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranchAlpha;
+
+// @alpha
+export type TypeMatchOrError<Expected, Received> = [Received] extends [Expected] ? unknown : {
+    __error__: "Zod schema value type does not match the property's declared type";
+    expected: Expected;
+    received: Received;
+};
+
+// @alpha
+export type ViewOrTree<TSchema extends ImplicitFieldSchema> = TreeView<TSchema> | (ReadableField<TSchema> & TreeNode);
 
 ```

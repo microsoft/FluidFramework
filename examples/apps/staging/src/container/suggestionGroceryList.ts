@@ -40,7 +40,7 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 	 */
 	private readonly _suggestionGroceryItems = new Map<string, SuggestionGroceryItem>();
 	private _inStagingMode = false;
-	public get inStagingMode() {
+	public get inStagingMode(): boolean {
 		return this._inStagingMode;
 	}
 
@@ -86,7 +86,7 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 		}
 	}
 
-	public readonly addItem = (name: string) => {
+	public readonly addItem = (name: string): void => {
 		if (this._inStagingMode) {
 			// Use timestamp as a hack for a consistent sortable order.  Prefixed with 'z' to sort last.
 			const suggestedAddition = new SuggestionGroceryItem(
@@ -116,7 +116,7 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 		);
 	};
 
-	public readonly removeItem = (id: string) => {
+	public readonly removeItem = (id: string): void => {
 		if (this._inStagingMode) {
 			const suggestedRemoval = this._suggestionGroceryItems.get(id);
 			if (suggestedRemoval !== undefined) {
@@ -133,8 +133,8 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 		}
 	};
 
-	public readonly getSuggestions = () => {
-		const asyncGetSuggestions = async () => {
+	public readonly getSuggestions = (): void => {
+		const asyncGetSuggestions = async (): Promise<void> => {
 			const { adds, removals } = await getChangesFromHealthBot(this.groceryList);
 			// Check to make sure we are still in staging mode after we get the results - if not, then just
 			// discard the suggestions.  Alternatively, we could wait for the network call to return before
@@ -154,7 +154,7 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 		asyncGetSuggestions().catch(console.error);
 	};
 
-	public readonly acceptSuggestions = () => {
+	public readonly acceptSuggestions = (): void => {
 		const adds = [...this._suggestionGroceryItems.values()].filter(
 			(item) => item.suggestion === "add",
 		);
@@ -175,7 +175,7 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 		this._events.emit("leaveStagingMode");
 	};
 
-	public readonly rejectSuggestions = () => {
+	public readonly rejectSuggestions = (): void => {
 		for (const item of this._suggestionGroceryItems.values()) {
 			if (item.suggestion === "add") {
 				item.removeItem();
@@ -188,7 +188,7 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 		this._events.emit("leaveStagingMode");
 	};
 
-	private readonly onItemAdded = (item: IGroceryItem) => {
+	private readonly onItemAdded = (item: IGroceryItem): void => {
 		const addedItem = new SuggestionGroceryItem(
 			item.id,
 			item.name,
@@ -207,7 +207,7 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 		this._events.emit("itemAdded", addedItem);
 	};
 
-	private readonly onItemRemoved = (item: IGroceryItem) => {
+	private readonly onItemRemoved = (item: IGroceryItem): void => {
 		const removedItem = this._suggestionGroceryItems.get(item.id);
 		this._suggestionGroceryItems.delete(item.id);
 		this._events.emit("itemRemoved", removedItem);

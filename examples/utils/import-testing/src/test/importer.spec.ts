@@ -11,17 +11,23 @@ import {
 	SchemaFactoryAlpha,
 	TableSchema,
 	TreeViewConfiguration,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 import type {
 	areSafelyAssignable,
 	requireTrue,
 	requireAssignableTo,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tree/internal";
 
 import { Empty001, Empty020, largeUnion } from "../largeExport.js";
-import { BadArraySelf, GoodArraySelf, RecursiveMap, RecursiveRecord } from "../testExports.js";
+import {
+	BadArraySelf,
+	GoodArraySelf,
+	RecursiveMap,
+	RecursiveRecord,
+	Square,
+} from "../testExports.js";
 
 describe("import tests", () => {
 	it("recursive record", () => {
@@ -82,7 +88,7 @@ describe("import tests", () => {
 			row: Row,
 		}) {}
 
-		const _table = new Table({
+		const _table = Table.create({
 			columns: [
 				new Column({
 					props: {
@@ -183,6 +189,21 @@ describe("import tests", () => {
 		const node = new LargeUnionObjectNode({
 			// eslint-disable-next-line unicorn/no-null
 			x: new Empty020({ x: new Empty001({ x: null }) }),
+		});
+	});
+
+	it("erased", () => {
+		const schema = new SchemaFactory("com.example");
+
+		class Container extends schema.object("ObjectNode", { x: Square }) {}
+
+		const config = new TreeViewConfiguration({
+			schema: Container,
+			enableSchemaValidation: true,
+		});
+
+		const node = new Container({
+			x: Square.create(42),
 		});
 	});
 });

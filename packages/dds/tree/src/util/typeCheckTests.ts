@@ -6,7 +6,6 @@
 // These tests include making sure some banned types (like `{}`) work correctly,
 // and are authored with awareness of the issues with these types.
 
-/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 

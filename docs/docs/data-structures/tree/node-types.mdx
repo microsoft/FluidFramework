@@ -7,29 +7,29 @@ Data on a [SharedTree](./index.mdx) is stored as a [node](./nodes.mdx) of one of
 
 ## Leaf Nodes
 
-A [leaf](https://fluidframework.com/docs/api/fluid-framework/nodekind-enum#leaf-enummember) node represents an atomic value, while a [TreeNode](https://fluidframework.com/docs/api/fluid-framework/treenode-class) represents an object or collection.
+A [leaf](../../api/fluid-framework/nodekind-enum.md#leaf-enummember) node represents an atomic value, while a [TreeNode](../../api/fluid-framework/treenode-class.md) represents an object or collection.
 The following leaf node types are available:
 
--   [**boolean**](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#boolean-property): Works identically to a JavaScript boolean.
--   [**number**](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#number-property): Works identically to a JavaScript number except does not support -0, NaN or Infinity.
--   [**string**](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#string-property): Works identically to a JavaScript string except for not supporting unpaired UTF-16 surrogate pairs.
--   [**null**](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#null-property): Works identically to a JavaScript null.
--   [**FluidHandle**](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#handle-property): A handle to a Fluid DDS or Data Object in the current container. For more information about handles see [Handles](../../concepts/handles.mdx).
+-   [**boolean**](../../api/fluid-framework/schemastatics-interface.md#boolean-propertysignature): Works identically to a JavaScript boolean.
+-   [**number**](../../api/fluid-framework/schemastatics-interface.md#number-propertysignature): Works identically to a JavaScript number except does not support -0, NaN or Infinity.
+-   [**string**](../../api/fluid-framework/schemastatics-interface.md#string-propertysignature): Works identically to a JavaScript string except for not supporting unpaired UTF-16 surrogate pairs.
+-   [**null**](../../api/fluid-framework/schemastatics-interface.md#null-propertysignature): Works identically to a JavaScript null.
+-   [**FluidHandle**](../../api/fluid-framework/schemastatics-interface.md#handle-propertysignature): A handle to a Fluid DDS or Data Object in the current container. For more information about handles see [Handles](../../concepts/handles.mdx).
 
 ## TreeNodes
 
-The following subsections describe the available [TreeNode](https://fluidframework.com/docs/api/fluid-framework/treenode-class) types.
+The following subsections describe the available [TreeNode](../../api/fluid-framework/treenode-class.md) types.
 
 ### Object Nodes
 
-An [object node](https://fluidframework.com/docs/api/fluid-framework/treeobjectnode-typealias) is a JavaScript object like TreeNode with zero or more named child [fields](https://fluidframework.com/docs/api/fluid-framework/fieldschema-class) exposed as properties of the object.
+An [object node](../../api/fluid-framework/treeobjectnode-typealias.md) is a JavaScript object like TreeNode with zero or more named child [fields](../../api/fluid-framework/fieldschema-class.md) exposed as properties of the object.
 The object node's fields can be node types.
 A `SharedTree` can have many object nodes at various places in the tree and they do not all have to conform to the same schema.
 Your schema can specify different properties for different object nodes.
 The schema also specifies whether a child property is
-[required](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#required-property),
-[optional](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#optional-property)
-or an [identifier](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#identifier-property),
+[required](../../api/fluid-framework/schemastatics-interface.md#required-propertysignature),
+[optional](../../api/fluid-framework/schemastatics-interface.md#optional-propertysignature)
+or an [identifier](../../api/fluid-framework/schemafactory-class.md#identifier-property),
 as well as what types of nodes are allowed in the field.
 For example, a property could be either number or string.
 

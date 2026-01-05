@@ -22,7 +22,7 @@ import { RouterliciousDocumentServiceFactory } from "../documentServiceFactory.j
 import { RouterliciousErrorTypes } from "../errorUtils.js";
 import * as socketModule from "../socketModule.js";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { ClientSocketMock } from "./socketTestUtils.ts/socketMock.js";
 
 /**

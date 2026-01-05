@@ -70,7 +70,6 @@ import {
 	NodeAttachState,
 	type RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
-import { type FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import type { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
@@ -87,6 +86,7 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
+import type { FlexFieldKind } from "./fieldKind.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -99,10 +99,10 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
-	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>;
+	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
 
 	public constructor(
-		fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
 	) {
 		this.fieldKinds = fieldKinds;
@@ -1643,6 +1643,7 @@ export class ModularChangeFamily
 	}
 
 	public buildEditor(
+		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	): ModularEditBuilder {
 		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver);
@@ -1908,7 +1909,7 @@ function invertBuilds(
  */
 export function* relevantRemovedRoots(
 	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Iterable<DeltaDetachedNodeId> {
 	yield* relevantRemovedRootsFromFields(change.fieldChanges, change.nodeChanges, fieldKinds);
 }
@@ -1916,7 +1917,7 @@ export function* relevantRemovedRoots(
 function* relevantRemovedRootsFromFields(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Iterable<DeltaDetachedNodeId> {
 	for (const [_, fieldChange] of change) {
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
@@ -1990,6 +1991,9 @@ export function updateRefreshers(
 	const {
 		fieldChanges,
 		nodeChanges,
+		nodeToParent,
+		nodeAliases,
+		crossFieldKeys,
 		maxId,
 		revisions,
 		constraintViolationCount,
@@ -2001,9 +2005,9 @@ export function updateRefreshers(
 	return makeModularChangeset({
 		fieldChanges,
 		nodeChanges,
-		nodeToParent: change.nodeToParent,
-		nodeAliases: change.nodeAliases,
-		crossFieldKeys: change.crossFieldKeys,
+		nodeToParent,
+		nodeAliases,
+		crossFieldKeys,
 		maxId: maxId as number,
 		revisions,
 		constraintViolationCount,
@@ -2022,7 +2026,7 @@ export function updateRefreshers(
  */
 export function intoDelta(
 	taggedChange: TaggedChange<ModularChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): DeltaRoot {
 	const change = taggedChange.change;
 	const rootDelta: Mutable<DeltaRoot> = {};
@@ -2091,7 +2095,7 @@ function copyDetachedNodes(
 function intoDeltaImpl(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	global: DeltaDetachedNodeChanges[],
 	rename: DeltaDetachedNodeRename[],
 ): Map<FieldKey, DeltaFieldChanges> {
@@ -2121,7 +2125,7 @@ function intoDeltaImpl(
 function deltaFromNodeChange(
 	change: NodeChangeset,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	global: DeltaDetachedNodeChanges[],
 	rename: DeltaDetachedNodeRename[],
 ): DeltaFieldMap {
@@ -2173,19 +2177,19 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 }
 
 export function getFieldKind(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	kind: FieldKindIdentifier,
-): FieldKindWithEditor {
+): FlexFieldKind {
 	if (kind === genericFieldKind.identifier) {
 		return genericFieldKind;
 	}
 	const fieldKind = fieldKinds.get(kind);
 	assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
-	return withEditor(fieldKind);
+	return fieldKind;
 }
 
 export function getChangeHandler(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
 	return getFieldKind(fieldKinds, kind).changeHandler;
@@ -2668,7 +2672,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
-		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	) {
 		super(family, changeReceiver);
@@ -2932,9 +2936,13 @@ function buildModularChangesetFromNode(props: {
 }): ModularChangeset {
 	const {
 		path,
-		nodeId = { localId: brand(props.idAllocator.allocate()), revision: props.revision },
+		idAllocator,
+		revision,
+		nodeChanges,
+		nodeChange,
+		nodeId = { localId: brand(idAllocator.allocate()), revision },
 	} = props;
-	setInChangeAtomIdMap(props.nodeChanges, nodeId, props.nodeChange);
+	setInChangeAtomIdMap(nodeChanges, nodeId, nodeChange);
 	const fieldChangeset = genericFieldKind.changeHandler.editor.buildChildChanges([
 		[path.parentIndex, nodeId],
 	]);
@@ -2975,16 +2983,21 @@ function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]):
 } {
 	let maxId = -1;
 	const revInfos: RevisionInfo[] = [];
+	const revisions = new Set<RevisionTag>();
 	for (const taggedChange of changes) {
 		const change = taggedChange.change;
 		maxId = Math.max(change.maxId ?? -1, maxId);
-		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
+		const infosToAdd = revisionInfoFromTaggedChange(taggedChange);
+		for (const info of infosToAdd) {
+			if (!revisions.has(info.revision)) {
+				revisions.add(info.revision);
+				revInfos.push(info);
+			}
+		}
 	}
 
-	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
 	for (const info of revInfos) {
-		revisions.add(info.revision);
 		if (info.rollbackOf !== undefined) {
 			rolledBackRevisions.push(info.rollbackOf);
 		}

@@ -32,7 +32,7 @@ import {
 	canInitialize,
 	initialize,
 	initializerFromChunk,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
 import type { Listenable } from "@fluidframework/core-interfaces";
 import {
@@ -44,7 +44,7 @@ import {
 import { toInitialSchema } from "../../simple-tree/index.js";
 import type { Transactor } from "../../shared-tree-core/index.js";
 import { Breakable } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { makeTestDefaultChangeFamily } from "../shared-tree-core/utils.js";
 import {
 	mintRevisionTag,

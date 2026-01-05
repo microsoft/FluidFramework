@@ -52,12 +52,8 @@ import {
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
-import {
-	defaultSchemaPolicy,
-	FieldKinds,
-	isFieldInSchema,
-	throwOutOfSchema,
-} from "../default-schema/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
+import { isFieldInSchema, throwOutOfSchema } from "../schemaChecker.js";
 
 /** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {

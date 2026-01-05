@@ -22,12 +22,12 @@ import {
 	type NodeId,
 	type RebaseRevisionMetadata,
 	genericChangeHandler,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { TestChange } from "../../testChange.js";
 import { testSnapshots } from "./genericFieldSnapshots.test.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 
 const nodeId1: NodeId = { localId: brand(1) };

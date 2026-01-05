@@ -39,7 +39,7 @@ import { ITokenProvider, ITokenResponse } from "./tokens.js";
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
 export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
 
-const buildRequestUrl = (requestConfig: AxiosRequestConfig) =>
+const buildRequestUrl = (requestConfig: AxiosRequestConfig): string =>
 	requestConfig.baseURL !== undefined
 		? `${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`
 		: (requestConfig.url ?? "");
@@ -76,7 +76,7 @@ export function createR11sResponseFromContent<T>(content: T): IR11sResponse<T> {
 	};
 }
 
-function headersToMap(headers: Headers) {
+function headersToMap(headers: Headers): Map<string, string> {
 	const newHeaders = new Map<string, string>();
 	for (const [key, value] of headers.entries()) {
 		newHeaders.set(key, value);
@@ -87,7 +87,7 @@ function headersToMap(headers: Headers) {
 export function getPropsToLogFromResponse(headers: {
 	// eslint-disable-next-line @rushstack/no-new-null
 	get: (id: string) => string | undefined | null;
-}) {
+}): ITelemetryBaseProperties {
 	interface LoggingHeader {
 		headerName: string;
 		logName: string;
@@ -315,7 +315,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 		return token;
 	}
 
-	public setToken(token: ITokenResponse) {
+	public setToken(token: ITokenResponse): void {
 		this.token = token;
 	}
 }

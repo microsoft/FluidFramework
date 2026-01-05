@@ -40,7 +40,6 @@ import {
 } from "../shared-tree/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	getStoredSchema,
 	numberSchema,
 	SchemaFactoryAlpha,
 	stringSchema,
@@ -59,11 +58,10 @@ import {
 	permissiveStoredSchemaGenerationOptions,
 	type TreeViewConfiguration,
 } from "../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
 import { brand, Breakable } from "../util/index.js";
-import type { Partial } from "@sinclair/typebox";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { isLazy } from "../simple-tree/core/index.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
@@ -91,9 +89,14 @@ interface TestTree {
  */
 export interface TestDocument extends TestTree, Omit<TestSimpleTree, "root"> {
 	/**
-	 * True if and only if the document had content in unknown optional fields.
+	 * True if and only if the document has content in unknown optional fields.
 	 */
 	readonly hasUnknownOptionalFields?: true;
+
+	/**
+	 * True if and only if the documents schema has unknown optional fields in the stored schema.
+	 */
+	readonly hasUnknownOptionalFieldSchema?: true;
 
 	/**
 	 * True if and only if the document had staged allowed types.
@@ -234,15 +237,11 @@ const allTheFieldsName: TreeNodeSchemaIdentifier = brand("test.allTheFields");
 
 const library = {
 	nodeSchema: new Map([
-		[
-			brand(Minimal.identifier),
-			getStoredSchema(Minimal, restrictiveStoredSchemaGenerationOptions),
-		],
+		...toStoredSchema(
+			[Minimal, schemaStatics.number],
+			restrictiveStoredSchemaGenerationOptions,
+		).nodeSchema,
 		[allTheFieldsName, allTheFields],
-		[
-			brand(factory.number.identifier),
-			getStoredSchema(schemaStatics.number, restrictiveStoredSchemaGenerationOptions),
-		],
 	]),
 } satisfies Partial<TreeStoredSchema>;
 
@@ -472,6 +471,7 @@ export const testDocuments: readonly TestDocument[] = [
 		ambiguous: false,
 		name: "AllowsUnknownOptionalFields",
 		schema: HasUnknownOptionalFields,
+		hasUnknownOptionalFieldSchema: true,
 		// Unknown optional fields are allowed but empty in this document.
 		policy: defaultSchemaPolicy,
 		schemaData: toInitialSchema(HasUnknownOptionalFieldsV2),
@@ -483,6 +483,7 @@ export const testDocuments: readonly TestDocument[] = [
 		name: "HasUnknownOptionalFields",
 		schema: HasUnknownOptionalFields,
 		hasUnknownOptionalFields: true,
+		hasUnknownOptionalFieldSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toInitialSchema(HasUnknownOptionalFieldsV2),
 		treeFactory: () =>

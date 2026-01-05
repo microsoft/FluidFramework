@@ -5,12 +5,12 @@ on:
     branches: [main, next, release/**/*]
 
 permissions:
-  contents: read  # for actions/labeler to determine modified files
+  contents: read # for actions/labeler to determine modified files
 
 jobs:
   areas_label:
     permissions:
-      pull-requests: write  # for actions/labeler to add labels to PRs
+      pull-requests: write # for actions/labeler to add labels to PRs
     runs-on: ubuntu-latest
     name: Label areas
     # Skip labeling main-next merge PRs. The area labels are noisy and distracting for main-next PRs because they can
@@ -20,7 +20,8 @@ jobs:
     # This is implemented by comparing the PR title because at creation time, the PR has no labels (and the GItHub API
     # does not have a way to set labels at creation either), so skipping based on labels does not work.
     steps:
-      - uses: actions/labeler@5c7539237e04b714afd8ad9b4aed733815b9fab4 # ratchet:actions/labeler@v4.0.2
+      # release notes: https://github.com/actions/labeler/releases/tag/v6.0.1
+      - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # ratchet:actions/labeler@v6
         if: "github.event.pull_request.title != 'Automation: main-next integrate'"
         with:
           configuration-path: ".github/labeler-areas.yml"
@@ -30,21 +31,23 @@ jobs:
   # this CI job calls the labeler action wuth sync-labels=false, so the label won't be removed automatically.
   changesets_label:
     permissions:
-      pull-requests: write  # for actions/labeler to add labels to PRs
+      pull-requests: write # for actions/labeler to add labels to PRs
     runs-on: ubuntu-latest
     name: Label changeset-required
     steps:
-      - uses: actions/labeler@5c7539237e04b714afd8ad9b4aed733815b9fab4 # ratchet:actions/labeler@v4.0.2
+      # release notes: https://github.com/actions/labeler/releases/tag/v6.0.1
+      - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # ratchet:actions/labeler@v6
         with:
           configuration-path: ".github/labeler-changesets.yml"
           repo-token: "${{ github.token }}"
           sync-labels: false # The changeset-required label is often added manually, so don't remove it.
   branches_label:
     permissions:
-      pull-requests: write  # for actions/labeler to add labels to PRs
+      pull-requests: write # for actions/labeler to add labels to PRs
     runs-on: ubuntu-latest
     name: Label base branches and external contributors
     steps:
-      - uses: srvaroa/labeler@9c29ad1ef33d169f9ef33c52722faf47a566bcf3 # ratchet:srvaroa/labeler@v1
+      # release notes: https://github.com/srvaroa/labeler/releases/tag/v1.13.0
+      - uses: srvaroa/labeler@0a20eccb8c94a1ee0bed5f16859aece1c45c3e55 # ratchet:srvaroa/labeler@v1.13.0
         env:
           GITHUB_TOKEN: "${{ github.token }}"

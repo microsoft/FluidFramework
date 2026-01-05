@@ -43,7 +43,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type {
 	SharedTreeOptionsInternal,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../shared-tree/sharedTree.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import type { FuzzView } from "./fuzzEditGenerators.js";

@@ -11,7 +11,14 @@ import { assertWithMessage, fail } from './Common.js';
 import { EditLog } from './EditLog.js';
 import { convertTreeNodes, newEdit } from './EditUtilities.js';
 import { convertEditIds, convertNodeDataIds } from './IdConversion.js';
-import { AttributionId, DetachedSequenceId, FinalNodeId, OpSpaceNodeId, TraitLabel } from './Identifiers.js';
+import {
+	AttributionId,
+	DetachedSequenceId,
+	FinalNodeId,
+	OpSpaceNodeId,
+	TraitLabel,
+	type NodeId,
+} from './Identifiers.js';
 import { initialTree } from './InitialTree.js';
 import {
 	ContextualizedNodeIdNormalizer,
@@ -363,7 +370,7 @@ export class SharedTreeEncoder_0_0_2 {
 		assert(sequencedEdits !== undefined, 0x636 /* 0.0.2 summary encountered with missing sequencedEdits field. */);
 		const idCompressor = new IdCompressor(createSessionId(), reservedIdCount, attributionId);
 		const idGenerator = getNodeIdContext(idCompressor);
-		const generateId = (id) => idGenerator.generateNodeId(id);
+		const generateId = (id): NodeId => idGenerator.generateNodeId(id);
 
 		// This saves all of the edits in the summary as part of the first chunk.
 		const temporaryLog = new EditLog<ChangeInternal>();

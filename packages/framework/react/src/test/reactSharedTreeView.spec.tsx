@@ -73,7 +73,7 @@ describe("reactSharedTreeView", () => {
 				);
 
 				it("TreeViewComponent", () => {
-					const view = independentView(new TreeViewConfiguration({ schema: Item }), {});
+					const view = independentView(new TreeViewConfiguration({ schema: Item }));
 					const content = <TreeViewComponent viewComponent={View} tree={{ treeView: view }} />;
 					const rendered = render(content, { reactStrictMode });
 

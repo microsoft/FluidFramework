@@ -35,9 +35,9 @@ import {
 import type {
 	NodeId,
 	RebaseRevisionMetadata,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
 import {

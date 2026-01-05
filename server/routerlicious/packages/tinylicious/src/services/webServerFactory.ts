@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import * as http from "http";
+import { EventEmitter } from "node:events";
+import * as http from "node:http";
 
 import type {
 	IWebServer,
@@ -25,11 +25,11 @@ class SocketIoSocket implements IWebSocket {
 
 	constructor(private readonly socket: Socket) {}
 
-	public get handshake(): any {
+	public get handshake(): unknown {
 		return this.socket.handshake;
 	}
 
-	public on(event: string, listener: (...args: any[]) => void) {
+	public on(event: string, listener: (...args: any[]) => void): void {
 		this.socket.on(event, listener);
 	}
 
@@ -37,15 +37,15 @@ class SocketIoSocket implements IWebSocket {
 		return this.socket.join(id);
 	}
 
-	public emit(event: string, ...args: any[]) {
+	public emit(event: string, ...args: any[]): void {
 		this.socket.emit(event, ...args);
 	}
 
-	public emitToRoom(roomId: string, event: string, ...args: any[]) {
+	public emitToRoom(roomId: string, event: string, ...args: any[]): void {
 		this.socket.nsp.to(roomId).emit(event, ...args);
 	}
 
-	public async broadcastToRoom(roomId: string, event: string, ...args: any) {
+	public async broadcastToRoom(roomId: string, event: string, ...args: any[]): Promise<void> {
 		this.socket.to(roomId).emit(event, ...args);
 	}
 

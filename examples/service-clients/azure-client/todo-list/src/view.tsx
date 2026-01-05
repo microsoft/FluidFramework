@@ -16,7 +16,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createTodoItem, type TodoListContainerSchema } from "./fluid.js";
 import type { TodoList, TodoItem } from "./schema.js";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
 /**

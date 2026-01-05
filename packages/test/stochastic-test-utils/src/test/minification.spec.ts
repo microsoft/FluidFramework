@@ -16,7 +16,7 @@ function requireLines(s: string, count = 1): void {
 describe("Minification", () => {
 	describe("extractMessage", () => {
 		it("non assert", () => {
-			function namedFunction() {
+			function namedFunction(): Error {
 				return new Error("message");
 			}
 			const e = namedFunction();

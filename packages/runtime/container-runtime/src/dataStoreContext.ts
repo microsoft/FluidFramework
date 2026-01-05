@@ -95,7 +95,7 @@ import {
 	validateDatastoreCompatibility,
 } from "./runtimeLayerCompatState.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	type ReadFluidDataStoreAttributes,
 	type WriteFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
@@ -1003,7 +1003,7 @@ export abstract class FluidDataStoreContext
 		validateDatastoreCompatibility(
 			maybeDataStoreCompatDetails.ILayerCompatDetails,
 			this.dispose.bind(this),
-			this.mc.logger,
+			this.mc,
 		);
 
 		// And now mark the runtime active
@@ -1096,7 +1096,7 @@ export abstract class FluidDataStoreContext
 	public reSubmit(
 		message: FluidDataStoreMessage,
 		localOpMetadata: unknown,
-		squash?: boolean,
+		squash: boolean,
 	): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
 		this.channel.reSubmit(message.type, message.content, localOpMetadata, squash);
@@ -1315,7 +1315,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
 		if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
 			// Need to get through snapshot and use that to populate extraBlobs
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
 				this.storage,
 				tree.blobs[dataStoreAttributesBlobName],
@@ -1494,7 +1494,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		let attributes: ReadFluidDataStoreAttributes;
 		let isRootDataStore = false;
 		if (snapshot !== undefined) {

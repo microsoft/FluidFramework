@@ -33,11 +33,11 @@ import {
 	type NodeId,
 	type RebaseRevisionMetadata,
 	setInCrossFieldMap,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
 import {
 	type CellId,
@@ -49,7 +49,7 @@ import {
 	extractMarkEffect,
 	getInputLength,
 	isDetach,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/index.js";
 import {
 	areInputCellsEmpty,
@@ -59,7 +59,7 @@ import {
 	markEmptiesCells,
 	omitMarkEffect,
 	splitMark,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
 	type IdAllocator,
@@ -84,7 +84,7 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type MarkEffect,
 	NoopMarkType,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
 
 export function assertWrappedChangesetsEqual(
@@ -151,8 +151,9 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 	function normalizeEffect<TEffect extends MarkEffect>(effect: TEffect): TEffect {
 		switch (effect.type) {
 			case "Rename":
-			case NoopMarkType:
+			case NoopMarkType: {
 				return effect;
+			}
 			case "AttachAndDetach": {
 				return {
 					...effect,
@@ -211,8 +212,9 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				normalized.revision = atom.revision;
 				return normalized as TEffect;
 			}
-			default:
+			default: {
 				assert.fail(`Unexpected mark type: ${(effect as SF.Mark).type}`);
+			}
 		}
 	}
 	const output = new MarkListFactory();

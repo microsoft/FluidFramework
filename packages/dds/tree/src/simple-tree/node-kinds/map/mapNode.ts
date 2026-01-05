@@ -7,7 +7,6 @@ import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	FieldKinds,
 	isTreeValue,
 	type FlexibleNodeContent,
 	type FlexTreeNode,
@@ -22,7 +21,7 @@ import {
 	type InnerNode,
 	NodeKind,
 	type TreeNodeSchema,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	type TreeNode,
 	typeSchemaSymbol,
@@ -42,7 +41,6 @@ import {
 	createTreeNodeSchemaPrivateData,
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
-	convertAllowedTypes,
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import {
@@ -67,7 +65,7 @@ import type {
 import { recordLikeDataToFlexContent } from "../common.js";
 import { MapNodeStoredSchema } from "../../../core/index.js";
 import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
-import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * A map of string keys to tree objects.
@@ -308,7 +306,10 @@ export function mapSchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+		public static get simpleAllowedTypes(): ReadonlyMap<
+			string,
+			SimpleAllowedTypeAttributes<SchemaType.View>
+		> {
 			return lazySimpleAllowedTypes.value;
 		}
 
@@ -334,7 +335,7 @@ export function mapSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
@@ -343,19 +344,7 @@ export function mapSchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(
-				this,
-				[normalizedTypes],
-				(storedOptions) =>
-					new MapNodeStoredSchema(
-						{
-							kind: FieldKinds.optional.identifier,
-							types: convertAllowedTypes(info, storedOptions),
-							persistedMetadata,
-						},
-						persistedMetadata,
-					),
-			));
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [normalizedTypes]));
 		}
 	}
 	const schemaErased: MapNodeCustomizableSchema<

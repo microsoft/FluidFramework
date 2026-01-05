@@ -278,6 +278,28 @@ export interface IDirectoryEvents extends IEvent {
 }
 
 /**
+ * Internal events for {@link ISharedDirectory}.
+ * @internal
+ */
+export interface ISharedDirectoryEventsInternal extends ISharedDirectoryEvents {
+	/**
+	 * Emitted when the {@link ISharedDirectory} is cleared.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `path` - The absolute path to the directory that was cleared.
+	 *
+	 * - `local` - Whether the clear originated from this client.
+	 *
+	 * - `target` - The {@link ISharedDirectory} itself.
+	 */
+	(
+		event: "clearInternal",
+		listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void,
+	);
+}
+
+/**
  * Provides a hierarchical organization of map-like data structures as SubDirectories.
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
  * SubDirectories can be retrieved for use as working directories.
