@@ -560,8 +560,8 @@ function getBasicJapaneseAlphabetString() {
 function getRandomDateString(random = makeRandom(), start: Date, end: Date) {
 	const dateS = new Date(random.integer(+start, +end)).toString();
 	return (
-		`${dateS.substring(0, 10)} ${dateS.substring(16, 24)} ` +
-		`${dateS.substring(28, 33)} ${dateS.substring(11, 15)}`
+		`${dateS.slice(0, 10)} ${dateS.slice(16, 24)} ` +
+		`${dateS.slice(28, 33)} ${dateS.slice(11, 15)}`
 	);
 }
 

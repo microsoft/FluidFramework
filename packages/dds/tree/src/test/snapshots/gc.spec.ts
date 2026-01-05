@@ -109,16 +109,15 @@ describe("Garbage Collection", () => {
 			// Get the handles that were last added.
 			const deletedHandles = root.handles;
 			// Get the routes of the handles.
-			const deletedHandleRoutes = Array.from(
-				deletedHandles,
-				(handle) => toFluidHandleInternal(handle).absolutePath,
+			const deletedHandleRoutes = new Set(
+				deletedHandles.map((handle) => toFluidHandleInternal(handle).absolutePath),
 			);
 
 			// Remove the last added handles.
 			root.handles.removeRange(0, lastElementIndex + 1);
 
 			this._expectedRoutes = this._expectedRoutes.filter(
-				(route) => !deletedHandleRoutes.includes(route),
+				(route) => !deletedHandleRoutes.has(route),
 			);
 			this.containerRuntimeFactory.processAllMessages();
 

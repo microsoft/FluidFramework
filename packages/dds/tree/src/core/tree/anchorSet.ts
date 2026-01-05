@@ -1185,6 +1185,7 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 		assert(this.status !== Status.Disposed, 0x41d /* PathNode must not be disposed */);
 		if (this.isUnreferenced() && this.children.size === 0 && !this.events.hasListeners()) {
 			if (this.status === Status.Alive) {
+				// eslint-disable-next-line unicorn/prefer-dom-node-remove -- Custom tree structure, not DOM
 				this.parentPath?.removeChild(this);
 			}
 			this.status = Status.Disposed;
