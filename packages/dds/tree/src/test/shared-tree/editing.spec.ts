@@ -2033,12 +2033,15 @@ describe("Editing", () => {
 				const title = scenario
 					.map((s) => {
 						switch (s.type) {
-							case StepType.Remove:
+							case StepType.Remove: {
 								return `${verb}(i:${s.index} p:${s.peer})`;
-							case StepType.Undo:
+							}
+							case StepType.Undo: {
 								return `U(${s.peer})`;
-							default:
+							}
+							default: {
 								unreachableCase(s);
+							}
 						}
 					})
 					.join(" ");
@@ -2076,8 +2079,9 @@ describe("Editing", () => {
 								affectedNode = undoQueues[iPeer].pop()!;
 								break;
 							}
-							default:
+							default: {
 								unreachableCase(step);
+							}
 						}
 						tree.merge(peer, false);
 						presentOnTree[affectedNode] = presence;

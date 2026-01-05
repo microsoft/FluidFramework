@@ -75,6 +75,7 @@
 		"semver": "^7.7.3",
 		"simple-git": "^3.30.0",
 		"sort-package-json": "1.57.0",
+		"type-fest": "^2.19.0",
 		"typescript": "~5.4.5"
 	},
 	"devDependencies": {
@@ -102,7 +103,6 @@
 		"mocha": "^11.7.5",
 		"rimraf": "^6.1.2",
 		"ts-node": "^10.9.2",
-		"type-fest": "^2.19.0",
 		"typedoc": "^0.28.14",
 		"typedoc-plugin-markdown": "^4.9.0"
 	},

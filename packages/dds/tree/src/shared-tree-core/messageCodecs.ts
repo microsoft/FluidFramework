@@ -154,8 +154,9 @@ export function makeMessageCodecs<TChangeset>(
 					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			case unbrand(MessageFormatVersion.v5):
+			case unbrand(MessageFormatVersion.v5): {
 				return [version, makeDiscontinuedCodecVersion(options, version, "2.74.0")];
+			}
 			case unbrand(MessageFormatVersion.vSharedBranches): {
 				const changeCodec = changeCodecs.resolve(
 					dependentChangeFormatVersion.lookup(version),
@@ -165,8 +166,9 @@ export function makeMessageCodecs<TChangeset>(
 					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			default:
+			default: {
 				unreachableCase(version);
+			}
 		}
 	});
 	return makeCodecFamily(registry);

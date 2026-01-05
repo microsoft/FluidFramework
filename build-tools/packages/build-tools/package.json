@@ -62,6 +62,7 @@
 		"semver": "^7.7.3",
 		"sort-package-json": "1.57.0",
 		"ts-deepmerge": "^7.0.3",
+		"type-fest": "^2.19.0",
 		"typescript": "~5.4.5",
 		"yaml": "^2.8.1"
 	},
@@ -79,8 +80,7 @@
 		"@types/semver": "^7.7.1",
 		"eslint": "~8.57.0",
 		"json-schema-to-typescript": "^15.0.4",
-		"mocha": "^11.7.5",
-		"type-fest": "^2.19.0"
+		"mocha": "^11.7.5"
 	},
 	"engines": {
 		"node": ">=20.19.0"
