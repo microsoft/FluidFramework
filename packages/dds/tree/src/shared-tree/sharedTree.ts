@@ -365,10 +365,12 @@ export class SharedTreeKernel
 			}
 		});
 		checkout.events.on("beforeBatch", (event) => {
-			if (event.type === "append" && this.sharedObject.isAttached()) {
-				if (checkout.transaction.isInProgress()) {
-					enricher.addTransactionCommits(event.newCommits);
-				}
+			if (
+				event.type === "append" &&
+				this.sharedObject.isAttached() &&
+				checkout.transaction.isInProgress()
+			) {
+				enricher.addTransactionCommits(event.newCommits);
 			}
 		});
 	}

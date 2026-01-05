@@ -888,7 +888,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		)[];
 
 		const contentArray = content.flatMap((c): InsertableContent[] =>
-			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
+			c instanceof IterableTreeArrayContent ? [...c] : [c],
 		);
 
 		const kernel = getKernel(this);
@@ -918,7 +918,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	public toJSON(): unknown {
 		// This override causes the class instance to `JSON.stringify` as `[a, b]` rather than `{0: a, 1: b}`.
-		return Array.from(this as unknown as TreeArrayNode);
+		return [...(this as unknown as TreeArrayNode)];
 	}
 
 	// Instances of this class are used as the dispatch object for the proxy,

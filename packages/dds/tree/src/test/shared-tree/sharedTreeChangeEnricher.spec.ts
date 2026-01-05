@@ -111,16 +111,16 @@ describe("SharedTreeChangeEnricher", () => {
 	it("applies tip changes to fork", () => {
 		const { enricher, fork } = setupEnricher();
 		assert.deepEqual(jsonTreeFromForest(enricher.borrowedForest), [content]);
-		assert.deepEqual(Array.from(enricher.borrowedRemovedRoots.entries()), []);
+		assert.deepEqual([...enricher.borrowedRemovedRoots.entries()], []);
 
 		fork.applyTipChange(removeRoot, revision1);
 
 		assert.deepEqual(jsonTreeFromForest(fork.borrowedForest), []);
-		assert.equal(Array.from(fork.borrowedRemovedRoots.entries()).length, 1);
+		assert.equal([...fork.borrowedRemovedRoots.entries()].length, 1);
 
 		// The original enricher should not have been modified
 		assert.deepEqual(jsonTreeFromForest(enricher.borrowedForest), [content]);
-		assert.deepEqual(Array.from(enricher.borrowedRemovedRoots.entries()), []);
+		assert.deepEqual([...enricher.borrowedRemovedRoots.entries()], []);
 	});
 
 	it("updates enrichments", () => {

@@ -93,7 +93,7 @@ export function isNodeInSchema<T extends NotUndefined>(
 			// Since this is testing compatibility with a stored schema (not view schema), "allowUnknownOptionalFields" does not exist at this layer.
 			// Code using this with a stored schema derived from a view schema rather than the document can be problematic because it may be missing unknown fields that the actual document has.
 			// Other schema evolution features like "staged" allowed types will likely cause similar issues elsewhere in this checker.
-			if (uncheckedFieldsFromNode.size !== 0) {
+			if (uncheckedFieldsFromNode.size > 0) {
 				return onError(SchemaValidationError.ObjectNode_FieldNotInSchema);
 			}
 		} else if (schema instanceof MapNodeStoredSchema) {
