@@ -43,7 +43,9 @@ describeCompat("Flush mode validation", "NoCompat", (getTestObjectProvider, apis
 		}
 	});
 
-	async function setupContainer(runtimeOptions?: IContainerRuntimeOptionsInternal) {
+	async function setupContainer(
+		runtimeOptions?: IContainerRuntimeOptionsInternal,
+	): Promise<void> {
 		const configCopy = { ...testContainerConfig, runtimeOptions };
 
 		// Create a Container for the first client.

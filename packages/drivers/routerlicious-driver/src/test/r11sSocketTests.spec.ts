@@ -12,7 +12,7 @@ import {
 	type IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
-import { stub } from "sinon";
+import { stub, spy } from "sinon";
 import type { Socket } from "socket.io-client";
 
 import { R11sServiceClusterDrainingErrorCode } from "../contracts.js";
@@ -156,6 +156,74 @@ describe("Routerlicious Socket Error Handling", () => {
 					"Connection should have been rejected with the correct error details.",
 				);
 			});
+		});
+	});
+
+	describe("disconnectCore behavior", () => {
+		it("properly disconnects socket when _details is NOT initialized (connect_error before handshake)", async () => {
+			const socket = new ClientSocketMock({
+				connect_document: {
+					eventToEmit: "connect_error",
+				},
+			});
+
+			const disconnectSpy = spy(socket, "disconnect");
+
+			await assert.rejects(
+				mockSocket(socket, async () => documentService.connectToDeltaStream(client)),
+				"socket mock should have errored on connect",
+			);
+
+			// Verify socket.disconnect() was called, proving disconnectCore completed successfully
+			// Without the hasDetails check, accessing this.clientId throws and socket.disconnect() is never called
+			assert.strictEqual(
+				disconnectSpy.callCount,
+				1,
+				"socket.disconnect() should be called even when _details is not initialized",
+			);
+
+			disconnectSpy.restore();
+		});
+
+		it("emits client_disconnect and disconnects socket when _details IS initialized (error after successful handshake)", async () => {
+			const socket = new ClientSocketMock({
+				connect_document: { eventToEmit: "connect_document_success" },
+			});
+
+			const emitSpy = spy(socket, "emit");
+			const disconnectSpy = spy(socket, "disconnect");
+
+			const connection = await mockSocket(socket, async () =>
+				documentService.connectToDeltaStream(client),
+			);
+
+			// Wait for disconnect event after sending error
+			const disconnectPromise = new Promise<void>((resolve) => {
+				connection.on("disconnect", () => resolve());
+			});
+
+			socket.sendErrorEvent();
+			await disconnectPromise;
+
+			// Verify client_disconnect WAS emitted since _details is initialized
+			const clientDisconnectCalls = emitSpy
+				.getCalls()
+				.filter((call) => call.args[0] === "client_disconnect");
+			assert.strictEqual(
+				clientDisconnectCalls.length,
+				1,
+				"client_disconnect should be emitted when _details is initialized",
+			);
+
+			// Verify socket.disconnect() was also called
+			assert.strictEqual(
+				disconnectSpy.callCount,
+				1,
+				"socket.disconnect() should be called after emitting client_disconnect",
+			);
+
+			emitSpy.restore();
+			disconnectSpy.restore();
 		});
 	});
 

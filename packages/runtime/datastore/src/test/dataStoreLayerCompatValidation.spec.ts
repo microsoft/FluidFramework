@@ -13,6 +13,7 @@ import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/i
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	createChildLogger,
+	createChildMonitoringContext,
 	isLayerIncompatibilityError,
 } from "@fluidframework/telemetry-utils/internal";
 import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils/internal";
@@ -97,7 +98,7 @@ describe("DataStore Layer compatibility", () => {
 	 * validate the compatibility between DataStore and Runtime layers.
 	 */
 	describe("validateRuntimeCompatibility", () => {
-		const logger = createChildLogger();
+		const mc = createChildMonitoringContext({ logger: createChildLogger() });
 		it("DataStore is compatible with old Runtime (pre-enforcement)", () => {
 			// Older Runtime will not have ILayerCompatDetails defined.
 			assert.doesNotThrow(
@@ -107,7 +108,7 @@ describe("DataStore Layer compatibility", () => {
 						() => {
 							throw new Error("should not dispose");
 						},
-						logger,
+						mc,
 					),
 				"DataStore should be compatible with older Runtime",
 			);
@@ -129,7 +130,7 @@ describe("DataStore Layer compatibility", () => {
 						() => {
 							throw new Error("should not dispose");
 						},
-						logger,
+						mc,
 					),
 				"DataStore should be compatible with Runtime layer",
 			);
@@ -148,7 +149,7 @@ describe("DataStore Layer compatibility", () => {
 				supportedFeatures: new Set(runtimeSupportRequirementsForDataStore.requiredFeatures),
 			};
 			assert.throws(
-				() => validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, logger),
+				() => validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, mc),
 				(e: Error) =>
 					validateFailureProperties(e, false /* isGenerationCompatible */, runtimeGeneration),
 				"DataStore should be incompatible with Runtime layer",
@@ -170,7 +171,7 @@ describe("DataStore Layer compatibility", () => {
 			};
 
 			assert.throws(
-				() => validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, logger),
+				() => validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, mc),
 				(e: Error) =>
 					validateFailureProperties(
 						e,
@@ -199,7 +200,7 @@ describe("DataStore Layer compatibility", () => {
 			};
 
 			assert.throws(
-				() => validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, logger),
+				() => validateRuntimeCompatibility(runtimeCompatDetails, disposeFn, mc),
 				(e: Error) =>
 					validateFailureProperties(
 						e,

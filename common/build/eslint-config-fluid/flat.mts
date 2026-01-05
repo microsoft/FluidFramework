@@ -10,6 +10,8 @@
 import { FlatCompat } from "@eslint/eslintrc";
 import eslintJs from "@eslint/js";
 import type { Linter } from "eslint";
+// eslint-plugin-depend is ESM-only and must be imported directly for flat config
+import dependPlugin from "eslint-plugin-depend";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -63,6 +65,32 @@ const minimalDeprecated: FlatConfigArray = [
 		extends: [path.join(__dirname, "minimal-deprecated.js")],
 	}),
 ];
+
+// eslint-plugin-depend configuration.
+// This plugin is ESM-only and cannot be loaded via legacy config (FlatCompat),
+// so we configure it directly here for flat config consumers.
+const dependConfig = {
+	plugins: {
+		depend: dependPlugin,
+	},
+	rules: {
+		"depend/ban-dependencies": [
+			"error",
+			{
+				allowed: [
+					// axios replacement with fetch is ongoing: https://github.com/microsoft/FluidFramework/pull/25592
+					"axios",
+
+					// fs-extra is well-maintained and provides a useful readJson/writeJson API which is what we mainly use.
+					"fs-extra",
+				],
+			},
+		],
+	},
+};
+recommended.push(dependConfig);
+strict.push(dependConfig);
+minimalDeprecated.push(dependConfig);
 
 // Use projectService for automatic tsconfig discovery instead of manual project configuration.
 // This eliminates the need to manually configure project paths and handles test files automatically.

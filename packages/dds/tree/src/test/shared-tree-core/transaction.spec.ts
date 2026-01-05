@@ -20,10 +20,8 @@ import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../uti
 import {
 	findAncestor,
 	rootFieldKey,
-	tagChange,
 	type GraphCommit,
 	type RevisionTag,
-	type TaggedChange,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 
@@ -273,11 +271,7 @@ describe("TransactionStacks", () => {
 describe("SquashingTransactionStacks", () => {
 	it("squash transactions", () => {
 		const branch = createBranch();
-		let squashCount = 0;
-		const transaction = new SquashingTransactionStack(branch, (commits) => {
-			squashCount += 1;
-			return squash(commits);
-		});
+		const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 		assert.equal(transaction.activeBranch, branch);
 		transaction.start();
 		assert.notEqual(transaction.activeBranch, branch);
@@ -286,17 +280,15 @@ describe("SquashingTransactionStacks", () => {
 		assert.notEqual(transaction.activeBranch, branch);
 		editBranch(transaction.activeBranch, "C");
 		transaction.commit();
-		assert.equal(squashCount, 0); // Squash should only be called for the outermost transaction commit
 		assert.notEqual(transaction.activeBranch, branch);
 		transaction.commit();
-		assert.equal(squashCount, 1);
 		assert.equal(transaction.activeBranch, branch);
 		assert.equal(edits(branch), 1); // Only one (squashed) commit should be on the branch after the initial commit, not two (unsquashed)
 	});
 
 	it("transfer events between active branches", () => {
 		const branch = createBranch();
-		const transaction = new SquashingTransactionStack(branch, squash);
+		const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 
 		let originalEventCount = 0;
 		transaction.branch.events.on("afterChange", () => {
@@ -328,7 +320,7 @@ describe("SquashingTransactionStacks", () => {
 
 	it("delegate edits to the active branch", () => {
 		const branch = createBranch();
-		const transaction = new SquashingTransactionStack(branch, squash);
+		const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 		const editor = transaction.activeBranchEditor; // We'll hold on to this editor across the transaction
 		assert.equal(edits(branch), 0);
 		assert.equal(transaction.activeBranch, branch);
@@ -374,10 +366,6 @@ describe("SquashingTransactionStacks", () => {
 	function edit(editor: DefaultEditBuilder, value: string): void {
 		const content = chunkFromJsonableTrees([{ type: brand("TestValue"), value }]);
 		editor.valueField({ parent: undefined, field: rootFieldKey }).set(content);
-	}
-
-	function squash(commits: GraphCommit<DefaultChangeset>[]): TaggedChange<DefaultChangeset> {
-		return tagChange(defaultChangeFamily.rebaser.compose(commits), mintRevisionTag());
 	}
 
 	/** The number of commits on the given branch, not including the initial commit */

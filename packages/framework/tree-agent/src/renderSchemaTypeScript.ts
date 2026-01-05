@@ -18,6 +18,7 @@ import { z } from "zod";
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
 import { getExposedProperties, type PropertyDef } from "./propertyBinding.js";
+import { instanceOfs, renderZodTypeScript } from "./renderZodTypeScript.js";
 import {
 	getFriendlyName,
 	isNamedSchema,
@@ -25,7 +26,6 @@ import {
 	resolveShortNameCollisions,
 	unqualifySchema,
 } from "./utils.js";
-import { instanceOfs, renderZodTypeScript } from "./renderZodTypeScript.js";
 
 interface BoundMembers {
 	methods: Record<string, FunctionWrapper>;

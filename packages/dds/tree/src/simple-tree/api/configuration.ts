@@ -222,7 +222,7 @@ export class TreeViewConfiguration<
 			},
 		});
 
-		if (ambiguityErrors.length !== 0) {
+		if (ambiguityErrors.length > 0) {
 			// Duplicate errors are common since when two types conflict, both orders error:
 			const deduplicated = new Set(ambiguityErrors);
 			throw new UsageError(`Ambiguous schema found:\n${[...deduplicated].join("\n")}`);
