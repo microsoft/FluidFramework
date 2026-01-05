@@ -292,7 +292,7 @@ export function rebaseBranch<TChange>(
 	const revInfos = getRevInfoFromTaggedChanges([...targetRebasePath, ...sourcePath]);
 	// Note that the `revisionMetadata` gets updated as `revInfos` gets updated.
 	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
-	let editsToCompose: TaggedChange<TChange>[] = targetRebasePath.slice();
+	let editsToCompose: TaggedChange<TChange>[] = [...targetRebasePath];
 	for (const c of sourcePath) {
 		const rollback = rollbackFromCommit(changeRebaser, c, mintRevisionTag, true /* cache */);
 		if (sourceSet.has(c.revision)) {

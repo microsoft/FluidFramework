@@ -130,7 +130,7 @@ export function makeMessageCodecs<TChangeset>(
 			JsonCompatibleReadOnly,
 			MessageEncodingContext
 		>,
-	][] = Array.from(messageFormatVersions).map((version) => {
+	][] = [...messageFormatVersions].map((version) => {
 		switch (version) {
 			case unbrand(MessageFormatVersion.undefined):
 			case unbrand(MessageFormatVersion.v1):

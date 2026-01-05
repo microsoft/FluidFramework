@@ -231,7 +231,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		const { deletedSourceCommits, targetCommits, sourceCommits } = commits;
 		assert(hasSome(targetCommits), 0xa83 /* Expected commit(s) for a non no-op rebase */);
 
-		const newCommits = targetCommits.concat(sourceCommits);
+		const newCommits = [...targetCommits, ...sourceCommits];
 		const changeEvent = {
 			type: "rebase",
 			get change() {
