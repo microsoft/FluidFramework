@@ -75,7 +75,7 @@ export function compareWithReferenceSnapshot(
 	snapshot: IFileSnapshot,
 	referenceSnapshotFilename: string,
 	errorHandler: (description: string, error?: any) => void,
-) {
+): void {
 	// Read the reference snapshot and covert it to normalized IFileSnapshot.
 	const referenceSnapshotString = fs.readFileSync(
 		`${referenceSnapshotFilename}.json`,
@@ -218,7 +218,7 @@ export async function loadContainer(
 /**
  * @internal
  */
-export async function uploadSummary(container: IContainer) {
+export async function uploadSummary(container: IContainer): Promise<string> {
 	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> =
 		await container.getEntryPoint();
 	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;

@@ -5,7 +5,7 @@
 
 import { LocalReferencePosition, ReferencePosition } from "@fluidframework/sequence/legacy";
 
-import { DocSegmentKind, getDocSegmentKind } from "../document/index.js";
+import { DocSegmentKind, getDocSegmentKind, type FlowDocument } from "../document/index.js";
 import { Dom, TagName, clamp, hasTagName } from "../util/index.js";
 import { updateRef } from "../util/localref.js";
 import { Layout, eotSegment } from "../view/layout.js";
@@ -13,21 +13,21 @@ import { Layout, eotSegment } from "../view/layout.js";
 import { debug } from "./debug.js";
 
 export class Caret {
-	private get doc() {
+	private get doc(): FlowDocument {
 		return this.layout.doc;
 	}
-	public get position() {
+	public get position(): number {
 		return clamp(0, this.doc.localRefToPosition(this.endRef), this.doc.length);
 	}
-	public get anchor() {
+	public get anchor(): number {
 		return clamp(0, this.doc.localRefToPosition(this.startRef), this.doc.length);
 	}
-	public get bounds() {
+	public get bounds(): DOMRect | undefined {
 		const { focusNode, focusOffset } = window.getSelection();
 		return focusNode === null ? undefined : Dom.getClientRect(focusNode, focusOffset);
 	}
 
-	public get selection() {
+	public get selection(): { start: number; end: number } {
 		const start = this.anchor;
 		const end = this.position;
 
@@ -97,7 +97,7 @@ export class Caret {
 		);
 	}
 
-	private readonly onSelectionChange = () => {
+	private readonly onSelectionChange = (): void => {
 		const { anchorNode, anchorOffset, focusNode, focusOffset } = window.getSelection();
 		debug(
 			"Cursor.onSelectionChange(%o:%d..%o:%d)",

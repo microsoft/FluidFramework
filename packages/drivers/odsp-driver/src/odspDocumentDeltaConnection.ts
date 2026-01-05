@@ -24,7 +24,6 @@ import {
 	type ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-
 import type { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 

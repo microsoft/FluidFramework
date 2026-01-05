@@ -122,7 +122,7 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {
 	buildChildChanges: (changes: Iterable<[number, NodeId]>): SingleNodeChangeset => {
-		const changesArray = Array.from(changes);
+		const changesArray = [...changes];
 		assert(changesArray.length <= 1, "This field kind only supports one node in its field");
 		return changesArray[0] === undefined ? undefined : changesArray[0][1];
 	},
@@ -216,7 +216,7 @@ const pathA0A: FieldUpPath = { parent: pathA0, field: fieldA };
 const pathA0B: FieldUpPath = { parent: pathA0, field: fieldB };
 const pathB0A: FieldUpPath = { parent: pathB0, field: fieldA };
 
-const mainEditor = family.buildEditor(() => undefined);
+const mainEditor = family.buildEditor(mintRevisionTag, () => undefined);
 const rootChange1a = removeAliases(
 	mainEditor.buildChanges([
 		{
@@ -1166,7 +1166,7 @@ describe("ModularChangeFamily", () => {
 			) => {
 				return [
 					...change.shallow.map((id) => makeDetachedNodeId(id.major, id.minor)),
-					...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
+					...change.nested.flatMap((c) => [...relevantRemovedRootsFromChild(c)]),
 				];
 			},
 		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
@@ -1178,7 +1178,7 @@ describe("ModularChangeFamily", () => {
 
 		function relevantRemovedRoots(input: ModularChangeset): DeltaDetachedNodeId[] {
 			deepFreeze(input);
-			return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
+			return [...relevantDetachedTreesImplementation(input, mockFieldKinds)];
 		}
 
 		function nodeChangeFromHasRemovedRootsRefs(changeset: HasRemovedRootsRefs): NodeChangeset {
@@ -1462,7 +1462,7 @@ describe("ModularChangeFamily", () => {
 
 	it("build child change", () => {
 		const [changeReceiver, getChanges] = testChangeReceiver(family);
-		const editor = family.buildEditor(changeReceiver);
+		const editor = family.buildEditor(mintRevisionTag, changeReceiver);
 		const path: UpPath = {
 			parent: undefined,
 			parentField: fieldA,
@@ -1614,13 +1614,15 @@ function deepFreeze(object: object) {
 }
 
 function buildChangeset(edits: EditDescription[]): ModularChangeset {
-	const editor = family.buildEditor(() => undefined);
+	const editor = family.buildEditor(mintRevisionTag, () => undefined);
 	return editor.buildChanges(edits);
 }
 
 function buildExistsConstraint(path: UpPath): ModularChangeset {
 	const edits: ModularChangeset[] = [];
-	const editor = family.buildEditor((taggedChange) => edits.push(taggedChange.change));
+	const editor = family.buildEditor(mintRevisionTag, (taggedChange) =>
+		edits.push(taggedChange.change),
+	);
 	editor.addNodeExistsConstraint(path, mintRevisionTag());
 	return edits[0];
 }

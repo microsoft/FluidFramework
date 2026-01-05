@@ -27,7 +27,7 @@ const inputRevs = new Set([tag1, tag2, undefined]);
 export function testReplaceRevisions() {
 	describe("replaceRevisions", () => {
 		for (const outputRev of [tagOut, undefined]) {
-			describe(`{${Array.from(inputRevs.keys()).join(",")}} -> ${outputRev}`, () => {
+			describe(`{${[...inputRevs.keys()].join(",")}} -> ${outputRev}`, () => {
 				runCases(outputRev);
 			});
 		}

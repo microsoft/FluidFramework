@@ -19,7 +19,14 @@ const dockerUrls = {
 
 const defaultTinyliciousPort = 7070;
 
-export const tinyliciousUrls = (options: ITinyliciousRouteOptions) => {
+export const tinyliciousUrls = (
+	options: ITinyliciousRouteOptions,
+): {
+	deltaStreamUrl: string;
+	hostUrl: string;
+	ordererUrl: string;
+	storageUrl: string;
+} => {
 	const port = options.tinyliciousPort ?? defaultTinyliciousPort;
 
 	return {

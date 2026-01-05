@@ -4,7 +4,10 @@
  */
 
 import type { IRequest } from "@fluidframework/core-interfaces";
-import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type {
+	IDocumentService,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import type {
 	IPublicClientConfig,
 	IOdspAuthRequestInfo,
@@ -31,7 +34,7 @@ async function initializeODSPCore(
 	odspResolvedUrl: IOdspResolvedUrl,
 	server: string,
 	clientConfig: IPublicClientConfig,
-) {
+): Promise<IDocumentService | undefined> {
 	const { driveId, itemId } = odspResolvedUrl;
 
 	connectionInfo = {
@@ -52,7 +55,9 @@ async function initializeODSPCore(
   item:   ${itemId}
   docId:  ${docId}`);
 
-	const getStorageTokenStub = async (options: OdspResourceTokenFetchOptions) => {
+	const getStorageTokenStub = async (
+		options: OdspResourceTokenFetchOptions,
+	): Promise<string> => {
 		return resolveWrapper(
 			async (authRequestInfo: IOdspAuthRequestInfo) => {
 				if (
@@ -68,7 +73,7 @@ async function initializeODSPCore(
 		);
 	};
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	const getWebsocketTokenStub = (_options: OdspResourceTokenFetchOptions) =>
+	const getWebsocketTokenStub = (_options: OdspResourceTokenFetchOptions): Promise<string> =>
 		Promise.resolve("");
 	const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
 		getStorageTokenStub,
@@ -86,7 +91,7 @@ async function initializeR11s(
 	server: string,
 	pathname: string,
 	r11sResolvedUrl: IResolvedUrl,
-) {
+): Promise<IDocumentService | undefined> {
 	const path = pathname.split("/");
 	let tenantId: string;
 	let documentId: string;
@@ -108,7 +113,7 @@ async function initializeR11s(
 	};
 
 	if (localDataOnly) {
-		return;
+		return undefined;
 	}
 
 	console.log(`Connecting to r11s: tenantId=${tenantId} id:${documentId}`);
@@ -159,7 +164,7 @@ async function resolveUrl(url: string): Promise<IResolvedInfo | undefined> {
 	return undefined;
 }
 
-export async function fluidFetchInit(urlStr: string) {
+export async function fluidFetchInit(urlStr: string): Promise<IDocumentService | undefined> {
 	const resolvedInfo = await resolveUrl(urlStr);
 	if (resolvedInfo === undefined) {
 		throw new Error(`Unknown URL ${urlStr}`);

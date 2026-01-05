@@ -17,7 +17,7 @@ import { fluidFetchMessages } from "./fluidFetchMessages.js";
 import { getSharepointFiles, getSingleSharePointFile } from "./fluidFetchSharePoint.js";
 import { fluidFetchSnapshot } from "./fluidFetchSnapshot.js";
 
-async function fluidFetchOneFile(urlStr: string, name?: string) {
+async function fluidFetchOneFile(urlStr: string, name?: string): Promise<void> {
 	const documentService = await fluidFetchInit(urlStr);
 	const saveDir =
 		paramSaveDir !== undefined
@@ -41,7 +41,10 @@ async function fluidFetchOneFile(urlStr: string, name?: string) {
 	await fluidFetchMessages(documentService, saveDir);
 }
 
-async function tryFluidFetchOneSharePointFile(server: string, driveItem: IOdspDriveItem) {
+async function tryFluidFetchOneSharePointFile(
+	server: string,
+	driveItem: IOdspDriveItem,
+): Promise<void> {
 	const { path, name, driveId, itemId } = driveItem;
 	console.log(`File: ${path}/${name}`);
 	await fluidFetchOneFile(
@@ -61,7 +64,7 @@ function getSharePointSpecificDriveItem(
 	}
 }
 
-function getSharepointServerRelativePathFromURL(url: URL) {
+function getSharepointServerRelativePathFromURL(url: URL): string | undefined {
 	if (url.pathname.startsWith("/_api/v2.1/drives/")) {
 		return undefined;
 	}
@@ -83,7 +86,7 @@ function getSharepointServerRelativePathFromURL(url: URL) {
 	return decodeURI(sitePath);
 }
 
-async function fluidFetchMain() {
+async function fluidFetchMain(): Promise<void> {
 	if (paramURL === undefined) {
 		return;
 	}

@@ -888,7 +888,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		)[];
 
 		const contentArray = content.flatMap((c): InsertableContent[] =>
-			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
+			c instanceof IterableTreeArrayContent ? [...c] : [c],
 		);
 
 		const kernel = getKernel(this);
@@ -918,7 +918,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	public toJSON(): unknown {
 		// This override causes the class instance to `JSON.stringify` as `[a, b]` rather than `{0: a, 1: b}`.
-		return Array.from(this as unknown as TreeArrayNode);
+		return [...(this as unknown as TreeArrayNode)];
 	}
 
 	// Instances of this class are used as the dispatch object for the proxy,
@@ -972,14 +972,14 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 	public removeRange(start?: number, end?: number): void {
 		const field = getSequenceField(this);
-		const { length } = field;
+		const { length, editor } = field;
 		const removeStart = start ?? 0;
 		validateIndex(removeStart, field, "TreeArrayNode.removeRange", true);
 
 		const removeEnd = Math.min(length, end ?? length);
 		validateIndexRange(removeStart, removeEnd, field, "TreeArrayNode.removeRange");
 
-		field.editor.remove(removeStart, removeEnd - removeStart);
+		editor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
