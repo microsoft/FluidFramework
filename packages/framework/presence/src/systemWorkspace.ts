@@ -223,8 +223,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			this.staleConnectionTimer.setTimeout(this.resolveStaleConnections.bind(this), 30_000);
 
 			this.selfAttendee.setConnected();
-			// TODO: AB#56686: self-Attendee never announced as Connected - Emit this event once there are tests in place
-			// this.events.emit("attendeeConnected", this.selfAttendee);
+			this.events.emit("attendeeConnected", this.selfAttendee);
 		}
 	}
 
