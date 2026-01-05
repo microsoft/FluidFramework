@@ -22,6 +22,7 @@ import {
 	createSpecificAttendeeId,
 	generateBasicClientJoin,
 	prepareConnectedPresence,
+	prepareDisconnectedPresence,
 } from "./testUtils.js";
 
 const collateralSessionId = createSpecificAttendeeId("collateral-id");
@@ -84,6 +85,114 @@ describe("Presence", () => {
 
 			// Act & Verify
 			assert.throws(() => presence.attendees.getAttendee("unknown"), /Attendee not found/);
+		});
+
+		describe("self attendee", () => {
+			const selfAttendeeId = "selfAttendeeId";
+			const selfClientConnectionId = "client9";
+
+			it("is announced via `attendeeConnected` when local client connects", () => {
+				// Setup - create presence in disconnected state
+				const { presence, connectPresence } = prepareDisconnectedPresence(
+					runtime,
+					selfAttendeeId,
+					clock,
+					logger,
+				);
+
+				const connectedAttendees: Attendee[] = [];
+				presence.attendees.events.on("attendeeConnected", (attendee) => {
+					connectedAttendees.push(attendee);
+				});
+
+				// Act - connect presence
+				connectPresence(selfClientConnectionId);
+
+				// Verify - self attendee was announced
+				const selfAttendee = presence.attendees.getMyself();
+				assert.strictEqual(
+					connectedAttendees.length,
+					1,
+					"Expected exactly one attendee to be announced",
+				);
+				assert.strictEqual(
+					connectedAttendees[0],
+					selfAttendee,
+					"Expected self attendee to be announced",
+				);
+			});
+
+			it('has status "Connected" when announced via `attendeeConnected`', () => {
+				// Setup - create presence in disconnected state
+				const { presence, connectPresence } = prepareDisconnectedPresence(
+					runtime,
+					selfAttendeeId,
+					clock,
+					logger,
+				);
+
+				let statusAtAnnouncement: AttendeeStatus | undefined;
+				presence.attendees.events.on("attendeeConnected", (attendee) => {
+					if (attendee === presence.attendees.getMyself()) {
+						statusAtAnnouncement = attendee.getConnectionStatus();
+					}
+				});
+
+				// Act - connect presence
+				connectPresence(selfClientConnectionId);
+
+				// Verify - status was Connected at announcement time
+				assert.strictEqual(
+					statusAtAnnouncement,
+					AttendeeStatus.Connected,
+					"Self attendee should have status 'Connected' when announced",
+				);
+			});
+
+			it("is announced via `attendeeConnected` when local client reconnects", () => {
+				// Setup - create presence in disconnected state, connect and then disconnect
+				const { presence, connectPresence } = prepareDisconnectedPresence(
+					runtime,
+					selfAttendeeId,
+					clock,
+					logger,
+				);
+
+				// Initial connection
+				connectPresence(selfClientConnectionId);
+
+				// Disconnect
+				runtime.disconnect();
+
+				// Ignore submitted signals for reconnection
+				runtime.submitSignal = () => {};
+
+				const connectedAttendees: Attendee[] = [];
+				presence.attendees.events.on("attendeeConnected", (attendee) => {
+					connectedAttendees.push(attendee);
+				});
+
+				// Act - reconnect with new connection id
+				runtime.connect("client10", selfClientConnectionId);
+
+				// Verify - self attendee was announced
+				const selfAttendee = presence.attendees.getMyself();
+				assert.strictEqual(
+					connectedAttendees.length,
+					1,
+					"Expected exactly one attendee to be announced on reconnect",
+				);
+				assert.strictEqual(
+					connectedAttendees[0],
+					selfAttendee,
+					"Expected self attendee to be announced on reconnect",
+				);
+				assert.strictEqual(
+					selfAttendee.getConnectionStatus(),
+					AttendeeStatus.Connected,
+					"Self attendee should have status 'Connected' after reconnect",
+				);
+			});
 		});
 
 		describe("when connected", () => {
@@ -561,12 +670,15 @@ describe("Presence", () => {
 						it("does not update status of attendee with stale connection if attendee rejoins", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
-							// Setup - fail if attendee joined is announced
+							// Setup - fail if non-self attendee joined is announced
 							afterCleanUp.push(
-								presence.attendees.events.on("attendeeConnected", () => {
-									assert.fail(
-										"No `attendeeConnected` should be announced for rejoining attendee that's already 'Connected'",
-									);
+								presence.attendees.events.on("attendeeConnected", (attendee) => {
+									// Self attendee will be announced on reconnect, which is expected
+									if (attendee !== presence.attendees.getMyself()) {
+										assert.fail(
+											"No `attendeeConnected` should be announced for rejoining attendee that's already 'Connected'",
+										);
+									}
 								}),
 							);
 
@@ -589,12 +701,15 @@ describe("Presence", () => {
 						it("does not update status of attendee with stale connection if attendee sends datastore update", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
-							// Setup - fail if attendee joined is announced
+							// Setup - fail if non-self attendee joined is announced
 							afterCleanUp.push(
-								presence.attendees.events.on("attendeeConnected", () => {
-									assert.fail(
-										"No `attendeeConnected` should be announced for active attendee that's already 'Connected'",
-									);
+								presence.attendees.events.on("attendeeConnected", (attendee) => {
+									// Self attendee will be announced on reconnect, which is expected
+									if (attendee !== presence.attendees.getMyself()) {
+										assert.fail(
+											"No `attendeeConnected` should be announced for active attendee that's already 'Connected'",
+										);
+									}
 								}),
 							);
 
