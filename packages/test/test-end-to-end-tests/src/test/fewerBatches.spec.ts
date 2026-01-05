@@ -65,7 +65,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	const setupContainers = async (
 		containerConfig: ITestContainerConfig,
 		featureGates: Record<string, ConfigTypes> = {},
-	) => {
+	): Promise<void> => {
 		const configWithFeatureGates = {
 			...containerConfig,
 			loaderProps: { configProvider: configProvider(featureGates) },
@@ -195,7 +195,9 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	 *
 	 * @param containerConfig - the test container configuration
 	 */
-	const processOutOfOrderOp = async (featureGates: Record<string, ConfigTypes> = {}) => {
+	const processOutOfOrderOp = async (
+		featureGates: Record<string, ConfigTypes> = {},
+	): Promise<void> => {
 		await setupContainers(testContainerConfig, featureGates);
 
 		// Force the containers into write-mode

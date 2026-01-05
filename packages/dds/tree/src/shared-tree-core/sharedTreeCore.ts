@@ -467,8 +467,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 					);
 					break;
 				}
-				default:
+				default: {
 					unreachableCase(type);
+				}
 			}
 		}
 
@@ -569,8 +570,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.submitBranchCreation(message.branchId);
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(type);
+			}
 		}
 	}
 
@@ -599,8 +601,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.editManager.removeBranch(message.branchId);
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(type);
+			}
 		}
 	}
 
@@ -624,8 +627,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.editManager.addNewBranch(message.branchId);
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(type);
+			}
 		}
 	}
 

@@ -117,6 +117,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	 * Construct a new branch.
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
+	 * @param mintRevisionTag - used to generate a `RevisionTag` for each change.
 	 * @param branchTrimmer - an optional event emitter that informs the branch it has been trimmed. If this is not supplied, then the branch must
 	 * never be trimmed. See {@link BranchTrimmingEvents} for details on trimming.
 	 */
@@ -186,15 +187,19 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * @param commit - The commit to base the new branch off of. Defaults to the head of this branch.
+	 * @param mintRevisionTag - used to generate a `RevisionTag` for each change.
 	 * @remarks Changes made to the new branch will not be applied to this branch until the new branch is {@link SharedTreeBranch.merge | merged} back in.
 	 * Forks created during a transaction will be disposed when the transaction ends.
 	 */
-	public fork(commit: GraphCommit<TChange> = this.head): SharedTreeBranch<TEditor, TChange> {
+	public fork(
+		commit: GraphCommit<TChange> = this.head,
+		mintRevisionTag: () => RevisionTag = this.mintRevisionTag,
+	): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			commit,
 			this.changeFamily,
-			this.mintRevisionTag,
+			mintRevisionTag,
 			this.branchTrimmer,
 		);
 		this.#events.emit("fork", fork);
