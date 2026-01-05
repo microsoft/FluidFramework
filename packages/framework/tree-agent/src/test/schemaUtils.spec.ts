@@ -9,7 +9,13 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 
-import { getFriendlyName, unqualifySchema, findSchemas, isNamedSchema } from "../utils.js";
+import {
+	getFriendlyName,
+	unqualifySchema,
+	findSchemas,
+	isNamedSchema,
+	resolveShortNameCollisions,
+} from "../utils.js";
 
 const sf = new SchemaFactoryAlpha("test.scope");
 class TestObject extends sf.object("TestObject", { value: sf.string }) {}
@@ -277,6 +283,44 @@ describe("findNamedSchemas", () => {
 		}
 		assert.ok(!identifiers.includes("string"));
 		assert.ok(!identifiers.includes("number"));
+	});
+});
+
+describe("resolveShortNameCollisions", () => {
+	it("returns array with same length as input", () => {
+		const input = ["scope1.Foo", "scope1.Bar", "scope1.Baz"];
+		const result = resolveShortNameCollisions(input);
+		assert.equal(result.length, input.length);
+	});
+
+	it("preserves non-colliding names", () => {
+		const input = ["scope1.Foo", "scope1.Bar", "scope1.Baz"];
+		const result = resolveShortNameCollisions(input);
+		assert.deepEqual(result, ["Foo", "Bar", "Baz"]);
+	});
+
+	it("resolves three-way collisions with counters as suffixes", () => {
+		const input = ["scope1.Foo", "scope2.Foo", "scope3.Foo"];
+		const result = resolveShortNameCollisions(input);
+		assert.equal(result[0], "Foo_1");
+		assert.equal(result[1], "Foo_2");
+		assert.equal(result[2], "Foo_3");
+	});
+
+	it("handles mixed colliding and non-colliding names", () => {
+		const input = ["scope1.Foo", "scope2.Foo", "scope1.Bar"];
+		const result = resolveShortNameCollisions(input);
+		assert.equal(result[0], "Foo_1");
+		assert.equal(result[1], "Foo_2");
+		assert.equal(result[2], "Bar");
+	});
+
+	it("skips suffix values that conflict with existing short names", () => {
+		const input = ["scope1.Foo", "scope2.Foo", "scope3.Foo_1"] as const;
+		const result = resolveShortNameCollisions(input);
+		assert.equal(result[0], "Foo_2");
+		assert.equal(result[1], "Foo_3");
+		assert.equal(result[2], "Foo_1");
 	});
 });
 
