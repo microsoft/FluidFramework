@@ -424,10 +424,8 @@ export class AnchorSet implements AnchorLocator {
 	 * Does not add a ref!
 	 */
 	public find(path: UpPath): PathNode | undefined {
-		if (path instanceof PathNode) {
-			if (path.anchorSet === this) {
-				return path;
-			}
+		if (path instanceof PathNode && path.anchorSet === this) {
+			return path;
 		}
 		const parent = path.parent ?? this.root;
 		const parentPath = this.find(parent);

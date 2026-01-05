@@ -591,10 +591,8 @@ function testPartialOrder<T>(
 			}
 
 			for (const c of values) {
-				if (compare(a, b) && compare(b, c)) {
-					if (!compare(a, c)) {
-						transitivity.push([a, b, c]);
-					}
+				if (compare(a, b) && compare(b, c) && !compare(a, c)) {
+					transitivity.push([a, b, c]);
 				}
 			}
 		}
