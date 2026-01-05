@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IAudience } from "@fluidframework/container-definitions";
 import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -108,7 +107,10 @@ export function isValueDirectory<T>(
  * High-level contract for manager of singleton Presence datastore
  */
 export interface PresenceDatastoreManager {
-	joinSession(clientId: ClientConnectionId): void;
+	joinSession(
+		clientId: ClientConnectionId,
+		alternateProvider: ClientConnectionId | undefined,
+	): void;
 	onDisconnected(): void;
 	getWorkspace<TSchema extends StatesWorkspaceSchema>(
 		internalWorkspaceAddress: `s:${WorkspaceAddress}`,
@@ -120,7 +122,7 @@ export interface PresenceDatastoreManager {
 		requestedContent: TSchema,
 	): NotificationsWorkspace<TSchema>;
 	processSignal(
-		message: InboundExtensionMessage<SignalMessages>,
+		message: InboundExtensionMessage<SignalMessages> & { clientId: ClientConnectionId },
 		local: boolean,
 		optional: boolean,
 	): void;
@@ -195,13 +197,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private readonly targetedSignalSupport: boolean;
 
 	/**
-	 * When defined, this client is not recognized in the session.
-	 * Call when no longer caring about that condition. That way listeners are
-	 * cleaned up.
-	 */
-	private stopWaitingForSelfInAudience: undefined | (() => void);
-
-	/**
 	 * Tracks whether this client has complete snapshot level knowledge and
 	 * how that determination was reached.
 	 * - "alone": no other audience members detected at join
@@ -256,7 +251,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	}
 
 	private getAudienceInformation(selfClientId: ClientConnectionId): {
-		audience: IAudience;
 		selfPresent: boolean;
 		interactiveMembersExcludingSelf: {
 			all: Set<ClientConnectionId>;
@@ -282,7 +276,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 		}
 		return {
-			audience,
 			selfPresent,
 			interactiveMembersExcludingSelf: {
 				all,
@@ -303,7 +296,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// Lack of anyone likely means that this client is very freshly joined
 		// and has not received any Join Signals (type="join") from the service
 		// yet.
-		const { audience, selfPresent, interactiveMembersExcludingSelf } =
+		const { selfPresent, interactiveMembersExcludingSelf } =
 			this.getAudienceInformation(selfClientId);
 
 		if (selfPresent) {
@@ -320,13 +313,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			}
 		} else {
 			// When self is not represented, audience is an unreliable state,
-			// especially during a reconnect. Without an alternateProvider,
-			// defer join and judgement on complete snapshot until at least
-			// self is known to be present.
-			if (alternateProvider === undefined) {
-				this.listenForSelfInAudience(selfClientId, audience);
-				return;
-			}
+			// especially during a reconnect. An alternateProvider is expected
+			// to have been provided for this call to be useful (efficient).
+			assert(
+				alternateProvider !== undefined,
+				"Self is not in audience and no alternateProvider given",
+			);
 		}
 
 		// Broadcast join message to all clients
@@ -366,52 +358,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		});
 	}
 
-	private listenForSelfInAudience(selfClientId: string, audience: IAudience): void {
-		this.logger?.sendTelemetryEvent({
-			eventName: "JoinDeferred",
-			details: {
-				attendeeId: this.attendeeId,
-				connectionId: selfClientId,
-			},
-		});
-		// Prepare to join once self audience member joins.
-		// Alternatively, processSignal may force a join when a presence
-		// signal is received even without audience members (assumes
-		// audience signals were lost).
-		const joinWhenSelfAudienceMemberAdded = (addedClientId: ClientConnectionId): void => {
-			if (addedClientId !== selfClientId) {
-				// Keep listening
-				return;
-			}
-
-			// No need to force here by providing alternate provider as self is
-			// now present.
-			// Do avoid forcing so that reasonForCompleteSnapshot is set correctly
-			// if no others have been added.
-			this.stopWaitingAndJoin(selfClientId, /* alternateProvider */ undefined);
-		};
-		audience.on("addMember", joinWhenSelfAudienceMemberAdded);
-		this.stopWaitingForSelfInAudience = () => {
-			audience.off("addMember", joinWhenSelfAudienceMemberAdded);
-		};
-	}
-
-	private stopWaitingAndJoin(
-		selfClientId: ClientConnectionId,
-		alternateProvider: ClientConnectionId | undefined,
-	): void {
-		this.stopWaitingForSelfInAudience?.();
-		this.stopWaitingForSelfInAudience = undefined;
-		// Confirm not currently disconnected
-		if (this.runtime.getJoinedStatus() !== "disconnected") {
-			this.joinSession(selfClientId, alternateProvider);
-		}
-	}
-
 	public onDisconnected(): void {
 		delete this.reasonForCompleteSnapshot;
-		this.stopWaitingForSelfInAudience?.();
-		this.stopWaitingForSelfInAudience = undefined;
 	}
 
 	public getWorkspace<TSchema extends StatesWorkspaceSchema>(
@@ -693,7 +641,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	}
 
 	public processSignal(
-		message: InboundExtensionMessage<SignalMessages>,
+		message: InboundExtensionMessage<SignalMessages> & { clientId: ClientConnectionId },
 		local: boolean,
 		optional: boolean,
 	): void {
@@ -717,21 +665,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			return;
 		}
 
-		const selfClientId = this.runtime.getClientId();
-		assert(selfClientId !== undefined, "Received signal without clientId");
-
-		// Check for undesired case of receiving a remote presence signal
-		// without having been alerted to self audience join. (Perhaps join
-		// signal was dropped.)
-		// In practice it is commonly observed that local signals can be
-		// returned ahead of audience join notification. So, it is reasonable
-		// to expect that audience join notification may be delayed until after
-		// other presence signals are received. One is enough to get things
-		// rolling.
-		if (this.stopWaitingForSelfInAudience !== undefined) {
-			this.stopWaitingAndJoin(selfClientId, /* alternateProvider */ message.clientId);
-		}
-
 		const timeModifier =
 			received -
 			(this.averageLatency + message.content.avgLatency + message.content.sendTimestamp);
@@ -751,6 +684,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// Update join response requests that are now satisfied.
 			const joinResponseFor = message.content.joinResponseFor;
 			if (joinResponseFor) {
+				const selfClientId = this.runtime.getClientId();
+				assert(selfClientId !== undefined, "Received signal without clientId");
+
 				let justGainedCompleteSnapshot = false;
 				if (joinResponseFor.includes(selfClientId)) {
 					if (this.reasonForCompleteSnapshot) {

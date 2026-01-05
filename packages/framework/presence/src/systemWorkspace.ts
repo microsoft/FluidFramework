@@ -80,8 +80,9 @@ export interface SystemWorkspace
 	 * Must be called when the current client acquires a new connection.
 	 *
 	 * @param clientConnectionId - The new client connection ID.
+	 * @param audienceOutOfDate - When true, audience cannot be used as authoritative.
 	 */
-	onConnectionAdded(clientConnectionId: ClientConnectionId): void;
+	onConnectionAdded(clientConnectionId: ClientConnectionId, audienceOutOfDate: boolean): void;
 
 	/**
 	 * Removes the client connection ID from the system workspace.
@@ -175,62 +176,73 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		return postUpdateActions;
 	}
 
-	public onConnectionAdded(clientConnectionId: ClientConnectionId): void {
+	public onConnectionAdded(
+		clientConnectionId: ClientConnectionId,
+		audienceOutOfDate: boolean,
+	): void {
 		assert(
 			this.selfAttendee.getConnectionStatus() === AttendeeStatus.Disconnected,
 			0xaad /* Local client should be 'Disconnected' before adding new connection. */,
 		);
 
+		const selfInAudience = this.audience.getMember(clientConnectionId) !== undefined;
 		assert(
-			this.audience.getMember(clientConnectionId) !== undefined,
+			selfInAudience || audienceOutOfDate,
 			"Local client must be in audience for presence to handle added connection.",
 		);
 
-		this.datastore.clientToSessionId[clientConnectionId] = {
-			rev: this.selfAttendee.order++,
-			timestamp: Date.now(),
-			value: this.selfAttendee.attendeeId,
-		};
-
-		// Mark 'Connected' remote attendees connections as stale
-		// Performance note: This will visit attendees multiple times as the
-		// attendee map has attendeeIds and connectionIds entries that point to
-		// the same attendee. But the getConnectionStatus check is cheap and
-		// staleConnectionClients set will handle duplicates.
-		this.staleConnectionClients.clear();
-		for (const staleConnectionClient of this.attendees.values()) {
-			if (staleConnectionClient.getConnectionStatus() === AttendeeStatus.Connected) {
-				this.staleConnectionClients.add(staleConnectionClient);
-			}
+		if (!(clientConnectionId in this.datastore.clientToSessionId)) {
+			this.datastore.clientToSessionId[clientConnectionId] = {
+				rev: this.selfAttendee.order++,
+				timestamp: Date.now(),
+				value: this.selfAttendee.attendeeId,
+			};
 		}
 
 		// Update the self attendee connection information, but not connection
-		// status yet. Connection status will be updated once audience confirms
-		// connection. It is only once our connection is known to audience that
+		// status yet. Connection status is updated once self is in audience -
+		// see later. It is only once our connection is known to audience that
 		// audience can be used to track other attendees' connection statuses
-		// and we seek to present a consistent view.
-		// In between onConnectionAdded and audience confirmation, the audience
-		// will go through a refresh that may remove all members.
+		// and we seek to present a consistent view locally.
 		this.selfAttendee.connectionId = clientConnectionId;
-		this.selfAttendee.setConnected();
 		this.attendees.set(clientConnectionId, this.selfAttendee);
 
-		this.staleConnectionTimer.setTimeout(() => {
-			const consideredDisconnected = [];
-			for (const client of this.staleConnectionClients) {
-				// Confirm that audience no longer has connection. It is possible
-				// but unlikely that no one mentioned the attendee in this period
-				// and that they were never disconnected.
-				if (this.audience.getMember(client.getConnectionId()) === undefined) {
-					consideredDisconnected.push(client);
-					client.setDisconnected();
+		if (selfInAudience) {
+			// Mark 'Connected' remote attendees connections as stale
+			// Performance note: This will visit attendees multiple times as the
+			// attendee map has attendeeIds and connectionIds entries that point to
+			// the same attendee. But the getConnectionStatus check is cheap and
+			// staleConnectionClients.add will handle duplicates.
+			this.staleConnectionClients.clear();
+			for (const staleConnectionClient of this.attendees.values()) {
+				if (staleConnectionClient.getConnectionStatus() === AttendeeStatus.Connected) {
+					this.staleConnectionClients.add(staleConnectionClient);
 				}
 			}
-			for (const client of consideredDisconnected) {
-				this.events.emit("attendeeDisconnected", client);
+
+			this.staleConnectionTimer.setTimeout(this.resolveStaleConnections.bind(this), 30_000);
+
+			this.selfAttendee.setConnected();
+			// TODO: AB#56686: self-Attendee never announced as Connected - Emit this event once there are tests in place
+			// this.events.emit("attendeeConnected", this.selfAttendee);
+		}
+	}
+
+	private resolveStaleConnections(): void {
+		const consideredDisconnected = [];
+		for (const client of this.staleConnectionClients) {
+			// Confirm that audience no longer has connection. It is possible
+			// but unlikely that no one mentioned the attendee in this period
+			// and that they were never disconnected.
+			if (this.audience.getMember(client.getConnectionId()) === undefined) {
+				consideredDisconnected.push(client);
+				client.setDisconnected();
 			}
-			this.staleConnectionClients.clear();
-		}, 30_000);
+		}
+		for (const client of consideredDisconnected) {
+			this.events.emit("attendeeDisconnected", client);
+		}
+		this.staleConnectionClients.clear();
 	}
 
 	public removeClientConnectionId(clientConnectionId: ClientConnectionId): void {
