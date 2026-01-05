@@ -230,16 +230,15 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
 	public getFieldPathForEditing(): NormalizedFieldUpPath {
-		if (!this.isFreed()) {
-			if (
-				// Only allow editing if we are the root document field...
-				(this.parent === undefined && this.anchor.fieldKey === rootFieldKey) ||
+		if (
+			!this.isFreed() &&
+			// Only allow editing if we are the root document field...
+			((this.parent === undefined && this.anchor.fieldKey === rootFieldKey) ||
 				// ...or are under a node in the document
 				(this.parent !== undefined &&
-					treeStatusFromAnchorCache(this.parent.anchorNode) === TreeStatus.InDocument)
-			) {
-				return this.getFieldPath();
-			}
+					treeStatusFromAnchorCache(this.parent.anchorNode) === TreeStatus.InDocument))
+		) {
+			return this.getFieldPath();
 		}
 
 		throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");

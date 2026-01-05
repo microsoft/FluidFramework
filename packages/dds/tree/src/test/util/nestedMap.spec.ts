@@ -330,7 +330,7 @@ describe("NestedMap unit tests", () => {
 			setInNestedMap(input, "Foo", "Bar", 1);
 			setInNestedMap(input, "Foo", "Baz", 2);
 
-			const output = mapNestedMap(input, (n: number) => String(n));
+			const output = mapNestedMap(input, String);
 
 			assert.deepEqual(
 				output,
@@ -349,7 +349,7 @@ describe("NestedMap unit tests", () => {
 		it("tolerates empty outer maps", () => {
 			const input: NestedMap<string, string, number> = new Map<string, Map<string, number>>();
 
-			const output = mapNestedMap(input, (n: number) => String(n));
+			const output = mapNestedMap(input, String);
 
 			assert.deepEqual(output, new Map([]));
 		});
@@ -359,7 +359,7 @@ describe("NestedMap unit tests", () => {
 				["Foo", new Map()],
 			]);
 
-			const output = mapNestedMap(input, (n: number) => String(n));
+			const output = mapNestedMap(input, String);
 
 			assert.deepEqual(output, new Map([["Foo", new Map()]]));
 		});

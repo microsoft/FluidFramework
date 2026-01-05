@@ -161,18 +161,17 @@ export class SharedDirectoryOracle {
 		const path = change.path ?? "/";
 
 		const fuzzDir = this.sharedDir.getWorkingDirectory(path);
-		if (!fuzzDir) return;
+		assert(fuzzDir !== undefined, `Directory at path "${path}" should exist in sharedDir`);
 
 		const absPath = path.startsWith("/") ? path : `/${path}`;
 		const dirNode = this.createDirNode(this.modelFromValueChanged, absPath);
 
 		// Validate previousValue matches oracle, except:
 		// - Post-clear events: previousValue from before clear, oracle already cleared
-		// - Remote ops with pending local ops: oracle has optimistic value, event has sequenced value
+		// - Remote ops
 		const oracleValue = dirNode.keys.get(key);
 		const isPostClearEvent = previousValue !== undefined && oracleValue === undefined;
-		const hasPendingLocalOp = !local && oracleValue !== previousValue;
-		if (!isPostClearEvent && !hasPendingLocalOp) {
+		if (local && !isPostClearEvent) {
 			assert.deepStrictEqual(
 				previousValue,
 				oracleValue,
@@ -214,9 +213,7 @@ export class SharedDirectoryOracle {
 		);
 
 		const newSubDir = this.sharedDir.getWorkingDirectory(path);
-		if (!newSubDir) {
-			return;
-		}
+		assert(newSubDir !== undefined, `Directory at path "${path}" should exist in sharedDir`);
 
 		const subdirPath = path.startsWith("/") ? path : `/${path}`;
 		this.createDirNode(this.modelFromValueChanged, subdirPath);
@@ -241,13 +238,10 @@ export class SharedDirectoryOracle {
 
 		const dirNode = this.createDirNode(this.modelFromContainedValueChanged, absolutePath);
 
-		// Validate previousValue matches oracle, except:
-		// - Post-clear events: previousValue from before clear, oracle already cleared
-		// - Remote ops with pending local ops: oracle has optimistic value, event has sequenced value
+		// Validate previousValue matches oracle for local ops only
 		const oracleValue = dirNode.keys.get(key);
 		const isPostClearEvent = previousValue !== undefined && oracleValue === undefined;
-		const hasPendingLocalOp = !local && oracleValue !== previousValue;
-		if (!isPostClearEvent && !hasPendingLocalOp) {
+		if (local && !isPostClearEvent) {
 			assert.deepStrictEqual(
 				previousValue,
 				oracleValue,

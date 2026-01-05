@@ -187,13 +187,11 @@ export function convertObjectNodeSchema(
 		copyProperty(fieldSchema.metadata, "description", output);
 		properties[key] = output;
 
-		if (fieldSchema.kind !== FieldKind.Optional) {
-			if (
-				options.requireFieldsWithDefaults ||
-				fieldSchema.props?.defaultProvider === undefined
-			) {
-				required.push(key);
-			}
+		if (
+			fieldSchema.kind !== FieldKind.Optional &&
+			(options.requireFieldsWithDefaults || fieldSchema.props?.defaultProvider === undefined)
+		) {
+			required.push(key);
 		}
 	}
 

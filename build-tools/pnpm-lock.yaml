@@ -428,6 +428,9 @@ importers:
       sort-package-json:
         specifier: 1.57.0
         version: 1.57.0
+      type-fest:
+        specifier: ^2.19.0
+        version: 2.19.0
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -504,9 +507,6 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.19.1)(typescript@5.4.5)
-      type-fest:
-        specifier: ^2.19.0
-        version: 2.19.0
       typedoc:
         specifier: ^0.28.14
         version: 0.28.15(typescript@5.4.5)
@@ -582,6 +582,9 @@ importers:
       ts-deepmerge:
         specifier: ^7.0.3
         version: 7.0.3
+      type-fest:
+        specifier: ^2.19.0
+        version: 2.19.0
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -631,9 +634,6 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
-      type-fest:
-        specifier: ^2.19.0
-        version: 2.19.0
 
   packages/bundle-size-tools:
     dependencies:
