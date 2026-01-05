@@ -63,7 +63,7 @@ export class SharedTreeEditBuilder
 					...taggedChange,
 					change: { changes: [{ type: "data", innerChange: taggedChange.change }] },
 				}),
-			modularChangeFamily.minVersionForCollab,
+			modularChangeFamily.codecOptions,
 		);
 
 		this.schema = {

@@ -9,7 +9,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	FluidClientVersion,
-	currentVersion,
 	type CodecWriteOptions,
 	type ICodecFamily,
 } from "../../codec/index.js";
@@ -94,6 +93,7 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import type { FlexFieldKind } from "./fieldKind.js";
+import { lt } from "semver-ts";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -107,15 +107,13 @@ export class ModularChangeFamily
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
 	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
-	public readonly minVersionForCollab: CodecWriteOptions["minVersionForCollab"];
 
 	public constructor(
 		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
-		codecOptions: Pick<CodecWriteOptions, "minVersionForCollab">,
+		public readonly codecOptions: CodecWriteOptions,
 	) {
 		this.fieldKinds = fieldKinds;
-		this.minVersionForCollab = codecOptions?.minVersionForCollab ?? currentVersion;
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
@@ -1678,12 +1676,7 @@ export class ModularChangeFamily
 	public buildEditor(
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	): ModularEditBuilder {
-		return new ModularEditBuilder(
-			this,
-			this.fieldKinds,
-			changeReceiver,
-			this.minVersionForCollab,
-		);
+		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver, this.codecOptions);
 	}
 
 	private createEmptyFieldChange(fieldKind: FieldKindIdentifier): FieldChange {
@@ -2714,17 +2707,17 @@ function makeModularChangeset(
 export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	private transactionDepth: number = 0;
 	private idAllocator: IdAllocator;
-	private readonly minVersionForCollab: CodecWriteOptions["minVersionForCollab"];
+	private readonly codecOptions: CodecWriteOptions;
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
-		minVersionForCollab: CodecWriteOptions["minVersionForCollab"],
+		codecOptions: CodecWriteOptions,
 	) {
 		super(family, changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
-		this.minVersionForCollab = minVersionForCollab;
+		this.codecOptions = codecOptions;
 	}
 
 	public override enterTransaction(): void {
@@ -2897,7 +2890,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public addNoChangeConstraint(revision: RevisionTag): void {
-		if (this.minVersionForCollab < FluidClientVersion.v2_80) {
+		if (lt(this.codecOptions.minVersionForCollab, FluidClientVersion.v2_80)) {
 			throw new UsageError(
 				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
 			);
@@ -2912,7 +2905,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public addNoChangeConstraintOnRevert(revision: RevisionTag): void {
-		if (this.minVersionForCollab < FluidClientVersion.v2_80) {
+		if (lt(this.codecOptions.minVersionForCollab, FluidClientVersion.v2_80)) {
 			throw new UsageError(
 				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
 			);

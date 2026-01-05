@@ -40,9 +40,12 @@ import {
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
 import { initializeForest } from "../initializeForest.js";
-import { FluidClientVersion } from "../../../index.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
 
-const codecOptions = { minVersionForCollab: FluidClientVersion.v2_0 };
+const codecOptions = {
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: FluidClientVersion.v2_0,
+};
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, codecOptions);
 const family = defaultChangeFamily;
 
@@ -143,7 +146,7 @@ function initializeEditableForest(data?: JsonableTree): {
 			deltas.push(delta);
 			applyDelta(delta, taggedChange.revision, forest, detachedFieldIndex);
 		},
-		codecOptions.minVersionForCollab,
+		codecOptions,
 	);
 	return {
 		forest,

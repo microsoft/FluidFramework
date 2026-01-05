@@ -26,9 +26,10 @@ import {
 } from "../../shared-tree-core/index.js";
 import { brand } from "../../util/index.js";
 import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
-import { FluidClientVersion } from "../../index.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
+	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: FluidClientVersion.v2_0,
 });
 

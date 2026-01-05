@@ -57,7 +57,7 @@ const defaultEditor = new DefaultEditBuilder(
 	modularFamily,
 	mintRevisionTag,
 	(taggedChange) => dataChanges.push(taggedChange.change),
-	codecOptions.minVersionForCollab,
+	codecOptions,
 );
 
 // Side effects results in `dataChanges` being populated

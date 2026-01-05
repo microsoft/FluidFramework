@@ -60,7 +60,7 @@ export class DefaultChangeFamily
 
 	public constructor(
 		codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
-		codecOptions: Pick<CodecWriteOptions, "minVersionForCollab">,
+		codecOptions: CodecWriteOptions,
 	) {
 		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs, codecOptions);
 	}
@@ -81,7 +81,7 @@ export class DefaultChangeFamily
 			this,
 			mintRevisionTag,
 			changeReceiver,
-			this.modularFamily.minVersionForCollab,
+			this.modularFamily.codecOptions,
 		);
 	}
 }
@@ -187,7 +187,7 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	addNoChangeConstraint(): void;
 
 	/**
-	 * Add a global constraint that will be violated if the edit is rebased after being reverted.
+	 * Add a global constraint that will be violated if the revert of the edit is rebased
 	 * Once violated, this constraint should remain violated.
 	 */
 	addNoChangeConstraintOnRevert(): void;
@@ -204,13 +204,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
-		minVersionForCollab: CodecWriteOptions["minVersionForCollab"],
+		codecOptions: CodecWriteOptions,
 	) {
 		this.modularBuilder = new ModularEditBuilder(
 			family,
 			fieldKinds,
 			changeReceiver,
-			minVersionForCollab,
+			codecOptions,
 		);
 	}
 

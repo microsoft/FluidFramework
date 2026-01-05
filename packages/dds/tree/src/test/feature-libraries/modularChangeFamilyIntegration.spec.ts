@@ -61,13 +61,16 @@ import { MarkMaker } from "./sequence-field/testEdits.js";
 import { assertEqual, Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
-import { FluidClientVersion } from "../../index.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map([
 	[sequence.identifier, sequence],
 ]);
 
-const codecOptions = { minVersionForCollab: FluidClientVersion.v2_0 };
+const codecOptions = {
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: FluidClientVersion.v2_0,
+};
 const family = new ModularChangeFamily(fieldKinds, failCodecFamily, codecOptions);
 
 const rootField: FieldKey = brand("Root");
@@ -88,7 +91,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 
 			const rootPath = { parent: undefined, parentField: rootField, parentIndex: 0 };
@@ -150,7 +153,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 
 			const rootPath = { parent: undefined, parentField: rootField, parentIndex: 0 };
@@ -211,7 +214,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 
 			editor.move(
@@ -260,7 +263,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 			editor.sequenceField({ parent: undefined, field: fieldA }).remove(1, 1);
 			editor.move(
@@ -298,7 +301,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 			editor.move(
 				{ parent: undefined, field: fieldA },
@@ -336,7 +339,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 
 			const fieldAPath = { parent: undefined, field: fieldA };
@@ -436,7 +439,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
 			const nodeBPath: UpPath = {
@@ -488,7 +491,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 			const nodePath1: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 1 };
 
@@ -553,7 +556,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
 			const nodeBPath: UpPath = { parent: undefined, parentField: fieldB, parentIndex: 0 };
@@ -590,7 +593,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
 
@@ -658,7 +661,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 			editor.move(
 				{ parent: undefined, field: fieldA },
@@ -710,7 +713,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 			editor.move(
 				{ parent: undefined, field: fieldA },
@@ -771,7 +774,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 			editor.move(
 				{ parent: undefined, field: fieldA },
@@ -816,7 +819,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 
 			editor.enterTransaction();
@@ -879,7 +882,7 @@ describe("ModularChangeFamily integration", () => {
 				family,
 				mintRevisionTag,
 				changeReceiver,
-				codecOptions.minVersionForCollab,
+				codecOptions,
 			);
 
 			const fieldAPath = { parent: undefined, field: fieldA };
