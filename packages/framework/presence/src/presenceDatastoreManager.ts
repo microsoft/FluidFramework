@@ -646,7 +646,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		optional: boolean,
 	): void {
 		const received = Date.now();
-		assert(message.clientId !== null, 0xa3a /* Map received signal without clientId */);
 		if (!isPresenceMessage(message)) {
 			assert(optional, "Unrecognized message type in critical message");
 			return;
