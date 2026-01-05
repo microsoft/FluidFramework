@@ -394,12 +394,12 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 * Given a cursor in field mode, indexes all nodes under the field and then indexes all nodes up the spine.
 	 */
 	private indexSpine(cursor: ITreeSubscriptionCursor): void {
-		if (keyAsDetachedField(cursor.getFieldKey()) !== rootField) {
-			cursor.exitField();
-			cursor.exitNode();
-		} else {
+		if (keyAsDetachedField(cursor.getFieldKey()) === rootField) {
 			// return early if we're already at the root field
 			return;
+		} else {
+			cursor.exitField();
+			cursor.exitNode();
 		}
 
 		// walk up the spine and index nodes until we reach the root

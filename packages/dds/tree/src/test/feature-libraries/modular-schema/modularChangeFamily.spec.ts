@@ -117,7 +117,7 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, oldRevisions, newRevision) =>
-		change !== undefined ? replaceAtomRevisions(change, oldRevisions, newRevision) : undefined,
+		change === undefined ? undefined : replaceAtomRevisions(change, oldRevisions, newRevision),
 };
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {
@@ -149,10 +149,10 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
-		local: [{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined }],
+		local: [{ count: 1, fields: change === undefined ? undefined : deltaFromChild(change) }],
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
-		change !== undefined ? relevantRemovedRootsFromChild(change) : [],
+		change === undefined ? [] : relevantRemovedRootsFromChild(change),
 
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.

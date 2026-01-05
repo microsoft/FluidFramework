@@ -184,10 +184,10 @@ export function runUnitTestScenario(
 	// the same sequence number.
 	let lastIntention = 0;
 	for (const step of stepsWithoutIntention) {
-		if (step.type !== "Push") {
-			steps.push({ ...step, intention: ++lastIntention });
-		} else {
+		if (step.type === "Push") {
 			steps.push(step);
+		} else {
+			steps.push({ ...step, intention: ++lastIntention });
 		}
 	}
 	const run = (advanceMinimumSequenceNumber: boolean) => {
@@ -522,11 +522,11 @@ export function runUnitTestScenario(
 		processBunchOfSteps(bunch);
 	};
 
-	if (title !== undefined) {
+	if (title === undefined) {
+		run(true);
+	} else {
 		// Run two versions of the scenario, one where the minimum sequence number is advanced and one where it is not
 		it(title, () => run(false));
 		it(`${title} (while advancing the min seq number)`, () => run(true));
-	} else {
-		run(true);
 	}
 }

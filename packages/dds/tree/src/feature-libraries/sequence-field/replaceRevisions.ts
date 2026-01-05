@@ -98,15 +98,15 @@ function updateIdOverride<TEffect extends Detach | Rename>(
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): TEffect {
-	if (effect.idOverride !== undefined) {
+	if (effect.idOverride === undefined) {
+		return effect;
+	} else {
 		const idOverride = replaceAtomRevisions(
 			effect.idOverride,
 			revisionsToReplace,
 			newRevision,
 		);
 		return { ...effect, idOverride };
-	} else {
-		return effect;
 	}
 }
 
@@ -115,16 +115,16 @@ function updateMoveEffect<TEffect extends HasMoveFields>(
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): TEffect {
-	return effect.finalEndpoint !== undefined
-		? updateRevision(
+	return effect.finalEndpoint === undefined
+		? updateRevision(effect, revisionsToReplace, newRevision)
+		: updateRevision(
 				{
 					...effect,
 					finalEndpoint: updateRevision(effect.finalEndpoint, revisionsToReplace, newRevision),
 				},
 				revisionsToReplace,
 				newRevision,
-			)
-		: updateRevision(effect, revisionsToReplace, newRevision);
+			);
 }
 
 function updateRevision<T extends HasRevisionTag>(

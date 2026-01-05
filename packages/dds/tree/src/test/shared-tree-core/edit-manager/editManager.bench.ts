@@ -75,9 +75,9 @@ describe("EditManager - Bench", () => {
 			changeFamily: defaultFamily,
 			mintChange: (revision) => {
 				const change = makeEditMinter(defaultFamily, sequencePrepend)();
-				return revision !== undefined
-					? defaultFamily.rebaser.changeRevision(change, revision)
-					: change;
+				return revision === undefined
+					? change
+					: defaultFamily.rebaser.changeRevision(change, revision);
 			},
 			maxEditCount: 350,
 		},
