@@ -29,7 +29,7 @@ describe("runWithRetry Tests", () => {
 	it("Should succeed at first time", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			retryTimes -= 1;
 			return true;
 		};
@@ -51,7 +51,7 @@ describe("runWithRetry Tests", () => {
 		const maxTries: number = 5;
 		let retryTimes: number = maxTries;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("Throw error");
@@ -78,7 +78,7 @@ describe("runWithRetry Tests", () => {
 	it("Check that it retries after retry seconds", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("Throttle Error");
@@ -97,7 +97,7 @@ describe("runWithRetry Tests", () => {
 	it("If error is just a string, should retry as canRetry is not false", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const err = new Error("error");
@@ -116,7 +116,7 @@ describe("runWithRetry Tests", () => {
 	it("Should not retry if canRetry is set as false", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("error");
@@ -136,7 +136,7 @@ describe("runWithRetry Tests", () => {
 	it("Should not retry if canRetry is not set", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("error");
@@ -155,7 +155,7 @@ describe("runWithRetry Tests", () => {
 	it("Should not retry if it is disabled", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("error");
@@ -181,7 +181,7 @@ describe("runWithRetry Tests", () => {
 	it("Abort reason is included in thrown exception", async () => {
 		const abortController = new AbortController();
 
-		const api = () => {
+		const api = (): never => {
 			abortController.abort("Sample abort reason");
 			const error = new Error("aborted");
 			(error as any).canRetry = true;

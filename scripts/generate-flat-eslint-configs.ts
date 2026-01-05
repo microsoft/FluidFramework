@@ -50,6 +50,10 @@ interface PackageTarget {
 	extendedLocalConfig?: { rules?: Record<string, unknown>; overrides?: unknown[] };
 	/** Path to a shared flat config to import from (relative to packageDir) */
 	sharedFlatConfigImport?: string;
+	/** Named exports from shared config that should be imported */
+	sharedConfigNamedImports?: string[];
+	/** Original source code of the legacy config */
+	legacyConfigSource?: string;
 }
 
 interface SharedConfigTarget {
@@ -237,6 +241,9 @@ async function findLegacyConfigs(
 						| { rules?: Record<string, unknown>; overrides?: unknown[] }
 						| undefined;
 					let sharedFlatConfigImport: string | undefined;
+					let sharedConfigNamedImports: string[] = [];
+					let matchingSharedConfig: SharedConfigTarget | undefined;
+
 					const config = legacyConfig as {
 						extends?: string | string[];
 						rules?: Record<string, unknown>;
@@ -263,7 +270,20 @@ async function findLegacyConfigs(
 										sharedFlatConfigImport = relPath.startsWith(".")
 											? relPath
 											: `./${relPath}`;
-										console.log(`  Will import shared config from ${sharedFlatConfigImport}`);
+										// Detect which named exports are referenced in this config
+										sharedConfigNamedImports = detectSharedConfigImports(
+											content,
+											matchingShared,
+										);
+										if (sharedConfigNamedImports.length > 0) {
+											console.log(
+												`  Will import shared config from ${sharedFlatConfigImport} with named exports: ${sharedConfigNamedImports.join(", ")}`,
+											);
+										} else {
+											console.log(
+												`  Will import shared config from ${sharedFlatConfigImport}`,
+											);
+										}
 									} else {
 										// Merge rules from extended configs that aren't shared flat configs
 										try {
@@ -315,6 +335,10 @@ async function findLegacyConfigs(
 						eslintIgnorePatterns,
 						extendedLocalConfig,
 						sharedFlatConfigImport,
+						sharedConfigNamedImports:
+							sharedConfigNamedImports.length > 0 ? sharedConfigNamedImports : undefined,
+						legacyConfigSource: content,
+						sharedFlatConfigImport,
 					});
 				} else {
 					console.error(`Skipping package at ${full} due to failed legacy config load.`);
@@ -333,6 +357,204 @@ async function findLegacyConfigs(
 		await walk(path.join(repoRoot, top));
 	}
 	return results;
+}
+
+/**
+ * Serialize a value to JavaScript/TypeScript code.
+ * Unlike JSON.stringify, this preserves unquoted object keys and can handle special markers.
+ */
+function serializeValue(value: unknown, indent: string = ""): string {
+	if (value === null) return "null";
+	if (value === undefined) return "undefined";
+
+	if (typeof value === "string") {
+		// Check if this is a special marker for a variable reference
+		if (value.startsWith("__SPREAD__")) {
+			const varName = value.substring("__SPREAD__".length);
+			return `...${varName}`;
+		}
+		return JSON.stringify(value);
+	}
+
+	if (typeof value === "number" || typeof value === "boolean") {
+		return String(value);
+	}
+
+	if (Array.isArray(value)) {
+		if (value.length === 0) return "[]";
+
+		// Check if any items are spread operators
+		const hasSpread = value.some(
+			(item) => typeof item === "string" && item.startsWith("__SPREAD__"),
+		);
+
+		if (hasSpread) {
+			// Need to handle spread operators specially
+			const items: string[] = [];
+			for (const item of value) {
+				if (typeof item === "string" && item.startsWith("__SPREAD__")) {
+					items.push(serializeValue(item, indent));
+				} else {
+					items.push(serializeValue(item, indent));
+				}
+			}
+			return `[${items.join(", ")}]`;
+		}
+
+		// Simple array without spreads
+		const items = value.map((item) => serializeValue(item, indent));
+		if (items.join(", ").length < 60) {
+			return `[${items.join(", ")}]`;
+		}
+		return `[\n${indent}\t${items.join(`,\n${indent}\t`)},\n${indent}]`;
+	}
+
+	if (typeof value === "object") {
+		const entries = Object.entries(value);
+		if (entries.length === 0) return "{}";
+
+		const lines = entries.map(([key, val]) => {
+			// Always quote keys for consistency with existing style
+			const keyStr = JSON.stringify(key);
+			return `${indent}\t${keyStr}: ${serializeValue(val, indent + "\t")}`;
+		});
+
+		return `{\n${lines.join(",\n")},\n${indent}}`;
+	}
+
+	return JSON.stringify(value);
+}
+
+/**
+ * Detect which named exports from shared configs are referenced in the legacy config source.
+ */
+function detectSharedConfigImports(
+	legacyConfigSource: string,
+	sharedConfig: SharedConfigTarget,
+): string[] {
+	const imports: string[] = [];
+
+	// Get the named exports from the shared config
+	const rawExports = sharedConfig.rawModuleExports as Record<string, unknown>;
+	if (!rawExports) return imports;
+
+	for (const [key, value] of Object.entries(rawExports)) {
+		if (key === "lintConfig") continue;
+		if (!Array.isArray(value)) continue;
+
+		// Check if this variable is referenced in the source
+		// Look for patterns like: importInternalModulesAllowedForTest.concat(...)
+		// or destructured: const { importInternalModulesAllowedForTest } = require(...)
+		const regex = new RegExp(`\\b${key}\\b`);
+		if (regex.test(legacyConfigSource)) {
+			imports.push(key);
+		}
+	}
+
+	return imports;
+}
+
+/**
+ * Parse source code to find concat patterns and map them to rules.
+ * Returns a map of rule names to ALL concat patterns found (can be multiple per rule).
+ */
+function findConcatPatternsInSource(
+	legacyConfigSource: string,
+	namedImports: string[],
+): Map<string, Array<{ varName: string; additionalItems: string[]; sourceIndex: number }>> {
+	const patterns = new Map<
+		string,
+		Array<{ varName: string; additionalItems: string[]; sourceIndex: number }>
+	>();
+
+	for (const importName of namedImports) {
+		// Pattern 1: "rule-name": ["error", { allow: importName.concat([...]) }]
+		const concatPattern = new RegExp(
+			`"([^"]+)":\\s*\\[[^\\[]*\\{[^}]*allow:\\s*${importName}\\.concat\\(\\[([^\\]]*)\\]\\)`,
+			"gs",
+		);
+
+		let match;
+		while ((match = concatPattern.exec(legacyConfigSource)) !== null) {
+			const ruleName = match[1];
+			const concatContent = match[2];
+			const sourceIndex = match.index;
+
+			// Extract string literals
+			const additionalItems: string[] = [];
+			const stringMatches = Array.from(concatContent.matchAll(/"([^"]+)"|'([^']+)'/g));
+			for (const strMatch of stringMatches) {
+				const str = strMatch[1] || strMatch[2];
+				additionalItems.push(str);
+			}
+
+			if (!patterns.has(ruleName)) {
+				patterns.set(ruleName, []);
+			}
+			patterns.get(ruleName)!.push({ varName: importName, additionalItems, sourceIndex });
+		}
+
+		// Pattern 2: "rule-name": ["error", { allow: importName }] (direct reference, no concat)
+		const directPattern = new RegExp(
+			`"([^"]+)":\\s*\\[[^\\[]*\\{[^}]*allow:\\s*${importName}\\s*[,}]`,
+			"gs",
+		);
+
+		while ((match = directPattern.exec(legacyConfigSource)) !== null) {
+			const ruleName = match[1];
+			const sourceIndex = match.index;
+
+			if (!patterns.has(ruleName)) {
+				patterns.set(ruleName, []);
+			}
+			// Check if we already have a pattern for this rule at this location (concat takes precedence)
+			const existing = patterns.get(ruleName)!;
+			const alreadyExists = existing.some((p) => Math.abs(p.sourceIndex - sourceIndex) < 100);
+			if (!alreadyExists) {
+				patterns
+					.get(ruleName)!
+					.push({ varName: importName, additionalItems: [], sourceIndex });
+			}
+		}
+	}
+
+	return patterns;
+}
+
+/**
+ * Process a rule configuration value, checking if it matches a concat pattern.
+ */
+function processRuleConfigForConcat(
+	ruleName: string,
+	ruleConfig: unknown,
+	concatPatterns: Map<
+		string,
+		Array<{ varName: string; additionalItems: string[]; sourceIndex: number }>
+	>,
+): unknown {
+	const patternList = concatPatterns.get(ruleName);
+	if (!patternList || patternList.length === 0) return ruleConfig;
+
+	// Use the first pattern and remove it (for cases where same rule appears multiple times)
+	const pattern = patternList.shift()!;
+
+	// If this rule has a concat pattern, process it
+	if (Array.isArray(ruleConfig) && ruleConfig.length >= 2) {
+		const [severity, options, ...rest] = ruleConfig;
+		if (options && typeof options === "object" && "allow" in options) {
+			// Replace the allow array with our spread pattern
+			return [
+				severity,
+				{
+					...options,
+					"allow": ["__SPREAD__" + pattern.varName, ...pattern.additionalItems],
+				},
+				...rest,
+			];
+		}
+	}
+
+	return ruleConfig;
 }
 
 function buildSharedConfigContent(
@@ -399,14 +621,14 @@ ${typeImport}`;
 	// Generate named exports for reusable lists
 	for (const [name, value] of Object.entries(namedExports)) {
 		const arrayType = typescript ? `: string[]` : "";
-		configContent += `export const ${name}${arrayType} = ${JSON.stringify(value, null, "\t")};\n\n`;
+		configContent += `export const ${name}${arrayType} = ${serializeValue(value, "")};\n\n`;
 	}
 
 	configContent += `${jsdocType}const config${configType} = [\n`;
 
 	// Add rules
 	if (config.rules && Object.keys(config.rules).length > 0) {
-		configContent += `\t{\n\t\trules: ${JSON.stringify(config.rules, null, 2).replace(/\n/g, "\n\t\t")},\n\t},\n`;
+		configContent += `\t{\n\t\trules: ${serializeValue(config.rules, "\t\t")},\n\t},\n`;
 	}
 
 	// Add overrides
@@ -418,13 +640,13 @@ ${typeImport}`;
 		}>) {
 			configContent += `\t{\n`;
 			if (override.files) {
-				configContent += `\t\tfiles: ${JSON.stringify(override.files)},\n`;
+				configContent += `\t\tfiles: ${serializeValue(override.files, "\t\t")},\n`;
 			}
 			if (override.excludedFiles) {
-				configContent += `\t\tignores: ${JSON.stringify(override.excludedFiles)},\n`;
+				configContent += `\t\tignores: ${serializeValue(override.excludedFiles, "\t\t")},\n`;
 			}
 			if (override.rules) {
-				configContent += `\t\trules: ${JSON.stringify(override.rules, null, 2).replace(/\n/g, "\n\t\t")},\n`;
+				configContent += `\t\trules: ${serializeValue(override.rules, "\t\t")},\n`;
 			}
 			configContent += `\t},\n`;
 		}
@@ -505,6 +727,8 @@ function buildFlatConfigContent(
 	typescript: boolean = false,
 	extendedLocalConfig?: { rules?: Record<string, unknown>; overrides?: unknown[] },
 	sharedFlatConfigImport?: string,
+	sharedConfigNamedImports?: string[],
+	legacyConfigSource?: string,
 ): string {
 	const flatSource = path
 		.relative(
@@ -523,7 +747,11 @@ function buildFlatConfigContent(
 	// Build imports
 	let imports = `${typeImport}import { ${variant} } from "${importPath}";\n`;
 	if (sharedFlatConfigImport) {
-		imports += `import sharedConfig from "${sharedFlatConfigImport}";\n`;
+		if (sharedConfigNamedImports && sharedConfigNamedImports.length > 0) {
+			imports += `import sharedConfig, { ${sharedConfigNamedImports.join(", ")} } from "${sharedFlatConfigImport}";\n`;
+		} else {
+			imports += `import sharedConfig from "${sharedFlatConfigImport}";\n`;
+		}
 	}
 
 	// In finalize mode, generate a clean config without the "GENERATED FILE" boilerplate
@@ -544,6 +772,40 @@ ${imports}
 `;
 
 	let configContent = header;
+
+	// Parse source code to find concat patterns
+	let concatPatterns = new Map<
+		string,
+		Array<{ varName: string; additionalItems: string[]; sourceIndex: number }>
+	>();
+	if (legacyConfigSource && sharedConfigNamedImports && sharedConfigNamedImports.length > 0) {
+		concatPatterns = findConcatPatternsInSource(legacyConfigSource, sharedConfigNamedImports);
+
+		// Process rules in the legacy config to apply concat patterns
+		const processRules = (rules: Record<string, unknown>): Record<string, unknown> => {
+			const result: Record<string, unknown> = {};
+			for (const [ruleName, ruleConfig] of Object.entries(rules)) {
+				result[ruleName] = processRuleConfigForConcat(ruleName, ruleConfig, concatPatterns);
+			}
+			return result;
+		};
+
+		// Process main rules
+		if (legacyConfig?.rules) {
+			(legacyConfig as any).rules = processRules(
+				legacyConfig.rules as Record<string, unknown>,
+			);
+		}
+
+		// Process override rules
+		if (legacyConfig?.overrides && Array.isArray(legacyConfig.overrides)) {
+			for (const override of legacyConfig.overrides as any[]) {
+				if (override.rules) {
+					override.rules = processRules(override.rules);
+				}
+			}
+		}
+	}
 
 	// Check if there are local rules or overrides to include
 	// If using a shared config, don't merge rules from extendedLocalConfig since they come from the shared config
@@ -620,18 +882,18 @@ ${imports}
 
 			// Add non-type-aware rules to all files
 			if (Object.keys(otherRules).length > 0) {
-				configContent += `\t{\n\t\trules: ${JSON.stringify(otherRules, null, 2).replace(/\n/g, "\n\t\t")},\n\t},\n`;
+				configContent += `\t{\n\t\trules: ${serializeValue(otherRules, "\t\t")},\n\t},\n`;
 			}
 
 			// Add type-aware rules only to non-test files
 			if (Object.keys(typeAwareRules).length > 0) {
-				configContent += `\t{\n\t\tfiles: ["**/*.{ts,tsx}"],\n\t\tignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],\n\t\trules: ${JSON.stringify(typeAwareRules, null, 2).replace(/\n/g, "\n\t\t")},\n\t},\n`;
+				configContent += `\t{\n\t\tfiles: ["**/*.{ts,tsx}"],\n\t\tignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],\n\t\trules: ${serializeValue(typeAwareRules, "\t\t")},\n\t},\n`;
 			}
 
 			// Add react/react-hooks rules scoped to jsx/tsx files where the plugin is loaded
 			// The base config (minimal-deprecated.js) loads react and react-hooks plugins for *.jsx and *.tsx files
 			if (Object.keys(reactRules).length > 0) {
-				configContent += `\t{\n\t\tfiles: ["**/*.jsx", "**/*.tsx"],\n\t\trules: ${JSON.stringify(reactRules, null, 2).replace(/\n/g, "\n\t\t")},\n\t},\n`;
+				configContent += `\t{\n\t\tfiles: ["**/*.jsx", "**/*.tsx"],\n\t\trules: ${serializeValue(reactRules, "\t\t")},\n\t},\n`;
 			}
 		}
 
@@ -647,17 +909,17 @@ ${imports}
 			}>) {
 				configContent += `\t{\n`;
 				if (override.files) {
-					configContent += `\t\tfiles: ${JSON.stringify(override.files)},\n`;
+					configContent += `\t\tfiles: ${serializeValue(override.files, "\t\t")},\n`;
 				}
 				if (override.excludedFiles) {
-					configContent += `\t\tignores: ${JSON.stringify(override.excludedFiles)},\n`;
+					configContent += `\t\tignores: ${serializeValue(override.excludedFiles, "\t\t")},\n`;
 				}
 				// Handle parserOptions.project in overrides
 				if (override.parserOptions?.project) {
 					configContent += `\t\tlanguageOptions: {\n`;
 					configContent += `\t\t\tparserOptions: {\n`;
 					configContent += `\t\t\t\tprojectService: false,\n`;
-					configContent += `\t\t\t\tproject: ${JSON.stringify(override.parserOptions.project)},\n`;
+					configContent += `\t\t\t\tproject: ${serializeValue(override.parserOptions.project, "\t\t\t\t")},\n`;
 					configContent += `\t\t\t},\n`;
 					configContent += `\t\t},\n`;
 					// Check if this override targets test files
@@ -667,7 +929,7 @@ ${imports}
 					}
 				}
 				if (override.rules) {
-					configContent += `\t\trules: ${JSON.stringify(override.rules, null, 2).replace(/\n/g, "\n\t\t")},\n`;
+					configContent += `\t\trules: ${serializeValue(override.rules, "\t\t")},\n`;
 				}
 				configContent += `\t},\n`;
 			}
@@ -697,7 +959,7 @@ ${imports}
 				configContent += `\t\tlanguageOptions: {\n`;
 				configContent += `\t\t\tparserOptions: {\n`;
 				configContent += `\t\t\t\tprojectService: false,\n`;
-				configContent += `\t\t\t\tproject: ${JSON.stringify(projectPaths)},\n`;
+				configContent += `\t\t\t\tproject: ${serializeValue(projectPaths, "\t\t\t\t")},\n`;
 				configContent += `\t\t\t},\n`;
 				configContent += `\t\t},\n`;
 				configContent += `\t},\n`;
@@ -709,7 +971,7 @@ ${imports}
 		if (hasEslintIgnore) {
 			configContent += `\t// Migrated from .eslintignore\n`;
 			configContent += `\t{\n`;
-			configContent += `\t\tignores: ${JSON.stringify(eslintIgnorePatterns, null, 2).replace(/\n/g, "\n\t\t")},\n`;
+			configContent += `\t\tignores: ${serializeValue(eslintIgnorePatterns, "\t\t")},\n`;
 			configContent += `\t},\n`;
 		}
 
@@ -760,6 +1022,8 @@ async function writeFlatConfigs(
 			typescript,
 			t.extendedLocalConfig,
 			t.sharedFlatConfigImport,
+			t.sharedConfigNamedImports,
+			t.legacyConfigSource,
 		);
 		await fs.writeFile(outPath, content, "utf8");
 		console.log(`  Generated: ${path.relative(repoRoot, outPath)} (${t.flatVariant})`);

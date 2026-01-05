@@ -17,6 +17,7 @@ import type {
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITestObjectProvider,
@@ -61,7 +62,7 @@ describeCompat(
 
 		// A Test Data Object that exposes some basic functionality.
 		class TestDataObject extends DataObject {
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
 

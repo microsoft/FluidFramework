@@ -12,7 +12,7 @@ import {
 	RevisionTagSchema,
 	SessionIdSchema,
 } from "../core/index.js";
-import { type Brand, brandedNumberType } from "../util/index.js";
+import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
 import type { EncodedBranchId } from "./branch.js";
 
 /**
@@ -123,7 +123,7 @@ export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: Chang
 /**
  * The format version for the EditManager.
  */
-export const EditManagerFormatVersion = {
+export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", {
 	/**
 	 * Introduced and retired prior to 2.0.
 	 * Reading and writing capability removed in 2.73.0.
@@ -161,18 +161,15 @@ export const EditManagerFormatVersion = {
 	 * Only used for testing shared branches.
 	 */
 	vSharedBranches: "shared-branches|v0.1",
-} as const;
-export type EditManagerFormatVersion = Brand<
-	(typeof EditManagerFormatVersion)[keyof typeof EditManagerFormatVersion],
-	"EditManagerFormatVersion"
->;
+});
+export type EditManagerFormatVersion = Values<typeof EditManagerFormatVersion>;
 export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> =
 	new Set([
 		EditManagerFormatVersion.v3,
 		EditManagerFormatVersion.v4,
 		EditManagerFormatVersion.vSharedBranches,
-	] as EditManagerFormatVersion[]);
+	]);
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(
-	Object.values(EditManagerFormatVersion) as EditManagerFormatVersion[],
+	Object.values(EditManagerFormatVersion),
 );
 /* eslint-enable @typescript-eslint/explicit-function-return-type */

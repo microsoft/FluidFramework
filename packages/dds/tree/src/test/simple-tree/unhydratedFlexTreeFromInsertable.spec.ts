@@ -24,11 +24,13 @@ import {
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
 	getKernel,
+	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import {
 	createFieldSchema,
 	FieldKind,
 	getDefaultProvider,
+	type DefaultProvider,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
 import {
@@ -38,10 +40,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/unhydratedFlexTreeFromInsertable.js";
 import { brand } from "../../util/index.js";
-import {
-	MockNodeIdentifierManager,
-	type FlexTreeHydratedContextMinimal,
-} from "../../feature-libraries/index.js";
+import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import {
 	CompatibilityLevel,
 	contentSchemaSymbol,
@@ -53,9 +52,8 @@ import {
 } from "../../simple-tree/core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../simple-tree/createContext.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { prepareContentForHydration } from "../../simple-tree/prepareForInsertion.js";
 import { hydrate } from "./utils.js";
+import { createSnapshotCompressor, getView } from "../utils.js";
 
 describe("unhydratedFlexTreeFromInsertable", () => {
 	it("string", () => {
@@ -1012,44 +1010,79 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
-		it("Populates identifier field with the default identifier provider", () => {
-			const nodeKeyManager = new MockNodeIdentifierManager();
+		// This checks that DefaultProvider is used correctly.
+		// Currently this mainly matters for identifiers, but this test validates that it works generally.
+		it("Uses default provider global and context", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.object("object", {
-				a: schemaFactory.identifier,
+
+			const log: string[] = [];
+
+			const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
+				(
+					context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
+				): UnhydratedFlexTreeNode[] => {
+					const s: string = context === "UseGlobalContext" ? "Global" : "Local";
+					log.push(s);
+					return [unhydratedFlexTreeFromInsertable(s, schemaFactory.string)];
+				},
+			);
+			const field = createFieldSchema(FieldKind.Identifier, schemaFactory.string, {
+				defaultProvider: defaultIdentifierProvider,
 			});
 
-			const tree = {};
+			class Schema extends schemaFactory.object("object", {
+				a: field,
+			}) {}
 
-			const actual = unhydratedFlexTreeFromInsertable(tree, schema);
-			const dummy = hydrate(schema, {});
-			const dummyContext = getKernel(dummy).context.flexContext;
-			assert(dummyContext.isHydrated());
-			// Do the default allocation using this context
-			const context: FlexTreeHydratedContextMinimal = {
-				checkout: dummyContext.checkout,
-				nodeKeyManager,
-			};
+			{
+				const node = new Schema({});
+				assert.deepEqual(log, []);
+				const id = node.a;
+				assert.deepEqual(log, ["Global"]);
+				assert.equal(id, "Global");
+				log.length = 0;
+			}
+			{
+				const node = new Schema({});
+				assert.deepEqual(log, []);
+				hydrate(Schema, node);
+				assert.deepEqual(log, ["Local"]);
+				const id = node.a;
+				assert.deepEqual(log, ["Local"]);
+				assert.equal(id, "Local");
+			}
+		});
 
-			prepareContentForHydration([actual], () => {}, context);
+		// This checks that identifiers are populated lazily from the view ensuring they can be compressed.
+		// This ensures the public facing part of this is working end to end.
+		it("Populates identifier field lazily with the view's compressor when inserting", () => {
+			const schemaFactory = new SchemaFactory("test");
+			class Schema extends schemaFactory.object("object", {
+				a: schemaFactory.identifier,
+			}) {}
 
-			const expected: MapTree = {
-				type: brand("test.object"),
-				fields: new Map<FieldKey, MapTree[]>([
-					[
-						brand("a"),
-						[
-							{
-								type: brand(stringSchema.identifier),
-								value: nodeKeyManager.getId(0),
-								fields: new Map(),
-							},
-						],
-					],
-				]),
-			};
+			// Create the node, with the uninitialized identifier field.
+			// If accessed now, it would allocate a random v4 uuid.
+			const node = new Schema({});
 
-			assert.deepEqual(deepCopyMapTree(actual), expected);
+			const view = getView(
+				new TreeViewConfiguration({ schema: SchemaFactory.optional(Schema) }),
+				{ idCompressor: createSnapshotCompressor() },
+			);
+
+			view.initialize(undefined);
+
+			// This should populate the identifier using the view's compressor.
+			view.root = node;
+
+			// If working correctly, the identifier is allocated from the view snapshot compressor and should be deterministic,
+			// and based off of snapshotSessionId.
+			// If it is instead allocated early without using the view, it will be a random v4 uuid and fail this check.
+			// Due to some other source of id allocation (like revision tags) there may be a small number of other ids allocated resulting in the last digit not being 1.
+			// Those should be deterministic, but might be impacted by some changes elsewhere.
+			// Since this test only cares that the id came from the view's compressor, we just check for the known prefix.
+			// This reduces the chance of unrelated changes breaking this test for no reason.
+			assert(view.root.a.includes("beefbeef-beef-4000-8000-0000000000"));
 		});
 
 		it("Populates optional field with the default optional provider.", () => {

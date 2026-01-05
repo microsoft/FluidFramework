@@ -20,6 +20,11 @@ const config: Linter.Config[] = [
 		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
 			"react/no-deprecated": "off",
+			"react-hooks/immutability": "warn",
+			"react-hooks/refs": "warn",
+			"react-hooks/rules-of-hooks": "warn",
+			"react-hooks/set-state-in-effect": "warn",
+			"react-hooks/static-components": "warn",
 		},
 	},
 	{

@@ -23,11 +23,11 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 	 *
 	 * This method is used to perform Fluid object setup, which can include setting an initial schema or initial values.
 	 */
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		this.root.set(diceValueKey, 1);
 	}
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		this.root.on("valueChanged", (changed: IValueChanged) => {
 			if (changed.key === diceValueKey) {
 				this.emit("diceRolled");
@@ -35,12 +35,11 @@ export class DiceRoller extends DataObject implements IDiceRoller {
 		});
 	}
 
-	public get value() {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return this.root.get(diceValueKey);
+	public get value(): number {
+		return this.root.get(diceValueKey) as number;
 	}
 
-	public readonly roll = () => {
+	public readonly roll = (): void => {
 		const rollValue = Math.floor(Math.random() * 6) + 1;
 		this.root.set(diceValueKey, rollValue);
 	};

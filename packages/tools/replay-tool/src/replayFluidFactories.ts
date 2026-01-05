@@ -104,11 +104,11 @@ export class ReplayDataStoreFactory
 {
 	public readonly type = "@fluid-internal/replay-tool";
 
-	public get IFluidDataStoreFactory() {
+	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
 		return this;
 	}
 
-	public get IFluidDataStoreRegistry() {
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
 		return this;
 	}
 
@@ -124,7 +124,9 @@ export class ReplayDataStoreFactory
 		private readonly runtimeClassArg: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 	) {}
 
-	public async instantiateDataStore(context: IFluidDataStoreContext) {
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+	): Promise<FluidDataStoreRuntime> {
 		return new this.runtimeClassArg(
 			context,
 			new Map(allDdsFactories.map((factory) => [factory.type, factory])),

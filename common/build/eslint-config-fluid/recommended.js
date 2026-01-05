@@ -46,6 +46,9 @@ module.exports = {
 
 		// #region `unicorn` rule overrides
 
+		// TODO: Enable this rule and fix violations once eslint9 upgrade is done
+		"unicorn/consistent-function-scoping": "warn",
+
 		/**
 		 * TODO: Consider enabling in the future.
 		 */

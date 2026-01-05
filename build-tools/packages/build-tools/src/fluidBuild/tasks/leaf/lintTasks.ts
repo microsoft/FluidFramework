@@ -16,16 +16,6 @@ import { TscDependentTask } from "./tscTask";
 const sharedEslintConfigPath =
 	process.env.FLUID_BUILD_ESLINT_CONFIG_PATH ?? "common/build/eslint-config-fluid";
 
-export class TsLintTask extends TscDependentTask {
-	protected get configFileFullPaths() {
-		return [this.getPackageFileFullPath("tslint.json")];
-	}
-
-	protected async getToolVersion() {
-		return getInstalledPackageVersion("tslint", this.node.pkg.directory);
-	}
-}
-
 export class EsLintTask extends TscDependentTask {
 	private _configFileFullPath: string | undefined;
 	private _sharedConfigFiles: string[] | undefined;

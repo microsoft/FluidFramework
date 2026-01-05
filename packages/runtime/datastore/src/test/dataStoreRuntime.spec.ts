@@ -318,7 +318,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		);
 
 		// Resubmit the op (simulating reconnect). Should still be dirty
-		runtime.reSubmit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+		runtime.reSubmit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined, false);
 		assert.strictEqual(
 			runtime.isDirty,
 			true,
@@ -350,7 +350,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		);
 
 		// Resubmit the op (simulating reconnect). Should be clean since resubmit didn't result in a new op
-		runtime.reSubmit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+		runtime.reSubmit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined, false);
 		assert.strictEqual(
 			runtime.isDirty,
 			false,
@@ -372,7 +372,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after attach op");
 
 		// Resubmit same attach op
-		runtime.reSubmit(DataStoreMessageType.Attach, attachMessage, undefined);
+		runtime.reSubmit(DataStoreMessageType.Attach, attachMessage, undefined, false);
 		assert.strictEqual(
 			runtime.isDirty,
 			true,

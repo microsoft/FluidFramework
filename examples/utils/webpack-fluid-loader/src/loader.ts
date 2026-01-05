@@ -101,7 +101,7 @@ export type RouteOptions =
 	| IOdspRouteOptions;
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
-function makeSideBySideDiv(divId: string) {
+function makeSideBySideDiv(divId: string): HTMLDivElement {
 	const div = document.createElement("div");
 	div.style.flexGrow = "1";
 	div.style.width = "50%"; // ensure the divs don't encroach on each other
@@ -322,7 +322,7 @@ async function getFluidObjectAndRender(
 	container: IContainer,
 	url: string,
 	div: HTMLDivElement,
-) {
+): Promise<void> {
 	const entryPoint = await container.getEntryPoint();
 
 	let fluidObject: FluidObject<IFluidMountableView>;
@@ -369,9 +369,9 @@ async function attachContainer(
 	manualAttach: boolean,
 	testOrderer: boolean,
 	shouldUseContainerId: boolean,
-) {
+): Promise<IContainer> {
 	// This is called once loading is complete to replace the url in the address bar with the new `url`.
-	const replaceUrl = (resolvedUrl: IResolvedUrl | undefined) => {
+	const replaceUrl = (resolvedUrl: IResolvedUrl | undefined): void => {
 		let [docUrl, title] = [url, documentId];
 		if (shouldUseContainerId) {
 			// for a r11s and t9s container we need to use the actual ID
