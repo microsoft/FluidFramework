@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal";
 import type {
@@ -25,6 +26,7 @@ import {
 	llmDefault,
 	resolveShortNameCollisions,
 	unqualifySchema,
+	filterIterable,
 } from "./utils.js";
 
 interface BoundMembers {
@@ -73,14 +75,16 @@ export function renderSchemaTypeScript(
 	let hasHelperMethods = false;
 
 	// Resolve short name collisions for all named schemas
-	const namedIdentifiers = [...definitions.keys()].filter((element) => isNamedSchema(element));
+	const namedIdentifiers = [...filterIterable(definitions.keys(), isNamedSchema)];
 	const collisionResolvedNames = resolveShortNameCollisions(namedIdentifiers);
 
-	for (const identifier of namedIdentifiers) {
-		const resolvedName = collisionResolvedNames.get(identifier);
-		if (resolvedName !== undefined) {
-			friendlyNames.set(identifier, resolvedName);
-		}
+	for (const [i, identifier] of namedIdentifiers.entries()) {
+		const resolvedName = collisionResolvedNames[i];
+		assert(
+			resolvedName !== undefined,
+			"Collision resolved name should exist for each identifier.",
+		);
+		friendlyNames.set(identifier, resolvedName);
 	}
 
 	const declarations: string[] = [];

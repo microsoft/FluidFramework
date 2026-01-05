@@ -56,6 +56,23 @@ export function* mapIterable<T, U>(
 }
 
 /**
+ * Filter an iterable, returning only elements that match the filter condition
+ * @param iterable - the iterable to filter
+ * @param filterCondition - the filter condition function to test each element
+ * @returns a new iterable of elements that pass the filter condition
+ */
+export function* filterIterable<T>(
+	iterable: Iterable<T>,
+	filterCondition: (t: T) => boolean,
+): IterableIterator<T> {
+	for (const t of iterable) {
+		if (filterCondition(t)) {
+			yield t;
+		}
+	}
+}
+
+/**
  * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
  * @param map - The map to query/update
  * @param key - The key to lookup in the map
@@ -205,65 +222,55 @@ export function unqualifySchema(schemaIdentifier: string): string {
 
 /**
  * Resolves short name collisions by appending counters to colliding short names.
- * @param identifiers - An array of schema identifiers to be converted to unique short names.
- * @returns A map from each identifier to its unique, collision-resolved short name
+ * @param identifiers - An array of full unmodified schema identifiers to be converted to unique short names.
+ * @returns An array of unique, collision-resolved short names (preserving length and index order as input)
  *
  * @remarks
  * When multiple identifiers produce the same short name, the colliding identifiers get a counter appended to its name.
  * Non-colliding identifiers keep their original short name.
  * The algorithm ensures collision-resolved names don't conflict with other existing short names.
- * Example:
- * - "scope.Foo" and "scope2.Foo" resolve to "Foo_1" and "Foo_2"
- * - If "scope3.Foo_1" also exists, it stays as "Foo_1" (no collision), but the other "Foo" instances will resolve to "Foo_2" and "Foo_3" to avoid conflicts.
+ * Counters always start at 1 (suffix `_1`) and increment, skipping over any short names that already exist (including naturally-suffixed names such as `"Foo_1"`).
+ * Examples:
+ * - If only `"scope.Foo"` and `"scope2.Foo"` exist, they resolve to `["Foo_1", "Foo_2"]`.
+ * - If `"scope.Foo"`, `"scope2.Foo"`, and `"scope3.Foo_1"` all exist, they resolve to `["Foo_2", "Foo_3", "Foo_1"]` (indices preserved).
  */
-export function resolveShortNameCollisions(identifiers: string[]): Map<string, string> {
-	const shortNameToIdentifiers = new Map<string, string[]>();
-	const allShortNames = new Set<string>();
+export function resolveShortNameCollisions<T extends readonly string[]>(
+	identifiers: T,
+): string[] & { length: T["length"] } {
+	const shortNameToIdentifiers = new Map<string, [index: number, identifier: string][]>();
 
-	// Populate the map of short names to their corresponding identifiers
-	for (const identifier of identifiers) {
+	// Populate the map of short names to their corresponding identifiers with indices
+	for (const [i, identifier] of identifiers.entries()) {
 		const shortName = unqualifySchema(identifier);
-		allShortNames.add(shortName);
-		if (shortNameToIdentifiers.has(shortName) === false) {
-			shortNameToIdentifiers.set(shortName, []);
-		}
-		const identifierList = shortNameToIdentifiers.get(shortName);
-		if (identifierList !== undefined) {
-			identifierList.push(identifier);
-		}
+		const identifierList = getOrCreate(shortNameToIdentifiers, shortName, () => []);
+		identifierList.push([i, identifier]);
 	}
 
-	// Append and underscore and counter to colliding short names.
-	const result = new Map<string, string>();
+	const result: string[] = [];
+
+	// Append an underscore and counter to colliding short names.
 	for (const [shortName, identifierList] of shortNameToIdentifiers) {
 		if (identifierList.length === 1) {
 			// No collision, unchanged short name.
-			for (const identifier of identifierList) {
-				result.set(identifier, shortName);
+			for (const [index] of identifierList) {
+				result[index] = shortName;
 			}
 		} else {
 			// Collision, append counters to conflicting short names
 			let counter = 1;
-			for (const identifier of identifierList) {
+			for (const [index] of identifierList) {
 				let candidateName = `${shortName}_${counter}`;
-				while (allShortNames.has(candidateName) && candidateName !== shortName) {
+				while (shortNameToIdentifiers.has(candidateName)) {
 					counter += 1;
 					candidateName = `${shortName}_${counter}`;
 				}
-				result.set(identifier, candidateName);
+				result[index] = candidateName;
 				counter += 1;
 			}
 		}
 	}
 
-	return result;
-}
-
-/**
- * Converts a TreeNodeSchema set to an array of their identifiers.
- */
-export function schemaSetToIdentifiers(schemas: Set<TreeNodeSchema>): string[] {
-	return Array.from(schemas, (s) => s.identifier);
+	return result as string[] & { length: T["length"] };
 }
 
 /**

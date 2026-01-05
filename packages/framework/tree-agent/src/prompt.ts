@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { oob } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
 import type { ImplicitFieldSchema, TreeMapNode, TreeNodeSchema } from "@fluidframework/tree";
 import type { ReadableField } from "@fluidframework/tree/alpha";
@@ -17,7 +17,6 @@ import {
 	communize,
 	findSchemas,
 	resolveShortNameCollisions,
-	schemaSetToIdentifiers,
 } from "./utils.js";
 
 /**
@@ -35,14 +34,17 @@ export function getPrompt(args: {
 	// Inspect the schema to determine what kinds of nodes are possible - this will affect how much information we need to include in the prompt.
 	const rootTypes = [...normalizeFieldSchema(schema).allowedTypeSet];
 	const allSchemas = findSchemas(schema);
-	const schemaIdentifiers = schemaSetToIdentifiers(allSchemas);
-	const collisionResolvedIdentifiers = resolveShortNameCollisions(schemaIdentifiers);
+	const schemasArray = [...allSchemas];
+	const schemaIdentifiers = schemasArray.map((s) => s.identifier);
+	const collisionResolvedIdentifiersArray = resolveShortNameCollisions(schemaIdentifiers);
 	const collisionResolvedNames = new Map<TreeNodeSchema, string>();
-	for (const schemaNode of allSchemas) {
-		const resolvedName = collisionResolvedIdentifiers.get(schemaNode.identifier);
-		if (resolvedName !== undefined) {
-			collisionResolvedNames.set(schemaNode, resolvedName);
-		}
+	for (const [i, schemaNode] of schemasArray.entries()) {
+		const resolvedName = collisionResolvedIdentifiersArray[i];
+		assert(
+			resolvedName !== undefined,
+			"Expected collision resolved name to exist for each schema",
+		);
+		collisionResolvedNames.set(schemaNode, resolvedName);
 	}
 
 	const rootTypeUnion = `${rootTypes.map((t) => collisionResolvedNames.get(t) ?? getFriendlyName(t)).join(" | ")}`;
