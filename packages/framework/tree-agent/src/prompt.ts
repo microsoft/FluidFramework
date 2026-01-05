@@ -10,6 +10,7 @@ import type { ReadableField } from "@fluidframework/tree/alpha";
 import { getSimpleSchema } from "@fluidframework/tree/alpha";
 import { normalizeFieldSchema } from "@fluidframework/tree/internal";
 
+import { PromptBuilder, InterfaceBuilder } from "./promptBuilder.js";
 import type { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
 import { getFriendlyName, communize, findSchemas } from "./utils.js";
@@ -270,29 +271,48 @@ Finally, double check that the edits would accomplish the user's request (if it 
 
 `;
 
-	const prompt = `You are a helpful assistant collaborating with the user on a document. The document state is a JSON tree, and you are able to analyze and edit it.
-The JSON tree adheres to the following Typescript schema:
+	const builder = new PromptBuilder();
 
-\`\`\`typescript
-${typescriptSchemaTypes}
-\`\`\`
+	builder
+		.addParagraph(
+			"You are a helpful assistant collaborating with the user on a document. The document state is a JSON tree, and you are able to analyze and edit it.",
+		)
+		.addParagraph("The JSON tree adheres to the following Typescript schema:")
+		.addBlank()
+		.addTypeScriptBlock(typescriptSchemaTypes);
 
-If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
-When answering such a question, DO NOT answer with information that is not part of the document unless requested to do so.
+	builder
+		.addBlank()
+		.addParagraph(
+			"If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.",
+		)
+		.addParagraph(
+			"When answering such a question, DO NOT answer with information that is not part of the document unless requested to do so.",
+		);
 
-${editToolName === undefined ? "" : editing}### Application data
+	if (editToolName !== undefined) {
+		builder.addBlank().addRaw(editing);
+	}
 
-${
-	domainHints === undefined
-		? ""
-		: `\nThe application supplied the following additional instructions: ${domainHints}`
-}
-The current state of \`context.root\` (a \`${field === undefined ? "undefined" : getFriendlyName(Tree.schema(field))}\`) is:
+	builder.addBlank().addHeading(3, "Application data");
 
-\`\`\`JSON
-${stringified}
-\`\`\``;
-	return prompt;
+	if (domainHints !== undefined) {
+		builder
+			.addBlank()
+			.addParagraph(
+				`The application supplied the following additional instructions: ${domainHints}`,
+			);
+	}
+
+	builder
+		.addBlank()
+		.addParagraph(
+			`The current state of \`context.root\` (a \`${field === undefined ? "undefined" : getFriendlyName(Tree.schema(field))}\`) is:`,
+		)
+		.addBlank()
+		.addJsonBlock(stringified);
+
+	return builder.build();
 }
 
 /**
@@ -353,133 +373,147 @@ export function stringifyTree(tree: ReadableField<ImplicitFieldSchema>): string 
  * @privateRemarks TODO: How do we keep this in sync with the actual `TreeArrayNode` docs if/when those docs change?
  */
 function getTreeArrayNodeDocumentation(typeName: string): string {
-	return `/** A special type of array which implements 'readonly T[]' (i.e. it supports all read-only JS array methods) and provides custom array mutation APIs. */
-export interface ${typeName}<T> extends ReadonlyArray<T> {
-	/**
-	 * Inserts new item(s) at a specified location.
-	 * @param index - The index at which to insert \`value\`.
-	 * @param value - The content to insert.
-	 * @throws Throws if \`index\` is not in the range [0, \`array.length\`).
-	 */
-	insertAt(index: number, ...value: readonly T[]): void;
+	const builder = new InterfaceBuilder(
+		typeName,
+		"A special type of array which implements 'readonly T[]' (i.e. it supports all read-only JS array methods) and provides custom array mutation APIs.",
+		["T"],
+		"ReadonlyArray<T>",
+	).enableMultiLineSignatures();
 
-	/**
-	 * Removes the item at the specified location.
-	 * @param index - The index at which to remove the item.
-	 * @throws Throws if \`index\` is not in the range [0, \`array.length\`).
-	 */
-	removeAt(index: number): void;
+	builder.addMethod({
+		name: "insertAt",
+		description: "Inserts new item(s) at a specified location.",
+		parameters: [
+			{ name: "index", type: "number", description: "The index at which to insert `value`" },
+			{
+				name: "value",
+				type: "readonly T[]",
+				description: "The content to insert",
+				isSpread: true,
+			},
+		],
+		throws: ["Throws if `index` is not in the range [0, `array.length`)."],
+	});
 
-	/**
-	 * Removes all items between the specified indices.
-	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the array.
-	 * @param end - The ending index of the range to remove (exclusive). Defaults to \`array.length\`.
-	 * @throws Throws if \`start\` is not in the range [0, \`array.length\`].
-	 * @throws Throws if \`end\` is less than \`start\`.
-	 * If \`end\` is not supplied or is greater than the length of the array, all items after \`start\` are removed.
-	 *
-	 * @remarks
-	 * The default values for start and end are computed when this is called,
-	 * and thus the behavior is the same as providing them explicitly, even with respect to merge resolution with concurrent edits.
-	 * For example, two concurrent transactions both emptying the array with \`node.removeRange()\` then inserting an item,
-	 * will merge to result in the array having both inserted items.
-	 */
-	removeRange(start?: number, end?: number): void;
+	builder.addMethod({
+		name: "removeAt",
+		description: "Removes the item at the specified location.",
+		parameters: [
+			{ name: "index", type: "number", description: "The index at which to remove the item" },
+		],
+		throws: ["Throws if `index` is not in the range [0, `array.length`)."],
+	});
 
-	/**
-	 * Moves the specified item to the desired location in the array.
-	 *
-	 * WARNING - This API is easily misused.
-	 * Please read the documentation for the \`destinationGap\` parameter carefully.
-	 *
-	 * @param destinationGap - The location *between* existing items that the moved item should be moved to.
-	 *
-	 * WARNING - \`destinationGap\` describes a location between existing items *prior to applying the move operation*.
-	 *
-	 * For example, if the array contains items \`[A, B, C]\` before the move, the \`destinationGap\` must be one of the following:
-	 *
-	 * - \`0\` (between the start of the array and \`A\`'s original position)
-	 * - \`1\` (between \`A\`'s original position and \`B\`'s original position)
-	 * - \`2\` (between \`B\`'s original position and \`C\`'s original position)
-	 * - \`3\` (between \`C\`'s original position and the end of the array)
-	 *
-	 * So moving \`A\` between \`B\` and \`C\` would require \`destinationGap\` to be \`2\`.
-	 *
-	 * This interpretation of \`destinationGap\` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
-	 * or relative to the start or end of the array:
-	 *
-	 * - Move to the start of the array: \`array.moveToIndex(0, ...)\` (see also \`moveToStart\`)
-	 * - Move to before some item X: \`array.moveToIndex(indexOfX, ...)\`
-	 * - Move to after some item X: \`array.moveToIndex(indexOfX + 1\`, ...)
-	 * - Move to the end of the array: \`array.moveToIndex(array.length, ...)\` (see also \`moveToEnd\`)
-	 *
-	 * This interpretation of \`destinationGap\` does however make it less obvious how to move an item relative to its current position:
-	 *
-	 * - Move item B before its predecessor: \`array.moveToIndex(indexOfB - 1, ...)\`
-	 * - Move item B after its successor: \`array.moveToIndex(indexOfB + 2, ...)\`
-	 *
-	 * Notice the asymmetry between \`-1\` and \`+2\` in the above examples.
-	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
-	 * If items A and B are adjacent, such that A precedes B,
-	 * then they can be swapped with \`array.moveToIndex(indexOfA, indexOfB)\`.
-	 *
-	 * @param sourceIndex - The index of the item to move.
-	 * @param source - The optional source array to move the item out of (defaults to this array).
-	 * @throws Throws if any of the source index is not in the range [0, \`array.length\`),
-	 * or if the index is not in the range [0, \`array.length\`].
-	 */
-	moveToIndex(destinationGap: number, sourceIndex: number, source?: ${typeName}<T>): void;
+	builder.addMethod({
+		name: "removeRange",
+		description: "Removes all items between the specified indices.",
+		parameters: [
+			{
+				name: "start",
+				type: "number",
+				isOptional: true,
+				description:
+					"The starting index of the range to remove (inclusive). Defaults to the start of the array.",
+			},
+			{
+				name: "end",
+				type: "number",
+				isOptional: true,
+				description:
+					"The ending index of the range to remove (exclusive). Defaults to `array.length`.",
+			},
+		],
+		throws: [
+			"Throws if `start` is not in the range [0, `array.length`].",
+			"Throws if `end` is less than `start`.\nIf `end` is not supplied or is greater than the length of the array, all items after `start` are removed.",
+		],
+		remarks:
+			"The default values for start and end are computed when this is called,\n" +
+			"and thus the behavior is the same as providing them explicitly, even with respect to merge resolution with concurrent edits.\n" +
+			"For example, two concurrent transactions both emptying the array with `node.removeRange()` then inserting an item,\n" +
+			"will merge to result in the array having both inserted items.",
+	});
 
-	/**
-	 * Moves the specified items to the desired location within the array.
-	 *
-	 * WARNING - This API is easily misused.
-	 * Please read the documentation for the \`destinationGap\` parameter carefully.
-	 *
-	 * @param destinationGap - The location *between* existing items that the moved item should be moved to.
-	 *
-	 * WARNING - \`destinationGap\` describes a location between existing items *prior to applying the move operation*.
-	 *
-	 * For example, if the array contains items \`[A, B, C]\` before the move, the \`destinationGap\` must be one of the following:
-	 *
-	 * - \`0\` (between the start of the array and \`A\`'s original position)
-	 * - \`1\` (between \`A\`'s original position and \`B\`'s original position)
-	 * - \`2\` (between \`B\`'s original position and \`C\`'s original position)
-	 * - \`3\` (between \`C\`'s original position and the end of the array)
-	 *
-	 * So moving \`A\` between \`B\` and \`C\` would require \`destinationGap\` to be \`2\`.
-	 *
-	 * This interpretation of \`destinationGap\` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
-	 * or relative to the start or end of the array:
-	 *
-	 * - Move to the start of the array: \`array.moveToIndex(0, ...)\` (see also \`moveToStart\`)
-	 * - Move to before some item X: \`array.moveToIndex(indexOfX, ...)\`
-	 * - Move to after some item X: \`array.moveToIndex(indexOfX + 1\`, ...)
-	 * - Move to the end of the array: \`array.moveToIndex(array.length, ...)\` (see also \`moveToEnd\`)
-	 *
-	 * This interpretation of \`destinationGap\` does however make it less obvious how to move an item relative to its current position:
-	 *
-	 * - Move item B before its predecessor: \`array.moveToIndex(indexOfB - 1, ...)\`
-	 * - Move item B after its successor: \`array.moveToIndex(indexOfB + 2, ...)\`
-	 *
-	 * Notice the asymmetry between \`-1\` and \`+2\` in the above examples.
-	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
-	 * If items A and B are adjacent, such that A precedes B,
-	 * then they can be swapped with \`array.moveToIndex(indexOfA, indexOfB)\`.
-	 *
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The optional source array to move items out of (defaults to this array).
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
-	 * if any of the input indices are not in the range [0, \`array.length\`], or if \`sourceStart\` is greater than \`sourceEnd\`.
-	 */
-	moveRangeToIndex(
-		destinationGap: number,
-		sourceStart: number,
-		sourceEnd: number,
-		source?: ${typeName}<T>,
-	): void;
-}`;
+	const moveWarning =
+		"WARNING - This API is easily misused. Please read the documentation for the `destinationGap` parameter carefully.\n\n" +
+		"WARNING - `destinationGap` describes a location between existing items *prior to applying the move operation*.\n\n" +
+		"For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:\n" +
+		"- `0` (between the start of the array and `A`'s original position)\n" +
+		"- `1` (between `A`'s original position and `B`'s original position)\n" +
+		"- `2` (between `B`'s original position and `C`'s original position)\n" +
+		"- `3` (between `C`'s original position and the end of the array)\n\n" +
+		"So moving `A` between `B` and `C` would require `destinationGap` to be `2`.\n\n" +
+		"This interpretation of `destinationGap` makes it easy to specify the desired destination relative to a sibling item that is not being moved, or relative to the start or end of the array:\n" +
+		"- Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)\n" +
+		"- Move to before some item X: `array.moveToIndex(indexOfX, ...)`\n" +
+		"- Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)\n" +
+		"- Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)\n\n" +
+		"This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:\n" +
+		"- Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`\n" +
+		"- Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`\n\n" +
+		"Notice the asymmetry between `-1` and `+2` in the above examples.\n" +
+		"In such scenarios, it can often be easier to approach such edits by swapping adjacent items:\n" +
+		"If items A and B are adjacent, such that A precedes B, then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.";
+
+	builder.addMethod({
+		name: "moveToIndex",
+		description: "Moves the specified item to the desired location in the array.",
+		parameters: [
+			{
+				name: "destinationGap",
+				type: "number",
+				description:
+					"The location *between* existing items that the moved item should be moved to",
+			},
+			{ name: "sourceIndex", type: "number", description: "The index of the item to move" },
+			{
+				name: "source",
+				type: `${typeName}<T>`,
+				isOptional: true,
+				description:
+					"The optional source array to move the item out of (defaults to this array)",
+			},
+		],
+		throws: [
+			"Throws if any of the source index is not in the range [0, `array.length`),\nor if the index is not in the range [0, `array.length`].",
+		],
+		remarks: moveWarning,
+	});
+
+	builder.addMethod({
+		name: "moveRangeToIndex",
+		description: "Moves the specified items to the desired location within the array.",
+		parameters: [
+			{
+				name: "destinationGap",
+				type: "number",
+				description:
+					"The location *between* existing items that the moved item should be moved to",
+			},
+			{
+				name: "sourceStart",
+				type: "number",
+				description: "The starting index of the range to move (inclusive)",
+			},
+			{
+				name: "sourceEnd",
+				type: "number",
+				description: "The ending index of the range to move (exclusive)",
+			},
+			{
+				name: "source",
+				type: `${typeName}<T>`,
+				isOptional: true,
+				description: "The optional source array to move items out of (defaults to this array)",
+			},
+		],
+		throws: [
+			"Throws if the types of any of the items being moved are not allowed in the destination array,\nif any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.",
+		],
+		remarks: moveWarning,
+	});
+
+	return builder.build();
 }
 
 /**
@@ -488,73 +522,91 @@ export interface ${typeName}<T> extends ReadonlyArray<T> {
  * @privateRemarks TODO: How do we keep this in sync with the actual `TreeMapNode` docs if/when those docs change?
  */
 function getTreeMapNodeDocumentation(typeName: string): string {
-	return `/**
- * A map of string keys to tree objects.
- */
-export interface ${typeName}<T> extends ReadonlyMap<string, T> {
-	/**
-	 * Adds or updates an entry in the map with a specified \`key\` and a \`value\`.
-	 *
-	 * @param key - The key of the element to add to the map.
-	 * @param value - The value of the element to add to the map.
-	 *
-	 * @remarks
-	 * Setting the value at a key to \`undefined\` is equivalent to calling {@link ${typeName}.delete} with that key.
-	 */
-	set(key: string, value: T | undefined): void;
+	const builder = new InterfaceBuilder(
+		typeName,
+		"A map of string keys to tree objects.",
+		["T"],
+		"ReadonlyMap<string, T>",
+	).enableMultiLineSignatures();
 
-	/**
-	 * Removes the specified element from this map by its \`key\`.
-	 *
-	 * @remarks
-	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
-	 * deleted.
-	 *
-	 * @param key - The key of the element to remove from the map.
-	 */
-	delete(key: string): void;
+	builder.addMethod({
+		name: "set",
+		description: "Adds or updates an entry in the map with a specified `key` and a `value`.",
+		parameters: [
+			{
+				name: "key",
+				type: "string",
+				description: "The key of the element to add to the map.",
+			},
+			{
+				name: "value",
+				type: "T | undefined",
+				description: "The value of the element to add to the map.",
+			},
+		],
+		remarks: `Setting the value at a key to \`undefined\` is equivalent to calling {@link ${typeName}.delete} with that key.`,
+	});
 
-	/**
-	 * Returns an iterable of keys in the map.
-	 *
-	 * @remarks
-	 * Note: no guarantees are made regarding the order of the keys returned.
-	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
-	 */
-	keys(): IterableIterator<string>;
+	builder.addMethod({
+		name: "delete",
+		description: "Removes the specified element from this map by its `key`.",
+		parameters: [
+			{
+				name: "key",
+				type: "string",
+				description: "The key of the element to remove from the map.",
+			},
+		],
+		remarks:
+			"Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was\ndeleted.",
+	});
 
-	/**
-	 * Returns an iterable of values in the map.
-	 *
-	 * @remarks
-	 * Note: no guarantees are made regarding the order of the values returned.
-	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
-	 */
-	values(): IterableIterator<T>;
+	builder.addMethod({
+		name: "keys",
+		description: "Returns an iterable of keys in the map.",
+		parameters: [],
+		returnType: "IterableIterator<string>",
+		remarks:
+			"Note: no guarantees are made regarding the order of the keys returned.\nIf your usage scenario depends on consistent ordering, you will need to sort these yourself.",
+	});
 
-	/**
-	 * Returns an iterable of key/value pairs for every entry in the map.
-	 *
-	 * @remarks
-	 * Note: no guarantees are made regarding the order of the entries returned.
-	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
-	 */
-	entries(): IterableIterator<[string, T]>;
+	builder.addMethod({
+		name: "values",
+		description: "Returns an iterable of values in the map.",
+		parameters: [],
+		returnType: "IterableIterator<T>",
+		remarks:
+			"Note: no guarantees are made regarding the order of the values returned.\nIf your usage scenario depends on consistent ordering, you will need to sort these yourself.",
+	});
 
-	/**
-	 * Executes the provided function once per each key/value pair in this map.
-	 *
-	 * @remarks
-	 * Note: no guarantees are made regarding the order in which the function is called with respect to the map's entries.
-	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
-	 */
-	forEach(
-		callbackfn: (
-			value: T,
-			key: string,
-			map: ReadonlyMap<string, T>,
-		) => void,
-		thisArg?: any,
-	): void;
-}`;
+	builder.addMethod({
+		name: "entries",
+		description: "Returns an iterable of key/value pairs for every entry in the map.",
+		parameters: [],
+		returnType: "IterableIterator<[string, T]>",
+		remarks:
+			"Note: no guarantees are made regarding the order of the entries returned.\nIf your usage scenario depends on consistent ordering, you will need to sort these yourself.",
+	});
+
+	builder.addMethod({
+		name: "forEach",
+		description: "Executes the provided function once per each key/value pair in this map.",
+		parameters: [
+			{
+				name: "callbackfn",
+				type: "(value: T, key: string, map: ReadonlyMap<string, T>) => void",
+				description: "The function to execute for each entry.",
+			},
+			{
+				name: "thisArg",
+				type: "any",
+				isOptional: true,
+				description: "The value to use as `this` when executing the callback.",
+			},
+		],
+		remarks:
+			"Note: no guarantees are made regarding the order in which the function is called with respect to the map's entries.\nIf your usage scenario depends on consistent ordering, you will need to sort these yourself.",
+	});
+
+	return builder.build();
 }

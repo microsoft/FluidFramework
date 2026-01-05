@@ -145,22 +145,29 @@ However, write operations (e.g. index assignment, `push`, `pop`, `splice`, etc.)
 Instead, you must use the methods on the following interface to mutate the array:
 
 ```typescript
-/** A special type of array which implements 'readonly T[]' (i.e. it supports all read-only JS array methods) and provides custom array mutation APIs. */
+/**
+ * A special type of array which implements 'readonly T[]' (i.e. it supports all read-only JS array methods) and provides custom array mutation APIs.
+ */
 export interface TreeArray<T> extends ReadonlyArray<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
-	 * @param index - The index at which to insert `value`.
-	 * @param value - The content to insert.
+	 * @param index - The index at which to insert `value`
+	 * @param value - The content to insert
 	 * @throws Throws if `index` is not in the range [0, `array.length`).
 	 */
-	insertAt(index: number, ...value: readonly T[]): void;
+	insertAt(
+		index: number,
+		...value: readonly T[]
+	): void;
 
 	/**
 	 * Removes the item at the specified location.
-	 * @param index - The index at which to remove the item.
+	 * @param index - The index at which to remove the item
 	 * @throws Throws if `index` is not in the range [0, `array.length`).
 	 */
-	removeAt(index: number): void;
+	removeAt(
+		index: number
+	): void;
 
 	/**
 	 * Removes all items between the specified indices.
@@ -176,100 +183,93 @@ export interface TreeArray<T> extends ReadonlyArray<T> {
 	 * For example, two concurrent transactions both emptying the array with `node.removeRange()` then inserting an item,
 	 * will merge to result in the array having both inserted items.
 	 */
-	removeRange(start?: number, end?: number): void;
+	removeRange(
+		start?: number,
+		end?: number
+	): void;
 
 	/**
 	 * Moves the specified item to the desired location in the array.
+	 * @param destinationGap - The location *between* existing items that the moved item should be moved to
+	 * @param sourceIndex - The index of the item to move
+	 * @param source - The optional source array to move the item out of (defaults to this array)
+	 * @throws Throws if any of the source index is not in the range [0, `array.length`),
+	 * or if the index is not in the range [0, `array.length`].
 	 *
-	 * WARNING - This API is easily misused.
-	 * Please read the documentation for the `destinationGap` parameter carefully.
-	 *
-	 * @param destinationGap - The location *between* existing items that the moved item should be moved to.
-	 *
+	 * @remarks
+	 * WARNING - This API is easily misused. Please read the documentation for the `destinationGap` parameter carefully.
+	 * 
 	 * WARNING - `destinationGap` describes a location between existing items *prior to applying the move operation*.
-	 *
+	 * 
 	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
-	 *
 	 * - `0` (between the start of the array and `A`'s original position)
 	 * - `1` (between `A`'s original position and `B`'s original position)
 	 * - `2` (between `B`'s original position and `C`'s original position)
 	 * - `3` (between `C`'s original position and the end of the array)
-	 *
+	 * 
 	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
-	 *
-	 * This interpretation of `destinationGap` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
-	 * or relative to the start or end of the array:
-	 *
+	 * 
+	 * This interpretation of `destinationGap` makes it easy to specify the desired destination relative to a sibling item that is not being moved, or relative to the start or end of the array:
 	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
 	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
 	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
 	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
-	 *
+	 * 
 	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
-	 *
 	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
 	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
-	 *
+	 * 
 	 * Notice the asymmetry between `-1` and `+2` in the above examples.
 	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
-	 * If items A and B are adjacent, such that A precedes B,
-	 * then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.
-	 *
-	 * @param sourceIndex - The index of the item to move.
-	 * @param source - The optional source array to move the item out of (defaults to this array).
-	 * @throws Throws if any of the source index is not in the range [0, `array.length`),
-	 * or if the index is not in the range [0, `array.length`].
+	 * If items A and B are adjacent, such that A precedes B, then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.
 	 */
-	moveToIndex(destinationGap: number, sourceIndex: number, source?: TreeArray<T>): void;
+	moveToIndex(
+		destinationGap: number,
+		sourceIndex: number,
+		source?: TreeArray<T>
+	): void;
 
 	/**
 	 * Moves the specified items to the desired location within the array.
+	 * @param destinationGap - The location *between* existing items that the moved item should be moved to
+	 * @param sourceStart - The starting index of the range to move (inclusive)
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @param source - The optional source array to move items out of (defaults to this array)
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 *
-	 * WARNING - This API is easily misused.
-	 * Please read the documentation for the `destinationGap` parameter carefully.
-	 *
-	 * @param destinationGap - The location *between* existing items that the moved item should be moved to.
-	 *
+	 * @remarks
+	 * WARNING - This API is easily misused. Please read the documentation for the `destinationGap` parameter carefully.
+	 * 
 	 * WARNING - `destinationGap` describes a location between existing items *prior to applying the move operation*.
-	 *
+	 * 
 	 * For example, if the array contains items `[A, B, C]` before the move, the `destinationGap` must be one of the following:
-	 *
 	 * - `0` (between the start of the array and `A`'s original position)
 	 * - `1` (between `A`'s original position and `B`'s original position)
 	 * - `2` (between `B`'s original position and `C`'s original position)
 	 * - `3` (between `C`'s original position and the end of the array)
-	 *
+	 * 
 	 * So moving `A` between `B` and `C` would require `destinationGap` to be `2`.
-	 *
-	 * This interpretation of `destinationGap` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
-	 * or relative to the start or end of the array:
-	 *
+	 * 
+	 * This interpretation of `destinationGap` makes it easy to specify the desired destination relative to a sibling item that is not being moved, or relative to the start or end of the array:
 	 * - Move to the start of the array: `array.moveToIndex(0, ...)` (see also `moveToStart`)
 	 * - Move to before some item X: `array.moveToIndex(indexOfX, ...)`
 	 * - Move to after some item X: `array.moveToIndex(indexOfX + 1`, ...)
 	 * - Move to the end of the array: `array.moveToIndex(array.length, ...)` (see also `moveToEnd`)
-	 *
+	 * 
 	 * This interpretation of `destinationGap` does however make it less obvious how to move an item relative to its current position:
-	 *
 	 * - Move item B before its predecessor: `array.moveToIndex(indexOfB - 1, ...)`
 	 * - Move item B after its successor: `array.moveToIndex(indexOfB + 2, ...)`
-	 *
+	 * 
 	 * Notice the asymmetry between `-1` and `+2` in the above examples.
 	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
-	 * If items A and B are adjacent, such that A precedes B,
-	 * then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.
-	 *
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The optional source array to move items out of (defaults to this array).
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
-	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
+	 * If items A and B are adjacent, such that A precedes B, then they can be swapped with `array.moveToIndex(indexOfA, indexOfB)`.
 	 */
 	moveRangeToIndex(
 		destinationGap: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source?: TreeArray<T>,
+		source?: TreeArray<T>
 	): void;
 }
 ```
@@ -292,28 +292,32 @@ Instead, you must use the methods on the following interface to mutate the map:
 export interface TreeMap<T> extends ReadonlyMap<string, T> {
 	/**
 	 * Adds or updates an entry in the map with a specified `key` and a `value`.
-	 *
 	 * @param key - The key of the element to add to the map.
 	 * @param value - The value of the element to add to the map.
 	 *
 	 * @remarks
 	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMap.delete} with that key.
 	 */
-	set(key: string, value: T | undefined): void;
+	set(
+		key: string,
+		value: T | undefined
+	): void;
 
 	/**
 	 * Removes the specified element from this map by its `key`.
+	 * @param key - The key of the element to remove from the map.
 	 *
 	 * @remarks
 	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
 	 * deleted.
-	 *
-	 * @param key - The key of the element to remove from the map.
 	 */
-	delete(key: string): void;
+	delete(
+		key: string
+	): void;
 
 	/**
 	 * Returns an iterable of keys in the map.
+	 * @returns `IterableIterator<string>`
 	 *
 	 * @remarks
 	 * Note: no guarantees are made regarding the order of the keys returned.
@@ -323,6 +327,7 @@ export interface TreeMap<T> extends ReadonlyMap<string, T> {
 
 	/**
 	 * Returns an iterable of values in the map.
+	 * @returns `IterableIterator<T>`
 	 *
 	 * @remarks
 	 * Note: no guarantees are made regarding the order of the values returned.
@@ -332,6 +337,7 @@ export interface TreeMap<T> extends ReadonlyMap<string, T> {
 
 	/**
 	 * Returns an iterable of key/value pairs for every entry in the map.
+	 * @returns `IterableIterator<[string, T]>`
 	 *
 	 * @remarks
 	 * Note: no guarantees are made regarding the order of the entries returned.
@@ -341,18 +347,16 @@ export interface TreeMap<T> extends ReadonlyMap<string, T> {
 
 	/**
 	 * Executes the provided function once per each key/value pair in this map.
+	 * @param callbackfn - The function to execute for each entry.
+	 * @param thisArg - The value to use as `this` when executing the callback.
 	 *
 	 * @remarks
 	 * Note: no guarantees are made regarding the order in which the function is called with respect to the map's entries.
 	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
 	 */
 	forEach(
-		callbackfn: (
-			value: T,
-			key: string,
-			map: ReadonlyMap<string, T>,
-		) => void,
-		thisArg?: any,
+		callbackfn: (value: T, key: string, map: ReadonlyMap<string, T>) => void,
+		thisArg?: any
 	): void;
 }
 ```
@@ -399,13 +403,15 @@ mapOfObj.set("someKey", context.create.Obj({ /*... deep clone all properties fro
 
 Finally, double check that the edits would accomplish the user's request (if it is possible).
 
+
+
 ### Application data
 
-
 The application supplied the following additional instructions: These are some domain-specific hints.
+
 The current state of `context.root` (a `Obj`) is:
 
-```JSON
+```json
 {
   // Type: "Obj",
   "map": {
