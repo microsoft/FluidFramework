@@ -169,26 +169,24 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	): void;
 
 	/**
-	 * Add a constraint that the node at the given path must exist.
+	 * Add a constraint that, for this change to apply, the node at the given path must exist immediately before the change is applied.
 	 * @param path - The path to the node that must exist.
 	 */
 	addNodeExistsConstraint(path: NormalizedUpPath): void;
 
 	/**
-	 * Add a constraint that the node at the given path must exist when reverting a change.
+	 * Add a constraint that, for the revert of this change to apply, the node at the given path must exist immediately before the revert is applied.
 	 * @param path - The path to the node that must exist when reverting a change.
 	 */
 	addNodeExistsConstraintOnRevert(path: NormalizedUpPath): void;
 
 	/**
-	 * Add a global constraint that will be violated if the edit is rebased.
-	 * Once violated, this constraint should remain violated.
+	 * Add a constraint that, for this change to apply, the document must be in the same state immediately before this change applied as it was before this change was authored.
 	 */
 	addNoChangeConstraint(): void;
 
 	/**
-	 * Add a global constraint that will be violated if the revert of the edit is rebased
-	 * Once violated, this constraint should remain violated.
+	 * Add a constraint that, for the revert of this change to apply, the document must be in the same state immediately before the revert applied as it was after this change was applied.
 	 */
 	addNoChangeConstraintOnRevert(): void;
 }

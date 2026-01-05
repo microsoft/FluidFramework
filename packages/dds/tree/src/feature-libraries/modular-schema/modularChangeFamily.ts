@@ -703,8 +703,6 @@ export class ModularChangeFamily
 			return makeModularChangeset({
 				maxId: change.change.maxId as number,
 				revisions: revInfos,
-				noChangeConstraint: change.change.noChangeConstraintOnRevert,
-				noChangeConstraintOnRevert,
 				destroys,
 			});
 		}

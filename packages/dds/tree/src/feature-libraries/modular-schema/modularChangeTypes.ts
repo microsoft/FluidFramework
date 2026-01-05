@@ -60,9 +60,9 @@ export interface ModularChangeset extends HasFieldChanges {
 	 * If this count is greater than 0, it will prevent the changeset from being applied.
 	 */
 	readonly constraintViolationCount?: number;
-	/** Global no change constraint that gets violated whenever the changeset is rebased */
+	/** Constraint that the document must be in the same state before this change applied as it was before this change was authored */
 	readonly noChangeConstraint?: NoChangeConstraint;
-	/** Global no change constraint for reverts that gets violated whenever the reverted is rebased */
+	/** Constraint that the document must be in the same state before the revert of this change applied as it was after this change was applied */
 	readonly noChangeConstraintOnRevert?: NoChangeConstraint;
 	/**
 	 * The number of constraint violations that apply to the revert of the changeset. If this count is greater than 0, it will
@@ -118,7 +118,7 @@ export interface NodeExistsConstraint {
 
 /**
  * A constraint that is violated whenever the edit with the constraint is rebased.
- * Once violated, this constraint should remain violated.
+ * Once violated, this constraint will remain violated.
  */
 export interface NoChangeConstraint {
 	violated: boolean;

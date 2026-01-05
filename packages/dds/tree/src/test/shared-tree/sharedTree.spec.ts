@@ -1736,26 +1736,15 @@ describe("SharedTree", () => {
 			const tree1 = provider.trees[0];
 			const view1 = asAlpha(tree1.viewWith(config));
 			view1.initialize(["A", "B"]);
-			provider.synchronizeMessages();
-			const fork = view1.fork();
-
-			// Adding the noChange constraint should throw since the client version is too low
 			assert.throws(() => {
-				fork.runTransaction(
-					() => {
-						fork.root.insertAt(1, "X");
-						return;
-					},
-					{
-						preconditions: [{ type: "noChange" }],
-					},
-				);
+				view1.runTransaction(() => {}, {
+					preconditions: [{ type: "noChange" }],
+				});
 			});
 
 			// Same for on revert
 			assert.throws(() => {
-				fork.runTransaction(() => {
-					fork.root.insertAt(1, "X");
+				view1.runTransaction(() => {
 					return {
 						preconditionsOnRevert: [{ type: "noChange" }],
 					};
@@ -1817,7 +1806,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...fork.root], ["Y", "A", "B"]);
 		});
 
-		it("revert constraint gets violated when a change is rebased", () => {
+		it("revert constraint gets violated when the revert is rebased", () => {
 			const provider = new TestTreeProviderLite(
 				2,
 				configuredSharedTree({

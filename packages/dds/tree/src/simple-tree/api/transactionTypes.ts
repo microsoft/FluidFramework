@@ -40,7 +40,8 @@ export interface NodeInDocumentConstraint {
 }
 
 /**
- * A transaction {@link TransactionConstraintAlpha | constraint} which requires that no other changes are applied to the document before this transaction is sequenced and applied.
+ * A {@link TransactionConstraintAlpha | constraint} which requires that, for this transaction to apply, the document must be in the same state immediately before the transaction is applied as it was before the transaction was authored.
+ * When used as a revert precondition it requires that, for the revert to apply, the document must be in the same state immediately before the revert is applied as it was after the transaction was applied.
  * @alpha
  */
 export interface NoChangeConstraint {
