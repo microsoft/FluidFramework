@@ -577,7 +577,7 @@ export function decodeChange(
 	return decoded;
 }
 
-export function makeModularChangeCodecV1(
+export function getFieldChangesetCodecs(
 	fieldKinds: FieldKindConfiguration,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
@@ -585,10 +585,11 @@ export function makeModularChangeCodecV1(
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-	fieldsCodec: FieldBatchCodec,
 	codecOptions: ICodecOptions,
-	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
-): ModularChangeCodec {
+): Map<
+	FieldKindIdentifier,
+	{ compiledSchema?: SchemaValidationFunction<TAnySchema>; codec: FieldCodec }
+> {
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {
 		const codec = kind.changeHandler.codecsFactory(revisionTagCodec).resolve(formatVersion);
@@ -620,6 +621,27 @@ export function makeModularChangeCodecV1(
 	fieldKinds.forEach((entry, identifier) => {
 		fieldChangesetCodecs.set(identifier, getMapEntry(entry));
 	});
+
+	return fieldChangesetCodecs;
+}
+
+export function makeModularChangeCodecV1(
+	fieldKinds: FieldKindConfiguration,
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+	fieldsCodec: FieldBatchCodec,
+	codecOptions: ICodecOptions,
+	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
+): ModularChangeCodec {
+	const fieldChangesetCodecs = getFieldChangesetCodecs(
+		fieldKinds,
+		revisionTagCodec,
+		codecOptions,
+	);
 
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) =>
