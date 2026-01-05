@@ -16,7 +16,7 @@ describe("List", () => {
 	function prettyArgs(...args: any[]) {
 		return args.reduce((prev: string, arg, index) => {
 			// If all remaining arguments are 'undefined' elide them.
-			if (args.slice(index).findIndex((value) => value !== undefined) === -1) {
+			if (!args.slice(index).some((value) => value !== undefined)) {
 				return prev;
 			}
 
@@ -364,7 +364,7 @@ describe("List", () => {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const lowerA = "a".codePointAt(0)!;
 				const predicate = (value: unknown, index: number) =>
-					value === String.fromCharCode(lowerA + index);
+					value === String.fromCodePoint(lowerA + index);
 
 				const tests = [[], ["a"], ["a", "b"], ["c", "b"], ["a", "c"]];
 

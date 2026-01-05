@@ -339,7 +339,7 @@ export class NodeDecoder implements ChunkDecoder {
 			// consider keeping array chunks here if they are longer than some threshold.
 			const chunks = deaggregateChunks(data);
 
-			if (chunks.length !== 0) {
+			if (chunks.length > 0) {
 				fields.set(key, chunks);
 			}
 		}

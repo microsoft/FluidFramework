@@ -200,7 +200,7 @@ export function rebaseBranch<TChange>(
 	const sourceBranchLength = sourcePath.length;
 
 	// Find where `targetCommit` is in the target branch
-	const targetCommitIndex = targetPath.findIndex((r) => r === targetCommit);
+	const targetCommitIndex = targetPath.indexOf(targetCommit);
 	if (targetCommitIndex === -1) {
 		// If the targetCommit is not in the target path, then it is either disjoint from `target` or it is behind/at
 		// the commit where source and target diverge (ancestor), in which case there is nothing more to rebase
@@ -388,7 +388,7 @@ export function revisionMetadataSourceFromInfo(
 	};
 
 	const hasRollback = (revision: RevisionTag): boolean => {
-		return revInfos.find((info) => info.rollbackOf === revision) !== undefined;
+		return revInfos.some((info) => info.rollbackOf === revision);
 	};
 
 	return { getIndex, tryGetInfo, hasRollback };

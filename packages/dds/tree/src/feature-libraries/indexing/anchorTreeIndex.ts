@@ -470,5 +470,5 @@ function filterNodes(
  * Checks that an array is of the type {@link TreeIndexNodes} and has at least one element.
  */
 export function hasElement<T>(array: readonly T[]): array is TreeIndexNodes<T> {
-	return array.length >= 1;
+	return array.length > 0;
 }

@@ -91,7 +91,7 @@ function withAdjacentTombstones(
 	const output = [...marks];
 	let markIdx = marks.findIndex(hasEffectType);
 	assert(
-		markIdx !== -1 && marks.slice(markIdx + 1).findIndex(hasEffectType) === -1,
+		markIdx !== -1 && !marks.slice(markIdx + 1).some(hasEffectType),
 		"Expected to find exactly one mark with the given type",
 	);
 	const mark = marks[markIdx];
