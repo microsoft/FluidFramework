@@ -495,9 +495,30 @@ export class MapKernel {
 	 */
 	public clear(): void {
 		if (!this.isAttached()) {
+			// Collect keys to delete before clearing
+			// eslint-disable-next-line @typescript-eslint/no-shadow
+			const keysToDelete: { key: string; previousValue: unknown }[] = [];
+			for (const [key, value] of this.sequencedData) {
+				keysToDelete.push({ key, previousValue: value.value });
+			}
 			this.sequencedData.clear();
 			this.eventEmitter.emit("clear", true, this.eventEmitter);
+			// Emit delete-like valueChanged events for keys that were removed
+			for (const { key, previousValue } of keysToDelete) {
+				this.eventEmitter.emit(
+					"valueChanged",
+					{ key, previousValue },
+					true,
+					this.eventEmitter,
+				);
+			}
 			return;
+		}
+
+		// Collect keys that will be deleted (those without pending ops that supersede the clear)
+		const keysToDelete: { key: string; previousValue: unknown }[] = [];
+		for (const [key, value] of this.internalIterator()) {
+			keysToDelete.push({ key, previousValue: value.value });
 		}
 
 		const pendingClear: PendingClear = {
@@ -510,6 +531,10 @@ export class MapKernel {
 		};
 		this.submitMessage(op, pendingClear);
 		this.eventEmitter.emit("clear", true, this.eventEmitter);
+		// Emit delete-like valueChanged events for keys that were removed
+		for (const { key, previousValue } of keysToDelete) {
+			this.eventEmitter.emit("valueChanged", { key, previousValue }, true, this.eventEmitter);
+		}
 	}
 
 	/**

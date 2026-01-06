@@ -63,7 +63,7 @@ function makeVersionedCodec<
 			const versioned = data as Versioned; // Validated by withSchemaValidation
 			if (!supportedVersions.has(versioned.version)) {
 				throw new UsageError(
-					`Unsupported version ${versioned.version} encountered while decoding data. Supported versions for this data are: ${Array.from(supportedVersions).join(", ")}.
+					`Unsupported version ${versioned.version} encountered while decoding data. Supported versions for this data are: ${[...supportedVersions].join(", ")}.
 The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 				);
 			}

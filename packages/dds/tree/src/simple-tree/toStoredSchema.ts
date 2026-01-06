@@ -186,7 +186,7 @@ export function transformSimpleSchema(
 ): SimpleTreeSchema {
 	const simpleNodeSchema = new Map<string, SimpleNodeSchema>();
 	const root = filterFieldAllowedTypes(schema.root, options);
-	const queue = Array.from(root.simpleAllowedTypes.keys());
+	const queue = [...root.simpleAllowedTypes.keys()];
 	for (const identifier of queue) {
 		getOrCreate(simpleNodeSchema, identifier, (id) => {
 			const nodeSchema = schema.definitions.get(id) ?? fail(0xca8 /* missing schema */);

@@ -1055,7 +1055,7 @@ function registerValidationHook<TDecoded, TContext>(
 	if (!testedFamilies.has(family)) {
 		testedFamilies.add(family);
 		after("validate all versions tested", () => {
-			const supportedVersions = Array.from(family.getSupportedFormats());
+			const supportedVersions = [...family.getSupportedFormats()];
 			const missingVersions = supportedVersions.filter((version) => !tested.has(version));
 			if (missingVersions.length > 0) {
 				throw new Error(`Missing codec versions in test: ${missingVersions.join(", ")}`);
