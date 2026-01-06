@@ -310,7 +310,7 @@ export function encodeDetachedNodes(
 				buildsArray.push(buildsForRevision);
 			}
 
-			buildsForRevision = encodedRevision !== undefined ? [[], encodedRevision] : [[]];
+			buildsForRevision = encodedRevision === undefined ? [[]] : [[], encodedRevision];
 		}
 
 		treesToEncode.push(chunk.cursor());
@@ -432,7 +432,7 @@ export function decodeRevisionInfos(
 	>,
 ): RevisionInfo[] | undefined {
 	if (revisions === undefined) {
-		return context.revision !== undefined ? [{ revision: context.revision }] : undefined;
+		return context.revision === undefined ? undefined : [{ revision: context.revision }];
 	}
 
 	const decodedRevisions = [];

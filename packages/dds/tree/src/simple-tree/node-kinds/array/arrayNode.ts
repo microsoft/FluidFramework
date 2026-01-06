@@ -888,7 +888,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		)[];
 
 		const contentArray = content.flatMap((c): InsertableContent[] =>
-			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
+			c instanceof IterableTreeArrayContent ? [...c] : [c],
 		);
 
 		const kernel = getKernel(this);
@@ -918,7 +918,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	public toJSON(): unknown {
 		// This override causes the class instance to `JSON.stringify` as `[a, b]` rather than `{0: a, 1: b}`.
-		return Array.from(this as unknown as TreeArrayNode);
+		return [...(this as unknown as TreeArrayNode)];
 	}
 
 	// Instances of this class are used as the dispatch object for the proxy,
@@ -1044,7 +1044,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			kernel.context.flexContext.schema.nodeSchema.get(brand(kernel.schema.identifier)) ??
 			fail(0xc16 /* missing schema for array node */)
 		).getFieldSchema(EmptyKey).types;
-		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
+		const sourceField = source === undefined ? destinationField : getSequenceField(source);
 
 		validateIndex(destinationGap, destinationField, "TreeArrayNode.moveRangeToIndex", true);
 		validateIndexRange(
@@ -1074,7 +1074,24 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 
 		const movedCount = sourceEnd - sourceStart;
-		if (!destinationField.context.isHydrated()) {
+		if (destinationField.context.isHydrated()) {
+			if (!sourceField.context.isHydrated()) {
+				throw new UsageError(
+					"Cannot move elements from an unhydrated array to a hydrated array.",
+				);
+			}
+			if (sourceField.context !== destinationField.context) {
+				throw new UsageError("Cannot move elements between two different TreeViews.");
+			}
+
+			destinationField.context.checkout.editor.move(
+				sourceField.getFieldPath(),
+				sourceStart,
+				movedCount,
+				destinationField.getFieldPath(),
+				destinationGap,
+			);
+		} else {
 			if (!(sourceField instanceof UnhydratedSequenceField)) {
 				throw new UsageError(
 					"Cannot move elements from a hydrated array to an unhydrated array.",
@@ -1105,23 +1122,6 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 					);
 				}
 			});
-		} else {
-			if (!sourceField.context.isHydrated()) {
-				throw new UsageError(
-					"Cannot move elements from an unhydrated array to a hydrated array.",
-				);
-			}
-			if (sourceField.context !== destinationField.context) {
-				throw new UsageError("Cannot move elements between two different TreeViews.");
-			}
-
-			destinationField.context.checkout.editor.move(
-				sourceField.getFieldPath(),
-				sourceStart,
-				movedCount,
-				destinationField.getFieldPath(),
-				destinationGap,
-			);
 		}
 	}
 

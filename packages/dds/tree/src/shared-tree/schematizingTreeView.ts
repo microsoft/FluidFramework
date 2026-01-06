@@ -313,9 +313,9 @@ export class SchematizingSimpleTreeView<
 
 		if (rollback === true) {
 			this.checkout.transaction.abort();
-			return value !== undefined
-				? { success: false, value: value as TFailureValue }
-				: { success: false };
+			return value === undefined
+				? { success: false }
+				: { success: false, value: value as TFailureValue };
 		}
 
 		// Validate preconditions on revert after running the transaction callback and was successful.
@@ -325,9 +325,9 @@ export class SchematizingSimpleTreeView<
 		);
 
 		this.checkout.transaction.commit();
-		return value !== undefined
-			? { success: true, value: value as TSuccessValue }
-			: { success: true };
+		return value === undefined
+			? { success: true }
+			: { success: true, value: value as TSuccessValue };
 	}
 
 	private ensureUndisposed(): void {

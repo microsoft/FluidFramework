@@ -13,7 +13,10 @@ import {
 	rootFieldKey,
 	type ChangeFamilyEditor,
 } from "../../../core/index.js";
-import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
+import {
+	DefaultChangeFamily,
+	DefaultRevisionReplacer,
+} from "../../../feature-libraries/index.js";
 import type { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { type Editor, makeEditMinter } from "../../editMinter.js";
@@ -79,9 +82,15 @@ describe("EditManager - Bench", () => {
 			changeFamily: defaultFamily,
 			mintChange: (revision) => {
 				const change = makeEditMinter(defaultFamily, sequencePrepend)();
-				return revision !== undefined
-					? defaultFamily.rebaser.changeRevision(change, revision)
-					: change;
+				return revision === undefined
+					? change
+					: defaultFamily.rebaser.changeRevision(
+							change,
+							new DefaultRevisionReplacer(
+								revision,
+								defaultFamily.rebaser.getRevisions(change),
+							),
+						);
 			},
 			maxEditCount: 350,
 		},

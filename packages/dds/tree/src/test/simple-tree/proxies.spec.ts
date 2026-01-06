@@ -476,7 +476,7 @@ describe("ArrayNode Proxy", () => {
 
 			describe("moveRangeToIndex()", () => {
 				function check(index: number, start: number, end: number) {
-					const expected = initialTree.slice(0);
+					const expected = [...initialTree];
 					// Remove the moved items from [start..end).
 					const moved = expected.splice(start, /* deleteCount: */ end - start);
 					// Re-insert the moved items, adjusting index as necessary.

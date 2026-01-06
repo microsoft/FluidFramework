@@ -1042,13 +1042,13 @@ describe("SharedTree", () => {
 
 			function onDispose(disposed: Revertible): void {
 				const redoIndex = redoStack.indexOf(disposed);
-				if (redoIndex !== -1) {
-					redoStack.splice(redoIndex, 1);
-				} else {
+				if (redoIndex === -1) {
 					const undoIndex = undoStack.indexOf(disposed);
 					if (undoIndex !== -1) {
 						undoStack.splice(undoIndex, 1);
 					}
+				} else {
+					redoStack.splice(redoIndex, 1);
 				}
 			}
 

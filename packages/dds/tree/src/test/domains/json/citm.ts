@@ -389,8 +389,8 @@ function generateEventAndPerformance(
 		name: ORIGINAL_EVENT_NAMES[random.integer(0, ORIGINAL_EVENT_NAMES.length - 1)],
 		subjectCode: null,
 		subtitle: null,
-		topicIds: Array.from(eventTopicIdSet),
-		subTopicIds: Array.from(eventSubTopicIdSet),
+		topicIds: [...eventTopicIdSet],
+		subTopicIds: [...eventSubTopicIdSet],
 	};
 
 	// eslint-disable-next-line no-param-reassign

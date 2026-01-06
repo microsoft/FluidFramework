@@ -13,6 +13,7 @@ import type {
 	DeltaFieldMap,
 	EncodedRevisionTag,
 	RevisionMetadataSource,
+	RevisionReplacer,
 	RevisionTag,
 } from "../../core/index.js";
 import type { IdAllocator, Invariant } from "../../util/index.js";
@@ -164,11 +165,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	 */
 	prune(change: TChangeset, pruneChild: NodeChangePruner): TChangeset;
 
-	replaceRevisions(
-		change: TChangeset,
-		oldRevisions: Set<RevisionTag | undefined>,
-		newRevisions: RevisionTag | undefined,
-	): TChangeset;
+	replaceRevisions(change: TChangeset, replacer: RevisionReplacer): TChangeset;
 
 	/**
 	 * Returns a copy of the given changeset with the same declarations (e.g., new cells) but no actual changes.

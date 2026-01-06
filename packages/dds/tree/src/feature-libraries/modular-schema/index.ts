@@ -79,3 +79,4 @@ export type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
 } from "./fieldKindConfiguration.js";
+export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
