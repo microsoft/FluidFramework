@@ -1672,7 +1672,9 @@ describe("SharedTree", () => {
 				assert.deepEqual(mainView2.root[0], ["A", "B", "C"]);
 			});
 		});
+	});
 
+	describe("Constraints", () => {
 		it("revert constraint", () => {
 			// This test ensures that the feature works across peers as opposed to solely across branches.
 			const provider = new TestTreeProviderLite(2);
@@ -1717,6 +1719,149 @@ describe("SharedTree", () => {
 			assert.deepEqual(TreeBeta.exportConcise(viewB.root), { child: { id: "C" } });
 
 			stack.unsubscribe();
+		});
+
+		it("throws a usage error when the version is too low", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_74,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const tree1 = provider.trees[0];
+			const view1 = asAlpha(tree1.viewWith(config));
+			view1.initialize(["A", "B"]);
+			assert.throws(() => {
+				view1.runTransaction(() => {}, {
+					preconditions: [{ type: "noChange" }],
+				});
+			});
+
+			// Same for on revert
+			assert.throws(() => {
+				view1.runTransaction(() => {
+					return {
+						preconditionsOnRevert: [{ type: "noChange" }],
+					};
+				});
+			});
+		});
+
+		it("gets violated when a change is rebased", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const tree1 = provider.trees[0];
+			const view1 = asAlpha(tree1.viewWith(config));
+			view1.initialize(["A", "B"]);
+			provider.synchronizeMessages();
+			const tree2 = provider.trees[1];
+			const view2 = asAlpha(tree2.viewWith(config));
+
+			const fork = view1.fork();
+			assert.deepEqual([...view1.root], ["A", "B"]);
+			assert.deepEqual([...view1.root], [...view2.root]);
+			assert.deepEqual([...view1.root], [...fork.root]);
+
+			// Make a concurrent edit on the other tree
+			view2.runTransaction(() => {
+				view2.root.insertAt(0, "Y");
+			});
+			// And add "X" on the fork with a constraint
+			fork.runTransaction(
+				() => {
+					fork.root.insertAt(1, "X");
+					return;
+				},
+				{
+					preconditions: [{ type: "noChange" }],
+				},
+			);
+			assert.deepEqual([...view1.root], ["A", "B"]);
+			assert.deepEqual([...view2.root], ["Y", "A", "B"]);
+			assert.deepEqual([...fork.root], ["A", "X", "B"]);
+
+			provider.synchronizeMessages();
+			assert.deepEqual([...view1.root], ["Y", "A", "B"]);
+			assert.deepEqual([...view2.root], ["Y", "A", "B"]);
+			assert.deepEqual([...fork.root], ["A", "X", "B"]);
+
+			// rebase the fork, which should violate the constraint
+			fork.rebaseOnto(view1);
+			assert.deepEqual([...view1.root], ["Y", "A", "B"]);
+			assert.deepEqual([...view2.root], ["Y", "A", "B"]);
+			assert.deepEqual([...fork.root], ["Y", "A", "B"]);
+		});
+
+		it("revert constraint gets violated when the revert is rebased", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+
+			const view1 = asAlpha(provider.trees[0].viewWith(config));
+			view1.initialize(["A", "B"]);
+			provider.synchronizeMessages();
+
+			const fork = view1.fork();
+			const view2 = asAlpha(provider.trees[1].viewWith(config));
+			assert.deepEqual([...view1.root], ["A", "B"]);
+			assert.deepEqual([...view1.root], [...view2.root]);
+			assert.deepEqual([...view1.root], [...fork.root]);
+
+			const stackFork = createTestUndoRedoStacks(fork.events);
+			fork.runTransaction(() => {
+				fork.root.insertAt(1, "X");
+				return {
+					preconditionsOnRevert: [{ type: "noChange" }],
+				};
+			});
+			provider.synchronizeMessages();
+			assert.deepEqual([...view1.root], ["A", "B"]);
+			assert.deepEqual([...view2.root], ["A", "B"]);
+			assert.deepEqual([...fork.root], ["A", "X", "B"]);
+
+			const revertible = stackFork.undoStack[0] ?? assert.fail("Missing undo");
+			revertible.revert();
+			// Revert should go through on the fork since the constraint shouldnt be violated yet
+			assert.deepEqual([...fork.root], ["A", "B"]);
+
+			// Make an edit on the second tree to force a rebase
+			view2.runTransaction(() => {
+				view2.root.insertAt(0, "Y");
+			});
+			provider.synchronizeMessages();
+			assert.deepEqual([...view1.root], ["Y", "A", "B"]);
+			assert.deepEqual([...view2.root], ["Y", "A", "B"]);
+			assert.deepEqual([...fork.root], ["A", "B"]);
+
+			// When rebasing, the No Change constraint should be violated
+			// and the revert transaction should be dropped
+			fork.rebaseOnto(view1);
+			assert.deepEqual([...view1.root], ["Y", "A", "B"]);
+			assert.deepEqual([...view2.root], ["Y", "A", "B"]);
+			assert.deepEqual([...fork.root], ["Y", "A", "X", "B"]);
+			stackFork.unsubscribe();
 		});
 	});
 

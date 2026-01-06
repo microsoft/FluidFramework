@@ -24,6 +24,12 @@ export const rollback = Symbol("SharedTree Transaction Rollback");
 export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more constraint types here
 
 /**
+ * Type for alpha version {@link TransactionConstraint | constraint}s
+ * @sealed @alpha
+ */
+export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint; // TODO: Add more constraint types here
+
+/**
  * A transaction {@link TransactionConstraint | constraint} which requires that the given node exists in the tree.
  * @remarks The node must be in the document (its {@link TreeStatus | status} must be {@link TreeStatus.InDocument | InDocument}) to qualify as "existing".
  * @public
@@ -31,6 +37,15 @@ export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more 
 export interface NodeInDocumentConstraint {
 	readonly type: "nodeInDocument";
 	readonly node: TreeNode;
+}
+
+/**
+ * A {@link TransactionConstraintAlpha | constraint} which requires that, for this transaction to apply, the document must be in the same state immediately before the transaction is applied as it was before the transaction was authored.
+ * When used as a revert precondition it requires that, for the revert to apply, the document must be in the same state immediately before the revert is applied as it was after the transaction was applied.
+ * @alpha
+ */
+export interface NoChangeConstraint {
+	readonly type: "noChange";
 }
 
 /**
@@ -52,13 +67,13 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = (
 	  }
 ) & {
 	/**
-	 * An optional list of {@link TransactionConstraint | constraints} that will be checked when the commit corresponding
+	 * An optional list of {@link TransactionConstraintAlpha | constraints} that will be checked when the commit corresponding
 	 * to this transaction is reverted. If any of these constraints are not met when the revert is being applied either
 	 * locally or on remote clients, the revert will be ignored.
 	 * These constraints must also be met at the time they are first introduced. If they are not met after the transaction
 	 * callback returns, then `runTransaction` (which invokes the transaction callback) will throw a `UsageError`.
 	 */
-	preconditionsOnRevert?: readonly TransactionConstraint[];
+	preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 };
 
 /**
@@ -117,10 +132,10 @@ export type TransactionResult =
  */
 export interface RunTransactionParams {
 	/**
-	 * An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
+	 * An optional list of {@link TransactionConstraintAlpha | constraints} that are checked just before the transaction begins.
 	 * If any of the constraints are not met when `runTransaction` is called, an error will be thrown.
 	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on
 	 * this client and ignored by all other clients.
 	 */
-	readonly preconditions?: readonly TransactionConstraint[];
+	readonly preconditions?: readonly TransactionConstraintAlpha[];
 }

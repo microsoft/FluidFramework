@@ -50,7 +50,7 @@ import {
 	type TransactionResult,
 	type TransactionResultExt,
 	type RunTransactionParams,
-	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
@@ -296,7 +296,7 @@ export class SchematizingSimpleTreeView<
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		const addConstraints = (
 			constraintsOnRevert: boolean,
-			constraints: readonly TransactionConstraint[] = [],
+			constraints: readonly TransactionConstraintAlpha[] = [],
 		): void => {
 			addConstraintsToTransaction(this.checkout, constraintsOnRevert, constraints);
 		};
@@ -559,10 +559,11 @@ export function getCheckout(context: TreeBranch): TreeCheckout {
 export function addConstraintsToTransaction(
 	checkout: ITreeCheckout,
 	constraintsOnRevert: boolean,
-	constraints: readonly TransactionConstraint[] = [],
+	constraints: readonly TransactionConstraintAlpha[] = [],
 ): void {
 	for (const constraint of constraints) {
-		switch (constraint.type) {
+		const constraintType = constraint.type;
+		switch (constraintType) {
 			case "nodeInDocument": {
 				const node = getInnerNode(constraint.node);
 				const nodeStatus = getKernel(constraint.node).getStatus();
@@ -580,8 +581,16 @@ export function addConstraintsToTransaction(
 				}
 				break;
 			}
+			case "noChange": {
+				if (constraintsOnRevert) {
+					checkout.editor.addNoChangeConstraintOnRevert();
+				} else {
+					checkout.editor.addNoChangeConstraint();
+				}
+				break;
+			}
 			default: {
-				unreachableCase(constraint.type);
+				unreachableCase(constraintType);
 			}
 		}
 	}
