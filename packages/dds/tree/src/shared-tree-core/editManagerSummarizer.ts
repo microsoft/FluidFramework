@@ -104,9 +104,9 @@ export class EditManagerSummarizer<TChangeset>
 	}): void {
 		const { stringify, builder } = props;
 		const context: EditManagerEncodingContext =
-			this.schemaAndPolicy !== undefined
-				? { schema: this.schemaAndPolicy, idCompressor: this.idCompressor }
-				: { idCompressor: this.idCompressor };
+			this.schemaAndPolicy === undefined
+				? { idCompressor: this.idCompressor }
+				: { schema: this.schemaAndPolicy, idCompressor: this.idCompressor };
 		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);
 		const dataString = stringify(jsonCompatible);
 		builder.addBlob(stringKey, dataString);

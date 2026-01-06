@@ -71,8 +71,8 @@ export function getNestedChanges(change: Changeset): NestedChangesIndices {
 		if (changes !== undefined) {
 			output.push([
 				changes,
-				!areInputCellsEmpty(mark) ? inputIndex : undefined /* inputIndex */,
-				!areOutputCellsEmpty(mark) ? outputIndex : undefined /* outputIndex */,
+				areInputCellsEmpty(mark) ? undefined : inputIndex /* inputIndex */,
+				areOutputCellsEmpty(mark) ? undefined : outputIndex /* outputIndex */,
 			]);
 		}
 		if (!areInputCellsEmpty(mark)) {
@@ -890,10 +890,10 @@ export function withNodeChange<TMark extends CellMark<TKind>, TKind extends Mark
 	changes: NodeId | undefined,
 ): TMark {
 	const newMark = { ...mark };
-	if (changes !== undefined) {
-		newMark.changes = changes;
-	} else {
+	if (changes === undefined) {
 		delete newMark.changes;
+	} else {
+		newMark.changes = changes;
 	}
 	return newMark;
 }

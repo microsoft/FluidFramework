@@ -46,9 +46,7 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 				this.updatedLocalIds,
 				id,
 			);
-			if (prior !== undefined) {
-				updated.localId = prior;
-			} else {
+			if (prior === undefined) {
 				let localId: ChangesetLocalId;
 				if (this.localIds.has(id.localId)) {
 					this.maxSeen = brand(this.maxSeen + 1);
@@ -62,6 +60,8 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 				}
 				setInChangeAtomIdMap(this.updatedLocalIds, id, localId);
 				updated.localId = localId;
+			} else {
+				updated.localId = prior;
 			}
 			return updated;
 		}
