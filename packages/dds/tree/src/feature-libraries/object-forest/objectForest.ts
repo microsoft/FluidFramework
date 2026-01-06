@@ -104,12 +104,12 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		roots?: MapTree,
 	) {
 		this.#roots =
-			roots !== undefined
-				? deepCopyMapTree(roots)
-				: {
+			roots === undefined
+				? {
 						type: aboveRootPlaceholder,
 						fields: new Map(),
-					};
+					}
+				: deepCopyMapTree(roots);
 
 		if (additionalAsserts) {
 			this.checkSchema();

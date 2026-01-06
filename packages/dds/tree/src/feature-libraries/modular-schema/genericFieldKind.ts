@@ -77,7 +77,7 @@ function compose(
 	const composed = change1.clone();
 	for (const [index, id2] of change2.entries()) {
 		const id1 = composed.get(index);
-		const idComposed = id1 !== undefined ? composeChildren(id1, id2) : id2;
+		const idComposed = id1 === undefined ? id2 : composeChildren(id1, id2);
 		composed.set(index, idComposed);
 	}
 

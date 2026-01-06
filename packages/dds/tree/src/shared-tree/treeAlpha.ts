@@ -637,12 +637,12 @@ class NodeSubscription {
 					return;
 				}
 				const subscription = subscriptions.get(flexNode);
-				if (subscription !== undefined) {
-					// Already subscribed to this node.
-					subscription.keys = undefined; // Now subscribed to all keys.
-				} else {
+				if (subscription === undefined) {
 					const newSubscription = new NodeSubscription(invalidate, flexNode);
 					subscriptions.set(flexNode, newSubscription);
+				} else {
+					// Already subscribed to this node.
+					subscription.keys = undefined; // Now subscribed to all keys.
 				}
 			},
 			observeNodeField(flexNode: FlexTreeNode, key: FieldKey): void {
@@ -651,15 +651,15 @@ class NodeSubscription {
 					return;
 				}
 				const subscription = subscriptions.get(flexNode);
-				if (subscription !== undefined) {
+				if (subscription === undefined) {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					newSubscription.keys = new Set([key]);
+					subscriptions.set(flexNode, newSubscription);
+				} else {
 					// Already subscribed to this node: if not subscribed to all keys, subscribe to this one.
 					// TODO:Performance: due to how JavaScript set ordering works,
 					// it might be faster to check `has` and only add if not present in case the same field is viewed many times.
 					subscription.keys?.add(key);
-				} else {
-					const newSubscription = new NodeSubscription(invalidate, flexNode);
-					newSubscription.keys = new Set([key]);
-					subscriptions.set(flexNode, newSubscription);
 				}
 			},
 			observeParentOf(node: FlexTreeNode): void {

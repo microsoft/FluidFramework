@@ -968,7 +968,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			const tree = jsonableTreeFromCursor(cursor);
 			// This method is used for tree consistency comparison.
 			const { major, minor } = id;
-			const finalizedMajor = major !== undefined ? this.revisionTagCodec.encode(major) : major;
+			const finalizedMajor = major === undefined ? major : this.revisionTagCodec.encode(major);
 			trees.push([finalizedMajor, minor, tree]);
 		}
 		cursor.free();

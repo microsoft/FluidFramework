@@ -180,9 +180,9 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Source);
 				const normalized: Mutable<SF.MoveIn> = { ...effect };
 				normalized.finalEndpoint =
-					normalized.finalEndpoint !== undefined
-						? normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Destination)
-						: normalizeAtom(effectId, CrossFieldTarget.Destination);
+					normalized.finalEndpoint === undefined
+						? normalizeAtom(effectId, CrossFieldTarget.Destination)
+						: normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Destination);
 				normalized.id = atom.localId;
 				normalized.revision = atom.revision;
 				return normalized as TEffect;
@@ -196,9 +196,9 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 					normalized.idOverride = effectId;
 				}
 				normalized.finalEndpoint =
-					normalized.finalEndpoint !== undefined
-						? normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Source)
-						: normalizeAtom(effectId, CrossFieldTarget.Source);
+					normalized.finalEndpoint === undefined
+						? normalizeAtom(effectId, CrossFieldTarget.Source)
+						: normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Source);
 				normalized.id = atom.localId;
 				normalized.revision = atom.revision;
 				return normalized as TEffect;
@@ -314,11 +314,11 @@ function composeI(
 	const changes = taggedChanges.map(({ change }) => change);
 	const idAllocator = continuingAllocator(changes);
 	const metadata =
-		revInfos !== undefined
-			? Array.isArray(revInfos)
+		revInfos === undefined
+			? defaultRevisionMetadataFromChanges(taggedChanges)
+			: Array.isArray(revInfos)
 				? revisionMetadataSourceFromInfo(revInfos)
-				: revInfos
-			: defaultRevisionMetadataFromChanges(taggedChanges);
+				: revInfos;
 
 	let composed: SF.Changeset = [];
 	for (const change of changes) {
@@ -813,9 +813,9 @@ export function tagChangeInline(
 	rollbackOf?: RevisionTag,
 ): TaggedChange<Changeset> {
 	const inlined = inlineRevision(change, revision);
-	return rollbackOf !== undefined
-		? tagRollbackInverse(inlined, revision, rollbackOf)
-		: tagChange(inlined, revision);
+	return rollbackOf === undefined
+		? tagChange(inlined, revision)
+		: tagRollbackInverse(inlined, revision, rollbackOf);
 }
 
 export function inlineRevision(change: Changeset, revision: RevisionTag): Changeset {

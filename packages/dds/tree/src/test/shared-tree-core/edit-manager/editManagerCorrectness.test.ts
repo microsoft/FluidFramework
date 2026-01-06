@@ -858,8 +858,8 @@ export function testCorrectness() {
 		 * but this one doesn't, then there might be something wrong with this test).
 		 */
 		describeStress("Combinatorial exhaustive", function ({ stressMode }) {
-			const NUM_STEPS = stressMode !== StressMode.Short ? 5 : 4;
-			const NUM_PEERS = stressMode !== StressMode.Short ? 3 : 2;
+			const NUM_STEPS = stressMode === StressMode.Short ? 4 : 5;
+			const NUM_PEERS = stressMode === StressMode.Short ? 2 : 3;
 			if (stressMode !== StressMode.Short) {
 				this.timeout(60_000);
 			}
