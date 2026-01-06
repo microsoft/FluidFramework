@@ -93,10 +93,8 @@ export const optional = new FlexFieldKind(optionalIdentifier, Multiplicity.Optio
 
 export const requiredFieldEditor: RequiredFieldEditor = {
 	...optionalFieldEditor,
-	set: (ids: {
-		fill: ChangeAtomId;
-		detach: ChangeAtomId;
-	}): OptionalChangeset => optionalFieldEditor.set(false, ids),
+	set: (ids: { fill: ChangeAtomId; detach: ChangeAtomId }): OptionalChangeset =>
+		optionalFieldEditor.set(false, ids),
 };
 
 export const requiredFieldChangeHandler: FieldChangeHandler<

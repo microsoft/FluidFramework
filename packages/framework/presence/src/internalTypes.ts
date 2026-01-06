@@ -168,25 +168,26 @@ export type ValidatableValueStructure<
 		| InternalTypes.ValueDirectory<unknown>
 		| InternalTypes.ValueRequiredState<unknown>
 		| InternalTypes.ValueOptionalState<unknown>,
-> = T extends InternalTypes.ValueDirectory<infer TValue>
-	? InternalUtilityTypes.IfSameType<
-			T,
-			InternalTypes.ValueDirectory<T>,
-			// Use canonical type for exact match
-			ValidatableValueDirectory<TValue>,
-			// Inexact match => recurse
-			InternalUtilityTypes.FlattenIntersection<
-				Omit<T, "items"> & {
-					items: {
-						[KItems in keyof T["items"]]: ValidatableValueStructure<T["items"][KItems]>;
-					};
-				}
+> =
+	T extends InternalTypes.ValueDirectory<infer TValue>
+		? InternalUtilityTypes.IfSameType<
+				T,
+				InternalTypes.ValueDirectory<T>,
+				// Use canonical type for exact match
+				ValidatableValueDirectory<TValue>,
+				// Inexact match => recurse
+				InternalUtilityTypes.FlattenIntersection<
+					Omit<T, "items"> & {
+						items: {
+							[KItems in keyof T["items"]]: ValidatableValueStructure<T["items"][KItems]>;
+						};
+					}
+				>
 			>
-		>
-	: T extends
-				| InternalTypes.ValueRequiredState<infer TValue>
-				| InternalTypes.ValueOptionalState<infer TValue>
-		? InternalUtilityTypes.FlattenIntersection<
-				Omit<T, keyof ValidatableMetadata<TValue>> & ValidatableMetadata<TValue>
-			>
-		: never;
+		: T extends
+					| InternalTypes.ValueRequiredState<infer TValue>
+					| InternalTypes.ValueOptionalState<infer TValue>
+			? InternalUtilityTypes.FlattenIntersection<
+					Omit<T, keyof ValidatableMetadata<TValue>> & ValidatableMetadata<TValue>
+				>
+			: never;

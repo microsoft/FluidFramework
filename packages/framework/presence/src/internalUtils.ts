@@ -111,9 +111,10 @@ export function asDeeplyReadonlyDeserializedJson<T>(
  * Conditional type that reveals the underlying JSON type of an opaque JSON value. If `T` is an object, the key values
  * will be revealed.
  */
-type RevealOpaqueJsonDeserialized<T> = T extends OpaqueJsonDeserialized<infer U>
-	? JsonDeserialized<U>
-	: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key]> };
+type RevealOpaqueJsonDeserialized<T> =
+	T extends OpaqueJsonDeserialized<infer U>
+		? JsonDeserialized<U>
+		: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key]> };
 
 /**
  * No-runtime-effect helper to reveal the JSON type from a value's opaque JSON
@@ -164,11 +165,12 @@ type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends 
  * Generates a union of types that are the remainder from a simple
  * Pick combination (that is the set of common properties).
  */
-type PickRemainder<T> = Pick<T, keyof T> extends infer Common
-	? T extends unknown
-		? Omit<T, keyof Common>
-		: never
-	: never;
+type PickRemainder<T> =
+	Pick<T, keyof T> extends infer Common
+		? T extends unknown
+			? Omit<T, keyof Common>
+			: never
+		: never;
 
 /**
  * Combines union of structure into a single structure where common properties

@@ -673,16 +673,11 @@ describe("allowedTypes", () => {
 			 * This still has a lot of unsolved issues and open questions, but generally seems like an improvement
 			 * (or at least stricter and more consistent).
 			 */
-			type SchemaUnionToIntersection<T> = UnionToIntersection<SchemaToPair<T>> extends [
-				infer s,
-				infer X,
-			]
-				? s
-				: never;
+			type SchemaUnionToIntersection<T> =
+				UnionToIntersection<SchemaToPair<T>> extends [infer s, infer X] ? s : never;
 
-			type SchemaToPair<T> = T extends TreeNodeSchema<string, NodeKind, infer Node>
-				? [T, Node]
-				: [never, never];
+			type SchemaToPair<T> =
+				T extends TreeNodeSchema<string, NodeKind, infer Node> ? [T, Node] : [never, never];
 
 			const sf = new SchemaFactory("test");
 

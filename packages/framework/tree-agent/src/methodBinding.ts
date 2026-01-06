@@ -129,9 +129,10 @@ export function buildFunc<
  * A utility type that infers the return type of a function definition.
  * @alpha
  */
-export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest>
-	? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>>
-	: never;
+export type Infer<T> =
+	T extends FunctionDef<infer Args, infer Return, infer Rest>
+		? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>>
+		: never;
 
 /**
  * An interface for exposing methods of schema classes to an agent.

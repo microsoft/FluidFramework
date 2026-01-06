@@ -246,9 +246,8 @@ export function enumFromStrings<
 	type MembersUnion = Members[number];
 
 	// Get all keys of the Members tuple which are numeric strings as union of numbers:
-	type Indexes = Extract<keyof Members, `${number}`> extends `${infer N extends number}`
-		? N
-		: never;
+	type Indexes =
+		Extract<keyof Members, `${number}`> extends `${infer N extends number}` ? N : never;
 
 	type TOut = {
 		[Index in Indexes as Members[Index]]: ReturnType<

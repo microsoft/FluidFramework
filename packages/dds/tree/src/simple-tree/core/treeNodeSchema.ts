@@ -574,15 +574,12 @@ export function isTreeNodeSchemaClass<
  * If a schema is both TreeNodeSchemaClass and TreeNodeSchemaNonClass, prefer TreeNodeSchemaClass since that includes subclasses properly.
  * @public
  */
-export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaClass<
-	string,
-	NodeKind,
-	infer TNode
->
-	? TNode
-	: T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode>
+export type NodeFromSchema<T extends TreeNodeSchema> =
+	T extends TreeNodeSchemaClass<string, NodeKind, infer TNode>
 		? TNode
-		: never;
+		: T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode>
+			? TNode
+			: never;
 
 /**
  * Data which can be used as a node to be inserted.
