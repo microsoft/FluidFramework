@@ -32,8 +32,6 @@ stages:
   condition: succeededOrFailed()
   dependsOn:
     - ${{ parameters.stageId }}
-  variables:
-    - group: ado-feeds
   jobs:
   - job: upload_run_telemetry
     displayName: Upload stage telemetry to Kusto

@@ -838,7 +838,7 @@ extends:
             - publish_npm_internal_test
             - publish_npm_internal_build
             - publish_npm_public
-            # NOTE: This is brittle; since the publish_npm_internal_dev stage is addded to the pipeline conditionally,
+            # NOTE: This is brittle; since the publish_npm_internal_dev stage is added to the pipeline conditionally,
             # we create a dependency on it based on the same condition.
             # So this needs to be kept in sync with the logic that include-publish-npm-package.yml uses to create the stage.
             # At some point it might be preferable to always create the stage, control its execution solely with
