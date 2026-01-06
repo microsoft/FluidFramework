@@ -36,7 +36,7 @@ describe("uncompressedEncode", () => {
 				});
 				const result = codec.encode([input], context);
 				const decoded = codec.decode(result, context);
-				const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
+				const decodedJson = decoded.map((cursor) => jsonableTreeFromFieldCursor(cursor));
 				assert.deepEqual([[jsonable]], decodedJson);
 			});
 		}

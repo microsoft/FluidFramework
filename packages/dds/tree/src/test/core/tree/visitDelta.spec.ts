@@ -91,7 +91,9 @@ function testDeltaVisit(
 				name === "create"
 					? ([
 							name,
-							(args as Parameters<DeltaVisitor["create"]>)[0].map(mapTreeFromCursor),
+							(args as Parameters<DeltaVisitor["create"]>)[0].map((cursor) =>
+								mapTreeFromCursor(cursor),
+							),
 							args[1],
 						] as VisitCall)
 					: ([name, ...args] as VisitCall);

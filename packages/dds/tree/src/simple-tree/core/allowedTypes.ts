@@ -544,8 +544,8 @@ export function normalizeAllowedTypesInternal(
 	return getOrCreate(cachedNormalize, type, () => {
 		const inputArray = isReadonlyArray(type) ? type : [type];
 		Object.freeze(inputArray);
-		const annotatedTypes: AnnotatedAllowedType[] = inputArray.map(
-			normalizeToAnnotatedAllowedType,
+		const annotatedTypes: AnnotatedAllowedType[] = inputArray.map((t) =>
+			normalizeToAnnotatedAllowedType(t),
 		);
 
 		return AnnotatedAllowedTypesInternal.create(annotatedTypes);

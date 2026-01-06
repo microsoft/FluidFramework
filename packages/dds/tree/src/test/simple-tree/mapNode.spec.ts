@@ -16,7 +16,9 @@ const schemaFactory = new SchemaFactory("Test");
 const object = schemaFactory.object("object", { content: schemaFactory.number });
 
 const schema = schemaFactory.object("parent", {
+	// eslint-disable-next-line unicorn/no-array-callback-reference -- schemaFactory.map() is not Array.map()
 	map: schemaFactory.map(schemaFactory.string),
+	// eslint-disable-next-line unicorn/no-array-callback-reference -- schemaFactory.map() is not Array.map()
 	objectMap: schemaFactory.map(object),
 });
 
@@ -62,6 +64,7 @@ describeHydration(
 					assert.equal(child, 1);
 					assert.equal(map, node);
 				}
+				// eslint-disable-next-line unicorn/no-array-callback-reference -- thisArg binding requires passing callback directly
 				node.forEach(callback, thisArg);
 				assert.deepEqual(log, ["b"]);
 			});
@@ -75,6 +78,7 @@ describeHydration(
 			});
 
 			it("pojo-emulation", () => {
+				// eslint-disable-next-line unicorn/no-array-callback-reference -- schemaFactory.map() is not Array.map()
 				const Schema = schemaFactory.map(schemaFactory.number);
 				const node = init(Schema, new Map());
 				assert.equal(Reflect.getPrototypeOf(node), Map.prototype);
@@ -94,6 +98,7 @@ describeHydration(
 		});
 
 		it("create - NonClass", () => {
+			// eslint-disable-next-line unicorn/no-array-callback-reference -- schemaFactory.map() is not Array.map()
 			const Schema = schemaFactory.map(schemaFactory.number);
 			type Schema = NodeFromSchema<typeof Schema>;
 			const _fromMap: Schema = Schema.create(new Map());

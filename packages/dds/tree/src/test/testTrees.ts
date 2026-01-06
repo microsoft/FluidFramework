@@ -294,7 +294,7 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 ];
 
 export const testTrees: readonly TestTree[] = [
-	...testSimpleTrees.map(convertSimpleTreeTest),
+	...testSimpleTrees.map((simpleTree) => convertSimpleTreeTest(simpleTree)),
 	test(
 		"numericSequence",
 		{

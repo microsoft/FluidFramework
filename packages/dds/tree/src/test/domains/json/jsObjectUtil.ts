@@ -16,7 +16,7 @@ function cloneObject(
 ): JsonCompatible {
 	if (isReadonlyArray(obj)) {
 		// PERF: 'Array.map()' was ~44% faster than looping over the array. (node 14 x64)
-		return obj.map(clone);
+		return obj.map((item) => clone(item));
 	} else {
 		const result: JsonCompatibleObject = {};
 		// PERF: Nested array allocs make 'Object.entries()' ~2.4x slower than reading

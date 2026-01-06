@@ -89,9 +89,9 @@ function withAdjacentTombstones(
 ): SF.Mark[] {
 	const hasEffectType = (m: SF.Mark): boolean => m.type === type;
 	const output = [...marks];
-	let markIdx = marks.findIndex(hasEffectType);
+	let markIdx = marks.findIndex((m) => hasEffectType(m));
 	assert(
-		markIdx !== -1 && !marks.slice(markIdx + 1).some(hasEffectType),
+		markIdx !== -1 && !marks.slice(markIdx + 1).some((m) => hasEffectType(m)),
 		"Expected to find exactly one mark with the given type",
 	);
 	const mark = marks[markIdx];

@@ -735,14 +735,17 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactory("test");
 
 			// Explicit structural example
+			// eslint-disable-next-line unicorn/no-array-callback-reference -- factory.map() is not Array.map()
 			const MyMap = factory.map(factory.number);
 			type MyMap = NodeFromSchema<typeof MyMap>;
 
 			// Inline structural example
+			// eslint-disable-next-line unicorn/no-array-callback-reference -- factory.map() is not Array.map()
 			factory.object("Foo", { myMap: factory.map(factory.number) });
 
 			function broken() {
 				// @ts-expect-error structural map schema are not typed as classes.
+				// eslint-disable-next-line unicorn/no-array-callback-reference -- factory.map() is not Array.map()
 				class NotAClass extends factory.map(factory.number) {}
 			}
 		});

@@ -1122,7 +1122,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			this.peerLocalBranches.set(
 				sessionId,
 				new SharedTreeBranch(
-					branch.commits.reduce(mintCommit, commit),
+					branch.commits.reduce((acc, c) => mintCommit(acc, c), commit),
 					this.changeFamily,
 					this.mintRevisionTag,
 				),

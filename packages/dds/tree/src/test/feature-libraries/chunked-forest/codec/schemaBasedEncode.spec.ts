@@ -478,7 +478,7 @@ describe("schemaBasedEncoding", () => {
 					// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
 					const encoded = codec.encode([cursorForJsonableTreeField(tree)], fieldBatchContext);
 					const result = codec.decode(encoded, fieldBatchContext);
-					const resultTree = result.map(jsonableTreeFromFieldCursor);
+					const resultTree = result.map((cursor) => jsonableTreeFromFieldCursor(cursor));
 					assert.deepEqual(resultTree, [tree]);
 
 					// This snapshot makes it clear when the format changes.

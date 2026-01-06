@@ -94,7 +94,10 @@ describe("rebaser", () => {
 					branch.unshift(cur.revision);
 				}
 
-				assert.deepEqual(branch, revisions.map(makeRevisionTag));
+				assert.deepEqual(
+					branch,
+					revisions.map((revision) => makeRevisionTag(revision)),
+				);
 			}
 		}
 

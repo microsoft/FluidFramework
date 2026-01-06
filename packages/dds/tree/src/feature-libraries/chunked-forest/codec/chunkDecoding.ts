@@ -175,7 +175,7 @@ export function deaggregateChunks(chunk: TreeChunk): TreeChunk[] {
  * Avoids creating nested or less than 2 child {@link SequenceChunk}s.
  */
 export function aggregateChunks(input: TreeChunk[]): TreeChunk {
-	const chunks = input.flatMap(deaggregateChunks);
+	const chunks = input.flatMap((chunk) => deaggregateChunks(chunk));
 	switch (chunks.length) {
 		case 0: {
 			return emptyChunk;

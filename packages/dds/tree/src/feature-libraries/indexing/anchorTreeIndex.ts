@@ -460,7 +460,7 @@ function filterNodes(
 	filter: (node: AnchorNode) => boolean,
 ): AnchorNode[] | undefined {
 	if (anchorNodes !== undefined) {
-		return anchorNodes.filter(filter);
+		return anchorNodes.filter((node) => filter(node));
 	}
 
 	return undefined;

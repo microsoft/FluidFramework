@@ -41,6 +41,7 @@ describe("SharedTreeObject factories", () => {
 		child: ChildA,
 		poly: [ChildA, ChildB],
 		list: sb.array(sb.number),
+		// eslint-disable-next-line unicorn/no-array-callback-reference -- sb.map() is not Array.map()
 		map: sb.map(sb.number),
 		optional: sb.optional(ChildOptional),
 		grand: ChildC,

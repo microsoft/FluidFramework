@@ -156,7 +156,7 @@ describe("compressedEncode", () => {
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
 					});
-					const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
+					const decodedJson = decoded.map((cursor) => jsonableTreeFromFieldCursor(cursor));
 					assert.deepEqual([[jsonable]], decodedJson);
 
 					// This makes it clear when the format changes.

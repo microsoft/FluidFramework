@@ -50,7 +50,7 @@ function uncompressedEncode(
 	batch: FieldBatch,
 	version: FieldBatchFormatVersion,
 ): EncodedFieldBatch {
-	const rootFields = batch.map(encodeSequence);
+	const rootFields = batch.map((field) => encodeSequence(field));
 	return {
 		version,
 		identifiers: [],

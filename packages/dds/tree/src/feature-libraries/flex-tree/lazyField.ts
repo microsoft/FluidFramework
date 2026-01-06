@@ -359,7 +359,7 @@ export function unboxedFlexNode(
 	const anchor = fieldAnchor.parent;
 	let child: AnchorNode | undefined;
 	if (anchor === undefined) {
-		child = context.checkout.forest.anchors.find({
+		child = context.checkout.forest.anchors.findNode({
 			parent: undefined,
 			parentField: fieldAnchor.fieldKey,
 			parentIndex: cursor.fieldIndex,

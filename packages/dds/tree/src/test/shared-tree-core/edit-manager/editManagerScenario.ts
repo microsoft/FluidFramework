@@ -369,13 +369,21 @@ export function runUnitTestScenario(
 						/**
 						 * Changes that were known to the peer at the time it authored this commit.
 						 */
-						const knownToPeer: number[] = [
-							...steps.filter(peerTrunkChangesFilter),
-							...steps.filter(peerLocalChangesFilter),
-						].map(
-							(s) =>
-								s.intention ?? fail("Sequenced changes must all have an intention property"),
-						);
+						const knownToPeer: number[] = [];
+						for (const s of steps) {
+							if (peerTrunkChangesFilter(s)) {
+								knownToPeer.push(
+									s.intention ?? fail("Sequenced changes must all have an intention property"),
+								);
+							}
+						}
+						for (const s of steps) {
+							if (peerLocalChangesFilter(s)) {
+								knownToPeer.push(
+									s.intention ?? fail("Sequenced changes must all have an intention property"),
+								);
+							}
+						}
 						const commit: TestCommit = {
 							revision: mintRevisionTag(),
 							sessionId: step.from,

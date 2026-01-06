@@ -155,7 +155,9 @@ export class SharedTreeChangeFamily
 			}
 		};
 		return {
-			changes: change.change.changes.map(invertInnerChange).reverse(),
+			changes: change.change.changes
+				.map((innerChange) => invertInnerChange(innerChange))
+				.reverse(),
 		};
 	}
 

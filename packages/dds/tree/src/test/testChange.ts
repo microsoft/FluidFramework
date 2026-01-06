@@ -170,7 +170,12 @@ function checkChangeList(
 	changes: readonly RecursiveReadonly<TestChange>[],
 	intentions: number[],
 ): void {
-	const filtered = changes.filter(isNonEmptyChange);
+	const filtered: RecursiveReadonly<NonEmptyTestChange>[] = [];
+	for (const change of changes) {
+		if (isNonEmptyChange(change)) {
+			filtered.push(change);
+		}
+	}
 	let intentionsSeen: number[] = [];
 	let index = 0;
 	for (const change of filtered) {

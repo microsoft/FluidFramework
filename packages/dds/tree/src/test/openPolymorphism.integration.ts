@@ -344,7 +344,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			const ItemTypes = ComponentMinimal.composeComponentSchema(allComponents, lazyConfig);
 			const config: MyAppConfigPartial = { allowedItemTypes: ItemTypes };
 			// At this point it is now legal to evaluate lazy schema:
-			const items = new Set(ItemTypes.map(evaluateLazySchema));
+			const items = new Set(ItemTypes.map((schema) => evaluateLazySchema(schema)));
 			return { ...config, items };
 		}
 
@@ -509,9 +509,11 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			});
 
 			// At this point it is now legal to evaluate lazy schema:
-			const items = new Set(composed.config.allowedItemTypes.map(evaluateLazySchema));
+			const items = new Set(
+				composed.config.allowedItemTypes.map((schema) => evaluateLazySchema(schema)),
+			);
 			const backgrounds = new Set(
-				composed.config.allowedBackgroundTypes.map(evaluateLazySchema),
+				composed.config.allowedBackgroundTypes.map((schema) => evaluateLazySchema(schema)),
 			);
 			return { composed, ...composed.config, items, backgrounds };
 		}

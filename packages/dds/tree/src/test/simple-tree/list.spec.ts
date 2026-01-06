@@ -451,37 +451,37 @@ describe("List", () => {
 				describe("every()", () => {
 					const check = test3("every");
 
-					tests.forEach(check);
+					tests.forEach((test) => check(test));
 				});
 
 				describe("filter()", () => {
 					const check = test3("filter");
 
-					tests.forEach(check);
+					tests.forEach((test) => check(test));
 				});
 
 				describe("find()", () => {
 					const check = test3("find");
 
-					tests.forEach(check);
+					tests.forEach((test) => check(test));
 				});
 
 				describe("findIndex()", () => {
 					const check = test3("findIndex");
 
-					tests.forEach(check);
+					tests.forEach((test) => check(test));
 				});
 
 				describe("forEach()", () => {
 					const check = test3("forEach");
 
-					tests.forEach(check);
+					tests.forEach((test) => check(test));
 				});
 
 				describe("map()", () => {
 					const check = test3("map");
 
-					tests.forEach(check);
+					tests.forEach((test) => check(test));
 				});
 
 				describe("reduce()", () => {
@@ -637,7 +637,7 @@ describe("List", () => {
 					test2("some", array, noInit, predicate);
 				};
 
-				[[], ["a"], ["b"], ["b", "c"], ["b", "c", "c"]].forEach(check);
+				[[], ["a"], ["b"], ["b", "c"], ["b", "c", "c"]].forEach((array) => check(array));
 			});
 
 			describe("toLocaleString()", () => {
@@ -654,7 +654,7 @@ describe("List", () => {
 				// TODO: Pass explicit locale when permitted by TS lib.
 				// For now, the results should at least be consistent on the same machine.
 				// In 'en' locale, we're expecting to see a comma thousands separator.
-				[[1000, 2000, 3000]].forEach(check);
+				[[1000, 2000, 3000]].forEach((array) => check(array));
 			});
 
 			describe("toString()", () => {
@@ -669,7 +669,7 @@ describe("List", () => {
 				};
 
 				// We do not expect to see a thousands separator.
-				[[1000, 2000, 3000]].forEach(check);
+				[[1000, 2000, 3000]].forEach((array) => check(array));
 			});
 		});
 	});

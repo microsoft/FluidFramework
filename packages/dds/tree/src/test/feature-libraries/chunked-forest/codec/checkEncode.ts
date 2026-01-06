@@ -125,7 +125,7 @@ function testDecode(
 	// roundtripping in that case.
 	function hasHandle(data: unknown): boolean {
 		if (Array.isArray(data)) {
-			return data.some(hasHandle);
+			return data.some((element) => hasHandle(element));
 		}
 		return isFluidHandle(data);
 	}

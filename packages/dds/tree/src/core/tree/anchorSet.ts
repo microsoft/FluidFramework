@@ -423,18 +423,18 @@ export class AnchorSet implements AnchorLocator {
 	 *
 	 * Does not add a ref!
 	 */
-	public find(path: UpPath): PathNode | undefined {
+	public findNode(path: UpPath): PathNode | undefined {
 		if (path instanceof PathNode && path.anchorSet === this) {
 			return path;
 		}
 		const parent = path.parent ?? this.root;
-		const parentPath = this.find(parent);
+		const parentPath = this.findNode(parent);
 		return parentPath?.childIfAnchored(path.parentField, path.parentIndex);
 	}
 
 	/**
 	 * Returns an equivalent path making as much of it with PathNodes as possible.
-	 * This allows future operations (like find, track, locate) on this path (and derived ones) to be faster.
+	 * This allows future operations (like findNode, track, locate) on this path (and derived ones) to be faster.
 	 * Note that the returned path may use AnchorNodes from this AnchorSet,
 	 * but does not have a tracked reference to them, so this should not be held onto across anything that might free an AnchorNode.
 	 *
@@ -515,7 +515,7 @@ export class AnchorSet implements AnchorLocator {
 	private decoupleNodes(startPath: UpPath, count: number): PathNode[] {
 		assert(count > 0, 0x681 /* count must be positive */);
 
-		const sourceParent = this.find(startPath.parent ?? this.root);
+		const sourceParent = this.findNode(startPath.parent ?? this.root);
 		const sourceChildren = sourceParent?.children?.get(startPath.parentField);
 		let nodes: PathNode[] = [];
 
@@ -675,7 +675,7 @@ export class AnchorSet implements AnchorLocator {
 	 *
 	 */
 	private offsetChildren(firstSiblingToOffset: UpPath, offset: number): void {
-		const nodePath = this.find(firstSiblingToOffset.parent ?? this.root);
+		const nodePath = this.findNode(firstSiblingToOffset.parent ?? this.root);
 		const field = nodePath?.children.get(firstSiblingToOffset.parentField);
 		if (field !== undefined) {
 			this.increaseParentIndexes(field, firstSiblingToOffset.parentIndex, offset);

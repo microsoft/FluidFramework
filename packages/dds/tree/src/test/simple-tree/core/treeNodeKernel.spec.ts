@@ -73,18 +73,18 @@ describe("simple-tree proxies", () => {
 
 		const anchors = view.checkout.forest.anchors;
 
-		assert.equal(anchors.find(path), undefined);
+		assert.equal(anchors.findNode(path), undefined);
 
 		view.root = child;
 		assert(!anchors.isEmpty());
 
 		const anchorNode = kernel.anchorNode;
 
-		assert.equal(anchors.find(path), anchorNode);
+		assert.equal(anchors.findNode(path), anchorNode);
 		view.dispose();
 
 		// AnchorSet is now empty
-		assert.equal(anchors.find(path), undefined);
+		assert.equal(anchors.findNode(path), undefined);
 		assert(anchors.isEmpty());
 	});
 });

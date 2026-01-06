@@ -116,7 +116,7 @@ describe("makeFieldBatchCodec", () => {
 
 			const encoded = codec.encode([input], context);
 			const decoded = codec.decode(encoded, context);
-			const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
+			const decodedJson = decoded.map((cursor) => jsonableTreeFromFieldCursor(cursor));
 			assert.deepEqual([[simpleTestData]], decodedJson);
 		});
 
@@ -135,7 +135,7 @@ describe("makeFieldBatchCodec", () => {
 
 			const encoded = codec.encode([input], context);
 			const decoded = codec.decode(encoded, context);
-			const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
+			const decodedJson = decoded.map((cursor) => jsonableTreeFromFieldCursor(cursor));
 			assert.deepEqual([[simpleTestData]], decodedJson);
 		});
 	});
