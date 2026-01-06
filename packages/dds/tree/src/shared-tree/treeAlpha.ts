@@ -93,14 +93,20 @@ const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => 
 };
 
 identifier.shorten = (branch: TreeBranch, nodeIdentifier: string): number | undefined => {
-	assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
+	assert(
+		branch instanceof SchematizingSimpleTreeView,
+		0xcac /* Unexpected branch implementation */,
+	);
 	const { nodeKeyManager } = branch;
 	const localNodeKey = nodeKeyManager.tryLocalizeNodeIdentifier(nodeIdentifier);
 	return localNodeKey === undefined ? undefined : extractFromOpaque(localNodeKey);
 };
 
 identifier.lengthen = (branch: TreeBranch, nodeIdentifier: number): string => {
-	assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
+	assert(
+		branch instanceof SchematizingSimpleTreeView,
+		0xcad /* Unexpected branch implementation */,
+	);
 	const { nodeKeyManager } = branch;
 	const local = brand<LocalNodeIdentifier>(nodeIdentifier as SessionSpaceCompressedId);
 	return nodeKeyManager.stabilizeNodeIdentifier(local);
