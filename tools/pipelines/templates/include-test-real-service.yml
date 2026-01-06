@@ -141,7 +141,7 @@ parameters:
   default: 'latest'
 
 stages:
-- stage: ${{ parameters.stageId}}
+- stage: ${{ parameters.stageId }}
   ${{ if ne(parameters.lockBehavior, 'none') }}:
     lockBehavior: ${{ parameters.lockBehavior }}
   condition: ${{ parameters.condition }}
@@ -565,9 +565,20 @@ stages:
 
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
-- template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+- template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
   parameters:
     stageId: ${{ parameters.stageId }}
-    uploadTestPassRateTelemetry: ${{ parameters.uploadTestPassRateTelemetry }}
     pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
     testWorkspace: $(Build.SourcesDirectory)
+    telemetry_upload_steps:
+      - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
+        parameters:
+          stageId: ${{ parameters.stageId }}
+          pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
+          testWorkspace: $(Build.SourcesDirectory)
+      - ${{ if parameters.uploadTestPassRateTelemetry }}:
+        - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-test-pass-rate.yml@self
+          parameters:
+            stageId: ${{ parameters.stageId }}
+            pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
+            testWorkspace: $(Build.SourcesDirectory)

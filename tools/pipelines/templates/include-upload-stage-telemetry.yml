@@ -6,6 +6,8 @@
 # This template adds a new stage to a pipeline.
 # The new stage "targets" another stage (specified as a parameter) and uploads telemetry about that stage to Kusto.
 
+# TODO: Delete?
+
 parameters:
 
 # Id for the stage whose runtime + result telemetry will be uploaded to Kusto.
@@ -23,6 +25,7 @@ parameters:
 - name: pipelineIdentifierForTelemetry
   type: string
 
+# The sources directory that was used for the test run
 - name: testWorkspace
   type: string
 
@@ -31,7 +34,7 @@ stages:
   displayName: Upload stage telemetry to Kusto ('${{ parameters.stageId }}')
   condition: succeededOrFailed()
   dependsOn:
-    - ${{ parameters.stageId}}
+    - ${{ parameters.stageId }}
   variables:
     - group: ado-feeds
   jobs:

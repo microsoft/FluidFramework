@@ -1,0 +1,59 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-steps-upload-stage-timing
+
+# This template adds steps to the upload-telemetry stage to include the upload of stage timing.
+# The new stage "targets" another stage (specified as a parameter) and uploads telemetry about that stage to Kusto.
+
+parameters:
+
+# Id for the stage whose runtime + result telemetry will be uploaded to Kusto.
+- name: stageId
+  type: string
+
+# Unique identifier for the pipeline that is including this template.
+# Used to identify telemetry data in Kusto for this pipeline.
+- name: pipelineIdentifierForTelemetry
+  type: string
+
+# The sources directory that was used for the test run
+- name: testWorkspace
+  type: string
+
+steps:
+- task: Bash@3
+	displayName: Get stage timing and result data from ADO
+	env:
+	BUILD_ID: $(Build.BuildId)
+	ADO_API_TOKEN: $(System.AccessToken)
+	WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTimingAndResult
+	inputs:
+	targetType: 'inline'
+	script: |
+		set -eu -o pipefail
+
+		echo "Creating output folder '$WORK_FOLDER'"
+		mkdir -p $WORK_FOLDER
+
+		echo "Retrieving data from ADO API";
+		echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2\""
+		curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version=7.1-preview.2" > $WORK_FOLDER/output.json
+
+- task: Bash@3
+	displayName: Submit telemetry for stage timing and result
+	env:
+	BUILD_ID: $(Build.BuildId)
+	STAGE_ID: ${{ parameters.stageId }}
+	PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
+	WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTimingAndResult
+	inputs:
+	targetType: 'inline'
+	workingDirectory: $(Build.SourcesDirectory)
+	script: |
+		set -eu -o pipefail
+
+		echo "Listing files in '$WORK_FOLDER'"
+		ls -laR $WORK_FOLDER;
+
+		pnpm exec telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
