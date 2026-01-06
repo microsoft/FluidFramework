@@ -73,7 +73,6 @@ import {
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import type { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
-	type ChangeAtomIdBTree,
 	type CrossFieldKey,
 	type CrossFieldKeyRange,
 	type CrossFieldKeyTable,
@@ -87,6 +86,11 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import type { FlexFieldKind } from "./fieldKind.js";
+import {
+	getFromChangeAtomIdMap,
+	setInChangeAtomIdMap,
+	type ChangeAtomIdBTree,
+} from "../changeAtomIdBTree.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -1546,7 +1550,7 @@ export class ModularChangeFamily
 			updated.refreshers = replaceIdMapRevisions(change.refreshers, replacer);
 		}
 
-		updated.revisions = [{ revision: replacer.newRevision }];
+		updated.revisions = [{ revision: replacer.updatedRevision }];
 
 		return updated;
 	}
@@ -3109,17 +3113,6 @@ interface ModularChangesetContent {
 	nodeToParent: ChangeAtomIdBTree<FieldId>;
 	nodeAliases: ChangeAtomIdBTree<NodeId>;
 	crossFieldKeys: CrossFieldKeyTable;
-}
-
-function getFromChangeAtomIdMap<T>(
-	map: ChangeAtomIdBTree<T>,
-	id: ChangeAtomId,
-): T | undefined {
-	return map.get([id.revision, id.localId]);
-}
-
-function setInChangeAtomIdMap<T>(map: ChangeAtomIdBTree<T>, id: ChangeAtomId, value: T): void {
-	map.set([id.revision, id.localId], value);
 }
 
 function areEqualFieldIds(a: FieldId, b: FieldId): boolean {

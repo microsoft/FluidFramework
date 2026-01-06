@@ -211,3 +211,9 @@ export {
 	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
+
+export {
+	type ChangeAtomIdBTree,
+	getFromChangeAtomIdMap,
+	setInChangeAtomIdMap,
+} from "./changeAtomIdBTree.js";

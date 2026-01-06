@@ -35,6 +35,7 @@ import {
 	type EditDescription,
 	jsonableTreeFromFieldCursor,
 	DefaultRevisionReplacer,
+	type ChangeAtomIdBTree,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -82,7 +83,6 @@ import { ajvValidator } from "../../codec/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import {
 	newCrossFieldKeyTable,
-	type ChangeAtomIdBTree,
 	type CrossFieldKeyTable,
 	type FieldChangeMap,
 	type FieldId,

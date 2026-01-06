@@ -59,7 +59,6 @@ import {
 } from "./modularChangeFormat.js";
 import {
 	newCrossFieldKeyTable,
-	type ChangeAtomIdBTree,
 	type FieldChangeMap,
 	type FieldChangeset,
 	type FieldId,
@@ -67,6 +66,7 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
+import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,

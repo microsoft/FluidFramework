@@ -25,6 +25,7 @@ import {
 	fieldKinds,
 	type SchemaChange,
 	intoDelta,
+	DefaultRevisionReplacer,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeChangeFamily,
@@ -61,7 +62,8 @@ const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (ta
 
 const rootField = { parent: undefined, field: rootFieldKey };
 // Side effects results in `dataChanges` being populated
-// The enter/exit transaction calls are used to ensure the first two change use the same local IDs in their change atoms
+// The enter/exit transaction calls are used to ensure the first two change use the same local IDs in their change atoms.
+// Specifically, `exitTransaction` resets the local ID space.
 defaultEditor.enterTransaction();
 defaultEditor.valueField(rootField).set(chunkFromJsonTrees(["X"]));
 defaultEditor.exitTransaction();
@@ -428,7 +430,10 @@ describe("SharedTreeChangeFamily", () => {
 				assert.equal(a.minor, b.minor);
 			}
 			const newRevision = mintRevisionTag();
-			const updated = sharedTreeFamily.changeRevision(input, newRevision);
+			const updated = sharedTreeFamily.changeRevision(
+				input,
+				new DefaultRevisionReplacer(newRevision, sharedTreeFamily.getRevisions(input)),
+			);
 			// Check the revision change had the intended effect
 			{
 				const [a, b] = getIds(updated);
@@ -460,7 +465,10 @@ describe("SharedTreeChangeFamily", () => {
 			};
 			checkConsistency(input);
 			const newRevision = mintRevisionTag();
-			const updated = sharedTreeFamily.changeRevision(input, newRevision);
+			const updated = sharedTreeFamily.changeRevision(
+				input,
+				new DefaultRevisionReplacer(newRevision, sharedTreeFamily.getRevisions(input)),
+			);
 			checkConsistency(updated);
 		});
 	});

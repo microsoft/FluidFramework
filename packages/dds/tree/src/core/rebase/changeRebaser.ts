@@ -104,20 +104,20 @@ export interface ChangeRebaser<TChangeset> {
 }
 
 /**
- * A type that can update references to a set of old revisions with new ones across multiple changesets.
+ * A type that can update references to a set of obsolete revisions across multiple changesets.
  */
 export interface RevisionReplacer {
 	/**
-	 * The new revision to use.
+	 * The revision to use in place of the obsolete revisions.
 	 */
-	readonly newRevision: RevisionTag;
+	readonly updatedRevision: RevisionTag;
 
 	/**
 	 * Predicate to determine if a revision needs replacing.
 	 * @param revision - The revision that may need replacing.
 	 * @returns true iff the given `revision` needs replacing.
 	 */
-	isOldRevision(revision: RevisionTag | undefined): boolean;
+	isObsolete(revision: RevisionTag | undefined): boolean;
 
 	/**
 	 * Returns the updated ID for the given ID.

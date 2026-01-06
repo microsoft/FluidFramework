@@ -119,7 +119,7 @@ function updateRevisionAndId<T extends HasRevisionTag & HasMoveId>(
 	input: T,
 	replacer: RevisionReplacer,
 ): T {
-	if (!replacer.isOldRevision(input.revision)) {
+	if (!replacer.isObsolete(input.revision)) {
 		return input;
 	}
 	const newAtom = replacer.getUpdatedAtomId(makeChangeAtomId(input.id, input.revision));

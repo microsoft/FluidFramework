@@ -20,7 +20,6 @@ import {
 	mapTaggedChange,
 } from "../core/index.js";
 import {
-	DefaultRevisionReplacer,
 	type FieldBatchCodec,
 	ModularChangeFamily,
 	type ModularChangeset,
@@ -225,18 +224,9 @@ export class SharedTreeChangeFamily
 	public changeRevision(
 		change: SharedTreeChange,
 		replacer: RevisionReplacer,
-	): SharedTreeChange;
-	public changeRevision(change: SharedTreeChange, newRevision: RevisionTag): SharedTreeChange;
-	public changeRevision(
-		change: SharedTreeChange,
-		replacer: RevisionReplacer | RevisionTag,
 	): SharedTreeChange {
-		const actualReplacer: RevisionReplacer =
-			typeof replacer === "object"
-				? replacer
-				: new DefaultRevisionReplacer(replacer, this.getRevisions(change));
 		return mapDataChanges(change, (inner) =>
-			this.modularChangeFamily.rebaser.changeRevision(inner, actualReplacer),
+			this.modularChangeFamily.rebaser.changeRevision(inner, replacer),
 		);
 	}
 
