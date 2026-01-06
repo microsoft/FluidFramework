@@ -522,6 +522,9 @@ importers:
       '@manypkg/get-packages':
         specifier: ^2.2.2
         version: 2.2.2
+      '@types/glob':
+        specifier: ^7.2.0
+        version: 7.2.0
       async:
         specifier: ^3.2.6
         version: 3.2.6
@@ -610,9 +613,6 @@ importers:
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
-      '@types/glob':
-        specifier: ^7.2.0
-        version: 7.2.0
       '@types/lodash.isequal':
         specifier: ^4.5.8
         version: 4.5.8
