@@ -466,7 +466,7 @@ export class EditManager<
 	}
 
 	public getSharedBranchIds(): BranchId[] {
-		return Array.from(this.sharedBranches.keys());
+		return [...this.sharedBranches.keys()];
 	}
 
 	public removeBranch(branchId: BranchId): void {

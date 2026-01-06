@@ -147,7 +147,7 @@ export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuz
 }
 
 export function nodeSchemaFromTreeSchema(treeSchema: typeof fuzzFieldSchema) {
-	const nodeSchema = Array.from(treeSchema.allowedTypeSet).find(
+	const nodeSchema = [...treeSchema.allowedTypeSet].find(
 		(treeNodeSchema) => treeNodeSchema.identifier === "treeFuzz.node",
 	) as typeof FuzzNode | undefined;
 	return nodeSchema;

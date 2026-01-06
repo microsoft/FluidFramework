@@ -38,6 +38,10 @@ export class DummyChangeRebaser implements ChangeRebaser<typeof dummyChange> {
 		return {};
 	}
 
+	public getRevisions(): Set<RevisionTag | undefined> {
+		return new Set();
+	}
+
 	public changeRevision(): typeof dummyChange {
 		return {};
 	}
