@@ -413,7 +413,7 @@ type _InlineTrick = 0;
 export type Input<T extends never> = T;
 
 // @public @system
-type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {
+export type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {
     arbitraryKey: "arbitraryValue";
 } extends T ? Record<string, never> : never : FlattenKeys<{
     readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property & string]>;
@@ -714,7 +714,7 @@ export interface SchemaStatics {
 }
 
 // @public @system
-type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
+export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
