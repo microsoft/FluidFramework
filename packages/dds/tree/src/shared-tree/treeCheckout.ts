@@ -11,7 +11,11 @@ import {
 	UsageError,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { FluidClientVersion, FormatValidatorNoOp } from "../codec/index.js";
+import {
+	FluidClientVersion,
+	FormatValidatorNoOp,
+	type CodecWriteOptions,
+} from "../codec/index.js";
 import {
 	type Anchor,
 	type AnchorLocator,
@@ -300,21 +304,23 @@ export function createTreeCheckout(
 		logger?: ITelemetryLoggerExt;
 		breaker?: Breakable;
 		disposeForksAfterTransaction?: boolean;
+		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
 	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest(breaker, schema);
-	const defaultCodecOptions = {
+	const defaultCodecOptions: CodecWriteOptions = {
 		jsonValidator: FormatValidatorNoOp,
 		minVersionForCollab: FluidClientVersion.v2_0,
 	};
+	const codecOptions: CodecWriteOptions = { ...defaultCodecOptions, ...args?.codecOptions };
 	const changeFamily =
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
 			revisionTagCodec,
-			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
-			defaultCodecOptions,
+			args?.fieldBatchCodec ?? makeFieldBatchCodec(codecOptions),
+			codecOptions,
 			args?.chunkCompressionStrategy,
 			idCompressor,
 		);
@@ -1189,6 +1195,12 @@ class EditLock {
 			},
 			addNodeExistsConstraintOnRevert(path) {
 				editor.addNodeExistsConstraintOnRevert(path);
+			},
+			addNoChangeConstraint() {
+				editor.addNoChangeConstraint();
+			},
+			addNoChangeConstraintOnRevert() {
+				editor.addNoChangeConstraintOnRevert();
 			},
 		};
 	}
