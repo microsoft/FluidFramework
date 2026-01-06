@@ -23,32 +23,32 @@ parameters:
 
 steps:
 - task: Bash@3
-displayName: Get test pass rate data from ADO
-env:
-  BUILD_ID: $(Build.BuildId)
-  STAGE_ID: ${{ parameters.stageId }}
-  ADO_API_TOKEN: $(System.AccessToken)
-  WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTestPassRate
-inputs:
-  targetType: 'inline'
-  script: |
-  set -eu -o pipefail
-  echo "Fetching test pass rate data and saving into JSON files"
-  node "$(Build.SourcesDirectory)/scripts/get-test-pass-rate.mjs"
+  displayName: Get test pass rate data from ADO
+  env:
+    BUILD_ID: $(Build.BuildId)
+    STAGE_ID: ${{ parameters.stageId }}
+    ADO_API_TOKEN: $(System.AccessToken)
+    WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTestPassRate
+  inputs:
+    targetType: 'inline'
+    script: |
+      set -eu -o pipefail
+      echo "Fetching test pass rate data and saving into JSON files"
+      node "$(Build.SourcesDirectory)/scripts/get-test-pass-rate.mjs"
 
 - task: Bash@3
-displayName: Submit telemetry for test pass rate
-env:
-  BUILD_ID: $(Build.BuildId)
-  STAGE_ID: ${{ parameters.stageId }}
-  PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
-  WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTestPassRate
-inputs:
-  targetType: 'inline'
-  workingDirectory: $(Build.SourcesDirectory)
-  script: |
-  set -eu -o pipefail
-  echo "Listing files in '$WORK_FOLDER'"
-  ls -laR $WORK_FOLDER;
+  displayName: Submit telemetry for test pass rate
+  env:
+    BUILD_ID: $(Build.BuildId)
+    STAGE_ID: ${{ parameters.stageId }}
+    PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
+    WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTestPassRate
+  inputs:
+    targetType: 'inline'
+    workingDirectory: $(Build.SourcesDirectory)
+    script: |
+      set -eu -o pipefail
+      echo "Listing files in '$WORK_FOLDER'"
+      ls -laR $WORK_FOLDER;
 
-  pnpm exec telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/testPassRate.js" --dir "$WORK_FOLDER"
+      pnpm exec telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/testPassRate.js" --dir "$WORK_FOLDER"
