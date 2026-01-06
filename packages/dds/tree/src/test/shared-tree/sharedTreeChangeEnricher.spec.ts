@@ -22,6 +22,7 @@ import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
+	DefaultRevisionReplacer,
 	ModularChangeFamily,
 	type ModularChangeset,
 	ModularEditBuilder,
@@ -197,5 +198,11 @@ function tagChangeInLine(
 	change: ModularChangeset,
 	revision: RevisionTag,
 ): TaggedChange<ModularChangeset> {
-	return tagChange(modularFamily.changeRevision(change, revision), revision);
+	return tagChange(
+		modularFamily.changeRevision(
+			change,
+			new DefaultRevisionReplacer(revision, modularFamily.getRevisions(change)),
+		),
+		revision,
+	);
 }

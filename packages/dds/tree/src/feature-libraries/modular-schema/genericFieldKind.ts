@@ -11,8 +11,7 @@ import {
 	type DeltaMark,
 	type FieldKindIdentifier,
 	Multiplicity,
-	type RevisionTag,
-	replaceAtomRevisions,
+	type RevisionReplacer,
 } from "../../core/index.js";
 
 import type {
@@ -157,10 +156,9 @@ function pruneGenericChange(
 
 function replaceRevisions(
 	changeset: GenericChangeset,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
+	replacer: RevisionReplacer,
 ): GenericChangeset {
-	return changeset.mapValues((node) => replaceAtomRevisions(node, oldRevisions, newRevision));
+	return changeset.mapValues((node) => replacer.getUpdatedAtomId(node));
 }
 
 /**
