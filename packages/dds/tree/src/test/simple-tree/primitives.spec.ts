@@ -137,7 +137,9 @@ describe("Primitives", () => {
 
 	describe("boolean", () => {
 		const schema = schemaFactory.boolean;
-		[true, false].forEach((value) => checkExact(schema, value));
+		for (const value of [true, false]) {
+			checkExact(schema, value);
+		}
 	});
 
 	describe("number", () => {
@@ -145,7 +147,7 @@ describe("Primitives", () => {
 			const schema = schemaFactory.number;
 
 			// Test a handful of extreme values to sanity check that they round-trip as expected.
-			[
+			for (const value of [
 				-Number.MAX_VALUE,
 				Number.MIN_SAFE_INTEGER,
 				-Number.MIN_VALUE,
@@ -153,37 +155,41 @@ describe("Primitives", () => {
 				Number.MIN_VALUE,
 				Number.MAX_SAFE_INTEGER,
 				Number.MAX_VALUE,
-			].forEach((value) => checkExact(schema, value));
+			]) {
+				checkExact(schema, value);
+			}
 
 			// JSON coerces non-finite numbers to 'null'.  If 'null' violates schema,
 			// this must throw a TypeError.
-			[Number.NEGATIVE_INFINITY, Number.NaN, Number.POSITIVE_INFINITY].forEach((value) => {
+			for (const value of [Number.NEGATIVE_INFINITY, Number.NaN, Number.POSITIVE_INFINITY]) {
 				checkThrows(schema, value);
-			});
+			}
 
 			// JSON coerces -0 to 0.  This succeeds because it does not change the type.
-			[-0].forEach((value) => {
+			for (const value of [-0]) {
 				checkCoerced(schema, value);
-			});
+			}
 		});
 
 		describe("with schema [_.number, _.null]", () => {
 			// JSON coerces non-finite numbers to 'null'.  This succeeds when 'null' is
 			// permitted by schema.
 			const schema = [schemaFactory.number, schemaFactory.null] as const;
-			[Number.NEGATIVE_INFINITY, Number.NaN, Number.POSITIVE_INFINITY].forEach((value) =>
-				checkCoerced(schema, value),
-			);
+			for (const value of [Number.NEGATIVE_INFINITY, Number.NaN, Number.POSITIVE_INFINITY]) {
+				checkCoerced(schema, value);
+			}
 		});
 	});
 
 	describe("string", () => {
 		const schema = schemaFactory.string;
-		[
+		for (const value of [
 			"", // empty string
 			"!~", // printable ascii range
 			"比特币", // non-ascii range
 			"😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
-		].forEach((value) => checkExact(schema, value));
+		]) {
+			checkExact(schema, value);
+		}
 	});
 });

@@ -110,9 +110,9 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
 		schema.simpleAllowedTypes.keys(),
 	);
-	allowedTypesIdentifiers.forEach((type) => {
+	for (const type of allowedTypesIdentifiers) {
 		allowedTypes.push(createSchemaRef(type));
-	});
+	}
 
 	const items: JsonFieldSchema = hasSingle(allowedTypes)
 		? allowedTypes[0]
@@ -216,9 +216,9 @@ function convertRecordLikeNodeSchema(
 	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
 		schema.simpleAllowedTypes.keys(),
 	);
-	allowedTypesIdentifiers.forEach((type) => {
+	for (const type of allowedTypesIdentifiers) {
 		allowedTypes.push(createSchemaRef(type));
-	});
+	}
 
 	const output = {
 		type: "object",

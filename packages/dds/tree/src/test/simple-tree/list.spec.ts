@@ -454,37 +454,49 @@ describe("List", () => {
 				describe("every()", () => {
 					const check = test3("every");
 
-					tests.forEach(check);
+					for (const test of tests) {
+						check(test);
+					}
 				});
 
 				describe("filter()", () => {
 					const check = test3("filter");
 
-					tests.forEach(check);
+					for (const test of tests) {
+						check(test);
+					}
 				});
 
 				describe("find()", () => {
 					const check = test3("find");
 
-					tests.forEach(check);
+					for (const test of tests) {
+						check(test);
+					}
 				});
 
 				describe("findIndex()", () => {
 					const check = test3("findIndex");
 
-					tests.forEach(check);
+					for (const test of tests) {
+						check(test);
+					}
 				});
 
 				describe("forEach()", () => {
 					const check = test3("forEach");
 
-					tests.forEach(check);
+					for (const test of tests) {
+						check(test);
+					}
 				});
 
 				describe("map()", () => {
 					const check = test3("map");
 
-					tests.forEach(check);
+					for (const test of tests) {
+						check(test);
+					}
 				});
 
 				describe("reduce()", () => {
@@ -493,7 +505,9 @@ describe("List", () => {
 						return previous.concat(value, index);
 					});
 
-					[[], ["a"], ["a", "b"]].forEach((init) => check(init, []));
+					for (const init of [[], ["a"], ["a", "b"]]) {
+						check(init, []);
+					}
 				});
 
 				describe("reduceRight()", () => {
@@ -502,7 +516,9 @@ describe("List", () => {
 						return previous.concat(value, index);
 					});
 
-					[[], ["a"], ["a", "b"]].forEach((init) => check(init, []));
+					for (const init of [[], ["a"], ["a", "b"]]) {
+						check(init, []);
+					}
 				});
 			});
 
@@ -642,7 +658,9 @@ describe("List", () => {
 					test2("some", array, noInit, predicate);
 				};
 
-				[[], ["a"], ["b"], ["b", "c"], ["b", "c", "c"]].forEach(check);
+				for (const array of [[], ["a"], ["b"], ["b", "c"], ["b", "c", "c"]]) {
+					check(array);
+				}
 			});
 
 			describe("toLocaleString()", () => {
@@ -659,7 +677,9 @@ describe("List", () => {
 				// TODO: Pass explicit locale when permitted by TS lib.
 				// For now, the results should at least be consistent on the same machine.
 				// In 'en' locale, we're expecting to see a comma thousands separator.
-				[[1000, 2000, 3000]].forEach(check);
+				for (const array of [[1000, 2000, 3000]]) {
+					check(array);
+				}
 			});
 
 			describe("toString()", () => {
@@ -674,7 +694,9 @@ describe("List", () => {
 				};
 
 				// We do not expect to see a thousands separator.
-				[[1000, 2000, 3000]].forEach(check);
+				for (const array of [[1000, 2000, 3000]]) {
+					check(array);
+				}
 			});
 		});
 	});
