@@ -56,15 +56,15 @@ import {
 	type EncodedRevisionInfo,
 } from "./modularChangeFormatV1.js";
 import {
-	newCrossFieldKeyTable,
-	type ChangeAtomIdBTree,
-	type FieldChangeMap,
 	type FieldChangeset,
+	newCrossFieldKeyTable,
+	type FieldChangeMap,
 	type FieldId,
 	type ModularChangeset,
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
+import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
