@@ -20,6 +20,7 @@ import {
 	tagRollbackInverse,
 } from "../../../core/index.js";
 import {
+	DefaultRevisionReplacer,
 	type FieldChangeDelta,
 	type NodeChangeComposer,
 	type NodeChangeRebaser,
@@ -605,7 +606,10 @@ function inlineRevisionWrapped(
 }
 
 function inlineRevision(change: OptionalChangeset, revision: RevisionTag): OptionalChangeset {
-	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
+	return optionalChangeRebaser.replaceRevisions(
+		change,
+		new DefaultRevisionReplacer(revision, new Set([undefined])),
+	);
 }
 
 function tagWrappedChangeInline(

@@ -510,7 +510,7 @@ function nodeSchemaForNodeType(nodeSchema: typeof FuzzNode, nodeType: string) {
 	const nodeSchemaField = nodeSchema.fields.get("requiredChild");
 	assert(nodeSchemaField !== undefined);
 	const allowedTypes = nodeSchemaField.allowedTypeSet;
-	const simpleNodeSchema = Array.from(allowedTypes).find(
+	const simpleNodeSchema = [...allowedTypes].find(
 		(treeNodeSchema) => treeNodeSchema.identifier === nodeType,
 	);
 	const simpleSchema = simpleNodeSchema as unknown as new (dummy: unknown) => TreeNode;

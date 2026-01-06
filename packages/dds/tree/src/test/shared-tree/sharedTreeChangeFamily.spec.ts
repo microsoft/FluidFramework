@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
@@ -13,6 +13,7 @@ import {
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
+	tagChange,
 } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
@@ -23,6 +24,8 @@ import {
 	type TreeChunk,
 	fieldKinds,
 	type SchemaChange,
+	intoDelta,
+	DefaultRevisionReplacer,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeChangeFamily,
@@ -57,16 +60,28 @@ const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (ta
 	dataChanges.push(taggedChange.change),
 );
 
+const rootField = { parent: undefined, field: rootFieldKey };
 // Side effects results in `dataChanges` being populated
-defaultEditor
-	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(chunkFromJsonTrees(["X"]));
-defaultEditor
-	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(chunkFromJsonTrees(["Y"]));
+// The enter/exit transaction calls are used to ensure the first two change use the same local IDs in their change atoms.
+// Specifically, `exitTransaction` resets the local ID space.
+defaultEditor.enterTransaction();
+defaultEditor.valueField(rootField).set(chunkFromJsonTrees(["X"]));
+defaultEditor.exitTransaction();
+defaultEditor.valueField(rootField).set(chunkFromJsonTrees(["Y"]));
+defaultEditor.sequenceField(rootField).remove(0, 1);
+defaultEditor.move(rootField, 0, 1, rootField, 0);
 
 const dataChange1 = dataChanges[0];
 const dataChange2 = dataChanges[1];
+const dataChange3 = dataChanges[2];
+const dataChange4 = dataChanges[3];
+// This rebased change now refers to an ID introduced in dataChange3
+const rebasedDataChange4 = modularFamily.rebaser.rebase(
+	makeAnonChange(dataChange4),
+	makeAnonChange(dataChange3),
+	revisionMetadataSourceFromInfo([]),
+);
+
 const stDataChange1: SharedTreeChange = {
 	changes: [{ type: "data", innerChange: dataChange1 }],
 };
@@ -81,13 +96,9 @@ const emptySchema: TreeStoredSchema = {
 		persistedMetadata: undefined,
 	},
 };
+const innerSchemaChange = { schema: { new: emptySchema, old: emptySchema }, isInverse: false };
 const stSchemaChange: SharedTreeChange = {
-	changes: [
-		{
-			type: "schema",
-			innerChange: { schema: { new: emptySchema, old: emptySchema }, isInverse: false },
-		},
-	],
+	changes: [{ type: "schema", innerChange: innerSchemaChange }],
 };
 const stEmptyChange: SharedTreeChange = {
 	changes: [],
@@ -389,6 +400,76 @@ describe("SharedTreeChangeFamily", () => {
 					{ innerChange: [refresher2], type: "data" },
 				],
 			});
+		});
+	});
+
+	describe("changeRevision", () => {
+		it("handles local ID collisions across separate changes", () => {
+			function getIds(change: SharedTreeChange): [DeltaDetachedNodeId, DeltaDetachedNodeId] {
+				const change1 = change.changes[0];
+				const change3 = change.changes[2];
+				assert.equal(change1.type, "data");
+				assert.equal(change3.type, "data");
+				const delta1 = intoDelta(tagChange(change1.innerChange, undefined));
+				const delta3 = intoDelta(tagChange(change3.innerChange, undefined));
+				const id1 = delta1.build?.[0]?.id ?? fail("Missing id");
+				const id3 = delta3.build?.[0]?.id ?? fail("Missing id");
+				return [id1, id3];
+			}
+			const input: SharedTreeChange = {
+				changes: [
+					{ type: "data", innerChange: dataChange1 },
+					{ type: "schema", innerChange: innerSchemaChange },
+					{ type: "data", innerChange: dataChange2 },
+				],
+			};
+			// Check the test setup is correct
+			{
+				const [a, b] = getIds(input);
+				assert.notEqual(a.major, b.major);
+				assert.equal(a.minor, b.minor);
+			}
+			const newRevision = mintRevisionTag();
+			const updated = sharedTreeFamily.changeRevision(
+				input,
+				new DefaultRevisionReplacer(newRevision, sharedTreeFamily.getRevisions(input)),
+			);
+			// Check the revision change had the intended effect
+			{
+				const [a, b] = getIds(updated);
+				assert.equal(a.major, newRevision);
+				assert.equal(b.major, newRevision);
+				assert.notEqual(a.minor, b.minor);
+			}
+		});
+
+		it("keeps atom IDs consistent across separate changes", () => {
+			function checkConsistency(change: SharedTreeChange): void {
+				const change1 = change.changes[0];
+				const change3 = change.changes[2];
+				assert.equal(change1.type, "data");
+				assert.equal(change3.type, "data");
+				const delta1 = intoDelta(tagChange(change1.innerChange, undefined));
+				const delta3 = intoDelta(tagChange(change3.innerChange, undefined));
+				const detachedNodeId = delta1.fields?.get(rootFieldKey)?.[0]?.detach;
+				const reference = delta3.rename?.[0]?.oldId;
+				assert.notEqual(reference, undefined);
+				assert.deepEqual(reference, detachedNodeId);
+			}
+			const input: SharedTreeChange = {
+				changes: [
+					{ type: "data", innerChange: dataChange3 },
+					{ type: "schema", innerChange: innerSchemaChange },
+					{ type: "data", innerChange: rebasedDataChange4 },
+				],
+			};
+			checkConsistency(input);
+			const newRevision = mintRevisionTag();
+			const updated = sharedTreeFamily.changeRevision(
+				input,
+				new DefaultRevisionReplacer(newRevision, sharedTreeFamily.getRevisions(input)),
+			);
+			checkConsistency(updated);
 		});
 	});
 });
