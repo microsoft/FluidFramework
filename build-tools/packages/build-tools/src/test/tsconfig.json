@@ -17,13 +17,13 @@
 		"noImplicitThis": true,
 		"types": ["node", "mocha"],
 		"esModuleInterop": true,
-		"incremental": true
+		"incremental": true,
 	},
 	"include": ["./**/*"],
 	"exclude": [],
 	"references": [
 		{
-			"path": "../.."
-		}
-	]
+			"path": "../..",
+		},
+	],
 }
