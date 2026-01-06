@@ -117,7 +117,8 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, replacer) =>
-		change !== undefined ? replacer.getUpdatedAtomId(change) : undefined,
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- replacer type inference issue
+		change === undefined ? undefined : replacer.getUpdatedAtomId(change),
 };
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {

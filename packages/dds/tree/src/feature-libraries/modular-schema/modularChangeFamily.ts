@@ -1747,9 +1747,9 @@ function replaceCrossFieldKeyTableRevisions(
 		const field = entry.value;
 		const normalizedFieldId = normalizeFieldId(field, nodeAliases);
 		const updatedNodeId =
-			normalizedFieldId.nodeId !== undefined
-				? replacer.getUpdatedAtomId(normalizedFieldId.nodeId)
-				: undefined;
+			normalizedFieldId.nodeId === undefined
+				? undefined
+				: replacer.getUpdatedAtomId(normalizedFieldId.nodeId);
 
 		const updatedValue: FieldId = {
 			...normalizedFieldId,

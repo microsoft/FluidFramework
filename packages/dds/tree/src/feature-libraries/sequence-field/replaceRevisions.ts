@@ -92,26 +92,26 @@ function updateIdOverride<TEffect extends Detach | Rename>(
 	effect: TEffect,
 	replacer: RevisionReplacer,
 ): TEffect {
-	if (effect.idOverride !== undefined) {
-		const idOverride = replacer.getUpdatedAtomId(effect.idOverride);
-		return { ...effect, idOverride };
+	if (effect.idOverride === undefined) {
+		return effect;
 	}
-	return effect;
+	const idOverride = replacer.getUpdatedAtomId(effect.idOverride);
+	return { ...effect, idOverride };
 }
 
 function updateMoveEffect<TEffect extends HasMoveFields>(
 	effect: TEffect,
 	replacer: RevisionReplacer,
 ): TEffect {
-	return effect.finalEndpoint !== undefined
-		? updateRevisionAndId(
+	return effect.finalEndpoint === undefined
+		? updateRevisionAndId(effect, replacer)
+		: updateRevisionAndId(
 				{
 					...effect,
 					finalEndpoint: replacer.getUpdatedAtomId(effect.finalEndpoint),
 				},
 				replacer,
-			)
-		: updateRevisionAndId(effect, replacer);
+			);
 }
 
 function updateRevisionAndId<T extends HasRevisionTag & HasMoveId>(
