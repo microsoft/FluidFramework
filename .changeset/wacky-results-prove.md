@@ -4,9 +4,9 @@
 "__section": breaking
 ---
 
-## directory: Path parameter added to `cleared` event
+directory: Path parameter added to `cleared` event
 
-The `clear` event for SharedDirectory did not include a `path` parameter indicating which directory was cleared. Therefore, the `clear` event is deprecated and will be removed in future release. Instead use the `cleared` event.
+The `clear` event for SharedDirectory did not include a `path` parameter indicating which directory was cleared. Therefore, the `clear` event is deprecated and will be removed in a future release. Instead use the `cleared` event.
 
 **Before:**
 ```typescript
