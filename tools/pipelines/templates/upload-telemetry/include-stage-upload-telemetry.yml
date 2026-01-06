@@ -34,11 +34,11 @@ parameters:
   type: stepList
 
 stages:
-- stage: upload_telemetry_${{ iif(eq(parameters.stageIdFilter, ""), "all", parameters.stageIdFilter) }}
-  displayName: Upload stage telemetry to Kusto ('${{ iif(eq(parameters.stageIdFilter, ""), "all", parameters.stageIdFilter) }}')
+- stage: upload_telemetry_${{ iif(eq(parameters.stageIdFilter, ''), 'all', parameters.stageIdFilter) }}
+  displayName: Upload stage telemetry to Kusto ('${{ iif(eq(parameters.stageIdFilter, ''), 'all', parameters.stageIdFilter) }}')
   condition: succeededOrFailed()
   dependsOn:
-    - ${{ if neq(parameters.stageIdFilter, "") }}:
+    - ${{ if ne(parameters.stageIdFilter, '') }}:
       - ${{ parameters.stageIdFilter }}
     - ${{ each stage in parameters.dependsOn }}:
       - ${{ stage }}
