@@ -75,7 +75,14 @@ export function getApiExtractorConfigFilePath(commandLine: string): string {
 	return "api-extractor.json";
 }
 
-export function toPosixPath(s: string) {
+/**
+ * Converts a path to use forward slashes (POSIX style).
+ *
+ * @remarks
+ * This function is duplicated from `@fluid-tools/build-infrastructure` because build-tools
+ * is a CommonJS package and cannot directly import from the ESM-only build-infrastructure package.
+ */
+export function toPosixPath(s: string): string {
 	return s.replace(/\\/g, "/");
 }
 
@@ -239,13 +246,19 @@ export async function globWithGitignore(
 		return shuffleArray([...filtered]);
 	}
 
-	return filtered;
+	// Sort results for consistent ordering (tinyglobby does not guarantee sorted order)
+	return filtered.sort();
 }
 
 /**
  * Filters an array of absolute file paths using gitignore rules.
  * Reads .gitignore files from the filesystem hierarchy and applies them correctly
  * relative to each .gitignore file's directory.
+ *
+ * @remarks
+ * This function and related gitignore utilities are duplicated from `@fluid-tools/build-infrastructure`
+ * because build-tools is a CommonJS package and cannot directly import from the ESM-only
+ * build-infrastructure package.
  */
 async function filterByGitignore(files: string[], cwd: string): Promise<string[]> {
 	// Read .gitignore rule sets for the cwd and its parent directories
