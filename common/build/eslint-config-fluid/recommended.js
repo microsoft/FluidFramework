@@ -57,7 +57,7 @@ module.exports = {
 		// False positives on non-array `push` methods.
 		"unicorn/no-array-push-push": "off",
 
-		// False positives on non-array `map` methods.
+		// False positives on non-array methods.
 		"unicorn/no-array-callback-reference": "off",
 
 		"unicorn/empty-brace-spaces": "off",
