@@ -54,8 +54,7 @@ export class SharedDirectoryOracle {
 		// valueChanged fires globally on the root for ALL changes anywhere in the tree
 		// Only needs one listener on the root (includes 'path' field to indicate location)
 		this.sharedDir.on("valueChanged", this.onValueChanged);
-		// Use internal clearInternal event to track which directory was cleared
-		this.sharedDir.on("clearInternal", this.onClearInternal);
+		this.sharedDir.on("cleared", this.onCleared);
 		this.sharedDir.on("subDirectoryCreated", this.onSubDirCreated);
 		this.sharedDir.on("subDirectoryDeleted", this.onSubDirDeleted);
 
@@ -188,7 +187,7 @@ export class SharedDirectoryOracle {
 		}
 	};
 
-	private readonly onClearInternal = (path: string, local: boolean): void => {
+	private readonly onCleared = (path: string, local: boolean): void => {
 		// Clear keys; valueChanged events follow for keys with pending local operations
 		const absPath = path.startsWith("/") ? path : `/${path}`;
 		const dirNode1 = this.getDirNode(this.modelFromValueChanged, absPath);
@@ -366,7 +365,7 @@ export class SharedDirectoryOracle {
 
 	public dispose(): void {
 		this.sharedDir.off("valueChanged", this.onValueChanged);
-		this.sharedDir.off("clearInternal", this.onClearInternal);
+		this.sharedDir.off("cleared", this.onCleared);
 		this.sharedDir.off("subDirectoryCreated", this.onSubDirCreated);
 		this.sharedDir.off("subDirectoryDeleted", this.onSubDirDeleted);
 
