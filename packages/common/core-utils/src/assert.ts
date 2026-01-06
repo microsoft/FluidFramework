@@ -36,9 +36,14 @@ export function assert(
 	debugMessageBuilder?: () => string,
 ): asserts condition {
 	if (!condition) {
-		fail(message, debugMessageBuilder);
+		untaggedFail(message, debugMessageBuilder);
 	}
 }
+
+/**
+ * An alias for `fail` which avoids assert tagging for use in the implementation of `assert`.
+ */
+const untaggedFail = fail;
 
 /**
  * Throw an error with a constant message.
