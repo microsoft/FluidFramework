@@ -22,10 +22,17 @@ describe("textDomain", () => {
 	it("basic use", () => {
 		const text = TextAsTree.Tree.fromString("hello");
 		assert.equal(text.fullString(), "hello");
-		assert.deepEqual(Array.from(text.characters()), ["h", "e", "l", "l", "o"]);
+		assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
 		text.insertAt(5, " world");
 		assert.equal(text.fullString(), "hello world");
 		text.removeRange(0, 6);
 		assert.equal(text.fullString(), "world");
 	});
+
+	// TODO: Add tests for:
+	// - inserting at invalid indices (negative, beyond length),
+	// - removing with invalid indices or lengths,
+	// - inserting empty strings,
+	// - operations on empty text,
+	// - concurrent insertions/removals.
 });
