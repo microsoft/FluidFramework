@@ -59,5 +59,4 @@ stages:
           set -eu -o pipefail
           pnpm install
 
-    - ${{ each step in parameters.telemetry_upload_steps }}
-      - ${{ step }}
+    - ${{ parameters.telemetry_upload_steps }}
