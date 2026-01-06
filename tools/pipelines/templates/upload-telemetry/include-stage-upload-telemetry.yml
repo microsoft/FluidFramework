@@ -38,7 +38,7 @@ stages:
   displayName: Upload stage telemetry to Kusto ('${{ iif(eq(parameters.stageIdFilter, ""), "all", parameters.stageIdFilter) }}')
   condition: succeededOrFailed()
   dependsOn:
-    - ${{ if neq(parameters.stageIdFilter, "") }}
+    - ${{ if neq(parameters.stageIdFilter, "") }}:
       - ${{ parameters.stageIdFilter }}
     - ${{ each stage in parameters.dependsOn }}:
       - ${{ stage }}
