@@ -2096,9 +2096,13 @@ describe("Editing", () => {
 						}
 						present[iPeer][affectedNode] = presence;
 					}
-					peers.forEach((peer) => peer.rebaseOnto(tree));
+					for (const peer of peers) {
+						peer.rebaseOnto(tree);
+					}
 					expectJsonTree([tree, ...peers], startState);
-					peerUndoStacks.forEach(({ unsubscribe }) => unsubscribe());
+					for (const { unsubscribe } of peerUndoStacks) {
+						unsubscribe();
+					}
 				});
 			}
 

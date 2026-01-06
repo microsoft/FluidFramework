@@ -30,7 +30,7 @@ export function testSnapshots() {
 				const dir = path.join("sequence-field", `V${version}`);
 				useSnapshotDirectory(dir);
 				const codec = family.resolve(version);
-				marks.forEach((mark, index) => {
+				for (const [index, mark] of marks.entries()) {
 					it(`${index} - ${"type" in mark ? mark.type : "NoOp"}`, () => {
 						const changeset = [mark];
 						const encoded = codec.json.encode(changeset, {
@@ -40,7 +40,7 @@ export function testSnapshots() {
 						});
 						takeJsonSnapshot(encoded);
 					});
-				});
+				}
 			});
 		}
 	});

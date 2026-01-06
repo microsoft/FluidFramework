@@ -543,11 +543,11 @@ const TreeNodeWithArrayFeatures = (() => {
 	> extends TreeNodeValid<Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>> {}
 
 	// Modify TreeNodeWithArrayFeaturesUntyped to add the members from Array.prototype
-	arrayPrototypeKeys.forEach((key) => {
+	for (const key of arrayPrototypeKeys) {
 		Object.defineProperty(TreeNodeWithArrayFeaturesUntyped.prototype, key, {
 			value: Array.prototype[key],
 		});
-	});
+	}
 
 	return TreeNodeWithArrayFeaturesUntyped as unknown as typeof NodeWithArrayFeatures;
 })();

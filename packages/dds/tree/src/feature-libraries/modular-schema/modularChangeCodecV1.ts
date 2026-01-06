@@ -365,6 +365,7 @@ export function decodeDetachedNodes(
 	};
 
 	const map: ModularChangeset["builds"] = newTupleBTree();
+	// eslint-disable-next-line unicorn/no-array-for-each -- Codec internals: minimizing changes to serialization logic
 	encoded.builds.forEach((build) => {
 		// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
 		const revision =
@@ -618,6 +619,7 @@ export function getFieldChangesetCodecs(
 		],
 	]);
 
+	// eslint-disable-next-line unicorn/no-array-for-each -- Map.forEach with (value, key) signature; codec initialization
 	fieldKinds.forEach((entry, identifier) => {
 		fieldChangesetCodecs.set(identifier, getMapEntry(entry));
 	});

@@ -591,7 +591,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.#events.emit("afterBatch");
 		this.editLock.unlock();
 		if (event.type === "append") {
-			event.newCommits.forEach((commit) => this.validateCommit(commit));
+			for (const commit of event.newCommits) {
+				this.validateCommit(commit);
+			}
 		}
 	};
 
@@ -653,7 +655,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
 		// trimmed revisions.
 		this.withCombinedVisitor((visitor) => {
-			revisions.forEach((revision) => {
+			for (const revision of revisions) {
 				// get all the roots last created or used by the revision
 				const roots = this._removedRoots.getRootsLastTouchedByRevision(revision);
 
@@ -663,7 +665,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 
 				this._removedRoots.deleteRootsLastTouchedByRevision(revision);
-			});
+			}
 		});
 	};
 
@@ -1126,7 +1128,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	private validateCommit(commit: GraphCommit<SharedTreeChange>): void {
 		const validated = getOrCreate(this.#validatedCommits, commit, () => []);
 		if (validated !== true) {
-			validated.forEach((fn) => fn(commit));
+			for (const fn of validated) {
+				fn(commit);
+			}
 			this.#validatedCommits.set(commit, true);
 		}
 	}
@@ -1260,8 +1264,12 @@ function trackForksForDisposal(checkout: TreeCheckout): () => void {
 	let disposed = false;
 	return () => {
 		assert(!disposed, 0xaa9 /* Forks may only be disposed once */);
-		forks.forEach((fork) => fork.dispose());
-		onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+		for (const fork of forks) {
+			fork.dispose();
+		}
+		for (const unsubscribe of onDisposeUnSubscribes) {
+			unsubscribe();
+		}
 		onForkUnSubscribe();
 		disposed = true;
 	};
