@@ -164,12 +164,7 @@ export function customFromCursor<TChild>(
 				storedSchema.get(type) ?? fail(0xb2e /* missing schema for type in cursor */);
 			const arrayTypes = tryStoredSchemaAsArray(nodeSchema);
 
-			if (arrayTypes !== undefined) {
-				const fields = inCursorField(reader, EmptyKey, () =>
-					mapCursorField(reader, () => childHandler(reader, options, storedSchema, schema)),
-				);
-				return fields;
-			} else {
+			if (arrayTypes === undefined) {
 				const fields: Record<string, TChild> = {};
 				forEachField(reader, () => {
 					assert(reader.getFieldLength() === 1, 0xa19 /* invalid children number */);
@@ -184,6 +179,11 @@ export function customFromCursor<TChild>(
 					fields[key] = childHandler(reader, options, storedSchema, schema);
 					reader.exitNode();
 				});
+				return fields;
+			} else {
+				const fields = inCursorField(reader, EmptyKey, () =>
+					mapCursorField(reader, () => childHandler(reader, options, storedSchema, schema)),
+				);
 				return fields;
 			}
 		}

@@ -134,9 +134,9 @@ export class ModularChangeFamily
 	} {
 		// TODO: Handle the case where changes have conflicting field kinds
 		const kind =
-			change1.fieldKind !== genericFieldKind.identifier
-				? change1.fieldKind
-				: change2.fieldKind;
+			change1.fieldKind === genericFieldKind.identifier
+				? change2.fieldKind
+				: change1.fieldKind;
 
 		if (kind === genericFieldKind.identifier) {
 			// Both changes are generic
@@ -493,16 +493,16 @@ export class ModularChangeFamily
 			const fieldId: FieldId = { nodeId: parentId, field };
 			const fieldChange2 = change2.get(field);
 			const composedField =
-				fieldChange2 !== undefined
-					? this.composeFieldChanges(
+				fieldChange2 === undefined
+					? fieldChange1
+					: this.composeFieldChanges(
 							fieldId,
 							fieldChange1,
 							fieldChange2,
 							genId,
 							crossFieldTable,
 							revisionMetadata,
-						)
-					: fieldChange1;
+						);
 
 			composedFields.set(field, composedField);
 		}
@@ -989,9 +989,9 @@ export class ModularChangeFamily
 		const baseChange = crossFieldTable.baseChange;
 		for (const [revision, localId, fieldKey] of crossFieldTable.affectedBaseFields.keys()) {
 			const baseNodeId =
-				localId !== undefined
-					? normalizeNodeId({ revision, localId }, baseChange.nodeAliases)
-					: undefined;
+				localId === undefined
+					? undefined
+					: normalizeNodeId({ revision, localId }, baseChange.nodeAliases);
 
 			const baseFieldChange = fieldMapFromNodeId(
 				baseChange.fieldChanges,
@@ -1026,9 +1026,9 @@ export class ModularChangeFamily
 			};
 
 			const rebasedNodeId =
-				baseNodeId !== undefined
-					? rebasedNodeIdFromBaseNodeId(crossFieldTable, baseNodeId)
-					: undefined;
+				baseNodeId === undefined
+					? undefined
+					: rebasedNodeIdFromBaseNodeId(crossFieldTable, baseNodeId);
 
 			const fieldId: FieldId = { nodeId: rebasedNodeId, field: fieldKey };
 			const rebasedField: unknown = handler.rebaser.rebase(
@@ -1482,9 +1482,9 @@ export class ModularChangeFamily
 	): NodeId | undefined {
 		const changeset = nodeChangeFromId(nodeMap, nodeId);
 		const prunedFields =
-			changeset.fieldChanges !== undefined
-				? this.pruneFieldMap(changeset.fieldChanges, nodeMap)
-				: undefined;
+			changeset.fieldChanges === undefined
+				? undefined
+				: this.pruneFieldMap(changeset.fieldChanges, nodeMap);
 
 		const prunedChange = { ...changeset, fieldChanges: prunedFields };
 		if (prunedChange.fieldChanges === undefined) {
@@ -1747,9 +1747,9 @@ function replaceCrossFieldKeyTableRevisions(
 		const field = entry.value;
 		const normalizedFieldId = normalizeFieldId(field, nodeAliases);
 		const updatedNodeId =
-			normalizedFieldId.nodeId !== undefined
-				? replacer.getUpdatedAtomId(normalizedFieldId.nodeId)
-				: undefined;
+			normalizedFieldId.nodeId === undefined
+				? undefined
+				: replacer.getUpdatedAtomId(normalizedFieldId.nodeId);
 
 		const updatedValue: FieldId = {
 			...normalizedFieldId,
@@ -3037,7 +3037,7 @@ function nodeChangeFromId(nodes: ChangeAtomIdBTree<NodeChangeset>, id: NodeId): 
 }
 
 function fieldIdFromFieldIdKey([revision, localId, field]: FieldIdKey): FieldId {
-	const nodeId = localId !== undefined ? { revision, localId } : undefined;
+	const nodeId = localId === undefined ? undefined : { revision, localId };
 	return { nodeId, field };
 }
 
@@ -3081,9 +3081,9 @@ export function normalizeFieldId(
 	fieldId: FieldId,
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
 ): FieldId {
-	return fieldId.nodeId !== undefined
-		? { ...fieldId, nodeId: normalizeNodeId(fieldId.nodeId, nodeAliases) }
-		: fieldId;
+	return fieldId.nodeId === undefined
+		? fieldId
+		: { ...fieldId, nodeId: normalizeNodeId(fieldId.nodeId, nodeAliases) };
 }
 
 /**

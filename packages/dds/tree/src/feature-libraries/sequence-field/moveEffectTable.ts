@@ -103,9 +103,9 @@ export function getMoveEffect(
 	addDependency: boolean = true,
 ): RangeQueryResult<ChangeAtomId, MoveEffect> {
 	const result = moveEffects.get(target, revision, id, count, addDependency);
-	return result.value !== undefined
-		? { ...result, value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis, id) }
-		: result;
+	return result.value === undefined
+		? result
+		: { ...result, value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis, id) };
 }
 
 export type MoveMark = CellMark<MoveMarkEffect>;

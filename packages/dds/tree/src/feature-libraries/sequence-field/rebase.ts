@@ -196,7 +196,7 @@ class RebaseQueue {
 
 	private dequeueBase(length?: number): RebaseMarks {
 		const baseMark =
-			length !== undefined ? this.baseMarks.dequeueUpTo(length) : this.baseMarks.dequeue();
+			length === undefined ? this.baseMarks.dequeue() : this.baseMarks.dequeueUpTo(length);
 
 		let newMark: Mark = generateNoOpWithCellId(baseMark);
 
@@ -421,9 +421,9 @@ function sendEffectToDest(
 	if (effect.length < count) {
 		const [markEffect1, markEffect2] = splitMarkEffect(markEffect, effect.length);
 		const newEffect =
-			effect.value !== undefined
-				? { ...effect.value, movedMark: markEffect1 }
-				: { movedMark: markEffect1 };
+			effect.value === undefined
+				? { movedMark: markEffect1 }
+				: { ...effect.value, movedMark: markEffect1 };
 		setMoveEffect(
 			moveEffects,
 			CrossFieldTarget.Destination,
@@ -440,9 +440,9 @@ function sendEffectToDest(
 		);
 	} else {
 		const newEffect: MoveEffect =
-			effect.value !== undefined
-				? { ...effect.value, movedEffect: markEffect }
-				: { movedEffect: markEffect };
+			effect.value === undefined
+				? { movedEffect: markEffect }
+				: { ...effect.value, movedEffect: markEffect };
 		setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count, newEffect);
 	}
 }
@@ -462,9 +462,9 @@ function moveRebasedChanges(
 	).value;
 
 	const newEffect =
-		effect !== undefined
-			? { ...effect, rebasedChanges: nodeChange }
-			: { rebasedChanges: nodeChange };
+		effect === undefined
+			? { rebasedChanges: nodeChange }
+			: { ...effect, rebasedChanges: nodeChange };
 
 	setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, 1, newEffect);
 }

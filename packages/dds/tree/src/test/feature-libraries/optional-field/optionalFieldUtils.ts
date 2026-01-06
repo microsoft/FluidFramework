@@ -321,9 +321,9 @@ export function tagChangeInline(
 	rollbackOf?: RevisionTag,
 ): TaggedChange<OptionalChangeset> {
 	const inlined = inlineRevision(change, revision);
-	return rollbackOf !== undefined
-		? tagRollbackInverse(inlined, revision, rollbackOf)
-		: tagChange(inlined, revision);
+	return rollbackOf === undefined
+		? tagChange(inlined, revision)
+		: tagRollbackInverse(inlined, revision, rollbackOf);
 }
 
 export function inlineRevision(

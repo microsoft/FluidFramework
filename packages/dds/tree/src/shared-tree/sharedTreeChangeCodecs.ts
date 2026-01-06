@@ -149,15 +149,15 @@ function makeSharedTreeChangeCodec(
 				for (const decodedChange of change.changes) {
 					if (decodedChange.type === "data") {
 						const schemaAndPolicy =
-							updatedSchema !== undefined
-								? {
+							updatedSchema === undefined
+								? context.schema
+								: {
 										policy:
-											context.schema !== undefined
-												? context.schema.policy
-												: defaultSchemaPolicy,
+											context.schema === undefined
+												? defaultSchemaPolicy
+												: context.schema.policy,
 										schema: updatedSchema,
-									}
-								: context.schema;
+									};
 						changes.push({
 							data: modularChangeCodec.encode(decodedChange.innerChange, {
 								originatorId: context.originatorId,

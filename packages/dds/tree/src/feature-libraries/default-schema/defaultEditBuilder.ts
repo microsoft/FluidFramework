@@ -245,7 +245,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				let optionalChange: OptionalChangeset;
 				const revision = this.mintRevisionTag();
 				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
-				if (newContent !== undefined) {
+				if (newContent === undefined) {
+					optionalChange = optional.changeHandler.editor.clear(wasEmpty, detach);
+				} else {
 					const fill: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
 					const build = this.modularBuilder.buildTrees(fill.localId, newContent, revision);
 					edits.push(build);
@@ -254,8 +256,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						fill,
 						detach,
 					});
-				} else {
-					optionalChange = optional.changeHandler.editor.clear(wasEmpty, detach);
 				}
 
 				const change: FieldChangeset = brand(optionalChange);

@@ -71,7 +71,6 @@ module.exports = {
 		"unicorn/no-array-method-this-argument": "off",
 		"unicorn/no-array-reduce": "off",
 		"unicorn/no-await-expression-member": "off",
-		"unicorn/no-negated-condition": "off",
 		"unicorn/no-new-array": "off",
 		"unicorn/no-null": "off",
 		"unicorn/no-object-as-default-parameter": "off",
