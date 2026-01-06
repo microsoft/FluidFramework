@@ -130,6 +130,16 @@ const getOrCreateContainer = async (params: {
 	const client = new AzureClient({
 		connection: connectionProps,
 		logger,
+		configProvider: {
+			getRawConfig: (v: string) => {
+				// At higher client counts, summarizer will get invoked, taking up resources
+				// and spewing telemetry. None of current tests need summarization, so disable it.
+				if (v === "Fluid.ContainerRuntime.Test.DisableSummaries") {
+					return true;
+				}
+				return undefined;
+			},
+		},
 	});
 	let services: AzureContainerServices;
 	if (containerId === undefined) {
@@ -334,16 +344,15 @@ class MessageHandler {
 		if (latestMap && !workspace.states.latestMap) {
 			workspace.add(
 				"latestMap",
-				StateFactory.latestMap<{ value: Record<string, string | number> }, string>({
+				StateFactory.latestMap<{ value: Record<string, string | number> }>({
 					local: {},
 				}),
 			);
 			// Cast required due to optional keys in WorkspaceSchema
 			// TODO: AB#47518
-			const latestMapState = workspace.states.latestMap as LatestMapRaw<
-				{ value: Record<string, string | number> },
-				string
-			>;
+			const latestMapState = workspace.states.latestMap as LatestMapRaw<{
+				value: Record<string, string | number>;
+			}>;
 			latestMapState.events.on("remoteUpdated", (update) => {
 				for (const [key, valueWithMetadata] of update.items) {
 					this.send({
@@ -614,7 +623,7 @@ class MessageHandler {
 		// Cast required due to optional keys in WorkspaceSchema
 		// TODO: AB#47518
 		const latestMapState = workspace.states.latestMap as
-			| LatestMapRaw<{ value: Record<string, string | number> }, string>
+			| LatestMapRaw<{ value: Record<string, string | number> }>
 			| undefined;
 		if (!latestMapState) {
 			this.send({
@@ -692,7 +701,7 @@ class MessageHandler {
 		// Cast required due to optional keys in WorkspaceSchema
 		// TODO: AB#47518
 		const latestMapState = workspace.states.latestMap as
-			| LatestMapRaw<{ value: Record<string, string | number> }, string>
+			| LatestMapRaw<{ value: Record<string, string | number> }>
 			| undefined;
 		if (!latestMapState) {
 			this.send({

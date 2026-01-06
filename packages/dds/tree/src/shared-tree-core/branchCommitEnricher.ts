@@ -5,12 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import {
-	type ChangeRebaser,
-	type GraphCommit,
-	replaceChange,
-	type RevisionTag,
-} from "../core/index.js";
+import { type ChangeRebaser, type GraphCommit, replaceChange } from "../core/index.js";
 
 import type { SharedTreeBranchChange } from "./branch.js";
 import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
@@ -36,7 +31,7 @@ export class BranchCommitEnricher<TChange> {
 	 * Calling this function will compute the composition of that transaction's commits.
 	 * @remarks This function will be reset to undefined after each {@link BranchCommitEnricher.processChange | change is processed}.
 	 */
-	#getOuterTransactionChange?: (revision: RevisionTag) => TChange;
+	#getOuterTransactionChange?: () => TChange;
 
 	public constructor(
 		rebaser: ChangeRebaser<TChange>,
@@ -54,7 +49,7 @@ export class BranchCommitEnricher<TChange> {
 		if (change.type === "append") {
 			for (const newCommit of change.newCommits) {
 				const newChange =
-					this.#getOuterTransactionChange?.(newCommit.revision) ??
+					this.#getOuterTransactionChange?.() ??
 					this.#enricher.updateChangeEnrichments(newCommit.change, newCommit.revision);
 
 				this.#preparedCommits.set(newCommit, replaceChange(newCommit, newChange));

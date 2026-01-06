@@ -125,28 +125,16 @@ export function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtom
 	return { ...id, localId: brand(id.localId + offset) };
 }
 
-export function replaceAtomRevisions(
-	id: ChangeAtomId,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-): ChangeAtomId {
-	return oldRevisions.has(id.revision) ? atomWithRevision(id, newRevision) : id;
-}
-
-function atomWithRevision(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
-	const updated = { ...id, revision };
-	if (revision === undefined) {
-		delete updated.revision;
-	}
-
-	return updated;
-}
-
 /**
  * A node in a graph of commits. A commit's parent is the commit on which it was based.
  */
 export interface GraphCommit<TChange> {
-	/** The tag for this commit. If this commit is rebased, the corresponding rebased commit will retain this tag. */
+	/**
+	 * The tag for this commit.
+	 * @remarks
+	 * If this commit is rebased, the corresponding rebased commit will retain this tag.
+	 * With the exception of transaction commits (which all share the same tag), this tag is unique within a given branch history.
+	 */
 	readonly revision: RevisionTag;
 	/** The change that will result from applying this commit */
 	readonly change: TChange;

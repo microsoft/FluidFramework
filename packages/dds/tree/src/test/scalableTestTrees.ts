@@ -264,7 +264,7 @@ export function readWideFlexTree(tree: Context): {
 	const root = tree.root;
 	assert(root.is(FieldKinds.required));
 	const field = (root.content as FlexTreeNode).getBoxed(EmptyKey);
-	assert(field.length !== 0);
+	assert(field.length > 0);
 	assert(field.is(FieldKinds.sequence));
 	for (const currentNode of field) {
 		sum += currentNode.value as number;

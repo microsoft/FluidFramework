@@ -249,7 +249,9 @@ export {
 	type SchemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	type NodeInDocumentConstraint,
+	type NoChangeConstraint,
 	type RunTransactionParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -311,6 +313,8 @@ export {
 	FluidClientVersion,
 	type FormatValidator,
 	FormatValidatorNoOp,
+	type CodecName,
+	type FormatVersion,
 } from "./codec/index.js";
 export { FormatValidatorBasic } from "./external-utilities/index.js";
 

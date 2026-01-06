@@ -8,6 +8,7 @@ import chalk from "picocolors";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
 import { BaseCommand } from "../../library/index.js";
 import {
+	CheckCompatLayerGeneration,
 	CheckDependenciesInstalled,
 	type CheckFunction,
 	CheckHasNoPrereleaseDependencies,
@@ -32,6 +33,7 @@ const allChecks: ReadonlyMap<string, CheckFunction> = new Map([
 	["Has no pre-release Fluid dependencies", CheckHasNoPrereleaseDependencies],
 	["No repo policy violations", CheckNoPolicyViolations],
 	["No untagged asserts", CheckNoUntaggedAsserts],
+	["Compatibility layer generation is up to date", CheckCompatLayerGeneration],
 ]);
 
 /**

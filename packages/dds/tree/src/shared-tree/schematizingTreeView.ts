@@ -50,7 +50,7 @@ import {
 	type TransactionResult,
 	type TransactionResultExt,
 	type RunTransactionParams,
-	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
@@ -61,6 +61,7 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
+	type TreeBranchAlpha,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -72,7 +73,6 @@ import {
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import type { TreeBranchAlpha } from "../simple-tree/index.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -296,7 +296,7 @@ export class SchematizingSimpleTreeView<
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		const addConstraints = (
 			constraintsOnRevert: boolean,
-			constraints: readonly TransactionConstraint[] = [],
+			constraints: readonly TransactionConstraintAlpha[] = [],
 		): void => {
 			addConstraintsToTransaction(this.checkout, constraintsOnRevert, constraints);
 		};
@@ -313,12 +313,12 @@ export class SchematizingSimpleTreeView<
 					transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
 				)?.value;
 
-				if (rollback === true) {
-					this.checkout.transaction.abort();
-					return value !== undefined
-						? { success: false, value: value as TFailureValue }
-						: { success: false };
-				}
+		if (rollback === true) {
+			this.checkout.transaction.abort();
+			return value === undefined
+				? { success: false }
+				: { success: false, value: value as TFailureValue };
+		}
 
 				// Validate preconditions on revert after running the transaction callback and was successful.
 				addConstraints(
@@ -328,9 +328,9 @@ export class SchematizingSimpleTreeView<
 
 				this.checkout.transaction.commit();
 
-				return value !== undefined
-					? { success: true, value: value as TSuccessValue }
-					: { success: true };
+				return value === undefined
+					? { success: true }
+					: { success: true, value: value as TSuccessValue };
 			},
 			params?.label,
 		);
@@ -565,10 +565,11 @@ export function getCheckout(context: TreeBranch): TreeCheckout {
 export function addConstraintsToTransaction(
 	checkout: ITreeCheckout,
 	constraintsOnRevert: boolean,
-	constraints: readonly TransactionConstraint[] = [],
+	constraints: readonly TransactionConstraintAlpha[] = [],
 ): void {
 	for (const constraint of constraints) {
-		switch (constraint.type) {
+		const constraintType = constraint.type;
+		switch (constraintType) {
 			case "nodeInDocument": {
 				const node = getInnerNode(constraint.node);
 				const nodeStatus = getKernel(constraint.node).getStatus();
@@ -586,8 +587,17 @@ export function addConstraintsToTransaction(
 				}
 				break;
 			}
-			default:
-				unreachableCase(constraint.type);
+			case "noChange": {
+				if (constraintsOnRevert) {
+					checkout.editor.addNoChangeConstraintOnRevert();
+				} else {
+					checkout.editor.addNoChangeConstraint();
+				}
+				break;
+			}
+			default: {
+				unreachableCase(constraintType);
+			}
 		}
 	}
 }
