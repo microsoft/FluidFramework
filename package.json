@@ -363,7 +363,7 @@
 			"axios pre-1.0 needs an override to stay current on a version with no reported CVEs. Caret dependencies aren't enough on a pre-1.0 package."
 		],
 		"overrides": {
-			"@biomejs/biome": "~2.3.8",
+			"@biomejs/biome": "~2.3.11",
 			"@types/node@<18": "^18.19.0",
 			"@types/node@>=22": "^20.0.0",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
