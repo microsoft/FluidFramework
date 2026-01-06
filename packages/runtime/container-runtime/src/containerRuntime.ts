@@ -1829,7 +1829,9 @@ export class ContainerRuntime
 			validateSummaryHeuristicConfiguration(this.summaryConfiguration);
 		}
 
-		this.summariesDisabled = isSummariesDisabled(this.summaryConfiguration);
+		this.summariesDisabled =
+			isSummariesDisabled(this.summaryConfiguration) ||
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.Test.DisableSummaries") === true;
 
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;

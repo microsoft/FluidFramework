@@ -33,7 +33,7 @@ export class TransactionEnricher<TChange> {
 	}
 
 	public isTransacting(): boolean {
-		return this.#transactionScopesStart.length !== 0;
+		return this.#transactionScopesStart.length > 0;
 	}
 
 	public startTransaction(): void {
@@ -65,7 +65,7 @@ export class TransactionEnricher<TChange> {
 
 	public addTransactionStep(commit: GraphCommit<TChange>): void {
 		assert(
-			this.#transactionScopesStart.length !== 0,
+			this.#transactionScopesStart.length > 0,
 			0x987 /* No transaction to add a step to */,
 		);
 		const change = this.#enricher.updateChangeEnrichments(commit.change, commit.revision);

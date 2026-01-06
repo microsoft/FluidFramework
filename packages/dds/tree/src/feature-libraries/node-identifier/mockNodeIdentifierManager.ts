@@ -46,7 +46,7 @@ export class MockNodeIdentifierManager implements NodeIdentifierManager {
 		if (!isStableNodeIdentifier(key) || !key.startsWith("a110ca7e-add1-4000-8000-")) {
 			return undefined;
 		}
-		const localNodeIdentifier = Number.parseInt(key.substring(24), 16);
+		const localNodeIdentifier = Number.parseInt(key.slice(24), 16);
 		return localNodeIdentifier < this.count
 			? brand(localNodeIdentifier as SessionSpaceCompressedId)
 			: undefined;

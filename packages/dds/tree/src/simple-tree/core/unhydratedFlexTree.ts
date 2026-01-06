@@ -528,7 +528,7 @@ export class UnhydratedSequenceField
 					mapTrees.splice(index, 0, ...newContentChecked);
 				} else {
 					// ...but we avoid using `splice` + spread for very large input arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
-					return mapTrees.slice(0, index).concat(newContentChecked, mapTrees.slice(index));
+					return [...mapTrees.slice(0, index), ...newContentChecked, ...mapTrees.slice(index)];
 				}
 			});
 		},

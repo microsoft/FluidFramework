@@ -464,13 +464,12 @@ function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[
 	while (sharedDepth < minDepth) {
 		const detachStep = pathA[sharedDepth] ?? oob();
 		const attachStep = pathB[sharedDepth] ?? oob();
-		if (detachStep !== attachStep) {
-			if (
-				detachStep.parentField !== attachStep.parentField ||
-				detachStep.parentIndex !== attachStep.parentIndex
-			) {
-				break;
-			}
+		if (
+			detachStep !== attachStep &&
+			(detachStep.parentField !== attachStep.parentField ||
+				detachStep.parentIndex !== attachStep.parentIndex)
+		) {
+			break;
 		}
 		sharedDepth += 1;
 	}

@@ -56,7 +56,7 @@ export function makeSharedTreeChangeCodecFamily(
 			EncodedSharedTreeChange,
 			ChangeEncodingContext
 		>,
-	][] = Array.from(dependenciesForChangeFormat.entries()).map(
+	][] = [...dependenciesForChangeFormat.entries()].map(
 		([format, { modularChange, schemaChange }]) => [
 			format,
 			makeSharedTreeChangeCodec(

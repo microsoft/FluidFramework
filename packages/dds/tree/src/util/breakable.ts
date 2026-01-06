@@ -221,15 +221,15 @@ export function breakingClass<Target extends abstract new (...args: any[]) => Wi
 			if (!doNotWrap.has(key)) {
 				doNotWrap.add(key);
 				const descriptor = Reflect.getOwnPropertyDescriptor(prototype, key);
-				if (descriptor !== undefined) {
-					// Method
-					if (typeof descriptor.value === "function") {
-						if (!isBreaker(descriptor.value)) {
-							// This does not affect the original class, see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertyDescriptor
-							descriptor.value = breakingMethod(descriptor.value);
-							Object.defineProperty(DecoratedBreakable.prototype, key, descriptor);
-						}
-					}
+				// Method
+				if (
+					descriptor !== undefined &&
+					typeof descriptor.value === "function" &&
+					!isBreaker(descriptor.value)
+				) {
+					// This does not affect the original class, see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertyDescriptor
+					descriptor.value = breakingMethod(descriptor.value);
+					Object.defineProperty(DecoratedBreakable.prototype, key, descriptor);
 				}
 			}
 		}

@@ -29,6 +29,7 @@ import {
 	type SequenceField as SF,
 	type EditDescription,
 	genericFieldKind,
+	DefaultRevisionReplacer,
 } from "../../feature-libraries/index.js";
 import {
 	ModularChangeFamily,
@@ -1051,7 +1052,13 @@ function tagChangeInline(
 	change: ModularChangeset,
 	revision: RevisionTag,
 ): TaggedChange<ModularChangeset> {
-	return tagChange(family.changeRevision(change, revision), revision);
+	return tagChange(
+		family.changeRevision(
+			change,
+			new DefaultRevisionReplacer(revision, family.getRevisions(change)),
+		),
+		revision,
+	);
 }
 
 function buildChangeset(edits: EditDescription[]): ModularChangeset {
