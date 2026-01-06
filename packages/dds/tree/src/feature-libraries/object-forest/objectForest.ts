@@ -308,7 +308,9 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 
 		const forestVisitor = new Visitor(this);
 		const announcedVisitors: AnnouncedVisitor[] = [];
-		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
+		for (const getVisitor of this.deltaVisitors) {
+			announcedVisitors.push(getVisitor());
+		}
 		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;

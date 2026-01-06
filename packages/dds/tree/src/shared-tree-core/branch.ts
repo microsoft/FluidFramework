@@ -400,5 +400,9 @@ export function onForkTransitive<T extends { events: Listenable<{ fork(t: T): vo
 			onFork(fork);
 		}),
 	);
-	return () => offs.forEach((off) => off());
+	return () => {
+		for (const off of offs) {
+			off();
+		}
+	};
 }

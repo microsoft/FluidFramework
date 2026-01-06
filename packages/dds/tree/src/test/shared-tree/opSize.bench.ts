@@ -330,9 +330,9 @@ describe("Op Size", () => {
 	};
 
 	const saveAndResetCurrentOps = () => {
-		currentTestOps.forEach((op) =>
-			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op),
-		);
+		for (const op of currentTestOps) {
+			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op);
+		}
 		currentTestOps.length = 0;
 	};
 
@@ -350,9 +350,9 @@ describe("Op Size", () => {
 			// Currently tests can pass when no data is collected, so throw here in that case to ensure tests don't break and start collecting no data.
 			assert(currentTestOps.length > 0);
 		}
-		currentTestOps.forEach((op) =>
-			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op),
-		);
+		for (const op of currentTestOps) {
+			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op);
+		}
 		currentTestOps.length = 0;
 	});
 

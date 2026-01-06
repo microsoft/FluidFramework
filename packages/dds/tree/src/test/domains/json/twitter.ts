@@ -635,10 +635,10 @@ export function isJapaneseSymbolOrPunctuation(ch: string) {
  */
 export function parseSentencesIntoWords(inputSentences: string[]) {
 	const outputSentences: string[][] = [];
-	inputSentences.forEach((inputSentence) => {
+	for (const inputSentence of inputSentences) {
 		const sentenceWords: string[] = [];
 		const spaceSeparatedWords: string[] = inputSentence.split(" ");
-		spaceSeparatedWords.forEach((potentialWord) => {
+		for (const potentialWord of spaceSeparatedWords) {
 			const innerWords: string[] = [];
 			let previousChar: string | undefined;
 			let currentWord = "";
@@ -671,11 +671,13 @@ export function parseSentencesIntoWords(inputSentences: string[]) {
 			if (currentWord.length > 0) {
 				innerWords.push(currentWord);
 			}
-			innerWords.forEach((word) => sentenceWords.push(word));
-		});
+			for (const word of innerWords) {
+				sentenceWords.push(word);
+			}
+		}
 
 		outputSentences.push(sentenceWords);
-	});
+	}
 
 	return outputSentences;
 }

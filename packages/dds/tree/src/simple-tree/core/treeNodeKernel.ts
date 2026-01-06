@@ -393,7 +393,9 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		newSource: Listenable<KernelEvents> & HasListeners<KernelEvents>,
 	): void {
 		// Unsubscribe from the old source
-		this.#disposeSourceListeners.forEach((off) => off());
+		for (const off of this.#disposeSourceListeners.values()) {
+			off();
+		}
 		this.#disposeSourceListeners.clear();
 
 		this.#eventSource = newSource;
@@ -513,7 +515,9 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		);
 
 		this.#disposeOnFlushListener();
-		this.#disposeSourceListeners.forEach((off) => off());
+		for (const off of this.#disposeSourceListeners.values()) {
+			off();
+		}
 		this.#disposeSourceListeners.clear();
 
 		this.#childrenChangedBuffer.clear();

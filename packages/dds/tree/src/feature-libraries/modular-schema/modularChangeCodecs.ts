@@ -148,9 +148,9 @@ function makeModularChangeCodec(
 		],
 	]);
 
-	fieldKinds.forEach((entry, identifier) => {
+	for (const [identifier, entry] of fieldKinds) {
 		fieldChangesetCodecs.set(identifier, getMapEntry(entry));
-	});
+	}
 
 	const getFieldChangesetCodec = (
 		fieldKind: FieldKindIdentifier,
@@ -391,7 +391,7 @@ function makeModularChangeCodec(
 		};
 
 		const map: ModularChangeset["builds"] = newTupleBTree();
-		encoded.builds.forEach((build) => {
+		for (const build of encoded.builds) {
 			// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
 			const revision =
 				build[1] === undefined ? context.revision : revisionTagCodec.decode(build[1], context);
@@ -404,7 +404,7 @@ function makeModularChangeCodec(
 			for (const [id, chunk] of decodedChunks) {
 				map.set([revision, id], chunk);
 			}
-		});
+		}
 
 		return map;
 	}
