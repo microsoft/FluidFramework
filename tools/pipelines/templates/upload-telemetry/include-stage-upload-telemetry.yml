@@ -20,22 +20,13 @@ parameters:
 - name: stageIdFilter
   type: string
 
-# Unique identifier for the pipeline that is including this template.
-# Used to identify telemetry data in Kusto for this pipeline.
-- name: pipelineIdentifierForTelemetry
-  type: string
-
-# The sources directory that was used for the run
-- name: testWorkspace
-  type: string
-
 # The steps to take after configuring for telemetry upload
 - name: telemetry_upload_steps
   type: stepList
 
 stages:
 - stage: upload_telemetry_${{ iif(eq(parameters.stageIdFilter, ''), 'all', parameters.stageIdFilter) }}
-  displayName: Upload stage telemetry to Kusto ('${{ iif(eq(parameters.stageIdFilter, ''), 'all', parameters.stageIdFilter) }}')
+  displayName: Upload telemetry to Kusto ('${{ iif(eq(parameters.stageIdFilter, ''), 'all', parameters.stageIdFilter) }}')
   condition: succeededOrFailed()
   dependsOn:
     - ${{ if ne(parameters.stageIdFilter, '') }}:
@@ -44,7 +35,7 @@ stages:
       - ${{ stage }}
   jobs:
   - job: upload_run_telemetry
-    displayName: Upload stage telemetry to Kusto
+    displayName: Upload telemetry to Kusto
     pool: Small-eastus2
     variables:
     - group: ado-feeds
