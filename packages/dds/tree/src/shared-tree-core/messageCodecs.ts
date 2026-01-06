@@ -130,7 +130,7 @@ export function makeMessageCodecs<TChangeset>(
 			JsonCompatibleReadOnly,
 			MessageEncodingContext
 		>,
-	][] = Array.from(messageFormatVersions).map((version) => {
+	][] = [...messageFormatVersions].map((version) => {
 		switch (version) {
 			case unbrand(MessageFormatVersion.undefined):
 			case unbrand(MessageFormatVersion.v1):
@@ -152,8 +152,9 @@ export function makeMessageCodecs<TChangeset>(
 					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			case unbrand(MessageFormatVersion.v5):
+			case unbrand(MessageFormatVersion.v5): {
 				return [version, makeDiscontinuedCodecVersion(options, version, "2.74.0")];
+			}
 			case unbrand(MessageFormatVersion.vSharedBranches): {
 				const changeCodec = changeCodecs.resolve(
 					dependentChangeFormatVersion.lookup(version),
@@ -163,8 +164,9 @@ export function makeMessageCodecs<TChangeset>(
 					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			default:
+			default: {
 				unreachableCase(version);
+			}
 		}
 	});
 	return makeCodecFamily(registry);

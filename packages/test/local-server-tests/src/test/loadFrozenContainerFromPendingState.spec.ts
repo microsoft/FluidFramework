@@ -14,6 +14,10 @@ import {
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
+import type {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
@@ -28,10 +32,6 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "../utils.js";
-import type {
-	LocalDocumentServiceFactory,
-	LocalResolver,
-} from "@fluidframework/local-driver/internal";
 
 const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 	[...dir.entries()].map(([key, value]) => [

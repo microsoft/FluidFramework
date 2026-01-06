@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { ChangeRebaser, GraphCommit, RevisionTag } from "../core/index.js";
+import type { ChangeRebaser, GraphCommit } from "../core/index.js";
 
 import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
 
@@ -33,7 +33,7 @@ export class TransactionEnricher<TChange> {
 	}
 
 	public isTransacting(): boolean {
-		return this.#transactionScopesStart.length !== 0;
+		return this.#transactionScopesStart.length > 0;
 	}
 
 	public startTransaction(): void {
@@ -44,7 +44,7 @@ export class TransactionEnricher<TChange> {
 	 * Commits the current transaction.
 	 * @returns A function which can be used to compute the composed change for that transaction's commits. Undefined if the transaction is still ongoing or contained no committed changes.
 	 */
-	public commitTransaction(): ((revision: RevisionTag) => TChange) | undefined {
+	public commitTransaction(): (() => TChange) | undefined {
 		const commitsCommitted = this.#transactionScopesStart.pop();
 		assert(commitsCommitted !== undefined, 0x985 /* No transaction to commit */);
 		if (this.#transactionScopesStart.length === 0) {
@@ -53,8 +53,7 @@ export class TransactionEnricher<TChange> {
 			}
 			const transactionCommits = this.#transactionCommits;
 			this.#transactionCommits = [];
-			return (revision: RevisionTag) =>
-				this.#rebaser.changeRevision(this.#rebaser.compose(transactionCommits), revision);
+			return () => this.#rebaser.compose(transactionCommits);
 		}
 	}
 
@@ -66,7 +65,7 @@ export class TransactionEnricher<TChange> {
 
 	public addTransactionStep(commit: GraphCommit<TChange>): void {
 		assert(
-			this.#transactionScopesStart.length !== 0,
+			this.#transactionScopesStart.length > 0,
 			0x987 /* No transaction to add a step to */,
 		);
 		const change = this.#enricher.updateChangeEnrichments(commit.change, commit.revision);

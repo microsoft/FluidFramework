@@ -15,7 +15,7 @@ import { renderDiceRoller } from "../src/view.js";
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function createContainerAndRenderInElement(element: HTMLDivElement) {
+async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
 	const sessionStorageModelLoader = new SessionStorageModelLoader<ITaskSelectionAppModel>(
 		new StaticCodeLoader(new TaskSelectionContainerRuntimeFactory()),
 	);
@@ -71,7 +71,7 @@ async function createContainerAndRenderInElement(element: HTMLDivElement) {
 /**
  * For local testing we have two div's that we are rendering into independently.
  */
-async function setup() {
+async function setup(): Promise<void> {
 	const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
 	if (leftElement === null) {
 		throw new Error("sbs-left does not exist");

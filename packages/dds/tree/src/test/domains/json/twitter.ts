@@ -376,12 +376,12 @@ function generateTwitterStatus(
 	if (shouldAddInReplyToStatusId) {
 		const inReplyToStatusId = getRandomNumberString(random, 18, 18);
 		status.in_reply_to_status_id =
-			inReplyToStatusId !== null ? Number(inReplyToStatusId) : null;
+			inReplyToStatusId === null ? null : Number(inReplyToStatusId);
 		status.in_reply_to_status_id_str = inReplyToStatusId ?? null;
 	}
 	if (shouldAddInReplyToUserIdAndScreenName) {
 		const inReplyToUserId = getRandomNumberString(random, 10, 10);
-		status.in_reply_to_user_id = inReplyToUserId !== null ? Number(inReplyToUserId) : null;
+		status.in_reply_to_user_id = inReplyToUserId === null ? null : Number(inReplyToUserId);
 		status.in_reply_to_user_id_str = inReplyToUserId ?? null;
 		status.in_reply_to_screen_name = getRandomEnglishString(random, false, 6, 30);
 	}
@@ -560,8 +560,8 @@ function getBasicJapaneseAlphabetString() {
 function getRandomDateString(random = makeRandom(), start: Date, end: Date) {
 	const dateS = new Date(random.integer(+start, +end)).toString();
 	return (
-		`${dateS.substring(0, 10)} ${dateS.substring(16, 24)} ` +
-		`${dateS.substring(28, 33)} ${dateS.substring(11, 15)}`
+		`${dateS.slice(0, 10)} ${dateS.slice(16, 24)} ` +
+		`${dateS.slice(28, 33)} ${dateS.slice(11, 15)}`
 	);
 }
 

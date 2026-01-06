@@ -9,10 +9,10 @@ import { Decoration, DecorationSet } from "prosemirror-view";
 // Sample from
 // https://github.com/PierBover/prosemirror-cookbook
 
-export const create = () =>
+export const create = (): Plugin =>
 	new Plugin({
 		props: {
-			decorations(state) {
+			decorations(state): DecorationSet {
 				const selection = state.selection;
 				const resolved = state.doc.resolve(selection.from);
 				const decoration = Decoration.node(resolved.before(), resolved.after(), {

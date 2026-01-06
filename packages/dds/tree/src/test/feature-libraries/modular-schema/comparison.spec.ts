@@ -591,10 +591,8 @@ function testPartialOrder<T>(
 			}
 
 			for (const c of values) {
-				if (compare(a, b) && compare(b, c)) {
-					if (!compare(a, c)) {
-						transitivity.push([a, b, c]);
-					}
+				if (compare(a, b) && compare(b, c) && !compare(a, c)) {
+					transitivity.push([a, b, c]);
 				}
 			}
 		}
@@ -612,16 +610,13 @@ function intoSimpleObject(obj: unknown): unknown {
 		return obj;
 	}
 	if (Array.isArray(obj)) {
-		return Array.from(obj, intoSimpleObject);
+		return obj.map(intoSimpleObject);
 	}
 	if (obj instanceof Map) {
-		return Array.from(obj, ([key, value]): [unknown, unknown] => [
-			key,
-			intoSimpleObject(value),
-		]);
+		return [...obj].map(([key, value]): [unknown, unknown] => [key, intoSimpleObject(value)]);
 	}
 	if (obj instanceof Set) {
-		return Array.from(obj as ReadonlySet<string>);
+		return [...(obj as ReadonlySet<string>)];
 	}
 	const out: Record<string, unknown> = {};
 	// eslint-disable-next-line no-restricted-syntax

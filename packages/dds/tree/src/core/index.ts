@@ -105,7 +105,7 @@ export {
 	tryGetChunk,
 	type ChunkedCursor,
 	DetachedFieldIndexFormatVersion,
-	getCodecTreeForDetachedFieldIndexFormat,
+	detachedFieldIndexCodecBuilder,
 } from "./tree/index.js";
 
 export {
@@ -204,7 +204,6 @@ export {
 	offsetChangeAtomId,
 	StableIdSchema,
 	subtractChangeAtomIds,
-	replaceAtomRevisions,
 	replaceChange,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
@@ -213,6 +212,7 @@ export {
 	newChangeAtomIdRangeMap,
 	compareRevisions,
 	diffHistories,
+	type RevisionReplacer,
 } from "./rebase/index.js";
 
 export {

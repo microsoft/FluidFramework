@@ -61,6 +61,7 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
+	type TreeBranchAlpha,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -72,7 +73,6 @@ import {
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import type { TreeBranchAlpha } from "../simple-tree/index.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -313,9 +313,9 @@ export class SchematizingSimpleTreeView<
 
 		if (rollback === true) {
 			this.checkout.transaction.abort();
-			return value !== undefined
-				? { success: false, value: value as TFailureValue }
-				: { success: false };
+			return value === undefined
+				? { success: false }
+				: { success: false, value: value as TFailureValue };
 		}
 
 		// Validate preconditions on revert after running the transaction callback and was successful.
@@ -325,9 +325,9 @@ export class SchematizingSimpleTreeView<
 		);
 
 		this.checkout.transaction.commit();
-		return value !== undefined
-			? { success: true, value: value as TSuccessValue }
-			: { success: true };
+		return value === undefined
+			? { success: true }
+			: { success: true, value: value as TSuccessValue };
 	}
 
 	private ensureUndisposed(): void {
@@ -580,8 +580,9 @@ export function addConstraintsToTransaction(
 				}
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(constraint.type);
+			}
 		}
 	}
 }

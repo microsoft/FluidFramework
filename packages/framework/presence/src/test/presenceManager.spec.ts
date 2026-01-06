@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IClient } from "@fluidframework/driver-definitions";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
@@ -24,6 +25,11 @@ import {
 } from "./testUtils.js";
 
 const collateralSessionId = createSpecificAttendeeId("collateral-id");
+
+function verify<T>(value: T | undefined, message?: string): T {
+	assert(value !== undefined, message ?? "Expected value to be defined");
+	return value;
+}
 
 describe("Presence", () => {
 	describe("PresenceManager", () => {
@@ -204,7 +210,11 @@ describe("Presence", () => {
 
 					it('second time is announced once via `attendeeConnected` with status "Connected" when prior is unknown', () => {
 						// Setup
+						const priorClientData = verify(
+							runtime.getAudience().getMember(initialAttendeeConnectionId),
+						);
 						runtime.removeMember(initialAttendeeConnectionId);
+						runtime.audience.addMember(rejoinAttendeeConnectionId, priorClientData);
 
 						// Act - simulate join message from client
 						const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
@@ -219,6 +229,11 @@ describe("Presence", () => {
 					});
 
 					it('second time is announced once via `attendeeConnected` with status "Connected" when prior is still connected', () => {
+						const initialClientData = verify(
+							runtime.getAudience().getMember(initialAttendeeConnectionId),
+						);
+						runtime.audience.addMember(rejoinAttendeeConnectionId, initialClientData);
+
 						// Act - simulate join message from client
 						const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
 
@@ -301,7 +316,7 @@ describe("Presence", () => {
 					it("as collateral with old connection info and connected is NOT announced via `attendeeConnected`", () => {
 						// Setup - generate signals
 
-						// Both connection Id's unkonwn to audience
+						// Both connection Id's unknown to audience
 						const oldAttendeeConnectionId = "client9";
 						const newAttendeeConnectionId = "client10";
 
@@ -483,7 +498,9 @@ describe("Presence", () => {
 							// Act - disconnect & reconnect local client
 							runtime.disconnect(); // Simulate local client disconnect
 							clock.tick(1000);
-							runtime.connect("client6"); // Simulate local client reconnect with new connection id
+							// Simulate remote client disconnect (while local is disconnected)
+							runtime.audience.removeMember(knownAttendee.getConnectionId());
+							runtime.connect("client8", "client2"); // Simulate local client reconnect with new connection id
 
 							// Verify - attendee with stale connection should still be 'Connected' after 15 seconds
 							clock.tick(15_001);
@@ -528,7 +545,7 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect for 15 second, disconnect local client again, then advance timer
 							runtime.disconnect(); // First disconnect
 							clock.tick(1000);
-							runtime.connect("client6"); // Reconnect
+							runtime.connect("client8", "client2"); // Reconnect
 							clock.tick(15_000); // Advance 15 seconds
 							runtime.disconnect(); // Disconnect again
 							clock.tick(600_000); // Advance 10 minutes
@@ -556,7 +573,7 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect, process rejoin signal from known attendee after 15s, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client6");
+							runtime.connect("client8", "client2");
 							clock.tick(15_000);
 							processJoinSignals([rejoinAttendeeSignal]);
 							clock.tick(600_000);
@@ -584,7 +601,7 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect, process datatstore update signal from known attendee before 30s delay, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client6");
+							runtime.connect("client8", "client2");
 							clock.tick(15_000);
 							processSignal(
 								[],
@@ -624,7 +641,7 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect, remove remote client connection, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client6");
+							runtime.connect("client8", "client2");
 							clock.tick(15_001);
 							runtime.audience.removeMember(initialAttendeeConnectionId); // Remove remote client connection before 30s timeout
 							// Confirm that `attendeeDisconnected` is announced for when active attendee disconnects
@@ -659,14 +676,15 @@ describe("Presence", () => {
 
 							// Act - disconnect & reconnect local client multiple times with 15s delay
 							runtime.disconnect();
+							runtime.audience.removeMember(knownAttendee.getConnectionId()); // Simulate remote client disconnect (while local is disconnected)
 							clock.tick(1000);
-							runtime.connect("client6");
+							runtime.connect("client8", "client2");
 
 							clock.tick(15_001);
 
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client7");
+							runtime.connect("client9", "client8");
 
 							// Verify - attendee with stale connection should still be connected after 15 seconds
 							clock.tick(15_001);
@@ -752,8 +770,13 @@ describe("Presence", () => {
 				});
 
 				describe("that is rejoining", () => {
+					let priorClientData: IClient;
 					let priorAttendee: Attendee | undefined;
 					beforeEach(() => {
+						priorClientData = verify(
+							runtime.getAudience().getMember(initialAttendeeConnectionId),
+						);
+
 						// Setup prior attendee
 						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
 						assert(
@@ -787,7 +810,8 @@ describe("Presence", () => {
 
 						clock.tick(20);
 
-						// Act - simulate new join message from same client (without disconnect)
+						// Act - add to audience and simulate new join message from same client (without disconnect)
+						runtime.audience.addMember(rejoinAttendeeConnectionId, priorClientData);
 						processJoinSignals([rejoinAttendeeSignal]);
 
 						// Verify - session id is unchanged and connection id is updated

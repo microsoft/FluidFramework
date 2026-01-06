@@ -75,12 +75,15 @@ import { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
  */
 export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 	switch (typeof value) {
-		case "boolean":
+		case "boolean": {
 			return booleanSchema;
-		case "number":
+		}
+		case "number": {
 			return numberSchema;
-		case "string":
+		}
+		case "string": {
 			return stringSchema;
+		}
 		case "object": {
 			if (value === null) {
 				return nullSchema;
@@ -88,8 +91,9 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 			assert(isFluidHandle(value), 0x87e /* invalid TreeValue */);
 			return handleSchema;
 		}
-		default:
+		default: {
 			unreachableCase(value);
+		}
 	}
 }
 
@@ -928,9 +932,7 @@ export function structuralName<const T extends string>(
 	allowedTypes: TreeNodeSchema | readonly TreeNodeSchema[],
 ): `${T}<${string}>` {
 	let inner: string;
-	if (!isReadonlyArray(allowedTypes)) {
-		return structuralName(collectionName, [allowedTypes]);
-	} else {
+	if (isReadonlyArray(allowedTypes)) {
 		const names = allowedTypes.map((t): string => {
 			// Ensure that lazy types (functions) don't slip through here.
 			assert(!isLazy(t), 0x83d /* invalid type provided */);
@@ -943,6 +945,8 @@ export function structuralName<const T extends string>(
 		// Using JSON is a simple way to accomplish this.
 		// The outer `[]` around the result were needed so that a single type name "Any" would not collide with the "any" case which used to exist.
 		inner = JSON.stringify(names);
+	} else {
+		return structuralName(collectionName, [allowedTypes]);
 	}
 	return `${collectionName}<${inner}>`;
 }

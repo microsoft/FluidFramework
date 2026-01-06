@@ -29,11 +29,8 @@ export {
 export { buildForest } from "./object-forest/index.js";
 export {
 	SchemaSummarizer,
-	encodeTreeSchema,
 	makeSchemaCodec,
-	makeSchemaCodecs,
-	getCodecTreeForSchemaFormat,
-	clientVersionToSchemaVersion,
+	schemaCodecBuilder,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -90,6 +87,7 @@ export {
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,
+	DefaultRevisionReplacer,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -213,3 +211,9 @@ export {
 	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
+
+export {
+	type ChangeAtomIdBTree,
+	getFromChangeAtomIdMap,
+	setInChangeAtomIdMap,
+} from "./changeAtomIdBTree.js";
