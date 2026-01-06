@@ -72,7 +72,11 @@ export class SharedTreeChangeFamily
 			codecOptions,
 			chunkCompressionStrategy,
 		);
-		this.modularChangeFamily = new ModularChangeFamily(fieldKinds, modularChangeCodec);
+		this.modularChangeFamily = new ModularChangeFamily(
+			fieldKinds,
+			modularChangeCodec,
+			codecOptions,
+		);
 		this.codecs = makeSharedTreeChangeCodecFamily(
 			this.modularChangeFamily.codecs,
 			codecOptions,
