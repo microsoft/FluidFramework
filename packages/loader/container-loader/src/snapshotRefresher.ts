@@ -22,7 +22,7 @@ class RefreshPromiseTracker {
 	public get hasPromise(): boolean {
 		return this.#promise !== undefined;
 	}
-	public get Promise(): Promise<number> | undefined {
+	public get promise(): Promise<number> | undefined {
 		return this.#promise;
 	}
 	constructor(private readonly catchHandler: (error: Error) => void) {}
@@ -188,7 +188,7 @@ export class SnapshotRefresher implements IDisposable {
 	 * @returns The snapshot sequence number promise, or undefined if no refresh is in progress
 	 */
 	public get refreshSnapshotP(): Promise<number> | undefined {
-		return this.refreshTracker.Promise;
+		return this.refreshTracker.promise;
 	}
 
 	/**
