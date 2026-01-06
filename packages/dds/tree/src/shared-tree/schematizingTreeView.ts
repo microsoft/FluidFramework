@@ -313,12 +313,12 @@ export class SchematizingSimpleTreeView<
 					transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
 				)?.value;
 
-		if (rollback === true) {
-			this.checkout.transaction.abort();
-			return value === undefined
-				? { success: false }
-				: { success: false, value: value as TFailureValue };
-		}
+				if (rollback === true) {
+					this.checkout.transaction.abort();
+					return value === undefined
+						? { success: false }
+						: { success: false, value: value as TFailureValue };
+				}
 
 				// Validate preconditions on revert after running the transaction callback and was successful.
 				addConstraints(
