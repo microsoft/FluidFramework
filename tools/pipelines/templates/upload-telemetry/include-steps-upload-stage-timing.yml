@@ -8,8 +8,9 @@
 
 parameters:
 
-# Id for the stage whose runtime + result telemetry will be uploaded to Kusto.
-- name: stageId
+# Id for the stage whose telemetry will be uploaded to Kusto.
+# Other stages will be filtered out. If omitted, all stages will be uploaded.
+- name: stageIdFilter
   type: string
 
 # Unique identifier for the pipeline that is including this template.
@@ -44,7 +45,7 @@ steps:
   displayName: Submit telemetry for stage timing and result
   env:
     BUILD_ID: $(Build.BuildId)
-    STAGE_ID: ${{ parameters.stageId }}
+    STAGE_ID: ${{ parameters.stageIdFilter }}
     PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
     WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTimingAndResult
   inputs:
