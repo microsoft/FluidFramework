@@ -51,4 +51,5 @@ steps:
       echo "Listing files in '$WORK_FOLDER'"
       ls -laR $WORK_FOLDER;
 
+      echo "pnpm exec telemetry-generator --handlerModule \"$(pathToTelemetryGeneratorHandlersNew)/testPassRate.js\" --dir \"$WORK_FOLDER\""
       pnpm exec telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/testPassRate.js" --dir "$WORK_FOLDER"
