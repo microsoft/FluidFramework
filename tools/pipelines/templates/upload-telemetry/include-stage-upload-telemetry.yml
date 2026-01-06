@@ -8,8 +8,16 @@
 
 parameters:
 
-# Id for the stage whose runtime + result telemetry will be uploaded to Kusto.
-- name: stageId
+# Stages that must be completed before telemetry can be uploaded.
+# If a stageIdFilter is provided, it will automatically be depended on without
+# needing to specify it here.
+- name: dependsOn
+  type: object
+  default: []
+
+# Id for the stage whose telemetry will be uploaded to Kusto.
+# Other stages will be filtered out. If omitted, all stages will be uploaded.
+- name: stageIdFilter
   type: string
 
 # Unique identifier for the pipeline that is including this template.
@@ -24,14 +32,16 @@ parameters:
 # The steps to take after configuring for telemetry upload
 - name: telemetry_upload_steps
   type: stepList
-  default: []
 
 stages:
-- stage: ${{ parameters.stageId }}_upload_telemetry
-  displayName: Upload stage telemetry to Kusto ('${{ parameters.stageId }}')
+- stage: upload_telemetry_${{ iif(eq(parameters.stageIdFilter, ""), "all", parameters.stageIdFilter }}
+  displayName: Upload stage telemetry to Kusto ('${{ iif(eq(parameters.stageIdFilter, ""), "all", parameters.stageIdFilter }}')
   condition: succeededOrFailed()
   dependsOn:
-    - ${{ parameters.stageId }}
+    - ${{ if neq(parameters.stageIdFilter, "") }}
+      - ${{ parameters.stageIdFilter }}
+    - ${{ each stage in parameters.dependsOn }}:
+      - ${{ stage }}
   jobs:
   - job: upload_run_telemetry
     displayName: Upload stage telemetry to Kusto
