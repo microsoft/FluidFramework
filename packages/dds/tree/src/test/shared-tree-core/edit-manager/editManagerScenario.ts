@@ -184,10 +184,10 @@ export function runUnitTestScenario(
 	// the same sequence number.
 	let lastIntention = 0;
 	for (const step of stepsWithoutIntention) {
-		if (step.type !== "Push") {
-			steps.push({ ...step, intention: ++lastIntention });
-		} else {
+		if (step.type === "Push") {
 			steps.push(step);
+		} else {
+			steps.push({ ...step, intention: ++lastIntention });
 		}
 	}
 	const run = (advanceMinimumSequenceNumber: boolean) => {
@@ -387,8 +387,9 @@ export function runUnitTestScenario(
 						commits.push(commit);
 						break;
 					}
-					default:
+					default: {
 						unreachableCase(type);
+					}
 				}
 			}
 
@@ -406,7 +407,7 @@ export function runUnitTestScenario(
 					bunchRefNumber,
 					"main",
 				);
-				commits.forEach((commit) => {
+				for (const commit of commits) {
 					assert(
 						commit.sessionId === bunchSessionId &&
 							commit.seqNumber === bunchSeqNumber &&
@@ -414,7 +415,7 @@ export function runUnitTestScenario(
 						"All commits must be part of the same bunch",
 					);
 					trunk.push({ intention: commit.intention, seq: commit.seqNumber });
-				});
+				}
 				summarizer.addSequencedChanges(
 					commits,
 					commits[0].sessionId,
@@ -494,17 +495,20 @@ export function runUnitTestScenario(
 			}
 			switch (step.type) {
 				case "Push":
-				case "Ack":
+				case "Ack": {
 					return previousStep.type === step.type && previousStep.seq === step.seq;
-				case "Pull":
+				}
+				case "Pull": {
 					return (
 						previousStep.type === "Pull" &&
 						previousStep.seq === step.seq &&
 						previousStep.from === step.from &&
 						previousStep.ref === step.ref
 					);
-				default:
+				}
+				default: {
 					assert(false, "Invalid step type");
+				}
 			}
 		};
 		for (const step of steps) {
@@ -518,11 +522,11 @@ export function runUnitTestScenario(
 		processBunchOfSteps(bunch);
 	};
 
-	if (title !== undefined) {
+	if (title === undefined) {
+		run(true);
+	} else {
 		// Run two versions of the scenario, one where the minimum sequence number is advanced and one where it is not
 		it(title, () => run(false));
 		it(`${title} (while advancing the min seq number)`, () => run(true));
-	} else {
-		run(true);
 	}
 }

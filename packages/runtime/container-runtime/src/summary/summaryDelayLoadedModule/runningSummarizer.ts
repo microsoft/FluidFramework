@@ -740,6 +740,7 @@ export class RunningSummarizer
 	 */
 	private async trySummarizeWithRetries(
 		reason: SummarizeReason,
+		summarizeOptions: ISummarizeOptions = {},
 	): Promise<ISummarizeResults | undefined> {
 		// Helper to set summarize options, telemetry properties and call summarize.
 		const attemptSummarize = (
@@ -749,13 +750,13 @@ export class RunningSummarizer
 			summarizeProps: ISummarizeTelemetryProperties;
 			summarizeResult: ISummarizeResults;
 		} => {
-			const summarizeOptions: ISummarizeOptions = {
-				fullTree: false,
+			const attemptSummarizeOptions: ISummarizeOptions = {
+				fullTree: summarizeOptions.fullTree ?? false,
 			};
 			const summarizeProps: ISummarizeTelemetryProperties = {
 				summarizeReason: reason,
 				summaryAttempts: attemptNumber,
-				...summarizeOptions,
+				...attemptSummarizeOptions,
 				finalAttempt,
 			};
 			const summaryLogger = createChildLogger({
@@ -764,7 +765,7 @@ export class RunningSummarizer
 			});
 
 			const summaryOptions: ISubmitSummaryOptions = {
-				...summarizeOptions,
+				...attemptSummarizeOptions,
 				summaryLogger,
 				cancellationToken: this.cancellationToken,
 				finalAttempt,
@@ -917,8 +918,9 @@ export class RunningSummarizer
 	private async summarizeOnDemandWithRetries(
 		reason: SummarizeReason,
 		resultsBuilder: SummarizeResultBuilder,
+		summarizeOptions: ISummarizeOptions = {},
 	): Promise<ISummarizeResults> {
-		const results = await this.trySummarizeWithRetries(reason);
+		const results = await this.trySummarizeWithRetries(reason, summarizeOptions);
 		if (results === undefined) {
 			resultsBuilder.fail(
 				"Summarization was canceled",
@@ -956,13 +958,15 @@ export class RunningSummarizer
 			throw new UsageError("Attempted to run an already-running summarizer on demand");
 		}
 
-		const { reason, ...summarizeOptions } = options;
-		if (options.retryOnFailure === true) {
-			this.summarizeOnDemandWithRetries(`onDemand;${reason}`, resultsBuilder).catch(
-				(error: IRetriableFailureError) => {
-					resultsBuilder.fail("summarize failed", error);
-				},
-			);
+		const { reason, retryOnFailure, ...summarizeOptions } = options;
+		if (retryOnFailure === true) {
+			this.summarizeOnDemandWithRetries(
+				`onDemand;${reason}`,
+				resultsBuilder,
+				summarizeOptions,
+			).catch((error: IRetriableFailureError) => {
+				resultsBuilder.fail("summarize failed", error);
+			});
 		} else {
 			this.trySummarizeOnce(
 				{ summarizeReason: `onDemand/${reason}` },

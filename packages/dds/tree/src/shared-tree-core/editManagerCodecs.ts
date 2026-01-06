@@ -58,6 +58,7 @@ export function clientVersionToEditManagerFormatVersion(
 		getConfigForMinVersionForCollab(clientVersion, {
 			[lowestMinVersionForCollab]: EditManagerFormatVersion.v3,
 			[FluidClientVersion.v2_43]: EditManagerFormatVersion.v4,
+			[FluidClientVersion.v2_80]: EditManagerFormatVersion.v6,
 		}),
 	);
 
@@ -135,18 +136,21 @@ export function makeEditManagerCodecs<TChangeset>(
 	][] = Array.from(editManagerFormatVersions, (version) => {
 		switch (version) {
 			case unbrand(EditManagerFormatVersion.v1):
-			case unbrand(EditManagerFormatVersion.v2):
+			case unbrand(EditManagerFormatVersion.v2): {
 				return [version, makeDiscontinuedCodecVersion(options, version, "2.73.0")];
+			}
 			case unbrand(EditManagerFormatVersion.v3):
-			case unbrand(EditManagerFormatVersion.v4): {
+			case unbrand(EditManagerFormatVersion.v4):
+			case unbrand(EditManagerFormatVersion.v6): {
 				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,
 					makeV1CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			case unbrand(EditManagerFormatVersion.v5):
+			case unbrand(EditManagerFormatVersion.v5): {
 				return [version, makeDiscontinuedCodecVersion(options, version, "2.74.0")];
+			}
 			case unbrand(EditManagerFormatVersion.vSharedBranches): {
 				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
@@ -154,8 +158,9 @@ export function makeEditManagerCodecs<TChangeset>(
 					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
 			}
-			default:
+			default: {
 				unreachableCase(version);
+			}
 		}
 	});
 	return makeCodecFamily(registry);

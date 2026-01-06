@@ -394,12 +394,12 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	 * Given a cursor in field mode, indexes all nodes under the field and then indexes all nodes up the spine.
 	 */
 	private indexSpine(cursor: ITreeSubscriptionCursor): void {
-		if (keyAsDetachedField(cursor.getFieldKey()) !== rootField) {
-			cursor.exitField();
-			cursor.exitNode();
-		} else {
+		if (keyAsDetachedField(cursor.getFieldKey()) === rootField) {
 			// return early if we're already at the root field
 			return;
+		} else {
+			cursor.exitField();
+			cursor.exitNode();
 		}
 
 		// walk up the spine and index nodes until we reach the root
@@ -470,5 +470,5 @@ function filterNodes(
  * Checks that an array is of the type {@link TreeIndexNodes} and has at least one element.
  */
 export function hasElement<T>(array: readonly T[]): array is TreeIndexNodes<T> {
-	return array.length >= 1;
+	return array.length > 0;
 }
