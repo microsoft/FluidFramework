@@ -387,8 +387,9 @@ export function runUnitTestScenario(
 						commits.push(commit);
 						break;
 					}
-					default:
+					default: {
 						unreachableCase(type);
+					}
 				}
 			}
 
@@ -494,17 +495,20 @@ export function runUnitTestScenario(
 			}
 			switch (step.type) {
 				case "Push":
-				case "Ack":
+				case "Ack": {
 					return previousStep.type === step.type && previousStep.seq === step.seq;
-				case "Pull":
+				}
+				case "Pull": {
 					return (
 						previousStep.type === "Pull" &&
 						previousStep.seq === step.seq &&
 						previousStep.from === step.from &&
 						previousStep.ref === step.ref
 					);
-				default:
+				}
+				default: {
 					assert(false, "Invalid step type");
+				}
 			}
 		};
 		for (const step of steps) {

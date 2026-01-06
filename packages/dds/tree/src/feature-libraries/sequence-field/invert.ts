@@ -303,8 +303,9 @@ function invertMark(
 
 			return inverses;
 		}
-		default:
+		default: {
 			unreachableCase(type);
+		}
 	}
 }
 

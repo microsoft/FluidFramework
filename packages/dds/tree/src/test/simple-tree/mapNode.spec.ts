@@ -118,20 +118,23 @@ describeHydration(
 
 		it("entries", () => {
 			const root = init(schema, initialTree);
-			assert.deepEqual(Array.from(root.map.entries()), [
-				["foo", "Hello"],
-				["bar", "World"],
-			]);
+			assert.deepEqual(
+				[...root.map.entries()],
+				[
+					["foo", "Hello"],
+					["bar", "World"],
+				],
+			);
 		});
 
 		it("keys", () => {
 			const root = init(schema, initialTree);
-			assert.deepEqual(Array.from(root.map.keys()), ["foo", "bar"]);
+			assert.deepEqual([...root.map.keys()], ["foo", "bar"]);
 		});
 
 		it("values", () => {
 			const root = init(schema, initialTree);
-			assert.deepEqual(Array.from(root.map.values()), ["Hello", "World"]);
+			assert.deepEqual([...root.map.values()], ["Hello", "World"]);
 		});
 
 		it("iteration", () => {

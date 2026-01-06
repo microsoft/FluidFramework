@@ -101,7 +101,7 @@ const assertIntervals = (
 	intervalCollection: ISequenceIntervalCollection,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
-) => {
+): void => {
 	const actual = Array.from(intervalCollection);
 	if (validateOverlapping && sharedString.getLength() > 0) {
 		const overlapping = intervalCollection.findOverlappingIntervals(
@@ -2268,7 +2268,7 @@ describeCompat(
 					},
 				);
 
-				async function rehydrateConnectAndPause(loggingId: string) {
+				async function rehydrateConnectAndPause(loggingId: string): Promise<IContainer> {
 					// Rehydrate and immediately pause outbound to ensure we don't send the ops yet
 					// Container won't be connected yet, so no race here.
 					const container = await loader.resolve(

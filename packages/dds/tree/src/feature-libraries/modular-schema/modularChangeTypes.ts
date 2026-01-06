@@ -10,9 +10,9 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type RevisionInfo,
-	type RevisionTag,
 } from "../../core/index.js";
-import { brand, RangeMap, type Brand, type TupleBTree } from "../../util/index.js";
+import { brand, RangeMap, type Brand } from "../../util/index.js";
+import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
@@ -69,8 +69,6 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly destroys?: ChangeAtomIdBTree<number>;
 	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
 }
-
-export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;
 
 export type CrossFieldKeyTable = RangeMap<CrossFieldKey, FieldId>;
 

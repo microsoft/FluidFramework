@@ -12,10 +12,10 @@ import {
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeId,
 	type DeltaMark,
+	type RevisionReplacer,
 	type RevisionTag,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
-	replaceAtomRevisions,
 	taggedAtomId,
 } from "../../core/index.js";
 import {
@@ -433,29 +433,21 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 	replaceRevisions: (
 		change: OptionalChangeset,
-		oldRevisions: Set<RevisionTag | undefined>,
-		newRevision: RevisionTag | undefined,
+		replacer: RevisionReplacer,
 	): OptionalChangeset => {
-		const valueReplace = replaceReplaceRevisions(
-			change.valueReplace,
-			oldRevisions,
-			newRevision,
-		);
+		const valueReplace = replaceReplaceRevisions(change.valueReplace, replacer);
 
 		const childChanges: ChildChange[] = [];
 		for (const [id, childChange] of change.childChanges) {
 			childChanges.push([
-				replaceRegisterRevisions(id, oldRevisions, newRevision),
-				replaceAtomRevisions(childChange, oldRevisions, newRevision),
+				replaceRegisterRevisions(id, replacer),
+				replacer.getUpdatedAtomId(childChange),
 			]);
 		}
 
 		const moves: Move[] = [];
 		for (const [src, dst] of change.moves) {
-			moves.push([
-				replaceAtomRevisions(src, oldRevisions, newRevision),
-				replaceAtomRevisions(dst, oldRevisions, newRevision),
-			]);
+			moves.push([replacer.getUpdatedAtomId(src), replacer.getUpdatedAtomId(dst)]);
 		}
 
 		const updated: Mutable<OptionalChangeset> = { childChanges, moves };
@@ -473,8 +465,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 function replaceReplaceRevisions(
 	replace: Replace | undefined,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
+	replacer: RevisionReplacer,
 ): Replace | undefined {
 	if (replace === undefined) {
 		return undefined;
@@ -482,11 +473,11 @@ function replaceReplaceRevisions(
 
 	const updated: Mutable<Replace> = {
 		...replace,
-		dst: replaceAtomRevisions(replace.dst, oldRevisions, newRevision),
+		dst: replacer.getUpdatedAtomId(replace.dst),
 	};
 
 	if (replace.src !== undefined) {
-		updated.src = replaceRegisterRevisions(replace.src, oldRevisions, newRevision);
+		updated.src = replaceRegisterRevisions(replace.src, replacer);
 	}
 
 	return updated;
@@ -494,12 +485,9 @@ function replaceReplaceRevisions(
 
 function replaceRegisterRevisions(
 	register: RegisterId,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
+	replacer: RevisionReplacer,
 ): RegisterId {
-	return register === "self"
-		? register
-		: replaceAtomRevisions(register, oldRevisions, newRevision);
+	return register === "self" ? register : replacer.getUpdatedAtomId(register);
 }
 
 function getComposedReplaceDst(

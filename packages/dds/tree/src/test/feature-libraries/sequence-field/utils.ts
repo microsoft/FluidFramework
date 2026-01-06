@@ -35,8 +35,11 @@ import {
 	setInCrossFieldMap,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/index.js";
+import {
+	DefaultRevisionReplacer,
+	rebaseRevisionMetadataFromInfo,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
 import {
@@ -151,8 +154,9 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 	function normalizeEffect<TEffect extends MarkEffect>(effect: TEffect): TEffect {
 		switch (effect.type) {
 			case "Rename":
-			case NoopMarkType:
+			case NoopMarkType: {
 				return effect;
+			}
 			case "AttachAndDetach": {
 				return {
 					...effect,
@@ -211,8 +215,9 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				normalized.revision = atom.revision;
 				return normalized as TEffect;
 			}
-			default:
+			default: {
 				assert.fail(`Unexpected mark type: ${(effect as SF.Mark).type}`);
+			}
 		}
 	}
 	const output = new MarkListFactory();
@@ -814,11 +819,8 @@ export function tagChangeInline(
 }
 
 export function inlineRevision(change: Changeset, revision: RevisionTag): Changeset {
-	return SF.sequenceFieldChangeRebaser.replaceRevisions(
-		change,
-		new Set([undefined]),
-		revision,
-	);
+	const replacer = new DefaultRevisionReplacer(revision, new Set([undefined]));
+	return SF.sequenceFieldChangeRebaser.replaceRevisions(change, replacer);
 }
 
 interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {

@@ -15,10 +15,16 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	validateLayerCompatibility,
-	type ITelemetryLoggerExt,
+	type MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
+
+/**
+ * The config key to disable strict loader layer compatibility check.
+ */
+export const disableStrictLoaderLayerCompatibilityCheckKey =
+	"Fluid.ContainerRuntime.DisableStrictLoaderLayerCompatibilityCheck";
 
 /**
  * The core compatibility details of the Runtime layer that is the same across all layer boundaries.
@@ -98,8 +104,16 @@ export const dataStoreSupportRequirementsForRuntime: ILayerCompatSupportRequirem
 export function validateLoaderCompatibility(
 	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
-	logger: ITelemetryLoggerExt,
+	mc: MonitoringContext,
 ): void {
+	// By default, use strictCompatibilityCheck here - If the Loader doesn't provide compatibility details,
+	// assume it's a very old version and should be considered incompatible,
+	// since Loader can drift far from the Runtime causing issues.
+	// Can be disabled via config `disableStrictLoaderLayerCompatibilityCheckKey`.
+	const disableStrictLoaderLayerCompatibilityCheck = mc.config.getBoolean(
+		disableStrictLoaderLayerCompatibilityCheckKey,
+	);
+
 	validateLayerCompatibility(
 		"runtime",
 		"loader",
@@ -107,7 +121,8 @@ export function validateLoaderCompatibility(
 		loaderSupportRequirementsForRuntime,
 		maybeLoaderCompatDetailsForRuntime,
 		disposeFn,
-		logger,
+		mc,
+		disableStrictLoaderLayerCompatibilityCheck !== true /* strictCompatibilityCheck */,
 	);
 }
 
@@ -118,7 +133,7 @@ export function validateLoaderCompatibility(
 export function validateDatastoreCompatibility(
 	maybeDataStoreCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: () => void,
-	logger: ITelemetryLoggerExt,
+	mc: MonitoringContext,
 ): void {
 	validateLayerCompatibility(
 		"runtime",
@@ -127,6 +142,6 @@ export function validateDatastoreCompatibility(
 		dataStoreSupportRequirementsForRuntime,
 		maybeDataStoreCompatDetailsForRuntime,
 		disposeFn,
-		logger,
+		mc,
 	);
 }

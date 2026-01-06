@@ -13,6 +13,7 @@ import {
 	type ChangeRebaser,
 	type DeltaDetachedNodeId,
 	type RevisionMetadataSource,
+	type RevisionReplacer,
 	type RevisionTag,
 	type RevisionTagCodec,
 	type TaggedChange,
@@ -127,7 +128,7 @@ export class SharedTreeChangeFamily
 			innerChange: SharedTreeChange["changes"][number],
 		) => SharedTreeChange["changes"][number] = (innerChange) => {
 			switch (innerChange.type) {
-				case "data":
+				case "data": {
 					return {
 						type: "data",
 						innerChange: this.modularChangeFamily.invert(
@@ -136,6 +137,7 @@ export class SharedTreeChangeFamily
 							revision,
 						),
 					};
+				}
 				case "schema": {
 					return {
 						type: "schema",
@@ -148,8 +150,9 @@ export class SharedTreeChangeFamily
 						},
 					};
 				}
-				default:
+				default: {
 					fail(0xacc /* Unknown SharedTree change type. */);
+				}
 			}
 		};
 		return {
@@ -203,25 +206,28 @@ export class SharedTreeChangeFamily
 		};
 	}
 
+	public getRevisions(change: SharedTreeChange): Set<RevisionTag | undefined> {
+		const aggregated: Set<RevisionTag | undefined> = new Set();
+		for (const innerChange of change.changes) {
+			if (innerChange.type === "data") {
+				const innerRevisions = this.modularChangeFamily.rebaser.getRevisions(
+					innerChange.innerChange,
+				);
+				for (const tag of innerRevisions) {
+					aggregated.add(tag);
+				}
+			}
+		}
+		return aggregated;
+	}
+
 	public changeRevision(
 		change: SharedTreeChange,
-		newRevision: RevisionTag | undefined,
-		rollbackOf?: RevisionTag,
+		replacer: RevisionReplacer,
 	): SharedTreeChange {
-		return {
-			changes: change.changes.map((inner) => {
-				return inner.type === "data"
-					? {
-							...inner,
-							innerChange: this.modularChangeFamily.rebaser.changeRevision(
-								inner.innerChange,
-								newRevision,
-								rollbackOf,
-							),
-						}
-					: inner;
-			}),
-		};
+		return mapDataChanges(change, (inner) =>
+			this.modularChangeFamily.rebaser.changeRevision(inner, replacer),
+		);
 	}
 
 	public get rebaser(): ChangeRebaser<SharedTreeChange> {

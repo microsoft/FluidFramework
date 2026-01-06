@@ -528,7 +528,7 @@ export class UnhydratedSequenceField
 					mapTrees.splice(index, 0, ...newContentChecked);
 				} else {
 					// ...but we avoid using `splice` + spread for very large input arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
-					return mapTrees.slice(0, index).concat(newContentChecked, mapTrees.slice(index));
+					return [...mapTrees.slice(0, index), ...newContentChecked, ...mapTrees.slice(index)];
 				}
 			});
 		},
@@ -565,17 +565,22 @@ export function createField(
 ): UnhydratedFlexTreeField {
 	switch (args[1]) {
 		case FieldKinds.required.identifier:
-		case FieldKinds.identifier.identifier:
+		case FieldKinds.identifier.identifier: {
 			return new UnhydratedRequiredField(...args);
-		case FieldKinds.optional.identifier:
+		}
+		case FieldKinds.optional.identifier: {
 			return new UnhydratedOptionalField(...args);
-		case FieldKinds.sequence.identifier:
+		}
+		case FieldKinds.sequence.identifier: {
 			return new UnhydratedSequenceField(...args);
-		case FieldKinds.forbidden.identifier:
+		}
+		case FieldKinds.forbidden.identifier: {
 			// TODO: this seems to used by unknown optional fields. They should probably use "optional" not "Forbidden" schema.
 			return new UnhydratedFlexTreeField(...args);
-		default:
+		}
+		default: {
 			return fail(0xb9d /* unsupported field kind */);
+		}
 	}
 }
 

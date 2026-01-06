@@ -351,11 +351,7 @@ export class FluidDataStoreRuntime
 		// Validate that the Runtime is compatible with this DataStore.
 		const { ILayerCompatDetails: runtimeCompatDetails } =
 			dataStoreContext as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(
-			runtimeCompatDetails,
-			this.dispose.bind(this),
-			this.mc.logger,
-		);
+		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this), this.mc);
 
 		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
 			this._readonly = dataStoreContext.isReadOnly();
