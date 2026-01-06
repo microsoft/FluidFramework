@@ -36,14 +36,27 @@ export function assert(
 	debugMessageBuilder?: () => string,
 ): asserts condition {
 	if (!condition) {
-		untaggedFail(message, debugMessageBuilder);
+		failPrivate(message, debugMessageBuilder);
 	}
 }
 
 /**
- * An alias for `fail` which avoids assert tagging for use in the implementation of `assert`.
+ * {@link fail}'s implementation, but extracted to avoid assert tagging trying to tag the use of it in `assert`.
  */
-const untaggedFail = fail;
+function failPrivate(message: string | number, debugMessageBuilder?: () => string): never {
+	let messageString =
+		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message;
+	skipInProduction(() => {
+		if (debugMessageBuilder !== undefined) {
+			messageString = `${messageString}\nDebug Message: ${debugMessageBuilder()}`;
+		}
+		// Using console.log instead of console.error or console.warn since the latter two may break downstream users.
+		console.log(`Bug in Fluid Framework: Failed Assertion: ${messageString}`);
+	});
+	const error = new Error(messageString);
+	onAssertionError(error);
+	throw error;
+}
 
 /**
  * Throw an error with a constant message.
@@ -62,18 +75,7 @@ const untaggedFail = fail;
  * @internal
  */
 export function fail(message: string | number, debugMessageBuilder?: () => string): never {
-	let messageString =
-		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message;
-	skipInProduction(() => {
-		if (debugMessageBuilder !== undefined) {
-			messageString = `${messageString}\nDebug Message: ${debugMessageBuilder()}`;
-		}
-		// Using console.log instead of console.error or console.warn since the latter two may break downstream users.
-		console.log(`Bug in Fluid Framework: Failed Assertion: ${messageString}`);
-	});
-	const error = new Error(messageString);
-	onAssertionError(error);
-	throw error;
+	failPrivate(message, debugMessageBuilder);
 }
 
 function onAssertionError(error: Error): void {
