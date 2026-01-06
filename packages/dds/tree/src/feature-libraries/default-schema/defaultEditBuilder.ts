@@ -181,12 +181,12 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	addNodeExistsConstraintOnRevert(path: NormalizedUpPath): void;
 
 	/**
-	 * Add a constraint that, for this change to apply, the document must be in the same state immediately before this change applied as it was before this change was authored.
+	 * Add a constraint that, for this change to apply, the document must be in the same state immediately before this change is applied as it was before this change was authored.
 	 */
 	addNoChangeConstraint(): void;
 
 	/**
-	 * Add a constraint that, for the revert of this change to apply, the document must be in the same state immediately before the revert applied as it was after this change was applied.
+	 * Add a constraint that, for the revert of this change to apply, the document must be in the same state immediately before the revert is applied as it was after this change was applied.
 	 */
 	addNoChangeConstraintOnRevert(): void;
 }
