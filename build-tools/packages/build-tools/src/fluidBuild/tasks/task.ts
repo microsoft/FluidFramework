@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type AsyncPriorityQueue, priorityQueue } from "async";
-
 import * as assert from "assert";
+import { type AsyncPriorityQueue, priorityQueue } from "async";
 import registerDebug from "debug";
 import type { BuildContext } from "../buildContext";
 import { type BuildPackage } from "../buildGraph";

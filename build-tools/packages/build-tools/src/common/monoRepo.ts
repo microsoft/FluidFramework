@@ -6,15 +6,14 @@
 import { existsSync } from "node:fs";
 import * as path from "node:path";
 import { getPackagesSync } from "@manypkg/get-packages";
+import registerDebug from "debug";
 import { readFileSync, readJsonSync } from "fs-extra";
 import YAML from "yaml";
-
 import type { IFluidBuildDir } from "../fluidBuild/fluidBuildConfig";
-import { type Logger, defaultLogger } from "./logging";
+import { defaultLogger, type Logger } from "./logging";
 import { Package } from "./npmPackage";
 import { execWithErrorAsync, rimrafWithErrorAsync } from "./utils";
 
-import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
 export type PackageManager = "npm" | "pnpm" | "yarn";

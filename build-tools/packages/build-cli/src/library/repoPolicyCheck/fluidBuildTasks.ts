@@ -12,13 +12,13 @@ import {
 } from "@fluid-tools/build-infrastructure";
 import {
 	FluidRepo,
-	type Package,
-	type PackageJson,
-	TscUtils,
 	getEsLintConfigFilePath,
 	getFluidBuildConfig,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
+	type Package,
+	type PackageJson,
+	TscUtils,
 } from "@fluidframework/build-tools";
 import JSON5 from "json5";
 import * as semver from "semver";

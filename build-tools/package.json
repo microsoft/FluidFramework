@@ -71,7 +71,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.4",
+		"@biomejs/biome": "~2.3.11",
 		"@commitlint/cli": "^20.1.0",
 		"@commitlint/config-conventional": "^20.0.0",
 		"@commitlint/cz-commitlint": "^20.1.0",
@@ -153,7 +153,7 @@
 			"mdast-util-gfm-footnote: mdast-util-gfm@3.1.0 has a type definition bug where it imports ToMarkdownOptions from mdast-util-gfm-footnote, but version 2.0.0 doesn't export it. Override to 2.1.0 which includes the missing export."
 		],
 		"overrides": {
-			"@biomejs/biome": "~2.3.8",
+			"@biomejs/biome": "^2.3.11",
 			"@types/glob>@types/minimatch": "~5.1.2",
 			"@types/node": "^22.19.1",
 			"json5@<1.0.2": "^1.0.2",

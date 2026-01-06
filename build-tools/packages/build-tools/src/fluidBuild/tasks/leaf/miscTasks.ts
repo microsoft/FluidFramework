@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { readFile, readdir, stat } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import * as path from "node:path";
 
 import picomatch from "picomatch";

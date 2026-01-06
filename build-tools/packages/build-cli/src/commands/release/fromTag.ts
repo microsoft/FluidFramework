@@ -4,9 +4,9 @@
  */
 
 import {
+	detectBumpType,
 	type ReleaseVersion,
 	type VersionBumpType,
-	detectBumpType,
 } from "@fluid-tools/version-tools";
 import { type MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";

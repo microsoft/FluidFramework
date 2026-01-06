@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import type { AsyncPriorityQueue } from "async";
+import registerDebug from "debug";
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 import * as semver from "semver";
-
-import * as assert from "assert";
-import registerDebug from "debug";
 import type { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import type { Package } from "../common/npmPackage";
@@ -19,13 +18,13 @@ import { BuildResult, summarizeBuildResult } from "./buildResult";
 import { FileHashCache } from "./fileHashCache";
 import type { IFluidBuildConfig } from "./fluidBuildConfig";
 import {
+	getDefaultTaskDefinition,
+	getTaskDefinitions,
+	normalizeGlobalTaskDefinitions,
 	type TaskDefinition,
 	type TaskDefinitions,
 	type TaskDefinitionsOnDisk,
 	type TaskFileDependencies,
-	getDefaultTaskDefinition,
-	getTaskDefinitions,
-	normalizeGlobalTaskDefinitions,
 } from "./fluidTaskDefinitions";
 import { options } from "./options";
 import { Task, type TaskExec } from "./tasks/task";

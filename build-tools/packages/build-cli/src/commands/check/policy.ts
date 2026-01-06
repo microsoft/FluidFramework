@@ -14,8 +14,8 @@ import {
 	BaseCommand,
 	type Context,
 	type Handler,
-	Repository,
 	policyHandlers,
+	Repository,
 } from "../../library/index.js";
 
 type policyAction = "handle" | "resolve" | "final";

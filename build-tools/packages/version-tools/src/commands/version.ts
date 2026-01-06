@@ -9,11 +9,11 @@ import { table } from "table";
 
 import { isVersionBumpTypeExtended } from "../bumpTypes";
 import {
-	MINIMUM_PUBLIC_VERSION,
 	bumpInternalVersion,
 	fromInternalScheme,
 	getVersionRange,
 	isInternalVersionScheme,
+	MINIMUM_PUBLIC_VERSION,
 	toInternalScheme,
 } from "../internalVersionScheme";
 

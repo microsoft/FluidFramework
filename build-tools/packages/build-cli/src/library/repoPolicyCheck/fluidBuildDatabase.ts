@@ -237,10 +237,7 @@ export class FluidBuildDatabase {
 		packageGroup: ReadonlyMap<PackageName, Package>,
 		packageName: PackageName,
 		script: Script,
-		ignorePackage?: (packageInfo: {
-			name: string;
-			version: string;
-		}) => boolean,
+		ignorePackage?: (packageInfo: { name: string; version: string }) => boolean,
 	): BuildScript[][] {
 		const pkg = packageGroup.get(packageName);
 		if (pkg === undefined) {
