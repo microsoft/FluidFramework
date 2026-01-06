@@ -96,6 +96,7 @@ function updateIdOverride<TEffect extends Detach | Rename>(
 		const idOverride = replacer.getUpdatedAtomId(effect.idOverride);
 		return { ...effect, idOverride };
 	}
+	return effect;
 }
 
 function updateMoveEffect<TEffect extends HasMoveFields>(
