@@ -9,19 +9,20 @@ import { realpath } from "node:fs/promises";
 import * as path from "node:path";
 import { getPackages } from "@manypkg/get-packages";
 import registerDebug from "debug";
-import { readJson } from "fs-extra";
+import { findUp } from "find-up";
+import fsExtra from "fs-extra";
 import { lilconfigSync } from "lilconfig";
 
-import { defaultLogger } from "../common/logging";
-import { commonOptions } from "./commonOptions";
+// fs-extra doesn't provide named exports for ESM, so we destructure from default
+const { readJson } = fsExtra;
+
+import { defaultLogger } from "../common/logging.js";
+import { commonOptions } from "./commonOptions.js";
 import {
 	DEFAULT_FLUIDBUILD_CONFIG,
 	FLUIDBUILD_CONFIG_VERSION,
 	type IFluidBuildConfig,
-} from "./fluidBuildConfig";
-
-// switch to regular import once building ESM
-const findUp = import("find-up");
+} from "./fluidBuildConfig.js";
 
 const traceInit = registerDebug("fluid-build:init");
 
@@ -41,7 +42,7 @@ async function isFluidRootPackage(dir: string) {
 }
 
 async function inferRoot(buildRoot: boolean) {
-	const config = await (await findUp).findUp("fluidBuild.config.cjs", {
+	const config = await findUp("fluidBuild.config.cjs", {
 		cwd: process.cwd(),
 		type: "file",
 	});

@@ -7,8 +7,8 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 
-import { globFn, loadModule, toPosixPath } from "../taskUtils";
-import { LeafWithDoneFileTask } from "./leafTask";
+import { globFn, loadModule, toPosixPath } from "../taskUtils.js";
+import { LeafWithDoneFileTask } from "./leafTask.js";
 
 interface DoneFileContent {
 	version: string;

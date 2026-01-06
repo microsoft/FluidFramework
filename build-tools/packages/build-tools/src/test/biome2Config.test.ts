@@ -14,10 +14,10 @@ import {
 	getBiome2FormattedFilesFromDirectory,
 	getOrderedPatternsFromBiome2Config,
 	loadBiome2Config,
-} from "../common/biome2Config";
-import { GitRepo } from "../common/gitRepo";
-import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
-import { testDataPath } from "./init";
+} from "../common/biome2Config.js";
+import { GitRepo } from "../common/gitRepo.js";
+import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils.js";
+import { testDataPath } from "./init.js";
 
 describe("Biome 2.x config loading", () => {
 	describe("Biome2ConfigReader class", () => {
@@ -247,7 +247,7 @@ describe("Biome 2.x config loading", () => {
 		});
 
 		it("getAllBiome2ConfigPaths returns only the child config (no parent discovery)", async () => {
-			const { getAllBiome2ConfigPaths } = await import("../common/biome2Config");
+			const { getAllBiome2ConfigPaths } = await import("../common/biome2Config.js");
 			const allPaths = await getAllBiome2ConfigPaths(childConfig);
 
 			// Without extends, only the child config should be returned
@@ -348,7 +348,7 @@ describe("Biome 2.x config loading", () => {
 		});
 
 		it('getAllBiome2ConfigPaths includes root when using "//"', async () => {
-			const { getAllBiome2ConfigPaths } = await import("../common/biome2Config");
+			const { getAllBiome2ConfigPaths } = await import("../common/biome2Config.js");
 			const allPaths = await getAllBiome2ConfigPaths(childConfig);
 
 			// Should have both root and child configs
@@ -386,7 +386,7 @@ describe("Biome 2.x config loading", () => {
 		it('throws when "//" extends cannot find root config', async () => {
 			// Create a scenario where // is used but no root config exists
 			// We'll test this by checking the error message from findRootBiome2Config
-			const { findRootBiome2Config } = await import("../common/biome2Config");
+			const { findRootBiome2Config } = await import("../common/biome2Config.js");
 
 			// Start from a directory that has no biome configs above it
 			const result = await findRootBiome2Config("/tmp");
@@ -524,7 +524,7 @@ describe("Biome 2.x config loading", () => {
 		});
 
 		it("getAllBiome2ConfigPaths returns all configs in correct order", async () => {
-			const { getAllBiome2ConfigPaths } = await import("../common/biome2Config");
+			const { getAllBiome2ConfigPaths } = await import("../common/biome2Config.js");
 			const allPaths = await getAllBiome2ConfigPaths(testConfig);
 
 			// Should have 3 configs: base-formatter, base-linter, config
@@ -551,7 +551,7 @@ describe("Biome 2.x config loading", () => {
 			// If both base configs had the same property, the later one (base-linter.jsonc)
 			// would override the earlier one (base-formatter.jsonc).
 			// This test verifies the ordering is correct.
-			const { getAllBiome2ConfigPaths } = await import("../common/biome2Config");
+			const { getAllBiome2ConfigPaths } = await import("../common/biome2Config.js");
 			const allPaths = await getAllBiome2ConfigPaths(testConfig);
 
 			const baseFormatterIndex = allPaths.findIndex((p: string) =>

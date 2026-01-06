@@ -6,8 +6,8 @@
 import {
 	type BiomeConfigReader,
 	createBiomeConfigReader,
-} from "../../../common/biomeConfigUtils";
-import { LeafWithFileStatDoneFileTask } from "./leafTask";
+} from "../../../common/biomeConfigUtils.js";
+import { LeafWithFileStatDoneFileTask } from "./leafTask.js";
 
 /**
  * This task enables incremental build support for Biome formatting tasks. It reads Biome configuration files to load

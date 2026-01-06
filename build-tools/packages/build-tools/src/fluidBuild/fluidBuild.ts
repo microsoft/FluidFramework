@@ -6,16 +6,16 @@
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 
-import { GitRepo } from "../common/gitRepo";
-import { defaultLogger } from "../common/logging";
-import { Timer } from "../common/timer";
-import { type BuildGraph } from "./buildGraph";
-import { BuildResult } from "./buildResult";
-import { commonOptions } from "./commonOptions";
-import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
-import { FluidRepoBuild } from "./fluidRepoBuild";
-import { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidUtils";
-import { options, parseOptions } from "./options";
+import { GitRepo } from "../common/gitRepo.js";
+import { defaultLogger } from "../common/logging.js";
+import { Timer } from "../common/timer.js";
+import { type BuildGraph } from "./buildGraph.js";
+import { BuildResult } from "./buildResult.js";
+import { commonOptions } from "./commonOptions.js";
+import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig.js";
+import { FluidRepoBuild } from "./fluidRepoBuild.js";
+import { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidUtils.js";
+import { options, parseOptions } from "./options.js";
 
 const { log, errorLog: error, warning: warn } = defaultLogger;
 

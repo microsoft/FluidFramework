@@ -10,12 +10,19 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"bin": {
-		"fluid-build": "bin/fluid-build",
-		"fluid-doc-stats": "bin/fluid-doc-stats",
-		"fluid-tsc": "bin/fluid-tsc"
+		"fluid-build": "bin/fluid-build.mjs",
+		"fluid-doc-stats": "bin/fluid-doc-stats.mjs",
+		"fluid-tsc": "bin/fluid-tsc.mjs"
 	},
 	"scripts": {
 		"build": "fluid-build --task build",

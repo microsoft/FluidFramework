@@ -8,14 +8,10 @@
  */
 
 import { readFile } from "node:fs/promises";
-import * as JSON5 from "json5";
+import { findUp } from "find-up";
+import JSON5 from "json5";
 
-import type { GitRepo } from "./gitRepo";
-
-// find-up is an ESM-only package and we're still building CJS, so this import form is required
-// so that TypeScript won't transpile it to require(). Once this package is switched to ESM, then
-// this can be a standard import.
-const findUp = import("find-up");
+import type { GitRepo } from "./gitRepo.js";
 
 /**
  * Minimal interface for a Biome configuration that includes the extends field.
@@ -53,14 +49,11 @@ export async function getClosestBiomeConfigPath(
 	cwd: string,
 	stopAt?: string,
 ): Promise<string> {
-	return (await findUp)
-		.findUp(["biome.json", "biome.jsonc"], { cwd, stopAt })
-		.then((config) => {
-			if (config === undefined) {
-				throw new Error(`Can't find biome config file`);
-			}
-			return config;
-		});
+	const config = await findUp(["biome.json", "biome.jsonc"], { cwd, stopAt });
+	if (config === undefined) {
+		throw new Error(`Can't find biome config file`);
+	}
+	return config;
 }
 
 /**

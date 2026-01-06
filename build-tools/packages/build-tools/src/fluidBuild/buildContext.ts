@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { GitRepo } from "../common/gitRepo";
-import type { IFluidBuildConfig } from "./fluidBuildConfig";
+import type { GitRepo } from "../common/gitRepo.js";
+import type { IFluidBuildConfig } from "./fluidBuildConfig.js";
 
 /**
  * A context object that is passed to fluid-build tasks. It is used to provide easy access to commonly-needed metadata

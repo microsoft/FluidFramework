@@ -6,8 +6,8 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 
-import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../taskUtils";
-import { TscDependentTask } from "./tscTask";
+import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../taskUtils.js";
+import { TscDependentTask } from "./tscTask.js";
 
 /**
  * Path to the shared eslint-config-fluid package relative to the repo root.

@@ -4,9 +4,12 @@
  */
 
 import * as fs from "fs";
+import { createRequire } from "node:module";
 import * as path from "path";
-import * as ts from "typescript";
-import { sha256 } from "./hash";
+import ts from "typescript";
+import { sha256 } from "./hash.js";
+
+const require = createRequire(import.meta.url);
 
 const defaultTscUtil = createTscUtil(ts);
 export const parseCommandLine = defaultTscUtil.parseCommandLine;
