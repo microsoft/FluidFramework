@@ -148,20 +148,6 @@ function logIfFalse(
 }
 
 /**
- * Properties of a message that are safe to log for debugging purposes.
- */
-type SafeMessageProperties = Pick<
-	ISequencedDocumentMessage,
-	| "type"
-	| "clientId"
-	| "sequenceNumber"
-	| "clientSequenceNumber"
-	| "referenceSequenceNumber"
-	| "minimumSequenceNumber"
-	| "timestamp"
->;
-
-/**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
@@ -208,7 +194,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * Map of clientId to the last observed message from that client. This is used to validate
 	 * that clientSequenceNumbers are always increasing for a given clientId.
 	 */
-	private readonly lastObservedMessageByClient = new Map<string, SafeMessageProperties>();
+	private readonly lastObservedMessageByClient = new Map<string, ISequencedDocumentMessage>();
 
 	/**
 	 * Count the number of noops sent by the client which may not be acked
@@ -881,7 +867,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	// reuse.
 	// Also payload goes to telemetry, so no content or anything else that shouldn't be logged for privacy reasons
 	// Note: It's possible for a duplicate op to be broadcasted and have everything the same except the timestamp.
-	private comparableMessagePayload(m: SafeMessageProperties): string {
+	private comparableMessagePayload(m: ISequencedDocumentMessage): string {
 		return `${m.clientId}-${m.type}-${m.sequenceNumber}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
 	}
 
