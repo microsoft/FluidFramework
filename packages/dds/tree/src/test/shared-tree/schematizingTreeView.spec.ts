@@ -1257,6 +1257,104 @@ describe("SchematizingSimpleTreeView", () => {
 			// Check that only the outer label was exposed, not the inner labels
 			assert.deepEqual(labels, [outerLabel]);
 		});
+
+		it("separate views maintain independent transaction labels", () => {
+			const view1 = getTestObjectView();
+			const view2 = getTestObjectView();
+
+			const labels1: unknown[] = [];
+			const labels2: unknown[] = [];
+
+			view1.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					labels1.push(meta.label);
+				}
+			});
+
+			view2.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					labels2.push(meta.label);
+				}
+			});
+
+			const label1 = "view1Label";
+			const label2 = "view2Label";
+
+			// Start a transaction in view1 with label1
+			view1.runTransaction(
+				() => {
+					view1.root.content = 1;
+
+					// Nested transaction in view2 with label2 (within view1's transaction)
+					view2.runTransaction(
+						() => {
+							view2.root.content = 100;
+						},
+						{ label: label2 },
+					);
+
+					view1.root.content = 2;
+				},
+				{ label: label1 },
+			);
+
+			// Check that view1 only shows its label
+			assert.deepEqual(labels1, [label1]);
+
+			// Check that view2 shows its own label (not view1's label)
+			assert.deepEqual(labels2, [label2]);
+		});
+
+		it("separate branches maintain independent transaction labels", () => {
+			const view = getTestObjectView();
+			const branch1Checkout = view.checkout.branch();
+			const branch2Checkout = view.checkout.branch();
+
+			const labels1: unknown[] = [];
+			const labels2: unknown[] = [];
+
+			branch1Checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					labels1.push(meta.label);
+				}
+			});
+
+			branch2Checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					labels2.push(meta.label);
+				}
+			});
+
+			const label1 = "branch1Label";
+			const label2 = "branch2Label";
+
+			const branch1View = branch1Checkout.viewWith(view.config);
+			const branch2View = branch2Checkout.viewWith(view.config);
+
+			// Start a transaction in branch1 with label1
+			branch1View.runTransaction(
+				() => {
+					branch1View.root.content = 1;
+
+					// Nested transaction in branch2 with label2 (within branch1's transaction)
+					branch2View.runTransaction(
+						() => {
+							branch2View.root.content = 100;
+						},
+						{ label: label2 },
+					);
+
+					branch1View.root.content = 2;
+				},
+				{ label: label1 },
+			);
+
+			// Check that branch1 only shows its label
+			assert.deepEqual(labels1, [label1]);
+
+			// Check that branch2 shows its own label (not branch1's label)
+			assert.deepEqual(labels2, [label2]);
+		});
 	});
 
 	describe("label-based grouping for undo", () => {

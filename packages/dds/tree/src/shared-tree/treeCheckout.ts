@@ -380,15 +380,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	private editLock: EditLock;
 
 	// User-defined label associated with the transaction whose commit is currently being produced for this checkout.
-	private static _transactionLabel?: unknown;
-
-	public static get transactionLabel(): unknown | undefined {
-		return this._transactionLabel;
-	}
-
-	public static setTransactionLabel(label: unknown | undefined): void {
-		this._transactionLabel = label;
-	}
+	private transactionLabel?: unknown;
 
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
@@ -446,14 +438,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		label?: TLabel,
 	): TResult {
 		// If a transaction label is already set, nesting is occurring, so we should not override it
-		if (TreeCheckout.transactionLabel !== undefined) {
-			return fn(TreeCheckout.transactionLabel as TLabel);
+		if (this.transactionLabel !== undefined) {
+			return fn(this.transactionLabel as TLabel);
 		}
-		TreeCheckout.setTransactionLabel(label);
+		this.transactionLabel = label;
 		try {
-			return fn(TreeCheckout.transactionLabel as TLabel);
+			return fn(this.transactionLabel as TLabel);
 		} finally {
-			TreeCheckout.setTransactionLabel(undefined);
+			this.transactionLabel = undefined;
 		}
 	}
 
@@ -597,7 +589,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							change: encodedChange,
 						} satisfies SerializedChange;
 					},
-					label: TreeCheckout.transactionLabel,
+					label: this.transactionLabel,
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);
