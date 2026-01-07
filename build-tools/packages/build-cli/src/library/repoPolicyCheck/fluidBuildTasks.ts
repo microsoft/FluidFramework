@@ -33,30 +33,29 @@ interface ESLintInstance {
 
 /**
  * Type for the ESLint module exports.
+ * Requires ESLint 8.57.0+ which introduced the loadESLint API.
  */
 interface ESLintModuleType {
-	ESLint: new (opts?: { cwd?: string }) => ESLintInstance;
-	loadESLint?: (opts?: { cwd?: string }) => Promise<
+	loadESLint: (opts?: { cwd?: string }) => Promise<
 		new (instanceOpts?: { cwd?: string }) => ESLintInstance
 	>;
 }
 
 /**
  * Dynamically load ESLint and get the appropriate ESLint class for the config format.
- * This uses ESLint's loadESLint function which auto-detects flat vs legacy config.
+ * This uses ESLint's loadESLint function (added in 8.57.0) which auto-detects flat vs legacy config.
  */
 async function getESLintInstance(cwd: string): Promise<ESLintInstance> {
-	// Dynamic import to get the ESLint module
 	const eslintModule = (await import("eslint")) as unknown as ESLintModuleType;
 
-	// loadESLint was added in ESLint 8.57.0 and auto-detects config format
-	if (eslintModule.loadESLint !== undefined) {
-		const ESLintClass = await eslintModule.loadESLint({ cwd });
-		return new ESLintClass({ cwd });
+	if (eslintModule.loadESLint === undefined) {
+		throw new Error(
+			"ESLint 8.57.0 or later is required for config detection. Please upgrade your ESLint dependency.",
+		);
 	}
 
-	// Fallback for older ESLint versions (pre-8.57.0)
-	return new eslintModule.ESLint({ cwd });
+	const ESLintClass = await eslintModule.loadESLint({ cwd });
+	return new ESLintClass({ cwd });
 }
 
 /**
