@@ -34,7 +34,7 @@ sequenceDiagram
     participant Container
     participant Server
 
-    Client->>Container: createFluidContainer()
+    Client->>Container: createContainer()
     Container-->>Client: container created
     Client->>Container: viewWith(config)
     Container-->>Client: TreeView
@@ -98,43 +98,43 @@ export class CollaborationFluidClient {
 			const view: TreeView<typeof FluidGraphicCollectionData> =
 				container.initialObjects.appData.viewWith(GraphicCollectionTreeConfiguration);
 
-		if (!view.compatibility.canInitialize) {
-					throw new Error("The tree must be safe to initialize upon creation of the Fluid container");
-		}
+			if (!view.compatibility.canInitialize) {
+				throw new Error("The tree must be safe to initialize upon creation of the Fluid container");
+			}
 
-		view.initialize(new FluidGraphicCollectionData([]));
-		const fluidContainerId = await container.attach();
-		window.location.hash = fluidContainerId;
-		return view;
+			view.initialize(new FluidGraphicCollectionData([]));
+			const fluidContainerId = await container.attach();
+			window.location.hash = fluidContainerId;
+			return view;
 		} else {
-				// Path 2: Loading an existing container
-		const container = await this.loadFluidContainer(containerId);
-				const view: TreeView<typeof FluidGraphicCollectionData> =
-					container.initialObjects.appData.viewWith(GraphicCollectionTreeConfiguration);
+			// Path 2: Loading an existing container
+			const container = await this.loadFluidContainer(containerId);
+			const view: TreeView<typeof FluidGraphicCollectionData> =
+				container.initialObjects.appData.viewWith(GraphicCollectionTreeConfiguration);
 
-		if (view.compatibility.canInitialize) {
-			throw new Error("The tree should already be initialized if the Fluid container exists");
-		}
+			if (view.compatibility.canInitialize) {
+				throw new Error("The tree should already be initialized if the Fluid container exists");
+			}
 
-		return view;
+			return view;
 		}
 	}
 
-  private async createFluidContainer(): Promise<IFluidContainer<typeof FluidContainerSchema>> {
-    const client = this.initClient();
-    const { container } = await client.createContainer(FluidContainerSchema, FluidCompatibilityMode);
-    return container;
-  }
+	private async createFluidContainer(): Promise<IFluidContainer<typeof FluidContainerSchema>> {
+		const client = this.initClient();
+		const { container } = await client.createContainer(FluidContainerSchema, FluidCompatibilityMode);
+		return container;
+	}
 
-  private async loadFluidContainer(containerId: string): Promise<IFluidContainer<typeof FluidContainerSchema>> {
-    const client = this.initClient();
-    const { container } = await client.getContainer(containerId, FluidContainerSchema, FluidCompatibilityMode);
-    return container;
-  }
+	private async loadFluidContainer(containerId: string): Promise<IFluidContainer<typeof FluidContainerSchema>> {
+		const client = this.initClient();
+		const { container } = await client.getContainer(containerId, FluidContainerSchema, FluidCompatibilityMode);
+		return container;
+	}
 
-  private initClient(): TinyliciousClient {
-    return new TinyliciousClient({ connection: { port: 7070 } });
-  }
+	private initClient(): TinyliciousClient {
+		return new TinyliciousClient({ connection: { port: 7070 } });
+	}
 }
 ```
 
