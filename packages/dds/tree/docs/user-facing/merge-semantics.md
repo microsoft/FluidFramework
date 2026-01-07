@@ -386,7 +386,7 @@ or when the field on an object is overwritten or cleared.
 Consider the following scenario:
 Alice removes a whole page of sticky notes, while Bob concurrently moves a sticky note out of that page and into another (non-removed) page.
 `SharedTree`'s removal semantics ensure that Bob will still get his sticky note
-whether or not it ends up being sequenced before or after Alice removed the page where it came from.  
+whether or not it ends up being sequenced before or after Alice removed the page where it came from.
 If that weren't the case, then there would be a race between Alice and Bob's edits,
 where Bob's edit would not apply if Alice's edit were sequenced first, and Bob would lose the sticky note.
 
@@ -513,6 +513,7 @@ and `{ arrayA: [a2], arrayB: [b1] }` otherwise.
 We currently support the following types of constraints:
 
 -   `nodeInDocument`: Targets a specific node that must be in the document (i.e., not removed).
+-   `noChange`: Requires that the document must be in the same state when the transaction is applied as it was before the transaction was authored.
 
 ### Schema Changes
 
@@ -526,7 +527,7 @@ The merge semantics will be improved in the future to be less conservative.
 
 ## Merge Semantics by Node Kind
 
-For specifics on the merge semantics of individual edits operations for each node type, 
+For specifics on the merge semantics of individual edits operations for each node type,
 
 [Object Node](object-merge-semantics.md)
 [Map Node](map-merge-semantics.md)
