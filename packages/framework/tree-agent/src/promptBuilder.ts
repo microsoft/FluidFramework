@@ -19,18 +19,10 @@ export class PromptBuilder {
 	}
 
 	/**
-	 * Adds a paragraph of text to the prompt.
-	 */
-	public addParagraph(text: string): this {
-		this.sections.push(text);
-		return this;
-	}
-
-	/**
-	 * Adds multiple paragraphs separated by blank lines.
+	 * Adds one or more paragraphs of text to the prompt.
 	 */
 	public addParagraphs(...texts: string[]): this {
-		for (const text of texts) this.addParagraph(text);
+		this.sections.push(...texts);
 		return this;
 	}
 
@@ -45,23 +37,7 @@ export class PromptBuilder {
 	/**
 	 * Adds a TypeScript code block.
 	 */
-	public addTypeScriptBlock(code: string): this {
-		return this.addCodeBlock("typescript", code);
-	}
 
-	/**
-	 * Adds a JavaScript code block.
-	 */
-	public addJavaScriptBlock(code: string): this {
-		return this.addCodeBlock("javascript", code);
-	}
-
-	/**
-	 * Adds a JSON code block.
-	 */
-	public addJsonBlock(code: string): this {
-		return this.addCodeBlock("json", code);
-	}
 
 	/**
 	 * Adds a blank line to the prompt.
@@ -97,7 +73,6 @@ export interface MethodParameter {
 	isSpread?: boolean;
 	isOptional?: boolean;
 }
-
 /**
  * Configuration for documenting a method.
  */
@@ -109,61 +84,6 @@ export interface MethodDocConfig {
 	returnDescription?: string;
 	remarks?: string;
 	examples?: string[];
-}
-
-/**
- * A prompt builder for documenting class interfaces and their methods.
- */
-export class ClassPromptBuilder extends PromptBuilder {
-	public addMethod(config: MethodDocConfig): this {
-		const { name, description, parameters, returnType, returnDescription, remarks, examples } =
-			config;
-
-		const docLines: string[] = ["/**"];
-
-		docLines.push(` * ${description}`);
-
-		if (parameters.length > 0) {
-			docLines.push(` * @remarks`);
-			for (const { name: paramName, type, description: paramDesc } of parameters) {
-				const paramDoc = paramDesc === undefined ? "" : ` - ${paramDesc}`;
-				docLines.push(` * @param ${paramName}: \`${type}\`${paramDoc}`);
-			}
-		}
-
-		if (returnType !== undefined) {
-			const returnDoc = returnDescription === undefined ? "" : ` - ${returnDescription}`;
-			docLines.push(` * @returns \`${returnType}\`${returnDoc}`);
-		}
-
-		if (remarks !== undefined && remarks.length > 0) {
-			docLines.push(` *`);
-			docLines.push(` * @remarks`);
-			for (const line of remarks.split("\n")) {
-				docLines.push(` * ${line}`);
-			}
-		}
-
-		if (examples !== undefined && examples.length > 0) {
-			docLines.push(` *`);
-			for (const example of examples) {
-				docLines.push(` * ${example}`);
-			}
-		}
-
-		docLines.push(` */`);
-
-		const docString = docLines.join("\n");
-		this.addRaw(docString);
-
-		const paramList = parameters
-			.map(({ name: paramName, type }) => `${paramName}: ${type}`)
-			.join(", ");
-		const returnTypeStr = returnType ?? "void";
-		this.addRaw(`${name}(${paramList}): ${returnTypeStr};`);
-
-		return this;
-	}
 }
 
 /**
@@ -181,10 +101,23 @@ export interface InterfaceMethodConfig {
 }
 
 /**
+ * Configuration for documenting an interface property.
+ */
+export interface InterfacePropertyConfig {
+	name: string;
+	description: string;
+	type: string;
+	isOptional?: boolean;
+	remarks?: string;
+	examples?: string[];
+}
+
+/**
  * A prompt builder for constructing TypeScript interface definitions with method documentation.
  */
 export class InterfaceBuilder {
 	private readonly methods: InterfaceMethodConfig[] = [];
+	private readonly properties: InterfacePropertyConfig[] = [];
 	private readonly typeParameters: string[];
 	private readonly extendsClause: string | undefined;
 	private multiLineSignatures: boolean = false;
@@ -197,6 +130,8 @@ export class InterfaceBuilder {
 		private readonly description: string,
 		typeParamNames?: string[],
 		baseInterface?: string,
+		private readonly remarks?: string,
+		private readonly isExported: boolean = false,
 	) {
 		this.typeParameters = typeParamNames ?? [];
 		this.extendsClause = baseInterface;
@@ -220,6 +155,14 @@ export class InterfaceBuilder {
 	}
 
 	/**
+	 * Adds a property to the interface.
+	 */
+	public addProperty(config: InterfacePropertyConfig): this {
+		this.properties.push(config);
+		return this;
+	}
+
+	/**
 	 * Builds the TypeScript interface definition as a string.
 	 */
 	public build(): string {
@@ -228,100 +171,151 @@ export class InterfaceBuilder {
 		// Add the JSDoc comment for the interface
 		lines.push("/**");
 		lines.push(` * ${this.description}`);
+		if (this.remarks !== undefined) {
+			lines.push(` * @remarks ${this.remarks}`);
+		}
 		lines.push(" */");
 
 		// Add the interface declaration
-		const typeParamStr =
+		const typeParameterString =
 			this.typeParameters.length > 0 ? `<${this.typeParameters.join(", ")}>` : "";
-		const extendsStr =
+		const extendsString =
 			this.extendsClause === undefined ? "" : ` extends ${this.extendsClause}`;
-		lines.push(`export interface ${this.name}${typeParamStr}${extendsStr} {`);
+		const exportString = this.isExported ? "export " : "";
+		lines.push(
+			`${exportString}interface ${this.name}${typeParameterString}${extendsString} {`,
+		);
 
-		// Add methods
-		for (const [index, method] of this.methods.entries()) {
+		// Add properties and methods
+		const propertiesAndMethods = [...this.properties, ...this.methods];
+		for (const [index, propertyOrMethod] of propertiesAndMethods.entries()) {
 			if (index > 0) {
 				lines.push("");
 			}
 
-			const {
-				name: methodName,
-				description: methodDesc,
-				parameters,
-				returnType,
-				returnDescription,
-				throws,
-				remarks,
-				examples,
-			} = method;
+			if ("type" in propertyOrMethod) {
+				// Property
+				const {
+					name: propertyName,
+					description: propertyDescription,
+					type,
+					isOptional,
+					remarks,
+					examples,
+				} = propertyOrMethod;
 
-			const docLines: string[] = ["/**"];
-			docLines.push(` * ${methodDesc}`);
+				const docLines: string[] = ["/**"];
+				docLines.push(` * ${propertyDescription}`);
 
-			if (parameters.length > 0) {
-				for (const { name: paramName, description: paramDesc } of parameters) {
-					const paramDoc = paramDesc === undefined ? "" : ` - ${paramDesc}`;
-					docLines.push(` * @param ${paramName}${paramDoc}`);
-				}
-			}
-
-			if (returnType !== undefined) {
-				const returnDoc = returnDescription === undefined ? "" : ` - ${returnDescription}`;
-				docLines.push(` * @returns \`${returnType}\`${returnDoc}`);
-			}
-
-			if (throws !== undefined && throws.length > 0) {
-				for (const throwsDesc of throws) {
-					const throwsLines = throwsDesc.split("\n");
-					docLines.push(` * @throws ${throwsLines[0]}`);
-					for (let i = 1; i < throwsLines.length; i++) {
-						docLines.push(` * ${throwsLines[i]}`);
+				if (remarks !== undefined && remarks.length > 0) {
+					docLines.push(` *`);
+					docLines.push(` * @remarks`);
+					for (const line of remarks.split("\n")) {
+						docLines.push(` * ${line}`);
 					}
 				}
-			}
 
-			if (remarks !== undefined && remarks.length > 0) {
-				docLines.push(` *`);
-				docLines.push(` * @remarks`);
-				for (const line of remarks.split("\n")) {
-					docLines.push(` * ${line}`);
-				}
-			}
-
-			if (examples !== undefined && examples.length > 0) {
-				docLines.push(` *`);
-				for (const example of examples) {
-					docLines.push(` * ${example}`);
-				}
-			}
-
-			docLines.push(` */`);
-
-			for (const line of docLines) {
-				lines.push(`	${line}`);
-			}
-
-			if (this.multiLineSignatures && parameters.length > 0) {
-				lines.push(`	${methodName}(`);
-				for (let i = 0; i < parameters.length; i++) {
-					const param = parameters[i];
-					if (param !== undefined) {
-						const { name: paramName, type, isSpread: isSpread, isOptional } = param;
-						const paramSignature = `${isSpread === true ? "..." : ""}${paramName}${isOptional === true ? "?" : ""}: ${type}`;
-						const isLastParam = i === parameters.length - 1;
-						lines.push(`		${paramSignature}${isLastParam ? "" : ","}`);
+				if (examples !== undefined && examples.length > 0) {
+					docLines.push(` *`);
+					for (const example of examples) {
+						docLines.push(` * ${example}`);
 					}
 				}
-				const returnTypeStr = returnType ?? "void";
-				lines.push(`	): ${returnTypeStr};`);
+
+				docLines.push(` */`);
+
+				for (const line of docLines) {
+					lines.push(`	${line}`);
+				}
+
+				const optionalMarker = isOptional === true ? "?" : "";
+				lines.push(`	${propertyName}${optionalMarker}: ${type};`);
 			} else {
-				const paramList = parameters
-					.map(
-						({ name: paramName, type, isSpread: isSpread, isOptional }) =>
-							`${isSpread === true ? "..." : ""}${paramName}${isOptional === true ? "?" : ""}: ${type}`,
-					)
-					.join(", ");
-				const returnTypeStr = returnType ?? "void";
-				lines.push(`	${methodName}(${paramList}): ${returnTypeStr};`);
+				// Method
+				const {
+					name: methodName,
+					description: methodDesc,
+					parameters,
+					returnType,
+					returnDescription,
+					throws,
+					remarks,
+					examples,
+				} = propertyOrMethod;
+
+				const docLines: string[] = ["/**"];
+				docLines.push(` * ${methodDesc}`);
+
+				if (parameters.length > 0) {
+					for (const {
+						name: parameterName,
+						description: parameterDescription,
+					} of parameters) {
+						const parameterDocumentation =
+							parameterDescription === undefined ? "" : ` - ${parameterDescription}`;
+						docLines.push(` * @param ${parameterName}${parameterDocumentation}`);
+					}
+				}
+
+				if (returnType !== undefined) {
+					const returnDoc = returnDescription === undefined ? "" : ` - ${returnDescription}`;
+					docLines.push(` * @returns \`${returnType}\`${returnDoc}`);
+				}
+
+				if (remarks !== undefined && remarks.length > 0) {
+					docLines.push(` *`);
+					docLines.push(` * @remarks`);
+					for (const line of remarks.split("\n")) {
+						docLines.push(` * ${line}`);
+					}
+				}
+
+				if (throws !== undefined && throws.length > 0) {
+					for (const throwsDescription of throws) {
+						const throwsLines = throwsDescription.split("\n");
+						docLines.push(` * @throws ${throwsLines[0]}`);
+						for (let i = 1; i < throwsLines.length; i++) {
+							docLines.push(` * ${throwsLines[i]}`);
+						}
+					}
+				}
+
+				if (examples !== undefined && examples.length > 0) {
+					docLines.push(` *`);
+					for (const example of examples) {
+						docLines.push(` * ${example}`);
+					}
+				}
+
+				docLines.push(` */`);
+
+				for (const line of docLines) {
+					lines.push(`	${line}`);
+				}
+
+				if (this.multiLineSignatures && parameters.length > 0) {
+					lines.push(`	${methodName}(`);
+					for (let i = 0; i < parameters.length; i++) {
+						const param = parameters[i];
+						if (param !== undefined) {
+							const { name: paramName, type, isSpread: isSpread, isOptional } = param;
+							const paramSignature = `${isSpread === true ? "..." : ""}${paramName}${isOptional === true ? "?" : ""}: ${type}`;
+							const isLastParam = i === parameters.length - 1;
+							lines.push(`		${paramSignature}${isLastParam ? "" : ","}`);
+						}
+					}
+					const returnTypeStr = returnType ?? "void";
+					lines.push(`	): ${returnTypeStr};`);
+				} else {
+					const paramList = parameters
+						.map(
+							({ name: paramName, type, isSpread: isSpread, isOptional }) =>
+								`${isSpread === true ? "..." : ""}${paramName}${isOptional === true ? "?" : ""}: ${type}`,
+						)
+						.join(", ");
+					const returnTypeStr = returnType ?? "void";
+					lines.push(`	${methodName}(${paramList}): ${returnTypeStr};`);
+				}
 			}
 		}
 
