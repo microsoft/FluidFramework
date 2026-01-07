@@ -140,6 +140,13 @@ export namespace TextAsTree {
 	 * @remarks
 	 * The string is broken up into substrings which are referred to as 'characters'.
 	 * Unlike with JavaScript strings, all indexes are by character, not UTF-16 code unit.
+	 * This avoids the problem JavaScript where it can split UTF-16 surrogate pairs producing invalid strings,
+	 * and avoids the issue where indexing a string and iterating it segment the string differently.
+	 * This does NOT mean the characters correspond to user perceived characters (like grapheme clusters try to do):
+	 * applications will likely want to include higher level segmentation logic
+	 * which might differ between operations like delete
+	 * (which often operates on something in between unicode code points and grapheme clusters)
+	 * and navigation/selection (which typically uses grapheme clusters).
 	 *
 	 * @see {@link TextAsTree.Statics.fromString} for construction.
 	 * @see {@link TextAsTree.(Tree:type)} for schema.
