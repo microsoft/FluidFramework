@@ -257,7 +257,7 @@ const BENCHMARK_NODE_COUNT = 100;
 const sizes = [
 	{ percentile: 0.1, word: "small" },
 	{ percentile: 0.5, word: "medium" },
-	{ percentile: 1.0, word: "large" },
+	{ percentile: 1, word: "large" },
 ];
 
 const styles = [
