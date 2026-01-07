@@ -89,46 +89,50 @@ The explicit check for `canInitialize === false` serves as an assertion. If `can
 
 ```typescript
 export class CollaborationFluidClient {
-	public async init(): Promise<TreeView<typeof FluidGraphicCollectionData>> {
+	public async init(): Promise<TreeView<typeof AppData>> {
+		// Specify the container ID in the page URL, e.g. "www.app.com/#1bf51ce6-7614-4871-9965-d02a4e8c4ad4"
+		// If no ID is present in the URL (e.g. "www.app.com"), then create a new container with a new ID
     	const containerId = window.location.hash.substring(1);
 
 		if (containerId.length === 0) {
 			// Path 1: Creating a new container
 			const container = await this.createFluidContainer();
-			const view: TreeView<typeof FluidGraphicCollectionData> =
-				container.initialObjects.appData.viewWith(GraphicCollectionTreeConfiguration);
+			const view: TreeView = container.initialObjects.appData.viewWith(AppDataTreeConfiguration);
 
 			if (!view.compatibility.canInitialize) {
 				throw new Error("The tree must be safe to initialize upon creation of the Fluid container");
 			}
 
-			view.initialize(new FluidGraphicCollectionData([]));
+			view.initialize(new AppData([]));
 			const fluidContainerId = await container.attach();
 			window.location.hash = fluidContainerId;
 			return view;
 		} else {
 			// Path 2: Loading an existing container
 			const container = await this.loadFluidContainer(containerId);
-			const view: TreeView<typeof FluidGraphicCollectionData> =
-				container.initialObjects.appData.viewWith(GraphicCollectionTreeConfiguration);
+			const view: TreeView= container.initialObjects.appData.viewWith(AppDataTreeConfiguration);
 
 			if (view.compatibility.canInitialize) {
 				throw new Error("The tree should already be initialized if the Fluid container exists");
+			}
+
+			if (view.compatibility.canUpgrade) {
+				// See [Schema Evolution](./schema-evolution/index.mdx) for instructions on how to handle schema changes in production applications.
 			}
 
 			return view;
 		}
 	}
 
-	private async createFluidContainer(): Promise<IFluidContainer<typeof FluidContainerSchema>> {
+	private async createFluidContainer(): Promise<IFluidContainer<typeof AppSchema>> {
 		const client = this.initClient();
-		const { container } = await client.createContainer(FluidContainerSchema, FluidCompatibilityMode);
+		const { container } = await client.createContainer(AppSchema, FluidCompatibilityMode);
 		return container;
 	}
 
-	private async loadFluidContainer(containerId: string): Promise<IFluidContainer<typeof FluidContainerSchema>> {
+	private async loadFluidContainer(containerId: string): Promise<IFluidContainer<typeof AppSchema>> {
 		const client = this.initClient();
-		const { container } = await client.getContainer(containerId, FluidContainerSchema, FluidCompatibilityMode);
+		const { container } = await client.getContainer(containerId, AppSchema, FluidCompatibilityMode);
 		return container;
 	}
 
@@ -151,3 +155,4 @@ export class CollaborationFluidClient {
 
 - [SharedTree Quick Start](../../start/tree-start.mdx)
 - [Containers](../../build/containers.mdx)
+- [Schema Evolution](./schema-evolution/index.mdx)
