@@ -295,7 +295,6 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
 		const container2 = await loader.resolve({ url }, pendingState);
-		await provider.ensureSynchronized();
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const legacyTree2 = shim2.currentTree as LegacySharedTree;
@@ -333,7 +332,6 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
 		const container2 = await loader.resolve({ url }, pendingState);
-		await provider.ensureSynchronized();
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const newTree2 = shim2.currentTree as ITree;
