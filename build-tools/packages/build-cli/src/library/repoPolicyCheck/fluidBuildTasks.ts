@@ -25,10 +25,31 @@ import { type Handler, readFile } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
 
 /**
+ * Parser options structure used by typescript-eslint parser.
+ * The `project` field specifies which tsconfig files to use for type-aware linting.
+ */
+interface ParserOptions {
+	project?: string | string[] | boolean | undefined;
+}
+
+/**
+ * Computed ESLint configuration returned by calculateConfigForFile.
+ * Supports both legacy eslintrc format and ESLint 9 flat config format.
+ */
+interface ComputedESLintConfig {
+	// Legacy eslintrc format: parserOptions at top level
+	parserOptions?: ParserOptions;
+	// ESLint 9 flat config format: parserOptions nested under languageOptions
+	languageOptions?: {
+		parserOptions?: ParserOptions;
+	};
+}
+
+/**
  * Interface for ESLint instance with calculateConfigForFile method.
  */
 interface ESLintInstance {
-	calculateConfigForFile(filePath: string): Promise<unknown>;
+	calculateConfigForFile(filePath: string): Promise<ComputedESLintConfig>;
 }
 
 /**
@@ -46,6 +67,11 @@ interface ESLintModuleType {
  * This uses ESLint's loadESLint function (added in 8.57.0) which auto-detects flat vs legacy config.
  */
 async function getESLintInstance(cwd: string): Promise<ESLintInstance> {
+	// Dynamic import with cast to a custom interface because ESLint's types differ
+	// significantly between v8 and v9. The cast through `unknown` is safe because:
+	// 1. ESLintModuleType is a minimal interface covering only the loadESLint API we use
+	// 2. We validate loadESLint exists at runtime before using it (see check below)
+	// 3. If validation fails, we throw a descriptive error guiding users to upgrade
 	const eslintModule = (await import("eslint")) as unknown as ESLintModuleType;
 
 	if (eslintModule.loadESLint === undefined) {
@@ -259,19 +285,14 @@ async function eslintGetScriptDependencies(
 		return [];
 	}
 
-	let projects: string | string[] | boolean | null | undefined;
+	let projects: string | string[] | boolean | undefined;
 	try {
 		const config = await eslint.calculateConfigForFile(representativeFile);
 
 		// Handle both legacy eslintrc and flat config structures:
 		// - Legacy: config.parserOptions?.project
 		// - Flat config: config.languageOptions?.parserOptions?.project
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		projects =
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			(config as any).languageOptions?.parserOptions?.project ??
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			(config as any).parserOptions?.project;
+		projects = config.languageOptions?.parserOptions?.project ?? config.parserOptions?.project;
 	} catch (error) {
 		throw new Error(
 			`Unable to load eslint config for package in ${packageDir}. ${error instanceof Error ? error.message : error}`,
