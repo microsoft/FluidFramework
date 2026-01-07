@@ -84,6 +84,12 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 - `unicorn/prefer-string-replace-all`: Changed from `"off"` to `"warn"`
 - `unicorn/prefer-structured-clone`: New rule set to `"warn"`
 
+#### Rule promotions
+
+**recommended -> minimal**
+
+- `@typescript-eslint/explicit-function-return-type`
+
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 
 ### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments
