@@ -12,6 +12,7 @@ parameters:
 # Other stages will be filtered out. If omitted, all stages will be uploaded.
 - name: stageIdFilter
   type: string
+  default: ''
 
 # Unique identifier for the pipeline that is including this template.
 # Used to identify telemetry data in Kusto for this pipeline.
@@ -45,7 +46,8 @@ steps:
   displayName: Submit telemetry for stage timing and result
   env:
     BUILD_ID: $(Build.BuildId)
-    STAGE_ID: ${{ parameters.stageIdFilter }}
+    ${{ if eq(parameters.stageIdFilter, '') }}:
+      STAGE_ID: ${{ parameters.stageIdFilter }}
     PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
     WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTimingAndResult
   inputs:
