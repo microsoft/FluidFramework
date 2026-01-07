@@ -502,9 +502,9 @@ export class TestTreeProviderLite {
 	public synchronizeMessages(options?: { count?: number; flush?: boolean }): void {
 		const flush = options?.flush ?? true;
 		if (flush) {
-			this.containerRuntimeMap.forEach((containerRuntime) => {
+			for (const containerRuntime of this.containerRuntimeMap.values()) {
 				containerRuntime.flush();
-			});
+			}
 		}
 
 		const count = options?.count;
