@@ -7,10 +7,10 @@ import type { BuildContext } from "../../buildContext";
 import type { BuildPackage } from "../../buildGraph";
 import {
 	type DeclarativeTask,
-	type GitIgnoreSetting,
 	gitignoreDefaultValue,
 	replaceRepoRootTokens,
 } from "../../fluidBuildConfig";
+import type { GitIgnoreSetting } from "../../fluidTaskDefinitions";
 import { LeafWithGlobInputOutputDoneFileTask } from "./leafTask";
 
 export class DeclarativeLeafTask extends LeafWithGlobInputOutputDoneFileTask {

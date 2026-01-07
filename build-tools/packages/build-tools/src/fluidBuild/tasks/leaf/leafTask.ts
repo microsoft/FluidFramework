@@ -23,11 +23,11 @@ import type { BuildContext } from "../../buildContext";
 import { type BuildPackage } from "../../buildGraph";
 import { BuildResult, summarizeBuildResult } from "../../buildResult";
 import {
-	type GitIgnoreSetting,
 	type GitIgnoreSettingValue,
 	gitignoreDefaultValue,
 	replaceRepoRootToken,
 } from "../../fluidBuildConfig";
+import type { GitIgnoreSetting } from "../../fluidTaskDefinitions";
 import { options } from "../../options";
 import { Task, type TaskExec } from "../task";
 import { globWithGitignore } from "../taskUtils";

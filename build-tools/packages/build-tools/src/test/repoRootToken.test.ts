@@ -91,4 +91,26 @@ describe("Repo Root Token", () => {
 			assert.strictEqual(REPO_ROOT_TOKEN, "${repoRoot}");
 		});
 	});
+
+	describe("edge cases", () => {
+		it("handles paths with non-existent files (no validation at token level)", () => {
+			// Token replacement doesn't validate file existence - that's the responsibility
+			// of the consumer. This test confirms the function works with any path string.
+			const result = replaceRepoRootToken(
+				"${repoRoot}/non-existent/path/config.json",
+				testRepoRoot,
+			);
+			assert.strictEqual(result, "/home/user/repo/non-existent/path/config.json");
+		});
+
+		it("handles empty repo root path", () => {
+			const result = replaceRepoRootToken("${repoRoot}/config.json", "");
+			assert.strictEqual(result, "/config.json");
+		});
+
+		it("handles repo root with trailing slash", () => {
+			const result = replaceRepoRootToken("${repoRoot}/config.json", "/home/user/repo/");
+			assert.strictEqual(result, "/home/user/repo//config.json");
+		});
+	});
 });

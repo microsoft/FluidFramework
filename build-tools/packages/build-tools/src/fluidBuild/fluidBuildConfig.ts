@@ -4,7 +4,11 @@
  */
 
 import type { InterdependencyRange } from "@fluid-tools/version-tools";
-import type { TaskDefinitionsOnDisk, TaskFileDependencies } from "./fluidTaskDefinitions";
+import type {
+	GitIgnoreSetting,
+	TaskDefinitionsOnDisk,
+	TaskFileDependencies,
+} from "./fluidTaskDefinitions";
 
 /**
  * Token that can be used in file paths and globs to represent the repository root directory.
@@ -15,16 +19,26 @@ import type { TaskDefinitionsOnDisk, TaskFileDependencies } from "./fluidTaskDef
 export const REPO_ROOT_TOKEN = "${repoRoot}";
 
 /**
+ * Regex pattern derived from REPO_ROOT_TOKEN for replacing all occurrences.
+ * The $ and {} characters are escaped for regex.
+ */
+const REPO_ROOT_REGEX = /\$\{repoRoot\}/g;
+
+/**
  * Replace the ${repoRoot} token in a path or glob with the actual repository root path.
  *
  * @param pathOrGlob - The path or glob that may contain the ${repoRoot} token
  * @param repoRoot - The absolute path to the repository root
  * @returns The path or glob with ${repoRoot} replaced by the actual repository root path
+ *
+ * @example
+ * ```typescript
+ * replaceRepoRootToken("${repoRoot}/.eslintrc.cjs", "/home/user/repo")
+ * // Returns: "/home/user/repo/.eslintrc.cjs"
+ * ```
  */
 export function replaceRepoRootToken(pathOrGlob: string, repoRoot: string): string {
-	// Use global regex to replace all occurrences of the token
-	// Need to escape the $ and {} characters for regex
-	return pathOrGlob.replace(/\$\{repoRoot\}/g, repoRoot);
+	return pathOrGlob.replace(REPO_ROOT_REGEX, repoRoot);
 }
 
 /**
@@ -33,6 +47,12 @@ export function replaceRepoRootToken(pathOrGlob: string, repoRoot: string): stri
  * @param pathsOrGlobs - Array of paths or globs that may contain the ${repoRoot} token
  * @param repoRoot - The absolute path to the repository root
  * @returns Array with ${repoRoot} replaced by the actual repository root path in each element
+ *
+ * @example
+ * ```typescript
+ * replaceRepoRootTokens(["${repoRoot}/.eslintrc.cjs", "src/*.ts"], "/home/user/repo")
+ * // Returns: ["/home/user/repo/.eslintrc.cjs", "src/*.ts"]
+ * ```
  */
 export function replaceRepoRootTokens(
 	pathsOrGlobs: readonly string[],
@@ -135,8 +155,6 @@ export interface IFluidBuildDirs {
  * changed using the `gitignore` property on the task. See the documentation for that property for details.
  */
 export interface DeclarativeTask extends TaskFileDependencies {}
-
-export type GitIgnoreSetting = ("input" | "output")[];
 
 /**
  * Valid values that can be used in the `gitignore` array setting of a DeclarativeTask.

@@ -156,7 +156,6 @@ This package will ONLY track `${repoRoot}/.eslintrc.special.json` (no "..." mean
 
 The `additionalConfigFiles` feature works with any task handler that extends `LeafWithFileStatDoneFileTask`, which includes most tasks in the fluid-build system:
 - `EsLintTask` (eslint)
-- `TsLintTask` (tslint)  
 - `ApiExtractorTask` (api-extractor)
 - `GenerateEntrypointsTask` (flub generate entrypoints)
 - `BiomeTask` (biome check/format)
