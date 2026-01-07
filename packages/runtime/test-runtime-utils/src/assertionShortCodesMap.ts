@@ -739,6 +739,7 @@ export const shortCodeMap = {
 	"0x583": "unexpected field length",
 	"0x584": "response should contain epoch",
 	"0x585": "prefetched snapshot should have a valid epoch",
+	"0x587": "Unreachable unless manually accumulating a batch",
 	"0x58a": "Batch must have a reference sequence number if non-empty",
 	"0x58b": "Content offset within bounds",
 	"0x58c": "Content offset equal or larger than content length",
@@ -1893,5 +1894,15 @@ export const shortCodeMap = {
 	"0xcac": "Unexpected branch implementation",
 	"0xcad": "Unexpected branch implementation",
 	"0xcae": "The outer transaction should be ending",
-	"0xcaf": "Unexpected commit in transaction"
+	"0xcaf": "Unexpected commit in transaction",
+	"0xcb0": "must initializeData first",
+	"0xcb1": "Presence is only expected to be accessed with a single version.",
+	"0xcb2": "Presence is only expected to be accessed with a single version.",
+	"0xcb3": "Node cannot be raw.",
+	"0xcb4": "Unexpected node kind",
+	"0xcb5": "Node cannot be raw.",
+	"0xcb6": "Expected node to be on new fork.",
+	"0xcb7": "Unexpected node schema",
+	"0xcb8": "No config map entry for version",
+	"0xcb9": "Invalid package version"
 };

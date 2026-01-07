@@ -74,6 +74,8 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 
 - `unicorn/import-style`: Changed from `"error"` to `"off"`
 - `unicorn/consistent-destructuring`: Changed from `"error"` to `"off"`
+- `unicorn/no-array-callback-reference`: Changed from `"error"` to `"off"`
+    - Yields false positives for calls to `map` methods on non-array types.
 
 **Unicorn rules changed to warnings** (to surface occurrences without breaking builds):
 
