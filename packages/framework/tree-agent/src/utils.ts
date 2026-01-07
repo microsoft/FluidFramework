@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
@@ -29,13 +29,6 @@ import { NodeKind, normalizeFieldSchema } from "@fluidframework/tree/internal";
 export interface MapGetSet<K, V> {
 	get(key: K): V | undefined;
 	set(key: K, value: V): void;
-}
-
-/**
- * TBD
- */
-export function fail(message: string): never {
-	throw new Error(message);
 }
 
 /**
@@ -156,7 +149,7 @@ export function getFriendlyName(schema: TreeNodeSchema): string {
 			? `Record<string, (${childNames.join(" | ")})>`
 			: `Record<string, ${childNames[0]}>`;
 	}
-	fail("Unexpected node schema");
+	fail(0xcb7 /* Unexpected node schema */);
 }
 
 /**
