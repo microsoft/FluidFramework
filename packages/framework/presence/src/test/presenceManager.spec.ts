@@ -676,11 +676,10 @@ describe("Presence", () => {
 							afterCleanUp.push(
 								presence.attendees.events.on("attendeeConnected", (attendee) => {
 									// Self attendee will be announced on reconnect, which is expected
-									if (attendee !== presence.attendees.getMyself()) {
-										assert.fail(
-											"No `attendeeConnected` should be announced for rejoining attendee that's already 'Connected'",
-										);
-									}
+									assert(
+										attendee === presence.attendees.getMyself(),
+										"No `attendeeConnected` should be announced for rejoining attendee that's already 'Connected'",
+									);
 								}),
 							);
 
@@ -707,11 +706,10 @@ describe("Presence", () => {
 							afterCleanUp.push(
 								presence.attendees.events.on("attendeeConnected", (attendee) => {
 									// Self attendee will be announced on reconnect, which is expected
-									if (attendee !== presence.attendees.getMyself()) {
-										assert.fail(
-											"No `attendeeConnected` should be announced for active attendee that's already 'Connected'",
-										);
-									}
+									assert(
+										attendee === presence.attendees.getMyself(),
+										"No `attendeeConnected` should be announced for active attendee that's already 'Connected'",
+									);
 								}),
 							);
 
