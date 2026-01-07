@@ -513,7 +513,7 @@ and `{ arrayA: [a2], arrayB: [b1] }` otherwise.
 We currently support the following types of constraints:
 
 -   `nodeInDocument`: Targets a specific node that must be in the document (i.e., not removed).
--   `noChange`: Requires that the document must be in the same state immediately before the transaction is applied as it was before the transaction was authored. If any concurrent edits are sequenced before the transaction such that the transaction would need to be rebased, this constraint is violated and the transaction is dropped.
+-   `noChange`: Requires that the document must be in the same state when the transaction is applied as it was before the transaction was authored. If any concurrent edits are sequenced before the transaction such that the transaction would need to be rebased, this constraint is violated and the transaction is dropped.
 
 ### Schema Changes
 
