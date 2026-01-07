@@ -87,7 +87,7 @@ describe("PrefetchDocumentStorageService", () => {
 
 		// Second call should retry (not use cached error)
 		const result = await prefetchService.readBlob("blob1");
-		assert.ok(result);
+		assert.strictEqual(result.byteLength, 3, "Should return blob data");
 		assert.strictEqual(mockStorage.readBlobCalls.length, 1);
 	});
 
