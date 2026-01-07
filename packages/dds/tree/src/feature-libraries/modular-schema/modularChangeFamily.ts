@@ -2612,63 +2612,60 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 	}
 }
 
-function makeModularChangeset(
-	props: {
-		fieldChanges?: FieldChangeMap;
-		nodeChanges?: ChangeAtomIdBTree<NodeChangeset>;
-		nodeToParent?: ChangeAtomIdBTree<FieldId>;
-		nodeAliases?: ChangeAtomIdBTree<NodeId>;
-		crossFieldKeys?: CrossFieldKeyTable;
-		maxId: number;
-		revisions?: readonly RevisionInfo[];
-		constraintViolationCount?: number;
-		constraintViolationCountOnRevert?: number;
-		noChangeConstraint?: NoChangeConstraint;
-		noChangeConstraintOnRevert?: NoChangeConstraint;
-		builds?: ChangeAtomIdBTree<TreeChunk>;
-		destroys?: ChangeAtomIdBTree<number>;
-		refreshers?: ChangeAtomIdBTree<TreeChunk>;
-	} = {
-		maxId: -1,
-	},
-): ModularChangeset {
+function makeModularChangeset(props?: {
+	fieldChanges?: FieldChangeMap;
+	nodeChanges?: ChangeAtomIdBTree<NodeChangeset>;
+	nodeToParent?: ChangeAtomIdBTree<FieldId>;
+	nodeAliases?: ChangeAtomIdBTree<NodeId>;
+	crossFieldKeys?: CrossFieldKeyTable;
+	maxId: number;
+	revisions?: readonly RevisionInfo[];
+	constraintViolationCount?: number;
+	constraintViolationCountOnRevert?: number;
+	noChangeConstraint?: NoChangeConstraint;
+	noChangeConstraintOnRevert?: NoChangeConstraint;
+	builds?: ChangeAtomIdBTree<TreeChunk>;
+	destroys?: ChangeAtomIdBTree<number>;
+	refreshers?: ChangeAtomIdBTree<TreeChunk>;
+}): ModularChangeset {
+	const p = props ?? { maxId: -1 };
 	const changeset: Mutable<ModularChangeset> = {
-		fieldChanges: props.fieldChanges ?? new Map(),
-		nodeChanges: props.nodeChanges ?? newTupleBTree(),
-		nodeToParent: props.nodeToParent ?? newTupleBTree(),
-		nodeAliases: props.nodeAliases ?? newTupleBTree(),
-		crossFieldKeys: props.crossFieldKeys ?? newCrossFieldKeyTable(),
+		fieldChanges: p.fieldChanges ?? new Map(),
+		nodeChanges: p.nodeChanges ?? newTupleBTree(),
+		nodeToParent: p.nodeToParent ?? newTupleBTree(),
+		nodeAliases: p.nodeAliases ?? newTupleBTree(),
+		crossFieldKeys: p.crossFieldKeys ?? newCrossFieldKeyTable(),
 	};
 
-	if (props.revisions !== undefined && props.revisions.length > 0) {
-		changeset.revisions = props.revisions;
+	if (p.revisions !== undefined && p.revisions.length > 0) {
+		changeset.revisions = p.revisions;
 	}
-	if (props.maxId >= 0) {
-		changeset.maxId = brand(props.maxId);
+	if (p.maxId >= 0) {
+		changeset.maxId = brand(p.maxId);
 	}
-	if (props.constraintViolationCount !== undefined && props.constraintViolationCount > 0) {
-		changeset.constraintViolationCount = props.constraintViolationCount;
+	if (p.constraintViolationCount !== undefined && p.constraintViolationCount > 0) {
+		changeset.constraintViolationCount = p.constraintViolationCount;
 	}
 	if (
-		props.constraintViolationCountOnRevert !== undefined &&
-		props.constraintViolationCountOnRevert > 0
+		p.constraintViolationCountOnRevert !== undefined &&
+		p.constraintViolationCountOnRevert > 0
 	) {
-		changeset.constraintViolationCountOnRevert = props.constraintViolationCountOnRevert;
+		changeset.constraintViolationCountOnRevert = p.constraintViolationCountOnRevert;
 	}
-	if (props.noChangeConstraint !== undefined) {
-		changeset.noChangeConstraint = props.noChangeConstraint;
+	if (p.noChangeConstraint !== undefined) {
+		changeset.noChangeConstraint = p.noChangeConstraint;
 	}
-	if (props.noChangeConstraintOnRevert !== undefined) {
-		changeset.noChangeConstraintOnRevert = props.noChangeConstraintOnRevert;
+	if (p.noChangeConstraintOnRevert !== undefined) {
+		changeset.noChangeConstraintOnRevert = p.noChangeConstraintOnRevert;
 	}
-	if (props.builds !== undefined && props.builds.size > 0) {
-		changeset.builds = props.builds;
+	if (p.builds !== undefined && p.builds.size > 0) {
+		changeset.builds = p.builds;
 	}
-	if (props.destroys !== undefined && props.destroys.size > 0) {
-		changeset.destroys = props.destroys;
+	if (p.destroys !== undefined && p.destroys.size > 0) {
+		changeset.destroys = p.destroys;
 	}
-	if (props.refreshers !== undefined && props.refreshers.size > 0) {
-		changeset.refreshers = props.refreshers;
+	if (p.refreshers !== undefined && p.refreshers.size > 0) {
+		changeset.refreshers = p.refreshers;
 	}
 	return changeset;
 }
