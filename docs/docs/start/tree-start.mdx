@@ -117,8 +117,8 @@ appData.initialize(
 ```
 
 :::warning
-It's easy to get into trouble by initializing the tree view *after* connecting to the [container](../build/containers.mdx).
-The more detailed recommended init flow is described [here](../data-structures/tree/recommended-init-flow.mdx).
+Initialization can be complicated and it's easy to introduce race conditions.
+See the [Recommended Init Flow](../data-structures/tree/recommended-init-flow.mdx) guide for the recommended pattern to safely initialize SharedTree.
 :::
 
 ## Reading Data From Your Tree
