@@ -45,7 +45,6 @@ const config: Linter.Config[] = [
 			"unicorn/no-await-expression-member": "off",
 			"unicorn/no-new-array": "off",
 			"unicorn/no-null": "off",
-			"unicorn/no-object-as-default-parameter": "off",
 			"unicorn/no-useless-fallback-in-spread": "off",
 			"unicorn/no-zero-fractions": "off",
 			"unicorn/prefer-export-from": "off",
