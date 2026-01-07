@@ -848,5 +848,7 @@ extends:
             telemetry_upload_steps:
               - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
                 parameters:
+                  # Empty string signifies that we will upload all stages
+                  stageIdFilter: ''
                   pipelineIdentifierForTelemetry: BuildClient
                   testWorkspace: $(Pipeline.Workspace)

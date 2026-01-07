@@ -9,10 +9,9 @@
 parameters:
 
 # Id for the stage whose telemetry will be uploaded to Kusto.
-# Other stages will be filtered out. If omitted, all stages will be uploaded.
+# Other stages will be filtered out. If set to empty string, all stages will be uploaded.
 - name: stageIdFilter
   type: string
-  default: ''
 
 # Unique identifier for the pipeline that is including this template.
 # Used to identify telemetry data in Kusto for this pipeline.
