@@ -257,7 +257,7 @@ const BENCHMARK_NODE_COUNT = 100;
 const sizes = [
 	{ percentile: 0.1, word: "small" },
 	{ percentile: 0.5, word: "medium" },
-	{ percentile: 1.0, word: "large" },
+	{ percentile: 1, word: "large" },
 ];
 
 const styles = [
@@ -330,9 +330,9 @@ describe("Op Size", () => {
 	};
 
 	const saveAndResetCurrentOps = () => {
-		currentTestOps.forEach((op) =>
-			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op),
-		);
+		for (const op of currentTestOps) {
+			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op);
+		}
 		currentTestOps.length = 0;
 	};
 
@@ -348,11 +348,11 @@ describe("Op Size", () => {
 	afterEach(function () {
 		if (this.currentTest?.isFailed() === false) {
 			// Currently tests can pass when no data is collected, so throw here in that case to ensure tests don't break and start collecting no data.
-			assert(currentTestOps.length !== 0);
+			assert(currentTestOps.length > 0);
 		}
-		currentTestOps.forEach((op) =>
-			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op),
-		);
+		for (const op of currentTestOps) {
+			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op);
+		}
 		currentTestOps.length = 0;
 	});
 

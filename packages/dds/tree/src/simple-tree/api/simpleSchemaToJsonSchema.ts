@@ -110,9 +110,9 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JsonArrayNodeSch
 	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
 		schema.simpleAllowedTypes.keys(),
 	);
-	allowedTypesIdentifiers.forEach((type) => {
+	for (const type of allowedTypesIdentifiers) {
 		allowedTypes.push(createSchemaRef(type));
-	});
+	}
 
 	const items: JsonFieldSchema = hasSingle(allowedTypes)
 		? allowedTypes[0]
@@ -187,13 +187,11 @@ export function convertObjectNodeSchema(
 		copyProperty(fieldSchema.metadata, "description", output);
 		properties[key] = output;
 
-		if (fieldSchema.kind !== FieldKind.Optional) {
-			if (
-				options.requireFieldsWithDefaults ||
-				fieldSchema.props?.defaultProvider === undefined
-			) {
-				required.push(key);
-			}
+		if (
+			fieldSchema.kind !== FieldKind.Optional &&
+			(options.requireFieldsWithDefaults || fieldSchema.props?.defaultProvider === undefined)
+		) {
+			required.push(key);
 		}
 	}
 
@@ -218,9 +216,9 @@ function convertRecordLikeNodeSchema(
 	const allowedTypesIdentifiers: ReadonlySet<string> = new Set(
 		schema.simpleAllowedTypes.keys(),
 	);
-	allowedTypesIdentifiers.forEach((type) => {
+	for (const type of allowedTypesIdentifiers) {
 		allowedTypes.push(createSchemaRef(type));
-	});
+	}
 
 	const output = {
 		type: "object",

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { appendFileSync, closeSync, mkdirSync, openSync } from "node:fs";
+import { join } from "node:path";
 
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
@@ -27,6 +28,8 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 
 import { createLangchainChatModel } from "../chatModel.js";
+
+import { _dirname } from "./dirname.cjs";
 
 /**
  * Throw an error with the given message
@@ -157,7 +160,7 @@ interface TestResult {
 	readonly duration: number;
 }
 
-const resultsFolderPath = "./src/test/integration-test-results";
+const resultsFolderPath = join(_dirname, "../../src/test/integration-test-results");
 
 function formatDate(date: Date): string {
 	return date
@@ -185,7 +188,7 @@ export function describeIntegrationTests(
 		let startTime: Date | undefined;
 		before(() => {
 			startTime = new Date();
-			mkdirSync(`${resultsFolderPath}/${formatDate(startTime)}`, { recursive: true });
+			mkdirSync(join(resultsFolderPath, formatDate(startTime)), { recursive: true });
 		});
 
 		after(() => {
@@ -197,7 +200,7 @@ export function describeIntegrationTests(
 				table += `| ${result.name} | ${result.provider} | ${(result.score * 100).toFixed(2)}% | ${Math.ceil(result.duration / 1000)} |\n`;
 			}
 			const resultsFile = openSync(
-				`${resultsFolderPath}/${formatDate(startTime)}/results.md`,
+				join(resultsFolderPath, formatDate(startTime), "results.md"),
 				"a",
 			);
 			appendFileSync(resultsFile, "# Results\n\n", { encoding: "utf8" });
@@ -345,7 +348,7 @@ export function describeIntegrationTests(
 			assert(startTime !== undefined, "Expected startTime to be set");
 			const { name, schema, initialTree, prompt, expected, options } = test;
 			const fd = openSync(
-				`${resultsFolderPath}/${formatDate(startTime)}/${name}-${provider}.md`,
+				join(resultsFolderPath, formatDate(startTime), `${name}-${provider}.md`),
 				"w",
 			);
 			const view = await queryDomain(

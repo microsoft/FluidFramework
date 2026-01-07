@@ -855,6 +855,7 @@ const attachStatesToComparableNumbers = {
 /**
  * Mock implementation of IRuntime for testing that does nothing
  * @legacy @beta
+ * @sealed
  */
 export class MockFluidDataStoreRuntime
 	extends EventEmitter

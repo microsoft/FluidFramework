@@ -365,10 +365,12 @@ export class SharedTreeKernel
 			}
 		});
 		checkout.events.on("beforeBatch", (event) => {
-			if (event.type === "append" && this.sharedObject.isAttached()) {
-				if (checkout.transaction.isInProgress()) {
-					enricher.addTransactionCommits(event.newCommits);
-				}
+			if (
+				event.type === "append" &&
+				this.sharedObject.isAttached() &&
+				checkout.transaction.isInProgress()
+			) {
+				enricher.addTransactionCommits(event.newCommits);
 			}
 		});
 	}
@@ -598,6 +600,10 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 		brand<EditManagerFormatVersion>(EditManagerFormatVersion.vSharedBranches),
 		brand<SharedTreeChangeFormatVersion>(4),
 	],
+	[
+		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v6),
+		brand<SharedTreeChangeFormatVersion>(5),
+	],
 ]);
 
 /**
@@ -618,6 +624,10 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
 	[
 		brand<MessageFormatVersion>(MessageFormatVersion.vSharedBranches),
 		brand<SharedTreeChangeFormatVersion>(4),
+	],
+	[
+		brand<MessageFormatVersion>(MessageFormatVersion.v6),
+		brand<SharedTreeChangeFormatVersion>(5),
 	],
 ]);
 
