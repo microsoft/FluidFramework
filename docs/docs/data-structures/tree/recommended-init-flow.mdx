@@ -8,35 +8,55 @@ This guide describes the recommended initialization flow for SharedTree to avoid
 
 ## Overview
 
-When working with SharedTree, the most critical rule is: **never initialize after attaching the container**.
+When working with SharedTree, the most critical rule is to **never initialize after [connecting to the container](../../build/containers.mdx#connecting-to-a-container)**.
 
-If you attach (connect) a new container before initializing it, you create a dangerous race condition.
+Connecting a new container before initializing it creates a dangerous race condition.
 Other clients can connect to the container and see an uninitialized tree.
 They will think they need to initialize it themselves, so they'll send their own initialization operations.
 When the original client's initialization operation finally gets processed, all other clients' initialization attempts will be rejected and thrown away, potentially causing data loss and inconsistent state.
 
-The solution: initialize **before** attaching when creating a new container. Use `compatibility.canInitialize` to validate your assumptions and catch bugs early.
+The solution: initialize **before** attaching when creating a new container. Use `compatibility.canInitialize` to validate assumptions and catch bugs early.
 
 ## Initialization Flow
 
-// TODO
 ```mermaid
+sequenceDiagram
+    participant Client1 as Client 1<br/>(Creating New)
+    participant Client2 as Client 2<br/>(Loading Existing)
+    participant Container
+    participant Server
+
+    Note over Client1: Path 1: Creating New Container
+    Client1->>Container: createContainer()
+    Container-->>Client1: container created
+    Client1->>Container: viewWith(config)
+    Container-->>Client1: TreeView
+    Client1->>Client1: Check canInitialize === true
+    Client1->>Container: initialize(data)
+    Note over Container: Tree is now initialized
+    Client1->>Server: attach()
+    Server-->>Client1: containerId
+    Client1->>Client1: Save containerId<br/>(e.g., window.location.hash)
+
+    Note over Client2: Path 2: Loading Existing Container
+    Client2->>Server: getContainer(containerId)
+    Server->>Container: Load container
+    Container-->>Server: container
+    Server-->>Client2: container
+    Client2->>Container: viewWith(config)
+    Container-->>Client2: TreeView
+    Client2->>Client2: Check canInitialize === false
+    Note over Client2: Use existing initialized tree
 ```
-
-## The Two Paths
-
-### Path 1: Creating a New Container
 
 When creating a new container:
 
 1. Create the container
 2. Create a TreeView with `viewWith()`
 3. **Check that `canInitialize` is `true`** - if not, something is wrong
-4. Initialize the tree with your initial data
+4. Initialize the tree with initial data
 5. Attach the container to get its ID
 6. Save the container ID for future sessions
-
-### Path 2: Loading an Existing Container
 
 When loading an existing container:
 
@@ -51,53 +71,52 @@ This example shows a robust pattern for handling both new and existing container
 
 ```typescript
 export class CollaborationFluidClient {
-	public async init(): Promise<TreeView<typeof FluidGraphicCollectionData>> {
-		const containerId = window.location.hash.substring(1);
+  public async init(): Promise<TreeView<typeof FluidGraphicCollectionData>> {
+    const containerId = window.location.hash.substring(1);
 
-		if (containerId.length === 0) {
+    if (containerId.length === 0) {
 			// Path 1: Creating a new container
-			const container = await this.createFluidContainer();
+      const container = await this.createFluidContainer();
 			const view: TreeView<typeof FluidGraphicCollectionData> =
 				container.initialObjects.appData.viewWith(GraphicCollectionTreeConfiguration);
 
-			if (!view.compatibility.canInitialize) {
+      if (!view.compatibility.canInitialize) {
 				throw new Error("The tree must be safe to initialize upon creation of the Fluid container");
-			}
+      }
 
-			view.initialize(new FluidGraphicCollectionData([]));
-			const fluidContainerId = await container.attach();
-			window.location.hash = fluidContainerId;
-			return view;
-		} else {
+      view.initialize(new FluidGraphicCollectionData([]));
+      const fluidContainerId = await container.attach();
+      window.location.hash = fluidContainerId;
+      return view;
+    } else {
 			// Path 2: Loading an existing container
-			const container = await this.loadFluidContainer(containerId);
+      const container = await this.loadFluidContainer(containerId);
 			const view: TreeView<typeof FluidGraphicCollectionData> =
 				container.initialObjects.appData.viewWith(GraphicCollectionTreeConfiguration);
 
-			if (view.compatibility.canInitialize) {
-				throw new Error("The tree should already be initialized if the Fluid container exists");
-			}
+      if (view.compatibility.canInitialize) {
+        throw new Error("The tree should already be initialized if the Fluid container exists");
+      }
 
-			return view;
-		}
-	}
+      return view;
+    }
+  }
 
-	private async createFluidContainer(): Promise<IFluidContainer<typeof FluidContainerSchema>> {
-		const client = this.initClient();
-		const { container } = await client.createContainer(FluidContainerSchema, "2");
-		return container;
-	}
+  private async createFluidContainer(): Promise<IFluidContainer<typeof FluidContainerSchema>> {
+    const client = this.initClient();
+    const { container } = await client.createContainer(FluidContainerSchema, FluidCompatibilityMode);
+    return container;
+  }
 
-	private async loadFluidContainer(containerId: string): Promise<IFluidContainer<typeof FluidContainerSchema>> {
-		const client = this.initClient();
-		const { container } = await client.getContainer(containerId, FluidContainerSchema, "2");
-		return container;
-	}
+  private async loadFluidContainer(containerId: string): Promise<IFluidContainer<typeof FluidContainerSchema>> {
+    const client = this.initClient();
+    const { container } = await client.getContainer(containerId, FluidContainerSchema, FluidCompatibilityMode);
+    return container;
+  }
 
-	private initClient(): TinyliciousClient {
-		return new TinyliciousClient({ connection: { port: 7070 } });
-	}
-}
+  private initClient(): TinyliciousClient {
+    return new TinyliciousClient({ connection: { port: 7070 } });
+  }
 ```
 
 ## Why This Pattern Works
@@ -113,7 +132,7 @@ These checks catch bugs early and make debugging easier.
 
 ### Prevents Race Conditions
 
-By initializing **before** calling `attach()`, you ensure:
+By initializing **before** calling `attach()`, this pattern ensures:
 
 - The tree is fully initialized before other clients can connect
 - No race condition where multiple clients try to initialize simultaneously
@@ -128,9 +147,7 @@ The two paths are completely separate:
 
 ## Key Takeaways
 
-- Use `compatibility.canInitialize` to validate your assumptions about container state
-- For **new containers**: create → view → **verify `canInitialize` is `true`** → initialize → attach
-- For **existing containers**: load → view → **verify `canInitialize` is `false`** → use existing tree
+- Use `compatibility.canInitialize` to validate assumptions about container state
 - Always initialize **before** calling `attach()` on new containers
 - Treat `canInitialize` as an assertion to catch bugs early
 
