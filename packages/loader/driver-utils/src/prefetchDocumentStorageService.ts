@@ -63,7 +63,11 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 			// Note: Callers who await the cached promise will still see the rejection
 			prefetchedBlobPFromStorage.catch((error) => {
 				if (canRetryOnError(error)) {
-					this.prefetchCache.delete(blobId);
+					// Only clear cache if our promise is still the cached one
+					// (avoids race condition with concurrent requests)
+					if (this.prefetchCache.get(blobId) === prefetchedBlobPFromStorage) {
+						this.prefetchCache.delete(blobId);
+					}
 				}
 			});
 			this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);

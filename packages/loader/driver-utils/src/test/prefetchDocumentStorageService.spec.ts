@@ -13,6 +13,23 @@ import type {
 import { PrefetchDocumentStorageService } from "../prefetchDocumentStorageService.js";
 
 /**
+ * Helper to wait for a condition with timeout
+ */
+async function waitForCondition(
+	condition: () => boolean,
+	timeoutMs: number = 1000,
+	intervalMs: number = 5,
+): Promise<void> {
+	const startTime = Date.now();
+	while (!condition()) {
+		if (Date.now() - startTime > timeoutMs) {
+			throw new Error("Condition not met within timeout");
+		}
+		await new Promise((resolve) => setTimeout(resolve, intervalMs));
+	}
+}
+
+/**
  * Mock storage service for testing
  */
 class MockStorageService implements Partial<IDocumentStorageService> {
@@ -87,19 +104,26 @@ describe("PrefetchDocumentStorageService", () => {
 
 		// Second call should retry (not use cached error)
 		const result = await prefetchService.readBlob("blob1");
-		assert.strictEqual(result.byteLength, 3, "Should return blob data");
-		assert.strictEqual(mockStorage.readBlobCalls.length, 1);
+		assert.strictEqual(result.byteLength, 3, "Should return blob data after retry");
+		assert.strictEqual(
+			mockStorage.readBlobCalls.length,
+			1,
+			"Should perform exactly one new underlying read after cache is cleared",
+		);
 	});
 
 	it("should successfully prefetch blobs", async () => {
 		// Trigger prefetch
 		await prefetchService.getSnapshotTree();
 
-		// Wait for prefetch
-		await new Promise((resolve) => setTimeout(resolve, 10));
+		// Wait for prefetch to complete using polling instead of fixed timeout
+		await waitForCondition(() => mockStorage.readBlobCalls.length > 0);
 
 		// Verify blobs were prefetched
-		assert.ok(mockStorage.readBlobCalls.length > 0);
+		assert.ok(
+			mockStorage.readBlobCalls.length > 0,
+			"Prefetch should have triggered blob reads",
+		);
 
 		// Clear call tracking
 		mockStorage.readBlobCalls = [];
@@ -107,5 +131,32 @@ describe("PrefetchDocumentStorageService", () => {
 		// Reading a prefetched blob should use cache (no new call)
 		await prefetchService.readBlob("blob1");
 		assert.strictEqual(mockStorage.readBlobCalls.length, 0, "Should use cached prefetch");
+	});
+
+	it("should not cause unhandled rejections on fire-and-forget prefetch failures", async () => {
+		// Set up to fail all blob reads
+		const prefetchError = new Error("Prefetch network failure");
+		(prefetchError as any).canRetry = true;
+		mockStorage.failureError = prefetchError;
+		mockStorage.shouldFail = true;
+
+		// Trigger prefetch via getSnapshotTree (fire-and-forget pattern)
+		// The prefetch will fail, but should NOT cause unhandled rejection
+		await prefetchService.getSnapshotTree();
+
+		// Wait for prefetch attempts to occur
+		await waitForCondition(() => mockStorage.readBlobCalls.length > 0);
+
+		// Allow microtask queue to flush (for catch handlers to execute)
+		await new Promise((resolve) => setImmediate(resolve));
+
+		// If we reach here without unhandled rejection, the test passes
+		// Now verify that explicit readBlob calls still receive the error properly
+		mockStorage.readBlobCalls = [];
+		await assert.rejects(
+			async () => prefetchService.readBlob("blob1"),
+			(error: Error) => error.message === "Prefetch network failure",
+			"Explicit readBlob should still receive the error",
+		);
 	});
 });
