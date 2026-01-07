@@ -47,7 +47,6 @@ const config: Linter.Config[] = [
 			"unicorn/no-null": "off",
 			"unicorn/no-object-as-default-parameter": "off",
 			"unicorn/no-useless-fallback-in-spread": "off",
-			"unicorn/no-zero-fractions": "off",
 			"unicorn/prefer-export-from": "off",
 			"unicorn/text-encoding-identifier-case": "off",
 		},
