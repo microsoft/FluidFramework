@@ -222,8 +222,8 @@ function findTscScript(json: Readonly<PackageJson>, project: string): string | u
 /**
  * Find a representative TypeScript source file in the package directory.
  * This is needed because ESLint's calculateConfigForFile requires an actual file path.
- * @param packageDir - directory of the package
- * @returns path to a representative source file, or undefined if none found
+ * @param packageDir - The directory of the package.
+ * @returns The path to a representative source file, or undefined if none is found.
  */
 function findRepresentativeSourceFile(packageDir: string): string | undefined {
 	// Common source directories to check
