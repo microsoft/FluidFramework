@@ -11,7 +11,7 @@ module.exports = {
 		// '@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
 
 		// This package is effectively deprecated. The below rules are disabled for ease of migration and will not be enabled.
-		"@typescript-eslint/explicit-function-return-type": "off",
+		'@typescript-eslint/explicit-function-return-type': 'off',
 		'@typescript-eslint/no-shadow': 'off',
 		'no-shadow': 'off',
 		'@typescript-eslint/no-unsafe-return': 'off',

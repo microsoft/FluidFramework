@@ -10,7 +10,6 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-
 			// #region TODO: Fix violations and remove these rule disables
 
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
