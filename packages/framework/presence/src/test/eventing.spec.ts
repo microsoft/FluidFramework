@@ -26,6 +26,8 @@ import {
 	assertFinalExpectations,
 	prepareConnectedPresence,
 	attendeeId1,
+	localAttendeeId,
+	localClientConnectionId,
 } from "./testUtils.js";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";
@@ -222,8 +224,8 @@ describe("Presence", () => {
 			runtime = new MockEphemeralRuntime(logger);
 			({ presence, processSignal } = prepareConnectedPresence(
 				runtime,
-				"attendeeId-2",
-				"client2",
+				localAttendeeId,
+				localClientConnectionId,
 				clock,
 				logger,
 			));

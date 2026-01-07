@@ -179,9 +179,15 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 				this.audience.addMember(memberClientId, client);
 			}
 		}
-		// finally add new connection
+		// finally add new connection to both audience and quorum
 		for (const [newClientId, newMember] of buildClientDataArray([clientId], 1)) {
 			this.audience.addMember(newClientId, newMember);
+			// Add to quorum as a write client (consistent with buildClientDataArray creating write clients)
+			const quorumSize = this.quorum.getMembers().size;
+			this.quorum.addMember(newClientId, {
+				client: newMember,
+				sequenceNumber: 10 * quorumSize,
+			});
 		}
 	}
 
