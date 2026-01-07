@@ -33,7 +33,7 @@ interface ParserOptions {
 }
 
 /**
- * Computed ESLint configuration returned by calculateConfigForFile.
+ * Computed ESLint configuration returned by {@link calculateConfigForFile}.
  * Supports both legacy eslintrc format and ESLint 9 flat config format.
  */
 interface ComputedESLintConfig {
