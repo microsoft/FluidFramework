@@ -253,7 +253,7 @@ function findRepresentativeSourceFile(packageDir: string): string | undefined {
 }
 
 /**
- * Get a list of build script names that the eslint depends on, based on eslint config file.
+ * Get a list of build script names that eslint depends on, based on eslint config file.
  * @remarks eslint does not depend on build tasks for the projects it references. (The
  * projects' configurations guide eslint typescript parser to use original typescript
  * source.) The packages that those projects depend on must be built. So effectively
