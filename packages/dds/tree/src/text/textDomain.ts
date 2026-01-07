@@ -63,10 +63,7 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {}
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
  * @privateRemarks
- * We may want to provide either ways to create strings with application controlled character boundaries since there is not a clear single answer on how to break a string into atomic units.
- * For example an app might want to merge combining characters into a single logical character even though they are multiple code points.
- *
- * Currently this API only supports this basic definition of character, and has no support for more advanced features like:
+ * Currently this API only supports a really minimal feature set, and has no support for more advanced features like:
  * - Alternative character boundaries (e.g. grapheme clusters, paragraphs, tokens, etc.).
  * We may want to provide either ways to create strings with application controlled character boundaries since there is not a clear single answer on how to break a string into atomic units.
  * - Character attributes (e.g. bold, italic, etc):
