@@ -171,7 +171,9 @@ export class ForestSummarizer
 					: undefined,
 		};
 		const encoded = this.codec.encode(fieldMap, encoderContext);
-		fieldMap.forEach((value) => value.free());
+		for (const value of fieldMap.values()) {
+			value.free();
+		}
 
 		this.incrementalSummaryBuilder.completeSummary({
 			incrementalSummaryContext,

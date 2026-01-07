@@ -184,7 +184,7 @@ class SharedObjectFromKernel<
 	}
 
 	get #kernel(): SharedKernel {
-		return (this.#lazyData ?? fail("must initializeData first")).kernel;
+		return (this.#lazyData ?? fail(0xcb0 /* must initializeData first */)).kernel;
 	}
 
 	protected override async loadCore(storage: IChannelStorageService): Promise<void> {

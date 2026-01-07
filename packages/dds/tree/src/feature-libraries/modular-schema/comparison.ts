@@ -144,10 +144,8 @@ export function allowsFieldSuperset(
 	superset: TreeFieldStoredSchema,
 	monotonicOnly: boolean = true,
 ): boolean {
-	if (!monotonicOnly) {
-		if (isNeverField(policy, originalData, original)) {
-			return true;
-		}
+	if (!monotonicOnly && isNeverField(policy, originalData, original)) {
+		return true;
 	}
 
 	if (!allowsTreeSchemaIdentifierSuperset(original.types, superset.types)) {
@@ -239,15 +237,20 @@ export function allowsMultiplicitySuperset(
 	}
 
 	switch (superset) {
-		case Multiplicity.Forbidden:
+		case Multiplicity.Forbidden: {
 			return false;
-		case Multiplicity.Optional:
+		}
+		case Multiplicity.Optional: {
 			return original === Multiplicity.Single || original === Multiplicity.Forbidden;
-		case Multiplicity.Single:
+		}
+		case Multiplicity.Single: {
 			return false;
-		case Multiplicity.Sequence:
+		}
+		case Multiplicity.Sequence: {
 			return true;
-		default:
+		}
+		default: {
 			return unreachableCase(superset);
+		}
 	}
 }

@@ -10,6 +10,7 @@ import type {
 	RevisionMetadataSource,
 } from "../../../core/index.js";
 import type {
+	ChangeAtomIdBTree,
 	CrossFieldManager,
 	FieldChangeHandler,
 	FieldChangeMap,
@@ -19,7 +20,6 @@ import type {
 } from "../../../feature-libraries/index.js";
 import {
 	newCrossFieldKeyTable,
-	type ChangeAtomIdBTree,
 	type CrossFieldKeyTable,
 	type FieldChange,
 	type FieldId,

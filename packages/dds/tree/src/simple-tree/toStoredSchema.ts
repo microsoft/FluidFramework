@@ -186,27 +186,31 @@ export function transformSimpleSchema(
 ): SimpleTreeSchema {
 	const simpleNodeSchema = new Map<string, SimpleNodeSchema>();
 	const root = filterFieldAllowedTypes(schema.root, options);
-	const queue = Array.from(root.simpleAllowedTypes.keys());
+	const queue = [...root.simpleAllowedTypes.keys()];
 	for (const identifier of queue) {
 		getOrCreate(simpleNodeSchema, identifier, (id) => {
 			const nodeSchema = schema.definitions.get(id) ?? fail(0xca8 /* missing schema */);
 			const transformed = transformSimpleNodeSchema(nodeSchema, options);
 			const kind = transformed.kind;
 			switch (kind) {
-				case NodeKind.Leaf:
+				case NodeKind.Leaf: {
 					break;
+				}
 				case NodeKind.Array:
 				case NodeKind.Map:
-				case NodeKind.Record:
+				case NodeKind.Record: {
 					queue.push(...transformed.simpleAllowedTypes.keys());
 					break;
-				case NodeKind.Object:
+				}
+				case NodeKind.Object: {
 					for (const fieldSchema of transformed.fields.values()) {
 						queue.push(...fieldSchema.simpleAllowedTypes.keys());
 					}
 					break;
-				default:
+				}
+				default: {
 					unreachableCase(kind);
+				}
 			}
 			return transformed;
 		});

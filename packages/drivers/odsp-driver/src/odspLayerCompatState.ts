@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
+import { generation, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 
 import { pkgVersion } from "./packageVersion.js";
 
@@ -19,7 +19,7 @@ export const odspDriverCompatDetailsForLoader: ILayerCompatDetails = {
 	/**
 	 * The current generation of the ODSP Driver layer.
 	 */
-	generation: 3,
+	generation,
 	/**
 	 * The features supported by the ODSP Driver layer across the Driver / Loader boundary.
 	 */
