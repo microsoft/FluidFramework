@@ -9,7 +9,7 @@
 parameters:
 
 # Id for the stage whose telemetry will be uploaded to Kusto.
-# Other stages will be filtered out. If omitted, all stages will be uploaded.
+# Other stages will be filtered out. 'all' is not supported by the script we use currently.
 - name: stageIdFilter
   type: string
 

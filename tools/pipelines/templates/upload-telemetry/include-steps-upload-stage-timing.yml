@@ -9,7 +9,7 @@
 parameters:
 
 # Id for the stage whose telemetry will be uploaded to Kusto.
-# Other stages will be filtered out. If set to empty string, all stages will be uploaded.
+# Other stages will be filtered out. If set to 'all', all stages will be uploaded.
 - name: stageIdFilter
   type: string
 
@@ -45,7 +45,7 @@ steps:
   displayName: Submit telemetry for stage timing and result
   env:
     BUILD_ID: $(Build.BuildId)
-    ${{ if eq(parameters.stageIdFilter, '') }}:
+    ${{ if eq(parameters.stageIdFilter, 'all') }}:
       STAGE_ID: ${{ parameters.stageIdFilter }}
     PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
     WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTimingAndResult

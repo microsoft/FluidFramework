@@ -9,14 +9,14 @@
 parameters:
 
 # Stages that must be completed before telemetry can be uploaded.
-# If a stageIdFilter is provided, it will automatically be depended on without
+# If a stageIdFilter is specified, it will automatically be depended on without
 # needing to specify it here.
 - name: dependsOn
   type: object
   default: []
 
 # Id for the stage whose telemetry will be uploaded to Kusto.
-# Other stages will be filtered out. If omitted, all stages will be uploaded.
+# Other stages will be filtered out. If set to 'all', all stages will be uploaded.
 - name: stageIdFilter
   type: string
 
@@ -25,11 +25,11 @@ parameters:
   type: stepList
 
 stages:
-- stage: upload_telemetry_${{ iif(eq(parameters.stageIdFilter, ''), 'all', parameters.stageIdFilter) }}
-  displayName: Upload telemetry to Kusto ('${{ iif(eq(parameters.stageIdFilter, ''), 'all', parameters.stageIdFilter) }}')
+- stage: upload_telemetry_${{ parameters.stageIdFilter }}
+  displayName: Upload telemetry to Kusto ('${{ parameters.stageIdFilter }}')
   condition: succeededOrFailed()
   dependsOn:
-    - ${{ if ne(parameters.stageIdFilter, '') }}:
+    - ${{ if ne(parameters.stageIdFilter, 'all') }}:
       - ${{ parameters.stageIdFilter }}
     - ${{ each stage in parameters.dependsOn }}:
       - ${{ stage }}
