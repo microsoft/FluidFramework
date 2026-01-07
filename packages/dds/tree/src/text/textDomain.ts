@@ -118,8 +118,8 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {}
  * - Support in generateSchemaFromSimpleSchema for recognizing text nodes and generating the appropriate schema.
  * - Ensure above features work well enough to support important scenarios like AI assisted editing and document indexing for search.
  *
- * Again these are general patterns that components with non-trivial encodings and thus part of that work will be establishing and documenting those patterns more generally,
- * as well as implementing them for text.
+ * Part of that work will be establishing and documenting those patterns so other components with complex encodings can follow them,
+ * in addition to implementing them for text.
  * @internal
  */
 export namespace TextAsTree {
