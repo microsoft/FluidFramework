@@ -497,7 +497,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		const currentClientToSessionValueState =
 			// When connected, `clientToSessionId` must always have current connection entry.
 			this.datastore["system:presence"].clientToSessionId[clientConnectionId];
-		assert(currentClientToSessionValueState !== undefined, 0xcbb /* Client connection update missing */);
+		assert(
+			currentClientToSessionValueState !== undefined,
+			0xcbb /* Client connection update missing */,
+		);
 
 		const newMessage = {
 			sendTimestamp: Date.now(),
