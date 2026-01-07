@@ -14,7 +14,7 @@ import {
 	unqualifySchema,
 	findSchemas,
 	isNamedSchema,
-	resolveShortNameCollisions,
+	mapToFriendlyIdentifiers,
 } from "../utils.js";
 
 const sf = new SchemaFactoryAlpha("test.scope");
@@ -289,19 +289,19 @@ describe("findNamedSchemas", () => {
 describe("resolveShortNameCollisions", () => {
 	it("returns array with same length as input", () => {
 		const input = ["scope1.Foo", "scope1.Bar", "scope1.Baz"];
-		const result = resolveShortNameCollisions(input);
+		const result = mapToFriendlyIdentifiers(input);
 		assert.equal(result.length, input.length);
 	});
 
 	it("preserves non-colliding names", () => {
 		const input = ["scope1.Foo", "scope1.Bar", "scope1.Baz"];
-		const result = resolveShortNameCollisions(input);
+		const result = mapToFriendlyIdentifiers(input);
 		assert.deepEqual(result, ["Foo", "Bar", "Baz"]);
 	});
 
 	it("resolves three-way collisions with counters as suffixes", () => {
 		const input = ["scope1.Foo", "scope2.Foo", "scope3.Foo"];
-		const result = resolveShortNameCollisions(input);
+		const result = mapToFriendlyIdentifiers(input);
 		assert.equal(result[0], "Foo_1");
 		assert.equal(result[1], "Foo_2");
 		assert.equal(result[2], "Foo_3");
@@ -309,18 +309,38 @@ describe("resolveShortNameCollisions", () => {
 
 	it("handles mixed colliding and non-colliding names", () => {
 		const input = ["scope1.Foo", "scope2.Foo", "scope1.Bar"];
-		const result = resolveShortNameCollisions(input);
+		const result = mapToFriendlyIdentifiers(input);
 		assert.equal(result[0], "Foo_1");
 		assert.equal(result[1], "Foo_2");
 		assert.equal(result[2], "Bar");
 	});
 
 	it("skips suffix values that conflict with existing short names", () => {
-		const input = ["scope1.Foo", "scope2.Foo", "scope3.Foo_1"] as const;
-		const result = resolveShortNameCollisions(input);
+		const input = ["scope1.Foo", "scope2.Foo", "scope3.Foo_1"];
+		const result = mapToFriendlyIdentifiers(input);
 		assert.equal(result[0], "Foo_2");
 		assert.equal(result[1], "Foo_3");
 		assert.equal(result[2], "Foo_1");
+	});
+
+	it("duplicate full names are resolved with counters as suffixes", () => {
+		const input = ["scope.Foo", "scope.Foo"];
+		const result = mapToFriendlyIdentifiers(input);
+		assert.equal(result[0], "Foo_1");
+		assert.equal(result[1], "Foo_2");
+	});
+
+	it("multi-level scope collisions are resolved with counters as suffixes", () => {
+		const input = ["outer1.inner1.Foo", "outer2.inner1.Foo", "outer1.inner2.Foo", "outer2.inner2.Foo", "outer1.inner1.Bar", "outer2.inner1.Bar", "outer1.inner2.Bar", "outer2.inner2.Bar"]
+		const result = mapToFriendlyIdentifiers(input);
+		assert.equal(result[0], "Foo_1");
+		assert.equal(result[1], "Foo_2");
+		assert.equal(result[2], "Foo_3");
+		assert.equal(result[3], "Foo_4");
+		assert.equal(result[4], "Bar_1");
+		assert.equal(result[5], "Bar_2");
+		assert.equal(result[6], "Bar_3");
+		assert.equal(result[7], "Bar_4");
 	});
 });
 

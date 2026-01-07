@@ -24,7 +24,7 @@ import {
 	getFriendlyName,
 	isNamedSchema,
 	llmDefault,
-	resolveShortNameCollisions,
+	mapToFriendlyIdentifiers,
 	unqualifySchema,
 	filterIterable,
 } from "./utils.js";
@@ -76,7 +76,7 @@ export function renderSchemaTypeScript(
 
 	// Resolve short name collisions for all named schemas
 	const namedIdentifiers = [...filterIterable(definitions.keys(), isNamedSchema)];
-	const collisionResolvedNames = resolveShortNameCollisions(namedIdentifiers);
+	const collisionResolvedNames = mapToFriendlyIdentifiers(namedIdentifiers);
 
 	for (const [i, identifier] of namedIdentifiers.entries()) {
 		const resolvedName = collisionResolvedNames[i];

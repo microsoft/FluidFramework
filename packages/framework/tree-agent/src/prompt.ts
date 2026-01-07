@@ -16,7 +16,7 @@ import {
 	getFriendlyName,
 	communize,
 	findSchemas,
-	resolveShortNameCollisions,
+	mapToFriendlyIdentifiers,
 } from "./utils.js";
 
 /**
@@ -36,7 +36,7 @@ export function getPrompt(args: {
 	const allSchemas = findSchemas(schema);
 	const schemasArray = [...allSchemas];
 	const schemaIdentifiers = schemasArray.map((s) => s.identifier);
-	const collisionResolvedIdentifiersArray = resolveShortNameCollisions(schemaIdentifiers);
+	const collisionResolvedIdentifiersArray = mapToFriendlyIdentifiers(schemaIdentifiers);
 	const collisionResolvedNames = new Map<TreeNodeSchema, string>();
 	for (const [i, schemaNode] of schemasArray.entries()) {
 		const resolvedName = collisionResolvedIdentifiersArray[i];

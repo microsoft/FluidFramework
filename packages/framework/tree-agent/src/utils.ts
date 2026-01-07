@@ -234,39 +234,40 @@ export function unqualifySchema(schemaIdentifier: string): string {
  * - If only `"scope.Foo"` and `"scope2.Foo"` exist, they resolve to `["Foo_1", "Foo_2"]`.
  * - If `"scope.Foo"`, `"scope2.Foo"`, and `"scope3.Foo_1"` all exist, they resolve to `["Foo_2", "Foo_3", "Foo_1"]` (indices preserved).
  */
-export function resolveShortNameCollisions<T extends readonly string[]>(
+export function mapToFriendlyIdentifiers<T extends readonly string[]>(
 	identifiers: T,
 ): string[] & { length: T["length"] } {
-	const shortNameToIdentifiers = new Map<string, [index: number, identifier: string][]>();
+	const shortNameCount = new Map<string, number>();
 
-	// Populate the map of short names to their corresponding identifiers with indices
-	for (const [i, identifier] of identifiers.entries()) {
+	// Count how many identifiers map to each short name
+	for (const identifier of identifiers) {
 		const shortName = unqualifySchema(identifier);
-		const identifierList = getOrCreate(shortNameToIdentifiers, shortName, () => []);
-		identifierList.push([i, identifier]);
+		shortNameCount.set(shortName, (shortNameCount.get(shortName) ?? 0) + 1);
 	}
 
 	const result: string[] = [];
+	const shortNameCounter = new Map<string, number>(); // Track which suffix we're on for each name
 
-	// Append an underscore and counter to colliding short names.
-	for (const [shortName, identifierList] of shortNameToIdentifiers) {
-		if (identifierList.length === 1) {
+	// Assign collision-resolved names, iterating in the same order as identifiers
+	for (const identifier of identifiers) {
+		const shortName = unqualifySchema(identifier);
+		const count = shortNameCount.get(shortName);
+		assert(count !== undefined, "Expected short name to have been counted in first pass");
+
+		if (count === 1) {
 			// No collision, unchanged short name.
-			for (const [index] of identifierList) {
-				result[index] = shortName;
-			}
+			result.push(shortName);
 		} else {
 			// Collision, append counters to conflicting short names
-			let counter = 1;
-			for (const [index] of identifierList) {
-				let candidateName = `${shortName}_${counter}`;
-				while (shortNameToIdentifiers.has(candidateName)) {
-					counter += 1;
-					candidateName = `${shortName}_${counter}`;
-				}
-				result[index] = candidateName;
+			let counter = shortNameCounter.get(shortName) ?? 0;
+			counter += 1;
+			let candidateName = `${shortName}_${counter}`;
+			while (shortNameCount.has(candidateName)) {
 				counter += 1;
+				candidateName = `${shortName}_${counter}`;
 			}
+			shortNameCounter.set(shortName, counter);
+			result.push(candidateName);
 		}
 	}
 
