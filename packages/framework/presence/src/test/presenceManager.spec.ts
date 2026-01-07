@@ -133,22 +133,23 @@ describe("Presence", () => {
 					logger,
 				);
 
-				let statusAtAnnouncement: AttendeeStatus | undefined;
+				let attendeeConnectedRaised = false;
 				presence.attendees.events.on("attendeeConnected", (attendee) => {
 					if (attendee === presence.attendees.getMyself()) {
-						statusAtAnnouncement = attendee.getConnectionStatus();
+						attendeeConnectedRaised = true;
+						assert.strictEqual(
+							attendee.getConnectionStatus(),
+							AttendeeStatus.Connected,
+							"Self attendee should have status 'Connected' when announced",
+						);
 					}
 				});
 
 				// Act - connect presence
 				connectPresence(selfClientConnectionId);
 
-				// Verify - status was Connected at announcement time
-				assert.strictEqual(
-					statusAtAnnouncement,
-					AttendeeStatus.Connected,
-					"Self attendee should have status 'Connected' when announced",
-				);
+				// Verify - attendeeConnected was raised
+				assert(attendeeConnectedRaised, "attendeeConnected event should be raised for self attendee");
 			});
 
 			it("is announced via `attendeeConnected` when local client reconnects", () => {
