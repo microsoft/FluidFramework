@@ -148,7 +148,7 @@ describe("PrefetchDocumentStorageService", () => {
 		await waitForCondition(() => mockStorage.readBlobCalls.length > 0);
 
 		// Allow microtask queue to flush (for catch handlers to execute)
-		await new Promise((resolve) => setImmediate(resolve));
+		await Promise.resolve();
 
 		// If we reach here without unhandled rejection, the test passes
 		// Now verify that explicit readBlob calls still receive the error properly
