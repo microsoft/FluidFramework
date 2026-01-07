@@ -371,4 +371,227 @@ describe("Task Definitions", () => {
 			]);
 		});
 	});
+
+	describe("Global Task Definition Validation", () => {
+		it("throws error when '...' is used in global additionalConfigFiles", () => {
+			const globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk = {
+				eslint: {
+					dependsOn: [],
+					files: {
+						inputGlobs: [],
+						outputGlobs: [],
+						additionalConfigFiles: ["...", "some-config.json"],
+					},
+				},
+			};
+
+			assert.throws(
+				() => normalizeGlobalTaskDefinitions(globalTaskDefinitionsOnDisk),
+				/Invalid 'files.additionalConfigFiles' dependencies '...' for global task definition eslint/,
+			);
+		});
+
+		it("throws error when '...' is used in global inputGlobs", () => {
+			const globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk = {
+				myTask: {
+					dependsOn: [],
+					files: {
+						inputGlobs: ["...", "src/**/*.ts"],
+						outputGlobs: [],
+					},
+				},
+			};
+
+			assert.throws(
+				() => normalizeGlobalTaskDefinitions(globalTaskDefinitionsOnDisk),
+				/Invalid 'files.inputGlobs' dependencies '...' for global task definition myTask/,
+			);
+		});
+
+		it("throws error when '...' is used in global outputGlobs", () => {
+			const globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk = {
+				myTask: {
+					dependsOn: [],
+					files: {
+						inputGlobs: [],
+						outputGlobs: ["...", "dist/**/*.js"],
+					},
+				},
+			};
+
+			assert.throws(
+				() => normalizeGlobalTaskDefinitions(globalTaskDefinitionsOnDisk),
+				/Invalid 'files.outputGlobs' dependencies '...' for global task definition myTask/,
+			);
+		});
+
+		it("allows valid global task definitions without '...'", () => {
+			const globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk = {
+				eslint: {
+					dependsOn: [],
+					files: {
+						inputGlobs: ["src/**/*.ts"],
+						outputGlobs: ["dist/**/*.js"],
+						additionalConfigFiles: ["${repoRoot}/.eslintrc.cjs"],
+					},
+				},
+			};
+
+			// Should not throw
+			const result = normalizeGlobalTaskDefinitions(globalTaskDefinitionsOnDisk);
+			assert.deepStrictEqual(result.eslint.files?.additionalConfigFiles, [
+				"${repoRoot}/.eslintrc.cjs",
+			]);
+		});
+	});
+
+	describe("Task Definition Resolution", () => {
+		it("returns additionalConfigFiles from resolved task definition", () => {
+			const globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk = {
+				eslint: {
+					dependsOn: [],
+					files: {
+						inputGlobs: ["src/**/*.ts"],
+						outputGlobs: [],
+						additionalConfigFiles: ["${repoRoot}/.eslintrc.cjs"],
+					},
+				},
+			};
+
+			const globalTaskDefinitions = normalizeGlobalTaskDefinitions(
+				globalTaskDefinitionsOnDisk,
+			);
+
+			const packageJson: PackageJson = {
+				name: "test-package",
+				version: "1.0.0",
+				scripts: {
+					eslint: "eslint src",
+				},
+			};
+
+			const taskDefinitions = getTaskDefinitions(packageJson, globalTaskDefinitions, {
+				isReleaseGroupRoot: false,
+			});
+
+			// Verify the task definition contains the additionalConfigFiles
+			assert.deepStrictEqual(taskDefinitions.eslint.files?.additionalConfigFiles, [
+				"${repoRoot}/.eslintrc.cjs",
+			]);
+		});
+
+		it("returns empty array when no additionalConfigFiles defined", () => {
+			const globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk = {
+				eslint: {
+					dependsOn: [],
+				},
+			};
+
+			const globalTaskDefinitions = normalizeGlobalTaskDefinitions(
+				globalTaskDefinitionsOnDisk,
+			);
+
+			const packageJson: PackageJson = {
+				name: "test-package",
+				version: "1.0.0",
+				scripts: {
+					eslint: "eslint src",
+				},
+			};
+
+			const taskDefinitions = getTaskDefinitions(packageJson, globalTaskDefinitions, {
+				isReleaseGroupRoot: false,
+			});
+
+			// additionalConfigFiles should be undefined when not specified
+			assert.strictEqual(taskDefinitions.eslint.files?.additionalConfigFiles, undefined);
+		});
+
+		it("preserves ${repoRoot} tokens in additionalConfigFiles for later resolution", () => {
+			const globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk = {
+				eslint: {
+					dependsOn: [],
+					files: {
+						inputGlobs: [],
+						outputGlobs: [],
+						additionalConfigFiles: [
+							"${repoRoot}/.eslintrc.cjs",
+							"${repoRoot}/common/eslint-config.json",
+							"./local-config.json",
+						],
+					},
+				},
+			};
+
+			const globalTaskDefinitions = normalizeGlobalTaskDefinitions(
+				globalTaskDefinitionsOnDisk,
+			);
+
+			const packageJson: PackageJson = {
+				name: "test-package",
+				version: "1.0.0",
+				scripts: {
+					eslint: "eslint src",
+				},
+			};
+
+			const taskDefinitions = getTaskDefinitions(packageJson, globalTaskDefinitions, {
+				isReleaseGroupRoot: false,
+			});
+
+			// Tokens should be preserved - they're resolved later by the task handler
+			assert.deepStrictEqual(taskDefinitions.eslint.files?.additionalConfigFiles, [
+				"${repoRoot}/.eslintrc.cjs",
+				"${repoRoot}/common/eslint-config.json",
+				"./local-config.json",
+			]);
+		});
+
+		it("combines package additionalConfigFiles with global using '...'", () => {
+			const globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk = {
+				eslint: {
+					dependsOn: [],
+					files: {
+						inputGlobs: [],
+						outputGlobs: [],
+						additionalConfigFiles: ["${repoRoot}/.eslintrc.cjs"],
+					},
+				},
+			};
+
+			const globalTaskDefinitions = normalizeGlobalTaskDefinitions(
+				globalTaskDefinitionsOnDisk,
+			);
+
+			const packageJson: PackageJson = {
+				name: "test-package",
+				version: "1.0.0",
+				scripts: {
+					eslint: "eslint src",
+				},
+				fluidBuild: {
+					tasks: {
+						eslint: {
+							dependsOn: [],
+							files: {
+								inputGlobs: [],
+								outputGlobs: [],
+								additionalConfigFiles: ["...", "./package-local.json"],
+							},
+						},
+					},
+				},
+			};
+
+			const taskDefinitions = getTaskDefinitions(packageJson, globalTaskDefinitions, {
+				isReleaseGroupRoot: false,
+			});
+
+			// Package-local files come first, then inherited global files
+			assert.deepStrictEqual(taskDefinitions.eslint.files?.additionalConfigFiles, [
+				"./package-local.json",
+				"${repoRoot}/.eslintrc.cjs",
+			]);
+		});
+	});
 });
