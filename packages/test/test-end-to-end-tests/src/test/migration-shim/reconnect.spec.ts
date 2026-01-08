@@ -62,7 +62,7 @@ class QuantityType extends builder.object("quantityObj", {
 }) {}
 const treeConfig = new TreeViewConfiguration({ schema: QuantityType });
 
-describeCompat.only("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
