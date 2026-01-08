@@ -21,10 +21,10 @@ export function toPosixPath(s: string): string {
  * A gitignore rule set binds a directory to an `ignore` instance configured
  * with the patterns from that directory's .gitignore file.
  */
-type GitignoreRuleSet = {
+interface GitignoreRuleSet {
 	dir: string;
 	ig: ReturnType<typeof createIgnore>;
-};
+}
 
 /**
  * Cache for gitignore rule sets per directory path.
@@ -64,7 +64,7 @@ async function readGitignoreRuleSets(dir: string): Promise<GitignoreRuleSet[]> {
 
 	// Collect directory chain from dir up to filesystem root
 	let currentDir = dir;
-	while (true) {
+	for (;;) {
 		dirs.push(currentDir);
 		const parentDir = path.dirname(currentDir);
 		if (parentDir === currentDir) {
@@ -123,7 +123,7 @@ function readGitignoreRuleSetsSync(dir: string): GitignoreRuleSet[] {
 
 	// Collect directory chain from dir up to filesystem root
 	let currentDir = dir;
-	while (true) {
+	for (;;) {
 		dirs.push(currentDir);
 		const parentDir = path.dirname(currentDir);
 		if (parentDir === currentDir) {
@@ -268,7 +268,7 @@ export async function globWithGitignore(
 		absolute: true,
 	});
 
-	const filtered = !applyGitignore ? files : await filterByGitignore(files, cwd);
+	const filtered = applyGitignore ? await filterByGitignore(files, cwd) : files;
 
 	// Sort results for consistent ordering (tinyglobby does not guarantee sorted order)
 	return filtered.sort();

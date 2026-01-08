@@ -358,7 +358,7 @@ async function readGitignoreRuleSets(dir: string): Promise<GitignoreRuleSet[]> {
 
 	// Collect directory chain from dir up to filesystem root
 	let currentDir = dir;
-	while (true) {
+	for (;;) {
 		dirs.push(currentDir);
 		const parentDir = path.dirname(currentDir);
 		if (parentDir === currentDir) {
