@@ -30,20 +30,6 @@ module.exports = {
 		// This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
 		"tsdoc/syntax": "error",
 
-		// In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
-		// API documentation. For example, type inference might decide a function returns a concrete type
-		// instead of an interface. This has no runtime impact, but would cause compilation problems.
-		"@typescript-eslint/explicit-function-return-type": [
-			"error",
-			{
-				allowExpressions: true,
-				allowTypedFunctionExpressions: true,
-				allowHigherOrderFunctions: true,
-				allowDirectConstAssertionInArrowFunctions: true,
-				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
-			},
-		],
-
 		// #region `unicorn` rule overrides
 
 		// TODO: Enable this rule and fix violations once eslint9 upgrade is done
@@ -56,6 +42,9 @@ module.exports = {
 
 		// False positives on non-array `push` methods.
 		"unicorn/no-array-push-push": "off",
+
+		// False positives on non-array methods.
+		"unicorn/no-array-callback-reference": "off",
 
 		"unicorn/empty-brace-spaces": "off",
 

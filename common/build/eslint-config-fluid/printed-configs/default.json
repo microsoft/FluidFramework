@@ -2050,7 +2050,7 @@
             "error"
         ],
         "unicorn/no-array-callback-reference": [
-            "error"
+            "off"
         ],
         "unicorn/no-array-for-each": [
             "error"
