@@ -484,10 +484,10 @@ export function encodeValue(
 	outputBuffer: BufferFormat,
 ): void {
 	if (shape === undefined) {
-		if (value !== undefined) {
-			outputBuffer.push(true, value);
-		} else {
+		if (value === undefined) {
 			outputBuffer.push(false);
+		} else {
+			outputBuffer.push(true, value);
 		}
 	} else {
 		if (shape === true) {

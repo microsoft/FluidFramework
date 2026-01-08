@@ -10,9 +10,10 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	findAncestor,
+	tagChange,
 	type ChangeFamilyEditor,
 	type GraphCommit,
-	type TaggedChange,
+	type RevisionTag,
 } from "../core/index.js";
 import { getLast, getOrCreate, hasSome } from "../util/index.js";
 
@@ -264,13 +265,11 @@ export class SquashingTransactionStack<
 	/**
 	 * Construct a new {@link SquashingTransactionStack}.
 	 * @param branch - The {@link SquashingTransactionStack.branch | branch} that will be forked off of when a transaction begins.
-	 * @param squash - Called once when the outer-most transaction is committed to produce a single squashed change from the transaction's commits.
-	 * The change will be applied to the original {@link SquashingTransactionStack.branch | branch}.
 	 * @param onPush - A function that will be called when a transaction is pushed to the {@link TransactionStack | stack}.
 	 */
 	public constructor(
 		public readonly branch: SharedTreeBranch<TEditor, TChange>,
-		squash: (commits: GraphCommit<TChange>[]) => TaggedChange<TChange>,
+		mintRevisionTag: () => RevisionTag,
 		onPush?: () => OnPop | void,
 	) {
 		super(
@@ -280,18 +279,24 @@ export class SquashingTransactionStack<
 				// TODO:#8603: This may need to be computed differently if we allow rebasing during a transaction.
 				const startHead = this.activeBranch.getHead();
 				const outerOnPop = onPush?.();
-				const transactionBranch = this.branch.fork(startHead);
+				let transactionRevision: RevisionTag | undefined;
+				const transactionBranch = this.branch.fork(
+					startHead,
+					// Lazily mint the revision tag for the transaction when it is first needed
+					() => (transactionRevision ??= mintRevisionTag()),
+				);
 				this.setTransactionBranch(transactionBranch);
 				transactionBranch.editor.enterTransaction();
 				// Invoked when an outer transaction ends
 				const onOuterTransactionPop: OnPop = (result) => {
-					assert(!this.isInProgress(), "The outer transaction should be ending");
+					assert(!this.isInProgress(), 0xcae /* The outer transaction should be ending */);
 					transactionBranch.editor.exitTransaction();
 					switch (result) {
-						case TransactionResult.Abort:
+						case TransactionResult.Abort: {
 							// When a transaction is aborted, roll back all the transaction's changes on the current branch
 							transactionBranch.removeAfter(startHead);
 							break;
+						}
 						case TransactionResult.Commit: {
 							// ...squash all the new commits on the transaction branch into a new commit on the original branch
 							const removedCommits: GraphCommit<TChange>[] = [];
@@ -300,12 +305,20 @@ export class SquashingTransactionStack<
 								(c) => c === startHead,
 							);
 							if (removedCommits.length > 0) {
-								this.branch.apply(squash(removedCommits));
+								for (const commit of removedCommits) {
+									assert(
+										commit.revision === transactionRevision,
+										0xcaf /* Unexpected commit in transaction */,
+									);
+								}
+								const squash = this.branch.changeFamily.rebaser.compose(removedCommits);
+								this.branch.apply(tagChange(squash, transactionRevision));
 							}
 							break;
 						}
-						default:
+						default: {
 							unreachableCase(result);
+						}
 					}
 					transactionBranch.dispose();
 					this.setTransactionBranch(undefined);
@@ -321,14 +334,17 @@ export class SquashingTransactionStack<
 						onPop: (result) => {
 							transactionBranch.editor.exitTransaction();
 							switch (result) {
-								case TransactionResult.Abort:
+								case TransactionResult.Abort: {
 									// When a transaction is aborted, roll back all the transaction's changes on the current branch
 									transactionBranch.removeAfter(nestedStartHead);
 									break;
-								case TransactionResult.Commit:
+								}
+								case TransactionResult.Commit: {
 									break;
-								default:
+								}
+								default: {
 									unreachableCase(result);
+								}
 							}
 							nestedOuterOnPop?.(result);
 						},

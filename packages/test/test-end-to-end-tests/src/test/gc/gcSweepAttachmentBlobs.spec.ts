@@ -66,7 +66,7 @@ function validateBlobStateInSummary(
 	blobNodePath: string,
 	expectDelete: boolean,
 	expectGCStateHandle: boolean,
-) {
+): void {
 	const shouldShouldNot = expectDelete ? "should not" : "should";
 
 	// Validate that the blob tree should not be in the summary since there should be no attachment blobs.
@@ -140,7 +140,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 	async function loadContainer(
 		summaryVersion: string,
 		config: ITestContainerConfig = testContainerConfig,
-	) {
+	): Promise<IContainer> {
 		return provider.loadTestContainer(config, {
 			[LoaderHeader.version]: summaryVersion,
 		});
@@ -151,7 +151,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 		blobNodePath: string,
 		messagePrefix: string,
 		isSummarizerContainer = false,
-	) {
+	): Promise<void> {
 		const blobId = blobNodePath.split("/")[2];
 		const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
 		const runtime = isSummarizerContainer
@@ -169,7 +169,11 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 		assert(container.closed !== true, `${messagePrefix}: Container should not have closed`);
 	}
 
-	async function createDataStoreAndSummarizer() {
+	async function createDataStoreAndSummarizer(): Promise<{
+		dataStore: ITestDataObject;
+		summarizer: ISummarizer;
+		summarizerContainer: IContainer;
+	}> {
 		const container = await provider.makeTestContainer(testContainerConfig);
 		const dataStore = (await container.getEntryPoint()) as ITestDataObject;
 
@@ -444,7 +448,10 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 		/**
 		 * Creates a detached container and returns it along with the default data store.
 		 */
-		async function createDetachedContainerAndDataStore() {
+		async function createDetachedContainerAndDataStore(): Promise<{
+			mainContainer: IContainer;
+			mainDataStore: ITestDataObject;
+		}> {
 			const loader = provider.makeTestLoader({
 				...testContainerConfig,
 				loaderProps: { ...testContainerConfig.loaderProps },
@@ -768,7 +775,10 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 		/**
 		 * Creates a container and returns it along with the default data store.
 		 */
-		async function createContainerAndDataStore() {
+		async function createContainerAndDataStore(): Promise<{
+			mainContainer: IContainer;
+			mainDataStore: ITestDataObject;
+		}> {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
 			const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			await waitForContainerConnection(mainContainer, true);
@@ -780,7 +790,10 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 		 * that GarbageCollector has initial GC data. When GC runs next with the attachment blobs, it has a previous
 		 * GC data to validate references against and ensure that gcUnknownOutboundReferences error is not logged.
 		 */
-		async function createSummarizerWithInitialSummary(container: IContainer) {
+		async function createSummarizerWithInitialSummary(container: IContainer): Promise<{
+			summarizer: ISummarizer;
+			summarizerContainer: IContainer;
+		}> {
 			const { summarizer, container: summarizerContainer } = await createSummarizer(
 				provider,
 				container,
@@ -1134,10 +1147,13 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			summarizer: ISummarizer,
 			containerRuntime: ContainerRuntime,
 			blockInboundGCOp: boolean = false,
-		) {
+		): Promise<{
+			originalSummarize: typeof containerRuntime.summarize;
+			summarizePromiseP: Promise<ISummarizeEventProps>;
+		}> {
 			let latestAttemptProps: ISummarizeEventProps | undefined;
 			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve, reject) => {
-				const handler = (eventProps: ISummarizeEventProps) => {
+				const handler = (eventProps: ISummarizeEventProps): void => {
 					latestAttemptProps = eventProps;
 					if (eventProps.result !== "failure") {
 						summarizer.off("summarize", handler);
@@ -1162,7 +1178,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			}
 
 			let summarizeFunc = containerRuntime.summarize;
-			const summarizeOverride = async (options: any) => {
+			const summarizeOverride = async (options: any): Promise<any> => {
 				summarizeFunc = summarizeFunc.bind(containerRuntime);
 				const results = await summarizeFunc(options);
 				// If this is not the last attempt, throw an error so that summarize fails.

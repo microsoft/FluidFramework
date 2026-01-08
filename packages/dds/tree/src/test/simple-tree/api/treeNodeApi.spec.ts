@@ -1550,7 +1550,7 @@ describe("treeNodeApi", () => {
 			});
 			assert.throws(
 				() => Tree.shortId(view.root),
-				validateAssertionError(/may not be called on a node with more than one identifier/),
+				validateAssertionError(/node has more than one identifier/),
 			);
 		});
 
@@ -1657,7 +1657,7 @@ describe("treeNodeApi", () => {
 			});
 			assert.throws(
 				() => TreeAlpha.identifier(view.root),
-				validateAssertionError(/may not be called on a node with more than one identifier/),
+				validateAssertionError(/node has more than one identifier/),
 			);
 		});
 
@@ -1754,7 +1754,7 @@ describe("treeNodeApi", () => {
 				});
 				assert.throws(
 					() => TreeAlpha.identifier.getShort(view.root),
-					validateAssertionError(/may not be called on a node with more than one identifier/),
+					validateAssertionError(/node has more than one identifier/),
 				);
 			});
 
@@ -1780,7 +1780,7 @@ describe("treeNodeApi", () => {
 					assert.equal(TreeAlpha.identifier.getShort(node), undefined);
 				});
 
-				// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
+				// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new as well as `TreeIdentifierUtils.getShort`
 				it("returns undefined when unhydrated then local id when hydrated", () => {
 					const config = new TreeViewConfiguration({ schema: HasIdentifier });
 					const view = getView(config);

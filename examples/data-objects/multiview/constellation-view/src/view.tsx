@@ -25,13 +25,13 @@ const StarView: React.FC<IStarViewProps> = (props: IStarViewProps) => {
 	const [x, setX] = React.useState(props.model.x);
 	const [y, setY] = React.useState(props.model.y);
 
-	React.useEffect(() => {
+	React.useEffect((): (() => void) => {
 		const onCoordinateChanged = (): void => {
 			setX(props.model.x);
 			setY(props.model.y);
 		};
 		props.model.on("coordinateChanged", onCoordinateChanged);
-		return () => {
+		return (): void => {
 			props.model.off("coordinateChanged", onCoordinateChanged);
 		};
 	}, [props.model]);
@@ -61,12 +61,12 @@ export const ConstellationView: React.FC<IConstellationViewProps> = (
 	props: IConstellationViewProps,
 ) => {
 	const [starList, setStarList] = React.useState<ICoordinate[]>(props.model.stars);
-	React.useEffect(() => {
+	React.useEffect((): (() => void) => {
 		const onConstellationChanged = (): void => {
 			setStarList(props.model.stars);
 		};
 		props.model.on("constellationChanged", onConstellationChanged);
-		return () => {
+		return (): void => {
 			props.model.off("constellationChanged", onConstellationChanged);
 		};
 	}, [props.model]);
