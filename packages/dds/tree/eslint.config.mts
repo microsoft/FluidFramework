@@ -36,7 +36,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-call": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
 			"import-x/order": "off",
-			"jsdoc/multiline-blocks": "off",
 			"jsdoc/require-description": "warn",
 			"unicorn/consistent-function-scoping": "off",
 			"unicorn/no-array-method-this-argument": "off",
