@@ -189,7 +189,6 @@ module.exports = {
 				ignoreEOLComments: true,
 			},
 		],
-		"no-void": "error",
 
 		/**
 		 * Note: this can be replaced altogether by `@typescript-eslint/no-unused-vars`,
@@ -263,6 +262,7 @@ module.exports = {
 		"@typescript-eslint/consistent-type-imports": "off",
 
 		"func-call-spacing": "off", // Off because it conflicts with typescript-formatter
+		"no-void": "off",
 		"require-atomic-updates": "off",
 
 		/**
