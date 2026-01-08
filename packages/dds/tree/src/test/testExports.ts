@@ -16,4 +16,15 @@
 // This is a special case and it is not like the other index files in this package
 // (such as those in the nested directories in test which reexport contents of those directories for use within this package).
 
-export { baseTreeModel } from "./shared-tree/index.js";
+export { baseTreeModel, optimizedForestTreeModel } from "./shared-tree/index.js";
+
+// eslint-disable-next-line import-x/no-internal-modules
+export type { Operation } from "./shared-tree/fuzz/operationTypes.js";
+
+export {
+	deterministicIdCompressorFactory,
+	failureDirectory,
+	FuzzTestOnCreate,
+	SharedTreeFuzzTestFactory,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "./shared-tree/fuzz/fuzzUtils.js";

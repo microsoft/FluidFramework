@@ -15412,6 +15412,141 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
 
+  packages/test/version-compat-tests:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-experimental/tree':
+        specifier: workspace:~
+        version: link:../../../experimental/dds/tree
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../common/client-utils
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../mocha-test-setup
+      '@fluid-private/test-dds-utils':
+        specifier: workspace:~
+        version: link:../../dds/test-dds-utils
+      '@fluid-private/test-drivers':
+        specifier: workspace:~
+        version: link:../test-drivers
+      '@fluid-private/test-pairwise-generator':
+        specifier: workspace:~
+        version: link:../test-pairwise-generator
+      '@fluid-private/test-version-utils':
+        specifier: workspace:~
+        version: link:../test-version-utils
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../framework/aqueduct
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.60.0
+        version: 0.60.0(@types/node@18.19.86)
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:~
+        version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
+      '@fluidframework/datastore':
+        specifier: workspace:~
+        version: link:../../runtime/datastore
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/datastore-definitions
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
+      '@fluidframework/eslint-config-fluid':
+        specifier: workspace:~
+        version: link:../../../common/build/eslint-config-fluid
+      '@fluidframework/id-compressor':
+        specifier: workspace:~
+        version: link:../../runtime/id-compressor
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../drivers/local-driver
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../dds/map
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
+      '@fluidframework/sequence':
+        specifier: workspace:~
+        version: link:../../dds/sequence
+      '@fluidframework/server-local-server':
+        specifier: ^7.0.0
+        version: 7.0.0
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../dds/shared-object-base
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
+      '@fluidframework/test-utils':
+        specifier: workspace:~
+        version: link:../test-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.86
+      c8:
+        specifier: ^10.1.3
+        version: 10.1.3
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.57.1
+        version: 8.57.1
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      sinon:
+        specifier: ^18.0.1
+        version: 18.0.1
+      ts-loader:
+        specifier: ^9.5.1
+        version: 9.5.1(typescript@5.4.5)(webpack@5.97.1)
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
   packages/tools/changelog-generator-wrapper:
     dependencies:
       '@changesets/cli':
