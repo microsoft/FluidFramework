@@ -26,20 +26,6 @@ module.exports = {
 		"no-void": "error",
 		"require-atomic-updates": "error",
 
-		// In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
-		// API documentation. For example, type inference might decide a function returns a concrete type
-		// instead of an interface. This has no runtime impact, but would cause compilation problems.
-		"@typescript-eslint/explicit-function-return-type": [
-			"error",
-			{
-				allowExpressions: true,
-				allowTypedFunctionExpressions: true,
-				allowHigherOrderFunctions: true,
-				allowDirectConstAssertionInArrowFunctions: true,
-				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
-			},
-		],
-
 		// #region `unicorn` rule overrides
 
 		// TODO: Enable this rule and fix violations once eslint9 upgrade is done
