@@ -23,8 +23,6 @@ module.exports = {
 	rules: {
 		// RECOMMENDED RULES
 		"@rushstack/no-new-null": "error",
-		"no-empty": "error",
-		"no-void": "error",
 		"require-atomic-updates": "error",
 
 		// In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our

@@ -1409,7 +1409,7 @@
             }
         ],
         "no-empty": [
-            "off",
+            "error",
             {
                 "allowEmptyCatch": false
             }
@@ -1720,7 +1720,7 @@
             "error"
         ],
         "no-void": [
-            "off",
+            "error",
             {
                 "allowAsStatement": false
             }
