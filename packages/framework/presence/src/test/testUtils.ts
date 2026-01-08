@@ -152,13 +152,13 @@ export function prepareConnectedPresence(
 } {
 	const localAvgLatency = 10;
 
-	const { presence, processSignal, connectPresence } = prepareDisconnectedPresence(
+	const { presence, processSignal, connect } = prepareDisconnectedPresence(
 		runtime,
 		attendeeId,
 		clock,
 		logger,
 	);
-	connectPresence(clientConnectionId);
+	connect(clientConnectionId);
 
 	return {
 		presence,
@@ -190,7 +190,7 @@ export function prepareDisconnectedPresence(
 	/**
 	 * Connects presence using the given client connection id.
 	 */
-	connectPresence: (clientConnectionId: ClientConnectionId) => void;
+	connect: (clientConnectionId: ClientConnectionId) => void;
 } {
 	// Ensure runtime is in disconnected state
 	runtime.clientId = undefined;
@@ -218,7 +218,7 @@ export function prepareDisconnectedPresence(
 		throw logErrors;
 	}
 
-	const connectPresence = (clientConnectionId: ClientConnectionId): void => {
+	const connect = (clientConnectionId: ClientConnectionId): void => {
 		// This logic needs to be kept in sync with datastore manager.
 		const members = runtime.audience.getMembers();
 		members.delete(clientConnectionId);
@@ -285,7 +285,7 @@ export function prepareDisconnectedPresence(
 	return {
 		presence,
 		processSignal,
-		connectPresence,
+		connect,
 	};
 }
 

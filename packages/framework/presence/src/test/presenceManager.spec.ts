@@ -93,9 +93,9 @@ describe("Presence", () => {
 			const selfAttendeeId = "selfAttendeeId";
 			const selfClientConnectionId = "client9";
 
-			it("is announced via `attendeeConnected` when local client connects", () => {
+			it("is announced via `attendeeConnected` when presence initializes while self is in Audience", () => {
 				// Setup - create presence in disconnected state
-				const { presence, connectPresence } = prepareDisconnectedPresence(
+				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
 					selfAttendeeId,
 					clock,
@@ -107,8 +107,8 @@ describe("Presence", () => {
 					connectedAttendees.push(attendee);
 				});
 
-				// Act - connect presence
-				connectPresence(selfClientConnectionId);
+				// Act - connect
+				connect(selfClientConnectionId);
 
 				// Verify - self attendee was announced
 				const selfAttendee = presence.attendees.getMyself();
@@ -124,9 +124,27 @@ describe("Presence", () => {
 				);
 			});
 
+			it('has status "Disconnected" when presence initializes while self not in Audience', () => {
+				// Setup - create presence in disconnected state
+				const { presence } = prepareDisconnectedPresence(
+					runtime,
+					selfAttendeeId,
+					clock,
+					logger,
+				);
+
+				// Verify - self attendee has "Disconnected" status
+				const selfAttendee = presence.attendees.getMyself();
+				assert.strictEqual(
+					selfAttendee.getConnectionStatus(),
+					AttendeeStatus.Disconnected,
+					"Self attendee should have status 'Disconnected' when presence initializes while self not in Audience",
+				);
+			});
+
 			it('has status "Connected" when announced via `attendeeConnected`', () => {
 				// Setup - create presence in disconnected state
-				const { presence, connectPresence } = prepareDisconnectedPresence(
+				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
 					selfAttendeeId,
 					clock,
@@ -145,16 +163,19 @@ describe("Presence", () => {
 					}
 				});
 
-				// Act - connect presence
-				connectPresence(selfClientConnectionId);
+				// Act - connect
+				connect(selfClientConnectionId);
 
 				// Verify - attendeeConnected was raised
-				assert(attendeeConnectedRaised, "attendeeConnected event should be raised for self attendee");
+				assert(
+					attendeeConnectedRaised,
+					"attendeeConnected event should be raised for self attendee",
+				);
 			});
 
 			it("is announced via `attendeeConnected` when local client reconnects", () => {
 				// Setup - create presence in disconnected state, connect and then disconnect
-				const { presence, connectPresence } = prepareDisconnectedPresence(
+				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
 					selfAttendeeId,
 					clock,
@@ -162,7 +183,7 @@ describe("Presence", () => {
 				);
 
 				// Initial connection
-				connectPresence(selfClientConnectionId);
+				connect(selfClientConnectionId);
 
 				// Disconnect
 				runtime.disconnect();
