@@ -13,8 +13,8 @@ import * as util from "util";
 import type * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import { Server } from "socket.io";
 import { setupMaster, setupWorker } from "@socket.io/sticky";
+import { Server } from "socket.io";
 
 import * as socketIo from "./socketIoServer";
 

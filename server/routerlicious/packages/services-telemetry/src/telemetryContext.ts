@@ -69,17 +69,17 @@ export class NullTelemetryContext implements ITelemetryContext {
 }
 const nullTelemetryContext = new NullTelemetryContext();
 
-export const getGlobal = () => (typeof window !== "undefined" ? window : global);
+export const getGlobal: () => any = () => (typeof window !== "undefined" ? window : global);
 
 /**
  * @internal
  */
-export const getGlobalTelemetryContext = () =>
+export const getGlobalTelemetryContext: () => ITelemetryContext = () =>
 	(getGlobal().telemetryContext as ITelemetryContext | undefined) ?? nullTelemetryContext;
 
 /**
  * @internal
  */
-export const setGlobalTelemetryContext = (telemetryContext: ITelemetryContext) => {
+export const setGlobalTelemetryContext: (telemetryContext: ITelemetryContext) => void = (telemetryContext: ITelemetryContext) => {
 	getGlobal().telemetryContext = telemetryContext;
 };

@@ -75,7 +75,7 @@ describe("LocalDeltaConnectionServer", () => {
 	async function addJoinHandler(socket: IWebSocket): Promise<any> {
 		const joinP = new Deferred<any>();
 
-		const joinHandler = (msgs: ISequencedDocumentSystemMessage[]) => {
+		const joinHandler: (msgs: ISequencedDocumentSystemMessage[]) => void = (msgs: ISequencedDocumentSystemMessage[]) => {
 			for (const msg of msgs) {
 				if (joinP.isCompleted === false) {
 					if (msg.type !== MessageType.ClientJoin) {
@@ -97,7 +97,7 @@ describe("LocalDeltaConnectionServer", () => {
 	async function addMessagehandler(socket: IWebSocket): Promise<any> {
 		const messageP = new Deferred<any>();
 
-		const messageHandler = (msgs: ISequencedDocumentMessage[]) => {
+		const messageHandler: (msgs: ISequencedDocumentMessage[]) => void = (msgs: ISequencedDocumentMessage[]) => {
 			for (const msg of msgs) {
 				if (messageP.isCompleted === false) {
 					if (msg.type === MessageType.Operation) {

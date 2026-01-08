@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IThrottlerResponse } from "@fluidframework/server-services-core";
 import { strict as assert } from "assert";
+
+import { IThrottlerResponse } from "@fluidframework/server-services-core";
 import Sinon from "sinon";
+
 import { TestThrottlerHelper } from "../testThrottlerHelper";
 
 describe("Test for Test Utils", () => {

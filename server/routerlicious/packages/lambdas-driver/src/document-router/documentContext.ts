@@ -106,7 +106,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 	/**
 	 * Sets the last successfully processed offset.
 	 */
-	public setLastSuccessfulOffset(offset: number) {
+	public setLastSuccessfulOffset(offset: number): void {
 		this.lastSuccessfulOffsetInternal = offset;
 	}
 
@@ -115,14 +115,14 @@ export class DocumentContext extends EventEmitter implements IContext {
 	 * It is different than pause() method which emits the pause event.
 	 * This is used to set the state to pause when another doc in the same kafka partition triggered pause and we want to pause all the docs in that kafka partition.
 	 */
-	public setStateToPause() {
+	public setStateToPause(): void {
 		this.headPaused = true;
 	}
 
 	/**
 	 * Updates the head offset for the context.
 	 */
-	public setHead(head: IQueuedMessage) {
+	public setHead(head: IQueuedMessage): boolean {
 		assert(
 			head.offset > this.head.offset || this.headPaused,
 			`Head offset ${head.offset} must be greater than the current head offset ${this.head.offset} or headPaused should be true (${this.headPaused}). Topic ${head.topic}, partition ${head.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
@@ -179,7 +179,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 		return true;
 	}
 
-	public checkpoint(message: IQueuedMessage, restartOnCheckpointFailure?: boolean) {
+	public checkpoint(message: IQueuedMessage, restartOnCheckpointFailure?: boolean): void {
 		if (this.closed) {
 			return;
 		}
@@ -227,7 +227,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 		this.emit("checkpoint", restartOnCheckpointFailure);
 	}
 
-	public error(error: any, errorData: IContextErrorData) {
+	public error(error: any, errorData: IContextErrorData): void {
 		if (this.closed) {
 			// don't emit errors after closing
 			Lumberjack.info("Skipping emitting error since the documentContext is already closed", {
@@ -241,22 +241,22 @@ export class DocumentContext extends EventEmitter implements IContext {
 		this.emit("error", error, errorData);
 	}
 
-	public close() {
+	public close(): void {
 		this.closed = true;
 
 		this.removeAllListeners();
 	}
 
-	public getContextError() {
+	public getContextError(): any {
 		return this.contextError;
 	}
 
-	public pause(offset?: number, reason?: any) {
+	public pause(offset?: number, reason?: any): void {
 		this.headPaused = true;
 		this.emit("pause", offset, reason);
 	}
 
-	public resume() {
+	public resume(): void {
 		this.emit("resume");
 	}
 }

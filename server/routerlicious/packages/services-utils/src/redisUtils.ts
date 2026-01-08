@@ -58,7 +58,7 @@ export const executeRedisMultiWithHmsetExpire = async (
 				resolve();
 			})
 			.catch((error) => {
-				reject(error);
+				reject(error instanceof Error ? error : new Error(String(error)));
 			});
 	});
 
@@ -116,7 +116,7 @@ export const executeRedisMultiWithHmsetExpireAndLpush = async (
 				resolve();
 			})
 			.catch((error) => {
-				reject(error);
+				reject(error instanceof Error ? error : new Error(String(error)));
 			});
 	});
 

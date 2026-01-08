@@ -52,7 +52,7 @@ export class KafkaNodeConsumer implements IConsumer {
 		}
 	}
 
-	public isConnected() {
+	public isConnected(): boolean {
 		return this.client ? true : false;
 	}
 
@@ -82,7 +82,7 @@ export class KafkaNodeConsumer implements IConsumer {
 		return new Promise<void>((resolve, reject) => {
 			this.consumerGroup.sendOffsetCommitRequest(commitRequest, (err, data) => {
 				if (err) {
-					reject(err);
+					reject(err instanceof Error ? err : new Error(String(err)));
 				} else {
 					resolve();
 				}
@@ -108,15 +108,15 @@ export class KafkaNodeConsumer implements IConsumer {
 		return this;
 	}
 
-	public async pause() {
+	public async pause(): Promise<void> {
 		this.consumerGroup.pause();
 	}
 
-	public async resume() {
+	public async resume(): Promise<void> {
 		this.consumerGroup.resume();
 	}
 
-	private async connect() {
+	private async connect(): Promise<void> {
 		this.client = new kafka.KafkaClient(this.clientOptions);
 		const groupId = this.groupId;
 

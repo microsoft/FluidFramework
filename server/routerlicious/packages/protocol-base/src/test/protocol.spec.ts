@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	MessageType,
 	type ISequencedDocumentMessage,
@@ -12,6 +13,7 @@ import {
 	type IClientDetails,
 	type IUser,
 } from "@fluidframework/protocol-definitions";
+
 import { ProtocolOpHandler } from "../protocol";
 
 describe("Protocol", () => {

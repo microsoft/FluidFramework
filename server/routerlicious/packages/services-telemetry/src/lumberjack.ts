@@ -31,10 +31,10 @@ const defaultLumberjackOptions: ILumberjackOptions = {
 	enableSanitization: false,
 };
 
-export const getGlobalLumberjackInstance = () =>
+export const getGlobalLumberjackInstance: () => Lumberjack | undefined = () =>
 	getGlobal().lumberjackInstance as Lumberjack | undefined;
 
-export const setGlobalLumberjackInstance = (lumberjackInstance: Lumberjack) => {
+export const setGlobalLumberjackInstance: (lumberjackInstance: Lumberjack) => void = (lumberjackInstance: Lumberjack) => {
 	getGlobal().lumberjackInstance = lumberjackInstance;
 };
 
@@ -81,7 +81,7 @@ export class Lumberjack {
 		engines: ILumberjackEngine[],
 		schemaValidators?: ILumberjackSchemaValidator[],
 		options?: Partial<ILumberjackOptions>,
-	) {
+	): Lumberjack {
 		const newInstance = new Lumberjack();
 		newInstance.setup(engines, schemaValidators, options);
 		return newInstance;
@@ -91,7 +91,7 @@ export class Lumberjack {
 		engines: ILumberjackEngine[],
 		schemaValidators?: ILumberjackSchemaValidator[],
 		options?: Partial<ILumberjackOptions>,
-	) {
+	): void {
 		this.options = options;
 		this.instance.setup(engines, schemaValidators, options);
 	}
@@ -99,7 +99,7 @@ export class Lumberjack {
 	public static newLumberMetric<T extends string = LumberEventName>(
 		eventName: T,
 		properties?: Map<string, any> | Record<string, any>,
-	) {
+	): Lumber<T> {
 		return this.instance.newLumberMetric<T>(eventName, properties);
 	}
 
@@ -108,19 +108,19 @@ export class Lumberjack {
 		level: LogLevel,
 		properties?: Map<string, any> | Record<string, any>,
 		exception?: any,
-	) {
+	): void {
 		this.instance.log(message, level, properties, exception);
 	}
 
-	public static debug(message: string, properties?: Map<string, any> | Record<string, any>) {
+	public static debug(message: string, properties?: Map<string, any> | Record<string, any>): void {
 		this.instance.log(message, LogLevel.Debug, properties);
 	}
 
-	public static verbose(message: string, properties?: Map<string, any> | Record<string, any>) {
+	public static verbose(message: string, properties?: Map<string, any> | Record<string, any>): void {
 		this.instance.log(message, LogLevel.Verbose, properties);
 	}
 
-	public static info(message: string, properties?: Map<string, any> | Record<string, any>) {
+	public static info(message: string, properties?: Map<string, any> | Record<string, any>): void {
 		this.instance.log(message, LogLevel.Info, properties);
 	}
 
@@ -128,7 +128,7 @@ export class Lumberjack {
 		message: string,
 		properties?: Map<string, any> | Record<string, any>,
 		exception?: any,
-	) {
+	): void {
 		this.instance.log(message, LogLevel.Warning, properties, exception);
 	}
 
@@ -136,7 +136,7 @@ export class Lumberjack {
 		message: string,
 		properties?: Map<string, any> | Record<string, any>,
 		exception?: any,
-	) {
+	): void {
 		this.instance.log(message, LogLevel.Error, properties, exception);
 	}
 
@@ -144,7 +144,7 @@ export class Lumberjack {
 		engines: ILumberjackEngine[],
 		schemaValidators?: ILumberjackSchemaValidator[],
 		options?: Partial<ILumberjackOptions>,
-	) {
+	): void {
 		if (this._isSetupCompleted) {
 			handleError(
 				LumberEventName.LumberjackError,
@@ -184,7 +184,7 @@ export class Lumberjack {
 	public newLumberMetric<T extends string = LumberEventName>(
 		eventName: T,
 		properties?: Map<string, any> | Record<string, any>,
-	) {
+	): Lumber<T> {
 		this.errorOnIncompleteSetup();
 		return new Lumber<T>(
 			eventName,
@@ -196,7 +196,7 @@ export class Lumberjack {
 		);
 	}
 
-	public static isSetupCompleted() {
+	public static isSetupCompleted(): boolean {
 		return this.instance._isSetupCompleted;
 	}
 
@@ -205,7 +205,7 @@ export class Lumberjack {
 		level: LogLevel,
 		properties?: Map<string, any> | Record<string, any>,
 		exception?: any,
-	) {
+	): void {
 		this.errorOnIncompleteSetup();
 		const lumberProperties = this._options.enableGlobalTelemetryContext
 			? {
@@ -231,15 +231,15 @@ export class Lumberjack {
 		}
 	}
 
-	public debug(message: string, properties?: Map<string, any> | Record<string, any>) {
+	public debug(message: string, properties?: Map<string, any> | Record<string, any>): void {
 		this.log(message, LogLevel.Debug, properties);
 	}
 
-	public verbose(message: string, properties?: Map<string, any> | Record<string, any>) {
+	public verbose(message: string, properties?: Map<string, any> | Record<string, any>): void {
 		this.log(message, LogLevel.Verbose, properties);
 	}
 
-	public info(message: string, properties?: Map<string, any> | Record<string, any>) {
+	public info(message: string, properties?: Map<string, any> | Record<string, any>): void {
 		this.log(message, LogLevel.Info, properties);
 	}
 
@@ -247,7 +247,7 @@ export class Lumberjack {
 		message: string,
 		properties?: Map<string, any> | Record<string, any>,
 		exception?: any,
-	) {
+	): void {
 		this.log(message, LogLevel.Warning, properties, exception);
 	}
 
@@ -255,11 +255,11 @@ export class Lumberjack {
 		message: string,
 		properties?: Map<string, any> | Record<string, any>,
 		exception?: any,
-	) {
+	): void {
 		this.log(message, LogLevel.Error, properties, exception);
 	}
 
-	private errorOnIncompleteSetup() {
+	private errorOnIncompleteSetup(): void {
 		if (!this._isSetupCompleted) {
 			handleError(
 				LumberEventName.LumberjackError,

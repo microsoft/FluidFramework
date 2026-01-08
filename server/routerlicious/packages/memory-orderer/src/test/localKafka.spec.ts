@@ -5,12 +5,13 @@
 
 import { strict as assert } from "assert";
 
-import { LocalKafka } from "../localKafka";
-import { LocalContext } from "../localContext";
 import { IQueuedMessage } from "@fluidframework/server-services-core";
 
+import { LocalContext } from "../localContext";
+import { LocalKafka } from "../localKafka";
+
 describe("LocalKafka", () => {
-	function createMessage(sequenceNumber: number) {
+	function createMessage(sequenceNumber: number): object {
 		return {
 			sequenceNumber,
 		};
@@ -30,18 +31,18 @@ describe("LocalKafka", () => {
 			},
 		});
 
-		localKafka.send([createMessage(1), createMessage(2)], "topic");
+		void localKafka.send([createMessage(1), createMessage(2)], "topic");
 		assert.strictEqual(sequenceNumber, 2);
 
-		localKafka.send([createMessage(3)], "topic");
+		void localKafka.send([createMessage(3)], "topic");
 		assert.strictEqual(sequenceNumber, 3);
 
-		localKafka.send([createMessage(4)], "topic");
+		void localKafka.send([createMessage(4)], "topic");
 		assert.strictEqual(sequenceNumber, 4);
 
 		assert.strictEqual(localKafka.length, 0);
 
-		localKafka.close();
+		void localKafka.close();
 	});
 
 	it("works with two subscriptions", async () => {
@@ -69,36 +70,36 @@ describe("LocalKafka", () => {
 			},
 		});
 
-		localKafka.send([createMessage(1), createMessage(2)], "topic");
+		void localKafka.send([createMessage(1), createMessage(2)], "topic");
 		assert.strictEqual(sequenceNumber1, 2);
 		assert.strictEqual(sequenceNumber2, 2);
 
-		localKafka.send([createMessage(3)], "topic");
+		void localKafka.send([createMessage(3)], "topic");
 		assert.strictEqual(sequenceNumber1, 3);
 		assert.strictEqual(sequenceNumber2, 3);
 
-		localKafka.send([createMessage(4)], "topic");
+		void localKafka.send([createMessage(4)], "topic");
 		assert.strictEqual(sequenceNumber1, 4);
 		assert.strictEqual(sequenceNumber2, 4);
 
 		assert.strictEqual(localKafka.length, 0);
 
-		localKafka.close();
+		void localKafka.close();
 	});
 
 	it("close clears queue", async () => {
 		const localKafka = new LocalKafka();
 
-		localKafka.send([createMessage(1), createMessage(2)], "topic");
+		void localKafka.send([createMessage(1), createMessage(2)], "topic");
 		assert.strictEqual(localKafka.length, 2);
 
-		localKafka.send([createMessage(3)], "topic");
+		void localKafka.send([createMessage(3)], "topic");
 		assert.strictEqual(localKafka.length, 3);
 
-		localKafka.send([createMessage(4)], "topic");
+		void localKafka.send([createMessage(4)], "topic");
 		assert.strictEqual(localKafka.length, 4);
 
-		localKafka.close();
+		void localKafka.close();
 
 		assert.strictEqual(localKafka.length, 0);
 	});

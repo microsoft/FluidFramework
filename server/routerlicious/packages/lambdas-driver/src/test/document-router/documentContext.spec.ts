@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { DocumentContext } from "../../document-router/documentContext";
-import { DebugLogger, TestKafka } from "@fluidframework/server-test-utils";
-import { IContextErrorData, IRoutingKey } from "@fluidframework/server-services-core";
 
-function validateException(fn: () => void) {
+import { IContextErrorData, IRoutingKey } from "@fluidframework/server-services-core";
+import { DebugLogger, TestKafka } from "@fluidframework/server-test-utils";
+
+import { DocumentContext } from "../../document-router/documentContext";
+
+function validateException(fn: () => void): void {
 	try {
 		fn();
 		assert.ok(false);
@@ -20,12 +22,12 @@ function validateException(fn: () => void) {
 describe("document-router", () => {
 	describe("DocumentContext", () => {
 		let testContext: DocumentContext;
-		let routingKey: IRoutingKey = {
+		const routingKey: IRoutingKey = {
 			tenantId: "test-tenant-id",
 			documentId: "test-document-id",
 		};
-		let offset0 = TestKafka.createdQueuedMessage(0);
-		let contextTailOffset = TestKafka.createdQueuedMessage(-1);
+		const offset0 = TestKafka.createdQueuedMessage(0);
+		const contextTailOffset = TestKafka.createdQueuedMessage(-1);
 
 		beforeEach(async () => {
 			testContext = new DocumentContext(

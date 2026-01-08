@@ -1357,7 +1357,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			} else if (message.operation.type === MessageType.Summarize) {
 				// No need to add additionalContent for summarize messages using the single commit flow
 				// because scribe will not be involved.
-				// eslint-disable-next-line unicorn/no-lonely-if
+				 
 				if (
 					!this.serviceConfiguration.deli.skipSummarizeAugmentationForSingleCommmit ||
 					!(JSON.parse(message.operation.contents as string) as ISummaryContent).details

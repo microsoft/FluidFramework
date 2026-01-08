@@ -23,7 +23,7 @@ export const getMessageMetadata = (
 	tenantId: string,
 	correlationId?: string,
 	// TODO: add a type for this
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
+	 
 ) => ({
 	documentId,
 	tenantId,

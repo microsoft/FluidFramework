@@ -26,15 +26,15 @@ export class LocalKafka implements IProducer {
 
 	constructor(private messageOffset = 0) {}
 
-	public get length() {
+	public get length(): number {
 		return this.qeueue.length;
 	}
 
-	public isConnected() {
+	public isConnected(): boolean {
 		return true;
 	}
 
-	public subscribe(kafakaSubscriber: IKafkaSubscriber) {
+	public subscribe(kafakaSubscriber: IKafkaSubscriber): void {
 		const kafkaSubscription = new LocalKafkaSubscription(kafakaSubscriber, this.qeueue);
 		kafkaSubscription.on("processed", (queueOffset) => {
 			if (this.minimumQueueOffset >= queueOffset) {

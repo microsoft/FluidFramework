@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { TestKafka } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
+
+import { TestKafka } from "@fluidframework/server-test-utils";
+
 import { KafkaRunnerFactory } from "../../kafka-service/runnerFactory";
+
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
 
 describe("kafka-service", () => {
@@ -24,7 +27,7 @@ describe("kafka-service", () => {
 
 				const runner = testFactory.create({
 					consumer,
-					dispose: () => Promise.resolve(),
+					dispose: async () => Promise.resolve(),
 					lambdaFactory,
 				});
 				assert.ok(runner);

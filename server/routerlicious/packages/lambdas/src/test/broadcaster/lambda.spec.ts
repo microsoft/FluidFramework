@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import {
 	DefaultServiceConfiguration,
 	IPartitionLambda,
@@ -14,7 +16,7 @@ import {
 	TestContext,
 	TestPublisher,
 } from "@fluidframework/server-test-utils";
-import { strict as assert } from "assert";
+
 import { BroadcasterLambda } from "../../broadcaster/lambda";
 
 describe("Routerlicious", () => {
@@ -58,7 +60,7 @@ describe("Routerlicious", () => {
 					const numMessages = 10;
 					for (let i = 0; i < numMessages; i++) {
 						const message = messageFactory.createSequencedOperation();
-						lambda.handler(
+						await lambda.handler(
 							kafkaMessageFactory.sequenceMessage(message, testDocumentId),
 						);
 					}

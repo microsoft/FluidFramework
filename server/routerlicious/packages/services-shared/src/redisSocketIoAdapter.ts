@@ -228,6 +228,7 @@ export class RedisSocketIoAdapter extends Adapter {
 	/**
 	 * Removes a socket
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	public async delAll(socketId: SocketId): Promise<void> {
 		if (!this.isDefaultNamespaceAndDisable) {
 			const rooms = this.sids.get(socketId);

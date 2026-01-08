@@ -5,13 +5,14 @@
 
 import { defaultHash } from "@fluidframework/server-services-client";
 import * as testUtils from "@fluidframework/server-test-utils";
+import Sinon from "sinon";
+
 import { CheckpointContext } from "../../deli/checkpointContext";
 import {
 	createDeliCheckpointManagerFromCollection,
 	ICheckpointParams,
 } from "../../deli/checkpointManager";
 import { CheckpointReason } from "../../utils";
-import Sinon from "sinon";
 
 describe("Routerlicious", () => {
 	describe("Deli", () => {
@@ -79,14 +80,14 @@ describe("Routerlicious", () => {
 
 			describe(".checkpoint", () => {
 				it("Should be able to submit a new checkpoint", async () => {
-					testCheckpointContext.checkpoint(createCheckpoint(0, 0));
+					await testCheckpointContext.checkpoint(createCheckpoint(0, 0));
 					await testContext.waitForOffset(0);
 				});
 
 				it("Should be able to submit multiple checkpoints", async () => {
 					const numCheckpoints = 10;
 					for (let i = 0; i < numCheckpoints + 1; i++) {
-						testCheckpointContext.checkpoint(createCheckpoint(i, i));
+						await testCheckpointContext.checkpoint(createCheckpoint(i, i));
 					}
 					await testContext.waitForOffset(numCheckpoints);
 				});

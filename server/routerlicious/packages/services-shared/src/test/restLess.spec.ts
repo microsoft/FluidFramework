@@ -4,11 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { AxiosRequestConfig } from "axios";
-import { json, urlencoded } from "body-parser";
-import express from "express";
-import request from "supertest";
+
 import { RestLessClient } from "@fluidframework/server-services-client";
+import { AxiosRequestConfig } from "axios";
+import express, { json, urlencoded } from "express";
+import request from "supertest";
+
 import { RestLessServer } from "../restLessServer";
 
 describe("RestLess", () => {

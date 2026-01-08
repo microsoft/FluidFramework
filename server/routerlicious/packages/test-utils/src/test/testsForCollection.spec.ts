@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TestCollection } from "../testCollection";
 
 describe("Test for TestUtils", () => {

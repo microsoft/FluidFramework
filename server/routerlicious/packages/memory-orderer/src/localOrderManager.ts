@@ -29,7 +29,7 @@ export class LocalOrderManager {
 		const key = this.getKey(tenantId, documentId);
 
 		let ordererP = this.localOrderers.get(key);
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+
 		if (!ordererP) {
 			ordererP = this.getCore(tenantId, documentId);
 			this.localOrderers.set(key, ordererP);
@@ -38,11 +38,11 @@ export class LocalOrderManager {
 		return ordererP;
 	}
 
-	public async remove(tenantId: string, documentId: string) {
+	public async remove(tenantId: string, documentId: string): Promise<void> {
 		const key = this.getKey(tenantId, documentId);
 
 		const ordererP = this.localOrderers.get(key);
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+
 		if (ordererP) {
 			this.localOrderers.delete(key);
 
@@ -65,7 +65,7 @@ export class LocalOrderManager {
 		return orderer;
 	}
 
-	private createLocalNode() {
+	private createLocalNode(): void {
 		this.localNodeP = this.nodeFactory.create();
 		this.localNodeP
 			.then((localNode) => {
@@ -78,7 +78,7 @@ export class LocalOrderManager {
 			});
 	}
 
-	private getKey(tenantId: string, documentId: string) {
+	private getKey(tenantId: string, documentId: string): string {
 		return `${tenantId}/${documentId}`;
 	}
 }

@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
-import { CheckpointManager } from "../../kafka-service/checkpointManager";
+
 import { IQueuedMessage } from "@fluidframework/server-services-core";
+import { TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
+
+import { CheckpointManager } from "../../kafka-service/checkpointManager";
+
 
 describe("kafka-service", () => {
 	describe("CheckpointManager", () => {
@@ -24,7 +27,7 @@ describe("kafka-service", () => {
 			/**
 			 * Helper function that invokes a checkpoint assuming it will fail
 			 */
-			async function verifyCheckpointError(queuedMessage: IQueuedMessage) {
+			async function verifyCheckpointError(queuedMessage: IQueuedMessage): Promise<void> {
 				await checkpointManager
 					.checkpoint(queuedMessage)
 					.then(() => {

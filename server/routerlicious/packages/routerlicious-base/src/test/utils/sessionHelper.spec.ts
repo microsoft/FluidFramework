@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import sinon from "sinon";
+import { strict as assert } from "assert";
+
 import {
 	IDocumentRepository,
 	IDocument,
 	MongoDocumentRepository,
 } from "@fluidframework/server-services-core";
+import sinon from "sinon";
+
 import { getSession } from "../../utils/sessionHelper";
-import { strict as assert } from "assert";
+
 
 describe("sessionHelper", () => {
 	describe("getSession", () => {

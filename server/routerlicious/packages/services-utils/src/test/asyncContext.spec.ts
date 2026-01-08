@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { ITelemetryContextProperties } from "@fluidframework/server-services-telemetry";
 import { v4 as uuid } from "uuid";
-import { strict as assert } from "assert";
+
 import {
 	AsyncLocalStorageAbortControllerContext,
 	AsyncLocalStorageContextProvider,
 	AsyncLocalStorageTelemetryContext,
 } from "../asyncContext";
 
-describe("AsyncContext", function () {
-	describe("AsyncLocalStorageContextProvider", function () {
+describe("AsyncContext", () => {
+	describe("AsyncLocalStorageContextProvider", () => {
 		class MockContextProviderLogger<T> {
 			private _events: (T | undefined)[] = [];
 
@@ -70,7 +72,7 @@ describe("AsyncContext", function () {
 			};
 			const main = async (id: string) => {
 				return new Promise<void>((resolve) => {
-					contextProvider.bindContext(id, () => helper().then(resolve));
+					contextProvider.bindContext(id, async () => helper().then(resolve));
 				});
 			};
 			const id1 = uuid();
@@ -144,7 +146,7 @@ describe("AsyncContext", function () {
 		});
 	});
 
-	describe("AsyncLocalStorageTelemetryContext", function () {
+	describe("AsyncLocalStorageTelemetryContext", () => {
 		class MockTelemetryContextLogger {
 			private _events: Partial<ITelemetryContextProperties>[] = [];
 
@@ -201,7 +203,7 @@ describe("AsyncContext", function () {
 			};
 			const main = async (correlationId: string) => {
 				return new Promise<void>((resolve) => {
-					telemetryContext.bindProperties({ correlationId }, () =>
+					telemetryContext.bindProperties({ correlationId }, async () =>
 						helper().then(resolve),
 					);
 				});
@@ -260,7 +262,7 @@ describe("AsyncContext", function () {
 		});
 	});
 
-	describe("AsyncLocalStorageAbortControllerContext", function () {
+	describe("AsyncLocalStorageAbortControllerContext", () => {
 		class MockAbortControllerContextLogger {
 			private _events: Partial<AbortController>[] = [];
 
@@ -322,7 +324,7 @@ describe("AsyncContext", function () {
 			};
 			const main = async (abortController: AbortController) => {
 				return new Promise<void>((resolve) => {
-					abortControllerContext.bindAbortController(abortController, () =>
+					abortControllerContext.bindAbortController(abortController, async () =>
 						helper().then(resolve),
 					);
 				});

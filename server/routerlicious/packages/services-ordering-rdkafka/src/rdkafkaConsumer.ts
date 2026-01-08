@@ -175,7 +175,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	/**
 	 * Returns true if the consumer is connected
 	 */
-	public isConnected() {
+	public isConnected(): boolean {
 		return this.consumer?.isConnected() ? true : false;
 	}
 
@@ -186,7 +186,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		return this.latestOffsets.get(partitionId);
 	}
 
-	protected async connect() {
+	protected async connect(): Promise<void> {
 		if (this.closed) {
 			return;
 		}
@@ -485,13 +485,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 	}
 
-	public async pause() {
+	public async pause(): Promise<void> {
 		this.consumer?.unsubscribe();
 		this.emit("paused");
 		return Promise.resolve();
 	}
 
-	public async resume() {
+	public async resume(): Promise<void> {
 		this.consumer?.subscribe([this.topic]);
 		this.emit("resumed");
 		return Promise.resolve();
@@ -582,7 +582,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	 * the message will be saved and processed after rebalancing is completed.
 	 * @param message - The message
 	 */
-	private processMessage(message: kafkaTypes.Message) {
+	private processMessage(message: kafkaTypes.Message): void {
 		const partition = message.partition;
 
 		if (!this.assignedPartitions.has(partition)) {
@@ -651,7 +651,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		consumer: kafkaTypes.KafkaConsumer | undefined,
 		err: kafkaTypes.LibrdKafkaError,
 		assignments: kafkaTypes.Assignment[],
-	) {
+	): void {
 		if (!consumer) {
 			return;
 		}
@@ -713,7 +713,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private eagerRebalanceHandler(
 		err: kafkaTypes.LibrdKafkaError,
 		topicPartitions: kafkaTypes.TopicPartition[],
-	) {
+	): void {
 		const newAssignedPartitions = new Set<number>(topicPartitions.map((tp) => tp.partition));
 
 		if (
@@ -774,7 +774,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private cooperativeRebalanceHandler(
 		err: kafkaTypes.LibrdKafkaError,
 		topicPartitions: kafkaTypes.TopicPartition[],
-	) {
+	): void {
 		if (topicPartitions.length === 0) {
 			// According to Kafka's cooperative rebalancing protocol, there can be multiple rebalancing rounds.
 			// During these rounds, there might be intermediate states where a consumer receives an empty partition list as part of the protocol.

@@ -55,27 +55,27 @@ class ProxySocketConnection implements IOrdererConnection {
 		private readonly details: IConnectedMessage,
 	) {}
 
-	public async connect() {
+	public async connect(): Promise<void> {
 		return;
 	}
 
-	public async order(messages: IDocumentMessage[]) {
+	public async order(messages: IDocumentMessage[]): Promise<void> {
 		this.node.send(this.cid, "order", messages);
 	}
 
-	public async disconnect() {
+	public async disconnect(): Promise<void> {
 		this.node.send(this.cid, "disconnect", null);
 	}
 
-	public emit(op: string, id: string, ...data: any[]) {
+	public emit(op: string, id: string, ...data: any[]): void {
 		this.socket.emit(op, id, ...data);
 	}
 
-	public once(event: "error", listener: (...args: any[]) => void) {
+	public once(event: "error", listener: (...args: any[]) => void): void {
 		return;
 	}
 
-	public off(event: "error", listener: (...args: any[]) => void) {
+	public off(event: "error", listener: (...args: any[]) => void): void {
 		return;
 	}
 }
@@ -198,7 +198,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 		return orderer;
 	}
 
-	public send(cid: number, type: string, payload: any) {
+	public send(cid: number, type: string, payload: any): void {
 		this.socket?.send({
 			cid,
 			payload,
@@ -226,14 +226,14 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 		return deferred.promise;
 	}
 
-	private route(message: IOpMessage) {
+	private route(message: IOpMessage): void {
 		const sockets = this.topicMap.get(message.topic);
 		for (const socket of sockets ?? []) {
 			socket.emit(message.op, message.data[0], ...message.data.slice(1));
 		}
 	}
 
-	private getNextCid() {
+	private getNextCid(): number {
 		return this.cid++;
 	}
 }

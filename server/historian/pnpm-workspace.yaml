@@ -9,4 +9,5 @@
 #    output directories during compilation.
 
 packages:
+  - "../../common/build/eslint-config-fluid"
   - "packages/*"

@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IThrottlingMetrics, IUsageData } from "@fluidframework/server-services-core";
+
 import { TestThrottleAndUsageStorageManager } from "../testThrottleAndUsageStorageManager";
 
 describe("Test for Test Utils", () => {

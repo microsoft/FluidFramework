@@ -23,7 +23,8 @@ export function executeOnInterval(
 			return scheduledJob;
 		}
 
-		(async () => api())()
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	(async () => api())()
 			.then((res) => {
 				Lumberjack.info(`Success executing ${callName}`);
 			})

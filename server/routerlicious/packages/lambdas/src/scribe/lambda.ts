@@ -40,7 +40,6 @@ import {
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
-import * as _ from "lodash";
 
 import {
 	createSessionMetric,
@@ -584,8 +583,7 @@ export class ScribeLambda implements IPartitionLambda {
 					typeof message.contents === "string" &&
 					message.type !== MessageType.ClientLeave
 				) {
-					// eslint-disable-next-line import-x/namespace
-					const clonedMessage = _.cloneDeep(message);
+					const clonedMessage = structuredClone(message);
 					clonedMessage.contents = JSON.parse(clonedMessage.contents as string);
 					this.protocolHandler.processMessage(clonedMessage, false);
 				} else {

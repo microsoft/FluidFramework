@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { defaultHash, getNextHash } from "@fluidframework/server-services-client";
 import {
@@ -27,9 +29,8 @@ import {
 	TestTenantManager,
 	TestNotImplementedCheckpointRepository,
 } from "@fluidframework/server-test-utils";
-import { strict as assert } from "assert";
-import * as _ from "lodash";
 import Sinon from "sinon";
+
 import { DeliLambdaFactory } from "../../deli/lambdaFactory";
 
 const MinSequenceNumberWindow = 2000;
@@ -99,6 +100,7 @@ describe("Routerlicious", () => {
 				);
 
 				// Create a second client and have it join
+				// eslint-disable-next-line no-param-reassign
 				start += MinSequenceNumberWindow;
 				await lambda.handler(
 					kafkaMessageFactory.sequenceMessage(
@@ -118,7 +120,7 @@ describe("Routerlicious", () => {
 			}
 
 			beforeEach(async () => {
-				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
+				const dbFactory = new TestDbFactory(structuredClone({ documents: testData }));
 				const mongoManager = new MongoManager(dbFactory);
 				const documentRepository = new TestNotImplementedDocumentRepository();
 				const checkpointRepository = new TestNotImplementedCheckpointRepository();
@@ -130,14 +132,14 @@ describe("Routerlicious", () => {
 				Sinon.replace(
 					documentRepository,
 					"readOne",
-					Sinon.fake.resolves(_.cloneDeep(testData[0])),
+					Sinon.fake.resolves(structuredClone(testData[0])),
 				);
 				Sinon.replace(documentRepository, "updateOne", Sinon.fake.resolves(undefined));
 
 				Sinon.replace(
 					checkpointRepository,
 					"getCheckpoint",
-					Sinon.fake.resolves(_.cloneDeep(testData[0])),
+					Sinon.fake.resolves(structuredClone(testData[0])),
 				);
 				Sinon.replace(
 					checkpointRepository,
@@ -613,6 +615,7 @@ describe("Routerlicious", () => {
 					await quiesceWithClientsConnected();
 				});
 
+				// eslint-disable-next-line @typescript-eslint/no-shadow
 				const removeClientsAfterDisconnectTest = async (lambda: IPartitionLambda) => {
 					const secondMessageFactory = new MessageFactory(testId, "test2");
 

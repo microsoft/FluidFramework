@@ -42,7 +42,7 @@ export class LocalOrdererManager implements IOrdererManager {
 	/**
 	 * Closes all local orderers
 	 */
-	public async close() {
+	public async close(): Promise<void> {
 		await Promise.all(
 			Array.from(this.ordererMap.values()).map(async (orderer) => (await orderer).close()),
 		);
@@ -151,9 +151,10 @@ export class LocalOrdererManager implements IOrdererManager {
 
 	public async removeOrderer(tenantId: string, documentId: string): Promise<void> {
 		// No-op for local orderer. Orderer connections are managed separately.
+		return Promise.resolve();
 	}
 
-	private getOrdererMapKey(tenantId: string, documentId: string) {
+	private getOrdererMapKey(tenantId: string, documentId: string): string {
 		return `${tenantId}/${documentId}`;
 	}
 }

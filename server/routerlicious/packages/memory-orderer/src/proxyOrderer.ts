@@ -30,7 +30,7 @@ export class ProxyOrderer implements IOrderer {
 	}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	public close() {
+	public close(): Promise<void> {
 		return Promise.resolve();
 	}
 }

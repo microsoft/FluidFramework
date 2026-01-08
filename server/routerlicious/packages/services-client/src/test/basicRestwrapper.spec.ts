@@ -4,13 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import Axios, { AxiosHeaders } from "axios";
-import { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+
+import Axios, { AxiosHeaders, AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
-import { CorrelationIdHeaderName } from "../constants";
-import { BasicRestWrapper } from "../restWrapper";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { jwtDecode } from "jwt-decode";
+
+import { CorrelationIdHeaderName } from "../constants";
+import { BasicRestWrapper } from "../restWrapper";
 
 describe("BasicRestWrapper", () => {
 	const baseurl = "https://fake.microsoft.com";
@@ -886,13 +887,9 @@ describe("BasicRestWrapper", () => {
 
 			const refreshTokenIfNeeded = async () => {
 				const tokenClaims = jwtDecode(expiredToken);
-				if (tokenClaims.exp < new Date().getTime() / 1000) {
-					return {
+				return tokenClaims.exp < new Date().getTime() / 1000 ? {
 						Authorization: `Basic ${newToken}`,
-					};
-				} else {
-					return undefined;
-				}
+					} : undefined;
 			};
 
 			const rw = new BasicRestWrapper(
@@ -909,10 +906,12 @@ describe("BasicRestWrapper", () => {
 				refreshTokenIfNeeded,
 			);
 
-			//act
+			// act
 			await rw.get(requestUrl).then(() => assert.ok(true));
 
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			assert.notEqual(rw["defaultHeaders"].Authorization, `Basic ${expiredToken}`);
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			assert.strictEqual(rw["defaultHeaders"].Authorization, `Basic ${newToken}`);
 		});
 	});

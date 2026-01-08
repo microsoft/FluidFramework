@@ -114,7 +114,7 @@ export class DocumentPartition {
 			});
 	}
 
-	public process(message: IQueuedMessage) {
+	public process(message: IQueuedMessage): void {
 		if (this.closed) {
 			return;
 		}
@@ -132,7 +132,7 @@ export class DocumentPartition {
 		this.updateActivityTime();
 	}
 
-	public close(closeType: LambdaCloseType) {
+	public close(closeType: LambdaCloseType): void {
 		if (this.closed) {
 			return;
 		}
@@ -155,7 +155,7 @@ export class DocumentPartition {
 		}
 	}
 
-	public isInactive(now: number = Date.now()) {
+	public isInactive(now: number = Date.now()): boolean {
 		return (
 			!this.context.hasPendingWork() &&
 			this.activityTimeoutTime &&
@@ -167,7 +167,7 @@ export class DocumentPartition {
 	 * Marks this document partition as corrupt
 	 * Future messages will be checkpointed but no real processing will happen
 	 */
-	private markAsCorrupt(error: any, message?: IQueuedMessage) {
+	private markAsCorrupt(error: any, message?: IQueuedMessage): void {
 		if (this.closed) {
 			Lumberjack.info(
 				"Skipping marking document as corrupt since the document partition is already closed",
@@ -202,14 +202,14 @@ export class DocumentPartition {
 		}
 	}
 
-	private updateActivityTime(activityTime?: number) {
+	private updateActivityTime(activityTime?: number): void {
 		const cacluatedActivityTimeout =
 			Date.now() + (this.lambda?.activityTimeout ?? this.activityTimeout);
 		this.activityTimeoutTime =
 			activityTime !== undefined ? activityTime : cacluatedActivityTimeout;
 	}
 
-	public pause(offset: number) {
+	public pause(offset: number): void {
 		if (this.closed) {
 			Lumberjack.warning("Skipping pause since doc partition is closed.", {
 				...getLumberBaseProperties(this.documentId, this.tenantId),
@@ -245,7 +245,7 @@ export class DocumentPartition {
 		});
 	}
 
-	public resume() {
+	public resume(): void {
 		if (this.closed) {
 			Lumberjack.warning("Skipping resume since doc partition is closed.", {
 				...getLumberBaseProperties(this.documentId, this.tenantId),

@@ -38,7 +38,6 @@ import {
 	CheckpointService,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { merge } from "lodash";
 
 import type { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
@@ -82,7 +81,7 @@ const DefaultDeli: IDeliState = {
 class LocalSocketPublisher implements IPublisher {
 	constructor(private readonly publisher: IPubSub) {}
 
-	public on(event: string, listener: (...args: any[]) => void) {
+	public on(event: string, listener: (...args: any[]) => void): void {
 		return;
 	}
 
@@ -92,7 +91,7 @@ class LocalSocketPublisher implements IPublisher {
 		};
 	}
 
-	public async close() {}
+	public async close(): Promise<void> {}
 }
 
 /**
@@ -131,7 +130,7 @@ export class LocalOrderer implements IOrderer {
 		deliContext: IContext = new LocalContext(logger),
 		moiraContext: IContext = new LocalContext(logger),
 		serviceConfiguration: Partial<IServiceConfiguration> = {},
-	) {
+	): Promise<LocalOrderer> {
 		const documentDetails = await setup.documentP();
 
 		return new LocalOrderer(
@@ -146,7 +145,7 @@ export class LocalOrderer implements IOrderer {
 			scribeContext,
 			deliContext,
 			moiraContext,
-			merge({}, DefaultServiceConfiguration, serviceConfiguration),
+			{ ...DefaultServiceConfiguration, ...serviceConfiguration },
 		);
 	}
 
@@ -222,7 +221,7 @@ export class LocalOrderer implements IOrderer {
 		return connection;
 	}
 
-	public async close() {
+	public async close(): Promise<void> {
 		await this.closeKafkas();
 		this.closeLambdas();
 	}
@@ -235,13 +234,13 @@ export class LocalOrderer implements IOrderer {
 		return false;
 	}
 
-	private setupKafkas() {
+	private setupKafkas(): void {
 		const deliState: IDeliState = JSON.parse(this.dbObject.deli);
 		this.rawDeltasKafka = new LocalKafka(deliState.logOffset + 1);
 		this.deltasKafka = new LocalKafka();
 	}
 
-	private setupLambdas() {
+	private setupLambdas(): void {
 		this.scriptoriumLambda = new LocalLambdaController(
 			this.deltasKafka,
 			this.setup,
@@ -322,7 +321,7 @@ export class LocalOrderer implements IOrderer {
 		}
 	}
 
-	private async startScribeLambda(setup: ILocalOrdererSetup, context: IContext) {
+	private async startScribeLambda(setup: ILocalOrdererSetup, context: IContext): Promise<ScribeLambda> {
 		// Scribe lambda
 		const [
 			documentRepository,
@@ -419,7 +418,7 @@ export class LocalOrderer implements IOrderer {
 		);
 	}
 
-	private startLambdas() {
+	private startLambdas(): void {
 		const lumberjackProperties = {
 			...getLumberBaseProperties(this.documentId, this.tenantId),
 		};
@@ -474,11 +473,11 @@ export class LocalOrderer implements IOrderer {
 		}
 	}
 
-	private async closeKafkas() {
+	private async closeKafkas(): Promise<void> {
 		await Promise.all([this.rawDeltasKafka.close(), this.deltasKafka.close()]);
 	}
 
-	private closeLambdas() {
+	private closeLambdas(): void {
 		if (this.deliLambda) {
 			this.deliLambda.close();
 			this.deliLambda = undefined;

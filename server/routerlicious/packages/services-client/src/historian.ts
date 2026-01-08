@@ -49,14 +49,14 @@ export function parseToken(
 ): string | undefined {
 	let token: string | undefined;
 	if (authorization) {
-		const base64TokenMatch = authorization.match(/Basic (.+)/);
+		const base64TokenMatch = /Basic (.+)/.exec(authorization);
 		if (!base64TokenMatch) {
 			debug("Invalid base64 token", { tenantId });
 			throw new NetworkError(403, "Malformed authorization token");
 		}
 		const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
 
-		const tokenMatch = encoded.match(/(.+):(.+)/);
+		const tokenMatch = /(.+):(.+)/.exec(encoded);
 		if (!tokenMatch || tenantId !== tokenMatch[1]) {
 			debug("Tenant mismatch or invalid token format", { tenantId });
 			throw new NetworkError(403, "Malformed authorization token");
@@ -128,7 +128,7 @@ export class Historian implements IHistorian {
 			.catch(async (error) =>
 				error === 400 || error === 404
 					? ([] as git.ICommitDetails[])
-					: Promise.reject<git.ICommitDetails[]>(error),
+					: Promise.reject<git.ICommitDetails[]>(error instanceof Error ? error : new Error(String(error))),
 			);
 	}
 

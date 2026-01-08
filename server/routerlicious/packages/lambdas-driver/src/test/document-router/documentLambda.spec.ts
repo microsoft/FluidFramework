@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import {
 	DefaultServiceConfiguration,
 	IContextErrorData,
@@ -15,8 +17,9 @@ import {
 	MessageFactory,
 	TestContext,
 } from "@fluidframework/server-test-utils";
-import { strict as assert } from "assert";
+
 import { DocumentLambdaFactory } from "../../document-router/lambdaFactory";
+
 import { createTestModule, ITestLambdaModule } from "./testDocumentLambda";
 
 describe("document-router", () => {

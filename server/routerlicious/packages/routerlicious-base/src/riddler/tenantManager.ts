@@ -31,7 +31,6 @@ import {
 	getJtiClaimFromAccessToken,
 } from "@fluidframework/server-services-utils";
 import * as jwt from "jsonwebtoken";
-import * as _ from "lodash";
 import { v4 as uuid } from "uuid";
 import * as winston from "winston";
 
@@ -533,8 +532,7 @@ export class TenantManager {
 		);
 
 		const tenant = await this.getTenant(id);
-		// eslint-disable-next-line import-x/namespace
-		return _.extend(tenant, {
+		return Object.assign(tenant, {
 			key: tenantKeys?.key1,
 			secondaryKey: tenantKeys?.key2,
 		});
@@ -1233,7 +1231,7 @@ export class TenantManager {
 		let batchOffsetId = "";
 		const batchFetchSize = 2000;
 		try {
-			// eslint-disable-next-line no-constant-condition
+			 
 			while (true) {
 				// Avoid using findAll(), it will read all records from database and load in client side memory,
 				// which will be a concern for timing, networkIO, and client memory in the future

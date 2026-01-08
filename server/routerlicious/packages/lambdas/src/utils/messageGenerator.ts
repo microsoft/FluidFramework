@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 // TODO: documentation
-// eslint-disable-next-line jsdoc/require-description
+ 
 /**
  * @internal
  */
@@ -34,7 +34,7 @@ export const createNackMessage = (
 });
 
 // TODO: documentation
-// eslint-disable-next-line jsdoc/require-description
+ 
 /**
  * @internal
  */
@@ -53,7 +53,7 @@ export function createRoomJoinMessage(clientId: string, client: IClient): ISigna
 }
 
 // TODO: documentation
-// eslint-disable-next-line jsdoc/require-description
+ 
 /**
  * @internal
  */

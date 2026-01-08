@@ -50,7 +50,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 	/**
 	 * Sends the client join op for this connection
 	 */
-	public async connect(clientJoinMessageServerMetadata?: any) {
+	public async connect(clientJoinMessageServerMetadata?: any): Promise<void> {
 		const clientDetail: IClientJoin = {
 			clientId: this.clientId,
 			detail: this.client,
@@ -140,11 +140,11 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 		return this.submitRawOperation([message]);
 	}
 
-	public once(event: "error", listener: (...args: any[]) => void) {
+	public once(event: "error", listener: (...args: any[]) => void): void {
 		this.producer.once(event, listener);
 	}
 
-	public off(event: "error", listener: (...args: any[]) => void) {
+	public off(event: "error", listener: (...args: any[]) => void): void {
 		this.producer.off(event, listener);
 	}
 
@@ -217,7 +217,7 @@ export class KafkaOrderer implements core.IOrderer {
 	}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	public close() {
+	public close(): Promise<void> {
 		return Promise.resolve();
 	}
 }
@@ -262,7 +262,7 @@ export class KafkaOrdererFactory {
 		}
 	}
 
-	private getOrdererMapKey(tenantId: string, documentId: string) {
+	private getOrdererMapKey(tenantId: string, documentId: string): string {
 		return `${tenantId}/${documentId}`;
 	}
 }

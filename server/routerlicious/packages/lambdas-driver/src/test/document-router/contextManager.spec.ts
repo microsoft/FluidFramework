@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import {
 	IContext,
 	IQueuedMessage,
@@ -11,26 +13,26 @@ import {
 	IRoutingKey,
 } from "@fluidframework/server-services-core";
 import { TestKafka, DebugLogger } from "@fluidframework/server-test-utils";
-import { strict as assert } from "assert";
+
 import { DocumentContextManager } from "../../document-router/contextManager";
 
 class TestContext implements IContext {
 	public offset = -1;
 
-	public checkpoint(queuedMessage: IQueuedMessage) {
+	public checkpoint(queuedMessage: IQueuedMessage): void {
 		assert(queuedMessage.offset >= this.offset, `${queuedMessage.offset} >= ${this.offset}`);
 		this.offset = queuedMessage.offset;
 	}
 
-	public error(error: any, errorData: IContextErrorData) {
+	public error(error: any, errorData: IContextErrorData): void {
 		throw new Error("Method not implemented.");
 	}
 
-	public pause(reason?: any) {
+	public pause(reason?: any): void {
 		throw new Error("Method not implemented.");
 	}
 
-	public resume() {
+	public resume(): void {
 		throw new Error("Method not implemented.");
 	}
 
@@ -41,13 +43,13 @@ describe("document-router", () => {
 	describe("DocumentContextManager", () => {
 		let testContext: TestContext;
 		let testContextManager: DocumentContextManager;
-		let offset0: IQueuedMessage,
-			offset5: IQueuedMessage,
-			offset10: IQueuedMessage,
-			offset12: IQueuedMessage,
-			offset15: IQueuedMessage,
-			offset20: IQueuedMessage,
-			offset25: IQueuedMessage;
+		let offset0: IQueuedMessage;
+			let offset5: IQueuedMessage;
+			let offset10: IQueuedMessage;
+			let offset12: IQueuedMessage;
+			let offset15: IQueuedMessage;
+			let offset20: IQueuedMessage;
+			let offset25: IQueuedMessage;
 		let routingKey: IRoutingKey;
 
 		beforeEach(async () => {

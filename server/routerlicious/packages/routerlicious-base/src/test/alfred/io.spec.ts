@@ -4,15 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ISummaryTree,
 	SummaryType,
 	ICommittedProposal,
 } from "@fluidframework/protocol-definitions";
-
 import * as services from "@fluidframework/server-services";
 import { defaultHash } from "@fluidframework/server-services-client";
-
 import {
 	IDeliState,
 	IScribe,
@@ -103,7 +102,7 @@ describe("Routerlicious", () => {
 			);
 			const scribe: IScribe = JSON.parse(docDetails.value.scribe);
 			assert.equal(
-				scribe.protocolState.values[0][1]["value"],
+				scribe.protocolState.values[0][1].value,
 				"empty",
 				"Code proposal value should be equal!!",
 			);

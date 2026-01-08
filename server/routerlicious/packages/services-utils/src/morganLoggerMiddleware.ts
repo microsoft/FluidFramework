@@ -17,7 +17,7 @@ import morgan from "morgan";
 
 import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const split = require("split");
 
 /**

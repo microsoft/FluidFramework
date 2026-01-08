@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { WebSocketTracker } from "../webSocketTracker";
+
 import { IWebSocket } from "@fluidframework/server-services-core";
+
+import { WebSocketTracker } from "../webSocketTracker";
 
 describe("WebSocketTracker", () => {
 	// let webSocketTracker: WebSocketTracker;
@@ -22,7 +24,7 @@ describe("WebSocketTracker", () => {
 	});
 
 	it("should add and retrieve a socket for a token", () => {
-		let webSocketTracker: WebSocketTracker = new WebSocketTracker();
+		const webSocketTracker: WebSocketTracker = new WebSocketTracker();
 		const compositeTokenId = "token1";
 		webSocketTracker.addSocketForToken(compositeTokenId, webSocket1);
 
@@ -32,8 +34,8 @@ describe("WebSocketTracker", () => {
 	});
 
 	it("should work for multiple calls", () => {
-		let webSocketTracker: WebSocketTracker = new WebSocketTracker();
-		let webSocket1: IWebSocket = {
+		const webSocketTracker: WebSocketTracker = new WebSocketTracker();
+		const webSocket1: IWebSocket = {
 			id: "socketId1",
 		} as IWebSocket;
 		const compositeTokenId1 = "token1";
@@ -76,7 +78,7 @@ describe("WebSocketTracker", () => {
 	});
 
 	it("should add socket", () => {
-		let webSocketTracker: WebSocketTracker = new WebSocketTracker();
+		const webSocketTracker: WebSocketTracker = new WebSocketTracker();
 		webSocketTracker.addSocket(webSocket1);
 
 		const sockets = webSocketTracker.getAllSockets();

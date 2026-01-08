@@ -22,7 +22,7 @@ let nodeRdkafkaModule: typeof kafkaTypes | undefined;
 // so then the cleanup callback tries to access the mutex and crashes.
 //
 // So we will also lazy import node-rdkafka only if we intend to use it.
-export function tryImportNodeRdkafka() {
+export function tryImportNodeRdkafka(): typeof kafkaTypes | undefined {
 	if (!tryImport) {
 		tryImport = true;
 		try {

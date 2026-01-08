@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import { fromUtf8ToBase64, stringToBuffer } from "@fluidframework/common-utils";
 import {
-	buildTreePath,
-	convertSummaryTreeToWholeSummaryTree,
-	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
-	convertFirstSummaryWholeSummaryTreeToSummaryTree,
-} from "../storageUtils";
+	IDocumentAttributes,
+	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
 
 import {
 	IWholeFlatSummaryBlob,
@@ -19,10 +19,12 @@ import {
 	IWholeFlatSummaryTreeEntry,
 } from "../storageContracts";
 import {
-	IDocumentAttributes,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+	buildTreePath,
+	convertSummaryTreeToWholeSummaryTree,
+	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
+} from "../storageUtils";
+
 
 const summaryBlobs: IWholeFlatSummaryBlob[] = [
 	{
@@ -193,7 +195,7 @@ describe("Storage Utils", () => {
 			for (const b of summaryBlobs) {
 				blobs.set(b.id, stringToBuffer(b.content, b.encoding ?? "utf-8"));
 			}
-			flatSummaryTree = flatSummary.trees && flatSummary.trees[0];
+			flatSummaryTree = flatSummary.trees?.[0];
 			sequenceNumber = flatSummaryTree?.sequenceNumber;
 		});
 

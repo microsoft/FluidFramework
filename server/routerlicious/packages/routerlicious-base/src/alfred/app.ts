@@ -39,10 +39,9 @@ import {
 	bindAbortControllerContext,
 } from "@fluidframework/server-services-utils";
 import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
-import express from "express";
+import express, { json, urlencoded } from "express";
 import type { Provider } from "nconf";
 import shajs from "sha.js";
 

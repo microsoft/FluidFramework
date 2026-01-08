@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { NetworkError } from "@fluidframework/server-services-client";
+
 import { Deferred } from "@fluidframework/common-utils";
+import { NetworkError } from "@fluidframework/server-services-client";
 import type { Response, Request } from "express";
+
 import {
 	containsPathTraversal,
 	defaultErrorMessage,
@@ -218,7 +220,7 @@ describe("HTTP Utils", () => {
 		it("handles undefined error", async () => {
 			const mockResponse = new MockResponse();
 			const responseError = undefined;
-			handleResponse(Promise.reject(responseError), mockResponse as unknown as Response);
+			handleResponse(Promise.reject(new Error(String(responseError))), mockResponse as unknown as Response);
 			await waitForResponseEnd(mockResponse);
 			assert.strictEqual(mockResponse.statusCode, defaultErrorCode);
 			assert.strictEqual(mockResponse.responseData, JSON.stringify(defaultErrorMessage));
@@ -226,7 +228,7 @@ describe("HTTP Utils", () => {
 		it("handles string error", async () => {
 			const mockResponse = new MockResponse();
 			const responseError = "Failure occurred";
-			handleResponse(Promise.reject(responseError), mockResponse as unknown as Response);
+			handleResponse(Promise.reject(new Error(responseError)), mockResponse as unknown as Response);
 			await waitForResponseEnd(mockResponse);
 			assert.strictEqual(mockResponse.statusCode, defaultErrorCode);
 			assert.strictEqual(mockResponse.responseData, JSON.stringify(defaultErrorMessage));
