@@ -461,7 +461,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				: undefined;
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
-			return (result) => {
+			return (result, viewChange: SharedTreeChange | undefined) => {
 				switch (result) {
 					case TransactionResult.Abort: {
 						restoreRemovedRoots();
@@ -477,6 +477,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					default: {
 						unreachableCase(result);
 					}
+				}
+				if (viewChange !== undefined) {
+					this.applyChange(viewChange, this.#transaction.branch.getHead().revision);
 				}
 				disposeForks?.();
 			};

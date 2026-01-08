@@ -37,6 +37,7 @@ import type {
 } from "./transactionTypes.js";
 import type { VerboseTree } from "./verboseTree.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
+import type { Transactor } from "../../shared-tree-core/index.js";
 
 /**
  * A tree from which a {@link TreeView} can be created.
@@ -407,6 +408,8 @@ export interface TreeViewAlpha<
 
 	// Override the base fork method to return a TreeViewAlpha.
 	fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
+
+	readonly transaction: Transactor;
 }
 
 /**

@@ -9,7 +9,11 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	diffHistories,
 	findAncestor,
+	findCommonAncestor,
+	mintCommit,
+	rebaseBranch,
 	tagChange,
 	type ChangeFamilyEditor,
 	type GraphCommit,
@@ -198,6 +202,11 @@ export class TransactionStack implements Transactor, IDisposable {
 	}
 }
 
+export type OnPopWithViewChange<TChange> = (
+	result: TransactionResult,
+	viewChange: TChange | undefined,
+) => void;
+
 /**
  * An implementation of {@link Transactor} that {@link TransactionStack | uses a stack} and a {@link SharedTreeBranch | branch} to manage transactions.
  * @remarks Given a branch, this class will fork the branch when a transaction begins and squash the forked branch back into the original branch when the transaction ends.
@@ -270,14 +279,14 @@ export class SquashingTransactionStack<
 	public constructor(
 		public readonly branch: SharedTreeBranch<TEditor, TChange>,
 		mintRevisionTag: () => RevisionTag,
-		onPush?: () => OnPop | void,
+		onPush?: () => OnPopWithViewChange<TChange> | void,
 	) {
 		super(
 			// Invoked when an outer transaction starts
 			(): Callbacks => {
 				// Keep track of the commit that each transaction was on when it started
-				// TODO:#8603: This may need to be computed differently if we allow rebasing during a transaction.
 				const startHead = this.activeBranch.getHead();
+				const rebaser = this.branch.changeFamily.rebaser;
 				const outerOnPop = onPush?.();
 				let transactionRevision: RevisionTag | undefined;
 				const transactionBranch = this.branch.fork(
@@ -291,29 +300,90 @@ export class SquashingTransactionStack<
 				const onOuterTransactionPop: OnPop = (result) => {
 					assert(!this.isInProgress(), 0xcae /* The outer transaction should be ending */);
 					transactionBranch.editor.exitTransaction();
+
+					const sourcePath: GraphCommit<TChange>[] = [];
+					const targetPath: GraphCommit<TChange>[] = [];
+					const ancestor = findCommonAncestor(
+						[startHead, sourcePath],
+						[branch.getHead(), targetPath],
+					);
+					assert(ancestor !== undefined, "branches must be related");
+
+					let viewChange: TChange | undefined;
 					switch (result) {
 						case TransactionResult.Abort: {
 							// When a transaction is aborted, roll back all the transaction's changes on the current branch
 							transactionBranch.removeAfter(startHead);
+							if (targetPath.length > 0) {
+								// Changes were made on `branch` since the transaction began.
+								// The view will need to be updated to reflect those changes on `branch`.
+								viewChange = diffHistories(
+									rebaser,
+									startHead,
+									this.branch.getHead(),
+									mintRevisionTag,
+								);
+							}
 							break;
 						}
 						case TransactionResult.Commit: {
-							// ...squash all the new commits on the transaction branch into a new commit on the original branch
-							const removedCommits: GraphCommit<TChange>[] = [];
+							// Squash all the new commits on the transaction branch into a new commit on the original branch
+							const transactionSteps: GraphCommit<TChange>[] = [];
 							findAncestor(
-								[transactionBranch.getHead(), removedCommits],
+								[transactionBranch.getHead(), transactionSteps],
 								(c) => c === startHead,
 							);
-							if (removedCommits.length > 0) {
-								for (const commit of removedCommits) {
+							if (transactionSteps.length > 0) {
+								assert(
+									transactionRevision !== undefined,
+									"Expected transaction revision in the presence of transaction steps",
+								);
+								for (const commit of transactionSteps) {
 									assert(
 										commit.revision === transactionRevision,
 										0xcaf /* Unexpected commit in transaction */,
 									);
 								}
-								const squash = this.branch.changeFamily.rebaser.compose(removedCommits);
-								this.branch.apply(tagChange(squash, transactionRevision));
+								const squash = rebaser.compose(transactionSteps);
+
+								if (targetPath.length === 0) {
+									// No changes were made on the original branch since the transaction began
+									// The transaction commit can be applied directly
+									this.branch.apply(tagChange(squash, transactionRevision));
+									// The view is already up-to-date so there's nothing more to do
+								} else {
+									// Some changes were made on `branch` since the transaction began
+									const unrebasedHead = mintCommit(startHead, {
+										change: squash,
+										revision: transactionRevision,
+									});
+									// We need to rebase the transaction commit on top of the new changes
+									const rebased = rebaseBranch(
+										mintRevisionTag,
+										rebaser,
+										unrebasedHead,
+										branch.getHead(),
+									);
+									assert(
+										rebased.newSourceHead.revision === transactionRevision,
+										"The transaction commit should be rebased to the tip",
+									);
+									this.branch.apply(rebased.newSourceHead);
+									viewChange = rebased.sourceChange;
+								}
+							} else {
+								if (targetPath.length > 0) {
+									// Changes were made on `branch` since the transaction began.
+									// The view will need to be updated to reflect those changes on `branch`.
+									viewChange = diffHistories(
+										rebaser,
+										startHead,
+										this.branch.getHead(),
+										mintRevisionTag,
+									);
+								}
 							}
+
 							break;
 						}
 						default: {
@@ -322,7 +392,7 @@ export class SquashingTransactionStack<
 					}
 					transactionBranch.dispose();
 					this.setTransactionBranch(undefined);
-					outerOnPop?.(result);
+					outerOnPop?.(result, viewChange);
 				};
 				// Invoked when a nested transaction begins
 				const onNestedTransactionPush: OnPush = () => {
@@ -346,7 +416,7 @@ export class SquashingTransactionStack<
 									unreachableCase(result);
 								}
 							}
-							nestedOuterOnPop?.(result);
+							nestedOuterOnPop?.(result, undefined);
 						},
 					};
 				};
