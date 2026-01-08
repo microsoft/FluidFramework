@@ -324,7 +324,9 @@ export async function ensureInstalled(
 		// Remove the `as any` cast once node typing is updated.
 		try {
 			(rmdirSync as any)(modulePath, { recursive: true });
-		} catch (ex) {}
+		} catch (ex) {
+			// Ignore the error
+		}
 		throw new Error(`Unable to install version ${version}\n${e}`);
 	} finally {
 		release();

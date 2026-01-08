@@ -209,7 +209,9 @@ const makeAfterMiddlewares = (
 				let toLog = error;
 				try {
 					toLog = JSON.stringify(error);
-				} catch {}
+				} catch {
+					// Ignore the error
+				}
 				console.log(toLog);
 			}
 			if (!canContinue) {

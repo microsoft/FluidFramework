@@ -557,7 +557,9 @@ export class DocumentDeltaConnection
 						// That's a WebSocket. Clear it as we can't log it.
 						description.target = undefined;
 					}
-				} catch (_e) {}
+				} catch (_e) {
+					// Ignore the error
+				}
 
 				// Handle socket transport downgrading when not offline.
 				if (
