@@ -90,14 +90,11 @@ describe("Presence", () => {
 		});
 
 		describe("self attendee", () => {
-			const selfAttendeeId = "selfAttendeeId";
-			const selfClientConnectionId = "client9";
-
 			it("is announced via `attendeeConnected` when presence initializes while self is in Audience", () => {
 				// Setup - create presence in disconnected state
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
-					selfAttendeeId,
+					localAttendeeId,
 					clock,
 					logger,
 				);
@@ -108,7 +105,7 @@ describe("Presence", () => {
 				});
 
 				// Act - connect
-				connect(selfClientConnectionId);
+				connect(localClientConnectionId);
 
 				// Verify - self attendee was announced
 				const selfAttendee = presence.attendees.getMyself();
@@ -128,7 +125,7 @@ describe("Presence", () => {
 				// Setup - create presence in disconnected state
 				const { presence } = prepareDisconnectedPresence(
 					runtime,
-					selfAttendeeId,
+					localAttendeeId,
 					clock,
 					logger,
 				);
@@ -146,7 +143,7 @@ describe("Presence", () => {
 				// Setup - create presence in disconnected state
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
-					selfAttendeeId,
+					localAttendeeId,
 					clock,
 					logger,
 				);
@@ -164,7 +161,7 @@ describe("Presence", () => {
 				});
 
 				// Act - connect
-				connect(selfClientConnectionId);
+				connect(localClientConnectionId);
 
 				// Verify - attendeeConnected was raised
 				assert(
@@ -177,13 +174,13 @@ describe("Presence", () => {
 				// Setup - create presence in disconnected state, connect and then disconnect
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
-					selfAttendeeId,
+					localAttendeeId,
 					clock,
 					logger,
 				);
 
 				// Initial connection
-				connect(selfClientConnectionId);
+				connect(localClientConnectionId);
 
 				// Disconnect
 				runtime.disconnect();
@@ -197,7 +194,7 @@ describe("Presence", () => {
 				});
 
 				// Act - reconnect with new connection id
-				runtime.connect("client10", selfClientConnectionId);
+				runtime.connect("client10", localClientConnectionId);
 
 				// Verify - self attendee was announced
 				const selfAttendee = presence.attendees.getMyself();
