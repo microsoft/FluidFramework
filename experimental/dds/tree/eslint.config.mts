@@ -10,7 +10,6 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			// This package is effectively deprecated. The below rules are disabled for ease of migration and will not be enabled.
 			'@typescript-eslint/explicit-function-return-type': 'off',
 			'@typescript-eslint/no-shadow': 'off',
 			'no-shadow': 'off',
