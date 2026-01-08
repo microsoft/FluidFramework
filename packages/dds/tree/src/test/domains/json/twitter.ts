@@ -376,12 +376,12 @@ function generateTwitterStatus(
 	if (shouldAddInReplyToStatusId) {
 		const inReplyToStatusId = getRandomNumberString(random, 18, 18);
 		status.in_reply_to_status_id =
-			inReplyToStatusId !== null ? Number(inReplyToStatusId) : null;
+			inReplyToStatusId === null ? null : Number(inReplyToStatusId);
 		status.in_reply_to_status_id_str = inReplyToStatusId ?? null;
 	}
 	if (shouldAddInReplyToUserIdAndScreenName) {
 		const inReplyToUserId = getRandomNumberString(random, 10, 10);
-		status.in_reply_to_user_id = inReplyToUserId !== null ? Number(inReplyToUserId) : null;
+		status.in_reply_to_user_id = inReplyToUserId === null ? null : Number(inReplyToUserId);
 		status.in_reply_to_user_id_str = inReplyToUserId ?? null;
 		status.in_reply_to_screen_name = getRandomEnglishString(random, false, 6, 30);
 	}
@@ -635,10 +635,10 @@ export function isJapaneseSymbolOrPunctuation(ch: string) {
  */
 export function parseSentencesIntoWords(inputSentences: string[]) {
 	const outputSentences: string[][] = [];
-	inputSentences.forEach((inputSentence) => {
+	for (const inputSentence of inputSentences) {
 		const sentenceWords: string[] = [];
 		const spaceSeparatedWords: string[] = inputSentence.split(" ");
-		spaceSeparatedWords.forEach((potentialWord) => {
+		for (const potentialWord of spaceSeparatedWords) {
 			const innerWords: string[] = [];
 			let previousChar: string | undefined;
 			let currentWord = "";
@@ -671,11 +671,13 @@ export function parseSentencesIntoWords(inputSentences: string[]) {
 			if (currentWord.length > 0) {
 				innerWords.push(currentWord);
 			}
-			innerWords.forEach((word) => sentenceWords.push(word));
-		});
+			for (const word of innerWords) {
+				sentenceWords.push(word);
+			}
+		}
 
 		outputSentences.push(sentenceWords);
-	});
+	}
 
 	return outputSentences;
 }

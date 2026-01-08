@@ -19,7 +19,7 @@ import type {
 import type { IdAllocator, Invariant } from "../../util/index.js";
 
 import type { CrossFieldManager } from "./crossFieldQueries.js";
-import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
+import type { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 
 export type NestedChangesIndices = [

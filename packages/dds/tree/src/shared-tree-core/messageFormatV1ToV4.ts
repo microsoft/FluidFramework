@@ -8,6 +8,7 @@ import { type TSchema, Type } from "@sinclair/typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { MessageFormatVersion } from "./messageFormat.js";
 
 /**
  * The format of messages that SharedTree sends and receives.
@@ -32,7 +33,12 @@ export interface Message {
 	 * This was not set historically and was added before making any breaking changes to the format.
 	 * For that reason, absence of a 'version' field is synonymous with version 1.
 	 */
-	readonly version?: number;
+	readonly version?:
+		| typeof MessageFormatVersion.v1
+		| typeof MessageFormatVersion.v2
+		| typeof MessageFormatVersion.v3
+		| typeof MessageFormatVersion.v4
+		| typeof MessageFormatVersion.v6;
 }
 
 // Return type is intentionally derived.
@@ -42,5 +48,13 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		revision: RevisionTagSchema,
 		originatorId: SessionIdSchema,
 		changeset: tChange,
-		version: Type.Optional(Type.Number()),
+		version: Type.Optional(
+			Type.Union([
+				Type.Literal(MessageFormatVersion.v1),
+				Type.Literal(MessageFormatVersion.v2),
+				Type.Literal(MessageFormatVersion.v3),
+				Type.Literal(MessageFormatVersion.v4),
+				Type.Literal(MessageFormatVersion.v6),
+			]),
+		),
 	});

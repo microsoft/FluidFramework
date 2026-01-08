@@ -236,8 +236,12 @@ export function extractMessage(stack: string): string {
 
 	const linesToKeep: string[] = [];
 	for (const line of stackLines.slice(stackTop)) {
+		// Skip internals of assert library
+		if (/^at (failPrivate) /.exec(line)) {
+			continue;
+		}
 		linesToKeep.push(line);
-		// Heuristically continue including lines if stack line matches this pattern:
+		// Stop after including the first line not matching assert functions so source location which called the assert is the last thing included.
 		if (!/^at (assert|fail) /.exec(line)) {
 			break;
 		}

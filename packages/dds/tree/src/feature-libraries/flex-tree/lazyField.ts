@@ -304,7 +304,7 @@ export class LazyOptionalField extends LazyField implements FlexTreeOptionalFiel
 	public editor: OptionalFieldEditBuilder<ExclusiveMapTree> = {
 		set: (newContent, wasEmpty) => {
 			this.optionalEditor().set(
-				newContent !== undefined ? cursorForMapTreeField([newContent]) : newContent,
+				newContent === undefined ? newContent : cursorForMapTreeField([newContent]),
 				wasEmpty,
 			);
 		},
@@ -358,16 +358,16 @@ export function unboxedFlexNode(
 	// This avoids O(depth) related costs from getOrCreateHydratedFlexTreeNode in the cached case.
 	const anchor = fieldAnchor.parent;
 	let child: AnchorNode | undefined;
-	if (anchor !== undefined) {
-		const anchorNode = context.checkout.forest.anchors.locate(anchor);
-		assert(anchorNode !== undefined, 0xa4c /* missing anchor */);
-		child = anchorNode.childIfAnchored(fieldAnchor.fieldKey, cursor.fieldIndex);
-	} else {
+	if (anchor === undefined) {
 		child = context.checkout.forest.anchors.find({
 			parent: undefined,
 			parentField: fieldAnchor.fieldKey,
 			parentIndex: cursor.fieldIndex,
 		});
+	} else {
+		const anchorNode = context.checkout.forest.anchors.locate(anchor);
+		assert(anchorNode !== undefined, 0xa4c /* missing anchor */);
+		child = anchorNode.childIfAnchored(fieldAnchor.fieldKey, cursor.fieldIndex);
 	}
 
 	if (child !== undefined) {

@@ -790,10 +790,10 @@ function verifyRebaseOverDoUndoPairIsNoOp<TChangeset>(
 	);
 
 	const expectedChange = tagChange(edit.change, edit.revision);
-	if (fieldRebaser.assertChangesetsEquivalent !== undefined) {
-		fieldRebaser.assertChangesetsEquivalent(actualChange, expectedChange);
-	} else {
+	if (fieldRebaser.assertChangesetsEquivalent === undefined) {
 		assertDeepEqual(actualChange, expectedChange);
+	} else {
+		fieldRebaser.assertChangesetsEquivalent(actualChange, expectedChange);
 	}
 }
 

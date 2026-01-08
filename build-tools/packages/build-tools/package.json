@@ -42,6 +42,7 @@
 	"dependencies": {
 		"@fluid-tools/version-tools": "workspace:~",
 		"@manypkg/get-packages": "^2.2.2",
+		"@types/glob": "^7.2.0",
 		"async": "^3.2.6",
 		"date-fns": "^3.6.0",
 		"debug": "^4.4.3",
@@ -73,7 +74,6 @@
 		"@fluidframework/eslint-config-fluid": "^8.1.0",
 		"@types/async": "^3.2.25",
 		"@types/fs-extra": "^11.0.4",
-		"@types/glob": "^7.2.0",
 		"@types/lodash.isequal": "^4.5.8",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^22.19.1",

@@ -5,8 +5,13 @@
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecFamily } from "../../codec/index.js";
+import {
+	FluidClientVersion,
+	type CodecWriteOptions,
+	type ICodecFamily,
+} from "../../codec/index.js";
 import {
 	type ChangeEncodingContext,
 	type ChangeFamily,
@@ -82,6 +87,7 @@ import {
 	type FieldId,
 	type ModularChangeset,
 	newCrossFieldKeyTable,
+	type NoChangeConstraint,
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
@@ -91,6 +97,7 @@ import {
 	setInChangeAtomIdMap,
 	type ChangeAtomIdBTree,
 } from "../changeAtomIdBTree.js";
+import { lt } from "semver-ts";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -108,6 +115,7 @@ export class ModularChangeFamily
 	public constructor(
 		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+		public readonly codecOptions: CodecWriteOptions,
 	) {
 		this.fieldKinds = fieldKinds;
 	}
@@ -134,9 +142,9 @@ export class ModularChangeFamily
 	} {
 		// TODO: Handle the case where changes have conflicting field kinds
 		const kind =
-			change1.fieldKind !== genericFieldKind.identifier
-				? change1.fieldKind
-				: change2.fieldKind;
+			change1.fieldKind === genericFieldKind.identifier
+				? change2.fieldKind
+				: change1.fieldKind;
 
 		if (kind === genericFieldKind.identifier) {
 			// Both changes are generic
@@ -203,6 +211,11 @@ export class ModularChangeFamily
 			change2,
 		);
 
+		// The composed changeset has a "no change" constraint if either change has one
+		const noChangeConstraint = change1.noChangeConstraint ?? change2.noChangeConstraint;
+		const noChangeConstraintOnRevert =
+			change1.noChangeConstraintOnRevert ?? change2.noChangeConstraintOnRevert;
+
 		return makeModularChangeset({
 			fieldChanges,
 			nodeChanges,
@@ -211,6 +224,8 @@ export class ModularChangeFamily
 			crossFieldKeys,
 			maxId: idState.maxId,
 			revisions: revInfos,
+			noChangeConstraint,
+			noChangeConstraintOnRevert,
 			builds: allBuilds,
 			destroys: allDestroys,
 			refreshers: allRefreshers,
@@ -493,16 +508,16 @@ export class ModularChangeFamily
 			const fieldId: FieldId = { nodeId: parentId, field };
 			const fieldChange2 = change2.get(field);
 			const composedField =
-				fieldChange2 !== undefined
-					? this.composeFieldChanges(
+				fieldChange2 === undefined
+					? fieldChange1
+					: this.composeFieldChanges(
 							fieldId,
 							fieldChange1,
 							fieldChange2,
 							genId,
 							crossFieldTable,
 							revisionMetadata,
-						)
-					: fieldChange1;
+						);
 
 			composedFields.set(field, composedField);
 		}
@@ -664,8 +679,8 @@ export class ModularChangeFamily
 	/**
 	 * @param change - The change to invert.
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
-	 * @param revisionForInvert - The revision for the invert changeset.
 	 * performing a sandwich rebase.
+	 * @param revisionForInvert - The revision for the invert changeset.
 	 */
 	public invert(
 		change: TaggedChange<ModularChangeset>,
@@ -684,6 +699,9 @@ export class ModularChangeFamily
 		const revInfos: RevisionInfo[] = isRollback
 			? [{ revision: revisionForInvert, rollbackOf: change.revision }]
 			: [{ revision: revisionForInvert }];
+
+		const noChangeConstraint = change.change.noChangeConstraintOnRevert;
+		const noChangeConstraintOnRevert = change.change.noChangeConstraint;
 
 		if (hasConflicts(change.change)) {
 			return makeModularChangeset({
@@ -768,6 +786,8 @@ export class ModularChangeFamily
 			revisions: revInfos,
 			constraintViolationCount: change.change.constraintViolationCountOnRevert,
 			constraintViolationCountOnRevert: change.change.constraintViolationCount,
+			noChangeConstraint,
+			noChangeConstraintOnRevert,
 			destroys,
 		});
 	}
@@ -915,6 +935,13 @@ export class ModularChangeFamily
 		const revertConstraintState = newConstraintState(
 			change.constraintViolationCountOnRevert ?? 0,
 		);
+
+		let noChangeConstraint = change.noChangeConstraint;
+		if (noChangeConstraint !== undefined && !noChangeConstraint.violated) {
+			noChangeConstraint = { violated: true };
+			constraintState.violationCount += 1;
+		}
+
 		this.updateConstraintsForFields(
 			rebasedFields,
 			NodeAttachState.Attached,
@@ -934,6 +961,8 @@ export class ModularChangeFamily
 			revisions: change.revisions,
 			constraintViolationCount: constraintState.violationCount,
 			constraintViolationCountOnRevert: revertConstraintState.violationCount,
+			noChangeConstraint,
+			noChangeConstraintOnRevert: change.noChangeConstraintOnRevert,
 			builds: change.builds,
 			destroys: change.destroys,
 			refreshers: change.refreshers,
@@ -989,9 +1018,9 @@ export class ModularChangeFamily
 		const baseChange = crossFieldTable.baseChange;
 		for (const [revision, localId, fieldKey] of crossFieldTable.affectedBaseFields.keys()) {
 			const baseNodeId =
-				localId !== undefined
-					? normalizeNodeId({ revision, localId }, baseChange.nodeAliases)
-					: undefined;
+				localId === undefined
+					? undefined
+					: normalizeNodeId({ revision, localId }, baseChange.nodeAliases);
 
 			const baseFieldChange = fieldMapFromNodeId(
 				baseChange.fieldChanges,
@@ -1026,9 +1055,9 @@ export class ModularChangeFamily
 			};
 
 			const rebasedNodeId =
-				baseNodeId !== undefined
-					? rebasedNodeIdFromBaseNodeId(crossFieldTable, baseNodeId)
-					: undefined;
+				baseNodeId === undefined
+					? undefined
+					: rebasedNodeIdFromBaseNodeId(crossFieldTable, baseNodeId);
 
 			const fieldId: FieldId = { nodeId: rebasedNodeId, field: fieldKey };
 			const rebasedField: unknown = handler.rebaser.rebase(
@@ -1482,9 +1511,9 @@ export class ModularChangeFamily
 	): NodeId | undefined {
 		const changeset = nodeChangeFromId(nodeMap, nodeId);
 		const prunedFields =
-			changeset.fieldChanges !== undefined
-				? this.pruneFieldMap(changeset.fieldChanges, nodeMap)
-				: undefined;
+			changeset.fieldChanges === undefined
+				? undefined
+				: this.pruneFieldMap(changeset.fieldChanges, nodeMap);
 
 		const prunedChange = { ...changeset, fieldChanges: prunedFields };
 		if (prunedChange.fieldChanges === undefined) {
@@ -1624,7 +1653,7 @@ export class ModularChangeFamily
 		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	): ModularEditBuilder {
-		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver);
+		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver, this.codecOptions);
 	}
 
 	private createEmptyFieldChange(fieldKind: FieldKindIdentifier): FieldChange {
@@ -1747,9 +1776,9 @@ function replaceCrossFieldKeyTableRevisions(
 		const field = entry.value;
 		const normalizedFieldId = normalizeFieldId(field, nodeAliases);
 		const updatedNodeId =
-			normalizedFieldId.nodeId !== undefined
-				? replacer.getUpdatedAtomId(normalizedFieldId.nodeId)
-				: undefined;
+			normalizedFieldId.nodeId === undefined
+				? undefined
+				: replacer.getUpdatedAtomId(normalizedFieldId.nodeId);
 
 		const updatedValue: FieldId = {
 			...normalizedFieldId,
@@ -2082,8 +2111,12 @@ function intoDeltaImpl(
 		if (fieldChanges !== undefined && fieldChanges.length > 0) {
 			delta.set(field, fieldChanges);
 		}
-		fieldGlobal?.forEach((c) => global.push(c));
-		fieldRename?.forEach((r) => rename.push(r));
+		for (const c of fieldGlobal ?? []) {
+			global.push(c);
+		}
+		for (const r of fieldRename ?? []) {
+			rename.push(r);
+		}
 	}
 	return delta;
 }
@@ -2579,55 +2612,60 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 	}
 }
 
-function makeModularChangeset(
-	props: {
-		fieldChanges?: FieldChangeMap;
-		nodeChanges?: ChangeAtomIdBTree<NodeChangeset>;
-		nodeToParent?: ChangeAtomIdBTree<FieldId>;
-		nodeAliases?: ChangeAtomIdBTree<NodeId>;
-		crossFieldKeys?: CrossFieldKeyTable;
-		maxId: number;
-		revisions?: readonly RevisionInfo[];
-		constraintViolationCount?: number;
-		constraintViolationCountOnRevert?: number;
-		builds?: ChangeAtomIdBTree<TreeChunk>;
-		destroys?: ChangeAtomIdBTree<number>;
-		refreshers?: ChangeAtomIdBTree<TreeChunk>;
-	} = {
-		maxId: -1,
-	},
-): ModularChangeset {
+function makeModularChangeset(props?: {
+	fieldChanges?: FieldChangeMap;
+	nodeChanges?: ChangeAtomIdBTree<NodeChangeset>;
+	nodeToParent?: ChangeAtomIdBTree<FieldId>;
+	nodeAliases?: ChangeAtomIdBTree<NodeId>;
+	crossFieldKeys?: CrossFieldKeyTable;
+	maxId: number;
+	revisions?: readonly RevisionInfo[];
+	constraintViolationCount?: number;
+	constraintViolationCountOnRevert?: number;
+	noChangeConstraint?: NoChangeConstraint;
+	noChangeConstraintOnRevert?: NoChangeConstraint;
+	builds?: ChangeAtomIdBTree<TreeChunk>;
+	destroys?: ChangeAtomIdBTree<number>;
+	refreshers?: ChangeAtomIdBTree<TreeChunk>;
+}): ModularChangeset {
+	const p = props ?? { maxId: -1 };
 	const changeset: Mutable<ModularChangeset> = {
-		fieldChanges: props.fieldChanges ?? new Map(),
-		nodeChanges: props.nodeChanges ?? newTupleBTree(),
-		nodeToParent: props.nodeToParent ?? newTupleBTree(),
-		nodeAliases: props.nodeAliases ?? newTupleBTree(),
-		crossFieldKeys: props.crossFieldKeys ?? newCrossFieldKeyTable(),
+		fieldChanges: p.fieldChanges ?? new Map(),
+		nodeChanges: p.nodeChanges ?? newTupleBTree(),
+		nodeToParent: p.nodeToParent ?? newTupleBTree(),
+		nodeAliases: p.nodeAliases ?? newTupleBTree(),
+		crossFieldKeys: p.crossFieldKeys ?? newCrossFieldKeyTable(),
 	};
 
-	if (props.revisions !== undefined && props.revisions.length > 0) {
-		changeset.revisions = props.revisions;
+	if (p.revisions !== undefined && p.revisions.length > 0) {
+		changeset.revisions = p.revisions;
 	}
-	if (props.maxId >= 0) {
-		changeset.maxId = brand(props.maxId);
+	if (p.maxId >= 0) {
+		changeset.maxId = brand(p.maxId);
 	}
-	if (props.constraintViolationCount !== undefined && props.constraintViolationCount > 0) {
-		changeset.constraintViolationCount = props.constraintViolationCount;
+	if (p.constraintViolationCount !== undefined && p.constraintViolationCount > 0) {
+		changeset.constraintViolationCount = p.constraintViolationCount;
 	}
 	if (
-		props.constraintViolationCountOnRevert !== undefined &&
-		props.constraintViolationCountOnRevert > 0
+		p.constraintViolationCountOnRevert !== undefined &&
+		p.constraintViolationCountOnRevert > 0
 	) {
-		changeset.constraintViolationCountOnRevert = props.constraintViolationCountOnRevert;
+		changeset.constraintViolationCountOnRevert = p.constraintViolationCountOnRevert;
 	}
-	if (props.builds !== undefined && props.builds.size > 0) {
-		changeset.builds = props.builds;
+	if (p.noChangeConstraint !== undefined) {
+		changeset.noChangeConstraint = p.noChangeConstraint;
 	}
-	if (props.destroys !== undefined && props.destroys.size > 0) {
-		changeset.destroys = props.destroys;
+	if (p.noChangeConstraintOnRevert !== undefined) {
+		changeset.noChangeConstraintOnRevert = p.noChangeConstraintOnRevert;
 	}
-	if (props.refreshers !== undefined && props.refreshers.size > 0) {
-		changeset.refreshers = props.refreshers;
+	if (p.builds !== undefined && p.builds.size > 0) {
+		changeset.builds = p.builds;
+	}
+	if (p.destroys !== undefined && p.destroys.size > 0) {
+		changeset.destroys = p.destroys;
+	}
+	if (p.refreshers !== undefined && p.refreshers.size > 0) {
+		changeset.refreshers = p.refreshers;
 	}
 	return changeset;
 }
@@ -2635,14 +2673,17 @@ function makeModularChangeset(
 export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	private transactionDepth: number = 0;
 	private idAllocator: IdAllocator;
+	private readonly codecOptions: CodecWriteOptions;
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
+		codecOptions: CodecWriteOptions,
 	) {
 		super(family, changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
+		this.codecOptions = codecOptions;
 	}
 
 	public override enterTransaction(): void {
@@ -2812,6 +2853,36 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 				revision,
 			),
 		);
+	}
+
+	public addNoChangeConstraint(revision: RevisionTag): void {
+		if (lt(this.codecOptions.minVersionForCollab, FluidClientVersion.v2_80)) {
+			throw new UsageError(
+				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
+			);
+		}
+
+		const changeset = makeModularChangeset({
+			maxId: -1,
+			noChangeConstraint: { violated: false },
+		});
+
+		this.applyChange(tagChange(changeset, revision));
+	}
+
+	public addNoChangeConstraintOnRevert(revision: RevisionTag): void {
+		if (lt(this.codecOptions.minVersionForCollab, FluidClientVersion.v2_80)) {
+			throw new UsageError(
+				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
+			);
+		}
+
+		const changeset = makeModularChangeset({
+			maxId: -1,
+			noChangeConstraintOnRevert: { violated: false },
+		});
+
+		this.applyChange(tagChange(changeset, revision));
 	}
 }
 
@@ -3037,7 +3108,7 @@ function nodeChangeFromId(nodes: ChangeAtomIdBTree<NodeChangeset>, id: NodeId): 
 }
 
 function fieldIdFromFieldIdKey([revision, localId, field]: FieldIdKey): FieldId {
-	const nodeId = localId !== undefined ? { revision, localId } : undefined;
+	const nodeId = localId === undefined ? undefined : { revision, localId };
 	return { nodeId, field };
 }
 
@@ -3081,9 +3152,9 @@ export function normalizeFieldId(
 	fieldId: FieldId,
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
 ): FieldId {
-	return fieldId.nodeId !== undefined
-		? { ...fieldId, nodeId: normalizeNodeId(fieldId.nodeId, nodeAliases) }
-		: fieldId;
+	return fieldId.nodeId === undefined
+		? fieldId
+		: { ...fieldId, nodeId: normalizeNodeId(fieldId.nodeId, nodeAliases) };
 }
 
 /**

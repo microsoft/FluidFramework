@@ -727,7 +727,7 @@ const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
 
 export function testStateBasedRebaserAxioms() {
 	describeStress("State-based Rebaser Axioms", function ({ stressMode }) {
-		this.timeout(stressMode !== StressMode.Short ? 80_000 : 5000);
+		this.timeout(stressMode === StressMode.Short ? 5000 : 80_000);
 		const allocator = idAllocatorFromMaxId();
 		const startingLength = 2;
 		const startingState: NodeState[] = makeArray(startingLength, () => ({
@@ -747,7 +747,7 @@ export function testStateBasedRebaserAxioms() {
 			fieldRebaser,
 			{
 				groupSubSuites: true,
-				numberOfEditsToVerifyAssociativity: stressMode !== StressMode.Short ? 4 : 3,
+				numberOfEditsToVerifyAssociativity: stressMode === StressMode.Short ? 3 : 4,
 				skipRebaseOverCompose: false,
 			},
 		);
@@ -1044,9 +1044,9 @@ function tagWrappedChangeInline(
 	rollbackOf?: RevisionTag,
 ): TaggedChange<WrappedChange> {
 	const inlined = inlineRevisionWrapped(change, revision);
-	return rollbackOf !== undefined
-		? tagRollbackInverse(inlined, revision, rollbackOf)
-		: tagChange(inlined, revision);
+	return rollbackOf === undefined
+		? tagChange(inlined, revision)
+		: tagRollbackInverse(inlined, revision, rollbackOf);
 }
 
 function inlineRevisionWrapped(change: WrappedChange, revision: RevisionTag): WrappedChange {

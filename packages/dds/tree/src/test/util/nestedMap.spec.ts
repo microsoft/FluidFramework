@@ -200,6 +200,7 @@ describe("NestedMap unit tests", () => {
 
 		// Enumerate and count entries
 		let entryCount = 0;
+		// eslint-disable-next-line unicorn/no-array-for-each -- Testing SizedNestedMap.forEach API
 		map.forEach(() => {
 			entryCount++;
 		});

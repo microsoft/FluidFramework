@@ -577,6 +577,17 @@ export const FluidClientVersion = {
 	 * - ForestSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.74
 	 */
 	v2_74: "2.74.0",
+
+	/**
+	 * Fluid Framework Client 2.80 and newer.
+	 * @remarks
+	 * New formats introduced in 2.80:
+	 * - MessageFormatVersion.v6 - written when minVersionForCollab \>= 2.80
+	 * - EditManagerFormatVersion.v6 - written when minVersionForCollab \>= 2.80
+	 * - SharedTreeChangeFormatVersion.v5 - written when minVersionForCollab \>= 2.80
+	 * - ModularChangeFormatVersion.v5 - written when minVersionForCollab \>= 2.80
+	 */
+	v2_80: "2.80.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**
