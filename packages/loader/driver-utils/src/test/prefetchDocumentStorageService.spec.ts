@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 
 import type {
 	IDocumentStorageService,
+	IDocumentStorageServicePolicies,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 
@@ -57,7 +58,7 @@ class MockStorageService implements Partial<IDocumentStorageService> {
 		};
 	}
 
-	public get policies() {
+	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return undefined;
 	}
 }
