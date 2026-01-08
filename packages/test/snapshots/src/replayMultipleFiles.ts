@@ -391,7 +391,7 @@ async function processNode(
 		threads = await import("worker_threads");
 		threads.Worker.EventEmitter.defaultMaxListeners = 20;
 	} catch (err) {
-		// Ignore the error
+		// TODO: document why we are ignoring the error here
 	}
 
 	if (!concurrently || !threads) {

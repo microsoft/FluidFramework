@@ -63,7 +63,7 @@ try {
 	// eslint-disable-next-line @typescript-eslint/no-require-imports
 	threads = require("worker_threads");
 } catch (error) {
-	// Ignore the error
+	// TODO: document why we are ignoring the error here
 }
 
 function expandTreeForReadability(tree: ITree): ITree {
@@ -81,7 +81,7 @@ function expandTreeForReadability(tree: ITree): ITree {
 					encoding: blob.encoding,
 				};
 			} catch (e) {
-				// Ignore the error
+				// TODO: document why we are ignoring the error here
 			}
 		}
 		newTree.entries.push(newNode);
@@ -428,7 +428,7 @@ export class ReplayTool {
 								this.args.fromVersion = name;
 							}
 						} catch (err) {
-							// Ignore the error
+							// TODO: document why we are ignoring the error here
 						}
 					}
 					if (this.args.fromVersion === undefined) {

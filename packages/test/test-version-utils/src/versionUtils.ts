@@ -325,7 +325,7 @@ export async function ensureInstalled(
 		try {
 			(rmdirSync as any)(modulePath, { recursive: true });
 		} catch (ex) {
-			// Ignore the error
+			// TODO: document why we are ignoring the error here
 		}
 		throw new Error(`Unable to install version ${version}\n${e}`);
 	} finally {

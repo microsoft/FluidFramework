@@ -28,7 +28,7 @@ export class OdspUrlResolver implements IUrlResolver {
 			const resolvedUrl = await this.driverUrlResolver.resolve(request);
 			return resolvedUrl;
 		} catch (error) {
-			// Ignore the error
+			// TODO: document why we are ignoring the error here
 		}
 
 		const url = new URL(request.url);

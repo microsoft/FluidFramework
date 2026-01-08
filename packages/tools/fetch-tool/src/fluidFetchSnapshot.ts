@@ -246,7 +246,7 @@ async function saveSnapshot(
 						decoded = JSON.stringify(JSON.parse(decoded), undefined, 2);
 					}
 				} catch (e) {
-					// Ignore the error
+					// TODO: document why we are ignoring the error here
 				}
 				fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`, decoded);
 			} else {

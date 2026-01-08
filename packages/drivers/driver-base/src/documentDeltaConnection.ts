@@ -558,7 +558,7 @@ export class DocumentDeltaConnection
 						description.target = undefined;
 					}
 				} catch (_e) {
-					// Ignore the error
+					// TODO: document why we are ignoring the error here
 				}
 
 				// Handle socket transport downgrading when not offline.

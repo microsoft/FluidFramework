@@ -132,7 +132,7 @@ fluidFetchMain()
 						extraMsg += `\n${key}: ${JSON.stringify(error[key], undefined, 2)}`;
 					}
 				} catch (_) {
-					// Ignore the error
+					// TODO: document why we are ignoring the error here
 				}
 			}
 			console.error(`ERROR: ${error.stack}${extraMsg}`);

@@ -210,7 +210,7 @@ const makeAfterMiddlewares = (
 				try {
 					toLog = JSON.stringify(error);
 				} catch {
-					// Ignore the error
+					// TODO: document why we are ignoring the error here
 				}
 				console.log(toLog);
 			}
