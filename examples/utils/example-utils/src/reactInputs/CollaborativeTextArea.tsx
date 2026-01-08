@@ -5,7 +5,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
-import {
+import type {
 	ISharedStringHelperTextChangedEventArgs,
 	SharedStringHelper,
 } from "../SharedStringHelper.js";
@@ -83,10 +83,10 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 		if (isTextInserted) {
 			const insertedText = newText.substring(oldSelectionStart, newCaretPosition);
 			const isTextReplaced = oldSelectionEnd - oldSelectionStart > 0;
-			if (!isTextReplaced) {
-				sharedStringHelper.insertText(insertedText, oldSelectionStart);
-			} else {
+			if (isTextReplaced) {
 				sharedStringHelper.replaceText(insertedText, oldSelectionStart, oldSelectionEnd);
+			} else {
+				sharedStringHelper.insertText(insertedText, oldSelectionStart);
 			}
 		} else {
 			// Text was removed

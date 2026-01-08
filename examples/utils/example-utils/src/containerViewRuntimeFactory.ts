@@ -4,9 +4,9 @@
  */
 
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
-import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
 
 import { type IFluidMountableView, MountableView } from "./mountableView/index.js";
 
@@ -15,8 +15,9 @@ const dataStoreId = "modelDataStore";
 /**
  * @internal
  */
-export type ViewCallback<T> = (fluidModel: T) => any;
+export type ViewCallback<T> = (fluidModel: T) => IFluidMountableView;
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -65,7 +66,6 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 				const entryPoint = await getDataStoreEntryPoint<T>(containerRuntime, dataStoreId);
 
 				const view = viewCallback(entryPoint);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				let getMountableDefaultView = async (): Promise<IFluidMountableView> => view;
 				if (MountableView.canMount(view)) {
 					getMountableDefaultView = async (): Promise<IFluidMountableView> =>
