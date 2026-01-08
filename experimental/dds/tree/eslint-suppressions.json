@@ -1,7 +1,0 @@
-{
-	"src/migration-shim/migrationShim.ts": {
-		"@typescript-eslint/prefer-nullish-coalescing": {
-			"count": 1
-		}
-	}
-}

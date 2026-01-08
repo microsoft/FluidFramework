@@ -1,7 +1,0 @@
-{
-	"src/propertyTree.ts": {
-		"@typescript-eslint/prefer-nullish-coalescing": {
-			"count": 2
-		}
-	}
-}

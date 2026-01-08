@@ -1,7 +1,0 @@
-{
-	"src/markovChain.ts": {
-		"@typescript-eslint/prefer-nullish-coalescing": {
-			"count": 4
-		}
-	}
-}

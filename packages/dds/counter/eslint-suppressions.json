@@ -1,7 +1,0 @@
-{
-	"src/counter.ts": {
-		"@typescript-eslint/prefer-optional-chain": {
-			"count": 2
-		}
-	}
-}

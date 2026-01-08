@@ -1,7 +1,0 @@
-{
-	"src/errorLogging.ts": {
-		"@typescript-eslint/prefer-nullish-coalescing": {
-			"count": 1
-		}
-	}
-}
