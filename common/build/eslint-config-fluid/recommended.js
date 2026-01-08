@@ -222,13 +222,6 @@ module.exports = {
 			{ fixStyle: "separate-type-imports" },
 		],
 
-		/**
-		 * Ensures that type-only import statements do not result in runtime side-effects.
-		 *
-		 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
-		 */
-		"@typescript-eslint/no-import-type-side-effects": "error",
-
 		// #endregion
 	},
 	overrides: [
