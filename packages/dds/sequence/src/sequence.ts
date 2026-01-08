@@ -71,9 +71,9 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import { type ISequenceIntervalCollection } from "./intervalCollection.js";
+import type { ISequenceIntervalCollection } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
-import { type SequenceOptions } from "./intervalCollectionMapInterfaces.js";
+import type { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 import {
 	SequenceDeltaEvent,
 	SequenceDeltaEventClass,
