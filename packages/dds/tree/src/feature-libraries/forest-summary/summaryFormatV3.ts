@@ -10,7 +10,7 @@
  * If the summary is incremental, the contents of the incremental chunks is stored separately:
  * The contents of an incremental chunk is under a summary tree node with its {@link ChunkReferenceId} as the key.
  * The inline portion of the chunk content is encoded with the forest codec and is stored in a blob with this key as
- * well. The rest of the chunk contents  is stored in the summary tree under the summary tree node.
+ * well. The rest of the chunk contents is stored in the summary tree under the summary tree node.
  *
  * @remarks
  * See the summary format in {@link ForestIncrementalSummaryBuilder} for more details.
