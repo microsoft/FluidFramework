@@ -119,7 +119,7 @@ export abstract class ReleaseReportBaseCommand<
 	 *
 	 * @param context - The {@link Context}.
 	 * @param mode - The {@link ReleaseSelectionMode} to use to determine the release to report on.
-	 * @param releaseGroupOrPackage - If provided, the release data collected will be limited to only the pakages in this release
+	 * @param releaseGroupOrPackage - If provided, the release data collected will be limited to only the packages in this release
 	 * group and its direct Fluid dependencies.
 	 * @param includeDependencies - If true, the release data will include the Fluid dependencies of the release group.
 	 */
