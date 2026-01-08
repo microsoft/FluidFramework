@@ -42,6 +42,7 @@
 	"dependencies": {
 		"@fluid-tools/version-tools": "workspace:~",
 		"@manypkg/get-packages": "^2.2.2",
+		"@types/glob": "^7.2.0",
 		"async": "^3.2.6",
 		"date-fns": "^3.6.0",
 		"debug": "^4.4.3",

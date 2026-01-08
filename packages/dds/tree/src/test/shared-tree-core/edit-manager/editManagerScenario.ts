@@ -407,7 +407,7 @@ export function runUnitTestScenario(
 					bunchRefNumber,
 					"main",
 				);
-				commits.forEach((commit) => {
+				for (const commit of commits) {
 					assert(
 						commit.sessionId === bunchSessionId &&
 							commit.seqNumber === bunchSeqNumber &&
@@ -415,7 +415,7 @@ export function runUnitTestScenario(
 						"All commits must be part of the same bunch",
 					);
 					trunk.push({ intention: commit.intention, seq: commit.seqNumber });
-				});
+				}
 				summarizer.addSequencedChanges(
 					commits,
 					commits[0].sessionId,

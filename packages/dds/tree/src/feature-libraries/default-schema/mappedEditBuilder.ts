@@ -66,4 +66,10 @@ export class MappedEditBuilder<TBase, TAdapted> implements IDefaultEditBuilder<T
 	public addNodeExistsConstraintOnRevert(path: NormalizedUpPath): void {
 		this.baseBuilder.addNodeExistsConstraintOnRevert(path);
 	}
+	public addNoChangeConstraint(): void {
+		this.baseBuilder.addNoChangeConstraint();
+	}
+	public addNoChangeConstraintOnRevert(): void {
+		this.baseBuilder.addNoChangeConstraintOnRevert();
+	}
 }

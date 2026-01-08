@@ -66,10 +66,17 @@ export function remove(tree: ITreeCheckout, index: number, count: number): void 
 /**
  * Creates a sequence field at the root.
  */
-export function makeTreeFromJsonSequence(json: JsonCompatible[]): TreeCheckout {
-	const tree = checkoutWithContent({
-		schema: jsonSequenceRootSchema,
-		initialTree: fieldJsonCursor(json),
-	});
+
+export function makeTreeFromJsonSequence(
+	json: JsonCompatible[],
+	args?: Parameters<typeof checkoutWithContent>[1],
+): TreeCheckout {
+	const tree = checkoutWithContent(
+		{
+			schema: jsonSequenceRootSchema,
+			initialTree: fieldJsonCursor(json),
+		},
+		args,
+	);
 	return tree;
 }

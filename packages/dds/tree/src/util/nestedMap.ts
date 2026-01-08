@@ -177,11 +177,11 @@ export function nestedMapToFlatList<Key1, Key2, Value>(
 	map: ReadonlyNestedMap<Key1, Key2, Value>,
 ): [Key1, Key2, Value][] {
 	const list: [Key1, Key2, Value][] = [];
-	map.forEach((innerMap, key1) => {
-		innerMap.forEach((val, key2) => {
+	for (const [key1, innerMap] of map) {
+		for (const [key2, val] of innerMap) {
 			list.push([key1, key2, val]);
-		});
-	});
+		}
+	}
 	return list;
 }
 
@@ -202,11 +202,11 @@ export function forEachInNestedMap<Key1, Key2, Value>(
 	map: ReadonlyNestedMap<Key1, Key2, Value>,
 	delegate: (value: Value, key1: Key1, key2: Key2) => void,
 ): void {
-	map.forEach((innerMap, keyFirst) => {
-		innerMap.forEach((val, keySecond) => {
+	for (const [keyFirst, innerMap] of map) {
+		for (const [keySecond, val] of innerMap) {
 			delegate(val, keyFirst, keySecond);
-		});
-	});
+		}
+	}
 }
 
 /**
@@ -221,14 +221,14 @@ export function mapNestedMap<Key1, Key2, ValueIn, ValueOut = ValueIn>(
 	delegate: (value: ValueIn, key1: Key1, key2: Key2) => ValueOut,
 ): NestedMap<Key1, Key2, ValueOut> {
 	const output = new Map<Key1, Map<Key2, ValueOut>>();
-	input.forEach((inputInnerMap, keyFirst) => {
+	for (const [keyFirst, inputInnerMap] of input) {
 		const outputInnerMap = new Map<Key2, ValueOut>();
-		inputInnerMap.forEach((val, keySecond) => {
+		for (const [keySecond, val] of inputInnerMap) {
 			const mappedValue = delegate(val, keyFirst, keySecond);
 			outputInnerMap.set(keySecond, mappedValue);
-		});
+		}
 		output.set(keyFirst, outputInnerMap);
-	});
+	}
 	return output;
 }
 
