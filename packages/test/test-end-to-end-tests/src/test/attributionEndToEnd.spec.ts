@@ -112,7 +112,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
 
-	const sharedStringFromContainer = async (container: IContainer) => {
+	const sharedStringFromContainer = async (container: IContainer): Promise<SharedString> => {
 		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		return dataObject.getSharedObject<SharedString>(stringId);
 	};
@@ -147,7 +147,9 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			: undefined,
 	});
 
-	const getAttributorFromContainer = async (container: IContainer) => {
+	const getAttributorFromContainer = async (
+		container: IContainer,
+	): Promise<IRuntimeAttributor> => {
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const containerRuntime = dataStore.context.containerRuntime;
 		const attributor = await getRuntimeAttributor(containerRuntime);
@@ -155,7 +157,9 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		return attributor;
 	};
 
-	const getAttributorFromContainerWithNoAssert = async (container: IContainer) => {
+	const getAttributorFromContainerWithNoAssert = async (
+		container: IContainer,
+	): Promise<IRuntimeAttributor | undefined> => {
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const containerRuntime = dataStore.context.containerRuntime;
 		const attributor = await getRuntimeAttributor(containerRuntime);

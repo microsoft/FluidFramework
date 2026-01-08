@@ -32,7 +32,7 @@ const snapshot = (root: Node): ISnapshotNode => ({
 	children: [...root.childNodes].map(snapshot),
 });
 
-function expectTree(actual: Node, expected: ISnapshotNode) {
+function expectTree(actual: Node, expected: ISnapshotNode): void {
 	assert.strictEqual(actual, expected.node);
 
 	const children = expected.children;
@@ -72,10 +72,10 @@ describeCompat("Layout", "LoaderCompat", (getTestObjectProvider) => {
 		root = undefined as any;
 	});
 
-	const getHTML = () => root.innerHTML;
+	const getHTML = (): string => root.innerHTML;
 
 	describe("round-trip", () => {
-		async function check() {
+		async function check(): Promise<void> {
 			await layout.rendered;
 			const expectedHtml = getHTML();
 
@@ -175,7 +175,7 @@ describeCompat("Layout", "LoaderCompat", (getTestObjectProvider) => {
 	});
 
 	describe.skip("structure", () => {
-		function expect(expected: string, start = 0, end = doc.length) {
+		function expect(expected: string, start = 0, end = doc.length): void {
 			layout.sync(start, end);
 			const html = getHTML();
 			console.log(html);

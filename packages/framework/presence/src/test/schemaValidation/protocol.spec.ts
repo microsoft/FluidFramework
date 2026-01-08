@@ -9,6 +9,8 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
+import { StateFactory } from "@fluidframework/presence/beta";
+
 import type { PresenceWithNotifications } from "../../index.js";
 import { toOpaqueJson } from "../../internalUtils.js";
 import { broadcastJoinResponseDelaysMs } from "../../presenceDatastoreManager.js";
@@ -26,8 +28,6 @@ import {
 	generateBasicClientJoin,
 	prepareConnectedPresence,
 } from "../testUtils.js";
-
-import { StateFactory } from "@fluidframework/presence/beta";
 
 /**
  * Workspace updates
@@ -255,6 +255,7 @@ describe("Presence", () => {
 				});
 				const latest = statesWorkspace.states.latest;
 				const attendee1 = presence.attendees.getAttendee(attendeeId1);
+
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 				latest.getRemote(attendee1)?.value();
 

@@ -184,6 +184,37 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 			expect(await fluidCache.get(docId1Entry2)).toBeUndefined();
 		});
 
+		it("removes a specific entry without affecting other entries for the same document", async () => {
+			const fluidCache = getFluidCache();
+
+			const docId1Entry1 = getMockCacheEntry("docId1Entry1", {
+				docId: "docId1",
+			});
+			const docId1Entry2 = getMockCacheEntry("docId1Entry2", {
+				docId: "docId1",
+			});
+			const docId2Entry1 = getMockCacheEntry("docId2Entry1", {
+				docId: "docId2",
+			});
+
+			await fluidCache.put(docId1Entry1, { data: "entry1" });
+			await fluidCache.put(docId1Entry2, { data: "entry2" });
+			await fluidCache.put(docId2Entry1, { data: "entry3" });
+
+			// Verify all entries exist
+			expect(await fluidCache.get(docId1Entry1)).toEqual({ data: "entry1" });
+			expect(await fluidCache.get(docId1Entry2)).toEqual({ data: "entry2" });
+			expect(await fluidCache.get(docId2Entry1)).toEqual({ data: "entry3" });
+
+			// Remove only one specific entry from docId1
+			await fluidCache.removeEntry(docId1Entry1);
+
+			// Verify only the specified entry was removed
+			expect(await fluidCache.get(docId1Entry1)).toBeUndefined();
+			expect(await fluidCache.get(docId1Entry2)).toEqual({ data: "entry2" }); // Still exists
+			expect(await fluidCache.get(docId2Entry1)).toEqual({ data: "entry3" }); // Still exists
+		});
+
 		// The tests above test the public API of Fluid Cache.
 		//  Those tests should not break if we changed the implementation.
 		// The tests below test implementation details of the Fluid Cache, such as the usage of indexedDB.

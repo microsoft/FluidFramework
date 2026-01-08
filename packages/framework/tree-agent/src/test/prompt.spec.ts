@@ -16,11 +16,11 @@ import {
 } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
+import type { TreeView } from "../api.js";
 import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { getPrompt } from "../prompt.js";
 import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { Subtree } from "../subtree.js";
-import type { TreeView } from "../api.js";
 
 const sf = new SchemaFactoryAlpha("test");
 
@@ -189,7 +189,7 @@ describe("Prompt generation", () => {
 		{
 			const view = getView(
 				sf.object("ObjectWithMap", {
-					map: sf.map(sf.string), // eslint-disable-line unicorn/no-array-callback-reference
+					map: sf.map(sf.string),
 				}),
 				{ map: {} },
 			);

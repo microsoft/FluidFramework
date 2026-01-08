@@ -61,7 +61,10 @@ const sharedCellId = "scell1Key";
 const sharedMatrixId = "smatrix1Key";
 const sparseMatrixId = "sparsematrixKey";
 
-const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type: string) => {
+const createFluidObject = async (
+	dataStoreContext: IFluidDataStoreContext,
+	type: string,
+): Promise<ITestFluidObject> => {
 	const dataStore = await dataStoreContext.containerRuntime.createDataStore(type);
 	return getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
 };

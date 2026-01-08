@@ -473,18 +473,18 @@ export function prefixFieldPath(
  * TODO: tests for this.
  */
 export function prefixPathPrefix(root: PathRootPrefix, inner: PathRootPrefix): PathRootPrefix {
-	if (inner.parent !== undefined) {
-		const composedPrefix: PathRootPrefix = {
-			parent: new PrefixedPath(root, inner.parent),
-			rootFieldOverride: inner.rootFieldOverride,
-			indexOffset: inner.indexOffset,
-		};
-		return composedPrefix;
-	} else {
+	if (inner.parent === undefined) {
 		const composedPrefix: PathRootPrefix = {
 			parent: root.parent,
 			rootFieldOverride: root.rootFieldOverride ?? inner.rootFieldOverride,
 			indexOffset: (inner.indexOffset ?? 0) + (root.indexOffset ?? 0),
+		};
+		return composedPrefix;
+	} else {
+		const composedPrefix: PathRootPrefix = {
+			parent: new PrefixedPath(root, inner.parent),
+			rootFieldOverride: inner.rootFieldOverride,
+			indexOffset: inner.indexOffset,
 		};
 		return composedPrefix;
 	}

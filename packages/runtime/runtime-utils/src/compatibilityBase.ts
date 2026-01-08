@@ -143,12 +143,35 @@ export function getConfigForMinVersionForCollab<T>(
 	minVersionForCollab: MinimumVersionForCollab,
 	config: ConfigMapEntry<T>,
 ): T {
-	const entries: [string, unknown][] = Object.entries(config); // Assigning this to a typed variable to convert the "any" into unknown.
+	return getConfigForMinVersionForCollabIterable(
+		minVersionForCollab,
+		Object.entries(config) as [MinimumMinorSemanticVersion, T][],
+	);
+}
+
+/**
+ * Returns a default configuration given minVersionForCollab and the contents of a {@link ConfigMapEntry} in an Iterable.
+ * @remarks
+ * See also {@link getConfigForMinVersionForCollab} for consuming a ConfigMapEntry directly.
+ *
+ * `ConfigMapEntry` is a nice type safe format for developers to directly author this data,
+ * but it is messy and less type safe to work with it in this format programmatically.
+ * Thus this function exists to help meet the needs of programmatic use cases,
+ * like cases which transform a ConfigMapEntry before selecting a value from it.
+ * @internal
+ */
+export function getConfigForMinVersionForCollabIterable<T>(
+	minVersionForCollab: MinimumVersionForCollab,
+	entries: Iterable<readonly [MinimumMinorSemanticVersion | MinimumVersionForCollab, T]>, // [[typeof lowestMinVersionForCollab, T], ...[MinimumVersionForCollab, T][]],
+): T {
 	// Validate and strongly type the versions from the configMap.
-	const versions: [MinimumVersionForCollab, unknown][] = entries.map(([version, value]) => {
-		validateMinimumVersionForCollab(version);
-		return [version, value];
-	});
+	const versions: [MinimumVersionForCollab, unknown][] = Array.from(
+		entries,
+		([version, value]) => {
+			validateMinimumVersionForCollab(version);
+			return [version, value];
+		},
+	);
 	// Sort the versions in descending order to find the largest compatible entry.
 	// TODO: Enforcing a sorted order might be a good idea. For now tolerates any order.
 	versions.sort((a, b) => compare(b[0], a[0]));
@@ -159,7 +182,7 @@ export function getConfigForMinVersionForCollab<T>(
 			return value as T;
 		}
 	}
-	fail("No config map entry for version");
+	fail(0xcb8 /* No config map entry for version */);
 }
 
 /**
@@ -199,7 +222,7 @@ export function isValidMinVersionForCollab(
 	return isValidSemver && isGteLowestMinVersion && isLtePkgVersion;
 }
 
-const parsedPackageVersion = parse(pkgVersion) ?? fail("Invalid package version");
+const parsedPackageVersion = parse(pkgVersion) ?? fail(0xcb9 /* Invalid package version */);
 
 /**
  * `pkgVersion` version without pre-release.

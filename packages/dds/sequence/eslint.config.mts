@@ -10,9 +10,11 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"@typescript-eslint/explicit-function-return-type": "warn",
 			"@typescript-eslint/no-use-before-define": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"prefer-arrow-callback": "off",
 		},
 	},
 ];
