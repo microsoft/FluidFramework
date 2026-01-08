@@ -15,7 +15,8 @@ const dataStoreId = "modelDataStore";
 /**
  * @internal
  */
-export type ViewCallback<T> = (fluidModel: T) => IFluidMountableView;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use a real return type
+export type ViewCallback<T> = (fluidModel: T) => any;
 
 // eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
@@ -65,10 +66,14 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 			): Promise<IFluidMountableViewEntryPoint> => {
 				const entryPoint = await getDataStoreEntryPoint<T>(containerRuntime, dataStoreId);
 
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: Update `ViewCallback` to use a real return type
 				const view = viewCallback(entryPoint);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- TODO: Update `ViewCallback` to use a real return type
 				let getMountableDefaultView = async (): Promise<IFluidMountableView> => view;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- TODO: Update `ViewCallback` to use a real return type
 				if (MountableView.canMount(view)) {
 					getMountableDefaultView = async (): Promise<IFluidMountableView> =>
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- TODO: Update `ViewCallback` to use a real return type
 						new MountableView(view);
 				}
 
