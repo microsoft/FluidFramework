@@ -578,10 +578,10 @@ describe("List", () => {
 				check(["a", "b"], -2.5); // Truncated to -2 - first element
 				// Non-integer indices at and close to the valid "edges"
 				check(["a", "b"], 1.999999); // Truncated to -1 - second element
-				check(["a", "b"], 2.0); // Truncated to -2 - first element
+				check(["a", "b"], 2); // Truncated to -2 - first element
 				check(["a", "b"], 2.000001); // Truncated to -2 - first element
 				check(["a", "b"], -2.999999); // Truncated to -2 - first element
-				check(["a", "b"], -3.0); // Truncated to -3 - out of bounds
+				check(["a", "b"], -3); // Truncated to -3 - out of bounds
 				check(["a", "b"], -3.000001); // Truncated to -3 - out of bounds
 				check(["a", "b"], -3.5); // Truncated to -3 - out of bounds
 				// Extreme values

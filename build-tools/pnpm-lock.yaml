@@ -293,6 +293,9 @@ importers:
       '@types/debug':
         specifier: ^4.1.12
         version: 4.1.12
+      '@types/eslint':
+        specifier: ^9.6.1
+        version: 9.6.1
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
