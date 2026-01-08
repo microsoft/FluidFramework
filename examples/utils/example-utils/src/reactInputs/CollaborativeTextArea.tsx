@@ -81,7 +81,7 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 		// This is also a bad assumption, in the undo case.
 		const isTextInserted = newCaretPosition - oldSelectionStart > 0;
 		if (isTextInserted) {
-			const insertedText = newText.substring(oldSelectionStart, newCaretPosition);
+			const insertedText = newText.slice(oldSelectionStart, newCaretPosition);
 			const isTextReplaced = oldSelectionEnd - oldSelectionStart > 0;
 			if (isTextReplaced) {
 				sharedStringHelper.replaceText(insertedText, oldSelectionStart, oldSelectionEnd);
