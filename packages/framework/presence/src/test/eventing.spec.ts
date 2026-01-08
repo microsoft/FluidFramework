@@ -26,7 +26,7 @@ import {
 	assertFinalExpectations,
 	prepareConnectedPresence,
 	attendeeId1,
-	initialLocalAttendeeId,
+	localAttendeeId,
 	initialLocalClientConnectionId,
 } from "./testUtils.js";
 
@@ -224,7 +224,7 @@ describe("Presence", () => {
 			runtime = new MockEphemeralRuntime(logger);
 			({ presence, processSignal } = prepareConnectedPresence(
 				runtime,
-				initialLocalAttendeeId,
+				localAttendeeId,
 				initialLocalClientConnectionId,
 				clock,
 				logger,

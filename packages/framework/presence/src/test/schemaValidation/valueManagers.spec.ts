@@ -23,7 +23,7 @@ import type { ProcessSignalFunction } from "../testUtils.js";
 import {
 	assertFinalExpectations,
 	attendeeId1,
-	initialLocalAttendeeId,
+	localAttendeeId,
 	connectionId1,
 	initialLocalClientConnectionId,
 	createSpiedValidator,
@@ -225,7 +225,7 @@ describe("Presence", () => {
 			// Create Presence joining session as attendeeId-2. Tests will act as attendee2
 			({ presence, processSignal } = prepareConnectedPresence(
 				runtime,
-				initialLocalAttendeeId,
+				localAttendeeId,
 				initialLocalClientConnectionId,
 				clock,
 				logger,
@@ -287,13 +287,13 @@ describe("Presence", () => {
 										[initialLocalClientConnectionId]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": initialLocalAttendeeId,
+											"value": localAttendeeId,
 										},
 									},
 								},
 								"s:name:testWorkspace": {
 									"latest": {
-										[initialLocalAttendeeId]: {
+										[localAttendeeId]: {
 											"rev": 0,
 											"timestamp": clock.now,
 											"value": toOpaqueJson({ x: 0, y: 0, z: 0 }),
@@ -591,13 +591,13 @@ describe("Presence", () => {
 										[initialLocalClientConnectionId]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": initialLocalAttendeeId,
+											"value": localAttendeeId,
 										},
 									},
 								},
 								"s:name:testWorkspace": {
 									"latestMap": {
-										[initialLocalAttendeeId]: {
+										[localAttendeeId]: {
 											"rev": 0,
 											"items": {
 												"key1": {
@@ -679,13 +679,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testWorkspace": {
 										"latestMap": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 1,
 												"items": {
 													"key1": {

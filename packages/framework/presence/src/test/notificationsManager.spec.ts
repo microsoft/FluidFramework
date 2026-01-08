@@ -28,7 +28,7 @@ import {
 	createInstanceOf,
 	createSpecificAttendeeId,
 	prepareConnectedPresence,
-	initialLocalAttendeeId,
+	localAttendeeId,
 } from "./testUtils.js";
 
 const attendeeId3 = createSpecificAttendeeId("attendeeId-3");
@@ -62,7 +62,7 @@ describe("Presence", () => {
 			// Set up the presence connection
 			({ presence, processSignal } = prepareConnectedPresence(
 				runtime,
-				initialLocalAttendeeId,
+				localAttendeeId,
 				initialLocalClientConnectionId,
 				clock,
 				logger,
@@ -145,13 +145,13 @@ describe("Presence", () => {
 									[initialLocalClientConnectionId]: {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": initialLocalAttendeeId,
+										"value": localAttendeeId,
 									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									[initialLocalAttendeeId]: {
+									[localAttendeeId]: {
 										"rev": 0,
 										"timestamp": 0,
 										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
@@ -202,13 +202,13 @@ describe("Presence", () => {
 									[initialLocalClientConnectionId]: {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": initialLocalAttendeeId,
+										"value": localAttendeeId,
 									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									[initialLocalAttendeeId]: {
+									[localAttendeeId]: {
 										"rev": 0,
 										"timestamp": 0,
 										"value": toOpaqueJson({ "name": "newId", "args": [42] }),

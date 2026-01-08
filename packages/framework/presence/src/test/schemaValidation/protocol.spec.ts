@@ -20,7 +20,7 @@ import type { ProcessSignalFunction } from "../testUtils.js";
 import {
 	assertFinalExpectations,
 	attendeeId1,
-	initialLocalAttendeeId,
+	localAttendeeId,
 	connectionId1,
 	initialLocalClientConnectionId,
 	createSpecificAttendeeId,
@@ -63,7 +63,7 @@ describe("Presence", () => {
 
 			({ presence, processSignal } = prepareConnectedPresence(
 				runtime,
-				initialLocalAttendeeId,
+				localAttendeeId,
 				initialLocalClientConnectionId,
 				clock,
 				logger,
@@ -181,7 +181,7 @@ describe("Presence", () => {
 									[initialLocalClientConnectionId]: {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": initialLocalAttendeeId,
+										"value": localAttendeeId,
 									},
 									[connectionId1]: {
 										"rev": 0,
@@ -272,7 +272,7 @@ describe("Presence", () => {
 							"s:name:testWorkspace": {
 								"latest": {
 									...originalJoinResponseData["s:name:testWorkspace"].latest,
-									[initialLocalAttendeeId]: {
+									[localAttendeeId]: {
 										"rev": 0,
 										"timestamp": workspaceSetupTime,
 										"value": toOpaqueJson({ x: 0, y: 0, z: 0 }),

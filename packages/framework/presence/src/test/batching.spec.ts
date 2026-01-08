@@ -18,7 +18,7 @@ import {
 	assertFinalExpectations,
 	initialLocalClientConnectionId,
 	prepareConnectedPresence,
-	initialLocalAttendeeId,
+	localAttendeeId,
 } from "./testUtils.js";
 
 describe("Presence", () => {
@@ -43,7 +43,7 @@ describe("Presence", () => {
 			// Set up the presence connection.
 			presence = prepareConnectedPresence(
 				runtime,
-				initialLocalAttendeeId,
+				localAttendeeId,
 				initialLocalClientConnectionId,
 				clock,
 				logger,
@@ -82,13 +82,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testStateWorkspace": {
 										"count": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 0,
 												"timestamp": 1010,
 												"value": toOpaqueJson({
@@ -113,13 +113,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testStateWorkspace": {
 										"count": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 1,
 												"timestamp": 1020,
 												"value": toOpaqueJson({
@@ -144,13 +144,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testStateWorkspace": {
 										"count": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 2,
 												"timestamp": 1020,
 												"value": toOpaqueJson({
@@ -200,13 +200,13 @@ describe("Presence", () => {
 										[initialLocalClientConnectionId]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": initialLocalAttendeeId,
+											"value": localAttendeeId,
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										[initialLocalAttendeeId]: {
+										[localAttendeeId]: {
 											"rev": 0,
 											"timestamp": 1010,
 											"value": toOpaqueJson({
@@ -248,13 +248,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testStateWorkspace": {
 										"count": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 3,
 												"timestamp": 1060,
 												"value": toOpaqueJson({
@@ -279,13 +279,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testStateWorkspace": {
 										"count": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 6,
 												"timestamp": 1140,
 												"value": toOpaqueJson({
@@ -356,13 +356,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testStateWorkspace": {
 										"count": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 2,
 												"timestamp": 1100,
 												"value": toOpaqueJson({
@@ -387,13 +387,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testStateWorkspace": {
 										"count": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 5,
 												"timestamp": 1220,
 												"value": toOpaqueJson({
@@ -462,13 +462,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testStateWorkspace": {
 										"count": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 0,
 												"timestamp": 1010,
 												"value": toOpaqueJson({
@@ -477,7 +477,7 @@ describe("Presence", () => {
 											},
 										},
 										"immediateUpdate": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 0,
 												"timestamp": 1010,
 												"value": toOpaqueJson({
@@ -502,13 +502,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testStateWorkspace": {
 										"count": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 2,
 												"timestamp": 1100,
 												"value": toOpaqueJson({
@@ -517,7 +517,7 @@ describe("Presence", () => {
 											},
 										},
 										"immediateUpdate": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 1,
 												"timestamp": 1110,
 												"value": toOpaqueJson({
@@ -576,13 +576,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testStateWorkspace": {
 										"count": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 2,
 												"timestamp": 1050,
 												"value": toOpaqueJson({
@@ -591,7 +591,7 @@ describe("Presence", () => {
 											},
 										},
 										"note": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 1,
 												"timestamp": 1020,
 												"value": toOpaqueJson({
@@ -616,13 +616,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testStateWorkspace": {
 										"note": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 2,
 												"timestamp": 1060,
 												"value": toOpaqueJson({ "message": "final message" }),
@@ -684,13 +684,13 @@ describe("Presence", () => {
 										[initialLocalClientConnectionId]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": initialLocalAttendeeId,
+											"value": localAttendeeId,
 										},
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										[initialLocalAttendeeId]: {
+										[localAttendeeId]: {
 											"rev": 2,
 											"timestamp": 1050,
 											"value": toOpaqueJson({
@@ -701,7 +701,7 @@ describe("Presence", () => {
 								},
 								"s:name:testStateWorkspace2": {
 									"note": {
-										[initialLocalAttendeeId]: {
+										[localAttendeeId]: {
 											"rev": 2,
 											"timestamp": 1060,
 											"value": toOpaqueJson({
@@ -767,13 +767,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"n:name:testNotificationWorkspace": {
 										"testEvents": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 0,
 												"timestamp": 0,
 												"value": toOpaqueJson({ "name": "newId", "args": [77] }),
@@ -797,13 +797,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"n:name:testNotificationWorkspace": {
 										"testEvents": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 0,
 												"timestamp": 0,
 												"value": toOpaqueJson({ "name": "newId", "args": [88] }),
@@ -863,13 +863,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"s:name:testStateWorkspace": {
 										"count": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 3,
 												"timestamp": 1040,
 												"value": toOpaqueJson({
@@ -880,7 +880,7 @@ describe("Presence", () => {
 									},
 									"n:name:testNotificationWorkspace": {
 										"testEvents": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 0,
 												"timestamp": 0,
 												"value": toOpaqueJson({
@@ -907,13 +907,13 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
 									"n:name:testNotificationWorkspace": {
 										"testEvents": {
-											[initialLocalAttendeeId]: {
+											[localAttendeeId]: {
 												"rev": 0,
 												"timestamp": 0,
 												"value": toOpaqueJson({

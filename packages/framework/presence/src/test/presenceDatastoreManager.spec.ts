@@ -31,7 +31,7 @@ import {
 	createSpecificAttendeeId,
 	prepareConnectedPresence,
 	attendeeId1,
-	initialLocalAttendeeId,
+	localAttendeeId,
 } from "./testUtils.js";
 
 const attendee0SystemWorkspaceDatastore = {
@@ -104,7 +104,7 @@ describe("Presence", () => {
 			// Setup, Act (call to createPresenceManager), & Verify (post createPresenceManager call)
 			prepareConnectedPresence(
 				runtime,
-				initialLocalAttendeeId,
+				localAttendeeId,
 				initialLocalClientConnectionId,
 				clock,
 				logger,
@@ -117,7 +117,7 @@ describe("Presence", () => {
 			beforeEach(() => {
 				({ processSignal } = prepareConnectedPresence(
 					runtime,
-					initialLocalAttendeeId,
+					localAttendeeId,
 					initialLocalClientConnectionId,
 					clock,
 					logger,
@@ -224,7 +224,7 @@ describe("Presence", () => {
 					eventName: "Presence:JoinResponse",
 					details: JSON.stringify({
 						type: "broadcastAll",
-						attendeeId: initialLocalAttendeeId,
+						attendeeId: localAttendeeId,
 						connectionId: initialLocalClientConnectionId,
 						primaryResponses: JSON.stringify(["client4", "client5"]),
 						secondaryResponses: JSON.stringify([]),
@@ -243,7 +243,7 @@ describe("Presence", () => {
 										[initialLocalClientConnectionId]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": initialLocalAttendeeId,
+											"value": localAttendeeId,
 										},
 									},
 								},
@@ -289,7 +289,7 @@ describe("Presence", () => {
 						eventName: "Presence:JoinResponse",
 						details: JSON.stringify({
 							type: "broadcastAll",
-							attendeeId: initialLocalAttendeeId,
+							attendeeId: localAttendeeId,
 							connectionId: initialLocalClientConnectionId,
 							primaryResponses: JSON.stringify([]),
 							secondaryResponses: JSON.stringify([["client4", responseOrder]]),
@@ -307,7 +307,7 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
@@ -371,7 +371,7 @@ describe("Presence", () => {
 						eventName: "Presence:JoinResponse",
 						details: JSON.stringify({
 							type: "broadcastAll",
-							attendeeId: initialLocalAttendeeId,
+							attendeeId: localAttendeeId,
 							connectionId: initialLocalClientConnectionId,
 							primaryResponses: JSON.stringify([]),
 							secondaryResponses: JSON.stringify([["client5", responseOrder]]),
@@ -391,7 +391,7 @@ describe("Presence", () => {
 											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": initialLocalAttendeeId,
+												"value": localAttendeeId,
 											},
 										},
 									},
@@ -452,7 +452,7 @@ describe("Presence", () => {
 			beforeEach(() => {
 				({ presence, processSignal } = prepareConnectedPresence(
 					runtime,
-					initialLocalAttendeeId,
+					localAttendeeId,
 					initialLocalClientConnectionId,
 					clock,
 					logger,
@@ -747,7 +747,7 @@ describe("Presence", () => {
 			beforeEach(() => {
 				({ presence, processSignal } = prepareConnectedPresence(
 					runtime,
-					initialLocalAttendeeId,
+					localAttendeeId,
 					initialLocalClientConnectionId,
 					clock,
 					logger,

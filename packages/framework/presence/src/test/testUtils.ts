@@ -73,7 +73,7 @@ export const connectionId1 = "client1" as const satisfies ClientConnectionId;
 /**
  * Mock {@link AttendeeId} for the local client in tests.
  */
-export const initialLocalAttendeeId = createSpecificAttendeeId("localAttendeeId");
+export const localAttendeeId = createSpecificAttendeeId("localAttendeeId");
 /**
  * Mock {@link ClientConnectionId} for the local client in tests.
  * Note: This is intentionally not in the initial audience so that tests can
@@ -88,7 +88,7 @@ export const initialLocalClientConnectionId =
 export function generateBasicClientJoin(
 	fixedTime: number,
 	{
-		attendeeId = initialLocalAttendeeId,
+		attendeeId = localAttendeeId,
 		clientConnectionId = initialLocalClientConnectionId,
 		updateProviders = ["client0", "client1", "client3"],
 		connectionOrder = 0,

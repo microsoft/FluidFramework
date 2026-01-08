@@ -19,7 +19,7 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
-	initialLocalAttendeeId,
+	localAttendeeId,
 	initialLocalClientConnectionId,
 	createSpecificAttendeeId,
 	generateBasicClientJoin,
@@ -94,7 +94,7 @@ describe("Presence", () => {
 				// Setup - create presence in disconnected state
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
-					initialLocalAttendeeId,
+					localAttendeeId,
 					clock,
 					logger,
 				);
@@ -125,7 +125,7 @@ describe("Presence", () => {
 				// Setup - create presence in disconnected state
 				const { presence } = prepareDisconnectedPresence(
 					runtime,
-					initialLocalAttendeeId,
+					localAttendeeId,
 					clock,
 					logger,
 				);
@@ -143,7 +143,7 @@ describe("Presence", () => {
 				// Setup - create presence in disconnected state
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
-					initialLocalAttendeeId,
+					localAttendeeId,
 					clock,
 					logger,
 				);
@@ -174,7 +174,7 @@ describe("Presence", () => {
 				// Setup - create presence in disconnected state, connect and then disconnect
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
-					initialLocalAttendeeId,
+					localAttendeeId,
 					clock,
 					logger,
 				);
@@ -224,7 +224,7 @@ describe("Presence", () => {
 			beforeEach(() => {
 				({ presence, processSignal } = prepareConnectedPresence(
 					runtime,
-					initialLocalAttendeeId,
+					localAttendeeId,
 					initialLocalClientConnectionId,
 					clock,
 					logger,
