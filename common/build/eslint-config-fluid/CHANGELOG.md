@@ -92,7 +92,7 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 
 #### Rule modifications
 
-- `jsdoc/require-description`: Updated to allow single-line comments to be expressed as a single line. E.g. `/** Single-line comment */`.
+- `jsdoc/multiline-blocks`: Updated to allow single-line comments to be expressed as a single line. E.g. `/** Single-line comment */`.
 
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 
