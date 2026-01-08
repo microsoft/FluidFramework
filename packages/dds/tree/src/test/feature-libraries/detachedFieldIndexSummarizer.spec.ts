@@ -21,9 +21,12 @@ import {
 import {
 	DetachedFieldIndexSummarizer,
 	DetachedFieldIndexSummaryFormatVersion,
-	detachedFieldIndexBlobKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/detachedFieldIndexSummarizer.js";
+import {
+	summaryContentBlobKey as detachedFieldIndexBlobKeyV1ToV2,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../feature-libraries/detachedFieldIndexSummaryFormatV1ToV2.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV1 } from "../../core/tree/detachedFieldIndexFormatV1.js";
 import { FluidClientVersion } from "../../codec/index.js";
@@ -122,7 +125,7 @@ describe("DetachedFieldIndexSummarizer", () => {
 			const summaryTree: ISummaryTree = {
 				type: SummaryType.Tree,
 				tree: {
-					[detachedFieldIndexBlobKey]: summaryBlob,
+					[detachedFieldIndexBlobKeyV1ToV2]: summaryBlob,
 				},
 			};
 
