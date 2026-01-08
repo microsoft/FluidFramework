@@ -131,7 +131,9 @@ fluidFetchMain()
 					if (key !== "message" && key !== "stack") {
 						extraMsg += `\n${key}: ${JSON.stringify(error[key], undefined, 2)}`;
 					}
-				} catch (_) {}
+				} catch (_) {
+					// Ignore the error
+				}
 			}
 			console.error(`ERROR: ${error.stack}${extraMsg}`);
 		} else if (typeof error === "object") {

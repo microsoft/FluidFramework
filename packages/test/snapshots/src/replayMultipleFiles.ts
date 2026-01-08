@@ -390,7 +390,9 @@ async function processNode(
 	try {
 		threads = await import("worker_threads");
 		threads.Worker.EventEmitter.defaultMaxListeners = 20;
-	} catch (err) {}
+	} catch (err) {
+		// Ignore the error
+	}
 
 	if (!concurrently || !threads) {
 		await processOneNode(workerData);
