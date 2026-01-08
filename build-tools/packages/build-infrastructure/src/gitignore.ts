@@ -167,10 +167,7 @@ function readGitignoreRuleSetsSync(dir: string): GitignoreRuleSet[] {
  * Reads .gitignore files from the filesystem hierarchy and applies them correctly
  * relative to each .gitignore file's directory.
  */
-export async function filterByGitignore(
-	files: string[],
-	cwd: string,
-): Promise<string[]> {
+export async function filterByGitignore(files: string[], cwd: string): Promise<string[]> {
 	// Read .gitignore rule sets for the cwd and its parent directories
 	const ruleSets = await readGitignoreRuleSets(cwd);
 	if (ruleSets.length === 0) {
