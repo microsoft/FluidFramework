@@ -10,6 +10,7 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
+			'@typescript-eslint/explicit-function-return-type': 'off',
 			'@typescript-eslint/no-shadow': 'off',
 			'no-shadow': 'off',
 			'@typescript-eslint/no-unsafe-return': 'off',
