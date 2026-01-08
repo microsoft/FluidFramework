@@ -19,8 +19,8 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
-	localAttendeeId,
-	localClientConnectionId,
+	initialLocalAttendeeId,
+	initialLocalClientConnectionId,
 	createSpecificAttendeeId,
 	generateBasicClientJoin,
 	prepareConnectedPresence,
@@ -94,7 +94,7 @@ describe("Presence", () => {
 				// Setup - create presence in disconnected state
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
-					localAttendeeId,
+					initialLocalAttendeeId,
 					clock,
 					logger,
 				);
@@ -105,7 +105,7 @@ describe("Presence", () => {
 				});
 
 				// Act - connect
-				connect(localClientConnectionId);
+				connect(initialLocalClientConnectionId);
 
 				// Verify - self attendee was announced
 				const selfAttendee = presence.attendees.getMyself();
@@ -125,7 +125,7 @@ describe("Presence", () => {
 				// Setup - create presence in disconnected state
 				const { presence } = prepareDisconnectedPresence(
 					runtime,
-					localAttendeeId,
+					initialLocalAttendeeId,
 					clock,
 					logger,
 				);
@@ -143,7 +143,7 @@ describe("Presence", () => {
 				// Setup - create presence in disconnected state
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
-					localAttendeeId,
+					initialLocalAttendeeId,
 					clock,
 					logger,
 				);
@@ -161,7 +161,7 @@ describe("Presence", () => {
 				});
 
 				// Act - connect
-				connect(localClientConnectionId);
+				connect(initialLocalClientConnectionId);
 
 				// Verify - attendeeConnected was raised
 				assert(
@@ -174,13 +174,13 @@ describe("Presence", () => {
 				// Setup - create presence in disconnected state, connect and then disconnect
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
-					localAttendeeId,
+					initialLocalAttendeeId,
 					clock,
 					logger,
 				);
 
 				// Initial connection
-				connect(localClientConnectionId);
+				connect(initialLocalClientConnectionId);
 
 				// Disconnect
 				runtime.disconnect();
@@ -194,7 +194,7 @@ describe("Presence", () => {
 				});
 
 				// Act - reconnect with new connection id
-				runtime.connect("client10", localClientConnectionId);
+				runtime.connect("client10", initialLocalClientConnectionId);
 
 				// Verify - self attendee was announced
 				const selfAttendee = presence.attendees.getMyself();
@@ -224,8 +224,8 @@ describe("Presence", () => {
 			beforeEach(() => {
 				({ presence, processSignal } = prepareConnectedPresence(
 					runtime,
-					localAttendeeId,
-					localClientConnectionId,
+					initialLocalAttendeeId,
+					initialLocalClientConnectionId,
 					clock,
 					logger,
 				));
@@ -299,7 +299,7 @@ describe("Presence", () => {
 						averageLatency: 50,
 						attendeeId: attendeeSessionId,
 						clientConnectionId: initialAttendeeConnectionId,
-						updateProviders: [localClientConnectionId],
+						updateProviders: [initialLocalClientConnectionId],
 					});
 
 					rejoinAttendeeSignal = generateBasicClientJoin(clock.now - 20, {
@@ -307,7 +307,7 @@ describe("Presence", () => {
 						attendeeId: attendeeSessionId, // Same session id
 						clientConnectionId: rejoinAttendeeConnectionId, // Different connection id
 						connectionOrder: 1,
-						updateProviders: [localClientConnectionId],
+						updateProviders: [initialLocalClientConnectionId],
 						priorClientToSessionId:
 							initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
 					});
@@ -417,7 +417,7 @@ describe("Presence", () => {
 							attendeeId: attendeeSessionId,
 							clientConnectionId: rejoinAttendeeConnectionId,
 							connectionOrder: 1,
-							updateProviders: [localClientConnectionId],
+							updateProviders: [initialLocalClientConnectionId],
 							priorClientToSessionId: {
 								...initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
 								[collateralAttendeeConnectionId]: {
@@ -630,7 +630,7 @@ describe("Presence", () => {
 							clock.tick(1000);
 							// Simulate remote client disconnect (while local is disconnected)
 							runtime.audience.removeMember(knownAttendee.getConnectionId());
-							runtime.connect("client8", localClientConnectionId); // Simulate local client reconnect with new connection id
+							runtime.connect("client8", initialLocalClientConnectionId); // Simulate local client reconnect with new connection id
 
 							// Verify - attendee with stale connection should still be 'Connected' after 15 seconds
 							clock.tick(15_001);
@@ -675,7 +675,7 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect for 15 second, disconnect local client again, then advance timer
 							runtime.disconnect(); // First disconnect
 							clock.tick(1000);
-							runtime.connect("client8", localClientConnectionId); // Reconnect
+							runtime.connect("client8", initialLocalClientConnectionId); // Reconnect
 							clock.tick(15_000); // Advance 15 seconds
 							runtime.disconnect(); // Disconnect again
 							clock.tick(600_000); // Advance 10 minutes
@@ -705,7 +705,7 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect, process rejoin signal from known attendee after 15s, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client8", localClientConnectionId);
+							runtime.connect("client8", initialLocalClientConnectionId);
 							clock.tick(15_000);
 							processJoinSignals([rejoinAttendeeSignal]);
 							clock.tick(600_000);
@@ -735,7 +735,7 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect, process datatstore update signal from known attendee before 30s delay, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client8", localClientConnectionId);
+							runtime.connect("client8", initialLocalClientConnectionId);
 							clock.tick(15_000);
 							processSignal(
 								[],
@@ -775,7 +775,7 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect, remove remote client connection, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client8", localClientConnectionId);
+							runtime.connect("client8", initialLocalClientConnectionId);
 							clock.tick(15_001);
 							runtime.audience.removeMember(initialAttendeeConnectionId); // Remove remote client connection before 30s timeout
 							// Confirm that `attendeeDisconnected` is announced for when active attendee disconnects
@@ -812,7 +812,7 @@ describe("Presence", () => {
 							runtime.disconnect();
 							runtime.audience.removeMember(knownAttendee.getConnectionId()); // Simulate remote client disconnect (while local is disconnected)
 							clock.tick(1000);
-							runtime.connect("client8", localClientConnectionId);
+							runtime.connect("client8", initialLocalClientConnectionId);
 
 							clock.tick(15_001);
 

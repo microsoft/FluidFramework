@@ -73,13 +73,14 @@ export const connectionId1 = "client1" as const satisfies ClientConnectionId;
 /**
  * Mock {@link AttendeeId} for the local client in tests.
  */
-export const localAttendeeId = createSpecificAttendeeId("localAttendeeId");
+export const initialLocalAttendeeId = createSpecificAttendeeId("localAttendeeId");
 /**
  * Mock {@link ClientConnectionId} for the local client in tests.
  * Note: This is intentionally not in the initial audience so that tests can
  * properly simulate connecting a client that wasn't previously connected.
  */
-export const localClientConnectionId = "localClient" as const satisfies ClientConnectionId;
+export const initialLocalClientConnectionId =
+	"localClient" as const satisfies ClientConnectionId;
 
 /**
  * Generates expected inbound join signal for a client that was initialized while connected.
@@ -87,8 +88,8 @@ export const localClientConnectionId = "localClient" as const satisfies ClientCo
 export function generateBasicClientJoin(
 	fixedTime: number,
 	{
-		attendeeId = localAttendeeId,
-		clientConnectionId = localClientConnectionId,
+		attendeeId = initialLocalAttendeeId,
+		clientConnectionId = initialLocalClientConnectionId,
 		updateProviders = ["client0", "client1", "client3"],
 		connectionOrder = 0,
 		averageLatency = 0,
@@ -148,10 +149,7 @@ export function prepareConnectedPresence(
 ): {
 	presence: PresenceWithNotifications;
 	processSignal: ProcessSignalFunction;
-	localAvgLatency: number;
 } {
-	const localAvgLatency = 10;
-
 	const { presence, processSignal, connect } = prepareDisconnectedPresence(
 		runtime,
 		attendeeId,
@@ -163,7 +161,6 @@ export function prepareConnectedPresence(
 	return {
 		presence,
 		processSignal,
-		localAvgLatency,
 	};
 }
 
@@ -205,6 +202,13 @@ export function prepareDisconnectedPresence(
 		signalMessage: InboundExtensionMessage<SignalMessages>,
 		local: boolean,
 	): void => {
+		// Pass on to presence manager, but first clone the message to avoid
+		// possibility of Presence mutating the original message which often
+		// contains reference to general (shared) test data.
+		// Additionally JSON.parse(JSON.stringify(signalMessage)) is used to
+		// ensure only regular JSON-serializable data is passed to Presence.
+		// In production environment, the message is always extracted from
+		// the network and Presence can safely mutate it.
 		presence.processSignal(
 			addressChain,
 			JSON.parse(JSON.stringify(signalMessage)) as InboundExtensionMessage<SignalMessages>,
@@ -212,7 +216,8 @@ export function prepareDisconnectedPresence(
 		);
 	};
 
-	// Validate expectations post initialization
+	// Validate expectations post initialization to make sure logger
+	// and runtime are left in a clean expectation state.
 	const logErrors = getUnexpectedLogErrorException(logger);
 	if (logErrors) {
 		throw logErrors;
@@ -220,6 +225,7 @@ export function prepareDisconnectedPresence(
 
 	const connect = (clientConnectionId: ClientConnectionId): void => {
 		// This logic needs to be kept in sync with datastore manager.
+		// From PresenceDatastoreManager.getInteractiveMembersExcludingSelf:
 		const members = runtime.audience.getMembers();
 		members.delete(clientConnectionId);
 		const all = new Set<ClientConnectionId>();
@@ -266,6 +272,9 @@ export function prepareDisconnectedPresence(
 			clock.tick(broadcastJoinResponseDelaysMs.namedResponder + 20);
 
 			// Send a fake join response
+			// There are no other attendees in the session (not realistic) but this
+			// convinces the presence manager that it now has full knowledge, which
+			// enables it to respond to other's join requests accurately.
 			processSignal(
 				[],
 				{

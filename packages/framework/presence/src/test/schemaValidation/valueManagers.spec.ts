@@ -23,9 +23,9 @@ import type { ProcessSignalFunction } from "../testUtils.js";
 import {
 	assertFinalExpectations,
 	attendeeId1,
-	localAttendeeId,
+	initialLocalAttendeeId,
 	connectionId1,
-	localClientConnectionId,
+	initialLocalClientConnectionId,
 	createSpiedValidator,
 	prepareConnectedPresence,
 } from "../testUtils.js";
@@ -225,8 +225,8 @@ describe("Presence", () => {
 			// Create Presence joining session as attendeeId-2. Tests will act as attendee2
 			({ presence, processSignal } = prepareConnectedPresence(
 				runtime,
-				localAttendeeId,
-				localClientConnectionId,
+				initialLocalAttendeeId,
+				initialLocalClientConnectionId,
 				clock,
 				logger,
 			));
@@ -284,16 +284,16 @@ describe("Presence", () => {
 							data: {
 								"system:presence": {
 									"clientToSessionId": {
-										[localClientConnectionId]: {
+										[initialLocalClientConnectionId]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": localAttendeeId,
+											"value": initialLocalAttendeeId,
 										},
 									},
 								},
 								"s:name:testWorkspace": {
 									"latest": {
-										[localAttendeeId]: {
+										[initialLocalAttendeeId]: {
 											"rev": 0,
 											"timestamp": clock.now,
 											"value": toOpaqueJson({ x: 0, y: 0, z: 0 }),
@@ -588,16 +588,16 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										[localClientConnectionId]: {
+										[initialLocalClientConnectionId]: {
 											"rev": 0,
 											"timestamp": initialTime,
-											"value": localAttendeeId,
+											"value": initialLocalAttendeeId,
 										},
 									},
 								},
 								"s:name:testWorkspace": {
 									"latestMap": {
-										[localAttendeeId]: {
+										[initialLocalAttendeeId]: {
 											"rev": 0,
 											"items": {
 												"key1": {
@@ -676,16 +676,16 @@ describe("Presence", () => {
 								"data": {
 									"system:presence": {
 										"clientToSessionId": {
-											[localClientConnectionId]: {
+											[initialLocalClientConnectionId]: {
 												"rev": 0,
 												"timestamp": initialTime,
-												"value": localAttendeeId,
+												"value": initialLocalAttendeeId,
 											},
 										},
 									},
 									"s:name:testWorkspace": {
 										"latestMap": {
-											[localAttendeeId]: {
+											[initialLocalAttendeeId]: {
 												"rev": 1,
 												"items": {
 													"key1": {

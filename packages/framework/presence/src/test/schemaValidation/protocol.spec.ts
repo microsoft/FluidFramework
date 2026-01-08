@@ -20,9 +20,9 @@ import type { ProcessSignalFunction } from "../testUtils.js";
 import {
 	assertFinalExpectations,
 	attendeeId1,
-	localAttendeeId,
+	initialLocalAttendeeId,
 	connectionId1,
-	localClientConnectionId,
+	initialLocalClientConnectionId,
 	createSpecificAttendeeId,
 	createSpiedValidator,
 	generateBasicClientJoin,
@@ -61,12 +61,10 @@ describe("Presence", () => {
 			runtime = new MockEphemeralRuntime(logger);
 			clock.setSystemTime(initialTime);
 
-			// Create Presence joining session as attendeeId-2.
-			let localAvgLatency: number;
-			({ presence, processSignal, localAvgLatency } = prepareConnectedPresence(
+			({ presence, processSignal } = prepareConnectedPresence(
 				runtime,
-				localAttendeeId,
-				localClientConnectionId,
+				initialLocalAttendeeId,
+				initialLocalClientConnectionId,
 				clock,
 				logger,
 			));
@@ -80,6 +78,7 @@ describe("Presence", () => {
 			// Process remote client update signal (attendeeId-1 is then part of local client's known session).
 			const attendee1UpdateSendTimestamp = deltaToStart - 20;
 			const attendee1AvgLatency = 20;
+			const localAvgLatency = 10;
 			const attendee1ToLocalTimeDelta =
 				clock.now - (localAvgLatency + attendee1AvgLatency + attendee1UpdateSendTimestamp);
 			localAttendee1ValueRevisionTimestamp =
@@ -170,7 +169,7 @@ describe("Presence", () => {
 					averageLatency: 50,
 					attendeeId: attendeeId4,
 					clientConnectionId: connectionId4,
-					updateProviders: [localClientConnectionId],
+					updateProviders: [initialLocalClientConnectionId],
 				});
 				const expectedSetupJoinResponse = {
 					type: "Pres:DatastoreUpdate",
@@ -179,10 +178,10 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[localClientConnectionId]: {
+									[initialLocalClientConnectionId]: {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": localAttendeeId,
+										"value": initialLocalAttendeeId,
 									},
 									[connectionId1]: {
 										"rev": 0,
@@ -273,7 +272,7 @@ describe("Presence", () => {
 							"s:name:testWorkspace": {
 								"latest": {
 									...originalJoinResponseData["s:name:testWorkspace"].latest,
-									[localAttendeeId]: {
+									[initialLocalAttendeeId]: {
 										"rev": 0,
 										"timestamp": workspaceSetupTime,
 										"value": toOpaqueJson({ x: 0, y: 0, z: 0 }),

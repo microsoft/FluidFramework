@@ -24,11 +24,11 @@ import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
 	assertIdenticalTypes,
-	localClientConnectionId,
+	initialLocalClientConnectionId,
 	createInstanceOf,
 	createSpecificAttendeeId,
 	prepareConnectedPresence,
-	localAttendeeId,
+	initialLocalAttendeeId,
 } from "./testUtils.js";
 
 const attendeeId3 = createSpecificAttendeeId("attendeeId-3");
@@ -62,8 +62,8 @@ describe("Presence", () => {
 			// Set up the presence connection
 			({ presence, processSignal } = prepareConnectedPresence(
 				runtime,
-				localAttendeeId,
-				localClientConnectionId,
+				initialLocalAttendeeId,
+				initialLocalClientConnectionId,
 				clock,
 				logger,
 			));
@@ -142,16 +142,16 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[localClientConnectionId]: {
+									[initialLocalClientConnectionId]: {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": localAttendeeId,
+										"value": initialLocalAttendeeId,
 									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									[localAttendeeId]: {
+									[initialLocalAttendeeId]: {
 										"rev": 0,
 										"timestamp": 0,
 										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
@@ -199,16 +199,16 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[localClientConnectionId]: {
+									[initialLocalClientConnectionId]: {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": localAttendeeId,
+										"value": initialLocalAttendeeId,
 									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
 								"testEvents": {
-									[localAttendeeId]: {
+									[initialLocalAttendeeId]: {
 										"rev": 0,
 										"timestamp": 0,
 										"value": toOpaqueJson({ "name": "newId", "args": [42] }),

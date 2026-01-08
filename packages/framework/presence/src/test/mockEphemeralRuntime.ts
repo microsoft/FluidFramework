@@ -153,6 +153,18 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		this.audience.removeMember(clientId);
 	}
 
+	public syncWithQuorum(): void {
+		for (const [clientId, client] of this.audience.getMembers()) {
+			if (client.mode === "write" && this.quorum.getMember(clientId) === undefined) {
+				const quorumSize = this.quorum.getMembers().size;
+				this.quorum.addMember(clientId, {
+					client,
+					sequenceNumber: 10 * quorumSize,
+				});
+			}
+		}
+	}
+
 	public connect(clientId: string, oldClientId: string | undefined): void {
 		// during connect audience is refreshed - snapshot current members
 		const members = this.audience.getMembers();
@@ -179,15 +191,9 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 				this.audience.addMember(memberClientId, client);
 			}
 		}
-		// finally add new connection to both audience and quorum
+		// finally add new connection to both audience
 		for (const [newClientId, newMember] of buildClientDataArray([clientId], 1)) {
 			this.audience.addMember(newClientId, newMember);
-			// Add to quorum as a write client (consistent with buildClientDataArray creating write clients)
-			const quorumSize = this.quorum.getMembers().size;
-			this.quorum.addMember(newClientId, {
-				client: newMember,
-				sequenceNumber: 10 * quorumSize,
-			});
 		}
 	}
 
