@@ -73,6 +73,13 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public readonly quorum: MockQuorumClients;
 	public readonly audience: MockAudience;
 
+	/**
+	 * Tracks the next sequence number to assign to quorum members.
+	 * This only increases to ensure sequence numbers are always monotonically increasing,
+	 * even if quorum members are removed.
+	 */
+	private nextSequenceNumber: number;
+
 	public readonly listeners: {
 		joined: ((props: { clientId: ClientConnectionId; canWrite: boolean }) => void)[];
 		disconnected: (() => void)[];
@@ -93,12 +100,16 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 			this.logger = logger;
 		}
 
+		const numWriteClients = 6;
 		const clientsData = buildClientDataArray(
 			["client0", "client1", "client2", "client3", "client4", "client5", "client6", "client7"],
-			/* count of write clients (in quorum) */ 6,
+			numWriteClients,
 		);
 		this.quorum = makeMockQuorum(clientsData);
 		this.audience = makeMockAudience(clientsData);
+		// Initial quorum members have sequence numbers 0, 10, 20, ..., 50
+		// so next available is 60
+		this.nextSequenceNumber = 10 * numWriteClients;
 		this.events = {
 			on: (
 				event: string,
@@ -172,11 +183,11 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public addAudienceWriteClientsToQuorum(): void {
 		for (const [clientId, client] of this.audience.getMembers()) {
 			if (client.mode === "write" && this.quorum.getMember(clientId) === undefined) {
-				const quorumSize = this.quorum.getMembers().size;
 				this.quorum.addMember(clientId, {
 					client,
-					sequenceNumber: 10 * quorumSize,
+					sequenceNumber: this.nextSequenceNumber,
 				});
+				this.nextSequenceNumber += 10;
 			}
 		}
 	}
