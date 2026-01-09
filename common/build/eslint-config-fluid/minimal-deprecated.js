@@ -352,6 +352,12 @@ module.exports = {
 		"jsdoc/empty-tags": "error",
 
 		/**
+		 * Ensures JSDoc/TSDoc comments to use the consistent formatting.
+		 * See {@link https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/rules/multiline-blocks.md}
+		 */
+		"jsdoc/multiline-blocks": ["error"],
+
+		/**
 		 * Ensures multi-line formatting meets JSDoc/TSDoc requirements.
 		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-no-bad-blocks>
 		 */
