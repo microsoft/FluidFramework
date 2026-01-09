@@ -21,7 +21,7 @@ export interface IEvent {
 export class TestTopic implements ITopic {
 	public events = new Map<string, IEvent[]>();
 
-	public emit(event: string, ...args: any[]) {
+	public emit(event: string, ...args: any[]): void {
 		if (!this.events.has(event)) {
 			this.events.set(event, []);
 		}
@@ -29,7 +29,7 @@ export class TestTopic implements ITopic {
 		this.events.get(event)?.push({ args, event });
 	}
 
-	public getEvents(key: string) {
+	public getEvents(key: string): IEvent[] | undefined {
 		return this.events.get(key);
 	}
 }
@@ -41,7 +41,7 @@ export class TestPublisher implements IPublisher {
 	private readonly events = new EventEmitter();
 	private topics: { [topic: string]: TestTopic } = {};
 
-	public on(event: string, listener: (...args: any[]) => void) {
+	public on(event: string, listener: (...args: any[]) => void): void {
 		this.events.on(event, listener);
 	}
 
@@ -53,5 +53,5 @@ export class TestPublisher implements IPublisher {
 		return this.topics[topic];
 	}
 
-	public async close() {}
+	public async close(): Promise<void> {}
 }

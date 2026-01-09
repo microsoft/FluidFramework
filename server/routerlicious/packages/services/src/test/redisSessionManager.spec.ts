@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+
+import { ICollaborationSession } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { TestRedisClientConnectionManager } from "@fluidframework/server-test-utils";
+
 import { RedisCollaborationSessionManager } from "../redisSessionManager";
-import { ICollaborationSession } from "@fluidframework/server-services-core";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
@@ -19,9 +21,9 @@ describe("RedisCollaborationSessionManager", () => {
 	beforeEach(() => {
 		testRedisClientConnectionManager = new TestRedisClientConnectionManager();
 	});
-	afterEach(() => {
-		testRedisClientConnectionManager.getRedisClient().flushall();
-		testRedisClientConnectionManager.getRedisClient().quit();
+	afterEach(async () => {
+		await testRedisClientConnectionManager.getRedisClient().flushall();
+		await testRedisClientConnectionManager.getRedisClient().quit();
 	});
 
 	it("Creates and retrieves session", async () => {
@@ -144,7 +146,7 @@ describe("RedisCollaborationSessionManager", () => {
 			const retrievedSession = retrievedSessions.find(
 				(s) => s.documentId === session.documentId,
 			);
-			assert(retrievedSession, `Session for ${session1} not found`);
+			assert(retrievedSession, `Session for ${session.documentId} not found`);
 			assert.deepStrictEqual(retrievedSession, session);
 		}
 	});

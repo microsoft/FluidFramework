@@ -616,7 +616,7 @@ describe("Routerlicious", () => {
 				});
 
 				// eslint-disable-next-line @typescript-eslint/no-shadow
-				const removeClientsAfterDisconnectTest = async (lambda: IPartitionLambda) => {
+				const removeClientsAfterDisconnectTest = async (lambda: IPartitionLambda): Promise<void> => {
 					const secondMessageFactory = new MessageFactory(testId, "test2");
 
 					let timeOffset = 0;

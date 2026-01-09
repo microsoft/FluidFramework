@@ -19,7 +19,7 @@ describe("Health Check Endpoints", () => {
 	let testCheckWithException: TestCheck;
 	let startupCheck: StartupCheck;
 
-	const setupApp = (useReadinessCheck = false) => {
+	const setupApp = (useReadinessCheck = false): void => {
 		app = express();
 		testCheck = new TestCheck();
 		testCheckWithException = new TestCheck();

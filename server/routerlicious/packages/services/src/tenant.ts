@@ -39,7 +39,9 @@ export function getRefreshTokenIfNeededCallback(
 	scopes: ScopeType[],
 	serviceName: string,
 ): (authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined> {
-	const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
+	const refreshTokenIfNeeded = async (
+		authorizationHeader: RawAxiosRequestHeaders,
+	): Promise<RawAxiosRequestHeaders | undefined> => {
 		if (typeof authorizationHeader.Authorization === "string") {
 			const currentAccessToken = extractTokenFromHeader(authorizationHeader.Authorization);
 			const props = {
@@ -183,7 +185,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		);
 
 		const defaultQueryString = {};
-		const getDefaultHeaders = () => {
+		const getDefaultHeaders = (): RawAxiosRequestHeaders => {
 			const credentials: ICredentials = {
 				password: accessToken,
 				user: tenantId,
@@ -203,7 +205,9 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			return headers;
 		};
 
-		const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
+		const refreshTokenIfNeeded = async (
+			authorizationHeader: RawAxiosRequestHeaders,
+		): Promise<RawAxiosRequestHeaders | undefined> => {
 			if (typeof authorizationHeader.Authorization === "string") {
 				const currentAccessToken = parseToken(tenantId, authorizationHeader.Authorization);
 				if (currentAccessToken !== undefined) {

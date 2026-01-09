@@ -17,14 +17,14 @@ export function executeOnInterval(
 ): ScheduledJob {
 	const scheduledJob = new ScheduledJob();
 
-	const execute = () => {
+	const execute = (): ScheduledJob => {
 		if (!scheduledJob.isRunning()) {
 			Lumberjack.info(`Job has been killed ${callName}`);
 			return scheduledJob;
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	(async () => api())()
+		(async () => api())()
 			.then((res) => {
 				Lumberjack.info(`Success executing ${callName}`);
 			})
@@ -65,7 +65,7 @@ export class ScheduledJob {
 		return this._jobRunning;
 	}
 
-	public kill() {
+	public kill(): void {
 		this._jobRunning = false;
 	}
 }

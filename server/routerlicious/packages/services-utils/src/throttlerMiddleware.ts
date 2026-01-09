@@ -49,7 +49,7 @@ const defaultThrottleMiddlewareOptions: IThrottleMiddlewareOptions = {
 	throttleIdSuffix: undefined,
 };
 
-const getThrottleId = (req: Request, throttleOptions: IThrottleMiddlewareOptions) => {
+const getThrottleId = (req: Request, throttleOptions: IThrottleMiddlewareOptions): string => {
 	const prefix =
 		typeof throttleOptions.throttleIdPrefix === "function"
 			? throttleOptions.throttleIdPrefix(req)
@@ -61,11 +61,11 @@ const getThrottleId = (req: Request, throttleOptions: IThrottleMiddlewareOptions
 	return prefix ?? throttleOptions.throttleIdSuffix ?? "-";
 };
 
-const getHttpUsageId = (throttleId: string) => {
+const getHttpUsageId = (throttleId: string): string => {
 	return `${throttleId}_${httpUsageStorageId}`;
 };
 
-function noopMiddleware(req: Request, res: Response, next: NextFunction) {
+function noopMiddleware(req: Request, res: Response, next: NextFunction): void {
 	next();
 }
 

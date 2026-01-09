@@ -7,7 +7,7 @@
  * Normalize a port into a number, string, or false.
  * @internal
  */
-export function normalizePort(val) {
+export function normalizePort(val: string): string | number | false {
 	const normalizedPort = parseInt(val, 10);
 
 	if (isNaN(normalizedPort)) {

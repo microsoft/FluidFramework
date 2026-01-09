@@ -46,6 +46,7 @@ class TestTenantRepository implements ITenantRepository {
 	async find(query: any, sort: any, limit?: number, skip?: number): Promise<ITenantDocument[]> {
 		throw new Error("Method not implemented.");
 	}
+	// eslint-disable-next-line @rushstack/no-new-null
 	async findOne(query: any, options?: any): Promise<ITenantDocument | null> {
 		throw new Error("Method not implemented.");
 	}
@@ -240,6 +241,7 @@ describe("TenantManager", () => {
 			};
 			const expectedKeys = { key1: "abcd", key2: "efgh" };
 			sandbox.stub(cache, "get").resolves("secondary");
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			const orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -258,6 +260,7 @@ describe("TenantManager", () => {
 			};
 			const expectedKeys = { key1: "abcd", key2: "efgh" };
 			sandbox.stub(cache, "get").resolves(null);
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			const orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -276,6 +279,7 @@ describe("TenantManager", () => {
 			};
 			let expectedKeys = { key1: "abcd", key2: "efgh" };
 			const cacheStub = sandbox.stub(cache, "get").resolves("primary");
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			let orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -288,6 +292,7 @@ describe("TenantManager", () => {
 			cacheStub.restore();
 			expectedKeys = { key1: "efgh", key2: "abcd" };
 			sandbox.stub(cache, "get").resolves("secondary");
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -301,6 +306,7 @@ describe("TenantManager", () => {
 	describe("decryptCachedKeys", () => {
 		it("Should decrypt ITenantKeys when decryptPrivateKeys is false", () => {
 			const keys: ITenantKeys = { key1: "abcd", key2: "efgh" };
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			const decryptedKeys = tenantManager["decryptCachedKeys"](JSON.stringify(keys), false);
 			assert(isITenantKeys(decryptedKeys));
 			assert.strictEqual(decryptedKeys.key1, keys.key1);
@@ -314,6 +320,7 @@ describe("TenantManager", () => {
 				keyNextRotationTime: Math.round(new Date().getTime() / 1000) + 86400,
 				secondaryKeyNextRotationTime: Math.round(new Date().getTime() / 1000),
 			};
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			const decryptedKeys = tenantManager["decryptCachedKeys"](JSON.stringify(keys), true);
 			assert(isITenantPrivateKeys(decryptedKeys));
 			assert.strictEqual(decryptedKeys.key, keys.key);

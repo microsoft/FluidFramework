@@ -24,7 +24,7 @@ export function create(
 	documentStorage: IDocumentStorage,
 	// eslint-disable-next-line import-x/no-deprecated
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
-) {
+): IRoutes {
 	return {
 		ordering: ordering.create(
 			config,

@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import Sinon from "sinon";
+import { strict as assert } from "node:assert";
+
+import { ThrottlingError } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { TestThrottleAndUsageStorageManager } from "@fluidframework/server-test-utils";
-import { ThrottlingError } from "@fluidframework/server-services-core";
+import Sinon from "sinon";
+
 import {
 	DistributedTokenBucketThrottler,
 	IDistributedTokenBucketThrottlerConfig,
-} from "../../throttling/distributedTokenBucketThrottler";
+} from "../../throttling";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {

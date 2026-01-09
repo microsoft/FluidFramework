@@ -28,8 +28,8 @@ async function readStream<T>(stream): Promise<T[]> {
 			resolve(entries);
 		});
 
-		stream.on("error", (error) => {
-			reject(error);
+		stream.on("error", (error)=> {
+			reject(error instanceof Error ? error : new Error(String(error)));
 		});
 	});
 }
@@ -131,7 +131,7 @@ export class Collection<T> implements ICollection<T> {
 		await new Promise<void>((resolve, reject) => {
 			this.db.put(this.getKey(value), value, (error) => {
 				if (error) {
-					reject(error);
+					reject(error instanceof Error ? error : new Error(String(error)));
 				} else {
 					resolve();
 				}
@@ -150,8 +150,8 @@ export class Collection<T> implements ICollection<T> {
 	}
 
 	// Generate an insertion key for a value based on index structure.
-	private getKey(value: any) {
-		function getValueByKey(propertyBag, key: string) {
+	private getKey(value: any): string {
+		function getValueByKey(propertyBag: any, key: string): any {
 			const keys = key.split(".");
 			let v = propertyBag;
 			for (const splitKey of keys) {
@@ -210,7 +210,7 @@ export class Collection<T> implements ICollection<T> {
 						if (err.notFound) {
 							resolve([]);
 						} else {
-							reject(err);
+							reject(err instanceof Error ? err : new Error(String(err)));
 						}
 					} else {
 						resolve([val]);

@@ -9,15 +9,15 @@ export default [
 	...minimalDeprecated,
 	{
 		rules: {
-		"import-x/no-nodejs-modules": "off",
-		"promise/catch-or-return": ["error", { allowFinally: true }],
+			"import-x/no-nodejs-modules": "off",
+			"promise/catch-or-return": ["error", { allowFinally: true }],
 
-		// TODO: remove usages of deprecated APIs and remove these overrides
-		"import-x/no-deprecated": "warn",
+			// TODO: remove usages of deprecated APIs and remove these overrides
+			"import-x/no-deprecated": "warn",
 
-		// TODO: fix violations and remove these overrides
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-		"@typescript-eslint/strict-boolean-expressions": "warn",
+			// TODO: fix violations and remove these overrides
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"@typescript-eslint/strict-boolean-expressions": "warn",
 		},
 	},
 	{

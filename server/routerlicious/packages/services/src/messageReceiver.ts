@@ -27,7 +27,7 @@ class RabbitmqReceiver implements ITaskMessageReceiver {
 		this.rabbitmqConnectionString = this.rabbitmqConfig.connectionString;
 	}
 
-	public async initialize() {
+	public async initialize(): Promise<void> {
 		this.connection = await amqp.connect(this.rabbitmqConnectionString);
 		this.channel = await this.connection.createChannel();
 		await this.channel.assertQueue(this.taskQueueName, { durable: true });
@@ -67,7 +67,7 @@ class RabbitmqReceiver implements ITaskMessageReceiver {
 		return this;
 	}
 
-	public async close() {
+	public async close(): Promise<void> {
 		const closeChannelP = this.channel?.close();
 		const closeConnectionP = this.connection?.close();
 		await Promise.all([closeChannelP, closeConnectionP]);

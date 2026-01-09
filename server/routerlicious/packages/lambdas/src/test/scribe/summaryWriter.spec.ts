@@ -295,7 +295,7 @@ function verifyLogResult(
 	expectedLogtailGaps: number[][],
 	expectedRetrievedGapsRange: number[][][],
 	expectedFinalLogtailRange: number[][],
-) {
+): void {
 	assert.strictEqual(actualLogMessage, expectedLogMessage);
 	assert.deepStrictEqual(
 		actualLogProperties.logtailRangeFromLastSummary,

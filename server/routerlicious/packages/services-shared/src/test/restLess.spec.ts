@@ -20,7 +20,7 @@ describe("RestLess", () => {
 	};
 	let supertest: request.SuperTest<request.Test>;
 	let database: Map<string, any>;
-	const setupApp = (restLessBeforeBodyParser: boolean = false) => {
+	const setupApp = (restLessBeforeBodyParser: boolean = false): void => {
 		/**
 		 * Set up example (simple) express server with "authentication"
 		 */
@@ -102,7 +102,7 @@ describe("RestLess", () => {
 		});
 		supertest = request(app);
 	};
-	const superRequest = (requestConfig: AxiosRequestConfig, translate = false) => {
+	const superRequest = (requestConfig: AxiosRequestConfig, translate = false): request.Test => {
 		const reqConf = translate ? new RestLessClient().translate(requestConfig) : requestConfig;
 		const req: request.Test = supertest[reqConf.method?.toLowerCase() ?? "get"](
 			reqConf.url ?? "",

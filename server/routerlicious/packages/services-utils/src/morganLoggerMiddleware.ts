@@ -32,7 +32,7 @@ const stream = split().on("data", (message) => {
 /**
  * @internal
  */
-export function alternativeMorganLoggerMiddleware(loggerFormat: string) {
+export function alternativeMorganLoggerMiddleware(loggerFormat: string): express.RequestHandler {
 	return morgan(loggerFormat, { stream });
 }
 
@@ -62,7 +62,11 @@ interface IResponseLatency {
 	closeTime: number;
 }
 
-function getEventLoopMetrics(histogram: IntervalHistogram) {
+function getEventLoopMetrics(histogram: IntervalHistogram): {
+	max: string;
+	min: string;
+	mean: string;
+} {
 	return {
 		max: (histogram.max / 1e6).toFixed(3),
 		min: (histogram.min / 1e6).toFixed(3),
@@ -109,10 +113,10 @@ export function jsonMorganLoggerMiddleware(
 					let complete = false;
 					let prefinishTime: number | undefined;
 					let finishTime: number | undefined;
-					const prefinishListener = () => {
+					const prefinishListener = (): void => {
 						prefinishTime = performance.now();
 					};
-					const finishListener = () => {
+					const finishListener = (): void => {
 						finishTime = performance.now();
 					};
 					response.once("prefinish", prefinishListener);
@@ -193,7 +197,7 @@ export function jsonMorganLoggerMiddleware(
 				...getTelemetryContextPropertiesWithHttpInfo(req, res),
 			};
 			httpMetric.setProperties(properties);
-			const resolveMetric = () => {
+			const resolveMetric = (): void => {
 				if (enableEventLoopLagMetric) {
 					histogram.disable();
 					httpMetric.setProperty("eventLoopLagMs", getEventLoopMetrics(histogram));

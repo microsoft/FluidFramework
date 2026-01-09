@@ -46,7 +46,7 @@ class SocketIoSocket implements core.IWebSocket {
 		return this.socket.handshake;
 	}
 
-	public on(event: string, listener: (...args: any[]) => void) {
+	public on(event: string, listener: (...args: any[]) => void): void {
 		if (!this.isDisposed) {
 			this.eventListeners.push({ event, listener });
 			this.socket.on(event, listener);
@@ -59,19 +59,19 @@ class SocketIoSocket implements core.IWebSocket {
 		}
 	}
 
-	public emit(event: string, ...args: any[]) {
+	public emit(event: string, ...args: any[]): void {
 		if (!this.isDisposed) {
 			this.socket.emit(event, ...args);
 		}
 	}
 
-	public emitToRoom(roomId: string, event: string, ...args: any[]) {
+	public emitToRoom(roomId: string, event: string, ...args: any[]): void {
 		if (!this.isDisposed) {
 			this.socket.nsp.to(roomId).emit(event, ...args);
 		}
 	}
 
-	public disconnect(close?: boolean) {
+	public disconnect(close?: boolean): void {
 		if (!this.isDisposed) {
 			this.socket.disconnect(close);
 		}
@@ -247,12 +247,12 @@ class SocketIoServer implements core.IWebSocketServer {
 		}
 	}
 
-	public on(event: string, listener: (...args: any[]) => void) {
+	public on(event: string, listener: (...args: any[]) => void): void {
 		this.events.on(event, listener);
 	}
 
 	public async close(): Promise<void> {
-		const sleep = async (timeMs: number) =>
+		const sleep = async (timeMs: number): Promise<void> =>
 			new Promise((resolve) => setTimeout(resolve, timeMs));
 
 		if (this.socketIoConfig?.gracefulShutdownEnabled) {
@@ -342,13 +342,13 @@ class SocketIoServer implements core.IWebSocketServer {
 	private initPingPongLatencyTracking(
 		socket: Socket,
 		{ tenantId, documentId }: { tenantId: string; documentId: string },
-	) {
+	): void {
 		if (!this.socketIoConfig?.pingPongLatencyTrackingEnabled) {
 			return;
 		}
 
 		const pingPongDurationsMs: number[] = [];
-		const outputPingPongLatencyEvent = () => {
+		const outputPingPongLatencyEvent = (): void => {
 			const aggregateAverageLatencyMs = Math.ceil(
 				pingPongDurationsMs.reduce((a, b) => a + b) / pingPongDurationsMs.length,
 			);
@@ -365,13 +365,13 @@ class SocketIoServer implements core.IWebSocketServer {
 			latencyMetric.success("Socket.io Ping-Pong Latency");
 		};
 		let lastPingStartTime: number | undefined;
-		const packetCreateHandler = (packet: any) => {
+		const packetCreateHandler = (packet: any): void => {
 			if (packet.type === "ping") {
 				lastPingStartTime = performance.now();
 			}
 		};
 		socket.conn.on("packetCreate", packetCreateHandler);
-		const packetReceivedHandler = (packet: any) => {
+		const packetReceivedHandler = (packet: any): void => {
 			if (packet.type === "pong" && lastPingStartTime !== undefined) {
 				const latency = performance.now() - lastPingStartTime;
 				lastPingStartTime = undefined;

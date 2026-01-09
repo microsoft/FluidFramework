@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import Sinon from "sinon";
+import { strict as assert } from "node:assert";
+
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { TestThrottleAndUsageStorageManager } from "@fluidframework/server-test-utils";
+import Sinon from "sinon";
+
 import {
 	TokenBucket,
 	DistributedTokenBucket,
 	ITokenBucketConfig,
 	IDistributedTokenBucketConfig,
-} from "../../throttling/tokenBucket";
+} from "../../throttling";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
@@ -56,8 +58,8 @@ describe("TokenBucket", () => {
 
 			// Consume all tokens
 			for (let i = 0; i < 5; i++) {
-				const result = bucket.tryConsume(1);
-				assert.strictEqual(result, 0);
+				const consumeResult = bucket.tryConsume(1);
+				assert.strictEqual(consumeResult, 0);
 			}
 
 			// Next consumption should be throttled
@@ -207,8 +209,8 @@ describe("TokenBucket", () => {
 			bucket.tryConsume(4);
 			// Loop consumption and refill to keep capacity at barely enough.
 			for (let i = 0; i < config.capacity * 2; i++) {
-				const result = bucket.tryConsume(1);
-				assert.strictEqual(result, 0, `Token ${i + 1} should be consumed`);
+				const loopResult = bucket.tryConsume(1);
+				assert.strictEqual(loopResult, 0, `Token ${i + 1} should be consumed`);
 				// Wait for refill
 				Sinon.clock.tick(1);
 			}
@@ -272,8 +274,8 @@ describe("TokenBucket", () => {
 
 			// Should not be able to consume more than capacity
 			for (let i = 0; i < 5; i++) {
-				const result = bucket.tryConsume(1);
-				assert.strictEqual(result, 0, `Should consume token ${i + 1}`);
+				const loopResult = bucket.tryConsume(1);
+				assert.strictEqual(loopResult, 0, `Should consume token ${i + 1}`);
 			}
 
 			// Next should be throttled
@@ -430,7 +432,10 @@ describe("DistributedTokenBucket", () => {
 
 			// Verify usage data was stored
 			const storedUsage = await storageManager.getUsageData("usage-id");
-			assert.ok(storedUsage, "Should have stored usage data");
+			assert.ok(
+				storedUsage !== undefined && storedUsage !== null,
+				"Should have stored usage data",
+			);
 			assert.strictEqual(storedUsage.tenantId, "test-tenant");
 		});
 

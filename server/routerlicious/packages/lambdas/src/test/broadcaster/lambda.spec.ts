@@ -46,7 +46,7 @@ describe("Routerlicious", () => {
 				);
 			});
 
-			function countOps(events: IEvent[]) {
+			function countOps(events: IEvent[]): number {
 				let count = 0;
 				for (const event of events) {
 					count += event.args[1].length;

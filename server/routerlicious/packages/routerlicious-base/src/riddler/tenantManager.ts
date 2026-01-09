@@ -1231,7 +1231,6 @@ export class TenantManager {
 		let batchOffsetId = "";
 		const batchFetchSize = 2000;
 		try {
-			 
 			while (true) {
 				// Avoid using findAll(), it will read all records from database and load in client side memory,
 				// which will be a concern for timing, networkIO, and client memory in the future

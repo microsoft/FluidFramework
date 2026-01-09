@@ -28,7 +28,7 @@ export async function run<T extends IResources>(
 	resourceFactory: IResourcesFactory<T>,
 	runnerFactory: IRunnerFactory<T>,
 	logger: ILogger | undefined,
-) {
+): Promise<void> {
 	const customizations = await (resourceFactory.customize
 		? resourceFactory.customize(config).catch((error) => {
 				prefixErrorLabel(error, "resourceFactory:customize");
@@ -131,7 +131,7 @@ export function runService<T extends IResources>(
 	group: string,
 	configOrPath: nconf.Provider | string,
 	waitBeforeExitInMs?: number,
-) {
+): void {
 	const config =
 		typeof configOrPath === "string"
 			? nconf
@@ -190,7 +190,7 @@ export function runService<T extends IResources>(
  * log/telemetry data has time to be emitted before we exit the process
  * in runService().
  */
-async function executeAndWait(func: () => void, waitInMs: number) {
+async function executeAndWait(func: () => void, waitInMs: number): Promise<void> {
 	func();
 	return new Promise((resolve) => {
 		setTimeout(resolve, waitInMs);

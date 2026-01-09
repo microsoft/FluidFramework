@@ -14,7 +14,6 @@ import sinon from "sinon";
 
 import { getSession } from "../../utils/sessionHelper";
 
-
 describe("sessionHelper", () => {
 	describe("getSession", () => {
 		let documentRepository: sinon.SinonStubbedInstance<IDocumentRepository>;

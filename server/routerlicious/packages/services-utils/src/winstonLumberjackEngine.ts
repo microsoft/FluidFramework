@@ -18,7 +18,7 @@ import winston from "winston";
  * @internal
  */
 export class WinstonLumberjackEngine implements ILumberjackEngine {
-	public emit(lumber: Lumber<string>) {
+	public emit(lumber: Lumber<string>): void {
 		try {
 			const propObj: { [key: string]: any } = {};
 			lumber.properties.forEach((value, key) => {
@@ -46,7 +46,7 @@ export class WinstonLumberjackEngine implements ILumberjackEngine {
 		}
 	}
 
-	private getLogLevelToWinstonMapping(level: LogLevel | undefined) {
+	private getLogLevelToWinstonMapping(level: LogLevel | undefined): string {
 		switch (level) {
 			case LogLevel.Error:
 				return "error";

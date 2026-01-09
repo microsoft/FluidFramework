@@ -92,7 +92,7 @@ export async function getCreationToken(
 	token: string,
 	documentId: string,
 	lifetime = 5 * 60,
-) {
+): Promise<string> {
 	const tokenClaims = decode(token) as ITokenClaims;
 	const { tenantId, user, jti, ver } = tokenClaims;
 	const accessToken = await tenantManager.signToken(
@@ -479,7 +479,7 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 /**
  * @internal
  */
-export function getParam(params: Params, key: string) {
+export function getParam(params: Params, key: string): string | undefined {
 	return Array.isArray(params) ? undefined : params[key];
 }
 

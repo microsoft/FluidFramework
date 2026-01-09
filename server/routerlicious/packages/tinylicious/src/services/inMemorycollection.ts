@@ -37,7 +37,6 @@ export class Collection<T> implements ICollection<T> {
 	}
 
 	public findOne(query: any): Promise<T> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return Promise.resolve(this.findOneInternal(query));
 	}
 
@@ -63,7 +62,6 @@ export class Collection<T> implements ICollection<T> {
 			return "existing object";
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.insertOneInternal(value);
 	}
 
@@ -92,7 +90,6 @@ export class Collection<T> implements ICollection<T> {
 	public async deleteOne(filter: any): Promise<any> {
 		const value = this.findOneInternal(filter);
 		this.removeOneInternal(value);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return value;
 	}
 
@@ -125,13 +122,12 @@ export class Collection<T> implements ICollection<T> {
 	}
 
 	private findInternal(query: any, sort?: any): T[] {
-		function getValueByKey(propertyBag, key: string) {
+		function getValueByKey(propertyBag: any, key: string): any {
 			const keys = key.split(".");
 			let value = propertyBag;
 			for (const splitKey of keys) {
 				value = value[splitKey];
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return value;
 		}
 
@@ -160,8 +156,7 @@ export class Collection<T> implements ICollection<T> {
 		}
 
 		if (sort && Object.keys(sort).length === 1) {
-			// eslint-disable-next-line no-inner-declarations
-			function compare(a, b) {
+			function compare(a: any, b: any): number {
 				const sortKey = Object.keys(sort)[0];
 				return sort[sortKey] === 1
 					? getValueByKey(a, sortKey) - getValueByKey(b, sortKey)

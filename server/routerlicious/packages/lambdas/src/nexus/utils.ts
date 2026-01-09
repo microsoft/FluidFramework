@@ -23,8 +23,8 @@ export const getMessageMetadata = (
 	tenantId: string,
 	correlationId?: string,
 	// TODO: add a type for this
-	 
-) => ({
+
+): {documentId: string; tenantId: string; correlationId?: string} => ({
 	documentId,
 	tenantId,
 	correlationId,

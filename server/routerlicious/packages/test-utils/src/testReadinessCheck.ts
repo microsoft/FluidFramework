@@ -13,11 +13,11 @@ export class TestCheck implements ICheck {
 	private throwException = false;
 	private isReady = false;
 
-	public setThrowException() {
+	public setThrowException(): void {
 		this.throwException = true;
 	}
 
-	public setReady() {
+	public setReady(): void {
 		this.isReady = true;
 	}
 

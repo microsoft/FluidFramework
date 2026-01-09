@@ -19,7 +19,7 @@ import * as winston from "winston";
 
 import { create as createRoutes } from "./routes";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const split = require("split");
 
 /**
@@ -35,7 +35,7 @@ export function create(
 	mongoManager: MongoManager,
 	// eslint-disable-next-line import-x/no-deprecated
 	collaborationSessionEventEmitter: TypedEventEmitter<ICollaborationSessionEvents> | undefined,
-) {
+): express.Express {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
 

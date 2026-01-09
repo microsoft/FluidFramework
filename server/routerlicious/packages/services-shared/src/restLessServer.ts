@@ -96,7 +96,7 @@ export class RestLessServer {
 		// Parse and add HTTP Headers
 		const headerField: RequestField = fields[RestLessFieldNames.Header];
 		let definedNewContentType: boolean = false;
-		const parseAndSetHeader = (header: string) => {
+		const parseAndSetHeader = (header: string): void => {
 			const { name, value } = decodeHeader(header);
 			if (!name || value === undefined) {
 				return;
@@ -149,7 +149,7 @@ export class RestLessServer {
 		}
 	}
 
-	private static isRestLess(request: IncomingMessageEx) {
+	private static isRestLess(request: IncomingMessageEx): boolean {
 		const isPost = request.method?.toLowerCase() === "post";
 		const contentTypeContents: string[] | undefined = request.headers["content-type"]
 			?.toLowerCase()
@@ -157,6 +157,6 @@ export class RestLessServer {
 		// TODO: maybe add multipart/form-data support in future if needed for blob uploads
 		const isForm = contentTypeContents?.includes("application/x-www-form-urlencoded");
 		const isRestLess = contentTypeContents?.includes("restless");
-		return isPost && isForm && isRestLess;
+		return isPost && !!isForm && !!isRestLess;
 	}
 }

@@ -10,7 +10,7 @@ import type {
 	IScribe,
 } from "@fluidframework/server-services-core";
 
-const getDefaultErrorMsg = (methodName: string) =>
+const getDefaultErrorMsg = (methodName: string): string =>
 	`TestNotImplementedCheckpointService.${methodName}: Method not implemented. Provide your own mock.`;
 
 /**

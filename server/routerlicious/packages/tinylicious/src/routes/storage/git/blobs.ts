@@ -5,9 +5,9 @@
 
 import fs from "node:fs";
 
+// eslint-disable-next-line import-x/no-deprecated
 import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import type { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
-// eslint-disable-next-line import-x/no-deprecated
 import { Router } from "express";
 import * as git from "isomorphic-git";
 import type nconf from "nconf";

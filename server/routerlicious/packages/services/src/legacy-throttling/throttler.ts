@@ -219,7 +219,10 @@ export class Throttler implements IThrottler {
 		}
 	}
 
-	private getBaseTelemetryProperties(key: string) {
+	private getBaseTelemetryProperties(key: string): {
+		baseMessageMetaData: { key: string; eventName: string };
+		baseLumberjackProperties: Record<string, string>;
+	} {
 		return {
 			baseMessageMetaData: {
 				key,

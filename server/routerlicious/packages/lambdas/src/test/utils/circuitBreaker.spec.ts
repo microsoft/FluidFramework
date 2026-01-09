@@ -27,7 +27,7 @@ describe("Lambda CircuitBreaker", () => {
 	const errorResponse = "Dummy action failed";
 	const healthCheckSuccessResponse = "Health check successful";
 	const healthCheckFailedResponse = "Health check failed";
-	const dummyFunction = async (success = true, timeoutMs = 0) => {
+	const dummyFunction = async (success = true, timeoutMs = 0): Promise<string> => {
 		if (timeoutMs > 0) {
 			await new Promise((resolve) => setTimeout(resolve, timeoutMs));
 		}
@@ -35,7 +35,7 @@ describe("Lambda CircuitBreaker", () => {
 			? Promise.resolve(successfulResponse)
 			: Promise.reject(new Error(errorResponse));
 	};
-	const dummyHealthCheck = async (success = true) => {
+	const dummyHealthCheck = async (success = true): Promise<string> => {
 		await new Promise((resolve) => setTimeout(resolve, 100));
 		return success
 			? Promise.resolve(healthCheckSuccessResponse)

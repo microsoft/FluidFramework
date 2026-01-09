@@ -11,7 +11,9 @@ import nconf from "nconf";
 
 import { createDocumentRouter } from "../../utils/documentRouter";
 
-interface LambdaConfig { foobar: number }
+interface LambdaConfig {
+	foobar: number;
+}
 
 describe("document-router", () => {
 	describe("Plugin", () => {

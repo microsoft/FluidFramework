@@ -63,7 +63,6 @@ import Sinon from "sinon";
 
 import { OrdererManager } from "../../nexus";
 
-
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
 	Lumberjack.setup([lumberjackEngine]);

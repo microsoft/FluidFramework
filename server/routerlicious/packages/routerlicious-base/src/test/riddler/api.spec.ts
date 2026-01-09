@@ -21,7 +21,6 @@ import request from "supertest";
 import { ITenantDocument } from "../../riddler";
 import * as riddlerApp from "../../riddler/app";
 
-
 const documentsCollectionName = "testDocuments";
 const deltasCollectionName = "testDeltas";
 const rawDeltasCollectionName = "testRawDeltas";

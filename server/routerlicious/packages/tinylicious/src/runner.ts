@@ -149,7 +149,7 @@ export class TinyliciousRunner implements IRunner {
 	/**
 	 * Event listener for HTTP server "error" event.
 	 */
-	private onError(error) {
+	private onError(error: any): void {
 		if (error.syscall !== "listen") {
 			throw error;
 		}
@@ -175,7 +175,7 @@ export class TinyliciousRunner implements IRunner {
 	/**
 	 * Event listener for HTTP server "listening" event.
 	 */
-	private onListening() {
+	private onListening(): void {
 		const addr = this.server?.httpServer?.address();
 		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
 		winston.info(`Listening on ${bind}`);

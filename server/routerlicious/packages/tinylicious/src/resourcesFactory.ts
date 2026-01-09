@@ -38,7 +38,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 	): Promise<TinyliciousResources> {
 		const globalDbEnabled = false;
 		// Pull in the default port off the config
-		const port = utils.normalizePort(process.env.PORT ?? defaultTinyliciousPort);
+		const port = utils.normalizePort(process.env.PORT ?? defaultTinyliciousPort.toString());
 		const collectionNames = config.get("mongo:collectionNames");
 
 		const tenantManager = new TenantManager(`http://localhost:${port}`);

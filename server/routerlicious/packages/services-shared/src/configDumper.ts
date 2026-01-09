@@ -43,7 +43,7 @@ export class ConfigDumper {
 		return this.config;
 	}
 
-	public dumpConfig() {
+	public dumpConfig(): void {
 		const redactJsonKeys = fastRedact({
 			paths: this.secretNamesToRedactInConfigDump,
 			censor: errorSanitizationMessage,

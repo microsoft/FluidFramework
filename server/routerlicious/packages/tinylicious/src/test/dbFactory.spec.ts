@@ -10,7 +10,6 @@ import * as path from "node:path";
 
 import type { ICollection, IDb } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
-import { rimraf } from "rimraf";
 
 import { getDbFactory } from "../services";
 
@@ -108,7 +107,7 @@ describe("Tinylicious", () => {
 							},
 						},
 						dispose: async () => {
-							await rimraf(levelDir);
+							await fs.promises.rm(levelDir, { recursive: true, force: true });
 						},
 					};
 				},

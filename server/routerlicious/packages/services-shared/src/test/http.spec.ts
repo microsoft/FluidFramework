@@ -29,7 +29,7 @@ class MockResponse {
 		return this._responseData;
 	}
 	private _headers: { [key: string]: string } = {};
-	public setHeader(name: string, value: string) {
+	public setHeader(name: string, value: string): void {
 		this._headers[name] = value;
 	}
 
@@ -108,7 +108,7 @@ describe("HTTP Utils", () => {
 		const validParam1 = "hello";
 		const validParam2 = "world";
 		let nextCalled = false;
-		const mockNext = () => {
+		const mockNext = (): void => {
 			nextCalled = true;
 		};
 		beforeEach(() => {

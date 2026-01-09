@@ -35,15 +35,15 @@ export class DebugLogger implements ILogger {
 		private readonly debugWarn: IDebugger,
 	) {}
 
-	public info(message: string) {
+	public info(message: string): void {
 		this.debugInfo(message);
 	}
 
-	public warn(message: string) {
+	public warn(message: string): void {
 		this.debugWarn(message);
 	}
 
-	public error(message: string) {
+	public error(message: string): void {
 		this.debugErr(message);
 	}
 }

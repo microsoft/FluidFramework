@@ -38,7 +38,7 @@ export class TestContext extends EventEmitter implements IContext {
 		}
 	}
 
-	public checkpoint(queuedMessage: IQueuedMessage) {
+	public checkpoint(queuedMessage: IQueuedMessage): void {
 		assert(queuedMessage.offset > this.offset, `${queuedMessage.offset} > ${this.offset}`);
 		this.offset = queuedMessage.offset;
 
@@ -53,7 +53,7 @@ export class TestContext extends EventEmitter implements IContext {
 		});
 	}
 
-	public error(error: any, errorData: IContextErrorData) {
+	public error(error: any, errorData: IContextErrorData): void {
 		this.emit("error", error, errorData);
 	}
 
@@ -67,7 +67,7 @@ export class TestContext extends EventEmitter implements IContext {
 		return deferred.promise;
 	}
 
-	public getContextError() {
+	public getContextError(): undefined {
 		return;
 	}
 

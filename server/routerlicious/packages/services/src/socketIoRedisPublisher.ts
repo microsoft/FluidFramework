@@ -16,7 +16,7 @@ import { Emitter as SocketIoEmitter } from "@socket.io/redis-emitter";
 export class SocketIoRedisTopic implements core.ITopic {
 	constructor(private readonly topic: any) {}
 
-	public emit(event: string, ...args: any[]) {
+	public emit(event: string, ...args: any[]): void {
 		this.topic.emit(event, ...args);
 	}
 }
@@ -43,7 +43,7 @@ export class SocketIoRedisPublisher implements core.IPublisher {
 		);
 	}
 
-	public on(event: string, listener: (...args: any[]) => void) {
+	public on(event: string, listener: (...args: any[]) => void): void {
 		this.events.on(event, listener);
 	}
 

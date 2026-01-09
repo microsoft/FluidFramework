@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IThrottlerResponse } from "@fluidframework/server-services-core";
-import { TestThrottleAndUsageStorageManager } from "@fluidframework/server-test-utils";
-import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { strict as assert } from "assert";
+
+import { IThrottlerResponse } from "@fluidframework/server-services-core";
+import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { TestThrottleAndUsageStorageManager } from "@fluidframework/server-test-utils";
 import Sinon from "sinon";
+
 import { ThrottlerHelper } from "../../legacy-throttling";
 
 const lumberjackEngine = new TestEngine1();
@@ -30,7 +32,7 @@ describe("ThrottlerHelper", () => {
 		const opsBurstLimit = 10;
 		const cooldownIntervalInMs = 10;
 		const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
-		let weight: number = 1;
+		const weight: number = 1;
 		let response: IThrottlerResponse;
 		const throttleStorageManager = new TestThrottleAndUsageStorageManager();
 		const throttlerHelper = new ThrottlerHelper(
@@ -62,7 +64,7 @@ describe("ThrottlerHelper", () => {
 		const opsBurstLimit = 10;
 		const cooldownIntervalInMs = 10;
 		const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
-		let weight: number = 2;
+		const weight: number = 2;
 		let response: IThrottlerResponse;
 		const throttleStorageManager = new TestThrottleAndUsageStorageManager();
 		const throttlerHelper = new ThrottlerHelper(
@@ -94,8 +96,7 @@ describe("ThrottlerHelper", () => {
 		const opsBurstLimit = 10;
 		const cooldownIntervalInMs = 10;
 		const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
-		let weight: number = operationsPerCooldown + 1;
-		let response: IThrottlerResponse;
+		const weight: number = operationsPerCooldown + 1;
 		const throttleStorageManager = new TestThrottleAndUsageStorageManager();
 		const throttlerHelper = new ThrottlerHelper(
 			throttleStorageManager,
@@ -106,7 +107,7 @@ describe("ThrottlerHelper", () => {
 
 		const id = "test-id";
 
-		response = await throttlerHelper.updateCount(id, weight);
+		const response = await throttlerHelper.updateCount(id, weight);
 		assert.strictEqual(
 			response.throttleStatus,
 			true,
@@ -200,7 +201,7 @@ describe("ThrottlerHelper", () => {
 		const opsPerMs = 1;
 		const opsBurstLimit = 10;
 		const cooldownIntervalInMs = 10;
-		let weight: number = 1;
+		const weight: number = 1;
 		let response: IThrottlerResponse;
 		const throttleStorageManager = new TestThrottleAndUsageStorageManager();
 		const throttlerHelper = new ThrottlerHelper(
@@ -243,8 +244,7 @@ describe("ThrottlerHelper", () => {
 		const opsBurstLimit = 10;
 		const cooldownIntervalInMs = 10;
 		const operationsPerCooldown = opsPerMs * cooldownIntervalInMs;
-		let weight: number = operationsPerCooldown + 1;
-		let response: IThrottlerResponse;
+		const weight: number = operationsPerCooldown + 1;
 		const throttleStorageManager = new TestThrottleAndUsageStorageManager();
 		const throttlerHelper = new ThrottlerHelper(
 			throttleStorageManager,
@@ -255,7 +255,7 @@ describe("ThrottlerHelper", () => {
 
 		const id = "test-id";
 
-		response = await throttlerHelper.updateCount(id, weight);
+		const response = await throttlerHelper.updateCount(id, weight);
 		assert.strictEqual(
 			response.throttleStatus,
 			true,

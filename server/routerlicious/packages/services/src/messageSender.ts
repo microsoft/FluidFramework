@@ -30,7 +30,7 @@ class RabbitmqTaskSender implements ITaskMessageSender {
 		this.taskQueues = config.queues;
 	}
 
-	public async initialize() {
+	public async initialize(): Promise<void> {
 		this.connection = await amqp.connect(this.rabbitmqConnectionString);
 		this.channel = await this.connection.createChannel();
 
@@ -48,7 +48,7 @@ class RabbitmqTaskSender implements ITaskMessageSender {
 		});
 	}
 
-	public sendTask(queueName: string, message: ITaskMessage) {
+	public sendTask(queueName: string, message: ITaskMessage): void {
 		this.channel?.sendToQueue(queueName, Buffer.from(JSON.stringify(message)), {
 			persistent: false,
 		});
@@ -59,7 +59,7 @@ class RabbitmqTaskSender implements ITaskMessageSender {
 		return this;
 	}
 
-	public async close() {
+	public async close(): Promise<void> {
 		const closeChannelP = this.channel?.close();
 		const closeConnectionP = this.connection?.close();
 		await Promise.all([closeChannelP, closeConnectionP]);
@@ -76,7 +76,10 @@ class RabbitmqTaskSender implements ITaskMessageSender {
  */
 export function createMessageSender(rabbitmqConfig: any, config: any): ITaskMessageSender {
 	// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-	return rabbitmqConfig && rabbitmqConfig.connectionString
+	return rabbitmqConfig !== undefined &&
+		rabbitmqConfig !== null &&
+		rabbitmqConfig.connectionString !== undefined &&
+		rabbitmqConfig.connectionString !== null
 		? new RabbitmqTaskSender(rabbitmqConfig, config)
 		: new EmptyTaskMessageSender();
 }
