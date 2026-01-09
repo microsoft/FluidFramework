@@ -1290,6 +1290,14 @@
         "jsdoc/require-asterisk-prefix": [
             "error"
         ],
+        "jsdoc/require-description": [
+            "error",
+            {
+                "checkConstructors": false,
+                "checkGetters": true,
+                "checkSetters": true
+            }
+        ],
         "jsdoc/require-hyphen-before-param-description": [
             "error"
         ],
