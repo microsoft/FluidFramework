@@ -156,10 +156,10 @@ export function testSchemaCompatibilitySnapshots(
 	const snapshotDirectory = path.join(schemaCompatibilitySnapshotsFolder, domainName);
 	checkSchemaCompatibilitySnapshots({
 		snapshotDirectory,
-		fileSystemMethods: { ...fs, ...path },
-		appVersion: cleanedPackageVersion,
-		currentViewSchema,
-		minAppVersionForCollaboration,
+		fileSystem: { ...fs, ...path },
+		version: cleanedPackageVersion,
+		schema: currentViewSchema,
+		minVersionForCollaboration: minAppVersionForCollaboration,
 		mode: regenerateSnapshots ? "update" : "test",
 	});
 }

@@ -298,6 +298,7 @@ export {
 	incrementalEncodingPolicyForAllowedTypes,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
+	type SchemaCompatibilitySnapshotsOptions,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

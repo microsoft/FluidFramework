@@ -192,28 +192,28 @@ describe("snapshotCompatibilityChecker", () => {
 			}) {}
 
 			checkSchemaCompatibilitySnapshots({
-				appVersion: "2.0.0",
-				currentViewSchema: new TreeViewConfiguration({ schema: Point2D }),
-				fileSystemMethods: nodeFileSystem,
-				minAppVersionForCollaboration: "2.0.0",
+				version: "2.0.0",
+				schema: new TreeViewConfiguration({ schema: Point2D }),
+				fileSystem: nodeFileSystem,
+				minVersionForCollaboration: "2.0.0",
 				mode: "test",
 				snapshotDirectory,
 			});
 
 			checkSchemaCompatibilitySnapshots({
-				appVersion: "2.0.0",
-				currentViewSchema: new TreeViewConfiguration({ schema: Point3D }),
-				fileSystemMethods: nodeFileSystem,
-				minAppVersionForCollaboration: "1.0.0",
+				version: "2.0.0",
+				schema: new TreeViewConfiguration({ schema: Point3D }),
+				fileSystem: nodeFileSystem,
+				minVersionForCollaboration: "1.0.0",
 				mode: "test",
 				snapshotDirectory,
 			});
 
 			checkSchemaCompatibilitySnapshots({
-				appVersion: "2.0.0",
-				currentViewSchema: new TreeViewConfiguration({ schema: Point3D }),
-				fileSystemMethods: nodeFileSystem,
-				minAppVersionForCollaboration: "2.0.0",
+				version: "2.0.0",
+				schema: new TreeViewConfiguration({ schema: Point3D }),
+				fileSystem: nodeFileSystem,
+				minVersionForCollaboration: "2.0.0",
 				mode: "test",
 				snapshotDirectory,
 			});

@@ -195,14 +195,39 @@ export interface CombinedSchemaCompatibilityStatus {
 }
 
 /**
+ * The options for {@link checkSchemaCompatibilitySnapshots}.
+ * @input
+ * @alpha
+ */
+export interface SchemaCompatibilitySnapshotsOptions {
+	/**
+	 * Directory where historical schema snapshots are stored.
+	 */
+	readonly snapshotDirectory: string;
+	/**
+	 * How the `snapshotDirectory` is accessed.
+	 */
+	readonly fileSystem: SnapshotFileSystem;
+	/**
+	 * The current application or library version.
+	 */
+	readonly version: string;
+	/**
+	 * The current view schema.
+	 */
+	readonly schema: TreeViewConfiguration;
+	/**
+	 * The minimum application version that the current version is expected to be able to collaborate with.
+	 */
+	readonly minVersionForCollaboration: string;
+	/**
+	 * The mode of operation, either "test" or "update".
+	 */
+	readonly mode: "test" | "update";
+}
+
+/**
  * Check a `currentViewSchema` for compatibility with a collection of historical schema snapshots stored in `snapshotDirectory`.
- *
- * @param snapshotDirectory - Directory where historical schema snapshots are stored.
- * @param fileSystemMethods - How the `snapshotDirectory` is accessed.
- * @param appVersion - The current application version.
- * @param currentViewSchema - The current view schema.
- * @param minAppVersionForCollaboration - The minimum application version that the current version is expected to be able to collaborate with.
- * @param mode - The mode of operation, either "test" or "update".
  * @remarks
  * This is intended for use in snapshot based schema compatibility tests.
  * Every shared tree based component or application with a schema is recommended to use this to verify schema compatibility across versions.
@@ -213,41 +238,41 @@ export interface CombinedSchemaCompatibilityStatus {
  *
  * @alpha
  */
-export function checkSchemaCompatibilitySnapshots(options: {
-	snapshotDirectory: string;
-	fileSystemMethods: SnapshotFileSystem;
-	appVersion: string;
-	currentViewSchema: TreeViewConfiguration;
-	minAppVersionForCollaboration: string;
-	mode: "test" | "update";
-}): void {
+export function checkSchemaCompatibilitySnapshots(
+	options: SchemaCompatibilitySnapshotsOptions,
+): void {
 	const checker = new SnapshotCompatibilityChecker(
 		options.snapshotDirectory,
-		options.fileSystemMethods,
+		options.fileSystem,
 	);
-	const { appVersion, currentViewSchema, mode, minAppVersionForCollaboration } = options;
-	if (semver.valid(appVersion) === null) {
+	const {
+		version: currentVersion,
+		schema: currentViewSchema,
+		mode,
+		minVersionForCollaboration,
+	} = options;
+	if (semver.valid(currentVersion) === null) {
 		throw new UsageError(
-			`Invalid app version: ${appVersion}. Must be a valid semver version.`,
+			`Invalid app version: ${currentVersion}. Must be a valid semver version.`,
 		);
 	}
 
 	const compatibilityMap = checker.getCompatibility(currentViewSchema);
 	if (mode === "test") {
-		if (!compatibilityMap.has(appVersion)) {
-			throw new UsageError(`No snapshot found for version ${appVersion}`);
+		if (!compatibilityMap.has(currentVersion)) {
+			throw new UsageError(`No snapshot found for version ${currentVersion}`);
 		}
 	} else {
 		if (mode !== "update") {
 			throw new UsageError(`Invalid mode: ${mode}. Must be either "test" or "update".`);
 		}
-		checker.writeSchemaSnapshot(appVersion, currentViewSchema);
+		checker.writeSchemaSnapshot(currentVersion, currentViewSchema);
 	}
 
 	const compatibilityErrors: string[] = [];
 
 	{
-		const currentSnapshot = checker.readSchemaSnapshotRaw(appVersion);
+		const currentSnapshot = checker.readSchemaSnapshotRaw(currentVersion);
 		const current = exportCompatibilitySchemaSnapshot(currentViewSchema);
 
 		if (JSON.stringify(currentSnapshot) !== JSON.stringify(current)) {
@@ -256,7 +281,7 @@ export function checkSchemaCompatibilitySnapshots(options: {
 			} else {
 				compatibilityErrors.push(
 					`Current schema snapshot for version ${JSON.stringify(
-						appVersion,
+						currentVersion,
 					)} does not match expected snapshot. Run in "update" mode again to rewrite the snapshot to review the differences.`,
 				);
 			}
@@ -273,12 +298,12 @@ export function checkSchemaCompatibilitySnapshots(options: {
 		// Current should be able to view all versions.
 		if (!compatibility.backwardsCompatibilityStatus.canUpgrade) {
 			compatibilityErrors.push(
-				`Current version ${JSON.stringify(appVersion)} cannot upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
+				`Current version ${JSON.stringify(currentVersion)} cannot upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
 			);
 		}
 
-		if (semver.eq(snapshotVersion, appVersion)) {
-			if (appVersion !== snapshotVersion) {
+		if (semver.eq(snapshotVersion, currentVersion)) {
+			if (currentVersion !== snapshotVersion) {
 				throw new UsageError(
 					`Snapshot version ${JSON.stringify(snapshotVersion)} is semantically equal but not string equal to appVersion ${JSON.stringify(snapshotVersion)}: this is not supported.`,
 				);
@@ -291,17 +316,17 @@ export function checkSchemaCompatibilitySnapshots(options: {
 					`Current version ${JSON.stringify(snapshotVersion)} expected to be equivalent to its snapshot.`,
 				);
 			}
-		} else if (semver.gt(snapshotVersion, appVersion)) {
+		} else if (semver.gt(snapshotVersion, currentVersion)) {
 			throw new UsageError(
-				`Snapshot version ${JSON.stringify(snapshotVersion)} is from a version greater than the current app version ${JSON.stringify(appVersion)}. This is currently unexpected and not supported: appVersion is expected to increase monotonically.`,
+				`Snapshot version ${JSON.stringify(snapshotVersion)} is from a version greater than the current app version ${JSON.stringify(currentVersion)}. This is currently unexpected and not supported: appVersion is expected to increase monotonically.`,
 			);
-		} else if (semver.lt(snapshotVersion, appVersion)) {
+		} else if (semver.lt(snapshotVersion, currentVersion)) {
 			// Collaboration with this version is expected to work.
-			if (semver.gte(snapshotVersion, minAppVersionForCollaboration)) {
+			if (semver.gte(snapshotVersion, minVersionForCollaboration)) {
 				// Check that the historical version can view documents from the current version, since collaboration with this one is expected to work.
 				if (!compatibility.forwardsCompatibilityStatus.canView) {
 					compatibilityErrors.push(
-						`Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(appVersion)}: these versions are expected to be able to collaborate due to minAppVersionForCollaboration being ${JSON.stringify(minAppVersionForCollaboration)} but they cannot.`,
+						`Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to minAppVersionForCollaboration being ${JSON.stringify(minVersionForCollaboration)} but they cannot.`,
 					);
 				}
 			} else {
@@ -310,7 +335,7 @@ export function checkSchemaCompatibilitySnapshots(options: {
 			}
 		} else {
 			throw new UsageError(
-				`Unexpected semver comparison result between snapshot version ${JSON.stringify(snapshotVersion)} and app version ${JSON.stringify(appVersion)}.`,
+				`Unexpected semver comparison result between snapshot version ${JSON.stringify(snapshotVersion)} and app version ${JSON.stringify(currentVersion)}.`,
 			);
 		}
 	}
