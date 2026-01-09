@@ -293,7 +293,6 @@ export {
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
 	checkSchemaCompatibilitySnapshots,
-	type CombinedSchemaCompatibilityStatus,
 	type SnapshotFileSystem,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,

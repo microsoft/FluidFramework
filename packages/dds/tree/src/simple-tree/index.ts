@@ -198,7 +198,6 @@ export {
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
 	checkSchemaCompatibilitySnapshots,
-	type CombinedSchemaCompatibilityStatus,
 	type SnapshotFileSystem,
 } from "./api/index.js";
 export type {

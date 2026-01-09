@@ -172,13 +172,6 @@ export interface CodecWriteOptions extends ICodecOptions {
     readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
 }
 
-// @alpha
-export interface CombinedSchemaCompatibilityStatus {
-    readonly backwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
-    readonly forwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
-    readonly snapshotName: string;
-}
-
 // @public
 export enum CommitKind {
     Default = 0,

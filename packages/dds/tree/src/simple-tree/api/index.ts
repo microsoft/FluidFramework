@@ -181,6 +181,5 @@ export {
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
 	checkSchemaCompatibilitySnapshots,
-	type CombinedSchemaCompatibilityStatus,
 	type SnapshotFileSystem,
 } from "./snapshotCompatibilityChecker.js";

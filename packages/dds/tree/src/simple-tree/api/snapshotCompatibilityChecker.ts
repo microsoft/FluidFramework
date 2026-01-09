@@ -180,19 +180,10 @@ export interface SnapshotFileSystem {
 
 /**
  * The combined compatibility status for both backwards and forwards compatibility checks.
- *
  * @privateRemarks
  * TODO: what is forward and backwards here seems reversed. Either add docs which phrase things in a way this makes sense or swap them.
- *
- * @alpha
  */
 export interface CombinedSchemaCompatibilityStatus {
-	/**
-	 * The name of the historical snapshot being compared against.
-	 * @remarks
-	 * This is typically the "appVersion" from {@link checkSchemaCompatibilitySnapshots} from when it was generated using "update" mode.
-	 */
-	readonly snapshotName: string;
 	/**
 	 * How a {@link TreeView} using the current schema would report its compatibility with the historical snapshot.
 	 */
@@ -389,7 +380,6 @@ export class SnapshotCompatibilityChecker {
 			);
 
 			compatibilityStatuses.set(name, {
-				snapshotName: name,
 				backwardsCompatibilityStatus,
 				forwardsCompatibilityStatus,
 			});
