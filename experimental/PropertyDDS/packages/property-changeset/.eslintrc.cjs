@@ -41,6 +41,7 @@ module.exports = {
 		"@typescript-eslint/unbound-method": "off",
 		"eqeqeq": "off",
 		"import-x/no-internal-modules": "off",
+		"jsdoc/require-description": "off",
 		"no-case-declarations": "off",
 		"no-inner-declarations": "off",
 		"no-multi-spaces": "off",

@@ -40,6 +40,7 @@ module.exports = {
 		"import-x/no-duplicates": "off",
 		"import-x/no-extraneous-dependencies": "off",
 		"import-x/no-internal-modules": "off",
+		"jsdoc/require-description": "off",
 		"max-len": "off",
 		"no-bitwise": "off",
 		"no-new-func": "off",
