@@ -11,6 +11,11 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"exports": {
+		".": "./index.js",
+		"./*": "./*",
+		"./flat.mts": "./flat.mjs"
+	},
 	"main": "index.js",
 	"scripts": {
 		"build": "npm run print-configs && npm run prettier",
@@ -41,7 +46,8 @@
 		"eslint-plugin-react-hooks": "~7.0.1",
 		"eslint-plugin-tsdoc": "~0.5.0",
 		"eslint-plugin-unicorn": "~54.0.0",
-		"eslint-plugin-unused-imports": "~4.3.0"
+		"eslint-plugin-unused-imports": "~4.3.0",
+		"jiti": "^2.6.1"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
