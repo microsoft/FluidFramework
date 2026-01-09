@@ -8,4 +8,5 @@ export {
 	takeSnapshot,
 	useSnapshotDirectory,
 	regenerateSnapshots,
+	testSchemaCompatibilitySnapshots,
 } from "./snapshotTools.js";

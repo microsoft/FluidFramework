@@ -4,21 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
-import path from "node:path";
-import fs from "node:fs";
-
-import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 
 import { Tree } from "../shared-tree/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import type { areSafelyAssignable, requireTrue } from "../util/index.js";
-import {
-	checkSchemaCompatibilitySnapshots,
-	TreeBeta,
-	TreeViewConfiguration,
-} from "../simple-tree/index.js";
-import { testSrcPath } from "./testSrcPath.cjs";
-import { regenerateSnapshots } from "./snapshots/index.js";
+import { TreeBeta, TreeViewConfiguration } from "../simple-tree/index.js";
+import { testSchemaCompatibilitySnapshots } from "./snapshots/index.js";
 
 describe("JsonDomainSchema", () => {
 	it("examples", () => {
@@ -79,13 +70,6 @@ describe("JsonDomainSchema", () => {
 
 	it("compatibility", () => {
 		const currentViewSchema = new TreeViewConfiguration({ schema: JsonAsTree.Tree });
-		checkSchemaCompatibilitySnapshots(
-			path.join(testSrcPath, "jsonDomainSchemaSnapshots"),
-			{ ...fs, ...path },
-			cleanedPackageVersion,
-			currentViewSchema,
-			"0.0.0",
-			regenerateSnapshots ? "update" : "test",
-		);
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.0.0", "json");
 	});
 });

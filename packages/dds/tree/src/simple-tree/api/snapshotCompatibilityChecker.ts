@@ -318,7 +318,7 @@ export class SnapshotCompatibilityChecker {
 				);
 			}
 
-			if (semver.eq(snapshotVersion, minAppVersionForCollaboration)) {
+			if (semver.eq(snapshotVersion, appVersion)) {
 				if (appVersion !== snapshotVersion) {
 					throw new UsageError(
 						`Snapshot version ${JSON.stringify(snapshotVersion)} is semantically equal but not string equal to appVersion ${JSON.stringify(snapshotVersion)}: this is not supported.`,
@@ -405,7 +405,7 @@ export class SnapshotCompatibilityChecker {
 			`${snapshotName}.json`,
 		);
 		this.ensureSnapshotDirectoryExists();
-		this.fileSystemMethods.writeFileSync(fullPath, JSON.stringify(snapshot), {
+		this.fileSystemMethods.writeFileSync(fullPath, JSON.stringify(snapshot, undefined, 2), {
 			encoding: "utf8",
 		});
 	}
