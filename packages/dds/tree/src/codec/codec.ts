@@ -511,6 +511,7 @@ export const FluidClientVersion = {
 
 	/**
 	 * Fluid Framework Client 2.81 and newer.
+	 * @remarks
 	 * New formats introduced in 2.81:
 	 * - EditManagerSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.81
 	 * - DetachedFieldIndexSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.81
