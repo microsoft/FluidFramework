@@ -37,6 +37,9 @@ export {
 	type BindableSchema,
 	type Ctor,
 	type Infer,
+	type InferZod,
+	type InferArgsZod,
+	type InferTypeFactory,
 	type IExposedMethods,
 } from "./methodBinding.js";
 export type {
@@ -50,3 +53,39 @@ export type {
 	TypeMatchOrError,
 	IfEquals,
 } from "./propertyBinding.js";
+
+/**
+ * Custom type system for defining method and property types without zod dependency.
+ * @alpha
+ */
+export {
+	typeFactory,
+	isTypeFactoryType,
+	instanceOfsTypeFactory,
+} from "./treeAgentTypes.js";
+
+/**
+ * Type interfaces for the type factory type system.
+ * @alpha
+ */
+export type {
+	TypeFactoryType,
+	TypeFactoryTypeKind,
+	TypeFactoryString,
+	TypeFactoryNumber,
+	TypeFactoryBoolean,
+	TypeFactoryVoid,
+	TypeFactoryUndefined,
+	TypeFactoryNull,
+	TypeFactoryUnknown,
+	TypeFactoryArray,
+	TypeFactoryObject,
+	TypeFactoryRecord,
+	TypeFactoryMap,
+	TypeFactoryTuple,
+	TypeFactoryUnion,
+	TypeFactoryLiteral,
+	TypeFactoryOptional,
+	TypeFactoryReadonly,
+	TypeFactoryInstanceOf,
+} from "./treeAgentTypes.js";

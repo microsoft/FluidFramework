@@ -9,6 +9,7 @@ import { NodeKind } from "@fluidframework/tree";
 import type { z } from "zod";
 
 import { instanceOf } from "./renderZodTypeScript.js";
+import type { TypeFactoryType } from "./treeAgentTypes.js";
 
 /**
  * A utility type that extracts the method keys from a given type.
@@ -62,7 +63,8 @@ export function getExposedMethods(schemaClass: BindableSchema): {
  * A type that represents a function argument.
  * @alpha
  */
-export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string, type: T];
+export type Arg<T extends z.ZodTypeAny | TypeFactoryType = z.ZodTypeAny | TypeFactoryType> =
+	readonly [name: string, type: T];
 
 /**
  * A function definition interface that describes the structure of a function.
@@ -70,8 +72,8 @@ export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string,
  */
 export interface FunctionDef<
 	Args extends readonly Arg[],
-	Return extends z.ZodTypeAny,
-	Rest extends z.ZodTypeAny | null = null,
+	Return extends z.ZodTypeAny | TypeFactoryType,
+	Rest extends z.ZodTypeAny | TypeFactoryType | null = null,
 > {
 	description?: string;
 	args: Args;
@@ -83,15 +85,20 @@ export interface FunctionDef<
  * A class that implements the FunctionDef interface.
  */
 export class FunctionWrapper
-	implements FunctionDef<readonly Arg[], z.ZodTypeAny, z.ZodTypeAny | null>
+	implements
+		FunctionDef<
+			readonly Arg[],
+			z.ZodTypeAny | TypeFactoryType,
+			z.ZodTypeAny | TypeFactoryType | null
+		>
 {
 	public constructor(
 		public readonly name: string,
 		public readonly description: string | undefined,
 		public readonly args: readonly Arg[],
 		// eslint-disable-next-line @rushstack/no-new-null
-		public readonly rest: z.ZodTypeAny | null,
-		public readonly returns: z.ZodTypeAny,
+		public readonly rest: z.ZodTypeAny | TypeFactoryType | null,
+		public readonly returns: z.ZodTypeAny | TypeFactoryType,
 	) {}
 }
 
@@ -110,9 +117,9 @@ export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Sing
  * @alpha
  */
 export function buildFunc<
-	const Return extends z.ZodTypeAny,
+	const Return extends z.ZodTypeAny | TypeFactoryType,
 	const Args extends readonly Arg[],
-	const Rest extends z.ZodTypeAny | null = null,
+	const Rest extends z.ZodTypeAny | TypeFactoryType | null = null,
 >(
 	def: { description?: string; returns: Return; rest?: Rest },
 	...args: Args
@@ -126,11 +133,47 @@ export function buildFunc<
 }
 
 /**
- * A utility type that infers the return type of a function definition.
+ * A utility type that extracts inferred parameter types from Zod args.
  * @alpha
  */
-export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest>
-	? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>>
+export type InferArgsZod<Args extends readonly Arg<z.ZodTypeAny>[]> = Args extends readonly [
+	infer Head extends Arg<z.ZodTypeAny>,
+	...infer Tail extends readonly Arg<z.ZodTypeAny>[],
+]
+	? [z.infer<Head[1]>, ...InferArgsZod<Tail>]
+	: [];
+
+/**
+ * A utility type that infers the function signature from a Zod function definition with strict type checking.
+ * @alpha
+ */
+export type InferZod<T> = T extends FunctionDef<
+	infer Args extends readonly Arg<z.ZodTypeAny>[],
+	infer Return extends z.ZodTypeAny,
+	any
+>
+	? (...args: InferArgsZod<Args>) => z.infer<Return>
+	: never;
+
+/**
+ * A utility type that infers the function signature from a type factory function definition with relaxed type checking.
+ * @alpha
+ */
+export type InferTypeFactory<T> = T extends FunctionDef<readonly Arg[], infer Return, any>
+	? (...args: any[]) => any
+	: never;
+
+/**
+ * A utility type that infers the return type of a function definition.
+ * @alpha
+ * @remarks
+ * For Zod types, provides strict compile-time type checking. For type factory types, returns `any`.
+ * @deprecated Use InferZod or InferTypeFactory directly for better type safety.
+ */
+export type Infer<T> = T extends FunctionDef<readonly Arg[], infer Return, any>
+	? Return extends z.ZodTypeAny
+		? InferZod<T>
+		: InferTypeFactory<T>
 	: never;
 
 /**
@@ -138,16 +181,32 @@ export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Res
  * @alpha
  */
 export interface ExposedMethods {
+	/**
+	 * Expose a method with Zod types (strict compile-time type checking).
+	 */
 	expose<
 		const K extends string & keyof MethodKeys<InstanceType<S>>,
-		S extends BindableSchema & Ctor<Record<K, Infer<Z>>> & IExposedMethods,
-		Z extends FunctionDef<any, any, any>,
+		S extends BindableSchema & Ctor<Record<K, InferZod<Z>>> & IExposedMethods,
+		Z extends FunctionDef<readonly Arg<z.ZodTypeAny>[], z.ZodTypeAny, z.ZodTypeAny | null>,
 	>(schema: S, methodName: K, zodFunction: Z): void;
+
+	/**
+	 * Expose a method with type factory types (relaxed compile-time type checking).
+	 */
+	expose<
+		const K extends string & keyof MethodKeys<InstanceType<S>>,
+		S extends BindableSchema & Ctor & IExposedMethods,
+		Z extends FunctionDef<
+			readonly Arg<TypeFactoryType>[],
+			TypeFactoryType,
+			TypeFactoryType | null
+		>,
+	>(schema: S, methodName: K, tfFunction: Z): void;
 
 	/**
 	 * Create a Zod schema for a SharedTree schema class.
 	 * @remarks
-	 * Use it to "wrap" schema types that are referenced as arguments or return types when exposing methods (with {@link ExposedMethods.expose}).
+	 * Use it to "wrap" schema types that are referenced as arguments or return types when exposing methods with {@link ExposedMethods}.
 	 */
 	instanceOf<T extends TreeNodeSchemaClass>(
 		schema: T,
@@ -186,8 +245,12 @@ class ExposedMethodsI implements ExposedMethods {
 
 	public expose<
 		const K extends string & keyof MethodKeys<InstanceType<S>>,
-		S extends BindableSchema & Ctor<Record<K, Infer<Z>>> & IExposedMethods,
-		Z extends FunctionDef<readonly Arg[], z.ZodTypeAny, z.ZodTypeAny | null>,
+		S extends BindableSchema & Ctor & IExposedMethods,
+		Z extends FunctionDef<
+			readonly Arg[],
+			z.ZodTypeAny | TypeFactoryType,
+			z.ZodTypeAny | TypeFactoryType | null
+		>,
 	>(schema: S, methodName: K, functionDef: Z): void {
 		if (schema !== this.schemaClass) {
 			throw new Error('Must expose methods on the "this" object');
