@@ -386,9 +386,20 @@ module.exports = {
 
 		// #endregion
 
+		// #region @typescript-eslint rules
+
+		/**
+		 * Ensures that type-only import statements do not result in runtime side-effects.
+		 *
+		 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
+		 */
+		"@typescript-eslint/no-import-type-side-effects": "error",
+
 		"@typescript-eslint/prefer-includes": "error",
 		"@typescript-eslint/prefer-nullish-coalescing": "error",
 		"@typescript-eslint/prefer-optional-chain": "error",
+
+		// #endregion
 
 		/**
 		 * By default, libraries should not take dependencies on node libraries.
