@@ -114,6 +114,8 @@ export const defaultOptions: Required<FuzzDescribeOptions> = {
 };
 
 /**
+ * Creates a fuzz test `describe` function with the provided options.
+ *
  * @internal
  */
 export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFuzz {
@@ -169,6 +171,8 @@ export const describeFuzz: DescribeFuzz = createFuzzDescribe();
 export const describeStress: DescribeStress = createFuzzDescribe();
 
 /**
+ * Generates test seeds based on the provided test count and stress mode.
+ *
  * @internal
  */
 export function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {
