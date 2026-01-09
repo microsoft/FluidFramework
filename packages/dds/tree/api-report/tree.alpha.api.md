@@ -147,7 +147,14 @@ export type ChangeMetadata = CommitMetadata & ({
 export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
-export function checkSchemaCompatibilitySnapshots(snapshotDirectory: string, fileSystemMethods: SnapshotFileSystem, appVersion: string, currentViewSchema: TreeViewConfiguration, minAppVersionForCollaboration: string, mode: "test" | "update"): void;
+export function checkSchemaCompatibilitySnapshots(options: {
+    snapshotDirectory: string;
+    fileSystemMethods: SnapshotFileSystem;
+    appVersion: string;
+    currentViewSchema: TreeViewConfiguration;
+    minAppVersionForCollaboration: string;
+    mode: "test" | "update";
+}): void;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {

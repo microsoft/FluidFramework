@@ -9,8 +9,9 @@ import {
 	checkCompatibility,
 	importCompatibilitySchemaSnapshot,
 	exportCompatibilitySchemaSnapshot,
-	SnapshotCompatibilityChecker,
 	type SnapshotFileSystem,
+	SnapshotCompatibilityChecker,
+	checkSchemaCompatibilitySnapshots,
 	// Allow importing file which is being tested.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/snapshotCompatibilityChecker.js";
@@ -174,12 +175,9 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	describe("checkSchemaCompatibilitySnapshots", () => {
-		const checker = new SnapshotCompatibilityChecker(
-			path.join(testSrcPath, "schemaSnapshots", "point"),
-			nodeFileSystem,
-		);
-
 		it("write current view schema snapshot", () => {
+			const snapshotDirectory = path.join(testSrcPath, "schemaSnapshots", "point");
+
 			const factory = new SchemaFactory("test");
 
 			class Point2D extends factory.object("Point", {
@@ -193,22 +191,44 @@ describe("snapshotCompatibilityChecker", () => {
 				z: factory.optional(factory.number),
 			}) {}
 
-			checker.checkCompatibility(
-				"1.0.0",
-				new TreeViewConfiguration({ schema: Point2D }),
-				"1.0.0",
-				"update",
-			);
+			checkSchemaCompatibilitySnapshots({
+				appVersion: "2.0.0",
+				currentViewSchema: new TreeViewConfiguration({ schema: Point2D }),
+				fileSystemMethods: nodeFileSystem,
+				minAppVersionForCollaboration: "2.0.0",
+				mode: "test",
+				snapshotDirectory,
+			});
 
-			checker.checkCompatibility(
-				"2.0.0",
-				new TreeViewConfiguration({ schema: Point3D }),
-				"1.0.0",
-				"update",
-			);
+			checkSchemaCompatibilitySnapshots({
+				appVersion: "2.0.0",
+				currentViewSchema: new TreeViewConfiguration({ schema: Point3D }),
+				fileSystemMethods: nodeFileSystem,
+				minAppVersionForCollaboration: "1.0.0",
+				mode: "test",
+				snapshotDirectory,
+			});
+
+			checkSchemaCompatibilitySnapshots({
+				appVersion: "2.0.0",
+				currentViewSchema: new TreeViewConfiguration({ schema: Point3D }),
+				fileSystemMethods: nodeFileSystem,
+				minAppVersionForCollaboration: "2.0.0",
+				mode: "test",
+				snapshotDirectory,
+			});
+		});
+
+		it("workflow over time", () => {
+			// TODO
 		});
 
 		it.skip("check current view schema against historical persisted schemas", () => {
+			const checker = new SnapshotCompatibilityChecker(
+				path.join(testSrcPath, "schemaSnapshots", "point"),
+				nodeFileSystem,
+			);
+
 			const factory = new SchemaFactory("test");
 
 			class Point3D extends factory.object("Point", {

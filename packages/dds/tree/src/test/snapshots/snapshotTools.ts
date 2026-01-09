@@ -149,17 +149,17 @@ assert(existsSync(schemaCompatibilitySnapshotsFolder));
  * Use {@link useSnapshotDirectory} to control where they are saved.
  */
 export function testSchemaCompatibilitySnapshots(
-	config: TreeViewConfiguration,
+	currentViewSchema: TreeViewConfiguration,
 	minAppVersionForCollaboration: MinimumVersionForCollab,
 	domainName: string,
 ): void {
-	const directory = path.join(schemaCompatibilitySnapshotsFolder, domainName);
-	checkSchemaCompatibilitySnapshots(
-		directory,
-		{ ...fs, ...path },
-		cleanedPackageVersion,
-		config,
+	const snapshotDirectory = path.join(schemaCompatibilitySnapshotsFolder, domainName);
+	checkSchemaCompatibilitySnapshots({
+		snapshotDirectory,
+		fileSystemMethods: { ...fs, ...path },
+		appVersion: cleanedPackageVersion,
+		currentViewSchema,
 		minAppVersionForCollaboration,
-		regenerateSnapshots ? "update" : "test",
-	);
+		mode: regenerateSnapshots ? "update" : "test",
+	});
 }
