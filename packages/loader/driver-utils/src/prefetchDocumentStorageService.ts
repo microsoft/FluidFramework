@@ -57,15 +57,20 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 				return prefetchedBlobP;
 			}
 			const prefetchedBlobPFromStorage = this.internalStorageService.readBlob(blobId);
-			this.prefetchCache.set(
-				blobId,
-				prefetchedBlobPFromStorage.catch((error) => {
-					if (canRetryOnError(error)) {
+			// Attach error handler for side effects only:
+			// 1. Clear cache on retryable errors so next read retries
+			// 2. Prevent unhandled rejection warning for fire-and-forget prefetch
+			// Note: Callers who await the cached promise will still see the rejection
+			prefetchedBlobPFromStorage.catch((error) => {
+				if (canRetryOnError(error)) {
+					// Only clear cache if our promise is still the cached one
+					// (avoids race condition with concurrent requests)
+					if (this.prefetchCache.get(blobId) === prefetchedBlobPFromStorage) {
 						this.prefetchCache.delete(blobId);
 					}
-					throw error;
-				}),
-			);
+				}
+			});
+			this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);
 			return prefetchedBlobPFromStorage;
 		}
 		return this.internalStorageService.readBlob(blobId);

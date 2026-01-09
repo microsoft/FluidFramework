@@ -90,6 +90,10 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 
 - `@typescript-eslint/explicit-function-return-type`
 
+#### Rule modifications
+
+- `jsdoc/multiline-blocks`: Updated to allow single-line comments to be expressed as a single line. E.g. `/** Single-line comment */`.
+
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 
 ### eslint-plugin-eslint-comments replaced by @eslint-community/eslint-plugin-eslint-comments

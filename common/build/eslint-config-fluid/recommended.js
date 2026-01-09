@@ -186,10 +186,10 @@ module.exports = {
 		// #region eslint-plugin-jsdoc rules
 
 		/**
-		 * Ensures all JSDoc/TSDoc comments use the multi-line format for consistency.
-		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-multiline-blocks>
+		 * Ensures JSDoc/TSDoc comments to use the consistent formatting.
+		 * See {@link https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/rules/multiline-blocks.md}
 		 */
-		"jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
+		"jsdoc/multiline-blocks": ["error"],
 
 		/**
 		 * Require the description (summary) component in JSDoc/TSDoc comments
