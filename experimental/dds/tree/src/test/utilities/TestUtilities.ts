@@ -7,11 +7,7 @@ import { resolve } from 'path';
 
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
 import { AttachState } from '@fluidframework/container-definitions';
-import {
-	type IContainer,
-	type IFluidCodeDetails,
-	type IHostLoader,
-} from '@fluidframework/container-definitions/internal';
+import type { IContainer, IFluidCodeDetails, IHostLoader } from '@fluidframework/container-definitions/internal';
 import { asLegacyAlpha, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
