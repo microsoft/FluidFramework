@@ -29,7 +29,7 @@ describe("inventoryApp", () => {
 						new Inventory({
 							parts: [
 								new Part({ name: "nut", quantity: 5 }),
-								new Part({ name: "bolt", quantity: 6 }),
+								new Part({ name: "bolt", quantity: 5 }),
 							],
 						}),
 				),
@@ -42,11 +42,13 @@ describe("inventoryApp", () => {
 		const dataObject = container.initialObjects.tree;
 		assert.equal(dataObject.treeView.root.parts.length, 2);
 		const firstPart = dataObject.treeView.root.parts[0];
+		const secondPart = dataObject.treeView.root.parts[1];
 		assert(firstPart !== undefined);
+		assert(secondPart !== undefined);
 		firstPart.quantity += 1;
+		secondPart.quantity += 2;
 		assert.equal(dataObject.treeView.root.parts[0]?.quantity, 6);
-		assert.equal(dataObject.treeView.root.parts[1]?.quantity, 6);
-
+		assert.equal(dataObject.treeView.root.parts[1]?.quantity, 7);
 		container.dispose();
 	});
 
