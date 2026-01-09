@@ -123,7 +123,7 @@ describe("Presence", () => {
 					logger,
 				));
 
-				runtime.syncWithQuorum();
+				runtime.addAudienceWriteClientsToQuorum();
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);

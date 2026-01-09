@@ -144,6 +144,9 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		);
 	}
 
+	/**
+	 * Removes a member from both audience and quorum.
+	 */
 	public removeMember(clientId: ClientConnectionId): void {
 		const client = this.audience.getMember(clientId);
 		assert(client !== undefined, `Attempting to remove unknown connection: ${clientId}`);
@@ -153,7 +156,20 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		this.audience.removeMember(clientId);
 	}
 
-	public syncWithQuorum(): void {
+	/**
+	 * Adds audience write clients to quorum if not already present.
+	 *
+	 * @remarks
+	 * Quorum membership is op-based while audience membership is
+	 * signal-based, so quorum membership lags behind audience. This
+	 * function allows tests to control when newly joined audience members are
+	 * show up in quorum.
+	 *
+	 * Note: New audience members are added upon {@link connect}, and member
+	 * removal is handled by {@link removeMember} which removes from both
+	 * audience and quorum together.
+	 */
+	public addAudienceWriteClientsToQuorum(): void {
 		for (const [clientId, client] of this.audience.getMembers()) {
 			if (client.mode === "write" && this.quorum.getMember(clientId) === undefined) {
 				const quorumSize = this.quorum.getMembers().size;
