@@ -147,6 +147,9 @@ export type ChangeMetadata = CommitMetadata & ({
 export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
+export function checkSchemaCompatibilitySnapshots(snapshotDirectory: string, fileSystemMethods: SnapshotFileSystem, appVersion: string, currentViewSchema: TreeViewConfiguration, minAppVersionForCollaboration: string, mode: "test" | "update"): void;
+
+// @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
     clone: boolean;
     value: unknown;
@@ -164,12 +167,9 @@ export interface CodecWriteOptions extends ICodecOptions {
 
 // @alpha
 export interface CombinedSchemaCompatibilityStatus {
-    // (undocumented)
-    backwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
-    // (undocumented)
-    forwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
-    // (undocumented)
-    snapshotName: string;
+    readonly backwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+    readonly forwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+    readonly snapshotName: string;
 }
 
 // @public
@@ -455,26 +455,6 @@ export interface ICodecOptions {
 
 // @alpha
 export type IdentifierIndex = SimpleTreeIndex<string, TreeNode>;
-
-// @alpha
-export interface IFileSystemMethods {
-    // (undocumented)
-    basename: (path: string, ext?: string) => string;
-    // (undocumented)
-    join: (parentPath: string, childPath: string) => string;
-    // (undocumented)
-    mkdirSync: (dir: string, options?: {
-        recursive: true;
-    }) => void;
-    // (undocumented)
-    readdirSync: (dir: string) => string[];
-    // (undocumented)
-    readFileSync: (file: string, encoding: "utf8") => string;
-    // (undocumented)
-    writeFileSync: (file: string, data: string, options?: {
-        encoding?: "utf8";
-    }) => void;
-}
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -1189,17 +1169,22 @@ export function singletonSchema<TScope extends string, TName extends string | nu
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
-// @alpha
-export class SnapshotCompatibilityChecker {
-    constructor(snapshotDirectory: string, fileSystemMethods: IFileSystemMethods);
+// @alpha @input
+export interface SnapshotFileSystem {
     // (undocumented)
-    checkCompatibility(appVersion: string, currentViewSchema: TreeViewConfiguration, mode: "test" | "update"): Map<string, CombinedSchemaCompatibilityStatus>;
+    join(parentPath: string, childPath: string): string;
     // (undocumented)
-    readAllSchemaSnapshots(): Map<string, TreeViewConfiguration>;
+    mkdirSync(dir: string, options: {
+        recursive: true;
+    }): void;
     // (undocumented)
-    readSchemaSnapshot(snapshotName: string): TreeViewConfiguration;
+    readdirSync(dir: string): readonly string[];
     // (undocumented)
-    writeSchemaSnapshot(snapshotName: string, viewSchema: TreeViewConfiguration): void;
+    readFileSync(file: string, encoding: "utf8"): string;
+    // (undocumented)
+    writeFileSync(file: string, data: string, options: {
+        encoding: "utf8";
+    }): void;
 }
 
 // @alpha @system

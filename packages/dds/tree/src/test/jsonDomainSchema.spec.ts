@@ -4,10 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
+import path from "node:path";
+import fs from "node:fs";
+
+import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
+
 import { Tree } from "../shared-tree/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import type { areSafelyAssignable, requireTrue } from "../util/index.js";
-import { TreeBeta } from "../simple-tree/index.js";
+import {
+	checkSchemaCompatibilitySnapshots,
+	TreeBeta,
+	TreeViewConfiguration,
+} from "../simple-tree/index.js";
+import { testSrcPath } from "./testSrcPath.cjs";
+import { regenerateSnapshots } from "./snapshots/index.js";
 
 describe("JsonDomainSchema", () => {
 	it("examples", () => {
@@ -64,5 +75,17 @@ describe("JsonDomainSchema", () => {
 		// Due to the nature of this issue possibly being impacted by details of the .d.ts generation,
 		// there is also some testing in examples/utils/import-testing/src/test/importer.spec.ts
 		// which ensures it works from outside the package with both CJS and ESM.
+	});
+
+	it("compatibility", () => {
+		const currentViewSchema = new TreeViewConfiguration({ schema: JsonAsTree.Tree });
+		checkSchemaCompatibilitySnapshots(
+			path.join(testSrcPath, "jsonDomainSchemaSnapshots"),
+			{ ...fs, ...path },
+			cleanedPackageVersion,
+			currentViewSchema,
+			"0.0.0",
+			regenerateSnapshots ? "update" : "test",
+		);
 	});
 });

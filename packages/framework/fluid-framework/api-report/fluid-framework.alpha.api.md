@@ -154,6 +154,9 @@ export type ChangeMetadata = CommitMetadata & ({
 export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
+export function checkSchemaCompatibilitySnapshots(snapshotDirectory: string, fileSystemMethods: SnapshotFileSystem, appVersion: string, currentViewSchema: TreeViewConfiguration, minAppVersionForCollaboration: string, mode: "test" | "update"): void;
+
+// @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
     clone: boolean;
     value: unknown;
@@ -167,6 +170,13 @@ export interface CodecWriteOptions extends ICodecOptions {
     readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
     readonly minVersionForCollab: MinimumVersionForCollab;
     readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
+}
+
+// @alpha
+export interface CombinedSchemaCompatibilityStatus {
+    readonly backwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+    readonly forwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+    readonly snapshotName: string;
 }
 
 // @public
@@ -1537,24 +1547,22 @@ export function singletonSchema<TScope extends string, TName extends string | nu
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
-// @alpha
-export class SnapshotCompatibilityChecker {
-    constructor(snapshotDirectory: string, fileSystemMethods: {
-        writeFileSync: (file: string, data: string, options?: {
-            encoding?: "utf8";
-        }) => void;
-        readFileSync: (file: string, encoding: "utf8") => string;
-        mkdirSync: (dir: string) => void;
-        readdirSync: (dir: string) => string[];
-        join: (...paths: string[]) => string;
-        basename: (path: string, ext?: string) => string;
-    });
+// @alpha @input
+export interface SnapshotFileSystem {
     // (undocumented)
-    readAllSchemaSnapshots(): Map<string, TreeViewConfiguration>;
+    join(parentPath: string, childPath: string): string;
     // (undocumented)
-    readSchemaSnapshot(snapshotName: string): TreeViewConfiguration;
+    mkdirSync(dir: string, options: {
+        recursive: true;
+    }): void;
     // (undocumented)
-    writeSchemaSnapshot(snapshotName: string, viewSchema: TreeViewConfiguration): void;
+    readdirSync(dir: string): readonly string[];
+    // (undocumented)
+    readFileSync(file: string, encoding: "utf8"): string;
+    // (undocumented)
+    writeFileSync(file: string, data: string, options: {
+        encoding: "utf8";
+    }): void;
 }
 
 // @alpha @system

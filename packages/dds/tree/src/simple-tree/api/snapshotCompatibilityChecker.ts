@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as semver from "semver-ts";
+import { fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { toInitialSchema } from "../toStoredSchema.js";
@@ -144,66 +146,234 @@ export function importCompatibilitySchemaSnapshot(
 }
 
 /**
- * The file system methods required by {@link SnapshotCompatibilityChecker}.
+ * The file system methods required by {@link checkSchemaCompatibilitySnapshots}.
+ * @remarks
+ * Implemented by both Node.js `fs` and `path` modules, but other implementations can be provided as needed.
+ *
+ * @example
+ * ```typescript
+ * import path from "node:path";
+ * import fs from "node:fs";
+ *
+ * const nodeFileSystem: SnapshotFileSystem = {
+ * 	...fs,
+ * 	...path,
+ * };
+ * ```
  *
  * @privateRemarks
  * This interface is designed to be compatible with both Node.js `fs` and `path` modules. It is needed to avoid direct dependencies
  * on Node.js APIs in the core library code, allowing for greater portability and easier testing.
  *
+ * @input
  * @alpha
  */
-export interface IFileSystemMethods {
-	writeFileSync: (file: string, data: string, options?: { encoding?: "utf8" }) => void;
+export interface SnapshotFileSystem {
+	writeFileSync(file: string, data: string, options: { encoding: "utf8" }): void;
 
 	// We include the encoding here to match the function overload for readFileSync that returns a string.
-	readFileSync: (file: string, encoding: "utf8") => string;
-	mkdirSync: (
-		dir: string,
-		options?: {
-			// Allow users to specify nested directories be created if they do not exist.
-			recursive: true;
-		},
-	) => void;
-	readdirSync: (dir: string) => string[];
-	join: (parentPath: string, childPath: string) => string;
-	basename: (path: string, ext?: string) => string;
+	readFileSync(file: string, encoding: "utf8"): string;
+	mkdirSync(dir: string, options: { recursive: true }): void;
+	readdirSync(dir: string): readonly string[];
+	join(parentPath: string, childPath: string): string;
 }
 
 /**
  * The combined compatibility status for both backwards and forwards compatibility checks.
  *
+ * @privateRemarks
+ * TODO: what is forward and backwards here seems reversed. Either add docs which phrase things in a way this makes sense or swap them.
+ *
  * @alpha
  */
 export interface CombinedSchemaCompatibilityStatus {
-	snapshotName: string;
-	backwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
-	forwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+	/**
+	 * The name of the historical snapshot being compared against.
+	 * @remarks
+	 * This is typically the "appVersion" from {@link checkSchemaCompatibilitySnapshots} from when it was generated using "update" mode.
+	 */
+	readonly snapshotName: string;
+	/**
+	 * How a {@link TreeView} using the current schema would report its compatibility with the historical snapshot.
+	 */
+	readonly backwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+	/**
+	 * How a {@link TreeView} using the the snapshotted schema would report its compatibility with a document created with the current schema.
+	 */
+	readonly forwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+}
+
+/**
+ * Check a `currentViewSchema` for compatibility with a collection of historical schema snapshots stored in `snapshotDirectory`.
+ *
+ * @param snapshotDirectory - Directory where historical schema snapshots are stored.
+ * @param fileSystemMethods - How the `snapshotDirectory` is accessed.
+ * @param appVersion - The current application version.
+ * @param currentViewSchema - The current view schema.
+ * @param minAppVersionForCollaboration - The minimum application version that the current version is expected to be able to collaborate with.
+ * @param mode - The mode of operation, either "test" or "update".
+ * @remarks
+ * This is intended for use in snapshot based schema compatibility tests.
+ * Every shared tree based component or application with a schema is recommended to use this to verify schema compatibility across versions.
+ *
+ * Schema snapshots should be added to `snapshotDirectory` using this function in "update" mode whenever the schema changes in a compatibility impacting way or a new version about to be released is getting prepared for release (and thus `appVersion` changes).
+ *
+ * This will throw an exception if any snapshotted schema would result in documents that cannot be viewed (after using {@link TreeView.upgradeSchema}), or if any schema with a version greater than or equal to `minAppVersionForCollaboration` cannot view documents created with the `currentViewSchema`.
+ *
+ * @alpha
+ */
+export function checkSchemaCompatibilitySnapshots(
+	snapshotDirectory: string,
+	fileSystemMethods: SnapshotFileSystem,
+	appVersion: string,
+	currentViewSchema: TreeViewConfiguration,
+	minAppVersionForCollaboration: string,
+	mode: "test" | "update",
+): void {
+	const checker = new SnapshotCompatibilityChecker(snapshotDirectory, fileSystemMethods);
+	checker.checkCompatibility(
+		appVersion,
+		currentViewSchema,
+		minAppVersionForCollaboration,
+		mode,
+	);
 }
 
 /**
  * The high-level API for checking snapshot compatibility and generating new snapshots.
- *
- * @alpha
  */
 export class SnapshotCompatibilityChecker {
 	public constructor(
+		/**
+		 * Directory where historical schema snapshots are stored.
+		 */
 		private readonly snapshotDirectory: string,
-		private readonly fileSystemMethods: IFileSystemMethods,
+		/**
+		 * How the `snapshotDirectory` is accessed.
+		 */
+		private readonly fileSystemMethods: SnapshotFileSystem,
 	) {}
 
+	/**
+	 * Checks the compatibility of the current view schema against historical snapshots.
+	 * @param appVersion - The current application version.
+	 * @param currentViewSchema - The current view schema.
+	 * @param minAppVersionForCollaboration - The minimum application version that the current version is expected to be able to collaborate with.
+	 * @param mode - The mode of operation, either "test" or "update".
+	 */
 	public checkCompatibility(
 		appVersion: string,
 		currentViewSchema: TreeViewConfiguration,
+		minAppVersionForCollaboration: string,
 		mode: "test" | "update",
-	): Map<string, CombinedSchemaCompatibilityStatus> {
-		const previousViewSchemas = this.readAllSchemaSnapshots();
-		if (!previousViewSchemas.has(appVersion)) {
-			if (mode === "test") {
+	): void {
+		if (semver.valid(appVersion) === null) {
+			throw new UsageError(
+				`Invalid app version: ${appVersion}. Must be a valid semver version.`,
+			);
+		}
+
+		const compatibilityMap = this.getCompatibility(currentViewSchema);
+		if (mode === "test") {
+			if (!compatibilityMap.has(appVersion)) {
 				throw new UsageError(`No snapshot found for version ${appVersion}`);
-			} else if (mode === "update") {
-				this.writeSchemaSnapshot(appVersion, currentViewSchema);
+			}
+		} else {
+			if (mode !== "update") {
+				throw new UsageError(`Invalid mode: ${mode}. Must be either "test" or "update".`);
+			}
+			this.writeSchemaSnapshot(appVersion, currentViewSchema);
+		}
+
+		const compatibilityErrors: string[] = [];
+
+		{
+			const currentSnapshot = this.readSchemaSnapshotRaw(appVersion);
+			const current = exportCompatibilitySchemaSnapshot(currentViewSchema);
+
+			if (JSON.stringify(currentSnapshot) !== JSON.stringify(current)) {
+				if (mode === "test") {
+					fail("expected just written snapshot to match");
+				} else {
+					compatibilityErrors.push(
+						`Current schema snapshot for version ${JSON.stringify(
+							appVersion,
+						)} does not match expected snapshot. Run in "update" mode again to rewrite the snapshot to review the differences.`,
+					);
+				}
 			}
 		}
+
+		for (const [snapshotVersion, compatibility] of compatibilityMap) {
+			if (semver.valid(snapshotVersion) === null) {
+				throw new UsageError(
+					`Snapshot version ${JSON.stringify(snapshotVersion)} is not a valid semver version: rename or remove the snapshot file.`,
+				);
+			}
+
+			// Current should be able to view all versions.
+			if (!compatibility.backwardsCompatibilityStatus.canUpgrade) {
+				compatibilityErrors.push(
+					`Current version ${JSON.stringify(appVersion)} cannot upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
+				);
+			}
+
+			if (semver.eq(snapshotVersion, minAppVersionForCollaboration)) {
+				if (appVersion !== snapshotVersion) {
+					throw new UsageError(
+						`Snapshot version ${JSON.stringify(snapshotVersion)} is semantically equal but not string equal to appVersion ${JSON.stringify(snapshotVersion)}: this is not supported.`,
+					);
+				}
+				if (
+					compatibility.backwardsCompatibilityStatus.isEquivalent === false ||
+					compatibility.forwardsCompatibilityStatus.isEquivalent === false
+				) {
+					compatibilityErrors.push(
+						`Current version ${JSON.stringify(snapshotVersion)} expected to be equivalent to its snapshot.`,
+					);
+				}
+			} else if (semver.gt(snapshotVersion, appVersion)) {
+				throw new UsageError(
+					`Snapshot version ${JSON.stringify(snapshotVersion)} is from a version greater than the current app version ${JSON.stringify(appVersion)}. This is currently unexpected and not supported: appVersion is expected to increase monotonically.`,
+				);
+			} else if (semver.lt(snapshotVersion, appVersion)) {
+				// Collaboration with this version is expected to work.
+				if (semver.gte(snapshotVersion, minAppVersionForCollaboration)) {
+					// Check that the historical version can view documents from the current version, since collaboration with this one is expected to work.
+					if (!compatibility.forwardsCompatibilityStatus.canView) {
+						compatibilityErrors.push(
+							`Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(appVersion)}: these versions are expected to be able to collaborate due to minAppVersionForCollaboration being ${JSON.stringify(minAppVersionForCollaboration)} but they cannot.`,
+						);
+					}
+				} else {
+					// This is the case where the historical version is less than the minimum version for collaboration.
+					// No additional validation is needed here currently, since forwards document compat from these versions is already tested above (since it applies to all snapshots).
+				}
+			} else {
+				throw new UsageError(
+					`Unexpected semver comparison result between snapshot version ${JSON.stringify(snapshotVersion)} and app version ${JSON.stringify(appVersion)}.`,
+				);
+			}
+		}
+
+		if (compatibilityErrors.length > 0) {
+			throw new Error(
+				`Schema compatibility check failed:\n${compatibilityErrors
+					.map((e) => ` - ${e}`)
+					.join("\n")}`,
+			);
+		}
+	}
+
+	/**
+	 * Gets the compatibility of the current view schema against historical snapshots.
+	 * @param currentViewSchema - The current view schema.
+	 * @returns A map of snapshot names to their combined compatibility status.
+	 */
+	public getCompatibility(
+		currentViewSchema: TreeViewConfiguration,
+	): Map<string, CombinedSchemaCompatibilityStatus> {
+		const previousViewSchemas = this.readAllSchemaSnapshots();
 
 		const compatibilityStatuses: Map<string, CombinedSchemaCompatibilityStatus> = new Map();
 
@@ -241,6 +411,11 @@ export class SnapshotCompatibilityChecker {
 	}
 
 	public readSchemaSnapshot(snapshotName: string): TreeViewConfiguration {
+		const snapshot = this.readSchemaSnapshotRaw(snapshotName);
+		return importCompatibilitySchemaSnapshot(snapshot);
+	}
+
+	public readSchemaSnapshotRaw(snapshotName: string): JsonCompatibleReadOnly {
 		const fullPath = this.fileSystemMethods.join(
 			this.snapshotDirectory,
 			`${snapshotName}.json`,
@@ -248,7 +423,7 @@ export class SnapshotCompatibilityChecker {
 		const snapshot = JSON.parse(
 			this.fileSystemMethods.readFileSync(fullPath, "utf8"),
 		) as JsonCompatibleReadOnly;
-		return importCompatibilitySchemaSnapshot(snapshot);
+		return snapshot;
 	}
 
 	public readAllSchemaSnapshots(): Map<string, TreeViewConfiguration> {
@@ -264,7 +439,7 @@ export class SnapshotCompatibilityChecker {
 		return snapshots;
 	}
 
-	private ensureSnapshotDirectoryExists(): void {
+	public ensureSnapshotDirectoryExists(): void {
 		this.fileSystemMethods.mkdirSync(this.snapshotDirectory, { recursive: true });
 	}
 }

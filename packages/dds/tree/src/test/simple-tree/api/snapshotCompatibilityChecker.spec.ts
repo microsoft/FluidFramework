@@ -3,22 +3,36 @@
  * Licensed under the MIT License.
  */
 
+import type { requireAssignableTo } from "@fluidframework/build-tools";
+
 import {
 	checkCompatibility,
-	normalizeFieldSchema,
 	importCompatibilitySchemaSnapshot,
-	SchemaFactory,
 	exportCompatibilitySchemaSnapshot,
+	SnapshotCompatibilityChecker,
+	type SnapshotFileSystem,
+	// Allow importing file which is being tested.
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/snapshotCompatibilityChecker.js";
+
+import {
+	normalizeFieldSchema,
+	SchemaFactory,
 	TreeViewConfiguration,
 	SchemaFactoryBeta,
 	stringSchema,
 	numberSchema,
-	SnapshotCompatibilityChecker,
+	allowUnused,
 } from "../../../simple-tree/index.js";
 import { strict as assert } from "node:assert";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import path from "node:path";
 import fs from "node:fs";
+
+const nodeFileSystem = {
+	...fs,
+	...path,
+};
 
 describe("snapshotCompatibilityChecker", () => {
 	it("parse and snapshot can roundtrip schema", () => {
@@ -154,71 +168,70 @@ describe("snapshotCompatibilityChecker", () => {
 		// The current schema's string schema is supported by the old schema's staged string schema
 		assert.equal(forwardsCompatibilityStatus.canView, true);
 	});
-});
 
-describe("snapshotCompatibilityChecker - high-level API", () => {
-	const checker = new SnapshotCompatibilityChecker(
-		path.join(testSrcPath, "schemaSnapshots", "point"),
-		{
-			...fs,
-			...path,
-		},
-	);
-
-	it("write current view schema snapshot", () => {
-		const factory = new SchemaFactory("test");
-
-		class Point2D extends factory.object("Point", {
-			x: factory.number,
-			y: factory.number,
-		}) {}
-
-		class Point3D extends factory.object("Point", {
-			x: factory.number,
-			y: factory.number,
-			z: factory.optional(factory.number),
-		}) {}
-
-		checker.checkCompatibility(
-			"1.0.0",
-			new TreeViewConfiguration({ schema: Point2D }),
-			"update",
-		);
-
-		checker.checkCompatibility(
-			"2.0.0",
-			new TreeViewConfiguration({ schema: Point3D }),
-			"update",
-		);
+	it("SnapshotFileSystem", () => {
+		allowUnused<requireAssignableTo<typeof nodeFileSystem, SnapshotFileSystem>>();
 	});
 
-	it.skip("check current view schema against historical persisted schemas", () => {
-		const factory = new SchemaFactory("test");
-
-		class Point3D extends factory.object("Point", {
-			x: factory.number,
-			y: factory.number,
-			z: factory.optional(factory.number),
-		}) {}
-
-		const results = checker.checkCompatibility(
-			"2.0.0",
-			new TreeViewConfiguration({ schema: Point3D }),
-			"test",
+	describe("checkSchemaCompatibilitySnapshots", () => {
+		const checker = new SnapshotCompatibilityChecker(
+			path.join(testSrcPath, "schemaSnapshots", "point"),
+			nodeFileSystem,
 		);
 
-		assert.equal(results.size, 2);
+		it("write current view schema snapshot", () => {
+			const factory = new SchemaFactory("test");
 
-		const resultV1 = results.get("1.0.0");
-		assert(resultV1 !== undefined);
-		assert.equal(resultV1.backwardsCompatibilityStatus.canView, false);
-		assert.equal(resultV1.backwardsCompatibilityStatus.canUpgrade, true);
-		assert.equal(resultV1.forwardsCompatibilityStatus.canView, false);
+			class Point2D extends factory.object("Point", {
+				x: factory.number,
+				y: factory.number,
+			}) {}
 
-		const resultV2 = results.get("2.0.0");
-		assert(resultV2 !== undefined);
-		assert.equal(resultV2.backwardsCompatibilityStatus.canView, true);
-		assert.equal(resultV2.backwardsCompatibilityStatus.canUpgrade, true);
-		assert.equal(resultV2.forwardsCompatibilityStatus.canView, true);
+			class Point3D extends factory.object("Point", {
+				x: factory.number,
+				y: factory.number,
+				z: factory.optional(factory.number),
+			}) {}
+
+			checker.checkCompatibility(
+				"1.0.0",
+				new TreeViewConfiguration({ schema: Point2D }),
+				"1.0.0",
+				"update",
+			);
+
+			checker.checkCompatibility(
+				"2.0.0",
+				new TreeViewConfiguration({ schema: Point3D }),
+				"1.0.0",
+				"update",
+			);
+		});
+
+		it.skip("check current view schema against historical persisted schemas", () => {
+			const factory = new SchemaFactory("test");
+
+			class Point3D extends factory.object("Point", {
+				x: factory.number,
+				y: factory.number,
+				z: factory.optional(factory.number),
+			}) {}
+
+			const results = checker.getCompatibility(new TreeViewConfiguration({ schema: Point3D }));
+
+			assert.equal(results.size, 2);
+
+			const resultV1 = results.get("1.0.0");
+			assert(resultV1 !== undefined);
+			assert.equal(resultV1.backwardsCompatibilityStatus.canView, false);
+			assert.equal(resultV1.backwardsCompatibilityStatus.canUpgrade, true);
+			assert.equal(resultV1.forwardsCompatibilityStatus.canView, false);
+
+			const resultV2 = results.get("2.0.0");
+			assert(resultV2 !== undefined);
+			assert.equal(resultV2.backwardsCompatibilityStatus.canView, true);
+			assert.equal(resultV2.backwardsCompatibilityStatus.canUpgrade, true);
+			assert.equal(resultV2.forwardsCompatibilityStatus.canView, true);
+		});
 	});
 });
