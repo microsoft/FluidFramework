@@ -33,8 +33,10 @@
 		"start:spo": "webpack serve --config webpack.config.cjs --env mode=spo",
 		"start:spo-df": "webpack serve --config webpack.config.cjs --env mode=spo-df",
 		"start:tinylicious": "webpack serve --config webpack.config.cjs --env mode=tinylicious",
+		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
 		"test": "npm run test:mocha",
-		"test:mocha": "npm run test:mocha:esm",
+		"test:mocha": "start-server-and-test start:tinylicious:test 7070 test:mocha:run",
+		"test:mocha:run": "npm run test:mocha:esm",
 		"test:mocha:esm": "mocha",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
@@ -48,6 +50,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
+		"tinylicious": "^7.0.0",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
@@ -66,6 +69,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"rimraf": "^6.1.2",
+		"start-server-and-test": "^2.0.3",
 		"source-map-loader": "^5.0.0",
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",
