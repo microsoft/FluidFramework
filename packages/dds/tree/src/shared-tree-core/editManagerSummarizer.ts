@@ -30,7 +30,7 @@ import type {
 	SummaryElementStringifier,
 } from "./summaryTypes.js";
 import { VersionedSummarizer } from "./versionedSummarizer.js";
-import { summaryContentBlobKey as summaryContentBlobKeyV1ToV2 } from "./editManagerSummaryFormatV1ToV4.js";
+import { summaryContentBlobKey as summaryContentBlobKeyV1ToV2 } from "./editManagerSummaryFormatV1ToV2.js";
 import { summaryContentBlobKey as summaryContentBlobKeyV3 } from "./editManagerSummaryFormatV3.js";
 
 /**
