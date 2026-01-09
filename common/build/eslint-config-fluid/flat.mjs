@@ -14,4 +14,3 @@ const jitiLoader = jiti(__filename, { interopDefault: true, esmResolve: true });
 const config = jitiLoader("./flat.mts");
 
 export const { recommended, strict, minimalDeprecated } = config;
-export default config.default;
