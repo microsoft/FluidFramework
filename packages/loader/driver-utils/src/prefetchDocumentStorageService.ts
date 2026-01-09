@@ -35,16 +35,14 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 			// The .catch() prevents unhandled rejection when p rejects, since
 			// p.then() creates a derived promise that also rejects if p rejects.
 			// Callers awaiting the returned p will still receive the error.
-			void p
-				.then((tree: ISnapshotTree | null | undefined) => {
-					if (tree === null || tree === undefined) {
-						return;
-					}
-					this.prefetchTree(tree);
-				})
-				.catch(() => {
-					// Intentionally empty - error will be handled by caller awaiting p
-				});
+			p.then((tree: ISnapshotTree | null | undefined) => {
+				if (tree === null || tree === undefined) {
+					return;
+				}
+				this.prefetchTree(tree);
+			}).catch(() => {
+				// Intentionally empty - error will be handled by caller awaiting p
+			});
 		}
 		return p;
 	}
