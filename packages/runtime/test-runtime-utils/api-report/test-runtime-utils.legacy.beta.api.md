@@ -191,7 +191,7 @@ export class MockDeltaConnection implements IDeltaConnection {
     // (undocumented)
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
-    reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void;
+    reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void;
     // (undocumented)
     rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -376,7 +376,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
 
-// @beta @legacy
+// @beta @sealed @legacy
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     constructor(overrides?: {
         clientId?: string;
@@ -490,7 +490,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void;
+    reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void;
     // (undocumented)
     rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)

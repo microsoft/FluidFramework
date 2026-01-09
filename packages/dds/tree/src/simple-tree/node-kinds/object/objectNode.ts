@@ -373,8 +373,9 @@ export function setField(
 			break;
 		}
 
-		default:
+		default: {
 			fail(0xade /* invalid FieldKind */);
+		}
 	}
 }
 
@@ -709,10 +710,8 @@ function shallowCompatibilityTest(
 
 	// If the schema has a required key which is not present in the input object, reject it.
 	for (const [fieldKey, fieldSchema] of schema.fields) {
-		if (fieldSchema.requiresValue) {
-			if (getFieldProperty(data, fieldKey) === undefined) {
-				return CompatibilityLevel.None;
-			}
+		if (fieldSchema.requiresValue && getFieldProperty(data, fieldKey) === undefined) {
+			return CompatibilityLevel.None;
 		}
 	}
 

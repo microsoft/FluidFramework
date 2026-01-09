@@ -77,15 +77,15 @@ export class InventoryListAppModel
 		return `version:one\n${inventoryItemStrings.join("\n")}`;
 	};
 
-	public connected() {
+	public connected(): boolean {
 		return this.container.connectionState === ConnectionState.Connected;
 	}
 
-	public close() {
+	public close(): void {
 		this.container.close();
 	}
 
-	public readonly DEBUG_summarizeOnDemand = () => {
+	public readonly DEBUG_summarizeOnDemand = (): void => {
 		(this.runtime as any) /* ContainerRuntime */
 			.summarizeOnDemand({ reason: "I said so" });
 	};

@@ -25,7 +25,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 
 import { Sanitizer } from "./sanitizer.js";
 
-function printUsage() {
+function printUsage(): void {
 	console.log("Usage:");
 	console.log("   node sanitize [--full | --noBail] <input>");
 	console.log("Where");
@@ -38,7 +38,7 @@ function printUsage() {
 	process.exit(-1);
 }
 
-function Sanitize(msgPath: string, fullScrub: boolean, noBail: boolean) {
+function Sanitize(msgPath: string, fullScrub: boolean, noBail: boolean): void {
 	const input = fs.readFileSync(msgPath, { encoding: "utf-8" });
 	const messages = JSON.parse(input) as ISequencedDocumentMessage[];
 
@@ -50,7 +50,7 @@ function Sanitize(msgPath: string, fullScrub: boolean, noBail: boolean) {
 	console.log("Done.");
 }
 
-function main() {
+function main(): void {
 	if (process.argv.length === 3) {
 		// Non null asserting here because of the length check above
 		return Sanitize(process.argv[2]!, false, false);

@@ -23,31 +23,24 @@ module.exports = {
 	rules: {
 		// RECOMMENDED RULES
 		"@rushstack/no-new-null": "error",
-		"no-empty": "error",
 		"no-void": "error",
 		"require-atomic-updates": "error",
 
-		// This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
-		"tsdoc/syntax": "error",
-
-		// In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
-		// API documentation. For example, type inference might decide a function returns a concrete type
-		// instead of an interface. This has no runtime impact, but would cause compilation problems.
-		"@typescript-eslint/explicit-function-return-type": [
-			"error",
-			{
-				allowExpressions: true,
-				allowTypedFunctionExpressions: true,
-				allowHigherOrderFunctions: true,
-				allowDirectConstAssertionInArrowFunctions: true,
-				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
-			},
-		],
-
 		// #region `unicorn` rule overrides
+
+		// TODO: Enable this rule and fix violations once eslint9 upgrade is done
+		"unicorn/consistent-function-scoping": "warn",
+
+		/**
+		 * TODO: Consider enabling in the future.
+		 */
+		"unicorn/import-style": "off",
 
 		// False positives on non-array `push` methods.
 		"unicorn/no-array-push-push": "off",
+
+		// False positives on non-array methods.
+		"unicorn/no-array-callback-reference": "off",
 
 		"unicorn/empty-brace-spaces": "off",
 
@@ -83,9 +76,9 @@ module.exports = {
 		"unicorn/prevent-abbreviations": "off",
 
 		/**
-		 * Disabled because we don't yet target a ES version that includes .at().
+		 * Enable in a future update; warning for now to surface occurrences without breaking builds.
 		 */
-		"unicorn/prefer-at": "off",
+		"unicorn/prefer-at": "warn",
 
 		/**
 		 * Disabled because we use EventEmitter everywhere today and changing it will be a bigger change outside of lint
@@ -94,9 +87,19 @@ module.exports = {
 		"unicorn/prefer-event-target": "off",
 
 		/**
-		 * Disabled because we don't yet target a ES version that includes string.replaceAll.
+		 * TODO: Enable in a future update; warning for now to surface occurrences without breaking builds.
 		 */
-		"unicorn/prefer-string-replace-all": "off",
+		"unicorn/prefer-string-raw": "warn",
+
+		/**
+		 * TODO: Enable in a future update; warning for now to surface occurrences without breaking builds.
+		 */
+		"unicorn/prefer-string-replace-all": "warn",
+
+		/**
+		 * TODO: Enable in a future update; warning for now to surface occurrences without breaking builds.
+		 */
+		"unicorn/prefer-structured-clone": "warn",
 
 		/**
 		 * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
@@ -179,10 +182,10 @@ module.exports = {
 		// #region eslint-plugin-jsdoc rules
 
 		/**
-		 * Ensures all JSDoc/TSDoc comments use the multi-line format for consistency.
-		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-multiline-blocks>
+		 * Ensures JSDoc/TSDoc comments to use the consistent formatting.
+		 * See {@link https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/rules/multiline-blocks.md}
 		 */
-		"jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
+		"jsdoc/multiline-blocks": ["error"],
 
 		/**
 		 * Require the description (summary) component in JSDoc/TSDoc comments
@@ -214,13 +217,6 @@ module.exports = {
 			"error",
 			{ fixStyle: "separate-type-imports" },
 		],
-
-		/**
-		 * Ensures that type-only import statements do not result in runtime side-effects.
-		 *
-		 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
-		 */
-		"@typescript-eslint/no-import-type-side-effects": "error",
 
 		// #endregion
 	},

@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import {
+	createExampleDriver,
+	getSpecifiedServiceFromWebpack,
+} from "@fluid-example/example-driver";
 import type {
 	ICodeDetailsLoader,
 	IContainer,
@@ -13,14 +17,6 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
-// eslint-disable-next-line import-x/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
-import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
-import {
-	LocalDocumentServiceFactory,
-	LocalResolver,
-	createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver/legacy";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
@@ -32,8 +28,13 @@ import {
 } from "../src/container/index.js";
 import { BlobCollectionView, DebugView } from "../src/view.js";
 
-const urlResolver = new LocalResolver();
-const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
+const service = getSpecifiedServiceFromWebpack();
+const {
+	urlResolver,
+	documentServiceFactory,
+	createCreateNewRequest,
+	createLoadExistingRequest,
+} = await createExampleDriver(service);
 const codeLoader: ICodeDetailsLoader = {
 	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
@@ -47,7 +48,9 @@ const codeLoader: ICodeDetailsLoader = {
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
+async function createOrLoadContainerAndRenderInElement(
+	element: HTMLDivElement,
+): Promise<void> {
 	let container: IContainer;
 	let attach: (() => void) | undefined;
 
@@ -55,13 +58,13 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 		container = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
 			urlResolver,
-			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
+			documentServiceFactory,
 			codeLoader,
 		});
 		attach = () => {
 			const documentId = uuid();
 			container
-				.attach(createLocalResolverCreateNewRequest(documentId))
+				.attach(createCreateNewRequest(documentId))
 				.then(() => {
 					if (container.resolvedUrl === undefined) {
 						throw new Error("Resolved Url unexpectedly missing!");
@@ -76,9 +79,9 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 	} else {
 		const id = location.hash.substring(1);
 		container = await loadExistingContainer({
-			request: { url: `${window.location.origin}/${id}` },
+			request: await createLoadExistingRequest(id),
 			urlResolver,
-			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
+			documentServiceFactory,
 			codeLoader,
 		});
 		// Update url and tab title
@@ -87,7 +90,7 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 	}
 
 	const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
-	const render = (blobCollection: IBlobCollection) => {
+	const render = (blobCollection: IBlobCollection): void => {
 		const appElement = document.createElement("div");
 		const debugElement = document.createElement("div");
 		element.append(debugElement, appElement);
@@ -103,16 +106,16 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 	render(blobCollection);
 }
 
-const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
+const leftElement = document.querySelector("#sbs-left") as HTMLDivElement;
 if (leftElement === null) {
 	throw new Error("sbs-left does not exist");
 }
-await createContainerAndRenderInElement(leftElement);
-const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
+await createOrLoadContainerAndRenderInElement(leftElement);
+const rightElement = document.querySelector("#sbs-right") as HTMLDivElement;
 if (rightElement === null) {
 	throw new Error("sbs-right does not exist");
 }
-await createContainerAndRenderInElement(rightElement);
+await createOrLoadContainerAndRenderInElement(rightElement);
 
 // Setting "fluidStarted" is just for our test automation
 // eslint-disable-next-line @typescript-eslint/dot-notation

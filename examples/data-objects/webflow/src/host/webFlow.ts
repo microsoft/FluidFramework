@@ -21,12 +21,12 @@ export class WebFlow extends DataObject {
 		return WebFlow.factory;
 	}
 
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		const doc = await FlowDocument.getFactory().createChildInstance(this.context);
 		this.root.set("doc", doc.handle);
 	}
 
-	public async getFlowDocument() {
+	public async getFlowDocument(): Promise<FlowDocument> {
 		return this.root.get<IFluidHandle<FlowDocument>>("doc").get();
 	}
 }

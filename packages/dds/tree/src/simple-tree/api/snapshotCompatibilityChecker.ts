@@ -5,13 +5,16 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
-import { toStoredSchema } from "../toStoredSchema.js";
+import { toInitialSchema } from "../toStoredSchema.js";
 import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
+import { createTreeSchema } from "../treeSchema.js";
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
-import { decodeSimpleSchema, encodeSimpleSchema } from "./simpleSchemaCodec.js";
+import {
+	decodeSchemaCompatibilitySnapshot,
+	encodeSchemaCompatibilitySnapshot,
+} from "./simpleSchemaCodec.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
-import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 
 /**
  * Compute the compatibility of using `view` to {@link ViewableTree.viewWith | view a tree} who's {@link ITreeAlpha.exportSimpleSchema | stored schema} could be derived from `viewWhichCreatedStoredSchema` via either {@link TreeView.initialize} or {@link TreeView.upgradeSchema}.
@@ -59,6 +62,9 @@ import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
  * @param view - The view being tested to see if it could view tree created or initialized using `viewWhichCreatedStoredSchema`.
  * @returns The compatibility status.
  *
+ * @privateRemarks
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ *
  * @alpha
  */
 export function checkCompatibility(
@@ -66,9 +72,7 @@ export function checkCompatibility(
 	view: TreeViewConfiguration,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: view.schema });
-	const stored = toStoredSchema(viewWhichCreatedStoredSchema.schema, {
-		includeStaged: () => true,
-	});
+	const stored = toInitialSchema(viewWhichCreatedStoredSchema.schema);
 	const tester = new SchemaCompatibilityTester(viewAsAlpha);
 	return tester.checkCompatibility(stored);
 }
@@ -96,13 +100,16 @@ export function checkCompatibility(
  * fs.writeFileSync("PointSchema.json", encodedSchema);
  * ```
  *
+ * @privateRemarks
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ *
  * @alpha
  */
 export function exportCompatibilitySchemaSnapshot(
 	config: Pick<TreeViewConfiguration, "schema">,
 ): JsonCompatibleReadOnly {
-	const simpleSchema = toSimpleTreeSchema(config.schema, true);
-	return encodeSimpleSchema(simpleSchema);
+	const treeSchema = createTreeSchema(config.schema);
+	return encodeSchemaCompatibilitySnapshot(treeSchema);
 }
 
 /**
@@ -121,13 +128,14 @@ export function exportCompatibilitySchemaSnapshot(
  * ```ts;
  * const oldViewSchema = importCompatibilitySchemaSnapshot(fs.readFileSync("PointSchema.json", "utf8"));
  * ```
- *
+ * @privateRemarks
+ * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  * @alpha
  */
 export function importCompatibilitySchemaSnapshot(
 	config: JsonCompatibleReadOnly,
 ): TreeViewConfiguration {
-	const simpleSchema = decodeSimpleSchema(config);
+	const simpleSchema = decodeSchemaCompatibilitySnapshot(config);
 	const viewSchema = generateSchemaFromSimpleSchema(simpleSchema);
 
 	// We construct a TreeViewConfiguration here with the default parameters. The default set of validation parameters are fine for

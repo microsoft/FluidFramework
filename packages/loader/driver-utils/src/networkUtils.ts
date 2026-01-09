@@ -15,7 +15,7 @@ export function logNetworkFailure(
 	logger: ITelemetryLoggerExt,
 	event: ITelemetryErrorEventExt,
 	error?: any,
-) {
+): void {
 	const newEvent = { ...event };
 
 	const errorOnlineProp = error?.online;

@@ -21,6 +21,7 @@ import {
 	ScopeType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
+	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 
 import { ReplayController } from "./replayController.js";
@@ -54,7 +55,7 @@ export class ReplayControllerStatic extends ReplayController {
 		}
 	}
 
-	public async initStorage(documentService: IDocumentService) {
+	public async initStorage(documentService: IDocumentService): Promise<boolean> {
 		return true;
 	}
 
@@ -62,7 +63,7 @@ export class ReplayControllerStatic extends ReplayController {
 		return [];
 	}
 
-	public async getSnapshotTree(version?: IVersion) {
+	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		return version ? Promise.reject(new Error("Invalid operation")) : null;
 	}
 
@@ -74,14 +75,14 @@ export class ReplayControllerStatic extends ReplayController {
 		return 0;
 	}
 
-	public fetchTo(currentOp: number) {
+	public fetchTo(currentOp: number): number | undefined {
 		if (!(this.unitIsTime !== true && this.replayTo >= 0)) {
 			return undefined;
 		}
 		return this.replayTo;
 	}
 
-	public isDoneFetch(currentOp: number, lastTimeStamp?: number) {
+	public isDoneFetch(currentOp: number, lastTimeStamp?: number): boolean {
 		if (this.replayTo >= 0) {
 			if (this.unitIsTime === true) {
 				return (
@@ -95,7 +96,7 @@ export class ReplayControllerStatic extends ReplayController {
 		return lastTimeStamp === undefined; // No more ops
 	}
 
-	public skipToIndex(fetchedOps: ISequencedDocumentMessage[]) {
+	public skipToIndex(fetchedOps: ISequencedDocumentMessage[]): number {
 		if (this.replayFrom <= 0) {
 			return 0;
 		}
@@ -123,7 +124,7 @@ export class ReplayControllerStatic extends ReplayController {
 		let current = this.skipToIndex(fetchedOps);
 
 		return new Promise((resolve) => {
-			const replayNextOps = () => {
+			const replayNextOps = (): void => {
 				// Emit the ops from replay to the end every "deltainterval" milliseconds
 				// to simulate the socket stream
 				const currentOp = fetchedOps[current];
@@ -171,7 +172,7 @@ export class ReplayControllerStatic extends ReplayController {
 				scheduleNext(nextInterval);
 				emitter(playbackOps);
 			};
-			const scheduleNext = (nextInterval: number) => {
+			const scheduleNext = (nextInterval: number): void => {
 				if (nextInterval >= 0 && current < fetchedOps.length) {
 					setTimeout(replayNextOps, nextInterval);
 				} else {
@@ -284,13 +285,13 @@ export class ReplayDocumentDeltaConnection
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	public async submitSignal(message: any) {}
+	public async submitSignal(message: unknown): Promise<void> {}
 
 	private _disposed = false;
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
-	public dispose() {
+	public dispose(): void {
 		this._disposed = true;
 	}
 

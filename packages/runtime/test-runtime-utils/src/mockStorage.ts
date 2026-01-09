@@ -19,7 +19,7 @@ import {
  * @legacy @beta
  */
 export class MockStorage implements IChannelStorageService {
-	public static createFromSummary(summaryTree: ISummaryTree) {
+	public static createFromSummary(summaryTree: ISummaryTree): MockStorage {
 		const tree = convertSummaryTreeToITree(summaryTree);
 		return new MockStorage(tree);
 	}

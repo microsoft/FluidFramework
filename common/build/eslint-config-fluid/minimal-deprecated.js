@@ -86,8 +86,6 @@ module.exports = {
 	plugins: [
 		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin
 		"@rushstack/eslint-plugin",
-		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin-security
-		"@rushstack/eslint-plugin-security",
 		// Plugin documentation: https://www.npmjs.com/package/@typescript-eslint/eslint-plugin
 		"@typescript-eslint/eslint-plugin",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-jsdoc
@@ -108,8 +106,16 @@ module.exports = {
 		// Don't lint generated packageVersion files.
 		"**/packageVersion.ts",
 		"**/layerGenerationState.ts",
+		// Don't lint generated test files
+		"**/*.generated.ts",
+		"**/*.generated.js",
 	],
 	rules: {
+		/**
+		 * Disable max-len as it conflicts with biome formatting.
+		 */
+		"max-len": "off",
+
 		/**
 		 * Restricts including release tags inside the member class / interface.
 		 *
@@ -166,6 +172,20 @@ module.exports = {
 		"@typescript-eslint/no-non-null-assertion": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
 
+		// In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
+		// API documentation. For example, type inference might decide a function returns a concrete type
+		// instead of an interface. This has no runtime impact, but would cause compilation problems.
+		"@typescript-eslint/explicit-function-return-type": [
+			"error",
+			{
+				allowExpressions: true,
+				allowTypedFunctionExpressions: true,
+				allowHigherOrderFunctions: true,
+				allowDirectConstAssertionInArrowFunctions: true,
+				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
+			},
+		],
+
 		"@typescript-eslint/no-restricted-imports": [
 			"error",
 			{
@@ -176,17 +196,7 @@ module.exports = {
 
 		"eqeqeq": ["error", "smart"],
 		"import-x/no-deprecated": "error",
-		"max-len": [
-			"error",
-			{
-				code: 120,
-				ignoreTrailingComments: true,
-				ignoreUrls: true,
-				ignoreStrings: true,
-				ignoreTemplateLiterals: true,
-				ignoreRegExpLiterals: true,
-			},
-		],
+		"no-empty": "error",
 		"no-multi-spaces": [
 			"error",
 			{
@@ -229,7 +239,6 @@ module.exports = {
 		 * Disabled because we don't require that all variable declarations be explicitly typed.
 		 */
 		"@rushstack/typedef-var": "off",
-		"@typescript-eslint/explicit-function-return-type": "off",
 		"@typescript-eslint/explicit-member-accessibility": "off",
 
 		"@typescript-eslint/member-ordering": "off",
@@ -266,7 +275,6 @@ module.exports = {
 		"@typescript-eslint/consistent-type-imports": "off",
 
 		"func-call-spacing": "off", // Off because it conflicts with typescript-formatter
-		"no-empty": "off",
 		"no-void": "off",
 		"require-atomic-updates": "off",
 
@@ -378,9 +386,20 @@ module.exports = {
 
 		// #endregion
 
+		// #region @typescript-eslint rules
+
+		/**
+		 * Ensures that type-only import statements do not result in runtime side-effects.
+		 *
+		 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
+		 */
+		"@typescript-eslint/no-import-type-side-effects": "error",
+
 		"@typescript-eslint/prefer-includes": "error",
 		"@typescript-eslint/prefer-nullish-coalescing": "error",
 		"@typescript-eslint/prefer-optional-chain": "error",
+
+		// #endregion
 
 		/**
 		 * By default, libraries should not take dependencies on node libraries.
@@ -424,6 +443,15 @@ module.exports = {
 				"react-hooks",
 			],
 			extends: ["plugin:react/recommended", "plugin:react-hooks/recommended"],
+			rules: {
+				// TODO: These rules should be re-enabled once we are on eslint 9
+				// and the react plugins are upgraded to more recent versions
+				"react-hooks/immutability": "warn",
+				"react-hooks/refs": "warn",
+				"react-hooks/rules-of-hooks": "warn",
+				"react-hooks/set-state-in-effect": "warn",
+				"react-hooks/static-components": "warn",
+			},
 			settings: {
 				react: {
 					version: "detect",

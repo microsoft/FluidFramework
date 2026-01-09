@@ -35,7 +35,7 @@ import type {
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
-import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
+import type { SchemaType, SimpleObjectNodeSchema } from "../simpleSchema.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 
 // These imports prevent a large number of type references in the API reports from showing up as *_2.
@@ -119,7 +119,7 @@ export class SchemaFactoryAlpha<
 		never,
 		TCustomMetadata
 	> &
-		SimpleObjectNodeSchema<TCustomMetadata> &
+		SimpleObjectNodeSchema<SchemaType.View, TCustomMetadata> &
 		// We can't just use non generic `ObjectNodeSchema` here since "Base constructors must all have the same return type".
 		// We also can't just use generic `ObjectNodeSchema` here and not `TreeNodeSchemaClass` since that doesn't work with unsafe recursive types.
 		// ObjectNodeSchema<

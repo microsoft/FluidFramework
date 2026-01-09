@@ -58,8 +58,9 @@ describe("schemaCreationUtilities", () => {
 			case mode instanceof Mode.Cool: {
 				assert.fail();
 			}
-			default:
+			default: {
 				assert.fail();
+			}
 		}
 	});
 
@@ -322,8 +323,9 @@ describe("schemaCreationUtilities", () => {
 				// This one runs
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(mode);
+			}
 		}
 	});
 
@@ -343,8 +345,9 @@ describe("schemaCreationUtilities", () => {
 				// This one runs
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(node);
+			}
 		}
 	});
 
@@ -369,8 +372,9 @@ describe("schemaCreationUtilities", () => {
 			case Day.Tomorrow: {
 				assert.fail();
 			}
-			default:
+			default: {
 				unreachableCase(view.root);
+			}
 		}
 	});
 
@@ -398,8 +402,9 @@ describe("schemaCreationUtilities", () => {
 			case Day.Tomorrow: {
 				assert.fail();
 			}
-			default:
+			default: {
 				unreachableCase(view.root);
+			}
 		}
 
 		//  InsertableTreeFieldFromImplicitField<TRootSchema>
@@ -436,8 +441,9 @@ describe("schemaCreationUtilities", () => {
 			case Day.Tomorrow: {
 				assert.fail();
 			}
-			default:
+			default: {
 				unreachableCase(view.root);
+			}
 		}
 
 		//  InsertableTreeFieldFromImplicitField<TRootSchema>

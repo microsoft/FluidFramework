@@ -113,6 +113,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	 */
 	protected disconnectCore(err: IAnyDriverError): void {
 		if (
+			this.hasDetails &&
 			this.socket.connected &&
 			err.message !== DocumentDeltaConnection.errorMessageForClientDisposeWithoutError
 		) {

@@ -254,6 +254,23 @@ export async function loadFrozenContainerFromPendingState(
 export async function loadSummarizerContainerAndMakeSummary(
 	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
 ): Promise<LoadSummarizerSummaryResult> {
+	let result = await loadSummarizerContainerAndMakeSummaryInternal(
+		loadSummarizerContainerProps,
+	);
+	if (!result.success) {
+		/**
+		 * We retry once as there is potential for a race condition when loading a snapshot.
+		 * If the newest snapshot is not ready when creating the container but becomes available upon catching up, the container
+		 * will be closed so it can load from the new snapshot.
+		 */
+		result = await loadSummarizerContainerAndMakeSummaryInternal(loadSummarizerContainerProps);
+	}
+	return result;
+}
+
+async function loadSummarizerContainerAndMakeSummaryInternal(
+	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
+): Promise<LoadSummarizerSummaryResult> {
 	const { logger, configProvider, request: originalRequest } = loadSummarizerContainerProps;
 	const telemetryProps = {
 		loaderId: uuid(),

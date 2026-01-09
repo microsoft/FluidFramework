@@ -32,19 +32,6 @@ module.exports = {
 		// TODO: Remove this override once this config has been updated to extend the "strict" base config.
 		"@typescript-eslint/explicit-member-accessibility": "error",
 
-		// #region TODO: remove these once eslint-config-fluid has been updated to 5.8.0
-		"@typescript-eslint/consistent-type-exports": [
-			"error",
-			{ fixMixedExportsWithInlineTypeSpecifier: true },
-		],
-		"@typescript-eslint/consistent-type-imports": [
-			"error",
-			{ fixStyle: "inline-type-imports" },
-		],
-		"@typescript-eslint/no-import-type-side-effects": "error",
-
-		// #endregion
-
 		// #region TODO:AB#6983: Remove these overrides and fix violations
 
 		"@typescript-eslint/explicit-module-boundary-types": "off",
@@ -58,40 +45,19 @@ module.exports = {
 		"@typescript-eslint/no-unsafe-call": "off",
 		"@typescript-eslint/no-unsafe-member-access": "off",
 
-		"import/order": "off",
-
-		"jsdoc/multiline-blocks": "off",
+		"import-x/order": "off",
 
 		// Set to a warning to encourage adding docs :)
 		"jsdoc/require-description": "warn",
 
-		"unicorn/consistent-destructuring": "off",
 		"unicorn/consistent-function-scoping": "off",
-		"unicorn/explicit-length-check": "off",
-		"unicorn/no-array-callback-reference": "off",
-		"unicorn/no-array-for-each": "off",
-		"unicorn/prefer-array-index-of": "off",
 		"unicorn/no-array-method-this-argument": "off",
 		"unicorn/no-array-reduce": "off",
 		"unicorn/no-await-expression-member": "off",
-		"unicorn/no-lonely-if": "off",
-		"unicorn/no-negated-condition": "off",
 		"unicorn/no-new-array": "off",
 		"unicorn/no-null": "off",
-		"unicorn/no-object-as-default-parameter": "off",
 		"unicorn/no-useless-fallback-in-spread": "off",
-		"unicorn/no-zero-fractions": "off",
-		"unicorn/prefer-array-some": "off",
-		"unicorn/prefer-code-point": "off",
-		"unicorn/prefer-default-parameters": "off",
-		"unicorn/prefer-dom-node-remove": "off",
 		"unicorn/prefer-export-from": "off",
-		"unicorn/prefer-math-trunc": "off",
-		"unicorn/prefer-native-coercion-functions": "off",
-		"unicorn/prefer-set-has": "off",
-		"unicorn/prefer-spread": "off",
-		"unicorn/prefer-string-slice": "off",
-		"unicorn/switch-case-braces": "off",
 		"unicorn/text-encoding-identifier-case": "off",
 
 		// #endregion

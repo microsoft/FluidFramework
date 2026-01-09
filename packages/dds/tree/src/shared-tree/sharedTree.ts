@@ -41,7 +41,7 @@ import {
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
 	type TreeTypeSet,
-	getCodecTreeForDetachedFieldIndexFormat,
+	detachedFieldIndexCodecBuilder,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
@@ -57,7 +57,6 @@ import {
 	defaultSchemaPolicy,
 	getCodecTreeForFieldBatchFormat,
 	getCodecTreeForForestFormat,
-	getCodecTreeForSchemaFormat,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
@@ -66,7 +65,7 @@ import {
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
+import { schemaCodecBuilder, type FormatV1 } from "../feature-libraries/schema-index/index.js";
 import {
 	type BranchId,
 	clientVersionToEditManagerFormatVersion,
@@ -97,6 +96,7 @@ import {
 	type ITreeAlpha,
 	type SimpleObjectFieldSchema,
 	type SimpleAllowedTypeAttributes,
+	type SchemaType,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -240,6 +240,7 @@ export class SharedTreeKernel
 				getCurrentSeq: lastSequenceNumber,
 			},
 			schemaCodec,
+			options.minVersionForCollab,
 		);
 		const fieldBatchCodec = makeFieldBatchCodec(options);
 
@@ -262,7 +263,10 @@ export class SharedTreeKernel
 			initialSequenceNumber,
 			options.shouldEncodeIncrementally,
 		);
-		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
+		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(
+			removedRoots,
+			options.minVersionForCollab,
+		);
 		const innerChangeFamily = new SharedTreeChangeFamily(
 			revisionTagCodec,
 			fieldBatchCodec,
@@ -361,10 +365,12 @@ export class SharedTreeKernel
 			}
 		});
 		checkout.events.on("beforeBatch", (event) => {
-			if (event.type === "append" && this.sharedObject.isAttached()) {
-				if (checkout.transaction.isInProgress()) {
-					enricher.addTransactionCommits(event.newCommits);
-				}
+			if (
+				event.type === "append" &&
+				this.sharedObject.isAttached() &&
+				checkout.transaction.isInProgress()
+			) {
+				enricher.addTransactionCommits(event.newCommits);
 			}
 		});
 	}
@@ -503,7 +509,9 @@ export class SharedTreeKernel
 	public onDisconnect(): void {}
 }
 
-export function exportSimpleSchema(storedSchema: TreeStoredSchema): SimpleTreeSchema {
+export function exportSimpleSchema(
+	storedSchema: TreeStoredSchema,
+): SimpleTreeSchema<SchemaType.Stored> {
 	return {
 		root: exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
 		definitions: new Map(
@@ -592,6 +600,10 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 		brand<EditManagerFormatVersion>(EditManagerFormatVersion.vSharedBranches),
 		brand<SharedTreeChangeFormatVersion>(4),
 	],
+	[
+		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v6),
+		brand<SharedTreeChangeFormatVersion>(5),
+	],
 ]);
 
 /**
@@ -612,6 +624,10 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
 	[
 		brand<MessageFormatVersion>(MessageFormatVersion.vSharedBranches),
 		brand<SharedTreeChangeFormatVersion>(4),
+	],
+	[
+		brand<MessageFormatVersion>(MessageFormatVersion.v6),
+		brand<SharedTreeChangeFormatVersion>(5),
 	],
 ]);
 
@@ -636,8 +652,8 @@ export function getCodecTreeForSharedTreeFormat(
 ): CodecTree {
 	const children: CodecTree[] = [];
 	children.push(getCodecTreeForForestFormat(clientVersion));
-	children.push(getCodecTreeForSchemaFormat(clientVersion));
-	children.push(getCodecTreeForDetachedFieldIndexFormat(clientVersion));
+	children.push(schemaCodecBuilder.getCodecTree(clientVersion));
+	children.push(detachedFieldIndexCodecBuilder.getCodecTree(clientVersion));
 	children.push(getCodecTreeForEditManagerFormat(clientVersion));
 	children.push(getCodecTreeForMessageFormat(clientVersion));
 	children.push(getCodecTreeForFieldBatchFormat(clientVersion));
@@ -808,6 +824,8 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
 	messageFormatSelector: clientVersionToMessageFormatVersion,
 	enableSharedBranches: false,
+	writeVersionOverrides: new Map(),
+	allowPossiblyIncompatibleWriteVersionOverrides: false,
 };
 
 /**
@@ -819,8 +837,8 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
  */
 function buildSimpleAllowedTypeAttributesForStoredSchema(
 	types: TreeTypeSet,
-): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
-	const allowedTypesInfo = new Map<string, SimpleAllowedTypeAttributes>();
+): ReadonlyMap<string, SimpleAllowedTypeAttributes<SchemaType.Stored>> {
+	const allowedTypesInfo = new Map<string, SimpleAllowedTypeAttributes<SchemaType.Stored>>();
 	for (const type of types) {
 		// Stored schemas do not have staged upgrades
 		allowedTypesInfo.set(type, { isStaged: undefined });
@@ -828,24 +846,31 @@ function buildSimpleAllowedTypeAttributesForStoredSchema(
 	return allowedTypesInfo;
 }
 
-function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {
+function exportSimpleFieldSchemaStored(
+	schema: TreeFieldStoredSchema,
+): SimpleFieldSchema<SchemaType.Stored> {
 	let kind: FieldKind;
 	switch (schema.kind) {
-		case FieldKinds.identifier.identifier:
+		case FieldKinds.identifier.identifier: {
 			kind = FieldKind.Identifier;
 			break;
-		case FieldKinds.optional.identifier:
+		}
+		case FieldKinds.optional.identifier: {
 			kind = FieldKind.Optional;
 			break;
-		case FieldKinds.required.identifier:
+		}
+		case FieldKinds.required.identifier: {
 			kind = FieldKind.Required;
 			break;
-		case FieldKinds.forbidden.identifier:
+		}
+		case FieldKinds.forbidden.identifier: {
 			kind = FieldKind.Optional;
 			assert(schema.types.size === 0, 0xa94 /* invalid forbidden field */);
 			break;
-		default:
+		}
+		default: {
 			fail(0xaca /* invalid field kind */);
+		}
 	}
 	return {
 		kind,
@@ -862,7 +887,9 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
  * Note on SimpleNodeSchema construction: In the persisted format `persistedMetadata` is just called `metadata` whereas the `metadata`
  * field on SimpleNodeSchema is not persisted.
  */
-function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
+function exportSimpleNodeSchemaStored(
+	schema: TreeNodeStoredSchema,
+): SimpleNodeSchema<SchemaType.Stored> {
 	const arrayTypes = tryStoredSchemaAsArray(schema);
 	if (arrayTypes !== undefined) {
 		return {
@@ -873,7 +900,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		};
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
-		const fields = new Map<FieldKey, SimpleObjectFieldSchema>();
+		const fields = new Map<FieldKey, SimpleObjectFieldSchema<SchemaType.Stored>>();
 		for (const [storedKey, field] of schema.objectNodeFields) {
 			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}

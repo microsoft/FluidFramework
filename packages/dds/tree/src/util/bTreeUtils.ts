@@ -45,7 +45,7 @@ export function mergeTupleBTrees<K extends readonly unknown[], V>(
 	preferLeft = true,
 ): TupleBTree<K, V> {
 	if (tree1 === undefined) {
-		return tree2 !== undefined ? brand(tree2.clone()) : newTupleBTree<K, V>();
+		return tree2 === undefined ? newTupleBTree<K, V>() : brand(tree2.clone());
 	}
 
 	const result: TupleBTree<K, V> = brand(tree1.clone());

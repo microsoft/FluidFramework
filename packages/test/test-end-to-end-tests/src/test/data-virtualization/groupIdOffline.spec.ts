@@ -8,10 +8,11 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	type ITestObjectProvider,
 	createTestConfigProvider,
@@ -44,7 +45,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 
 	// A Test Data Object that exposes some basic functionality.
 	class TestDataObject extends DataObject {
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 

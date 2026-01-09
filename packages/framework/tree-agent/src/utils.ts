@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
@@ -29,13 +29,6 @@ import { NodeKind, normalizeFieldSchema } from "@fluidframework/tree/internal";
 export interface MapGetSet<K, V> {
 	get(key: K): V | undefined;
 	set(key: K, value: V): void;
-}
-
-/**
- * TBD
- */
-export function fail(message: string): never {
-	throw new Error(message);
 }
 
 /**
@@ -156,7 +149,7 @@ export function getFriendlyName(schema: TreeNodeSchema): string {
 			? `Record<string, (${childNames.join(" | ")})>`
 			: `Record<string, ${childNames[0]}>`;
 	}
-	fail("Unexpected node schema");
+	fail(0xcb7 /* Unexpected node schema */);
 }
 
 /**
@@ -176,17 +169,31 @@ export function isNamedSchema(schemaIdentifier: string): boolean {
 }
 
 /**
- * Returns the unqualified name of a schema (e.g. `"my.scope.MyNode"` returns `"MyNode"`).
- * @remarks This works by removing all characters before the last dot in the schema name.
- * If there is a dot in a user's schema name, this might produce unexpected results.
+ * Returns the unqualified, sanitized Typescript-safe name of a schema
+ * Examples:
+ * - `"my.scope.MyNode"` returns `"MyNode"`
+ * - `"my.scope.MyNode-2"` returns `"MyNode_2"`
+ * - `"my.scope.MyNode!"` returns `"MyNode_"`
+ * @remarks
+ * - Removes all characters before the last dot in the schema name.
+ * - Sanitizes the remainder into a valid Typescript identifier
+ * - If there is a dot in a user's schema name, this might produce unexpected results.
  */
 export function unqualifySchema(schemaIdentifier: string): string {
 	// Get the unqualified name by removing the scope (everything before the last dot).
 	const matches = /[^.]+$/.exec(schemaIdentifier);
-	if (matches === null) {
-		return schemaIdentifier; // Return the original name if it is unscoped.
+	const unqualifiedName = matches === null ? schemaIdentifier : matches[0];
+
+	let sanitizedName = unqualifiedName;
+
+	// Replace invalid characters with "_".
+	sanitizedName = sanitizedName.replace(/[^\w$]/g, "_");
+
+	// If the first character is a number, prefix it with "_".
+	if (!/^[$A-Z_a-z]/.test(sanitizedName)) {
+		sanitizedName = `_${sanitizedName}`;
 	}
-	return matches[0];
+	return sanitizedName;
 }
 
 /**

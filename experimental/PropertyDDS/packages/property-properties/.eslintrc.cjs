@@ -14,6 +14,7 @@ module.exports = {
 	rules: {
 		// Many rules are disabled in PropertyDDS projects. See https://github.com/microsoft/FluidFramework/pull/10272
 		"@typescript-eslint/dot-notation": "off",
+		"@typescript-eslint/explicit-function-return-type": "warn",
 		"@typescript-eslint/no-dynamic-delete": "off",
 		"@typescript-eslint/no-extraneous-class": "off",
 		"@typescript-eslint/no-implied-eval": "off",
@@ -56,6 +57,12 @@ module.exports = {
 		"quote-props": "off",
 		"tsdoc/syntax": "off",
 		"unicorn/better-regex": "off",
+		"depend/ban-dependencies": [
+			"error",
+			{
+				allowed: ["lodash", "underscore"],
+			},
+		],
 
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line unicorn/prefer-node-protocol
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { IOdspSnapshot } from "../contracts.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";

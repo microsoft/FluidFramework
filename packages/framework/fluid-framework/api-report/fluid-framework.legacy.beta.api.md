@@ -800,7 +800,9 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
 // @beta @sealed @legacy
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // @deprecated
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "cleared", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
@@ -964,7 +966,6 @@ export interface LeafSchema<Name extends string, T extends TreeLeafValue> extend
 // @public @sealed
 export interface Listenable<TListeners extends object> {
     off<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): void;
-    // (undocumented)
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
 
@@ -1595,7 +1596,6 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extend
 // @public @sealed
 export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
     constructor(props: ITreeViewConfiguration<TSchema>);
-    protected readonly definitionsInternal: ReadonlyMap<string, TreeNodeSchema>;
     readonly enableSchemaValidation: boolean;
     readonly preventAmbiguity: boolean;
     readonly schema: TSchema;

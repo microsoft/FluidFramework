@@ -68,7 +68,10 @@ export async function createSummarizerCore(
 	container: IContainer,
 	loader: IHostLoader,
 	summaryVersion?: string,
-) {
+): Promise<{
+	container: IContainer;
+	summarizer: ISummarizer;
+}> {
 	const absoluteUrl = await container.getAbsoluteUrl("");
 	if (absoluteUrl === undefined) {
 		throw new Error("URL could not be resolved");

@@ -45,7 +45,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
 		return this.cachedRead(blobId);
 	}
-	public stopPrefetch() {
+	public stopPrefetch(): void {
 		this.prefetchEnabled = false;
 		this.prefetchCache.clear();
 	}
@@ -57,21 +57,26 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 				return prefetchedBlobP;
 			}
 			const prefetchedBlobPFromStorage = this.internalStorageService.readBlob(blobId);
-			this.prefetchCache.set(
-				blobId,
-				prefetchedBlobPFromStorage.catch((error) => {
-					if (canRetryOnError(error)) {
+			// Attach error handler for side effects only:
+			// 1. Clear cache on retryable errors so next read retries
+			// 2. Prevent unhandled rejection warning for fire-and-forget prefetch
+			// Note: Callers who await the cached promise will still see the rejection
+			prefetchedBlobPFromStorage.catch((error) => {
+				if (canRetryOnError(error)) {
+					// Only clear cache if our promise is still the cached one
+					// (avoids race condition with concurrent requests)
+					if (this.prefetchCache.get(blobId) === prefetchedBlobPFromStorage) {
 						this.prefetchCache.delete(blobId);
 					}
-					throw error;
-				}),
-			);
+				}
+			});
+			this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);
 			return prefetchedBlobPFromStorage;
 		}
 		return this.internalStorageService.readBlob(blobId);
 	}
 
-	private prefetchTree(tree: ISnapshotTree) {
+	private prefetchTree(tree: ISnapshotTree): void {
 		const secondary: string[] = [];
 		this.prefetchTreeCore(tree, secondary);
 
@@ -81,7 +86,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		}
 	}
 
-	private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]) {
+	private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]): void {
 		for (const [blobKey, blob] of Object.entries(tree.blobs)) {
 			if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
 				if (blob !== null) {

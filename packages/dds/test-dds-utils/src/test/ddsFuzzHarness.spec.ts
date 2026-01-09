@@ -287,6 +287,7 @@ describe("DDS Fuzz Harness", () => {
 											return {
 												type: "changeConnectionState",
 												connected: false,
+												squash: false,
 											};
 										},
 									),
@@ -380,6 +381,7 @@ describe("DDS Fuzz Harness", () => {
 								return {
 									type: "changeConnectionState",
 									connected: false,
+									squash: false,
 								};
 							},
 						),

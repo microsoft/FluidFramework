@@ -16,6 +16,7 @@ module.exports = {
 		"@typescript-eslint/ban-ts-comment": "off",
 		"@typescript-eslint/consistent-type-definitions": "off",
 		"@typescript-eslint/dot-notation": "off",
+		"@typescript-eslint/explicit-function-return-type": "warn",
 		"@typescript-eslint/no-dynamic-delete": "off",
 		"@typescript-eslint/no-invalid-this": "off",
 		"@typescript-eslint/no-empty-interface": "off",
@@ -54,6 +55,13 @@ module.exports = {
 		"tsdoc/syntax": "off",
 		"unicorn/better-regex": "off",
 		"unicorn/filename-case": "off",
+		"depend/ban-dependencies": [
+			"error",
+			{
+				allowed: ["lodash", "traverse"],
+			},
+		],
+
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 };

@@ -28,19 +28,26 @@ import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import {
+	currentVersion,
+	makeCodecFamily,
+	type CodecWriteOptions,
+} from "../../../codec/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
-import { currentVersion, type CodecWriteOptions } from "../../../codec/index.js";
-import { brand } from "../../../util/index.js";
+import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: currentVersion,
 };
 
-const schemaCodecs = makeSchemaCodecs(codecOptions);
-const codecV1 = makeSchemaCodec(codecOptions, brand(SchemaFormatVersion.v1));
-const codecV2 = makeSchemaCodec(codecOptions, brand(SchemaFormatVersion.v2));
+const schemaCodecs = makeCodecFamily(
+	schemaCodecBuilder.applyOptions(codecOptions).map(([_version, codec]) => {
+		return [codec.formatVersion, codec.codec] as const;
+	}),
+);
+const codecV1 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v1);
+const codecV2 = makeSchemaCodec(codecOptions, SchemaFormatVersion.v2);
 
 const schema2 = toInitialSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 
@@ -68,7 +75,7 @@ describe("SchemaIndex", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [
 			{
-				version: 1 as const,
+				version: SchemaFormatVersion.v1,
 				nodes: {},
 				root: { kind: "x" as FieldKindIdentifier, types: [] },
 			} satisfies FormatV1,
@@ -82,7 +89,7 @@ describe("SchemaIndex", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [
 			{
-				version: 2 as const,
+				version: SchemaFormatVersion.v2,
 				nodes: {},
 				root: {
 					kind: "x" as FieldKindIdentifier,

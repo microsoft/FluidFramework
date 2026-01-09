@@ -12,7 +12,19 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
  * @param initiatorType - type of the network call
  * @internal
  */
-export function getW3CData(url: string, initiatorType: string) {
+export function getW3CData(
+	url: string,
+	initiatorType: string,
+): {
+	dnsLookupTime: number | undefined;
+	w3cStartTime: number | undefined;
+	redirectTime: number | undefined;
+	tcpHandshakeTime: number | undefined;
+	secureConnectionTime: number | undefined;
+	responseNetworkTime: number | undefined;
+	fetchStartToResponseEndTime: number | undefined;
+	reqStartToResponseEndTime: number | undefined;
+} {
 	// From: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
 	// fetchStart: immediately before the browser starts to fetch the resource.
 	// requestStart: immediately before the browser starts requesting the resource from the server
@@ -100,7 +112,7 @@ export async function promiseRaceWithWinner<T>(
 ): Promise<{ index: number; value: T }> {
 	return new Promise((resolve, reject) => {
 		promises.forEach((p, index) => {
-			p.then((v) => resolve({ index, value: v })).catch(reject);
+			p.then((v): void => resolve({ index, value: v })).catch(reject);
 		});
 	});
 }
@@ -114,7 +126,7 @@ export function validateMessages(
 	from: number,
 	logger: ITelemetryLoggerExt,
 	strict: boolean = true,
-) {
+): void {
 	if (messages.length !== 0) {
 		const start = messages[0].sequenceNumber;
 		const length = messages.length;

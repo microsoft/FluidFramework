@@ -98,4 +98,4 @@ export type {
 	TelemetryEventCategory,
 } from "./telemetryTypes.js";
 export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
-export { validateLayerCompatibility } from "./layerCompatError.js";
+export { allowIncompatibleLayersKey, validateLayerCompatibility } from "./layerCompatError.js";

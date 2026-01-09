@@ -21,6 +21,7 @@ import type { FieldKind, FieldSchemaMetadata } from "./fieldSchema.js";
  * @sealed
  */
 export interface SimpleNodeSchemaBaseAlpha<
+	out Type extends SchemaType,
 	out TNodeKind extends NodeKind,
 	out TCustomMetadata = unknown,
 > extends SimpleNodeSchemaBase<TNodeKind, TCustomMetadata> {
@@ -37,6 +38,12 @@ export interface SimpleNodeSchemaBaseAlpha<
 	 * If this does end up getting reflected in some compatibility value, that should also be documented.
 	 */
 	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
+
+	// This overrides the type from SimpleNodeSchemaBase to make it more specific. When stabilized, this should be moved to the base interface.
+	readonly metadata: SimpleNodeSchemaBase<TNodeKind, TCustomMetadata>["metadata"] &
+		(Type extends SchemaType.View
+			? unknown
+			: { readonly custom?: undefined; readonly description?: undefined });
 }
 
 /**
@@ -46,7 +53,10 @@ export interface SimpleNodeSchemaBaseAlpha<
  * Refers to the types by identifier.
  * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
  */
-export type SimpleAllowedTypes = ReadonlyMap<string, SimpleAllowedTypeAttributes>;
+export type SimpleAllowedTypes<Type extends SchemaType = SchemaType> = ReadonlyMap<
+	string,
+	SimpleAllowedTypeAttributes<Type>
+>;
 
 /**
  * A {@link SimpleNodeSchema} for an object node.
@@ -54,8 +64,10 @@ export type SimpleAllowedTypes = ReadonlyMap<string, SimpleAllowedTypeAttributes
  * @alpha
  * @sealed
  */
-export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBaseAlpha<NodeKind.Object, TCustomMetadata> {
+export interface SimpleObjectNodeSchema<
+	Type extends SchemaType = SchemaType,
+	out TCustomMetadata = unknown,
+> extends SimpleNodeSchemaBaseAlpha<Type, NodeKind.Object, TCustomMetadata> {
 	/**
 	 * Schemas for each of the object's fields, keyed off of schema's keys.
 	 * @remarks
@@ -66,7 +78,7 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
 	 * TODO: Consider adding `storedKeysToFields` or something similar to reduce confusion,
 	 * especially if/when TreeNodeSchema for objects provide more maps.
 	 */
-	readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema>;
+	readonly fields: ReadonlyMap<string, SimpleObjectFieldSchema<Type>>;
 
 	/**
 	 * Whether the object node allows unknown optional fields.
@@ -75,7 +87,7 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
 	 *
 	 * @remarks Only populated for view schemas, undefined otherwise. Relevant for compatibility checking scenarios.
 	 */
-	readonly allowUnknownOptionalFields: boolean | undefined;
+	readonly allowUnknownOptionalFields: Type extends SchemaType.View ? boolean : undefined;
 }
 
 /**
@@ -86,7 +98,8 @@ export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
  * @alpha
  * @sealed
  */
-export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
+export interface SimpleObjectFieldSchema<Type extends SchemaType = SchemaType>
+	extends SimpleFieldSchema<Type> {
 	/**
 	 * The stored key of the field.
 	 * @remarks
@@ -101,15 +114,17 @@ export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
  * @alpha
  * @sealed
  */
-export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBaseAlpha<NodeKind.Array, TCustomMetadata> {
+export interface SimpleArrayNodeSchema<
+	Type extends SchemaType = SchemaType,
+	out TCustomMetadata = unknown,
+> extends SimpleNodeSchemaBaseAlpha<Type, NodeKind.Array, TCustomMetadata> {
 	/**
 	 * The types allowed in the array.
 	 *
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes<Type>>;
 }
 
 /**
@@ -118,15 +133,17 @@ export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
  * @alpha
  * @sealed
  */
-export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBaseAlpha<NodeKind.Map, TCustomMetadata> {
+export interface SimpleMapNodeSchema<
+	Type extends SchemaType = SchemaType,
+	out TCustomMetadata = unknown,
+> extends SimpleNodeSchemaBaseAlpha<Type, NodeKind.Map, TCustomMetadata> {
 	/**
 	 * The types allowed as values in the map.
 	 *
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes<Type>>;
 }
 
 /**
@@ -135,15 +152,17 @@ export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
  * @alpha
  * @sealed
  */
-export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBaseAlpha<NodeKind.Record, TCustomMetadata> {
+export interface SimpleRecordNodeSchema<
+	Type extends SchemaType = SchemaType,
+	out TCustomMetadata = unknown,
+> extends SimpleNodeSchemaBaseAlpha<Type, NodeKind.Record, TCustomMetadata> {
 	/**
 	 * The types allowed as values in the record.
 	 *
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes<Type>>;
 }
 
 /**
@@ -152,7 +171,8 @@ export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
  * @alpha
  * @sealed
  */
-export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBaseAlpha<NodeKind.Leaf> {
+export interface SimpleLeafNodeSchema<Type extends SchemaType = SchemaType>
+	extends SimpleNodeSchemaBaseAlpha<Type, NodeKind.Leaf> {
 	/**
 	 * The kind of leaf node.
 	 */
@@ -173,20 +193,28 @@ export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBaseAlpha<NodeKind
  *
  * @alpha
  */
-export type SimpleNodeSchema =
-	| SimpleLeafNodeSchema
-	| SimpleMapNodeSchema
-	| SimpleArrayNodeSchema
-	| SimpleObjectNodeSchema
-	| SimpleRecordNodeSchema;
+export type SimpleNodeSchema<Type extends SchemaType = SchemaType> =
+	| SimpleLeafNodeSchema<Type>
+	| SimpleMapNodeSchema<Type>
+	| SimpleArrayNodeSchema<Type>
+	| SimpleObjectNodeSchema<Type>
+	| SimpleRecordNodeSchema<Type>;
 
 /**
  * Information about allowed types under a field.
  *
+ * @privateRemarks
+ * Variance annotations should not be used to change type checking: they are only used by the compiler as an optimization hint.
+ * However in this case, for unknown reasons, TypeScript makes this interface bi-variant without `out` on `Type`.
+ * That is bad as it allows schema of unknown type to be used as stored or view without errors.
+ * To mitigate this, `out` is added to make this interface properly covariant in `Type`.
+ * This may not be robust if TypeScript checks this type structurally,
+ * but whatever bug causes the bi-variant likely does not occur in that case anyway.
+ *
  * @alpha
  * @sealed
  */
-export interface SimpleAllowedTypeAttributes {
+export interface SimpleAllowedTypeAttributes<out Type extends SchemaType = SchemaType> {
 	/**
 	 * {@link SchemaUpgrade} if this schema is included as a {@link SchemaStaticsBeta.staged | staged} schema upgrade,
 	 * allowing the view schema be compatible with stored schema with (post upgrade) or without it (pre-upgrade).
@@ -198,9 +226,24 @@ export interface SimpleAllowedTypeAttributes {
 	 * The false and undefined cases here are a bit odd.
 	 * This API should be reevaluated before stabilizing.
 	 */
-	readonly isStaged: false | SchemaUpgrade | undefined;
+	readonly isStaged: Type extends SchemaType.Stored ? undefined : false | SchemaUpgrade;
 }
 
+/**
+ * The type of simple schema being represented.
+ *
+ * @alpha
+ */
+export enum SchemaType {
+	/**
+	 * The schema is a stored schema, meaning it expresses exactly what could be validly persisted in a SharedTree.
+	 */
+	Stored,
+	/**
+	 * The schema is a view schema, meaning it expresses how to view data which is using a compatible stored schema.
+	 */
+	View,
+}
 /**
  * A simple, shallow representation of a schema for a field.
  *
@@ -211,7 +254,7 @@ export interface SimpleAllowedTypeAttributes {
  * @alpha
  * @sealed
  */
-export interface SimpleFieldSchema {
+export interface SimpleFieldSchema<Type extends SchemaType = SchemaType> {
 	/**
 	 * The kind of tree field.
 	 */
@@ -223,12 +266,17 @@ export interface SimpleFieldSchema {
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
 	 */
-	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes>;
+	readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes<Type>>;
 
 	/**
-	 * {@inheritDoc FieldSchemaMetadata}
+	 * Metadata for this field schema, see {@link FieldSchemaMetadata}.
+	 * @remarks
+	 * As this is the non-persisted portion of the metadata, it is forced to store only undefined in the `SchemaType.Stored` case.
 	 */
-	readonly metadata: FieldSchemaMetadata;
+	readonly metadata: FieldSchemaMetadata &
+		(Type extends SchemaType.View
+			? unknown
+			: { readonly custom?: undefined; readonly description?: undefined });
 
 	/**
 	 * Persisted metadata for this field schema.
@@ -248,12 +296,11 @@ export interface SimpleFieldSchema {
  * @alpha
  * @sealed
  */
-export interface SimpleTreeSchema {
+export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
 	/**
 	 * The tree field representing the root of the tree.
 	 */
-	readonly root: SimpleFieldSchema;
-
+	readonly root: SimpleFieldSchema<Type>;
 	/**
 	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.root}.
 	 *
@@ -263,5 +310,5 @@ export interface SimpleTreeSchema {
 	 * Information about if a schema is {@link SchemaStaticsBeta.staged | staged} or not is not available as the "Simple Schema" layer of abstraction: they are included unconditionally.
 	 * Options for filtering out staged schemas from view schema are available in {@link extractPersistedSchema}.
 	 */
-	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;
+	readonly definitions: ReadonlyMap<string, SimpleNodeSchema<Type>>;
 }

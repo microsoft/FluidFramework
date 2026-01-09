@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
@@ -39,7 +39,7 @@ class UnknownChannel implements IChannel {
 		});
 	}
 
-	get IFluidLoadable() {
+	get IFluidLoadable(): IFluidLoadable {
 		return this;
 	}
 	get handle(): IFluidHandle {
@@ -74,7 +74,7 @@ class UnknownChannel implements IChannel {
 		return this.getAttachSummary(fullTree, trackState, telemetryContext);
 	}
 
-	public isAttached() {
+	public isAttached(): boolean {
 		return true;
 	}
 
@@ -129,7 +129,7 @@ class ObjectRegistryWithUnknownChannels implements ISharedObjectRegistry {
 
 export function mixinDataStoreWithAnyChannel(
 	Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
-) {
+): typeof FluidDataStoreRuntime {
 	return class RuntimeWithRequestHandler extends Base {
 		constructor(
 			dataStoreContext: IFluidDataStoreContext,

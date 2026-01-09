@@ -5,7 +5,7 @@
 
 import { getTreeNodeSchemaPrivateData, type AllowedTypesFull } from "../core/index.js";
 import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
-import type { TreeSchema } from "./configuration.js";
+import type { TreeSchema } from "../treeSchema.js";
 import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js";
 import { oneFromIterable } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";

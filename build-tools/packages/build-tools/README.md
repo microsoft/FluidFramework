@@ -189,12 +189,12 @@ when incremental build option is enabled. While `tsc` also make use of this info
 still takes longer to detect that when invoked. `fluid-build` bypass that and read the incremental build to get all the
 input files it depends on and compare the before and after file hash to check if the input files are changed.
 
-#### Tslint/Eslint/ApiExtractor Task
+#### Eslint/ApiExtractor Task
 
-`tslint`, `eslint` and `api-extractor` are all "tsc-dependent" tasks, and have similar incremental rules. It will
+`eslint` and `api-extractor` are all "tsc-dependent" tasks, and have similar incremental rules. It will
 detect whether the task needs to run based on any `tsc` dependent task declared in the build graph (filtered to
 within the package if possible). It then copy the content of the `tsc` build info of these dependent task along with the
-the version and config for `tslint`, `eslint` and `api-extractor` and generate a "done" file. Compare the content of
+the version and config for `eslint` and `api-extractor` and generate a "done" file. Compare the content of
 the current state and previous build will determine whether the task needs to be invoked.
 
 ### Worker mode (Experimental)

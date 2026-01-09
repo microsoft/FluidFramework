@@ -307,24 +307,6 @@ export async function waitContainerToCatchUp(container: IContainer): Promise<boo
 const getCodeProposal = (quorum: IQuorumProposals): unknown =>
 	quorum.get("code") ?? quorum.get("code2");
 
-/**
- * Helper function to report to telemetry cases where operation takes longer than expected (200ms)
- * @param logger - logger to use
- * @param eventName - event name
- * @param action - functor to call and measure
- */
-export async function ReportIfTooLong(
-	logger: ITelemetryLoggerExt,
-	eventName: string,
-	action: () => Promise<ITelemetryBaseProperties>,
-): Promise<void> {
-	const event = PerformanceEvent.start(logger, { eventName });
-	const props = await action();
-	if (event.duration > 200) {
-		event.end(props);
-	}
-}
-
 const summarizerClientType = "summarizer";
 
 interface IContainerLifecycleEvents extends IEvent {
@@ -769,7 +751,7 @@ export class Container
 		validateDriverCompatibility(
 			maybeDriverCompatDetails.ILayerCompatDetails,
 			(error) => {} /* disposeFn */, // There is nothing to dispose here, so just ignore the error.
-			subLogger,
+			createChildMonitoringContext({ logger: subLogger, namespace: "Container" }),
 		);
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
@@ -2458,10 +2440,7 @@ export class Container
 
 			// Validate that the Runtime is compatible with this Loader.
 			const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
-			validateRuntimeCompatibility(
-				maybeRuntimeCompatDetails.ILayerCompatDetails,
-				this.mc.logger,
-			);
+			validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, this.mc);
 
 			this._runtime = runtime;
 			this._lifecycleEvents.emit("runtimeInstantiated");
