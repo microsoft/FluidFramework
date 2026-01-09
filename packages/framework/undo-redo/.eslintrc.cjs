@@ -10,20 +10,9 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
+		// TODO: remove these overrides and fix violations
 		"@typescript-eslint/no-use-before-define": "off",
 		"no-case-declarations": "off",
-
-		// #region TODO: remove these once eslint-config-fluid has been updated to 5.8.0
-		"@typescript-eslint/consistent-type-exports": [
-			"error",
-			{ fixMixedExportsWithInlineTypeSpecifier: true },
-		],
-		"@typescript-eslint/consistent-type-imports": [
-			"error",
-			{ fixStyle: "inline-type-imports" },
-		],
-		"@typescript-eslint/no-import-type-side-effects": "error",
-		// #endregion
 	},
 	overrides: [
 		{
