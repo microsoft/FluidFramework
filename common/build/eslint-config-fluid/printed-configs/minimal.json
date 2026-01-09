@@ -1419,7 +1419,7 @@
             }
         ],
         "no-empty": [
-            "off",
+            "error",
             {
                 "allowEmptyCatch": false
             }

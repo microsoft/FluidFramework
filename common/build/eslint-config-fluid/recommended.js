@@ -23,12 +23,8 @@ module.exports = {
 	rules: {
 		// RECOMMENDED RULES
 		"@rushstack/no-new-null": "error",
-		"no-empty": "error",
 		"no-void": "error",
 		"require-atomic-updates": "error",
-
-		// This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
-		"tsdoc/syntax": "error",
 
 		// #region `unicorn` rule overrides
 
