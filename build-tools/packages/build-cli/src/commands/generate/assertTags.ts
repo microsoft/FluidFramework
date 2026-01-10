@@ -185,6 +185,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		const dataMap = new Map<PackageWithKind, PackageData>();
 		const config = lilconfig(configName, { searchPlaces });
 
+		const repo = (await this.getContext()).repo;
+
 		for (const pkg of packages) {
 			// Package configuration:
 			// eslint-disable-next-line no-await-in-loop
@@ -214,8 +216,6 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 				skipFileDependencyResolution: false,
 				tsConfigFilePath: tsconfigPath,
 			});
-
-			const repo = (await this.getContext()).repo;
 
 			// Filter to package local sources of interest
 			const sourceFiles = project
