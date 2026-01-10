@@ -213,6 +213,24 @@ describe("snapshotCompatibilityChecker", () => {
 				() =>
 					checkSchemaCompatibilitySnapshots({
 						version: "2.0.0",
+						schema: new TreeViewConfiguration({ schema: [] }), // Schema invalid for all versions, so should fail
+						fileSystem: nodeFileSystem,
+						minVersionForCollaboration: "1.0.0",
+						mode: "test",
+						snapshotDirectory,
+					}),
+				validateError(`Schema compatibility check failed:
+ - Current schema snapshot for version "2.0.0" does not match expected snapshot. Run in "update" mode again to rewrite the snapshot to review the differences.
+ - Current version "2.0.0" cannot upgrade documents from "1.0.0".
+ - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to minAppVersionForCollaboration being "1.0.0" but they cannot.
+ - Current version "2.0.0" cannot upgrade documents from "2.0.0".
+ - Current version "2.0.0" expected to be equivalent to its snapshot.`),
+			);
+
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: Point3D }),
 						fileSystem: nodeFileSystem,
 						minVersionForCollaboration: "1.0.0", // Due to not using allowUnknownOptionalFields, these cannot collaborate, so should fail
