@@ -427,12 +427,19 @@ export class SnapshotCompatibilityChecker {
 	public readAllSchemaSnapshots(): Map<string, TreeViewConfiguration> {
 		this.ensureSnapshotDirectoryExists();
 		const files = this.fileSystemMethods.readdirSync(this.snapshotDirectory);
-		const snapshots: Map<string, TreeViewConfiguration> = new Map();
+		const versions: string[] = [];
 		for (const file of files) {
 			if (file.endsWith(".json")) {
 				const snapshotName = file.slice(0, ".json".length * -1);
-				snapshots.set(snapshotName, this.readSchemaSnapshot(snapshotName));
+				versions.push(snapshotName);
 			}
+		}
+		// Ensures that errors are in a consistent and friendly order, independent of file system order.
+		versions.sort((a, b) => semver.compare(a, b));
+
+		const snapshots: Map<string, TreeViewConfiguration> = new Map();
+		for (const version of versions) {
+			snapshots.set(version, this.readSchemaSnapshot(version));
 		}
 		return snapshots;
 	}
