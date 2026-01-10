@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import path from "node:path";
+import fs from "node:fs";
+
 import type { requireAssignableTo } from "@fluidframework/build-tools";
+import { validateError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	checkCompatibility,
@@ -27,8 +31,6 @@ import {
 } from "../../../simple-tree/index.js";
 import { strict as assert } from "node:assert";
 import { testSrcPath } from "../../testSrcPath.cjs";
-import path from "node:path";
-import fs from "node:fs";
 
 const nodeFileSystem = {
 	...fs,
@@ -191,23 +193,35 @@ describe("snapshotCompatibilityChecker", () => {
 				z: factory.optional(factory.number),
 			}) {}
 
-			checkSchemaCompatibilitySnapshots({
-				version: "2.0.0",
-				schema: new TreeViewConfiguration({ schema: Point2D }),
-				fileSystem: nodeFileSystem,
-				minVersionForCollaboration: "2.0.0",
-				mode: "test",
-				snapshotDirectory,
-			});
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "2.0.0",
+						schema: new TreeViewConfiguration({ schema: Point2D }), // Using the schema from v1 as v2, so should fail
+						fileSystem: nodeFileSystem,
+						minVersionForCollaboration: "1.0.0",
+						mode: "test",
+						snapshotDirectory,
+					}),
+				validateError(`Schema compatibility check failed:
+ - Current schema snapshot for version "2.0.0" does not match expected snapshot. Run in "update" mode again to rewrite the snapshot to review the differences.
+ - Current version "2.0.0" cannot upgrade documents from "2.0.0".
+ - Current version "2.0.0" expected to be equivalent to its snapshot.`),
+			);
 
-			checkSchemaCompatibilitySnapshots({
-				version: "2.0.0",
-				schema: new TreeViewConfiguration({ schema: Point3D }),
-				fileSystem: nodeFileSystem,
-				minVersionForCollaboration: "1.0.0",
-				mode: "test",
-				snapshotDirectory,
-			});
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "2.0.0",
+						schema: new TreeViewConfiguration({ schema: Point3D }),
+						fileSystem: nodeFileSystem,
+						minVersionForCollaboration: "1.0.0", // Due to not using allowUnknownOptionalFields, these cannot collaborate, so should fail
+						mode: "test",
+						snapshotDirectory,
+					}),
+				validateError(`Schema compatibility check failed:
+ - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to minAppVersionForCollaboration being "1.0.0" but they cannot.`),
+			);
 
 			checkSchemaCompatibilitySnapshots({
 				version: "2.0.0",
@@ -220,10 +234,144 @@ describe("snapshotCompatibilityChecker", () => {
 		});
 
 		it("workflow over time", () => {
-			// TODO
+			const snapshotDirectory = "dir";
+			const snapshots = new Map<string, string>();
+
+			// Trivial in-memory file system for testing.
+			const fileSystem: SnapshotFileSystem = {
+				writeFileSync(file: string, data: string, options: { encoding: "utf8" }): void {
+					snapshots.set(file, data);
+				},
+				readFileSync(file: string, encoding: "utf8"): string {
+					return snapshots.get(file) ?? assert.fail(`File not found: ${file}`);
+				},
+				mkdirSync(dir: string, options: { recursive: true }): void {},
+				readdirSync(dir: string): readonly string[] {
+					return [...snapshots.keys()];
+				},
+				join(parentPath: string, childPath: string): string {
+					return childPath;
+				},
+			};
+
+			const factory = new SchemaFactoryBeta("test");
+
+			class Point1 extends factory.object("Point", {
+				x: factory.number,
+				y: factory.number,
+			}) {}
+
+			class Point2 extends factory.object(
+				"Point",
+				{
+					x: factory.number,
+					y: factory.number,
+				},
+				{ allowUnknownOptionalFields: true },
+			) {}
+
+			class Point3 extends factory.object("Point", {
+				x: factory.number,
+				y: factory.number,
+				z: factory.optional(factory.number),
+			}) {}
+
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "1.0.0",
+						schema: new TreeViewConfiguration({ schema: Point1 }),
+						fileSystem,
+						minVersionForCollaboration: "1.0.0",
+						mode: "test",
+						snapshotDirectory,
+					}),
+				validateError("No snapshot found for version 1.0.0"),
+			);
+
+			assert.deepEqual([...snapshots.keys()], []);
+
+			checkSchemaCompatibilitySnapshots({
+				version: "1.0.0",
+				schema: new TreeViewConfiguration({ schema: Point1 }),
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "update",
+				snapshotDirectory,
+			});
+
+			assert.deepEqual([...snapshots.keys()], ["1.0.0.json"]);
+
+			checkSchemaCompatibilitySnapshots({
+				version: "1.0.0",
+				schema: new TreeViewConfiguration({ schema: Point1 }),
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "test",
+				snapshotDirectory,
+			});
+
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "1.0.0",
+						schema: new TreeViewConfiguration({ schema: Point2 }),
+						fileSystem,
+						minVersionForCollaboration: "1.0.0",
+						mode: "test",
+						snapshotDirectory,
+					}),
+				validateError(`Schema compatibility check failed:
+ - Current schema snapshot for version "1.0.0" does not match expected snapshot. Run in "update" mode again to rewrite the snapshot to review the differences.`),
+			);
+
+			checkSchemaCompatibilitySnapshots({
+				version: "2.0.0",
+				schema: new TreeViewConfiguration({ schema: Point2 }),
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "update",
+				snapshotDirectory,
+			});
+
+			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json"]);
+
+			checkSchemaCompatibilitySnapshots({
+				version: "2.0.0",
+				schema: new TreeViewConfiguration({ schema: Point2 }),
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "test",
+				snapshotDirectory,
+			});
+
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "3.0.0",
+						schema: new TreeViewConfiguration({ schema: Point3 }),
+						fileSystem,
+						minVersionForCollaboration: "1.0.0",
+						mode: "update",
+						snapshotDirectory,
+					}),
+				validateError(`Schema compatibility check failed:
+ - Historical version "1.0.0" cannot view documents from "3.0.0": these versions are expected to be able to collaborate due to minAppVersionForCollaboration being "1.0.0" but they cannot.`),
+			);
+
+			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json", "3.0.0.json"]);
+
+			checkSchemaCompatibilitySnapshots({
+				version: "3.0.0",
+				schema: new TreeViewConfiguration({ schema: Point3 }),
+				fileSystem,
+				minVersionForCollaboration: "2.0.0",
+				mode: "test",
+				snapshotDirectory,
+			});
 		});
 
-		it.skip("check current view schema against historical persisted schemas", () => {
+		it("check current view schema against historical persisted schemas", () => {
 			const checker = new SnapshotCompatibilityChecker(
 				path.join(testSrcPath, "schemaSnapshots", "point"),
 				nodeFileSystem,

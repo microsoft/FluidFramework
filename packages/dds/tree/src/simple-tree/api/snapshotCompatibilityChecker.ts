@@ -276,7 +276,7 @@ export function checkSchemaCompatibilitySnapshots(
 		const current = exportCompatibilitySchemaSnapshot(currentViewSchema);
 
 		if (JSON.stringify(currentSnapshot) !== JSON.stringify(current)) {
-			if (mode === "test") {
+			if (mode === "update") {
 				fail("expected just written snapshot to match");
 			} else {
 				compatibilityErrors.push(
