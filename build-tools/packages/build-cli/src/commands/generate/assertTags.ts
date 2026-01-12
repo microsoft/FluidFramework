@@ -295,8 +295,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 						if (comments.length > 0) {
 							let originalErrorText = comments[0]
 								.getText()
-								.replace(/\/\*/g, "")
-								.replace(/\*\//g, "")
+								.replaceAll("/*", "")
+								.replaceAll("*/", "")
 								.trim();
 
 							// Replace leading+trailing double quotes and backticks.
