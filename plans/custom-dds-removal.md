@@ -1,21 +1,26 @@
 # Custom DDS Removal Plan
 
-## Goal
-Reduce exposure of DDS base classes and interfaces (`SharedObject`, `SharedObjectCore`, `IChannel`, `IChannelFactory`) to prevent external/third-party custom DDS implementations while ensuring all DDSes are owned by Fluid.
+## Goals
+
+1. **Reduce public API surface** - Remove DDS base classes and interfaces (`SharedObject`, `SharedObjectCore`, `IChannel`, `IChannelFactory`, etc.) from the public API to prevent external/third-party custom DDS implementations.
+
+2. **Enable faster iteration** - When these types are public or `@legacy @beta`, changes must move slowly due to compatibility requirements. Making them internal allows the team to iterate more rapidly on DDS infrastructure.
+
+3. **Simplify the API** - Consolidate around SharedTree as the recommended DDS for most use cases, while maintaining existing DDSes for specific scenarios.
 
 ---
 
 ## Current State Analysis
 
 ### DDS Audit Results
-Found **19 total DDS implementations** in the codebase - all are Fluid-owned:
+Found **20 total DDS implementations** in the codebase - all are Fluid-owned:
 
 | Category | DDSes |
 |----------|-------|
 | **Active/Stable** | SharedCell, SharedMap, SharedDirectory, SharedTree, SharedSegmentSequence, TaskManager, ConsensusOrderedCollection, ConsensusRegisterCollection, PactMap, Ink |
 | **Legacy (@legacy @beta)** | SharedCounter, SharedString, SharedMatrix, SharedSummaryBlock |
 | **Internal Legacy** | SharedSignal, SharedArray (in legacy-dds package) |
-| **PropertyDDS (experimental)** | SharedPropertyTree, DeflatedPropertyTree, LZ4PropertyTree |
+| **Experimental** | SharedPropertyTree, DeflatedPropertyTree, LZ4PropertyTree (PropertyDDS), experimental SharedTree (in `experimental/dds/tree`) |
 
 **No external/third-party DDSes found.** All DDSes are already in Fluid's codebase.
 
@@ -36,16 +41,17 @@ export {
 export type { ISharedObject, ISharedObjectEvents } from "./types.js";
 ```
 
-**From `@fluidframework/datastore-definitions` (index.ts:13-20):**
+**From `@fluidframework/datastore-definitions` (index.ts:13-20, 34):**
 ```typescript
 export type {
-  IChannel,          // @legacy @beta - channel interface
-  IChannelFactory,   // @legacy @beta - factory pattern
-  IChannelServices,
-  IChannelStorageService,
-  IDeltaConnection,
-  IDeltaHandler,     // @legacy @beta - op processing
+  IChannel,              // @legacy @beta - channel interface
+  IChannelFactory,       // @legacy @beta - factory pattern
+  IChannelServices,      // @legacy @beta - services bundle
+  IChannelStorageService,// @legacy @beta - storage service
+  IDeltaConnection,      // @legacy @beta - delta connection
+  IDeltaHandler,         // @legacy @beta - op processing
 } from "./channel.js";
+export type { IChannelAttributes } from "./storage.js"; // @legacy @beta
 ```
 
 ### Code Comments Indicating Intent
@@ -57,159 +63,67 @@ export type {
 
 ## Implementation Plan
 
-### Phase 0: Pre-announce deprecations
+### Recommended Approach
 
-Add a changeset for the affected packages that describes the classes and types that will be deprecated in the upcoming release 2.82.0. The deprecated APIs will be fully removed in release 2.100.0.
+Based on feedback, the recommended approach is to **make things internal directly** and use build tooling to discover any issues. Deprecation is an intermediate step that may not be necessary if we're confident in making the change. However, we still need to announce the breaking change.
 
-### Phase 1: Add Deprecation Notices
+### Phase 0: Pre-announce API changes
 
-Add `@deprecated` JSDoc tags to all public exports that enable custom DDS creation.
+Add a changeset for the affected packages that describes the types that will be made internal in the upcoming release. This gives consumers notice of the upcoming change.
 
-**File: `packages/dds/shared-object-base/src/sharedObject.ts`**
+### Phase 1: Move exports from public to internal
 
-Update `SharedObjectCore` class (line 87):
-```typescript
-/**
- * Base class from which all {@link ISharedObject|shared objects} derive.
- * ...existing docs...
- * @deprecated SharedObjectCore is intended for internal Fluid Framework use only.
- * External implementations of custom DDSes are not supported and this class will
- * be removed from the public API in a future release.
- * @legacy @beta
- */
-export abstract class SharedObjectCore<...>
-```
+Move all DDS-implementation-enabling exports to internal-only. The following types should be moved:
 
-Update `SharedObject` class (around line 740):
-```typescript
-/**
- * ...existing docs...
- * @deprecated SharedObject is intended for internal Fluid Framework use only.
- * External implementations of custom DDSes are not supported and this class will
- * be removed from the public API in a future release. Use existing DDS types
- * (SharedMap, SharedTree, etc.) instead.
- * @legacy @beta
- */
-export abstract class SharedObject<...>
-```
+**From `@fluidframework/shared-object-base`:**
+- `SharedObject` - base class
+- `SharedObjectCore` - core base class
+- `ISharedObject` - interface
+- `ISharedObjectEvents` - events interface
+- `createSharedObjectKind` - factory creator
+- `ISharedObjectKind` - type (keep `SharedObjectKind` public as the safe sealed type)
 
-Update `createSharedObjectKind` function:
-```typescript
-/**
- * ...existing docs...
- * @deprecated createSharedObjectKind is intended for internal Fluid Framework use only.
- * External implementations of custom DDSes are not supported and this function will
- * be removed from the public API in a future release.
- */
-export function createSharedObjectKind<...>
-```
+**From `@fluidframework/datastore-definitions`:**
+- `IChannel` - channel interface (note: has exposure at datastore layer - need to sever typing)
+- `IChannelFactory` - factory interface
+- `IChannelServices` - services bundle
+- `IChannelStorageService` - storage service interface
+- `IDeltaConnection` - delta connection interface
+- `IDeltaHandler` - op processing interface
+- `IChannelAttributes` - channel attributes
 
-**File: `packages/dds/shared-object-base/src/types.ts`**
+### Phase 2: Identify additional types
 
-Update `ISharedObject` interface:
-```typescript
-/**
- * ...existing docs...
- * @deprecated ISharedObject is intended for internal Fluid Framework use only.
- * External implementations are not supported. Use existing DDS types instead.
- * @legacy @beta
- */
-export interface ISharedObject<...>
-```
+Manually inspect the API reports at the lowest shipped layer to identify any additional types that should be made internal. Use build tooling and trial/error to discover issues.
 
-**File: `packages/runtime/datastore-definitions/src/channel.ts`**
+Check API reports:
+- `packages/dds/shared-object-base/api-report/*.api.md`
+- `packages/runtime/datastore-definitions/api-report/*.api.md`
 
-Update `IChannel` interface (line 36):
-```typescript
-/**
- * ...existing docs...
- * @deprecated IChannel is intended for internal Fluid Framework use only.
- * External implementations of channels/DDSes are not supported and this interface
- * will be removed from the public API in a future release.
- * @legacy @beta
- */
-export interface IChannel extends IFluidLoadable {
-```
+### Phase 3: Address IChannel at datastore layer
 
-Update `IChannelFactory` interface (around line 294):
-```typescript
-/**
- * ...existing docs...
- * @deprecated IChannelFactory is intended for internal Fluid Framework use only.
- * External implementations of custom DDSes are not supported and this interface
- * will be removed from the public API in a future release.
- * @legacy @beta
- */
-export interface IChannelFactory<TChannel extends IChannel = IChannel> {
-```
+The `IChannel` interface has some exposure at the datastore layer. A plan is needed to sever the typing between the datastore layer and the channel layer when `IChannel` becomes internal. This may require:
+- Creating a narrower public interface for datastore interactions
+- Updating datastore APIs to not expose `IChannel` directly
+- Possibly using `unknown` or a new minimal interface type
 
-Update `IDeltaHandler` interface (around line 140):
-```typescript
-/**
- * ...existing docs...
- * @deprecated IDeltaHandler is intended for internal Fluid Framework use only.
- * @legacy @beta
- */
-export interface IDeltaHandler<T = unknown> {
-```
-
-### Phase 2: Add changesets
-
-Add changesets for the packages that are changed, describing the deprecations. Something like the following:
-
-```markdown
-SharedObject, SharedObjectCore, ISharedObject, and createSharedObjectKind are now deprecated
-
-These APIs are intended for internal Fluid Framework use only. External implementations
-of custom DDSes are not supported and these exports will be removed from the public API
-in a future release.
-
-Applications should use the existing DDS types (SharedMap, SharedTree, SharedCell, etc.)
-rather than implementing custom DDSes.
-```
-
-```markdown
-IChannel, IChannelFactory, and IDeltaHandler are now deprecated
-
-These interfaces are intended for internal Fluid Framework use only. External
-implementations of channels/DDSes are not supported and these exports will be
-removed from the public API in a future release.
-```
-
-### Phase 3: Run API Extractor & Verify
+### Phase 4: Build and verify
 
 After making the changes:
 
-1. Run build to regenerate API reports:
+1. Run build to regenerate API reports and discover issues:
    ```bash
    pnpm build
    ```
 
-2. Verify API reports show deprecation:
-   - `packages/dds/shared-object-base/api-report/*.api.md`
-   - `packages/runtime/datastore-definitions/api-report/*.api.md`
+2. Address any build errors that indicate types are being used across package boundaries unexpectedly.
 
-3. Run tests to ensure no regressions:
+3. Verify API reports no longer export the internal types publicly.
+
+4. Run tests to ensure no regressions:
    ```bash
    pnpm test
    ```
-
-### Phase 4: Future Removal (2.100.0 release)
-
-In a subsequent minor release, move exports from public to internal:
-
-**File: `packages/dds/shared-object-base/src/index.ts`**
-
-Change from:
-```typescript
-export {
-  SharedObject,
-  SharedObjectCore,
-  ...
-} from "./sharedObject.js";
-```
-
-To only export in internal index, not public. The `SharedObjectKind` type (which is `@sealed`) remains public as the safe API.
 
 ---
 
@@ -217,27 +131,75 @@ To only export in internal index, not public. The `SharedObjectKind` type (which
 
 | File | Changes |
 |------|---------|
-| `packages/dds/shared-object-base/src/sharedObject.ts` | Add @deprecated to SharedObjectCore, SharedObject, createSharedObjectKind |
-| `packages/dds/shared-object-base/src/types.ts` | Add @deprecated to ISharedObject |
-| `packages/runtime/datastore-definitions/src/channel.ts` | Add @deprecated to IChannel, IChannelFactory, IDeltaHandler |
-| `packages/dds/shared-object-base/CHANGELOG.md` | Add deprecation notice |
-| `packages/runtime/datastore-definitions/CHANGELOG.md` | Add deprecation notice |
+| `packages/dds/shared-object-base/src/index.ts` | Move SharedObject, SharedObjectCore, ISharedObject, createSharedObjectKind, ISharedObjectKind to internal exports only |
+| `packages/dds/shared-object-base/src/sharedObject.ts` | Update API tags from @legacy @beta to @internal |
+| `packages/dds/shared-object-base/src/types.ts` | Update API tags from @legacy @beta to @internal |
+| `packages/runtime/datastore-definitions/src/index.ts` | Move channel-related types to internal exports only |
+| `packages/runtime/datastore-definitions/src/channel.ts` | Update API tags from @legacy @beta to @internal |
+| `packages/runtime/datastore-definitions/src/storage.ts` | Update IChannelAttributes API tag to @internal |
+
+---
+
+## Changeset Content
+
+### For `@fluidframework/shared-object-base`:
+```markdown
+---
+"@fluidframework/shared-object-base": major
+---
+
+SharedObject, SharedObjectCore, ISharedObject, ISharedObjectEvents, createSharedObjectKind, and ISharedObjectKind are now internal
+
+These APIs are intended for internal Fluid Framework use only. External implementations
+of custom DDSes are not supported. These exports have been moved to internal and are
+no longer available in the public API.
+
+Applications should use SharedTree or another existing DDS type (SharedMap, SharedCell, etc.)
+rather than implementing custom DDSes. The `SharedObjectKind` type remains public as the
+safe, sealed type for referencing DDS kinds.
+```
+
+### For `@fluidframework/datastore-definitions`:
+```markdown
+---
+"@fluidframework/datastore-definitions": major
+---
+
+IChannel, IChannelFactory, IChannelServices, IChannelStorageService, IDeltaConnection, IDeltaHandler, and IChannelAttributes are now internal
+
+These interfaces are intended for internal Fluid Framework use only. External
+implementations of channels/DDSes are not supported. These exports have been moved
+to internal and are no longer available in the public API.
+```
 
 ---
 
 ## Verification Plan
 
-1. **Build**: `pnpm build` - Ensure all packages compile
+1. **Build**: `pnpm build` - Ensure all packages compile and use tooling to discover type exposure issues
 2. **Tests**: `pnpm test` - Ensure no test regressions
-3. **API Reports**: Check that `@deprecated` appears in generated API reports
+3. **API Reports**: Verify internal types no longer appear in public API reports
 4. **Lint**: `pnpm lint` - Ensure no lint errors
-5. **External Test**: (Manual) Confirm that TypeScript shows deprecation warnings when importing these APIs
+5. **Cross-package**: Verify no public packages depend on these types in their public APIs
 
 ---
 
 ## Summary
 
-- **No external DDSes found** - All 19 DDSes are already Fluid-owned
-- **Deprecation approach**: Add `@deprecated` JSDoc now, remove from public exports in follow-up release
+- **No external DDSes found** - All 20 DDSes are already Fluid-owned
+- **Direct internal approach**: Move types to internal rather than deprecate-then-remove
 - **Safe API preserved**: `SharedObjectKind<T>` remains public and @sealed
+- **SharedTree promoted**: Deprecation messages should recommend SharedTree as the primary DDS
+- **Datastore layer concern**: IChannel exposure at datastore layer needs special handling
 - **Open question**: Need to confirm whether there are other partner DDSes that are not yet accounted for
+
+---
+
+## Notes from PR Review
+
+- Per @anthony-murphy: Aggressively deprecate/internalize anything no longer needed - IChannelAttributes, IChannelServices and child types
+- Per @anthony-murphy: IChannel has exposure at datastore layer, need plan to sever typing when internal
+- Per @anthony-murphy: Prefer making things internal directly and using build tooling to discover problems
+- Per @markfields: Another goal is enabling faster iteration on these types
+- Per @markfields: Include experimental SharedTree in the DDS list
+- Per @markfields: Promote SharedTree specifically in migration guidance
