@@ -37,6 +37,8 @@ class MockStorageService implements Partial<IDocumentStorageService> {
 	public readBlobCalls: string[] = [];
 	public shouldFail = false;
 	public failureError = new Error("Mock read failure");
+	public shouldGetSnapshotTreeFail = false;
+	public getSnapshotTreeError = new Error("Mock getSnapshotTree failure");
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
 		this.readBlobCalls.push(blobId);
@@ -47,6 +49,9 @@ class MockStorageService implements Partial<IDocumentStorageService> {
 	}
 
 	public async getSnapshotTree(): Promise<ISnapshotTree | null> {
+		if (this.shouldGetSnapshotTreeFail) {
+			throw this.getSnapshotTreeError;
+		}
 		return {
 			blobs: {
 				".metadata": "blob1",
@@ -159,5 +164,28 @@ describe("PrefetchDocumentStorageService", () => {
 			(error: Error) => error.message === "Prefetch network failure",
 			"Explicit readBlob should still receive the error",
 		);
+	});
+
+	it("should not cause unhandled rejections when getSnapshotTree fails", async () => {
+		// Set up getSnapshotTree to fail (e.g., network timeout)
+		const networkError = new Error("Socket timeout");
+		mockStorage.shouldGetSnapshotTreeFail = true;
+		mockStorage.getSnapshotTreeError = networkError;
+
+		// getSnapshotTree internally does: void p.then(...).catch(...)
+		// Without the .catch(), if p rejects, the derived promise from .then() also
+		// rejects and causes an unhandled rejection. This test verifies the fix.
+		await assert.rejects(
+			async () => prefetchService.getSnapshotTree(),
+			(error: Error) => error.message === "Socket timeout",
+			"Caller should receive the error",
+		);
+
+		// Allow microtask queue to flush - if there's an unhandled rejection,
+		// it would surface here or cause the test to fail
+		await Promise.resolve();
+		await new Promise((resolve) => setTimeout(resolve, 10));
+
+		// If we reach here without unhandled rejection, the test passes
 	});
 });

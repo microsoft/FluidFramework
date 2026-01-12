@@ -242,15 +242,18 @@ export function composeDeep(
 ): WrappedChange {
 	const metadata = revisionMetadata ?? defaultRevisionMetadataFromChanges(changes);
 
-	return changes.length === 0
-		? ChangesetWrapper.create([])
-		: changes.reduce((change1, change2) =>
-				makeAnonChange(
-					ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
-						composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
-					),
-				),
-			).change;
+	if (changes.length === 0) {
+		return ChangesetWrapper.create([]);
+	}
+	let result = changes[0];
+	for (let i = 1; i < changes.length; i++) {
+		result = makeAnonChange(
+			ChangesetWrapper.compose(result, changes[i], (c1, c2, composeChild) =>
+				composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
+			),
+		);
+	}
+	return result.change;
 }
 
 export function composeNoVerify(
