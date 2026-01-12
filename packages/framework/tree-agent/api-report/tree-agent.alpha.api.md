@@ -60,20 +60,16 @@ export interface ExposedMethods {
 
 // @alpha
 export interface ExposedProperties {
-    // (undocumented)
     exposeProperty<S extends BindableSchema & Ctor, K extends string & ExposableKeys<InstanceType<S>>, TZ extends ZodTypeAny>(schema: S, name: K, def: {
         schema: TZ;
         description?: string;
     } & ReadOnlyRequirement<InstanceType<S>, K> & TypeMatchOrError<InstanceType<S>[K], infer<TZ>>): void;
-    // (undocumented)
     exposeProperty<S extends BindableSchema & Ctor, K extends string & ExposableKeys<InstanceType<S>>>(schema: S, name: K, def: {
         schema: TypeFactoryType;
         description?: string;
         readOnly?: boolean;
     }): void;
-    // (undocumented)
     exposeProperty<S extends BindableSchema & Ctor, K extends string & ExposableKeys<InstanceType<S>>>(schema: S, name: K, tfType: TypeFactoryType): void;
-    // (undocumented)
     instanceOf<T extends TreeNodeSchemaClass>(schema: T): ZodType<InstanceType<T>, ZodTypeDef, InstanceType<T>>;
 }
 
@@ -85,25 +81,19 @@ export const exposePropertiesSymbol: unique symbol;
 
 // @alpha
 export interface FunctionDef<Args extends readonly Arg[], Return extends z.ZodTypeAny | TypeFactoryType, Rest extends z.ZodTypeAny | TypeFactoryType | null = null> {
-    // (undocumented)
     args: Args;
-    // (undocumented)
     description?: string;
-    // (undocumented)
     rest?: Rest;
-    // (undocumented)
     returns: Return;
 }
 
 // @alpha
 export interface IExposedMethods {
-    // (undocumented)
     [exposeMethodsSymbol](methods: ExposedMethods): void;
 }
 
 // @alpha
 export interface IExposedProperties {
-    // (undocumented)
     [exposePropertiesSymbol]?(properties: ExposedProperties): void;
 }
 
@@ -146,14 +136,14 @@ export type MethodKeys<T> = {
 
 // @alpha
 export class PropertyDef {
-    constructor(name: string, description: string | undefined, schema: ZodTypeAny | TypeFactoryType, readOnly: boolean);
-    // (undocumented)
+    constructor(
+    name: string,
+    description: string | undefined,
+    schema: ZodTypeAny | TypeFactoryType,
+    readOnly: boolean);
     readonly description: string | undefined;
-    // (undocumented)
     readonly name: string;
-    // (undocumented)
     readonly readOnly: boolean;
-    // (undocumented)
     readonly schema: ZodTypeAny | TypeFactoryType;
 }
 
@@ -230,140 +220,109 @@ export const typeFactory: {
     instanceOf<T extends TreeNodeSchemaClass_2>(schema: T): TypeFactoryInstanceOf;
 };
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryArray extends TypeFactoryType {
-    // (undocumented)
     readonly element: TypeFactoryType;
-    // (undocumented)
     readonly _kind: "array";
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryBoolean extends TypeFactoryType {
-    // (undocumented)
     readonly _kind: "boolean";
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryInstanceOf extends TypeFactoryType {
-    // (undocumented)
     readonly _kind: "instanceof";
-    // (undocumented)
     readonly schema: ObjectNodeSchema;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryLiteral extends TypeFactoryType {
-    // (undocumented)
     readonly _kind: "literal";
-    // (undocumented)
     readonly value: string | number | boolean;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryMap extends TypeFactoryType {
-    // (undocumented)
     readonly keyType: TypeFactoryType;
-    // (undocumented)
     readonly _kind: "map";
-    // (undocumented)
     readonly valueType: TypeFactoryType;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryNull extends TypeFactoryType {
-    // (undocumented)
     readonly _kind: "null";
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryNumber extends TypeFactoryType {
-    // (undocumented)
     readonly _kind: "number";
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryObject extends TypeFactoryType {
-    // (undocumented)
     readonly _kind: "object";
-    // (undocumented)
     readonly shape: Record<string, TypeFactoryType>;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryOptional extends TypeFactoryType {
-    // (undocumented)
     readonly innerType: TypeFactoryType;
-    // (undocumented)
     readonly _kind: "optional";
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryReadonly extends TypeFactoryType {
-    // (undocumented)
     readonly innerType: TypeFactoryType;
-    // (undocumented)
     readonly _kind: "readonly";
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryRecord extends TypeFactoryType {
-    // (undocumented)
     readonly keyType: TypeFactoryType;
-    // (undocumented)
     readonly _kind: "record";
-    // (undocumented)
     readonly valueType: TypeFactoryType;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryString extends TypeFactoryType {
-    // (undocumented)
     readonly _kind: "string";
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryTuple extends TypeFactoryType {
-    // (undocumented)
     readonly items: readonly TypeFactoryType[];
-    // (undocumented)
     readonly _kind: "tuple";
-    // (undocumented)
     readonly rest?: TypeFactoryType;
 }
 
 // @alpha
 export interface TypeFactoryType {
-    // (undocumented)
     readonly _kind: TypeFactoryTypeKind;
 }
 
 // @alpha
 export type TypeFactoryTypeKind = "string" | "number" | "boolean" | "void" | "undefined" | "null" | "unknown" | "array" | "object" | "record" | "map" | "tuple" | "union" | "literal" | "optional" | "readonly" | "instanceof";
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryUndefined extends TypeFactoryType {
-    // (undocumented)
     readonly _kind: "undefined";
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryUnion extends TypeFactoryType {
-    // (undocumented)
     readonly _kind: "union";
-    // (undocumented)
     readonly options: readonly TypeFactoryType[];
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryUnknown extends TypeFactoryType {
-    // (undocumented)
     readonly _kind: "unknown";
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface TypeFactoryVoid extends TypeFactoryType {
-    // (undocumented)
     readonly _kind: "void";
 }
 

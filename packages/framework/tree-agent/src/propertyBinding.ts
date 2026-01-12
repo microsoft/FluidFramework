@@ -75,9 +75,21 @@ export type TypeMatchOrError<Expected, Received> = [Received] extends [Expected]
  */
 export class PropertyDef {
 	public constructor(
+		/**
+		 * The name of the property.
+		 */
 		public readonly name: string,
+		/**
+		 * Optional description of the property.
+		 */
 		public readonly description: string | undefined,
+		/**
+		 * The schema defining the property's type (either Zod or TypeFactory).
+		 */
 		public readonly schema: ZodTypeAny | TypeFactoryType,
+		/**
+		 * Whether the property is readonly.
+		 */
 		public readonly readOnly: boolean,
 	) {}
 }
@@ -87,7 +99,9 @@ export class PropertyDef {
  * @alpha
  */
 export interface ExposedProperties {
-	// Overload for Zod types with compile-time checking
+	/**
+	 * Expose a property with Zod type checking.
+	 */
 	exposeProperty<
 		S extends BindableSchema & Ctor,
 		K extends string & ExposableKeys<InstanceType<S>>,
@@ -99,7 +113,9 @@ export interface ExposedProperties {
 			TypeMatchOrError<InstanceType<S>[K], ZodInfer<TZ>>,
 	): void;
 
-	// Overload for type factory types without compile-time checking - with metadata
+	/**
+	 * Expose a property with type factory type and metadata.
+	 */
 	exposeProperty<
 		S extends BindableSchema & Ctor,
 		K extends string & ExposableKeys<InstanceType<S>>,
@@ -109,12 +125,17 @@ export interface ExposedProperties {
 		def: { schema: TypeFactoryType; description?: string; readOnly?: boolean },
 	): void;
 
-	// Overload for type factory types without compile-time checking - simple form
+	/**
+	 * Expose a property with type factory type (simple form).
+	 */
 	exposeProperty<
 		S extends BindableSchema & Ctor,
 		K extends string & ExposableKeys<InstanceType<S>>,
 	>(schema: S, name: K, tfType: TypeFactoryType): void;
 
+	/**
+	 * Create a Zod type that references a SharedTree schema class.
+	 */
 	instanceOf<T extends TreeNodeSchemaClass>(
 		schema: T,
 	): ZodType<InstanceType<T>, ZodTypeDef, InstanceType<T>>;
@@ -135,6 +156,9 @@ export interface ExposedProperties {
  * @alpha
  */
 export interface IExposedProperties {
+	/**
+	 * Static method that exposes properties of this schema class to an agent.
+	 */
 	[exposePropertiesSymbol]?(properties: ExposedProperties): void;
 }
 

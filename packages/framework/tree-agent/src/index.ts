@@ -54,20 +54,12 @@ export type {
 	IfEquals,
 } from "./propertyBinding.js";
 
-/**
- * Custom type system for defining method and property types without zod dependency.
- * @alpha
- */
 export {
 	typeFactory,
 	isTypeFactoryType,
 	instanceOfsTypeFactory,
 } from "./treeAgentTypes.js";
 
-/**
- * Type interfaces for the type factory type system.
- * @alpha
- */
 export type {
 	TypeFactoryType,
 	TypeFactoryTypeKind,

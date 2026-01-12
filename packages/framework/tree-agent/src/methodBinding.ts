@@ -75,9 +75,21 @@ export interface FunctionDef<
 	Return extends z.ZodTypeAny | TypeFactoryType,
 	Rest extends z.ZodTypeAny | TypeFactoryType | null = null,
 > {
+	/**
+	 * Optional description of the function.
+	 */
 	description?: string;
+	/**
+	 * The function's parameters.
+	 */
 	args: Args;
+	/**
+	 * Optional rest parameter type.
+	 */
 	rest?: Rest;
+	/**
+	 * The function's return type.
+	 */
 	returns: Return;
 }
 
@@ -234,6 +246,9 @@ export const exposeMethodsSymbol: unique symbol = Symbol("run");
  * @alpha
  */
 export interface IExposedMethods {
+	/**
+	 * Static method that exposes methods of this schema class to an agent.
+	 */
 	[exposeMethodsSymbol](methods: ExposedMethods): void;
 }
 

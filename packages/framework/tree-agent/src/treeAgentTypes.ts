@@ -35,6 +35,9 @@ export type TypeFactoryTypeKind =
  * @alpha
  */
 export interface TypeFactoryType {
+	/**
+	 * The kind of type this represents.
+	 */
 	readonly _kind: TypeFactoryTypeKind;
 }
 
@@ -77,136 +80,243 @@ export function isTypeFactoryType(value: unknown): value is TypeFactoryType {
 // Primitive type factories
 
 /**
+ * Represents a string type in the type factory system.
  * @alpha
  */
 export interface TypeFactoryString extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "string";
 }
 
 /**
+ * Represents a number type in the type factory system.
  * @alpha
  */
 export interface TypeFactoryNumber extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "number";
 }
 
 /**
+ * Represents a boolean type in the type factory system.
  * @alpha
  */
 export interface TypeFactoryBoolean extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "boolean";
 }
 
 /**
+ * Represents a void type in the type factory system.
  * @alpha
  */
 export interface TypeFactoryVoid extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "void";
 }
 
 /**
+ * Represents an undefined type in the type factory system.
  * @alpha
  */
 export interface TypeFactoryUndefined extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "undefined";
 }
 
 /**
+ * Represents a null type in the type factory system.
  * @alpha
  */
 export interface TypeFactoryNull extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "null";
 }
 
 /**
+ * Represents an unknown type in the type factory system.
  * @alpha
  */
 export interface TypeFactoryUnknown extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "unknown";
 }
 
 // Complex type interfaces
 
 /**
+ * Represents an array type in the type factory system.
  * @alpha
  */
 export interface TypeFactoryArray extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "array";
+	/**
+	 * The type of elements in the array.
+	 */
 	readonly element: TypeFactoryType;
 }
 
 /**
+ * Represents an object type with a fixed shape in the type factory system.
  * @alpha
  */
 export interface TypeFactoryObject extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "object";
+	/**
+	 * The shape of the object, mapping property names to their types.
+	 */
 	readonly shape: Record<string, TypeFactoryType>;
 }
 
 /**
+ * Represents a record type (index signature) in the type factory system.
  * @alpha
  */
 export interface TypeFactoryRecord extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "record";
+	/**
+	 * The type of the record's keys.
+	 */
 	readonly keyType: TypeFactoryType;
+	/**
+	 * The type of the record's values.
+	 */
 	readonly valueType: TypeFactoryType;
 }
 
 /**
+ * Represents a Map type in the type factory system.
  * @alpha
  */
 export interface TypeFactoryMap extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "map";
+	/**
+	 * The type of the map's keys.
+	 */
 	readonly keyType: TypeFactoryType;
+	/**
+	 * The type of the map's values.
+	 */
 	readonly valueType: TypeFactoryType;
 }
 
 /**
+ * Represents a tuple type with fixed-length items and optional rest elements in the type factory system.
  * @alpha
  */
 export interface TypeFactoryTuple extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "tuple";
+	/**
+	 * The fixed-length items in the tuple.
+	 */
 	readonly items: readonly TypeFactoryType[];
+	/**
+	 * Optional rest element type for variable-length tuples.
+	 */
 	readonly rest?: TypeFactoryType;
 }
 
 /**
+ * Represents a union type in the type factory system.
  * @alpha
  */
 export interface TypeFactoryUnion extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "union";
+	/**
+	 * The possible types in the union.
+	 */
 	readonly options: readonly TypeFactoryType[];
 }
 
 /**
+ * Represents a literal type (specific string, number, or boolean value) in the type factory system.
  * @alpha
  */
 export interface TypeFactoryLiteral extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "literal";
+	/**
+	 * The specific literal value.
+	 */
 	readonly value: string | number | boolean;
 }
 
 /**
+ * Represents an optional type modifier in the type factory system.
  * @alpha
  */
 export interface TypeFactoryOptional extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "optional";
+	/**
+	 * The inner type that is optional.
+	 */
 	readonly innerType: TypeFactoryType;
 }
 
 /**
+ * Represents a readonly type modifier in the type factory system.
  * @alpha
  */
 export interface TypeFactoryReadonly extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "readonly";
+	/**
+	 * The inner type that is readonly.
+	 */
 	readonly innerType: TypeFactoryType;
 }
 
 /**
+ * Represents an instanceof type that references a SharedTree schema class in the type factory system.
  * @alpha
  */
 export interface TypeFactoryInstanceOf extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
 	readonly _kind: "instanceof";
+	/**
+	 * The SharedTree schema class to reference.
+	 */
 	readonly schema: ObjectNodeSchema;
 }
 
