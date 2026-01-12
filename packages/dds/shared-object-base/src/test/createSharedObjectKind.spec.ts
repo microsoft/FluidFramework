@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type {
 	IChannel,
 	IChannelAttributes,
@@ -13,7 +14,6 @@ import type {
 	IChannelServices,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
@@ -60,8 +60,7 @@ class SharedFooFactory implements IChannelFactory<IFoo> {
 			foo: "bar",
 			attributes: this.attributes,
 			id,
-			minVersionForCollab: (runtime as IFluidDataStoreRuntimeInternalConfig)
-				.minVersionForCollab,
+			minVersionForCollab: (runtime as FluidDataStoreRuntime).minVersionForCollab,
 			// Note: other IChannel methods aren't relevant
 		} as IFoo & IChannel;
 	}

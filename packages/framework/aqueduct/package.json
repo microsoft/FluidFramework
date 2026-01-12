@@ -155,7 +155,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IDataObjectProps": {
+				"forwardCompat": false
+			},
+			"Interface_DataObjectFactoryProps": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
