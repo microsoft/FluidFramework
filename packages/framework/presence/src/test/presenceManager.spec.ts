@@ -90,6 +90,12 @@ describe("Presence", () => {
 		});
 
 		describe("self attendee", () => {
+			beforeEach(() => {
+				// Remove local client from audience to test the full connection flow
+				// (simulating the case where local client wasn't previously connected)
+				runtime.removeMember(initialLocalClientConnectionId);
+			});
+
 			it("is announced via `attendeeConnected` when presence initializes while self is in Audience", () => {
 				// Setup - create presence in disconnected state
 				const { presence, connect } = prepareDisconnectedPresence(

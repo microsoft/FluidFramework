@@ -76,8 +76,6 @@ export const connectionId1 = "client1" as const satisfies ClientConnectionId;
 export const localAttendeeId = createSpecificAttendeeId("localAttendeeId");
 /**
  * Mock {@link ClientConnectionId} for the local client in tests.
- * Note: This is intentionally not in the initial audience so that tests can
- * properly simulate connecting a client that wasn't previously connected.
  */
 export const initialLocalClientConnectionId =
 	"localClient" as const satisfies ClientConnectionId;
@@ -132,6 +130,103 @@ export function generateBasicClientJoin(
 export type ProcessSignalFunction = ReturnType<typeof createPresenceManager>["processSignal"];
 
 /**
+ * Creates a processSignal wrapper function for a presence manager.
+ */
+function createProcessSignal(
+	presence: ReturnType<typeof createPresenceManager>,
+): ProcessSignalFunction {
+	return (
+		addressChain: string[],
+		signalMessage: InboundExtensionMessage<SignalMessages>,
+		local: boolean,
+	): void => {
+		// Pass on to presence manager, but first clone the message to avoid
+		// possibility of Presence mutating the original message which often
+		// contains reference to general (shared) test data.
+		// Additionally JSON.parse(JSON.stringify(signalMessage)) is used to
+		// ensure only regular JSON-serializable data is passed to Presence.
+		// In production environment, the message is always extracted from
+		// the network and Presence can safely mutate it.
+		presence.processSignal(
+			addressChain,
+			JSON.parse(JSON.stringify(signalMessage)) as InboundExtensionMessage<SignalMessages>,
+			local,
+		);
+	};
+}
+
+/**
+ * Calculates update providers based on current audience members.
+ */
+function calculateUpdateProviders(
+	runtime: MockEphemeralRuntime,
+	clientConnectionId: ClientConnectionId,
+): ClientConnectionId[] {
+	// This logic needs to be kept in sync with datastore manager.
+	// From PresenceDatastoreManager.getInteractiveMembersExcludingSelf:
+	const members = runtime.audience.getMembers();
+	members.delete(clientConnectionId);
+	const all = new Set<ClientConnectionId>();
+	const writers = new Set<ClientConnectionId>();
+	for (const [id, client] of members) {
+		if (client.details.capabilities.interactive) {
+			all.add(id);
+			if (client.mode === "write") {
+				writers.add(id);
+			}
+		}
+	}
+	// From PresenceDatastoreManager.joinSession:
+	const updateProviders = [...(writers.size > 0 ? writers : all)];
+	if (updateProviders.length > 3) {
+		updateProviders.length = 3;
+	}
+	return updateProviders;
+}
+
+/**
+ * Processes the local join signal and sends a fake join response.
+ */
+function processJoinSignalAndResponse(
+	processSignal: ProcessSignalFunction,
+	expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">>,
+	clientConnectionId: ClientConnectionId,
+	updateProviders: ClientConnectionId[],
+	clock: Omit<SinonFakeTimers, "restore">,
+	latency: number,
+): void {
+	// Pass a little time (to mimic reality)
+	clock.tick(latency);
+
+	// Return the [local] join signal
+	processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
+
+	if (updateProviders.length > 0) {
+		// Pass time (to mimic likely response)
+		clock.tick(broadcastJoinResponseDelaysMs.namedResponder + 20);
+
+		// Send a fake join response
+		// There are no other attendees in the session (not realistic) but this
+		// convinces the presence manager that it now has full knowledge, which
+		// enables it to respond to other's join requests accurately.
+		processSignal(
+			[],
+			{
+				type: "Pres:DatastoreUpdate",
+				content: {
+					...expectedClientJoin.content,
+					isComplete: true,
+					joinResponseFor: [clientConnectionId],
+				},
+				clientId: updateProviders[0],
+			} satisfies InboundDatastoreUpdateMessage,
+			false,
+		);
+	}
+}
+
+/**
  * Prepares an instance of presence as it would be if initialized while connected.
  *
  * @param runtime - the mock runtime
@@ -150,13 +245,42 @@ export function prepareConnectedPresence(
 	presence: PresenceWithNotifications;
 	processSignal: ProcessSignalFunction;
 } {
-	const { presence, processSignal, connect } = prepareDisconnectedPresence(
-		runtime,
+	// Set runtime to connected state
+	runtime.clientId = clientConnectionId;
+	runtime.joined = true;
+
+	logger?.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
+
+	const updateProviders = calculateUpdateProviders(runtime, clientConnectionId);
+
+	const expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
 		attendeeId,
+		clientConnectionId,
+		updateProviders,
+	});
+	delete expectedClientJoin.clientId;
+	runtime.signalsExpected.push([expectedClientJoin]);
+
+	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
+	const processSignal = createProcessSignal(presence);
+
+	// Validate expectations post initialization to make sure logger
+	// and runtime are left in a clean expectation state.
+	const logErrors = getUnexpectedLogErrorException(logger);
+	if (logErrors) {
+		throw logErrors;
+	}
+	runtime.assertAllSignalsSubmitted();
+
+	processJoinSignalAndResponse(
+		processSignal,
+		expectedClientJoin,
+		clientConnectionId,
+		updateProviders,
 		clock,
-		logger,
+		10,
 	);
-	connect(clientConnectionId);
 
 	return {
 		presence,
@@ -196,25 +320,7 @@ export function prepareDisconnectedPresence(
 	logger?.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
 
 	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
-
-	const processSignal = (
-		addressChain: string[],
-		signalMessage: InboundExtensionMessage<SignalMessages>,
-		local: boolean,
-	): void => {
-		// Pass on to presence manager, but first clone the message to avoid
-		// possibility of Presence mutating the original message which often
-		// contains reference to general (shared) test data.
-		// Additionally JSON.parse(JSON.stringify(signalMessage)) is used to
-		// ensure only regular JSON-serializable data is passed to Presence.
-		// In production environment, the message is always extracted from
-		// the network and Presence can safely mutate it.
-		presence.processSignal(
-			addressChain,
-			JSON.parse(JSON.stringify(signalMessage)) as InboundExtensionMessage<SignalMessages>,
-			local,
-		);
-	};
+	const processSignal = createProcessSignal(presence);
 
 	// Validate expectations post initialization to make sure logger
 	// and runtime are left in a clean expectation state.
@@ -224,24 +330,7 @@ export function prepareDisconnectedPresence(
 	}
 
 	const connect = (clientConnectionId: ClientConnectionId): void => {
-		// This logic needs to be kept in sync with datastore manager.
-		// From PresenceDatastoreManager.getInteractiveMembersExcludingSelf:
-		const members = runtime.audience.getMembers();
-		members.delete(clientConnectionId);
-		const all = new Set<ClientConnectionId>();
-		const writers = new Set<ClientConnectionId>();
-		for (const [id, client] of members) {
-			if (client.details.capabilities.interactive) {
-				all.add(id);
-				if (client.mode === "write") {
-					writers.add(id);
-				}
-			}
-		}
-		const updateProviders = [...(writers.size > 0 ? writers : all)];
-		if (updateProviders.length > 3) {
-			updateProviders.length = 3;
-		}
+		const updateProviders = calculateUpdateProviders(runtime, clientConnectionId);
 
 		const expectedClientJoin: OutboundClientJoinMessage &
 			Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(
@@ -261,34 +350,14 @@ export function prepareDisconnectedPresence(
 		// Validate signal was submitted
 		runtime.assertAllSignalsSubmitted();
 
-		// Pass a little time (to mimic reality)
-		clock.tick(10);
-
-		// Return the [local] join signal
-		processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
-
-		if (updateProviders.length > 0) {
-			// Pass time (to mimic likely response)
-			clock.tick(broadcastJoinResponseDelaysMs.namedResponder + 20);
-
-			// Send a fake join response
-			// There are no other attendees in the session (not realistic) but this
-			// convinces the presence manager that it now has full knowledge, which
-			// enables it to respond to other's join requests accurately.
-			processSignal(
-				[],
-				{
-					type: "Pres:DatastoreUpdate",
-					content: {
-						...expectedClientJoin.content,
-						isComplete: true,
-						joinResponseFor: [clientConnectionId],
-					},
-					clientId: updateProviders[0],
-				} satisfies InboundDatastoreUpdateMessage,
-				false,
-			);
-		}
+		processJoinSignalAndResponse(
+			processSignal,
+			expectedClientJoin,
+			clientConnectionId,
+			updateProviders,
+			clock,
+			10,
+		);
 	};
 
 	return {

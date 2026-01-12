@@ -100,15 +100,25 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 			this.logger = logger;
 		}
 
-		const numWriteClients = 6;
+		const numWriteClients = 7;
 		const clientsData = buildClientDataArray(
-			["client0", "client1", "client2", "client3", "client4", "client5", "client6", "client7"],
+			[
+				"client0",
+				"client1",
+				"client2",
+				"client3",
+				"client4",
+				"client5",
+				"localClient",
+				"client6",
+				"client7",
+			],
 			numWriteClients,
 		);
 		this.quorum = makeMockQuorum(clientsData);
 		this.audience = makeMockAudience(clientsData);
-		// Initial quorum members have sequence numbers 0, 10, 20, ..., 50
-		// so next available is 60
+		// Initial quorum members have sequence numbers 0, 10, 20, ..., 60
+		// so next available is 70
 		this.nextSequenceNumber = 10 * numWriteClients;
 		this.events = {
 			on: (
