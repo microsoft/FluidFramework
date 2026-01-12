@@ -185,7 +185,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		const dataMap = new Map<PackageWithKind, PackageData>();
 		const config = lilconfig(configName, { searchPlaces });
 
-		const repo = (await this.getContext()).repo;
+		const { repo } = await this.getContext();
 
 		for (const pkg of packages) {
 			// Package configuration:
