@@ -3,23 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
-import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
-import type {
-	IFluidCompatibilityMetadata,
-	Logger,
-	Package,
-	PackageJson,
-} from "@fluidframework/build-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import { formatISO, isDate, isValid, parseISO } from "date-fns";
-import { diff, parse } from "semver";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
-
-// Approximate month as 33 days to add some buffer and avoid over-counting months in longer spans.
-export const daysInMonthApproximation = 33;
+import {
+	DEFAULT_GENERATION_DIR,
+	DEFAULT_GENERATION_FILE_NAME,
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	checkPackageCompatLayerGeneration,
+	deleteCompatLayerGenerationFile,
+	writePackageCompatLayerGeneration,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../library/compatLayerGeneration.js";
 
 /**
  * Command to update the generation value of Fluid's compatibility layers.
@@ -28,21 +24,23 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 	typeof UpdateGenerationLayerCommand
 > {
 	static readonly description =
-		"Updates the generation and release date for layer compatibility.";
+		`Updates the generation of a package for layer compatibility.` +
+		` To opt in a package, add an empty "fluidCompatMetadata" object to its package.json.`;
 
 	static readonly flags = {
 		generationDir: Flags.directory({
 			description: "The directory where the generation file is located.",
-			default: "./src",
+			default: DEFAULT_GENERATION_DIR,
 			exists: true,
 		}),
 		outFile: Flags.string({
 			description: `Output the results to this file.`,
-			default: `layerGenerationState.ts`,
+			default: DEFAULT_GENERATION_FILE_NAME,
 		}),
 		minimumCompatWindowMonths: Flags.integer({
-			description: `The minimum compatibility window in months that is supported across all Fluid layers.`,
-			default: 3,
+			description: `The minimum compatibility window in months that is supported across all Fluid layers. Must be at least 1`,
+			default: DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+			min: 1,
 		}),
 		...PackageCommand.flags,
 	} as const;
@@ -51,167 +49,28 @@ export default class UpdateGenerationLayerCommand extends PackageCommand<
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { generationDir, outFile, minimumCompatWindowMonths } = this.flags;
-		const generationFileFullPath = path.join(pkg.directory, generationDir, outFile);
 
-		const currentPkgVersion = pkg.version;
-		// "patch" versions do trigger generation updates.
-		if (isCurrentPackageVersionPatch(currentPkgVersion)) {
-			this.verbose(`Patch version detected; skipping generation update.`);
-			return;
-		}
-
-		// Default to generation 1 if no existing file.
-		let newGeneration: number | undefined = 1;
-		const { fluidCompatMetadata } = pkg.packageJson;
-		if (fluidCompatMetadata !== undefined) {
-			this.verbose(
-				`Layer compatibility metadata from package.json: Generation: ${fluidCompatMetadata.generation}, ` +
-					`Release Date: ${fluidCompatMetadata.releaseDate}, Package Version: ${fluidCompatMetadata.releasePkgVersion}`,
-			);
-			newGeneration = maybeGetNewGeneration(
-				currentPkgVersion,
-				fluidCompatMetadata,
-				minimumCompatWindowMonths,
-				this.logger,
-			);
-			if (newGeneration === undefined) {
-				// No update needed; early exit.
-				this.verbose(`No generation update needed; skipping.`);
-				return;
-			}
-		}
-
-		const currentReleaseDate = formatISO(new Date(), { representation: "date" });
-		const newFluidCompatMetadata: IFluidCompatibilityMetadata = {
-			generation: newGeneration,
-			releaseDate: currentReleaseDate,
-			releasePkgVersion: currentPkgVersion,
-		};
-		updatePackageJsonFile(pkg.directory, (json: PackageJson) => {
-			json.fluidCompatMetadata = newFluidCompatMetadata;
-		});
-		await writeFile(generationFileFullPath, generateLayerFileContent(newGeneration), {
-			encoding: "utf8",
-		});
-		this.info(`Layer generation updated to ${newGeneration}`);
-	}
-}
-
-/**
- * Determines if the current package version represents a patch release.
- *
- * @param pkgVersion - The semantic version of the package (e.g., "2.0.1")
- * @returns True if the version is a patch release, false otherwise
- *
- * @throws Error When the provided version string is not a valid semantic version
- *
- * @example
- * ```typescript
- * isCurrentPackageVersionPatch("2.0.1"); // returns true
- * isCurrentPackageVersionPatch("2.1.0"); // returns false
- * isCurrentPackageVersionPatch("3.0.0"); // returns false
- * ```
- */
-export function isCurrentPackageVersionPatch(pkgVersion: string): boolean {
-	const parsed = parse(pkgVersion);
-	if (parsed === null) {
-		throw new Error(`Package version ${pkgVersion} is not a valid semver`);
-	}
-	return parsed.patch > 0;
-}
-
-/**
- * Generates the complete content for a layer generation TypeScript file.
- *
- * Creates a properly formatted TypeScript file with copyright header, autogenerated warning,
- * and export for generation number.
- *
- * @param generation - The layer compatibility generation number
- * @returns The complete file content as a string ready to be written to disk
- *
- * @example
- * ```typescript
- * const content = generateLayerFileContent(5);
- * // Returns a complete TypeScript file with exports:
- * // export const generation = 5;
- * ```
- */
-export function generateLayerFileContent(generation: number): string {
-	return `/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- *
- * THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY
- */
-
-export const generation = ${generation};
-`;
-}
-
-/**
- * Determines if a new generation should be generated based on package version changes and time since
- * the last release.
- *
- * This function parses an existing layer generation file and decides whether to increment the generation
- * number based on:
- * 1. Whether the package version has changed since the last update
- * 2. How much time has elapsed since the previous release date
- * 3. The minimum compatibility window constraints
- *
- * The generation increment is calculated as the number of months since the previous release,
- * but capped at (minimumCompatWindowMonths - 1) to maintain compatibility requirements.
- *
- * @param currentPkgVersion - The current package version to compare against the stored version
- * @param fluidCompatMetadata - The existing Fluid compatibility metadata from the previous generation
- * @param minimumCompatWindowMonths - The maximum number of months of compatibility to maintain across layers
- * @param log - Logger instance for verbose output about the calculation process
- * @returns The new generation number if an update is needed, or undefined if no update is required
- *
- * @throws Error When the generation file content doesn't match the expected format
- * @throws Error When the current date is older than the previous release date
- */
-export function maybeGetNewGeneration(
-	currentPkgVersion: string,
-	fluidCompatMetadata: IFluidCompatibilityMetadata,
-	minimumCompatWindowMonths: number,
-	log: Logger,
-): number | undefined {
-	// Only "minor" or "major" version changes trigger generation updates.
-	const result = diff(currentPkgVersion, fluidCompatMetadata.releasePkgVersion);
-	if (result === null || (result !== "minor" && result !== "major")) {
-		log.verbose(`No minor or major release since last update; skipping generation update.`);
-		return undefined;
-	}
-
-	log.verbose(
-		`Previous package version: ${fluidCompatMetadata.releasePkgVersion}, Current package version: ${currentPkgVersion}`,
-	);
-
-	const previousReleaseDate = parseISO(fluidCompatMetadata.releaseDate);
-	if (!isValid(previousReleaseDate) || !isDate(previousReleaseDate)) {
-		throw new Error(
-			`Previous release date "${fluidCompatMetadata.releaseDate}" is not a valid date.`,
+		const result = await checkPackageCompatLayerGeneration(
+			pkg,
+			generationDir,
+			outFile,
+			minimumCompatWindowMonths,
+			this.logger,
 		);
-	}
 
-	const today = new Date();
-	const timeDiff = today.getTime() - previousReleaseDate.getTime();
-	if (timeDiff < 0) {
-		throw new Error("Current date is older that previous release date");
+		if (result.needsUpdate) {
+			await writePackageCompatLayerGeneration(
+				pkg,
+				result.newGeneration,
+				generationDir,
+				outFile,
+			);
+			this.info(`Layer generation updated to ${result.newGeneration}`);
+		} else if (result.needsDeletion) {
+			await deleteCompatLayerGenerationFile(result.filePath);
+			this.info(`Deleted orphaned generation file: ${result.filePath}`);
+		} else {
+			this.verbose(`No update needed for ${pkg.name}`);
+		}
 	}
-	const daysBetweenReleases = Math.round(timeDiff / (1000 * 60 * 60 * 24));
-	const monthsBetweenReleases = Math.floor(daysBetweenReleases / daysInMonthApproximation);
-	log.verbose(`Previous release date: ${previousReleaseDate}, Today: ${today}`);
-	log.verbose(
-		`Time between releases: ${daysBetweenReleases} day(s) or ~${monthsBetweenReleases} month(s)`,
-	);
-
-	const newGeneration =
-		fluidCompatMetadata.generation +
-		Math.min(monthsBetweenReleases, minimumCompatWindowMonths - 1);
-	if (newGeneration === fluidCompatMetadata.generation) {
-		log.verbose(`Generation remains the same (${newGeneration}); skipping generation update.`);
-		return undefined;
-	}
-	return newGeneration;
 }

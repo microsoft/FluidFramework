@@ -462,7 +462,8 @@ Uint64MapProperty.prototype._castFunctor = _castFunctors.Uint64;
  * A ValueMapProperty which stores Int16 values
  */
 export class Int16MapProperty extends ValueMapProperty {
-	/** @param {Object} in_params - Input parameters for property creation
+	/**
+	 * @param {Object} in_params - Input parameters for property creation
 	 *
 	 * @constructor
 	 * @protected

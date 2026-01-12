@@ -18,7 +18,7 @@ export class SharedDelta extends SharedOT<Delta, Delta> {
 		return runtime.createChannel(id, DeltaFactory.Type) as SharedDelta;
 	}
 
-	public static getFactory() {
+	public static getFactory(): DeltaFactory {
 		return new DeltaFactory();
 	}
 
@@ -30,14 +30,14 @@ export class SharedDelta extends SharedOT<Delta, Delta> {
 		return this.state;
 	}
 
-	public get text() {
+	public get text(): string {
 		return this.state.reduce((s, delta) => {
 			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			return `${s}${delta.insert?.toString()}`;
 		}, "");
 	}
 
-	public get length() {
+	public get length(): number {
 		return this.text.length;
 	}
 
@@ -49,11 +49,11 @@ export class SharedDelta extends SharedOT<Delta, Delta> {
 		return state.compose(op);
 	}
 
-	public insert(position: number, text: string) {
+	public insert(position: number, text: string): void {
 		this.apply(new Delta().retain(position).insert(text));
 	}
 
-	public delete(start: number, end: number) {
+	public delete(start: number, end: number): void {
 		this.apply(new Delta().retain(start).delete(end - start));
 	}
 }
@@ -67,10 +67,10 @@ export class DeltaFactory implements IChannelFactory {
 		packageVersion: "test",
 	};
 
-	public get type() {
+	public get type(): string {
 		return DeltaFactory.Type;
 	}
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return DeltaFactory.Attributes;
 	}
 
@@ -82,13 +82,13 @@ export class DeltaFactory implements IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
-	) {
+	): Promise<SharedDelta> {
 		const instance = new SharedDelta(id, runtime, attributes);
 		await instance.load(services);
 		return instance;
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string) {
+	public create(runtime: IFluidDataStoreRuntime, id: string): SharedDelta {
 		const instance = new SharedDelta(id, runtime, this.attributes);
 		instance.initializeLocal();
 		return instance;

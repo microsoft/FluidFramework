@@ -264,7 +264,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			this.loadSummarizable(s, services, parse),
 		);
 
-		if (this.detachedRevision !== undefined) {
+		if (this.detachedRevision === undefined) {
+			await Promise.all([loadEditManager, ...loadSummarizables]);
+		} else {
 			// If we are detached but loading from a summary, then we need to update our detached revision to ensure that it is ahead of all detached revisions in the summary.
 			// First, finish loading the edit manager so that we can inspect the sequence numbers of the commits on the trunk.
 			await loadEditManager;
@@ -277,8 +279,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.detachedRevision = latestDetachedSequenceNumber;
 			}
 			await Promise.all(loadSummarizables);
-		} else {
-			await Promise.all([loadEditManager, ...loadSummarizables]);
 		}
 	}
 
@@ -467,8 +467,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 					);
 					break;
 				}
-				default:
+				default: {
 					unreachableCase(type);
+				}
 			}
 		}
 
@@ -569,8 +570,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.submitBranchCreation(message.branchId);
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(type);
+			}
 		}
 	}
 
@@ -599,8 +601,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.editManager.removeBranch(message.branchId);
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(type);
+			}
 		}
 	}
 
@@ -624,8 +627,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.editManager.addNewBranch(message.branchId);
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(type);
+			}
 		}
 	}
 

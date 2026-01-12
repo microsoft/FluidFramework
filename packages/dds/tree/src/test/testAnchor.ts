@@ -54,7 +54,7 @@ export class TestAnchor {
 			}
 		});
 		cursor.free();
-		if (paths.length < 1) {
+		if (paths.length === 0) {
 			assert.fail("Value not found in tree");
 		}
 		if (paths.length > 1) {

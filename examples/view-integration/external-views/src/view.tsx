@@ -5,7 +5,7 @@
 
 import React, { type FC, useEffect, useState } from "react";
 
-import { IDiceRoller } from "./container/index.js";
+import type { IDiceRoller } from "./container/index.js";
 
 export interface IDiceRollerViewProps {
 	diceRoller: IDiceRoller;
@@ -17,7 +17,7 @@ export const DiceRollerView: FC<IDiceRollerViewProps> = ({
 	const [diceValue, setDiceValue] = useState(diceRoller.value);
 
 	useEffect(() => {
-		const onDiceRolled = () => {
+		const onDiceRolled = (): void => {
 			setDiceValue(diceRoller.value);
 		};
 		diceRoller.events.on("diceRolled", onDiceRolled);

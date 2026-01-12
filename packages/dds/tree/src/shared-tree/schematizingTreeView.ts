@@ -50,7 +50,7 @@ import {
 	type TransactionResult,
 	type TransactionResultExt,
 	type RunTransactionParams,
-	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
@@ -61,17 +61,18 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
+	type TreeBranchAlpha,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
 	breakingClass,
 	disposeSymbol,
+	type JsonCompatibleReadOnly,
 	type WithBreakable,
 } from "../util/index.js";
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import type { TreeBranchAlpha } from "../simple-tree/index.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -163,6 +164,10 @@ export class SchematizingSimpleTreeView<
 				this.events.emit("commitApplied", data, getRevertible);
 			}),
 		);
+	}
+
+	public applyChange(change: JsonCompatibleReadOnly): void {
+		this.checkout.applySerializedChange(change);
 	}
 
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
@@ -291,7 +296,7 @@ export class SchematizingSimpleTreeView<
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		const addConstraints = (
 			constraintsOnRevert: boolean,
-			constraints: readonly TransactionConstraint[] = [],
+			constraints: readonly TransactionConstraintAlpha[] = [],
 		): void => {
 			addConstraintsToTransaction(this.checkout, constraintsOnRevert, constraints);
 		};
@@ -308,9 +313,9 @@ export class SchematizingSimpleTreeView<
 
 		if (rollback === true) {
 			this.checkout.transaction.abort();
-			return value !== undefined
-				? { success: false, value: value as TFailureValue }
-				: { success: false };
+			return value === undefined
+				? { success: false }
+				: { success: false, value: value as TFailureValue };
 		}
 
 		// Validate preconditions on revert after running the transaction callback and was successful.
@@ -320,9 +325,9 @@ export class SchematizingSimpleTreeView<
 		);
 
 		this.checkout.transaction.commit();
-		return value !== undefined
-			? { success: true, value: value as TSuccessValue }
-			: { success: true };
+		return value === undefined
+			? { success: true }
+			: { success: true, value: value as TSuccessValue };
 	}
 
 	private ensureUndisposed(): void {
@@ -450,7 +455,9 @@ export class SchematizingSimpleTreeView<
 			this.flexTreeContext[disposeSymbol]();
 			this.flexTreeContext = undefined;
 		}
-		this.flexTreeViewUnregisterCallbacks.forEach((unregister) => unregister());
+		for (const unregister of this.flexTreeViewUnregisterCallbacks) {
+			unregister();
+		}
 		this.flexTreeViewUnregisterCallbacks.clear();
 		anchors.slots.delete(SimpleContextSlot);
 	}
@@ -465,7 +472,9 @@ export class SchematizingSimpleTreeView<
 	public dispose(): void {
 		this.disposed = true;
 		this.disposeFlexView();
-		this.unregisterCallbacks.forEach((unregister) => unregister());
+		for (const unregister of this.unregisterCallbacks) {
+			unregister();
+		}
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.onDispose?.();
@@ -554,10 +563,11 @@ export function getCheckout(context: TreeBranch): TreeCheckout {
 export function addConstraintsToTransaction(
 	checkout: ITreeCheckout,
 	constraintsOnRevert: boolean,
-	constraints: readonly TransactionConstraint[] = [],
+	constraints: readonly TransactionConstraintAlpha[] = [],
 ): void {
 	for (const constraint of constraints) {
-		switch (constraint.type) {
+		const constraintType = constraint.type;
+		switch (constraintType) {
 			case "nodeInDocument": {
 				const node = getInnerNode(constraint.node);
 				const nodeStatus = getKernel(constraint.node).getStatus();
@@ -575,8 +585,17 @@ export function addConstraintsToTransaction(
 				}
 				break;
 			}
-			default:
-				unreachableCase(constraint.type);
+			case "noChange": {
+				if (constraintsOnRevert) {
+					checkout.editor.addNoChangeConstraintOnRevert();
+				} else {
+					checkout.editor.addNoChangeConstraint();
+				}
+				break;
+			}
+			default: {
+				unreachableCase(constraintType);
+			}
 		}
 	}
 }

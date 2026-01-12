@@ -6,20 +6,18 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 
-import type { ICodecOptions, IJsonCodec } from "../../codec/index.js";
+import type { CodecAndSchema, IJsonCodec } from "../../codec/index.js";
 import type { EncodedRevisionTag, RevisionTagCodec, RevisionTag } from "../rebase/index.js";
 
-import { type FormatV2, StableOrFinalRevisionTag } from "./detachedFieldIndexFormatV2.js";
+import { StableOrFinalRevisionTag } from "./detachedFieldIndexFormatV2.js";
 import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
 import { isStableId } from "@fluidframework/id-compressor/internal";
 import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
-import { brand } from "../../util/index.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(
 		private readonly revisionTagCodec: RevisionTagCodec,
-		private readonly options: ICodecOptions,
 		private readonly idCompressor: IIdCompressor,
 	) {}
 
@@ -57,14 +55,12 @@ class MajorCodec implements IJsonCodec<Major> {
 
 export function makeDetachedNodeToFieldCodecV2(
 	revisionTagCodec: RevisionTagCodec,
-	options: ICodecOptions,
 	idCompressor: IIdCompressor,
-): IJsonCodec<DetachedFieldSummaryData, FormatV2> {
-	const majorCodec = new MajorCodec(revisionTagCodec, options, idCompressor);
+): CodecAndSchema<DetachedFieldSummaryData> {
+	const majorCodec = new MajorCodec(revisionTagCodec, idCompressor);
 	return makeDetachedFieldIndexCodecFromMajorCodec(
-		options,
 		majorCodec,
-		brand(DetachedFieldIndexFormatVersion.v2),
+		DetachedFieldIndexFormatVersion.v2,
 		StableOrFinalRevisionTag,
 	);
 }

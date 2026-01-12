@@ -5,12 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { createPresenceManager } from "../presenceManager.js";
-
-import { addControlsTests } from "./broadcastControlsTests.js";
-import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
-
 import type {
 	BroadcastControlSettings,
 	LatestMapRaw,
@@ -20,6 +14,12 @@ import type {
 	LatestMap,
 } from "@fluidframework/presence/beta";
 import { StateFactory } from "@fluidframework/presence/beta";
+
+import { createPresenceManager } from "../presenceManager.js";
+
+import { addControlsTests } from "./broadcastControlsTests.js";
+import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
@@ -51,7 +51,7 @@ describe("Presence", () => {
 				x: number;
 				y: number;
 			},
-			string
+			`key${number}`
 		> {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const workspace = presence.states.getWorkspace(testWorkspaceName, {
@@ -216,7 +216,7 @@ export function checkCompiles(): void {
 		key,
 		value,
 	}: Pick<
-		LatestMapItemUpdatedClientData<T, string | number, RawValueAccessor<T>>,
+		LatestMapItemUpdatedClientData<T, string, RawValueAccessor<T>>,
 		"attendee" | "key" | "value"
 	>): void {
 		console.log(attendee.attendeeId, key, value);

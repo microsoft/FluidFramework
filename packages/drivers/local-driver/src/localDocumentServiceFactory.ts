@@ -106,7 +106,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	 * @param clientId - The ID of the client to be disconnected.
 	 * @param disconnectReason - The reason of the disconnection.
 	 */
-	public disconnectClient(clientId: string, disconnectReason: string) {
+	public disconnectClient(clientId: string, disconnectReason: string): void {
 		const documentDeltaConnection = this.documentDeltaConnectionsMap.get(clientId);
 		if (documentDeltaConnection === undefined) {
 			throw new Error(`No client with the id: ${clientId}`);
@@ -121,7 +121,12 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	 * @param type - Type of the Nack.
 	 * @param message - A message about the nack for debugging/logging/telemetry purposes.
 	 */
-	public nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any) {
+	public nackClient(
+		clientId: string,
+		code?: number,
+		type?: NackErrorType,
+		message?: any,
+	): void {
 		const documentDeltaConnection = this.documentDeltaConnectionsMap.get(clientId);
 		if (documentDeltaConnection === undefined) {
 			throw new Error(`No client with the id: ${clientId}`);

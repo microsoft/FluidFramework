@@ -62,11 +62,11 @@ describeCompat(
 		beforeEach("check driver compatibility", function () {
 			provider = getTestObjectProvider();
 			if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
-				this.skip(); // This test is not reliable with FRS for some reason
+				this.skip(); // This test triggers 504 errors on AFR occasionally. The test intentionally ignores server interactions anyway.
 			}
 		});
 
-		const setup = async () => {
+		const setup = async (): Promise<void> => {
 			testId++;
 			provider = getTestObjectProvider();
 			const loader = provider.makeTestLoader(testContainerConfig);
@@ -86,7 +86,7 @@ describeCompat(
 			minBatchCount: 100, // Since we're only running one iteration per batch, we need to run a lot of batches to get a good sample (even if it takes longer than default 5s)
 		};
 
-		function sendOps(label: string) {
+		function sendOps(label: string): void {
 			Array.from({ length: batchSize }).forEach((_, i) => {
 				defaultDataStore._root.set(`key-${i}-${label}`, `value-${label}`);
 			});

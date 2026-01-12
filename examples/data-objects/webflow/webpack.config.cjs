@@ -9,8 +9,8 @@ const { merge } = require("webpack-merge");
 const webpack = require("webpack");
 
 module.exports = (env) => {
-	const isProduction = env?.production;
-	const styleLocalIdentName = isProduction ? "[hash:base64:5]" : "[local]-[hash:base64:5]";
+	const { production } = env;
+	const styleLocalIdentName = production ? "[hash:base64:5]" : "[local]-[hash:base64:5]";
 
 	return merge(
 		{
@@ -69,8 +69,9 @@ module.exports = (env) => {
 			watchOptions: {
 				ignored: "**/node_modules/**",
 			},
+			mode: production ? "production" : "development",
+			devtool: production ? "source-map" : "inline-source-map",
 		},
-		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 		fluidRoute.devServerConfig(__dirname, env),
 	);
 };

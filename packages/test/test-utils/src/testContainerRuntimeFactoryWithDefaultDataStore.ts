@@ -14,7 +14,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 
-const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
+const getDefaultFluidObject = async (runtime: IContainerRuntime): Promise<FluidObject> => {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
 	if (entryPoint === undefined) {
 		throw new Error("default dataStore must exist");

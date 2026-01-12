@@ -38,6 +38,10 @@ export {
 } from "./schemaFactory.js";
 export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
 export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+export {
+	eraseSchemaDetails,
+	eraseSchemaDetailsSubclassable,
+} from "./eraseSchemaDetails.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
@@ -149,7 +153,9 @@ export {
 
 export {
 	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	type NodeInDocumentConstraint,
+	type NoChangeConstraint,
 	type RunTransactionParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
