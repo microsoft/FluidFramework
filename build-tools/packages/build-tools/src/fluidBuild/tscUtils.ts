@@ -292,6 +292,7 @@ export function getTscUtils(path: string): TscUtil {
 			return tscUtilFromLibPath;
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		const tsLib: typeof ts = require(tsPath);
 		const tscUtil = createTscUtil(tsLib);
 		tscUtilPathCache.set(path, tscUtil);

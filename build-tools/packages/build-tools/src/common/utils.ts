@@ -129,6 +129,7 @@ export async function lookUpDirAsync(
 ): Promise<string | undefined> {
 	let curr = path.resolve(dir);
 
+	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		if (await callback(curr)) {
 			return curr;
@@ -150,6 +151,7 @@ export function lookUpDirSync(
 ): string | undefined {
 	let curr = path.resolve(dir);
 
+	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		if (callback(curr)) {
 			return curr;
