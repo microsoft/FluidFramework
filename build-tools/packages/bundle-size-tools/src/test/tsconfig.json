@@ -1,0 +1,22 @@
+{
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"declaration": true,
+		"importHelpers": true,
+		"declarationMap": false,
+		"rootDir": "./",
+		"outDir": "../../lib/test",
+		"types": ["node", "mocha"],
+		"typeRoots": [
+			"../../../../node_modules/@types",
+			"../../../../node_modules/.pnpm/node_modules/@types",
+		],
+		"skipLibCheck": true,
+	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
+}
