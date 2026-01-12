@@ -184,6 +184,8 @@ export interface IProseMirrorReactViewProps {
 }
 
 /**
+ * React component that renders a ProseMirror editor with collaborative features.
+ *
  * @internal
  */
 export const ProseMirrorReactView: React.FC<IProseMirrorReactViewProps> = (
