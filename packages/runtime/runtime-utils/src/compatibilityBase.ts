@@ -174,7 +174,7 @@ export function getConfigForMinVersionForCollabIterable<T>(
 }
 
 /**
- * Finds the entry for a the highest version that is less than or equal to the provided minVersionForCollab.
+ * Finds the entry for the highest version that is less than or equal to the provided minVersionForCollab.
  * @remarks
  * If none is found, returns undefined.
  *

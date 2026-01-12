@@ -146,7 +146,8 @@ assert(existsSync(schemaCompatibilitySnapshotsFolder));
 /**
  * Test schema snapshots for shared tree components which are part of this package.
  * @remarks
- * Use {@link useSnapshotDirectory} to control where they are saved.
+ * Snapshots are stored in a subdirectory of {@link schemaCompatibilitySnapshotsFolder} based off of `domainName`.
+ * based on the provided {@link domainName} parameter.
  */
 export function testSchemaCompatibilitySnapshots(
 	currentViewSchema: TreeViewConfiguration,
