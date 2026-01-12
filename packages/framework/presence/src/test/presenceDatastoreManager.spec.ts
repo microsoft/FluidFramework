@@ -266,8 +266,7 @@ describe("Presence", () => {
 			describe("when NOT preferred responder", () => {
 				it("and no other responses ... with broadcast after delay", () => {
 					// Setup
-					// localClient is added to quorum at position 6 (after initial 6 write clients)
-					const responseOrder = 6;
+					const responseOrder = 2;
 					// 3 * named length (client0 and client1) + quorum sequence order
 					const responderIndex = 3 * 2 + responseOrder;
 					const updateTime =
@@ -346,8 +345,7 @@ describe("Presence", () => {
 
 				it("and other has partially responded ... with broadcast after delay", () => {
 					// Setup
-					// localClient is added to quorum at position 6 (after initial 6 write clients)
-					const responseOrder = 6;
+					const responseOrder = 2;
 					// 3 * named length (client0 and client1) + quorum sequence order
 					const responderIndex = 3 * 2 + responseOrder;
 					const client4ResponseDelay =

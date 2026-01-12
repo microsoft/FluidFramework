@@ -30,7 +30,12 @@ import type {
 } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
-import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import {
+	type MockEphemeralRuntime,
+	initialLocalClientConnectionId,
+} from "./mockEphemeralRuntime.js";
+
+
 
 /**
  * Use to compile-time assert types of two variables are identical.
@@ -75,20 +80,13 @@ export const connectionId1 = "client1" as const satisfies ClientConnectionId;
  */
 export const localAttendeeId = createSpecificAttendeeId("localAttendeeId");
 /**
- * Mock {@link ClientConnectionId} for the local client in tests.
- */
-export const initialLocalClientConnectionId =
-	"localClient" as const satisfies ClientConnectionId;
-/**
  * Mock {@link ClientConnectionId} for the local client after first reconnection.
  */
-export const rejoinedLocalClientConnectionId1 =
-	"client8" as const satisfies ClientConnectionId;
+export const localClientRejoin1 = "client8" as const satisfies ClientConnectionId;
 /**
  * Mock {@link ClientConnectionId} for the local client after second reconnection.
  */
-export const rejoinedLocalClientConnectionId2 =
-	"client9" as const satisfies ClientConnectionId;
+export const localClientRejoin2 = "client9" as const satisfies ClientConnectionId;
 
 /**
  * Generates expected inbound join signal for a client that was initialized while connected.
@@ -428,3 +426,5 @@ export const createSpiedValidator = <T extends object>(
 	validatorFunction: StateSchemaValidator<T> = nullValidator<T>,
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 ) => spy(validatorFunction) satisfies StateSchemaValidator<T>;
+
+export {initialLocalClientConnectionId} from "./mockEphemeralRuntime.js";

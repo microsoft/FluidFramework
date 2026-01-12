@@ -12,6 +12,12 @@ import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-ut
 import type { ClientConnectionId } from "../baseTypes.js";
 import type { IEphemeralRuntime } from "../internalTypes.js";
 
+/**
+ * Mock {@link ClientConnectionId} for the local client in tests.
+ */
+export const initialLocalClientConnectionId =
+	"localClient" as const satisfies ClientConnectionId;
+
 type ClientData = [string, IClient];
 
 function buildClientDataArray(clientIds: string[], numWriteClients: number): ClientData[] {
@@ -100,16 +106,15 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 			this.logger = logger;
 		}
 
-		const numWriteClients = 7;
+		const numWriteClients = 6;
 		const clientsData = buildClientDataArray(
 			[
 				"client0",
 				"client1",
-				"client2",
+				initialLocalClientConnectionId,
 				"client3",
 				"client4",
 				"client5",
-				"localClient",
 				"client6",
 				"client7",
 			],
@@ -117,8 +122,8 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		);
 		this.quorum = makeMockQuorum(clientsData);
 		this.audience = makeMockAudience(clientsData);
-		// Initial quorum members have sequence numbers 0, 10, 20, ..., 60
-		// so next available is 70
+		// Initial quorum members have sequence numbers 0, 10, 20, ..., 50
+		// so next available is 60
 		this.nextSequenceNumber = 10 * numWriteClients;
 		this.events = {
 			on: (

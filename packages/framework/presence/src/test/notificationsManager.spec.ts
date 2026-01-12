@@ -219,7 +219,7 @@ describe("Presence", () => {
 						},
 					},
 					// Targeting self for simplicity
-					targetClientId: "client2",
+					targetClientId: initialLocalClientConnectionId,
 				},
 			]);
 
