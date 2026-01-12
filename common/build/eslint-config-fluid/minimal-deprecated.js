@@ -177,7 +177,17 @@ module.exports = {
 			},
 		],
 
-		// Note: will be promoted to an error in the future.
+		/**
+		 * Enforces consistent usage of `import type` for type-only imports.
+		 *
+		 * This helps clearly separate types from runtime values, which can improve readability,
+		 * support for tree-shaking and bundling, and aligns with modern TypeScript best practices.
+		 *
+		 * @remarks
+		 * Note: this will be promoted to "error" in a future release.
+		 *
+		 * Docs: {@link https://typescript-eslint.io/rules/consistent-type-imports/}
+		 */
 		"@typescript-eslint/consistent-type-imports": ["warn", { fixStyle: "inline-type-imports" }],
 
 		"@typescript-eslint/dot-notation": "error",
