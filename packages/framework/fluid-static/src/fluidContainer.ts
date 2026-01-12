@@ -267,9 +267,22 @@ export interface IFluidContainerInternal extends ContainerExtensionStore {
 	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
-	 * Serialize a detached container to a string representation. This can be saved for later rehydration.
+	 * Serialize a detached container to a string representation.
+	 *
+	 * @remarks
+	 * The serialized container can be rehydrated using the client-specific rehydrate API
+	 * (e.g., `OdspClient.rehydrateContainer()`).
+	 *
+	 * This method can only be called on detached containers. If the container is attached,
+	 * closed, or disposed, this method will throw an error.
+	 *
+	 * **Compatibility:** The serialized container format is only guaranteed to be compatible
+	 * with the same version of Fluid Framework that produced it. Storing serialized containers
+	 * for long-term persistence is not recommended without additional versioning considerations.
+	 *
+	 * @throws Will throw an error if the container is not in a detached state.
 	 */
-	serialize(): string;
+	serializeDetachedContainer(): string;
 }
 
 /**
@@ -407,7 +420,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 		return this.rootDataObject.uploadBlob(blob);
 	}
 
-	public serialize(): string {
+	public serializeDetachedContainer(): string {
 		if (this.container.closed || this.container.attachState !== AttachState.Detached) {
 			throw new Error(
 				"Cannot serialize container. Container must be in detached state and not closed.",
