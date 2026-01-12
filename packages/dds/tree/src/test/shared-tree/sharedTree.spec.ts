@@ -687,8 +687,8 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 
 		// Load the last summary (state: "AC") and process the deletion of Z and insertion of B
-		const loadedTree4 = await provider.createTree();
-		const view4 = loadedTree4.viewWith(
+		const loadedTree = await provider.createTree();
+		const view4 = loadedTree.viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
