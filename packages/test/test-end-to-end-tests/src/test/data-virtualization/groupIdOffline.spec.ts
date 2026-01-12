@@ -347,13 +347,15 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 			container2 as unknown as {
 				// See SerializedStateManager class in container-loader package
 				serializedStateManager: {
-					refreshLatestSnapshot: (supportGetSnapshotApi: boolean) => Promise<void>;
+					snapshotRefresher: {
+						refreshLatestSnapshot: (supportGetSnapshotApi: boolean) => Promise<void>;
+					};
 				};
 			}
 		).serializedStateManager;
 		clearCacheIfOdsp(provider, persistedCache);
 
-		await serializedStateManager.refreshLatestSnapshot(true);
+		await serializedStateManager.snapshotRefresher.refreshLatestSnapshot(true);
 
 		// Update the latestSequenceNumber so that the reference sequence number is beyond the snapshot
 		await provider.ensureSynchronized();
