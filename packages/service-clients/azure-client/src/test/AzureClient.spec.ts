@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState is typed as ConnectionState but test doesn't type it precisely */
-
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
@@ -143,6 +141,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState is typed as ConnectionState but test doesn't type it precisely
 			if (container.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,
@@ -168,6 +167,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState is typed as ConnectionState but test doesn't type it precisely
 			if (container.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,
@@ -201,6 +201,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 			const containerId = await newContainer.attach();
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState is typed as ConnectionState but test doesn't type it precisely
 			if (newContainer.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,

@@ -7,7 +7,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-base-to-string */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
@@ -73,9 +72,11 @@ function LinearDictionary<TKey, TData>(
 			return;
 		}
 
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (_start === undefined) {
 			_start = min()!.key;
 		}
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (_end === undefined) {
 			_end = max()!.key;
 		}

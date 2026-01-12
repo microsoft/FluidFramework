@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/prefer-optional-chain */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { HasListeners, Listenable } from "@fluidframework/core-interfaces/internal";
@@ -1210,6 +1210,7 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 function binaryFind(sorted: readonly PathNode[], index: number): PathNode | undefined {
 	// Try guessing the list is not sparse as a starter:
 	const guess = sorted[index];
+	// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 	if (guess !== undefined && guess.parentIndex === index) {
 		return guess;
 	}
