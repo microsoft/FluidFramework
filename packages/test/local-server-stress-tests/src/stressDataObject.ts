@@ -27,7 +27,7 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { type StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
+import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
 import {
 	RuntimeHeaders,
 	toFluidHandleInternal,

@@ -14,19 +14,21 @@ const schemaFactory = new SchemaFactory("test");
 describe("List", () => {
 	/** Formats 'args' array, inserting commas and eliding trailing `undefine`s.  */
 	function prettyArgs(...args: any[]) {
-		return args.reduce((prev: string, arg, index) => {
+		let result = "";
+		for (let index = 0; index < args.length; index++) {
 			// If all remaining arguments are 'undefined' elide them.
 			if (!args.slice(index).some((value) => value !== undefined)) {
-				return prev;
+				break;
 			}
 
 			// If not the first argument add a comma separator.
-			let next = index > 0 ? `${prev}, ` : prev;
+			if (index > 0) {
+				result += ", ";
+			}
 
-			next += pretty(arg);
-
-			return next;
-		}, "");
+			result += pretty(args[index]);
+		}
+		return result;
 	}
 
 	// eslint-disable-next-line @fluid-internal/fluid/no-markdown-links-in-jsdoc -- false positive AB#51719

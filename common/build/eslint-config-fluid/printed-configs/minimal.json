@@ -666,7 +666,14 @@
             }
         ],
         "@typescript-eslint/explicit-function-return-type": [
-            "off"
+            "error",
+            {
+                "allowExpressions": true,
+                "allowTypedFunctionExpressions": true,
+                "allowHigherOrderFunctions": true,
+                "allowDirectConstAssertionInArrowFunctions": true,
+                "allowConciseArrowFunctionExpressionsStartingWithVoid": false
+            }
         ],
         "@typescript-eslint/explicit-member-accessibility": [
             "off"
@@ -760,6 +767,9 @@
             "error"
         ],
         "@typescript-eslint/no-implied-eval": [
+            "error"
+        ],
+        "@typescript-eslint/no-import-type-side-effects": [
             "error"
         ],
         "@typescript-eslint/no-inferrable-types": [
@@ -1274,6 +1284,9 @@
         "jsdoc/empty-tags": [
             "error"
         ],
+        "jsdoc/multiline-blocks": [
+            "error"
+        ],
         "jsdoc/no-bad-blocks": [
             "error"
         ],
@@ -1409,7 +1422,7 @@
             }
         ],
         "no-empty": [
-            "off",
+            "error",
             {
                 "allowEmptyCatch": false
             }

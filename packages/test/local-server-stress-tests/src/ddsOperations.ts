@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type AsyncGenerator, type AsyncReducer } from "@fluid-private/stochastic-test-utils";
+import type { AsyncGenerator, AsyncReducer } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzTestState,
 	Client as DDSClient,

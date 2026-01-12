@@ -127,8 +127,6 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/datastore": "workspace:~",
-		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
@@ -168,7 +166,8 @@
 			],
 			"build:esnext:main": [
 				"^api",
-				"^build:esnext"
+				"^build:esnext",
+				"build:genver"
 			],
 			"check:exports:bundle-release-tags": [
 				"build:esnext"
@@ -182,7 +181,8 @@
 			],
 			"tsc:main": [
 				"^api",
-				"^tsc"
+				"^tsc",
+				"build:genver"
 			]
 		}
 	},

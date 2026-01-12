@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IChannel,
-	type IChannelAttributes,
-	type IChannelServices,
-	type IDeltaHandler,
+import type {
+	IChannel,
+	IChannelAttributes,
+	IChannelServices,
+	IDeltaHandler,
 } from '@fluidframework/datastore-definitions/internal';
-import { type ITree } from '@fluidframework/tree';
+import type { ITree } from '@fluidframework/tree';
 
-import { type SharedTree as LegacySharedTree } from '../SharedTree.js';
+import type { SharedTree as LegacySharedTree } from '../SharedTree.js';
 
-import { type IMigrationOp } from './migrationShim.js';
+import type { IMigrationOp } from './migrationShim.js';
 
 /**
  * An interface for a shim delta handler intercepts another delta handler.

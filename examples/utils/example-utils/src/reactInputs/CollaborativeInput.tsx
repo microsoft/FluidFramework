@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
+import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
 import React from "react";
 
 /**
@@ -121,7 +121,7 @@ export class CollaborativeInput extends React.Component<
 		const newPosition = ev.currentTarget.selectionStart ?? 0;
 		const isTextInserted = newPosition - this.state.selectionStart > 0;
 		if (isTextInserted) {
-			const insertedText = newText.substring(this.state.selectionStart, newPosition);
+			const insertedText = newText.slice(this.state.selectionStart, newPosition);
 			const changeRangeLength = this.state.selectionEnd - this.state.selectionStart;
 			if (changeRangeLength === 0) {
 				this.props.sharedString.insertText(this.state.selectionStart, insertedText);
