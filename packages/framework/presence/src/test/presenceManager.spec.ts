@@ -98,11 +98,12 @@ describe("Presence", () => {
 				runtime.removeMember(initialLocalClientConnectionId);
 			});
 
-			it("is announced via `attendeeConnected` when presence initializes while self is in Audience", () => {
+			it("is announced via `attendeeConnected` upon initial connection", () => {
 				// Setup - create presence in disconnected state
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
 					localAttendeeId,
+					initialLocalClientConnectionId,
 					clock,
 					logger,
 				);
@@ -113,7 +114,7 @@ describe("Presence", () => {
 				});
 
 				// Act - connect
-				connect(initialLocalClientConnectionId);
+				connect();
 
 				// Verify - self attendee was announced
 				const selfAttendee = presence.attendees.getMyself();
@@ -134,6 +135,7 @@ describe("Presence", () => {
 				const { presence } = prepareDisconnectedPresence(
 					runtime,
 					localAttendeeId,
+					initialLocalClientConnectionId,
 					clock,
 					logger,
 				);
@@ -152,6 +154,7 @@ describe("Presence", () => {
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
 					localAttendeeId,
+					initialLocalClientConnectionId,
 					clock,
 					logger,
 				);
@@ -169,7 +172,7 @@ describe("Presence", () => {
 				});
 
 				// Act - connect
-				connect(initialLocalClientConnectionId);
+				connect();
 
 				// Verify - attendeeConnected was raised
 				assert(
@@ -183,12 +186,13 @@ describe("Presence", () => {
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
 					localAttendeeId,
+					initialLocalClientConnectionId,
 					clock,
 					logger,
 				);
 
 				// Initial connection
-				connect(initialLocalClientConnectionId);
+				connect();
 
 				// Disconnect
 				runtime.disconnect();
@@ -228,11 +232,12 @@ describe("Presence", () => {
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
 					localAttendeeId,
+					initialLocalClientConnectionId,
 					clock,
 					logger,
 				);
 
-				connect(initialLocalClientConnectionId);
+				connect();
 
 				const disconnectedAttendees: Attendee[] = [];
 				presence.attendees.events.on("attendeeDisconnected", (attendee) => {

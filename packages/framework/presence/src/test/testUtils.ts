@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	InternalUtilityTypes,
@@ -34,8 +36,6 @@ import {
 	type MockEphemeralRuntime,
 	initialLocalClientConnectionId,
 } from "./mockEphemeralRuntime.js";
-
-
 
 /**
  * Use to compile-time assert types of two variables are identical.
@@ -328,21 +328,23 @@ export function prepareConnectedPresence(
  *
  * @param runtime - the mock runtime
  * @param attendeeId - the client session id given to presence
+ * @param clientConnectionId - the client connection id to use when connecting
  * @param clock - the fake timer
  * @param logger - optional logger to track telemetry events
  */
 export function prepareDisconnectedPresence(
 	runtime: MockEphemeralRuntime,
 	attendeeId: string,
+	clientConnectionId: ClientConnectionId,
 	clock: Omit<SinonFakeTimers, "restore">,
 	logger?: EventAndErrorTrackingLogger,
 ): {
 	presence: PresenceWithNotifications;
 	processSignal: ProcessSignalFunction;
 	/**
-	 * Connects presence using the given client connection id.
+	 * Connects presence using the client connection id provided to prepareDisconnectedPresence.
 	 */
-	connect: (clientConnectionId: ClientConnectionId) => void;
+	connect: () => void;
 	/**
 	 * The simulated local average latency used by connect.
 	 */
@@ -352,9 +354,19 @@ export function prepareDisconnectedPresence(
 	runtime.clientId = undefined;
 	runtime.joined = false;
 
+	// Ensure client connection id is not already in audience or quorum
+	assert(
+		runtime.audience.getMember(clientConnectionId) === undefined,
+		`Client connection id ${clientConnectionId} should not be in audience`,
+	);
+	assert(
+		runtime.getQuorum().getMember(clientConnectionId) === undefined,
+		`Client connection id ${clientConnectionId} should not be in quorum`,
+	);
+
 	const { presence, processSignal } = createPresenceAndValidate(runtime, attendeeId, logger);
 
-	const connect = (clientConnectionId: ClientConnectionId): void => {
+	const connect = (): void => {
 		const updateProviders = calculateUpdateProviders(runtime, clientConnectionId);
 
 		const expectedClientJoin: OutboundClientJoinMessage &
@@ -427,4 +439,4 @@ export const createSpiedValidator = <T extends object>(
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 ) => spy(validatorFunction) satisfies StateSchemaValidator<T>;
 
-export {initialLocalClientConnectionId} from "./mockEphemeralRuntime.js";
+export { initialLocalClientConnectionId } from "./mockEphemeralRuntime.js";
