@@ -25,8 +25,13 @@ import { TestTreeProvider } from "../../utils.js";
  * @remarks TODO: Figure out a better way to get an IIDCompressor
  */
 async function getIIDCompressor(tree?: ITreePrivate): Promise<IIdCompressor> {
+	let treeToUse = tree;
+	if (treeToUse === undefined) {
+		const provider = await TestTreeProvider.create(1);
+		treeToUse = provider.trees[0];
+	}
 	const runtime = (
-		(tree ?? (await TestTreeProvider.create(1)).trees[0]) as unknown as {
+		treeToUse as unknown as {
 			runtime: IFluidDataStoreRuntime;
 		}
 	).runtime;
