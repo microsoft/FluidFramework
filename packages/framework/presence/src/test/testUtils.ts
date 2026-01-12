@@ -82,12 +82,13 @@ export const localAttendeeId = createSpecificAttendeeId("localAttendeeId");
 /**
  * Mock {@link ClientConnectionId} for the local client after first reconnection.
  */
-export const localClientRejoin1 = "client8" as const satisfies ClientConnectionId;
+export const rejoinedLocalClientConnectionId1 =
+	"localClientRejoin1" as const satisfies ClientConnectionId;
 /**
  * Mock {@link ClientConnectionId} for the local client after second reconnection.
  */
-export const localClientRejoin2 = "client9" as const satisfies ClientConnectionId;
-
+export const rejoinedLocalClientConnectionId2 =
+	"localClientRejoin2" as const satisfies ClientConnectionId;
 /**
  * Generates expected inbound join signal for a client that was initialized while connected.
  */
