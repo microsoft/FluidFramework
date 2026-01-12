@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+
 import { strict as assert } from "node:assert";
 
 import {
@@ -211,6 +213,7 @@ function testObjectLike(testCases: TestCaseErased[]) {
 			test1((subject) => {
 				const all = Object.getOwnPropertyDescriptors(subject);
 				return Object.fromEntries(
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- intentional behavior
 					Object.entries(all).filter(([key, descriptor]) => descriptor.enumerable),
 				);
 			});

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+
 import { strict as assert } from "node:assert";
 
 import {
@@ -1195,6 +1197,7 @@ describe("sharedTreeView", () => {
 				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
 					assert(getRevertible !== undefined, "Expected commit to be revertible.");
 					// Only save off the first revertible, as it's the only one we'll use.
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (revertible === undefined) {
 						revertible = getRevertible();
 					}

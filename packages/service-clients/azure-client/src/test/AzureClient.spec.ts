@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison -- container.connectionState is typed as ConnectionState but test doesn't type it precisely */
+
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";

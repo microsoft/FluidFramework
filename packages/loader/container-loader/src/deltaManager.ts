@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import type {
 	IDeltaManagerEvents,

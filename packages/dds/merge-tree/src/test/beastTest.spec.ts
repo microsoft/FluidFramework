@@ -7,6 +7,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-base-to-string */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import { strict as assert } from "node:assert";
 import fs from "node:fs";

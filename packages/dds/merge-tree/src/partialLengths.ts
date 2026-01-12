@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/prefer-optional-chain */
+
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { MergeTree } from "./mergeTree.js";

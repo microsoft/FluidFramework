@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+
 /**
  * Any mapping from a string to values of type `T`
  * @legacy @beta

@@ -354,6 +354,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 				}
 
 				case "addMark": {
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ?? could change behavior if attrs is falsy but defined
 					const attrs = stepAsJson.mark.attrs || true;
 
 					this.text.annotateRange(stepAsJson.from, stepAsJson.to, {
