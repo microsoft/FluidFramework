@@ -242,6 +242,32 @@ function processJoinSignalAndResponse(
 const localAvgLatency = 10;
 
 /**
+ * Creates presence manager and validates initialization expectations.
+ */
+function createPresenceAndValidate(
+	runtime: MockEphemeralRuntime,
+	attendeeId: string,
+	logger?: EventAndErrorTrackingLogger,
+): {
+	presence: ReturnType<typeof createPresenceManager>;
+	processSignal: ProcessSignalFunction;
+} {
+	logger?.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
+
+	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
+	const processSignal = createProcessSignal(presence);
+
+	// Validate expectations post initialization to make sure logger
+	// and runtime are left in a clean expectation state.
+	const logErrors = getUnexpectedLogErrorException(logger);
+	if (logErrors) {
+		throw logErrors;
+	}
+
+	return { presence, processSignal };
+}
+
+/**
  * Prepares an instance of presence as it would be if initialized while connected.
  *
  * @param runtime - the mock runtime
@@ -265,8 +291,6 @@ export function prepareConnectedPresence(
 	runtime.clientId = clientConnectionId;
 	runtime.joined = true;
 
-	logger?.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
-
 	const updateProviders = calculateUpdateProviders(runtime, clientConnectionId);
 
 	const expectedClientJoin: OutboundClientJoinMessage &
@@ -278,15 +302,7 @@ export function prepareConnectedPresence(
 	delete expectedClientJoin.clientId;
 	runtime.signalsExpected.push([expectedClientJoin]);
 
-	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
-	const processSignal = createProcessSignal(presence);
-
-	// Validate expectations post initialization to make sure logger
-	// and runtime are left in a clean expectation state.
-	const logErrors = getUnexpectedLogErrorException(logger);
-	if (logErrors) {
-		throw logErrors;
-	}
+	const { presence, processSignal } = createPresenceAndValidate(runtime, attendeeId, logger);
 	runtime.assertAllSignalsSubmitted();
 
 	processJoinSignalAndResponse(
@@ -338,17 +354,7 @@ export function prepareDisconnectedPresence(
 	runtime.clientId = undefined;
 	runtime.joined = false;
 
-	logger?.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
-
-	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
-	const processSignal = createProcessSignal(presence);
-
-	// Validate expectations post initialization to make sure logger
-	// and runtime are left in a clean expectation state.
-	const logErrors = getUnexpectedLogErrorException(logger);
-	if (logErrors) {
-		throw logErrors;
-	}
+	const { presence, processSignal } = createPresenceAndValidate(runtime, attendeeId, logger);
 
 	const connect = (clientConnectionId: ClientConnectionId): void => {
 		const updateProviders = calculateUpdateProviders(runtime, clientConnectionId);
