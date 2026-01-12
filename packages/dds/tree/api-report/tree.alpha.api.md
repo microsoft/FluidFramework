@@ -1175,17 +1175,12 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 
 // @alpha @input
 export interface SnapshotFileSystem {
-    // (undocumented)
     join(parentPath: string, childPath: string): string;
-    // (undocumented)
     mkdirSync(dir: string, options: {
         recursive: true;
     }): void;
-    // (undocumented)
     readdirSync(dir: string): readonly string[];
-    // (undocumented)
     readFileSync(file: string, encoding: "utf8"): string;
-    // (undocumented)
     writeFileSync(file: string, data: string, options: {
         encoding: "utf8";
     }): void;
