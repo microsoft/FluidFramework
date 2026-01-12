@@ -21,6 +21,7 @@ import {
 	assertFinalExpectations,
 	attendeeId1,
 	localAttendeeId,
+	localAvgLatency,
 	connectionId1,
 	initialLocalClientConnectionId,
 	createSpecificAttendeeId,
@@ -78,7 +79,6 @@ describe("Presence", () => {
 			// Process remote client update signal (attendeeId-1 is then part of local client's known session).
 			const attendee1UpdateSendTimestamp = deltaToStart - 20;
 			const attendee1AvgLatency = 20;
-			const localAvgLatency = 10;
 			const attendee1ToLocalTimeDelta =
 				clock.now - (localAvgLatency + attendee1AvgLatency + attendee1UpdateSendTimestamp);
 			localAttendee1ValueRevisionTimestamp =

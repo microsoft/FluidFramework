@@ -79,6 +79,16 @@ export const localAttendeeId = createSpecificAttendeeId("localAttendeeId");
  */
 export const initialLocalClientConnectionId =
 	"localClient" as const satisfies ClientConnectionId;
+/**
+ * Mock {@link ClientConnectionId} for the local client after first reconnection.
+ */
+export const rejoinedLocalClientConnectionId1 =
+	"client8" as const satisfies ClientConnectionId;
+/**
+ * Mock {@link ClientConnectionId} for the local client after second reconnection.
+ */
+export const rejoinedLocalClientConnectionId2 =
+	"client9" as const satisfies ClientConnectionId;
 
 /**
  * Generates expected inbound join signal for a client that was initialized while connected.
@@ -163,7 +173,7 @@ function calculateUpdateProviders(
 	clientConnectionId: ClientConnectionId,
 ): ClientConnectionId[] {
 	// This logic needs to be kept in sync with datastore manager.
-	// From PresenceDatastoreManager.getInteractiveMembersExcludingSelf:
+	// From PresenceDatastoreManager.getAudienceInformation:
 	const members = runtime.audience.getMembers();
 	members.delete(clientConnectionId);
 	const all = new Set<ClientConnectionId>();
@@ -227,6 +237,11 @@ function processJoinSignalAndResponse(
 }
 
 /**
+ * The simulated local average latency used in test helpers.
+ */
+export const localAvgLatency = 10;
+
+/**
  * Prepares an instance of presence as it would be if initialized while connected.
  *
  * @param runtime - the mock runtime
@@ -279,7 +294,7 @@ export function prepareConnectedPresence(
 		clientConnectionId,
 		updateProviders,
 		clock,
-		10,
+		localAvgLatency,
 	);
 
 	return {
@@ -356,7 +371,7 @@ export function prepareDisconnectedPresence(
 			clientConnectionId,
 			updateProviders,
 			clock,
-			10,
+			localAvgLatency,
 		);
 	};
 
