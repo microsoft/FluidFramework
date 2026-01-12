@@ -73,10 +73,38 @@ export async function stressTest(
 	console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 	console.log(`Start time: ${startTime} ms\n`);
 
+	// Get legacy package directory from environment variable if available
+	const legacyPackageDir = process.env.LEGACY_PACKAGE_DIR;
+	const hasLegacyVersion = legacyPackageDir !== undefined && legacyPackageDir !== "";
+
+	// Calculate how many runners should use each version
+	const halfClients = Math.floor(profile.numClients / 2);
+	const numLegacyRunners = hasLegacyVersion ? halfClients : 0;
+	const numCurrentRunners = profile.numClients - numLegacyRunners;
+
+	if (hasLegacyVersion) {
+		logger.sendTelemetryEvent({
+			eventName: "MixedVersionTest",
+			legacyPackageDir,
+			numCurrentRunners,
+			numLegacyRunners,
+		});
+		console.log(`Running mixed version test:`);
+		console.log(`  - ${numCurrentRunners} runners on current version (N)`);
+		console.log(
+			`  - ${numLegacyRunners} runners on legacy version (N-1) from ${legacyPackageDir}`,
+		);
+	}
+
 	const runnerArgs: string[][] = [];
 	for (let i = 0; i < profile.numClients; i++) {
+		// For the first half of runners, use current version
+		// For the second half, use legacy version if available
+		const useLegacy = hasLegacyVersion && i >= numCurrentRunners;
+		const runnerScript = useLegacy ? `${legacyPackageDir}/dist/runner.js` : "./dist/runner.js";
+
 		const childArgs: string[] = [
-			"./dist/runner.js",
+			runnerScript,
 			"--driver",
 			testDriver.type,
 			"--profile",
