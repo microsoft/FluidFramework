@@ -946,6 +946,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
     readonly mode: "test" | "update";
     readonly schema: TreeViewConfiguration;
     readonly snapshotDirectory: string;
+    readonly snapshotUnchangedVersions?: true;
     readonly version: string;
 }
 

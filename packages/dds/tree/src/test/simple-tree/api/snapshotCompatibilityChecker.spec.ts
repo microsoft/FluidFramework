@@ -14,8 +14,8 @@ import {
 	importCompatibilitySchemaSnapshot,
 	exportCompatibilitySchemaSnapshot,
 	type SnapshotFileSystem,
-	SnapshotCompatibilityChecker,
 	checkSchemaCompatibilitySnapshots,
+	getCompatibility,
 	// Allow importing file which is being tested.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/snapshotCompatibilityChecker.js";
@@ -204,7 +204,7 @@ describe("snapshotCompatibilityChecker", () => {
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Current schema snapshot for version "2.0.0" does not match expected snapshot. Run in "update" mode again to rewrite the snapshot to review the differences.
+ - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
  - Current version "2.0.0" cannot upgrade documents from "2.0.0".
  - Current version "2.0.0" expected to be equivalent to its snapshot.`),
 			);
@@ -220,9 +220,9 @@ describe("snapshotCompatibilityChecker", () => {
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Current schema snapshot for version "2.0.0" does not match expected snapshot. Run in "update" mode again to rewrite the snapshot to review the differences.
+ - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
  - Current version "2.0.0" cannot upgrade documents from "1.0.0".
- - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to minAppVersionForCollaboration being "1.0.0" but they cannot.
+ - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minAppVersionForCollaboration snapshot version being "1.0.0".
  - Current version "2.0.0" cannot upgrade documents from "2.0.0".
  - Current version "2.0.0" expected to be equivalent to its snapshot.`),
 			);
@@ -238,7 +238,7 @@ describe("snapshotCompatibilityChecker", () => {
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to minAppVersionForCollaboration being "1.0.0" but they cannot.`),
+ - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minAppVersionForCollaboration snapshot version being "1.0.0".`),
 			);
 
 			checkSchemaCompatibilitySnapshots({
@@ -304,7 +304,11 @@ describe("snapshotCompatibilityChecker", () => {
 						mode: "test",
 						snapshotDirectory,
 					}),
-				validateError("No snapshot found for version 1.0.0"),
+				validateError(
+					`Schema compatibility check failed:
+ - No snapshots found. If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
+ - No snapshot found with version less than or equal to minVersionForCollaboration "1.0.0".`,
+				),
 			);
 
 			assert.deepEqual([...snapshots.keys()], []);
@@ -340,7 +344,7 @@ describe("snapshotCompatibilityChecker", () => {
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Current schema snapshot for version "1.0.0" does not match expected snapshot. Run in "update" mode again to rewrite the snapshot to review the differences.`),
+ - Snapshot for current version "1.0.0" is out of date: schema has changed since latest existing snapshot version "1.0.0". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.`),
 			);
 
 			checkSchemaCompatibilitySnapshots({
@@ -374,7 +378,7 @@ describe("snapshotCompatibilityChecker", () => {
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Historical version "1.0.0" cannot view documents from "3.0.0": these versions are expected to be able to collaborate due to minAppVersionForCollaboration being "1.0.0" but they cannot.`),
+ - Historical version "1.0.0" cannot view documents from "3.0.0": these versions are expected to be able to collaborate due to the selected minAppVersionForCollaboration snapshot version being "1.0.0".`),
 			);
 
 			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json", "3.0.0.json"]);
@@ -387,37 +391,150 @@ describe("snapshotCompatibilityChecker", () => {
 				mode: "test",
 				snapshotDirectory,
 			});
-		});
 
-		it("check current view schema against historical persisted schemas", () => {
-			const checker = new SnapshotCompatibilityChecker(
-				path.join(testSrcPath, "schemaSnapshots", "point"),
-				nodeFileSystem,
+			// Version bumps should not cause errors unless schema also changes or snapshotUnchangedVersions is true.
+			checkSchemaCompatibilitySnapshots({
+				version: "3.1.0",
+				schema: new TreeViewConfiguration({ schema: Point3 }),
+				fileSystem,
+				minVersionForCollaboration: "2.0.0",
+				mode: "test",
+				snapshotDirectory,
+			});
+
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "3.1.0",
+						schema: new TreeViewConfiguration({ schema: Point3 }),
+						fileSystem,
+						minVersionForCollaboration: "2.0.0",
+						mode: "test",
+						snapshotDirectory,
+						snapshotUnchangedVersions: true,
+					}),
+				validateError(`Schema compatibility check failed:
+ - No snapshot found for version "3.1.0": snapshotUnchangedVersions is true, so every version must be snapshotted. If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.`),
 			);
 
-			const factory = new SchemaFactory("test");
+			// No-op update since snapshotUnchangedVersions is not true.
+			checkSchemaCompatibilitySnapshots({
+				version: "3.1.0",
+				schema: new TreeViewConfiguration({ schema: Point3 }),
+				fileSystem,
+				minVersionForCollaboration: "2.0.0",
+				mode: "update",
+				snapshotDirectory,
+			});
 
-			class Point3D extends factory.object("Point", {
+			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json", "3.0.0.json"]);
+
+			checkSchemaCompatibilitySnapshots({
+				version: "3.1.0",
+				schema: new TreeViewConfiguration({ schema: Point3 }),
+				fileSystem,
+				minVersionForCollaboration: "2.0.0",
+				mode: "update",
+				snapshotDirectory,
+				snapshotUnchangedVersions: true,
+			});
+
+			assert.deepEqual(
+				[...snapshots.keys()],
+				["1.0.0.json", "2.0.0.json", "3.0.0.json", "3.1.0.json"],
+			);
+
+			checkSchemaCompatibilitySnapshots({
+				version: "3.1.0",
+				schema: new TreeViewConfiguration({ schema: Point3 }),
+				fileSystem,
+				minVersionForCollaboration: "2.0.0",
+				mode: "test",
+				snapshotDirectory,
+				snapshotUnchangedVersions: true,
+			});
+
+			// minVersionForCollaboration must be exact match when snapshotUnchangedVersions is false.
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "3.1.0",
+						schema: new TreeViewConfiguration({ schema: Point3 }),
+						fileSystem,
+						minVersionForCollaboration: "2.1.0",
+						mode: "test",
+						snapshotDirectory,
+						snapshotUnchangedVersions: true,
+					}),
+				validateError(`Schema compatibility check failed:
+ - Using snapshotUnchangedVersions: a snapshot of the exact minVersionForCollaboration "2.1.0" is required. No snapshot found.`),
+			);
+
+			checkSchemaCompatibilitySnapshots({
+				version: "3.1.0",
+				schema: new TreeViewConfiguration({ schema: Point3 }),
+				fileSystem,
+				minVersionForCollaboration: "2.1.0",
+				mode: "test",
+				snapshotDirectory,
+			});
+		});
+	});
+
+	it("getCompatibility", () => {
+		const factory = new SchemaFactoryBeta("test");
+
+		class Point2D extends factory.object("Point", {
+			x: factory.number,
+			y: factory.number,
+		}) {}
+
+		class Point2DAllow extends factory.object(
+			"Point",
+			{
 				x: factory.number,
 				y: factory.number,
-				z: factory.optional(factory.number),
-			}) {}
+			},
+			{ allowUnknownOptionalFields: true },
+		) {}
 
-			const results = checker.getCompatibility(new TreeViewConfiguration({ schema: Point3D }));
+		class Point3D extends factory.object("Point", {
+			x: factory.number,
+			y: factory.number,
+			z: factory.optional(factory.number),
+		}) {}
 
-			assert.equal(results.size, 2);
+		{
+			const result = getCompatibility(
+				new TreeViewConfiguration({ schema: Point3D }),
+				new TreeViewConfiguration({ schema: Point2D }),
+			);
+			assert.equal(result.backwardsCompatibilityStatus.canView, false);
+			assert.equal(result.backwardsCompatibilityStatus.canUpgrade, true);
+			assert.equal(result.forwardsCompatibilityStatus.canView, false);
+			assert.equal(result.forwardsCompatibilityStatus.canUpgrade, false);
+		}
 
-			const resultV1 = results.get("1.0.0");
-			assert(resultV1 !== undefined);
-			assert.equal(resultV1.backwardsCompatibilityStatus.canView, false);
-			assert.equal(resultV1.backwardsCompatibilityStatus.canUpgrade, true);
-			assert.equal(resultV1.forwardsCompatibilityStatus.canView, false);
+		{
+			const result = getCompatibility(
+				new TreeViewConfiguration({ schema: Point3D }),
+				new TreeViewConfiguration({ schema: Point2DAllow }),
+			);
+			assert.equal(result.backwardsCompatibilityStatus.canView, false);
+			assert.equal(result.backwardsCompatibilityStatus.canUpgrade, true);
+			assert.equal(result.forwardsCompatibilityStatus.canView, true);
+			assert.equal(result.forwardsCompatibilityStatus.canUpgrade, false);
+		}
 
-			const resultV2 = results.get("2.0.0");
-			assert(resultV2 !== undefined);
-			assert.equal(resultV2.backwardsCompatibilityStatus.canView, true);
-			assert.equal(resultV2.backwardsCompatibilityStatus.canUpgrade, true);
-			assert.equal(resultV2.forwardsCompatibilityStatus.canView, true);
-		});
+		{
+			const result = getCompatibility(
+				new TreeViewConfiguration({ schema: Point3D }),
+				new TreeViewConfiguration({ schema: Point3D }),
+			);
+			assert.equal(result.backwardsCompatibilityStatus.canView, true);
+			assert.equal(result.backwardsCompatibilityStatus.canUpgrade, true);
+			assert.equal(result.forwardsCompatibilityStatus.canView, true);
+			assert.equal(result.forwardsCompatibilityStatus.canUpgrade, true);
+		}
 	});
 });
