@@ -21,7 +21,6 @@ import {
 	assertFinalExpectations,
 	attendeeId1,
 	localAttendeeId,
-	localAvgLatency,
 	connectionId1,
 	initialLocalClientConnectionId,
 	createSpecificAttendeeId,
@@ -49,6 +48,7 @@ describe("Presence", () => {
 
 		let clock: SinonFakeTimers;
 		let logger: EventAndErrorTrackingLogger;
+		let localAvgLatency: number;
 		let presence: PresenceWithNotifications;
 		let processSignal: ProcessSignalFunction;
 		let runtime: MockEphemeralRuntime;
@@ -62,7 +62,7 @@ describe("Presence", () => {
 			runtime = new MockEphemeralRuntime(logger);
 			clock.setSystemTime(initialTime);
 
-			({ presence, processSignal } = prepareConnectedPresence(
+			({ presence, processSignal, localAvgLatency } = prepareConnectedPresence(
 				runtime,
 				localAttendeeId,
 				initialLocalClientConnectionId,

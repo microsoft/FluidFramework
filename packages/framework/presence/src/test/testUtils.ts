@@ -239,7 +239,7 @@ function processJoinSignalAndResponse(
 /**
  * The simulated local average latency used in test helpers.
  */
-export const localAvgLatency = 10;
+const localAvgLatency = 10;
 
 /**
  * Prepares an instance of presence as it would be if initialized while connected.
@@ -259,6 +259,7 @@ export function prepareConnectedPresence(
 ): {
 	presence: PresenceWithNotifications;
 	processSignal: ProcessSignalFunction;
+	localAvgLatency: number;
 } {
 	// Set runtime to connected state
 	runtime.clientId = clientConnectionId;
@@ -300,6 +301,7 @@ export function prepareConnectedPresence(
 	return {
 		presence,
 		processSignal,
+		localAvgLatency,
 	};
 }
 
@@ -327,6 +329,10 @@ export function prepareDisconnectedPresence(
 	 * Connects presence using the given client connection id.
 	 */
 	connect: (clientConnectionId: ClientConnectionId) => void;
+	/**
+	 * The simulated local average latency used by connect.
+	 */
+	localAvgLatency: number;
 } {
 	// Ensure runtime is in disconnected state
 	runtime.clientId = undefined;
@@ -379,6 +385,7 @@ export function prepareDisconnectedPresence(
 		presence,
 		processSignal,
 		connect,
+		localAvgLatency,
 	};
 }
 
