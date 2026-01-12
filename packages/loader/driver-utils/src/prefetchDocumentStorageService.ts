@@ -31,12 +31,17 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		const p = this.internalStorageService.getSnapshotTree(version);
 		if (this.prefetchEnabled) {
-			// We don't care if the prefetch succeeds
-			void p.then((tree: ISnapshotTree | null | undefined) => {
+			// Fire-and-forget prefetch - we don't care if it succeeds.
+			// The .catch() prevents unhandled rejection when p rejects, since
+			// p.then() creates a derived promise that also rejects if p rejects.
+			// Callers awaiting the returned p will still receive the error.
+			p.then((tree: ISnapshotTree | null | undefined) => {
 				if (tree === null || tree === undefined) {
 					return;
 				}
 				this.prefetchTree(tree);
+			}).catch(() => {
+				// Intentionally empty - error will be handled by caller awaiting p
 			});
 		}
 		return p;
@@ -81,8 +86,9 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		this.prefetchTreeCore(tree, secondary);
 
 		for (const blob of secondary) {
-			// We don't care if the prefetch succeeds
-			void this.cachedRead(blob);
+			// Fire-and-forget prefetch. The .catch() prevents unhandled rejection
+			// since cachedRead is async and returns a separate promise chain.
+			this.cachedRead(blob).catch(() => {});
 		}
 	}
 
@@ -90,8 +96,9 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		for (const [blobKey, blob] of Object.entries(tree.blobs)) {
 			if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
 				if (blob !== null) {
-					// We don't care if the prefetch succeeds
-					void this.cachedRead(blob);
+					// Fire-and-forget prefetch. The .catch() prevents unhandled rejection
+					// since cachedRead is async and returns a separate promise chain.
+					this.cachedRead(blob).catch(() => {});
 				}
 			} else if (!blobKey.startsWith("deltas")) {
 				if (blob !== null) {
