@@ -13,10 +13,11 @@ import {
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import type { IContainerRuntimeInternal } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	FluidObject,
 	IConfigProviderBase,
+	IFluidHandle,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
@@ -34,7 +35,11 @@ import {
 	createOdspUrl,
 	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
-import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
+import type {
+	IOdspResolvedUrl,
+	OdspResourceTokenFetchOptions,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { lookupTemporaryBlobStorageId } from "@fluidframework/runtime-utils/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -234,22 +239,54 @@ export class OdspClient {
 	}
 
 	private async getContainerServices(container: IContainer): Promise<IOdspContainerServices> {
-		const runtimeInternal = await this.getRuntimeInternal(container);
-		// Get the resolved URL for ODSP-specific URL building
+		const containerRuntime = await this.getContainerRuntime(container);
 		const resolvedUrl = container.resolvedUrl;
 		const odspResolvedUrl =
 			resolvedUrl && isOdspResolvedUrl(resolvedUrl) ? resolvedUrl : undefined;
-		return new OdspContainerServices(container, odspResolvedUrl, runtimeInternal);
+
+		// Create a partially-applied function to lookup blob URLs
+		const lookupBlobUrl =
+			containerRuntime !== undefined && odspResolvedUrl !== undefined
+				? (handle: IFluidHandle): string | undefined =>
+						this.buildOdspBlobUrl(containerRuntime, handle, odspResolvedUrl)
+				: undefined;
+
+		return new OdspContainerServices(container, lookupBlobUrl);
 	}
 
-	private async getRuntimeInternal(
+	/**
+	 * Build an ODSP blob URL from a handle.
+	 * @param containerRuntime - The container runtime to lookup the storage ID from
+	 * @param handle - The blob handle to lookup
+	 * @param resolvedUrl - The ODSP resolved URL containing endpoint information
+	 * @returns The blob URL if the handle points to a non-pending blob, undefined otherwise
+	 */
+	private buildOdspBlobUrl(
+		containerRuntime: IContainerRuntime,
+		handle: IFluidHandle,
+		resolvedUrl: IOdspResolvedUrl,
+	): string | undefined {
+		const storageId = lookupTemporaryBlobStorageId(containerRuntime, handle);
+		if (storageId === undefined) {
+			return undefined;
+		}
+
+		const attachmentGETUrl = resolvedUrl.endpoints.attachmentGETStorageUrl;
+		if (!attachmentGETUrl) {
+			return undefined;
+		}
+
+		return `${attachmentGETUrl}/${encodeURIComponent(storageId)}/content`;
+	}
+
+	private async getContainerRuntime(
 		container: IContainer,
-	): Promise<IContainerRuntimeInternal | undefined> {
+	): Promise<IContainerRuntime | undefined> {
 		const entryPoint = await container.getEntryPoint();
 		if (
 			entryPoint !== undefined &&
 			typeof (entryPoint as IMaybeFluidObjectWithContainerRuntime).IStaticEntryPoint
-				?.extensionStore === "function"
+				?.extensionStore === "object"
 		) {
 			// If the container has a static entry point with an extension store, use that to get the runtime
 			return (entryPoint as IMaybeFluidObjectWithContainerRuntime).IStaticEntryPoint
@@ -259,12 +296,11 @@ export class OdspClient {
 }
 
 /**
- * Unclear if this is the best way to go about accessing the runtime internal from the entry point.
- * We need it for IContainerRuntimeInternal.lookupTemporaryBlobStorageId,
- * and fluid-static guarantees this exists on the container's entry point, but it is not exposed publicly.
+ * Access the container runtime from the entry point.
+ * fluid-static guarantees this exists on the container's entry point via IStaticEntryPoint.
  */
 interface IMaybeFluidObjectWithContainerRuntime extends FluidObject {
 	IStaticEntryPoint: {
-		extensionStore: IContainerRuntimeInternal;
+		extensionStore: IContainerRuntime;
 	};
 }
