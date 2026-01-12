@@ -166,7 +166,8 @@
 			],
 			"build:esnext:main": [
 				"^api",
-				"^build:esnext"
+				"^build:esnext",
+				"build:genver"
 			],
 			"check:exports:bundle-release-tags": [
 				"build:esnext"
@@ -180,7 +181,8 @@
 			],
 			"tsc:main": [
 				"^api",
-				"^tsc"
+				"^tsc",
+				"build:genver"
 			]
 		}
 	},
