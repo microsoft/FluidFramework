@@ -488,11 +488,11 @@ export function checkSchemaCompatibilitySnapshots(
 				if (semver.gte(snapshotVersion, selectedMinVersionForCollaborationSnapshot[0])) {
 					// Check that the historical version can view documents from the current version, since collaboration with this one is expected to work.
 					if (!compatibility.forwardsCompatibilityStatus.canView) {
-						const message = `Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected minAppVersionForCollaboration snapshot version being ${JSON.stringify(selectedMinVersionForCollaborationSnapshot[0])}.`;
+						const message = `Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being ${JSON.stringify(selectedMinVersionForCollaborationSnapshot[0])}.`;
 						compatibilityErrors.push(
 							selectedMinVersionForCollaborationSnapshot[0] === minVersionForCollaboration
 								? message
-								: `${message} The specified minAppVersionForCollaboration is ${JSON.stringify(minVersionForCollaboration)} which was rounded down to an existing snapshot.`,
+								: `${message} The specified minVersionForCollaboration is ${JSON.stringify(minVersionForCollaboration)} which was rounded down to an existing snapshot.`,
 						);
 					}
 				} else {
