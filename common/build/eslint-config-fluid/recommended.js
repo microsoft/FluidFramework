@@ -118,6 +118,8 @@ module.exports = {
 
 		// #endregion
 
+		// #region `@typescript-eslint` rule overrides
+
 		/**
 		 * Disallows the `any` type.
 		 * Using the `any` type defeats the purpose of using TypeScript.
@@ -178,14 +180,6 @@ module.exports = {
 		 * hole, and source of bugs in your codebase.
 		 */
 		"@typescript-eslint/no-unsafe-return": "error",
-
-		// #region eslint-plugin-jsdoc rules
-
-		/**
-		 * Ensures JSDoc/TSDoc comments to use the consistent formatting.
-		 * See {@link https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/rules/multiline-blocks.md}
-		 */
-		"jsdoc/multiline-blocks": ["error"],
 
 		/**
 		 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript

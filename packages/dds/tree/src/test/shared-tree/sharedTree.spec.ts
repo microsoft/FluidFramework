@@ -514,12 +514,13 @@ describe("SharedTree", () => {
 				view.root = new node({ child: undefined });
 				containerRuntimeFactory.processAllMessages();
 
+				const tree1SummarizeResult = await tree1.summarize();
 				const tree2 = await factory.load(
 					dataStoreRuntime2,
 					"B",
 					{
 						deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-						objectStorage: MockStorage.createFromSummary((await tree1.summarize()).summary),
+						objectStorage: MockStorage.createFromSummary(tree1SummarizeResult.summary),
 					},
 					factory.attributes,
 				);
@@ -624,7 +625,8 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 
 		// Load the last summary
-		const view2 = (await provider.createTree()).viewWith(
+		const loadedTree = await provider.createTree();
+		const view2 = loadedTree.viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
@@ -685,7 +687,8 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 
 		// Load the last summary (state: "AC") and process the deletion of Z and insertion of B
-		const view4 = (await provider.createTree()).viewWith(
+		const loadedTree = await provider.createTree();
+		const view4 = loadedTree.viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
@@ -757,12 +760,13 @@ describe("SharedTree", () => {
 		getBranch(tree).branch();
 		view.root.insertAtEnd("b");
 
+		const treeSummarizeResult = await tree.summarize();
 		const tree2 = await sharedTreeFactory.load(
 			runtime,
 			"tree2",
 			{
 				deltaConnection: runtime.createDeltaConnection(),
-				objectStorage: MockStorage.createFromSummary((await tree.summarize()).summary),
+				objectStorage: MockStorage.createFromSummary(treeSummarizeResult.summary),
 			},
 			sharedTreeFactory.attributes,
 		);
@@ -2428,7 +2432,8 @@ describe("SharedTree", () => {
 				.initialize(["A", "B", "C"]);
 
 			await provider.ensureSynchronized();
-			const summary = (await provider.trees[0].summarize()).summary;
+			const summarizeResult = await provider.trees[0].summarize();
+			const summary = summarizeResult.summary;
 			const indexesSummary = summary.tree.indexes;
 			assert(indexesSummary.type === SummaryType.Tree);
 			const editManagerSummary = indexesSummary.tree.EditManager;
@@ -2477,7 +2482,8 @@ describe("SharedTree", () => {
 				.initialize(["A", "B", "C"]);
 
 			await provider2.ensureSynchronized();
-			const summary2 = (await provider2.trees[0].summarize()).summary;
+			const summarizeResult2 = await provider2.trees[0].summarize();
+			const summary2 = summarizeResult2.summary;
 			const indexesSummary2 = summary2.tree.indexes;
 			assert(indexesSummary2.type === SummaryType.Tree);
 			const editManagerSummary2 = indexesSummary2.tree.EditManager;
