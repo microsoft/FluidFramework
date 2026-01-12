@@ -70,6 +70,6 @@ describe("JsonDomainSchema", () => {
 
 	it("compatibility", () => {
 		const currentViewSchema = new TreeViewConfiguration({ schema: JsonAsTree.Tree });
-		testSchemaCompatibilitySnapshots(currentViewSchema, "2.0.0", "json");
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.80.0", "json");
 	});
 });

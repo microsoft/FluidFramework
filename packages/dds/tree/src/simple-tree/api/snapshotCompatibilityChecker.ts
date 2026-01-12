@@ -218,11 +218,15 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 */
 	readonly schema: TreeViewConfiguration;
 	/**
-	 * The minimum application version that the current version is expected to be able to collaborate with.
+	 * The minimum version that the current version is expected to be able to collaborate with.
 	 */
 	readonly minVersionForCollaboration: string;
 	/**
 	 * When true, every version must be snapshotted, and a increased version number will require a new snapshot.
+	 * @remarks
+	 * If this is true, it is assumed there is a snapshot for every release, and thus it is required that the `minVersionForCollaboration` refer to a version which has a snapshot.
+	 * When this is not true, versions without snapshots are assumed to have the same schema as the latest previous version which has a snapshot, and thus `minVersionForCollaboration`
+	 * can refer to versions between snapshots and will get its schema from the preceding version.
 	 */
 	readonly snapshotUnchangedVersions?: true;
 	/**
@@ -232,15 +236,51 @@ export interface SchemaCompatibilitySnapshotsOptions {
 }
 
 /**
- * Check a `currentViewSchema` for compatibility with a collection of historical schema snapshots stored in `snapshotDirectory`.
+ * Check `currentViewSchema` for compatibility with a collection of historical schema snapshots stored in `snapshotDirectory`.
  * @remarks
  * This is intended for use in snapshot based schema compatibility tests.
  * Every shared tree based component or application with a schema is recommended to use this to verify schema compatibility across versions.
  *
- * Schema snapshots should be added to `snapshotDirectory` using this function in "update" mode whenever the schema changes in a compatibility impacting way or a new version about to be released is getting prepared for release (and thus `appVersion` changes).
+ * Schema snapshots should be added to `snapshotDirectory` using this function in "update" mode whenever the schema changes in a compatibility impacting way
+ * (or when `snapshotUnchangedVersions` is true and a new version about to be released is getting prepared for release (and thus `version` changed)).
  *
- * This will throw an exception if any snapshotted schema would result in documents that cannot be viewed (after using {@link TreeView.upgradeSchema}), or if any schema with a version greater than or equal to `minAppVersionForCollaboration` cannot view documents created with the `currentViewSchema`.
+ * This will throw an exception if any snapshotted schema would result in documents that cannot be viewed (after using {@link TreeView.upgradeSchema}), or if any schema with a version greater than or equal to `minVersionForCollaboration` cannot view documents created with the `currentViewSchema`.
+ * See {@link TreeView.compatibility} for more information.
  *
+ * Proper use of this utility should do a good job at detecting schema compatibility issues,
+ * however it currently does not do a good job of explaining exactly what change to the schema is causing the compatibility issues.
+ * This is a known limitation that will be improved in future releases.
+ * These improvements, as well as other changes, may change the exact messages produced by this function in the error cases: no stability of these messages should be assumed.
+ *
+ * For now, locating what change broke compatibility is likely best discovered by making small schema changes one at a time and updating the snapshot and reviewing the diffs.
+ * Details for what kinds of changes are breaking and in which ways can be found in the documentation for {@link TreeView.compatibility} and
+ * {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution}.
+ *
+ * This utility does not enforce anything with respect to API compatibility, or special semantics for major, minor, or patch versions.
+ * Libraries which export schema for use by others will need to take special care to ensure the stability contract they offer their users aligns which what is validated by this utility.
+ *
+ * @example Mocha Test
+ * ```typescript
+ * it("schema compatibility", () => {
+ * 	checkSchemaCompatibilitySnapshots({
+ * 		version: pkgVersion,
+ * 		schema: config,
+ * 		fileSystem: { ...fs, ...path },
+ * 		minVersionForCollaboration: "2.0.0",
+ * 		mode: process.argv.includes("--snapshot") ? "update" : "test",
+ * 		snapshotDirectory,
+ * 	});
+ * });
+ * ```
+ * @privateRemarks
+ * Use of this within this package for libraries released as part of it should use {@link testSchemaCompatibilitySnapshots} instead.
+ *
+ * TODO: this uses the format defined in simpleSchemaCodec.ts.
+ * Currently this does not include any versioning information in the snapshot format itself.
+ * This would make it hard to do things like upgrade to a new format (perhaps for better diffs, or to support new features) in the future.
+ * That code should probably be migrated to a proper versioned codec with a schema and validation.
+ * This utility can directly depend on the typebox-validator and inject that as this code should not be bundle size sensitive.
+ * This should be addressed before this reached beta stability.
  * @alpha
  */
 export function checkSchemaCompatibilitySnapshots(
@@ -279,7 +319,7 @@ export function checkSchemaCompatibilitySnapshots(
 		);
 	}
 
-	const current = exportCompatibilitySchemaSnapshot(currentViewSchema);
+	const currentEncodedForSnapshotting = exportCompatibilitySchemaSnapshot(currentViewSchema);
 	const snapshots = checker.readAllSchemaSnapshots();
 
 	const compatibilityErrors: string[] = [];
@@ -293,7 +333,7 @@ export function checkSchemaCompatibilitySnapshots(
 
 	if (snapshotUnchangedVersions === true) {
 		if (mode === "update") {
-			checker.writeSchemaSnapshot(currentVersion, current);
+			checker.writeSchemaSnapshot(currentVersion, currentEncodedForSnapshotting);
 			snapshots.set(currentVersion, currentViewSchema);
 		} else {
 			const currentRead = snapshots.get(currentVersion);
@@ -303,7 +343,7 @@ export function checkSchemaCompatibilitySnapshots(
 				);
 			} else if (
 				JSON.stringify(exportCompatibilitySchemaSnapshot(currentRead)) !==
-				JSON.stringify(current)
+				JSON.stringify(currentEncodedForSnapshotting)
 			) {
 				updatableError(
 					`Snapshot for current version ${JSON.stringify(currentVersion)} is out of date.`,
@@ -315,7 +355,7 @@ export function checkSchemaCompatibilitySnapshots(
 		const latestSnapshot = entries[entries.length - 1];
 		if (latestSnapshot === undefined) {
 			if (mode === "update") {
-				checker.writeSchemaSnapshot(currentVersion, current);
+				checker.writeSchemaSnapshot(currentVersion, currentEncodedForSnapshotting);
 				snapshots.set(currentVersion, currentViewSchema);
 			} else {
 				updatableError(`No snapshots found.`);
@@ -324,11 +364,11 @@ export function checkSchemaCompatibilitySnapshots(
 			if (semver.lte(latestSnapshot[0], currentVersion)) {
 				// Check to see if schema in snapshot is the same as the latest existing snapshot.
 				const oldString = JSON.stringify(exportCompatibilitySchemaSnapshot(latestSnapshot[1]));
-				const currentString = JSON.stringify(current);
+				const currentString = JSON.stringify(currentEncodedForSnapshotting);
 				if (oldString !== currentString) {
 					// Schema has changed: must create new snapshot.
 					if (mode === "update") {
-						checker.writeSchemaSnapshot(currentVersion, current);
+						checker.writeSchemaSnapshot(currentVersion, currentEncodedForSnapshotting);
 						snapshots.set(currentVersion, currentViewSchema);
 					} else {
 						updatableError(

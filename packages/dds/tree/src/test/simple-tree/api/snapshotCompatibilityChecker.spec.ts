@@ -31,6 +31,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { strict as assert } from "node:assert";
 import { testSrcPath } from "../../testSrcPath.cjs";
+import { pkgVersion } from "../../../packageVersion.js";
 
 const nodeFileSystem = {
 	...fs,
@@ -177,6 +178,29 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	describe("checkSchemaCompatibilitySnapshots", () => {
+		describe("example from docs", () => {
+			const factory = new SchemaFactory("test");
+
+			class Point extends factory.object("Point", {
+				x: factory.number,
+				y: factory.number,
+				z: factory.optional(factory.number),
+			}) {}
+
+			const config = new TreeViewConfiguration({ schema: Point });
+			const snapshotDirectory = path.join(testSrcPath, "schemaSnapshots", "point");
+			it("schema compatibility", () => {
+				checkSchemaCompatibilitySnapshots({
+					version: pkgVersion,
+					schema: config,
+					fileSystem: { ...fs, ...path },
+					minVersionForCollaboration: "2.0.0",
+					mode: process.argv.includes("--snapshot") ? "update" : "test",
+					snapshotDirectory,
+				});
+			});
+		});
+
 		it("write current view schema snapshot", () => {
 			const snapshotDirectory = path.join(testSrcPath, "schemaSnapshots", "point");
 
