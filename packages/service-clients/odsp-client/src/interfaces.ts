@@ -67,30 +67,40 @@ export interface OdspClientProps {
 }
 
 /**
+ * Properties for attaching an ODSP container.
+ *
+ * @remarks
+ * These properties control how and where the Fluid container is created in SharePoint/OneDrive.
+ * The `itemId` and `eTag` properties correspond to existing ODSP file metadata and can be used
+ * to convert an existing file to a Fluid file.
+ *
+ * @input
  * @beta
  */
 export interface OdspContainerAttachProps {
 	/**
 	 * The file path where Fluid containers are created. If undefined, the file is created at the root.
 	 */
-	filePath: string | undefined;
+	readonly filePath: string | undefined;
 
 	/**
 	 * The file name of the Fluid file. If undefined, the file is named with a GUID.
 	 */
-	fileName: string | undefined;
+	readonly fileName: string | undefined;
 
 	/**
-	 * The ID of the item (file) to which the container is being attached.
-	 * When combined with eTag, this will trigger a conversion of an existing file to a Fluid file.
+	 * The ID of the existing ODSP item (file) to convert to a Fluid file.
+	 * This corresponds to the SharePoint/OneDrive item ID of the file.
+	 * When combined with `eTag`, this triggers conversion of an existing file to a Fluid file.
 	 */
-	itemId?: string;
+	readonly itemId?: string | undefined;
 
 	/**
-	 * Optional eTag to use when attaching the container.
-	 * If provided, the container will
+	 * The eTag of the existing ODSP item to convert to a Fluid file.
+	 * This corresponds to the SharePoint/OneDrive eTag of the file.
+	 * Must be provided together with `itemId` to trigger file conversion.
 	 */
-	eTag?: string;
+	readonly eTag?: string | undefined;
 }
 
 /**
