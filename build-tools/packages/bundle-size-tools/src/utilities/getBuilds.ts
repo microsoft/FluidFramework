@@ -22,7 +22,10 @@ export interface GetBuildOptions {
 /**
  * A wrapper around the terrible API signature for ADO getBuilds
  */
-export async function getBuilds(adoConnection: WebApi, options: GetBuildOptions) {
+export async function getBuilds(
+	adoConnection: WebApi,
+	options: GetBuildOptions,
+): Promise<import("azure-devops-node-api/interfaces/BuildInterfaces").Build[]> {
 	const buildApi = await adoConnection.getBuildApi();
 
 	return buildApi.getBuilds(

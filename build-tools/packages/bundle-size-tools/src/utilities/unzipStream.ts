@@ -7,7 +7,6 @@ import * as JSZip from "jszip";
 
 function readStreamAsBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const data: any[] = [];
 		stream.on("data", (chunk) => {
 			data.push(chunk);
@@ -21,6 +20,8 @@ function readStreamAsBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 	});
 }
 
-export async function unzipStream(stream: NodeJS.ReadableStream) {
+export async function unzipStream(
+	stream: NodeJS.ReadableStream,
+): ReturnType<typeof JSZip.loadAsync> {
 	return JSZip.loadAsync(await readStreamAsBuffer(stream));
 }

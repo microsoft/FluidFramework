@@ -81,12 +81,12 @@ export class NpmDepChecker {
 		}
 	}
 
-	public async run(apply: boolean) {
+	public async run(apply: boolean): Promise<boolean> {
 		await this.check();
 		return this.fix(apply);
 	}
 
-	private async check() {
+	private async check(): Promise<void> {
 		let count = 0;
 		for (const tsFile of this.checkFiles) {
 			const content = await readFile(tsFile, "utf-8");
@@ -106,7 +106,7 @@ export class NpmDepChecker {
 			}
 		}
 	}
-	private fix(apply: boolean) {
+	private fix(apply: boolean): boolean {
 		let changed = false;
 		for (const depCheckRecord of this.records) {
 			const name = depCheckRecord.name;
@@ -137,8 +137,8 @@ export class NpmDepChecker {
 		return this.dupCheck(apply) || changed;
 	}
 
-	private isInDependencies(name: string) {
-		return (
+	private isInDependencies(name: string): boolean {
+		return !!(
 			(this.pkg.packageJson.dependencies &&
 				this.pkg.packageJson.dependencies[name] !== undefined) ||
 			(this.pkg.packageJson.devDependencies &&
@@ -146,7 +146,7 @@ export class NpmDepChecker {
 		);
 	}
 
-	private depcheckTypes(apply: boolean) {
+	private depcheckTypes(apply: boolean): boolean {
 		let changed = false;
 		for (const { name: dep } of this.pkg.combinedDependencies) {
 			if (dep.startsWith("@types/") && this.foundTypes.indexOf(dep) === -1) {
@@ -171,7 +171,7 @@ export class NpmDepChecker {
 		return changed;
 	}
 
-	private dupCheck(apply: boolean) {
+	private dupCheck(apply: boolean): boolean {
 		if (!this.pkg.packageJson.devDependencies || !this.pkg.packageJson.dependencies) {
 			return false;
 		}

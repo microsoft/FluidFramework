@@ -20,7 +20,7 @@ import {
 	getExecutableFromCommand,
 } from "../../../common/utils";
 import type { BuildContext } from "../../buildContext";
-import { type BuildPackage } from "../../buildGraph";
+import type { BuildPackage } from "../../buildGraph";
 import { BuildResult, summarizeBuildResult } from "../../buildResult";
 import {
 	type GitIgnoreSetting,
@@ -53,7 +53,7 @@ export abstract class LeafTask extends Task {
 	private parentWeight = -1;
 
 	// For task that needs to override the actual command to execute
-	protected get executionCommand() {
+	protected get executionCommand(): string {
 		return this.command;
 	}
 
@@ -70,11 +70,11 @@ export abstract class LeafTask extends Task {
 		}
 	}
 
-	public initializeDependentLeafTasks() {
+	public initializeDependentLeafTasks(): void {
 		this.ensureDependentLeafTasks();
 	}
 
-	private ensureDependentLeafTasks() {
+	private ensureDependentLeafTasks(): Set<LeafTask> {
 		if (this.dependentLeafTasks === undefined) {
 			this.dependentLeafTasks = new Set();
 			this.addDependentLeafTasks(this.transitiveDependentLeafTask);
@@ -93,11 +93,11 @@ export abstract class LeafTask extends Task {
 		}
 	}
 
-	public collectLeafTasks(leafTasks: Set<LeafTask>) {
+	public collectLeafTasks(leafTasks: Set<LeafTask>): void {
 		leafTasks.add(this);
 	}
 
-	public initializeWeight() {
+	public initializeWeight(): number {
 		if (this.parentWeight === -1) {
 			this.parentWeight = this.computeParentWeight() + this.taskWeight;
 			traceTaskInitWeight(`${this.nameColored}: ${this.parentWeight}`);
@@ -105,7 +105,7 @@ export abstract class LeafTask extends Task {
 		return this.parentWeight;
 	}
 
-	private computeParentWeight() {
+	private computeParentWeight(): number {
 		let sum = 0;
 		for (const t of this.parentLeafTasks.values()) {
 			sum += t.taskWeight;
@@ -147,16 +147,16 @@ export abstract class LeafTask extends Task {
 		}
 	}
 
-	protected get taskWeight() {
+	protected get taskWeight(): number {
 		return 1;
 	}
 
-	public get weight() {
+	public get weight(): number {
 		assert.notStrictEqual(this.parentWeight, -1);
 		return this.parentWeight;
 	}
 
-	public get isDisabled() {
+	public get isDisabled(): boolean {
 		if (this.isTemp) {
 			return true;
 		}
@@ -164,14 +164,14 @@ export abstract class LeafTask extends Task {
 		return (options.nolint && isLintTask) || (options.lintonly && !isLintTask);
 	}
 
-	public get executable() {
+	public get executable(): string {
 		return getExecutableFromCommand(
 			this.command,
 			this.context.fluidBuildConfig?.multiCommandExecutables ?? [],
 		);
 	}
 
-	protected get useWorker() {
+	protected get useWorker(): boolean {
 		return false;
 	}
 	public async exec(): Promise<BuildResult> {
@@ -270,7 +270,7 @@ export abstract class LeafTask extends Task {
 		});
 	}
 
-	private getExecErrors(ret: ExecAsyncResult) {
+	private getExecErrors(ret: ExecAsyncResult): string {
 		let errorMessages = ret.stdout;
 		if (ret.stderr) {
 			errorMessages = `${errorMessages}\n${ret.stderr}`;
@@ -285,7 +285,7 @@ export abstract class LeafTask extends Task {
 		return errorMessages;
 	}
 
-	private execDone(startTime: number, status: BuildResult, worker?: boolean) {
+	private execDone(startTime: number, status: BuildResult, worker?: boolean): BuildResult {
 		if (!options.showExec) {
 			let statusCharacter: string = " ";
 			switch (status) {
@@ -374,7 +374,7 @@ export abstract class LeafTask extends Task {
 		return true;
 	}
 
-	protected getDependentLeafTasks() {
+	protected getDependentLeafTasks(): IterableIterator<LeafTask> {
 		assert.notStrictEqual(this.dependentLeafTasks, undefined);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this.dependentLeafTasks!.values();
@@ -407,7 +407,7 @@ export abstract class LeafTask extends Task {
 	 */
 
 	// After the task is done, indicate whether the command can be incremental next time.
-	protected abstract get isIncremental();
+	protected abstract get isIncremental(): boolean;
 
 	// check if this task is up to date
 	protected abstract checkLeafIsUpToDate(): Promise<boolean>;
@@ -424,23 +424,23 @@ export abstract class LeafTask extends Task {
 	}
 
 	// For called when the task has successfully executed
-	// eslint-disable-next-line @typescript-eslint/no-empty-function
+
 	protected async markExecDone(): Promise<void> {}
 
-	protected getVsCodeErrorMessages(errorMessages: string) {
+	protected getVsCodeErrorMessages(errorMessages: string): string {
 		return errorMessages;
 	}
 
-	protected traceNotUpToDate() {
+	protected traceNotUpToDate(): void {
 		this.traceTrigger("not up to date");
 	}
 
-	protected traceTrigger(reason: string) {
+	protected traceTrigger(reason: string): void {
 		const msg = `${this.nameColored}: [${reason}]`;
 		traceTaskTrigger(msg);
 	}
 
-	protected traceError(msg: string) {
+	protected traceError(msg: string): void {
 		traceError(`${this.nameColored}: ${msg}`);
 	}
 }
@@ -451,10 +451,10 @@ export abstract class LeafTask extends Task {
 export abstract class LeafWithDoneFileTask extends LeafTask {
 	private _isIncremental: boolean = true;
 
-	protected get isIncremental() {
+	protected get isIncremental(): boolean {
 		return this._isIncremental;
 	}
-	protected get doneFileFullPath() {
+	protected get doneFileFullPath(): string {
 		return this.getPackageFileFullPath(this.doneFile);
 	}
 
@@ -478,7 +478,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		return leafIsUpToDate;
 	}
 
-	protected async markExecDone() {
+	protected async markExecDone(): Promise<void> {
 		const doneFileFullPath = this.doneFileFullPath;
 		try {
 			// TODO: checkLeafIsUpToDate already called this. Consider reusing its results to save recomputation of them.
@@ -499,7 +499,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		}
 	}
 
-	protected async checkLeafIsUpToDate() {
+	protected async checkLeafIsUpToDate(): Promise<boolean> {
 		const doneFileFullPath = this.doneFileFullPath;
 		try {
 			const doneFileExpectedContent = await this.getDoneFileContent();
@@ -564,11 +564,11 @@ export class UnknownLeafTask extends LeafTask {
 		super(node, command, context, taskName);
 	}
 
-	protected get isIncremental() {
+	protected get isIncremental(): boolean {
 		return this.command === "";
 	}
 
-	protected async checkLeafIsUpToDate() {
+	protected async checkLeafIsUpToDate(): Promise<boolean> {
 		if (this.command === "") {
 			// Empty command is always up to date.
 			return true;
@@ -643,7 +643,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 	}
 
 	private async getHashDoneFileContent(): Promise<string | undefined> {
-		const mapHash = async (name: string) => {
+		const mapHash = async (name: string): Promise<{ name: string; hash: string }> => {
 			const hash = await this.node.context.fileHashCache.getFileHash(
 				this.getPackageFileFullPath(name),
 			);
