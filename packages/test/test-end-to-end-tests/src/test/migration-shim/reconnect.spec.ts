@@ -19,9 +19,9 @@ import {
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	type ITestObjectProvider,

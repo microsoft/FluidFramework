@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ICacheEntry } from "@fluidframework/driver-definitions/internal";
+import type { ICacheEntry } from "@fluidframework/driver-definitions/internal";
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 import { openDB } from "idb";
 

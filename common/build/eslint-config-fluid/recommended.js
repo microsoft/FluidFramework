@@ -23,12 +23,8 @@ module.exports = {
 	rules: {
 		// RECOMMENDED RULES
 		"@rushstack/no-new-null": "error",
-		"no-empty": "error",
 		"no-void": "error",
 		"require-atomic-updates": "error",
-
-		// This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
-		"tsdoc/syntax": "error",
 
 		// #region `unicorn` rule overrides
 
@@ -221,13 +217,6 @@ module.exports = {
 			"error",
 			{ fixStyle: "separate-type-imports" },
 		],
-
-		/**
-		 * Ensures that type-only import statements do not result in runtime side-effects.
-		 *
-		 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
-		 */
-		"@typescript-eslint/no-import-type-side-effects": "error",
 
 		// #endregion
 	},

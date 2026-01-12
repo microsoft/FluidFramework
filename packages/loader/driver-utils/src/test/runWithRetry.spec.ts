@@ -108,7 +108,9 @@ describe("runWithRetry Tests", () => {
 		};
 		try {
 			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
-		} catch (error) {}
+		} catch (error) {
+			// Ignore the error
+		}
 		assert.strictEqual(retryTimes, 0, "Should retry");
 		assert.strictEqual(success, true, "Should succeed as retry should be successful");
 	});
@@ -128,7 +130,9 @@ describe("runWithRetry Tests", () => {
 		try {
 			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 			assert.fail("Should not succeed");
-		} catch (error) {}
+		} catch (error) {
+			// Ignore the error
+		}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
 		assert.strictEqual(success, false, "Should not succeed as canRetry was not set");
 	});
@@ -147,7 +151,9 @@ describe("runWithRetry Tests", () => {
 		try {
 			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 			assert.fail("Should not succeed");
-		} catch (error) {}
+		} catch (error) {
+			// Ignore the error
+		}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
 		assert.strictEqual(success, false, "Should not succeed as canRetry was not set");
 	});
@@ -173,7 +179,9 @@ describe("runWithRetry Tests", () => {
 				}),
 			);
 			assert.fail("Should not succeed");
-		} catch (error) {}
+		} catch (error) {
+			// Ignore the error
+		}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
 		assert.strictEqual(success, false, "Should not succeed as retrying was disabled");
 	});
