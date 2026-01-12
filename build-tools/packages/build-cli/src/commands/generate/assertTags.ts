@@ -5,7 +5,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import type { Package } from "@fluidframework/build-tools";
+import type { FluidRepo, Package } from "@fluidframework/build-tools";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageKind, PackageWithKind } from "../../filter.js";
 
@@ -185,6 +185,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		const dataMap = new Map<PackageWithKind, PackageData>();
 		const config = lilconfig(configName, { searchPlaces });
 
+		const { repo } = await this.getContext();
+
 		for (const pkg of packages) {
 			// Package configuration:
 			// eslint-disable-next-line no-await-in-loop
@@ -219,12 +221,16 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 			const sourceFiles = project
 				.getSourceFiles(
 					// Limit to sources in the current package directory
-					`${pkg.directory}/**`,
+					`${pkg.directory.replaceAll("\\", "/")}/**`,
 				)
 				// Filter out type files - only interested in runtime sources
 				.filter((source) => source.getExtension() !== ".d.ts");
 
+			this.info(
+				`Processing '${pkg.name}'s (${repo.relativeToRepo(pkg.directory)}) ${sourceFiles.length} source files.`,
+			);
 			const newAssertFiles = this.collectAssertData(
+				repo,
 				sourceFiles,
 				assertionFunctions,
 				collected,
@@ -248,6 +254,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 	}
 
 	private collectAssertData(
+		repo: FluidRepo,
 		sources: Iterable<SourceFile>,
 		assertionFunctions: AssertionFunctions,
 		collected: CollectedData,
@@ -258,6 +265,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		const newAssertFiles = new Set<SourceFile>();
 
 		for (const sourceFile of sources) {
+			this.verbose(` Processing ${repo.relativeToRepo(sourceFile.getFilePath())}`);
 			// walk the assert message params in the file
 			for (const msg of getAssertMessageParams(sourceFile, assertionFunctions)) {
 				const nodeKind = msg.getKind();
