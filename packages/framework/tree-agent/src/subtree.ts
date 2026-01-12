@@ -34,7 +34,7 @@ export class Subtree<TRoot extends ImplicitFieldSchema> {
 
 	public get branch(): TreeBranchAlpha {
 		return this.viewOrTree instanceof TreeNode
-			? (TreeAlpha.branch(this.viewOrTree) ?? fail("Node cannot be raw."))
+			? (TreeAlpha.branch(this.viewOrTree) ?? fail(0xcb3 /* Node cannot be raw. */))
 			: this.viewOrTree;
 	}
 
@@ -89,7 +89,7 @@ export class Subtree<TRoot extends ImplicitFieldSchema> {
 						}
 					}
 					default: {
-						fail("Unexpected node kind");
+						fail(0xcb4 /* Unexpected node kind */);
 					}
 				}
 			}
@@ -108,10 +108,11 @@ export class Subtree<TRoot extends ImplicitFieldSchema> {
 
 	public fork(): Subtree<TRoot> {
 		if (this.viewOrTree instanceof TreeNode) {
-			const branch = TreeAlpha.branch(this.viewOrTree) ?? fail("Node cannot be raw.");
+			const branch =
+				TreeAlpha.branch(this.viewOrTree) ?? fail(0xcb5 /* Node cannot be raw. */);
 			const node =
 				getNodeOnBranch(this.viewOrTree, branch.fork()) ??
-				fail("Expected node to be on new fork.");
+				fail(0xcb6 /* Expected node to be on new fork. */);
 
 			return new Subtree<TRoot>(node);
 		} else {

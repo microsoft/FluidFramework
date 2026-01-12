@@ -24,6 +24,7 @@ import type { ContainerAttachProps, ContainerSchema } from "@fluidframework/flui
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
+	isInternalFluidContainer,
 } from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
@@ -155,6 +156,9 @@ export class OdspClient {
 		const fluidContainer = await createFluidContainer<T>({
 			container,
 		});
+		if (!isInternalFluidContainer(fluidContainer)) {
+			throw new Error("Fluid container is not internal");
+		}
 		const services = await this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -227,6 +231,9 @@ export class OdspClient {
 			return resolvedUrl.itemId;
 		};
 		const fluidContainer = await createFluidContainer<T>({ container });
+		if (!isInternalFluidContainer(fluidContainer)) {
+			throw new Error("Fluid container is not internal");
+		}
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}

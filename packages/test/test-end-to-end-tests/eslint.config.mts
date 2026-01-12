@@ -10,9 +10,10 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"prefer-arrow-callback": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"@typescript-eslint/explicit-function-return-type": "warn",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"prefer-arrow-callback": "off",
 			"import-x/no-nodejs-modules": ["error"],
 			"@typescript-eslint/no-restricted-imports": [
 				"error",

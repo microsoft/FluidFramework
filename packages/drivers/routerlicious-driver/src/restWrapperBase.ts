@@ -4,7 +4,7 @@
  */
 
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "./axios.cjs";
-import { type QueryStringType } from "./queryStringUtils.js";
+import type { QueryStringType } from "./queryStringUtils.js";
 import { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {

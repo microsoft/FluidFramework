@@ -552,8 +552,8 @@ describe("SharedTreeCore", () => {
 			private prepareForResubmit(toResubmit: readonly GraphCommit<ModularChangeset>[]): void {
 				assert.equal(this.resubmitQueue.length, 0);
 				assert.equal(toResubmit.length, this.submissionLog.length);
-				this.resubmitQueue.push(...Array.from(toResubmit, (c) => ({ ...c, original: c })));
-				this.resubmissionLog.push(toResubmit.slice());
+				this.resubmitQueue.push(...[...toResubmit].map((c) => ({ ...c, original: c })));
+				this.resubmissionLog.push([...toResubmit]);
 			}
 
 			public getEnrichedCommit(

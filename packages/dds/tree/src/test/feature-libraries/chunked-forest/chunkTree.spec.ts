@@ -383,10 +383,10 @@ describe("chunkTree", () => {
 				idCompressor: undefined,
 			});
 			assert.equal(chunks.length, length);
-			chunks.forEach((chunk, index) => {
+			for (const [index, chunk] of chunks.entries()) {
 				assert(chunk instanceof BasicChunk);
 				assertChunkCursorEquals(chunk, [fieldData[index]]);
-			});
+			}
 		});
 
 		it("respects chunk policy for sequence chunking", () => {

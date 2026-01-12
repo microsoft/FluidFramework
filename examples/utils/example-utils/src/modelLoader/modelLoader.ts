@@ -6,15 +6,15 @@
 import { type IContainer, LoaderHeader } from "@fluidframework/container-definitions/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26907: `container-loader` internal `loadContainerPaused` used in examples
 import { loadContainerPaused } from "@fluidframework/container-loader/internal";
+import type { ILoaderProps } from "@fluidframework/container-loader/legacy";
 import {
 	createDetachedContainer,
-	ILoaderProps,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
 import type { IRequest } from "@fluidframework/core-interfaces";
 
 import type { IDetachedModel, IModelLoader } from "./interfaces.js";
-import { IModelContainerRuntimeEntryPoint } from "./modelContainerRuntimeFactory.js";
+import type { IModelContainerRuntimeEntryPoint } from "./modelContainerRuntimeFactory.js";
 
 /**
  * @internal

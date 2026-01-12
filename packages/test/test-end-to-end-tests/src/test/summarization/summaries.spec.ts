@@ -135,7 +135,9 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		try {
 			negResult = undefined;
 			negResult = summarizer.summarizeOnDemand({ reason: "negative test" });
-		} catch (reason) {}
+		} catch (reason) {
+			// Ignore the error
+		}
 		assert(
 			negResult === undefined,
 			"Should not have attempted to summarize while summarizing",

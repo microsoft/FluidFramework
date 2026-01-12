@@ -18,18 +18,6 @@ module.exports = {
 		"unicorn/text-encoding-identifier-case": "off",
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
-		// #region TODO: remove these once eslint-config-fluid has been updated to 5.8.0
-		"@typescript-eslint/consistent-type-exports": [
-			"error",
-			{ fixMixedExportsWithInlineTypeSpecifier: true },
-		],
-		"@typescript-eslint/consistent-type-imports": [
-			"error",
-			{ fixStyle: "inline-type-imports" },
-		],
-		"@typescript-eslint/no-import-type-side-effects": "error",
-		// #endregion
-
 		// Disabled because the rule is crashing on this package - AB#51780
 		"@typescript-eslint/unbound-method": "off",
 	},

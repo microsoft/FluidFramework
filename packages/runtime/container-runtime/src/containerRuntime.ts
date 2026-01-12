@@ -1622,10 +1622,11 @@ export class ContainerRuntime
 
 		// Validate that the Loader is compatible with this Runtime.
 		const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
+
 		validateLoaderCompatibility(
 			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
 			this.disposeFn,
-			this.mc.logger,
+			this.mc,
 		);
 
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.
@@ -1828,7 +1829,9 @@ export class ContainerRuntime
 			validateSummaryHeuristicConfiguration(this.summaryConfiguration);
 		}
 
-		this.summariesDisabled = isSummariesDisabled(this.summaryConfiguration);
+		this.summariesDisabled =
+			isSummariesDisabled(this.summaryConfiguration) ||
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.Test.DisableSummaries") === true;
 
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;

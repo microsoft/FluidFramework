@@ -62,7 +62,9 @@ let threads = { isMainThread: true };
 try {
 	// eslint-disable-next-line @typescript-eslint/no-require-imports
 	threads = require("worker_threads");
-} catch (error) {}
+} catch (error) {
+	// TODO: document why we are ignoring the error here
+}
 
 function expandTreeForReadability(tree: ITree): ITree {
 	const newTree: ITree = { entries: [], id: undefined };
@@ -78,7 +80,9 @@ function expandTreeForReadability(tree: ITree): ITree {
 					contents: JSON.parse(blob.contents) as string,
 					encoding: blob.encoding,
 				};
-			} catch (e) {}
+			} catch (e) {
+				// TODO: document why we are ignoring the error here
+			}
 		}
 		newTree.entries.push(newNode);
 	}
@@ -423,7 +427,9 @@ export class ReplayTool {
 							) {
 								this.args.fromVersion = name;
 							}
-						} catch (err) {}
+						} catch (err) {
+							// TODO: document why we are ignoring the error here
+						}
 					}
 					if (this.args.fromVersion === undefined) {
 						console.error(

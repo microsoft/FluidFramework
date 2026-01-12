@@ -932,9 +932,7 @@ export function structuralName<const T extends string>(
 	allowedTypes: TreeNodeSchema | readonly TreeNodeSchema[],
 ): `${T}<${string}>` {
 	let inner: string;
-	if (!isReadonlyArray(allowedTypes)) {
-		return structuralName(collectionName, [allowedTypes]);
-	} else {
+	if (isReadonlyArray(allowedTypes)) {
 		const names = allowedTypes.map((t): string => {
 			// Ensure that lazy types (functions) don't slip through here.
 			assert(!isLazy(t), 0x83d /* invalid type provided */);
@@ -947,6 +945,8 @@ export function structuralName<const T extends string>(
 		// Using JSON is a simple way to accomplish this.
 		// The outer `[]` around the result were needed so that a single type name "Any" would not collide with the "any" case which used to exist.
 		inner = JSON.stringify(names);
+	} else {
+		return structuralName(collectionName, [allowedTypes]);
 	}
 	return `${collectionName}<${inner}>`;
 }

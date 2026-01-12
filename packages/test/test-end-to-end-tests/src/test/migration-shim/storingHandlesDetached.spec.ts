@@ -8,10 +8,10 @@ import { strict as assert } from "assert";
 import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	type ITestObjectProvider,

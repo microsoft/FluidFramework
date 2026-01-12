@@ -4,7 +4,6 @@
  */
 
 import fs from "node:fs";
-import { createRequire } from "node:module";
 import path from "node:path";
 import {
 	updatePackageJsonFile,
@@ -15,19 +14,75 @@ import {
 	type Package,
 	type PackageJson,
 	TscUtils,
-	getEsLintConfigFilePath,
 	getFluidBuildConfig,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
 } from "@fluidframework/build-tools";
-import JSON5 from "json5";
 import * as semver from "semver";
 import type { TsConfigJson } from "type-fest";
 import { getFlubConfig } from "../../config.js";
 import { type Handler, readFile } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
 
-const require = createRequire(import.meta.url);
+/**
+ * Parser options structure used by typescript-eslint parser.
+ * The `project` field specifies which tsconfig files to use for type-aware linting.
+ */
+interface ParserOptions {
+	project?: string | string[] | boolean | undefined;
+}
+
+/**
+ * Computed ESLint configuration returned by {@link calculateConfigForFile}.
+ * Supports both legacy eslintrc format and ESLint 9 flat config format.
+ */
+interface ComputedESLintConfig {
+	// Legacy eslintrc format: parserOptions at top level
+	parserOptions?: ParserOptions;
+	// ESLint 9 flat config format: parserOptions nested under languageOptions
+	languageOptions?: {
+		parserOptions?: ParserOptions;
+	};
+}
+
+/**
+ * Interface for ESLint instance with calculateConfigForFile method.
+ */
+interface ESLintInstance {
+	calculateConfigForFile(filePath: string): Promise<ComputedESLintConfig>;
+}
+
+/**
+ * Type for the ESLint module exports.
+ * Requires ESLint 8.57.0+ which introduced the loadESLint API.
+ */
+interface ESLintModuleType {
+	loadESLint: (opts?: { cwd?: string }) => Promise<
+		new (instanceOpts?: { cwd?: string }) => ESLintInstance
+	>;
+}
+
+/**
+ * Dynamically load ESLint and get the appropriate ESLint class for the config format.
+ * This uses ESLint's loadESLint function (added in 8.57.0) which auto-detects flat vs legacy config.
+ */
+async function getESLintInstance(cwd: string): Promise<ESLintInstance> {
+	// Dynamic import with cast to a custom interface because ESLint's types differ
+	// significantly between v8 and v9. The cast through `unknown` is safe because:
+	// 1. ESLintModuleType is a minimal interface covering only the loadESLint API we use
+	// 2. We validate loadESLint exists at runtime before using it (see check below)
+	// 3. If validation fails, we throw a descriptive error guiding users to upgrade
+	const eslintModule = (await import("eslint")) as unknown as ESLintModuleType;
+
+	if (eslintModule.loadESLint === undefined) {
+		throw new Error(
+			"ESLint 8.57.0 or later is required for config detection. Please upgrade your ESLint dependency.",
+		);
+	}
+
+	const ESLintClass = await eslintModule.loadESLint({ cwd });
+	return new ESLintClass({ cwd });
+}
 
 /**
  * Get and cache the tsc check ignore setting
@@ -164,19 +219,41 @@ function findTscScript(json: Readonly<PackageJson>, project: string): string | u
 	throw new Error(`'${project}' used in scripts '${tscScripts.join("', '")}'`);
 }
 
-// This should be TSESLint.Linter.Config or .ConfigType from @typescript-eslint/utils
-// but that can only be used once this project is using Node16 resolution. PR #20972
-// We could derive type from @typescript-eslint/eslint-plugin, but that it will add
-// peer dependency requirements.
-interface EslintConfig {
-	parserOptions?: {
-		// https://typescript-eslint.io/packages/parser/#project
-		// eslint-disable-next-line @rushstack/no-new-null
-		project?: string | string[] | boolean | null;
-	};
-}
 /**
- * Get a list of build script names that the eslint depends on, based on .eslintrc file.
+ * Find a representative TypeScript source file in the package directory.
+ * This is needed because ESLint's calculateConfigForFile requires an actual file path.
+ * @param packageDir - The directory of the package.
+ * @returns The path to a representative source file, or undefined if none is found.
+ */
+function findRepresentativeSourceFile(packageDir: string): string | undefined {
+	// Common source directories to check
+	const sourceDirs = ["src", "lib", "source", "."];
+	const extensions = new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".cts"]);
+
+	for (const dir of sourceDirs) {
+		const fullDir = path.join(packageDir, dir);
+		if (!fs.existsSync(fullDir) || !fs.statSync(fullDir).isDirectory()) {
+			continue;
+		}
+
+		try {
+			const files = fs.readdirSync(fullDir);
+			for (const file of files) {
+				const ext = path.extname(file);
+				if (extensions.has(ext)) {
+					return path.join(fullDir, file);
+				}
+			}
+		} catch {
+			// Directory not readable, try next
+		}
+	}
+
+	return undefined;
+}
+
+/**
+ * Get a list of build script names that eslint depends on, based on eslint config file.
  * @remarks eslint does not depend on build tasks for the projects it references. (The
  * projects' configurations guide eslint typescript parser to use original typescript
  * source.) The packages that those projects depend on must be built. So effectively
@@ -195,39 +272,36 @@ async function eslintGetScriptDependencies(
 		return [];
 	}
 
-	const eslintConfig = getEsLintConfigFilePath(packageDir);
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-	if (!eslintConfig) {
-		throw new Error(`Unable to find eslint config file for package in ${packageDir}`);
+	// Use ESLint's API to load and compute the effective configuration.
+	// This handles both legacy eslintrc and ESLint 9 flat config formats,
+	// as well as TypeScript config files (.mts, .cts, .ts) and ESM configs (.mjs).
+	const eslint = await getESLintInstance(packageDir);
+
+	// Find a representative TypeScript file to calculate config for.
+	// We need an actual file path because calculateConfigForFile requires it.
+	const representativeFile = findRepresentativeSourceFile(packageDir);
+	if (representativeFile === undefined) {
+		// No source files found, assume no eslint dependencies
+		return [];
 	}
 
-	let config: EslintConfig;
+	let projects: string | string[] | boolean | undefined;
 	try {
-		const { ext } = path.parse(eslintConfig);
-		if (ext === ".mjs") {
-			throw new Error(`Eslint config '${eslintConfig}' is ESM; only CommonJS is supported.`);
-		}
+		const config = await eslint.calculateConfigForFile(representativeFile);
 
-		if (ext !== ".js" && ext !== ".cjs") {
-			// TODO: optimize double read for TscDependentTask.getDoneFileContent and there.
-			const configFile = fs.readFileSync(eslintConfig, "utf8");
-			config = JSON5.parse(configFile);
-		} else {
-			// This code assumes that the eslint config will be in CommonJS, because if it's ESM the require call will fail.
-			config = require(path.resolve(eslintConfig)) as EslintConfig;
-			if (config === undefined) {
-				throw new Error(`Exports not found in ${eslintConfig}`);
-			}
-		}
+		// Handle both legacy eslintrc and flat config structures:
+		// - Legacy: config.parserOptions?.project
+		// - Flat config: config.languageOptions?.parserOptions?.project
+		projects = config.languageOptions?.parserOptions?.project ?? config.parserOptions?.project;
 	} catch (error) {
-		throw new Error(`Unable to load eslint config file ${eslintConfig}. ${error}`);
+		throw new Error(
+			`Unable to load eslint config for package in ${packageDir}. ${error instanceof Error ? error.message : error}`,
+		);
 	}
 
-	let projects = config.parserOptions?.project;
 	if (!Array.isArray(projects) && typeof projects !== "string") {
-		// "config" is normally the raw configuration as file is on disk and has not
-		// resolved and merged any extends specifications. So, "project" is what is
-		// set in top file.
+		// The computed config merges extends and overrides, so "project" reflects
+		// the effective setting for the representative file.
 		if (projects === false || projects === null) {
 			// type based linting is disabled - assume no task prerequisites
 			return [];
@@ -254,7 +328,7 @@ async function eslintGetScriptDependencies(
 
 			if (found === undefined) {
 				throw new Error(
-					`Unable to find tsc script using project '${project}' specified in '${eslintConfig}' within package '${json.name}'`,
+					`Unable to find tsc script using project '${project}' specified in eslint config within package '${json.name}'`,
 				);
 			}
 

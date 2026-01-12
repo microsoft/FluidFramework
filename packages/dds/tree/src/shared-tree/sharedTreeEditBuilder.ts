@@ -55,11 +55,15 @@ export class SharedTreeEditBuilder
 		mintRevisionTag: () => RevisionTag,
 		private readonly changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
 	) {
-		super(modularChangeFamily, mintRevisionTag, (taggedChange) =>
-			changeReceiver({
-				...taggedChange,
-				change: { changes: [{ type: "data", innerChange: taggedChange.change }] },
-			}),
+		super(
+			modularChangeFamily,
+			mintRevisionTag,
+			(taggedChange) =>
+				changeReceiver({
+					...taggedChange,
+					change: { changes: [{ type: "data", innerChange: taggedChange.change }] },
+				}),
+			modularChangeFamily.codecOptions,
 		);
 
 		this.schema = {

@@ -260,7 +260,7 @@ export class SchemaFactoryBeta<
 	> {
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
-			...(options ?? {}),
+			...options,
 		});
 	}
 

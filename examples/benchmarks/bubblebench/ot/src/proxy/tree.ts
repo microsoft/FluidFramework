@@ -36,7 +36,7 @@ const arrayPatch = {
 			consumer(
 				item
 					.map((value, index) => json1.insertOp([...path, start + index], value))
-					// eslint-disable-next-line unicorn/no-array-reduce, unicorn/no-array-callback-reference
+					// eslint-disable-next-line unicorn/no-array-reduce
 					.reduce(json1.type.compose),
 			);
 			return target.push(...item);

@@ -12,9 +12,16 @@ module.exports = {
 		project: ["./src/test/tsconfig.json"],
 	},
 	rules: {
-		"prefer-arrow-callback": "off",
-		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+		// #region TODO: Fix violations and remove these rule disables
+
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+
+		"@typescript-eslint/explicit-function-return-type": "warn",
+		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+
+		"prefer-arrow-callback": "off",
+
+		// #endregion
 
 		// This library is used in the browser, so we don't want dependencies on most node libraries.
 		"import-x/no-nodejs-modules": ["error"],

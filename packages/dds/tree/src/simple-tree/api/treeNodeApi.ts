@@ -331,9 +331,9 @@ export function getIdentifierFromNode(
 					if (context.isHydrated()) {
 						const localNodeKey =
 							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-						return localNodeKey !== undefined
-							? extractFromOpaque(localNodeKey)
-							: identifierValue;
+						return localNodeKey === undefined
+							? identifierValue
+							: extractFromOpaque(localNodeKey);
 					} else {
 						return identifierValue;
 					}
@@ -342,7 +342,7 @@ export function getIdentifierFromNode(
 					if (context.isHydrated()) {
 						const localNodeKey =
 							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-						return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+						return localNodeKey === undefined ? undefined : extractFromOpaque(localNodeKey);
 					} else {
 						return undefined;
 					}
@@ -357,7 +357,7 @@ export function getIdentifierFromNode(
 		}
 		default: {
 			throw new UsageError(
-				"shortId() may not be called on a node with more than one identifier. Consider converting extraneous identifier fields to string fields.",
+				"The node has more than one identifier. Retrieve identifiers individually via their fields instead.",
 			);
 		}
 	}

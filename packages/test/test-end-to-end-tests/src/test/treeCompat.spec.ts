@@ -14,7 +14,7 @@ import {
 	type ITestFluidObject,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import { type ITree } from "@fluidframework/tree";
+import type { ITree } from "@fluidframework/tree";
 import { lt } from "semver";
 
 const treeId = "sharedTree";

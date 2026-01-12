@@ -323,20 +323,20 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			name: "nested-sequence-change",
 			runScenario: async (takeSnapshot) => {
 				const sf = new SchemaFactory("test trees");
-				class Array extends sf.arrayRecursive('Array<["test trees.Recursive Map"]>', [
+				class ArrayNode extends sf.arrayRecursive('Array<["test trees.Recursive Map"]>', [
 					() => SequenceMap,
 				]) {}
-				class SequenceMap extends sf.mapRecursive("Recursive Map", [() => Array]) {}
+				class SequenceMap extends sf.mapRecursive("Recursive Map", [() => ArrayNode]) {}
 
 				const provider = new TestTreeProviderLite(1, factory, true);
 				const tree = provider.trees[0];
 				const view = tree.viewWith(
 					new TreeViewConfiguration({
-						schema: Array,
+						schema: ArrayNode,
 						enableSchemaValidation,
 					}),
 				);
-				view.initialize(new Array([]));
+				view.initialize(new ArrayNode([]));
 				provider.synchronizeMessages();
 
 				// We must make this shallow change to the sequence field as part of the same transaction as the
@@ -345,7 +345,10 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					view.root.insertAtStart(new SequenceMap([]));
 					const map = view.root[0];
 					const innerArray: SequenceMap[] = [];
-					map.set("foo", new Array([new SequenceMap([["bar", new Array(innerArray)]])]));
+					map.set(
+						"foo",
+						new ArrayNode([new SequenceMap([["bar", new ArrayNode(innerArray)]])]),
+					);
 					// Since innerArray is an array, not an actual node, this does nothing (other than ensure innerArray was copied and thus the tree was not modified by this change)
 					innerArray.push(new SequenceMap([]));
 				});

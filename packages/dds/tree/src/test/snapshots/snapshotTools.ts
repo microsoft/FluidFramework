@@ -92,14 +92,12 @@ export function useSnapshotDirectory(dirPath: string = "files"): void {
 	// Basic sanity check to avoid accidentally creating snapshots outside of the blessed folder.
 	assert(normalizedDir.startsWith(snapshotsFolder));
 
-	if (regenerateSnapshots) {
-		// This whole function is run (once per call to useSnapshotDirectory) during the test discovery phase.
-		// Snapshots are generated during the test execution phase (after the discovery phase),
-		// so the removal of the directory here is not interleaved with the (re)generation of the snapshots.
-		if (existsSync(snapshotsFolder)) {
-			console.log(`removing snapshot directory: ${snapshotsFolder}`);
-			rmSync(snapshotsFolder, { recursive: true, force: true });
-		}
+	// This whole function is run (once per call to useSnapshotDirectory) during the test discovery phase.
+	// Snapshots are generated during the test execution phase (after the discovery phase),
+	// so the removal of the directory here is not interleaved with the (re)generation of the snapshots.
+	if (regenerateSnapshots && existsSync(snapshotsFolder)) {
+		console.log(`removing snapshot directory: ${snapshotsFolder}`);
+		rmSync(snapshotsFolder, { recursive: true, force: true });
 	}
 
 	before((): void => {

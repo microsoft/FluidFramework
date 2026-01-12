@@ -144,10 +144,8 @@ export function allowsFieldSuperset(
 	superset: TreeFieldStoredSchema,
 	monotonicOnly: boolean = true,
 ): boolean {
-	if (!monotonicOnly) {
-		if (isNeverField(policy, originalData, original)) {
-			return true;
-		}
+	if (!monotonicOnly && isNeverField(policy, originalData, original)) {
+		return true;
 	}
 
 	if (!allowsTreeSchemaIdentifierSuperset(original.types, superset.types)) {

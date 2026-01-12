@@ -124,7 +124,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
-		// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
+		// eslint-disable-next-line unicorn/no-array-for-each
 		this.kernel.forEach(callbackFn);
 	}
 

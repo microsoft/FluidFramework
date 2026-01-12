@@ -1708,9 +1708,9 @@ describe("schemaFactory", () => {
 			it("are permitted when unhydrated", () => {
 				const testArray = new TestArray(["test"]);
 				testArray.insertAtEnd("test");
-				assert.deepEqual(Array.from(testArray.values()), ["test", "test"]);
+				assert.deepEqual([...testArray.values()], ["test", "test"]);
 				testArray.insertAtEnd(5);
-				assert.deepEqual(Array.from(testArray.values()), ["test", "test", 5]);
+				assert.deepEqual([...testArray.values()], ["test", "test", 5]);
 			});
 
 			it("can't be hydrated", () => {

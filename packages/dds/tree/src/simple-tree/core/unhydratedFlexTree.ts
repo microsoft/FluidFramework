@@ -187,7 +187,13 @@ export class UnhydratedFlexTreeNode
 	public adoptBy(parent: undefined): void;
 	public adoptBy(parent: UnhydratedFlexTreeField, index: number): void;
 	public adoptBy(parent: UnhydratedFlexTreeField | undefined, index?: number): void {
-		if (parent !== undefined) {
+		if (parent === undefined) {
+			assert(
+				this.location !== unparentedLocation,
+				0xa09 /* Node may not be un-adopted if it does not have a parent */,
+			);
+			this.location = unparentedLocation;
+		} else {
 			assert(index !== undefined, 0xa08 /* Expected index */);
 			if (this.location !== unparentedLocation) {
 				throw new UsageError("A node may not be in more than one place in the tree");
@@ -207,12 +213,6 @@ export class UnhydratedFlexTreeNode
 				unhydratedNode = parentNode;
 			}
 			this.location = { parent, index };
-		} else {
-			assert(
-				this.location !== unparentedLocation,
-				0xa09 /* Node may not be un-adopted if it does not have a parent */,
-			);
-			this.location = unparentedLocation;
 		}
 	}
 
@@ -362,7 +362,7 @@ export class UnhydratedFlexTreeField
 	}
 
 	private getPendingDefault(): ContextualFieldProvider | undefined {
-		return !Array.isArray(this.lazyChildren) ? this.lazyChildren : undefined;
+		return Array.isArray(this.lazyChildren) ? undefined : this.lazyChildren;
 	}
 
 	/**
@@ -474,10 +474,10 @@ export class UnhydratedOptionalField
 			}
 
 			this.edit((mapTrees) => {
-				if (newContent !== undefined) {
-					mapTrees[0] = newContent;
-				} else {
+				if (newContent === undefined) {
 					mapTrees.length = 0;
+				} else {
+					mapTrees[0] = newContent;
 				}
 			});
 		},
@@ -528,7 +528,7 @@ export class UnhydratedSequenceField
 					mapTrees.splice(index, 0, ...newContentChecked);
 				} else {
 					// ...but we avoid using `splice` + spread for very large input arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
-					return mapTrees.slice(0, index).concat(newContentChecked, mapTrees.slice(index));
+					return [...mapTrees.slice(0, index), ...newContentChecked, ...mapTrees.slice(index)];
 				}
 			});
 		},

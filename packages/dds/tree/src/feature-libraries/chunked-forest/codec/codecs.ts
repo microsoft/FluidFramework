@@ -202,7 +202,10 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 				// fallthrough
 				case TreeCompressionStrategy.Compressed: {
 					// eslint-disable-next-line unicorn/prefer-ternary
-					if (context.schema !== undefined) {
+					if (context.schema === undefined) {
+						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
+						encoded = uncompressedEncodeFn(data);
+					} else {
 						encoded = schemaCompressedEncodeFn(
 							context.schema.schema,
 							context.schema.policy,
@@ -210,9 +213,6 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 							context.idCompressor,
 							incrementalEncoder,
 						);
-					} else {
-						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
-						encoded = uncompressedEncodeFn(data);
 					}
 
 					break;

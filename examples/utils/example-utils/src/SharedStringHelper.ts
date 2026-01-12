@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree/legacy";
-import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
+import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
 
 /**
  * @internal
@@ -48,7 +48,7 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
 	}
 
 	/**
-	 * @returns The full text stored in the SharedString as a string.
+	 * Gets the full text stored in the SharedString as a string.
 	 */
 	public getText(): string {
 		return this._latestText;

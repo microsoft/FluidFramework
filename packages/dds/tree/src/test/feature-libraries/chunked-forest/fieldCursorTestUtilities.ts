@@ -41,11 +41,9 @@ export function assertChunkCursorBatchEquals(
 export function validateChunkCursor(
 	chunk: TreeChunk,
 	expected: JsonableTree[],
-	expectedPath: FieldUpPath = {
-		field: rootFieldKey,
-		parent: undefined,
-	},
+	expectedPath?: FieldUpPath,
 ): void {
-	checkFieldTraversal(chunk.cursor(), expectedPath);
+	const path = expectedPath ?? { field: rootFieldKey, parent: undefined };
+	checkFieldTraversal(chunk.cursor(), path);
 	assertChunkCursorEquals(chunk, expected);
 }

@@ -19,12 +19,12 @@ import {
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import {
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
+import type {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	type ITestObjectProvider,

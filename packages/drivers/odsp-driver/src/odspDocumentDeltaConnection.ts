@@ -391,7 +391,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		documentId: string,
 		logger: ITelemetryLoggerExt,
 	): SocketReference {
-		// eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
+		// eslint-disable-next-line unicorn/no-array-method-this-argument
 		const existingSocketReference = SocketReference.find(key, logger);
 		if (existingSocketReference) {
 			return existingSocketReference;

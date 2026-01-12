@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import {
-	type IContainer,
-	type IRuntimeFactory,
+import type {
+	IContainer,
+	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
 	ConnectionState,
@@ -20,11 +20,11 @@ import {
 	IContainerRuntimeOptions,
 	loadContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
-import {
-	type ConfigTypes,
-	type FluidObject,
-	type IConfigProviderBase,
-	type IErrorBase,
+import type {
+	ConfigTypes,
+	FluidObject,
+	IConfigProviderBase,
+	IErrorBase,
 } from "@fluidframework/core-interfaces/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";

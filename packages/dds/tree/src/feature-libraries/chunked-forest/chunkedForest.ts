@@ -196,17 +196,17 @@ export class ChunkedForest implements IEditableForest {
 				assertValidRange(source, sourceField);
 				const newField = sourceField.splice(source.start, source.end - source.start);
 
-				if (destination !== undefined) {
+				if (destination === undefined) {
+					for (const child of newField) {
+						child.referenceRemoved();
+					}
+				} else {
 					assert(
 						!this.forest.roots.fields.has(destination),
 						0x7af /* Destination must be a new empty detached field */,
 					);
 					if (newField.length > 0) {
 						this.forest.roots.fields.set(destination, newField);
-					}
-				} else {
-					for (const child of newField) {
-						child.referenceRemoved();
 					}
 				}
 				// This check is performed after the transfer to ensure that the field is not removed in scenarios
@@ -276,7 +276,9 @@ export class ChunkedForest implements IEditableForest {
 		};
 
 		const announcedVisitors: AnnouncedVisitor[] = [];
-		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
+		for (const getVisitor of this.deltaVisitors) {
+			announcedVisitors.push(getVisitor());
+		}
 		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;

@@ -8,7 +8,7 @@ import {
 	TestDataObjectType,
 	type ITestDataObject,
 } from "@fluid-private/test-version-utils";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {

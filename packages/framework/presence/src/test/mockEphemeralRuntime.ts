@@ -153,11 +153,35 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		this.audience.removeMember(clientId);
 	}
 
-	public connect(clientId: string): void {
+	public connect(clientId: string, oldClientId: string | undefined): void {
+		// during connect audience is refreshed - snapshot current members
+		const members = this.audience.getMembers();
+
+		this.audience.setCurrentClientId(clientId);
+
 		this.clientId = clientId;
 		this.joined = true;
 		for (const listener of this.listeners.joined) {
 			listener({ clientId, canWrite: false });
+		}
+
+		// simulate expected "clear"
+		for (const [memberClientId] of members) {
+			assert(
+				memberClientId !== clientId,
+				"`connect` should not use clientId already in audience",
+			);
+			this.audience.removeMember(memberClientId);
+		}
+		// restore members
+		for (const [memberClientId, client] of members) {
+			if (memberClientId !== oldClientId) {
+				this.audience.addMember(memberClientId, client);
+			}
+		}
+		// finally add new connection
+		for (const [newClientId, newMember] of buildClientDataArray([clientId], 1)) {
+			this.audience.addMember(newClientId, newMember);
 		}
 	}
 

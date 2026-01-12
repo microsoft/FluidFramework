@@ -106,14 +106,14 @@ function testDecode(
 	// Check decode
 	const result = decode(
 		chunk,
-		idCompressor !== undefined
+		idCompressor === undefined
 			? {
-					idCompressor,
-					originatorId: idCompressor.localSessionId,
-				}
-			: {
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
+				}
+			: {
+					idCompressor,
+					originatorId: idCompressor.localSessionId,
 				},
 		incrementalDecoder,
 	);
@@ -143,14 +143,14 @@ function testDecode(
 		// Instead check that it works properly:
 		const parsedResult = decode(
 			parsed,
-			idCompressor !== undefined
+			idCompressor === undefined
 				? {
-						idCompressor,
-						originatorId: idCompressor.localSessionId,
-					}
-				: {
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
+					}
+				: {
+						idCompressor,
+						originatorId: idCompressor.localSessionId,
 					},
 			incrementalDecoder,
 		);

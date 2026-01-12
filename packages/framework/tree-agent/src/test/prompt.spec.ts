@@ -189,7 +189,7 @@ describe("Prompt generation", () => {
 		{
 			const view = getView(
 				sf.object("ObjectWithMap", {
-					map: sf.map(sf.string), // eslint-disable-line unicorn/no-array-callback-reference
+					map: sf.map(sf.string),
 				}),
 				{ map: {} },
 			);

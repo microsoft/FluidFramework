@@ -131,7 +131,7 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 		 * For submit failures, submitFailureResult should be provided. For nack failures, nackSummaryResult should
 		 * be provided. For op broadcast failures, only errors / properties should be provided.
 		 */
-		const fail = (
+		const summaryFail = (
 			errorCode: SummarizeErrorCode,
 			error: IRetriableFailureError,
 			properties?: SummaryGeneratorTelemetry,
@@ -191,7 +191,7 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 				const errorCode: SummarizeErrorCode = "submitSummaryFailure";
 				const retriableError =
 					summaryData.error ?? new RetriableSummaryError(getFailMessage(errorCode));
-				return fail(errorCode, retriableError, summarizeTelemetryProps, {
+				return summaryFail(errorCode, retriableError, summarizeTelemetryProps, {
 					stage: summaryData.stage,
 				});
 			}
@@ -227,7 +227,7 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 			summarizeEvent.reportEvent("generate", { ...summarizeTelemetryProps });
 			resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
 		} catch (error) {
-			return fail(
+			return summaryFail(
 				"submitSummaryFailure",
 				wrapError(
 					error,
@@ -260,13 +260,13 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 			);
 			if (waitBroadcastResult.result === "cancelled") {
 				const errorCode: SummarizeErrorCode = "disconnect";
-				return fail(errorCode, new RetriableSummaryError(getFailMessage(errorCode)));
+				return summaryFail(errorCode, new RetriableSummaryError(getFailMessage(errorCode)));
 			}
 			if (waitBroadcastResult.result !== "done") {
 				// The summary op may not have been received within the timeout due to a transient error. So,
 				// fail with a retriable error to re-attempt the summary if possible.
 				const errorCode: SummarizeErrorCode = "summaryOpWaitTimeout";
-				return fail(
+				return summaryFail(
 					errorCode,
 					new RetriableSummaryError(getFailMessage(errorCode), 0 /* retryAfterSeconds */),
 				);
@@ -296,13 +296,13 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 			);
 			if (waitAckNackResult.result === "cancelled") {
 				const errorCode: SummarizeErrorCode = "disconnect";
-				return fail(errorCode, new RetriableSummaryError(getFailMessage(errorCode)));
+				return summaryFail(errorCode, new RetriableSummaryError(getFailMessage(errorCode)));
 			}
 			if (waitAckNackResult.result !== "done") {
 				const errorCode: SummarizeErrorCode = "summaryAckWaitTimeout";
 				// The summary ack may not have been received within the timeout due to a transient error. So,
 				// fail with a retriable error to re-attempt the summary if possible.
-				return fail(
+				return summaryFail(
 					errorCode,
 					new RetriableSummaryError(getFailMessage(errorCode), 0 /* retryAfterSeconds */),
 				);
@@ -363,7 +363,7 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 					0x25f /* "retryAfterSeconds" */,
 				);
 				// This will only set resultsBuilder.receivedSummaryAckOrNack, as other promises are already set.
-				return fail(
+				return summaryFail(
 					errorCode,
 					error,
 					{ ...summarizeTelemetryProps, nackRetryAfter: retryAfterSeconds },

@@ -5,7 +5,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
-import {
+import type {
 	ISharedStringHelperTextChangedEventArgs,
 	SharedStringHelper,
 } from "../SharedStringHelper.js";
@@ -81,12 +81,12 @@ export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 		// This is also a bad assumption, in the undo case.
 		const isTextInserted = newCaretPosition - oldSelectionStart > 0;
 		if (isTextInserted) {
-			const insertedText = newText.substring(oldSelectionStart, newCaretPosition);
+			const insertedText = newText.slice(oldSelectionStart, newCaretPosition);
 			const isTextReplaced = oldSelectionEnd - oldSelectionStart > 0;
-			if (!isTextReplaced) {
-				sharedStringHelper.insertText(insertedText, oldSelectionStart);
-			} else {
+			if (isTextReplaced) {
 				sharedStringHelper.replaceText(insertedText, oldSelectionStart, oldSelectionEnd);
+			} else {
+				sharedStringHelper.insertText(insertedText, oldSelectionStart);
 			}
 		} else {
 			// Text was removed

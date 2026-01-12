@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { type ILoaderProps } from "@fluidframework/container-loader/internal";
+import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import {
 	LocalDocumentServiceFactory,

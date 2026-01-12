@@ -143,7 +143,7 @@ export function getFieldEncoder(
 	const kind = context.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
 	const type = oneFromIterable(field.types);
 	const nodeEncoder =
-		type !== undefined ? nodeBuilder.nodeEncoderFromSchema(type) : anyNodeEncoder;
+		type === undefined ? anyNodeEncoder : nodeBuilder.nodeEncoderFromSchema(type);
 	if (kind.multiplicity === Multiplicity.Single) {
 		if (field.kind === identifierFieldKindIdentifier) {
 			assert(type !== undefined, 0x999 /* field type must be defined in identifier field */);

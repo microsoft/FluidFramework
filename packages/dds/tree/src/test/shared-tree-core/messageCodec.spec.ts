@@ -17,8 +17,6 @@ import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { Message } from "../../shared-tree-core/messageFormatV1ToV4.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import type { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
 import { TestChange } from "../testChange.js";
 import {
@@ -154,6 +152,7 @@ describe("message codec", () => {
 	makeEncodingTestSuite(family, testCases, undefined, [
 		MessageFormatVersion.v3,
 		MessageFormatVersion.v4,
+		MessageFormatVersion.v6,
 		MessageFormatVersion.vSharedBranches,
 	]);
 	makeDiscontinuedEncodingTestSuite(family, [
@@ -210,7 +209,7 @@ describe("message codec", () => {
 				originatorId,
 				changeset: {},
 				version: -1,
-			} satisfies Message);
+			});
 			assert.throws(
 				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
 				validateUsageError(/Unsupported version -1 encountered while decoding data/),

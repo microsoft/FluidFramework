@@ -1066,7 +1066,9 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 			try {
 				await container.attach(request);
 				assert.fail("expected attach to fail!");
-			} catch (e) {}
+			} catch (e) {
+				// Ignore the error
+			}
 			assert.strictEqual(container.closed, true, "Container should be closed");
 		},
 	);
@@ -1117,7 +1119,9 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 			try {
 				await container.attach(request);
 				assert.fail("expected attach to fail!");
-			} catch (e) {}
+			} catch (e) {
+				// Ignore the error
+			}
 			assert.strictEqual(container.closed, true, "Container should be closed");
 		},
 	);

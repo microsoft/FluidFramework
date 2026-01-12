@@ -1,5 +1,13 @@
 # @fluidframework/map
 
+## 2.80.0
+
+### Minor Changes
+
+- map: Emit valueChanged events for deleted keys after a clear operation ([#26102](https://github.com/microsoft/FluidFramework/pull/26102)) [7c9be0e2d2c](https://github.com/microsoft/FluidFramework/commit/7c9be0e2d2cd7dd40aaa6bf6812ad9a6d43609f5)
+
+  When a `clear` op is processed on SharedMap, `valueChanged` events are now emitted for each key that was deleted. Previously, only the `clear` event was emitted with no subsequent `valueChanged` events.
+
 ## 2.74.0
 
 Dependency updates only.

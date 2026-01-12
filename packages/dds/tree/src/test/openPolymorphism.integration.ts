@@ -618,7 +618,7 @@ export namespace Component {
 				return config;
 			};
 			this.componentsMap = new Map(allComponents.map((c) => [c, c(lazyConfigInner)]));
-			this.components = Array.from(this.componentsMap.values());
+			this.components = [...this.componentsMap.values()];
 			config = lazyConfiguration(this);
 			this.config = config;
 		}

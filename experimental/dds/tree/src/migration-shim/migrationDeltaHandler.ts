@@ -4,11 +4,11 @@
  */
 
 import { assert } from '@fluidframework/core-utils/internal';
-import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions/internal';
+import type { IChannelAttributes, IDeltaHandler } from '@fluidframework/datastore-definitions/internal';
 import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import type { IRuntimeMessageCollection, IRuntimeMessagesContent } from '@fluidframework/runtime-definitions/internal';
 
-import { type IOpContents, type IShimDeltaHandler } from './types.js';
+import type { IOpContents, IShimDeltaHandler } from './types.js';
 import { attributesMatch, isBarrierOp, isStampedOp } from './utils.js';
 
 /**

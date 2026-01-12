@@ -16,9 +16,9 @@ import {
 	type ISummarizer,
 } from "@fluidframework/container-runtime/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
-	type ISummaryContext,
-	type ISummaryTree,
+import type {
+	ISummaryContext,
+	ISummaryTree,
 } from "@fluidframework/driver-definitions/internal";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {

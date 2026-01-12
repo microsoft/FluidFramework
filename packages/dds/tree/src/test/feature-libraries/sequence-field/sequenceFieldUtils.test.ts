@@ -27,12 +27,13 @@ export function testUtils() {
 	describe("Utils", () => {
 		describe("round-trip splitMark and tryMergeMarks", () => {
 			const marks = generatePopulatedMarks(testIdCompressor);
-			[
+			const allMarks = [
 				...marks,
 				...marks
 					.filter((mark) => !areInputCellsEmpty(mark))
 					.map((mark) => ({ ...mark, vestigialEndpoint })),
-			].forEach((mark, index) => {
+			];
+			for (const [index, mark] of allMarks.entries()) {
 				it(`${index}: ${"type" in mark ? mark.type : "NoOp"}`, () => {
 					const splitable: SF.Mark = { ...mark, count: 3 };
 					delete splitable.changes;
@@ -41,7 +42,7 @@ export function testUtils() {
 					const merged = tryMergeMarks(part1, part2);
 					assert.deepEqual(merged, splitable);
 				});
-			});
+			}
 		});
 	});
 }

@@ -303,7 +303,14 @@ export type JoinedStatus =
  */
 export interface ExtensionHostEvents {
 	"disconnected": () => void;
+	/**
+	 * @privateRemarks There are no known listeners to this event. `presence`
+	 * package listens to Signal-based Audience `addMember` event for self.
+	 */
 	"joined": (props: { clientId: ClientConnectionId; canWrite: boolean }) => void;
+	/**
+	 * @privateRemarks There are no known listeners to this event.
+	 */
 	"operabilityChanged": (canWrite: boolean) => void;
 }
 

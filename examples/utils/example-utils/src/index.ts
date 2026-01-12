@@ -10,14 +10,15 @@ export {
 	/**
 	 * @public
 	 */
+	// eslint-disable-next-line unicorn/prefer-export-from
 	EventEmitter,
 };
 
 export {
 	ContainerViewRuntimeFactory,
-	ViewCallback,
+	type ViewCallback,
 	getDataStoreEntryPoint,
-	IFluidMountableViewEntryPoint,
+	type IFluidMountableViewEntryPoint,
 } from "./containerViewRuntimeFactory.js";
 export type {
 	DataTransformationCallback,
@@ -37,9 +38,9 @@ export {
 } from "./migrationTool/index.js";
 export { SameContainerMigrator } from "./migrator/index.js";
 export {
-	IDetachedModel,
-	IModelContainerRuntimeEntryPoint,
-	IModelLoader,
+	type IDetachedModel,
+	type IModelContainerRuntimeEntryPoint,
+	type IModelLoader,
 	ModelContainerRuntimeFactory,
 	ModelLoader,
 	SessionStorageModelLoader,
@@ -54,12 +55,12 @@ export {
 export {
 	CollaborativeInput,
 	CollaborativeTextArea,
-	ICollaborativeInputProps,
-	ICollaborativeInputState,
-	ICollaborativeTextAreaProps,
+	type ICollaborativeInputProps,
+	type ICollaborativeInputState,
+	type ICollaborativeTextAreaProps,
 } from "./reactInputs/index.js";
 export {
-	ISharedStringHelperEvents,
-	ISharedStringHelperTextChangedEventArgs,
+	type ISharedStringHelperEvents,
+	type ISharedStringHelperTextChangedEventArgs,
 	SharedStringHelper,
 } from "./SharedStringHelper.js";

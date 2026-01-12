@@ -1,5 +1,17 @@
 # @fluidframework/container-definitions
 
+## 2.80.0
+
+### Minor Changes
+
+- Added layerIncompatibilityError to FluidErrorTypes, ContainerErrorTypes, DriverErrorTypes and OdspErrorTypes ([#26068](https://github.com/microsoft/FluidFramework/pull/26068)) [a8532bdd903](https://github.com/microsoft/FluidFramework/commit/a8532bdd903626524f17d2ec650d8904046e5308)
+
+  The Fluid error type `layerIncompatibilityError` is added to `FluidErrorTypes` and is now @legacy @beta. It is also added to `ContainerErrorTypes`, `DriverErrorTypes` and `OdspErrorTypes` which extend `FluidErrorTypes`.
+  `layerIncompatibilityError` was added as @legacy @alpha in version 2.72.0.
+  The corresponding interface `ILayerIncompatibilityError` for errors of type `layerIncompatibilityError` is now also @legacy @beta.
+
+  See [this issue](https://github.com/microsoft/FluidFramework/issues/25813) for more details.
+
 ## 2.74.0
 
 ### Minor Changes

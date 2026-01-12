@@ -165,9 +165,10 @@ describe("End to end chunked encoding", () => {
 			{ jsonValidator: FormatValidatorBasic },
 		);
 		const dummyEditor = new DefaultEditBuilder(
-			new DefaultChangeFamily(codec),
+			new DefaultChangeFamily(codec, options),
 			mintRevisionTag,
 			changeReceiver,
+			options,
 		);
 		const checkout = new MockTreeCheckout(forest, {
 			editor: dummyEditor as unknown as ISharedTreeEditor,

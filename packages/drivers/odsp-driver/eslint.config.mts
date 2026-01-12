@@ -15,26 +15,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"unicorn/text-encoding-identifier-case": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-			"@typescript-eslint/consistent-type-imports": [
-				"error",
-				{
-					"fixStyle": "inline-type-imports",
-				},
-			],
-			"@typescript-eslint/no-import-type-side-effects": "error",
 			"@typescript-eslint/unbound-method": "off",
-		},
-	},
-	{
-		files: ["**/*.{ts,tsx}"],
-		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
-		rules: {
-			"@typescript-eslint/consistent-type-exports": [
-				"error",
-				{
-					"fixMixedExportsWithInlineTypeSpecifier": true,
-				},
-			],
 		},
 	},
 	{

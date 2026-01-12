@@ -394,9 +394,9 @@ export function encodeFieldSchemaV2(schema: TreeFieldStoredSchema): FieldSchemaF
 	const fieldSchema: FieldSchemaFormatV1 = encodeFieldSchemaV1(schema);
 
 	// Omit metadata from the output if it is undefined
-	return schema.persistedMetadata !== undefined
-		? { ...fieldSchema, metadata: schema.persistedMetadata }
-		: { ...fieldSchema };
+	return schema.persistedMetadata === undefined
+		? { ...fieldSchema }
+		: { ...fieldSchema, metadata: schema.persistedMetadata };
 }
 
 export function decodeFieldSchema(schema: FieldSchemaFormatV2): TreeFieldStoredSchema {

@@ -209,12 +209,23 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 
 			// load the project based on the tsconfig
 			const project = new Project({
-				skipFileDependencyResolution: true,
+				// Be sure not to skip dependency resolution, as we want to
+				// process all files in a package.
+				skipFileDependencyResolution: false,
 				tsConfigFilePath: tsconfigPath,
 			});
 
+			// Filter to package local sources of interest
+			const sourceFiles = project
+				.getSourceFiles(
+					// Limit to sources in the current package directory
+					`${pkg.directory}/**`,
+				)
+				// Filter out type files - only interested in runtime sources
+				.filter((source) => source.getExtension() !== ".d.ts");
+
 			const newAssertFiles = this.collectAssertData(
-				project,
+				sourceFiles,
 				assertionFunctions,
 				collected,
 				errors,
@@ -237,7 +248,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 	}
 
 	private collectAssertData(
-		project: Project,
+		sources: Iterable<SourceFile>,
 		assertionFunctions: AssertionFunctions,
 		collected: CollectedData,
 		errors: string[],
@@ -246,8 +257,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		const otherErrors: Node[] = [];
 		const newAssertFiles = new Set<SourceFile>();
 
-		// walk all the files in the project
-		for (const sourceFile of project.getSourceFiles()) {
+		for (const sourceFile of sources) {
 			// walk the assert message params in the file
 			for (const msg of getAssertMessageParams(sourceFile, assertionFunctions)) {
 				const nodeKind = msg.getKind();

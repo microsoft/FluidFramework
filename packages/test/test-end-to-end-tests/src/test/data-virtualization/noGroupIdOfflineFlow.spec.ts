@@ -7,12 +7,12 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
-import { type ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObjectFactory, DataObject } = apis.dataRuntime;

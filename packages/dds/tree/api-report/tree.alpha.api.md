@@ -362,6 +362,7 @@ export const FluidClientVersion: {
     readonly v2_52: "2.52.0";
     readonly v2_73: "2.73.0";
     readonly v2_74: "2.74.0";
+    readonly v2_80: "2.80.0";
 };
 
 // @beta
@@ -736,6 +737,12 @@ export const MapNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is MapNodeSchema;
 };
 
+// @alpha
+export interface NoChangeConstraint {
+    // (undocumented)
+    readonly type: "noChange";
+}
+
 // @public @system
 type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild> ? TBuild : never;
 
@@ -926,7 +933,7 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParams {
-    readonly preconditions?: readonly TransactionConstraint[];
+    readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
 // @public @sealed
@@ -1389,11 +1396,14 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ({
     rollback: true;
     value: TFailureValue;
 }) & {
-    preconditionsOnRevert?: readonly TransactionConstraint[];
+    preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 };
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @alpha @sealed
+export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
 
 // @alpha
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;

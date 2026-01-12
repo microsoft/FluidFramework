@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/shared-summary-block";
-export const pkgVersion = "2.80.0";
+export const pkgVersion = "2.81.0";

@@ -98,13 +98,13 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 				...baseEntry,
 				[encodeURIComponent(key)]: value,
 			};
-		} else if (id !== undefined) {
+		} else if (id === undefined) {
+			throw new Error(`Invalid tree entry for ${summaryObject.type}`);
+		} else {
 			entry = {
 				...baseEntry,
 				[encodeURIComponent(key)]: id,
 			};
-		} else {
-			throw new Error(`Invalid tree entry for ${summaryObject.type}`);
 		}
 		entries.push(entry);
 	}

@@ -20,9 +20,7 @@ import {
 } from "../../codec/index.js";
 import {
 	RevisionTagCodec,
-	tagChange,
 	TreeStoredSchemaRepository,
-	type GraphCommit,
 	type RevisionTag,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
@@ -171,6 +169,7 @@ export function makeTestDefaultChangeFamily(options?: {
 			codecOptions,
 			options?.chunkCompressionStrategy ?? TreeCompressionStrategy.Compressed,
 		),
+		codecOptions,
 	);
 }
 
@@ -301,16 +300,7 @@ export class TestSharedTreeCore extends SharedObject {
 
 		this.transaction = new SquashingTransactionStack(
 			this.getLocalBranch(),
-			(commits: GraphCommit<DefaultChangeset>[]) => {
-				const revision = this.kernel.mintRevisionTag();
-				return tagChange(
-					this.changeFamily.rebaser.changeRevision(
-						this.changeFamily.rebaser.compose(commits),
-						revision,
-					),
-					revision,
-				);
-			},
+			this.kernel.mintRevisionTag,
 		);
 
 		const commitEnricher = this.kernel.getCommitEnricher("main");
