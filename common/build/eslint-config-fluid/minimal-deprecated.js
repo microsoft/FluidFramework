@@ -189,7 +189,7 @@ module.exports = {
 		"@typescript-eslint/explicit-module-boundary-types": "warn",
 
 		/**
-		 * Forbids the explicit use of the `any` type.
+		 * Disallows the explicit use of the `any` type.
 		 * @remarks Note: this will be promoted to "error" in a future release.
 		 */
 		"@typescript-eslint/no-explicit-any": [
