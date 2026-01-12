@@ -39,7 +39,7 @@ import { ITokenProvider, ITokenResponse } from "./tokens.js";
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
 export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
 
-const buildRequestUrl = (requestConfig: RequestConfig) =>
+const buildRequestUrl = (requestConfig: RequestConfig): string =>
 	requestConfig.baseURL !== undefined
 		? `${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`
 		: (requestConfig.url ?? "");

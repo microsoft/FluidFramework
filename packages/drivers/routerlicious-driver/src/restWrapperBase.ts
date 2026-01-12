@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type QueryStringType } from "./queryStringUtils.js";
+import type { QueryStringType } from "./queryStringUtils.js";
 import type { RequestConfig, RequestHeaders } from "./request.cjs";
 import { IR11sResponse } from "./restWrapper.js";
 
