@@ -47,7 +47,7 @@ import {
 	EditManagerFormatVersion,
 	SharedTreeSummaryFormatVersion,
 	summarizablesMetadataKey,
-	type ChangeEnricherReadonlyCheckout,
+	type ChangeEnricherCheckout,
 	type EditManager,
 	type ResubmitMachine,
 	type SharedTreeCore,
@@ -591,7 +591,7 @@ describe("SharedTreeCore", () => {
 			readonly output: T;
 		}
 
-		class MockChangeEnricher<T extends object> implements ChangeEnricherReadonlyCheckout<T> {
+		class MockChangeEnricher<T extends object> implements ChangeEnricherCheckout<T> {
 			public isDisposed = false;
 			public enrichmentLog: Enrichment<T>[] = [];
 

@@ -8,7 +8,7 @@ import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 import type { GraphCommit, RevisionTag, TaggedChange } from "../core/index.js";
 import { disposeSymbol } from "../util/index.js";
 
-import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
+import type { ChangeEnricherCheckout } from "./changeEnricher.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
 
 interface PendingChange<TChange> {
@@ -40,7 +40,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		 * Change enricher that represent the tip of the top-level local branch (i.e., the branch on which in-flight
 		 * commits are applied and automatically rebased).
 		 */
-		private readonly tip: ChangeEnricherReadonlyCheckout<TChange>,
+		private readonly tip: ChangeEnricherCheckout<TChange>,
 	) {}
 
 	public onCommitSubmitted(commit: GraphCommit<TChange>): void {
@@ -80,9 +80,6 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		for (let iCommit = localCommits.length - 1; iCommit >= 0; iCommit -= 1) {
 			const commit = localCommits[iCommit] ?? oob();
 			const rollback = this.makeRollback(commit);
-			// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
-			// Either we have to make it possible to do so, or this logic will have to change to work
-			// forwards from an earlier fork instead of backwards.
 			checkout.applyTipChange(rollback);
 		}
 

@@ -40,8 +40,8 @@ export type { ResubmitMachine } from "./resubmitMachine.js";
 export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 
 export {
-	type ChangeEnricherReadonlyCheckout,
-	type ChangeEnricherMutableCheckout,
+	type ChangeEnricherCheckout,
+	type ChangeEnricherProvider,
 	NoOpChangeEnricher,
 } from "./changeEnricher.js";
 

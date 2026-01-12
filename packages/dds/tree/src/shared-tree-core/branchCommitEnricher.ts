@@ -8,15 +8,14 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { type ChangeRebaser, type GraphCommit, replaceChange } from "../core/index.js";
 
 import type { SharedTreeBranchChange } from "./branch.js";
-import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
-import { TransactionEnricher } from "./transactionEnricher.js";
+import type { ChangeEnricherCheckout, ChangeEnricherProvider } from "./changeEnricher.js";
+import { getLast, hasSome } from "../util/index.js";
 
 /**
  * Utility for enriching commits from a {@link Branch} before these commits are applied and submitted.
  */
 export class BranchCommitEnricher<TChange> {
-	readonly #transactionEnricher: TransactionEnricher<TChange>;
-	readonly #enricher: ChangeEnricherReadonlyCheckout<TChange>;
+	private readonly enricher: ChangeEnricherCheckout<TChange>;
 	/**
 	 * Maps each local commit to the corresponding enriched commit.
 	 * @remarks
@@ -24,39 +23,47 @@ export class BranchCommitEnricher<TChange> {
 	 * Each entry is removed when it is {@link BranchCommitEnricher.enrich | retrieved}.
 	 * In the event that an entry is not explicitly removed, it will eventually be {@link WeakMap | dropped from memory} along with the associated commit.
 	 */
-	readonly #preparedCommits: WeakMap<GraphCommit<TChange>, GraphCommit<TChange>> = new Map();
+	private readonly preparedCommits: WeakMap<GraphCommit<TChange>, GraphCommit<TChange>> =
+		new Map();
 
-	/**
-	 * If defined, a top-level transaction has been {@link BranchCommitEnricher.commitTransaction | committed} since the last {@link BranchCommitEnricher.processChange | change has been processed}.
-	 * Calling this function will compute the composition of that transaction's commits.
-	 * @remarks This function will be reset to undefined after each {@link BranchCommitEnricher.processChange | change is processed}.
-	 */
-	#getOuterTransactionChange?: () => TChange;
+	private transactionDepth = 0;
 
 	public constructor(
 		rebaser: ChangeRebaser<TChange>,
-		enricher: ChangeEnricherReadonlyCheckout<TChange>,
-	) {
-		this.#enricher = enricher;
-		this.#transactionEnricher = new TransactionEnricher(rebaser, this.#enricher);
-	}
+		private readonly enricherProvider: ChangeEnricherProvider<TChange>,
+	) {}
 
 	/**
 	 * Process the given change, preparing new commits for {@link BranchCommitEnricher.enrich | enrichment}.
 	 * @param change - The change to process.
 	 */
-	public processChange(change: SharedTreeBranchChange<TChange>): void {
-		if (change.type === "append") {
-			for (const newCommit of change.newCommits) {
-				const newChange =
-					this.#getOuterTransactionChange?.() ??
-					this.#enricher.updateChangeEnrichments(newCommit.change, newCommit.revision);
-
-				this.#preparedCommits.set(newCommit, replaceChange(newCommit, newChange));
+	public processChange(
+		head: GraphCommit<TChange>,
+		change: SharedTreeBranchChange<TChange>,
+	): void {
+		if (change.type === "append" && hasSome(change.newCommits)) {
+			if (change.newCommits.length === 1) {
+				const newCommit = change.newCommits[0];
+				const newChange = this.enricher.updateChangeEnrichments(
+					newCommit.change,
+					newCommit.revision,
+				);
+				this.preparedCommits.set(newCommit, replaceChange(newCommit, newChange));
+			} else {
+				const enricher = this.enricherProvider(head);
+				const lastCommit = getLast(change.newCommits);
+				for (const newCommit of change.newCommits) {
+					const newChange = enricher.updateChangeEnrichments(
+						newCommit.change,
+						newCommit.revision,
+					);
+					this.preparedCommits.set(newCommit, replaceChange(newCommit, newChange));
+					if (newCommit !== lastCommit) {
+						enricher.applyTipChange(newCommit.change, newCommit.revision);
+					}
+				}
 			}
 		}
-
-		this.#getOuterTransactionChange = undefined;
 	}
 
 	/**
@@ -65,9 +72,9 @@ export class BranchCommitEnricher<TChange> {
 	 * @remarks A commit can only be enriched once - subsequent calls to this method with the same commit will throw an error.
 	 */
 	public enrich(commit: GraphCommit<TChange>): GraphCommit<TChange> {
-		const prepared = this.#preparedCommits.get(commit);
+		const prepared = this.preparedCommits.get(commit);
 		assert(prepared !== undefined, 0x980 /* Unknown commit */);
-		this.#preparedCommits.delete(commit);
+		this.preparedCommits.delete(commit);
 		return prepared;
 	}
 
@@ -76,7 +83,7 @@ export class BranchCommitEnricher<TChange> {
 	 * @remarks This may be called multiple times without calling {@link BranchCommitEnricher.commitTransaction | commitTransaction}, producing "nested transactions".
 	 */
 	public startTransaction(): void {
-		this.#transactionEnricher.startTransaction();
+		this.transactionDepth += 1;
 	}
 
 	/**
@@ -84,7 +91,7 @@ export class BranchCommitEnricher<TChange> {
 	 * @remarks This should be called _before_ the corresponding transaction commit change is {@link BranchCommitEnricher.processChange | processed}.
 	 */
 	public commitTransaction(): void {
-		this.#getOuterTransactionChange = this.#transactionEnricher.commitTransaction();
+		this.transactionDepth -= 1;
 	}
 
 	/**
@@ -92,18 +99,6 @@ export class BranchCommitEnricher<TChange> {
 	 * @remarks This will throw an error if there is no ongoing transaction.
 	 */
 	public abortTransaction(): void {
-		this.#transactionEnricher.abortTransaction();
-	}
-
-	/**
-	 * Add new transaction commits to the current transaction.
-	 * @param newCommits - The new commits to add.
-	 * @remarks This will throw an error if there is no ongoing transaction.
-	 */
-	public addTransactionCommits(newCommits: Iterable<GraphCommit<TChange>>): void {
-		assert(this.#transactionEnricher.isTransacting(), 0xa97 /* Not in transaction */);
-		for (const commit of newCommits) {
-			this.#transactionEnricher.addTransactionStep(commit);
-		}
+		this.transactionDepth -= 1;
 	}
 }

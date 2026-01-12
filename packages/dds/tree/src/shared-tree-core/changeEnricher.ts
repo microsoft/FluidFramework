@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { RevisionTag } from "../core/index.js";
+import type { GraphCommit, RevisionTag } from "../core/index.js";
 import { disposeSymbol } from "../util/index.js";
+
+export type ChangeEnricherProvider<TChange> = (
+	lastCommitApplied: GraphCommit<TChange>,
+) => ChangeEnricherCheckout<TChange>;
 
 /**
  * A checkout that can be used by {@link SharedTreeCore} or {@link DefaultResubmitMachine} to enrich changes with refreshers.
@@ -17,7 +21,7 @@ import { disposeSymbol } from "../util/index.js";
  *
  * See implementations for examples.
  */
-export interface ChangeEnricherReadonlyCheckout<TChange> {
+export interface ChangeEnricherCheckout<TChange> {
 	/**
 	 * Updates the set of refreshers on a change.
 	 * @param change - the change to enrich. Not mutated.
@@ -26,17 +30,6 @@ export interface ChangeEnricherReadonlyCheckout<TChange> {
 	 */
 	updateChangeEnrichments(change: TChange, revision: RevisionTag): TChange;
 
-	/**
-	 * Forks the checkout, creating a new checkout that represents the same state but can be mutated.
-	 */
-	fork(): ChangeEnricherMutableCheckout<TChange>;
-}
-
-/**
- * A {@link ChangeEnricherReadonlyCheckout} whose state can be controlled by a {@link CommitEnricher}.
- */
-export interface ChangeEnricherMutableCheckout<TChange>
-	extends ChangeEnricherReadonlyCheckout<TChange> {
 	/**
 	 * Applies a change to the tip state.
 	 * @param change - the change to apply. Not mutated.
@@ -51,13 +44,10 @@ export interface ChangeEnricherMutableCheckout<TChange>
 	[disposeSymbol](): void;
 }
 
-export class NoOpChangeEnricher<TChange> implements ChangeEnricherMutableCheckout<TChange> {
+export class NoOpChangeEnricher<TChange> implements ChangeEnricherCheckout<TChange> {
 	public applyTipChange(change: TChange, revision?: RevisionTag | undefined): void {}
 	public updateChangeEnrichments(change: TChange, revision: RevisionTag): TChange {
 		return change;
-	}
-	public fork(): ChangeEnricherMutableCheckout<TChange> {
-		return new NoOpChangeEnricher();
 	}
 	public [disposeSymbol](): void {}
 }

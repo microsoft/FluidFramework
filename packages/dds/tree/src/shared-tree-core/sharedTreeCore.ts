@@ -48,7 +48,7 @@ import {
 
 import type { BranchId, SharedTreeBranch } from "./branch.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
-import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
+import { type ChangeEnricherCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec, type EditManagerCodecOptions } from "./editManagerCodecs.js";
@@ -144,7 +144,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
 		resubmitMachine?: ResubmitMachine<TChange>,
-		enricher?: ChangeEnricherReadonlyCheckout<TChange>,
+		enricher?: ChangeEnricherCheckout<TChange>,
 		public readonly getEditor: () => TEditor = () => this.getLocalBranch().editor,
 	) {
 		super(
@@ -635,10 +635,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 	protected registerSharedBranchForEditing(
 		branchId: BranchId,
-		enricher: ChangeEnricherReadonlyCheckout<TChange>,
+		changeEnricher: ChangeEnricherCheckout<TChange>,
 		resubmitMachine?: ResubmitMachine<TChange>,
 	): void {
-		const changeEnricher = enricher ?? new NoOpChangeEnricher();
 		const commitEnricher = new BranchCommitEnricher(this.changeFamily.rebaser, changeEnricher);
 		assert(!this.enrichers.has(branchId), 0xc6d /* Branch already registered */);
 		this.enrichers.set(branchId, {

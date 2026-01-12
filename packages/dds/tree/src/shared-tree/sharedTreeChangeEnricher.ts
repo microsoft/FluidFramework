@@ -29,12 +29,12 @@ import { updateRefreshers } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type {
 	ChangeEnricherMutableCheckout,
-	ChangeEnricherReadonlyCheckout,
+	ChangeEnricherCheckout,
 } from "../shared-tree-core/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export class SharedTreeReadonlyChangeEnricher
-	implements ChangeEnricherReadonlyCheckout<SharedTreeChange>
+	implements ChangeEnricherCheckout<SharedTreeChange>
 {
 	/**
 	 * @param borrowedForest - The state based on which to enrich changes.
@@ -62,13 +62,13 @@ export class SharedTreeReadonlyChangeEnricher
 	public updateChangeEnrichments(change: SharedTreeChange): SharedTreeChange {
 		return updateRefreshers(
 			change,
-			this.getDetachedRoot,
+			(id) => this.getDetachedRoot(id),
 			relevantRemovedRoots,
 			updateDataChangeRefreshers,
 		);
 	}
 
-	private readonly getDetachedRoot = (id: DeltaDetachedNodeId): TreeChunk | undefined => {
+	protected getDetachedRoot(id: DeltaDetachedNodeId): TreeChunk | undefined {
 		const root = this.borrowedRemovedRoots.tryGetEntry(id);
 		if (root !== undefined) {
 			const cursor = this.borrowedForest.getCursorAboveDetachedFields();
@@ -81,13 +81,15 @@ export class SharedTreeReadonlyChangeEnricher
 			});
 		}
 		return undefined;
-	};
+	}
 }
 
 export class SharedTreeMutableChangeEnricher
 	extends SharedTreeReadonlyChangeEnricher
 	implements ChangeEnricherMutableCheckout<SharedTreeChange>
 {
+	private readonly changeQueue: [SharedTreeChange, RevisionTag | undefined][] = [];
+
 	/**
 	 * @param forest - The state based on which to enrich changes.
 	 * Owned by the constructed instance.
@@ -106,28 +108,45 @@ export class SharedTreeMutableChangeEnricher
 	}
 
 	public applyTipChange(change: SharedTreeChange, revision?: RevisionTag): void {
-		for (const dataOrSchemaChange of change.changes) {
-			const type = dataOrSchemaChange.type;
-			switch (type) {
-				case "data": {
-					const delta = intoDelta(tagChange(dataOrSchemaChange.innerChange, revision));
-					const visitor = this.forest.acquireVisitor();
-					visitDelta(delta, visitor, this.removedRoots, revision);
-					visitor.free();
-					break;
-				}
-				case "schema": {
-					// This enricher doesn't need to maintain schema information.
-					// Note that the refreshers being generated through `updateChangeEnrichments` will be encoded using
-					// the schema that was used in the input context of the data changeset these refreshers are on.
-					// See the encoding logic in SharedTreeCore for details.
-					break;
-				}
-				default: {
-					unreachableCase(type);
+		this.changeQueue.push([change, revision]);
+	}
+
+	public override updateChangeEnrichments(change: SharedTreeChange): SharedTreeChange {
+		return updateRefreshers(
+			change,
+			(id) => this.lazyGetDetachedRoot(id),
+			relevantRemovedRoots,
+			updateDataChangeRefreshers,
+		);
+	}
+
+	private lazyGetDetachedRoot(id: DeltaDetachedNodeId): TreeChunk | undefined {
+		for (const [change, revision] of this.changeQueue) {
+			for (const dataOrSchemaChange of change.changes) {
+				const type = dataOrSchemaChange.type;
+				switch (type) {
+					case "data": {
+						const delta = intoDelta(tagChange(dataOrSchemaChange.innerChange, revision));
+						const visitor = this.forest.acquireVisitor();
+						visitDelta(delta, visitor, this.removedRoots, revision);
+						visitor.free();
+						break;
+					}
+					case "schema": {
+						// This enricher doesn't need to maintain schema information.
+						// Note that the refreshers being generated through `updateChangeEnrichments` will be encoded using
+						// the schema that was used in the input context of the data changeset these refreshers are on.
+						// See the encoding logic in SharedTreeCore for details.
+						break;
+					}
+					default: {
+						unreachableCase(type);
+					}
 				}
 			}
 		}
+		this.changeQueue.length = 0;
+		return super.getDetachedRoot(id);
 	}
 
 	public [disposeSymbol](): void {

@@ -36,7 +36,7 @@ import {
 	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
 import {
-	type ChangeEnricherReadonlyCheckout,
+	type ChangeEnricherCheckout,
 	SquashingTransactionStack,
 	type ResubmitMachine,
 	type SharedTreeBranch,
@@ -98,7 +98,7 @@ class MockSharedObjectHandle extends MockHandle<ISharedObject> implements IShare
 export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 	indexes: TIndexes;
 	resubmitMachine?: ResubmitMachine<DefaultChangeset>;
-	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>;
+	enricher?: ChangeEnricherCheckout<DefaultChangeset>;
 	codecOptions?: CodecWriteOptions;
 }): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
 	const { indexes, resubmitMachine, enricher, codecOptions } = options;
@@ -142,7 +142,7 @@ export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>(
 	indexes: TIndexes,
 	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
-	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
+	enricher?: ChangeEnricherCheckout<DefaultChangeset>,
 ): TestSharedTreeCore {
 	return new TestSharedTreeCore(
 		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -214,7 +214,7 @@ function createTreeInner(
 	schema: TreeStoredSchemaRepository,
 	codecOptions: CodecWriteOptions = testCodecOptions,
 	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
-	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
+	enricher?: ChangeEnricherCheckout<DefaultChangeset>,
 	editor?: () => DefaultEditBuilder,
 ): [SharedTreeCore<DefaultEditBuilder, DefaultChangeset>, DefaultChangeFamily] {
 	const changeFamily = makeTestDefaultChangeFamily({ idCompressor, chunkCompressionStrategy });
@@ -279,7 +279,7 @@ export class TestSharedTreeCore extends SharedObject {
 		schema: TreeStoredSchemaRepository = new TreeStoredSchemaRepository(),
 		chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Uncompressed,
 		resubmitMachine?: ResubmitMachine<DefaultChangeset>,
-		enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
+		enricher?: ChangeEnricherCheckout<DefaultChangeset>,
 	) {
 		super(id, runtime, TestSharedTreeCore.attributes, id);
 		assert(runtime.idCompressor !== undefined, "The runtime must provide an ID compressor");
@@ -368,7 +368,7 @@ export class TestSharedTreeCore extends SharedObject {
 	}
 }
 
-export class TestChangeEnricher implements ChangeEnricherReadonlyCheckout<TestChange> {
+export class TestChangeEnricher implements ChangeEnricherCheckout<TestChange> {
 	public updateChangeEnrichments(change: TestChange, revision: RevisionTag): TestChange {
 		if (TestChange.isNonEmptyChange(change)) {
 			return {
