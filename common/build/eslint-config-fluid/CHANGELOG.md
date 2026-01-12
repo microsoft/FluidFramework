@@ -91,6 +91,7 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 - `@typescript-eslint/explicit-function-return-type`
 - `@typescript-eslint/no-import-type-side-effects`
 - `jsdoc/multiline-blocks`
+- `jsdoc/require-description`
 - `no-empty`
 
 #### Rule modifications
