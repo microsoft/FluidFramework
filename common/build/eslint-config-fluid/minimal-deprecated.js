@@ -196,6 +196,7 @@ module.exports = {
 
 		"eqeqeq": ["error", "smart"],
 		"import-x/no-deprecated": "error",
+		"no-empty": "error",
 		"no-multi-spaces": [
 			"error",
 			{
@@ -274,7 +275,6 @@ module.exports = {
 		"@typescript-eslint/consistent-type-imports": "off",
 
 		"func-call-spacing": "off", // Off because it conflicts with typescript-formatter
-		"no-empty": "off",
 		"no-void": "off",
 		"require-atomic-updates": "off",
 
