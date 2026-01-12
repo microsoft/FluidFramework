@@ -16,6 +16,7 @@ const config: Linter.Config[] = [
 			'@typescript-eslint/no-unsafe-return': 'off',
 			'import-x/no-deprecated': 'off',
 			'@fluid-internal/fluid/no-unchecked-record-access': 'off',
+			'jsdoc/require-description': 'off',
 		},
 	},
 	{
