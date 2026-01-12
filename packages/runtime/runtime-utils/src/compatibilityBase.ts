@@ -178,7 +178,7 @@ export function getConfigForMinVersionForCollabIterable<T>(
  * @remarks
  * If none is found, returns undefined.
  *
- * When used with fluid client versions, use more strict {@link getConfigForMinVersionForCollabIterable} instead.
+ * When used with Fluid client versions, use more strict {@link getConfigForMinVersionForCollabIterable} instead.
  *
  * @internal
  */
