@@ -1284,6 +1284,9 @@
         "jsdoc/empty-tags": [
             "error"
         ],
+        "jsdoc/multiline-blocks": [
+            "error"
+        ],
         "jsdoc/no-bad-blocks": [
             "error"
         ],

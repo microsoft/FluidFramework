@@ -1,9 +1,11 @@
 {
 	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
+		"rootDir": "./src",
 		"outDir": "./lib",
 		"types": ["react"],
 		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
+	"exclude": ["src/test/**"],
 }
