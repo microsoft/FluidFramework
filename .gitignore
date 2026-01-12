@@ -53,5 +53,5 @@ UPCOMING.md
 # artifacts or bundleAnalysis folders. See scripts/pack-build-output.sh for more details.
 build_output_archive
 
-# AI artifacts
+# Claude Code
 .claude
