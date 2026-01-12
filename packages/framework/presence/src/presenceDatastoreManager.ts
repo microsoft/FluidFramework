@@ -317,7 +317,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// to have been provided for this call to be useful (efficient).
 			assert(
 				alternateProvider !== undefined,
-				"Self is not in audience and no alternateProvider given",
+				0xcba /* Self is not in audience and no alternateProvider given */,
 			);
 		}
 
@@ -497,7 +497,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		const currentClientToSessionValueState =
 			// When connected, `clientToSessionId` must always have current connection entry.
 			this.datastore["system:presence"].clientToSessionId[clientConnectionId];
-		assert(currentClientToSessionValueState !== undefined, "Client connection update missing");
+		assert(
+			currentClientToSessionValueState !== undefined,
+			0xcbb /* Client connection update missing */,
+		);
 
 		const newMessage = {
 			sendTimestamp: Date.now(),
@@ -647,7 +650,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	): void {
 		const received = Date.now();
 		if (!isPresenceMessage(message)) {
-			assert(optional, "Unrecognized message type in critical message");
+			assert(optional, 0xcbc /* Unrecognized message type in critical message */);
 			return;
 		}
 
@@ -684,7 +687,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			const joinResponseFor = message.content.joinResponseFor;
 			if (joinResponseFor) {
 				const selfClientId = this.runtime.getClientId();
-				assert(selfClientId !== undefined, "Received signal without clientId");
+				assert(selfClientId !== undefined, 0xcbd /* Received signal without clientId */);
 
 				let justGainedCompleteSnapshot = false;
 				if (joinResponseFor.includes(selfClientId)) {
@@ -729,7 +732,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			if (message.content.acknowledgementId !== undefined) {
 				assert(
 					this.targetedSignalSupport,
-					"Acknowledgment message was requested while targeted signal capability is not supported",
+					0xcbe /* Acknowledgment message was requested while targeted signal capability is not supported */,
 				);
 				this.runtime.submitSignal({
 					type: acknowledgementMessageType,

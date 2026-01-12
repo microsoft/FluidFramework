@@ -315,7 +315,7 @@ function rebaseMarkIgnoreChild(
 			if (currMark.changes !== undefined) {
 				moveRebasedChanges(currMark.changes, moveEffects, getEndpoint(baseMark));
 			}
-			rebasedMark = { ...(remains ?? {}), count: baseMark.count };
+			rebasedMark = { ...remains, count: baseMark.count };
 		} else {
 			rebasedMark = currMark;
 		}

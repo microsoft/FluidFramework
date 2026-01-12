@@ -172,6 +172,20 @@ module.exports = {
 		"@typescript-eslint/no-non-null-assertion": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
 
+		// In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
+		// API documentation. For example, type inference might decide a function returns a concrete type
+		// instead of an interface. This has no runtime impact, but would cause compilation problems.
+		"@typescript-eslint/explicit-function-return-type": [
+			"error",
+			{
+				allowExpressions: true,
+				allowTypedFunctionExpressions: true,
+				allowHigherOrderFunctions: true,
+				allowDirectConstAssertionInArrowFunctions: true,
+				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
+			},
+		],
+
 		"@typescript-eslint/no-restricted-imports": [
 			"error",
 			{
@@ -182,6 +196,7 @@ module.exports = {
 
 		"eqeqeq": ["error", "smart"],
 		"import-x/no-deprecated": "error",
+		"no-empty": "error",
 		"no-multi-spaces": [
 			"error",
 			{
@@ -224,7 +239,6 @@ module.exports = {
 		 * Disabled because we don't require that all variable declarations be explicitly typed.
 		 */
 		"@rushstack/typedef-var": "off",
-		"@typescript-eslint/explicit-function-return-type": "off",
 		"@typescript-eslint/explicit-member-accessibility": "off",
 
 		"@typescript-eslint/member-ordering": "off",
@@ -261,7 +275,6 @@ module.exports = {
 		"@typescript-eslint/consistent-type-imports": "off",
 
 		"func-call-spacing": "off", // Off because it conflicts with typescript-formatter
-		"no-empty": "off",
 		"no-void": "off",
 		"require-atomic-updates": "off",
 
@@ -373,9 +386,20 @@ module.exports = {
 
 		// #endregion
 
+		// #region @typescript-eslint rules
+
+		/**
+		 * Ensures that type-only import statements do not result in runtime side-effects.
+		 *
+		 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
+		 */
+		"@typescript-eslint/no-import-type-side-effects": "error",
+
 		"@typescript-eslint/prefer-includes": "error",
 		"@typescript-eslint/prefer-nullish-coalescing": "error",
 		"@typescript-eslint/prefer-optional-chain": "error",
+
+		// #endregion
 
 		/**
 		 * By default, libraries should not take dependencies on node libraries.
