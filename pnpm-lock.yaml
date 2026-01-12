@@ -2830,15 +2830,27 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../../packages/test/mocha-test-setup
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.62.0
-        version: 0.62.0(@types/node@20.17.9)
+        version: 0.62.0(@types/node@18.19.130)
       '@fluidframework/eslint-config-fluid':
         specifier: workspace:~
         version: link:../../../common/build/eslint-config-fluid
+      '@testing-library/react':
+        specifier: ^16.3.0
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.130
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.15
@@ -2851,9 +2863,15 @@ importers:
       eslint-plugin-react-hooks:
         specifier: ~7.0.1
         version: 7.0.1(eslint@9.39.1(jiti@2.6.1))
+      global-jsdom:
+        specifier: ^26.0.0
+        version: 26.0.0(jsdom@20.0.3)
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
