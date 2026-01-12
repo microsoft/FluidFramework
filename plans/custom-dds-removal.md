@@ -155,36 +155,25 @@ export interface IDeltaHandler<T = unknown> {
 
 ### Phase 2: Add changesets
 
-Add changesets for the
+Add changesets for the packages that are changed, describing the deprecations. Something like the following:
 
 ```markdown
-## [Next Version]
+SharedObject, SharedObjectCore, ISharedObject, and createSharedObjectKind are now deprecated
 
-### Deprecations
+These APIs are intended for internal Fluid Framework use only. External implementations
+of custom DDSes are not supported and these exports will be removed from the public API
+in a future release.
 
-- SharedObject, SharedObjectCore, ISharedObject, and createSharedObjectKind have been deprecated ([#XXXXX](URL))
-
-  These APIs are intended for internal Fluid Framework use only. External implementations
-  of custom DDSes are not supported and these exports will be removed from the public API
-  in a future release.
-
-  Applications should use the existing DDS types (SharedMap, SharedTree, SharedCell, etc.)
-  rather than implementing custom DDSes.
+Applications should use the existing DDS types (SharedMap, SharedTree, SharedCell, etc.)
+rather than implementing custom DDSes.
 ```
 
-**File: `packages/runtime/datastore-definitions/CHANGELOG.md`**
-
-Add entry:
 ```markdown
-## [Next Version]
+IChannel, IChannelFactory, and IDeltaHandler are now deprecated
 
-### Deprecations
-
-- IChannel, IChannelFactory, and IDeltaHandler have been deprecated ([#XXXXX](URL))
-
-  These interfaces are intended for internal Fluid Framework use only. External
-  implementations of channels/DDSes are not supported and these exports will be
-  removed from the public API in a future release.
+These interfaces are intended for internal Fluid Framework use only. External
+implementations of channels/DDSes are not supported and these exports will be
+removed from the public API in a future release.
 ```
 
 ### Phase 3: Run API Extractor & Verify
