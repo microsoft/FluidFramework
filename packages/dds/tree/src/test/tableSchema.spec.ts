@@ -27,6 +27,12 @@ import type {
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";
+import { createTestUndoRedoStacks, TestTreeProviderLite } from "./utils.js";
+import { TreeViewConfiguration } from "../simple-tree/index.js";
+import { FluidClientVersion } from "../codec/index.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
+import { configuredSharedTree } from "../treeFactory.js";
+import { asAlpha } from "../api.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
@@ -2018,6 +2024,125 @@ describe("TableFactory unit tests", () => {
 			Tree.on(table.rows, "nodeChanged", () => {
 				// Respond to the change.
 			});
+		});
+	});
+
+	describe("NoChange Constraints (Hydrated only)", () => {
+		it("removeColumns adds noChange constraint to prevent concurrent row additions", () => {
+			// Create a provider with minimum version support for noChange constraints
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree1 = provider.trees[0];
+			const view = asAlpha(tree1.viewWith(config));
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [],
+				}),
+			);
+			provider.synchronizeMessages();
+
+			const table = view.root;
+
+			// Create a branch to test constraint violation
+			const fork = view.fork();
+			const branchTable = fork.root;
+
+			// Get a second tree/view for concurrent edits
+			const tree2 = provider.trees[1];
+			const view2 = asAlpha(tree2.viewWith(config));
+
+			// Remove a column on the branch - this should add a noChange constraint
+			branchTable.removeColumns(["column-0"]);
+			assert.equal(branchTable.columns.length, 0);
+
+			// Make a concurrent edit on the other tree by adding a row
+			// This should violate the noChange constraint
+			view2.root.insertRows({
+				rows: [{ id: "row-0", cells: {} }],
+			});
+			provider.synchronizeMessages();
+			assert.equal(table.rows.length, 1);
+
+			// When rebasing, the constraint should be violated and the column removal should be dropped
+			fork.rebaseOnto(view);
+
+			// The column should still exist in the branch because the constraint was violated
+			assert.equal(branchTable.columns.length, 1);
+			assert.equal(branchTable.columns[0].id, "column-0");
+		});
+
+		it("insertColumns adds revert noChange constraint to prevent row additions on undo", () => {
+			// Create a provider with minimum version support for noChange constraints
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree1 = provider.trees[0];
+			const view = asAlpha(tree1.viewWith(config));
+			view.initialize(Table.create({ columns: [], rows: [] }));
+			provider.synchronizeMessages();
+
+			const table = view.root;
+
+			// Create a branch
+			const fork = view.fork();
+			const branchTable = fork.root;
+
+			// Get a second tree/view for concurrent edits
+			const tree2 = provider.trees[1];
+			const view2 = asAlpha(tree2.viewWith(config));
+
+			// Set up undo/redo on the branch
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
+
+			// Insert a column on the branch - this should add a revert noChange constraint
+			branchTable.insertColumns({
+				columns: [{ id: "column-0", props: {} }],
+			});
+			assert.equal(branchTable.columns.length, 1);
+
+			// Get the revertible and revert the column insertion
+			const revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+
+			// Column should be removed on the branch
+			assert.equal(branchTable.columns.length, 0);
+
+			// Make a concurrent edit on the other tree by adding a row
+			view2.root.insertRows({
+				rows: [{ id: "row-0", cells: {} }],
+			});
+			provider.synchronizeMessages();
+			assert.equal(table.rows.length, 1);
+
+			// When rebasing, the revert constraint should be violated
+			fork.rebaseOnto(view);
+
+			// The revert should be dropped, so the column should still exist in the branch
+			assert.equal(branchTable.columns.length, 1);
+			assert.equal(branchTable.columns[0].id, "column-0");
+
+			unsubscribe();
 		});
 	});
 });

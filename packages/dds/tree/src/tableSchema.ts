@@ -33,6 +33,7 @@ import {
 	eraseSchemaDetailsSubclassable,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This makes the API report slightly cleaner.
 	TreeNodeSchemaCore,
+	type TransactionConstraintAlpha,
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";
 import { EmptyKey } from "./core/index.js";
@@ -641,15 +642,41 @@ export namespace System_TableSchema {
 
 				// #endregion
 
-				// TypeScript is unable to narrow the column type correctly here, hence the casts below.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				if (index === undefined) {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
-				} else {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
-				}
+				const branch = TreeAlpha.branch(this);
+
+				// Ensure events are paused until all of the edits are applied.
+				withBufferedTreeEvents(() => {
+					if (branch === undefined) {
+						// If this node does not have a corresponding branch, then it is unhydrated.
+						// TypeScript is unable to narrow the column type correctly here, hence the casts below.
+						// See: https://github.com/microsoft/TypeScript/issues/52144
+						if (index === undefined) {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
+						} else {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
+						}
+					} else {
+						// For hydrated trees, run in a transaction with revert noChange constraint
+						branch.runTransaction(() => {
+							// TypeScript is unable to narrow the column type correctly here, hence the casts below.
+							// See: https://github.com/microsoft/TypeScript/issues/52144
+							if (index === undefined) {
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
+							} else {
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
+							}
+
+							// Add a revert noChange constraint to ensure no rows are added when reverting column insertion
+							return {
+								preconditionsOnRevert: [{ type: "noChange" as const }],
+							};
+						});
+					}
+				});
 
 				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
 				return columns as unknown as ColumnValueType[];
@@ -714,6 +741,7 @@ export namespace System_TableSchema {
 
 					validateIndexRange(startIndex, endIndex, this.table.columns, "Table.removeColumns");
 
+					// Add a noChange constraint to ensure no rows are added during column removal
 					this.#applyEditsInBatch(() => {
 						const columnsToRemove = this.table.columns.slice(
 							startIndex,
@@ -733,7 +761,7 @@ export namespace System_TableSchema {
 							"Table.removeColumns",
 						);
 						removedColumns = columnsToRemove;
-					});
+					}, [{ type: "noChange" as const }]);
 					return removedColumns ?? fail(0xc1f /* Transaction did not complete. */);
 				} else {
 					// If there are no columns to remove, do nothing
@@ -749,6 +777,7 @@ export namespace System_TableSchema {
 						columnsToRemove.push(this.#getColumn(columnOrIdToRemove));
 					}
 
+					// Add a noChange constraint to ensure no rows are added during column removal
 					this.#applyEditsInBatch(() => {
 						// Note, throwing an error within a transaction will abort the entire transaction.
 						// So if we throw an error here for any column, no columns will be removed.
@@ -766,7 +795,7 @@ export namespace System_TableSchema {
 							// We have already validated that all of the columns exist above, so this is safe.
 							this.table.columns.removeAt(this.table.columns.indexOf(columnToRemove));
 						}
-					});
+					}, [{ type: "noChange" as const }]);
 					return columnsToRemove;
 				}
 			}
@@ -857,7 +886,10 @@ export namespace System_TableSchema {
 			 * Transactions are not supported for unhydrated trees, so we cannot run a transaction in that case.
 			 * But since there are no collaborators, this is not an issue.
 			 */
-			#applyEditsInBatch(applyEdits: () => void): void {
+			#applyEditsInBatch(
+				applyEdits: () => void,
+				preconditions?: readonly TransactionConstraintAlpha[],
+			): void {
 				const branch = TreeAlpha.branch(this);
 
 				// Ensure events are paused until all of the edits are applied.
@@ -870,9 +902,12 @@ export namespace System_TableSchema {
 						// Therefore, we don't need to run the edits as a transaction.
 						applyEdits();
 					} else {
-						branch.runTransaction(() => {
-							applyEdits();
-						});
+						branch.runTransaction(
+							() => {
+								applyEdits();
+							},
+							preconditions === undefined ? undefined : { preconditions },
+						);
 					}
 				});
 			}
