@@ -181,6 +181,45 @@ describe("Presence", () => {
 				);
 			});
 
+			it("is announced via `attendeeDisconnected` when local client disconnects", () => {
+				// Setup - create presence in disconnected state and connect
+				const { presence, connect } = prepareDisconnectedPresence(
+					runtime,
+					localAttendeeId,
+					initialLocalClientConnectionId,
+					clock,
+					logger,
+				);
+
+				connect();
+
+				const disconnectedAttendees: Attendee[] = [];
+				presence.attendees.events.on("attendeeDisconnected", (attendee) => {
+					disconnectedAttendees.push(attendee);
+				});
+
+				// Act - disconnect
+				runtime.disconnect();
+
+				// Verify - self attendee was announced as disconnected
+				const selfAttendee = presence.attendees.getMyself();
+				assert.strictEqual(
+					disconnectedAttendees.length,
+					1,
+					"Expected exactly one attendee to be announced as disconnected",
+				);
+				assert.strictEqual(
+					disconnectedAttendees[0],
+					selfAttendee,
+					"Expected self attendee to be announced as disconnected",
+				);
+				assert.strictEqual(
+					selfAttendee.getConnectionStatus(),
+					AttendeeStatus.Disconnected,
+					"Self attendee should have status 'Disconnected' after disconnect",
+				);
+			});
+
 			it("is announced via `attendeeConnected` when local client reconnects", () => {
 				// Setup - create presence in disconnected state, connect and then disconnect
 				const { presence, connect } = prepareDisconnectedPresence(
@@ -224,45 +263,6 @@ describe("Presence", () => {
 					selfAttendee.getConnectionStatus(),
 					AttendeeStatus.Connected,
 					"Self attendee should have status 'Connected' after reconnect",
-				);
-			});
-
-			it("is announced via `attendeeDisconnected` when local client disconnects", () => {
-				// Setup - create presence in disconnected state and connect
-				const { presence, connect } = prepareDisconnectedPresence(
-					runtime,
-					localAttendeeId,
-					initialLocalClientConnectionId,
-					clock,
-					logger,
-				);
-
-				connect();
-
-				const disconnectedAttendees: Attendee[] = [];
-				presence.attendees.events.on("attendeeDisconnected", (attendee) => {
-					disconnectedAttendees.push(attendee);
-				});
-
-				// Act - disconnect
-				runtime.disconnect();
-
-				// Verify - self attendee was announced as disconnected
-				const selfAttendee = presence.attendees.getMyself();
-				assert.strictEqual(
-					disconnectedAttendees.length,
-					1,
-					"Expected exactly one attendee to be announced as disconnected",
-				);
-				assert.strictEqual(
-					disconnectedAttendees[0],
-					selfAttendee,
-					"Expected self attendee to be announced as disconnected",
-				);
-				assert.strictEqual(
-					selfAttendee.getConnectionStatus(),
-					AttendeeStatus.Disconnected,
-					"Self attendee should have status 'Disconnected' after disconnect",
 				);
 			});
 		});
