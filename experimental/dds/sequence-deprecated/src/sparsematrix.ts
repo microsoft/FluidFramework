@@ -218,7 +218,6 @@ export const maxRows = maxRow + 1;
  */
 export const maxCellPosition = maxCol * maxRow;
 
-	// eslint-disable-next-line jsdoc/require-description -- Deprecated
 /**
  * @deprecated `positionToRowCol` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
@@ -226,7 +225,6 @@ export const maxCellPosition = maxCol * maxRow;
  */
 export const rowColToPosition = (row: number, col: number): number => row * maxCols + col;
 
-	// eslint-disable-next-line jsdoc/require-description -- Deprecated
 /**
  * @deprecated `positionToRowCol` is part of an abandoned prototype.
  * Use {@link @fluidframework/matrix#SharedMatrix} instead.
