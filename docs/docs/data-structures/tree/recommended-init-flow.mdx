@@ -97,7 +97,7 @@ export class CollaborationFluidClient {
 		if (containerId.length === 0) {
 			// Path 1: Creating a new container
 			const container = await this.createFluidContainer();
-			const view: TreeView = container.initialObjects.appData.viewWith(AppDataTreeConfiguration);
+			const view = container.initialObjects.appData.viewWith(AppDataTreeConfiguration);
 
 			if (!view.compatibility.canInitialize) {
 				throw new Error("The tree must be safe to initialize upon creation of the Fluid container");
@@ -110,7 +110,7 @@ export class CollaborationFluidClient {
 		} else {
 			// Path 2: Loading an existing container
 			const container = await this.loadFluidContainer(containerId);
-			const view: TreeView= container.initialObjects.appData.viewWith(AppDataTreeConfiguration);
+			const view = container.initialObjects.appData.viewWith(AppDataTreeConfiguration);
 
 			if (view.compatibility.canInitialize) {
 				throw new Error("The tree should already be initialized if the Fluid container exists");
