@@ -156,26 +156,60 @@ export function importCompatibilitySchemaSnapshot(
  * import path from "node:path";
  * import fs from "node:fs";
  *
- * const nodeFileSystem: SnapshotFileSystem = {
- * 	...fs,
- * 	...path,
- * };
+ * const nodeFileSystem: SnapshotFileSystem = { ...fs, ...path };
  * ```
  *
  * @privateRemarks
- * This interface is designed to be compatible with both Node.js `fs` and `path` modules. It is needed to avoid direct dependencies
- * on Node.js APIs in the core library code, allowing for greater portability and easier testing.
+ * This interface is designed to be compatible with Node.js `fs` and `path` modules.
+ * It is needed to avoid direct dependencies on Node.js APIs in the core library code,
+ * allowing for greater portability and easier testing.
  *
  * @input
  * @alpha
  */
 export interface SnapshotFileSystem {
+	/**
+	 * Writes a UTF-8 encoded file to disk, replacing the file if it already exists.
+	 *
+	 * @param file - Path to the file to write.
+	 * @param data - String data to be written.
+	 * @param options - Options specifying that the encoding is UTF-8.
+	 */
 	writeFileSync(file: string, data: string, options: { encoding: "utf8" }): void;
 
+	/**
+	 * Reads a UTF-8 encoded file from disk and returns its contents as a string.
+	 *
+	 * @param file - Path to the file to read.
+	 * @param encoding - The text encoding to use when reading the file. Must be `"utf8"`.
+	 * @returns The contents of the file as a string.
+	 */
 	// We include the encoding here to match the function overload for readFileSync that returns a string.
 	readFileSync(file: string, encoding: "utf8"): string;
+
+	/**
+	 * How a {@link TreeView} using the snapshotted schema would report its compatibility with a document created with the current schema.
+	 *
+	 * @param dir - Path of the directory to create.
+	 * @param options - Options indicating that creation should be recursive.
+	 */
 	mkdirSync(dir: string, options: { recursive: true }): void;
+
+	/**
+	 * Reads the contents of a directory.
+	 *
+	 * @param dir - Path of the directory to read.
+	 * @returns An array of names of the directory entries.
+	 */
 	readdirSync(dir: string): readonly string[];
+
+	/**
+	 * Joins two path segments into a single path string.
+	 *
+	 * @param parentPath - The directory path.
+	 * @param childPath - Filename within `parentPath` directory.
+	 * @returns The combined path string.
+	 */
 	join(parentPath: string, childPath: string): string;
 }
 
@@ -190,7 +224,7 @@ export interface CombinedSchemaCompatibilityStatus {
 	 */
 	readonly backwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
 	/**
-	 * How a {@link TreeView} using the the snapshotted schema would report its compatibility with a document created with the current schema.
+	 * How a {@link TreeView} using the snapshotted schema would report its compatibility with a document created with the current schema.
 	 */
 	readonly forwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
 }
@@ -222,7 +256,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 */
 	readonly minVersionForCollaboration: string;
 	/**
-	 * When true, every version must be snapshotted, and a increased version number will require a new snapshot.
+	 * When true, every version must be snapshotted, and an increased version number will require a new snapshot.
 	 * @remarks
 	 * If this is true, it is assumed there is a snapshot for every release, and thus it is required that the `minVersionForCollaboration` refer to a version which has a snapshot.
 	 * When this is not true, versions without snapshots are assumed to have the same schema as the latest previous version which has a snapshot, and thus `minVersionForCollaboration`
