@@ -31,7 +31,7 @@ function setupTree() {
 		idCompressor: createIdCompressor(),
 	});
 
-	const factory = new SharedTreeTestFactory(() => {});
+	const factory = SharedTreeTestFactory.build(() => {});
 
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 	const tree1 = factory.create(dataStoreRuntime1, "A");
@@ -142,7 +142,7 @@ describe("SharedTreeCore rollback", () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory({
 			flushMode: FlushMode.TurnBased,
 		});
-		const factory = new SharedTreeTestFactory(() => {});
+		const factory = SharedTreeTestFactory.build(() => {});
 
 		// Client 1
 		const dataStoreRuntime1 = new MockFluidDataStoreRuntime({

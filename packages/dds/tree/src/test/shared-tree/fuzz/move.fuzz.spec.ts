@@ -54,7 +54,7 @@ describe("Fuzz - move", () => {
 		DDSFuzzTestState<SharedTreeTestFactory>
 	> = {
 		workloadName: "move",
-		factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
+		factory: SharedTreeTestFactory.build(createOnCreate(populatedInitialState)),
 		generatorFactory,
 		reducer: fuzzReducer,
 		validateConsistency: validateFuzzTreeConsistency,

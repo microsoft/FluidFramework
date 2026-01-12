@@ -32,7 +32,7 @@ const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	fork: 1,
 	merge: 1,
 };
-const generatorFactory = () => takeAsync(100, makeOpGenerator(editGeneratorOpWeights));
+export const generatorFactory = () => takeAsync(100, makeOpGenerator(editGeneratorOpWeights));
 
 export const baseTreeModel: DDSFuzzModel<
 	SharedTreeFuzzTestFactory,
@@ -40,7 +40,7 @@ export const baseTreeModel: DDSFuzzModel<
 	DDSFuzzTestState<SharedTreeFuzzTestFactory>
 > = {
 	workloadName: "SharedTree (Reference Forest)",
-	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
+	factory: SharedTreeFuzzTestFactory.build(createOnCreate(undefined), undefined, {
 		minVersionForCollab: pkgVersion,
 		forest: ForestTypeReference,
 	}),
@@ -55,7 +55,7 @@ export const optimizedForestTreeModel: DDSFuzzModel<
 	DDSFuzzTestState<SharedTreeFuzzTestFactory>
 > = {
 	workloadName: "SharedTree (Optimized Forest)",
-	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
+	factory: SharedTreeFuzzTestFactory.build(createOnCreate(undefined), undefined, {
 		minVersionForCollab: pkgVersion,
 		forest: ForestTypeOptimized,
 	}),

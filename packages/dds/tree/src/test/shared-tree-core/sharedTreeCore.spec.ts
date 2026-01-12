@@ -361,7 +361,7 @@ describe("SharedTreeCore", () => {
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
 			idCompressor: createIdCompressor(),
 		});
-		const factory = new SharedTreeTestFactory(() => {});
+		const factory = SharedTreeTestFactory.build(() => {});
 
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
