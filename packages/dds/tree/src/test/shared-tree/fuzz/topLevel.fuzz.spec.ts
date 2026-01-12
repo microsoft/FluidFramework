@@ -96,7 +96,7 @@ describe("Fuzz - Top-Level", () => {
 		> = {
 			...baseTreeModel,
 			workloadName: "SharedTree rebasing",
-			factory: new SharedTreeFuzzTestFactory(FuzzTestOnCreate),
+			factory: SharedTreeFuzzTestFactory.build(FuzzTestOnCreate),
 		};
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,

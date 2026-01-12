@@ -611,17 +611,28 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
 	 */
 	public constructor(
+		factory: IChannelFactory<ISharedTree>,
 		protected readonly onCreate: (tree: ISharedTree) => void,
 		protected readonly onLoad?: (tree: ISharedTree) => void,
-		options: SharedTreeOptionsInternal = {},
 	) {
+		this.inner = factory;
+	}
+
+	public static build(
+		onCreate: (tree: ISharedTree) => void,
+		onLoad?: (tree: ISharedTree) => void,
+		options: SharedTreeOptionsInternal = {},
+	): SharedTreeTestFactory {
 		const optionsUpdated: SharedTreeOptionsInternal = {
 			...options,
 			jsonValidator: FormatValidatorBasic,
 		};
-		this.inner = configuredSharedTreeInternal(
+
+		const factory = configuredSharedTreeInternal(
 			optionsUpdated,
 		).getFactory() as IChannelFactory<ISharedTree>;
+
+		return new SharedTreeTestFactory(factory, onCreate, onLoad);
 	}
 
 	public get type(): string {

@@ -153,17 +153,18 @@ export function nodeSchemaFromTreeSchema(treeSchema: typeof fuzzFieldSchema) {
 	return nodeSchema;
 }
 
+// TODO: Consider removing this class.
 export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 	/**
 	 * @param onCreate - Called once for each created tree (not called for trees loaded from summaries).
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
 	 */
-	public constructor(
-		protected override readonly onCreate: (tree: ISharedTree) => void,
-		protected override readonly onLoad?: (tree: ISharedTree) => void,
+	public static override build(
+		onCreate: (tree: ISharedTree) => void,
+		onLoad?: (tree: ISharedTree) => void,
 		options: SharedTreeOptionsInternal = {},
-	) {
-		super(onCreate, onLoad, {
+	): SharedTreeFuzzTestFactory {
+		return SharedTreeTestFactory.build(onCreate, onLoad, {
 			...options,
 			jsonValidator: FormatValidatorBasic,
 			disposeForksAfterTransaction: false,
