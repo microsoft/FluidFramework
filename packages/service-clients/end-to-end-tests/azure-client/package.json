@@ -82,7 +82,6 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"axios": "^1.8.4",
 		"cross-env": "^10.1.0",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",

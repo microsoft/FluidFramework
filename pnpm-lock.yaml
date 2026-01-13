@@ -10427,9 +10427,6 @@ importers:
       socket.io-client:
         specifier: ~4.7.5
         version: 4.7.5
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
@@ -10470,9 +10467,6 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
-      axios:
-        specifier: ^1.8.4
-        version: 1.13.2(debug@4.4.3)
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -10509,6 +10503,9 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
 
   packages/drivers/routerlicious-urlResolver:
     dependencies:
@@ -12513,9 +12510,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      axios:
-        specifier: ^1.8.4
-        version: 1.13.2(debug@4.4.3)
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
@@ -13583,9 +13577,6 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../dds/tree
-      axios:
-        specifier: ^1.8.4
-        version: 1.13.2(debug@4.4.3)
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
