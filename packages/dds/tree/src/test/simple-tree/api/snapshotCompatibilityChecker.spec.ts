@@ -246,7 +246,7 @@ describe("snapshotCompatibilityChecker", () => {
 				validateError(`Schema compatibility check failed:
  - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
  - Current version "2.0.0" cannot upgrade documents from "1.0.0".
- - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minAppVersionForCollaboration snapshot version being "1.0.0".
+ - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being "1.0.0".
  - Current version "2.0.0" cannot upgrade documents from "2.0.0".
  - Current version "2.0.0" expected to be equivalent to its snapshot.`),
 			);
@@ -262,7 +262,7 @@ describe("snapshotCompatibilityChecker", () => {
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minAppVersionForCollaboration snapshot version being "1.0.0".`),
+ - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being "1.0.0".`),
 			);
 
 			checkSchemaCompatibilitySnapshots({
@@ -402,7 +402,7 @@ describe("snapshotCompatibilityChecker", () => {
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Historical version "1.0.0" cannot view documents from "3.0.0": these versions are expected to be able to collaborate due to the selected minAppVersionForCollaboration snapshot version being "1.0.0".`),
+ - Historical version "1.0.0" cannot view documents from "3.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being "1.0.0".`),
 			);
 
 			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json", "3.0.0.json"]);
