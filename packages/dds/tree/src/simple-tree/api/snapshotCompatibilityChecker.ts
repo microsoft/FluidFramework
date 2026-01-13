@@ -245,6 +245,9 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	readonly fileSystem: SnapshotFileSystem;
 	/**
 	 * The current application or library version.
+	 * @remarks
+	 * This uses the {@link https://semver.org/#spec-item-11|ordering defined by semver}.
+	 * It is only compared against the version from previous snapshots (taken from this version when they were created by setting `mode` to "update") and the `minVersionForCollaboration`.
 	 */
 	readonly version: string;
 	/**
@@ -253,6 +256,20 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	readonly schema: TreeViewConfiguration;
 	/**
 	 * The minimum version that the current version is expected to be able to collaborate with.
+	 * @remarks
+	 * This defines a range of versions whose schema must be forwards compatible with trees using the current schema:
+	 * Any schema from snapshots with a version greater than or equal to this must be able to view documents created with the current schema.
+	 * This means that if the current `schema` is used to create a {@link TreeView}, then {@link TreeView.upgradeSchema} is used, the older clients,
+	 * all the way back to this `minVersionForCollaboration` will be able to view and edit the tree using their schema and thus collaborate.
+	 *
+	 * Typically applications will attempt to manage their deployment/update schedule such that all versions concurrently deployed can
+	 * collaborate to avoid users losing access to documents when other users upgrade the schema.
+	 * Such applications can set this to the oldest version currently deployed,
+	 * then rely on {@link checkSchemaCompatibilitySnapshots} to verify that no schema changes are made which would break collaboration with that (or newer) versions.
+	 *
+	 * This is the same approach used by {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+	 * except that type is specifically for use with the version of the Fluid Framework client packages,
+	 * and this corresponds to the version of the application or library defining the schema.
 	 */
 	readonly minVersionForCollaboration: string;
 	/**
