@@ -160,22 +160,20 @@ function fieldChangeMapFromDescription(
 			field: field.fieldKey,
 		};
 
-		const fieldChangeset = field.children.reduce(
-			(change: unknown, nodeDescription: NodeChangesetDescription) =>
-				addNodeToField(
-					family,
-					change,
-					nodeDescription,
-					fieldId,
-					changeHandler,
-					nodes,
-					nodeToParent,
-					crossFieldKeys,
-					idAllocator,
-				),
-
-			field.changeset,
-		);
+		let fieldChangeset: unknown = field.changeset;
+		for (const nodeDescription of field.children) {
+			fieldChangeset = addNodeToField(
+				family,
+				fieldChangeset,
+				nodeDescription,
+				fieldId,
+				changeHandler,
+				nodes,
+				nodeToParent,
+				crossFieldKeys,
+				idAllocator,
+			);
+		}
 
 		for (const { key, count } of changeHandler.getCrossFieldKeys(fieldChangeset)) {
 			crossFieldKeys.set(key, count, fieldId);

@@ -35,9 +35,9 @@ import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
 function validateShape(shape: ChunkShape): void {
-	shape.positions.forEach((info, positionIndex) => {
+	for (const [positionIndex, info] of shape.positions.entries()) {
 		if (info === undefined) {
-			return;
+			continue;
 		}
 		assert.equal(
 			info.parent,
@@ -56,7 +56,7 @@ function validateShape(shape: ChunkShape): void {
 				assert.equal(element.parent, info);
 			}
 		}
-	});
+	}
 }
 
 describe("uniformChunk", () => {

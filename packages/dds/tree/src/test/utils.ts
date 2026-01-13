@@ -50,6 +50,7 @@ import {
 
 import {
 	currentVersion,
+	type CodecWriteOptions,
 	type FormatVersion,
 	type ICodecFamily,
 	type IJsonCodec,
@@ -501,9 +502,9 @@ export class TestTreeProviderLite {
 	public synchronizeMessages(options?: { count?: number; flush?: boolean }): void {
 		const flush = options?.flush ?? true;
 		if (flush) {
-			this.containerRuntimeMap.forEach((containerRuntime) => {
+			for (const containerRuntime of this.containerRuntimeMap.values()) {
 				containerRuntime.flush();
-			});
+			}
 		}
 
 		const count = options?.count;
@@ -816,6 +817,7 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 		forestType?: ForestType;
 		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -830,6 +832,7 @@ function createCheckoutWithContent(
 			HasListeners<CheckoutEvents>;
 		forestType?: ForestType;
 		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);

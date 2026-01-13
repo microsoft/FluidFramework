@@ -103,7 +103,9 @@ describe("TestChange", () => {
 		change: TaggedChange<TestChange>,
 		...baseChanges: TaggedChange<TestChange>[]
 	): TestChange {
-		baseChanges.forEach((base) => deepFreeze(base));
+		for (const base of baseChanges) {
+			deepFreeze(base);
+		}
 		deepFreeze(change);
 
 		const composed = TestChange.composeList(baseChanges.map((c) => c.change));

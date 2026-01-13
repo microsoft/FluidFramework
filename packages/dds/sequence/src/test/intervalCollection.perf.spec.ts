@@ -6,7 +6,7 @@
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISequenceIntervalCollection } from "../intervalCollection.js";
+import type { ISequenceIntervalCollection } from "../intervalCollection.js";
 import {
 	createOverlappingIntervalsIndex,
 	type ISequenceOverlappingIntervalsIndex,

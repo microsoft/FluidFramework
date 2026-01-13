@@ -1090,27 +1090,27 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		const parentTrunkBase =
 			trunkRevisionCache.get(data.base ?? rootRevision) ??
 			fail(0xc61 /* Expected base revision to be in trunk cache */);
-		this.trunk.setHead(
-			data.trunk.reduce((base, c) => {
-				const sequenceId: SequenceId =
-					c.indexInBatch === undefined
-						? {
-								sequenceNumber: c.sequenceNumber,
-							}
-						: {
-								sequenceNumber: c.sequenceNumber,
-								indexInBatch: c.indexInBatch,
-							};
-				const commit = mintCommit(base, c);
-				this.sequenceIdToCommit.set(sequenceId, commit);
-				this.commitMetadata.set(c.revision, {
-					sequenceId,
-					sessionId: c.sessionId,
-				});
-				trunkRevisionCache.set(c.revision, commit);
-				return commit;
-			}, parentTrunkBase),
-		);
+		let trunkHead = parentTrunkBase;
+		for (const c of data.trunk) {
+			const sequenceId: SequenceId =
+				c.indexInBatch === undefined
+					? {
+							sequenceNumber: c.sequenceNumber,
+						}
+					: {
+							sequenceNumber: c.sequenceNumber,
+							indexInBatch: c.indexInBatch,
+						};
+			const commit = mintCommit(trunkHead, c);
+			this.sequenceIdToCommit.set(sequenceId, commit);
+			this.commitMetadata.set(c.revision, {
+				sequenceId,
+				sessionId: c.sessionId,
+			});
+			trunkRevisionCache.set(c.revision, commit);
+			trunkHead = commit;
+		}
+		this.trunk.setHead(trunkHead);
 
 		this.localBranch.setHead(this.trunk.getHead());
 
@@ -1119,13 +1119,13 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 				trunkRevisionCache.get(branch.base) ??
 				fail(0xad7 /* Expected summary branch to be based off of a revision in the trunk */);
 
+			let branchHead = commit;
+			for (const c of branch.commits) {
+				branchHead = mintCommit(branchHead, c);
+			}
 			this.peerLocalBranches.set(
 				sessionId,
-				new SharedTreeBranch(
-					branch.commits.reduce(mintCommit, commit),
-					this.changeFamily,
-					this.mintRevisionTag,
-				),
+				new SharedTreeBranch(branchHead, this.changeFamily, this.mintRevisionTag),
 			);
 		}
 	}
