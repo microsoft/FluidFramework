@@ -69,7 +69,7 @@ importers:
         specifier: ~4.3.0
         version: 4.3.0(@typescript-eslint/eslint-plugin@8.18.2(@typescript-eslint/parser@8.18.2(eslint@9.39.2(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.2(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.2(jiti@2.6.1))
       typescript-eslint:
-        specifier: ~8.18.2
+        specifier: ^8.18.2
         version: 8.18.2(eslint@9.39.2(jiti@2.6.1))(typescript@5.4.5)
     devDependencies:
       '@fluidframework/build-common':
