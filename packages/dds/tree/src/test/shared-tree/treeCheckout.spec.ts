@@ -1578,7 +1578,7 @@ describe("sharedTreeView", () => {
 			});
 		});
 
-		it("avoids diff computation when no refresher is needed", () => {
+		it("delays diff computation if no refresher is needed", () => {
 			const { view1, view1Branch } = setup([]);
 			view1.root.insertAtEnd({ id: "A" });
 			const commit = view1Branch.getHead();
@@ -1587,13 +1587,40 @@ describe("sharedTreeView", () => {
 
 			view1.checkout.resetEnrichmentStats();
 			view1.checkout.runEnrichmentBatch(commit, (enricher) => {
-				const enriched = enricher.enrich(commit.change);
-				assertEnrichmentCount(enriched, 0);
+				enricher.enrich(commit.change);
 			});
 			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
 				batches: 1,
 				diffs: 0,
 				commitsEnriched: 1,
+				refreshers: 0,
+				forks: 0,
+				applied: 0,
+			});
+		});
+
+		it("delays apply changes if no refresher is needed", () => {
+			const { view1, view1Branch } = setup([]);
+			view1.root.insertAtEnd({ id: "A" });
+			const commit1 = view1Branch.getHead();
+			view1.root.insertAtEnd({ id: "B" });
+			const commit2 = view1Branch.getHead();
+			view1.root.insertAtEnd({ id: "C" });
+			const commit3 = view1Branch.getHead();
+
+			view1.checkout.resetEnrichmentStats();
+			view1.checkout.runEnrichmentBatch(commit1, (enricher) => {
+				enricher.enrich(commit1.change);
+				enricher.enqueueChange(commit1);
+				enricher.enrich(commit2.change);
+				enricher.enqueueChange(commit2);
+				enricher.enrich(commit3.change);
+				enricher.enqueueChange(commit3);
+			});
+			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+				batches: 1,
+				diffs: 0,
+				commitsEnriched: 3,
 				refreshers: 0,
 				forks: 0,
 				applied: 0,

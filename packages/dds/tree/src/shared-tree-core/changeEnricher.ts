@@ -39,7 +39,7 @@ export interface ChangeEnricherCheckout<TChange> {
 	enrich(change: TChange): TChange;
 
 	/**
-	 * Enqueues change to be applied before {@link enrich | enriching} then next change.
+	 * Enqueues change to be applied before {@link enrich | enrichment}.
 	 * @param change - the change to apply or a callback that produces the change to apply.
 	 * The callback will be called at most once, either during or after this call.
 	 */
