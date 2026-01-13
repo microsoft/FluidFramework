@@ -15,7 +15,7 @@ import {
 import { generateToken } from "./auth.js";
 
 /**
- * Creates an {@link IRequest} for creating a new document with the local resolver.
+ * Creates an {@link @fluidframework/core-interfaces#IRequest} for creating a new document with the local resolver.
  *
  * @legacy @beta
  */

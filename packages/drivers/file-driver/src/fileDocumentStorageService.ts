@@ -139,7 +139,7 @@ export interface ISnapshotWriterStorage extends IDocumentStorageService {
 }
 
 /**
- * Constructor type for creating {@link IDocumentStorageService} instances.
+ * Constructor type for creating {@link @fluidframework/driver-definitions#IDocumentStorageService} instances.
  *
  * @internal
  */
