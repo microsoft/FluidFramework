@@ -1168,6 +1168,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		enricher[disposeSymbol]();
 	}
 
+	private getMainBranch(): SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange> {
+		return this.#transaction.branch;
+	}
+
 	// #endregion Enrichment
 }
 

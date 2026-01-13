@@ -30,6 +30,7 @@ import {
 	type ITreeCheckoutFork,
 	type BranchableTree,
 	createTreeCheckout,
+	type SharedTreeChange,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -59,6 +60,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { asAlpha } from "../../api.js";
+import type { SharedTreeBranch } from "../../shared-tree-core/index.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -1303,6 +1305,49 @@ describe("sharedTreeView", () => {
 				duringEdit: (view) => view.dispose(),
 				error: "Disposing a view is forbidden during a nodeChanged or treeChanged event",
 			});
+		});
+	});
+
+	describe("Enrichment", () => {
+		it("can provide an enricher for a commit that is about to be applied", () => {
+			const view = getView(
+				new TreeViewConfiguration({ enableSchemaValidation, schema: rootArray }),
+			);
+			view.initialize(["A"]);
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const revertible = getRevertible();
+				assert.equal(revertible.status, RevertibleStatus.Valid);
+				revertiblesCreated.push(revertible);
+			});
+
+			view.root.removeAt(0);
+
+			const mainBranch = (
+				view.checkout as unknown as {
+					getMainBranch(): SharedTreeBranch<never, SharedTreeChange>;
+				}
+			).getMainBranch();
+			let callCount = 0;
+			mainBranch.events.on("beforeChange", (change) => {
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view.checkout.runEnrichmentBatch(commit, (enricher) => {
+					callCount += 1;
+					const enriched = enricher.updateChangeEnrichments(commit.change, commit.revision);
+					assert.equal(enriched.changes[0].type, "data");
+					assert.equal(enriched.changes[0].innerChange.refreshers?.size, 1);
+				});
+			});
+
+			assert.equal(revertiblesCreated.length, 1);
+			revertiblesCreated[0].revert();
+
+			assert.equal(callCount, 1);
+
+			unsubscribe();
 		});
 	});
 });
