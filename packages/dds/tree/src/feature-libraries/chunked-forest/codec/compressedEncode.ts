@@ -590,6 +590,7 @@ class LazyFieldEncoder implements FieldEncoder {
 	}
 
 	private get encoder(): FieldEncoder {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.encoderLazy === undefined) {
 			this.encoderLazy = this.fieldEncoderFromPolicy(this.nodeBuilder, this.fieldSchema);
 		}
