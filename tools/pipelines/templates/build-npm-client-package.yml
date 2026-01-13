@@ -184,6 +184,9 @@ extends:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
         os: windows
+      sourceRepositoriesToScan:
+        include:
+        - repository: ff_pipeline_host
       # Tentative workaround for the occasional Credscan failures
       credscan:
         batchSize: 4
