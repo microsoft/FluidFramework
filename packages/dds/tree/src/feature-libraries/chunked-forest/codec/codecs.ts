@@ -5,10 +5,15 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 
 import {
 	type CodecTree,
 	type CodecWriteOptions,
+	FluidClientVersion,
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
 } from "../../../codec/index.js";
@@ -23,20 +28,23 @@ import {
 	brandedNumberType,
 	type Brand,
 	type JsonCompatibleReadOnly,
+	unbrand,
 } from "../../../util/index.js";
-import {
-	TreeCompressionStrategy,
-	TreeCompressionStrategyExtended,
-	type TreeCompressionStrategyPrivate,
-} from "../../treeCompressionUtils.js";
+import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { EncodedFieldBatch, validVersions, FieldBatchFormatVersion } from "./format.js";
-import { schemaCompressedEncode } from "./schemaBasedEncode.js";
-import { uncompressedEncode } from "./uncompressedEncode.js";
+import {
+	type EncodedFieldBatch,
+	validVersions,
+	FieldBatchFormatVersion,
+	EncodedFieldBatchV1,
+	EncodedFieldBatchV2,
+} from "./format.js";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
+import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode.js";
+import { schemaCompressedEncodeV1, schemaCompressedEncodeV2 } from "./schemaBasedEncode.js";
 
 /**
  * Reference ID for a chunk that is incrementally encoded.
@@ -98,7 +106,7 @@ export interface IncrementalDecoder {
 export interface IncrementalEncoderDecoder extends IncrementalEncoder, IncrementalDecoder {}
 
 export interface FieldBatchEncodingContext {
-	readonly encodeType: TreeCompressionStrategyPrivate;
+	readonly encodeType: TreeCompressionStrategy;
 	readonly idCompressor: IIdCompressor;
 	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;
@@ -120,19 +128,18 @@ export type FieldBatchCodec = IJsonCodec<
 >;
 
 /**
- * Get the write version for {@link makeFieldBatchCodec} based on the `minVersionForCollab` version.
- * @privateRemarks
- * TODO: makeFieldBatchCodec (and makeVersionDispatchingCodec transitively) should bake in this versionToFormat logic and the resulting codec can then support use with FluidClientVersion directly.
- */
-/**
  * Convert a MinimumVersionForCollab to write version for {@link FieldBatchCodec}.
  * @param clientVersion - The MinimumVersionForCollab to convert.
  */
 function clientVersionToFieldBatchVersion(
 	clientVersion: MinimumVersionForCollab,
 ): FieldBatchFormatVersion {
-	// Currently, field batch codec only writes in version 1.
-	return brand(FieldBatchFormatVersion.v1);
+	return brand(
+		getConfigForMinVersionForCollab(clientVersion, {
+			[lowestMinVersionForCollab]: FieldBatchFormatVersion.v1,
+			[FluidClientVersion.v2_73]: FieldBatchFormatVersion.v2,
+		}),
+	);
 }
 
 export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec {
@@ -146,8 +153,30 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 		0x935 /* Invalid write version for FieldBatch codec */,
 	);
 
-	// TODO: use makeVersionDispatchingCodec to support adding more versions in the future.
-	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
+	let uncompressedEncodeFn: typeof uncompressedEncodeV1 | typeof uncompressedEncodeV2;
+	let schemaCompressedEncodeFn:
+		| typeof schemaCompressedEncodeV1
+		| typeof schemaCompressedEncodeV2;
+	let encodedFieldBatchType: typeof EncodedFieldBatchV1 | typeof EncodedFieldBatchV2;
+	switch (writeVersion) {
+		case unbrand(FieldBatchFormatVersion.v1): {
+			uncompressedEncodeFn = uncompressedEncodeV1;
+			schemaCompressedEncodeFn = schemaCompressedEncodeV1;
+			encodedFieldBatchType = EncodedFieldBatchV1;
+			break;
+		}
+		case unbrand(FieldBatchFormatVersion.v2): {
+			uncompressedEncodeFn = uncompressedEncodeV2;
+			schemaCompressedEncodeFn = schemaCompressedEncodeV2;
+			encodedFieldBatchType = EncodedFieldBatchV2;
+			break;
+		}
+		default: {
+			unreachableCase(writeVersion);
+		}
+	}
+
+	return makeVersionedValidatedCodec(options, validVersions, encodedFieldBatchType, {
 		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 			for (const cursor of data) {
 				assert(
@@ -156,32 +185,41 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 				);
 			}
 			let encoded: EncodedFieldBatch;
+			let incrementalEncoder: IncrementalEncoder | undefined;
 			switch (context.encodeType) {
-				case TreeCompressionStrategy.Uncompressed:
-					encoded = uncompressedEncode(data);
+				case TreeCompressionStrategy.Uncompressed: {
+					encoded = uncompressedEncodeFn(data);
 					break;
-				case TreeCompressionStrategyExtended.CompressedIncremental:
-				case TreeCompressionStrategy.Compressed:
+				}
+				case TreeCompressionStrategy.CompressedIncremental: {
+					assert(
+						writeVersion >= FieldBatchFormatVersion.v2,
+						0xca0 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
+					);
+					// Incremental encoding is only supported for CompressedIncremental.
+					incrementalEncoder = context.incrementalEncoderDecoder;
+				}
+				// fallthrough
+				case TreeCompressionStrategy.Compressed: {
 					// eslint-disable-next-line unicorn/prefer-ternary
-					if (context.schema !== undefined) {
-						encoded = schemaCompressedEncode(
+					if (context.schema === undefined) {
+						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
+						encoded = uncompressedEncodeFn(data);
+					} else {
+						encoded = schemaCompressedEncodeFn(
 							context.schema.schema,
 							context.schema.policy,
 							data,
 							context.idCompressor,
-							// Incremental encoding is only supported for CompressedIncremental.
-							context.encodeType === TreeCompressionStrategyExtended.CompressedIncremental
-								? context.incrementalEncoderDecoder
-								: undefined,
+							incrementalEncoder,
 						);
-					} else {
-						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
-						encoded = uncompressedEncode(data);
 					}
 
 					break;
-				default:
+				}
+				default: {
 					unreachableCase(context.encodeType);
+				}
 			}
 
 			// TODO: consider checking input data was in schema.

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	allowUnused,
@@ -18,7 +19,6 @@ import {
 	type Unhydrated,
 } from "../simple-tree/index.js";
 import { Tree } from "../shared-tree/index.js";
-import { validateUsageError } from "./utils.js";
 import { getOrAddInMap, type requireAssignableTo } from "../util/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -618,7 +618,7 @@ export namespace Component {
 				return config;
 			};
 			this.componentsMap = new Map(allComponents.map((c) => [c, c(lazyConfigInner)]));
-			this.components = Array.from(this.componentsMap.values());
+			this.components = [...this.componentsMap.values()];
 			config = lazyConfiguration(this);
 			this.config = config;
 		}

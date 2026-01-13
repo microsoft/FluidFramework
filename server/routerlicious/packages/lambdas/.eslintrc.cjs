@@ -7,7 +7,7 @@ module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	rules: {
 		"@rushstack/no-new-null": "off",
-		"import/no-nodejs-modules": "off",
+		"import-x/no-nodejs-modules": "off",
 		"promise/catch-or-return": ["error", { allowFinally: true }],
 		"unicorn/no-null": "off",
 
@@ -27,7 +27,7 @@ module.exports = {
 		"@typescript-eslint/prefer-nullish-coalescing": "off",
 
 		// TODO: remove usages of deprecated APIs and remove this override
-		"import/no-deprecated": "warn",
+		"import-x/no-deprecated": "warn",
 
 		// TODO: fix violations and remove this override
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",

@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type TreeView,
-	type TreeViewAlpha,
-	type TreeViewBeta,
-	type ImplicitFieldSchema,
-	// eslint-disable-next-line import-x/no-deprecated
-	asTreeViewAlpha,
+import type {
+	TreeView,
+	TreeViewAlpha,
+	TreeViewBeta,
+	ImplicitFieldSchema,
+	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
 } from "./simple-tree/index.js";
 
 /**
  * Module entry points for retrieving alternate (alpha/beta) versions of tree APIs.
  * For each API (usually a class) that has an alpha/beta version, add overloads to the function(s) below.
- * In the future, `asBeta` may be added here too.
  * These functions should only be used by external consumers, not referenced internally within the tree package, to avoid circular import dependencies.
  */
 
@@ -25,9 +24,21 @@ import {
  */
 export function asAlpha<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,
-): TreeViewAlpha<TSchema> {
-	// eslint-disable-next-line import-x/no-deprecated
-	return asTreeViewAlpha(view);
+): TreeViewAlpha<TSchema>;
+
+/**
+ * Retrieve the {@link TreeViewConfigurationAlpha | alpha API} for a {@link TreeViewConfiguration}.
+ * @alpha
+ */
+export function asAlpha<TSchema extends ImplicitFieldSchema>(
+	view: TreeViewConfiguration<TSchema>,
+): TreeViewConfigurationAlpha<TSchema>;
+
+/**
+ * Implementation of overloads for {@link asAlpha}.
+ */
+export function asAlpha(view: unknown): unknown {
+	return view;
 }
 
 /**

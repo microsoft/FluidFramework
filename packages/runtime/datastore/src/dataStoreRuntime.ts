@@ -65,6 +65,8 @@ import {
 	type IFluidDataStorePolicies,
 	type MinimumVersionForCollab,
 	asLegacyAlpha,
+	currentSummarizeStepPrefix,
+	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -156,7 +158,7 @@ export interface ISharedObjectRegistry {
 }
 
 const defaultPolicies: IFluidDataStorePolicies = {
-	readonlyInStagingMode: true,
+	readonlyInStagingMode: false,
 };
 
 /**
@@ -242,6 +244,11 @@ export class FluidDataStoreRuntime
 	}
 	public get objectsRoutingContext(): this {
 		return this;
+	}
+
+	private localOpActivity: "applyStashed" | "rollback" | undefined = undefined;
+	public get activeLocalOperationActivity(): "applyStashed" | "rollback" | undefined {
+		return this.localOpActivity;
 	}
 
 	private _disposed = false;
@@ -344,11 +351,7 @@ export class FluidDataStoreRuntime
 		// Validate that the Runtime is compatible with this DataStore.
 		const { ILayerCompatDetails: runtimeCompatDetails } =
 			dataStoreContext as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(
-			runtimeCompatDetails,
-			this.dispose.bind(this),
-			this.mc.logger,
-		);
+		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this), this.mc);
 
 		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
 			this._readonly = dataStoreContext.isReadOnly();
@@ -1275,7 +1278,7 @@ export class FluidDataStoreRuntime
 		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 		content: any,
 		localOpMetadata: unknown,
-		squash?: boolean,
+		squash: boolean,
 	): void {
 		this.verifyNotClosed();
 
@@ -1326,69 +1329,86 @@ export class FluidDataStoreRuntime
 		localOpMetadata: unknown,
 	): void {
 		this.verifyNotClosed();
+		assert(
+			!this.localOpActivity,
+			0xca2 /* localOpActivity must be undefined when entering rollback */,
+		);
+		this.localOpActivity = "rollback";
+		try {
+			// The op being rolled back was not/will not be submitted, so decrement the count.
+			--this.pendingOpCount.value;
 
-		// The op being rolled back was not/will not be submitted, so decrement the count.
-		--this.pendingOpCount.value;
+			switch (type) {
+				case DataStoreMessageType.ChannelOp: {
+					// For Operations, find the right channel and trigger resubmission on it.
+					const envelope = content as IEnvelope;
+					const channelContext = this.contexts.get(envelope.address);
+					assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
 
-		switch (type) {
-			case DataStoreMessageType.ChannelOp: {
-				// For Operations, find the right channel and trigger resubmission on it.
-				const envelope = content as IEnvelope;
-				const channelContext = this.contexts.get(envelope.address);
-				assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
-
-				channelContext.rollback(envelope.contents, localOpMetadata);
-				break;
+					channelContext.rollback(envelope.contents, localOpMetadata);
+					break;
+				}
+				default: {
+					throw new LoggingError(`Can't rollback ${type} message`);
+				}
 			}
-			default: {
-				throw new LoggingError(`Can't rollback ${type} message`);
-			}
+		} finally {
+			this.localOpActivity = undefined;
 		}
 	}
 
 	// TODO: use something other than `any` here
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public async applyStashedOp(content: any): Promise<unknown> {
-		// The op being applied may have been submitted in a previous session, so we increment the count here.
-		// Either the ack will arrive and be processed, or that previous session's connection will end, at which point the op will be resubmitted.
-		++this.pendingOpCount.value;
+		assert(
+			!this.localOpActivity,
+			0xca3 /* localOpActivity must be undefined when entering applyStashedOp */,
+		);
+		this.localOpActivity = "applyStashed";
+		try {
+			// The op being applied may have been submitted in a previous session, so we increment the count here.
+			// Either the ack will arrive and be processed, or that previous session's connection will end, at which point the op will be resubmitted.
+			++this.pendingOpCount.value;
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const type = content?.type as DataStoreMessageType;
-		switch (type) {
-			case DataStoreMessageType.Attach: {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				const attachMessage = content.content as IAttachMessage;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			const type = content?.type as DataStoreMessageType;
+			switch (type) {
+				case DataStoreMessageType.Attach: {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					const attachMessage = content.content as IAttachMessage;
 
-				const flatBlobs = new Map<string, ArrayBufferLike>();
-				const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+					const flatBlobs = new Map<string, ArrayBufferLike>();
+					const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
-				const channelContext = this.createRehydratedLocalChannelContext(
-					attachMessage.id,
-					snapshotTree,
-					flatBlobs,
-				);
-				await channelContext.getChannel();
-				this.contexts.set(attachMessage.id, channelContext);
-				if (this.attachState === AttachState.Detached) {
-					this.localChannelContextQueue.set(attachMessage.id, channelContext);
-				} else {
-					channelContext.makeVisible();
-					this.pendingAttach.add(attachMessage.id);
+					const channelContext = this.createRehydratedLocalChannelContext(
+						attachMessage.id,
+						snapshotTree,
+						flatBlobs,
+					);
+					await channelContext.getChannel();
+					this.contexts.set(attachMessage.id, channelContext);
+					if (this.attachState === AttachState.Detached) {
+						this.localChannelContextQueue.set(attachMessage.id, channelContext);
+					} else {
+						channelContext.makeVisible();
+						this.pendingAttach.add(attachMessage.id);
+					}
+					return;
 				}
-				return;
+				case DataStoreMessageType.ChannelOp: {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					const envelope = content.content as IEnvelope;
+					const channelContext = this.contexts.get(envelope.address);
+					assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
+					await channelContext.getChannel();
+					return channelContext.applyStashedOp(envelope.contents);
+				}
+				default: {
+					unreachableCase(type);
+				}
 			}
-			case DataStoreMessageType.ChannelOp: {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				const envelope = content.content as IEnvelope;
-				const channelContext = this.contexts.get(envelope.address);
-				assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
-				await channelContext.getChannel();
-				return channelContext.applyStashedOp(envelope.contents);
-			}
-			default: {
-				unreachableCase(type);
-			}
+		} finally {
+			this.localOpActivity = undefined;
 		}
 	}
 
@@ -1538,6 +1558,7 @@ export const mixinRequestHandler = (
 export const mixinSummaryHandler = (
 	handler: (
 		runtime: FluidDataStoreRuntime,
+		setCurrentSummarizeStep: (currentStep: string) => void,
 	) => Promise<{ path: string[]; content: string } | undefined>,
 	Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ): typeof FluidDataStoreRuntime =>
@@ -1565,12 +1586,21 @@ export const mixinSummaryHandler = (
 			summary.summary.tree[firstName] = blob;
 		}
 
-		async summarize(...args: any[]): Promise<ISummaryTreeWithStats> {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			const summary = await super.summarize(...args);
+		async summarize(
+			fullTree: boolean = false,
+			trackState: boolean = true,
+			telemetryContext?: ITelemetryContext,
+		): Promise<ISummaryTreeWithStats> {
+			const summary = await super.summarize(fullTree, trackState, telemetryContext);
 
 			try {
-				const content = await handler(this);
+				const content = await handler(this, (currentStep: string) =>
+					telemetryContext?.set(
+						currentSummarizeStepPrefix,
+						currentSummarizeStepPropertyName,
+						`mixinSummaryHandler:${currentStep}`,
+					),
+				);
 				if (content !== undefined) {
 					this.addBlob(summary, content.path, content.content);
 				}

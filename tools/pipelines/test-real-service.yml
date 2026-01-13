@@ -9,27 +9,27 @@ name: $(Build.BuildId)
 trigger: none
 pr: none
 
-parameters:
-# If true, the routerlicious tests will run against the PPE (aka non-prod) environment.
-# This can be useful when we need to make changes to the routerlicious cluster
-# and we can make them in the PPE environment first before making them in the "prod" environment
-# that the tests normally target.
-- name: useR11sPpeEnvironment
-  displayName: Use PPE Routerlicious environment?
-  type: boolean
-  default: false
-
 resources:
   pipelines:
-  - pipeline: client   # Name of the pipeline resource
+  - pipeline: client
     source: Build - client packages
     branch: main # Default branch for manual/scheduled triggers if none is selected
     trigger:
       branches:
       - release/*
       - main
-      - next
-      - lts
+  - pipeline: routerlicious
+    source: server-routerlicious
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+  - pipeline: historian
+    source: server-historian
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+  - pipeline: gitrest
+    source: server-gitrest
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+  - pipeline: gitssh
+    source: server-gitssh
+    branch: main # Default branch for manual/scheduled triggers if none is selected
   repositories:
     - repository: ff_pipeline_host
       type: git
@@ -91,24 +91,20 @@ stages:
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
         logger__morganFormat: tiny
 
-  # end-to-end tests routerlicious
-  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+  # end-to-end tests docker
+  - template: templates/include-test-real-service.yml
     parameters:
-      stageId: e2e_routerlicious
-      stageDisplayName: e2e - routerlicious
-      poolBuild: Small-eastus2
+      stageId: e2e_docker
+      stageDisplayName: e2e - docker
+      poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
-      testCommand: test:realsvc:routerlicious:report
-      lockBehavior: sequential
       continueOnError: true
-      ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
-        r11sSelfSignedCertSecureFile: wu2-ppe-tls-certificate.pem
-      ${{ else }}:
-        r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
+      timeoutInMinutes: 360
+      testCommand: test:realsvc:r11s:docker
       stageVariables:
-        - group: e2e-r11s-lock
+        - group: container-registry-info
       splitTestVariants:
         - name: Non-compat
           flags: --compatVersion=0
@@ -121,11 +117,17 @@ stages:
       cacheCompatVersionsInstalls: true
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+
+      # Checks out the FluidFramework source so we can run the docker service
+      runAgainstDocker: true
+
+      # Docker tags to use when constructing the docker environment
+      alfredImageTag: 0.0.$(resources.pipeline.routerlicious.runID)
+      historianImageTag: 0.0.$(resources.pipeline.historian.runID)
+      gitrestImageTag: 0.0.$(resources.pipeline.gitrest.runID)
+      gitsshImageTag: 0.0.$(resources.pipeline.gitssh.runID)
+
       env:
-        ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
-          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s-ppe)
-        ${{ else }}:
-          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 

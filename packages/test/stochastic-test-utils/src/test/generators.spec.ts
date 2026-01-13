@@ -174,8 +174,10 @@ describe("generators", () => {
 	});
 
 	describe("interleave", () => {
-		const alphabetGeneratorFactory = () => generatorFromArray(["a", "b", "c", "d"]);
-		const numberGeneratorFactory = () => generatorFromArray([1, 2, 3, 4]);
+		const alphabetGeneratorFactory = (): Generator<string, void> =>
+			generatorFromArray(["a", "b", "c", "d"]);
+		const numberGeneratorFactory = (): Generator<number, void> =>
+			generatorFromArray([1, 2, 3, 4]);
 
 		it("alternates input generators", () => {
 			assertGeneratorProduces(
@@ -269,8 +271,10 @@ describe("generators", () => {
 	});
 
 	describe("interleaveAsync", () => {
-		const alphabetGeneratorFactory = () => asyncGeneratorFromArray(["a", "b", "c", "d"]);
-		const numberGeneratorFactory = () => asyncGeneratorFromArray([1, 2, 3, 4]);
+		const alphabetGeneratorFactory = (): AsyncGenerator<string, void> =>
+			asyncGeneratorFromArray(["a", "b", "c", "d"]);
+		const numberGeneratorFactory = (): AsyncGenerator<number, void> =>
+			asyncGeneratorFromArray([1, 2, 3, 4]);
 
 		it("alternates input generators", async () => {
 			await assertAsyncGeneratorProduces(

@@ -182,14 +182,14 @@ export class ConsensusRegisterCollection<T>
 		// 3. The runtime is disposed
 		// The boolean value returned by the promise is true if the attempted write was ack'd and won, false otherwise.
 		return new Promise<boolean>((resolve) => {
-			const handleAck = (ackMessageId: number, isWinner: boolean) => {
+			const handleAck = (ackMessageId: number, isWinner: boolean): void => {
 				if (ackMessageId === pendingMessageId) {
 					resolve(isWinner);
 					removeListeners();
 				}
 			};
 
-			const handleRollback = (rollbackMessageId: number) => {
+			const handleRollback = (rollbackMessageId: number): void => {
 				if (rollbackMessageId === pendingMessageId) {
 					// If we rolled back the pending message, resolve the promise with false.
 					resolve(false);
@@ -197,12 +197,12 @@ export class ConsensusRegisterCollection<T>
 				}
 			};
 
-			const handleDisposed = () => {
+			const handleDisposed = (): void => {
 				resolve(false);
 				removeListeners();
 			};
 
-			const removeListeners = () => {
+			const removeListeners = (): void => {
 				this.internalEvents.off("pendingMessageAck", handleAck);
 				this.internalEvents.off("pendingMessageRollback", handleRollback);
 				this.runtime.off("dispose", handleDisposed);
@@ -272,7 +272,7 @@ export class ConsensusRegisterCollection<T>
 		}
 	}
 
-	protected onDisconnect() {}
+	protected onDisconnect(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}

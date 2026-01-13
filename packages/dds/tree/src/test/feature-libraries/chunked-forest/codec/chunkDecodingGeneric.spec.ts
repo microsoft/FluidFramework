@@ -27,8 +27,11 @@ import {
 	EncodedFieldBatchGeneric,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/formatGeneric.js";
-import type { TreeChunk } from "../../../../feature-libraries/index.js";
-import { ReferenceCountedBase } from "../../../../util/index.js";
+import {
+	FieldBatchFormatVersion,
+	type TreeChunk,
+} from "../../../../feature-libraries/index.js";
+import { brand, ReferenceCountedBase } from "../../../../util/index.js";
 import { testIdCompressor } from "../../../utils.js";
 
 const Constant = Type.Literal(0);
@@ -42,13 +45,13 @@ const EncodedChunkShape = Type.Object(
 	unionOptions,
 );
 
-const version = 1.0;
+const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v1);
 
 type Constant = Static<typeof Constant>;
 type StringShape = Static<typeof StringShape>;
 type EncodedChunkShape = Static<typeof EncodedChunkShape>;
 
-const EncodedFieldBatch = EncodedFieldBatchGeneric(version, EncodedChunkShape);
+const EncodedFieldBatch = EncodedFieldBatchGeneric(fieldBatchVersion, EncodedChunkShape);
 type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;
 
 class TestChunk1 extends ReferenceCountedBase implements TreeChunk {
@@ -152,7 +155,7 @@ describe("chunkDecodingGeneric", () => {
 
 	it("decode: constant shape", () => {
 		const encoded: EncodedFieldBatch = {
-			version,
+			version: fieldBatchVersion,
 			identifiers: [],
 			shapes: [{ a: 0 }],
 			data: [[0, 5]],
@@ -172,7 +175,7 @@ describe("chunkDecodingGeneric", () => {
 
 	it("decode: flexible shape", () => {
 		const encoded: EncodedFieldBatch = {
-			version,
+			version: fieldBatchVersion,
 			identifiers: [],
 			shapes: [{ b: "content" }],
 			data: [[0]],

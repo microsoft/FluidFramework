@@ -11,6 +11,8 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions/inte
 import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
 import { baseMapModel, baseDirModel } from "@fluidframework/map/internal/test";
 import { baseSharedMatrixModel } from "@fluidframework/matrix/internal/test";
+import { baseConsensusOrderedCollectionModel } from "@fluidframework/ordered-collection/internal/test";
+import { baseRegisterCollectionModel } from "@fluidframework/register-collection/internal/test";
 import {
 	baseSharedStringModel,
 	baseIntervalModel,
@@ -22,7 +24,7 @@ function repeatFactoryAsync<T, TState = void>(
 	factory: () => AsyncGenerator<T, TState>,
 ): AsyncGenerator<T, TState> {
 	let generator = factory();
-	return async (state: TState) => {
+	return async (state: TState): Promise<typeof done | T> => {
 		const next = await generator(state);
 		if (next !== done) {
 			return next;
@@ -34,7 +36,16 @@ function repeatFactoryAsync<T, TState = void>(
 
 const generateSubModelMap = (
 	...models: Omit<DDSFuzzModel<IChannelFactory, any>, "workloadName">[]
-) => {
+): Map<
+	string,
+	{
+		factory: IChannelFactory;
+		generator: AsyncGenerator<any, DDSFuzzTestState<IChannelFactory>>;
+		reducer: DDSFuzzModel<IChannelFactory, any>["reducer"];
+		validateConsistency: DDSFuzzModel<IChannelFactory, any>["validateConsistency"];
+		minimizationTransforms?: DDSFuzzModel<IChannelFactory, any>["minimizationTransforms"];
+	}
+> => {
 	const modelMap = new Map<
 		string,
 		{
@@ -74,4 +85,6 @@ export const ddsModelMap = generateSubModelMap(
 	baseSharedArrayModel,
 	baseTaskManagerModel,
 	baseCounterModel,
+	baseRegisterCollectionModel,
+	baseConsensusOrderedCollectionModel,
 );

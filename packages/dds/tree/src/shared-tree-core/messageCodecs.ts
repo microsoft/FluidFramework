@@ -6,6 +6,11 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
+
+import {
 	type CodecTree,
 	type CodecWriteOptions,
 	type DependentFormatVersion,
@@ -15,6 +20,7 @@ import {
 	type ICodecOptions,
 	type IJsonCodec,
 	makeCodecFamily,
+	makeDiscontinuedCodecVersion,
 	makeVersionDispatchingCodec,
 } from "../codec/index.js";
 import type {
@@ -23,12 +29,12 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
+import { brand, unbrand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { DecodedMessage } from "./messageTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { makeV1ToV4CodecWithVersion } from "./messageCodecV1ToV4.js";
-import { makeV5CodecWithVersion } from "./messageCodecV5.js";
+import { makeSharedBranchesCodecWithVersion } from "./messageCodecVSharedBranches.js";
 import { MessageFormatVersion, messageFormatVersions } from "./messageFormat.js";
 
 export interface MessageEncodingContext {
@@ -45,10 +51,13 @@ export function clientVersionToMessageFormatVersion(
 	clientVersion: MinimumVersionForCollab,
 	writeVersionOverride?: MessageFormatVersion,
 ): MessageFormatVersion {
-	const compatibleVersion: MessageFormatVersion =
-		clientVersion < FluidClientVersion.v2_43
-			? brand(MessageFormatVersion.v3)
-			: brand(MessageFormatVersion.v4);
+	const compatibleVersion: MessageFormatVersion = brand(
+		getConfigForMinVersionForCollab(clientVersion, {
+			[lowestMinVersionForCollab]: MessageFormatVersion.v3,
+			[FluidClientVersion.v2_43]: MessageFormatVersion.v4,
+			[FluidClientVersion.v2_80]: MessageFormatVersion.v6,
+		}),
+	);
 	return writeVersionOverride ?? compatibleVersion;
 }
 
@@ -71,7 +80,7 @@ function messageFormatVersionFromOptions(
 export function messageFormatVersionSelectorForSharedBranches(
 	clientVersion: MinimumVersionForCollab,
 ): MessageFormatVersion {
-	return brand(MessageFormatVersion.v5);
+	return brand(MessageFormatVersion.vSharedBranches);
 }
 
 export function makeMessageCodec<TChangeset>(
@@ -122,32 +131,44 @@ export function makeMessageCodecs<TChangeset>(
 			JsonCompatibleReadOnly,
 			MessageEncodingContext
 		>,
-	][] = Array.from(messageFormatVersions).map((version) => {
-		const changeCodec = changeCodecs.resolve(
-			dependentChangeFormatVersion.lookup(version),
-		).json;
+	][] = [...messageFormatVersions].map((version) => {
 		switch (version) {
-			case MessageFormatVersion.undefined:
-			case MessageFormatVersion.v1:
-			case MessageFormatVersion.v2:
-			case MessageFormatVersion.v3:
-			case MessageFormatVersion.v4:
+			case unbrand(MessageFormatVersion.undefined):
+			case unbrand(MessageFormatVersion.v1):
+			case unbrand(MessageFormatVersion.v2): {
+				const versionOrUndefined =
+					version === unbrand(MessageFormatVersion.undefined) ? undefined : version;
 				return [
-					version === MessageFormatVersion.undefined ? undefined : version,
-					makeV1ToV4CodecWithVersion(
-						changeCodec,
-						revisionTagCodec,
-						options,
-						version === MessageFormatVersion.undefined ? MessageFormatVersion.v1 : version,
-					),
+					versionOrUndefined,
+					makeDiscontinuedCodecVersion(options, versionOrUndefined, "2.73.0"),
 				];
-			case MessageFormatVersion.v5:
+			}
+			case unbrand(MessageFormatVersion.v3):
+			case unbrand(MessageFormatVersion.v4):
+			case unbrand(MessageFormatVersion.v6): {
+				const changeCodec = changeCodecs.resolve(
+					dependentChangeFormatVersion.lookup(version),
+				).json;
 				return [
 					version,
-					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version),
 				];
-			default:
+			}
+			case unbrand(MessageFormatVersion.v5): {
+				return [version, makeDiscontinuedCodecVersion(options, version, "2.74.0")];
+			}
+			case unbrand(MessageFormatVersion.vSharedBranches): {
+				const changeCodec = changeCodecs.resolve(
+					dependentChangeFormatVersion.lookup(version),
+				).json;
+				return [
+					version,
+					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),
+				];
+			}
+			default: {
 				unreachableCase(version);
+			}
 		}
 	});
 	return makeCodecFamily(registry);

@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import {
-	type IContainer,
-	type IRuntimeFactory,
+import type {
+	IContainer,
+	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
 	ConnectionState,
@@ -20,16 +20,17 @@ import {
 	IContainerRuntimeOptions,
 	loadContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
-import {
-	type ConfigTypes,
-	type FluidObject,
-	type IConfigProviderBase,
-	type IErrorBase,
+import type {
+	ConfigTypes,
+	FluidObject,
+	IConfigProviderBase,
+	IErrorBase,
 } from "@fluidframework/core-interfaces/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import {
 	asLegacyAlpha,
+	type IContainerRuntimeBase,
 	type StageControlsInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -59,10 +60,10 @@ class DataObjectWithStagingMode extends DataObject {
 			: DataObjectWithStagingMode.instanceCount++;
 
 	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
-	get DataObjectWithStagingMode() {
+	get DataObjectWithStagingMode(): this {
 		return this;
 	}
-	get containerRuntime() {
+	get containerRuntime(): IContainerRuntimeBase {
 		return this.context.containerRuntime;
 	}
 
@@ -73,7 +74,7 @@ class DataObjectWithStagingMode extends DataObject {
 	}
 
 	/** Add to the root map including prefix in the key name, and a compressed ID in the value (for ID Compressor test coverage) */
-	public makeEdit(prefix: string) {
+	public makeEdit(prefix: string): void {
 		const compressedId = this.generateCompressedId();
 		this.root.set(`${prefix}-${this.instanceNumber}`, {
 			n: this.root.size,
@@ -104,7 +105,7 @@ class DataObjectWithStagingMode extends DataObject {
 	 */
 	public async enumerateDataWithHandlesResolved(): Promise<Record<string, unknown>> {
 		const state: Record<string, unknown> = {};
-		const loadStateInt = async (map) => {
+		const loadStateInt = async (map): Promise<void> => {
 			for (const key of map.keys()) {
 				const value = (state[key] = map.get(key));
 				if (isFluidHandle(value)) {
@@ -128,9 +129,6 @@ class DataObjectWithStagingMode extends DataObject {
 const dataObjectFactory = new DataObjectFactory({
 	type: "TheDataObject",
 	ctor: DataObjectWithStagingMode,
-	policies: {
-		readonlyInStagingMode: false,
-	},
 });
 
 // a simple container runtime factory with a single datastore aliased as default.
@@ -194,7 +192,7 @@ const waitForSave = async (clients: Client[] | Record<string, Client>): Promise<
 						return;
 					}
 
-					const rejectHandler = (error?: IErrorBase | undefined) => {
+					const rejectHandler = (error?: IErrorBase | undefined): void => {
 						reject(
 							wrapError(
 								error,
@@ -205,17 +203,15 @@ const waitForSave = async (clients: Client[] | Record<string, Client>): Promise<
 						off();
 					};
 
-					const resolveHandler = () => {
+					const resolveHandler = (): void => {
 						resolve(container.deltaManager.lastSequenceNumber);
 						off();
 					};
-
-					const off = () => {
+					const off = (): void => {
 						container.off("closed", rejectHandler);
 						container.off("disposed", rejectHandler);
 						container.off("saved", resolveHandler);
 					};
-
 					container.on("saved", resolveHandler);
 					container.on("closed", rejectHandler);
 					container.on("disposed", rejectHandler);
@@ -224,7 +220,10 @@ const waitForSave = async (clients: Client[] | Record<string, Client>): Promise<
 	).then((sequenceNumbers) => Math.max(...sequenceNumbers));
 
 /** Wait for all clients to process the given sequenceNumber */
-const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumber: number) => {
+const catchUp = async (
+	clients: Client[] | Record<string, Client>,
+	sequenceNumber: number,
+): Promise<void[]> => {
 	return Promise.all(
 		Object.entries(clients).map(
 			async ([key, { container }]) =>
@@ -243,7 +242,7 @@ const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumbe
 						return;
 					}
 
-					const rejectHandler = (error?: IErrorBase | undefined) => {
+					const rejectHandler = (error?: IErrorBase | undefined): void => {
 						reject(
 							wrapError(
 								error,
@@ -253,20 +252,17 @@ const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumbe
 						);
 						off();
 					};
-
-					const opHandler = (message) => {
+					const opHandler = (message): void => {
 						if (message.sequenceNumber >= sequenceNumber) {
 							resolve();
 							off();
 						}
 					};
-
-					const off = () => {
+					const off = (): void => {
 						container.off("op", opHandler);
 						container.off("closed", rejectHandler);
 						container.off("disposed", rejectHandler);
 					};
-
 					container.on("op", opHandler);
 					container.on("closed", rejectHandler);
 					container.on("disposed", rejectHandler);
@@ -275,7 +271,18 @@ const catchUp = async (clients: Client[] | Record<string, Client>, sequenceNumbe
 	);
 };
 
-const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer) => {
+const createClients = async (
+	deltaConnectionServer: ILocalDeltaConnectionServer,
+): Promise<{
+	original: {
+		container: IContainer;
+		dataObject: DataObjectWithStagingMode;
+	};
+	loaded: {
+		dataObject: DataObjectWithStagingMode;
+		container: IContainer;
+	};
+}> => {
 	const {
 		loaderProps: baseLoaderProps,
 		codeDetails,

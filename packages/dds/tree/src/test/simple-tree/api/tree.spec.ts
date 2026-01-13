@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -14,7 +15,7 @@ import {
 	unhydratedFlexTreeFromInsertable,
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
-import { getView, validateUsageError } from "../../utils.js";
+import { getView } from "../../utils.js";
 import { Tree } from "../../../shared-tree/index.js";
 import {
 	createFieldSchema,
@@ -25,6 +26,7 @@ import {
 } from "../../../simple-tree/fieldSchema.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
+import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -262,10 +264,10 @@ describe("simple-tree tree", () => {
 
 			view.root = toHydrate;
 			assert.equal(toHydrate, view.root);
-			assert.equal(toHydrate.identifier, "beefbeef-beef-4000-8000-000000000004");
+			assert.equal(toHydrate.identifier, "beefbeef-beef-4000-8000-000000000002");
 
 			view.root = { identifier: undefined };
-			assert.equal(view.root?.identifier, "beefbeef-beef-4000-8000-000000000006");
+			assert.equal(view.root?.identifier, "beefbeef-beef-4000-8000-000000000004");
 		});
 
 		it("populates field when no field defaulter is provided.", () => {
@@ -284,6 +286,55 @@ describe("simple-tree tree", () => {
 			const view = getView(config);
 			view.initialize(undefined);
 			assert.equal(view.root, "beefbeef-beef-4000-8000-000000000001");
+		});
+	});
+
+	describe("Serialized changes", () => {
+		it("can be applied to a different branch", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+
+			viewB.root = 4;
+			assert(change !== undefined);
+			viewA.applyChange(change);
+			assert.equal(viewA.root, 4);
+		});
+
+		it("fail to apply to a branch in another session", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = getView(config);
+			viewB.initialize(3);
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewA.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+			viewA.root = 4;
+
+			const c = change ?? assert.fail("change not captured");
+			assert.throws(() => {
+				viewB.applyChange(c);
+			}, /cannot apply change.*same sharedtree/i);
+		});
+
+		it("error if malformed", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			assert.throws(() => {
+				viewA.applyChange({ invalid: "bogus" });
+			}, /cannot apply change.*invalid.*format/i);
 		});
 	});
 });

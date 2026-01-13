@@ -8,13 +8,13 @@ import {
 	CollaborativeTextArea,
 	SharedStringHelper,
 } from "@fluid-example/example-utils";
+import { useTree } from "@fluidframework/react/alpha";
 import type { SharedString } from "@fluidframework/sequence/legacy";
 import React, { useEffect, useState } from "react";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
-import { type TodoItem } from "../Todo/index.js";
-import { useTree } from "../Utils/index.js";
+import type { TodoItem } from "../Todo/index.js";
 
 interface TodoItemViewProps {
 	readonly todoItemModel: TodoItem;
@@ -30,14 +30,14 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 
 	useTree(todoItemModel);
 
-	useEffect(() => {
-		void Promise.resolve(todoItemModel.title.get()).then((text) => {
+	useEffect((): void => {
+		void Promise.resolve(todoItemModel.title.get()).then((text): void => {
 			setItemTitle(text as SharedString);
 		});
 	}, [todoItemModel.title]);
 
-	useEffect(() => {
-		void Promise.resolve(todoItemModel.description.get()).then((text) => {
+	useEffect((): void => {
+		void Promise.resolve(todoItemModel.description.get()).then((text): void => {
 			setItemDescription(text as SharedString);
 		});
 	}, [todoItemModel.description]);
@@ -62,7 +62,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 				<button
 					className="todo-item-expand-button"
 					name="toggleDetailsVisible"
-					onClick={() => {
+					onClick={(): void => {
 						setDetailsVisible(!detailsVisible);
 					}}
 				>

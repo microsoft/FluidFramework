@@ -46,6 +46,7 @@ import {
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
 	type EncodedValueShape,
+	FieldBatchFormatVersion,
 	SpecialField,
 } from "./format.js";
 import type { IncrementalDecoder } from "./codecs.js";
@@ -176,12 +177,15 @@ export function deaggregateChunks(chunk: TreeChunk): TreeChunk[] {
 export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 	const chunks = input.flatMap(deaggregateChunks);
 	switch (chunks.length) {
-		case 0:
+		case 0: {
 			return emptyChunk;
-		case 1:
+		}
+		case 1: {
 			return chunks[0] ?? oob();
-		default:
+		}
+		default: {
 			return new SequenceChunk(chunks);
+		}
 	}
 }
 
@@ -246,6 +250,10 @@ export class IncrementalChunkDecoder implements ChunkDecoder {
 		);
 
 		const chunkDecoder = (batch: EncodedFieldBatch): TreeChunk => {
+			assert(
+				batch.version >= FieldBatchFormatVersion.v2,
+				0xc9f /* Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher */,
+			);
 			const context = new DecoderContext(
 				batch.identifiers,
 				batch.shapes,
@@ -331,7 +339,7 @@ export class NodeDecoder implements ChunkDecoder {
 			// consider keeping array chunks here if they are longer than some threshold.
 			const chunks = deaggregateChunks(data);
 
-			if (chunks.length !== 0) {
+			if (chunks.length > 0) {
 				fields.set(key, chunks);
 			}
 		}

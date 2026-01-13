@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	TreeNode,
@@ -17,7 +18,6 @@ import {
 	type TreeNodeSchema,
 	SchemaFactory,
 } from "../../../simple-tree/index.js";
-import { validateUsageError } from "../../utils.js";
 import { Tree } from "../../../shared-tree/index.js";
 
 describe("simple-tree core types", () => {

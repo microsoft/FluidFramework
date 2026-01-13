@@ -36,6 +36,7 @@ import {
 	FieldBatchFormatVersion,
 	type EncodedFieldBatch,
 	type EncodedNodeShape,
+	validVersions,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import type {
@@ -57,18 +58,22 @@ import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index
 
 function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): void {
 	switch (count) {
-		case 0:
+		case 0: {
 			assert(item.isUnreferenced());
 			break;
-		case 1:
+		}
+		case 1: {
 			assert(!item.isUnreferenced());
 			assert(!item.isShared());
 			break;
-		case "shared":
+		}
+		case "shared": {
 			assert(item.isShared());
 			break;
-		default:
+		}
+		default: {
 			break;
+		}
 	}
 }
 
@@ -88,22 +93,27 @@ const idDecodingContext = {
 	idCompressor: testIdCompressor,
 	originatorId: testIdCompressor.localSessionId,
 };
+
 describe("chunkDecoding", () => {
 	describe("decode", () => {
 		// Smoke test for top level decode function.
 		// All real functionality should be tested in more specific tests.
-		it("minimal", () => {
-			const result = decode(
-				{
-					version: FieldBatchFormatVersion.v1,
-					identifiers: [],
-					shapes: [{ a: 0 }],
-					data: [[0, []]],
-				},
-				idDecodingContext,
-			);
-			assert.deepEqual(result, [emptyChunk]);
-		});
+		for (const version of validVersions) {
+			describe(`FieldBatchFormatVersion ${version}`, () => {
+				it("minimal", () => {
+					const result = decode(
+						{
+							version: brand(version),
+							identifiers: [],
+							shapes: [{ a: 0 }],
+							data: [[0, []]],
+						},
+						idDecodingContext,
+					);
+					assert.deepEqual(result, [emptyChunk]);
+				});
+			});
+		}
 	});
 
 	describe("readValue", () => {
@@ -422,6 +432,8 @@ describe("chunkDecoding", () => {
 	});
 
 	describe("EncodedIncrementalChunkShape", () => {
+		const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2);
+
 		function createMockIncrementalDecoder(
 			chunksMap: Map<ChunkReferenceId, EncodedFieldBatch>,
 		): IncrementalDecoder {
@@ -444,7 +456,7 @@ describe("chunkDecoding", () => {
 				fields: [],
 			};
 			return {
-				version: FieldBatchFormatVersion.v1,
+				version: fieldBatchVersion,
 				identifiers: [],
 				shapes: [
 					{
@@ -458,7 +470,7 @@ describe("chunkDecoding", () => {
 		it("empty", () => {
 			const referenceId = brand<ChunkReferenceId>(0);
 			const emptyBatch: EncodedFieldBatch = {
-				version: FieldBatchFormatVersion.v1,
+				version: fieldBatchVersion,
 				identifiers: [],
 				shapes: [{ a: 0 }],
 				data: [[0, []]],
@@ -506,7 +518,7 @@ describe("chunkDecoding", () => {
 			const nodeIdentifier: TreeNodeSchemaIdentifier = brand("identifier");
 			// The encoded incremental chunk contains a nested array with another incremental chunk.
 			const batch1: EncodedFieldBatch = {
-				version: FieldBatchFormatVersion.v1,
+				version: fieldBatchVersion,
 				identifiers: [],
 				shapes: [
 					{
@@ -556,11 +568,31 @@ describe("chunkDecoding", () => {
 
 			assert.throws(
 				() => decoder.decode([], stream),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						"incremental decoder not available for incremental field decoding",
-					),
+				validateAssertionError(
+					"incremental decoder not available for incremental field decoding",
+				),
+			);
+		});
+
+		it("fails for unsupported FieldBatchFormatVersion.v1", () => {
+			const referenceId = brand<ChunkReferenceId>(0);
+			const emptyBatch: EncodedFieldBatch = {
+				version: brand(FieldBatchFormatVersion.v1),
+				identifiers: [],
+				shapes: [{ a: 0 }],
+				data: [[0, []]],
+			};
+			const chunksMap = new Map<ChunkReferenceId, EncodedFieldBatch>();
+			chunksMap.set(referenceId, emptyBatch);
+
+			const mockIncrementalDecoder = createMockIncrementalDecoder(chunksMap);
+			const cache = new DecoderContext([], [], idDecodingContext, mockIncrementalDecoder);
+			const decoder = new IncrementalChunkDecoder(cache);
+			const stream = { data: [referenceId], offset: 0 };
+
+			assert.throws(
+				() => decoder.decode([], stream),
+				validateAssertionError(/Unsupported FieldBatchFormatVersion/),
 			);
 		});
 	});

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -16,16 +17,16 @@ import {
 	createNodeIdentifierManager,
 	MockNodeIdentifierManager,
 } from "../../../feature-libraries/index.js";
-import type { ITreePrivate } from "../../../shared-tree/index.js";
-import { TestTreeProvider, validateUsageError } from "../../utils.js";
+import { TestTreeProvider } from "../../utils.js";
 
 /**
  * Acquire an {@link IIdCompressor} via unsavory means.
  * @remarks TODO: Figure out a better way to get an IIDCompressor
  */
-async function getIIDCompressor(tree?: ITreePrivate): Promise<IIdCompressor> {
+async function getIIDCompressor(): Promise<IIdCompressor> {
+	const provider = await TestTreeProvider.create(1);
 	const runtime = (
-		(tree ?? (await TestTreeProvider.create(1)).trees[0]) as unknown as {
+		provider.trees[0] as unknown as {
 			runtime: IFluidDataStoreRuntime;
 		}
 	).runtime;

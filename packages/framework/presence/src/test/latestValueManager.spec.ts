@@ -5,12 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { createPresenceManager } from "../presenceManager.js";
-
-import { addControlsTests } from "./broadcastControlsTests.js";
-import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
-
 import type {
 	BroadcastControlSettings,
 	Latest,
@@ -20,6 +14,12 @@ import type {
 	RawValueAccessor,
 } from "@fluidframework/presence/beta";
 import { StateFactory } from "@fluidframework/presence/beta";
+
+import { createPresenceManager } from "../presenceManager.js";
+
+import { addControlsTests } from "./broadcastControlsTests.js";
+import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
@@ -137,8 +137,10 @@ describe("Presence", () => {
 			const camera = workspace.states.camera;
 
 			let localUpdateCount = 0;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			camera.events.on("localUpdated", (update) => {
 				localUpdateCount++;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.deepStrictEqual(update.value, { x: 1, y: 2, z: 3 });
 			});
 

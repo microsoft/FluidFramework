@@ -126,6 +126,7 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, type IConnectionArgs } from "./deltaManager.js";
+import type { ILoaderServices } from "./loader.js";
 import { RelativeLoader } from "./loader.js";
 import {
 	validateDriverCompatibility,
@@ -142,7 +143,6 @@ import type { IQuorumSnapshot } from "./protocol/index.js";
 import {
 	type InternalProtocolHandlerBuilder,
 	ProtocolHandler,
-	type ProtocolHandlerBuilder,
 	type ProtocolHandlerInternal,
 	protocolHandlerShouldProcessSignal,
 	wrapProtocolHandlerBuilder,
@@ -173,6 +173,7 @@ const savedContainerEvent = "saved";
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 /**
+ * @remarks Export for testing only
  * @internal
  */
 export interface IContainerLoadProps {
@@ -196,9 +197,10 @@ export interface IContainerLoadProps {
 }
 
 /**
+ * @remarks Export for testing only
  * @internal
  */
-export interface IContainerCreateProps {
+export interface IContainerCreateProps extends ILoaderServices {
 	/**
 	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
 	 */
@@ -207,57 +209,6 @@ export interface IContainerCreateProps {
 	 * Client details provided in the override will be merged over the default client.
 	 */
 	readonly clientDetailsOverride?: IClientDetails;
-
-	/**
-	 * The url resolver used by the loader for resolving external urls
-	 * into Fluid urls such that the container specified by the
-	 * external url can be loaded.
-	 */
-	readonly urlResolver: IUrlResolver;
-	/**
-	 * The document service factory take the Fluid url provided
-	 * by the resolved url and constructs all the necessary services
-	 * for communication with the container's server.
-	 */
-	readonly documentServiceFactory: IDocumentServiceFactory;
-	/**
-	 * The code loader handles loading the necessary code
-	 * for running a container once it is loaded.
-	 */
-	readonly codeLoader: ICodeDetailsLoader;
-
-	/**
-	 * A property bag of options used by various layers
-	 * to control features
-	 */
-	readonly options: ILoaderOptions;
-
-	/**
-	 * Scope is provided to all container and is a set of shared
-	 * services for container's to integrate with their host environment.
-	 */
-	readonly scope: FluidObject;
-
-	/**
-	 * The logger downstream consumers should construct their loggers from
-	 */
-	readonly subLogger: ITelemetryLoggerExt;
-
-	/**
-	 * Optional property for allowing the container to use a custom
-	 * protocol implementation for handling the quorum and/or the audience.
-	 */
-	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
-
-	/**
-	 * Optional property for specifying a timeout for retry connection loop.
-	 *
-	 * If provided, container will use this value as the maximum time to wait
-	 * for a successful connection before giving up throwing the most recent error.
-	 *
-	 * If not provided, default behavior will be to retry until non-retryable error occurs.
-	 */
-	readonly retryConnectionTimeoutMs?: number;
 }
 
 /**
@@ -356,24 +307,6 @@ export async function waitContainerToCatchUp(container: IContainer): Promise<boo
 const getCodeProposal = (quorum: IQuorumProposals): unknown =>
 	quorum.get("code") ?? quorum.get("code2");
 
-/**
- * Helper function to report to telemetry cases where operation takes longer than expected (200ms)
- * @param logger - logger to use
- * @param eventName - event name
- * @param action - functor to call and measure
- */
-export async function ReportIfTooLong(
-	logger: ITelemetryLoggerExt,
-	eventName: string,
-	action: () => Promise<ITelemetryBaseProperties>,
-): Promise<void> {
-	const event = PerformanceEvent.start(logger, { eventName });
-	const props = await action();
-	if (event.duration > 200) {
-		event.end(props);
-	}
-}
-
 const summarizerClientType = "summarizer";
 
 interface IContainerLifecycleEvents extends IEvent {
@@ -410,6 +343,7 @@ export class Container
 
 					const onClosed = (err?: ICriticalContainerError): void => {
 						// pre-0.58 error message: containerClosedWithoutErrorDuringLoad
+						// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 						reject(err ?? new GenericError("Container closed without error during load"));
 					};
 					container.on("closed", onClosed);
@@ -627,7 +561,6 @@ export class Container
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
 	private readonly serializedStateManager: SerializedStateManager;
 	private readonly _containerId: string;
-	private readonly _retryConnectionTimeoutMs: number | undefined;
 
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
@@ -810,7 +743,6 @@ export class Container
 			scope,
 			subLogger,
 			protocolHandlerBuilder,
-			retryConnectionTimeoutMs,
 		} = createProps;
 
 		// Validate that the Driver is compatible with this Loader.
@@ -819,14 +751,13 @@ export class Container
 		validateDriverCompatibility(
 			maybeDriverCompatDetails.ILayerCompatDetails,
 			(error) => {} /* disposeFn */, // There is nothing to dispose here, so just ignore the error.
-			subLogger,
+			createChildMonitoringContext({ logger: subLogger, namespace: "Container" }),
 		);
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
 		const pendingLocalState = loadProps?.pendingLocalState;
 
 		this._canReconnect = canReconnect ?? true;
-		this._retryConnectionTimeoutMs = retryConnectionTimeoutMs;
 		this.clientDetailsOverride = clientDetailsOverride;
 		this.urlResolver = urlResolver;
 		this.serviceFactory = documentServiceFactory;
@@ -2067,7 +1998,6 @@ export class Container
 					this._canReconnect,
 					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
 					props,
-					this._retryConnectionTimeoutMs,
 				),
 		);
 
@@ -2510,10 +2440,7 @@ export class Container
 
 			// Validate that the Runtime is compatible with this Loader.
 			const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
-			validateRuntimeCompatibility(
-				maybeRuntimeCompatDetails.ILayerCompatDetails,
-				this.mc.logger,
-			);
+			validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, this.mc);
 
 			this._runtime = runtime;
 			this._lifecycleEvents.emit("runtimeInstantiated");

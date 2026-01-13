@@ -7,17 +7,20 @@ import { strict as assert, fail } from "node:assert";
 
 import { makeAnonChange } from "../../../core/index.js";
 import {
-	type ValueFieldEditor,
-	valueChangeHandler,
-	valueFieldEditor,
+	type RequiredFieldEditor,
+	defaultSchemaPolicy,
+	requiredFieldChangeHandler,
+	requiredFieldEditor,
 	// Allow import from file being tested.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
 import type {
 	CrossFieldManager,
 	FieldChangeHandler,
+	FullSchemaPolicy,
 } from "../../../feature-libraries/index.js";
 import {
+	allowsMultiplicitySuperset,
 	type NodeId,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -61,16 +64,51 @@ const childComposer1_2 = (
 	return arbitraryChildChange;
 };
 
+/**
+ * Test suite that a given FullSchemaPolicy has valid field kind relationships.
+ */
+function validateFieldKindSet(policy: FullSchemaPolicy): void {
+	describe("validateFieldKindSet", () => {
+		for (const [key, kind] of policy.fieldKinds) {
+			describe(key, () => {
+				it("correct key", () => {
+					assert.equal(key, kind.identifier);
+				});
+
+				it("valid migrations", () => {
+					const s = kind.options.allowMonotonicUpgradeFrom;
+					assert(s.has(kind.identifier) === false);
+					for (const other of s) {
+						const referenced = policy.fieldKinds.get(other);
+						assert(referenced !== undefined);
+
+						assert(allowsMultiplicitySuperset(referenced.multiplicity, kind.multiplicity));
+
+						for (const otherKey of referenced.options.allowMonotonicUpgradeFrom) {
+							assert(
+								s.has(otherKey) === true,
+								`Missing migration from ${otherKey} to ${key}: it is transitively allowed via ${other} but not directly allowed`,
+							);
+						}
+					}
+				});
+			});
+		}
+	});
+}
+
 describe("defaultFieldKinds", () => {
-	describe("valueFieldEditor.set", () => {
-		it("valueFieldEditor.set", () => {
+	validateFieldKindSet(defaultSchemaPolicy);
+
+	describe("requiredFieldEditor.set", () => {
+		it("requiredFieldEditor.set", () => {
 			const expected = Change.atOnce(
 				Change.clear("self", brand(1)),
 				Change.move(brand(41), "self"),
 			);
 			const revision = mintRevisionTag();
 			assertEqual(
-				valueFieldEditor.set({
+				requiredFieldEditor.set({
 					detach: { localId: brand(1), revision },
 					fill: { localId: brand(41), revision },
 				}),
@@ -80,11 +118,11 @@ describe("defaultFieldKinds", () => {
 	});
 
 	// TODO:
-	// These tests are covering value field usage patterns of optional field's rebaser (which value field uses).
+	// These tests are covering required field usage patterns of optional field's rebaser (which required field uses).
 	// These patterns should be covered in the optional field tests and not be needed here (except perhaps for a minimal integration test).
-	describe("value field rebaser", () => {
-		const fieldHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> =
-			valueChangeHandler;
+	describe("required field rebaser", () => {
+		const fieldHandler: FieldChangeHandler<OptionalChangeset, RequiredFieldEditor> =
+			requiredFieldChangeHandler;
 
 		const childChange1 = Change.child(nodeChange1);
 		const childChange2 = Change.child(nodeChange2);

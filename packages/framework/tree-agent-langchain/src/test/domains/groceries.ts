@@ -5,7 +5,7 @@
 
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 
-// eslint-disable-next-line eslint-comments/disable-enable-pair
+// eslint-disable-next-line @eslint-community/eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */
 
 const sf = new SchemaFactoryAlpha("com.microsoft.fluid.tree-agent.groceries");

@@ -9,20 +9,20 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
+		// TODO: remove this override and fix violations
 		"@typescript-eslint/strict-boolean-expressions": "off",
+
 		// This package implements test utils to be run under Node.JS.
 		"import-x/no-nodejs-modules": "off",
 
-		// #region TODO: remove these once eslint-config-fluid has been updated to 5.8.0
-		"@typescript-eslint/consistent-type-exports": [
+		"depend/ban-dependencies": [
 			"error",
-			{ fixMixedExportsWithInlineTypeSpecifier: true },
+			{
+				allowed: [
+					// TODO: This package should use tinyexec or child_process directly instead of execa
+					"execa",
+				],
+			},
 		],
-		"@typescript-eslint/consistent-type-imports": [
-			"error",
-			{ fixStyle: "inline-type-imports" },
-		],
-		"@typescript-eslint/no-import-type-side-effects": "error",
-		// #endregion
 	},
 };

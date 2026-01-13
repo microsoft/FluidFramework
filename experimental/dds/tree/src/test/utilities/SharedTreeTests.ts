@@ -901,10 +901,7 @@ export function runSharedTreeOperationsTests(
 					...summary,
 					sequencedEdits,
 				};
-				assert.throws(
-					() => sharedTree2.loadSummary(corruptedSummary),
-					(e: Error) => validateAssertionError(e, /Duplicate/)
-				);
+				assert.throws(() => sharedTree2.loadSummary(corruptedSummary), validateAssertionError(/Duplicate/));
 			});
 
 			it('can be used without history preservation', async () => {

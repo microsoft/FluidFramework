@@ -94,6 +94,7 @@ export async function timeoutPromise<T = void>(
 			},
 			(reason) => {
 				clearTimeout(timer);
+				// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 				reject(reason);
 			},
 		);

@@ -1,0 +1,25 @@
+/* eslint-disable */
+/**
+ * GENERATED FILE - DO NOT EDIT DIRECTLY.
+ * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+ */
+import type { Linter } from "eslint";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+
+const config: Linter.Config[] = [
+	...recommended,
+	{
+		files: ["*.spec.ts", "src/test/**"],
+		rules: {
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["node:assert", "node:fs", "node:path"],
+				},
+			],
+			"unicorn/prefer-module": "off",
+		},
+	},
+];
+
+export default config;

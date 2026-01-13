@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { Client } from "./localServerStressHarness";
 
-export const validateAllDataStoresSaved = async (...clients: Client[]) => {
+export const validateAllDataStoresSaved = async (...clients: Client[]): Promise<void> => {
 	for (const client of clients) {
 		assert(client.container.isDirty === false, `[${client.tag}] Container is dirty!`);
 		for (const entry of (await client.entryPoint.getContainerObjects()).filter(

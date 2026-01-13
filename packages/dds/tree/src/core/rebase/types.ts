@@ -13,6 +13,7 @@ import { Type } from "@sinclair/typebox";
 
 import {
 	type Brand,
+	type JsonCompatibleReadOnly,
 	type NestedMap,
 	RangeMap,
 	brand,
@@ -124,28 +125,16 @@ export function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtom
 	return { ...id, localId: brand(id.localId + offset) };
 }
 
-export function replaceAtomRevisions(
-	id: ChangeAtomId,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-): ChangeAtomId {
-	return oldRevisions.has(id.revision) ? atomWithRevision(id, newRevision) : id;
-}
-
-function atomWithRevision(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
-	const updated = { ...id, revision };
-	if (revision === undefined) {
-		delete updated.revision;
-	}
-
-	return updated;
-}
-
 /**
  * A node in a graph of commits. A commit's parent is the commit on which it was based.
  */
 export interface GraphCommit<TChange> {
-	/** The tag for this commit. If this commit is rebased, the corresponding rebased commit will retain this tag. */
+	/**
+	 * The tag for this commit.
+	 * @remarks
+	 * If this commit is rebased, the corresponding rebased commit will retain this tag.
+	 * With the exception of transaction commits (which all share the same tag), this tag is unique within a given branch history.
+	 */
 	readonly revision: RevisionTag;
 	/** The change that will result from applying this commit */
 	readonly change: TChange;
@@ -182,6 +171,30 @@ export interface CommitMetadata {
 	 */
 	readonly isLocal: boolean;
 }
+
+/**
+ * Information about a commit that has been applied.
+ *
+ * @sealed @alpha
+ */
+export type ChangeMetadata = CommitMetadata &
+	(
+		| {
+				readonly isLocal: true;
+				/**
+				 * A serializable object that encodes the change.
+				 * @remarks This change object can be {@link TreeBranchAlpha.applyChange | applied to another branch} in the same state as the one which generated it.
+				 * The change object must be applied to a SharedTree with the same IdCompressor session ID as it was created from.
+				 * @privateRemarks
+				 * This is a `SerializedChange` from treeCheckout.ts.
+				 */
+				getChange(): JsonCompatibleReadOnly;
+		  }
+		| {
+				readonly isLocal: false;
+				readonly getChange?: undefined;
+		  }
+	);
 
 /**
  * Creates a new graph commit object. This is useful for creating copies of commits with different parentage.

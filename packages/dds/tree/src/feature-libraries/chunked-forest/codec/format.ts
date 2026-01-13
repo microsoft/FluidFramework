@@ -13,22 +13,20 @@ import {
 	IdentifierOrIndex,
 	ShapeIndex,
 } from "./formatGeneric.js";
-import type { Brand } from "../../../util/index.js";
+import { strictEnum, type Values } from "../../../util/index.js";
 
 /**
  * The format version for the field batch.
  */
-export const FieldBatchFormatVersion = {
+export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 	v1: 1,
-} as const;
-export type FieldBatchFormatVersion = Brand<
-	(typeof FieldBatchFormatVersion)[keyof typeof FieldBatchFormatVersion],
-	"FieldBatchFormatVersion"
->;
+	v2: 2,
+});
+export type FieldBatchFormatVersion = Values<typeof FieldBatchFormatVersion>;
 
 // Compatible versions used for format/version validation.
 // TODO: A proper version update policy will need to be documented.
-export const validVersions = new Set([FieldBatchFormatVersion.v1]);
+export const validVersions = new Set([...Object.values(FieldBatchFormatVersion)]);
 
 /**
  * Top level length is implied from length of data array.
@@ -217,8 +215,17 @@ export type EncodedNodeShape = Static<typeof EncodedNodeShape>;
 export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
 export type EncodedIncrementalChunkShape = Static<typeof EncodedIncrementalChunkShape>;
 
-export const EncodedFieldBatch = EncodedFieldBatchGeneric(
+export const EncodedFieldBatchV1 = EncodedFieldBatchGeneric(
 	FieldBatchFormatVersion.v1,
 	EncodedChunkShape,
 );
+export type EncodedFieldBatchV1 = Static<typeof EncodedFieldBatchV1>;
+
+export const EncodedFieldBatchV2 = EncodedFieldBatchGeneric(
+	FieldBatchFormatVersion.v2,
+	EncodedChunkShape,
+);
+export type EncodedFieldBatchV2 = Static<typeof EncodedFieldBatchV2>;
+
+export const EncodedFieldBatch = Type.Union([EncodedFieldBatchV1, EncodedFieldBatchV2]);
 export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;

@@ -27,10 +27,6 @@
               "version": 3,
               "children": [
                 {
-                  "name": "FieldKind:NodeKey",
-                  "version": 1
-                },
-                {
                   "name": "FieldKind:Value",
                   "version": 2
                 },
@@ -78,10 +74,6 @@
               "name": "ModularChange",
               "version": 3,
               "children": [
-                {
-                  "name": "FieldKind:NodeKey",
-                  "version": 1
-                },
                 {
                   "name": "FieldKind:Value",
                   "version": 2

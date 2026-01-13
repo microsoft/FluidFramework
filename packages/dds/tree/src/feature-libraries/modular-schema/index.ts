@@ -8,6 +8,7 @@ export {
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
 	allowsTreeSuperset,
+	allowsMultiplicitySuperset,
 } from "./comparison.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
@@ -22,11 +23,11 @@ export {
 	ChangesetLocalIdSchema,
 	EncodedChangeAtomId,
 	EncodedRevisionInfo,
-	EncodedModularChangeset,
+	EncodedModularChangesetV1,
 	EncodedNodeChangeset,
-} from "./modularChangeFormat.js";
+} from "./modularChangeFormatV1.js";
+export { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
-export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 export {
 	type FieldChangeHandler,
 	type FieldChangeDelta,
@@ -52,6 +53,7 @@ export type {
 	FieldChangeset,
 	HasFieldChanges,
 	ModularChangeset,
+	NoChangeConstraint,
 	NodeExistsConstraint,
 	NodeId,
 } from "./modularChangeTypes.js";
@@ -77,3 +79,4 @@ export type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
 } from "./fieldKindConfiguration.js";
+export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";

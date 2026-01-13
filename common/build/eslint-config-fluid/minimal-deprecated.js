@@ -69,7 +69,7 @@ module.exports = {
 		es2024: false,
 		node: true,
 	},
-	extends: ["./base", "plugin:eslint-comments/recommended", "prettier"],
+	extends: ["./base", "prettier"],
 	globals: {
 		Atomics: "readonly",
 		SharedArrayBuffer: "readonly",
@@ -86,8 +86,6 @@ module.exports = {
 	plugins: [
 		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin
 		"@rushstack/eslint-plugin",
-		// Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin-security
-		"@rushstack/eslint-plugin-security",
 		// Plugin documentation: https://www.npmjs.com/package/@typescript-eslint/eslint-plugin
 		"@typescript-eslint/eslint-plugin",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-jsdoc
@@ -107,8 +105,17 @@ module.exports = {
 	ignorePatterns: [
 		// Don't lint generated packageVersion files.
 		"**/packageVersion.ts",
+		"**/layerGenerationState.ts",
+		// Don't lint generated test files
+		"**/*.generated.ts",
+		"**/*.generated.js",
 	],
 	rules: {
+		/**
+		 * Disable max-len as it conflicts with biome formatting.
+		 */
+		"max-len": "off",
+
 		/**
 		 * Restricts including release tags inside the member class / interface.
 		 *
@@ -153,7 +160,7 @@ module.exports = {
 		/**
 		 * Encourages minimal disabling of eslint rules, while still permitting whole-file exclusions.
 		 */
-		"eslint-comments/disable-enable-pair": [
+		"@eslint-community/eslint-comments/disable-enable-pair": [
 			"error",
 			{
 				allowWholeFile: true,
@@ -165,6 +172,20 @@ module.exports = {
 		"@typescript-eslint/no-non-null-assertion": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
 
+		// In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
+		// API documentation. For example, type inference might decide a function returns a concrete type
+		// instead of an interface. This has no runtime impact, but would cause compilation problems.
+		"@typescript-eslint/explicit-function-return-type": [
+			"error",
+			{
+				allowExpressions: true,
+				allowTypedFunctionExpressions: true,
+				allowHigherOrderFunctions: true,
+				allowDirectConstAssertionInArrowFunctions: true,
+				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
+			},
+		],
+
 		"@typescript-eslint/no-restricted-imports": [
 			"error",
 			{
@@ -175,17 +196,7 @@ module.exports = {
 
 		"eqeqeq": ["error", "smart"],
 		"import-x/no-deprecated": "error",
-		"max-len": [
-			"error",
-			{
-				code: 120,
-				ignoreTrailingComments: true,
-				ignoreUrls: true,
-				ignoreStrings: true,
-				ignoreTemplateLiterals: true,
-				ignoreRegExpLiterals: true,
-			},
-		],
+		"no-empty": "error",
 		"no-multi-spaces": [
 			"error",
 			{
@@ -228,13 +239,8 @@ module.exports = {
 		 * Disabled because we don't require that all variable declarations be explicitly typed.
 		 */
 		"@rushstack/typedef-var": "off",
-		"@typescript-eslint/explicit-function-return-type": "off",
 		"@typescript-eslint/explicit-member-accessibility": "off",
 
-		/**
-		 * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
-		 */
-		"@typescript-eslint/indent": "off",
 		"@typescript-eslint/member-ordering": "off",
 		"@typescript-eslint/no-explicit-any": "off",
 		"@typescript-eslint/no-unused-vars": "off",
@@ -269,7 +275,6 @@ module.exports = {
 		"@typescript-eslint/consistent-type-imports": "off",
 
 		"func-call-spacing": "off", // Off because it conflicts with typescript-formatter
-		"no-empty": "off",
 		"no-void": "off",
 		"require-atomic-updates": "off",
 
@@ -287,22 +292,7 @@ module.exports = {
 
 		// #region FORMATTING RULES
 
-		// We use formatting tools like Biome or prettier to format code, so most formatting-related rules are superfluous
-		// and are disabled. Running fewer rules also improves lint performance.
-
-		// The rules below are also deprecated in more recent versions of eslint/plugins
-		"@typescript-eslint/brace-style": "off",
-		"@typescript-eslint/comma-spacing": "off",
-		"@typescript-eslint/func-call-spacing": "off",
-		"@typescript-eslint/keyword-spacing": "off",
-		"@typescript-eslint/member-delimiter-style": "off",
-		"@typescript-eslint/semi": "off",
-		"@typescript-eslint/space-before-function-paren": "off",
-		"@typescript-eslint/space-infix-ops": "off",
-		"@typescript-eslint/type-annotation-spacing": "off",
-
 		// The rules below are deprecated in our current version of eslint/plugins
-		"@typescript-eslint/object-curly-spacing": "off",
 		"array-bracket-spacing": "off",
 		"arrow-spacing": "off",
 		"block-spacing": "off",
@@ -362,6 +352,12 @@ module.exports = {
 		"jsdoc/empty-tags": "error",
 
 		/**
+		 * Ensures JSDoc/TSDoc comments to use the consistent formatting.
+		 * See {@link https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/rules/multiline-blocks.md}
+		 */
+		"jsdoc/multiline-blocks": ["error"],
+
+		/**
 		 * Ensures multi-line formatting meets JSDoc/TSDoc requirements.
 		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-no-bad-blocks>
 		 */
@@ -396,9 +392,20 @@ module.exports = {
 
 		// #endregion
 
+		// #region @typescript-eslint rules
+
+		/**
+		 * Ensures that type-only import statements do not result in runtime side-effects.
+		 *
+		 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
+		 */
+		"@typescript-eslint/no-import-type-side-effects": "error",
+
 		"@typescript-eslint/prefer-includes": "error",
 		"@typescript-eslint/prefer-nullish-coalescing": "error",
 		"@typescript-eslint/prefer-optional-chain": "error",
+
+		// #endregion
 
 		/**
 		 * By default, libraries should not take dependencies on node libraries.
@@ -442,6 +449,15 @@ module.exports = {
 				"react-hooks",
 			],
 			extends: ["plugin:react/recommended", "plugin:react-hooks/recommended"],
+			rules: {
+				// TODO: These rules should be re-enabled once we are on eslint 9
+				// and the react plugins are upgraded to more recent versions
+				"react-hooks/immutability": "warn",
+				"react-hooks/refs": "warn",
+				"react-hooks/rules-of-hooks": "warn",
+				"react-hooks/set-state-in-effect": "warn",
+				"react-hooks/static-components": "warn",
+			},
 			settings: {
 				react: {
 					version: "detect",

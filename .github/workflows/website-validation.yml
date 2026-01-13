@@ -26,11 +26,16 @@ jobs:
     runs-on: ubuntu-latest
     name: Build site
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # ratchet:actions/checkout@v4
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
         with:
           submodules: false
-      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
-      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
+
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # ratchet:pnpm/action-setup@v4
+
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # ratchet:actions/setup-node@v6
         with:
           node-version: "20"
           cache: "pnpm"
@@ -43,8 +48,8 @@ jobs:
         run: |
           ./validateHashes.sh
       - name: Upload site artifact
-        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
         with:
           name: fluidframework-site
           path: docs/build
@@ -55,11 +60,16 @@ jobs:
     runs-on: ubuntu-latest
     name: pnpm lint
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # ratchet:actions/checkout@v4
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
         with:
           submodules: false
-      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
-      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
+
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # ratchet:pnpm/action-setup@v4
+
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # ratchet:actions/setup-node@v6
         with:
           node-version: "20"
           cache: "pnpm"
@@ -75,19 +85,24 @@ jobs:
     name: 🧪 Website Tests
     needs: build_site
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
         with:
           submodules: false
-      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
-      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
+
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # ratchet:pnpm/action-setup@v4
+
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # ratchet:actions/setup-node@v6
         with:
           node-version: "20"
           cache: "pnpm"
           cache-dependency-path: docs/pnpm-lock.yaml
 
       - name: Download site artifact
-         # release notes: https://github.com/actions/download-artifact/releases/tag/v4.1.8
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
+        # release notes: https://github.com/actions/download-artifact/releases/tag/v6.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # ratchet:actions/download-artifact@v6
         with:
           name: fluidframework-site
           path: docs/build
@@ -103,11 +118,16 @@ jobs:
     name: 🔗 Broken Link Check
     needs: build_site
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # ratchet:actions/checkout@v6
         with:
           submodules: false
-      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
-      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
+
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # ratchet:pnpm/action-setup@v4
+
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # ratchet:actions/setup-node@v6
         with:
           node-version: "20"
           cache: "pnpm"
@@ -116,8 +136,8 @@ jobs:
         run: mkdir -p ./results
 
       - name: Download site artifact
-         # release notes: https://github.com/actions/download-artifact/releases/tag/v4.1.8
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # ratchet:actions/download-artifact@v4
+        # release notes: https://github.com/actions/download-artifact/releases/tag/v6.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # ratchet:actions/download-artifact@v6
         with:
           name: fluidframework-site
           path: docs/build
@@ -139,8 +159,8 @@ jobs:
           cat ./results/linkcheck-output.txt | tee -a ./results/linkcheck
           echo -e "\n\`\`\`" | tee -a ./results/linkcheck
       - name: Upload results artifact
-        # release notes: https://github.com/actions/upload-artifact/releases/tag/v4.4.3
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # ratchet:actions/upload-artifact@v4
+        # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
         with:
           name: website-validation-results
           path: ./docs/results

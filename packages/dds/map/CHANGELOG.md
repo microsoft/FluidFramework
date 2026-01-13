@@ -1,5 +1,25 @@
 # @fluidframework/map
 
+## 2.80.0
+
+### Minor Changes
+
+- map: Emit valueChanged events for deleted keys after a clear operation ([#26102](https://github.com/microsoft/FluidFramework/pull/26102)) [7c9be0e2d2c](https://github.com/microsoft/FluidFramework/commit/7c9be0e2d2cd7dd40aaa6bf6812ad9a6d43609f5)
+
+  When a `clear` op is processed on SharedMap, `valueChanged` events are now emitted for each key that was deleted. Previously, only the `clear` event was emitted with no subsequent `valueChanged` events.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
 ## 2.71.0
 
 Dependency updates only.
@@ -143,7 +163,6 @@ Dependency updates only.
   already the case, but the documentation was not clear.
 
   Updated APIs:
-
   - [IDirectory](https://fluidframework.com/docs/api/v2/fluid-framework/idirectory-interface) sealed
   - [IDirectoryEvents](https://fluidframework.com/docs/api/v2/fluid-framework/idirectoryevents-interface) sealed
   - [IDirectoryValueChanged](https://fluidframework.com/docs/api/v2/fluid-framework/idirectoryvaluechanged-interface) sealed and path property is readonly
@@ -192,7 +211,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -234,7 +252,6 @@ Dependency updates only.
 - Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
   The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-
   - @fluidframework/gitresources
   - @fluidframework/server-kafka-orderer
   - @fluidframework/server-lambdas
@@ -272,7 +289,6 @@ Dependency updates only.
   limitation of serialization.
 
   Additional modifications:
-
   - `Jsonable`'s `TReplacement` parameter default has also been changed from `void` to `never`, which now disallows
     `void`.
   - Unrecognized primitive types like `symbol` are now filtered to `never` instead of `{}`.
@@ -306,7 +322,6 @@ Dependency updates only.
 - Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   This included the following changes from the protocol-definitions release:
-
   - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
     submitted by clients to the server and the resulting signals sent from the server to clients.
     - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
@@ -317,7 +332,6 @@ Dependency updates only.
 - Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Dependencies on the following Fluid server package have been updated to version 2.0.1:
-
   - @fluidframework/gitresources: 2.0.1
   - @fluidframework/server-kafka-orderer: 2.0.1
   - @fluidframework/server-lambdas: 2.0.1
@@ -359,7 +373,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent

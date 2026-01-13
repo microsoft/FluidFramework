@@ -9,9 +9,9 @@ import { BTree } from "@tylerbu/sorted-btree-es6";
 import {
 	type DeltaDetachedNodeId,
 	type DeltaMark,
+	type FieldKindIdentifier,
 	Multiplicity,
-	type RevisionTag,
-	replaceAtomRevisions,
+	type RevisionReplacer,
 } from "../../core/index.js";
 
 import type {
@@ -24,10 +24,11 @@ import type {
 	RelevantRemovedRootsFromChild,
 	ToDelta,
 } from "./fieldChangeHandler.js";
-import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
+import { FlexFieldKind } from "./fieldKind.js";
+import { brandConst } from "../../util/index.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -44,7 +45,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
 		buildChildChanges(changes: Iterable<[number, NodeId]>): GenericChangeset {
-			return newGenericChangeset(Array.from(changes));
+			return newGenericChangeset([...changes]);
 		},
 	},
 	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): FieldChangeDelta => {
@@ -76,7 +77,7 @@ function compose(
 	const composed = change1.clone();
 	for (const [index, id2] of change2.entries()) {
 		const id1 = composed.get(index);
-		const idComposed = id1 !== undefined ? composeChildren(id1, id2) : id2;
+		const idComposed = id1 === undefined ? id2 : composeChildren(id1, id2);
 		composed.set(index, idComposed);
 	}
 
@@ -155,21 +156,21 @@ function pruneGenericChange(
 
 function replaceRevisions(
 	changeset: GenericChangeset,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
+	replacer: RevisionReplacer,
 ): GenericChangeset {
-	return changeset.mapValues((node) => replaceAtomRevisions(node, oldRevisions, newRevision));
+	return changeset.mapValues((node) => replacer.getUpdatedAtomId(node));
 }
 
 /**
  * {@link FieldKind} used to represent changes to elements of a field in a field-kind-agnostic format.
  */
-export const genericFieldKind: FieldKindWithEditor = new FieldKindWithEditor(
-	"ModularEditBuilder.Generic",
+export const genericFieldKind: FlexFieldKind = new FlexFieldKind(
+	brandConst("ModularEditBuilder.Generic")<FieldKindIdentifier>(),
 	Multiplicity.Sequence,
-	genericChangeHandler,
-	(types, other) => false,
-	new Set(),
+	{
+		changeHandler: genericChangeHandler,
+		allowMonotonicUpgradeFrom: new Set(),
+	},
 );
 
 /**

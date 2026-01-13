@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
@@ -22,7 +23,7 @@ import {
 	enumFromStrings,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaCreationUtilities.js";
-import { getView, validateUsageError } from "../../utils.js";
+import { getView } from "../../utils.js";
 import {
 	unsafeArrayToTuple,
 	type areSafelyAssignable,
@@ -57,8 +58,9 @@ describe("schemaCreationUtilities", () => {
 			case mode instanceof Mode.Cool: {
 				assert.fail();
 			}
-			default:
+			default: {
 				assert.fail();
+			}
 		}
 	});
 
@@ -321,8 +323,9 @@ describe("schemaCreationUtilities", () => {
 				// This one runs
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(mode);
+			}
 		}
 	});
 
@@ -342,8 +345,9 @@ describe("schemaCreationUtilities", () => {
 				// This one runs
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(node);
+			}
 		}
 	});
 
@@ -368,8 +372,9 @@ describe("schemaCreationUtilities", () => {
 			case Day.Tomorrow: {
 				assert.fail();
 			}
-			default:
+			default: {
 				unreachableCase(view.root);
+			}
 		}
 	});
 
@@ -397,8 +402,9 @@ describe("schemaCreationUtilities", () => {
 			case Day.Tomorrow: {
 				assert.fail();
 			}
-			default:
+			default: {
 				unreachableCase(view.root);
+			}
 		}
 
 		//  InsertableTreeFieldFromImplicitField<TRootSchema>
@@ -435,8 +441,9 @@ describe("schemaCreationUtilities", () => {
 			case Day.Tomorrow: {
 				assert.fail();
 			}
-			default:
+			default: {
 				unreachableCase(view.root);
+			}
 		}
 
 		//  InsertableTreeFieldFromImplicitField<TRootSchema>

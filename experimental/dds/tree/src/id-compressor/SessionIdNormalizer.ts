@@ -130,6 +130,7 @@ export class SessionIdNormalizer<TRangeObject> {
 				const [alignedLocal, [firstFinal, lastFinal]] = finalRange;
 				if (finalId <= lastFinal) {
 					const finalDelta = finalId - firstFinal;
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-unary-minus
 					return -alignedLocal - 1 + finalDelta;
 				}
 			}
@@ -442,7 +443,7 @@ export class SessionIdNormalizer<TRangeObject> {
 					return finalRangesA === finalRangesB;
 				}
 
-				const rangeEquals = (finalRangeA: FinalRange<TRangeObject>, finalRangeB: FinalRange<TRangeObject>) => {
+				const rangeEquals = (finalRangeA: FinalRange<TRangeObject>, finalRangeB: FinalRange<TRangeObject>): boolean => {
 					const [firstFinalA, lastFinalA, rangeObjectA] = finalRangeA;
 					const [firstFinalB, lastFinalB, rangeObjectB] = finalRangeB;
 					return (

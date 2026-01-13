@@ -11,7 +11,7 @@ import type { PackageKind, PackageWithKind } from "../../filter.js";
 
 import { strict as assert } from "node:assert";
 import { Flags } from "@oclif/core";
-import { cosmiconfig } from "cosmiconfig";
+import { lilconfig } from "lilconfig";
 import {
 	type NoSubstitutionTemplateLiteral,
 	type Node,
@@ -183,7 +183,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		};
 
 		const dataMap = new Map<PackageWithKind, PackageData>();
-		const config = cosmiconfig(configName, { searchPlaces });
+		const config = lilconfig(configName, { searchPlaces });
 
 		for (const pkg of packages) {
 			// Package configuration:
@@ -197,7 +197,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 			} else {
 				const innerConfig = packageConfig.config as AssertTaggingPackageConfig;
 				// Do some really minimal validation of the configuration.
-				// TODO: replace this with robust validation, like a strongly typed utility wrapping cosmiconfig and typebox.
+				// TODO: replace this with robust validation, like a strongly typed utility wrapping lilconfig and typebox.
 				assert(
 					typeof innerConfig.assertionFunctions === "object",
 					`Assert tagging config in ${packageConfig.filepath} is not valid.`,
@@ -209,12 +209,23 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 
 			// load the project based on the tsconfig
 			const project = new Project({
-				skipFileDependencyResolution: true,
+				// Be sure not to skip dependency resolution, as we want to
+				// process all files in a package.
+				skipFileDependencyResolution: false,
 				tsConfigFilePath: tsconfigPath,
 			});
 
+			// Filter to package local sources of interest
+			const sourceFiles = project
+				.getSourceFiles(
+					// Limit to sources in the current package directory
+					`${pkg.directory}/**`,
+				)
+				// Filter out type files - only interested in runtime sources
+				.filter((source) => source.getExtension() !== ".d.ts");
+
 			const newAssertFiles = this.collectAssertData(
-				project,
+				sourceFiles,
 				assertionFunctions,
 				collected,
 				errors,
@@ -237,7 +248,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 	}
 
 	private collectAssertData(
-		project: Project,
+		sources: Iterable<SourceFile>,
 		assertionFunctions: AssertionFunctions,
 		collected: CollectedData,
 		errors: string[],
@@ -246,8 +257,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		const otherErrors: Node[] = [];
 		const newAssertFiles = new Set<SourceFile>();
 
-		// walk all the files in the project
-		for (const sourceFile of project.getSourceFiles()) {
+		for (const sourceFile of sources) {
 			// walk the assert message params in the file
 			for (const msg of getAssertMessageParams(sourceFile, assertionFunctions)) {
 				const nodeKind = msg.getKind();

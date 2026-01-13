@@ -434,7 +434,7 @@ export class ConsensusOrderedCollection<T = any>
 	}
 
 	protected applyStashedOp(): void {
-		throw new Error("not implemented");
+		// empty implementation
 	}
 
 	/**
