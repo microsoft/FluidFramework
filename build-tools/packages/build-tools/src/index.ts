@@ -28,9 +28,9 @@ export * as TscUtils from "./fluidBuild/tscUtils.js";
 export { getTypeTestPreviousPackageDetails } from "./common/typeTests.js";
 
 /**
- * The types defined here cannot be in build-cli because it is an ESM-only package, and these types are imported in
- * packages that are dual-emit or CJS-only. Long term these types should move to a shared library between build-cli and
- * build-tools.
+ * The types defined here are in a .cts file so they can be imported from both ESM and CJS contexts.
+ * This is necessary because these types are used by generated type test files which may be compiled
+ * as either ESM or CJS depending on the package's configuration.
  */
 export type {
 	TypeOnly,
@@ -38,4 +38,4 @@ export type {
 	FullType,
 	requireAssignableTo,
 	SkipUniqueSymbols,
-} from "./common/typeCompatibility.js";
+} from "./common/typeCompatibility.cjs";

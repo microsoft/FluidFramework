@@ -13,8 +13,14 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"require": {
+				"types": "./dist/common/typeCompatibility.d.cts",
+				"default": "./dist/common/typeCompatibility.cjs"
+			}
 		}
 	},
 	"main": "dist/index.js",
