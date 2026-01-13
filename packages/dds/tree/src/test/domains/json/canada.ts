@@ -89,15 +89,14 @@ export function generateCanada(segmentLengths = originalSegmentLengths, seed = 1
 	// an array of segments, where the coordinates of each segment is randomly generated using
 	// Brownian motion.
 	const segments = segmentLengths.map((len: number) => {
-		return new Array(len)
-			.fill(0)
-			.map(
-				() =>
-					[
-						(last_x = noise(clamp(-141, last_x + vxDist(), -52))),
-						(last_y = noise(clamp(41, last_y + vyDist(), 83))),
-					] as [number, number],
-			);
+		return Array.from(
+			{ length: len },
+			() =>
+				[
+					(last_x = noise(clamp(-141, last_x + vxDist(), -52))),
+					(last_y = noise(clamp(41, last_y + vyDist(), 83))),
+				] as [number, number],
+		);
 	});
 
 	return {

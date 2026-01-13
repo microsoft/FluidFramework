@@ -122,9 +122,10 @@ function createInitialTree(
 	childNodeByteSize: number,
 ): InsertableTreeNodeFromImplicitAllowedTypes<typeof Parent> {
 	const childNode = createTreeWithSize(childNodeByteSize);
-	const children: InsertableTreeNodeFromImplicitAllowedTypes<typeof Child>[] = new Array(
-		childNodes,
-	).fill(childNode);
+	const children: InsertableTreeNodeFromImplicitAllowedTypes<typeof Child>[] = Array.from(
+		{ length: childNodes },
+		() => childNode,
+	);
 	return children;
 }
 

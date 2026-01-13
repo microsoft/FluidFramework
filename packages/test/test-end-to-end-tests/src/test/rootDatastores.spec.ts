@@ -197,12 +197,14 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 					}
 				};
 
+				/* eslint-disable @typescript-eslint/await-thenable -- Promise.all wrapping awaited values is intentional pattern */
 				await Promise.all([
 					await createAliasedDataStore(),
 					await createAliasedDataStore(),
 					await createAliasedDataStore(),
 					await createAliasedDataStore(),
 				]);
+				/* eslint-enable @typescript-eslint/await-thenable */
 
 				assert.equal(datastores.length, 1);
 			},
