@@ -86,7 +86,10 @@ export class RouterliciousDocumentServiceFactory
 			...defaultRouterliciousDriverPolicies,
 			...driverPolicies,
 		};
-		this.blobCache = new InMemoryCache<ArrayBufferLike>();
+		// Use the same expiration time as snapshot cache for consistency.
+		// This ensures blobs are eventually garbage collected even if documents
+		// are not properly disposed.
+		this.blobCache = new InMemoryCache<ArrayBufferLike>(snapshotCacheExpiryMs);
 		if (this.driverPolicies.enableInternalSummaryCaching) {
 			if (this.driverPolicies.enableWholeSummaryUpload) {
 				this.wholeSnapshotTreeCache = new InMemoryCache<INormalizedWholeSnapshot>(

@@ -365,4 +365,12 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	private getCacheKey(blobId: string): string {
 		return `${this.id}:${blobId}`;
 	}
+
+	/**
+	 * Clean up resources associated with this storage service.
+	 */
+	public dispose(): void {
+		this.blobCache.clear();
+		this.snapshotTreeCache.clear();
+	}
 }

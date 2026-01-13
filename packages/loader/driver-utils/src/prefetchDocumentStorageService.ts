@@ -99,4 +99,12 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 			this.prefetchTreeCore(subTree, secondary);
 		}
 	}
+
+	/**
+	 * Clean up resources associated with this storage service.
+	 */
+	public dispose(): void {
+		this.prefetchCache.clear();
+		this.internalStorageService.dispose?.();
+	}
 }

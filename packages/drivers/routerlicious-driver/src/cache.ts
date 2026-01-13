@@ -8,6 +8,10 @@ import { MapWithExpiration } from "./mapWithExpiration.js";
 export interface ICache<T> {
 	get(key: string): Promise<T | undefined>;
 	put(key: string, value: T): Promise<void>;
+	/**
+	 * Clears all entries from the cache.
+	 */
+	clear(): void;
 }
 
 /** A basic in-memory cache that optionally supports expiring entries after a period of inactivity */
@@ -25,6 +29,10 @@ export class InMemoryCache<T> implements ICache<T> {
 	public async put(key: string, value: T): Promise<void> {
 		this.cache.set(key, value);
 	}
+
+	public clear(): void {
+		this.cache.clear();
+	}
 }
 
 /** This "cache" does nothing on put, and get always returns undefined */
@@ -34,4 +42,6 @@ export class NullCache<T> implements ICache<T> {
 	}
 
 	public async put(key: string, value: T): Promise<void> {}
+
+	public clear(): void {}
 }
