@@ -27,6 +27,7 @@ class SmdeView {
 
 	public render(elm: HTMLElement): void {
 		// Create base textarea
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (!this.textArea) {
 			this.textArea = document.createElement("textarea");
 		}

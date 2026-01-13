@@ -861,6 +861,7 @@ export class PartialSequenceLengths {
 		// eslint-disable-next-line unicorn/no-array-for-each
 		this.perClientAdjustments.forEach((clientAdjustments) => {
 			const leqPartial = clientAdjustments.latestLeq(seq);
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 			if (leqPartial && leqPartial.seq === seq) {
 				this.addClientAdjustment(clientId, seq, -leqPartial.seglen);
 			}
@@ -928,6 +929,7 @@ export class PartialSequenceLengths {
 				}
 				const partialLengths = branchPartialLengths.partialLengths;
 				const leqPartial = partialLengths.latestLeq(seq);
+				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 				if (leqPartial && leqPartial.seq === seq) {
 					seqSeglen += leqPartial.seglen;
 				}
@@ -937,6 +939,7 @@ export class PartialSequenceLengths {
 				// eslint-disable-next-line unicorn/no-array-for-each
 				branchPartialLengths.perClientAdjustments.forEach((clientAdjustments) => {
 					const leqBranchPartial = clientAdjustments.latestLeq(seq);
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 					if (leqBranchPartial && leqBranchPartial.seq === seq) {
 						this.addClientAdjustment(clientId, seq, leqBranchPartial.seglen);
 					}
