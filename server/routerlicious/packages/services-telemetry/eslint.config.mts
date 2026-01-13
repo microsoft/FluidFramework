@@ -10,13 +10,20 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"promise/catch-or-return": ["error", {
-				"allowFinally": true,
-			}],
+			"promise/catch-or-return": [
+				"error",
+				{
+					allowFinally: true,
+				},
+			],
 			"@typescript-eslint/prefer-nullish-coalescing": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-deprecated": "warn",
 		},
+	},
+	// Migrated from .eslintignore
+	{
+		ignores: ["*.spec.ts"],
 	},
 ];
 

@@ -10,22 +10,14 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"import-x/no-nodejs-modules": "off",
-			"promise/catch-or-return": [
-				"error",
-				{
-					allowFinally: true,
-				},
-			],
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
+			"@typescript-eslint/no-use-before-define": "off",
+			"@typescript-eslint/promise-function-async": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
+			"import-x/no-internal-modules": "off",
+			"import-x/no-nodejs-modules": "off",
+			"@typescript-eslint/prefer-nullish-coalescing": "off",
 			"import-x/no-deprecated": "warn",
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
-	},
-	// Migrated from .eslintignore
-	{
-		ignores: ["*.spec.ts"],
 	},
 ];
 

@@ -11,9 +11,12 @@ const config: Linter.Config[] = [
 	{
 		rules: {
 			"import-x/no-nodejs-modules": "off",
-			"promise/catch-or-return": ["error", {
-				"allowFinally": true,
-			}],
+			"promise/catch-or-return": [
+				"error",
+				{
+					allowFinally: true,
+				},
+			],
 			"import-x/no-deprecated": "warn",
 		},
 	},
@@ -23,6 +26,10 @@ const config: Linter.Config[] = [
 		rules: {
 			"@typescript-eslint/strict-boolean-expressions": "warn",
 		},
+	},
+	// Migrated from .eslintignore
+	{
+		ignores: ["*.spec.ts"],
 	},
 ];
 

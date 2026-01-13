@@ -11,11 +11,18 @@ const config: Linter.Config[] = [
 	{
 		rules: {
 			"@typescript-eslint/strict-boolean-expressions": "off",
-			"promise/catch-or-return": ["error", {
-				"allowFinally": true,
-			}],
+			"promise/catch-or-return": [
+				"error",
+				{
+					allowFinally: true,
+				},
+			],
 			"@typescript-eslint/prefer-nullish-coalescing": "off",
 		},
+	},
+	// Migrated from .eslintignore
+	{
+		ignores: ["*.spec.ts"],
 	},
 ];
 

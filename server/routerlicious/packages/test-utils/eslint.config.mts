@@ -15,14 +15,21 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-use-before-define": "off",
 			"import-x/no-nodejs-modules": "off",
 			"no-case-declarations": "off",
-			"promise/catch-or-return": ["error", {
-				"allowFinally": true,
-			}],
+			"promise/catch-or-return": [
+				"error",
+				{
+					allowFinally: true,
+				},
+			],
 			"@typescript-eslint/prefer-nullish-coalescing": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-deprecated": "warn",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
+	},
+	// Migrated from .eslintignore
+	{
+		ignores: ["*.spec.ts", "*.generated.ts"],
 	},
 ];
 
