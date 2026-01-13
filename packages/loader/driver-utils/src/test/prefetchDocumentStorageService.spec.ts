@@ -11,7 +11,22 @@ import type {
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 
+import { GenericNetworkError, NonRetryableError } from "../network.js";
 import { PrefetchDocumentStorageService } from "../prefetchDocumentStorageService.js";
+
+/**
+ * Creates a retryable error for testing
+ */
+function createRetryableError(message: string): GenericNetworkError {
+	return new GenericNetworkError(message, true, { driverVersion: undefined });
+}
+
+/**
+ * Creates a non-retryable error for testing
+ */
+function createNonRetryableError(message: string): NonRetryableError<"genericNetworkError"> {
+	return new NonRetryableError(message, "genericNetworkError", { driverVersion: undefined });
+}
 
 /**
  * Helper to wait for a condition with timeout
@@ -36,9 +51,9 @@ async function waitForCondition(
 class MockStorageService implements Partial<IDocumentStorageService> {
 	public readBlobCalls: string[] = [];
 	public shouldFail = false;
-	public failureError = new Error("Mock read failure");
+	public failureError: Error = new Error("Mock read failure");
 	public shouldGetSnapshotTreeFail = false;
-	public getSnapshotTreeError = new Error("Mock getSnapshotTree failure");
+	public getSnapshotTreeError: Error = new Error("Mock getSnapshotTree failure");
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
 		this.readBlobCalls.push(blobId);
@@ -96,9 +111,7 @@ describe("PrefetchDocumentStorageService", () => {
 	});
 
 	it("should clear cache on retryable errors allowing retry", async () => {
-		const retryableError = new Error("Retryable error");
-		(retryableError as any).canRetry = true;
-		mockStorage.failureError = retryableError;
+		mockStorage.failureError = createRetryableError("Retryable error");
 		mockStorage.shouldFail = true;
 
 		// First call fails
@@ -115,6 +128,35 @@ describe("PrefetchDocumentStorageService", () => {
 			mockStorage.readBlobCalls.length,
 			1,
 			"Should perform exactly one new underlying read after cache is cleared",
+		);
+	});
+
+	it("should NOT clear cache on non-retryable errors", async () => {
+		const nonRetryableError = createNonRetryableError("Non-retryable error");
+		mockStorage.failureError = nonRetryableError;
+		mockStorage.shouldFail = true;
+
+		// First call fails with non-retryable error
+		await assert.rejects(
+			async () => prefetchService.readBlob("blob1"),
+			(error: Error) => error.message === "Non-retryable error",
+		);
+
+		// Reset mock to return different data (to prove we're using cached rejection)
+		mockStorage.shouldFail = false;
+		mockStorage.readBlobCalls = [];
+
+		// Second call should still fail with same cached non-retryable error
+		// (cache should NOT be cleared for non-retryable errors)
+		await assert.rejects(
+			async () => prefetchService.readBlob("blob1"),
+			(error: Error) => error === nonRetryableError,
+			"Should receive the same cached non-retryable error",
+		);
+		assert.strictEqual(
+			mockStorage.readBlobCalls.length,
+			0,
+			"Should not perform new underlying read - cached rejection should be returned",
 		);
 	});
 
@@ -140,10 +182,8 @@ describe("PrefetchDocumentStorageService", () => {
 	});
 
 	it("should not cause unhandled rejections on fire-and-forget prefetch failures", async () => {
-		// Set up to fail all blob reads
-		const prefetchError = new Error("Prefetch network failure");
-		(prefetchError as any).canRetry = true;
-		mockStorage.failureError = prefetchError;
+		// Set up to fail all blob reads with a retryable error
+		mockStorage.failureError = createRetryableError("Prefetch network failure");
 		mockStorage.shouldFail = true;
 
 		// Trigger prefetch via getSnapshotTree (fire-and-forget pattern)
@@ -158,6 +198,7 @@ describe("PrefetchDocumentStorageService", () => {
 
 		// If we reach here without unhandled rejection, the test passes
 		// Now verify that explicit readBlob calls still receive the error properly
+		// (cache is cleared for retryable errors, so a new read is attempted)
 		mockStorage.readBlobCalls = [];
 		await assert.rejects(
 			async () => prefetchService.readBlob("blob1"),
