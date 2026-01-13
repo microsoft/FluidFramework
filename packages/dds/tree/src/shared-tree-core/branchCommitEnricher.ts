@@ -13,9 +13,9 @@ import { hasSome } from "../util/index.js";
  */
 export class BranchCommitEnricher<TChange> {
 	/**
-	 * Maps each local commit to the corresponding enriched commit.
+	 * Maps each local commit to the corresponding enriched change.
 	 * @remarks
-	 * Entries are added when the commits are {@link BranchCommitEnricher.prepareChanges | processed during a change}.
+	 * Entries are added when the commits are {@link BranchCommitEnricher.prepareChanges | prepared}.
 	 * Each entry is removed when it is {@link BranchCommitEnricher.retrieveChange | retrieved}.
 	 * In the event that an entry is not explicitly removed, it will eventually be {@link WeakMap | dropped from memory} along with the associated commit.
 	 */
@@ -42,8 +42,9 @@ export class BranchCommitEnricher<TChange> {
 
 	/**
 	 * Retrieves the enriched change for the given commit.
-	 * @param commit - A commit already {@link BranchCommitEnricher.prepareChanges | prepared}.
+	 * @param commit - A commit that was already {@link BranchCommitEnricher.prepareChanges | prepared}.
 	 * @remarks A commit can only be enriched once - subsequent calls to this method with the same commit will throw an error.
+	 * @returns The enriched change corresponding to the given `commit`.
 	 */
 	public retrieveChange(commit: GraphCommit<TChange>): TChange {
 		const prepared = this.prepared.get(commit);

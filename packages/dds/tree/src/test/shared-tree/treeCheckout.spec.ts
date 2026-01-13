@@ -60,7 +60,6 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { asAlpha } from "../../api.js";
-import type { SharedTreeBranch } from "../../shared-tree-core/index.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -1320,18 +1319,13 @@ describe("sharedTreeView", () => {
 			const view2 = provider.trees[1].kernel.viewWith(config);
 			view1.initialize(initialContent);
 			provider.synchronizeMessages();
-			const view1Branch = (
-				view1.checkout as unknown as {
-					getMainBranch(): SharedTreeBranch<never, SharedTreeChange>;
-				}
-			).getMainBranch();
 			const view1Revertibles: Revertible[] = [];
 			view1.events.on("changed", (_, getRevertible) => {
 				if (getRevertible !== undefined) {
 					view1Revertibles.push(getRevertible());
 				}
 			});
-			return { provider, view1, view1Revertibles, view1Branch, view2 };
+			return { provider, view1, view1Revertibles, view2 };
 		}
 
 		function assertEnrichmentCount(enriched: SharedTreeChange, expectedCount: number) {
@@ -1340,11 +1334,11 @@ describe("sharedTreeView", () => {
 		}
 
 		it("can provide an enricher for a transaction-less edit that is about to be applied", () => {
-			const { view1, view1Revertibles, view1Branch } = setup([{ id: "A" }]);
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
 			view1.root.removeAt(0);
 
 			let callCount = 0;
-			view1Branch.events.on("beforeChange", (change) => {
+			view1.checkout.mainBranch.events.on("beforeChange", (change) => {
 				callCount += 1;
 				assert.equal(change.type, "append");
 				assert.equal(change.newCommits.length, 1);
@@ -1370,11 +1364,11 @@ describe("sharedTreeView", () => {
 		});
 
 		it("can provide an enricher for a transaction-less edit that is has just been applied", () => {
-			const { view1, view1Revertibles, view1Branch } = setup([{ id: "A" }]);
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
 			view1.root.removeAt(0);
 
 			let callCount = 0;
-			view1Branch.events.on("afterChange", (change) => {
+			view1.checkout.mainBranch.events.on("afterChange", (change) => {
 				callCount += 1;
 				assert.equal(change.type, "append");
 				assert.equal(change.newCommits.length, 1);
@@ -1400,7 +1394,7 @@ describe("sharedTreeView", () => {
 		});
 
 		it("can provide an enricher for merged edits that are about to be applied", () => {
-			const { view1, view1Branch } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
+			const { view1 } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
 			const branch = view1.fork();
 
 			view1.root.removeAt(2);
@@ -1411,7 +1405,7 @@ describe("sharedTreeView", () => {
 			branch.root[2].id = "c"; // Will require a refresher
 
 			let callCount = 0;
-			view1Branch.events.on("beforeChange", (change) => {
+			view1.checkout.mainBranch.events.on("beforeChange", (change) => {
 				callCount += 1;
 				assert.equal(change.type, "append");
 				assert.equal(change.newCommits.length, 3);
@@ -1443,7 +1437,7 @@ describe("sharedTreeView", () => {
 		});
 
 		it("can provide an enricher for merged edits that have just been applied", () => {
-			const { view1, view1Branch } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
+			const { view1 } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
 			const branch = view1.fork();
 
 			view1.root.removeAt(2);
@@ -1454,7 +1448,7 @@ describe("sharedTreeView", () => {
 			branch.root[2].id = "c"; // Will require a refresher
 
 			let callCount = 0;
-			view1Branch.events.on("afterChange", (change) => {
+			view1.checkout.mainBranch.events.on("afterChange", (change) => {
 				callCount += 1;
 				assert.equal(change.type, "append");
 				assert.equal(change.newCommits.length, 3);
@@ -1486,11 +1480,11 @@ describe("sharedTreeView", () => {
 		});
 
 		it("can provide an enricher for a fast transaction that is about to be applied", () => {
-			const { view1, view1Revertibles, view1Branch } = setup([{ id: "A" }]);
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
 			view1.root.removeAt(0);
 
 			let callCount = 0;
-			view1Branch.events.on("beforeChange", (change) => {
+			view1.checkout.mainBranch.events.on("beforeChange", (change) => {
 				callCount += 1;
 				assert.equal(change.type, "append");
 				assert.equal(change.newCommits.length, 1);
@@ -1521,11 +1515,11 @@ describe("sharedTreeView", () => {
 		});
 
 		it("can provide an enricher a for fast transaction that has just been applied", () => {
-			const { view1, view1Revertibles, view1Branch } = setup([{ id: "A" }]);
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
 			view1.root.removeAt(0);
 
 			let callCount = 0;
-			view1Branch.events.on("afterChange", (change) => {
+			view1.checkout.mainBranch.events.on("afterChange", (change) => {
 				callCount += 1;
 				assert.equal(change.type, "append");
 				assert.equal(change.newCommits.length, 1);
@@ -1556,10 +1550,10 @@ describe("sharedTreeView", () => {
 		});
 
 		it("can provide an enricher for an edit applied long ago", () => {
-			const { view1, view1Revertibles, view1Branch } = setup([{ id: "A" }]);
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
 			view1.root.removeAt(0);
 			view1Revertibles[0].revert();
-			const revertCommit = view1Branch.getHead();
+			const revertCommit = view1.checkout.mainBranch.getHead();
 			view1.root.insertAtEnd({ id: "B" });
 			view1.root.insertAtEnd({ id: "C" });
 
@@ -1579,9 +1573,9 @@ describe("sharedTreeView", () => {
 		});
 
 		it("delays diff computation if no refresher is needed", () => {
-			const { view1, view1Branch } = setup([]);
+			const { view1 } = setup([]);
 			view1.root.insertAtEnd({ id: "A" });
-			const commit = view1Branch.getHead();
+			const commit = view1.checkout.mainBranch.getHead();
 			view1.root.insertAtEnd({ id: "B" });
 			view1.root.insertAtEnd({ id: "C" });
 
@@ -1600,13 +1594,13 @@ describe("sharedTreeView", () => {
 		});
 
 		it("delays apply changes if no refresher is needed", () => {
-			const { view1, view1Branch } = setup([]);
+			const { view1 } = setup([]);
 			view1.root.insertAtEnd({ id: "A" });
-			const commit1 = view1Branch.getHead();
+			const commit1 = view1.checkout.mainBranch.getHead();
 			view1.root.insertAtEnd({ id: "B" });
-			const commit2 = view1Branch.getHead();
+			const commit2 = view1.checkout.mainBranch.getHead();
 			view1.root.insertAtEnd({ id: "C" });
-			const commit3 = view1Branch.getHead();
+			const commit3 = view1.checkout.mainBranch.getHead();
 
 			view1.checkout.resetEnrichmentStats();
 			view1.checkout.runEnrichmentBatch(commit1, (enricher) => {

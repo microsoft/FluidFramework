@@ -18,7 +18,11 @@ import {
 	DependentFormatVersion,
 	type CodecWriteOptions,
 } from "../../codec/index.js";
-import { RevisionTagCodec, TreeStoredSchemaRepository } from "../../core/index.js";
+import {
+	RevisionTagCodec,
+	TreeStoredSchemaRepository,
+	type GraphCommit,
+} from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
@@ -41,6 +45,8 @@ import {
 	type MessageFormatVersion,
 	supportedMessageFormatVersions,
 	type EnrichmentConfig,
+	type ChangeEnricherProvider,
+	type ChangeEnricherCheckout,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
 import { strict as assert, fail } from "node:assert";
@@ -220,11 +226,27 @@ function createTreeInner(
 			idCompressor,
 			schema,
 			defaultSchemaPolicy,
-			enrichmentConfig,
+			enrichmentConfig ?? { provider: new NoOpChangeEnricherProvider<DefaultChangeset>() },
 			editor,
 		),
 		changeFamily,
 	];
+}
+
+class NoOpChangeEnricherProvider<TChange> implements ChangeEnricherProvider<TChange> {
+	public runEnrichmentBatch(
+		_firstCommit: GraphCommit<TChange>,
+		callback: (enricher: ChangeEnricherCheckout<TChange>) => void,
+	): void {
+		callback(new NoOpChangeEnricherCheckout<TChange>());
+	}
+}
+
+class NoOpChangeEnricherCheckout<TChange> implements ChangeEnricherCheckout<TChange> {
+	public enrich(change: TChange): TChange {
+		return change;
+	}
+	public enqueueChange(): void {}
 }
 
 /**

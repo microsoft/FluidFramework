@@ -1142,6 +1142,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	// #region Enrichment
 
+	/**
+	 * Statistics about enrichment operations performed by this checkout.
+	 * Used for testing. May be used for telemetry in the future.
+	 * The performance cost of maintaining this information is negligible.
+	 */
 	private readonly enrichmentStats: {
 		batches: number;
 		diffs: number;
@@ -1206,7 +1211,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		enricher[disposeSymbol]();
 	}
 
-	private getMainBranch(): SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange> {
+	public get mainBranch(): SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange> {
 		return this.#transaction.branch;
 	}
 

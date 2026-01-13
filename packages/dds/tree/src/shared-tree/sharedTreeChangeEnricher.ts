@@ -41,6 +41,9 @@ interface OwnedState {
 }
 
 export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTreeChange> {
+	/**
+	 * Queue of changes to be applied before querying for detached roots.
+	 */
 	private readonly changeQueue: (() => TaggedChange<SharedTreeChange>)[] = [];
 	protected readonly borrowed: BorrowedState;
 	protected owned?: OwnedState;
@@ -52,6 +55,10 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 	 * @param borrowedRemovedRoots - The set of removed roots based on which to enrich changes.
 	 * Not owned by the constructed instance.
 	 * @param idCompressor - The id compressor to use when chunking trees.
+	 * @param onEnrichCommit - Optional callback invoked whenever a commit is enriched.
+	 * @param onRefresherAdded - Optional callback invoked whenever a refresher is added during enrichment.
+	 * @param onForkState - Optional callback invoked whenever the enricher forks its state.
+	 * @param onApplyChange - Optional callback invoked whenever a change is applied to the owned state.
 	 */
 	public constructor(
 		borrowedForest: IForestSubscription,

@@ -81,20 +81,21 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		// Some in-flight commits have stale enrichments, so we recompute them.
 		this.provider.runEnrichmentBatch(pendingChanges[0].newCommit, (enricher) => {
 			for (const [index, { pending, newCommit, isStale }] of pendingChanges.entries()) {
-				if (!isStale) {
+				if (isStale) {
+					const enrichedChange = enricher.enrich(newCommit.change);
+					const enrichedCommit = { ...newCommit, change: enrichedChange };
+
+					enricher.enqueueChange(enrichedCommit);
+
+					pending.commit = enrichedCommit;
+					pending.lastEnrichment = this.currentEnrichment;
+				} else {
 					assert(
 						!pendingChanges.slice(index + 1).some((pc) => pc.isStale),
 						"Unexpected non-stale commit after stale enrichment",
 					);
 					break;
 				}
-				const enrichedChange = enricher.enrich(newCommit.change);
-				const enrichedCommit = { ...newCommit, change: enrichedChange };
-
-				enricher.enqueueChange(enrichedCommit);
-
-				pending.commit = enrichedCommit;
-				pending.lastEnrichment = this.currentEnrichment;
 			}
 		});
 	}
