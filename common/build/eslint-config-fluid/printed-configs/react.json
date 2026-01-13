@@ -1292,7 +1292,10 @@
             "error"
         ],
         "jsdoc/multiline-blocks": [
-            "error"
+            "error",
+            {
+                "noSingleLineBlocks": true
+            }
         ],
         "jsdoc/no-bad-blocks": [
             "error"
@@ -1783,6 +1786,9 @@
         "padded-blocks": [
             "off"
         ],
+        "padding-line-between-statements": [
+            "off"
+        ],
         "prefer-arrow-callback": [
             "error",
             {
@@ -2053,6 +2059,9 @@
         "space-unary-word-ops": [
             "off"
         ],
+        "spaced-comment": [
+            "off"
+        ],
         "standard/array-bracket-even-spacing": [
             "off"
         ],
@@ -2129,7 +2138,7 @@
             "error"
         ],
         "unicorn/no-array-callback-reference": [
-            "off"
+            "error"
         ],
         "unicorn/no-array-for-each": [
             "error"
