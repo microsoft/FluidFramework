@@ -1,7 +1,7 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"description": "Auto-generated list of deprecated ESLint rules. Do not edit manually. Run: tsx scripts/generate-deprecated-rules.ts",
-	"generatedAt": "2025-12-19T22:40:08.199Z",
+	"generatedAt": "2026-01-13T20:15:29.504Z",
 	"deprecatedRules": [
 		{
 			"rule": "@typescript-eslint/no-empty-interface",
@@ -338,7 +338,7 @@
 		},
 		{
 			"rule": "padding-line-between-statements",
-			"isConfigured": false
+			"isConfigured": true
 		},
 		{
 			"rule": "prefer-reflect",
@@ -404,7 +404,7 @@
 		},
 		{
 			"rule": "spaced-comment",
-			"isConfigured": false
+			"isConfigured": true
 		},
 		{
 			"rule": "switch-colon-spacing",

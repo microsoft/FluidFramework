@@ -9,6 +9,10 @@
  * This script queries the rule metadata from ESLint core and each plugin used in the config,
  * then outputs the deprecated rule names to a JSON file that can be imported by the flat config.
  *
+ * The script automatically detects whether flat config (flat.mts) is available and uses it
+ * to determine which deprecated rules are configured. If flat config is not available,
+ * it falls back to loading the legacy CJS configs (recommended.js, strict.js).
+ *
  * Usage: tsx scripts/generate-deprecated-rules.ts
  */
 
@@ -18,7 +22,7 @@ import { fileURLToPath } from "node:url";
 
 // @ts-expect-error - This is an internal ESLint API
 import { builtinRules } from "eslint/use-at-your-own-risk";
-import type { Rule } from "eslint";
+import type { Linter, Rule } from "eslint";
 
 // Import all plugins used in the config
 import tseslint from "typescript-eslint";
@@ -34,9 +38,6 @@ import rushstackPlugin from "@rushstack/eslint-plugin";
 import fluidPlugin from "@fluid-internal/eslint-plugin-fluid";
 import tsdocPlugin from "eslint-plugin-tsdoc";
 import unusedImportsPlugin from "eslint-plugin-unused-imports";
-
-// Import configs to check which rules are configured
-import { recommended, strict } from "../flat.mts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -100,13 +101,26 @@ async function loadExistingRules(outputPath: string): Promise<Set<string>> {
 }
 
 /**
- * Extracts all configured rule names from the ESLint config arrays.
- * @returns Set of all rule names that are configured in our configs
+ * Checks if a file exists.
  */
-function getConfiguredRules(): Set<string> {
+async function fileExists(filePath: string): Promise<boolean> {
+	try {
+		await fs.access(filePath);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Extracts all configured rule names from flat config arrays.
+ * @param configs - Array of flat config objects
+ * @returns Set of all rule names that are configured
+ */
+function getConfiguredRulesFromFlatConfig(configs: Linter.Config[]): Set<string> {
 	const configuredRules = new Set<string>();
 
-	for (const config of [...recommended, ...strict]) {
+	for (const config of configs) {
 		if (config.rules) {
 			for (const ruleName of Object.keys(config.rules)) {
 				configuredRules.add(ruleName);
@@ -115,6 +129,150 @@ function getConfiguredRules(): Set<string> {
 	}
 
 	return configuredRules;
+}
+
+/**
+ * Recursively extracts all configured rule names from a legacy eslintrc config object.
+ * @param config - Legacy eslintrc config object
+ * @param configDir - Directory containing the config (for resolving extends)
+ * @param visited - Set of already-visited config paths to prevent cycles
+ * @returns Set of all rule names that are configured
+ */
+function getConfiguredRulesFromLegacyConfig(
+	config: {
+		rules?: Record<string, unknown>;
+		extends?: string | string[];
+		overrides?: Array<{ rules?: Record<string, unknown> }>;
+	},
+	configDir: string,
+	visited: Set<string> = new Set(),
+): Set<string> {
+	const configuredRules = new Set<string>();
+
+	// Process extends first (base configs)
+	if (config.extends) {
+		const extendsArray = Array.isArray(config.extends) ? config.extends : [config.extends];
+		for (const ext of extendsArray) {
+			// Only process local file extends (starting with ./)
+			if (ext.startsWith("./") || ext.startsWith("../")) {
+				const extPath = path.resolve(configDir, ext);
+				if (!visited.has(extPath)) {
+					visited.add(extPath);
+					try {
+						// eslint-disable-next-line @typescript-eslint/no-require-imports
+						const extConfig = require(extPath) as typeof config;
+						const extRules = getConfiguredRulesFromLegacyConfig(
+							extConfig,
+							path.dirname(extPath),
+							visited,
+						);
+						for (const rule of extRules) {
+							configuredRules.add(rule);
+						}
+					} catch {
+						// Ignore errors loading extended configs
+					}
+				}
+			}
+		}
+	}
+
+	// Add rules from this config
+	if (config.rules) {
+		for (const ruleName of Object.keys(config.rules)) {
+			configuredRules.add(ruleName);
+		}
+	}
+
+	// Add rules from overrides
+	if (config.overrides) {
+		for (const override of config.overrides) {
+			if (override.rules) {
+				for (const ruleName of Object.keys(override.rules)) {
+					configuredRules.add(ruleName);
+				}
+			}
+		}
+	}
+
+	return configuredRules;
+}
+
+/**
+ * Attempts to load configured rules from flat config (flat.mts).
+ * @returns Set of configured rules, or null if flat config is not available
+ */
+async function tryLoadFlatConfig(): Promise<Set<string> | null> {
+	const flatConfigPath = path.join(__dirname, "..", "flat.mts");
+
+	if (!(await fileExists(flatConfigPath))) {
+		return null;
+	}
+
+	try {
+		// Dynamic import of the flat config
+		const flatConfig = (await import(flatConfigPath)) as {
+			recommended?: Linter.Config[];
+			strict?: Linter.Config[];
+		};
+
+		if (!flatConfig.recommended || !flatConfig.strict) {
+			return null;
+		}
+
+		return getConfiguredRulesFromFlatConfig([...flatConfig.recommended, ...flatConfig.strict]);
+	} catch (error) {
+		// Flat config exists but failed to load (e.g., missing dependencies or syntax issues)
+		console.warn(`Warning: flat.mts exists but failed to load: ${error}`);
+		return null;
+	}
+}
+
+/**
+ * Loads configured rules from legacy CJS configs (recommended.js, strict.js).
+ * @returns Set of configured rules
+ */
+function loadLegacyConfig(): Set<string> {
+	const configDir = path.join(__dirname, "..");
+	const configuredRules = new Set<string>();
+
+	for (const configFile of ["recommended.js", "strict.js"]) {
+		const configPath = path.join(configDir, configFile);
+		try {
+			// eslint-disable-next-line @typescript-eslint/no-require-imports
+			const config = require(configPath) as {
+				rules?: Record<string, unknown>;
+				extends?: string | string[];
+				overrides?: Array<{ rules?: Record<string, unknown> }>;
+			};
+			const rules = getConfiguredRulesFromLegacyConfig(config, configDir);
+			for (const rule of rules) {
+				configuredRules.add(rule);
+			}
+		} catch (error) {
+			console.warn(`Warning: Failed to load ${configFile}: ${error}`);
+		}
+	}
+
+	return configuredRules;
+}
+
+/**
+ * Gets all configured rules from ESLint configs.
+ * Tries flat config first, falls back to legacy CJS configs.
+ * @returns Set of all rule names that are configured in our configs
+ */
+async function getConfiguredRules(): Promise<Set<string>> {
+	// Try flat config first
+	const flatConfigRules = await tryLoadFlatConfig();
+	if (flatConfigRules !== null) {
+		console.log("Using flat config (flat.mts) to determine configured rules");
+		return flatConfigRules;
+	}
+
+	// Fall back to legacy config
+	console.log("Using legacy config (recommended.js, strict.js) to determine configured rules");
+	return loadLegacyConfig();
 }
 
 async function main(): Promise<void> {
@@ -129,7 +287,7 @@ async function main(): Promise<void> {
 		allDeprecated.push(...findDeprecatedRules("@typescript-eslint", tsPlugin.rules));
 	}
 
-	// All other plugins used in flat.mts
+	// All other plugins used in the configs
 	const plugins: Record<string, { rules?: Record<string, Rule.RuleModule> }> = {
 		"unicorn": unicornPlugin,
 		"jsdoc": jsdocPlugin,
@@ -161,7 +319,7 @@ async function main(): Promise<void> {
 	const existingRules = await loadExistingRules(outputPath);
 
 	// Get all configured rules from our ESLint configs
-	const configuredRules = getConfiguredRules();
+	const configuredRules = await getConfiguredRules();
 
 	// Find new deprecated rules not in the existing file
 	const newRules = allDeprecated.filter((d) => !existingRules.has(d.rule));

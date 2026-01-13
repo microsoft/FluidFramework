@@ -67,14 +67,13 @@ importers:
         version: 54.0.0(eslint@9.39.2(jiti@2.6.1))
       eslint-plugin-unused-imports:
         specifier: ~4.3.0
-<<<<<<< HEAD
-        version: 4.3.0(@typescript-eslint/eslint-plugin@8.18.2(@typescript-eslint/parser@8.18.2(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))
-      typescript-eslint:
-        specifier: ~8.18.2
-        version: 8.18.2(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
-=======
         version: 4.3.0(@typescript-eslint/eslint-plugin@8.18.2(@typescript-eslint/parser@8.18.2(eslint@9.39.2(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.2(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.2(jiti@2.6.1))
->>>>>>> main
+      globals:
+        specifier: ^14.0.0
+        version: 14.0.0
+      typescript-eslint:
+        specifier: ^8.18.2
+        version: 8.18.2(eslint@9.39.2(jiti@2.6.1))(typescript@5.4.5)
     devDependencies:
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -4409,12 +4408,12 @@ snapshots:
       possible-typed-array-names: 1.1.0
       reflect.getprototypeof: 1.0.10
 
-  typescript-eslint@8.18.2(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5):
+  typescript-eslint@8.18.2(eslint@9.39.2(jiti@2.6.1))(typescript@5.4.5):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.18.2(@typescript-eslint/parser@8.18.2(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
-      '@typescript-eslint/parser': 8.18.2(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
-      '@typescript-eslint/utils': 8.18.2(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
-      eslint: 9.39.1(jiti@2.6.1)
+      '@typescript-eslint/eslint-plugin': 8.18.2(@typescript-eslint/parser@8.18.2(eslint@9.39.2(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.2(jiti@2.6.1))(typescript@5.4.5)
+      '@typescript-eslint/parser': 8.18.2(eslint@9.39.2(jiti@2.6.1))(typescript@5.4.5)
+      '@typescript-eslint/utils': 8.18.2(eslint@9.39.2(jiti@2.6.1))(typescript@5.4.5)
+      eslint: 9.39.2(jiti@2.6.1)
       typescript: 5.4.5
     transitivePeerDependencies:
       - supports-color
