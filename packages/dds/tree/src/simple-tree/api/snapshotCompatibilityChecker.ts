@@ -289,8 +289,8 @@ export interface SchemaCompatibilitySnapshotsOptions {
 /**
  * Check `currentViewSchema` for compatibility with a collection of historical schema snapshots stored in `snapshotDirectory`.
  * @remarks
- * This is intended for use in snapshot based schema compatibility tests.
- * Every shared tree based component or application with a schema is recommended to use this to verify schema compatibility across versions.
+ * This is intended for use in snapshot-based schema compatibility tests.
+ * Every SharedTree-based component or application with a schema is recommended to use this to verify schema compatibility across versions.
  *
  * Schema snapshots should be added to `snapshotDirectory` using this function in "update" mode whenever the schema changes in a compatibility impacting way
  * (or when `snapshotUnchangedVersions` is true and a new version about to be released is getting prepared for release (and thus `version` changed)).
@@ -310,7 +310,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * This utility does not enforce anything with respect to API compatibility, or special semantics for major, minor, or patch versions.
  * Libraries which export schema for use by others will need to take special care to ensure the stability contract they offer their users aligns which what is validated by this utility.
  *
- * This utility only tests compatibility of the historical snapshots against the current schema: it does not test them against each-other.
+ * This utility only tests compatibility of the historical snapshots against the current schema; it does not test them against each-other.
  * Generally any historical schema should have been tested against the ones before them at the time they were current.
  * If for some reason a version of a schema made it into production that was not compatible with a previous version,
  * that can still be represented here (but may require manually generating a snapshot for that version)
@@ -318,7 +318,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * If a sufficiently incompatible historical schema were used in production, it may be impossible to make a single schema which can accommodate all of them:
  * this utility can be used to confirm that is the case, as well as to avoid the problem in the first place by testing schema before each one is deployed.
  *
- * @example Mocha test which validates the current `config` is can collaborate with all historical version back to 2.0.0, and load and update any versions older than that.
+ * @example Mocha test which validates the current `config` can collaborate with all historical version back to 2.0.0, and load and update any versions older than that.
  * ```typescript
  * it("schema compatibility", () => {
  * 	checkSchemaCompatibilitySnapshots({
