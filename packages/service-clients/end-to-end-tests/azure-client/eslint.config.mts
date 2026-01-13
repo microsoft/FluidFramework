@@ -35,6 +35,7 @@ const config: Linter.Config[] = [
 	},
 	{
 		files: ["*.spec.ts", "*.test.ts", "**/test/**"],
+		ignores: ["**/*.cjs"],
 		rules: {
 			"import-x/no-deprecated": "warn",
 			"import-x/no-internal-modules": [

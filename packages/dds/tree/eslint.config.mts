@@ -80,6 +80,7 @@ const config: Linter.Config[] = [
 	},
 	{
 		files: ["src/test/**/*"],
+		ignores: ["**/*.cjs"],
 		languageOptions: {
 			parserOptions: {
 				projectService: false,

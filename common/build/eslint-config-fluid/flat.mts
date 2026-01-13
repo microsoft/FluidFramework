@@ -19,6 +19,7 @@
 import eslintJs from "@eslint/js";
 import comments from "@eslint-community/eslint-plugin-eslint-comments/configs";
 import fluidPlugin from "@fluid-internal/eslint-plugin-fluid";
+import globals from "globals";
 import rushstackPlugin from "@rushstack/eslint-plugin";
 import tseslint from "typescript-eslint";
 import dependPlugin from "eslint-plugin-depend";
@@ -647,11 +648,23 @@ const internalModulesConfig: Linter.Config = {
 
 /**
  * CommonJS file configuration (.cts, .cjs).
- * Disables ES module preference rules.
+ * Provides Node.js CommonJS globals and disables ES module preference rules.
+ * Also relaxes rules that conflict with CommonJS patterns.
  */
 const cjsConfig: Linter.Config = {
 	files: ["**/*.cts", "**/*.cjs"],
-	rules: { "unicorn/prefer-module": "off" },
+	languageOptions: {
+		globals: {
+			...globals.node,
+			...globals.commonjs,
+		},
+		sourceType: "commonjs",
+	},
+	rules: {
+		"unicorn/prefer-module": "off",
+		"@typescript-eslint/no-require-imports": "off",
+		"import-x/no-internal-modules": "off",
+	},
 };
 
 /**
@@ -662,6 +675,25 @@ const jsConfig: Linter.Config = {
 	files: ["**/*.js", "**/*.cjs", "**/*.mjs", "**/*.d.ts"],
 	languageOptions: { parserOptions: { project: null, projectService: false } },
 	...tseslint.configs.disableTypeChecked,
+};
+
+/**
+ * Plain JavaScript CommonJS file configuration.
+ * Provides Node.js CommonJS globals for .js files that use require/exports.
+ * Note: .mjs files remain ES modules and don't get CommonJS globals.
+ */
+const jsCommonjsConfig: Linter.Config = {
+	files: ["**/*.js"],
+	languageOptions: {
+		globals: {
+			...globals.node,
+			...globals.commonjs,
+		},
+		sourceType: "commonjs",
+	},
+	rules: {
+		"@typescript-eslint/no-require-imports": "off",
+	},
 };
 
 // #endregion
@@ -689,6 +721,7 @@ function createRecommendedConfig(): FlatConfigArray {
 		internalModulesConfig,
 		cjsConfig,
 		jsConfig,
+		jsCommonjsConfig,
 		deprecatedRulesConfig,
 	];
 }
