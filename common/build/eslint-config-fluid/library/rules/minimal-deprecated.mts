@@ -1,0 +1,138 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import type { Linter } from "eslint";
+
+import {
+	restrictedImportPaths,
+	restrictedImportPatternsForProductionCode,
+	permittedImports,
+} from "../constants.mjs";
+
+/**
+ * Rules from minimal-deprecated.js.
+ */
+export const minimalDeprecatedRules: Linter.RulesRecord = {
+	// Disable max-len as it conflicts with biome formatting
+	"max-len": "off",
+
+	// Fluid custom rules
+	"@fluid-internal/fluid/no-member-release-tags": "error",
+	"@fluid-internal/fluid/no-unchecked-record-access": "error",
+
+	// @rushstack rules
+	"@rushstack/no-new-null": "warn",
+
+	// @typescript-eslint rules (from minimal-deprecated.js)
+	"@typescript-eslint/naming-convention": [
+		"error",
+		{
+			selector: "accessor",
+			modifiers: ["private"],
+			format: ["camelCase"],
+			leadingUnderscore: "allow",
+		},
+	],
+	"@typescript-eslint/dot-notation": "error",
+	"@typescript-eslint/no-non-null-assertion": "error",
+	"@typescript-eslint/no-unnecessary-type-assertion": "error",
+	"@typescript-eslint/explicit-function-return-type": [
+		"error",
+		{
+			allowExpressions: true,
+			allowTypedFunctionExpressions: true,
+			allowHigherOrderFunctions: true,
+			allowDirectConstAssertionInArrowFunctions: true,
+			allowConciseArrowFunctionExpressionsStartingWithVoid: false,
+		},
+	],
+	"@typescript-eslint/no-restricted-imports": [
+		"error",
+		{
+			paths: restrictedImportPaths,
+			patterns: restrictedImportPatternsForProductionCode,
+		},
+	],
+
+	"no-empty": "error",
+	"no-multi-spaces": [
+		"error",
+		{
+			ignoreEOLComments: true,
+		},
+	],
+
+	"unused-imports/no-unused-imports": "error",
+	"valid-typeof": "error",
+	"promise/param-names": "warn",
+
+	"unicorn/prefer-switch": "error",
+	"unicorn/prefer-ternary": "error",
+	"unicorn/prefer-type-error": "error",
+
+	// Disabled intentionally (from minimal-deprecated.js)
+	"@rushstack/typedef-var": "off",
+	"@typescript-eslint/explicit-member-accessibility": "off",
+	"@typescript-eslint/member-ordering": "off",
+	"@typescript-eslint/no-explicit-any": "off",
+	"@typescript-eslint/no-unused-vars": "off",
+	"@typescript-eslint/no-use-before-define": "off",
+	"@typescript-eslint/typedef": "off",
+	"@typescript-eslint/unified-signatures": "off",
+	"@typescript-eslint/no-duplicate-type-constituents": "off",
+	"@typescript-eslint/non-nullable-type-assertion-style": "off",
+	"@typescript-eslint/consistent-indexed-object-style": "off",
+	"@typescript-eslint/no-unsafe-enum-comparison": "off",
+	"@typescript-eslint/no-redundant-type-constituents": "off",
+	"@typescript-eslint/consistent-generic-constructors": "off",
+	"@typescript-eslint/consistent-type-exports": "off",
+	"@typescript-eslint/consistent-type-imports": "off",
+	"func-call-spacing": "off",
+	"no-void": "off",
+	"require-atomic-updates": "off",
+	"dot-notation": "off",
+	"no-unused-expressions": "off",
+
+	// Deprecated formatting rules (from minimal-deprecated.js)
+	"array-bracket-spacing": "off",
+	"arrow-spacing": "off",
+	"block-spacing": "off",
+	"dot-location": "off",
+	"jsx-quotes": "off",
+	"key-spacing": "off",
+	"space-unary-ops": "off",
+	"switch-colon-spacing": "off",
+
+	// TSDoc/JSDoc rules (from minimal-deprecated.js)
+	"tsdoc/syntax": "error",
+	"jsdoc/check-access": "error",
+	"jsdoc/check-line-alignment": "warn",
+	"jsdoc/check-examples": "off",
+	"jsdoc/check-indentation": "error",
+	"jsdoc/check-tag-names": "off",
+	"jsdoc/empty-tags": "error",
+	"jsdoc/multiline-blocks": ["error"],
+	"jsdoc/no-bad-blocks": "error",
+	"jsdoc/require-asterisk-prefix": "error",
+	"jsdoc/require-hyphen-before-param-description": "error",
+	"jsdoc/require-param-description": "error",
+	"jsdoc/require-returns-description": "error",
+
+	// Additional @typescript-eslint rules (from minimal-deprecated.js)
+	"@typescript-eslint/no-import-type-side-effects": "error",
+	"@typescript-eslint/prefer-includes": "error",
+	"@typescript-eslint/prefer-nullish-coalescing": "error",
+	"@typescript-eslint/prefer-optional-chain": "error",
+
+	// import-x rules (from minimal-deprecated.js)
+	"import-x/no-nodejs-modules": ["error"],
+	"import-x/no-deprecated": "error",
+	"import-x/no-internal-modules": [
+		"error",
+		{
+			allow: permittedImports,
+		},
+	],
+};
