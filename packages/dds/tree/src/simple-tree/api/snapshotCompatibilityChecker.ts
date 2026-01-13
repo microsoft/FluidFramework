@@ -222,11 +222,11 @@ export interface CombinedSchemaCompatibilityStatus {
 	/**
 	 * How a {@link TreeView} using the current schema would report its compatibility with the historical snapshot.
 	 */
-	readonly backwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+	readonly currentViewOfSnapshotDocument: Omit<SchemaCompatibilityStatus, "canInitialize">;
 	/**
 	 * How a {@link TreeView} using the snapshotted schema would report its compatibility with a document created with the current schema.
 	 */
-	readonly forwardsCompatibilityStatus: Omit<SchemaCompatibilityStatus, "canInitialize">;
+	readonly snapshotViewOfCurrentDocument: Omit<SchemaCompatibilityStatus, "canInitialize">;
 }
 
 /**
@@ -490,7 +490,7 @@ export function checkSchemaCompatibilitySnapshots(
 
 	for (const [snapshotVersion, compatibility] of compatibilityMap) {
 		// Current should be able to view all versions.
-		if (!compatibility.backwardsCompatibilityStatus.canUpgrade) {
+		if (!compatibility.currentViewOfSnapshotDocument.canUpgrade) {
 			compatibilityErrors.push(
 				`Current version ${JSON.stringify(currentVersion)} cannot upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
 			);
@@ -503,8 +503,8 @@ export function checkSchemaCompatibilitySnapshots(
 				);
 			}
 			if (
-				compatibility.backwardsCompatibilityStatus.isEquivalent === false ||
-				compatibility.forwardsCompatibilityStatus.isEquivalent === false
+				compatibility.currentViewOfSnapshotDocument.isEquivalent === false ||
+				compatibility.snapshotViewOfCurrentDocument.isEquivalent === false
 			) {
 				compatibilityErrors.push(
 					`Current version ${JSON.stringify(snapshotVersion)} expected to be equivalent to its snapshot.`,
@@ -520,7 +520,7 @@ export function checkSchemaCompatibilitySnapshots(
 				// Collaboration with this version is expected to work.
 				if (semver.gte(snapshotVersion, selectedMinVersionForCollaborationSnapshot[0])) {
 					// Check that the historical version can view documents from the current version, since collaboration with this one is expected to work.
-					if (!compatibility.forwardsCompatibilityStatus.canView) {
+					if (!compatibility.snapshotViewOfCurrentDocument.canView) {
 						const message = `Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being ${JSON.stringify(selectedMinVersionForCollaborationSnapshot[0])}.`;
 						compatibilityErrors.push(
 							selectedMinVersionForCollaborationSnapshot[0] === minVersionForCollaboration
@@ -640,7 +640,7 @@ export function getCompatibility(
 	);
 
 	return {
-		backwardsCompatibilityStatus,
-		forwardsCompatibilityStatus,
+		currentViewOfSnapshotDocument: backwardsCompatibilityStatus,
+		snapshotViewOfCurrentDocument: forwardsCompatibilityStatus,
 	};
 }

@@ -607,10 +607,10 @@ describe("snapshotCompatibilityChecker", () => {
 				new TreeViewConfiguration({ schema: Point3D }),
 				new TreeViewConfiguration({ schema: Point2D }),
 			);
-			assert.equal(result.backwardsCompatibilityStatus.canView, false);
-			assert.equal(result.backwardsCompatibilityStatus.canUpgrade, true);
-			assert.equal(result.forwardsCompatibilityStatus.canView, false);
-			assert.equal(result.forwardsCompatibilityStatus.canUpgrade, false);
+			assert.equal(result.currentViewOfSnapshotDocument.canView, false);
+			assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+			assert.equal(result.snapshotViewOfCurrentDocument.canView, false);
+			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, false);
 		}
 
 		{
@@ -618,10 +618,10 @@ describe("snapshotCompatibilityChecker", () => {
 				new TreeViewConfiguration({ schema: Point3D }),
 				new TreeViewConfiguration({ schema: Point2DAllow }),
 			);
-			assert.equal(result.backwardsCompatibilityStatus.canView, false);
-			assert.equal(result.backwardsCompatibilityStatus.canUpgrade, true);
-			assert.equal(result.forwardsCompatibilityStatus.canView, true);
-			assert.equal(result.forwardsCompatibilityStatus.canUpgrade, false);
+			assert.equal(result.currentViewOfSnapshotDocument.canView, false);
+			assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+			assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
+			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, false);
 		}
 
 		{
@@ -629,10 +629,10 @@ describe("snapshotCompatibilityChecker", () => {
 				new TreeViewConfiguration({ schema: Point3D }),
 				new TreeViewConfiguration({ schema: Point3D }),
 			);
-			assert.equal(result.backwardsCompatibilityStatus.canView, true);
-			assert.equal(result.backwardsCompatibilityStatus.canUpgrade, true);
-			assert.equal(result.forwardsCompatibilityStatus.canView, true);
-			assert.equal(result.forwardsCompatibilityStatus.canUpgrade, true);
+			assert.equal(result.currentViewOfSnapshotDocument.canView, true);
+			assert.equal(result.currentViewOfSnapshotDocument.canUpgrade, true);
+			assert.equal(result.snapshotViewOfCurrentDocument.canView, true);
+			assert.equal(result.snapshotViewOfCurrentDocument.canUpgrade, true);
 		}
 	});
 });
