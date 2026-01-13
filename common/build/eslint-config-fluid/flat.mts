@@ -3,115 +3,46 @@
  * Licensed under the MIT License.
  */
 
-// ESLint 9 flat-config compatibility wrapper for existing eslintrc configs.
-// Consumers can import { recommended, strict, minimalDeprecated } from this module
-// and spread them into their eslint.config.js.
+/**
+ * Native ESLint 9 flat config implementation.
+ *
+ * This configuration imports plugins directly (without FlatCompat) and copies rules
+ * verbatim from the legacy config files to ensure functional equivalence.
+ *
+ * Reference files:
+ * - base.js (lower-level rules, settings)
+ * - minimal-deprecated.js (extends base, adds more rules)
+ * - recommended.js (extends minimal-deprecated, adds unicorn/recommended and more rules)
+ * - strict.js (extends recommended, adds stricter rules)
+ */
 
-import { FlatCompat } from "@eslint/eslintrc";
 import eslintJs from "@eslint/js";
-import type { Linter } from "eslint";
-// eslint-plugin-depend is ESM-only and must be imported directly for flat config
+import eslintCommentsPlugin from "@eslint-community/eslint-plugin-eslint-comments";
+import fluidPlugin from "@fluid-internal/eslint-plugin-fluid";
+import rushstackPlugin from "@rushstack/eslint-plugin";
+import tseslint from "typescript-eslint";
 import dependPlugin from "eslint-plugin-depend";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import importXPlugin from "eslint-plugin-import-x";
+import jsdocPlugin from "eslint-plugin-jsdoc";
+import promisePlugin from "eslint-plugin-promise";
+import reactPlugin from "eslint-plugin-react";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
+import tsdocPlugin from "eslint-plugin-tsdoc";
+import unicornPlugin from "eslint-plugin-unicorn";
+import unusedImportsPlugin from "eslint-plugin-unused-imports";
+import prettierConfig from "eslint-config-prettier";
+import biomeConfig from "eslint-config-biome";
+import type { Linter } from "eslint";
 
 type FlatConfigArray = Linter.Config[];
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// =============================================================================
+// SHARED CONSTANTS (from minimal-deprecated.js)
+// =============================================================================
 
-const compat = new FlatCompat({
-	baseDirectory: __dirname,
-	recommendedConfig: eslintJs.configs.recommended,
-	allConfig: eslintJs.configs.all,
-});
-
-// Global ignores for all configs.
-// In flat config, a config object with only `ignores` is treated as a global ignore pattern.
-// See: https://eslint.org/docs/latest/use/configure/configuration-files#globally-ignoring-files-with-ignores
-const globalIgnores = {
-	ignores: [
-		// Build output directories
-		"**/dist/**",
-		"**/lib/**",
-		"**/build/**",
-
-		// Dependencies
-		"**/node_modules/**",
-
-		// Generated files (from minimal-deprecated.js ignorePatterns)
-		"**/packageVersion.ts",
-		"**/layerGenerationState.ts",
-		"**/*.generated.ts",
-		"**/*.generated.js",
-
-		// Common non-source directories
-		"**/coverage/**",
-		"**/.nyc_output/**",
-	],
-};
-
-const recommended: FlatConfigArray = [
-	globalIgnores,
-	...compat.config({ extends: [path.join(__dirname, "recommended.js")] }),
-];
-const strict: FlatConfigArray = [
-	globalIgnores,
-	...compat.config({ extends: [path.join(__dirname, "strict.js")] }),
-];
-const minimalDeprecated: FlatConfigArray = [
-	globalIgnores,
-	...compat.config({
-		extends: [path.join(__dirname, "minimal-deprecated.js")],
-	}),
-];
-
-// eslint-plugin-depend configuration.
-// This plugin is ESM-only and cannot be loaded via legacy config (FlatCompat),
-// so we configure it directly here for flat config consumers.
-const dependConfig = {
-	plugins: {
-		depend: dependPlugin,
-	},
-	rules: {
-		"depend/ban-dependencies": [
-			"error",
-			{
-				allowed: [
-					// axios replacement with fetch is ongoing: https://github.com/microsoft/FluidFramework/pull/25592
-					"axios",
-
-					// fs-extra is well-maintained and provides a useful readJson/writeJson API which is what we mainly use.
-					"fs-extra",
-				],
-			},
-		],
-	},
-};
-recommended.push(dependConfig);
-strict.push(dependConfig);
-minimalDeprecated.push(dependConfig);
-
-// Use projectService for automatic tsconfig discovery instead of manual project configuration.
-// This eliminates the need to manually configure project paths and handles test files automatically.
-// See: https://typescript-eslint.io/packages/parser#projectservice
-// Note: tsconfigRootDir is not set here to allow the parser to discover the correct project root
-// from the location of the file being linted. This also allows the tsdoc plugin to find tsdoc.json
-// files in the correct location.
-const useProjectService = {
-	files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-	languageOptions: {
-		parserOptions: {
-			projectService: true,
-		},
-	},
-};
-recommended.push(useProjectService);
-strict.push(useProjectService);
-minimalDeprecated.push(useProjectService);
-
-// Shared list of permitted imports for configuring the `import-x/no-internal-modules` rule.
-// This matches the permittedImports from minimal-deprecated.js with additional /legacy support
+/**
+ * Shared list of permitted imports for configuring the `import-x/no-internal-modules` rule.
+ */
 const permittedImports = [
 	// Within Fluid Framework allow import of '/internal' from other FF packages.
 	"@fluid-example/*/internal",
@@ -138,7 +69,7 @@ const permittedImports = [
 	"*/index.js",
 ];
 
-// Restricted import paths for all code (applies to both production and test).
+// Restricted import paths for all code (from minimal-deprecated.js)
 const restrictedImportPaths = [
 	// Prefer strict assertions
 	// See: <https://nodejs.org/api/assert.html#strict-assertion-mode>
@@ -154,15 +85,748 @@ const restrictedImportPaths = [
 	},
 ];
 
-// For test files, disable projectService and use explicit project paths.
-// This is needed because most packages use TypeScript project references where test files
-// are in separate tsconfig files (e.g., src/test/tsconfig.json) that are excluded from the main tsconfig.
-// ProjectService doesn't handle this pattern well, so we explicitly specify the common project paths.
-// Packages can override this configuration if they have different test setups.
-//
-// This config also includes all the rule overrides from minimal-deprecated.js test override (lines 430-468)
-const testProjectConfig = {
-	files: ["src/test/**", "*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"],
+// Restricted import patterns for production code.
+// Not applied to test code.
+const restrictedImportPatternsForProductionCode = [
+	// Don't import from the parent index file.
+	{
+		group: ["./index.js", "**/../index.js"],
+		message:
+			"Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
+	},
+];
+
+// Test file patterns (from minimal-deprecated.js)
+const testFilePatterns = ["*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"];
+
+// =============================================================================
+// GLOBAL IGNORES
+// =============================================================================
+
+const globalIgnores: Linter.Config = {
+	ignores: [
+		// Build output directories
+		"**/dist/**",
+		"**/lib/**",
+		"**/build/**",
+
+		// Dependencies
+		"**/node_modules/**",
+
+		// Generated files (from minimal-deprecated.js ignorePatterns)
+		"**/packageVersion.ts",
+		"**/layerGenerationState.ts",
+		"**/*.generated.ts",
+		"**/*.generated.js",
+
+		// Common non-source directories
+		"**/coverage/**",
+		"**/.nyc_output/**",
+	],
+};
+
+// =============================================================================
+// SETTINGS (from base.js)
+// =============================================================================
+
+const importXSettings = {
+	"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+	"import-x/parsers": {
+		"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts", ".cts", ".mts"],
+	},
+	"import-x/resolver": {
+		typescript: {
+			extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+			conditionNames: [
+				// This supports the test-only conditional export pattern used in merge-tree and id-compressor.
+				"allow-ff-test-exports",
+				// Default condition names below
+				"types",
+				"import",
+				// APF: https://angular.io/guide/angular-package-format
+				"esm2020",
+				"es2020",
+				"es2015",
+				"require",
+				"node",
+				"node-addons",
+				"browser",
+				"default",
+			],
+		},
+	},
+};
+
+const jsdocSettings = {
+	jsdoc: {
+		// The following are intended to keep js/jsx JSDoc comments in line with TSDoc syntax used in ts/tsx code.
+		tagNamePreference: {
+			arg: {
+				message: "Please use @param instead of @arg.",
+				replacement: "param",
+			},
+			argument: {
+				message: "Please use @param instead of @argument.",
+				replacement: "param",
+			},
+			return: {
+				message: "Please use @returns instead of @return.",
+				replacement: "returns",
+			},
+		},
+	},
+};
+
+// =============================================================================
+// BASE RULES (from base.js)
+// Rules from eslint:recommended, @typescript-eslint/recommended-type-checked,
+// @typescript-eslint/stylistic-type-checked, import-x/recommended, import-x/typescript
+// =============================================================================
+
+const baseRules: Linter.RulesRecord = {
+	// #region Fluid Custom Rules (from base.js)
+	"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "error",
+	"@fluid-internal/fluid/no-file-path-links-in-jsdoc": "error",
+	"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "error",
+
+	// #region @typescript-eslint (from base.js)
+	"@typescript-eslint/adjacent-overload-signatures": "error",
+	"@typescript-eslint/array-type": "error",
+	"@typescript-eslint/await-thenable": "error",
+	"@typescript-eslint/consistent-type-assertions": [
+		"error",
+		{
+			assertionStyle: "as",
+			objectLiteralTypeAssertions: "never",
+		},
+	],
+	"@typescript-eslint/consistent-type-definitions": "error",
+	"@typescript-eslint/dot-notation": "error",
+	"@typescript-eslint/explicit-function-return-type": "off",
+	"@typescript-eslint/no-dynamic-delete": "error",
+	"@typescript-eslint/no-empty-function": "off",
+	"@typescript-eslint/no-empty-object-type": "error",
+	"@typescript-eslint/no-explicit-any": "off",
+	"@typescript-eslint/no-extraneous-class": "error",
+	"@typescript-eslint/no-floating-promises": "error",
+	"@typescript-eslint/no-for-in-array": "error",
+	"@typescript-eslint/no-inferrable-types": "off",
+	"@typescript-eslint/no-invalid-this": "off",
+	"@typescript-eslint/no-magic-numbers": "off",
+	"@typescript-eslint/no-misused-new": "error",
+	"@typescript-eslint/no-non-null-assertion": "error",
+	"@typescript-eslint/no-require-imports": "error",
+	"@typescript-eslint/no-shadow": [
+		"error",
+		{
+			hoist: "all",
+			ignoreTypeValueShadow: true,
+		},
+	],
+	"@typescript-eslint/no-this-alias": "error",
+	"@typescript-eslint/no-unused-expressions": "error",
+	"@typescript-eslint/no-unused-vars": "off",
+	"@typescript-eslint/no-unnecessary-qualifier": "error",
+	"@typescript-eslint/no-unnecessary-type-arguments": "error",
+	"@typescript-eslint/no-unnecessary-type-assertion": "error",
+	"@typescript-eslint/no-unsafe-function-type": "error",
+	"@typescript-eslint/only-throw-error": "error",
+	"@typescript-eslint/prefer-for-of": "error",
+	"@typescript-eslint/prefer-function-type": "error",
+	"@typescript-eslint/prefer-namespace-keyword": "error",
+	"@typescript-eslint/prefer-readonly": "error",
+	"@typescript-eslint/promise-function-async": "error",
+	"@typescript-eslint/require-await": "off",
+	"@typescript-eslint/restrict-plus-operands": "error",
+	"@typescript-eslint/restrict-template-expressions": "off",
+	"@typescript-eslint/return-await": "error",
+	"@typescript-eslint/strict-boolean-expressions": "error",
+	"@typescript-eslint/triple-slash-reference": "error",
+	"@typescript-eslint/unbound-method": [
+		"error",
+		{
+			ignoreStatic: true,
+		},
+	],
+	"@typescript-eslint/unified-signatures": "error",
+	"@typescript-eslint/no-wrapper-object-types": "error",
+
+	// @eslint-community/eslint-plugin-eslint-comments
+	"@eslint-community/eslint-comments/disable-enable-pair": [
+		"error",
+		{
+			allowWholeFile: true,
+		},
+	],
+
+	// #region eslint-plugin-import-x (from base.js)
+	"import-x/no-default-export": "error",
+	"import-x/no-deprecated": "off",
+	"import-x/no-extraneous-dependencies": "error",
+	"import-x/no-internal-modules": "error",
+	"import-x/no-unassigned-import": "error",
+	"import-x/no-unresolved": [
+		"error",
+		{
+			caseSensitive: true,
+		},
+	],
+	"import-x/no-unused-modules": "error",
+	"import-x/order": [
+		"error",
+		{
+			"groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
+			"newlines-between": "always",
+			"alphabetize": {
+				order: "asc",
+				caseInsensitive: false,
+			},
+		},
+	],
+
+	// eslint-plugin-unicorn (from base.js)
+	"unicorn/better-regex": "error",
+	"unicorn/filename-case": [
+		"error",
+		{
+			cases: {
+				camelCase: true,
+				pascalCase: true,
+			},
+		},
+	],
+	"unicorn/no-for-loop": "off",
+	"unicorn/no-new-buffer": "error",
+	"unicorn/expiring-todo-comments": "off",
+
+	// eslint core rules (from base.js)
+	"arrow-body-style": "off",
+	"arrow-parens": ["error", "always"],
+	"camelcase": "off",
+	"brace-style": "off",
+	"capitalized-comments": "off",
+	"comma-dangle": "off",
+	"comma-spacing": "off",
+	"complexity": "off",
+	"constructor-super": "error",
+	"curly": "error",
+	"default-case": "error",
+	"dot-notation": "off",
+	"eol-last": "error",
+	"eqeqeq": ["error", "smart"],
+	"func-call-spacing": "off",
+	"guard-for-in": "error",
+	"id-match": "error",
+	"linebreak-style": "off",
+	"keyword-spacing": "off",
+	"max-classes-per-file": "off",
+	"max-len": [
+		"error",
+		{
+			ignoreRegExpLiterals: false,
+			ignoreStrings: false,
+			code: 120,
+		},
+	],
+	"max-lines": "off",
+	"new-parens": "error",
+	"newline-per-chained-call": "off",
+	"no-bitwise": "error",
+	"no-caller": "error",
+	"no-cond-assign": "error",
+	"no-constant-condition": "error",
+	"no-control-regex": "error",
+	"no-debugger": "off",
+	"no-duplicate-case": "error",
+	"no-duplicate-imports": "off",
+	"no-empty": "off",
+	"no-eval": "error",
+	"no-extra-semi": "off",
+	"no-fallthrough": "off",
+	"no-invalid-regexp": "error",
+	"no-invalid-this": "off",
+	"no-irregular-whitespace": "error",
+	"no-magic-numbers": "off",
+	"no-multi-str": "off",
+	"no-multiple-empty-lines": [
+		"error",
+		{
+			max: 1,
+			maxBOF: 0,
+			maxEOF: 0,
+		},
+	],
+	"no-nested-ternary": "off",
+	"no-new-func": "error",
+	"no-new-wrappers": "error",
+	"no-octal": "error",
+	"no-octal-escape": "error",
+	"no-param-reassign": "error",
+	"no-redeclare": "off",
+	"no-regex-spaces": "error",
+	"no-restricted-syntax": [
+		"error",
+		{
+			selector: "ExportAllDeclaration",
+			message:
+				"Exporting * is not permitted. You should export only named items you intend to export.",
+		},
+		"ForInStatement",
+	],
+	"no-sequences": "error",
+	"no-shadow": "off",
+	"no-sparse-arrays": "error",
+	"no-template-curly-in-string": "error",
+	"no-throw-literal": "off",
+	"no-trailing-spaces": "error",
+	"no-undef-init": "error",
+	"no-underscore-dangle": "off",
+	"no-unsafe-finally": "error",
+	"no-unused-expressions": "off",
+	"no-unused-labels": "error",
+	"no-unused-vars": "off",
+	"no-var": "error",
+	"no-void": "off",
+	"no-whitespace-before-property": "error",
+	"object-curly-spacing": "off",
+	"object-shorthand": "error",
+	"one-var": ["error", "never"],
+	"padded-blocks": ["error", "never"],
+	"padding-line-between-statements": [
+		"off",
+		{
+			blankLine: "always",
+			prev: "*",
+			next: "return",
+		},
+	],
+	"prefer-arrow-callback": "error",
+	"prefer-const": "error",
+	"prefer-object-spread": "error",
+	"prefer-promise-reject-errors": "error",
+	"prefer-template": "error",
+	"quote-props": ["error", "consistent-as-needed"],
+	"quotes": "off",
+	"radix": "error",
+	"require-await": "off",
+	"semi": "off",
+	"semi-spacing": "error",
+	"space-before-blocks": "error",
+	"space-before-function-paren": "off",
+	"space-infix-ops": "off",
+	"space-in-parens": ["error", "never"],
+	"spaced-comment": [
+		"error",
+		"always",
+		{
+			block: {
+				markers: ["!"],
+				balanced: true,
+			},
+		},
+	],
+	"use-isnan": "error",
+	"valid-typeof": "off",
+	"yoda": "off",
+};
+
+// =============================================================================
+// MINIMAL-DEPRECATED RULES (from minimal-deprecated.js)
+// =============================================================================
+
+const minimalDeprecatedRules: Linter.RulesRecord = {
+	// Disable max-len as it conflicts with biome formatting
+	"max-len": "off",
+
+	// Fluid custom rules
+	"@fluid-internal/fluid/no-member-release-tags": "error",
+	"@fluid-internal/fluid/no-unchecked-record-access": "error",
+
+	// @rushstack rules
+	"@rushstack/no-new-null": "warn",
+
+	// @typescript-eslint rules (from minimal-deprecated.js)
+	"@typescript-eslint/naming-convention": [
+		"error",
+		{
+			selector: "accessor",
+			modifiers: ["private"],
+			format: ["camelCase"],
+			leadingUnderscore: "allow",
+		},
+	],
+	"@typescript-eslint/dot-notation": "error",
+	"@typescript-eslint/no-non-null-assertion": "error",
+	"@typescript-eslint/no-unnecessary-type-assertion": "error",
+	"@typescript-eslint/explicit-function-return-type": [
+		"error",
+		{
+			allowExpressions: true,
+			allowTypedFunctionExpressions: true,
+			allowHigherOrderFunctions: true,
+			allowDirectConstAssertionInArrowFunctions: true,
+			allowConciseArrowFunctionExpressionsStartingWithVoid: false,
+		},
+	],
+	"@typescript-eslint/no-restricted-imports": [
+		"error",
+		{
+			paths: restrictedImportPaths,
+			patterns: restrictedImportPatternsForProductionCode,
+		},
+	],
+
+	"no-empty": "error",
+	"no-multi-spaces": [
+		"error",
+		{
+			ignoreEOLComments: true,
+		},
+	],
+
+	"unused-imports/no-unused-imports": "error",
+	"valid-typeof": "error",
+	"promise/param-names": "warn",
+
+	"unicorn/prefer-switch": "error",
+	"unicorn/prefer-ternary": "error",
+	"unicorn/prefer-type-error": "error",
+
+	// Disabled intentionally (from minimal-deprecated.js)
+	"@rushstack/typedef-var": "off",
+	"@typescript-eslint/explicit-member-accessibility": "off",
+	"@typescript-eslint/member-ordering": "off",
+	"@typescript-eslint/no-explicit-any": "off",
+	"@typescript-eslint/no-unused-vars": "off",
+	"@typescript-eslint/no-use-before-define": "off",
+	"@typescript-eslint/typedef": "off",
+	"@typescript-eslint/unified-signatures": "off",
+	"@typescript-eslint/no-duplicate-type-constituents": "off",
+	"@typescript-eslint/non-nullable-type-assertion-style": "off",
+	"@typescript-eslint/consistent-indexed-object-style": "off",
+	"@typescript-eslint/no-unsafe-enum-comparison": "off",
+	"@typescript-eslint/no-redundant-type-constituents": "off",
+	"@typescript-eslint/consistent-generic-constructors": "off",
+	"@typescript-eslint/consistent-type-exports": "off",
+	"@typescript-eslint/consistent-type-imports": "off",
+	"func-call-spacing": "off",
+	"no-void": "off",
+	"require-atomic-updates": "off",
+	"dot-notation": "off",
+	"no-unused-expressions": "off",
+
+	// Deprecated formatting rules (from minimal-deprecated.js)
+	"array-bracket-spacing": "off",
+	"arrow-spacing": "off",
+	"block-spacing": "off",
+	"dot-location": "off",
+	"jsx-quotes": "off",
+	"key-spacing": "off",
+	"space-unary-ops": "off",
+	"switch-colon-spacing": "off",
+
+	// TSDoc/JSDoc rules (from minimal-deprecated.js)
+	"tsdoc/syntax": "error",
+	"jsdoc/check-access": "error",
+	"jsdoc/check-line-alignment": "warn",
+	"jsdoc/check-examples": "off",
+	"jsdoc/check-indentation": "error",
+	"jsdoc/check-tag-names": "off",
+	"jsdoc/empty-tags": "error",
+	"jsdoc/multiline-blocks": ["error"],
+	"jsdoc/no-bad-blocks": "error",
+	"jsdoc/require-asterisk-prefix": "error",
+	"jsdoc/require-hyphen-before-param-description": "error",
+	"jsdoc/require-param-description": "error",
+	"jsdoc/require-returns-description": "error",
+
+	// Additional @typescript-eslint rules (from minimal-deprecated.js)
+	"@typescript-eslint/no-import-type-side-effects": "error",
+	"@typescript-eslint/prefer-includes": "error",
+	"@typescript-eslint/prefer-nullish-coalescing": "error",
+	"@typescript-eslint/prefer-optional-chain": "error",
+
+	// import-x rules (from minimal-deprecated.js)
+	"import-x/no-nodejs-modules": ["error"],
+	"import-x/no-deprecated": "error",
+	"import-x/no-internal-modules": [
+		"error",
+		{
+			allow: permittedImports,
+		},
+	],
+};
+
+// =============================================================================
+// RECOMMENDED RULES (from recommended.js)
+// =============================================================================
+
+const recommendedRules: Linter.RulesRecord = {
+	"@rushstack/no-new-null": "error",
+	"no-void": "error",
+	"require-atomic-updates": "error",
+
+	// Unicorn rule overrides (from recommended.js)
+	"unicorn/consistent-function-scoping": "warn",
+	"unicorn/import-style": "off",
+	"unicorn/no-array-push-push": "off",
+	"unicorn/no-array-callback-reference": "off",
+	"unicorn/empty-brace-spaces": "off",
+	"unicorn/no-for-loop": "off",
+	"unicorn/no-nested-ternary": "off",
+	"unicorn/no-useless-spread": "off",
+	"unicorn/no-useless-undefined": "off",
+	"unicorn/numeric-separators-style": ["error", { onlyIfContainsSeparator: true }],
+	"unicorn/prevent-abbreviations": "off",
+	"unicorn/prefer-at": "warn",
+	"unicorn/prefer-event-target": "off",
+	"unicorn/prefer-string-raw": "warn",
+	"unicorn/prefer-string-replace-all": "warn",
+	"unicorn/prefer-structured-clone": "warn",
+	"unicorn/template-indent": "off",
+	"unicorn/number-literal-case": "off",
+	"unicorn/expiring-todo-comments": "off",
+
+	// @typescript-eslint rules (from recommended.js)
+	"@typescript-eslint/no-explicit-any": [
+		"error",
+		{
+			ignoreRestArgs: true,
+		},
+	],
+	"@typescript-eslint/explicit-module-boundary-types": "error",
+	"@typescript-eslint/no-unsafe-argument": "error",
+	"@typescript-eslint/no-unsafe-assignment": "error",
+	"@typescript-eslint/no-unsafe-call": "error",
+	"@typescript-eslint/no-unsafe-member-access": "error",
+	"@typescript-eslint/no-unsafe-return": "error",
+
+	// JSDoc rules (from recommended.js)
+	"jsdoc/require-description": ["error", { checkConstructors: false }],
+
+	// Consistent type imports/exports (from recommended.js)
+	"@typescript-eslint/consistent-type-exports": [
+		"error",
+		{
+			fixMixedExportsWithInlineTypeSpecifier: true,
+		},
+	],
+	"@typescript-eslint/consistent-type-imports": ["error", { fixStyle: "separate-type-imports" }],
+};
+
+// =============================================================================
+// STRICT RULES (from strict.js)
+// =============================================================================
+
+const strictRules: Linter.RulesRecord = {
+	"jsdoc/require-jsdoc": [
+		"error",
+		{
+			publicOnly: true,
+			enableFixer: false,
+			require: {
+				ArrowFunctionExpression: true,
+				ClassDeclaration: true,
+				ClassExpression: true,
+				FunctionDeclaration: true,
+				FunctionExpression: true,
+				MethodDefinition: false,
+			},
+			contexts: [
+				"TSEnumDeclaration",
+				"TSInterfaceDeclaration",
+				"TSTypeAliasDeclaration",
+				"ExportNamedDeclaration > VariableDeclaration",
+			],
+			skipInterveningOverloadedDeclarations: false,
+			exemptOverloadedImplementations: true,
+		},
+	],
+};
+
+const strictTsRules: Linter.RulesRecord = {
+	"@typescript-eslint/explicit-member-accessibility": [
+		"error",
+		{
+			accessibility: "explicit",
+			overrides: {
+				accessors: "explicit",
+				constructors: "explicit",
+				methods: "explicit",
+				properties: "explicit",
+				parameterProperties: "explicit",
+			},
+		},
+	],
+	"@typescript-eslint/consistent-indexed-object-style": "error",
+	"@typescript-eslint/no-unsafe-enum-comparison": "error",
+	"@typescript-eslint/consistent-generic-constructors": "error",
+	"@typescript-eslint/no-redundant-type-constituents": "error",
+};
+
+// =============================================================================
+// eslint-plugin-depend configuration
+// =============================================================================
+
+const dependConfig: Linter.Config = {
+	plugins: {
+		depend: dependPlugin,
+	},
+	rules: {
+		"depend/ban-dependencies": [
+			"error",
+			{
+				allowed: ["axios", "fs-extra"],
+			},
+		],
+	},
+};
+
+// =============================================================================
+// CONFIG BUILDERS
+// =============================================================================
+
+function buildBaseConfig(): FlatConfigArray {
+	return [
+		globalIgnores,
+		// eslint:recommended
+		eslintJs.configs.recommended,
+		// @typescript-eslint/recommended-type-checked and stylistic-type-checked
+		...tseslint.configs.recommendedTypeChecked,
+		...tseslint.configs.stylisticTypeChecked,
+		// import-x/recommended and import-x/typescript
+		importXPlugin.flatConfigs.recommended,
+		importXPlugin.flatConfigs.typescript,
+		// Base config with all plugins and custom rules
+		{
+			plugins: {
+				"@eslint-community/eslint-comments": eslintCommentsPlugin,
+				"@fluid-internal/fluid": fluidPlugin,
+				"@rushstack": rushstackPlugin,
+				"jsdoc": jsdocPlugin,
+				"promise": promisePlugin,
+				"tsdoc": tsdocPlugin,
+				"unicorn": unicornPlugin,
+				"unused-imports": unusedImportsPlugin,
+			},
+			settings: {
+				...importXSettings,
+				...jsdocSettings,
+			},
+			rules: {
+				// @eslint-community/eslint-comments/recommended rules
+				"@eslint-community/eslint-comments/disable-enable-pair": "error",
+				"@eslint-community/eslint-comments/no-aggregating-enable": "error",
+				"@eslint-community/eslint-comments/no-duplicate-disable": "error",
+				"@eslint-community/eslint-comments/no-unlimited-disable": "error",
+				"@eslint-community/eslint-comments/no-unused-enable": "error",
+				...baseRules,
+			},
+		},
+		// TypeScript file override from base.js (lines 328-343)
+		// These rules are disabled by default but re-enabled in recommended.js
+		{
+			files: ["**/*.ts", "**/*.tsx"],
+			rules: {
+				"@typescript-eslint/indent": "off",
+				"func-call-spacing": "off",
+				// TODO: Enable these ASAP (from base.js)
+				"@typescript-eslint/explicit-module-boundary-types": "off",
+				"@typescript-eslint/no-unsafe-argument": "off",
+				"@typescript-eslint/no-unsafe-assignment": "off",
+				"@typescript-eslint/no-unsafe-call": "off",
+				"@typescript-eslint/no-unsafe-member-access": "off",
+			},
+		},
+		// Prettier disables conflicting rules - must come after custom rules
+		prettierConfig,
+	];
+}
+
+function buildMinimalDeprecatedConfig(): FlatConfigArray {
+	return [
+		...buildBaseConfig(),
+		{
+			rules: minimalDeprecatedRules,
+		},
+		// TypeScript file override (from minimal-deprecated.js)
+		{
+			files: ["**/*.ts", "**/*.tsx"],
+			rules: {
+				"dot-notation": "off",
+				"no-unused-expressions": "off",
+			},
+			settings: {
+				jsdoc: {
+					mode: "typescript",
+				},
+			},
+		},
+		dependConfig,
+	];
+}
+
+function buildRecommendedConfig(): FlatConfigArray {
+	return [
+		...buildMinimalDeprecatedConfig(),
+		// unicorn/recommended rules (plugin already registered in base)
+		{
+			rules: unicornPlugin.configs["flat/recommended"].rules,
+		},
+		{
+			rules: recommendedRules,
+		},
+		// Type validation files override (from recommended.js)
+		{
+			files: ["**/types/*validate*Previous*.ts"],
+			rules: {
+				"@typescript-eslint/no-explicit-any": "off",
+				"@typescript-eslint/no-unsafe-argument": "off",
+			},
+		},
+	];
+}
+
+function buildStrictConfig(): FlatConfigArray {
+	return [
+		...buildRecommendedConfig(),
+		{
+			rules: strictRules,
+		},
+		// TypeScript file override for strict (from strict.js)
+		{
+			files: ["**/*.ts", "**/*.tsx"],
+			rules: strictTsRules,
+		},
+	];
+}
+
+function buildStrictBiomeConfig(): FlatConfigArray {
+	return [...buildStrictConfig(), biomeConfig];
+}
+
+// =============================================================================
+// SHARED CONFIG ADDITIONS
+// These are added to all configs (matching flat.mts behavior)
+// =============================================================================
+
+/**
+ * Use projectService for automatic tsconfig discovery instead of manual project configuration.
+ */
+const useProjectService: Linter.Config = {
+	files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+	languageOptions: {
+		parserOptions: {
+			projectService: true,
+		},
+	},
+};
+
+/**
+ * Test file configuration with explicit project paths and rule overrides.
+ */
+const testProjectConfig: Linter.Config = {
+	files: ["src/test/**", ...testFilePatterns],
 	languageOptions: {
 		parserOptions: {
 			projectService: false,
@@ -170,47 +834,32 @@ const testProjectConfig = {
 		},
 	},
 	rules: {
-		// Rules disabled for test files (from minimal-deprecated.js lines 440-447)
 		"@typescript-eslint/no-invalid-this": "off",
-		"@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
-		"import-x/no-nodejs-modules": "off", // Node libraries are OK for test files.
-		"import-x/no-deprecated": "off", // Deprecated APIs are OK to use in test files.
+		"@typescript-eslint/unbound-method": "off",
+		"import-x/no-nodejs-modules": "off",
+		"import-x/no-deprecated": "off",
 		"@typescript-eslint/consistent-type-exports": "off",
 		"@typescript-eslint/consistent-type-imports": "off",
-
-		// For test files, remove the pattern restriction that blocks importing from parent index files.
-		// Only keep the paths restriction (about assert imports).
-		// This matches minimal-deprecated.js lines 449-454
 		"@typescript-eslint/no-restricted-imports": [
 			"error",
 			{
 				paths: restrictedImportPaths,
 			},
 		],
-
-		// For test files only, additionally allow import of '/test*' and '/internal/test*' exports.
-		// This matches minimal-deprecated.js lines 456-464
 		"import-x/no-internal-modules": [
 			"error",
 			{
 				allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*"].concat(permittedImports),
 			},
 		],
-
-		// Test code may leverage dev dependencies
-		// This matches minimal-deprecated.js line 467
 		"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
 	},
 };
-recommended.push(testProjectConfig);
-strict.push(testProjectConfig);
-minimalDeprecated.push(testProjectConfig);
 
-// Override import-x/no-internal-modules for non-test files to include /legacy imports.
-// The base config (via FlatCompat) only allows /internal imports.
-// This adds /legacy support which is needed for backwards compatibility during API transitions.
-// NOTE: This config excludes test files so that testProjectConfig's more permissive rule takes precedence.
-const internalModulesConfig = {
+/**
+ * Override import-x/no-internal-modules for non-test files to include /legacy imports.
+ */
+const internalModulesConfig: Linter.Config = {
 	files: [
 		"**/*.ts",
 		"**/*.tsx",
@@ -221,7 +870,7 @@ const internalModulesConfig = {
 		"**/*.mjs",
 		"**/*.cjs",
 	],
-	ignores: ["src/test/**", "*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"],
+	ignores: ["src/test/**", ...testFilePatterns],
 	rules: {
 		"import-x/no-internal-modules": [
 			"error",
@@ -231,63 +880,64 @@ const internalModulesConfig = {
 		],
 	},
 };
-recommended.push(internalModulesConfig);
-strict.push(internalModulesConfig);
-minimalDeprecated.push(internalModulesConfig);
 
-// ESLint 9 upgrade: Disable new react-hooks rules that were introduced in eslint-plugin-react-hooks 7.0.
-// These rules have violations across the codebase that need to be addressed incrementally.
-// TODO: Fix violations and enable these rules as errors.
-const reactHooksEslint9Upgrade = {
-	files: ["**/*.jsx", "**/*.tsx"],
-	rules: {
-		// react-hooks/immutability: Warns about mutating variables during render
-		// https://github.com/facebook/react/pull/29456
-		"react-hooks/immutability": "warn",
-
-		// react-hooks/refs: Warns about reading refs during render (before useEffect)
-		// https://github.com/facebook/react/pull/29516
-		"react-hooks/refs": "warn",
-
-		// react-hooks/set-state-in-effect: Warns about calling setState synchronously in effects
-		// https://github.com/facebook/react/pull/30224
-		"react-hooks/set-state-in-effect": "warn",
-
-		// react-hooks/static-components: Warns about creating components during render
-		// https://github.com/facebook/react/pull/30239
-		"react-hooks/static-components": "warn",
+/**
+ * React rules for ESLint 9 - extends react/recommended and react-hooks/recommended.
+ */
+const reactConfig: FlatConfigArray = [
+	// react/flat.recommended
+	{
+		files: ["**/*.jsx", "**/*.tsx"],
+		...reactPlugin.configs.flat.recommended,
 	},
-};
-recommended.push(reactHooksEslint9Upgrade);
-strict.push(reactHooksEslint9Upgrade);
-minimalDeprecated.push(reactHooksEslint9Upgrade);
+	// react-hooks/recommended rules (from minimal-deprecated.js lines 451)
+	{
+		files: ["**/*.jsx", "**/*.tsx"],
+		plugins: {
+			"react-hooks": reactHooksPlugin,
+		},
+		rules: reactHooksPlugin.configs.recommended.rules,
+		settings: {
+			react: {
+				version: "detect",
+			},
+		},
+	},
+	// Custom overrides from minimal-deprecated.js (lines 453-459)
+	{
+		files: ["**/*.jsx", "**/*.tsx"],
+		rules: {
+			"react-hooks/immutability": "warn",
+			"react-hooks/refs": "warn",
+			"react-hooks/rules-of-hooks": "warn",
+			"react-hooks/set-state-in-effect": "warn",
+			"react-hooks/static-components": "warn",
+		},
+	},
+];
 
-// CommonJS files (.cts, .cjs) can use __dirname and require, which are valid in CommonJS
-const cjsFileConfig = {
+/**
+ * CommonJS files can use __dirname and require.
+ */
+const cjsFileConfig: Linter.Config = {
 	files: ["**/*.cts", "**/*.cjs"],
 	rules: {
-		"unicorn/prefer-module": "off", // __dirname and require are valid in CommonJS
+		"unicorn/prefer-module": "off",
 	},
 };
-recommended.push(cjsFileConfig);
-strict.push(cjsFileConfig);
-minimalDeprecated.push(cjsFileConfig);
 
-// Disable type-aware parsing for JS files and .d.ts files.
-// JavaScript files don't have TypeScript type information.
-// .d.ts files are declaration-only and don't need type-aware linting.
-const jsNoProject = {
+/**
+ * Disable type-aware parsing for JS files and .d.ts files.
+ */
+const jsNoProject: Linter.Config = {
 	files: ["**/*.js", "**/*.cjs", "**/*.mjs", "**/*.d.ts"],
 	languageOptions: { parserOptions: { project: null, projectService: false } },
 };
-recommended.push(jsNoProject);
-strict.push(jsNoProject);
-minimalDeprecated.push(jsNoProject);
 
-// Disable type-required @typescript-eslint rules for pure JS files and .d.ts files.
-// These rules require TypeScript's type-checker, which isn't available for JavaScript files.
-// .d.ts files are declaration files and shouldn't be linted with type-aware rules.
-const jsTypeAwareDisable = {
+/**
+ * Disable type-required @typescript-eslint rules for pure JS files and .d.ts files.
+ */
+const jsTypeAwareDisable: Linter.Config = {
 	files: ["**/*.js", "**/*.cjs", "**/*.mjs", "**/*.d.ts"],
 	rules: {
 		"@typescript-eslint/await-thenable": "off",
@@ -349,8 +999,60 @@ const jsTypeAwareDisable = {
 		"@typescript-eslint/use-unknown-in-catch-callback-variable": "off",
 	},
 };
-recommended.push(jsTypeAwareDisable);
-strict.push(jsTypeAwareDisable);
-minimalDeprecated.push(jsTypeAwareDisable);
 
-export { recommended, strict, minimalDeprecated };
+/**
+ * React file overrides for recommended config (from recommended.js).
+ */
+const reactRecommendedOverride: Linter.Config = {
+	files: ["**/*.jsx", "**/*.tsx"],
+	rules: {
+		"unicorn/consistent-function-scoping": "off",
+	},
+};
+
+/**
+ * Test file overrides for recommended config (from recommended.js).
+ */
+const testRecommendedOverride: Linter.Config = {
+	files: testFilePatterns,
+	rules: {
+		"unicorn/consistent-function-scoping": "off",
+		"unicorn/prefer-module": "off",
+	},
+};
+
+function addSharedConfigs(configs: FlatConfigArray): FlatConfigArray {
+	return [
+		...configs,
+		useProjectService,
+		testProjectConfig,
+		internalModulesConfig,
+		...reactConfig,
+		cjsFileConfig,
+		jsNoProject,
+		jsTypeAwareDisable,
+	];
+}
+
+// =============================================================================
+// EXPORTS
+// =============================================================================
+
+const minimalDeprecated: FlatConfigArray = addSharedConfigs(buildMinimalDeprecatedConfig());
+const recommended: FlatConfigArray = addSharedConfigs([
+	...buildRecommendedConfig(),
+	reactRecommendedOverride,
+	testRecommendedOverride,
+]);
+const strict: FlatConfigArray = addSharedConfigs([
+	...buildStrictConfig(),
+	reactRecommendedOverride,
+	testRecommendedOverride,
+]);
+const strictBiome: FlatConfigArray = addSharedConfigs([
+	...buildStrictBiomeConfig(),
+	reactRecommendedOverride,
+	testRecommendedOverride,
+]);
+
+export { recommended, strict, minimalDeprecated, strictBiome };
