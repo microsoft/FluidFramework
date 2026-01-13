@@ -50,7 +50,7 @@ export function deepCopyMapTree(mapTree: MinimalMapTreeNodeView): ExclusiveMapTr
 	): ExclusiveMapTree {
 		return {
 			type: child.type,
-			...(child.value !== undefined ? { value: child.value } : {}),
+			...(child.value === undefined ? {} : { value: child.value }),
 			fields,
 		};
 	}

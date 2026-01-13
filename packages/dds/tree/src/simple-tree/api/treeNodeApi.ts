@@ -331,9 +331,9 @@ export function getIdentifierFromNode(
 					if (context.isHydrated()) {
 						const localNodeKey =
 							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-						return localNodeKey !== undefined
-							? extractFromOpaque(localNodeKey)
-							: identifierValue;
+						return localNodeKey === undefined
+							? identifierValue
+							: extractFromOpaque(localNodeKey);
 					} else {
 						return identifierValue;
 					}
@@ -342,7 +342,7 @@ export function getIdentifierFromNode(
 					if (context.isHydrated()) {
 						const localNodeKey =
 							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-						return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+						return localNodeKey === undefined ? undefined : extractFromOpaque(localNodeKey);
 					} else {
 						return undefined;
 					}

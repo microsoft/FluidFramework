@@ -169,17 +169,17 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 		id: Delta.DetachedNodeId;
 	}> {
 		for (const [major, innerMap] of this.detachedNodeToField) {
-			if (major !== undefined) {
+			if (major === undefined) {
 				for (const [minor, { root, latestRelevantRevision }] of innerMap) {
-					yield latestRelevantRevision !== undefined
-						? { id: { major, minor }, root, latestRelevantRevision }
-						: { id: { major, minor }, root };
+					yield latestRelevantRevision === undefined
+						? { id: { minor }, root }
+						: { id: { minor }, root, latestRelevantRevision };
 				}
 			} else {
 				for (const [minor, { root, latestRelevantRevision }] of innerMap) {
-					yield latestRelevantRevision !== undefined
-						? { id: { minor }, root, latestRelevantRevision }
-						: { id: { minor }, root };
+					yield latestRelevantRevision === undefined
+						? { id: { major, minor }, root }
+						: { id: { major, minor }, root, latestRelevantRevision };
 				}
 			}
 		}

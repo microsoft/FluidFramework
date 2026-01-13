@@ -17,7 +17,7 @@ import {
 } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
-import { type SequenceIntervalIndex } from "./intervalIndex.js";
+import type { SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
  * @legacy @beta

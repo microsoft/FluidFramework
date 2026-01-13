@@ -13,7 +13,10 @@ import {
 	rootFieldKey,
 	type ChangeFamilyEditor,
 } from "../../../core/index.js";
-import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
+import {
+	DefaultChangeFamily,
+	DefaultRevisionReplacer,
+} from "../../../feature-libraries/index.js";
 import type { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { type Editor, makeEditMinter } from "../../editMinter.js";
@@ -27,6 +30,7 @@ import {
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
 } from "./editManagerTestUtils.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
 
 describe("EditManager - Bench", () => {
 	interface Scenario {
@@ -53,7 +57,10 @@ describe("EditManager - Bench", () => {
 		readonly maxEditCount: number;
 	}
 
-	const defaultFamily = new DefaultChangeFamily(failCodecFamily);
+	const defaultFamily = new DefaultChangeFamily(failCodecFamily, {
+		jsonValidator: FormatValidatorBasic,
+		minVersionForCollab: FluidClientVersion.v2_0,
+	});
 	const sequencePrepend: Editor = (builder) => {
 		builder
 			.sequenceField({ parent: undefined, field: rootFieldKey })
@@ -75,9 +82,15 @@ describe("EditManager - Bench", () => {
 			changeFamily: defaultFamily,
 			mintChange: (revision) => {
 				const change = makeEditMinter(defaultFamily, sequencePrepend)();
-				return revision !== undefined
-					? defaultFamily.rebaser.changeRevision(change, revision)
-					: change;
+				return revision === undefined
+					? change
+					: defaultFamily.rebaser.changeRevision(
+							change,
+							new DefaultRevisionReplacer(
+								revision,
+								defaultFamily.rebaser.getRevisions(change),
+							),
+						);
 			},
 			maxEditCount: 350,
 		},

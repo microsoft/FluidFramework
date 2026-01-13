@@ -1292,10 +1292,7 @@
             "error"
         ],
         "jsdoc/multiline-blocks": [
-            "error",
-            {
-                "noSingleLineBlocks": true
-            }
+            "error"
         ],
         "jsdoc/no-bad-blocks": [
             "error"
@@ -2132,7 +2129,7 @@
             "error"
         ],
         "unicorn/no-array-callback-reference": [
-            "error"
+            "off"
         ],
         "unicorn/no-array-for-each": [
             "error"
