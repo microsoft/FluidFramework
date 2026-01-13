@@ -236,7 +236,7 @@ export interface RecordSchemaOptions<
  * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
  * @param persistedMetadata -
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export function recordSchema<
 	TName extends string,
 	const TAllowedTypes extends ImplicitAllowedTypes,

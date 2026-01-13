@@ -34,7 +34,7 @@ function invert(change: SF.Changeset, tag: RevisionTag = tag1): SF.Changeset {
 	return invertChange(tagChangeInline(change, tag), tagForInvert);
 }
 
-export function testInvert() {
+export function testInvert(): void {
 	describe("Invert", () => {
 		it("no changes", () => {
 			const input: SF.Changeset = [];

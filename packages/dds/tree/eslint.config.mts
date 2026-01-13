@@ -23,7 +23,6 @@ const config: Linter.Config[] = [
 				},
 			],
 			"@typescript-eslint/explicit-member-accessibility": "error",
-			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"@typescript-eslint/no-unsafe-call": "off",

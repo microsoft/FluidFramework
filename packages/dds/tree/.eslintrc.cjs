@@ -34,8 +34,6 @@ module.exports = {
 
 		// #region TODO:AB#6983: Remove these overrides and fix violations
 
-		"@typescript-eslint/explicit-module-boundary-types": "off",
-
 		// Causes eslint to stack-overflow in this package. Will need investigation.
 		"@typescript-eslint/no-unsafe-argument": "off",
 

@@ -30,7 +30,7 @@ import { schemaFormatV1 } from "../schema-stored/index.js";
  */
 
 // Many of the return types in this module are intentionally derived, rather than explicitly specified.
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
 
 /**
  * Json compatible map as object.
@@ -96,4 +96,4 @@ const EncodedGenericTreeNode = <Schema extends TSchema>(tChild: Schema) =>
 export interface EncodedJsonableTree extends EncodedGenericTreeNode<EncodedJsonableTree> {}
 export const EncodedJsonableTree = Type.Recursive((Self) => EncodedGenericTreeNode(Self));
 
-/* eslint-enable @typescript-eslint/explicit-function-return-type */
+/* eslint-enable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */

@@ -244,7 +244,7 @@ export class SchemaFactoryAlpha<
 	/**
 	 * {@inheritDoc SchemaFactory.objectRecursive}
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 	public override mapRecursive<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
@@ -294,7 +294,7 @@ export class SchemaFactoryAlpha<
 	/**
 	 * {@link SchemaFactory.arrayRecursive} but with support for some alpha features.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 	public override arrayRecursive<
 		const Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
@@ -348,7 +348,7 @@ export class SchemaFactoryAlpha<
 	 * This version of `SchemaFactory.record` uses the same workarounds as {@link SchemaFactory.objectRecursive}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 	public override recordRecursive<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,

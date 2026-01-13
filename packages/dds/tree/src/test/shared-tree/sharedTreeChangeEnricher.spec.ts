@@ -96,7 +96,10 @@ interface TestChangeEnricher {
 	fork(): SharedTreeMutableChangeEnricher & TestChangeEnricher;
 }
 
-export function setupEnricher() {
+export function setupEnricher(): {
+	enricher: SharedTreeReadonlyChangeEnricher & TestChangeEnricher;
+	fork: SharedTreeMutableChangeEnricher & TestChangeEnricher;
+} {
 	const removedRoots = new DetachedFieldIndex(
 		"test",
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,

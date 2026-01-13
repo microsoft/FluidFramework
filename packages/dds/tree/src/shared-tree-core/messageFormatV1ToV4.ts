@@ -42,7 +42,7 @@ export interface Message {
 }
 
 // Return type is intentionally derived.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object({
 		revision: RevisionTagSchema,
