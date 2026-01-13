@@ -29,7 +29,10 @@ parameters:
   default: $(Agent.TempDirectory)
 
 steps:
+# Use shallow clone since this pipeline only runs pre-built tests from artifacts;
+# no git history or version detection is needed.
 - checkout: ff_pipeline_host
+  fetchDepth: 1
 
 - task: Bash@3
   displayName: Print parameter/variable values for troubleshooting
