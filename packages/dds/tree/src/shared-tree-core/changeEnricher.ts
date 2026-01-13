@@ -47,20 +47,3 @@ export interface ChangeEnricherCheckout<TChange> {
 	 */
 	applyTipChange(change: TChange, revision?: RevisionTag): void;
 }
-
-export class NoOpChangeEnricherProvider<TChange> implements ChangeEnricherProvider<TChange> {
-	public runEnrichmentBatch(
-		_firstCommit: GraphCommit<TChange>,
-		callback: (enricher: ChangeEnricherCheckout<TChange>) => void,
-	): void {
-		const enricher = new NoOpChangeEnricher<TChange>();
-		callback(enricher);
-	}
-}
-
-export class NoOpChangeEnricher<TChange> implements ChangeEnricherCheckout<TChange> {
-	public applyTipChange(change: TChange, revision?: RevisionTag | undefined): void {}
-	public updateChangeEnrichments(change: TChange, revision: RevisionTag): TChange {
-		return change;
-	}
-}

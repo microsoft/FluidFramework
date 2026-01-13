@@ -43,7 +43,6 @@ export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 export {
 	type ChangeEnricherCheckout,
 	type ChangeEnricherProvider,
-	NoOpChangeEnricher,
 } from "./changeEnricher.js";
 
 export {
