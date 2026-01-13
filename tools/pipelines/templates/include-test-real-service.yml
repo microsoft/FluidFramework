@@ -354,25 +354,11 @@ stages:
               CURRENT_VERSION=$(node -e "console.log(require('${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}/package.json').version)")
               echo "Current version (N): $CURRENT_VERSION"
 
-              # Parse version components
-              IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
-
-              # Calculate N-1 version based on the versioning scheme:
-              # If version N is X.Y1.Z then version N-1 is X.Y0.Z where Y0 = Y1 - (Y1 % 10)
-              # Examples: 2.81.0 -> 2.70.0, 2.74.0 -> 2.60.0
-              legacy_minor=$((minor - 10))
-
-              # Handle edge case where we go below 0
-              if [ $legacy_minor -lt 0 ]; then
-                echo "##vso[task.logissue type=warning]Cannot calculate N-1 version for $CURRENT_VERSION (would be negative minor version)"
-                echo "##vso[task.setvariable variable=legacyVersion;isOutput=true]"
-                echo "##vso[task.setvariable variable=hasLegacyVersion;isOutput=true]false"
-              else
-                LEGACY_VERSION="${major}.${legacy_minor}.0"
-                echo "Legacy version (N-1): $LEGACY_VERSION"
-                echo "##vso[task.setvariable variable=legacyVersion;isOutput=true]$LEGACY_VERSION"
-                echo "##vso[task.setvariable variable=hasLegacyVersion;isOutput=true]true"
-              fi
+              # TEMPORARY: Hardcoded version for testing purposes
+              LEGACY_VERSION="2.70.0"
+              echo "Legacy version (N-1): $LEGACY_VERSION (hardcoded for testing)"
+              echo "##vso[task.setvariable variable=legacyVersion;isOutput=true]$LEGACY_VERSION"
+              echo "##vso[task.setvariable variable=hasLegacyVersion;isOutput=true]true"
 
         # Install N-1 test package to legacy directory
         - task: Bash@3
