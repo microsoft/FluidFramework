@@ -27,15 +27,24 @@ import {
 import { disposeSymbol } from "../util/index.js";
 import { updateRefreshers } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type {
-	ChangeEnricherMutableCheckout,
-	ChangeEnricherCheckout,
-} from "../shared-tree-core/index.js";
+import type { ChangeEnricherCheckout } from "../shared-tree-core/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-export class SharedTreeReadonlyChangeEnricher
-	implements ChangeEnricherCheckout<SharedTreeChange>
-{
+interface BorrowedState {
+	readonly forest: IForestSubscription;
+	readonly removedRoots: ReadOnlyDetachedFieldIndex;
+}
+
+interface OwnedState {
+	readonly forest: IEditableForest;
+	readonly removedRoots: DetachedFieldIndex;
+}
+
+export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTreeChange> {
+	private readonly changeQueue: [SharedTreeChange, RevisionTag | undefined][] = [];
+	protected readonly borrowed: BorrowedState;
+	protected owned?: OwnedState;
+
 	/**
 	 * @param borrowedForest - The state based on which to enrich changes.
 	 * Not owned by the constructed instance.
@@ -45,18 +54,15 @@ export class SharedTreeReadonlyChangeEnricher
 	 * @param idCompressor - The id compressor to use when chunking trees.
 	 */
 	public constructor(
-		protected readonly borrowedForest: IForestSubscription,
+		borrowedForest: IForestSubscription,
+		borrowedRemovedRoots: ReadOnlyDetachedFieldIndex,
 		private readonly schema: TreeStoredSchemaRepository,
-		protected readonly borrowedRemovedRoots: ReadOnlyDetachedFieldIndex,
 		private readonly idCompressor?: IIdCompressor,
-	) {}
-
-	public fork(): ChangeEnricherMutableCheckout<SharedTreeChange> {
-		return new SharedTreeMutableChangeEnricher(
-			this.borrowedForest.clone(this.schema, new AnchorSet()),
-			this.schema,
-			this.borrowedRemovedRoots.clone(),
-		);
+	) {
+		this.borrowed = {
+			forest: borrowedForest,
+			removedRoots: borrowedRemovedRoots,
+		};
 	}
 
 	public updateChangeEnrichments(change: SharedTreeChange): SharedTreeChange {
@@ -68,11 +74,13 @@ export class SharedTreeReadonlyChangeEnricher
 		);
 	}
 
-	protected getDetachedRoot(id: DeltaDetachedNodeId): TreeChunk | undefined {
-		const root = this.borrowedRemovedRoots.tryGetEntry(id);
+	private getDetachedRoot(id: DeltaDetachedNodeId): TreeChunk | undefined {
+		this.purgeChangeQueue();
+		const state = this.owned ?? this.borrowed;
+		const root = state.removedRoots.tryGetEntry(id);
 		if (root !== undefined) {
-			const cursor = this.borrowedForest.getCursorAboveDetachedFields();
-			const parentField = this.borrowedRemovedRoots.toFieldKey(root);
+			const cursor = state.forest.getCursorAboveDetachedFields();
+			const parentField = state.removedRoots.toFieldKey(root);
 			cursor.enterField(parentField);
 			cursor.enterNode(0);
 			return chunkTree(cursor, {
@@ -82,53 +90,26 @@ export class SharedTreeReadonlyChangeEnricher
 		}
 		return undefined;
 	}
-}
-
-export class SharedTreeMutableChangeEnricher
-	extends SharedTreeReadonlyChangeEnricher
-	implements ChangeEnricherMutableCheckout<SharedTreeChange>
-{
-	private readonly changeQueue: [SharedTreeChange, RevisionTag | undefined][] = [];
-
-	/**
-	 * @param forest - The state based on which to enrich changes.
-	 * Owned by the constructed instance.
-	 * @param schema - The schema that corresponds to the forest.
-	 * @param removedRoots - The set of removed roots based on which to enrich changes.
-	 * Owned by the constructed instance.
-	 * @param idCompressor - The id compressor to use when chunking trees.
-	 */
-	public constructor(
-		private readonly forest: IEditableForest,
-		schema: TreeStoredSchemaRepository,
-		private readonly removedRoots: DetachedFieldIndex,
-		idCompressor?: IIdCompressor,
-	) {
-		super(forest, schema, removedRoots, idCompressor);
-	}
 
 	public applyTipChange(change: SharedTreeChange, revision?: RevisionTag): void {
 		this.changeQueue.push([change, revision]);
 	}
 
-	public override updateChangeEnrichments(change: SharedTreeChange): SharedTreeChange {
-		return updateRefreshers(
-			change,
-			(id) => this.lazyGetDetachedRoot(id),
-			relevantRemovedRoots,
-			updateDataChangeRefreshers,
-		);
-	}
-
-	private lazyGetDetachedRoot(id: DeltaDetachedNodeId): TreeChunk | undefined {
+	private purgeChangeQueue(): void {
+		if (this.owned === undefined) {
+			this.owned = {
+				forest: this.borrowed.forest.clone(this.schema, new AnchorSet()),
+				removedRoots: this.borrowed.removedRoots.clone(),
+			};
+		}
 		for (const [change, revision] of this.changeQueue) {
 			for (const dataOrSchemaChange of change.changes) {
 				const type = dataOrSchemaChange.type;
 				switch (type) {
 					case "data": {
 						const delta = intoDelta(tagChange(dataOrSchemaChange.innerChange, revision));
-						const visitor = this.forest.acquireVisitor();
-						visitDelta(delta, visitor, this.removedRoots, revision);
+						const visitor = this.owned.forest.acquireVisitor();
+						visitDelta(delta, visitor, this.owned.removedRoots, revision);
 						visitor.free();
 						break;
 					}
@@ -146,7 +127,6 @@ export class SharedTreeMutableChangeEnricher
 			}
 		}
 		this.changeQueue.length = 0;
-		return super.getDetachedRoot(id);
 	}
 
 	public [disposeSymbol](): void {

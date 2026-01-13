@@ -8,7 +8,6 @@ import {
 	type ChangesetLocalId,
 	DetachedFieldIndex,
 	type ForestRootId,
-	type IEditableForest,
 	type RevisionTag,
 	type TaggedChange,
 	TreeStoredSchemaRepository,
@@ -30,8 +29,7 @@ import {
 	fieldKinds,
 } from "../../feature-libraries/index.js";
 import {
-	type SharedTreeMutableChangeEnricher,
-	SharedTreeReadonlyChangeEnricher,
+	SharedTreeChangeEnricher,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeEnricher.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -90,12 +88,6 @@ const removeRoot: SharedTreeChange = {
 
 const revision1 = testIdCompressor.generateCompressedId();
 
-interface TestChangeEnricher {
-	borrowedForest: IEditableForest;
-	borrowedRemovedRoots: DetachedFieldIndex;
-	fork(): SharedTreeMutableChangeEnricher & TestChangeEnricher;
-}
-
 export function setupEnricher() {
 	const removedRoots = new DetachedFieldIndex(
 		"test",
@@ -107,33 +99,13 @@ export function setupEnricher() {
 	const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
 	const forest = buildTestForest({ additionalAsserts: true, schema });
 	initializeForest(forest, fieldJsonCursor([content]), testRevisionTagCodec, testIdCompressor);
-	const enricher = new SharedTreeReadonlyChangeEnricher(
-		forest,
-		schema,
-		removedRoots,
-	) as SharedTreeReadonlyChangeEnricher & TestChangeEnricher;
-	const fork = enricher.fork() as SharedTreeMutableChangeEnricher & TestChangeEnricher;
-	return { enricher, fork };
+	const enricher = new SharedTreeChangeEnricher(forest, removedRoots, schema);
+	return { forest, removedRoots, enricher };
 }
 
 describe("SharedTreeChangeEnricher", () => {
-	it("applies tip changes to fork", () => {
-		const { enricher, fork } = setupEnricher();
-		assert.deepEqual(jsonTreeFromForest(enricher.borrowedForest), [content]);
-		assert.deepEqual([...enricher.borrowedRemovedRoots.entries()], []);
-
-		fork.applyTipChange(removeRoot, revision1);
-
-		assert.deepEqual(jsonTreeFromForest(fork.borrowedForest), []);
-		assert.equal([...fork.borrowedRemovedRoots.entries()].length, 1);
-
-		// The original enricher should not have been modified
-		assert.deepEqual(jsonTreeFromForest(enricher.borrowedForest), [content]);
-		assert.deepEqual([...enricher.borrowedRemovedRoots.entries()], []);
-	});
-
 	it("updates enrichments", () => {
-		const { fork } = setupEnricher();
+		const { enricher, forest, removedRoots } = setupEnricher();
 		const tag = mintRevisionTag();
 		const removeRoot2: SharedTreeChange = {
 			changes: [
@@ -146,7 +118,10 @@ describe("SharedTreeChangeEnricher", () => {
 				},
 			],
 		};
-		fork.applyTipChange(removeRoot2, tag);
+
+		assert.deepEqual(jsonTreeFromForest(forest), [content]);
+		assert.deepEqual([...removedRoots.entries()], []);
+		enricher.applyTipChange(removeRoot2, tag);
 
 		const tagForRestore = mintRevisionTag();
 		const restore = Change.atOnce(
@@ -170,7 +145,11 @@ describe("SharedTreeChangeEnricher", () => {
 			],
 		};
 
-		const enriched = fork.updateChangeEnrichments(restoreRoot);
+		const enriched = enricher.updateChangeEnrichments(restoreRoot);
+
+		// Check that the forest and removed roots were not mutated
+		assert.deepEqual(jsonTreeFromForest(forest), [content]);
+		assert.deepEqual([...removedRoots.entries()], []);
 
 		// Check that the original change was not modified
 		assert.equal(restoreRoot.changes[0].type, "data");
@@ -191,14 +170,14 @@ describe("SharedTreeChangeEnricher", () => {
 	});
 
 	it("can be disposed right after creation", () => {
-		const { fork } = setupEnricher();
-		fork[disposeSymbol]();
+		const { enricher } = setupEnricher();
+		enricher[disposeSymbol]();
 	});
 
 	it("can be disposed after mutation", () => {
-		const { fork } = setupEnricher();
-		fork.applyTipChange(removeRoot, revision1);
-		fork[disposeSymbol]();
+		const { enricher } = setupEnricher();
+		enricher.applyTipChange(removeRoot, revision1);
+		enricher[disposeSymbol]();
 	});
 });
 

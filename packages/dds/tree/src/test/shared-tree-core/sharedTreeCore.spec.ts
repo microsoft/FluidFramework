@@ -48,6 +48,7 @@ import {
 	SharedTreeSummaryFormatVersion,
 	summarizablesMetadataKey,
 	type ChangeEnricherCheckout,
+	type ChangeEnricherProvider,
 	type EditManager,
 	type ResubmitMachine,
 	type SharedTreeCore,
@@ -56,7 +57,7 @@ import {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { brand, disposeSymbol } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import {
 	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
@@ -591,31 +592,53 @@ describe("SharedTreeCore", () => {
 			readonly output: T;
 		}
 
-		class MockChangeEnricher<T extends object> implements ChangeEnricherCheckout<T> {
-			public isDisposed = false;
+		class MockChangeEnricherProvider<T extends object> implements ChangeEnricherProvider<T> {
+			// These counters are used to verify that the commit enricher does not perform unnecessary work
+			public commitsEnriched = 0;
+			public commitsApplied = 0;
+			public checkoutsCreated = 0;
+
 			public enrichmentLog: Enrichment<T>[] = [];
 
-			public fork(): never {
-				// SharedTreeCore should never call fork on a change enricher
-				throw new Error("Unexpected use of fork");
+			public resetCounters(): void {
+				this.commitsEnriched = 0;
+				this.commitsApplied = 0;
+				this.checkoutsCreated = 0;
 			}
+
+			public runEnrichmentBatch(
+				firstCommit: GraphCommit<T>,
+				callback: (enricher: ChangeEnricherCheckout<T>) => void,
+			): void {
+				const enricher = new MockChangeEnricher(this);
+				callback(enricher);
+			}
+		}
+
+		class MockChangeEnricher<T extends object> implements ChangeEnricherCheckout<T> {
+			public isDisposed = false;
+
+			public constructor(private readonly provider: MockChangeEnricherProvider<T>) {
+				this.provider.checkoutsCreated++;
+			}
+
+			public applyTipChange(change: T, revision?: RevisionTag): void {}
 
 			public updateChangeEnrichments(input: T): T {
 				assert.equal(this.isDisposed, false);
 				const output = { ...input };
-				this.enrichmentLog.push({ input, output });
+				this.provider.enrichmentLog.push({ input, output });
 				return output;
-			}
-
-			public [disposeSymbol](): void {
-				assert.equal(this.isDisposed, false);
-				this.isDisposed = true;
 			}
 		}
 
 		it("notifies the ResubmitMachine of submitted and sequenced commits", () => {
+			const provider = new MockChangeEnricherProvider<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine);
+			const tree = createTreeSharedObject([], {
+				provider,
+				resubmitMachine: machine,
+			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -637,9 +660,12 @@ describe("SharedTreeCore", () => {
 		});
 
 		it("enriches commits on first submit", () => {
-			const enricher = new MockChangeEnricher<ModularChangeset>();
+			const provider = new MockChangeEnricherProvider<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine, enricher);
+			const tree = createTreeSharedObject([], {
+				provider,
+				resubmitMachine: machine,
+			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -649,18 +675,21 @@ describe("SharedTreeCore", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			assert.equal(enricher.enrichmentLog.length, 0);
+			assert.equal(provider.enrichmentLog.length, 0);
 			changeTree(tree.kernel);
-			assert.equal(enricher.enrichmentLog.length, 1);
+			assert.equal(provider.enrichmentLog.length, 1);
 			assert.equal(machine.submissionLog.length, 1);
-			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
-			assert.equal(enricher.enrichmentLog[0].output, machine.submissionLog[0].change);
+			assert.equal(provider.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
+			assert.equal(provider.enrichmentLog[0].output, machine.submissionLog[0].change);
 		});
 
 		it("enriches transactions on first submit", () => {
-			const enricher = new MockChangeEnricher<ModularChangeset>();
+			const provider = new MockChangeEnricherProvider<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine, enricher);
+			const tree = createTreeSharedObject([], {
+				provider,
+				resubmitMachine: machine,
+			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -671,32 +700,28 @@ describe("SharedTreeCore", () => {
 				objectStorage: new MockStorage(),
 			});
 			tree.transaction.start();
-			assert.equal(enricher.enrichmentLog.length, 0);
+			assert.equal(provider.enrichmentLog.length, 0);
 			changeTree(tree.kernel);
-			assert.equal(enricher.enrichmentLog.length, 1);
-			assert.equal(
-				enricher.enrichmentLog[0].input,
-				tree.transaction.activeBranch.getHead().change,
-			);
+			assert.equal(provider.enrichmentLog.length, 0);
 			changeTree(tree.kernel);
-			assert.equal(enricher.enrichmentLog.length, 2);
-			assert.equal(
-				enricher.enrichmentLog[1].input,
-				tree.transaction.activeBranch.getHead().change,
-			);
+			assert.equal(provider.enrichmentLog.length, 0);
 			tree.transaction.commit();
-			assert.equal(enricher.enrichmentLog.length, 2);
+			assert.equal(provider.enrichmentLog.length, 1);
 			assert.equal(machine.submissionLog.length, 1);
-			assert.notEqual(
-				machine.submissionLog[0],
+			assert.equal(
+				provider.enrichmentLog[0].input,
 				tree.transaction.activeBranch.getHead().change,
 			);
+			assert.equal(provider.enrichmentLog[0].output, machine.submissionLog[0].change);
 		});
 
 		it("handles aborted outer transaction", () => {
-			const enricher = new MockChangeEnricher<ModularChangeset>();
+			const provider = new MockChangeEnricherProvider<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine, enricher);
+			const tree = createTreeSharedObject([], {
+				provider,
+				resubmitMachine: machine,
+			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -707,22 +732,19 @@ describe("SharedTreeCore", () => {
 				objectStorage: new MockStorage(),
 			});
 			tree.transaction.start();
-			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree.kernel);
-			assert.equal(enricher.enrichmentLog.length, 1);
-			assert.equal(
-				enricher.enrichmentLog[0].input,
-				tree.transaction.activeBranch.getHead().change,
-			);
 			tree.transaction.abort();
-			assert.equal(enricher.enrichmentLog.length, 1);
+			assert.equal(provider.enrichmentLog.length, 0);
 			assert.equal(machine.submissionLog.length, 0);
 		});
 
 		it("update commit enrichments on re-submit", () => {
-			const enricher = new MockChangeEnricher<ModularChangeset>();
+			const provider = new MockChangeEnricherProvider<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine, enricher);
+			const tree = createTreeSharedObject([], {
+				provider,
+				resubmitMachine: machine,
+			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -733,10 +755,10 @@ describe("SharedTreeCore", () => {
 				objectStorage: new MockStorage(),
 			});
 			runtime.connected = false;
-			assert.equal(enricher.enrichmentLog.length, 0);
+			assert.equal(provider.enrichmentLog.length, 0);
 			changeTree(tree.kernel);
 			changeTree(tree.kernel);
-			assert.equal(enricher.enrichmentLog.length, 2);
+			assert.equal(provider.enrichmentLog.length, 2);
 			assert.equal(machine.resubmitQueue.length, 0);
 			assert.equal(machine.submissionLog.length, 2);
 			assert.equal(machine.sequencingLog.length, 0);

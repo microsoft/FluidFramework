@@ -4,11 +4,20 @@
  */
 
 import type { GraphCommit, RevisionTag } from "../core/index.js";
-import { disposeSymbol } from "../util/index.js";
 
-export type ChangeEnricherProvider<TChange> = (
-	lastCommitApplied: GraphCommit<TChange>,
-) => ChangeEnricherCheckout<TChange>;
+export interface ChangeEnricherProvider<TChange> {
+	runEnrichmentBatch(
+		/**
+		 * The first commit to be enriched.
+		 */
+		firstCommit: GraphCommit<TChange>,
+		/**
+		 * A callback which is passed a {@link ChangeEnricherCheckout} representing the before applying `firstCommit`.
+		 * @param enricher - The enricher checkout. Only valid during the execution of this callback.
+		 */
+		callback: (enricher: ChangeEnricherCheckout<TChange>) => void,
+	): void;
+}
 
 /**
  * A checkout that can be used by {@link SharedTreeCore} or {@link DefaultResubmitMachine} to enrich changes with refreshers.
@@ -37,11 +46,16 @@ export interface ChangeEnricherCheckout<TChange> {
 	 * Can be undefined when the applied change is a rollback.
 	 */
 	applyTipChange(change: TChange, revision?: RevisionTag): void;
+}
 
-	/**
-	 * Disposes of the enricher.
-	 */
-	[disposeSymbol](): void;
+export class NoOpChangeEnricherProvider<TChange> implements ChangeEnricherProvider<TChange> {
+	public runEnrichmentBatch(
+		_firstCommit: GraphCommit<TChange>,
+		callback: (enricher: ChangeEnricherCheckout<TChange>) => void,
+	): void {
+		const enricher = new NoOpChangeEnricher<TChange>();
+		callback(enricher);
+	}
 }
 
 export class NoOpChangeEnricher<TChange> implements ChangeEnricherCheckout<TChange> {
@@ -49,5 +63,4 @@ export class NoOpChangeEnricher<TChange> implements ChangeEnricherCheckout<TChan
 	public updateChangeEnrichments(change: TChange, revision: RevisionTag): TChange {
 		return change;
 	}
-	public [disposeSymbol](): void {}
 }

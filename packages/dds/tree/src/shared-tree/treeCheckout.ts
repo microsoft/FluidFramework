@@ -73,6 +73,7 @@ import {
 	onForkTransitive,
 	type SharedTreeBranchChange,
 	type Transactor,
+	type ChangeEnricherCheckout,
 } from "../shared-tree-core/index.js";
 import {
 	Breakable,
@@ -102,6 +103,7 @@ import {
 } from "../simple-tree/index.js";
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { isStableId } from "@fluidframework/id-compressor/internal";
+import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -1136,6 +1138,37 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	// #endregion Commit Validation
+
+	// #region Enrichment
+
+	public runEnrichmentBatch(
+		toEnrich: GraphCommit<SharedTreeChange>,
+		callback: (enricher: ChangeEnricherCheckout<SharedTreeChange>) => void,
+	): void {
+		const enricher = new SharedTreeChangeEnricher(
+			this.forest,
+			this._removedRoots,
+			this.storedSchema,
+			this.idCompressor,
+		);
+		// This `lastCommitApplied` may be on the main branch or on a transaction branch.
+		// In either case, it is crucial that the state of the forest & detached field index reflects all changes up to and including this commit.
+		const lastCommitApplied = this.#transaction.activeBranch.getHead();
+		assert(toEnrich.parent !== undefined, "Commit to enrich must have a parent.");
+		if (toEnrich.parent !== lastCommitApplied) {
+			const diff = diffHistories(
+				this.changeFamily.rebaser,
+				lastCommitApplied,
+				toEnrich.parent,
+				this.mintRevisionTag,
+			);
+			enricher.applyTipChange(diff, undefined);
+		}
+		callback(enricher);
+		enricher[disposeSymbol]();
+	}
+
+	// #endregion Enrichment
 }
 
 /**

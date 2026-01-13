@@ -25,6 +25,7 @@ export {
 	SharedTreeCore,
 	type ClonableSchemaAndPolicy,
 	type SharedTreeCoreOptionsInternal,
+	type EnrichmentConfig,
 } from "./sharedTreeCore.js";
 export {
 	SharedTreeSummaryFormatVersion,
