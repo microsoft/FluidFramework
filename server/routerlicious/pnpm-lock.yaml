@@ -145,6 +145,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/gitresources-previous':
         specifier: npm:@fluidframework/gitresources@7.0.0
         version: '@fluidframework/gitresources@7.0.0'
@@ -188,6 +191,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-kafka-orderer-previous':
         specifier: npm:@fluidframework/server-kafka-orderer@7.0.0
         version: '@fluidframework/server-kafka-orderer@7.0.0'
@@ -291,6 +297,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-lambdas-previous':
         specifier: npm:@fluidframework/server-lambdas@7.0.0
         version: '@fluidframework/server-lambdas@7.0.0'
@@ -394,6 +403,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-lambdas-driver-previous':
         specifier: npm:@fluidframework/server-lambdas-driver@7.0.0
         version: '@fluidframework/server-lambdas-driver@7.0.0'
@@ -482,6 +494,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-local-server-previous':
         specifier: npm:@fluidframework/server-local-server@7.0.0
         version: '@fluidframework/server-local-server@7.0.0'
@@ -615,6 +630,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-memory-orderer-previous':
         specifier: npm:@fluidframework/server-memory-orderer@7.0.0
         version: '@fluidframework/server-memory-orderer@7.0.0'
@@ -670,6 +688,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/protocol-base-previous':
         specifier: npm:@fluidframework/protocol-base@7.0.0
         version: '@fluidframework/protocol-base@7.0.0'
@@ -779,6 +800,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-local-server':
         specifier: workspace:~
         version: link:../local-server
@@ -924,6 +948,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-local-server':
         specifier: workspace:~
         version: link:../local-server
@@ -1096,6 +1123,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-services-previous':
         specifier: npm:@fluidframework/server-services@7.0.0
         version: '@fluidframework/server-services@7.0.0'
@@ -1199,6 +1229,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-services-client-previous':
         specifier: npm:@fluidframework/server-services-client@7.0.0
         version: '@fluidframework/server-services-client@7.0.0'
@@ -1287,6 +1320,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-services-core-previous':
         specifier: npm:@fluidframework/server-services-core@7.0.0
         version: '@fluidframework/server-services-core@7.0.0'
@@ -1357,6 +1393,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-services-ordering-kafkanode-previous':
         specifier: npm:@fluidframework/server-services-ordering-kafkanode@7.0.0
         version: '@fluidframework/server-services-ordering-kafkanode@7.0.0'
@@ -1433,6 +1472,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-services-ordering-rdkafka-previous':
         specifier: npm:@fluidframework/server-services-ordering-rdkafka@7.0.0
         version: '@fluidframework/server-services-ordering-rdkafka@7.0.0'
@@ -1491,6 +1533,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-services-ordering-zookeeper-previous':
         specifier: npm:@fluidframework/server-services-ordering-zookeeper@7.0.0
         version: '@fluidframework/server-services-ordering-zookeeper@7.0.0'
@@ -1615,6 +1660,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-services-shared-previous':
         specifier: npm:@fluidframework/server-services-shared@7.0.0
         version: '@fluidframework/server-services-shared@7.0.0'
@@ -1697,6 +1745,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-services-telemetry-previous':
         specifier: npm:@fluidframework/server-services-telemetry@7.0.0
         version: '@fluidframework/server-services-telemetry@7.0.0'
@@ -1800,6 +1851,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-services-utils-previous':
         specifier: npm:@fluidframework/server-services-utils@7.0.0
         version: '@fluidframework/server-services-utils@7.0.0'
@@ -1921,6 +1975,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.61.0
         version: 0.61.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^8.1.0
+        version: 8.1.0(@typescript-eslint/utils@8.53.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint@9.39.2(jiti@2.6.1))(typescript@5.1.6)
       '@fluidframework/server-test-utils-previous':
         specifier: npm:@fluidframework/server-test-utils@7.0.0
         version: '@fluidframework/server-test-utils@7.0.0'
