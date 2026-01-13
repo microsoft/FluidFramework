@@ -4,6 +4,7 @@
  */
 
 import type { WebApi } from "azure-devops-node-api";
+import type { Build } from "azure-devops-node-api/interfaces/BuildInterfaces";
 
 export interface GetBuildOptions {
 	// The ADO project name
@@ -25,7 +26,7 @@ export interface GetBuildOptions {
 export async function getBuilds(
 	adoConnection: WebApi,
 	options: GetBuildOptions,
-): Promise<import("azure-devops-node-api/interfaces/BuildInterfaces").Build[]> {
+): Promise<Build[]> {
 	const buildApi = await adoConnection.getBuildApi();
 
 	return buildApi.getBuilds(

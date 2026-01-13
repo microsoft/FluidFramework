@@ -138,11 +138,9 @@ export class NpmDepChecker {
 	}
 
 	private isInDependencies(name: string): boolean {
-		return !!(
-			(this.pkg.packageJson.dependencies &&
-				this.pkg.packageJson.dependencies[name] !== undefined) ||
-			(this.pkg.packageJson.devDependencies &&
-				this.pkg.packageJson.devDependencies[name] !== undefined)
+		return (
+			this.pkg.packageJson.dependencies?.[name] !== undefined ||
+			this.pkg.packageJson.devDependencies?.[name] !== undefined
 		);
 	}
 

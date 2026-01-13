@@ -6,11 +6,10 @@
 
 /// <reference types="node" />
 
-import { Build } from 'azure-devops-node-api/interfaces/BuildInterfaces';
+import type { Build } from 'azure-devops-node-api/interfaces/BuildInterfaces';
 import type { CommentThreadStatus } from 'azure-devops-node-api/interfaces/GitInterfaces';
 import { Compiler } from 'webpack';
 import type JSZip from 'jszip';
-import * as JSZip_2 from 'jszip';
 import type { StatsCompilation } from 'webpack';
 import { WebApi } from 'azure-devops-node-api';
 import type Webpack from 'webpack';
@@ -296,7 +295,7 @@ export interface TotalSizeStatsProcessorOptions {
 }
 
 // @public (undocumented)
-export function unzipStream(stream: NodeJS.ReadableStream): ReturnType<typeof JSZip_2.loadAsync>;
+export function unzipStream(stream: NodeJS.ReadableStream): Promise<JSZip>;
 
 // @public
 export type WebpackStatsProcessor = (stats: StatsCompilation, config: BundleBuddyConfig | undefined) => BundleMetricSet | undefined;

@@ -185,7 +185,10 @@ function createGetSourceFileVersion(tsLib: typeof ts): (buffer: Buffer) => strin
 	};
 }
 
-function createTscUtil(tsLib: typeof ts): {
+/**
+ * TypeScript compiler utilities created for a specific TypeScript library instance.
+ */
+export interface TscUtil {
 	tsLib: typeof ts;
 	parseCommandLine: (command: string) => ts.ParsedCommandLine | undefined;
 	findConfigFile: (
@@ -197,7 +200,9 @@ function createTscUtil(tsLib: typeof ts): {
 	convertOptionPaths: typeof convertOptionPaths;
 	getCanonicalFileName: (x: string) => string;
 	getSourceFileVersion: (buffer: Buffer) => string;
-} {
+}
+
+function createTscUtil(tsLib: typeof ts): TscUtil {
 	return {
 		tsLib,
 		parseCommandLine: (command: string): ts.ParsedCommandLine | undefined => {
@@ -272,8 +277,6 @@ function createTscUtil(tsLib: typeof ts): {
 		getSourceFileVersion: createGetSourceFileVersion(tsLib),
 	};
 }
-
-export type TscUtil = ReturnType<typeof createTscUtil>;
 
 const tscUtilPathCache = new Map<string, TscUtil>();
 const tscUtilLibPathCache = new Map<string, TscUtil>();

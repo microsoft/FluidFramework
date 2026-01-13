@@ -423,7 +423,7 @@ export abstract class LeafTask extends Task {
 		return false;
 	}
 
-	// For called when the task has successfully executed
+	// Called when the task has successfully executed
 	protected async markExecDone(): Promise<void> {}
 
 	protected getVsCodeErrorMessages(errorMessages: string): string {
