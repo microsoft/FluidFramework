@@ -358,8 +358,11 @@ async function main(): Promise<void> {
 	// Print summary by plugin
 	const byPlugin: Record<string, number> = {};
 	for (const d of allDeprecated) {
-		const plugin = d.rule.includes("/") ? d.rule.split("/")[0] || "eslint" : "eslint";
-		byPlugin[plugin] = (byPlugin[plugin] || 0) + 1;
+		// Extract plugin name from rule. Rules are formatted as "plugin/rule-name" for plugins
+		// or just "rule-name" for core ESLint rules. Handle edge cases like empty prefixes.
+		const slashIndex = d.rule.indexOf("/");
+		const plugin = slashIndex > 0 ? d.rule.slice(0, slashIndex) : "eslint";
+		byPlugin[plugin] = (byPlugin[plugin] ?? 0) + 1;
 	}
 
 	console.log("\nBy plugin:");
