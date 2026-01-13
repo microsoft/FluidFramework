@@ -182,8 +182,10 @@ describe("PrefetchDocumentStorageService", () => {
 	});
 
 	it("should not cause unhandled rejections on fire-and-forget prefetch failures", async () => {
-		// Set up to fail all blob reads with a retryable error
-		mockStorage.failureError = createRetryableError("Prefetch network failure");
+		// Set up to fail all blob reads with a non-retryable error
+		// Using non-retryable so the error is cached and we can verify error identity
+		const prefetchError = createNonRetryableError("Prefetch network failure");
+		mockStorage.failureError = prefetchError;
 		mockStorage.shouldFail = true;
 
 		// Trigger prefetch via getSnapshotTree (fire-and-forget pattern)
@@ -197,13 +199,12 @@ describe("PrefetchDocumentStorageService", () => {
 		await Promise.resolve();
 
 		// If we reach here without unhandled rejection, the test passes
-		// Now verify that explicit readBlob calls still receive the error properly
-		// (cache is cleared for retryable errors, so a new read is attempted)
-		mockStorage.readBlobCalls = [];
+		// Now verify that explicit readBlob calls still receive the same cached error
+		// (non-retryable errors remain cached, so we can verify error identity)
 		await assert.rejects(
 			async () => prefetchService.readBlob("blob1"),
-			(error: Error) => error.message === "Prefetch network failure",
-			"Explicit readBlob should still receive the error",
+			(error: Error) => error === prefetchError,
+			"Explicit readBlob should receive the same cached error instance",
 		);
 	});
 
