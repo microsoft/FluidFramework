@@ -1307,12 +1307,6 @@
                     "@fluid-private/*/internal",
                     "@fluid-tools/*/internal",
                     "@fluidframework/*/internal",
-                    "@fluid-example/*/legacy",
-                    "@fluid-experimental/*/legacy",
-                    "@fluid-internal/*/legacy",
-                    "@fluid-private/*/legacy",
-                    "@fluid-tools/*/legacy",
-                    "@fluidframework/*/legacy",
                     "@fluid-experimental/**",
                     "*/index.js"
                 ]
