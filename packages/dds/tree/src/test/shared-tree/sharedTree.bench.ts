@@ -76,6 +76,42 @@ const factory = configuredSharedTree({
 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
 }).getFactory();
 
+/**
+ * Helper function to setup the sender and receiver trees for the op bunching benchmarks.
+ * @remarks It pauses the processing of both sender and receiver to enable the test to control when the
+ * messages are processed.
+ */
+function setupSenderAndReceiver() {
+	const provider = new TestTreeProviderLite(
+		2,
+		factory,
+		undefined /* useDeterministicSessionIds */,
+		FlushMode.TurnBased,
+	);
+	const sender = provider.trees[0];
+	const receiver = provider.trees[1];
+	sender.containerRuntime.pauseInboundProcessing();
+	receiver.containerRuntime.pauseInboundProcessing();
+	return { provider, sender, receiver };
+}
+
+/**
+ * Helper function to send local commits from a given tree.
+ * In turn based flush mode, the messages won't be sequenced until flush is called explicitly
+ * on the tree's container runtime.
+ * In Immediate flush mode, the messages will be flushed and sequenced immediately. So, this
+ * function will behave similar to 'sequenceLocalCommits'.
+ */
+function sendLocalCommits(
+	tree: SharedTreeWithContainerRuntime,
+	count: number,
+	commitPrefix: string,
+) {
+	for (let iCommit = 0; iCommit < count; iCommit++) {
+		insert(tree.kernel.checkout, 0, `${commitPrefix}${iCommit}`);
+	}
+}
+
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
 	configureBenchmarkHooks();
@@ -448,42 +484,6 @@ describe("SharedTree benchmarks", () => {
 
 	// In this context "op bunch" refers to a group of ops for the same DDS that are sent by a peer in a single message.
 	describe("Op Bunching", () => {
-		/**
-		 * Helper function to setup the sender and receiver trees for the op bunching benchmarks.
-		 * @remarks It pauses the processing of both sender and receiver to enable the test to control when the
-		 * messages are processed.
-		 */
-		function setupSenderAndReceiver() {
-			const provider = new TestTreeProviderLite(
-				2,
-				factory,
-				undefined /* useDeterministicSessionIds */,
-				FlushMode.TurnBased,
-			);
-			const sender = provider.trees[0];
-			const receiver = provider.trees[1];
-			sender.containerRuntime.pauseInboundProcessing();
-			receiver.containerRuntime.pauseInboundProcessing();
-			return { provider, sender, receiver };
-		}
-
-		/**
-		 * Helper function to send local commits from a given tree.
-		 * In turn based flush mode, the messages won't be sequenced until flush is called explicitly
-		 * on the tree's container runtime.
-		 * In Immediate flush mode, the messages will be flushed and sequenced immediately. So, this
-		 * function will behave similar to 'sequenceLocalCommits'.
-		 */
-		function sendLocalCommits(
-			tree: SharedTreeWithContainerRuntime,
-			count: number,
-			commitPrefix: string,
-		) {
-			for (let iCommit = 0; iCommit < count; iCommit++) {
-				insert(tree.kernel.checkout, 0, `${commitPrefix}${iCommit}`);
-			}
-		}
-
 		describe("Rebasing inbound bunch over local changes", () => {
 			// The number of commits in a bunch for a given run of this test suite.
 			const bunchSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];

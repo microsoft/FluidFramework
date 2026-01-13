@@ -357,6 +357,7 @@ describe("Op Size", () => {
 	});
 
 	describe("Insert Nodes", () => {
+		// eslint-disable-next-line unicorn/consistent-function-scoping -- benchmark helper uses describe-scoped vars
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
 			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
@@ -398,6 +399,7 @@ describe("Op Size", () => {
 	});
 
 	describe("Remove Nodes", () => {
+		// eslint-disable-next-line unicorn/consistent-function-scoping -- benchmark helper uses describe-scoped vars
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
 			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
@@ -442,6 +444,7 @@ describe("Op Size", () => {
 	});
 
 	describe("Edit Nodes", () => {
+		// eslint-disable-next-line unicorn/consistent-function-scoping -- benchmark helper uses describe-scoped vars
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
 			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);

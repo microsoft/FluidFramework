@@ -180,6 +180,17 @@ export const Change = {
 	},
 };
 
+function normalizeRegisterId(registerId: RegisterId): string {
+	if (typeof registerId === "string") {
+		return `s${registerId}`;
+	}
+	return `r${registerId.revision}id${registerId.localId}`;
+}
+
+function compareRegisterIds(c: RegisterId, d: RegisterId): number {
+	return normalizeRegisterId(c).localeCompare(normalizeRegisterId(d));
+}
+
 // Optional changesets may be equivalent but not evaluate to be deep-equal, as some ordering is irrelevant.
 export function assertTaggedEqual(
 	a: TaggedChange<OptionalChangeset> | undefined,
@@ -189,14 +200,6 @@ export function assertTaggedEqual(
 		assert.equal(a, b);
 		return;
 	}
-	const normalizeRegisterId = (registerId: RegisterId): string => {
-		if (typeof registerId === "string") {
-			return `s${registerId}`;
-		}
-		return `r${registerId.revision}id${registerId.localId}`;
-	};
-	const compareRegisterIds = (c: RegisterId, d: RegisterId) =>
-		normalizeRegisterId(c).localeCompare(normalizeRegisterId(d));
 	// The composed rebase implementation deep-freezes.
 	const aCopy = { ...a, change: { ...a.change, moves: [...a.change.moves] } };
 	const bCopy = { ...b, change: { ...b.change, moves: [...b.change.moves] } };

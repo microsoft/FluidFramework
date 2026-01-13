@@ -8,6 +8,10 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { FieldKey } from "../../../core/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../util/index.js";
 
+function clamp(min: number, value: number, max: number): number {
+	return Math.max(Math.min(value, max), min);
+}
+
 export interface Canada {
 	readonly [P: string]: JsonCompatibleReadOnly | undefined;
 	type: "FeatureCollection";
@@ -72,6 +76,12 @@ export function generateCanada(segmentLengths = originalSegmentLengths, seed = 1
 	const vyDist = () => random.normal(/* mean: */ 0, /* stdDev: */ 20);
 	const noiseDist = () => random.real(/* min: */ -18e-14, /* max: */ 18e-14);
 
+	// An interesting detail of 'canada.json' is that coordinates typically have ~6 digits of
+	// precision, followed by ~8 consecutive zeros or nines, and then a couple additional digits.
+	// We generate similar coordinates by truncating values to 6 digits of precision and then
+	// adding a very small amount of noise.
+	const noise = (x: number) => Math.trunc(x * 1000000) / 1000000 + noiseDist();
+
 	let last_x = -65;
 	let last_y = 43;
 
@@ -79,15 +89,6 @@ export function generateCanada(segmentLengths = originalSegmentLengths, seed = 1
 	// an array of segments, where the coordinates of each segment is randomly generated using
 	// Brownian motion.
 	const segments = segmentLengths.map((len: number) => {
-		const clamp = (min: number, value: number, max: number) =>
-			Math.max(Math.min(value, max), min);
-
-		// An interesting detail of 'canada.json' is that coordinates typically have ~6 digits of
-		// precision, followed by ~8 consecutive zeros or nines, and then a couple additional digits.
-		// We generate similar coordinates by truncating values to 6 digits of precision and then
-		// adding a very small amount of noise.
-		const noise = (x: number) => Math.trunc(x * 1000000) / 1000000 + noiseDist();
-
 		return new Array(len)
 			.fill(0)
 			.map(

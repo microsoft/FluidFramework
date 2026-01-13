@@ -69,6 +69,21 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions/inte
 import type { ISharedTree } from "../../../treeFactory.js";
 import { asAlpha } from "../../../api.js";
 
+function chooseRangeWithMaxLength(
+	random: DDSRandom,
+	fieldLength: number,
+	maxLength: number,
+): NodeRange {
+	const length = random.integer(1, Math.min(fieldLength, maxLength));
+	const first = random.integer(0, fieldLength - length);
+	const last = first + length - 1;
+	return { first, last };
+}
+
+function chooseRange(random: DDSRandom, fieldLength: number): NodeRange {
+	return chooseRangeWithMaxLength(random, fieldLength, fieldLength);
+}
+
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
@@ -494,21 +509,6 @@ export const makeTreeEditGenerator = (
 				assert.fail("Unknown field type");
 			}
 		}
-	}
-
-	function chooseRange(random: DDSRandom, fieldLength: number): NodeRange {
-		return chooseRangeWithMaxLength(random, fieldLength, fieldLength);
-	}
-
-	function chooseRangeWithMaxLength(
-		random: DDSRandom,
-		fieldLength: number,
-		maxLength: number,
-	): NodeRange {
-		const length = random.integer(1, Math.min(fieldLength, maxLength));
-		const first = random.integer(0, fieldLength - length);
-		const last = first + length - 1;
-		return { first, last };
 	}
 
 	return (state) => {

@@ -20,7 +20,6 @@ import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import type { ISummarizer } from "@fluidframework/container-runtime/internal";
-import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -354,9 +353,6 @@ export class TestTreeProvider {
 	 * _i_ is the index of the tree in order of creation.
 	 */
 	public async createTree(): Promise<ISharedTree> {
-		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-			getRawConfig: (name: string): ConfigTypes => settings[name],
-		});
 		const container =
 			this.trees.length === 0
 				? await this.provider.makeTestContainer()
