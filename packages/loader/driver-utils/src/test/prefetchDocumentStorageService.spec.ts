@@ -182,52 +182,85 @@ describe("PrefetchDocumentStorageService", () => {
 	});
 
 	it("should not cause unhandled rejections on fire-and-forget prefetch failures", async () => {
-		// Set up to fail all blob reads with a non-retryable error
-		// Using non-retryable so the error is cached and we can verify error identity
-		const prefetchError = createNonRetryableError("Prefetch network failure");
-		mockStorage.failureError = prefetchError;
-		mockStorage.shouldFail = true;
+		// Track unhandled rejections to verify none occur
+		const unhandledRejections: unknown[] = [];
+		const rejectionHandler = (reason: unknown): void => {
+			unhandledRejections.push(reason);
+		};
+		process.on("unhandledRejection", rejectionHandler);
 
-		// Trigger prefetch via getSnapshotTree (fire-and-forget pattern)
-		// The prefetch will fail, but should NOT cause unhandled rejection
-		await prefetchService.getSnapshotTree();
+		try {
+			// Set up to fail all blob reads with a non-retryable error
+			// Using non-retryable so the error is cached and we can verify error identity
+			const prefetchError = createNonRetryableError("Prefetch network failure");
+			mockStorage.failureError = prefetchError;
+			mockStorage.shouldFail = true;
 
-		// Wait for prefetch attempts to occur
-		await waitForCondition(() => mockStorage.readBlobCalls.length > 0);
+			// Trigger prefetch via getSnapshotTree (fire-and-forget pattern)
+			// The prefetch will fail, but should NOT cause unhandled rejection
+			await prefetchService.getSnapshotTree();
 
-		// Allow microtask queue to flush (for catch handlers to execute)
-		await Promise.resolve();
+			// Wait for prefetch attempts to occur
+			await waitForCondition(() => mockStorage.readBlobCalls.length > 0);
 
-		// If we reach here without unhandled rejection, the test passes
-		// Now verify that explicit readBlob calls still receive the same cached error
-		// (non-retryable errors remain cached, so we can verify error identity)
-		await assert.rejects(
-			async () => prefetchService.readBlob("blob1"),
-			(error: Error) => error === prefetchError,
-			"Explicit readBlob should receive the same cached error instance",
-		);
+			// Allow microtask queue to flush (for catch handlers to execute)
+			await Promise.resolve();
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
+			// Verify no unhandled rejections occurred
+			assert.strictEqual(
+				unhandledRejections.length,
+				0,
+				`Expected no unhandled rejections, but got: ${JSON.stringify(unhandledRejections)}`,
+			);
+
+			// Also verify that explicit readBlob calls still receive the same cached error
+			// (non-retryable errors remain cached, so we can verify error identity)
+			await assert.rejects(
+				async () => prefetchService.readBlob("blob1"),
+				(error: Error) => error === prefetchError,
+				"Explicit readBlob should receive the same cached error instance",
+			);
+		} finally {
+			process.off("unhandledRejection", rejectionHandler);
+		}
 	});
 
 	it("should not cause unhandled rejections when getSnapshotTree fails", async () => {
-		// Set up getSnapshotTree to fail (e.g., network timeout)
-		const networkError = new Error("Socket timeout");
-		mockStorage.shouldGetSnapshotTreeFail = true;
-		mockStorage.getSnapshotTreeError = networkError;
+		// Track unhandled rejections to verify none occur
+		const unhandledRejections: unknown[] = [];
+		const rejectionHandler = (reason: unknown): void => {
+			unhandledRejections.push(reason);
+		};
+		process.on("unhandledRejection", rejectionHandler);
 
-		// getSnapshotTree internally does: void p.then(...).catch(...)
-		// Without the .catch(), if p rejects, the derived promise from .then() also
-		// rejects and causes an unhandled rejection. This test verifies the fix.
-		await assert.rejects(
-			async () => prefetchService.getSnapshotTree(),
-			(error: Error) => error.message === "Socket timeout",
-			"Caller should receive the error",
-		);
+		try {
+			// Set up getSnapshotTree to fail (e.g., network timeout)
+			const networkError = new Error("Socket timeout");
+			mockStorage.shouldGetSnapshotTreeFail = true;
+			mockStorage.getSnapshotTreeError = networkError;
 
-		// Allow microtask queue to flush - if there's an unhandled rejection,
-		// it would surface here or cause the test to fail
-		await Promise.resolve();
-		await new Promise((resolve) => setTimeout(resolve, 10));
+			// getSnapshotTree internally does: void p.then(...).catch(...)
+			// Without the .catch(), if p rejects, the derived promise from .then() also
+			// rejects and causes an unhandled rejection. This test verifies the fix.
+			await assert.rejects(
+				async () => prefetchService.getSnapshotTree(),
+				(error: Error) => error.message === "Socket timeout",
+				"Caller should receive the error",
+			);
 
-		// If we reach here without unhandled rejection, the test passes
+			// Allow microtask queue to flush
+			await Promise.resolve();
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
+			// Verify no unhandled rejections occurred
+			assert.strictEqual(
+				unhandledRejections.length,
+				0,
+				`Expected no unhandled rejections, but got: ${JSON.stringify(unhandledRejections)}`,
+			);
+		} finally {
+			process.off("unhandledRejection", rejectionHandler);
+		}
 	});
 });
