@@ -31,13 +31,10 @@ export class BranchCommitEnricher<TChange> {
 		if (hasSome(commits)) {
 			this.enricherProvider.runEnrichmentBatch(commits[0], (enricher) => {
 				for (const newCommit of commits) {
-					const newChange = enricher.updateChangeEnrichments(
-						newCommit.change,
-						newCommit.revision,
-					);
+					const newChange = enricher.enrich(newCommit.change);
 					this.prepared.set(newCommit, newChange);
 					// The last call to this is unnecessary, but has negligible performance impact so long as the enricher is lazy.
-					enricher.applyTipChange(newCommit.change, newCommit.revision);
+					enricher.enqueueChange(newCommit);
 				}
 			});
 		}

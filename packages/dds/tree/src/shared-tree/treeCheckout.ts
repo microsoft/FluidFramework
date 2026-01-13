@@ -54,6 +54,7 @@ import {
 	type ChangeMetadata,
 	type ChangeEncodingContext,
 	type ReadOnlyDetachedFieldIndex,
+	makeAnonChange,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -1141,28 +1142,65 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	// #region Enrichment
 
+	private readonly enrichmentStats: {
+		batches: number;
+		diffs: number;
+		commitsEnriched: number;
+		refreshers: number;
+		forks: number;
+		applied: number;
+	} = { batches: 0, diffs: 0, commitsEnriched: 0, refreshers: 0, forks: 0, applied: 0 };
+
+	public resetEnrichmentStats(): void {
+		this.enrichmentStats.batches = 0;
+		this.enrichmentStats.diffs = 0;
+		this.enrichmentStats.commitsEnriched = 0;
+		this.enrichmentStats.refreshers = 0;
+		this.enrichmentStats.forks = 0;
+		this.enrichmentStats.applied = 0;
+	}
+
+	public getEnrichmentStats(): {
+		batches: number;
+		diffs: number;
+		commitsEnriched: number;
+		refreshers: number;
+		forks: number;
+		applied: number;
+	} {
+		return { ...this.enrichmentStats };
+	}
+
 	public runEnrichmentBatch(
 		toEnrich: GraphCommit<SharedTreeChange>,
 		callback: (enricher: ChangeEnricherCheckout<SharedTreeChange>) => void,
 	): void {
+		this.enrichmentStats.batches += 1;
 		const enricher = new SharedTreeChangeEnricher(
 			this.forest,
 			this._removedRoots,
 			this.storedSchema,
 			this.idCompressor,
+			() => (this.enrichmentStats.commitsEnriched += 1),
+			() => (this.enrichmentStats.refreshers += 1),
+			() => (this.enrichmentStats.forks += 1),
+			() => (this.enrichmentStats.applied += 1),
 		);
 		// This `lastCommitApplied` may be on the main branch or on a transaction branch.
 		// In either case, it is crucial that the state of the forest & detached field index reflects all changes up to and including this commit.
 		const lastCommitApplied = this.#transaction.activeBranch.getHead();
-		assert(toEnrich.parent !== undefined, "Commit to enrich must have a parent.");
 		if (toEnrich.parent !== lastCommitApplied) {
-			const diff = diffHistories(
-				this.changeFamily.rebaser,
-				lastCommitApplied,
-				toEnrich.parent,
-				this.mintRevisionTag,
-			);
-			enricher.applyTipChange(diff, undefined);
+			enricher.enqueueChange(() => {
+				this.enrichmentStats.diffs += 1;
+				assert(toEnrich.parent !== undefined, "Commit to enrich must have a parent.");
+				const diff = diffHistories(
+					this.changeFamily.rebaser,
+					lastCommitApplied,
+					toEnrich.parent,
+					this.mintRevisionTag,
+				);
+				return makeAnonChange(diff);
+			});
 		}
 		callback(enricher);
 		enricher[disposeSymbol]();

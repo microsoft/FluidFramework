@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { GraphCommit, RevisionTag } from "../core/index.js";
+import type { GraphCommit, TaggedChange } from "../core/index.js";
 
 export interface ChangeEnricherProvider<TChange> {
 	runEnrichmentBatch(
@@ -34,16 +34,14 @@ export interface ChangeEnricherCheckout<TChange> {
 	/**
 	 * Updates the set of refreshers on a change.
 	 * @param change - the change to enrich. Not mutated.
-	 * @param revision - the revision associated with the change.
 	 * @returns the enriched change. Possibly the same as the one passed in.
 	 */
-	updateChangeEnrichments(change: TChange, revision: RevisionTag): TChange;
+	enrich(change: TChange): TChange;
 
 	/**
-	 * Applies a change to the tip state.
-	 * @param change - the change to apply. Not mutated.
-	 * @param revision - the revision associated with the change.
-	 * Can be undefined when the applied change is a rollback.
+	 * Enqueues change to be applied before {@link enrich | enriching} then next change.
+	 * @param change - the change to apply or a callback that produces the change to apply.
+	 * The callback will be called at most once, either during or after this call.
 	 */
-	applyTipChange(change: TChange, revision?: RevisionTag): void;
+	enqueueChange(change: TaggedChange<TChange> | (() => TaggedChange<TChange>)): void;
 }

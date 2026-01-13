@@ -622,9 +622,9 @@ describe("SharedTreeCore", () => {
 				this.provider.checkoutsCreated++;
 			}
 
-			public applyTipChange(change: T, revision?: RevisionTag): void {}
+			public enqueueChange(): void {}
 
-			public updateChangeEnrichments(input: T): T {
+			public enrich(input: T): T {
 				assert.equal(this.isDisposed, false);
 				const output = { ...input };
 				this.provider.enrichmentLog.push({ input, output });

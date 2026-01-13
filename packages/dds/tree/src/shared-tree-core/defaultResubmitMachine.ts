@@ -88,13 +88,10 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 					);
 					break;
 				}
-				const enrichedChange = enricher.updateChangeEnrichments(
-					newCommit.change,
-					newCommit.revision,
-				);
+				const enrichedChange = enricher.enrich(newCommit.change);
 				const enrichedCommit = { ...newCommit, change: enrichedChange };
 
-				enricher.applyTipChange(enrichedChange, newCommit.revision);
+				enricher.enqueueChange(enrichedCommit);
 
 				pending.commit = enrichedCommit;
 				pending.lastEnrichment = this.currentEnrichment;

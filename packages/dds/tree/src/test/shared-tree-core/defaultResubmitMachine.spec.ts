@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { GraphCommit, RevisionTag } from "../../core/index.js";
+import type { GraphCommit, RevisionTag, TaggedChange } from "../../core/index.js";
 import { testIdCompressor } from "../utils.js";
 import {
 	type ChangeEnricherProvider,
@@ -60,7 +60,7 @@ export class MockChangeEnricher implements ChangeEnricherCheckout<MockEnrichable
 		return this.context;
 	}
 
-	public updateChangeEnrichments(change: MockEnrichableChange): MockEnrichableChange {
+	public enrich(change: MockEnrichableChange): MockEnrichableChange {
 		assert.equal(change.inputContext, this.context);
 		this.provider.commitsEnriched += 1;
 		return {
@@ -69,7 +69,7 @@ export class MockChangeEnricher implements ChangeEnricherCheckout<MockEnrichable
 		};
 	}
 
-	public applyTipChange(change: MockEnrichableChange, revision?: RevisionTag): void {
+	public enqueueChange({ change, revision }: TaggedChange<MockEnrichableChange>): void {
 		assert.equal(change.inputContext, this.context);
 		if (revision !== undefined) {
 			assert.equal(revision, change.outputContext);

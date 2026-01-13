@@ -1309,45 +1309,295 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("Enrichment", () => {
-		it("can provide an enricher for a commit that is about to be applied", () => {
-			const view = getView(
-				new TreeViewConfiguration({ enableSchemaValidation, schema: rootArray }),
-			);
-			view.initialize(["A"]);
-			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
-				assert.equal(revertible.status, RevertibleStatus.Valid);
-				revertiblesCreated.push(revertible);
-			});
+		const sf = new SchemaFactory("Enrichment Schema");
+		class Node extends sf.object("Node", { id: sf.string }) {}
+		const NodeArray = sf.array(Node);
 
-			view.root.removeAt(0);
-
-			const mainBranch = (
-				view.checkout as unknown as {
+		function setup(initialContent: InsertableField<typeof NodeArray>) {
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({ schema: NodeArray, enableSchemaValidation });
+			const view1 = provider.trees[0].kernel.viewWith(config);
+			const view2 = provider.trees[1].kernel.viewWith(config);
+			view1.initialize(initialContent);
+			provider.synchronizeMessages();
+			const view1Branch = (
+				view1.checkout as unknown as {
 					getMainBranch(): SharedTreeBranch<never, SharedTreeChange>;
 				}
 			).getMainBranch();
+			const view1Revertibles: Revertible[] = [];
+			view1.events.on("changed", (_, getRevertible) => {
+				if (getRevertible !== undefined) {
+					view1Revertibles.push(getRevertible());
+				}
+			});
+			return { provider, view1, view1Revertibles, view1Branch, view2 };
+		}
+
+		function assertEnrichmentCount(enriched: SharedTreeChange, expectedCount: number) {
+			assert.equal(enriched.changes[0].type, "data");
+			assert.equal(enriched.changes[0].innerChange.refreshers?.size ?? 0, expectedCount);
+		}
+
+		it("can provide an enricher for a transaction-less edit that is about to be applied", () => {
+			const { view1, view1Revertibles, view1Branch } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
 			let callCount = 0;
-			mainBranch.events.on("beforeChange", (change) => {
+			view1Branch.events.on("beforeChange", (change) => {
+				callCount += 1;
 				assert.equal(change.type, "append");
 				assert.equal(change.newCommits.length, 1);
 				const commit = change.newCommits[0];
-				view.checkout.runEnrichmentBatch(commit, (enricher) => {
-					callCount += 1;
-					const enriched = enricher.updateChangeEnrichments(commit.change, commit.revision);
-					assert.equal(enriched.changes[0].type, "data");
-					assert.equal(enriched.changes[0].innerChange.refreshers?.size, 1);
+				view1.checkout.resetEnrichmentStats();
+				view1.checkout.runEnrichmentBatch(commit, (enricher) => {
+					const enriched = enricher.enrich(commit.change);
+					assertEnrichmentCount(enriched, 1);
+				});
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 1,
+					forks: 0,
+					applied: 0,
 				});
 			});
 
-			assert.equal(revertiblesCreated.length, 1);
-			revertiblesCreated[0].revert();
-
+			assert.equal(view1Revertibles.length, 1);
+			view1Revertibles[0].revert();
 			assert.equal(callCount, 1);
+		});
 
-			unsubscribe();
+		it("can provide an enricher for a transaction-less edit that is has just been applied", () => {
+			const { view1, view1Revertibles, view1Branch } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1Branch.events.on("afterChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				view1.checkout.runEnrichmentBatch(commit, (enricher) => {
+					const enriched = enricher.enrich(commit.change);
+					assertEnrichmentCount(enriched, 1);
+				});
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 1,
+					commitsEnriched: 1,
+					refreshers: 1,
+					forks: 1,
+					applied: 1,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			view1Revertibles[0].revert();
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for merged edits that are about to be applied", () => {
+			const { view1, view1Branch } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
+			const branch = view1.fork();
+
+			view1.root.removeAt(2);
+			view1.root.removeAt(0);
+
+			branch.root[0].id = "a"; // Will require a refresher
+			branch.root[1].id = "b";
+			branch.root[2].id = "c"; // Will require a refresher
+
+			let callCount = 0;
+			view1Branch.events.on("beforeChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 3);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				view1.checkout.runEnrichmentBatch(commit, (enricher) => {
+					const enriched1 = enricher.enrich(change.newCommits[0].change);
+					assertEnrichmentCount(enriched1, 1);
+					enricher.enqueueChange(change.newCommits[0]);
+					const enriched2 = enricher.enrich(change.newCommits[1].change);
+					assertEnrichmentCount(enriched2, 0);
+					enricher.enqueueChange(change.newCommits[1]);
+					const enriched3 = enricher.enrich(change.newCommits[2].change);
+					assertEnrichmentCount(enriched3, 1);
+					enricher.enqueueChange(change.newCommits[2]);
+				});
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 3,
+					refreshers: 2,
+					forks: 1,
+					applied: 2,
+				});
+			});
+
+			view1.merge(branch);
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for merged edits that have just been applied", () => {
+			const { view1, view1Branch } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
+			const branch = view1.fork();
+
+			view1.root.removeAt(2);
+			view1.root.removeAt(0);
+
+			branch.root[0].id = "a"; // Will require a refresher
+			branch.root[1].id = "b";
+			branch.root[2].id = "c"; // Will require a refresher
+
+			let callCount = 0;
+			view1Branch.events.on("afterChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 3);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				view1.checkout.runEnrichmentBatch(commit, (enricher) => {
+					const enriched1 = enricher.enrich(change.newCommits[0].change);
+					assertEnrichmentCount(enriched1, 1);
+					enricher.enqueueChange(change.newCommits[0]);
+					const enriched2 = enricher.enrich(change.newCommits[1].change);
+					assertEnrichmentCount(enriched2, 0);
+					enricher.enqueueChange(change.newCommits[1]);
+					const enriched3 = enricher.enrich(change.newCommits[2].change);
+					assertEnrichmentCount(enriched3, 1);
+					enricher.enqueueChange(change.newCommits[2]);
+				});
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 1,
+					commitsEnriched: 3,
+					refreshers: 2,
+					forks: 1,
+					applied: 3,
+				});
+			});
+
+			view1.merge(branch);
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for a fast transaction that is about to be applied", () => {
+			const { view1, view1Revertibles, view1Branch } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1Branch.events.on("beforeChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				view1.checkout.runEnrichmentBatch(commit, (enricher) => {
+					const enriched = enricher.enrich(commit.change);
+					assertEnrichmentCount(enriched, 0);
+				});
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 0,
+					forks: 0,
+					applied: 0,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			view1.runTransaction(() => {
+				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
+				// TODO AD#57584: Use such an operation here when one is available
+				view1.root.insertAtEnd({ id: "B" });
+				view1.root.insertAtEnd({ id: "C" });
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher a for fast transaction that has just been applied", () => {
+			const { view1, view1Revertibles, view1Branch } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1Branch.events.on("afterChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				view1.checkout.runEnrichmentBatch(commit, (enricher) => {
+					const enriched = enricher.enrich(commit.change);
+					assertEnrichmentCount(enriched, 0);
+				});
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 0,
+					forks: 0,
+					applied: 0,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			view1.runTransaction(() => {
+				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
+				// TODO AD#57584: Use such an operation here when one is available
+				view1.root.insertAtEnd({ id: "B" });
+				view1.root.insertAtEnd({ id: "C" });
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for an edit applied long ago", () => {
+			const { view1, view1Revertibles, view1Branch } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+			view1Revertibles[0].revert();
+			const revertCommit = view1Branch.getHead();
+			view1.root.insertAtEnd({ id: "B" });
+			view1.root.insertAtEnd({ id: "C" });
+
+			view1.checkout.resetEnrichmentStats();
+			view1.checkout.runEnrichmentBatch(revertCommit, (enricher) => {
+				const enriched = enricher.enrich(revertCommit.change);
+				assertEnrichmentCount(enriched, 1);
+			});
+			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+				batches: 1,
+				diffs: 1,
+				commitsEnriched: 1,
+				refreshers: 1,
+				forks: 1,
+				applied: 1,
+			});
+		});
+
+		it("avoids diff computation when no refresher is needed", () => {
+			const { view1, view1Branch } = setup([]);
+			view1.root.insertAtEnd({ id: "A" });
+			const commit = view1Branch.getHead();
+			view1.root.insertAtEnd({ id: "B" });
+			view1.root.insertAtEnd({ id: "C" });
+
+			view1.checkout.resetEnrichmentStats();
+			view1.checkout.runEnrichmentBatch(commit, (enricher) => {
+				const enriched = enricher.enrich(commit.change);
+				assertEnrichmentCount(enriched, 0);
+			});
+			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+				batches: 1,
+				diffs: 0,
+				commitsEnriched: 1,
+				refreshers: 0,
+				forks: 0,
+				applied: 0,
+			});
 		});
 	});
 });

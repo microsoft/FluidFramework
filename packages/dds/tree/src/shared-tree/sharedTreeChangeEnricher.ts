@@ -11,7 +11,7 @@ import {
 	type IEditableForest,
 	type IForestSubscription,
 	type ReadOnlyDetachedFieldIndex,
-	type RevisionTag,
+	type TaggedChange,
 	type TreeStoredSchemaRepository,
 	tagChange,
 	visitDelta,
@@ -41,7 +41,7 @@ interface OwnedState {
 }
 
 export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTreeChange> {
-	private readonly changeQueue: [SharedTreeChange, RevisionTag | undefined][] = [];
+	private readonly changeQueue: (() => TaggedChange<SharedTreeChange>)[] = [];
 	protected readonly borrowed: BorrowedState;
 	protected owned?: OwnedState;
 
@@ -58,6 +58,10 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 		borrowedRemovedRoots: ReadOnlyDetachedFieldIndex,
 		private readonly schema: TreeStoredSchemaRepository,
 		private readonly idCompressor?: IIdCompressor,
+		private readonly onEnrichCommit?: () => void,
+		private readonly onRefresherAdded?: () => void,
+		private readonly onForkState?: () => void,
+		private readonly onApplyChange?: () => void,
 	) {
 		this.borrowed = {
 			forest: borrowedForest,
@@ -65,7 +69,8 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 		};
 	}
 
-	public updateChangeEnrichments(change: SharedTreeChange): SharedTreeChange {
+	public enrich(change: SharedTreeChange): SharedTreeChange {
+		this.onEnrichCommit?.();
 		return updateRefreshers(
 			change,
 			(id) => this.getDetachedRoot(id),
@@ -83,6 +88,7 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 			const parentField = state.removedRoots.toFieldKey(root);
 			cursor.enterField(parentField);
 			cursor.enterNode(0);
+			this.onRefresherAdded?.();
 			return chunkTree(cursor, {
 				policy: defaultChunkPolicy,
 				idCompressor: this.idCompressor,
@@ -91,18 +97,26 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 		return undefined;
 	}
 
-	public applyTipChange(change: SharedTreeChange, revision?: RevisionTag): void {
-		this.changeQueue.push([change, revision]);
+	public enqueueChange(
+		change: TaggedChange<SharedTreeChange> | (() => TaggedChange<SharedTreeChange>),
+	): void {
+		this.changeQueue.push(typeof change === "function" ? change : () => change);
 	}
 
 	private purgeChangeQueue(): void {
+		if (this.changeQueue.length === 0) {
+			return;
+		}
 		if (this.owned === undefined) {
+			this.onForkState?.();
 			this.owned = {
 				forest: this.borrowed.forest.clone(this.schema, new AnchorSet()),
 				removedRoots: this.borrowed.removedRoots.clone(),
 			};
 		}
-		for (const [change, revision] of this.changeQueue) {
+		for (const getChange of this.changeQueue) {
+			const { change, revision } = getChange();
+			this.onApplyChange?.();
 			for (const dataOrSchemaChange of change.changes) {
 				const type = dataOrSchemaChange.type;
 				switch (type) {

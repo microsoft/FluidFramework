@@ -121,7 +121,7 @@ describe("SharedTreeChangeEnricher", () => {
 
 		assert.deepEqual(jsonTreeFromForest(forest), [content]);
 		assert.deepEqual([...removedRoots.entries()], []);
-		enricher.applyTipChange(removeRoot2, tag);
+		enricher.enqueueChange(tagChange(removeRoot2, tag));
 
 		const tagForRestore = mintRevisionTag();
 		const restore = Change.atOnce(
@@ -145,7 +145,7 @@ describe("SharedTreeChangeEnricher", () => {
 			],
 		};
 
-		const enriched = enricher.updateChangeEnrichments(restoreRoot);
+		const enriched = enricher.enrich(restoreRoot);
 
 		// Check that the forest and removed roots were not mutated
 		assert.deepEqual(jsonTreeFromForest(forest), [content]);
@@ -176,7 +176,7 @@ describe("SharedTreeChangeEnricher", () => {
 
 	it("can be disposed after mutation", () => {
 		const { enricher } = setupEnricher();
-		enricher.applyTipChange(removeRoot, revision1);
+		enricher.enqueueChange(tagChange(removeRoot, revision1));
 		enricher[disposeSymbol]();
 	});
 });
