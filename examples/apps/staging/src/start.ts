@@ -24,7 +24,7 @@ import {
 } from "./container/index.js";
 import { AppView, DebugView } from "./view/index.js";
 
-const updateTabForId = (id: string) => {
+const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
 	location.hash = id;
 
@@ -32,7 +32,7 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const render = (groceryList: ISuggestionGroceryList) => {
+const render = (groceryList: ISuggestionGroceryList): void => {
 	const appDiv = document.getElementById("app") as HTMLDivElement;
 	const appRoot = createRoot(appDiv);
 	appRoot.render(createElement(AppView, { groceryList }));

@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { areStringsEquivalent } from "../util/index.js";
 
-function test(left: string | undefined | null, right: string | undefined | null) {
+function test(left: string | undefined | null, right: string | undefined | null): void {
 	const isLeftEmpty = left === "" || left === null || left === undefined;
 	const isRightEmpty = right === "" || right === null || right === undefined;
 	const expected = (isLeftEmpty && isRightEmpty) || left === right;

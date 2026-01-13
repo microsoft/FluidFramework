@@ -33,8 +33,12 @@ describeCompat(
 
 		let provider: ITestObjectProvider;
 
-		beforeEach("setup", async () => {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
+			// This test can be run against routerlicious once bug #55321 is fixed
+			if (provider.driver.type === "routerlicious") {
+				this.skip();
+			}
 		});
 
 		it("Can create loadingGroupId", async () => {

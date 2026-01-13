@@ -23,7 +23,7 @@ function getFluidCache(config?: {
 	// eslint-disable-next-line @rushstack/no-new-null
 	partitionKey?: string | null;
 	logger?: MockLogger;
-}) {
+}): FluidCache {
 	return new FluidCache({
 		partitionKey: config?.partitionKey ?? mockPartitionKey,
 		maxCacheItemAge: config?.maxCacheItemAge ?? 3 * 24 * 60 * 60 * 1000,
@@ -36,17 +36,17 @@ class DateMock {
 	// The current time being used by the mock
 	public static mockTimeMs: number = 0;
 
-	public static now() {
+	public static now(): number {
 		return DateMock.mockTimeMs;
 	}
 
-	public getTime() {
+	public getTime(): number {
 		return DateMock.mockTimeMs;
 	}
 }
 
 // Sets up a mock date time for the current test. Returns a function that should be called to reset the environment
-export function setupDateMock(startMockTime: number) {
+export function setupDateMock(startMockTime: number): () => void {
 	const realDate = window.Date;
 	DateMock.mockTimeMs = startMockTime;
 	(window.Date as any) = DateMock;

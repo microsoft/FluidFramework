@@ -7,11 +7,12 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
-	type Brand,
 	type JsonCompatibleReadOnlyObject,
 	type MakeNominal,
+	type Values,
 	brandConst,
 	invertMap,
+	strictEnum,
 } from "../../util/index.js";
 
 import {
@@ -33,17 +34,14 @@ import type { Multiplicity } from "./multiplicity.js";
 /**
  * The format version for the schema.
  */
-export const SchemaFormatVersion = {
+export const SchemaFormatVersion = strictEnum("SchemaFormatVersion", {
 	v1: 1,
 	/**
 	 * Adds persisted metadata to the node schema and field schema.
 	 */
 	v2: 2,
-} as const;
-export type SchemaFormatVersion = Brand<
-	(typeof SchemaFormatVersion)[keyof typeof SchemaFormatVersion],
-	"SchemaFormatVersion"
->;
+});
+export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 
@@ -396,9 +394,9 @@ export function encodeFieldSchemaV2(schema: TreeFieldStoredSchema): FieldSchemaF
 	const fieldSchema: FieldSchemaFormatV1 = encodeFieldSchemaV1(schema);
 
 	// Omit metadata from the output if it is undefined
-	return schema.persistedMetadata !== undefined
-		? { ...fieldSchema, metadata: schema.persistedMetadata }
-		: { ...fieldSchema };
+	return schema.persistedMetadata === undefined
+		? { ...fieldSchema }
+		: { ...fieldSchema, metadata: schema.persistedMetadata };
 }
 
 export function decodeFieldSchema(schema: FieldSchemaFormatV2): TreeFieldStoredSchema {

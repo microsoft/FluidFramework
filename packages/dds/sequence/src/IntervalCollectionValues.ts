@@ -9,7 +9,7 @@ import {
 	IFluidSerializer,
 } from "@fluidframework/shared-object-base/internal";
 
-import { type IntervalCollection } from "./intervalCollection.js";
+import type { IntervalCollection } from "./intervalCollection.js";
 import { ISerializableIntervalCollection } from "./intervalCollectionMapInterfaces.js";
 
 export function makeSerializable(

@@ -120,6 +120,22 @@ async function generateConfig(filePath: string, configPath: string): Promise<str
 		delete cleanConfig.parser;
 	}
 
+	// Convert numeric severities to string equivalents in rules
+	if (cleanConfig.rules) {
+		for (const [ruleName, ruleConfig] of Object.entries(cleanConfig.rules)) {
+			if (Array.isArray(ruleConfig) && ruleConfig.length > 0) {
+				const severity = ruleConfig[0];
+				if (severity === 0) ruleConfig[0] = "off";
+				else if (severity === 1) ruleConfig[0] = "warn";
+				else if (severity === 2) ruleConfig[0] = "error";
+			} else if (ruleConfig === 0 || ruleConfig === 1 || ruleConfig === 2) {
+				// Handle standalone severity values
+				const stringValue = ruleConfig === 0 ? "off" : ruleConfig === 1 ? "warn" : "error";
+				cleanConfig.rules[ruleName] = stringValue;
+			}
+		}
+	}
+
 	// Generate the new content with sorting applied
 	// Sorting at all is desirable as otherwise changes in the order of common config references may cause large diffs
 	// with little semantic meaning.

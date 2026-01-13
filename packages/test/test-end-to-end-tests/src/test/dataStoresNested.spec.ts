@@ -73,19 +73,27 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 		runtimeOptions,
 	});
 
-	async function addContainer(container: IContainer) {
+	async function addContainer(
+		container: IContainer,
+	): Promise<{ container: IContainer; dataStores: IDataStores }> {
 		containers.push(container);
 		const dataStores = (await container.getEntryPoint()) as IDataStores;
 		await provider.ensureSynchronized();
 		return { container, dataStores };
 	}
 
-	const createContainer = async () => {
+	const createContainer = async (): Promise<{
+		container: IContainer;
+		dataStores: IDataStores;
+	}> => {
 		const container = await provider.createContainer(runtimeFactory);
 		return addContainer(container);
 	};
 
-	async function addContainerInstance() {
+	async function addContainerInstance(): Promise<{
+		container: IContainer;
+		dataStores: IDataStores;
+	}> {
 		const container = await provider.loadContainer(runtimeFactory);
 		return addContainer(container);
 	}
@@ -140,7 +148,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	 * Creates a pair of containers and initializes them with initial state
 	 * @returns collab space
 	 */
-	async function initialize() {
+	async function initialize(): Promise<IDataStores> {
 		const { container, dataStores } = await createContainer();
 
 		// Create and setup a summary collection that will be used to track and wait for summaries.

@@ -227,7 +227,7 @@ export class OdspTestDriver implements ITestDriver {
 			odspEndpointName?: string;
 		},
 		api: OdspDriverApiType = OdspDriverApi,
-	) {
+	): Promise<OdspTestDriver> {
 		const tenantIndex = config?.tenantIndex ?? 0;
 		assertOdspEndpoint(config?.odspEndpointName);
 		const endpointName = config?.odspEndpointName ?? "odsp";
@@ -276,7 +276,7 @@ export class OdspTestDriver implements ITestDriver {
 		);
 	}
 
-	private static async getDriveId(siteUrl: string, tokenConfig: TokenConfig) {
+	private static async getDriveId(siteUrl: string, tokenConfig: TokenConfig): Promise<string> {
 		let driveIdP = this.driveIdPCache.get(siteUrl);
 		if (driveIdP) {
 			return driveIdP;
@@ -300,7 +300,7 @@ export class OdspTestDriver implements ITestDriver {
 		tenantName?: string,
 		userIndex?: number,
 		endpointName?: string,
-	) {
+	): Promise<OdspTestDriver> {
 		const tokenConfig: TokenConfig = {
 			...loginConfig,
 			...getMicrosoftConfiguration(),
@@ -329,7 +329,7 @@ export class OdspTestDriver implements ITestDriver {
 	private static async getStorageToken(
 		options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean },
 		config: IOdspTestLoginInfo & IPublicClientConfig,
-	) {
+	): Promise<string> {
 		const host = new URL(options.siteUrl).host;
 
 		if (options.useBrowserAuth === true) {
@@ -364,7 +364,7 @@ export class OdspTestDriver implements ITestDriver {
 	}
 
 	public readonly type = "odsp";
-	public get version() {
+	public get version(): string {
 		return this.api.version;
 	}
 	private readonly testIdToUrl = new Map<string, string>();
@@ -410,7 +410,7 @@ export class OdspTestDriver implements ITestDriver {
 		return this.testIdToUrl.get(testId)!;
 	}
 
-	public setPersistedCache(cache: IPersistedCache) {
+	public setPersistedCache(cache: IPersistedCache): void {
 		this.cache = cache;
 	}
 
@@ -439,11 +439,11 @@ export class OdspTestDriver implements ITestDriver {
 		);
 	}
 
-	private async getStorageToken(options: OdspResourceTokenFetchOptions) {
+	private async getStorageToken(options: OdspResourceTokenFetchOptions): Promise<string> {
 		return OdspTestDriver.getStorageToken(options, this.config);
 	}
 
-	private async getPushToken(options: OdspResourceTokenFetchOptions) {
+	private async getPushToken(options: OdspResourceTokenFetchOptions): Promise<string> {
 		const tokens = await OdspTestDriver.odspTokenManager.getPushTokens(
 			new URL(options.siteUrl).host,
 			this.config,
@@ -454,7 +454,7 @@ export class OdspTestDriver implements ITestDriver {
 		return tokens.accessToken;
 	}
 
-	public getUrlFromItemId(itemId: string) {
+	public getUrlFromItemId(itemId: string): string {
 		return this.api.createOdspUrl({
 			siteUrl: this.config.siteUrl,
 			driveId: this.config.driveId,

@@ -4,11 +4,11 @@
  */
 
 import { assert } from '@fluidframework/core-utils/internal';
-import {
-	type IChannelAttributes,
-	type IChannelFactory,
-	type IFluidDataStoreRuntime,
-	type IChannelServices,
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
 } from '@fluidframework/datastore-definitions/internal';
 import type { ITree } from '@fluidframework/tree';
 

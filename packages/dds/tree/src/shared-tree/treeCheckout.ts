@@ -6,12 +6,16 @@
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	UsageError,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { FluidClientVersion, FormatValidatorNoOp } from "../codec/index.js";
+import {
+	FluidClientVersion,
+	FormatValidatorNoOp,
+	type CodecWriteOptions,
+} from "../codec/index.js";
 import {
 	type Anchor,
 	type AnchorLocator,
@@ -20,7 +24,6 @@ import {
 	type AnchorSetRootEvents,
 	type ChangeFamily,
 	CommitKind,
-	type CommitMetadata,
 	type DeltaVisitor,
 	type DetachedFieldIndex,
 	type IEditableForest,
@@ -48,6 +51,8 @@ import {
 	type TreeNodeStoredSchema,
 	LeafNodeStoredSchema,
 	diffHistories,
+	type ChangeMetadata,
+	type ChangeEncodingContext,
 	type ReadOnlyDetachedFieldIndex,
 } from "../core/index.js";
 import {
@@ -69,7 +74,13 @@ import {
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
-import { Breakable, disposeSymbol, getOrCreate, type WithBreakable } from "../util/index.js";
+import {
+	Breakable,
+	disposeSymbol,
+	getOrCreate,
+	type JsonCompatibleReadOnly,
+	type WithBreakable,
+} from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -90,6 +101,7 @@ import {
 	type CustomTreeNode,
 } from "../simple-tree/index.js";
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -123,7 +135,7 @@ export interface CheckoutEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
 	 * this change is not revertible.
 	 */
-	changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+	changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 
 	/**
 	 * Fired when a new branch is created from this checkout.
@@ -292,21 +304,23 @@ export function createTreeCheckout(
 		logger?: ITelemetryLoggerExt;
 		breaker?: Breakable;
 		disposeForksAfterTransaction?: boolean;
+		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
 	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest(breaker, schema);
-	const defaultCodecOptions = {
+	const defaultCodecOptions: CodecWriteOptions = {
 		jsonValidator: FormatValidatorNoOp,
 		minVersionForCollab: FluidClientVersion.v2_0,
 	};
+	const codecOptions: CodecWriteOptions = { ...defaultCodecOptions, ...args?.codecOptions };
 	const changeFamily =
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
 			revisionTagCodec,
-			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
-			defaultCodecOptions,
+			args?.fieldBatchCodec ?? makeFieldBatchCodec(codecOptions),
+			codecOptions,
 			args?.chunkCompressionStrategy,
 			idCompressor,
 		);
@@ -441,42 +455,32 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	private createTransactionStack(
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	): SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange> {
-		return new SquashingTransactionStack(
-			branch,
-			(commits) => {
-				const revision = this.mintRevisionTag();
-				for (const transactionStep of commits) {
-					this._removedRoots.updateMajor(transactionStep.revision, revision);
-				}
-
-				const squashedChange = this.changeFamily.rebaser.compose(commits);
-				const change = this.changeFamily.rebaser.changeRevision(squashedChange, revision);
-				return tagChange(change, revision);
-			},
-			() => {
-				const disposeForks = this.disposeForksAfterTransaction
-					? trackForksForDisposal(this)
-					: undefined;
-				// When each transaction is started, make a restorable checkpoint of the current state of removed roots
-				const restoreRemovedRoots = this._removedRoots.createCheckpoint();
-				return (result) => {
-					switch (result) {
-						case TransactionResult.Abort:
-							restoreRemovedRoots();
-							break;
-						case TransactionResult.Commit:
-							if (!this.transaction.isInProgress()) {
-								// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
-								this.validateCommit(this.#transaction.branch.getHead());
-							}
-							break;
-						default:
-							unreachableCase(result);
+		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
+			const disposeForks = this.disposeForksAfterTransaction
+				? trackForksForDisposal(this)
+				: undefined;
+			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
+			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
+			return (result) => {
+				switch (result) {
+					case TransactionResult.Abort: {
+						restoreRemovedRoots();
+						break;
 					}
-					disposeForks?.();
-				};
-			},
-		);
+					case TransactionResult.Commit: {
+						if (!this.transaction.isInProgress()) {
+							// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
+							this.validateCommit(this.#transaction.branch.getHead());
+						}
+						break;
+					}
+					default: {
+						unreachableCase(result);
+					}
+				}
+				disposeForks?.();
+			};
+		});
 	}
 
 	public exportVerbose(): VerboseTree | undefined {
@@ -537,7 +541,34 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						};
 
 				let withinEventContext = true;
-				this.#events.emit("changed", { isLocal: true, kind }, getRevertible);
+
+				const metadata: ChangeMetadata = {
+					kind,
+					isLocal: true,
+					getChange: () => {
+						const context: ChangeEncodingContext = {
+							idCompressor: this.idCompressor,
+							originatorId: this.idCompressor.localSessionId,
+							revision,
+						};
+						const encodedChange = this.changeFamily.codecs
+							.resolve(4)
+							.json.encode(change, context);
+
+						assert(
+							commit.parent !== undefined,
+							0xca4 /* Expected applied commit to be parented */,
+						);
+						return {
+							version: 1,
+							revision,
+							originatorId: this.idCompressor.localSessionId,
+							change: encodedChange,
+						} satisfies SerializedChange;
+					},
+				};
+
+				this.#events.emit("changed", metadata, getRevertible);
 				withinEventContext = false;
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
@@ -560,9 +591,33 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.#events.emit("afterBatch");
 		this.editLock.unlock();
 		if (event.type === "append") {
-			event.newCommits.forEach((commit) => this.validateCommit(commit));
+			for (const commit of event.newCommits) {
+				this.validateCommit(commit);
+			}
 		}
 	};
+
+	/**
+	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
+	 */
+	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
+		if (!isSerializedChange(serializedChange)) {
+			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
+		}
+		const { revision, originatorId, change } = serializedChange;
+		if (originatorId !== this.idCompressor.localSessionId) {
+			throw new UsageError(
+				`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
+			);
+		}
+		const context: ChangeEncodingContext = {
+			idCompressor: this.idCompressor,
+			originatorId: this.idCompressor.localSessionId,
+			revision,
+		};
+		const decodedChange = this.changeFamily.codecs.resolve(4).json.decode(change, context);
+		this.applyChange(decodedChange, revision);
+	}
 
 	// Revision is the revision of the commit, if any, which caused this change.
 	private applyChange(change: SharedTreeChange, revision?: RevisionTag): void {
@@ -600,7 +655,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
 		// trimmed revisions.
 		this.withCombinedVisitor((visitor) => {
-			revisions.forEach((revision) => {
+			for (const revision of revisions) {
 				// get all the roots last created or used by the revision
 				const roots = this._removedRoots.getRootsLastTouchedByRevision(revision);
 
@@ -610,7 +665,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 
 				this._removedRoots.deleteRootsLastTouchedByRevision(revision);
-			});
+			}
 		});
 	};
 
@@ -765,6 +820,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);
+		// Branching after an unfinished transaction would expose the application to a state where its invariants may be violated.
+		if (this.transaction.isInProgress()) {
+			throw new UsageError("A view cannot be forked while it has a pending transaction.");
+		}
+
 		this.editLock.checkUnlocked("Branching");
 		const anchors = new AnchorSet();
 		const branch = this.#transaction.activeBranch.fork();
@@ -822,10 +882,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The source of the branch rebase has been disposed and cannot be rebased.",
 		);
 		this.editLock.checkUnlocked("Rebasing");
-		assert(
-			!checkout.transaction.isInProgress(),
-			0x9af /* A view cannot be rebased while it has a pending transaction */,
-		);
+
+		if (this.transaction.isInProgress()) {
+			throw new UsageError(
+				"Views cannot be rebased onto a view that has a pending transaction.",
+			);
+		}
+		if (checkout.transaction.isInProgress()) {
+			throw new UsageError("A view cannot be rebased while it has a pending transaction.");
+		}
+
 		assert(
 			!checkout.isSharedBranch,
 			0xa5d /* Shared branches cannot be rebased onto another branch. */,
@@ -851,12 +917,15 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			"The source of the branch merge has been disposed and cannot be merged.",
 		);
 		this.editLock.checkUnlocked("Merging");
-		assert(
-			!this.transaction.isInProgress(),
-			0x9b0 /* Views cannot be merged into a view while it has a pending transaction */,
-		);
-		while (checkout.transaction.isInProgress()) {
-			checkout.transaction.commit();
+		if (this.transaction.isInProgress()) {
+			throw new UsageError(
+				"Views cannot be merged into a view while it has a pending transaction.",
+			);
+		}
+		if (checkout.transaction.isInProgress()) {
+			throw new UsageError(
+				"Views with an open transaction cannot be merged into another view.",
+			);
 		}
 		this.#transaction.activeBranch.merge(checkout.#transaction.activeBranch);
 		if (disposeMerged && !checkout.isSharedBranch) {
@@ -905,7 +974,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			const tree = jsonableTreeFromCursor(cursor);
 			// This method is used for tree consistency comparison.
 			const { major, minor } = id;
-			const finalizedMajor = major !== undefined ? this.revisionTagCodec.encode(major) : major;
+			const finalizedMajor = major === undefined ? major : this.revisionTagCodec.encode(major);
 			trees.push([finalizedMajor, minor, tree]);
 		}
 		cursor.free();
@@ -1059,7 +1128,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	private validateCommit(commit: GraphCommit<SharedTreeChange>): void {
 		const validated = getOrCreate(this.#validatedCommits, commit, () => []);
 		if (validated !== true) {
-			validated.forEach((fn) => fn(commit));
+			for (const fn of validated) {
+				fn(commit);
+			}
 			this.#validatedCommits.set(commit, true);
 		}
 	}
@@ -1129,6 +1200,12 @@ class EditLock {
 			addNodeExistsConstraintOnRevert(path) {
 				editor.addNodeExistsConstraintOnRevert(path);
 			},
+			addNoChangeConstraint() {
+				editor.addNoChangeConstraint();
+			},
+			addNoChangeConstraintOnRevert() {
+				editor.addNoChangeConstraintOnRevert();
+			},
 		};
 	}
 
@@ -1187,8 +1264,12 @@ function trackForksForDisposal(checkout: TreeCheckout): () => void {
 	let disposed = false;
 	return () => {
 		assert(!disposed, 0xaa9 /* Forks may only be disposed once */);
-		forks.forEach((fork) => fork.dispose());
-		onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+		for (const fork of forks) {
+			fork.dispose();
+		}
+		for (const unsubscribe of onDisposeUnSubscribes) {
+			unsubscribe();
+		}
 		onForkUnSubscribe();
 		disposed = true;
 	};
@@ -1209,4 +1290,25 @@ function verboseFromCursor(
 		type: reader.type,
 		fields: fields as CustomTreeNode<IFluidHandle>,
 	};
+}
+
+interface SerializedChange {
+	version: 1;
+	revision: RevisionTag;
+	change: JsonCompatibleReadOnly;
+	originatorId: SessionId;
+}
+
+function isSerializedChange(value: unknown): value is SerializedChange {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+	const change = value as Partial<SerializedChange>;
+	return (
+		change.version === 1 &&
+		(change.revision === "root" || typeof change.revision === "number") &&
+		typeof change.originatorId === "string" &&
+		isStableId(change.originatorId) &&
+		change.change !== undefined
+	);
 }

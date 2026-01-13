@@ -17,12 +17,11 @@ import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { Message } from "../../shared-tree-core/messageFormatV1ToV4.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import type { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
 import { TestChange } from "../testChange.js";
 import {
 	type EncodingTestData,
+	makeDiscontinuedEncodingTestSuite,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,
@@ -150,14 +149,18 @@ describe("message codec", () => {
 			jsonValidator: FormatValidatorBasic,
 		},
 	);
-
-	makeEncodingTestSuite(
-		family,
-		testCases,
+	makeEncodingTestSuite(family, testCases, undefined, [
+		MessageFormatVersion.v3,
+		MessageFormatVersion.v4,
+		MessageFormatVersion.v6,
+		MessageFormatVersion.vSharedBranches,
+	]);
+	makeDiscontinuedEncodingTestSuite(family, [
 		undefined,
-		[MessageFormatVersion.v3, MessageFormatVersion.v4, MessageFormatVersion.vSharedBranches],
-		[undefined, MessageFormatVersion.v1, MessageFormatVersion.v2, MessageFormatVersion.v5],
-	);
+		MessageFormatVersion.v1,
+		MessageFormatVersion.v2,
+		MessageFormatVersion.v5,
+	]);
 
 	describe("dispatching codec", () => {
 		const codec = makeMessageCodec(
@@ -206,7 +209,7 @@ describe("message codec", () => {
 				originatorId,
 				changeset: {},
 				version: -1,
-			} satisfies Message);
+			});
 			assert.throws(
 				() => codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor }),
 				validateUsageError(/Unsupported version -1 encountered while decoding data/),

@@ -35,7 +35,7 @@ import type {
 	Major,
 	Minor,
 } from "./detachedFieldIndexTypes.js";
-import { makeDetachedFieldIndexCodec } from "./detachedFieldIndexCodecs.js";
+import { detachedFieldIndexCodecBuilder } from "./detachedFieldIndexCodecs.js";
 
 /**
  * Readonly interface for {@link DetachedFieldIndex}.
@@ -120,7 +120,11 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 			jsonValidator: FormatValidatorNoOp,
 			minVersionForCollab: FluidClientVersion.v2_0,
 		};
-		this.codec = makeDetachedFieldIndexCodec(revisionTagCodec, this.options, idCompressor);
+		this.codec = detachedFieldIndexCodecBuilder.build({
+			...this.options,
+			revisionTagCodec,
+			idCompressor,
+		});
 	}
 
 	public clone(): DetachedFieldIndex {
@@ -165,17 +169,17 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 		id: Delta.DetachedNodeId;
 	}> {
 		for (const [major, innerMap] of this.detachedNodeToField) {
-			if (major !== undefined) {
+			if (major === undefined) {
 				for (const [minor, { root, latestRelevantRevision }] of innerMap) {
-					yield latestRelevantRevision !== undefined
-						? { id: { major, minor }, root, latestRelevantRevision }
-						: { id: { major, minor }, root };
+					yield latestRelevantRevision === undefined
+						? { id: { minor }, root }
+						: { id: { minor }, root, latestRelevantRevision };
 				}
 			} else {
 				for (const [minor, { root, latestRelevantRevision }] of innerMap) {
-					yield latestRelevantRevision !== undefined
-						? { id: { minor }, root, latestRelevantRevision }
-						: { id: { minor }, root };
+					yield latestRelevantRevision === undefined
+						? { id: { major, minor }, root }
+						: { id: { major, minor }, root, latestRelevantRevision };
 				}
 			}
 		}
@@ -187,71 +191,6 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	public purge(): void {
 		this.detachedNodeToField.clear();
 		this.latestRelevantRevisionToFields.clear();
-	}
-
-	public updateMajor(current: Major, updated: Major): void {
-		// Update latestRelevantRevision information corresponding to `current`
-		{
-			const inner = this.latestRelevantRevisionToFields.get(current);
-			if (inner !== undefined) {
-				for (const nodeId of inner.values()) {
-					const entry = tryGetFromNestedMap(
-						this.detachedNodeToField,
-						nodeId.major,
-						nodeId.minor,
-					);
-					assert(
-						entry !== undefined,
-						0x9b8 /* Inconsistent data: missing detached node entry */,
-					);
-					setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor, {
-						...entry,
-						latestRelevantRevision: updated,
-					});
-				}
-				this.latestRelevantRevisionToFields.delete(current);
-
-				const updatedInner = this.latestRelevantRevisionToFields.get(updated);
-				if (updatedInner !== undefined) {
-					for (const [root, nodeId] of inner) {
-						updatedInner.set(root, nodeId);
-					}
-				} else {
-					this.latestRelevantRevisionToFields.set(updated, inner);
-				}
-			}
-		}
-
-		// Update the major keys corresponding to `current`
-		{
-			const innerCurrent = this.detachedNodeToField.get(current);
-			if (innerCurrent !== undefined) {
-				this.detachedNodeToField.delete(current);
-				const innerUpdated = this.detachedNodeToField.get(updated);
-				if (innerUpdated === undefined) {
-					this.detachedNodeToField.set(updated, innerCurrent);
-				} else {
-					for (const [minor, entry] of innerCurrent) {
-						assert(
-							innerUpdated.get(minor) === undefined,
-							0x7a9 /* Collision during index update */,
-						);
-						innerUpdated.set(minor, entry);
-					}
-				}
-
-				for (const [minor, entry] of innerCurrent) {
-					const entryInLatest = this.latestRelevantRevisionToFields.get(
-						entry.latestRelevantRevision,
-					);
-					assert(
-						entryInLatest !== undefined,
-						0x9b9 /* Inconsistent data: missing node entry in latestRelevantRevision */,
-					);
-					entryInLatest.set(entry.root, { major: updated, minor });
-				}
-			}
-		}
 	}
 
 	public toFieldKey(id: ForestRootId): FieldKey {

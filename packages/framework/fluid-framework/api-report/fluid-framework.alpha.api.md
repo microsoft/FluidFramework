@@ -141,6 +141,15 @@ export interface BranchableTree extends ViewableTree {
     rebase(branch: TreeBranchFork): void;
 }
 
+// @alpha @sealed
+export type ChangeMetadata = CommitMetadata & ({
+    readonly isLocal: true;
+    getChange(): JsonCompatibleReadOnly;
+} | {
+    readonly isLocal: false;
+    readonly getChange?: undefined;
+});
+
 // @alpha
 export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
@@ -150,9 +159,14 @@ export function cloneWithReplacements(root: unknown, rootKey: string, replacer: 
     value: unknown;
 }): unknown;
 
+// @alpha
+export type CodecName = string;
+
 // @alpha @input
 export interface CodecWriteOptions extends ICodecOptions {
+    readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
     readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
 }
 
 // @public
@@ -294,6 +308,12 @@ export abstract class ErasedType<out Name = unknown> {
 }
 
 // @alpha
+export function eraseSchemaDetails<TNode, ExtraSchemaProperties = unknown>(): <T extends ExtraSchemaProperties & TreeNodeSchema<string, NodeKind, TNode & TreeNode>>(schema: T) => ExtraSchemaProperties & TreeNodeSchema<T["identifier"], NodeKind, TNode & TreeNode & WithType<T["identifier"]>, never, false>;
+
+// @alpha
+export function eraseSchemaDetailsSubclassable<TNode, ExtraSchemaProperties = unknown>(): <T extends ExtraSchemaProperties & TreeNodeSchemaClass<string, NodeKind, TNode & TreeNode>>(schema: T) => ExtraSchemaProperties & TreeNodeSchemaClass<T["identifier"], NodeKind, TNode & TreeNode & WithType<T["identifier"]>, never, false>;
+
+// @alpha
 export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
 
 // @alpha
@@ -396,6 +416,7 @@ export const FluidClientVersion: {
     readonly v2_52: "2.52.0";
     readonly v2_73: "2.73.0";
     readonly v2_74: "2.74.0";
+    readonly v2_80: "2.80.0";
 };
 
 // @public
@@ -457,6 +478,9 @@ export const FormatValidatorBasic: FormatValidator_2;
 
 // @alpha
 export const FormatValidatorNoOp: FormatValidator;
+
+// @alpha
+export type FormatVersion = number | string | undefined;
 
 // @alpha
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema;
@@ -1075,6 +1099,12 @@ export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
 };
 
+// @alpha
+export interface NoChangeConstraint {
+    // (undocumented)
+    readonly type: "noChange";
+}
+
 // @public @system
 type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild> ? TBuild : never;
 
@@ -1273,7 +1303,7 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParams {
-    readonly preconditions?: readonly TransactionConstraint[];
+    readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
 // @public @sealed
@@ -1540,21 +1570,9 @@ export namespace System_TableSchema {
         readonly cells: FieldSchema_2<FieldKind_2.Required, TreeNodeSchemaClass<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Row.cells">, NodeKind.Record, TreeRecordNode<TCellSchema> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Row.cells">, NodeKind.Record, unknown>, RecordNodeInsertableData_2<TCellSchema>, true, TCellSchema, undefined, unknown>, unknown>;
     }>;
     // @system
-    export function createTableSchema<const TUserScope extends string, const TCellSchema extends ImplicitAllowedTypes, const TColumnSchema extends ColumnSchemaBase<TUserScope, TCellSchema>, const TRowSchema extends RowSchemaBase<TUserScope, TCellSchema>>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, _cellSchema: TCellSchema, columnSchema: TColumnSchema, rowSchema: TRowSchema): TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table">, NodeKind.Object, true, {
-    readonly rows: TreeNodeSchemaClass<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, TreeArrayNode<TRowSchema, [TRowSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TRowSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TRowSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, unknown>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>, true, TRowSchema, undefined>;
-    readonly columns: TreeNodeSchemaClass<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, TreeArrayNode<TColumnSchema, [TColumnSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TColumnSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TColumnSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, unknown>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>>, true, TColumnSchema, undefined>;
-    }, object & {
-    readonly rows: (InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, true, TRowSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>> | undefined) => TreeArrayNode<TRowSchema, [TRowSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TRowSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TRowSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, unknown>)> | undefined) & InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, true, TRowSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>> | undefined) => TreeArrayNode<TRowSchema, [TRowSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TRowSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TRowSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, unknown>)>;
-    readonly columns: (InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, true, TColumnSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>> | undefined) => TreeArrayNode<TColumnSchema, [TColumnSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TColumnSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TColumnSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, unknown>)> | undefined) & InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, true, TColumnSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>> | undefined) => TreeArrayNode<TColumnSchema, [TColumnSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TColumnSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TColumnSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, unknown>)>;
-    }, unknown> & (new (data: InternalTreeNode | (object & {
-        readonly rows: (InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, true, TRowSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>> | undefined) => TreeArrayNode<TRowSchema, [TRowSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TRowSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TRowSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, unknown>)> | undefined) & InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, true, TRowSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>> | undefined) => TreeArrayNode<TRowSchema, [TRowSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TRowSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TRowSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, unknown>)>;
-        readonly columns: (InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, true, TColumnSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>> | undefined) => TreeArrayNode<TColumnSchema, [TColumnSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TColumnSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TColumnSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, unknown>)> | undefined) & InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, true, TColumnSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>> | undefined) => TreeArrayNode<TColumnSchema, [TColumnSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TColumnSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TColumnSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, unknown>)>;
-    })) => TreeNode & TableSchema.Table<TUserScope, TCellSchema, TColumnSchema, TRowSchema> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table">, NodeKind, unknown>) & {
-        empty<TThis extends new (data: {
-            readonly rows: (InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, true, TRowSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>> | undefined) => TreeArrayNode<TRowSchema, [TRowSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TRowSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TRowSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, unknown>)> | undefined) & InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, true, TRowSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>> | undefined) => TreeArrayNode<TRowSchema, [TRowSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TRowSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TRowSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, unknown>)>;
-            readonly columns: (InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, true, TColumnSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>> | undefined) => TreeArrayNode<TColumnSchema, [TColumnSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TColumnSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TColumnSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, unknown>)> | undefined) & InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, true, TColumnSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>> | undefined) => TreeArrayNode<TColumnSchema, [TColumnSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TColumnSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TColumnSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, unknown>)>;
-        }) => TreeNode & TableSchema.Table<TUserScope, TCellSchema, TColumnSchema, TRowSchema> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table">, NodeKind, unknown>>(this: TThis): InstanceType<TThis>;
-    };
+    export function createTableSchema<const TUserScope extends string, const TCellSchema extends ImplicitAllowedTypes, const TColumnSchema extends ColumnSchemaBase<TUserScope, TCellSchema>, const TRowSchema extends RowSchemaBase<TUserScope, TCellSchema>>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, _cellSchema: TCellSchema, columnSchema: TColumnSchema, rowSchema: TRowSchema): {
+        create<TThis extends new (data?: InternalTreeNode | undefined) => TreeNode & TableSchema.Table<TUserScope, TCellSchema, TColumnSchema, TRowSchema> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "TableRoot">, NodeKind, unknown>>(this: TThis, initialContents?: TableSchema.TableFactoryMethodParameters<TUserScope, TCellSchema, TColumnSchema, TRowSchema> | undefined): InstanceType<TThis>;
+    } & (new (data?: InternalTreeNode | undefined) => TreeNode & TableSchema.Table<TUserScope, TCellSchema, TColumnSchema, TRowSchema> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "TableRoot">, NodeKind, unknown>) & TreeNodeSchemaCore<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "TableRoot"> & string, NodeKind, false, unknown, never, unknown> & (new (data: InternalTreeNode) => TreeNode & TableSchema.Table<TUserScope, TCellSchema, TColumnSchema, TRowSchema> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "TableRoot">, NodeKind, unknown> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "TableRoot"> & string, NodeKind, unknown>);
     // @system
     export type DefaultPropsType = ReturnType<typeof SchemaFactory.optional<[]>>;
     // @system
@@ -1565,6 +1583,15 @@ export namespace System_TableSchema {
     export interface OptionsWithSchemaFactory<TSchemaFactory extends SchemaFactoryBeta> {
         readonly schemaFactory: TSchemaFactory;
     }
+    // @system
+    export type RearrangeableList<TItemSchema extends ImplicitAllowedTypes> = TreeNode & readonly TreeNodeFromImplicitAllowedTypes<TItemSchema>[] & {
+        moveToEnd(sourceIndex: number): void;
+        moveToStart(sourceIndex: number): void;
+        moveToIndex(sourceIndex: number, destinationIndex: number): void;
+        moveRangeToEnd(startIndex: number, endIndex: number): void;
+        moveRangeToStart(startIndex: number, endIndex: number): void;
+        moveRangeToIndex(startIndex: number, endIndex: number, destinationIndex: number): void;
+    };
     // @sealed @system
     export type RowSchemaBase<TUserScope extends string = string, TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes, TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema> = ReturnType<typeof createRowSchema<TUserScope, TCellSchema, TPropsSchema>>;
     // @system
@@ -1658,6 +1685,7 @@ export namespace System_Unsafe {
 
 // @alpha
 export namespace TableSchema {
+    // @input
     export interface CellKey<TColumn extends ImplicitAllowedTypes, TRow extends ImplicitAllowedTypes> {
         readonly column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>;
         readonly row: string | number | TreeNodeFromImplicitAllowedTypes<TRow>;
@@ -1672,10 +1700,12 @@ export namespace TableSchema {
     export function column<const TUserScope extends string, const TCell extends ImplicitAllowedTypes, const TProps extends ImplicitFieldSchema>(params: System_TableSchema.CreateColumnOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell> & {
         readonly props: TProps;
     }): System_TableSchema.ColumnSchemaBase<TUserScope, TCell, TProps>;
+    // @input
     export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
         readonly columns: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[];
         readonly index?: number | undefined;
     }
+    // @input
     export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
         readonly index?: number | undefined;
         readonly rows: InsertableTreeNodeFromImplicitAllowedTypes<TRow>[];
@@ -1690,13 +1720,14 @@ export namespace TableSchema {
     export function row<const TUserScope extends string, const TCell extends ImplicitAllowedTypes, const TProps extends ImplicitFieldSchema>(params: System_TableSchema.CreateRowOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell> & {
         readonly props: TProps;
     }): System_TableSchema.RowSchemaBase<TUserScope, TCell, TProps>;
+    // @input
     export interface SetCellParameters<TCell extends ImplicitAllowedTypes, TColumn extends ImplicitAllowedTypes, TRow extends ImplicitAllowedTypes> {
         readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
         readonly key: CellKey<TColumn, TRow>;
     }
     // @sealed
     export interface Table<TUserScope extends string, TCell extends ImplicitAllowedTypes, TColumn extends System_TableSchema.ColumnSchemaBase<TUserScope, TCell>, TRow extends System_TableSchema.RowSchemaBase<TUserScope, TCell>> {
-        readonly columns: TreeArrayNode<TColumn>;
+        readonly columns: System_TableSchema.RearrangeableList<TColumn>;
         getCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
         getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
         getColumn(index: number): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
@@ -1711,7 +1742,7 @@ export namespace TableSchema {
         removeRows(index?: number | undefined, count?: number | undefined): TreeNodeFromImplicitAllowedTypes<TRow>[];
         removeRows(rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
         removeRows(rows: readonly string[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
-        readonly rows: TreeArrayNode<TRow>;
+        readonly rows: System_TableSchema.RearrangeableList<TRow>;
         setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
     }
     export function table<const TUserScope extends string, const TCell extends ImplicitAllowedTypes>(params: System_TableSchema.TableFactoryOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell>): System_TableSchema.TableSchemaBase<TUserScope, TCell, System_TableSchema.ColumnSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>, System_TableSchema.RowSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>>;
@@ -1725,6 +1756,11 @@ export namespace TableSchema {
         readonly column: TColumn;
         readonly row: TRow;
     }): System_TableSchema.TableSchemaBase<TUserScope, TCell, TColumn, TRow>;
+    // @input
+    export interface TableFactoryMethodParameters<TUserScope extends string, TCell extends ImplicitAllowedTypes, TColumn extends System_TableSchema.ColumnSchemaBase<TUserScope, TCell>, TRow extends System_TableSchema.RowSchemaBase<TUserScope, TCell>> {
+        readonly columns?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumn>> | undefined;
+        readonly rows?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRow>> | undefined;
+    }
 }
 
 // @public
@@ -1749,11 +1785,14 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ({
     rollback: true;
     value: TFailureValue;
 }) & {
-    preconditionsOnRevert?: readonly TransactionConstraint[];
+    preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 };
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @alpha @sealed
+export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
 
 // @alpha
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
@@ -1862,6 +1901,7 @@ export interface TreeBranch extends IDisposable {
 
 // @alpha @sealed
 export interface TreeBranchAlpha extends TreeBranch {
+    applyChange(change: JsonCompatibleReadOnly): void;
     readonly events: Listenable<TreeBranchEvents>;
     // (undocumented)
     fork(): TreeBranchAlpha;
@@ -1872,7 +1912,7 @@ export interface TreeBranchAlpha extends TreeBranch {
 
 // @alpha @sealed
 export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> {
-    changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+    changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 

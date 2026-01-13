@@ -7,10 +7,11 @@ import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import {
-	IContainer,
-	IFluidCodeDetails,
-	IFluidCodeDetailsComparer,
-	IFluidPackage,
+	type IContainer,
+	type IFluidCodeDetails,
+	type IFluidCodeDetailsComparer,
+	type IFluidPackage,
+	type IHostLoader,
 	isFluidPackage,
 } from "@fluidframework/container-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
@@ -59,7 +60,7 @@ describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider, apis
 	};
 	const codeDetails: IFluidCodeDetails = { package: packageV1 };
 
-	function createLoader() {
+	function createLoader(): IHostLoader {
 		const codeDetailsComparer: IFluidCodeDetailsComparer = {
 			get IFluidCodeDetailsComparer() {
 				return this;
@@ -187,7 +188,7 @@ describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider, apis
 			);
 		}
 	});
-	async function testRoundTrip() {
+	async function testRoundTrip(): Promise<void> {
 		const keys: string[] = [];
 		const maps: ISharedMap[] = [];
 		for (const container of containers) {
