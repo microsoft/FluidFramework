@@ -24,7 +24,7 @@ const routerliciousOverrides = {
 		// Allow finally blocks in promise chains.
 		"promise/catch-or-return": ["error", { allowFinally: true }],
 
-		// Import ordering is handled by Prettier.
+		// Import ordering is handled by the formatter.
 		"import-x/order": "off",
 
 		// This rule is too strict for server code.
@@ -37,7 +37,6 @@ const routerliciousOverrides = {
 		// TODO: remove usages of deprecated APIs and remove this override
 		"import-x/no-deprecated": "warn",
 
-		// Build-tools uses @deprecated internally for deprecation warnings.
 		// Keep as warning to track usage, but don't fail the build.
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
@@ -46,6 +45,7 @@ const routerliciousOverrides = {
 		"jsdoc/require-param-description": "off",
 
 		// TSDoc hyphen rule.
+		// TODO: Change this to error.
 		"tsdoc/syntax": "warn",
 
 		// Unicorn prefer-type-error is stylistic.
@@ -64,7 +64,7 @@ const routerliciousOverrides = {
 
 /**
  * The base ESLint flat config from eslint-config-fluid with routerlicious overrides.
- * Uses minimalDeprecated config (what most packages use).
+ * Uses minimalDeprecated config (what most routerlicious packages use).
  */
 export const baseConfig = [...minimalDeprecated, routerliciousOverrides];
 
