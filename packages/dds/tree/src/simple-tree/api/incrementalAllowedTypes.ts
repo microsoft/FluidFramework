@@ -3,21 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import type { FieldKey, TreeNodeSchemaIdentifier } from "../../core/index.js";
 import { getTreeNodeSchemaPrivateData, type AllowedTypesFull } from "../core/index.js";
-import { isObjectNodeSchema } from "../node-kinds/index.js";
-import type { TreeSchema } from "./configuration.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+import type { TreeSchema } from "../treeSchema.js";
 import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js";
 import { oneFromIterable } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { FieldKey } from "../../core/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
- * A symbol when present in the {@link AnnotatedAllowedTypes.metadata.custom} property as true, opts in the allowed
+ * A symbol when present in the {@link AnnotatedAllowedTypes.metadata}'s `custom` property as true, opts in the allowed
  * types to incremental summary optimization.
  * These allowed types will be optimized during summary such that if they don't change across summaries,
  * they will not be encoded and their content will not be included in the summary that is uploaded to the service.
  * @remarks
- * See {@link getShouldIncrementallySummarizeAllowedTypes} for more details.
+ * See {@link incrementalEncodingPolicyForAllowedTypes} for more details.
  *
  * Use {@link SchemaStaticsBeta.types} to add this metadata to allowed types in a schema.
  * @example
@@ -29,6 +30,7 @@ import { assert } from "@fluidframework/core-utils/internal";
  *   }),
  * }) {}
  * ```
+ * @alpha
  */
 export const incrementalSummaryHint: unique symbol = Symbol("IncrementalSummaryHint");
 
@@ -44,31 +46,30 @@ function isIncrementalSummaryHintInAllowedTypes(allowedTypes: AllowedTypesFull):
 }
 
 /**
- * This helper function {@link getShouldIncrementallySummarizeAllowedTypes} can be used to generate a callback function
- * of type {@link IncrementalEncodingPolicy}.
- * This callback can be passed as the value for {@link SharedTreeOptionsInternal.shouldEncodeFieldIncrementally} parameter
+ * This helper function {@link incrementalEncodingPolicyForAllowedTypes} can be used to generate a callback function
+ * of type {@link IncrementalEncodingPolicy}. It determines if each {@link AllowedTypes} in a schema should be
+ * incrementally summarized.
+ * This callback can be passed as the value for {@link SharedTreeOptions.shouldEncodeIncrementally} parameter
  * when creating the tree.
- * It will be called for each {@link AllowedTypes} in the schema to determine if it should be incrementally summarized.
  *
  * @param rootSchema - The schema for the root of the tree.
- * @returns A callback function of type {@link IncrementalEncodingPolicy} which can be used to determine if a field
- * should be incrementally summarized based on whether it is an allowed types with the
- * {@link incrementalAllowedTypesMetadata} metadata.
+ * @returns A callback function of type {@link IncrementalEncodingPolicy} which determines if allowed types should
+ * be incrementally summarized based on whether they have opted in via the {@link incrementalSummaryHint} metadata.
  *
  * @remarks
  * This only works for forest type {@link ForestTypeOptimized} and compression strategy
- * {@link TreeCompressionStrategyExtended.CompressedIncremental}.
+ * {@link TreeCompressionStrategy.CompressedIncremental}.
  *
- * The {@link incrementalAllowedTypesMetadata} will be replaced with a specialized metadata property once the
+ * @privateRemarks
+ * The {@link incrementalSummaryHint} will be replaced with a specialized metadata property once the
  * incremental summary feature and APIs are stabilized.
+ *
+ * @alpha
  */
-export function getShouldIncrementallySummarizeAllowedTypes(
+export function incrementalEncodingPolicyForAllowedTypes(
 	rootSchema: TreeSchema,
 ): IncrementalEncodingPolicy {
-	return (
-		targetNodeIdentifier: TreeNodeSchemaIdentifier | undefined,
-		targetFieldKey: FieldKey,
-	) => {
+	return (targetNodeIdentifier: string | undefined, targetFieldKey?: string) => {
 		if (targetNodeIdentifier === undefined) {
 			// Root fields cannot be allowed types, so we don't incrementally summarize them.
 			return false;
@@ -85,7 +86,14 @@ export function getShouldIncrementallySummarizeAllowedTypes(
 		}
 
 		if (isObjectNodeSchema(targetNode)) {
-			const targetPropertyKey = targetNode.storedKeyToPropertyKey.get(targetFieldKey);
+			if (targetFieldKey === undefined) {
+				throw new UsageError(
+					`Field key must be provided for object or array node '${targetNodeIdentifier}'`,
+				);
+			}
+			const targetPropertyKey = targetNode.storedKeyToPropertyKey.get(
+				targetFieldKey as FieldKey,
+			);
 			if (targetPropertyKey !== undefined) {
 				const fieldSchema = targetNode.fields.get(targetPropertyKey);
 				if (fieldSchema !== undefined) {
@@ -93,6 +101,12 @@ export function getShouldIncrementallySummarizeAllowedTypes(
 				}
 			}
 			return false;
+		}
+
+		if (targetFieldKey !== undefined && !isArrayNodeSchema(targetNode)) {
+			throw new UsageError(
+				`Field key must not be provided for leaf, map or record node '${targetNodeIdentifier}'`,
+			);
 		}
 
 		const allowedTypes = oneFromIterable(

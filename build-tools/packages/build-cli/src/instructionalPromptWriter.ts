@@ -6,7 +6,7 @@
 import { StringBuilder } from "@rushstack/node-core-library";
 import chalk from "picocolors";
 
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import { MonoRepoKind, indentString } from "./library/index.js";
 import type { CommandLogger } from "./logging.js";
 import type { ReleaseGroup, ReleasePackage } from "./releaseGroups.js";
@@ -52,19 +52,19 @@ interface Section {
  */
 export const ADOPipelineLinks = new Map<ReleasePackage | ReleaseGroup | undefined, string>([
 	[
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		MonoRepoKind.Client,
 		"https://dev.azure.com/fluidframework/internal/_build?definitionId=12",
 	],
 	[
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		MonoRepoKind.Server,
 		"https://dev.azure.com/fluidframework/internal/_build?definitionId=30",
 	],
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	[MonoRepoKind.Azure, "https://dev.azure.com/fluidframework/internal/_build?definitionId=85"],
 	[
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		MonoRepoKind.BuildTools,
 		"https://dev.azure.com/fluidframework/internal/_build?definitionId=14",
 	],

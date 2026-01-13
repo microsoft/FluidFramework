@@ -119,7 +119,7 @@ export async function createContainerAndExecute(
 	timeout?: number,
 	disableNetworkFetch: boolean = false,
 ): Promise<string> {
-	const fn = async () => {
+	const fn = async (): Promise<string> => {
 		if (disableNetworkFetch) {
 			global.fetch = async () => {
 				throw new Error("Network fetch is not allowed");

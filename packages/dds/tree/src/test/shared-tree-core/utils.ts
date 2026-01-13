@@ -20,9 +20,7 @@ import {
 } from "../../codec/index.js";
 import {
 	RevisionTagCodec,
-	tagChange,
 	TreeStoredSchemaRepository,
-	type GraphCommit,
 	type RevisionTag,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
@@ -86,7 +84,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/sharedTree.js";
 
-const codecOptions: CodecWriteOptions = {
+export const testCodecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: currentVersion,
 };
@@ -97,11 +95,13 @@ class MockSharedObjectHandle extends MockHandle<ISharedObject> implements IShare
 	}
 }
 
-export function createTree<TIndexes extends readonly Summarizable[]>(
-	indexes: TIndexes,
-	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
-	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
-): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
+export function createTree<TIndexes extends readonly Summarizable[]>(options: {
+	indexes: TIndexes;
+	resubmitMachine?: ResubmitMachine<DefaultChangeset>;
+	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>;
+	codecOptions?: CodecWriteOptions;
+}): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
+	const { indexes, resubmitMachine, enricher, codecOptions } = options;
 	// This could use TestSharedTreeCore then return its kernel instead of using these mocks, but that would depend on far more code than needed (including other mocks).
 
 	// Summarizer requires ISharedObjectHandle. Specifically it looks for `bind` method.
@@ -128,6 +128,7 @@ export function createTree<TIndexes extends readonly Summarizable[]>(
 		TreeCompressionStrategy.Uncompressed,
 		createIdCompressor(),
 		new TreeStoredSchemaRepository(),
+		codecOptions ?? testCodecOptions,
 		resubmitMachine,
 		enricher,
 	)[0];
@@ -157,7 +158,9 @@ export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>
 export function makeTestDefaultChangeFamily(options?: {
 	idCompressor?: IIdCompressor;
 	chunkCompressionStrategy?: TreeCompressionStrategy;
+	codecOptions?: CodecWriteOptions;
 }) {
+	const codecOptions = options?.codecOptions ?? testCodecOptions;
 	return new DefaultChangeFamily(
 		makeModularChangeCodecFamily(
 			fieldKindConfigurations,
@@ -166,6 +169,7 @@ export function makeTestDefaultChangeFamily(options?: {
 			codecOptions,
 			options?.chunkCompressionStrategy ?? TreeCompressionStrategy.Compressed,
 		),
+		codecOptions,
 	);
 }
 
@@ -208,6 +212,7 @@ function createTreeInner(
 	chunkCompressionStrategy: TreeCompressionStrategy,
 	idCompressor: IIdCompressor,
 	schema: TreeStoredSchemaRepository,
+	codecOptions: CodecWriteOptions = testCodecOptions,
 	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
 	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	editor?: () => DefaultEditBuilder,
@@ -287,6 +292,7 @@ export class TestSharedTreeCore extends SharedObject {
 			chunkCompressionStrategy,
 			runtime.idCompressor,
 			schema,
+			testCodecOptions,
 			resubmitMachine,
 			enricher,
 			() => this.transaction.activeBranchEditor,
@@ -294,16 +300,7 @@ export class TestSharedTreeCore extends SharedObject {
 
 		this.transaction = new SquashingTransactionStack(
 			this.getLocalBranch(),
-			(commits: GraphCommit<DefaultChangeset>[]) => {
-				const revision = this.kernel.mintRevisionTag();
-				return tagChange(
-					this.changeFamily.rebaser.changeRevision(
-						this.changeFamily.rebaser.compose(commits),
-						revision,
-					),
-					revision,
-				);
-			},
+			this.kernel.mintRevisionTag,
 		);
 
 		const commitEnricher = this.kernel.getCommitEnricher("main");

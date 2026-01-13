@@ -4,7 +4,6 @@
  */
 
 export type {
-	TreeSchema,
 	ITreeViewConfiguration,
 	ITreeConfigurationOptions,
 } from "./configuration.js";
@@ -29,6 +28,7 @@ export { asTreeViewAlpha } from "./tree.js";
 export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
+	scoped,
 	type ScopedSchemaName,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
@@ -38,6 +38,10 @@ export {
 } from "./schemaFactory.js";
 export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
 export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+export {
+	eraseSchemaDetails,
+	eraseSchemaDetailsSubclassable,
+} from "./eraseSchemaDetails.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
@@ -149,7 +153,9 @@ export {
 
 export {
 	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	type NodeInDocumentConstraint,
+	type NoChangeConstraint,
 	type RunTransactionParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -161,15 +167,14 @@ export {
 } from "./transactionTypes.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
-export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
 export {
-	getShouldIncrementallySummarizeAllowedTypes,
+	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 } from "./incrementalAllowedTypes.js";
 export {
-	encodeSimpleSchema,
-	decodeSimpleSchema,
+	encodeSchemaCompatibilitySnapshot,
+	decodeSchemaCompatibilitySnapshot,
 } from "./simpleSchemaCodec.js";
 export {
 	exportCompatibilitySchemaSnapshot,

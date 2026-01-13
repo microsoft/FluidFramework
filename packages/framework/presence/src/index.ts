@@ -44,13 +44,8 @@ export {
 	getPresenceFromDataStoreContext,
 } from "./getPresence.js";
 
-export {
-	getPresenceViaDataObject,
-	type ExperimentalPresenceDO,
-	ExperimentalPresenceManager,
-} from "./datastorePresenceManagerFactory.js";
-
 export type {
+	KeySchemaValidator,
 	LatestMap,
 	LatestMapArguments,
 	LatestMapArgumentsRaw,

@@ -106,14 +106,14 @@ function testDecode(
 	// Check decode
 	const result = decode(
 		chunk,
-		idCompressor !== undefined
+		idCompressor === undefined
 			? {
-					idCompressor,
-					originatorId: idCompressor.localSessionId,
-				}
-			: {
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
+				}
+			: {
+					idCompressor,
+					originatorId: idCompressor.localSessionId,
 				},
 		incrementalDecoder,
 	);
@@ -143,14 +143,14 @@ function testDecode(
 		// Instead check that it works properly:
 		const parsedResult = decode(
 			parsed,
-			idCompressor !== undefined
+			idCompressor === undefined
 				? {
-						idCompressor,
-						originatorId: idCompressor.localSessionId,
-					}
-				: {
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
+					}
+				: {
+						idCompressor,
+						originatorId: idCompressor.localSessionId,
 					},
 			incrementalDecoder,
 		);
@@ -168,14 +168,16 @@ function testDecode(
  */
 function assertJsonish(data: unknown, stack: Set<unknown>): void {
 	switch (typeof data) {
-		case "number":
+		case "number": {
 			assert(Number.isFinite(data));
 			assert(!Object.is(data, -0));
 			return;
+		}
 		case "string":
 		// TODO: could test that string is valid unicode here.
-		case "boolean":
+		case "boolean": {
 			return;
+		}
 		case "object": {
 			if (data === null) {
 				return;
@@ -206,7 +208,8 @@ function assertJsonish(data: unknown, stack: Set<unknown>): void {
 				stack.delete(data);
 			}
 		}
-		default:
+		default: {
 			fail();
+		}
 	}
 }

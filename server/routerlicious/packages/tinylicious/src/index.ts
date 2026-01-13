@@ -5,7 +5,7 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import * as path from "node:path";
 
 import { runService } from "@fluidframework/server-services-shared";
 import { configureLogging } from "@fluidframework/server-services-utils";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ICacheEntry } from "@fluidframework/driver-definitions/internal";
+import type { ICacheEntry } from "@fluidframework/driver-definitions/internal";
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 import { openDB } from "idb";
 
@@ -23,17 +23,17 @@ class DateMock {
 	// The current time being used by the mock
 	public static mockTimeMs: number = 0;
 
-	public static now() {
+	public static now(): number {
 		return DateMock.mockTimeMs;
 	}
 
-	public getTime() {
+	public getTime(): number {
 		return DateMock.mockTimeMs;
 	}
 }
 
 // Sets up a mock date time for the current test. Returns a function that should be called to reset the environment
-function setupDateMock(startMockTime: number) {
+function setupDateMock(startMockTime: number): () => void {
 	const realDate = window.Date;
 	DateMock.mockTimeMs = startMockTime;
 	(window.Date as any) = DateMock;
@@ -64,7 +64,7 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 		maxCacheItemAge?: number;
 
 		partitionKey?: string | null;
-	}) {
+	}): FluidCache {
 		return new FluidCache({
 			partitionKey: config?.partitionKey ?? mockPartitionKey,
 			maxCacheItemAge: config?.maxCacheItemAge ?? 3 * 24 * 60 * 60 * 1000,
@@ -182,6 +182,37 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 			expect(await fluidCache.get(docId1Entry1)).toBeUndefined();
 			expect(await fluidCache.get(docId2Entry1)).not.toBeUndefined();
 			expect(await fluidCache.get(docId1Entry2)).toBeUndefined();
+		});
+
+		it("removes a specific entry without affecting other entries for the same document", async () => {
+			const fluidCache = getFluidCache();
+
+			const docId1Entry1 = getMockCacheEntry("docId1Entry1", {
+				docId: "docId1",
+			});
+			const docId1Entry2 = getMockCacheEntry("docId1Entry2", {
+				docId: "docId1",
+			});
+			const docId2Entry1 = getMockCacheEntry("docId2Entry1", {
+				docId: "docId2",
+			});
+
+			await fluidCache.put(docId1Entry1, { data: "entry1" });
+			await fluidCache.put(docId1Entry2, { data: "entry2" });
+			await fluidCache.put(docId2Entry1, { data: "entry3" });
+
+			// Verify all entries exist
+			expect(await fluidCache.get(docId1Entry1)).toEqual({ data: "entry1" });
+			expect(await fluidCache.get(docId1Entry2)).toEqual({ data: "entry2" });
+			expect(await fluidCache.get(docId2Entry1)).toEqual({ data: "entry3" });
+
+			// Remove only one specific entry from docId1
+			await fluidCache.removeEntry(docId1Entry1);
+
+			// Verify only the specified entry was removed
+			expect(await fluidCache.get(docId1Entry1)).toBeUndefined();
+			expect(await fluidCache.get(docId1Entry2)).toEqual({ data: "entry2" }); // Still exists
+			expect(await fluidCache.get(docId2Entry1)).toEqual({ data: "entry3" }); // Still exists
 		});
 
 		// The tests above test the public API of Fluid Cache.

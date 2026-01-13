@@ -497,9 +497,33 @@ export class ChannelCollection
 				continue;
 			}
 
-			// If a non-local operation then go and create the object, otherwise mark it as officially attached.
+			// Check for collision with local (not yet live / known to other clients) DataStore
+			// This is not a DataCorruption case if we crash the container before the DataStore becomes visible to others (it's a DataProcessingError instead)
+			//
+			// POSSIBLE CAUSES:
+			// - Something with ID creation, e.g. a bug in shortID logic, or somehow a generated ID matches an existing alias.
+			// - An invalid operation by the application or service where an existing container is returned to a new container attach call,
+			// resulting in duplicate accounting for objects that were supposed to be local-only. e.g. if the application patches in custom
+			// logic not supported by Fluid's API.
+			if (this.contexts.getUnbound(attachMessage.id) !== undefined) {
+				const error = DataProcessingError.create(
+					"Local DataStore matches remote DataStore id",
+					"DataStoreAttach",
+					envelope,
+					{ ...tagCodeArtifacts({ dataStoreId: attachMessage.id }) },
+				);
+				throw error;
+			}
+
+			// Check for collision with already processed (attaching/attached or aliased) DataStore
+			// This is presumed to indicate a corrupted op stream, where we'd expect all future sessions to fail here too.
+			//
+			// POSSIBLE CAUSES:
+			// - A bug in the service or driver that results in ops being duplicated
+			// - Similar to above, an existing container being returned to a new container attach call,
+			// where the DataStore in question was already made locally visible before container attach.
+			// (Perhaps future sessions would not fail in this case, but it's hypothetical and hard to differentiate)
 			if (this.alreadyProcessed(attachMessage.id)) {
-				// TODO: dataStoreId may require a different tag from PackageData #7488
 				const error = new DataCorruptionError(
 					// pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
 					"Duplicate DataStore created with existing id",
@@ -774,7 +798,7 @@ export class ChannelCollection
 			| OutboundContainerRuntimeAttachMessage
 			| ContainerRuntimeAliasMessage,
 		localOpMetadata: unknown,
-		squash: boolean | undefined,
+		squash: boolean,
 	): void => {
 		switch (message.type) {
 			case ContainerMessageType.Attach:
@@ -794,7 +818,7 @@ export class ChannelCollection
 	protected readonly resubmitDataStoreOp = (
 		envelope: IEnvelope<FluidDataStoreMessage>,
 		localOpMetadata: unknown,
-		squash: boolean | undefined,
+		squash: boolean,
 	): void => {
 		const context = this.contexts.get(envelope.address);
 		// If the data store has been deleted, log an error and throw an error. If there are local changes for a
@@ -1902,7 +1926,7 @@ export class ComposableChannelCollection
 		type: string,
 		content: unknown,
 		localOpMetadata: unknown,
-		squash?: boolean,
+		squash: boolean,
 	): void {
 		// If the cast is incorrect and type is not one of the three supported,
 		// reSubmitContainerMessage will assert.

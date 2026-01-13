@@ -9,9 +9,9 @@ import { parse } from "semver";
 
 import { setVersion } from "@fluid-tools/build-infrastructure";
 import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { updateChangelogs } from "../../../library/changelogs.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { canonicalizeChangesets } from "../../../library/changesets.js";
 import { BaseCommandWithBuildProject } from "../../../library/index.js";
 
@@ -28,7 +28,7 @@ export default class GenerateChangeLogCommand extends BaseCommandWithBuildProjec
 	static readonly description =
 		"Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!";
 
-	static readonly aliases = ["vnext:generate:changelogs"];
+	static readonly aliases = ["generate:changelog"];
 
 	static readonly flags = {
 		releaseGroup: releaseGroupNameFlag({ required: true }),

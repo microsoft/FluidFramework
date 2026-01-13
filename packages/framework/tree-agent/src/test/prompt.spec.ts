@@ -9,20 +9,20 @@ import * as path from "node:path";
 
 import {
 	independentView,
-	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableField,
 } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
+import type { TreeView } from "../api.js";
 import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { getPrompt } from "../prompt.js";
 import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { Subtree } from "../subtree.js";
-import type { TreeView } from "../api.js";
 
-const sf = new SchemaFactory("test");
+const sf = new SchemaFactoryAlpha("test");
 
 describe("Prompt generation", () => {
 	it("gives instructions for editing if an editing tool is supplied", () => {
@@ -144,8 +144,8 @@ describe("Prompt generation", () => {
 				subtree: new Subtree(view),
 				editToolName: "EditTreeTool",
 			});
-			assert.ok(prompt.includes("name: string; // readonly"));
-			assert.ok(prompt.includes("testProperty: string; // readonly"));
+			assert.ok(prompt.includes("    readonly name: string;"));
+			assert.ok(prompt.includes("    readonly testProperty: string;"));
 		}
 	});
 
@@ -189,7 +189,7 @@ describe("Prompt generation", () => {
 		{
 			const view = getView(
 				sf.object("ObjectWithMap", {
-					map: sf.map(sf.string), // eslint-disable-line unicorn/no-array-callback-reference
+					map: sf.map(sf.string),
 				}),
 				{ map: {} },
 			);
@@ -199,6 +199,38 @@ describe("Prompt generation", () => {
 			});
 			assert.ok(prompt.includes("# Editing Maps"));
 		}
+	});
+
+	it("sanitizes schema names that contain invalid characters", () => {
+		class InvalidlyNamedObject extends sf.object("Test-Object!", { value: sf.string }) {}
+
+		const view = getView(InvalidlyNamedObject, { value: "test" });
+		const prompt = getPrompt({
+			subtree: new Subtree(view),
+			editToolName: "EditTreeTool",
+		});
+
+		assert.ok(prompt.includes("Test_Object_"));
+		assert.ok(
+			!prompt.includes("Test-Object!"),
+			"The unsanitized identifier should not show up in the prompt",
+		);
+	});
+
+	it("sanitizes schema names that have leading digit", () => {
+		class LeadingDigit extends sf.object("1TestObject", { value: sf.string }) {}
+
+		const view = getView(LeadingDigit, { value: "test" });
+		const prompt = getPrompt({
+			subtree: new Subtree(view),
+			editToolName: "EditTreeTool",
+		});
+
+		assert.ok(prompt.includes("_1TestObject"));
+		assert.ok(
+			!prompt.includes("test.1TestObject"),
+			"The unsanitized identifier should not show up in the prompt",
+		);
 	});
 });
 
@@ -211,12 +243,17 @@ describe("Prompt snapshot", () => {
 	});
 
 	it("with all options enabled", () => {
-		class TestMap extends sf.map("TestMap", sf.number) {
+		class TestMap extends sf.mapAlpha("TestMap", sf.number, {
+			metadata: { description: "A test map" },
+		}) {
 			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
 				methods.expose(
 					TestMap,
 					"length",
-					buildFunc({ returns: methods.instanceOf(NumberValue) }),
+					buildFunc({
+						returns: methods.instanceOf(NumberValue),
+						description: "Gets the length of the map",
+					}),
 				);
 			}
 
@@ -225,7 +262,11 @@ describe("Prompt snapshot", () => {
 					schema: z.string(),
 					readOnly: true,
 				});
-				properties.exposeProperty(TestMap, "property", { schema: z.string(), readOnly: true });
+				properties.exposeProperty(TestMap, "property", {
+					schema: z.string(),
+					readOnly: true,
+					description: "A test property",
+				});
 			}
 
 			public readonly testProperty: string = "testProperty";
@@ -316,7 +357,7 @@ function getView<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	initialTree: InsertableField<TSchema>,
 ): TreeView<TSchema> {
-	const view = independentView(new TreeViewConfiguration({ schema }), {});
+	const view = independentView(new TreeViewConfiguration({ schema }));
 	view.initialize(initialTree);
 	return view;
 }

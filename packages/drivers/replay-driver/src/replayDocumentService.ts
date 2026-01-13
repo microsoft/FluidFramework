@@ -51,7 +51,7 @@ export class ReplayDocumentService
 		super();
 	}
 
-	public dispose() {}
+	public dispose(): void {}
 
 	// TODO: Issue-2109 Implement detach container api or put appropriate comment.
 	public get resolvedUrl(): IResolvedUrl {

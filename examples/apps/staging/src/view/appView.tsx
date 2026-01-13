@@ -13,11 +13,11 @@ export interface IAppViewProps {
 	groceryList: ISuggestionGroceryList;
 }
 
-export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps) => {
+export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps): JSX.Element => {
 	const [inStagingMode, setInStagingMode] = useState<boolean>(groceryList.inStagingMode);
 
 	useEffect(() => {
-		const handleStagingModeChanged = () => {
+		const handleStagingModeChanged = (): void => {
 			setInStagingMode(groceryList.inStagingMode);
 		};
 		groceryList.events.on("enterStagingMode", handleStagingModeChanged);
@@ -30,10 +30,10 @@ export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps) => {
 
 	let actions;
 	if (inStagingMode) {
-		const onAcceptChanges = () => {
+		const onAcceptChanges = (): void => {
 			groceryList.acceptSuggestions();
 		};
-		const onRejectChanges = () => {
+		const onRejectChanges = (): void => {
 			groceryList.rejectSuggestions();
 		};
 		actions = (

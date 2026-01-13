@@ -149,3 +149,64 @@ export function brandConst<const T>(
 ) => T2 & T {
 	return <T2>() => value as T2 & T;
 }
+
+/**
+ * Removes a type brand from a branded value.
+ * @remarks
+ * This is useful when trying to do an exhaustive switch over a union of branded types,
+ * which for some reason fails if the brand is not removed from the "case" entries.
+ */
+export function unbrand<const T extends BrandedType<unknown, unknown>>(
+	value: T,
+): ValueFromBranded<T> {
+	return value as never;
+}
+
+/**
+ * Make an enum like object using {@link Brand} to brand the values.
+ * @remarks
+ * This has stricter typing than TypeScript built in enums since it does not allow implicit assignment of `number` to enums with a numeric value.
+ * It also blocks implicit conversions of individual constants to the enum type:
+ * such cases must use {@link brand} or get the branded value from the enum instead.
+ *
+ * One limitation is that narrowing does not work in switch statements:
+ * the values in each case can use {@link unbrand} to work around this.
+ *
+ * This object does not provide {@link https://www.typescriptlang.org/docs/handbook/enums.html#reverse-mappings | reverse mappings}.
+ *
+ * @example
+ * ```typescript
+ * const TestA = strictEnum("TestA", {
+ * 	a: 1,
+ * 	b: 2,
+ * });
+ * type TestA = Values<typeof TestA>;
+ *
+ * function switchUnbrand(x: TestA) {
+ * 	switch (x) {
+ * 		case unbrand(TestA.a):
+ * 			return "a";
+ * 		case unbrand(TestA.b):
+ * 			return "b";
+ * 		default:
+ * 			unreachableCase(x);
+ * 	}
+ * }
+ * ```
+ */
+export function strictEnum<const T, const TBrand>(
+	name: TBrand,
+	entries: T,
+): { readonly [Property in keyof T]: Brand<T[Property], TBrand> } {
+	return entries as {
+		readonly [Property in keyof T]: Brand<T[Property], TBrand>;
+	};
+}
+
+/**
+ * Extracts the values of an object type as a union.
+ * @remarks
+ * Like `keyof`	except for values.
+ * This is useful for extracting the value types of enums created with {@link strictEnum}.
+ */
+export type Values<T> = T[keyof T];

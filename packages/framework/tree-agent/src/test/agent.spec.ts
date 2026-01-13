@@ -24,7 +24,7 @@ const editToolName = "EditTreeTool";
 
 describe("Semantic Agent", () => {
 	it("returns messages from queries", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model: SharedTreeChatModel = {
 			async query(message) {
@@ -37,7 +37,7 @@ describe("Semantic Agent", () => {
 	});
 
 	it("can apply an edit from a query", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const code = `context.root = "Edited";`;
 		const model: SharedTreeChatModel = {
@@ -56,7 +56,7 @@ describe("Semantic Agent", () => {
 	});
 
 	it("can apply multiple edits from a query", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		let editCount = 0;
 		const firstEdit = `
@@ -87,7 +87,7 @@ describe("Semantic Agent", () => {
 	});
 
 	it("does not allow editing if edit function name is not provided", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model: SharedTreeChatModel = {
 			async query({ edit }) {
@@ -103,7 +103,7 @@ describe("Semantic Agent", () => {
 	});
 
 	it("handles malformed edit code", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		let callCount = 0;
 		const model: SharedTreeChatModel = {
@@ -126,7 +126,7 @@ describe("Semantic Agent", () => {
 	});
 
 	it("handles edit code that causes runtime errors", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		let callCount = 0;
 		const model: SharedTreeChatModel = {
@@ -154,7 +154,7 @@ describe("Semantic Agent", () => {
 	});
 
 	it("limits the number of sequential edits", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		let callCount = 0;
 		const model: SharedTreeChatModel = {
@@ -186,7 +186,7 @@ describe("Semantic Agent", () => {
 	});
 
 	it("does not allow editing after query completes", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		let stolenEditCallback: ((js: string) => Promise<EditResult>) | undefined;
 		const model: SharedTreeChatModel = {
@@ -208,7 +208,7 @@ describe("Semantic Agent", () => {
 	});
 
 	it("does not roll back if a failed edit is followed by a successful edit in the same query", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model: SharedTreeChatModel = {
 			editToolName,
@@ -228,7 +228,7 @@ describe("Semantic Agent", () => {
 
 	it("rolls back if a successful edit is followed by a failed edit in the same query", async () => {
 		// First edit succeeds, but the second fails, so the tree should remain unchanged.
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		const model: SharedTreeChatModel = {
 			editToolName,
@@ -249,7 +249,7 @@ describe("Semantic Agent", () => {
 	});
 
 	it("supplies the system prompt as context", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("X");
 		const contexts: string[] = [];
 		const model: SharedTreeChatModel = {
@@ -282,9 +282,9 @@ describe("Semantic Agent", () => {
 			startColor: Color,
 			endColor: Color,
 		}) {}
-		const view = independentView(new TreeViewConfiguration({ schema: Gradient }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: Gradient }));
 		view.initialize({ startColor: { r: 0, g: 0, b: 0 }, endColor: { r: 0, g: 0, b: 0 } });
-		const code = `const white = context.create.Color({ r: 255, g: 255, b: 255 }); 
+		const code = `const white = context.create.Color({ r: 255, g: 255, b: 255 });
 context.root = context.create.Gradient({ startColor: white, endColor: white });`;
 		const model: SharedTreeChatModel = {
 			editToolName,
@@ -305,7 +305,7 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 			class Person extends sfLocal.object("Person", {
 				name: sfLocal.required(sfLocal.string),
 			}) {}
-			const view = independentView(new TreeViewConfiguration({ schema: Person }), {});
+			const view = independentView(new TreeViewConfiguration({ schema: Person }));
 			view.initialize(new Person({ name: "Alice" }));
 			const model: SharedTreeChatModel = {
 				editToolName,
@@ -326,7 +326,7 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 				name: sfLocal.required(sfLocal.string),
 				age: sfLocal.required(sfLocal.number),
 			}) {}
-			const view = independentView(new TreeViewConfiguration({ schema: Person }), {});
+			const view = independentView(new TreeViewConfiguration({ schema: Person }));
 			view.initialize(new Person({ name: "Alice", age: 25 }));
 			const model: SharedTreeChatModel = {
 				editToolName,
@@ -349,7 +349,7 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 				value: sfLocal.required(sfLocal.string),
 			}) {}
 			class Parent extends sfLocal.object("Parent", { child: Child }) {}
-			const view = independentView(new TreeViewConfiguration({ schema: Parent }), {});
+			const view = independentView(new TreeViewConfiguration({ schema: Parent }));
 			view.initialize(new Parent({ child: new Child({ value: "Initial" }) }));
 			const model: SharedTreeChatModel = {
 				editToolName,
@@ -372,7 +372,7 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 				value: sfLocal.required(sfLocal.string),
 			}) {}
 			class Parent extends sfLocal.object("Parent", { child: Child }) {}
-			const view = independentView(new TreeViewConfiguration({ schema: Parent }), {});
+			const view = independentView(new TreeViewConfiguration({ schema: Parent }));
 			view.initialize(new Parent({ child: new Child({ value: "Initial" }) }));
 			const model: SharedTreeChatModel = {
 				editToolName,
@@ -392,7 +392,7 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 		it("provides working isArray helper", async () => {
 			const sfLocal = new SchemaFactory("TestIsArray");
 			const NumberArray = sfLocal.array(sfLocal.number);
-			const view = independentView(new TreeViewConfiguration({ schema: NumberArray }), {});
+			const view = independentView(new TreeViewConfiguration({ schema: NumberArray }));
 			view.initialize([1, 2, 3]);
 			const model: SharedTreeChatModel = {
 				editToolName,
@@ -412,7 +412,7 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 		it("provides working isMap helper", async () => {
 			const sfLocal = new SchemaFactory("TestIsMap");
 			class NumberMap extends sfLocal.map("NumberMap", sfLocal.number) {}
-			const view = independentView(new TreeViewConfiguration({ schema: NumberMap }), {});
+			const view = independentView(new TreeViewConfiguration({ schema: NumberMap }));
 			view.initialize(new NumberMap(new Map([["x", 1]])));
 			const model: SharedTreeChatModel = {
 				editToolName,
@@ -431,7 +431,7 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 	});
 
 	it("supplies additional context if the tree changes between queries", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Initial");
 		const contexts: string[] = [];
 		const model: SharedTreeChatModel = {
@@ -470,7 +470,7 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 			child: Child,
 		}) {}
 
-		const view = independentView(new TreeViewConfiguration({ schema: Parent }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: Parent }));
 		view.initialize(new Parent({ child: new Child({ value: "Initial" }) }));
 		let context = "";
 		const model: SharedTreeChatModel = {
@@ -496,7 +496,7 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 	});
 
 	it("runs custom editors", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model: SharedTreeChatModel = {
 			editToolName,
@@ -520,7 +520,7 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 	});
 
 	it("catches errors from custom editors", async () => {
-		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }));
 		view.initialize("Content");
 		const model: SharedTreeChatModel = {
 			editToolName,
@@ -549,7 +549,7 @@ context.root = context.create.Gradient({ startColor: white, endColor: white });`
 			child: Child,
 			values: NumberMap,
 		}) {}
-		const view = independentView(new TreeViewConfiguration({ schema: Parent }), {});
+		const view = independentView(new TreeViewConfiguration({ schema: Parent }));
 		view.initialize(
 			new Parent({
 				child: new Child({ value: "Initial" }),

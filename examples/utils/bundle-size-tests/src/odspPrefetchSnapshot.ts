@@ -5,7 +5,7 @@
 
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
 
-export function apisToBundle() {
+export function apisToBundle(): void {
 	// eslint-disable-next-line @typescript-eslint/no-floating-promises
 	prefetchLatestSnapshot(
 		undefined as any,

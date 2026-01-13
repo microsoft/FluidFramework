@@ -5,69 +5,82 @@
 
 import { strict as assert } from "node:assert";
 import {
-	decodeSimpleSchema,
+	decodeSchemaCompatibilitySnapshot,
 	FieldKind,
 	NodeKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	encodeSimpleSchema,
+	encodeSchemaCompatibilitySnapshot,
 	stringSchema,
 	type SimpleLeafNodeSchema,
 	type SimpleNodeSchema,
 	type SimpleObjectFieldSchema,
 	type SimpleObjectNodeSchema,
 	type SimpleTreeSchema,
+	getSimpleSchema,
+	type SimpleFieldSchema,
+	createTreeSchema,
+	type SchemaType,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { createSchemaUpgrade } from "../../../simple-tree/core/index.js";
+import { transformSimpleSchema } from "../../../simple-tree/toStoredSchema.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { createSchemaUpgrade, Unchanged } from "../../../simple-tree/core/index.js";
 import { ValueSchema } from "../../../core/index.js";
-
-import {
-	copySimpleTreeSchemaWithoutMetadata,
-	toSimpleTreeSchema,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/viewSchemaToSimpleSchema.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { HasUnknownOptionalFields } from "../../testTrees.js";
 import { ajvValidator } from "../../codec/index.js";
 import type { FormatValidator } from "../../../codec/index.js";
+import type { Mutable } from "../../../util/index.js";
 
-const simpleString: SimpleLeafNodeSchema = {
+const simpleString: SimpleLeafNodeSchema<SchemaType.View> = {
 	leafKind: ValueSchema.String,
 	kind: NodeKind.Leaf,
-	metadata: {},
+	metadata: { custom: undefined, description: undefined },
 	persistedMetadata: undefined,
 };
 
-const simpleNumber: SimpleLeafNodeSchema = {
+const simpleNumber: SimpleLeafNodeSchema<SchemaType.View> = {
 	leafKind: ValueSchema.Number,
 	kind: NodeKind.Leaf,
-	metadata: {},
+	metadata: { custom: undefined, description: undefined },
 	persistedMetadata: undefined,
 };
 
 // The format validator used in these tests
 const formatValidator: FormatValidator = ajvValidator;
 
+/**
+ * Util for testing: makes a copy of the SimpleTreeSchema with all metadata removed.
+ *
+ * A better way to do this is round trip through encodeSimpleSchema/decodeSchemaCompatibilitySnapshot, but this exists to test that.
+ */
+function copySimpleTreeSchemaWithoutMetadata(simpleTree: SimpleTreeSchema): SimpleTreeSchema {
+	function stripFieldSchemaMetadata(field: SimpleFieldSchema): void {
+		const f = field as Mutable<SimpleFieldSchema>;
+		f.metadata = {};
+		f.persistedMetadata = undefined;
+	}
+
+	const copy = transformSimpleSchema(simpleTree, Unchanged);
+	for (const value of copy.definitions.values()) {
+		const m = value as Mutable<SimpleNodeSchema>;
+		m.metadata = {};
+		m.persistedMetadata = undefined;
+
+		if (m.kind === NodeKind.Object) {
+			for (const field of m.fields.values()) {
+				stripFieldSchemaMetadata(field);
+			}
+		}
+	}
+
+	stripFieldSchemaMetadata(copy.root);
+	return copy;
+}
+
 describe("getSimpleSchema", () => {
 	useSnapshotDirectory("get-simple-schema");
-
-	it("non-copying", () => {
-		const Schema = stringSchema;
-		const root = SchemaFactoryAlpha.optional(Schema);
-
-		const expected: SimpleTreeSchema = {
-			root,
-			definitions: new Map([[Schema.identifier, Schema]]),
-		};
-
-		const actual = toSimpleTreeSchema(root, false);
-
-		assert.deepEqual(actual, expected);
-
-		assert.equal(actual.root, root);
-		assert.equal(actual.definitions.get(Schema.identifier), Schema);
-	});
 
 	describe("Field Schema", () => {
 		const schemaFactory = new SchemaFactory("test");
@@ -76,12 +89,12 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("toSimpleTreeSchema", () => {
-			const actual = toSimpleTreeSchema(Schema, true);
+			const actual = getSimpleSchema(Schema);
 
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Optional,
-					metadata: { description: "An optional string." },
+					metadata: { description: "An optional string.", custom: undefined },
 					simpleAllowedTypes: new Map([
 						["com.fluidframework.leaf.string", { isStaged: false }],
 					]),
@@ -94,14 +107,17 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Field Schema", () => {
-			const actual = encodeSimpleSchema(toSimpleTreeSchema(Schema, true));
+			const actual = encodeSchemaCompatibilitySnapshot(getSimpleSchema(Schema));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Field Schema", () => {
-			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const simpleTree = getSimpleSchema(Schema);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSchemaCompatibilitySnapshot(
+				encodeSchemaCompatibilitySnapshot(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -109,13 +125,13 @@ describe("getSimpleSchema", () => {
 	describe("Leaf node", () => {
 		const Schema = SchemaFactory.string;
 
-		it("toSimpleTreeSchema", () => {
-			const actual = toSimpleTreeSchema(Schema, true);
+		it("getSimpleSchema", () => {
+			const actual = getSimpleSchema(Schema);
 
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Required,
-					metadata: {},
+					metadata: { custom: undefined, description: undefined },
 					simpleAllowedTypes: new Map([
 						["com.fluidframework.leaf.string", { isStaged: false }],
 					]),
@@ -128,14 +144,17 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Leaf node", () => {
-			const actual = encodeSimpleSchema(toSimpleTreeSchema(Schema, true));
+			const actual = encodeSchemaCompatibilitySnapshot(createTreeSchema(Schema));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Leaf node", () => {
-			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const simpleTree = createTreeSchema(Schema);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSchemaCompatibilitySnapshot(
+				encodeSchemaCompatibilitySnapshot(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -143,13 +162,13 @@ describe("getSimpleSchema", () => {
 	describe("Union root", () => {
 		const Schema = [SchemaFactory.number, SchemaFactory.string];
 
-		it("toSimpleTreeSchema", () => {
-			const actual = toSimpleTreeSchema(Schema, true);
+		it("getSimpleSchema", () => {
+			const actual = getSimpleSchema(Schema);
 
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Required,
-					metadata: {},
+					metadata: { custom: undefined, description: undefined },
 					persistedMetadata: undefined,
 					simpleAllowedTypes: new Map([
 						["com.fluidframework.leaf.number", { isStaged: false }],
@@ -166,14 +185,17 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Union root", () => {
-			const actual = encodeSimpleSchema(toSimpleTreeSchema(Schema, true));
+			const actual = encodeSchemaCompatibilitySnapshot(createTreeSchema(Schema));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Field Schema", () => {
-			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const simpleTree = createTreeSchema(Schema);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSchemaCompatibilitySnapshot(
+				encodeSchemaCompatibilitySnapshot(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -182,13 +204,13 @@ describe("getSimpleSchema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.array("array", schemaFactory.string) {}
 
-		it("toSimpleTreeSchema", () => {
-			const actual = toSimpleTreeSchema(Schema, true);
+		it("getSimpleSchema", () => {
+			const actual = getSimpleSchema(Schema);
 
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Required,
-					metadata: {},
+					metadata: { custom: undefined, description: undefined },
 					persistedMetadata: undefined,
 					simpleAllowedTypes: new Map([["test.array", { isStaged: false }]]),
 				},
@@ -200,7 +222,7 @@ describe("getSimpleSchema", () => {
 							simpleAllowedTypes: new Map([
 								["com.fluidframework.leaf.string", { isStaged: false }],
 							]),
-							metadata: {},
+							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
 						},
 					],
@@ -212,14 +234,17 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Array schema", () => {
-			const actual = encodeSimpleSchema(toSimpleTreeSchema(Schema, true));
+			const actual = encodeSchemaCompatibilitySnapshot(createTreeSchema(Schema));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Array Schema", () => {
-			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const simpleTree = createTreeSchema(Schema);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSchemaCompatibilitySnapshot(
+				encodeSchemaCompatibilitySnapshot(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -228,13 +253,13 @@ describe("getSimpleSchema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.map("map", schemaFactory.string) {}
 
-		it("toSimpleTreeSchema", () => {
-			const actual = toSimpleTreeSchema(Schema, true);
+		it("getSimpleSchema", () => {
+			const actual = getSimpleSchema(Schema);
 
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Required,
-					metadata: {},
+					metadata: { custom: undefined, description: undefined },
 					persistedMetadata: undefined,
 					simpleAllowedTypes: new Map([["test.map", { isStaged: false }]]),
 				},
@@ -243,7 +268,7 @@ describe("getSimpleSchema", () => {
 						"test.map",
 						{
 							kind: NodeKind.Map,
-							metadata: {},
+							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
 							simpleAllowedTypes: new Map([
 								["com.fluidframework.leaf.string", { isStaged: false }],
@@ -258,14 +283,17 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Map schema", () => {
-			const actual = encodeSimpleSchema(toSimpleTreeSchema(Schema, true));
+			const actual = encodeSchemaCompatibilitySnapshot(createTreeSchema(Schema));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Map schema", () => {
-			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const simpleTree = createTreeSchema(Schema);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSchemaCompatibilitySnapshot(
+				encodeSchemaCompatibilitySnapshot(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -274,13 +302,13 @@ describe("getSimpleSchema", () => {
 		const schemaFactory = new SchemaFactoryAlpha("test");
 		class Schema extends schemaFactory.record("record", schemaFactory.string) {}
 
-		it("toSimpleTreeSchema", () => {
-			const actual = toSimpleTreeSchema(Schema, true);
+		it("getSimpleSchema", () => {
+			const actual = getSimpleSchema(Schema);
 
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Required,
-					metadata: {},
+					metadata: { custom: undefined, description: undefined },
 					persistedMetadata: undefined,
 					simpleAllowedTypes: new Map([["test.record", { isStaged: false }]]),
 				},
@@ -289,7 +317,7 @@ describe("getSimpleSchema", () => {
 						"test.record",
 						{
 							kind: NodeKind.Record,
-							metadata: {},
+							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
 							simpleAllowedTypes: new Map([
 								["com.fluidframework.leaf.string", { isStaged: false }],
@@ -304,14 +332,17 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Record schema", () => {
-			const actual = encodeSimpleSchema(toSimpleTreeSchema(Schema, true));
+			const actual = encodeSchemaCompatibilitySnapshot(createTreeSchema(Schema));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Record schema", () => {
-			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const simpleTree = createTreeSchema(Schema);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSchemaCompatibilitySnapshot(
+				encodeSchemaCompatibilitySnapshot(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -323,13 +354,13 @@ describe("getSimpleSchema", () => {
 			bar: schemaFactory.required(schemaFactory.string),
 		}) {}
 
-		it("toSimpleTreeSchema", () => {
-			const actual = toSimpleTreeSchema(Schema, true);
+		it("getSimpleSchema", () => {
+			const actual = getSimpleSchema(Schema);
 
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Required,
-					metadata: {},
+					metadata: { custom: undefined, description: undefined },
 					persistedMetadata: undefined,
 					simpleAllowedTypes: new Map([["test.object", { isStaged: false }]]),
 				},
@@ -338,7 +369,7 @@ describe("getSimpleSchema", () => {
 						"test.object",
 						{
 							kind: NodeKind.Object,
-							metadata: {},
+							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
 							allowUnknownOptionalFields: false,
 							fields: new Map<string, SimpleObjectFieldSchema>([
@@ -346,7 +377,7 @@ describe("getSimpleSchema", () => {
 									"foo",
 									{
 										kind: FieldKind.Optional,
-										metadata: {},
+										metadata: { custom: undefined, description: undefined },
 										persistedMetadata: undefined,
 										simpleAllowedTypes: new Map([
 											["com.fluidframework.leaf.number", { isStaged: false }],
@@ -358,7 +389,7 @@ describe("getSimpleSchema", () => {
 									"bar",
 									{
 										kind: FieldKind.Required,
-										metadata: {},
+										metadata: { custom: undefined, description: undefined },
 										persistedMetadata: undefined,
 										simpleAllowedTypes: new Map([
 											["com.fluidframework.leaf.string", { isStaged: false }],
@@ -378,14 +409,17 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Object schema", () => {
-			const actual = encodeSimpleSchema(toSimpleTreeSchema(Schema, true));
+			const actual = encodeSchemaCompatibilitySnapshot(createTreeSchema(Schema));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Object schema", () => {
-			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const simpleTree = createTreeSchema(Schema);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSchemaCompatibilitySnapshot(
+				encodeSchemaCompatibilitySnapshot(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -396,13 +430,13 @@ describe("getSimpleSchema", () => {
 			id: schemaFactory.identifier,
 		}) {}
 
-		it("toSimpleTreeSchema", () => {
-			const actual = toSimpleTreeSchema(Schema, true);
+		it("getSimpleSchema", () => {
+			const actual = getSimpleSchema(Schema);
 
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Required,
-					metadata: {},
+					metadata: { custom: undefined, description: undefined },
 					persistedMetadata: undefined,
 					simpleAllowedTypes: new Map([["test.object", { isStaged: false }]]),
 				},
@@ -411,7 +445,7 @@ describe("getSimpleSchema", () => {
 						"test.object",
 						{
 							kind: NodeKind.Object,
-							metadata: {},
+							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
 							allowUnknownOptionalFields: false,
 							fields: new Map([
@@ -419,7 +453,7 @@ describe("getSimpleSchema", () => {
 									"id",
 									{
 										kind: FieldKind.Identifier,
-										metadata: {},
+										metadata: { custom: undefined, description: undefined },
 										persistedMetadata: undefined,
 										simpleAllowedTypes: new Map([
 											["com.fluidframework.leaf.string", { isStaged: false }],
@@ -438,14 +472,17 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Object schema including an identifier field", () => {
-			const actual = encodeSimpleSchema(toSimpleTreeSchema(Schema, true));
+			const actual = encodeSchemaCompatibilitySnapshot(createTreeSchema(Schema));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Object schema including an identifier field", () => {
-			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const simpleTree = createTreeSchema(Schema);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSchemaCompatibilitySnapshot(
+				encodeSchemaCompatibilitySnapshot(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -456,14 +493,14 @@ describe("getSimpleSchema", () => {
 			foo: schemaFactory.required([schemaFactory.number, schemaFactory.string]),
 		}) {}
 
-		it("toSimpleTreeSchema", () => {
+		it("getSimpleSchema", () => {
 			// Must enable copy so deep equality passes.
-			const actual = toSimpleTreeSchema(Schema, true);
+			const actual = getSimpleSchema(Schema);
 
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Required,
-					metadata: {},
+					metadata: { custom: undefined, description: undefined },
 					persistedMetadata: undefined,
 					simpleAllowedTypes: new Map([["test.object", { isStaged: false }]]),
 				},
@@ -472,7 +509,7 @@ describe("getSimpleSchema", () => {
 						"test.object",
 						{
 							kind: NodeKind.Object,
-							metadata: {},
+							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
 							allowUnknownOptionalFields: false,
 							fields: new Map([
@@ -480,7 +517,7 @@ describe("getSimpleSchema", () => {
 									"foo",
 									{
 										kind: FieldKind.Required,
-										metadata: {},
+										metadata: { custom: undefined, description: undefined },
 										persistedMetadata: undefined,
 										simpleAllowedTypes: new Map([
 											["com.fluidframework.leaf.number", { isStaged: false }],
@@ -501,14 +538,17 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Object schema including a union field", () => {
-			const actual = encodeSimpleSchema(toSimpleTreeSchema(Schema, true));
+			const actual = encodeSchemaCompatibilitySnapshot(createTreeSchema(Schema));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Object schema including a union field", () => {
-			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const simpleTree = createTreeSchema(Schema);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSchemaCompatibilitySnapshot(
+				encodeSchemaCompatibilitySnapshot(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -519,13 +559,13 @@ describe("getSimpleSchema", () => {
 			foo: schemaFactory.optionalRecursive([schemaFactory.string, () => Schema]),
 		}) {}
 
-		it("toSimpleTreeSchema", () => {
-			const actual = toSimpleTreeSchema(Schema, true);
+		it("getSimpleSchema", () => {
+			const actual = getSimpleSchema(Schema);
 
 			const expected: SimpleTreeSchema = {
 				root: {
 					kind: FieldKind.Required,
-					metadata: {},
+					metadata: { custom: undefined, description: undefined },
 					persistedMetadata: undefined,
 					simpleAllowedTypes: new Map([["test.recursive-object", { isStaged: false }]]),
 				},
@@ -534,7 +574,7 @@ describe("getSimpleSchema", () => {
 						"test.recursive-object",
 						{
 							kind: NodeKind.Object,
-							metadata: {},
+							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
 							allowUnknownOptionalFields: false,
 							fields: new Map([
@@ -542,7 +582,7 @@ describe("getSimpleSchema", () => {
 									"foo",
 									{
 										kind: FieldKind.Optional,
-										metadata: {},
+										metadata: { custom: undefined, description: undefined },
 										persistedMetadata: undefined,
 										simpleAllowedTypes: new Map([
 											["com.fluidframework.leaf.string", { isStaged: false }],
@@ -562,14 +602,17 @@ describe("getSimpleSchema", () => {
 		});
 
 		it("serialized - Recursive object schema", () => {
-			const actual = encodeSimpleSchema(toSimpleTreeSchema(Schema, true));
+			const actual = encodeSchemaCompatibilitySnapshot(createTreeSchema(Schema));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - Recursive object schema", () => {
-			const simpleTree = toSimpleTreeSchema(Schema, true);
+			const simpleTree = createTreeSchema(Schema);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSchemaCompatibilitySnapshot(
+				encodeSchemaCompatibilitySnapshot(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -595,19 +638,22 @@ describe("getSimpleSchema", () => {
 				definitions: new Map([[leafSchema.identifier, leafSchema]]),
 			};
 
-			const actual = toSimpleTreeSchema(schema, true);
+			const actual = createTreeSchema(schema);
 			assert.deepEqual(actual.root.simpleAllowedTypes, expected.root.simpleAllowedTypes);
 		});
 
 		it("serialized - simpleAllowedTypes", () => {
-			const actual = encodeSimpleSchema(toSimpleTreeSchema(schema, true));
+			const actual = encodeSchemaCompatibilitySnapshot(createTreeSchema(schema));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - simpleAllowedTypes", () => {
-			const simpleTree = toSimpleTreeSchema(schema, true);
+			const simpleTree = createTreeSchema(schema);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSchemaCompatibilitySnapshot(
+				encodeSchemaCompatibilitySnapshot(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});
@@ -622,7 +668,7 @@ describe("getSimpleSchema", () => {
 					simpleAllowedTypes: new Map([
 						["test.hasUnknownOptionalFields", { isStaged: false }],
 					]),
-					metadata: {},
+					metadata: { custom: undefined, description: undefined },
 					persistedMetadata: undefined,
 				},
 				definitions: new Map([
@@ -630,7 +676,7 @@ describe("getSimpleSchema", () => {
 						"test.hasUnknownOptionalFields",
 						{
 							kind: NodeKind.Object,
-							metadata: {},
+							metadata: { custom: undefined, description: undefined },
 							persistedMetadata: undefined,
 							allowUnknownOptionalFields: true,
 							fields: new Map([]),
@@ -639,19 +685,22 @@ describe("getSimpleSchema", () => {
 				]),
 			};
 
-			const actual = toSimpleTreeSchema(schema, true);
+			const actual = getSimpleSchema(schema);
 			assert.deepEqual(actual, expected);
 		});
 
 		it("serialized - allowUnknownOptionalFields", () => {
-			const actual = encodeSimpleSchema(toSimpleTreeSchema(schema, true));
+			const actual = encodeSchemaCompatibilitySnapshot(createTreeSchema(schema));
 			takeJsonSnapshot(actual);
 		});
 
 		it("Roundtrip serialization - allowUnknownOptionalFields", () => {
-			const simpleTree = toSimpleTreeSchema(schema, true);
+			const simpleTree = createTreeSchema(schema);
 			const expected = copySimpleTreeSchemaWithoutMetadata(simpleTree);
-			const actual = decodeSimpleSchema(encodeSimpleSchema(simpleTree), formatValidator);
+			const actual = decodeSchemaCompatibilitySnapshot(
+				encodeSchemaCompatibilitySnapshot(simpleTree),
+				formatValidator,
+			);
 			assert.deepEqual(actual, expected);
 		});
 	});

@@ -99,7 +99,7 @@ import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
 	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 			{}
 		: {
 				-readonly [Property in keyof T]: Property extends string
@@ -373,8 +373,9 @@ export function setField(
 			break;
 		}
 
-		default:
+		default: {
 			fail(0xade /* invalid FieldKind */);
+		}
 	}
 }
 
@@ -651,6 +652,7 @@ function objectToFlexContent(
 		Symbol.iterator in data ||
 		isFluidHandle(data)
 	) {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		throw new UsageError(`Input data is incompatible with Object schema: ${data}`);
 	}
 
@@ -708,10 +710,8 @@ function shallowCompatibilityTest(
 
 	// If the schema has a required key which is not present in the input object, reject it.
 	for (const [fieldKey, fieldSchema] of schema.fields) {
-		if (fieldSchema.requiresValue) {
-			if (getFieldProperty(data, fieldKey) === undefined) {
-				return CompatibilityLevel.None;
-			}
+		if (fieldSchema.requiresValue && getFieldProperty(data, fieldKey) === undefined) {
+			return CompatibilityLevel.None;
 		}
 	}
 

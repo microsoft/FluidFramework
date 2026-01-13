@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { InsertableTypedNode } from "@fluidframework/tree";
+import { type IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
+import type { InsertableTypedNode } from "@fluidframework/tree";
 
 import { Row } from "./tree/index.js";
 
@@ -24,7 +24,7 @@ export function generateRow(random: IRandom): InsertableTypedNode<typeof Row> {
 		["Baby Food", 255.28, 159.42],
 	]);
 
-	const toDollars = (n: number) => Math.round(n * 100) / 100;
+	const toDollars = (n: number): number => Math.round(n * 100) / 100;
 
 	const unitsSold = random.integer(2, 10000);
 	const totalRevenue = toDollars(unitPrice * unitsSold);
@@ -239,7 +239,7 @@ export function generateRow(random: IRandom): InsertableTypedNode<typeof Row> {
 	};
 }
 
-export function generateTable(rows: number, seed = 1) {
+export function generateTable(rows: number, seed = 1): InsertableTypedNode<typeof Row>[] {
 	const random = makeRandom(seed);
 
 	return Array.from({ length: rows }, () => generateRow(random)).sort(

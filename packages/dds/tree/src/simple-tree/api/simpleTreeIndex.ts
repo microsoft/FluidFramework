@@ -148,14 +148,14 @@ export function createSimpleTreeIndex<
 	indexableSchema?: readonly TreeNodeSchema[],
 ): SimpleTreeIndex<TKey, TValue> {
 	const indexableSchemaMap = new Map();
-	if (indexableSchema !== undefined) {
-		for (const schemus of indexableSchema) {
-			indexableSchemaMap.set(schemus.identifier, schemus);
-		}
-	} else {
+	if (indexableSchema === undefined) {
 		walkFieldSchema(view.schema, {
 			node: (schemus) => indexableSchemaMap.set(schemus.identifier, schemus),
 		});
+	} else {
+		for (const schemus of indexableSchema) {
+			indexableSchemaMap.set(schemus.identifier, schemus);
+		}
 	}
 
 	const schemaIndexer =
@@ -163,14 +163,14 @@ export function createSimpleTreeIndex<
 			? (schemaIdentifier: TreeNodeSchemaIdentifier) => {
 					// if indexable schema isn't provided, we check if the node is in schema
 					const schemus = indexableSchemaMap.get(schemaIdentifier);
-					if (schemus !== undefined) {
+					if (schemus === undefined) {
+						fail(0xb32 /* node is out of schema */);
+					} else {
 						const keyLocation =
 							typeof indexer === "function" ? indexer(schemus) : indexer.get(schemus);
 						if (keyLocation !== undefined) {
 							return makeGenericKeyFinder<TKey>(brand(keyLocation), isKeyValid);
 						}
-					} else {
-						fail(0xb32 /* node is out of schema */);
 					}
 				}
 			: (schemaIdentifier: TreeNodeSchemaIdentifier) => {

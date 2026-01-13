@@ -46,7 +46,7 @@ export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewP
 		}
 	};
 
-	React.useEffect(() => {
+	React.useEffect((): (() => void) => {
 		if (canvasRef.current !== null) {
 			canvasRef.current.width = 100;
 			canvasRef.current.height = 100;

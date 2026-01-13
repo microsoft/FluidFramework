@@ -5,7 +5,7 @@
 
 import type { Invariant } from "../../util/index.js";
 
-import type { RevisionTag } from "./types.js";
+import type { ChangeAtomId, RevisionTag } from "./types.js";
 
 /**
  * Rebasing logic for a particular kind of change.
@@ -89,11 +89,45 @@ export interface ChangeRebaser<TChangeset> {
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
-	changeRevision(
-		change: TChangeset,
-		newRevision: RevisionTag | undefined,
-		rollBackOf?: RevisionTag,
-	): TChangeset;
+	/**
+	 * Retrieves the set of revisions associated with the given change.
+	 */
+	getRevisions(change: TChangeset): Set<RevisionTag | undefined>;
+
+	/**
+	 * Produces a changeset that is equivalent to the given `change`, but with all references to its own revisions replaced according to the given `replacer`.
+	 * @param change - The change to update. Not modified.
+	 * @param replacer - The replacer to use.
+	 * @returns A changeset equivalent to `change`, but with all references to its own revision replaced according to `replacer`.
+	 */
+	changeRevision(change: TChangeset, replacer: RevisionReplacer): TChangeset;
+}
+
+/**
+ * A type that can update references to a set of obsolete revisions across multiple changesets.
+ */
+export interface RevisionReplacer {
+	/**
+	 * The revision to use in place of the obsolete revisions.
+	 */
+	readonly updatedRevision: RevisionTag;
+
+	/**
+	 * Predicate to determine if a revision needs replacing.
+	 * @param revision - The revision that may need replacing.
+	 * @returns true iff the given `revision` needs replacing.
+	 */
+	isObsolete(revision: RevisionTag | undefined): boolean;
+
+	/**
+	 * Returns the updated ID for the given ID.
+	 * @param id - The ID to update.
+	 * @returns an updated ID iff the given `id` needs updating, otherwise returns the given `id`.
+	 * @remarks
+	 * This function always maps the same input {@link ChangeAtomId.revision | revision} and {@link ChangeAtomId.localId | local ID} to the same output revision local ID.
+	 * This means multiple references to the same atom of change will remain consistent after revision replacement.
+	 */
+	getUpdatedAtomId<T extends ChangeAtomId>(id: T): T;
 }
 
 export interface TaggedChange<TChangeset, TTag = RevisionTag | undefined> {

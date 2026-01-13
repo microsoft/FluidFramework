@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import * as path from "node:path";
 
 import type { Response } from "express";
 import type nconf from "nconf";

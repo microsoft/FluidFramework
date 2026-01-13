@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
+import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
 import React from "react";
 
 /**
@@ -46,6 +46,7 @@ export interface ICollaborativeInputState {
  * Given a {@link @fluidframework/sequence#SharedString}, will produce a collaborative input element.
  * @internal
  */
+/* eslint-disable react/prop-types -- TypeScript interfaces provide compile-time prop validation */
 export class CollaborativeInput extends React.Component<
 	ICollaborativeInputProps,
 	ICollaborativeInputState
@@ -66,7 +67,7 @@ export class CollaborativeInput extends React.Component<
 		this.updateSelection = this.updateSelection.bind(this);
 	}
 
-	public componentDidMount() {
+	public componentDidMount(): void {
 		// Sets an event listener so we can update our state as the value changes
 		this.props.sharedString.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
 			if (!ev.isLocal) {
@@ -76,14 +77,14 @@ export class CollaborativeInput extends React.Component<
 		this.updateInputFromSharedString();
 	}
 
-	public componentDidUpdate(prevProps: ICollaborativeInputProps) {
+	public componentDidUpdate(prevProps: ICollaborativeInputProps): void {
 		// If the component gets a new sharedString props it needs to re-fetch the sharedString text
 		if (prevProps.sharedString !== this.props.sharedString) {
 			this.updateInputFromSharedString();
 		}
 	}
 
-	public render() {
+	public render(): JSX.Element {
 		return (
 			// There are a lot of different ways content can be inserted into a input box
 			// and not all of them trigger a onBeforeInput event. To ensure we are grabbing
@@ -105,14 +106,14 @@ export class CollaborativeInput extends React.Component<
 		);
 	}
 
-	private updateInputFromSharedString() {
+	private updateInputFromSharedString(): void {
 		const text = this.props.sharedString.getText();
 		if (this.inputElementRef.current && this.inputElementRef.current.value !== text) {
 			this.inputElementRef.current.value = text;
 		}
 	}
 
-	private readonly handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
+	private readonly handleInput = (ev: React.FormEvent<HTMLInputElement>): void => {
 		// We need to set the value here to keep the input responsive to the user
 		const newText = ev.currentTarget.value;
 
@@ -120,7 +121,7 @@ export class CollaborativeInput extends React.Component<
 		const newPosition = ev.currentTarget.selectionStart ?? 0;
 		const isTextInserted = newPosition - this.state.selectionStart > 0;
 		if (isTextInserted) {
-			const insertedText = newText.substring(this.state.selectionStart, newPosition);
+			const insertedText = newText.slice(this.state.selectionStart, newPosition);
 			const changeRangeLength = this.state.selectionEnd - this.state.selectionStart;
 			if (changeRangeLength === 0) {
 				this.props.sharedString.insertText(this.state.selectionStart, insertedText);
@@ -142,7 +143,7 @@ export class CollaborativeInput extends React.Component<
 	 * We need to do this before we do any handleInput action or we will have lost our
 	 * cursor position and not be able to accurately update the shared string.
 	 */
-	private readonly updateSelection = () => {
+	private readonly updateSelection = (): void => {
 		if (!this.inputElementRef.current) {
 			return;
 		}
@@ -152,3 +153,4 @@ export class CollaborativeInput extends React.Component<
 		this.setState({ selectionEnd, selectionStart });
 	};
 }
+/* eslint-enable react/prop-types */

@@ -1,5 +1,17 @@
 # @fluid-example/multiview-container
 
+## 2.80.0
+
+Dependency updates only.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
 ## 2.72.0
 
 Dependency updates only.

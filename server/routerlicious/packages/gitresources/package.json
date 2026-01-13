@@ -29,9 +29,9 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.60.0",
+		"@fluid-tools/build-cli": "^0.61.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.60.0",
+		"@fluidframework/build-tools": "^0.61.0",
 		"@fluidframework/eslint-config-fluid": "^8.1.0",
 		"@fluidframework/gitresources-previous": "npm:@fluidframework/gitresources@7.0.0",
 		"@microsoft/api-extractor": "^7.45.1",

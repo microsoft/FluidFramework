@@ -28,7 +28,7 @@ import {
 	type OrderSequentially,
 } from "./ddsOperations";
 import { _dirname } from "./dirname.cjs";
-import { type LocalServerStressState } from "./localServerStressHarness";
+import type { LocalServerStressState } from "./localServerStressHarness";
 import type { StressDataObjectOperations } from "./stressDataObject.js";
 
 export type StressOperations = StressDataObjectOperations | DDSModelOp | OrderSequentially;
@@ -36,7 +36,7 @@ export type StressOperations = StressDataObjectOperations | DDSModelOp | OrderSe
 const orderSequentiallyReducer = async (
 	state: LocalServerStressState,
 	op: OrderSequentially,
-) => {
+): Promise<void> => {
 	const { baseModel, taggedHandles } = await loadAllHandles(state);
 	const ddsState = await covertLocalServerStateToDdsState(state);
 	const rollbackError = new Error("rollback");
