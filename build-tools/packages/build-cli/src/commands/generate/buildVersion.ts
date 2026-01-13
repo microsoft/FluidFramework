@@ -102,7 +102,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 
 		const context = await this.getContext();
 		const repo = await context.getGitRepository();
-		// eslint-disable-next-line unicorn/no-await-expression-member
+
 		const tags = flags.tags ?? (await repo.gitClient.tags()).all;
 
 		if (!useSimplePatchVersion && flags.tag !== undefined) {
@@ -168,10 +168,8 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 
 	private getFileVersion(): string {
 		if (fs.existsSync("./package.json")) {
-			return (
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" })).version as string
-			);
+			return JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" }))
+				.version as string;
 		}
 
 		this.error(`package.json not found`);

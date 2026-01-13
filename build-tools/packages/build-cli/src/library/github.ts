@@ -54,7 +54,6 @@ export async function getCommitInfo(
 	repo: string,
 	commit_sha: string,
 	log: CommandLogger,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
 	const octokit = new Octokit({ auth: token });
 

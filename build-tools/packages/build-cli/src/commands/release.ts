@@ -80,7 +80,6 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		const [context] = await Promise.all([this.getContext(), this.initMachineHooks()]);
 		const { argv, flags, logger, machine } = this;
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const rgOrPackageName = flags.releaseGroup ?? flags.package!;
 		assert(
 			rgOrPackageName !== undefined,
@@ -99,7 +98,6 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		const currentBranch = await gitRepo.getCurrentBranchName();
 		const bumpType = await getBumpType(flags.bumpType, currentBranch, releaseVersion);
 
-		// eslint-disable-next-line no-warning-comments
 		// TODO: can be removed once server team owns server releases
 		// eslint-disable-next-line import-x/no-deprecated
 		if (flags.releaseGroup === MonoRepoKind.Server && bumpType === "minor") {

@@ -224,7 +224,7 @@ export async function loadBiome2Config(configPath: string): Promise<Biome2Config
  * provide compile-time guarantees that prevent mixing 1.x and 2.x configs accidentally.
  *
  * @param configPaths - Array of absolute paths to config files, ordered from base to most specific.
- *                      Each config's values will override those from earlier configs.
+ * Each config's values will override those from earlier configs.
  * @returns The merged configuration.
  */
 async function mergeMultipleBiome2Configs(

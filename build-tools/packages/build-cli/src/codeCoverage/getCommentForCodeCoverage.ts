@@ -61,7 +61,6 @@ export function getCommentForCodeCoverageDiff(
 const getSummaryFooter = (baselineBuildInfo: IBuildMetrics): string => {
 	return `<hr><p>Baseline commit: ${
 		baselineBuildInfo.build.sourceVersion
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	} <br>Baseline build: <a target="_blank" href=${baselineBuildInfo.build._links?.web.href as string}> ${
 		baselineBuildInfo.build.id
 	} </a><br> Happy Coding!!</p>`;

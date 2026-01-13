@@ -1,0 +1,42 @@
+{
+	"src/ADO/PrCommentsUtils.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 5
+		}
+	},
+	"src/ADO/getAzureDevopsApi.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 1
+		}
+	},
+	"src/ADO/getCommentForBundleDiff.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 8
+		}
+	},
+	"src/BundleBuddyConfigWebpackPlugin.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 1
+		}
+	},
+	"src/bannedModulesPlugin/bannedModulesPlugin.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 1
+		}
+	},
+	"src/utilities/getBuilds.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 1
+		}
+	},
+	"src/utilities/getLastCommitHashFromPR.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 1
+		}
+	},
+	"src/utilities/unzipStream.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 1
+		}
+	}
+}

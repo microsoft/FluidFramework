@@ -50,12 +50,12 @@ export class PrettierTask extends LeafWithDoneFileTask {
 		}
 		this.parsed = this.entries.length !== 0;
 	}
-	protected get configFileFullPath() {
+	protected get configFileFullPath(): string {
 		// Currently there's no package-level config file, so just use tsconfig.json
 		return this.getPackageFileFullPath(".prettierrc.json");
 	}
 
-	protected async getDoneFileContent() {
+	protected async getDoneFileContent(): Promise<string | undefined> {
 		if (!this.parsed) {
 			this.traceError(`error generating done file content, unable to understand command line`);
 			return undefined;
@@ -73,7 +73,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 				this.traceError(`error generating done file content, unable to find ${ignoreFile}`);
 				return undefined;
 			}
-		} catch (e) {
+		} catch {
 			this.traceError(`error generating done file content, unable to read ${ignoreFile} file`);
 			return undefined;
 		}

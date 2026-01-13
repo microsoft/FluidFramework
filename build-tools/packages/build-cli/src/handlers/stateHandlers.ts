@@ -49,7 +49,7 @@ export type StateHandlerFunction = (
 	/**
 	 * Data that is unique to the state machine.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	data: any,
 ) => Promise<boolean>;
 

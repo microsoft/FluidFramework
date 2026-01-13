@@ -116,7 +116,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		const [owner, repo] = gitRepo.upstreamRemotePartialUrl.split("/");
 		this.verbose(`owner: ${owner} and repo: ${repo}`);
 
-		// eslint-disable-next-line unicorn/no-await-expression-member
 		this.initialBranch = (await gitRepo.gitClient.status()).current ?? "main";
 
 		this.remote = flags.remote ?? (await gitRepo.getRemote(gitRepo.upstreamRemotePartialUrl));
@@ -132,7 +131,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			if (prData.found) {
 				this.log(`Found open PR #${prData.number} at ${prData.url}`);
 				return;
-				// eslint-disable-next-line no-warning-comments
+
 				// TODO: notify the author
 			}
 
@@ -298,7 +297,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		// To determine who to assign the PR to, we look up the commit details on GitHub.
 		// TODO: Can't we get the author info from the local commit?
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
 		const commitInfo = flags.createPr
 			? await getCommitInfo(flags.pat, owner, repo, prHeadCommit, this.logger)
 			: undefined;
@@ -307,7 +306,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 				`Couldn't determine who to assign the PR to, so it must be manually assigned.`,
 			);
 		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+
 		const assignee: string = commitInfo?.data.author.login;
 
 		this.info(`Creating PR for commit id ${prHeadCommit} assigned to ${assignee}`);
@@ -424,7 +423,6 @@ async function hasConflicts(
 	log?: Logger,
 ): Promise<[boolean, number]> {
 	for (const [i, commit] of commitIds.entries()) {
-		// eslint-disable-next-line no-await-in-loop
 		const mergesClean = await gitRepo.canMergeWithoutConflicts(commit);
 		log?.verbose(`Can merge without conflicts ${commit}: ${mergesClean}`);
 		if (mergesClean === false) {

@@ -51,6 +51,7 @@ trigger:
     - biome.jsonc
     - build-tools
     - common/build/build-common
+    - common/build/eslint-config-fluid
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -77,6 +78,7 @@ pr:
     - .prettierignore
     - build-tools
     - common/build/build-common
+    - common/build/eslint-config-fluid
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml

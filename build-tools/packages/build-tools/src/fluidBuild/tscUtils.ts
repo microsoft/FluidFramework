@@ -92,7 +92,7 @@ const incrementalOptions = [
 	"strictFunctionTypes",
 ].sort(); // sort it so that the result of the filter is sorted as well.
 
-function filterIncrementalOptions(options: any) {
+function filterIncrementalOptions(options: any): Record<string, unknown> {
 	const newOptions: any = {};
 	for (const key of incrementalOptions) {
 		if (options[key] !== undefined) {
@@ -106,7 +106,7 @@ function convertOptionPaths(
 	options: ts.CompilerOptions,
 	base: string,
 	convert: (base: string, path: string) => string,
-) {
+): ts.CompilerOptions {
 	// Shallow clone 'CompilerOptions' before modifying.
 	const result = { ...options };
 
@@ -139,20 +139,20 @@ function convertOptionPaths(
 }
 
 // This is a duplicate of how tsc deal with case insensitive file system as keys (in tsBuildInfo)
-function toLowerCase(x: string) {
+function toLowerCase(x: string): string {
 	return x.toLowerCase();
 }
 // eslint-disable-next-line no-useless-escape
 const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_\. ]+/g;
 
-function createGetCanonicalFileName(tsLib: typeof ts) {
+function createGetCanonicalFileName(tsLib: typeof ts): (x: string) => string {
 	return tsLib.sys.useCaseSensitiveFileNames
-		? (x: string) => x
-		: (x: string) =>
+		? (x: string): string => x
+		: (x: string): string =>
 				fileNameLowerCaseRegExp.test(x) ? x.replace(fileNameLowerCaseRegExp, toLowerCase) : x;
 }
 
-function createGetSourceFileVersion(tsLib: typeof ts) {
+function createGetSourceFileVersion(tsLib: typeof ts): (buffer: Buffer) => string {
 	// The TypeScript compiler performs some light preprocessing of the source file
 	// text before calculating the file hashes that appear in *.tsbuildinfo.
 	//
@@ -185,10 +185,27 @@ function createGetSourceFileVersion(tsLib: typeof ts) {
 	};
 }
 
-function createTscUtil(tsLib: typeof ts) {
+/**
+ * TypeScript compiler utilities created for a specific TypeScript library instance.
+ */
+export interface TscUtil {
+	tsLib: typeof ts;
+	parseCommandLine: (command: string) => ts.ParsedCommandLine | undefined;
+	findConfigFile: (
+		directory: string,
+		parsedCommand: ts.ParsedCommandLine | undefined,
+	) => string | undefined;
+	readConfigFile: (path: string) => unknown;
+	filterIncrementalOptions: typeof filterIncrementalOptions;
+	convertOptionPaths: typeof convertOptionPaths;
+	getCanonicalFileName: (x: string) => string;
+	getSourceFileVersion: (buffer: Buffer) => string;
+}
+
+function createTscUtil(tsLib: typeof ts): TscUtil {
 	return {
 		tsLib,
-		parseCommandLine: (command: string) => {
+		parseCommandLine: (command: string): ts.ParsedCommandLine | undefined => {
 			// TODO: parse the command line for real, split space for now.
 			// In case of fluid-tsc, replace those parts with 'tsc' before split.
 			const args = command.replace(fluidTscRegEx, "tsc").split(" ");
@@ -218,7 +235,10 @@ function createTscUtil(tsLib: typeof ts) {
 			return parsedCommand;
 		},
 
-		findConfigFile: (directory: string, parsedCommand: ts.ParsedCommandLine | undefined) => {
+		findConfigFile: (
+			directory: string,
+			parsedCommand: ts.ParsedCommandLine | undefined,
+		): string | undefined => {
 			let tsConfigFullPath: string | undefined;
 			const project = parsedCommand?.options.project;
 			if (project !== undefined) {
@@ -244,7 +264,7 @@ function createTscUtil(tsLib: typeof ts) {
 			return tsConfigFullPath;
 		},
 
-		readConfigFile: (path: string) => {
+		readConfigFile: (path: string): unknown => {
 			const configFile = tsLib.readConfigFile(path, tsLib.sys.readFile);
 			if (configFile.error) {
 				return undefined;
@@ -257,8 +277,6 @@ function createTscUtil(tsLib: typeof ts) {
 		getSourceFileVersion: createGetSourceFileVersion(tsLib),
 	};
 }
-
-export type TscUtil = ReturnType<typeof createTscUtil>;
 
 const tscUtilPathCache = new Map<string, TscUtil>();
 const tscUtilLibPathCache = new Map<string, TscUtil>();
@@ -277,7 +295,6 @@ export function getTscUtils(path: string): TscUtil {
 			return tscUtilFromLibPath;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		const tsLib: typeof ts = require(tsPath);
 		const tscUtil = createTscUtil(tsLib);
 		tscUtilPathCache.set(path, tscUtil);

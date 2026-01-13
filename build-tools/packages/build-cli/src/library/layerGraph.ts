@@ -264,7 +264,7 @@ class PackageNode extends BaseNode {
 	public get indirectDependencies(): Set<PackageNode> {
 		if (this._indirectDependencies === undefined) {
 			// NOTE: recursive isn't great, but the graph should be small enough
-			// eslint-disable-next-line unicorn/no-array-reduce
+
 			this._indirectDependencies = this._childDependencies.reduce<Set<PackageNode>>(
 				(accum, childPackage) => {
 					for (const pkg of childPackage.childDependencies) accum.add(pkg);
@@ -279,7 +279,6 @@ class PackageNode extends BaseNode {
 
 	public get level(): number {
 		if (this._level === undefined) {
-			// eslint-disable-next-line unicorn/no-array-reduce
 			this._level = this._childDependencies.reduce<number>((accum, childPackage) => {
 				return Math.max(accum, childPackage.level + 1);
 			}, 0);
@@ -363,7 +362,7 @@ export class LayerGraph {
 						layerNode.addAllowedDependentLayerNode(depLayer);
 					} else {
 						const depPackage = this.packageNodeMap.get(depName);
-						// eslint-disable-next-line max-depth
+
 						if (depPackage === undefined) {
 							throw new Error(
 								`Missing package entry for dependency ${depName} in ${layerNode.name}`,
@@ -392,7 +391,7 @@ export class LayerGraph {
 			if (!packageLocations.has(pkg.name)) {
 				packageLocations.set(pkg.name, []);
 			}
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Code above guarantees the key exists
+
 			packageLocations.get(pkg.name)!.push(pkg.directory);
 		}
 		const duplicates = [...packageCounts.entries()].filter(([_, count]) => count > 1);

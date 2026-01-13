@@ -1,0 +1,177 @@
+{
+	"src/common/gitRepo.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 24
+		}
+	},
+	"src/common/logging.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 1
+		}
+	},
+	"src/common/monoRepo.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 5
+		}
+	},
+	"src/common/npmPackage.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 22
+		}
+	},
+	"src/common/timer.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 2
+		}
+	},
+	"src/common/utils.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 8
+		}
+	},
+	"src/docStats/docStats.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 3
+		}
+	},
+	"src/fluidBuild/buildGraph.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 21
+		}
+	},
+	"src/fluidBuild/commonOptions.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 1
+		}
+	},
+	"src/fluidBuild/fileHashCache.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 3
+		}
+	},
+	"src/fluidBuild/fluidBuild.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 2
+		}
+	},
+	"src/fluidBuild/fluidRepo.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 6
+		}
+	},
+	"src/fluidBuild/fluidRepoBuild.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 10
+		}
+	},
+	"src/fluidBuild/fluidTaskDefinitions.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 7
+		}
+	},
+	"src/fluidBuild/fluidTsc/fluidTsc.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 2
+		}
+	},
+	"src/fluidBuild/fluidUtils.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 4
+		}
+	},
+	"src/fluidBuild/hash.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 1
+		}
+	},
+	"src/fluidBuild/npmDepChecker.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 6
+		}
+	},
+	"src/fluidBuild/options.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 7
+		}
+	},
+	"src/fluidBuild/tasks/groupTask.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 3
+		}
+	},
+	"src/fluidBuild/tasks/leaf/apiExtractorTask.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 3
+		}
+	},
+	"src/fluidBuild/tasks/leaf/flubTasks.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 2
+		}
+	},
+	"src/fluidBuild/tasks/leaf/generateEntrypointsTask.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 2
+		}
+	},
+	"src/fluidBuild/tasks/leaf/leafTask.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 25
+		}
+	},
+	"src/fluidBuild/tasks/leaf/lintTasks.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 3
+		}
+	},
+	"src/fluidBuild/tasks/leaf/miscTasks.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 14
+		}
+	},
+	"src/fluidBuild/tasks/leaf/prettierTask.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 2
+		}
+	},
+	"src/fluidBuild/tasks/leaf/tscTask.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 21
+		}
+	},
+	"src/fluidBuild/tasks/leaf/webpackTask.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 6
+		}
+	},
+	"src/fluidBuild/tasks/task.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 9
+		}
+	},
+	"src/fluidBuild/tasks/taskFactory.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 3
+		}
+	},
+	"src/fluidBuild/tasks/taskUtils.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 5
+		}
+	},
+	"src/fluidBuild/tasks/workers/workerPool.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 6
+		}
+	},
+	"src/fluidBuild/tscUtils.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 6
+		}
+	},
+	"src/test/npmPackage.test.ts": {
+		"@typescript-eslint/explicit-function-return-type": {
+			"count": 1
+		}
+	}
+}

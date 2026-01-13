@@ -107,12 +107,8 @@
 			},
 			"Build": {
 				"dev": true,
-				"packages": [
-					"@fluidframework/build-common",
-					"@fluidframework/eslint-config-fluid",
-					"@fluid-internal/eslint-plugin-fluid",
-					"@fluid-tools/benchmark"
-				]
+				"dirs": ["common/build/"],
+				"packages": ["@fluidframework/build-common", "@fluid-tools/benchmark"]
 			},
 			"Tools": {
 				"dev": true,

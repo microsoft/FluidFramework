@@ -128,7 +128,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				monorepo.directory ?? context.root,
 				new Map(),
 			);
-			// eslint-disable-next-line @typescript-eslint/no-shadow
+
 			const changesetPath = path.relative(context.root, emptyFile);
 			this.logHr();
 			this.log(`Created empty changeset: ${chalk.green(changesetPath)}`);
@@ -150,11 +150,9 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		this.log(`Remote for ${repo.upstreamRemotePartialUrl} is: ${chalk.bold(remote)}`);
 
 		ux.action.start(`Comparing local changes to remote for branch ${branch}`);
-		let {
-			packages: initialBranchChangedPackages,
-			files: changedFiles,
-			releaseGroups: changedReleaseGroups,
-		} = await repo.getChangedSinceRef(branch, remote, context);
+		const changes = await repo.getChangedSinceRef(branch, remote, context);
+		const initialBranchChangedPackages = changes.packages;
+		let { files: changedFiles, releaseGroups: changedReleaseGroups } = changes;
 		ux.action.stop();
 
 		// Separate definition to address no-atomic-updates lint rule

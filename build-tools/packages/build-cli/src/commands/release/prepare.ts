@@ -17,7 +17,6 @@ import {
 	CheckNoPolicyViolations,
 	CheckNoUntaggedAsserts,
 	// library is overloaded with too much stuff now, and we should consider allowing interior imports.
-	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../library/releasePrepChecks.js";
 
 /**
@@ -70,7 +69,6 @@ export class ReleasePrepareCommand extends BaseCommand<typeof ReleasePrepareComm
 
 		this.logHr();
 		for (const [name, check] of allChecks) {
-			// eslint-disable-next-line no-await-in-loop -- the checks are supposed to run serially
 			const checkResult = await check(context, pkgOrReleaseGroup);
 			const checkPassed = checkResult === undefined;
 			const icon = checkPassed
