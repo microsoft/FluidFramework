@@ -851,6 +851,7 @@ extends:
               # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
               - ${{ if eq(parameters.isReleaseGroup, true) }}:
                 - publish_npm_internal_dev
+              - upload_manifests
             # Using 'all' signifies that we will upload all stages
             stageIdFilter: 'all'
             telemetry_upload_steps:
