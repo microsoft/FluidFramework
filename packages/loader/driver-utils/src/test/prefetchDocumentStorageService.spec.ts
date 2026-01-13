@@ -139,7 +139,8 @@ describe("PrefetchDocumentStorageService", () => {
 		// First call fails with non-retryable error
 		await assert.rejects(
 			async () => prefetchService.readBlob("blob1"),
-			(error: Error) => error.message === "Non-retryable error",
+			(error: Error) => error === nonRetryableError,
+			"First call should receive the non-retryable error",
 		);
 
 		// Reset mock to return different data (to prove we're using cached rejection)
