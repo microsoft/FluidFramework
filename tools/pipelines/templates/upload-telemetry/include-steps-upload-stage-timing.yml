@@ -45,7 +45,8 @@ steps:
   displayName: Submit telemetry for stage timing and result
   env:
     BUILD_ID: $(Build.BuildId)
-    ${{ if eq(parameters.stageIdFilter, 'all') }}:
+    # The script interprets undefined STAGE_ID as meaning to include all stages
+    ${{ if ne(parameters.stageIdFilter, 'all') }}:
       STAGE_ID: ${{ parameters.stageIdFilter }}
     PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
     WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTimingAndResult
