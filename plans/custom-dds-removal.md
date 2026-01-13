@@ -102,10 +102,100 @@ Check API reports:
 
 ### Phase 3: Address IChannel at datastore layer
 
-The `IChannel` interface has some exposure at the datastore layer. A plan is needed to sever the typing between the datastore layer and the channel layer when `IChannel` becomes internal. This may require:
-- Creating a narrower public interface for datastore interactions
-- Updating datastore APIs to not expose `IChannel` directly
-- Possibly using `unknown` or a new minimal interface type
+#### The Problem
+
+`IFluidDataStoreRuntime` (marked `@legacy @beta`) has methods that reference `IChannel`:
+
+```typescript
+interface IFluidDataStoreRuntime {
+    getChannel(id: string): Promise<IChannel>;
+    createChannel(id: string | undefined, type: string): IChannel;
+    addChannel(channel: IChannel): void;
+    bindChannel(channel: IChannel): void;
+}
+```
+
+If `IChannel` becomes `@internal`, API-extractor will report incompatible release tags.
+
+#### Usage Analysis
+
+Analyzed how these methods are used across the codebase:
+
+1. **Pattern: Create → Cast → Use** (most common)
+   ```typescript
+   const channel = runtime.createChannel(id, SharedMap.getFactory().type);
+   const map = channel as SharedMap;  // Immediate cast to specific DDS
+   map.set("key", value);
+   ```
+
+2. **Pattern: Get → Cast → Use**
+   ```typescript
+   const channel = await runtime.getChannel(id);
+   const map = channel as ISharedMap;
+   ```
+
+3. **`addChannel`/`bindChannel`**: Only used internally by DDS implementations.
+
+**Key Finding**: External callers ALWAYS immediately cast `IChannel` to specific DDS types. They never use `IChannel` methods directly.
+
+#### IChannel Methods (Service-Level Only)
+
+These methods are only used by the runtime, not by external code:
+- `getAttachSummary()` - Summary generation
+- `summarize()` - Summary generation
+- `isAttached()` - Attachment state
+- `connect()` - Connection setup
+- `getGCData()` - Garbage collection
+- `attributes` - Channel metadata
+
+External code only accesses:
+- `handle` (from `IFluidLoadable`)
+- `id` (rarely)
+- Casting to specific DDS types
+
+#### Recommended Solution: Phased Internalization
+
+Rather than creating a new minimal interface (which adds API surface), use a phased approach:
+
+**Phase 3a: Keep `IChannel` as `@legacy @beta`**
+- `IChannel` remains accessible in the legacy API
+- `IChannelAttributes` remains accessible (referenced by `IChannel.attributes`)
+- This maintains `IFluidDataStoreRuntime` compatibility
+
+**Phase 3b: Internalize implementation-enabling interfaces**
+Make `IChannelFactory` `@internal` to prevent custom DDS factory implementations.
+
+**Transitive dependency constraint**: The following interfaces CANNOT be made internal because
+they are transitively referenced by `IChannel` (which must remain public for `IFluidDataStoreRuntime`):
+- `IChannelServices` - Referenced by `IChannel.connect(services: IChannelServices)`
+- `IChannelStorageService` - Referenced by `IChannelServices.objectStorage`
+- `IDeltaConnection` - Referenced by `IChannelServices.deltaConnection`
+- `IDeltaHandler` - Referenced by `IDeltaConnection.attach(handler: IDeltaHandler)`
+
+**Why this still works**: To implement a custom DDS, you need:
+1. ❌ `SharedObject`/`SharedObjectCore` base classes → Now `@internal`
+2. ❌ `IChannelFactory` to create the factory → Now `@internal`
+3. ⚠️ `IChannelServices` et al. → Must stay `@legacy @beta` but useless without #1 and #2
+
+Keeping `IChannel` and its dependencies as `@legacy @beta` is acceptable because:
+- External code can't implement it (no base class)
+- External code can't create custom factories (no `IChannelFactory`)
+- The service interfaces are useless without the implementation infrastructure
+- It maintains backward compatibility with `IFluidDataStoreRuntime`
+
+#### Alternative Approaches (Not Recommended)
+
+1. **Use `unknown` return type**: Loses type safety, requires casts everywhere
+2. **Create minimal public interface**: Adds API surface, requires migration
+3. **Split `IFluidDataStoreRuntime`**: Major breaking change
+4. **Make everything internal**: Breaks `IFluidDataStoreRuntime` compatibility
+
+#### Future Consideration
+
+In a future major version, `IChannel` could potentially be made internal by:
+1. Updating `IFluidDataStoreRuntime` methods to return `IFluidLoadable & { id: string }`
+2. Or deprecating the channel methods entirely in favor of higher-level APIs
+3. This would require coordinated changes across multiple packages
 
 ### Phase 4: Build and verify
 
