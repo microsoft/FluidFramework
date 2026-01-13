@@ -12,16 +12,24 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
+		// #region TODO: Fix violations and remove these rule disables
+
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+
+		"@typescript-eslint/explicit-function-return-type": "warn",
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+
+		"prefer-arrow-callback": "off",
+
+		// #endregion
 	},
 	settings: {
-		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-		"import/parsers": {
+		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import-x/parsers": {
 			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
 		},
-		"import/resolver": {
+		"import-x/resolver": {
 			typescript: {
 				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
 				conditionNames: [

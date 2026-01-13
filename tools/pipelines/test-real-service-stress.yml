@@ -18,7 +18,6 @@ resources:
       - release/*
       - main
       - next
-      - lts
   repositories:
   - repository: ff_pipeline_host
     type: git

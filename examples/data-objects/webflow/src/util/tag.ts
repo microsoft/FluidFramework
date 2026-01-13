@@ -17,7 +17,7 @@ const segmentKindToOppositeIdPrefix = {
 	[DocSegmentKind.endTags]: "b:",
 };
 
-export function createTags(tags: TagName[]) {
+export function createTags(tags: TagName[]): { root: HTMLElement; slot: HTMLElement } {
 	const root = document.createElement(tags[0]);
 	let slot: HTMLElement = root;
 	for (let i = 1; i < tags.length; i++) {
@@ -27,17 +27,17 @@ export function createTags(tags: TagName[]) {
 	return { root, slot };
 }
 
-export function addIdPrefix(kind: DocSegmentKind, id: string) {
+export function addIdPrefix(kind: DocSegmentKind, id: string): string {
 	const prefix = segmentKindToIdPrefix[kind];
 	return prefix ? `${prefix}${id}` : id;
 }
 
-export function removeIdPrefix(kind: DocSegmentKind, id: string) {
+export function removeIdPrefix(kind: DocSegmentKind, id: string): string {
 	const prefix = segmentKindToIdPrefix[kind];
 	return prefix ? id.slice(prefix.length) : id;
 }
 
-export function getIdForOpposite(kind: DocSegmentKind, id: string) {
+export function getIdForOpposite(kind: DocSegmentKind, id: string): string {
 	const oldPrefix = segmentKindToIdPrefix[kind];
 	const newPrefix = segmentKindToOppositeIdPrefix[kind];
 

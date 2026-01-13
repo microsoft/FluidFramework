@@ -4,46 +4,60 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	type CodecTree,
+	type CodecWriteOptions,
 	type ICodecFamily,
-	type ICodecOptions,
 	type IJsonCodec,
 	makeCodecFamily,
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import { getCodecTreeForSchemaFormat, makeSchemaCodec } from "../schema-index/index.js";
+import { makeSchemaCodec, schemaCodecBuilder } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
-import { SchemaVersion } from "../../core/index.js";
-import type { Brand } from "../../util/index.js";
+import { SchemaFormatVersion } from "../../core/index.js";
 
 /**
  * Create a family of schema change codecs.
  * @param options - Specifies common codec options, including which `validator` to use.
  * @returns The composed codec family.
  */
-export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
+export function makeSchemaChangeCodecs(
+	options: CodecWriteOptions,
+): ICodecFamily<SchemaChange> {
 	return makeCodecFamily([
-		[SchemaVersion.v1, makeSchemaChangeCodecV1(options, SchemaVersion.v1)],
-		[SchemaVersion.v2, makeSchemaChangeCodecV1(options, SchemaVersion.v2)],
+		[SchemaFormatVersion.v1, makeSchemaChangeCodecV1(options, SchemaFormatVersion.v1)],
+		// This code  (makeSchemaChangeCodecs) is constructing a SchemaFormatVersion.v2 codec, regardless of the requested write version.
+		// It then trusts the user of the produced makeCodecFamily to only select if when it is valid to do so.
+		// This trust is manifests in having to use `allowPossiblyIncompatibleWriteVersionOverrides`
+		// here as it needs to build the v2 codec regardless of if its valid to use.
+		// TODO: There should not be two separate places selecting the write version for this codec. Such cases should instead adopt one of the following patterns:
+		// 1. The outer coded should let the inner one do its own version selection instead of forcing it.
+		// 2. The outer codec should fully handle version selection and embed the inner content directly (referencing its format not codec) and not involve the codec at all.
+		// TODO: fix this up when migrating SchemaChangeCodec to use ClientVersionDispatchingCodecBuilder.
+		// This should probably use pattern 1 above, which will result in this codec having two identical versions.
+		[
+			SchemaFormatVersion.v2,
+			makeSchemaChangeCodecV1(
+				{ ...options, allowPossiblyIncompatibleWriteVersionOverrides: true },
+				SchemaFormatVersion.v2,
+			),
+		],
 	]);
 }
 
-export type SchemaChangeFormatVersion = Brand<
-	SchemaVersion.v1 | SchemaVersion.v2,
-	"SchemaChangeFormatVersion"
->;
 export function getCodecTreeForSchemaChangeFormat(
-	version: SchemaChangeFormatVersion,
+	version: SchemaFormatVersion,
+	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	return {
 		name: "SchemaChange",
 		version,
-		children: [getCodecTreeForSchemaFormat(version)],
+		children: [schemaCodecBuilder.getCodecTree(clientVersion)],
 	};
 }
 
@@ -54,8 +68,8 @@ export function getCodecTreeForSchemaChangeFormat(
  * @returns The composed codec.
  */
 export function makeSchemaChangeCodec(
-	options: ICodecOptions,
-	writeVersion: SchemaVersion,
+	options: CodecWriteOptions,
+	writeVersion: SchemaFormatVersion,
 ): IJsonCodec<SchemaChange> {
 	const family = makeSchemaChangeCodecs(options);
 	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
@@ -68,8 +82,8 @@ export function makeSchemaChangeCodec(
  * @returns The composed schema change codec.
  */
 function makeSchemaChangeCodecV1(
-	options: ICodecOptions,
-	schemaWriteVersion: SchemaVersion,
+	options: CodecWriteOptions,
+	schemaWriteVersion: SchemaFormatVersion,
 ): IJsonCodec<SchemaChange, EncodedSchemaChange> {
 	const schemaCodec = makeSchemaCodec(options, schemaWriteVersion);
 	const schemaChangeCodec: IJsonCodec<SchemaChange, EncodedSchemaChange> = {

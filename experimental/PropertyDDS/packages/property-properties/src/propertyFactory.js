@@ -4,7 +4,7 @@
  */
 
 // These imports are grouped manually to ensure that the imports are in the correct order.
-/* eslint-disable import/order */
+/* eslint-disable import-x/order */
 
 /**
  * @fileoverview Declaration of the PropertyFactory class.
@@ -114,7 +114,7 @@ const {
 
 const { LazyLoadedProperties } = require("./properties/lazyLoadedProperties");
 
-/* eslint-enable import/order */
+/* eslint-enable import-x/order */
 
 /**
  * Creates an instance of the TemplateValidator

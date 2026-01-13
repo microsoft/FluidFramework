@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ILayerCompatDetails,
-	ILayerCompatSupportRequirements,
+import {
+	generation,
+	type ILayerCompatDetails,
+	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import {
 	validateLayerCompatibility,
-	type ITelemetryLoggerExt,
+	type MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
@@ -20,13 +21,13 @@ import { pkgVersion } from "./packageVersion.js";
  */
 export const dataStoreCoreCompatDetails = {
 	/**
-	 * The package version of the Runtime layer.
+	 * The package version of the DataStore layer.
 	 */
 	pkgVersion,
 	/**
-	 * The current generation of the Runtime layer.
+	 * The current generation of the DataStore layer.
 	 */
-	generation: 1,
+	generation,
 };
 
 /**
@@ -64,7 +65,7 @@ export const runtimeSupportRequirementsForDataStore: ILayerCompatSupportRequirem
 export function validateRuntimeCompatibility(
 	maybeRuntimeCompatDetails: ILayerCompatDetails | undefined,
 	disposeFn: () => void,
-	logger: ITelemetryLoggerExt,
+	mc: MonitoringContext,
 ): void {
 	validateLayerCompatibility(
 		"dataStore",
@@ -73,6 +74,6 @@ export function validateRuntimeCompatibility(
 		runtimeSupportRequirementsForDataStore,
 		maybeRuntimeCompatDetails,
 		disposeFn,
-		logger,
+		mc,
 	);
 }

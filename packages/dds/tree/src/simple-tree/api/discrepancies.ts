@@ -43,7 +43,7 @@ import {
 	type FieldSchema,
 } from "../fieldSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
-import type { TreeSchema } from "./configuration.js";
+import type { TreeSchema } from "../treeSchema.js";
 import { tryStoredSchemaAsArray } from "./customTree.js";
 import { FieldKinds } from "../../feature-libraries/index.js";
 
@@ -90,12 +90,12 @@ export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 	readonly mismatch: "allowedTypes";
 	/**
 	 * Annotated allowed types in viewed schema
-	 * (excluding {@link SchemaStaticsAlpha.staged | staged} schema) which are not allowed in stored schema.
+	 * (excluding {@link SchemaStaticsBeta.staged | staged} schema) which are not allowed in stored schema.
 	 */
 	readonly view: readonly AnnotatedAllowedType<TreeNodeSchema>[];
 	/**
 	 * Allowed type identifiers in stored schema which are not allowed in view schema
-	 * (including the view schema's {@link SchemaStaticsAlpha.staged | staged} schema).
+	 * (including the view schema's {@link SchemaStaticsBeta.staged | staged} schema).
 	 */
 	readonly stored: readonly TreeNodeSchemaIdentifier[];
 }
@@ -154,16 +154,20 @@ function doesNodeKindMatchStoredNodeKind(
 	storedType: SchemaFactoryNodeKind,
 ): boolean {
 	switch (viewKind) {
-		case NodeKind.Leaf:
+		case NodeKind.Leaf: {
 			return storedType === LeafNodeStoredSchema;
+		}
 		case NodeKind.Array:
-		case NodeKind.Object:
+		case NodeKind.Object: {
 			return storedType === ObjectNodeStoredSchema;
+		}
 		case NodeKind.Map:
-		case NodeKind.Record:
+		case NodeKind.Record: {
 			return storedType === MapNodeStoredSchema;
-		default:
+		}
+		default: {
 			unreachableCase(viewKind);
+		}
 	}
 }
 
@@ -291,8 +295,9 @@ function* getNodeDiscrepancies(
 			}
 			break;
 		}
-		default:
+		default: {
 			break;
+		}
 	}
 }
 
@@ -457,18 +462,19 @@ function* computeObjectNodeDiscrepancies(
 		}
 
 		// If the stored schema has a field that's not in the view schema
-		if (!viewKeys.has(fieldKey)) {
-			// When the application has opted into it, we allow viewing documents which have additional
-			// optional fields in the stored schema that are not present in the view schema.
-			if (!view.allowUnknownOptionalFields || schema.kind !== FieldKinds.optional.identifier) {
-				yield {
-					identifier,
-					fieldKey,
-					mismatch: "fieldKind",
-					view: storedEmptyFieldSchema.kind,
-					stored: schema.kind,
-				} satisfies FieldKindDiscrepancy;
-			}
+		// When the application has opted into it, we allow viewing documents which have additional
+		// optional fields in the stored schema that are not present in the view schema.
+		if (
+			!viewKeys.has(fieldKey) &&
+			(!view.allowUnknownOptionalFields || schema.kind !== FieldKinds.optional.identifier)
+		) {
+			yield {
+				identifier,
+				fieldKey,
+				mismatch: "fieldKind",
+				view: storedEmptyFieldSchema.kind,
+				stored: schema.kind,
+			} satisfies FieldKindDiscrepancy;
 		}
 	}
 }

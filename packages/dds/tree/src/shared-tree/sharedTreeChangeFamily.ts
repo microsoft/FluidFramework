@@ -6,13 +6,14 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type { ICodecFamily, ICodecOptions } from "../codec/index.js";
+import type { CodecWriteOptions, ICodecFamily } from "../codec/index.js";
 import {
 	type ChangeEncodingContext,
 	type ChangeFamily,
 	type ChangeRebaser,
 	type DeltaDetachedNodeId,
 	type RevisionMetadataSource,
+	type RevisionReplacer,
 	type RevisionTag,
 	type RevisionTagCodec,
 	type TaggedChange,
@@ -23,7 +24,7 @@ import {
 	ModularChangeFamily,
 	type ModularChangeset,
 	type TreeChunk,
-	type TreeCompressionStrategyPrivate,
+	type TreeCompressionStrategy,
 	fieldKindConfigurations,
 	fieldKinds,
 	makeModularChangeCodecFamily,
@@ -60,8 +61,8 @@ export class SharedTreeChangeFamily
 	public constructor(
 		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
-		codecOptions: ICodecOptions,
-		chunkCompressionStrategy?: TreeCompressionStrategyPrivate,
+		codecOptions: CodecWriteOptions,
+		chunkCompressionStrategy?: TreeCompressionStrategy,
 		private readonly idCompressor?: IIdCompressor,
 	) {
 		const modularChangeCodec = makeModularChangeCodecFamily(
@@ -71,7 +72,11 @@ export class SharedTreeChangeFamily
 			codecOptions,
 			chunkCompressionStrategy,
 		);
-		this.modularChangeFamily = new ModularChangeFamily(fieldKinds, modularChangeCodec);
+		this.modularChangeFamily = new ModularChangeFamily(
+			fieldKinds,
+			modularChangeCodec,
+			codecOptions,
+		);
 		this.codecs = makeSharedTreeChangeCodecFamily(
 			this.modularChangeFamily.codecs,
 			codecOptions,
@@ -127,7 +132,7 @@ export class SharedTreeChangeFamily
 			innerChange: SharedTreeChange["changes"][number],
 		) => SharedTreeChange["changes"][number] = (innerChange) => {
 			switch (innerChange.type) {
-				case "data":
+				case "data": {
 					return {
 						type: "data",
 						innerChange: this.modularChangeFamily.invert(
@@ -136,6 +141,7 @@ export class SharedTreeChangeFamily
 							revision,
 						),
 					};
+				}
 				case "schema": {
 					return {
 						type: "schema",
@@ -148,8 +154,9 @@ export class SharedTreeChangeFamily
 						},
 					};
 				}
-				default:
+				default: {
 					fail(0xacc /* Unknown SharedTree change type. */);
+				}
 			}
 		};
 		return {
@@ -203,25 +210,28 @@ export class SharedTreeChangeFamily
 		};
 	}
 
+	public getRevisions(change: SharedTreeChange): Set<RevisionTag | undefined> {
+		const aggregated: Set<RevisionTag | undefined> = new Set();
+		for (const innerChange of change.changes) {
+			if (innerChange.type === "data") {
+				const innerRevisions = this.modularChangeFamily.rebaser.getRevisions(
+					innerChange.innerChange,
+				);
+				for (const tag of innerRevisions) {
+					aggregated.add(tag);
+				}
+			}
+		}
+		return aggregated;
+	}
+
 	public changeRevision(
 		change: SharedTreeChange,
-		newRevision: RevisionTag | undefined,
-		rollbackOf?: RevisionTag,
+		replacer: RevisionReplacer,
 	): SharedTreeChange {
-		return {
-			changes: change.changes.map((inner) => {
-				return inner.type === "data"
-					? {
-							...inner,
-							innerChange: this.modularChangeFamily.rebaser.changeRevision(
-								inner.innerChange,
-								newRevision,
-								rollbackOf,
-							),
-						}
-					: inner;
-			}),
-		};
+		return mapDataChanges(change, (inner) =>
+			this.modularChangeFamily.rebaser.changeRevision(inner, replacer),
+		);
 	}
 
 	public get rebaser(): ChangeRebaser<SharedTreeChange> {

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	SchemaFactory,
@@ -19,21 +19,16 @@ import {
 	type TransactionConstraint,
 	type rollback,
 } from "../../simple-tree/index.js";
-import {
-	TestTreeProviderLite,
-	createTestUndoRedoStacks,
-	getView,
-	validateUsageError,
-} from "../utils.js";
+import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
 import type { requireAssignableTo } from "../../util/index.js";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { runTransaction, Tree } from "../../shared-tree/tree.js";
 // Including tests for TreeAlpha here so they don't have to move if/when stabilized
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { TreeAlpha } from "../../shared-tree/treeAlpha.js";
 import { asAlpha } from "../../api.js";
 
@@ -405,9 +400,9 @@ describe("treeApi", () => {
 
 	it("context", () => {
 		const schemaFactory = new SchemaFactory(undefined);
-		class Array extends schemaFactory.array("array", schemaFactory.number) {}
+		class ArrayNode extends schemaFactory.array("array", schemaFactory.number) {}
 		const view = getView(
-			new TreeViewConfiguration({ schema: Array, enableSchemaValidation: true }),
+			new TreeViewConfiguration({ schema: ArrayNode, enableSchemaValidation: true }),
 		);
 		view.initialize([1, 2, 3]);
 
@@ -417,7 +412,7 @@ describe("treeApi", () => {
 		assert(context !== undefined);
 
 		// Unhydrated
-		assert.equal(TreeAlpha.branch(new Array([1, 2, 3])), undefined);
+		assert.equal(TreeAlpha.branch(new ArrayNode([1, 2, 3])), undefined);
 	});
 
 	it("can cast to alpha", () => {

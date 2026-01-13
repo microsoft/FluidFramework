@@ -4,7 +4,7 @@
  */
 
 // TODO: Update import once TreeDataObject is exported in our non-internal package.
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { SharedTree, TreeViewConfiguration, type TreeView } from "@fluidframework/tree/legacy";
 
@@ -90,7 +90,7 @@ function getInitialTree(): Table {
 		},
 	});
 
-	return new Table({
+	return Table.create({
 		columns: [taskNameColumn, dateColumn, completedColumn],
 		rows: [row0, row1],
 	});

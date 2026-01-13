@@ -12,8 +12,15 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
+		"@typescript-eslint/explicit-function-return-type": "warn",
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"tsdoc/syntax": "off",
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"depend/ban-dependencies": [
+			"error",
+			{
+				allowed: ["axios", "lodash"],
+			},
+		],
 	},
 };

@@ -26,8 +26,12 @@ import {
 } from "../../shared-tree-core/index.js";
 import { brand } from "../../util/index.js";
 import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 
-const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
+const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: FluidClientVersion.v2_0,
+});
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 
@@ -421,10 +425,10 @@ describe("Branches", () => {
 	}
 
 	function assertDisposed(fn: () => void): void {
-		assert.throws(fn, (e: Error) => validateAssertionError(e, "Branch is disposed"));
+		assert.throws(fn, validateAssertionError("Branch is disposed"));
 	}
 
 	function assertNotDisposed(fn: () => void): void {
-		assert.doesNotThrow(fn, (e: Error) => validateAssertionError(e, /\*/));
+		assert.doesNotThrow(fn, validateAssertionError(/\*/));
 	}
 });

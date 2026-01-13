@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 
 import { strict as assert } from "node:assert";
 
@@ -53,9 +53,9 @@ import {
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
-	getStoredSchema,
 	toInitialSchema,
 	restrictiveStoredSchemaGenerationOptions,
+	toStoredSchema,
 } from "../../../simple-tree/index.js";
 import { singleJsonCursor } from "../../json/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
@@ -93,13 +93,11 @@ describe("LazyField", () => {
 		cursor.free();
 		assert.throws(
 			() => optionalField.editor.set(undefined, optionalField.length === undefined),
-			(e: Error) =>
-				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
+			validateAssertionError(/only allowed on fields with TreeStatus.InDocument status/),
 		);
 		assert.throws(
 			() => valueField.editor.set(mapTreeFromCursor(singleJsonCursor({}))),
-			(e: Error) =>
-				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
+			validateAssertionError(/only allowed on fields with TreeStatus.InDocument status/),
 		);
 	});
 
@@ -450,13 +448,8 @@ describe("LazyField", () => {
 			persistedMetadata: undefined,
 		};
 		const schema: TreeStoredSchema = {
+			...toStoredSchema(numberSchema, restrictiveStoredSchemaGenerationOptions),
 			rootFieldSchema: rootSchema,
-			nodeSchema: new Map([
-				[
-					brand(numberSchema.identifier),
-					getStoredSchema(numberSchema, restrictiveStoredSchemaGenerationOptions),
-				],
-			]),
 		};
 
 		/**

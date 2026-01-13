@@ -7,10 +7,16 @@
 // @beta
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
+// @beta @sealed
+export interface IOdspContainerServicesEvents {
+    readOnlyStateChanged: () => void;
+    sensitivityLabelsInfoChanged: () => void;
+}
+
 // @beta
 export interface IOdspFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IFluidContainer<TContainerSchema> {
     attach(props?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
-    serialize(): string;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @beta
@@ -29,10 +35,6 @@ export class OdspClient {
     }>;
     // (undocumented)
     getContainer<T extends ContainerSchema>(id: string, containerSchema: T): Promise<{
-        container: IOdspFluidContainer<T>;
-        services: OdspContainerServices;
-    }>;
-    rehydrateContainer<T extends ContainerSchema>(serializedContainer: string, containerSchema: T): Promise<{
         container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
@@ -59,9 +61,13 @@ export interface OdspContainerAttachProps {
     filePath: string | undefined;
 }
 
-// @beta
-export interface OdspContainerServices {
+// @beta @sealed
+export interface OdspContainerServices extends IDisposable {
     audience: IOdspAudience;
+    // (undocumented)
+    events: Listenable<IOdspContainerServicesEvents>;
+    getReadOnlyState(): boolean | undefined;
+    getSensitivityLabelsInfo(): string | undefined;
 }
 
 // @beta

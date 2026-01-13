@@ -9,7 +9,7 @@ import {
 	type BrandedKey,
 	type BrandedMapSubset,
 	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
+	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../util/brandedMap.js";
 import type { Brand, Opaque } from "../../util/index.js";
 

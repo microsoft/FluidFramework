@@ -10,11 +10,15 @@ import {
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 
-import type { ICodecOptions } from "../codec/index.js";
+import {
+	FluidClientVersion,
+	type CodecWriteOptions,
+	type ICodecOptions,
+} from "../codec/index.js";
 import {
 	type RevisionTag,
 	RevisionTagCodec,
-	SchemaVersion,
+	SchemaFormatVersion,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
@@ -26,7 +30,7 @@ import {
 	TreeCompressionStrategy,
 	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
 	TreeViewConfiguration,
@@ -67,7 +71,7 @@ import { combineChunks } from "../feature-libraries/index.js";
  */
 export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & { idCompressor?: IIdCompressor | undefined },
+	options?: ForestOptions & { idCompressor?: IIdCompressor | undefined },
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
 }
@@ -195,8 +199,14 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	});
 
 	if (options?.content !== undefined) {
-		const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
-		const fieldBatchCodec = makeFieldBatchCodec(options, 1);
+		// Any version can be passed down to `makeSchemaCodec` and `makeFieldBatchCodec` here.
+		// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not `minVersionForCollab`.
+		const writeOptions: CodecWriteOptions = {
+			...options,
+			minVersionForCollab: FluidClientVersion.v2_0,
+		};
+		const schemaCodec = makeSchemaCodec(writeOptions, SchemaFormatVersion.v1);
+		const fieldBatchCodec = makeFieldBatchCodec(writeOptions);
 		const newSchema = schemaCodec.decode(options.content.schema as Format);
 
 		const context: FieldBatchEncodingContext = {
@@ -212,7 +222,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		assert(fieldCursors.length === 1, 0xa5b /* must have exactly 1 field in batch */);
 
 		const fieldCursor = oneFromIterable(fieldCursors);
-		assert(fieldCursor !== undefined, "expected exactly one field in batch");
+		assert(fieldCursor !== undefined, 0xc94 /* expected exactly one field in batch */);
 
 		initialize(
 			checkout,

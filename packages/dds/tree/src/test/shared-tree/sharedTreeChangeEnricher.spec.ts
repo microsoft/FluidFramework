@@ -18,10 +18,11 @@ import {
 } from "../../core/index.js";
 import { cursorToJsonObject, fieldJsonCursor } from "../json/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
+	DefaultRevisionReplacer,
 	ModularChangeFamily,
 	type ModularChangeset,
 	ModularEditBuilder,
@@ -31,9 +32,9 @@ import {
 import {
 	type SharedTreeMutableChangeEnricher,
 	SharedTreeReadonlyChangeEnricher,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeEnricher.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 import {
 	type IdAllocator,
@@ -42,7 +43,7 @@ import {
 	disposeSymbol,
 	idAllocatorFromMaxId,
 } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.js";
 import {
 	buildTestForest,
@@ -58,16 +59,24 @@ import { initializeForest } from "../feature-libraries/index.js";
 
 const content: JsonCompatible = { x: 42 };
 
-const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
+const codecOptions = {
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: FluidClientVersion.v2_0,
+};
+const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily, codecOptions);
 
 const dataChanges: ModularChangeset[] = [];
-const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (taggedChange) =>
-	dataChanges.push(taggedChange.change),
+const defaultEditor = new DefaultEditBuilder(
+	modularFamily,
+	mintRevisionTag,
+	(taggedChange) => dataChanges.push(taggedChange.change),
+	codecOptions,
 );
 const modularBuilder = new ModularEditBuilder(
 	modularFamily,
 	modularFamily.fieldKinds,
 	() => {},
+	codecOptions,
 );
 
 // Side effects results in `dataChanges` being populated
@@ -82,8 +91,8 @@ const removeRoot: SharedTreeChange = {
 const revision1 = testIdCompressor.generateCompressedId();
 
 interface TestChangeEnricher {
-	forest: IEditableForest;
-	removedRoots: DetachedFieldIndex;
+	borrowedForest: IEditableForest;
+	borrowedRemovedRoots: DetachedFieldIndex;
 	fork(): SharedTreeMutableChangeEnricher & TestChangeEnricher;
 }
 
@@ -110,17 +119,17 @@ export function setupEnricher() {
 describe("SharedTreeChangeEnricher", () => {
 	it("applies tip changes to fork", () => {
 		const { enricher, fork } = setupEnricher();
-		assert.deepEqual(jsonTreeFromForest(enricher.forest), [content]);
-		assert.deepEqual(Array.from(enricher.removedRoots.entries()), []);
+		assert.deepEqual(jsonTreeFromForest(enricher.borrowedForest), [content]);
+		assert.deepEqual([...enricher.borrowedRemovedRoots.entries()], []);
 
 		fork.applyTipChange(removeRoot, revision1);
 
-		assert.deepEqual(jsonTreeFromForest(fork.forest), []);
-		assert.equal(Array.from(fork.removedRoots.entries()).length, 1);
+		assert.deepEqual(jsonTreeFromForest(fork.borrowedForest), []);
+		assert.equal([...fork.borrowedRemovedRoots.entries()].length, 1);
 
 		// The original enricher should not have been modified
-		assert.deepEqual(jsonTreeFromForest(enricher.forest), [content]);
-		assert.deepEqual(Array.from(enricher.removedRoots.entries()), []);
+		assert.deepEqual(jsonTreeFromForest(enricher.borrowedForest), [content]);
+		assert.deepEqual([...enricher.borrowedRemovedRoots.entries()], []);
 	});
 
 	it("updates enrichments", () => {
@@ -197,5 +206,11 @@ function tagChangeInLine(
 	change: ModularChangeset,
 	revision: RevisionTag,
 ): TaggedChange<ModularChangeset> {
-	return tagChange(modularFamily.changeRevision(change, revision), revision);
+	return tagChange(
+		modularFamily.changeRevision(
+			change,
+			new DefaultRevisionReplacer(revision, modularFamily.getRevisions(change)),
+		),
+		revision,
+	);
 }

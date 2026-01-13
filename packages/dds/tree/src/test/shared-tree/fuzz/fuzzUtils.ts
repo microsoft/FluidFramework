@@ -43,7 +43,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type {
 	SharedTreeOptionsInternal,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../shared-tree/sharedTree.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import type { FuzzView } from "./fuzzEditGenerators.js";
@@ -147,7 +147,7 @@ export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuz
 }
 
 export function nodeSchemaFromTreeSchema(treeSchema: typeof fuzzFieldSchema) {
-	const nodeSchema = Array.from(treeSchema.allowedTypeSet).find(
+	const nodeSchema = [...treeSchema.allowedTypeSet].find(
 		(treeNodeSchema) => treeNodeSchema.identifier === "treeFuzz.node",
 	) as typeof FuzzNode | undefined;
 	return nodeSchema;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-nodejs-modules */
+/* eslint-disable import-x/no-nodejs-modules */
 
 import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";

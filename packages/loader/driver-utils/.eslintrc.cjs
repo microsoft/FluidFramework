@@ -12,7 +12,7 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
-		"import/no-nodejs-modules": ["error"],
+		"import-x/no-nodejs-modules": ["error"],
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
 		// Disabled because the rule is crashing on this package - AB#51780
@@ -23,7 +23,7 @@ module.exports = {
 			// Rules only for test files
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
-				"import/no-nodejs-modules": "off", // Node libraries are OK for test files.
+				"import-x/no-nodejs-modules": "off", // Node libraries are OK for test files.
 			},
 		},
 	],

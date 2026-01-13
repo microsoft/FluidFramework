@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 import {
 	SquashingTransactionStack,
 	SharedTreeBranch,
+	TransactionResult,
 	TransactionStack,
-	type OnPop,
 } from "../../shared-tree-core/index.js";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
@@ -20,12 +20,11 @@ import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../uti
 import {
 	findAncestor,
 	rootFieldKey,
-	tagChange,
 	type GraphCommit,
 	type RevisionTag,
-	type TaggedChange,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 
 describe("TransactionStacks", () => {
 	it("emit an event after starting a transaction", () => {
@@ -77,48 +76,151 @@ describe("TransactionStacks", () => {
 	});
 
 	it("run a function when a transaction begins", () => {
-		let invoked = false;
+		let invoked = 0;
 		const transaction = new TransactionStack((): void => {
-			invoked = true;
+			invoked += 1;
 			assert.equal(transaction.isInProgress(), false);
 		});
 		transaction.start();
-		assert.equal(invoked, true);
+		assert.equal(invoked, 1);
+	});
+
+	it("run the top-level push function by default when a nested transaction begins", () => {
+		let invoked = 0;
+		const transaction = new TransactionStack((): void => {
+			invoked += 1;
+			assert.equal(transaction.isInProgress(), invoked > 1);
+		});
+		transaction.start();
+		assert.equal(invoked, 1);
+		transaction.start();
+		assert.equal(invoked, 2);
+		transaction.start();
+		assert.equal(invoked, 3);
+	});
+
+	it("run a provided nested push function when a nested transaction begins", () => {
+		let invokedOuter = 0;
+		let invokedInner1 = 0;
+		let invokedInner2 = 0;
+		const transaction: TransactionStack = new TransactionStack(() => {
+			invokedOuter += 1;
+			assert.equal(transaction.isInProgress(), false);
+			return {
+				onPush: () => {
+					invokedInner1 += 1;
+					assert.equal(transaction.isInProgress(), true);
+					return {
+						onPush: () => {
+							invokedInner2 += 1;
+							assert.equal(transaction.isInProgress(), true);
+						},
+					};
+				},
+			};
+		});
+		transaction.start();
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 0);
+		assert.equal(invokedInner2, 0);
+		transaction.start();
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 0);
+		transaction.start();
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 1);
+		transaction.start();
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 2);
+	});
+
+	it("run a provided nested pop function when a nested transaction ends", () => {
+		let invokedOuter = 0;
+		let invokedInner1 = 0;
+		let invokedInner2 = 0;
+		const transaction: TransactionStack = new TransactionStack(() => {
+			return {
+				onPop: () => {
+					invokedOuter += 1;
+					assert.equal(transaction.isInProgress(), false);
+				},
+				onPush: () => {
+					return {
+						onPop: () => {
+							invokedInner1 += 1;
+							assert.equal(transaction.isInProgress(), true);
+						},
+						onPush: () => {
+							return {
+								onPop: () => {
+									invokedInner2 += 1;
+									assert.equal(transaction.isInProgress(), true);
+								},
+							};
+						},
+					};
+				},
+			};
+		});
+		transaction.start();
+		transaction.start();
+		transaction.start();
+		transaction.commit();
+		assert.equal(invokedOuter, 0);
+		assert.equal(invokedInner1, 0);
+		assert.equal(invokedInner2, 1);
+		transaction.commit();
+		assert.equal(invokedOuter, 0);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 1);
+		transaction.commit();
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 1);
 	});
 
 	it("run a function when a transaction aborts", () => {
-		let invoked = false;
-		const transaction = new TransactionStack((): OnPop => {
-			return () => {
-				invoked = true;
-				assert.equal(transaction.isInProgress(), false);
+		let invoked = 0;
+		const transaction: TransactionStack = new TransactionStack(() => {
+			return {
+				onPop: (result) => {
+					invoked += 1;
+					assert.equal(result, TransactionResult.Abort);
+					assert.equal(transaction.isInProgress(), false);
+				},
 			};
 		});
 		transaction.start();
-		assert.equal(invoked, false);
+		assert.equal(invoked, 0);
 		transaction.abort();
-		assert.equal(invoked, true);
+		assert.equal(invoked, 1);
 	});
 
 	it("run a function when a transaction commits", () => {
-		let invoked = false;
-		const transaction = new TransactionStack((): OnPop => {
-			return () => {
-				invoked = true;
-				assert.equal(transaction.isInProgress(), false);
+		let invoked = 0;
+		const transaction: TransactionStack = new TransactionStack(() => {
+			return {
+				onPop: (result) => {
+					invoked += 1;
+					assert.equal(result, TransactionResult.Commit);
+					assert.equal(transaction.isInProgress(), false);
+				},
 			};
 		});
 		transaction.start();
-		assert.equal(invoked, false);
+		assert.equal(invoked, 0);
 		transaction.commit();
-		assert.equal(invoked, true);
+		assert.equal(invoked, 1);
 	});
 
 	it("throw an error if committing without starting a transaction", () => {
 		const transaction = new TransactionStack();
 		assert.throws(
 			() => transaction.commit(),
-			(e: Error) => validateAssertionError(e, "No transaction to commit"),
+			validateAssertionError("No transaction to commit"),
 		);
 	});
 
@@ -126,7 +228,7 @@ describe("TransactionStacks", () => {
 		const transaction = new TransactionStack();
 		assert.throws(
 			() => transaction.abort(),
-			(e: Error) => validateAssertionError(e, "No transaction to abort"),
+			validateAssertionError("No transaction to abort"),
 		);
 	});
 
@@ -137,31 +239,27 @@ describe("TransactionStacks", () => {
 		assert.equal(transaction.disposed, true);
 		assert.throws(
 			() => transaction.isInProgress(),
-			(e: Error) => validateAssertionError(e, "Transactor is disposed"),
+			validateAssertionError("Transactor is disposed"),
 		);
-		assert.throws(
-			() => transaction.start(),
-			(e: Error) => validateAssertionError(e, "Transactor is disposed"),
-		);
+		assert.throws(() => transaction.start(), validateAssertionError("Transactor is disposed"));
 		assert.throws(
 			() => transaction.commit(),
-			(e: Error) => validateAssertionError(e, "Transactor is disposed"),
+			validateAssertionError("Transactor is disposed"),
 		);
-		assert.throws(
-			() => transaction.abort(),
-			(e: Error) => validateAssertionError(e, "Transactor is disposed"),
-		);
+		assert.throws(() => transaction.abort(), validateAssertionError("Transactor is disposed"));
 		assert.throws(
 			() => transaction.dispose(),
-			(e: Error) => validateAssertionError(e, "Transactor is disposed"),
+			validateAssertionError("Transactor is disposed"),
 		);
 	});
 
 	it("abort all transactions when disposed", () => {
 		let aborted = 0;
 		const transaction = new TransactionStack(() => {
-			return () => {
-				aborted += 1;
+			return {
+				onPop: () => {
+					aborted += 1;
+				},
 			};
 		});
 		transaction.start();
@@ -174,11 +272,7 @@ describe("TransactionStacks", () => {
 describe("SquashingTransactionStacks", () => {
 	it("squash transactions", () => {
 		const branch = createBranch();
-		let squashCount = 0;
-		const transaction = new SquashingTransactionStack(branch, (commits) => {
-			squashCount += 1;
-			return squash(commits);
-		});
+		const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 		assert.equal(transaction.activeBranch, branch);
 		transaction.start();
 		assert.notEqual(transaction.activeBranch, branch);
@@ -187,17 +281,15 @@ describe("SquashingTransactionStacks", () => {
 		assert.notEqual(transaction.activeBranch, branch);
 		editBranch(transaction.activeBranch, "C");
 		transaction.commit();
-		assert.equal(squashCount, 0); // Squash should only be called for the outermost transaction commit
 		assert.notEqual(transaction.activeBranch, branch);
 		transaction.commit();
-		assert.equal(squashCount, 1);
 		assert.equal(transaction.activeBranch, branch);
 		assert.equal(edits(branch), 1); // Only one (squashed) commit should be on the branch after the initial commit, not two (unsquashed)
 	});
 
 	it("transfer events between active branches", () => {
 		const branch = createBranch();
-		const transaction = new SquashingTransactionStack(branch, squash);
+		const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 
 		let originalEventCount = 0;
 		transaction.branch.events.on("afterChange", () => {
@@ -229,7 +321,7 @@ describe("SquashingTransactionStacks", () => {
 
 	it("delegate edits to the active branch", () => {
 		const branch = createBranch();
-		const transaction = new SquashingTransactionStack(branch, squash);
+		const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 		const editor = transaction.activeBranchEditor; // We'll hold on to this editor across the transaction
 		assert.equal(edits(branch), 0);
 		assert.equal(transaction.activeBranch, branch);
@@ -255,7 +347,10 @@ describe("SquashingTransactionStacks", () => {
 	});
 
 	type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
-	const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
+	const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
+		jsonValidator: FormatValidatorBasic,
+		minVersionForCollab: FluidClientVersion.v2_0,
+	});
 	const initialRevision = mintRevisionTag();
 
 	function createBranch(): DefaultBranch {
@@ -275,10 +370,6 @@ describe("SquashingTransactionStacks", () => {
 	function edit(editor: DefaultEditBuilder, value: string): void {
 		const content = chunkFromJsonableTrees([{ type: brand("TestValue"), value }]);
 		editor.valueField({ parent: undefined, field: rootFieldKey }).set(content);
-	}
-
-	function squash(commits: GraphCommit<DefaultChangeset>[]): TaggedChange<DefaultChangeset> {
-		return tagChange(defaultChangeFamily.rebaser.compose(commits), mintRevisionTag());
 	}
 
 	/** The number of commits on the given branch, not including the initial commit */

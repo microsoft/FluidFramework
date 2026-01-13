@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { EncodedFieldBatch, type FieldBatchFormatVersion } from "./format.js";
+export { EncodedFieldBatch, FieldBatchFormatVersion } from "./format.js";
 export type { FieldBatch } from "./fieldBatch.js";
 export {
 	type FieldBatchCodec,
 	makeFieldBatchCodec,
 	type FieldBatchEncodingContext,
-	fluidVersionToFieldBatchCodecWriteVersion,
 	type IncrementalEncoderDecoder,
 	type IncrementalEncoder,
 	type IncrementalDecoder,

@@ -12,7 +12,7 @@ import {
 	allowsValue,
 	isTreeValue,
 	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
+	/* eslint-disable-next-line import-x/no-internal-modules */
 } from "../../feature-libraries/valueUtilities.js";
 
 describe("valueUtilities", () => {

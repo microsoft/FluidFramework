@@ -247,6 +247,7 @@ function testObjectLike(testCases: TestCaseErased[]) {
 		describe(".toLocaleString()", () => {
 			test1((subject) => {
 				try {
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					return subject.toLocaleString();
 				} catch (error: unknown) {
 					assert(error instanceof Error);

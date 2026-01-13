@@ -7,12 +7,17 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, type IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
+import {
+	type CodecWriteOptions,
+	currentVersion,
+	type IJsonCodec,
+	makeCodecFamily,
+} from "../../../codec/index.js";
 import {
 	type FieldChangeHandler,
 	genericFieldKind,
 	type ModularChangeset,
-	FieldKindWithEditor,
+	FlexFieldKind,
 	type RelevantRemovedRootsFromChild,
 	defaultChunkPolicy,
 	type TreeChunk,
@@ -24,11 +29,13 @@ import {
 	type FieldKindConfigurationEntry,
 	makeModularChangeCodecFamily,
 	ModularChangeFamily,
-	type EncodedModularChangeset,
+	type EncodedModularChangesetV2,
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type EditDescription,
 	jsonableTreeFromFieldCursor,
+	DefaultRevisionReplacer,
+	type ChangeAtomIdBTree,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -46,13 +53,13 @@ import {
 	type ChangeEncodingContext,
 	type ChangeAtomIdMap,
 	Multiplicity,
-	replaceAtomRevisions,
 	type FieldUpPath,
 	type RevisionInfo,
 } from "../../../core/index.js";
 import {
 	type Mutable,
 	brand,
+	brandConst,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
 	newTupleBTree,
@@ -76,25 +83,24 @@ import { ajvValidator } from "../../codec/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import {
 	newCrossFieldKeyTable,
-	type ChangeAtomIdBTree,
 	type CrossFieldKeyTable,
 	type FieldChangeMap,
 	type FieldId,
 	type NodeChangeset,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	getFieldKind,
 	intoDelta,
 	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
 	EncodedNodeChangeset,
 	FieldChangeDelta,
 	FieldChangeEncodingContext,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
@@ -110,13 +116,14 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	mute: (change: SingleNodeChangeset) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
-	replaceRevisions: (change, oldRevisions, newRevision) =>
-		change !== undefined ? replaceAtomRevisions(change, oldRevisions, newRevision) : undefined,
+	replaceRevisions: (change, replacer) =>
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- replacer type inference issue
+		change === undefined ? undefined : replacer.getUpdatedAtomId(change),
 };
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {
 	buildChildChanges: (changes: Iterable<[number, NodeId]>): SingleNodeChangeset => {
-		const changesArray = Array.from(changes);
+		const changesArray = [...changes];
 		assert(changesArray.length <= 1, "This field kind only supports one node in its field");
 		return changesArray[0] === undefined ? undefined : changesArray[0][1];
 	},
@@ -143,10 +150,10 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
-		local: [{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined }],
+		local: [{ count: 1, fields: change === undefined ? undefined : deltaFromChild(change) }],
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
-		change !== undefined ? relevantRemovedRootsFromChild(change) : [],
+		change === undefined ? [] : relevantRemovedRootsFromChild(change),
 
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
@@ -156,12 +163,10 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	getCrossFieldKeys: (_change) => [],
 };
 
-const singleNodeField = new FieldKindWithEditor(
-	"SingleNode",
+const singleNodeField = new FlexFieldKind(
+	brandConst("SingleNode")<FieldKindIdentifier>(),
 	Multiplicity.Single,
-	singleNodeHandler,
-	(a, b) => false,
-	new Set(),
+	{ changeHandler: singleNodeHandler, allowMonotonicUpgradeFrom: new Set() },
 );
 
 export const fieldKindConfiguration: FieldKindConfiguration = new Map<
@@ -172,21 +177,22 @@ export const fieldKindConfiguration: FieldKindConfiguration = new Map<
 	[valueField.identifier, { kind: valueField, formatVersion: 1 }],
 ]);
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const codecOptions: ICodecOptions = {
+const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
+	minVersionForCollab: currentVersion,
 };
 
 const codec = makeModularChangeCodecFamily(
-	new Map([[1, fieldKindConfiguration]]),
+	new Map([[5, fieldKindConfiguration]]),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions, 1),
+	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
-const family = new ModularChangeFamily(fieldKinds, codec);
+const family = new ModularChangeFamily(fieldKinds, codec, codecOptions);
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -211,7 +217,7 @@ const pathA0A: FieldUpPath = { parent: pathA0, field: fieldA };
 const pathA0B: FieldUpPath = { parent: pathA0, field: fieldB };
 const pathB0A: FieldUpPath = { parent: pathB0, field: fieldA };
 
-const mainEditor = family.buildEditor(() => undefined);
+const mainEditor = family.buildEditor(mintRevisionTag, () => undefined);
 const rootChange1a = removeAliases(
 	mainEditor.buildChanges([
 		{
@@ -1161,22 +1167,19 @@ describe("ModularChangeFamily", () => {
 			) => {
 				return [
 					...change.shallow.map((id) => makeDetachedNodeId(id.major, id.minor)),
-					...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
+					...change.nested.flatMap((c) => [...relevantRemovedRootsFromChild(c)]),
 				];
 			},
 		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
-		const hasRemovedRootsRefsField = new FieldKindWithEditor(
-			fieldKind,
-			Multiplicity.Single,
-			handler,
-			() => false,
-			new Set(),
-		);
+		const hasRemovedRootsRefsField = new FlexFieldKind(fieldKind, Multiplicity.Single, {
+			changeHandler: handler,
+			allowMonotonicUpgradeFrom: new Set(),
+		});
 		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
 
 		function relevantRemovedRoots(input: ModularChangeset): DeltaDetachedNodeId[] {
 			deepFreeze(input);
-			return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
+			return [...relevantDetachedTreesImplementation(input, mockFieldKinds)];
 		}
 
 		function nodeChangeFromHasRemovedRootsRefs(changeset: HasRemovedRootsRefs): NodeChangeset {
@@ -1407,7 +1410,7 @@ describe("ModularChangeFamily", () => {
 		};
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
-			EncodedModularChangeset,
+			EncodedModularChangesetV2,
 			ChangeEncodingContext
 		> = {
 			successes: [
@@ -1452,6 +1455,28 @@ describe("ModularChangeFamily", () => {
 					inlineRevision(rootChangeWithoutNodeFieldChanges, tag1),
 					context,
 				],
+				[
+					"with no change constraint",
+					inlineRevision(
+						{
+							...buildChangeset([]),
+							noChangeConstraint: { violated: false },
+						},
+						tag1,
+					),
+					context,
+				],
+				[
+					"with violated no change constraint",
+					inlineRevision(
+						{
+							...buildChangeset([]),
+							noChangeConstraint: { violated: true },
+						},
+						tag1,
+					),
+					context,
+				],
 			],
 		};
 
@@ -1460,7 +1485,7 @@ describe("ModularChangeFamily", () => {
 
 	it("build child change", () => {
 		const [changeReceiver, getChanges] = testChangeReceiver(family);
-		const editor = family.buildEditor(changeReceiver);
+		const editor = family.buildEditor(mintRevisionTag, changeReceiver);
 		const path: UpPath = {
 			parent: undefined,
 			parentField: fieldA,
@@ -1591,7 +1616,10 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 }
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
-	return family.changeRevision(change, revision);
+	return family.changeRevision(
+		change,
+		new DefaultRevisionReplacer(revision, family.getRevisions(change)),
+	);
 }
 
 function tagChangeInline(
@@ -1612,13 +1640,15 @@ function deepFreeze(object: object) {
 }
 
 function buildChangeset(edits: EditDescription[]): ModularChangeset {
-	const editor = family.buildEditor(() => undefined);
+	const editor = family.buildEditor(mintRevisionTag, () => undefined);
 	return editor.buildChanges(edits);
 }
 
 function buildExistsConstraint(path: UpPath): ModularChangeset {
 	const edits: ModularChangeset[] = [];
-	const editor = family.buildEditor((taggedChange) => edits.push(taggedChange.change));
+	const editor = family.buildEditor(mintRevisionTag, (taggedChange) =>
+		edits.push(taggedChange.change),
+	);
 	editor.addNodeExistsConstraint(path, mintRevisionTag());
 	return edits[0];
 }

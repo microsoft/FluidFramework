@@ -12,21 +12,13 @@ import { normalizeFieldSchema } from "@fluidframework/tree/internal";
 
 import type { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
-import {
-	getFriendlyName,
-	getZodSchemaAsTypeScript,
-	isNamedSchema,
-	communize,
-	unqualifySchema,
-	type SchemaDetails,
-	findSchemas,
-} from "./utils.js";
+import { getFriendlyName, communize, findSchemas } from "./utils.js";
 
 /**
  * Produces a "system" prompt for the tree agent, based on the provided subtree.
  */
-export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
-	subtree: Subtree<TRoot>;
+export function getPrompt(args: {
+	subtree: Pick<Subtree<ImplicitFieldSchema>, "schema" | "field">;
 	editToolName: string | undefined;
 	domainHints?: string;
 }): string {
@@ -66,19 +58,11 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 		}
 	}
 
-	const { domainTypes } = generateEditTypesForPrompt(schema, getSimpleSchema(schema));
-	for (const [key, value] of Object.entries(domainTypes)) {
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete domainTypes[key];
-		if (isNamedSchema(key)) {
-			const friendlyKey = unqualifySchema(key);
-			domainTypes[friendlyKey] = value;
-		}
-	}
-
 	const stringified = stringifyTree(field);
-	const details: SchemaDetails = { hasHelperMethods: false };
-	const typescriptSchemaTypes = getZodSchemaAsTypeScript(domainTypes, details);
+	const { schemaText: typescriptSchemaTypes, hasHelperMethods } = generateEditTypesForPrompt(
+		schema,
+		getSimpleSchema(schema),
+	);
 	const exampleTypeName =
 		nodeTypeUnion === undefined
 			? undefined
@@ -121,23 +105,23 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	 * ${`Example: Check if a node is a ${exampleTypeName} with \`if (context.is.${exampleTypeName}(node)) {}\``}
 	 */
 	is: Record<string, <T extends TreeData>(data: unknown) => data is T>;
-	
+
 	/**
 	 * Checks if the provided data is an array.
 	 * @remarks
 	 * DO NOT use \`Array.isArray\` to check if tree data is an array - use this function instead.
-	 * 
+	 *
 	 * This function will also work for native JavaScript arrays.
 	 *
 	 * ${`Example: \`if (context.isArray(node)) {}\``}
 	 */
 	isArray(data: any): boolean;
-	
+
 	/**
 	 * Checks if the provided data is a map.
 	 * @remarks
 	 * DO NOT use \`instanceof Map\` to check if tree data is a map - use this function instead.
-	 * 
+	 *
 	 * This function will also work for native JavaScript Map instances.
 	 *
 	 * ${`Example: \`if (context.isMap(node)) {}\``}
@@ -179,7 +163,7 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 }
 \`\`\``;
 
-	const helperMethodExplanation = details.hasHelperMethods
+	const helperMethodExplanation = hasHelperMethods
 		? `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use any application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
 It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.`
 		: "";

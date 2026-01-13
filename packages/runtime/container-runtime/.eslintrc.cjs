@@ -9,7 +9,7 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
-		// FIXME: temporarily disabled because of crashes in typescript-eslint on destructuring in promise chains.
+		// AB#51780: temporarily disabled because of crashes in typescript-eslint on destructuring in promise chains.
 		// See: channelCollection.ts:1070
 		"@typescript-eslint/unbound-method": "off",
 	},
@@ -23,7 +23,7 @@ module.exports = {
 				"unicorn/consistent-function-scoping": "off",
 
 				// Test files are run in node only so additional node libraries can be used.
-				"import/no-nodejs-modules": ["error", { allow: ["node:assert", "node:crypto"] }],
+				"import-x/no-nodejs-modules": ["error", { allow: ["node:assert", "node:crypto"] }],
 			},
 		},
 	],

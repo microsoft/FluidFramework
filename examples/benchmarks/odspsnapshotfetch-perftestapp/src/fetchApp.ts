@@ -6,12 +6,12 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
 import { FluidAppOdspUrlResolver } from "@fluidframework/odsp-urlresolver/internal";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspSampleCache } from "./odspPersistantCache.js";
 
-export function start(div: HTMLDivElement, odspAccessToken: string) {
+export function start(div: HTMLDivElement, odspAccessToken: string): void {
 	const binaryDiv = document.createElement("div");
 	binaryDiv.style.minHeight = "400px";
 	const binaryText = document.createElement("div");
@@ -55,7 +55,7 @@ export function start(div: HTMLDivElement, odspAccessToken: string) {
 	fetchButton1.onclick = async () => {
 		const resolvedUrl = await urlResolver.resolve({ url: text1.value });
 		assert(resolvedUrl !== undefined, "resolvedUrl should be defined");
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		const mockLogger = new MockLogger();
 		for (let i = 0; i < 5; ++i) {
 			await prefetchLatestSnapshot(
@@ -73,7 +73,7 @@ export function start(div: HTMLDivElement, odspAccessToken: string) {
 	fetchButton2.onclick = async () => {
 		const resolvedUrl = await urlResolver.resolve({ url: text2.value });
 		assert(resolvedUrl !== undefined, 0x31a /* resolvedUrl is undefined */);
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		const mockLogger = new MockLogger();
 		for (let i = 0; i < 5; ++i) {
 			await prefetchLatestSnapshot(
@@ -89,8 +89,8 @@ export function start(div: HTMLDivElement, odspAccessToken: string) {
 	};
 }
 
-// eslint-disable-next-line import/no-deprecated
-function fetchButtonClick(mockLogger: MockLogger, div: HTMLDivElement) {
+// eslint-disable-next-line import-x/no-deprecated
+function fetchButtonClick(mockLogger: MockLogger, div: HTMLDivElement): void {
 	const fields = new Set([
 		"eventName",
 		"attempts",
@@ -123,7 +123,12 @@ function fetchButtonClick(mockLogger: MockLogger, div: HTMLDivElement) {
 						row1?.appendChild(cell1);
 					}
 					const cell2 = document.createElement("td");
-					const cellText2 = document.createTextNode(`${entry[1]}`);
+					const value = entry[1];
+					const cellText2 = document.createTextNode(
+						typeof value === "object" && value !== null
+							? JSON.stringify(value)
+							: String(value),
+					);
 					cell2.appendChild(cellText2);
 					row2.appendChild(cell2);
 				}

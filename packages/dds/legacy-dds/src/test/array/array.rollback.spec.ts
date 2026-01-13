@@ -13,9 +13,9 @@ import {
 	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { IRevertible, ISharedArray } from "../../array/interfaces.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SharedArrayFactory } from "../../array/sharedArrayFactory.js";
 import {
 	OperationType,

@@ -11,8 +11,16 @@ export type {
 	OpAttributionKey,
 } from "./attribution.js";
 export type {
+	ContainerExtensionId,
+	ContainerExtensionProvider,
+	ContainerExtensionExpectations,
+	ExtensionCompatibilityDetails,
+	UnknownExtensionInstantiation,
+} from "./containerExtensionProvider.js";
+export type {
 	AliasResult,
 	CreateChildSummarizerNodeFn,
+	FluidDataStoreContextInternal,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
@@ -80,6 +88,8 @@ export {
 	blobCountPropertyName,
 	channelsTreeName,
 	CreateSummarizerNodeSource,
+	currentSummarizeStepPrefix,
+	currentSummarizeStepPropertyName,
 	totalBlobSizePropertyName,
 } from "./summary.js";
 export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";

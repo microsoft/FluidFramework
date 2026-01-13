@@ -51,10 +51,7 @@ describe('MutableStringInterner', () => {
 	it("throws an error when trying to retrieve a string that hasn't been encountered", () => {
 		const interner = new MutableStringInterner();
 
-		assert.throws(
-			() => interner.getString(0),
-			(e: Error) => validateAssertionError(e, 'No string associated with 0.')
-		);
+		assert.throws(() => interner.getString(0), validateAssertionError('No string associated with 0.'));
 	});
 
 	it('can return a serializable representation of its state', () => {

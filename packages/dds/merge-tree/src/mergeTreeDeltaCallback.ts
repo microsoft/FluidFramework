@@ -6,7 +6,7 @@
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type { ISegment } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import type { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops.js";
 import type { PropertySet } from "./properties.js";
 
@@ -117,7 +117,7 @@ export interface IMergeTreeDeltaOpArgs {
 	 * The group op which contains the operation
 	 * if there operation is part of a group op.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	readonly groupOp?: IMergeTreeGroupMsg;
 
 	/**

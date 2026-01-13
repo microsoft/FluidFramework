@@ -18,7 +18,7 @@ import * as React from "react";
 
 import { DefaultView } from "./defaultView.js";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
 const simpleCoordinateComponentId = "simpleCoordinate";
@@ -83,9 +83,10 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 					/>
 				) as any;
 
-				let getMountableDefaultView = async () => view;
+				let getMountableDefaultView = async (): Promise<any> => view;
 				if (MountableView.canMount(view)) {
-					getMountableDefaultView = async () => new MountableView(view);
+					getMountableDefaultView = async (): Promise<MountableView> =>
+						new MountableView(view);
 				}
 
 				return {

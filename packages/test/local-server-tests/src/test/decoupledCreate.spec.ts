@@ -37,7 +37,7 @@ function createDSFWithOutOfBandCreate({
 		summary: ISummaryTree | undefined,
 		resolvedUrl: IResolvedUrl,
 	) => Promise<IRequest>;
-}) {
+}): IDocumentServiceFactory {
 	return new Proxy<IDocumentServiceFactory>(
 		new LocalDocumentServiceFactory(deltaConnectionServer),
 		{
@@ -69,7 +69,7 @@ async function createContainerOutOfBand(
 		summary: ISummaryTree | undefined;
 		resolvedUrl: IResolvedUrl;
 	},
-) {
+): Promise<string> {
 	// this actually creates the container
 	const { summary, resolvedUrl } = createContainerParams;
 	const documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);

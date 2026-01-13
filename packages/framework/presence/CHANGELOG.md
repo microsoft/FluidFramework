@@ -1,5 +1,34 @@
 # @fluid-experimental/presence
 
+## 2.80.0
+
+### Minor Changes
+
+- Removal of number key support in LatestMap ([#25904](https://github.com/microsoft/FluidFramework/pull/25904)) [c1d91d8b5f4](https://github.com/microsoft/FluidFramework/commit/c1d91d8b5f4f141f890c848a7f344d4238d4a85a)
+
+  `number` keys have never been successfully propagated as `number`s at runtime and this type clarification makes that clear. See [issue 25919](https://github.com/microsoft/FluidFramework/issues/25919) for more details.
+
+- Attendee status fixes on reconnect ([#26111](https://github.com/microsoft/FluidFramework/pull/26111)) [836f22fac9e](https://github.com/microsoft/FluidFramework/commit/836f22fac9e8728324ee1f3c34ea27ce8392f07e)
+
+  Fix "Connected" status for Attendees when local client reconnects (intermittent connection or transition from read-only to read-write connection).
+  This includes no longer emitting incorrect "attendeeDisconnected" events.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
 ## 2.70.0
 
 ### Minor Changes
@@ -89,7 +118,6 @@ Dependency updates only.
 ### Minor Changes
 
 - Latest and LatestMap support more types ([#24417](https://github.com/microsoft/FluidFramework/pull/24417)) [619af0b05e2](https://github.com/microsoft/FluidFramework/commit/619af0b05e23c469feb754e93351b7edca1a74a4)
-
   - `Latest` (`StateFactory.latest`) permits `null` so that nullable types may be used.
   - `LatestMap` (`StateFactory.latestMap`) permits `boolean`, `number`, `string`, and `null`.
 
@@ -210,7 +238,6 @@ Dependency updates only.
 
   The [presence value managers](https://fluidframework.com/docs/build/presence#value-managers) now raise events for local
   value changes. The new events are as follows:
-
   - LatestValueManager
     - `localUpdated` raised when `local` is assigned
   - LatestMapValueManager
@@ -304,7 +331,6 @@ Dependency updates only.
   #### Package scope advanced from `@fluid-experimental` ([#23073](https://github.com/microsoft/FluidFramework/pull/23073))
 
   To update existing:
-
   - package.json: replace `@fluid-experimental/presence` with `@fluidframework/presence`
   - code imports: replace `@fluid-experimental/presence` with `@fluidframework/presence/alpha`
 

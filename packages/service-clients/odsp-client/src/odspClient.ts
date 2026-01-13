@@ -188,10 +188,7 @@ export class OdspClient {
 		});
 		const container = await loadExistingContainer({ ...loaderProps, request: { url } });
 
-		const fluidContainer = await createFluidContainer<T>({
-			container,
-		});
-		// Perform type guard to access internal APIs exposed by OdspFluidContainer.
+		const fluidContainer = await createFluidContainer<T>({ container });
 		if (!isInternalFluidContainer(fluidContainer)) {
 			throw new Error("Fluid container is not internal");
 		}
@@ -266,14 +263,10 @@ export class OdspClient {
 			 */
 			return resolvedUrl.itemId;
 		};
-		const fluidContainer = await createFluidContainer<T>({
-			container,
-		});
-		// Perform type guard to access internal APIs exposed by OdspFluidContainer.
+		const fluidContainer = await createFluidContainer<T>({ container });
 		if (!isInternalFluidContainer(fluidContainer)) {
 			throw new Error("Fluid container is not internal");
 		}
-		// Assign custom attach method
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}

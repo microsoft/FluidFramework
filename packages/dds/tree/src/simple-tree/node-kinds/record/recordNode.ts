@@ -11,7 +11,7 @@ import { type JsonCompatibleReadOnlyObject, brand } from "../../../util/index.js
 import {
 	type TreeNodeSchema,
 	NodeKind,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type UnhydratedFlexTreeNode,
@@ -31,7 +31,6 @@ import {
 	type FlexContent,
 	CompatibilityLevel,
 	type TreeNodeSchemaPrivateData,
-	convertAllowedTypes,
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
@@ -50,7 +49,6 @@ import type {
 	TreeRecordNode,
 } from "./recordNodeTypes.js";
 import {
-	FieldKinds,
 	isTreeValue,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
@@ -59,7 +57,7 @@ import { prepareForInsertion } from "../../prepareForInsertion.js";
 import { recordLikeDataToFlexContent } from "../common.js";
 import { MapNodeStoredSchema } from "../../../core/index.js";
 import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
-import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -80,7 +78,7 @@ function createRecordNodeProxy(
 					case typeSchemaSymbol: {
 						return schema;
 					}
-					// eslint-disable-next-line import/no-deprecated
+					// eslint-disable-next-line import-x/no-deprecated
 					case typeNameSymbol: {
 						return schema.identifier;
 					}
@@ -101,9 +99,8 @@ function createRecordNodeProxy(
 						}
 						break;
 					}
-					default: {
-						// No-op
-					}
+					default:
+					// No-op
 				}
 			}
 
@@ -352,7 +349,10 @@ export function recordSchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+		public static get simpleAllowedTypes(): ReadonlyMap<
+			string,
+			SimpleAllowedTypeAttributes<SchemaType.View>
+		> {
 			return lazySimpleAllowedTypes.value;
 		}
 
@@ -370,7 +370,7 @@ export function recordSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
@@ -388,19 +388,7 @@ export function recordSchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(
-				this,
-				[normalizedTypes],
-				(storedOptions) =>
-					new MapNodeStoredSchema(
-						{
-							kind: FieldKinds.optional.identifier,
-							types: convertAllowedTypes(info, storedOptions),
-							persistedMetadata,
-						},
-						persistedMetadata,
-					),
-			));
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [normalizedTypes]));
 		}
 	}
 

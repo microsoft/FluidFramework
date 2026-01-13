@@ -8,7 +8,7 @@ import { OldestClientObserver } from "@fluid-experimental/oldest-client-observer
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { assert } from "@fluidframework/core-utils/legacy";
 
-import { IDiceRoller } from "./interface.js";
+import type { IDiceRoller } from "./interface.js";
 
 // The root is map-like, so we'll use this key for storing the value.
 const diceValueKey = "diceValue";
@@ -24,7 +24,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 	 * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
 	 * initialize the state of the DataObject.
 	 */
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		this.root.set(diceValueKey, 1);
 	}
 
@@ -32,7 +32,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
 	 * DataObject, by registering an event listener for dice rolls.
 	 */
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		this.root.on("valueChanged", (changed) => {
 			if (changed.key === diceValueKey) {
 				// When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
@@ -46,23 +46,23 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 		this.volunteerForAutoRoll();
 	}
 
-	private get oldestClientObserver() {
+	private get oldestClientObserver(): OldestClientObserver {
 		assert(this._oldestClientObserver !== undefined, "OldestClientObserver not initialized");
 		return this._oldestClientObserver;
 	}
 
-	public get value() {
+	public get value(): number {
 		const value = this.root.get<number>(diceValueKey);
 		assert(value !== undefined, "Dice value not initialized");
 		return value;
 	}
 
-	public readonly roll = () => {
+	public readonly roll = (): void => {
 		const rollValue = Math.floor(Math.random() * 6) + 1;
 		this.root.set(diceValueKey, rollValue);
 	};
 
-	public volunteerForAutoRoll() {
+	public volunteerForAutoRoll(): void {
 		if (this.oldestClientObserver.isOldest()) {
 			// If we're oldest, start the autoroll and watch for loss of oldest.
 			this.oldestClientObserver.once("lostOldest", () => {
@@ -80,7 +80,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 		}
 	}
 
-	private startAutoRollTask() {
+	private startAutoRollTask(): void {
 		console.log("Starting autoroll from OldestClientDiceRoller");
 		if (this.autoRollInterval === undefined) {
 			this.autoRollInterval = setInterval(() => {
@@ -89,7 +89,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 		}
 	}
 
-	private endAutoRollTask() {
+	private endAutoRollTask(): void {
 		console.log("Ending autoroll from OldestClientDiceRoller");
 		if (this.autoRollInterval !== undefined) {
 			clearInterval(this.autoRollInterval);
@@ -97,7 +97,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 		}
 	}
 
-	public hasTask() {
+	public hasTask(): boolean {
 		return this.oldestClientObserver.isOldest();
 	}
 }

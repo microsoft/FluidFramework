@@ -18,6 +18,7 @@ import type { JsonCompatibleReadOnly } from "../util/index.js";
 import { Message } from "./messageFormatV1ToV4.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { MessageEncodingContext } from "./messageCodecs.js";
+import type { MessageFormatVersion } from "./messageFormat.js";
 
 export function makeV1ToV4CodecWithVersion<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,
@@ -28,7 +29,12 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-	version: 1 | 2 | 3 | 4,
+	version:
+		| typeof MessageFormatVersion.v1
+		| typeof MessageFormatVersion.v2
+		| typeof MessageFormatVersion.v3
+		| typeof MessageFormatVersion.v4
+		| typeof MessageFormatVersion.v6,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,

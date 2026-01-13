@@ -48,11 +48,11 @@ import type {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
+	FluidDataStoreContextInternal,
 	FluidDataStoreRegistryEntry,
 	IContainerRuntimeBase,
 	IDataStore,
 	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
@@ -68,6 +68,8 @@ import type {
 	PackagePath,
 	IRuntimeStorageService,
 	MinimumVersionForCollab,
+	ContainerExtensionId,
+	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -93,7 +95,7 @@ import {
 	validateDatastoreCompatibility,
 } from "./runtimeLayerCompatState.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	type ReadFluidDataStoreAttributes,
 	type WriteFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
@@ -134,7 +136,7 @@ export interface ISnapshotDetails {
  * This interface is used for context's parent - ChannelCollection.
  * It should not be exposed to any other users of context.
  */
-export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
+export interface IFluidDataStoreContextPrivate extends FluidDataStoreContextInternal {
 	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
 
 	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
@@ -249,11 +251,7 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements
-		IFluidDataStoreContextInternal,
-		IFluidDataStoreContext,
-		IDisposable,
-		IProvideLayerCompatDetails
+	implements IFluidDataStoreContextPrivate, IDisposable, IProvideLayerCompatDetails
 {
 	public get packagePath(): PackagePath {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
@@ -1005,7 +1003,7 @@ export abstract class FluidDataStoreContext
 		validateDatastoreCompatibility(
 			maybeDataStoreCompatDetails.ILayerCompatDetails,
 			this.dispose.bind(this),
-			this.mc.logger,
+			this.mc,
 		);
 
 		// And now mark the runtime active
@@ -1098,7 +1096,7 @@ export abstract class FluidDataStoreContext
 	public reSubmit(
 		message: FluidDataStoreMessage,
 		localOpMetadata: unknown,
-		squash?: boolean,
+		squash: boolean,
 	): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
 		this.channel.reSubmit(message.type, message.content, localOpMetadata, squash);
@@ -1222,6 +1220,14 @@ export abstract class FluidDataStoreContext
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		return this.parentContext.uploadBlob(blob, signal);
 	}
+
+	public getExtension<TInterface, TUseContext extends unknown[] = []>(
+		id: ContainerExtensionId,
+		requirements: ContainerExtensionExpectations,
+		...context: TUseContext
+	): TInterface {
+		return this.parentContext.getExtension(id, requirements, ...context);
+	}
 }
 
 /**
@@ -1309,7 +1315,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
 		if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
 			// Need to get through snapshot and use that to populate extraBlobs
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
 				this.storage,
 				tree.blobs[dataStoreAttributesBlobName],
@@ -1488,7 +1494,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		let attributes: ReadFluidDataStoreAttributes;
 		let isRootDataStore = false;
 		if (snapshot !== undefined) {

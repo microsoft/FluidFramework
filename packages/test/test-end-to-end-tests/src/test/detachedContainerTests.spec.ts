@@ -61,7 +61,10 @@ const sharedCellId = "scell1Key";
 const sharedMatrixId = "smatrix1Key";
 const sparseMatrixId = "sparsematrixKey";
 
-const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type: string) => {
+const createFluidObject = async (
+	dataStoreContext: IFluidDataStoreContext,
+	type: string,
+): Promise<ITestFluidObject> => {
 	const dataStore = await dataStoreContext.containerRuntime.createDataStore(type);
 	return getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
 };
@@ -1063,7 +1066,9 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 			try {
 				await container.attach(request);
 				assert.fail("expected attach to fail!");
-			} catch (e) {}
+			} catch (e) {
+				// Ignore the error
+			}
 			assert.strictEqual(container.closed, true, "Container should be closed");
 		},
 	);
@@ -1114,7 +1119,9 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 			try {
 				await container.attach(request);
 				assert.fail("expected attach to fail!");
-			} catch (e) {}
+			} catch (e) {
+				// Ignore the error
+			}
 			assert.strictEqual(container.closed, true, "Container should be closed");
 		},
 	);

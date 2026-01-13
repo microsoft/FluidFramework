@@ -16,7 +16,7 @@ import {
 	type AllowedTypesFullEvaluated,
 	type AnnotatedAllowedType,
 	type SchemaVisitor,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
 
 function makeAnnotated(

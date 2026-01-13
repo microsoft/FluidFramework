@@ -9,6 +9,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	CursorLocationType,
 	type FieldKey,
+	type FieldKindData,
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type TreeChunk,
@@ -18,7 +19,6 @@ import {
 	forEachNode,
 } from "../../../core/index.js";
 import { getOrCreate } from "../../../util/index.js";
-import type { FlexFieldKind } from "../../modular-schema/index.js";
 
 import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
@@ -33,8 +33,8 @@ import {
 	type EncodedFieldBatch,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
+	FieldBatchFormatVersion,
 	SpecialField,
-	version,
 } from "./format.js";
 import type { IncrementalEncoder } from "./codecs.js";
 
@@ -57,7 +57,7 @@ export function compressedEncode(
 		anyFieldEncoder.encodeField(cursor, context, buffer);
 		batchBuffer.push(buffer);
 	}
-	return updateShapesAndIdentifiersEncoding(version, batchBuffer);
+	return updateShapesAndIdentifiersEncoding(context.version, batchBuffer);
 }
 
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
@@ -458,6 +458,10 @@ export const incrementalFieldEncoder: FieldEncoder = {
 			context.incrementalEncoder !== undefined,
 			0xc88 /* incremental encoder must be defined to use incrementalFieldEncoder */,
 		);
+		assert(
+			context.version >= FieldBatchFormatVersion.v2,
+			0xca1 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
+		);
 
 		const chunkReferenceIds = context.incrementalEncoder.encodeIncrementalField(
 			cursor,
@@ -480,10 +484,10 @@ export function encodeValue(
 	outputBuffer: BufferFormat,
 ): void {
 	if (shape === undefined) {
-		if (value !== undefined) {
-			outputBuffer.push(true, value);
-		} else {
+		if (value === undefined) {
 			outputBuffer.push(false);
+		} else {
+			outputBuffer.push(true, value);
 		}
 	} else {
 		if (shape === true) {
@@ -519,7 +523,7 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 	public constructor(
 		private readonly nodeEncoderFromPolicy: NodeEncoderPolicy,
 		private readonly fieldEncoderFromPolicy: FieldEncoderPolicy,
-		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FieldKindData>,
 		public readonly idCompressor: IIdCompressor,
 		/**
 		 * To be used to encode incremental chunks, if any.
@@ -527,6 +531,7 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		 * See {@link IncrementalEncoder} for more information.
 		 */
 		public readonly incrementalEncoder: IncrementalEncoder | undefined,
+		public readonly version: FieldBatchFormatVersion,
 	) {}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {

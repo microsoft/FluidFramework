@@ -9,10 +9,10 @@ import nconf from "nconf";
 import { pkgVersion } from "./packageVersion.js";
 import { resolveVersion } from "./versionUtils.js";
 // This import ensures nconf has been configured to load from correct sources before we compute the right baseVersion.
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./compatOptions.js";
 
-function getCodeVersion() {
+function getCodeVersion(): string {
 	const configVersion = nconf.get("fluid:test:baseVersion");
 	if (configVersion !== undefined) {
 		return configVersion as string;
@@ -61,7 +61,7 @@ export function testBaseVersion(
 	value: string | number | undefined,
 	base: string = baseVersion,
 	code: string = codeVersion,
-) {
+): string {
 	if (typeof value === "string" || value === 0 || value === undefined) {
 		return base;
 	}

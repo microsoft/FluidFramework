@@ -14,6 +14,14 @@ import { bumpVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo } from "@fluidframework/build-tools";
 
 import {
+	DEFAULT_GENERATION_DIR,
+	DEFAULT_GENERATION_FILE_NAME,
+	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	checkPackagesCompatLayerGeneration,
+	formatCompatLayerGenerationError,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../library/compatLayerGeneration.js";
+import {
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
 	generateBumpVersionBranchName,
@@ -430,7 +438,7 @@ export const checkPolicy: StateHandlerFunction = async (
 };
 
 /**
- * Checks that a release branch exists.
+ * Checks whether assert tagging has been done.
  *
  * @param state - The current state machine state.
  * @param machine - The state machine.
@@ -901,5 +909,63 @@ export const checkValidReleaseGroup: StateHandlerFunction = async (
 		BaseStateHandler.signalFailure(machine, state);
 	}
 
+	return true;
+};
+
+/**
+ * Checks whether the compatibility generation value for Fluid's layers need to been updated.
+ *
+ * @param state - The current state machine state.
+ * @param machine - The state machine.
+ * @param testMode - Set to true to run function in test mode.
+ * @param log - A logger that the function can use for logging.
+ * @param data - An object with handler-specific contextual data.
+ * @returns True if the state was handled; false otherwise.
+ */
+export const checkCompatLayerGeneration: StateHandlerFunction = async (
+	state: MachineState,
+	machine: Machine<unknown>,
+	testMode: boolean,
+	log: CommandLogger,
+	data: FluidReleaseStateHandlerData,
+): Promise<boolean> => {
+	if (testMode) return true;
+
+	const { context, releaseGroup, bumpType } = data;
+
+	if (bumpType === "patch") {
+		log.verbose(`Skipping layer compat generation check for patch release.`);
+		BaseStateHandler.signalSuccess(machine, state);
+		return true;
+	}
+
+	// Get packages to check based on release group or individual package
+	const packagesToCheck = isReleaseGroup(releaseGroup)
+		? context.packagesInReleaseGroup(releaseGroup)
+		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			[context.fullPackageMap.get(releaseGroup)!];
+
+	const { packagesNeedingUpdate } = await checkPackagesCompatLayerGeneration(
+		packagesToCheck,
+		DEFAULT_GENERATION_DIR,
+		DEFAULT_GENERATION_FILE_NAME,
+		DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
+	);
+
+	if (packagesNeedingUpdate.length > 0) {
+		const releaseGroupName = isReleaseGroup(releaseGroup) ? releaseGroup : undefined;
+		const { message, fixCommand } = formatCompatLayerGenerationError(
+			packagesNeedingUpdate,
+			releaseGroupName,
+		);
+		log.logHr();
+		log.errorLog(
+			`Layer generation needs to be updated. Please create a PR for the changes and merge before retrying.\n${message}\n\nRun '${fixCommand}' to update them.`,
+		);
+		BaseStateHandler.signalFailure(machine, state);
+		return false;
+	}
+
+	BaseStateHandler.signalSuccess(machine, state);
 	return true;
 };

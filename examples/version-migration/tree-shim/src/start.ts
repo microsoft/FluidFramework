@@ -11,7 +11,7 @@ import { InventoryListContainerRuntimeFactory } from "./model/index.js";
 import type { IInventoryListAppModel } from "./modelInterfaces.js";
 import { DebugView, InventoryListAppView } from "./view/index.js";
 
-const updateTabForId = (id: string) => {
+const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
 	location.hash = id;
 
@@ -19,7 +19,7 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const render = (model: IInventoryListAppModel) => {
+const render = (model: IInventoryListAppModel): void => {
 	const appDiv = document.getElementById("app") as HTMLDivElement;
 	ReactDOM.unmountComponentAtNode(appDiv);
 	ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);

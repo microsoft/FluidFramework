@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	Breakable,
@@ -11,9 +12,8 @@ import {
 	throwIfBroken,
 	breakingMethod,
 	breakingClass,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../util/breakable.js";
-import { validateUsageError } from "../utils.js";
 
 describe("Breakable", () => {
 	const breakError = new Error("BreakFoo");

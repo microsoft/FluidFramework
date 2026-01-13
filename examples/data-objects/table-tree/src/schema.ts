@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SchemaFactoryAlpha, TableSchema } from "@fluidframework/tree/internal";
 
 const schemaFactory = new SchemaFactoryAlpha("tree-table");

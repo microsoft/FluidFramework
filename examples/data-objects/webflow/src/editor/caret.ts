@@ -5,7 +5,7 @@
 
 import { LocalReferencePosition, ReferencePosition } from "@fluidframework/sequence/legacy";
 
-import { DocSegmentKind, getDocSegmentKind } from "../document/index.js";
+import { DocSegmentKind, getDocSegmentKind, type FlowDocument } from "../document/index.js";
 import { Dom, TagName, clamp, hasTagName } from "../util/index.js";
 import { updateRef } from "../util/localref.js";
 import { Layout, eotSegment } from "../view/layout.js";
@@ -13,21 +13,21 @@ import { Layout, eotSegment } from "../view/layout.js";
 import { debug } from "./debug.js";
 
 export class Caret {
-	private get doc() {
+	private get doc(): FlowDocument {
 		return this.layout.doc;
 	}
-	public get position() {
+	public get position(): number {
 		return clamp(0, this.doc.localRefToPosition(this.endRef), this.doc.length);
 	}
-	public get anchor() {
+	public get anchor(): number {
 		return clamp(0, this.doc.localRefToPosition(this.startRef), this.doc.length);
 	}
-	public get bounds() {
+	public get bounds(): DOMRect | undefined {
 		const { focusNode, focusOffset } = window.getSelection();
 		return focusNode === null ? undefined : Dom.getClientRect(focusNode, focusOffset);
 	}
 
-	public get selection() {
+	public get selection(): { start: number; end: number } {
 		const start = this.anchor;
 		const end = this.position;
 
@@ -48,7 +48,7 @@ export class Caret {
 		});
 	}
 
-	public setSelection(start: number, end: number) {
+	public setSelection(start: number, end: number): void {
 		debug("  Cursor.setSelection(%d,%d):", start, end);
 		debug("    start:");
 		this.startRef = updateRef(this.doc, this.startRef, start);
@@ -56,7 +56,7 @@ export class Caret {
 		this.endRef = updateRef(this.doc, this.endRef, end);
 	}
 
-	public sync() {
+	public sync(): void {
 		debug("  Caret.sync()");
 		const { node: startNode, nodeOffset: startOffset } = this.positionToNodeOffset(
 			this.startRef,
@@ -80,12 +80,12 @@ export class Caret {
 		}
 	}
 
-	public collapseForward() {
+	public collapseForward(): void {
 		const { end } = this.selection;
 		this.setSelection(end, end);
 	}
 
-	private logWindowSelection(title: string) {
+	private logWindowSelection(title: string): void {
 		const { anchorNode, anchorOffset, focusNode, focusOffset } = window.getSelection();
 		debug(
 			"          %s: (%o:%d..%o:%d)",
@@ -97,7 +97,7 @@ export class Caret {
 		);
 	}
 
-	private readonly onSelectionChange = () => {
+	private readonly onSelectionChange = (): void => {
 		const { anchorNode, anchorOffset, focusNode, focusOffset } = window.getSelection();
 		debug(
 			"Cursor.onSelectionChange(%o:%d..%o:%d)",
@@ -115,7 +115,7 @@ export class Caret {
 		this.setSelection(start, end);
 	};
 
-	private positionToNodeOffset(ref: ReferencePosition) {
+	private positionToNodeOffset(ref: ReferencePosition): { node: Node; nodeOffset: number } {
 		let result: { node: Node; nodeOffset: number };
 
 		const position = this.doc.localRefToPosition(ref);
@@ -156,7 +156,7 @@ export class Caret {
 		return result;
 	}
 
-	private nodeOffsetToPosition(node: Node | Element, nodeOffset: number) {
+	private nodeOffsetToPosition(node: Node | Element, nodeOffset: number): number {
 		const segment = this.layout.nodeToSegment(node);
 		if (segment === eotSegment) {
 			return this.doc.length;

@@ -28,6 +28,7 @@ import type {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+import type { ContainerExtensionProvider } from "./containerExtensionProvider.js";
 import type {
 	IFluidDataStoreFactory,
 	IProvideFluidDataStoreFactory,
@@ -318,11 +319,13 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
  */
 export interface IFluidDataStorePolicies {
 	/**
-	 * When set to true, data stores will appear to be readonly while in staging mode.
+	 * When set to true, the data store will appear readonly while in staging mode.
 	 *
 	 * @remarks
-	 * This policy is useful for data stores that do not support staging mode, such as those using consensus DDS.
-	 * It ensures that the data store appears readonly during staging mode to discourage unsupported operations.
+	 * In staging mode, operations are held locally until committed, so consensus-based operations
+	 * (e.g., `ConsensusRegisterCollection`, `ConsensusQueue`, `TaskManager`) won't resolve their promises until
+	 * staging mode exits. Set this to `true` for data stores that depend on consensus acknowledgments
+	 * to prevent modifications that would leave the data store in an unresponsive state.
 	 */
 	readonly readonlyInStagingMode: boolean;
 }
@@ -426,7 +429,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean): void;
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash: boolean): void;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
@@ -486,6 +489,7 @@ export interface IPendingMessagesState {
  * partially implemented by ContainerRuntime to provide context to the ChannelCollection.
  *
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
@@ -634,6 +638,7 @@ export type PackagePath = readonly string[];
  * This context is provided to the implementation of {@link IFluidDataStoreChannel} which powers the datastore.
  *
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidDataStoreContext extends IFluidParentContext {
 	readonly id: string;
@@ -694,7 +699,22 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 }
 
 /**
+ * Internal extension to {@link IFluidDataStoreContext} for use across FluidFramework packages.
+ *
+ * @remarks
+ * Important: this interface does cross layer boundaries and must follow `@legacy`
+ * layer compatibility patterns.
+ * This is meant to be a staging ground ahead of adding properties to {@link IFluidDataStoreContext}.
+ *
+ * @internal
+ */
+export interface FluidDataStoreContextInternal
+	extends IFluidDataStoreContext,
+		ContainerExtensionProvider {}
+
+/**
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 	/**

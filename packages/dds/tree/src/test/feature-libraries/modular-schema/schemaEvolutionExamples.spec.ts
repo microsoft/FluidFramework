@@ -15,7 +15,7 @@ import {
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository } from "../../utils.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discrepancies.js";
 
 function assertEnumEqual<TEnum extends { [key: number]: string }>(
@@ -138,12 +138,12 @@ describe("Schema Evolution Examples", () => {
 			// which will notify and applications with the document open.
 			// They can recheck their compatibility:
 			const compatNew = view2.checkCompatibility(stored);
-			const report = Array.from(
-				getDiscrepanciesInAllowedContent(
+			const report = [
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: tolerantRoot }),
 					stored,
 				),
-			);
+			];
 			assert.deepEqual(report, []);
 			// It is now possible to write our date into the document.
 			assert.deepEqual(compatNew, { canView: true, canUpgrade: true, isEquivalent: true });

@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerErrorTypes,
+	IContainer,
+} from "@fluidframework/container-definitions/internal";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import {
 	IDocumentServiceFactory,
@@ -55,7 +58,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 		loaderContainerTracker.reset();
 	});
 
-	async function loadContainer(props?: Partial<ILoaderProps>) {
+	async function loadContainer(props?: Partial<ILoaderProps>): Promise<IContainer> {
 		const loader = new Loader({
 			...props,
 			logger: provider.logger,
@@ -144,7 +147,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 		);
 	});
 
-	function assertCustomPropertySupport(err: any) {
+	function assertCustomPropertySupport(err: any): void {
 		err.asdf = "asdf";
 		assert(isILoggingError(err), "Error should support getTelemetryProperties()");
 		assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");

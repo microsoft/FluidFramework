@@ -55,7 +55,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { storeLocatorInOdspUrl } from "./odspFluidFileLink.js";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import type { ISnapshotContents } from "./odspPublicUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
@@ -532,7 +532,7 @@ export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl): strin
  * @param obj - obj whose type needs to be identified.
  */
 export function isInstanceOfISnapshot(
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	obj: ISnapshotContents | ISnapshot | undefined,
 ): obj is ISnapshot {
 	return obj !== undefined && "snapshotFormatV" in obj && obj.snapshotFormatV === 1;

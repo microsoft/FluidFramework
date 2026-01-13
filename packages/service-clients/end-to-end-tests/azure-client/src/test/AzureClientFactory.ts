@@ -9,7 +9,7 @@ import {
 	type AzureRemoteConnectionConfig,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
-// eslint-disable-next-line import/no-internal-modules -- TODO consider a test exposure to avoid /internal
+// eslint-disable-next-line import-x/no-internal-modules -- TODO consider a test exposure to avoid /internal
 import type { AzureClientPropsInternal } from "@fluidframework/azure-client/internal";
 import {
 	AzureClient as AzureClientLegacy,

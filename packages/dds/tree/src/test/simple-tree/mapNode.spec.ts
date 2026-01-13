@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { SchemaFactory, type NodeFromSchema } from "../../simple-tree/index.js";
 import { describeHydration } from "./utils.js";
 import { Tree } from "../../shared-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { isTreeNode } from "../../simple-tree/core/index.js";
 
 const schemaFactory = new SchemaFactory("Test");
@@ -37,12 +37,12 @@ describeHydration(
 				class Schema extends schemaFactory.map("x", Child) {}
 				const node = init(Schema, new Map([["a", new Map()]]));
 				const log: string[] = [];
-				node.forEach((child, key) => {
+				for (const [key, child] of node) {
 					isTreeNode(child);
 					assert.equal(child, node.get("a"));
 					assert(Tree.is(child, Child));
 					log.push(key);
-				});
+				}
 				assert.deepEqual(log, ["a"]);
 			});
 
@@ -62,6 +62,7 @@ describeHydration(
 					assert.equal(child, 1);
 					assert.equal(map, node);
 				}
+				// eslint-disable-next-line unicorn/no-array-for-each -- Testing thisArg binding behavior
 				node.forEach(callback, thisArg);
 				assert.deepEqual(log, ["b"]);
 			});
@@ -118,20 +119,23 @@ describeHydration(
 
 		it("entries", () => {
 			const root = init(schema, initialTree);
-			assert.deepEqual(Array.from(root.map.entries()), [
-				["foo", "Hello"],
-				["bar", "World"],
-			]);
+			assert.deepEqual(
+				[...root.map.entries()],
+				[
+					["foo", "Hello"],
+					["bar", "World"],
+				],
+			);
 		});
 
 		it("keys", () => {
 			const root = init(schema, initialTree);
-			assert.deepEqual(Array.from(root.map.keys()), ["foo", "bar"]);
+			assert.deepEqual([...root.map.keys()], ["foo", "bar"]);
 		});
 
 		it("values", () => {
 			const root = init(schema, initialTree);
-			assert.deepEqual(Array.from(root.map.values()), ["Hello", "World"]);
+			assert.deepEqual([...root.map.values()], ["Hello", "World"]);
 		});
 
 		it("iteration", () => {
@@ -150,6 +154,7 @@ describeHydration(
 		it("forEach", () => {
 			const root = init(schema, initialTree);
 			const result: [string, string][] = [];
+			// eslint-disable-next-line unicorn/no-array-for-each -- Testing forEach API (third param is the map)
 			root.map.forEach((v, k, m) => {
 				result.push([k, v]);
 				assert.equal(m, root.map);
@@ -164,6 +169,7 @@ describeHydration(
 		it("forEach (bound)", () => {
 			const root = init(schema, initialTree);
 			const result: [string, string][] = [];
+			// eslint-disable-next-line unicorn/no-array-for-each -- Testing thisArg binding behavior
 			root.map.forEach(function (this: typeof result, v, k, m) {
 				this.push([k, v]); // Accessing `result` via `this` to ensure that `thisArg` is respected
 				assert.equal(m, root.map);

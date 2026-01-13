@@ -20,7 +20,7 @@ module.exports = {
 		// dev dependencies in test code.
 		// TODO: Remove this override once the base config is more flexible around where test code
 		// lives in a package.
-		"import/no-extraneous-dependencies": [
+		"import-x/no-extraneous-dependencies": [
 			"error",
 			{
 				devDependencies: ["src/**/test/**"],
@@ -34,7 +34,7 @@ module.exports = {
 			plugins: ["chai-expect"],
 			extends: ["plugin:chai-expect/recommended"],
 			rules: {
-				"import/no-nodejs-modules": "off",
+				"import-x/no-nodejs-modules": "off",
 				// "unicorn/prefer-module": "off",
 
 				// Superceded by chai-expect rule

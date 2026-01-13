@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalUtilityTypes } from "../exposedInternalUtilityTypes.js";
-
 import type {
 	JsonDeserialized,
 	JsonTypeToOpaqueJson,
@@ -15,6 +13,8 @@ import type {
 	OpaqueJsonDeserialized,
 	OpaqueJsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+
+import type { InternalUtilityTypes } from "../exposedInternalUtilityTypes.js";
 
 /**
  * Use to compile-time assert types of two variables are identical.

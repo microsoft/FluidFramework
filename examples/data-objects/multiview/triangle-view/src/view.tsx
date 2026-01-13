@@ -6,7 +6,7 @@
 import type { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import React from "react";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";
 
 const renderTriangleToCanvas = (
@@ -46,7 +46,7 @@ export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewP
 		}
 	};
 
-	React.useEffect(() => {
+	React.useEffect((): (() => void) => {
 		if (canvasRef.current !== null) {
 			canvasRef.current.width = 100;
 			canvasRef.current.height = 100;

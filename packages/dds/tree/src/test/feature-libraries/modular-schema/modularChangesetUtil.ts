@@ -10,6 +10,7 @@ import type {
 	RevisionMetadataSource,
 } from "../../../core/index.js";
 import type {
+	ChangeAtomIdBTree,
 	CrossFieldManager,
 	FieldChangeHandler,
 	FieldChangeMap,
@@ -19,12 +20,11 @@ import type {
 } from "../../../feature-libraries/index.js";
 import {
 	newCrossFieldKeyTable,
-	type ChangeAtomIdBTree,
 	type CrossFieldKeyTable,
 	type FieldChange,
 	type FieldId,
 	type NodeChangeset,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	type IdAllocator,
@@ -37,7 +37,7 @@ import {
 	getChangeHandler,
 	getParentFieldId,
 	normalizeFieldId,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
@@ -160,22 +160,20 @@ function fieldChangeMapFromDescription(
 			field: field.fieldKey,
 		};
 
-		const fieldChangeset = field.children.reduce(
-			(change: unknown, nodeDescription: NodeChangesetDescription) =>
-				addNodeToField(
-					family,
-					change,
-					nodeDescription,
-					fieldId,
-					changeHandler,
-					nodes,
-					nodeToParent,
-					crossFieldKeys,
-					idAllocator,
-				),
-
-			field.changeset,
-		);
+		let fieldChangeset: unknown = field.changeset;
+		for (const nodeDescription of field.children) {
+			fieldChangeset = addNodeToField(
+				family,
+				fieldChangeset,
+				nodeDescription,
+				fieldId,
+				changeHandler,
+				nodes,
+				nodeToParent,
+				crossFieldKeys,
+				idAllocator,
+			);
+		}
 
 		for (const { key, count } of changeHandler.getCrossFieldKeys(fieldChangeset)) {
 			crossFieldKeys.set(key, count, fieldId);

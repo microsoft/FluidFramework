@@ -9,12 +9,13 @@ import {
 	CursorLocationType,
 	EmptyKey,
 	type FieldKey,
+	type JsonableTree,
 	type TreeNodeSchemaIdentifier,
 	type Value,
 	mapCursorField,
 	tryGetChunk,
 } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	type ChunkPolicy,
@@ -23,25 +24,26 @@ import {
 	type ShapeInfo,
 	basicOnlyChunkPolicy,
 	chunkField,
+	chunkFieldSingle,
 	chunkRange,
+	combineChunks,
 	defaultChunkPolicy,
 	insertValues,
 	polymorphic,
 	tryShapeFromFieldSchema,
 	tryShapeFromNodeSchema,
 	uniformChunkFromCursor,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { emptyChunk } from "../../../feature-libraries/chunked-forest/emptyChunk.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
 	TreeShape,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
-	type IncrementalEncodingPolicy,
 	type TreeChunk,
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
@@ -55,11 +57,15 @@ import { brand } from "../../../util/index.js";
 import { assertChunkCursorEquals, numberSequenceField } from "./fieldCursorTestUtilities.js";
 import { polygonTree, testData } from "./uniformChunkTestData.js";
 import {
+	incrementalEncodingPolicyForAllowedTypes,
+	incrementalSummaryHint,
 	nullSchema,
 	numberSchema,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	stringSchema,
 	toInitialSchema,
+	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
@@ -71,7 +77,6 @@ const valueField = builder.required(builder.number);
 const structValue = builder.object("structValue", { x: valueField });
 const optionalField = builder.optional(builder.number);
 const structOptional = builder.object("structOptional", { x: optionalField });
-const structValueField = builder.required(structValue);
 
 const schema = toInitialSchema([empty, builder.number, structValue, structOptional]);
 
@@ -356,6 +361,181 @@ describe("chunkTree", () => {
 			});
 			assert.equal(chunks.length, 0);
 		});
+
+		it("single node field", () => {
+			const trees: JsonableTree[] = [{ type: brand(numberSchema.identifier), value: 42 }];
+			const cursor = cursorForJsonableTreeField(trees);
+			const chunks = chunkField(cursor, {
+				policy: basicOnlyChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert.equal(chunks.length, 1);
+			assert(chunks[0] instanceof BasicChunk);
+			assertChunkCursorEquals(chunks[0], trees);
+		});
+
+		it("multiple nodes field", () => {
+			const length = 3;
+			const fieldData = numberSequenceField(length);
+			const cursor = cursorForJsonableTreeField(fieldData);
+			const chunks = chunkField(cursor, {
+				policy: basicOnlyChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert.equal(chunks.length, length);
+			for (const [index, chunk] of chunks.entries()) {
+				assert(chunk instanceof BasicChunk);
+				assertChunkCursorEquals(chunk, [fieldData[index]]);
+			}
+		});
+
+		it("respects chunk policy for sequence chunking", () => {
+			const policy: ChunkPolicy = {
+				sequenceChunkSplitThreshold: 2,
+				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+				uniformChunkNodeCount: 0,
+				shapeFromSchema: () => polymorphic,
+			};
+
+			const fieldData = numberSequenceField(4);
+			const cursor = cursorForJsonableTreeField(fieldData);
+			const chunks = chunkField(cursor, { policy, idCompressor: undefined });
+			assert.equal(chunks.length, policy.sequenceChunkSplitThreshold);
+			assert(chunks[0] instanceof SequenceChunk);
+			assert(chunks[1] instanceof SequenceChunk);
+
+			// Verify the chunked content matches the original
+			const allChunks = new SequenceChunk(chunks);
+			assertChunkCursorEquals(allChunks, fieldData);
+		});
+
+		it("preserves cursor position", () => {
+			const fieldData = numberSequenceField(2);
+			const cursor = cursorForJsonableTreeField(fieldData);
+			const originalMode = cursor.mode;
+
+			chunkField(cursor, {
+				policy: basicOnlyChunkPolicy,
+				idCompressor: undefined,
+			});
+
+			// Cursor should be back to its original position and mode
+			assert.equal(cursor.mode, originalMode);
+		});
+
+		it("adds refs to existing chunks", () => {
+			const basicChunk = new BasicChunk(brand(numberSchema.identifier), new Map(), 1);
+			assert(!basicChunk.isShared());
+			const cursor = basicChunk.cursor();
+
+			const chunks = chunkField(cursor, {
+				policy: defaultChunkPolicy,
+				idCompressor: undefined,
+			});
+
+			assert.equal(chunks.length, 1);
+			assert.equal(chunks[0], basicChunk);
+			assert(basicChunk.isShared());
+		});
+	});
+
+	describe("chunkFieldSingle", () => {
+		it("empty field", () => {
+			const chunk = chunkFieldSingle(emptyChunk.cursor(), {
+				policy: defaultChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert(chunk instanceof SequenceChunk);
+			assert.equal(chunk.topLevelLength, 0);
+			assert.equal(chunk.subChunks.length, 0);
+		});
+
+		it("single node field", () => {
+			const trees: JsonableTree[] = [{ type: brand(numberSchema.identifier), value: 42 }];
+			const cursor = cursorForJsonableTreeField(trees);
+			const chunk = chunkFieldSingle(cursor, {
+				policy: basicOnlyChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert(chunk instanceof BasicChunk);
+			assertChunkCursorEquals(chunk, trees);
+		});
+
+		it("multiple nodes field", () => {
+			const length = 3;
+			const fieldData = numberSequenceField(length);
+			const cursor = cursorForJsonableTreeField(fieldData);
+			const chunk = chunkFieldSingle(cursor, {
+				policy: basicOnlyChunkPolicy,
+				idCompressor: undefined,
+			});
+			assert(chunk instanceof SequenceChunk);
+			assert.equal(chunk.topLevelLength, length);
+			assertChunkCursorEquals(chunk, fieldData);
+		});
+
+		it("large field with chunking policy returns nested sequence chunk", () => {
+			const policy: ChunkPolicy = {
+				sequenceChunkSplitThreshold: 2,
+				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+				uniformChunkNodeCount: 0,
+				shapeFromSchema: () => polymorphic,
+			};
+
+			const length = 5;
+			const fieldData = numberSequenceField(length);
+			const cursor = cursorForJsonableTreeField(fieldData);
+			const chunk = chunkFieldSingle(cursor, { policy, idCompressor: undefined });
+
+			assert(chunk instanceof SequenceChunk);
+			assert.equal(chunk.topLevelLength, length);
+			assert.equal(chunk.subChunks.length, policy.sequenceChunkSplitThreshold);
+			assertChunkCursorEquals(chunk, fieldData);
+		});
+	});
+
+	describe("combineChunks", () => {
+		it("empty array", () => {
+			const chunk = combineChunks([]);
+			assert(chunk instanceof SequenceChunk);
+			assert.equal(chunk.topLevelLength, 0);
+			assert.equal(chunk.subChunks.length, 0);
+		});
+
+		it("single chunk", () => {
+			const basicChunk = new BasicChunk(brand(numberSchema.identifier), new Map(), 42);
+			const result = combineChunks([basicChunk]);
+			assert.equal(result, basicChunk);
+		});
+
+		it("multiple chunks", () => {
+			const chunk1 = new BasicChunk(brand(numberSchema.identifier), new Map(), 1);
+			const chunk2 = new BasicChunk(brand(numberSchema.identifier), new Map(), 2);
+			const chunk3 = new BasicChunk(brand(numberSchema.identifier), new Map(), 3);
+
+			const result = combineChunks([chunk1, chunk2, chunk3]);
+			assert(result instanceof SequenceChunk);
+			assert.equal(result.topLevelLength, 3);
+			assert.equal(result.subChunks.length, 3);
+			assert.equal(result.subChunks[0], chunk1);
+			assert.equal(result.subChunks[1], chunk2);
+			assert.equal(result.subChunks[2], chunk3);
+		});
+
+		it("mixed chunks", () => {
+			const basicChunk = new BasicChunk(brand(numberSchema.identifier), new Map(), 1);
+			const sequenceChunk = new SequenceChunk([
+				new BasicChunk(brand(numberSchema.identifier), new Map(), 2),
+				new BasicChunk(brand(numberSchema.identifier), new Map(), 3),
+			]);
+
+			const result = combineChunks([basicChunk, sequenceChunk]);
+			assert(result instanceof SequenceChunk);
+			assert.equal(result.topLevelLength, 3);
+			assert.equal(result.subChunks.length, 2);
+			assert.equal(result.subChunks[0], basicChunk);
+			assert.equal(result.subChunks[1], sequenceChunk);
+		});
 	});
 
 	describe("tryShapeFromNodeSchema", () => {
@@ -413,22 +593,21 @@ describe("chunkTree", () => {
 			expectEqual(info, polymorphic);
 		});
 		it("incremental", () => {
-			const shouldEncodeIncrementally: IncrementalEncodingPolicy = (
-				nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
-				fieldKey: FieldKey,
-			) => {
-				if (nodeIdentifier === structValue.identifier && fieldKey === "x") {
-					return true;
-				}
-				return false;
-			};
+			const sf = new SchemaFactoryAlpha("chunkTree");
+			const structValueIncremental = sf.object("structValue", {
+				foo: sf.types([{ type: sf.number, metadata: {} }], {
+					custom: { [incrementalSummaryHint]: true },
+				}),
+			});
 			const params: ShapeFromSchemaParameters = {
-				schema,
+				schema: toInitialSchema([structValueIncremental]),
 				policy: defaultSchemaPolicy,
-				shouldEncodeIncrementally,
+				shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+					new TreeViewConfigurationAlpha({ schema: structValueIncremental }),
+				),
 				shapes: new Map(),
 			};
-			const nodeSchema: TreeNodeSchemaIdentifier = brand(structValue.identifier);
+			const nodeSchema: TreeNodeSchemaIdentifier = brand(structValueIncremental.identifier);
 
 			// For incremental field, `shouldEncodeIncrementally` should return true.
 			// So, the shape returned should be polymorphic.
@@ -447,8 +626,8 @@ describe("chunkTree", () => {
 			);
 			expectEqual(
 				infoNonIncremental,
-				new TreeShape(brand(structValue.identifier), false, [
-					[brand("x"), new TreeShape(brand(numberSchema.identifier), true, []), 1],
+				new TreeShape(brand(structValueIncremental.identifier), false, [
+					[brand("foo"), new TreeShape(brand(numberSchema.identifier), true, []), 1],
 				]),
 			);
 		});
@@ -492,24 +671,24 @@ describe("chunkTree", () => {
 			assert.equal(info, undefined);
 		});
 		it("incrementalField", () => {
-			const shouldEncodeIncrementally: IncrementalEncodingPolicy = (
-				nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
-				fieldKey: FieldKey,
-			) => {
-				if (nodeIdentifier === structValue.identifier && fieldKey === "x") {
-					return true;
-				}
-				return false;
-			};
+			const sf = new SchemaFactoryAlpha("chunkTree");
+			const structValueIncremental = sf.object("structValue", {
+				foo: sf.types([{ type: sf.number, metadata: {} }], {
+					custom: { [incrementalSummaryHint]: true },
+				}),
+			});
+			const structValueFieldIncremental = sf.required(structValueIncremental);
 			const params: ShapeFromSchemaParameters = {
-				schema,
+				schema: toInitialSchema([structValueIncremental]),
 				policy: defaultSchemaPolicy,
-				shouldEncodeIncrementally,
+				shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+					new TreeViewConfigurationAlpha({ schema: structValueFieldIncremental }),
+				),
 				shapes: new Map(),
 			};
 			const fieldSchemaWithContext: FieldSchemaWithContext = {
 				parentNodeSchema: brand("root"),
-				fieldSchema: toInitialSchema(structValueField).rootFieldSchema,
+				fieldSchema: toInitialSchema(structValueFieldIncremental).rootFieldSchema,
 				key: brand("key"),
 			};
 			// For incremental field, `shouldEncodeIncrementally` should return true.

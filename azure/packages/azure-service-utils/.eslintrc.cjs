@@ -9,7 +9,7 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
-		"import/no-unassigned-import": "off",
+		"import-x/no-unassigned-import": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
 
 		// Useful for developer accessibility

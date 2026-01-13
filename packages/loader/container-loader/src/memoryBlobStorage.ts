@@ -53,7 +53,7 @@ export function tryInitializeMemoryDetachedBlobStorage(
  * It also provides methods for serialization and initialization with attachment blobs.
  * @returns A new `MemoryDetachedBlobStorage` instance.
  */
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 export function createMemoryDetachedBlobStorage(): MemoryDetachedBlobStorage {
 	const blobs: ArrayBufferLike[] = [];
 	const storage: MemoryDetachedBlobStorage = {

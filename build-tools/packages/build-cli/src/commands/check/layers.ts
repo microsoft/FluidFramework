@@ -9,7 +9,7 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 
 import { BaseCommand, LayerGraph } from "../../library/index.js";
-// eslint-disable-next-line import/no-internal-modules -- AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+// eslint-disable-next-line import-x/no-internal-modules -- AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 import { writeFileWithLineFeeds } from "../../library/text.js";
 
 const packagesMdFileName = "PACKAGES.md";
@@ -43,7 +43,12 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers> {
 
 		this.verbose("Package scan completed");
 
-		const layerGraph = LayerGraph.load(resolvedRoot, packages.packages, flags.info);
+		const layerGraph = LayerGraph.load(
+			resolvedRoot,
+			packages.packages,
+			flags.info,
+			this.logger,
+		);
 
 		// Write human-readable package list organized by layer
 		if (flags.md !== undefined) {

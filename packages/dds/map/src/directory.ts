@@ -44,7 +44,7 @@ import type {
 	IValueChanged,
 } from "./interfaces.js";
 import type {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
@@ -108,7 +108,7 @@ export interface IDirectorySetOperation {
 	/**
 	 * Value to be set on the key.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	value: ISerializableValue;
 }
 
@@ -301,7 +301,7 @@ export interface IDirectoryDataObject {
 	/**
 	 * Key/value date set by the user.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	storage?: Record<string, ISerializableValue>;
 
 	/**
@@ -525,7 +525,7 @@ export class SharedDirectory
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
-		// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
+		// eslint-disable-next-line unicorn/no-array-for-each
 		this.root.forEach(callback);
 	}
 
@@ -777,7 +777,7 @@ export class SharedDirectory
 					const parsedSerializable = parseHandles(
 						serializable,
 						this.serializer,
-						// eslint-disable-next-line import/no-deprecated
+						// eslint-disable-next-line import-x/no-deprecated
 					) as ISerializableValue;
 					migrateIfSharedSerializable(parsedSerializable, this.serializer, this.handle);
 					currentSubDir.populateStorage(key, parsedSerializable.value);
@@ -1036,7 +1036,7 @@ export class SharedDirectory
 				if (!currentSubDirObject.storage) {
 					currentSubDirObject.storage = {};
 				}
-				// eslint-disable-next-line import/no-deprecated
+				// eslint-disable-next-line import-x/no-deprecated
 				const result: ISerializableValue = {
 					type: value.type,
 					value: value.value && (JSON.parse(value.value) as object),
@@ -1512,7 +1512,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (!this.directory.isAttached()) {
 			const successfullyRemoved = this.sequencedStorageData.delete(key);
 			// Only emit if we actually deleted something.
-			if (previousOptimisticLocalValue !== undefined && successfullyRemoved) {
+			if (
+				this.isNotDisposedAndReachable() &&
+				previousOptimisticLocalValue !== undefined &&
+				successfullyRemoved
+			) {
 				const event: IDirectoryValueChanged = {
 					key,
 					path: this.absolutePath,
@@ -1545,7 +1549,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// Only emit if we locally believe we deleted something.  Otherwise we still send the op
 		// (permitting speculative deletion even if we don't see anything locally) but don't emit
 		// a valueChanged since we in fact did not locally observe a value change.
-		if (previousOptimisticLocalValue !== undefined) {
+		if (this.isNotDisposedAndReachable() && previousOptimisticLocalValue !== undefined) {
 			const event: IDirectoryValueChanged = {
 				key,
 				path: this.absolutePath,
@@ -1570,6 +1574,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (!this.directory.isAttached()) {
 			this.sequencedStorageData.clear();
 			this.directory.emit("clear", true, this.directory);
+			this.directory.emit("cleared", this.absolutePath, true, this.directory);
 			return;
 		}
 
@@ -1581,6 +1586,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.pendingStorageData.push(pendingClear);
 
 		this.directory.emit("clear", true, this.directory);
+		this.directory.emit("cleared", this.absolutePath, true, this.directory);
 		const op: IDirectoryOperation = {
 			type: "clear",
 			path: this.absolutePath,
@@ -1857,6 +1863,29 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		return subdir;
 	};
 
+	/**
+	 * Checks if this directory should be considered visible in the optimistic view.
+	 * This requires both:
+	 * 1. The directory object must not be disposed (disposed = true means fully deleted)
+	 * 2. The directory must be reachable via getWorkingDirectory (respects pending deletes)
+	 *
+	 * There's a timing window where a directory has a pending delete but is not yet disposed:
+	 * - When deleteSubDirectory is called locally, it adds a pending delete entry and emits a
+	 * "dispose" event, but doesn't set disposed = true yet.
+	 * - The directory only gets fully disposed when the delete message is sequenced.
+	 * - During this window, !disposed is true but getWorkingDirectory returns undefined.
+	 *
+	 * This method should be used before emitting events during remote message processing to ensure
+	 * events aren't emitted for directories that are invisible in the optimistic view.
+	 *
+	 * @returns true if this directory is visible in the optimistic view, false otherwise
+	 */
+	private isNotDisposedAndReachable(): boolean {
+		return (
+			!this.disposed && this.directory.getWorkingDirectory(this.absolutePath) !== undefined
+		);
+	}
+
 	public get sequencedSubdirectories(): ReadonlyMap<string, SubDirectory> {
 		this.throwIfDisposed();
 		return this._sequencedSubdirectories;
@@ -1905,16 +1934,24 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
 			// is no optimistically-applied local pending clear that would supersede this remote clear.
+			// Don't emit events if this directory has been disposed or no longer exists
 			if (!this.pendingStorageData.some((entry) => entry.type === "clear")) {
 				this.directory.emit("clear", local, this.directory);
+				this.directory.emit("cleared", this.absolutePath, local, this.directory);
 			}
 
 			// For pending set operations, emit valueChanged events
+			// Include 'path' so listeners can identify which subdirectory the change occurred in
 			for (const { key, previousValue } of pendingSets) {
+				// Stop emitting events if this directory has been disposed or is no longer reachable
+				if (!this.isNotDisposedAndReachable()) {
+					break;
+				}
 				this.directory.emit(
 					"valueChanged",
 					{
 						key,
+						path: this.absolutePath,
 						previousValue,
 					},
 					local,
@@ -1962,6 +1999,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.sequencedStorageData.delete(op.key);
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
+				this.isNotDisposedAndReachable() &&
 				!this.pendingStorageData.some(
 					(entry) => entry.type === "clear" || entry.key === op.key,
 				)
@@ -2027,6 +2065,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
+				this.isNotDisposedAndReachable() &&
 				!this.pendingStorageData.some((entry) => entry.type === "clear" || entry.key === key)
 			) {
 				const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
@@ -2116,7 +2155,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this._sequencedSubdirectories.set(op.subdirName, subDir);
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
-			if (!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName)) {
+			if (
+				!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName) &&
+				subDir.isNotDisposedAndReachable()
+			) {
 				this.emit("subDirectoryCreated", op.subdirName, local, this);
 			}
 		}

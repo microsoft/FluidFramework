@@ -14,7 +14,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../feature-libraries/modular-schema/index.js";
 
 import {
@@ -94,12 +94,11 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		numberOfEditsToRebase,
 		numberOfEditsToVerifyAssociativity,
 		groupSubSuites,
+		skipRebaseOverCompose,
 	} = definedOptions;
 
 	// Skip the "Rebase over compose" suite if specified to in the suite options.
-	const rebaseOverComposeDescribe = definedOptions.skipRebaseOverCompose
-		? describe.skip
-		: describe;
+	const rebaseOverComposeDescribe = skipRebaseOverCompose ? describe.skip : describe;
 
 	const [outerFixture, innerFixture] = groupSubSuites
 		? [it, (title: string, fn: () => void) => fn()]
@@ -109,24 +108,24 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		for (const initialState of initialStates) {
 			const intentionMinter = makeIntentionMinter();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
-				const localEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				const localEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						1,
 						"local-rev-",
 						intentionMinter,
 					),
-				);
-				const trunkEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				];
+				const trunkEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						numberOfEditsToRebaseOver,
 						"trunk-rev-",
 						intentionMinter,
 					),
-				);
+				];
 				for (const [{ description: name, changeset: edit }] of localEdits) {
 					for (const namedEditsToRebaseOver of trunkEdits) {
 						const title = `Rebase ${name} over compose ${JSON.stringify(
@@ -150,24 +149,24 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		for (const initialState of initialStates) {
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				const intentionMinter = makeIntentionMinter();
-				const localEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				const localEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						numberOfEditsToRebase,
 						"local-rev-",
 						intentionMinter,
 					),
-				);
-				const trunkEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				];
+				const trunkEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						1,
 						"trunk-rev-",
 						intentionMinter,
 					),
-				);
+				];
 				for (const namedSourceEdits of localEdits) {
 					for (const [{ description: name, changeset: namedEditToRebaseOver }] of trunkEdits) {
 						const title = `Rebase ${JSON.stringify(
@@ -217,24 +216,24 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		for (const initialState of initialStates) {
 			const intentionMinter = makeIntentionMinter();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
-				const localEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				const localEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						1,
 						"local-rev-",
 						intentionMinter,
 					),
-				);
-				const trunkEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				];
+				const trunkEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						2,
 						"trunk-rev-",
 						intentionMinter,
 					),
-				);
+				];
 				for (const [{ description: name, changeset: edit }] of localEdits) {
 					for (const namedEditsToRebaseOver of trunkEdits) {
 						const title = `Rebase ${name} over edits for left distributivity ${JSON.stringify(
@@ -258,24 +257,24 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		for (const initialState of initialStates) {
 			const intentionMinter = makeIntentionMinter();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
-				const localEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				const localEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						2,
 						"local-rev-",
 						intentionMinter,
 					),
-				);
-				const trunkEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				];
+				const trunkEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						1,
 						"trunk-rev-",
 						intentionMinter,
 					),
-				);
+				];
 				for (const [
 					{ description: name1, changeset: edit1 },
 					{ description: name2, changeset: edit2 },
@@ -302,24 +301,24 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		for (const initialState of initialStates) {
 			const intentionMinter = makeIntentionMinter();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
-				const localEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				const localEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						1,
 						"local-rev-",
 						intentionMinter,
 					),
-				);
-				const trunkEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				];
+				const trunkEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						1,
 						"trunk-rev-",
 						intentionMinter,
 					),
-				);
+				];
 				for (const [{ description: name, changeset: edit }] of localEdits) {
 					for (const namedEditsToRebaseOver of trunkEdits) {
 						const title = `Rebase ${name} over undo redo pair ${JSON.stringify(
@@ -343,24 +342,24 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		for (const initialState of initialStates) {
 			const intentionMinter = makeIntentionMinter();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
-				const localEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				const localEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						1,
 						"local-rev-",
 						intentionMinter,
 					),
-				);
-				const trunkEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				];
+				const trunkEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						1,
 						"trunk-rev-",
 						intentionMinter,
 					),
-				);
+				];
 				for (const [{ description: name, changeset: edit }] of localEdits) {
 					for (const namedEditsToRebaseOver of trunkEdits) {
 						const title = `Rebase ${name} over do undo pair ${JSON.stringify(
@@ -384,15 +383,15 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		for (const initialState of initialStates) {
 			const intentionMinter = makeIntentionMinter();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
-				const localEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				const localEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						1,
 						"local-rev-",
 						intentionMinter,
 					),
-				);
+				];
 				for (const [{ description: name, changeset: edit }] of localEdits) {
 					const title = `Rebase ${name} over empty change`;
 
@@ -408,15 +407,15 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		for (const initialState of initialStates) {
 			const intentionMinter = makeIntentionMinter();
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
-				const trunkEdits = Array.from(
-					generatePossibleSequenceOfEdits(
+				const trunkEdits = [
+					...generatePossibleSequenceOfEdits(
 						initialState,
 						generateChildStates,
 						1,
 						"trunk-rev-",
 						intentionMinter,
 					),
-				);
+				];
 				for (const [{ description: name, changeset: edit }] of trunkEdits) {
 					const title = `Rebase empty change over ${name}`;
 
@@ -791,10 +790,10 @@ function verifyRebaseOverDoUndoPairIsNoOp<TChangeset>(
 	);
 
 	const expectedChange = tagChange(edit.change, edit.revision);
-	if (fieldRebaser.assertChangesetsEquivalent !== undefined) {
-		fieldRebaser.assertChangesetsEquivalent(actualChange, expectedChange);
-	} else {
+	if (fieldRebaser.assertChangesetsEquivalent === undefined) {
 		assertDeepEqual(actualChange, expectedChange);
+	} else {
+		fieldRebaser.assertChangesetsEquivalent(actualChange, expectedChange);
 	}
 }
 

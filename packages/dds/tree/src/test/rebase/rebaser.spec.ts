@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import type { ChangeRebaser, RevisionTag } from "../../core/index.js";
 
 // Allow importing from these specific files which are being tested:
-/* eslint-disable-next-line import/no-internal-modules */
+/* eslint-disable-next-line import-x/no-internal-modules */
 import { type GraphCommit, rebaseBranch } from "../../core/rebase/index.js";
 import { mintRevisionTag } from "../utils.js";
 
@@ -36,6 +36,10 @@ export class DummyChangeRebaser implements ChangeRebaser<typeof dummyChange> {
 
 	public rebase(): typeof dummyChange {
 		return {};
+	}
+
+	public getRevisions(): Set<RevisionTag | undefined> {
+		return new Set();
 	}
 
 	public changeRevision(): typeof dummyChange {
@@ -121,15 +125,15 @@ describe("rebaser", () => {
 			baseInMain?: number,
 		): void {
 			const title = `${formatBranch(main)} ⇘ ${formatBranch(branch)}${
-				baseInMain !== undefined ? `  (base: ${baseInMain})` : ""
+				baseInMain === undefined ? "" : `  (base: ${baseInMain})`
 			}`;
 
 			it(title, () => {
 				const tester = new BranchTester(main, branch);
 				const base =
-					baseInMain !== undefined
-						? (tester[baseInMain] ?? assert.fail("Expected baseInMain to be in main"))
-						: tester.main;
+					baseInMain === undefined
+						? tester.main
+						: (tester[baseInMain] ?? assert.fail("Expected baseInMain to be in main"));
 
 				const { newSourceHead } = rebaseBranch(
 					mintRevisionTag,

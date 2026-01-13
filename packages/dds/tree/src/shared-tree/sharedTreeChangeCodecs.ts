@@ -4,8 +4,10 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	type CodecTree,
+	type CodecWriteOptions,
 	DiscriminatedUnionDispatcher,
 	type FormatVersion,
 	type ICodecFamily,
@@ -14,12 +16,15 @@ import {
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../codec/index.js";
-import type { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
+import {
+	type ChangeEncodingContext,
+	SchemaFormatVersion,
+	type TreeStoredSchema,
+} from "../core/index.js";
 import {
 	type ModularChangeFormatVersion,
 	type ModularChangeset,
 	type SchemaChange,
-	type SchemaChangeFormatVersion,
 	defaultSchemaPolicy,
 	getCodecTreeForModularChangeFormat,
 	getCodecTreeForSchemaChangeFormat,
@@ -40,7 +45,7 @@ import type { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChange
 
 export function makeSharedTreeChangeCodecFamily(
 	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
-	options: ICodecOptions,
+	options: CodecWriteOptions,
 ): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
 	const schemaChangeCodecs = makeSchemaChangeCodecs(options);
 	const versions: [
@@ -51,7 +56,7 @@ export function makeSharedTreeChangeCodecFamily(
 			EncodedSharedTreeChange,
 			ChangeEncodingContext
 		>,
-	][] = Array.from(dependenciesForChangeFormat.entries()).map(
+	][] = [...dependenciesForChangeFormat.entries()].map(
 		([format, { modularChange, schemaChange }]) => [
 			format,
 			makeSharedTreeChangeCodec(
@@ -66,13 +71,10 @@ export function makeSharedTreeChangeCodecFamily(
 
 interface ChangeFormatDependencies {
 	readonly modularChange: ModularChangeFormatVersion;
-	readonly schemaChange: SchemaChangeFormatVersion;
+	readonly schemaChange: SchemaFormatVersion;
 }
 
-export type SharedTreeChangeFormatVersion = Brand<
-	1 | 2 | 3 | 4,
-	"SharedTreeChangeFormatVersion"
->;
+export type SharedTreeChangeFormatVersion = Brand<3 | 4 | 5, "SharedTreeChangeFormatVersion">;
 
 /**
  * Defines for each SharedTree change format the corresponding dependent formats to use.
@@ -84,14 +86,14 @@ export const dependenciesForChangeFormat: Map<
 	SharedTreeChangeFormatVersion,
 	ChangeFormatDependencies
 > = new Map([
-	[brand(1), { modularChange: brand(1), schemaChange: brand(1) }],
-	[brand(2), { modularChange: brand(2), schemaChange: brand(1) }],
-	[brand(3), { modularChange: brand(3), schemaChange: brand(1) }],
-	[brand(4), { modularChange: brand(4), schemaChange: brand(1) }],
+	[brand(3), { modularChange: brand(3), schemaChange: SchemaFormatVersion.v1 }],
+	[brand(4), { modularChange: brand(4), schemaChange: SchemaFormatVersion.v1 }],
+	[brand(5), { modularChange: brand(5), schemaChange: SchemaFormatVersion.v1 }],
 ]);
 
 export function getCodecTreeForChangeFormat(
 	version: SharedTreeChangeFormatVersion,
+	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	const { modularChange, schemaChange } =
 		dependenciesForChangeFormat.get(version) ?? fail(0xc78 /* Unknown change format */);
@@ -100,7 +102,7 @@ export function getCodecTreeForChangeFormat(
 		version,
 		children: [
 			getCodecTreeForModularChangeFormat(modularChange),
-			getCodecTreeForSchemaChangeFormat(schemaChange),
+			getCodecTreeForSchemaChangeFormat(schemaChange, clientVersion),
 		],
 	};
 }
@@ -148,15 +150,15 @@ function makeSharedTreeChangeCodec(
 				for (const decodedChange of change.changes) {
 					if (decodedChange.type === "data") {
 						const schemaAndPolicy =
-							updatedSchema !== undefined
-								? {
+							updatedSchema === undefined
+								? context.schema
+								: {
 										policy:
-											context.schema !== undefined
-												? context.schema.policy
-												: defaultSchemaPolicy,
+											context.schema === undefined
+												? defaultSchemaPolicy
+												: context.schema.policy,
 										schema: updatedSchema,
-									}
-								: context.schema;
+									};
 						changes.push({
 							data: modularChangeCodec.encode(decodedChange.innerChange, {
 								originatorId: context.originatorId,

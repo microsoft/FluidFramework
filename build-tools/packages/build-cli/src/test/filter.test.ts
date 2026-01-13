@@ -183,7 +183,8 @@ describe("selectAndFilterPackages", () => {
 		const names = selected.map((p) => p.name);
 		expect(names).to.be.containingAllOf([
 			"@fluidframework/build-common",
-			"@fluidframework/eslint-config-fluid",
+			// TODO: Re-enable once eslint-config-fluid is no longer in the client release group
+			// "@fluidframework/eslint-config-fluid",
 			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluid-tools/api-markdown-documenter",

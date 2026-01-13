@@ -9,7 +9,7 @@ import type { Covariant } from "./typeCheck.js";
 
 /**
  * Constructs a "Branded" type, adding a type-checking only field to `ValueType`.
- *
+ * @remarks
  * Two usages of `Brand` should never use the same `Name`.
  * If they do, the resulting types will be assignable which defeats the point of this type.
  *
@@ -18,11 +18,17 @@ import type { Covariant } from "./typeCheck.js";
  * `Type 'Name1' is not assignable to type 'Name2'.`
  *
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `A`.
+ *
+ * @example Simple usage:
+ * ```typescript
+ * export type StrongId = Brand<string, "tree.StrongId">;
+ * const x: StrongId = brand("myId");
+ * ```
  */
 export type Brand<ValueType, Name> = ValueType & BrandedType<ValueType, Name>;
 
 /**
- * Helper for {@link Brand}.
+ * Implementation detail for {@link Brand}.
  *
  * See `MakeNominal` for some more details.
  *
@@ -98,6 +104,11 @@ export type NameFromBranded<T extends BrandedType<unknown, unknown>> = T extends
  * Adds a type {@link Brand} to a value.
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
+ * @remarks
+ * This infers the branded type from context so it can very easily be used to a semantically invalid conversion.
+ * Treat this like "as" casts: they are an indicator that the user/reader must ensure the conversion is valid.
+ *
+ * If branding a constant, and wanting to preserve the exact typing of the constant, use {@link brandConst} instead.
  * @privateRemarks
  * Leaving `T` unconstrained here allows for better type inference when branding unions.
  * For example when assigning `brand(number)` a number to an optional branded number field,
@@ -111,3 +122,91 @@ export function brand<T>(
 ): T {
 	return value as T;
 }
+
+/**
+ * Adds a type {@link Brand} to a value, while preserving the exact type of the value being branded.
+ * @remarks
+ * This takes in the type to brand to as a required type parameter, unlike {@link brand} which infers it from context.
+ * This also preserves the exact type of the value being branded.
+ * TypeScript has no way to take an explicit type parameter and infer another in a single generic context.
+ * To work around this, two generic contexts are used, first a function to infer the parameter type,
+ * and a second function (returned) to take the explicit type parameter.
+ *
+ * This is intended for use when branding constants.
+ * @example
+ * ```typescript
+ * const requiredIdentifier = brandConst("Value")<FieldKindIdentifier>();
+ * ```
+ * @privateRemarks
+ * The dummy parameter is used to produce a compile error in the event where the value being branded is incompatible with the branded type.
+ */
+export function brandConst<const T>(
+	value: T,
+): <T2 extends BrandedType<unknown, unknown>>(
+	...dummy: T extends (T2 extends BrandedType<infer ValueType, unknown> ? ValueType : never)
+		? []
+		: [never]
+) => T2 & T {
+	return <T2>() => value as T2 & T;
+}
+
+/**
+ * Removes a type brand from a branded value.
+ * @remarks
+ * This is useful when trying to do an exhaustive switch over a union of branded types,
+ * which for some reason fails if the brand is not removed from the "case" entries.
+ */
+export function unbrand<const T extends BrandedType<unknown, unknown>>(
+	value: T,
+): ValueFromBranded<T> {
+	return value as never;
+}
+
+/**
+ * Make an enum like object using {@link Brand} to brand the values.
+ * @remarks
+ * This has stricter typing than TypeScript built in enums since it does not allow implicit assignment of `number` to enums with a numeric value.
+ * It also blocks implicit conversions of individual constants to the enum type:
+ * such cases must use {@link brand} or get the branded value from the enum instead.
+ *
+ * One limitation is that narrowing does not work in switch statements:
+ * the values in each case can use {@link unbrand} to work around this.
+ *
+ * This object does not provide {@link https://www.typescriptlang.org/docs/handbook/enums.html#reverse-mappings | reverse mappings}.
+ *
+ * @example
+ * ```typescript
+ * const TestA = strictEnum("TestA", {
+ * 	a: 1,
+ * 	b: 2,
+ * });
+ * type TestA = Values<typeof TestA>;
+ *
+ * function switchUnbrand(x: TestA) {
+ * 	switch (x) {
+ * 		case unbrand(TestA.a):
+ * 			return "a";
+ * 		case unbrand(TestA.b):
+ * 			return "b";
+ * 		default:
+ * 			unreachableCase(x);
+ * 	}
+ * }
+ * ```
+ */
+export function strictEnum<const T, const TBrand>(
+	name: TBrand,
+	entries: T,
+): { readonly [Property in keyof T]: Brand<T[Property], TBrand> } {
+	return entries as {
+		readonly [Property in keyof T]: Brand<T[Property], TBrand>;
+	};
+}
+
+/**
+ * Extracts the values of an object type as a union.
+ * @remarks
+ * Like `keyof`	except for values.
+ * This is useful for extracting the value types of enums created with {@link strictEnum}.
+ */
+export type Values<T> = T[keyof T];

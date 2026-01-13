@@ -18,7 +18,7 @@ import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { type IRootSummarizerNode, createRootSummarizerNode } from "../summary/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 
 describe("Runtime", () => {

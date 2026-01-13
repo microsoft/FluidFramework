@@ -22,7 +22,7 @@ type RequestField = undefined | string | string[];
 interface IRestLessServerOptions {
 	/**
 	 * Request body size limit in number of bytes or as a string to
-	 * be passed to the [bytes](https://www.npmjs.com/package/bytes) library.
+	 * be passed to the {@link https://www.npmjs.com/package/bytes|bytes} library.
 	 * Only verified when parsing request body as a stream.
 	 * Default: 1gb
 	 */

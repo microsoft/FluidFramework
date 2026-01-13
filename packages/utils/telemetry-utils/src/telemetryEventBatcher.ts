@@ -25,12 +25,12 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	/**
 	 * Stores the sum of the custom data passed into the logger.
 	 */
-	private dataSums: { [key in TMetrics]?: number } = {};
+	private dataSums: Partial<Record<TMetrics, number>> = {};
 
 	/**
 	 * Stores the maximum value of the custom data passed into the logger.
 	 */
-	private dataMaxes: { [key in TMetrics]?: number } = {};
+	private dataMaxes: Partial<Record<TMetrics, number>> = {};
 
 	/**
 	 * Counter to keep track of the number of times the log function is called.

@@ -14,6 +14,7 @@ import sortPackageJson from "sort-package-json";
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
 import type { IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
+import type { IFluidCompatibilityMetadata } from "../fluidBuild/fluidCompatMetadata";
 import { options } from "../fluidBuild/options";
 import { defaultLogger } from "./logging";
 import type { MonoRepo, PackageManager } from "./monoRepo";
@@ -50,6 +51,12 @@ export type FluidPackageJson = {
 	pnpm?: {
 		overrides?: Record<string, string>;
 	};
+
+	/**
+	 * The metadata used for Fluid compatibility tracking and validation.
+	 * This is auto generated and updated during builds.
+	 */
+	fluidCompatMetadata?: IFluidCompatibilityMetadata;
 };
 
 /**

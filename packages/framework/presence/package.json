@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/presence",
-	"version": "2.71.0",
+	"version": "2.81.0",
 	"description": "A component for lightweight data sharing within a single session",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -32,6 +32,16 @@
 				"types": "./dist/alpha.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./legacy/alpha": {
+			"import": {
+				"types": "./lib/legacy.alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/legacy.alpha.d.ts",
+				"default": "./dist/index.js"
+			}
 		}
 	},
 	"files": [
@@ -42,15 +52,19 @@
 	],
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib",
+		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyAlpha legacy.alpha --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyAlpha legacy.alpha --outDir ./lib",
 		"build": "fluid-build . --task build",
+		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
+		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",
+		"build:api-reports:legacy": "api-extractor run --local --config api-extractor/api-extractor.legacy.json",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "npm run build:esnext:main && npm run build:esnext:experimental",
 		"build:esnext:experimental": "tsc --project ./tsconfig.json",
 		"build:esnext:main": "tsc --project ./tsconfig.main.json",
+		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
@@ -60,8 +74,10 @@
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json",
 		"check:exports:cjs:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.cjs.json",
+		"check:exports:cjs:legacy.alpha": "api-extractor run --config api-extractor/api-extractor-lint-legacy.alpha.cjs.json",
 		"check:exports:esm:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json",
 		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
+		"check:exports:esm:legacy.alpha": "api-extractor run --config api-extractor/api-extractor-lint-legacy.alpha.esm.json",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -111,24 +127,20 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/datastore": "workspace:~",
-		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.17.1",
+		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.58.3",
+		"@fluid-tools/build-cli": "^0.62.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.3",
+		"@fluidframework/build-tools": "^0.62.0",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^7.0.0",
+		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
@@ -136,13 +148,14 @@
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",
-		"concurrently": "^8.2.1",
+		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
-		"cross-env": "^7.0.3",
-		"eslint": "~8.57.1",
+		"cross-env": "^10.1.0",
+		"eslint": "~9.39.1",
+		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.2",
 		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"
 	},
@@ -153,7 +166,8 @@
 			],
 			"build:esnext:main": [
 				"^api",
-				"^build:esnext"
+				"^build:esnext",
+				"build:genver"
 			],
 			"check:exports:bundle-release-tags": [
 				"build:esnext"
@@ -167,7 +181,8 @@
 			],
 			"tsc:main": [
 				"^api",
-				"^tsc"
+				"^tsc",
+				"build:genver"
 			]
 		}
 	},

@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	IImportExportModel,
 	ISameContainerMigratableModel,
 	ISameContainerMigratableModelEvents,
 	IVersionedModel,
 } from "./sameContainerMigratableModel.js";
-export {
+export type {
 	ISameContainerMigrationTool,
 	ISameContainerMigrationToolEvents,
 	SameContainerMigrationState,
 } from "./sameContainerMigrationTool.js";
-export {
+export type {
 	DataTransformationCallback,
 	ISameContainerMigrator,
 	ISameContainerMigratorEvents,

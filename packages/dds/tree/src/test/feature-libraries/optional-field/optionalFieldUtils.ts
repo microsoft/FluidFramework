@@ -22,15 +22,19 @@ import {
 	type RegisterId,
 	RegisterMap,
 	optionalChangeRebaser,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import type {
 	ChildChange,
 	Replace,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { type Mutable, brand } from "../../../util/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
+import {
+	DefaultRevisionReplacer,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 
 const dummyDetachId: ChangeAtomId = { localId: brand(0) };
 
@@ -317,14 +321,17 @@ export function tagChangeInline(
 	rollbackOf?: RevisionTag,
 ): TaggedChange<OptionalChangeset> {
 	const inlined = inlineRevision(change, revision);
-	return rollbackOf !== undefined
-		? tagRollbackInverse(inlined, revision, rollbackOf)
-		: tagChange(inlined, revision);
+	return rollbackOf === undefined
+		? tagChange(inlined, revision)
+		: tagRollbackInverse(inlined, revision, rollbackOf);
 }
 
 export function inlineRevision(
 	change: OptionalChangeset,
 	revision: RevisionTag,
 ): OptionalChangeset {
-	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
+	return optionalChangeRebaser.replaceRevisions(
+		change,
+		new DefaultRevisionReplacer(revision, new Set([undefined])),
+	);
 }

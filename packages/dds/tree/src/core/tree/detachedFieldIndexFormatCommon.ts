@@ -5,9 +5,18 @@
 
 import { type Static, type TSchema, Type } from "@sinclair/typebox";
 
-import { brandedNumberType } from "../../util/index.js";
+import { brandedNumberType, strictEnum, type Values } from "../../util/index.js";
 
 import type { ForestRootId } from "./detachedFieldIndexTypes.js";
+
+/**
+ * The format version for the detached field index.
+ */
+export const DetachedFieldIndexFormatVersion = strictEnum("DetachedFieldIndexFormatVersion", {
+	v1: 1,
+	v2: 2,
+});
+export type DetachedFieldIndexFormatVersion = Values<typeof DetachedFieldIndexFormatVersion>;
 
 /**
  * The ID of a detached node. Is not globally unique on.
@@ -54,7 +63,10 @@ export const EncodedRootsForRevision = <Schema extends TSchema>(tRevisionTag: Sc
 	]);
 export type EncodedRootsForRevision = Static<ReturnType<typeof EncodedRootsForRevision>>;
 
-export const Format = <TVersion extends number, TRevisionTagSchema extends TSchema>(
+export const Format = <
+	TVersion extends DetachedFieldIndexFormatVersion,
+	TRevisionTagSchema extends TSchema,
+>(
 	tVersion: TVersion,
 	tRevisionTag: TRevisionTagSchema,
 	// Return type is intentionally derived.

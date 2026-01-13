@@ -26,8 +26,12 @@ import {
 } from "./shared-tree/index.js";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 import type { ITree } from "./simple-tree/index.js";
-import { Breakable } from "./util/index.js";
+import { Breakable, copyProperty } from "./util/index.js";
 import { FluidClientVersion } from "./codec/index.js";
+import {
+	editManagerFormatVersionSelectorForSharedBranches,
+	messageFormatVersionSelectorForSharedBranches,
+} from "./shared-tree-core/index.js";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
@@ -145,6 +149,16 @@ export function configuredSharedTreeBetaLegacy(
 }
 
 /**
+ * {@link configuredSharedTreeBeta} but including the alpha {@link SharedTreeOptions}.
+ * @alpha
+ */
+export function configuredSharedTreeAlpha(
+	options: SharedTreeOptions,
+): SharedObjectKind<ITree> {
+	return configuredSharedTree(options);
+}
+
+/**
  * {@link configuredSharedTreeBetaLegacy} but including `@alpha` options.
  *
  * @example
@@ -170,6 +184,13 @@ export function configuredSharedTreeBetaLegacy(
 export function configuredSharedTree(
 	options: SharedTreeOptions,
 ): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+	const internalOptions = resolveOptions(options);
+	return configuredSharedTreeInternal(internalOptions);
+}
+
+export function configuredSharedTreeInternal(
+	options: SharedTreeOptionsInternal,
+): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
 	const sharedObjectOptions: SharedObjectOptions<ITree> = {
 		type: SharedTreeFactoryType,
 		attributes: SharedTreeAttributes,
@@ -179,3 +200,28 @@ export function configuredSharedTree(
 
 	return makeSharedObjectKind<ITree>(sharedObjectOptions);
 }
+
+export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
+	const internal: SharedTreeOptionsInternal = {
+		...resolveFormatOptions(options),
+	};
+	for (const optionName of Object.keys(options)) {
+		copyProperty(options, optionName, internal);
+	}
+	return internal;
+}
+
+function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
+	const enableSharedBranches = options.enableSharedBranches ?? false;
+
+	if (enableSharedBranches) {
+		return sharedBranchesOptions;
+	}
+
+	return {};
+}
+
+const sharedBranchesOptions: SharedTreeOptionsInternal = {
+	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
+	editManagerFormatSelector: editManagerFormatVersionSelectorForSharedBranches,
+};

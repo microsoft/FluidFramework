@@ -145,7 +145,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		tree: ISnapshotTreeEx,
 		loadingGroupIds: Set<string>,
 		blobContents: Map<string, ArrayBuffer>,
-	) {
+	): Promise<void> {
 		const groupId = await this.readGroupId(tree);
 		if (groupId === undefined || loadingGroupIds.has(groupId)) {
 			for (const id of Object.values(tree.blobs)) {
@@ -264,7 +264,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		);
 	}
 
-	private stripTree(tree: ISnapshotTreeEx, groupId: string | undefined) {
+	private stripTree(tree: ISnapshotTreeEx, groupId: string | undefined): void {
 		tree.blobs = {};
 		tree.groupId = groupId;
 		tree.trees = {};
