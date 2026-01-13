@@ -7,7 +7,10 @@ import path from "node:path";
 import fs from "node:fs";
 
 import type { requireAssignableTo } from "@fluidframework/build-tools";
-import { validateError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	checkCompatibility,
@@ -275,11 +278,13 @@ describe("snapshotCompatibilityChecker", () => {
 			});
 		});
 
-		it("workflow over time", () => {
-			const snapshotDirectory = "dir";
+		/**
+		 * Trivial in-memory file system for testing.
+		 * Ignores the directory and stores files by filename.
+		 */
+		function mapFileSystem(): [SnapshotFileSystem, Map<string, string>] {
 			const snapshots = new Map<string, string>();
 
-			// Trivial in-memory file system for testing.
 			const fileSystem: SnapshotFileSystem = {
 				writeFileSync(file: string, data: string, options: { encoding: "utf8" }): void {
 					snapshots.set(file, data);
@@ -295,6 +300,12 @@ describe("snapshotCompatibilityChecker", () => {
 					return childPath;
 				},
 			};
+			return [fileSystem, snapshots];
+		}
+
+		it("workflow over time", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem, snapshots] = mapFileSystem();
 
 			const factory = new SchemaFactoryBeta("test");
 
@@ -502,6 +513,69 @@ describe("snapshotCompatibilityChecker", () => {
 				mode: "test",
 				snapshotDirectory,
 			});
+		});
+
+		it("invalid versions", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem] = mapFileSystem();
+
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "3.1.0x",
+						schema: new TreeViewConfiguration({ schema: [] }),
+						fileSystem,
+						minVersionForCollaboration: "2.1.0",
+						mode: "test",
+						snapshotDirectory,
+					}),
+				validateUsageError(`Invalid version: "3.1.0x". Must be a valid semver version.`),
+			);
+
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "3.1.0",
+						schema: new TreeViewConfiguration({ schema: [] }),
+						fileSystem,
+						minVersionForCollaboration: "2.1",
+						mode: "test",
+						snapshotDirectory,
+					}),
+				validateUsageError(
+					`Invalid minVersionForCollaboration: "2.1". Must be a valid semver version.`,
+				),
+			);
+
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "3.1.0",
+						schema: new TreeViewConfiguration({ schema: [] }),
+						fileSystem,
+						minVersionForCollaboration: "3.1.1",
+						mode: "test",
+						snapshotDirectory,
+					}),
+				validateUsageError(
+					`Invalid minVersionForCollaboration: "3.1.1". Must be less than or equal to current version "3.1.0".`,
+				),
+			);
+
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "1.0.0-beta",
+						schema: new TreeViewConfiguration({ schema: [] }),
+						fileSystem,
+						minVersionForCollaboration: "1.0.0",
+						mode: "test",
+						snapshotDirectory,
+					}),
+				validateUsageError(
+					`Invalid minVersionForCollaboration: "1.0.0". Must be less than or equal to current version "1.0.0-beta".`,
+				),
+			);
 		});
 	});
 

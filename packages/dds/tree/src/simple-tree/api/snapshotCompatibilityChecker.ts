@@ -282,12 +282,28 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	readonly snapshotUnchangedVersions?: true;
 	/**
 	 * The mode of operation, either "test" or "update".
+	 * @remarks
+	 * In "update" mode, a new snapshot is created if the current schema differs from the latest existing snapshot.
+	 * {@link SchemaCompatibilitySnapshotsOptions.snapshotUnchangedVersions} impacts this: see it for details.
+	 *
+	 * In "test" mode, an error is thrown if running in "update" mode would have made any changes.
+	 *
+	 * Both modes will throw errors if any compatibility issues are detected (but after updating snapshots in "update" mode so the diff can be used to help debug).
+	 *
+	 * It is recommended that "test" mode be used in automated tests to verify schema compatibility,
+	 * and "update" mode only be used manually to update snapshots when making schema changes (or version changes if `snapshotUnchangedVersions` is true).
 	 */
 	readonly mode: "test" | "update";
 }
 
 /**
  * Check `currentViewSchema` for compatibility with a collection of historical schema snapshots stored in `snapshotDirectory`.
+ *
+ * @throws Throws errors if the input version strings (including those in snapshot file names) are not valid semver versions.
+ * @throws Throws errors if the input version strings (including those in snapshot file names) are not ordered as expected (current being the highest, and `minVersionForCollaboration` corresponding to the current version or a lower snapshotted version).
+ * @throws In `test` mode, throws an error if there is not an up to date snapshot for the current version.
+ * @throws Throws an error if any snapshotted schema cannot be upgraded to the current schema.
+ * @throws Throws an error if any snapshotted schema with a version greater than or equal to `minVersionForCollaboration` cannot view documents created with the current schema.
  * @remarks
  * This is intended for use in snapshot-based schema compatibility tests.
  * Every SharedTree-based component or application with a schema is recommended to use this to verify schema compatibility across versions.
@@ -332,7 +348,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * });
  * ```
  * @privateRemarks
- * Use of this within this package for libraries released as part of it should use {@link testSchemaCompatibilitySnapshots} instead.
+ * Use of this function within this package (for schema libraries released as part of this package) should use {@link testSchemaCompatibilitySnapshots} instead.
  *
  * TODO: this uses the format defined in simpleSchemaCodec.ts.
  * Currently this does not include any versioning information in the snapshot format itself.
@@ -358,17 +374,17 @@ export function checkSchemaCompatibilitySnapshots(
 	} = options;
 	if (semver.valid(currentVersion) === null) {
 		throw new UsageError(
-			`Invalid app version: ${JSON.stringify(currentVersion)}. Must be a valid semver version.`,
+			`Invalid version: ${JSON.stringify(currentVersion)}. Must be a valid semver version.`,
 		);
 	}
 	if (semver.valid(minVersionForCollaboration) === null) {
 		throw new UsageError(
-			`Invalid app version: ${JSON.stringify(minVersionForCollaboration)}. Must be a valid semver version.`,
+			`Invalid minVersionForCollaboration: ${JSON.stringify(minVersionForCollaboration)}. Must be a valid semver version.`,
 		);
 	}
 	if (!semver.lte(minVersionForCollaboration, currentVersion)) {
 		throw new UsageError(
-			`Invalid app version: ${JSON.stringify(minVersionForCollaboration)}. Must be less than or equal to current version ${JSON.stringify(currentVersion)}.`,
+			`Invalid minVersionForCollaboration: ${JSON.stringify(minVersionForCollaboration)}. Must be less than or equal to current version ${JSON.stringify(currentVersion)}.`,
 		);
 	}
 
