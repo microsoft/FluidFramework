@@ -5,7 +5,11 @@
 
 import * as child_process from "child_process";
 import * as fs from "fs";
+import { fileURLToPath } from "node:url";
 import * as path from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import isEqual from "lodash.isequal";
 
 /**

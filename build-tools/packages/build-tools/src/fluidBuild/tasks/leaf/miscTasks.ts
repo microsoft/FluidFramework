@@ -7,11 +7,11 @@ import { readFile, readdir, stat } from "node:fs/promises";
 import * as path from "node:path";
 
 import picomatch from "picomatch";
-import { getTypeTestPreviousPackageDetails } from "../../../common/typeTests";
-import type { BuildContext } from "../../buildContext";
-import type { BuildPackage } from "../../buildGraph";
-import { globFn, toPosixPath } from "../taskUtils";
-import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
+import { getTypeTestPreviousPackageDetails } from "../../../common/typeTests.js";
+import type { BuildContext } from "../../buildContext.js";
+import type { BuildPackage } from "../../buildGraph.js";
+import { globFn, toPosixPath } from "../taskUtils.js";
+import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask.js";
 
 function unquote(str: string) {
 	if (str.length >= 2 && str[0] === '"' && str[str.length - 1] === '"') {

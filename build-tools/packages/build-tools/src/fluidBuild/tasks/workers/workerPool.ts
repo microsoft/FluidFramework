@@ -6,10 +6,15 @@
 import { type ChildProcess, fork } from "node:child_process";
 import type { EventEmitter } from "node:events";
 import { freemem } from "node:os";
+import path from "node:path";
 import type { Readable } from "node:stream";
+import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
 
-import type { WorkerExecResult, WorkerMessage } from "./worker";
+import type { WorkerExecResult, WorkerMessage } from "./worker.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export interface WorkerExecResultWithOutput extends WorkerExecResult {
 	stdout: string;

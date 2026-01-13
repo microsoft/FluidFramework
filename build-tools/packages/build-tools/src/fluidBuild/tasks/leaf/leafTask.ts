@@ -13,23 +13,23 @@ import type { AsyncPriorityQueue } from "async";
 import registerDebug from "debug";
 import chalk from "picocolors";
 
-import { defaultLogger } from "../../../common/logging";
+import { defaultLogger } from "../../../common/logging.js";
 import {
 	type ExecAsyncResult,
 	execAsync,
 	getExecutableFromCommand,
-} from "../../../common/utils";
-import type { BuildContext } from "../../buildContext";
-import { type BuildPackage } from "../../buildGraph";
-import { BuildResult, summarizeBuildResult } from "../../buildResult";
+} from "../../../common/utils.js";
+import type { BuildContext } from "../../buildContext.js";
+import { type BuildPackage } from "../../buildGraph.js";
+import { BuildResult, summarizeBuildResult } from "../../buildResult.js";
 import {
 	type GitIgnoreSetting,
 	type GitIgnoreSettingValue,
 	gitignoreDefaultValue,
-} from "../../fluidBuildConfig";
-import { options } from "../../options";
-import { Task, type TaskExec } from "../task";
-import { globWithGitignore } from "../taskUtils";
+} from "../../fluidBuildConfig.js";
+import { options } from "../../options.js";
+import { Task, type TaskExec } from "../task.js";
+import { globWithGitignore } from "../taskUtils.js";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");

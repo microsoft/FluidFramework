@@ -7,24 +7,27 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import * as path from "node:path";
 import { queue } from "async";
 import detectIndent from "detect-indent";
-import { readJsonSync, writeJsonSync } from "fs-extra";
+import fsExtra from "fs-extra";
 import chalk from "picocolors";
 import sortPackageJson from "sort-package-json";
 
+// fs-extra doesn't provide named exports for ESM, so we destructure from default
+const { readJsonSync, writeJsonSync } = fsExtra;
+
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
-import type { IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
-import type { IFluidCompatibilityMetadata } from "../fluidBuild/fluidCompatMetadata";
-import { options } from "../fluidBuild/options";
-import { defaultLogger } from "./logging";
-import type { MonoRepo, PackageManager } from "./monoRepo";
+import type { IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig.js";
+import type { IFluidCompatibilityMetadata } from "../fluidBuild/fluidCompatMetadata.js";
+import { options } from "../fluidBuild/options.js";
+import { defaultLogger } from "./logging.js";
+import type { MonoRepo, PackageManager } from "./monoRepo.js";
 import {
 	type ExecAsyncResult,
 	execWithErrorAsync,
 	isSameFileOrDir,
 	lookUpDirSync,
 	rimrafWithErrorAsync,
-} from "./utils";
+} from "./utils.js";
 
 import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");

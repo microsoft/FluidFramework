@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { getInstalledPackageVersion } from "../taskUtils";
-import { TscDependentTask } from "./tscTask";
+import { getInstalledPackageVersion } from "../taskUtils.js";
+import { TscDependentTask } from "./tscTask.js";
 
 export class GenerateEntrypointsTask extends TscDependentTask {
 	protected get configFileFullPaths() {

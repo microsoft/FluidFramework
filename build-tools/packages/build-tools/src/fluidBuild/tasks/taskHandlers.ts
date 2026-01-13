@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { BuildContext } from "../buildContext";
-import type { BuildPackage } from "../buildGraph";
-import type { LeafTask } from "./leaf/leafTask";
+import type { BuildContext } from "../buildContext.js";
+import type { BuildPackage } from "../buildGraph.js";
+import type { LeafTask } from "./leaf/leafTask.js";
 
 /**
  * The definition of a constructor function that returns a LeafTask subclass.

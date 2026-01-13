@@ -5,7 +5,7 @@
 
 import { parseISO } from "date-fns";
 import registerDebug from "debug";
-import { exec, execNoError } from "./utils";
+import { exec, execNoError } from "./utils.js";
 
 const traceGitRepo = registerDebug("fluid-build:gitRepo");
 

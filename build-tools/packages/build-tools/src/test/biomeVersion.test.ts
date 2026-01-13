@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert/strict";
 import path from "node:path";
-import { detectBiomeVersion } from "../common/biomeVersion";
-import { testDataPath } from "./init";
+import { detectBiomeVersion } from "../common/biomeVersion.js";
+import { testDataPath } from "./init.js";
 
 describe("biomeVersion", () => {
 	describe("detectBiomeVersion", () => {

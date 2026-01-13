@@ -5,11 +5,11 @@
 
 import type { AsyncPriorityQueue } from "async";
 
-import type { BuildContext } from "../buildContext";
-import { type BuildPackage } from "../buildGraph";
-import { BuildResult } from "../buildResult";
-import type { LeafTask } from "./leaf/leafTask";
-import { Task, type TaskExec } from "./task";
+import type { BuildContext } from "../buildContext.js";
+import { type BuildPackage } from "../buildGraph.js";
+import { BuildResult } from "../buildResult.js";
+import type { LeafTask } from "./leaf/leafTask.js";
+import { Task, type TaskExec } from "./task.js";
 
 export class GroupTask extends Task {
 	constructor(

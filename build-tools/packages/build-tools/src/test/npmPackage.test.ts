@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 import * as path from "node:path";
 
-import { type PackageJson, readPackageJsonAndIndent } from "../common/npmPackage";
-import { testDataPath } from "./init";
+import { type PackageJson, readPackageJsonAndIndent } from "../common/npmPackage.js";
+import { testDataPath } from "./init.js";
 
 /**
  * A transformer function that does nothing.

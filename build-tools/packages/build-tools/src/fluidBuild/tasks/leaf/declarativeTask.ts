@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { BuildContext } from "../../buildContext";
-import type { BuildPackage } from "../../buildGraph";
+import type { BuildContext } from "../../buildContext.js";
+import type { BuildPackage } from "../../buildGraph.js";
 import {
 	type DeclarativeTask,
 	type GitIgnoreSetting,
 	gitignoreDefaultValue,
-} from "../../fluidBuildConfig";
-import { LeafWithGlobInputOutputDoneFileTask } from "./leafTask";
+} from "../../fluidBuildConfig.js";
+import { LeafWithGlobInputOutputDoneFileTask } from "./leafTask.js";
 
 export class DeclarativeLeafTask extends LeafWithGlobInputOutputDoneFileTask {
 	constructor(

@@ -6,13 +6,16 @@
 import { existsSync } from "node:fs";
 import * as path from "node:path";
 import { getPackagesSync } from "@manypkg/get-packages";
-import { readFileSync, readJsonSync } from "fs-extra";
+import fsExtra from "fs-extra";
 import YAML from "yaml";
 
-import type { IFluidBuildDir } from "../fluidBuild/fluidBuildConfig";
-import { type Logger, defaultLogger } from "./logging";
-import { Package } from "./npmPackage";
-import { execWithErrorAsync, rimrafWithErrorAsync } from "./utils";
+// fs-extra doesn't provide named exports for ESM, so we destructure from default
+const { readFileSync, readJsonSync } = fsExtra;
+
+import type { IFluidBuildDir } from "../fluidBuild/fluidBuildConfig.js";
+import { type Logger, defaultLogger } from "./logging.js";
+import { Package } from "./npmPackage.js";
+import { execWithErrorAsync, rimrafWithErrorAsync } from "./utils.js";
 
 import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
