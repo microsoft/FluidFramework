@@ -17,10 +17,10 @@ Found **20 total DDS implementations** in the codebase - all are Fluid-owned:
 
 | Category | DDSes |
 |----------|-------|
-| **Active/Stable** | SharedCell, SharedMap, SharedDirectory, SharedTree, SharedSegmentSequence, TaskManager, ConsensusOrderedCollection, ConsensusRegisterCollection, PactMap, Ink |
+| **Active/Stable** | SharedCell, SharedMap, SharedDirectory, SharedTree, SharedSegmentSequence, TaskManager, ConsensusOrderedCollection, ConsensusRegisterCollection |
 | **Legacy (@legacy @beta)** | SharedCounter, SharedString, SharedMatrix, SharedSummaryBlock |
 | **Internal Legacy** | SharedSignal, SharedArray (in legacy-dds package) |
-| **Experimental** | SharedPropertyTree, DeflatedPropertyTree, LZ4PropertyTree (PropertyDDS), experimental SharedTree (in `experimental/dds/tree`) |
+| **Experimental** | PactMap, Ink, SharedPropertyTree, DeflatedPropertyTree, LZ4PropertyTree (PropertyDDS), experimental SharedTree (in `experimental/dds/tree`) |
 
 **No external/third-party DDSes found.** All DDSes are already in Fluid's codebase.
 
@@ -190,12 +190,13 @@ Keeping `IChannel` and its dependencies as `@legacy @beta` is acceptable because
 3. **Split `IFluidDataStoreRuntime`**: Major breaking change
 4. **Make everything internal**: Breaks `IFluidDataStoreRuntime` compatibility
 
-#### Future Consideration
+#### Future Considerations
 
 In a future major version, `IChannel` could potentially be made internal by:
 1. Updating `IFluidDataStoreRuntime` methods to return `IFluidLoadable & { id: string }`
 2. Or deprecating the channel methods entirely in favor of higher-level APIs
-3. This would require coordinated changes across multiple packages
+3. Using `unknown` or `IFluidLoadable` as the return type for `getChannel`/`createChannel`, with each DDS package offering a type check/narrowing function for consumers who prefer runtime type safety over casting
+4. This would require coordinated changes across multiple packages
 
 ### Phase 4: Build and verify
 
@@ -282,6 +283,21 @@ to internal and are no longer available in the public API.
 - **SharedTree promoted**: Deprecation messages should recommend SharedTree as the primary DDS
 - **Datastore layer concern**: IChannel exposure at datastore layer needs special handling
 - **Open question**: Need to confirm whether there are other partner DDSes that are not yet accounted for
+
+---
+
+## Follow-up Items
+
+### IFluidDataStoreRuntime Cleanup (Out of Scope)
+
+The current plan keeps `IChannel` and its transitive dependencies (`IChannelServices`, `IChannelStorageService`, `IDeltaConnection`, `IDeltaHandler`) as `@legacy @beta` because they are referenced by `IFluidDataStoreRuntime`. This leaks internal implementation details.
+
+**Follow-up work should be tracked separately to:**
+1. Update `IFluidDataStoreRuntime.getChannel()` and `createChannel()` to return a narrower type (e.g., `IFluidLoadable & { id: string }` or `unknown`)
+2. Potentially add type check/narrowing functions to each DDS package
+3. Once `IFluidDataStoreRuntime` no longer references `IChannel`, fully internalize `IChannel` and all related interfaces
+
+This is intentionally out of scope for the initial custom DDS removal effort to limit the breaking change surface area.
 
 ---
 
