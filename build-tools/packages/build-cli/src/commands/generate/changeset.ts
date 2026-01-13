@@ -11,6 +11,7 @@ import { Flags, ux } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import { humanId } from "human-id";
 import chalk from "picocolors";
+// eslint-disable-next-line import-x/no-named-as-default -- prompts default export is the intended API
 import prompts from "prompts";
 
 import { releaseGroupFlag } from "../../flags.js";

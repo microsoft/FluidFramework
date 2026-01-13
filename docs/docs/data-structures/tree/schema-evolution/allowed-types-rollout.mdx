@@ -32,7 +32,7 @@ synchronizeTrees();
 
 ### Step 1: Define and Stage the New Allowed Type
 
-To add support for reading strings, we import the alpha APIs and use [`staged`](../../../api/fluid-framework/schemafactorybeta-class.md) to mark the new allowed type:
+To add support for reading strings, we import the alpha APIs and use [`staged`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) to mark the new allowed type:
 
 ```typescript
 // Schema B: number or string (string is staged)
@@ -63,7 +63,7 @@ assert.throws(() => {
 });
 ```
 
-For this schema change, the schema does not need to be [upgraded](./index.mdx#schema-upgrade-process) because [`staged`](../../../api/fluid-framework/schemafactorybeta-class.md) allowed types are removed from stored schemas.
+For this schema change, the schema does not need to be [upgraded](./index.mdx#schema-upgrade-process) because [`staged`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) allowed types are removed from stored schemas.
 Upgrading the schema would result in a noop.
 
 ### Step 3: Wait for Client Saturation
@@ -75,7 +75,7 @@ See the [staged rollouts](./index.mdx#staged-rollouts) section for more details 
 
 ### Step 4: Upgrade to Allow Inserting the New Allowed Type
 
-Once client saturation has been reached, remove the [`staged()`](../../../api/fluid-framework/schemafactorybeta-class.md) wrapper from the new allowed type and call `upgradeSchema` to make a change to the stored schema:
+Once client saturation has been reached, remove the [`staged()`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) wrapper from the new allowed type and call `upgradeSchema` to make a change to the stored schema:
 
 ```typescript
 // Schema C: number or string, both fully allowed
@@ -101,6 +101,6 @@ Any client code changes to add functionality for inserting the new allowed type 
 
 ## See Also
 
-- [`SchemaStaticsBeta.staged()` API](../../../api/fluid-framework/schemafactorybeta-class.md) - API documentation
+- [`SchemaStaticsBeta.staged()` API](../../../api/fluid-framework/schemafactorybeta-class#staged-property) - API documentation
 - [Schema Definition](../schema-definition.mdx) - How to define schemas
 - [Node Types](../node-types.mdx) - Understanding different node types

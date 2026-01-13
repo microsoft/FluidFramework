@@ -146,7 +146,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.62.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/register-collection-previous": "npm:@fluidframework/register-collection@2.74.0",
+		"@fluidframework/register-collection-previous": "npm:@fluidframework/register-collection@2.80.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",

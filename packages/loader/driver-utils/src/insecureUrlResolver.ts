@@ -10,7 +10,6 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import Axios from "axios";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -66,22 +65,22 @@ export class InsecureUrlResolver implements IUrlResolver {
 				return maybeResolvedUrl;
 			}
 
-			const headers = {
-				Authorization: `Bearer ${this.bearer}`,
-			};
-			const resolvedP = Axios.post<IResolvedUrl>(
-				`${this.hostUrl}/apis/load`,
-				{
+			const resolvedP = fetch(`${this.hostUrl}/apis/load`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${this.bearer}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
 					url: request.url,
-				},
-				{
-					headers,
-				},
-			);
-			this.cache.set(
-				request.url,
-				resolvedP.then((resolved) => resolved.data),
-			);
+				}),
+			}).then(async (response) => {
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+				return response.json() as Promise<IResolvedUrl>;
+			});
+			this.cache.set(request.url, resolvedP);
 
 			return this.cache.get(request.url);
 		}

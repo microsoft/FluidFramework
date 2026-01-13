@@ -151,6 +151,7 @@ export abstract class PackageCommand<
 		}
 
 		try {
+			// eslint-disable-next-line import-x/no-named-as-default-member -- async.mapLimit is the idiomatic usage
 			await async.mapLimit(packages, this.flags.concurrency, async (pkg: PackageWithKind) => {
 				started += 1;
 				updateStatus();

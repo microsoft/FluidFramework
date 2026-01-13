@@ -344,7 +344,7 @@ export function bumpInternalVersion(
 	version: semver.SemVer | string,
 	bumpType: VersionBumpTypeExtended,
 ): semver.SemVer {
-	validateVersionScheme(version, true, undefined);
+	validateVersionScheme(version, true);
 	const [pubVer, intVer, prereleaseId] = fromInternalScheme(version, true, true);
 
 	const newIntVer =
@@ -376,7 +376,7 @@ export function getVersionRange(
 	version: semver.SemVer | string,
 	maxAutomaticBump: "minor" | "patch" | "~" | "^",
 ): string {
-	validateVersionScheme(version, true, undefined);
+	validateVersionScheme(version, true);
 
 	const lowVersion = version;
 	let highVersion: semver.SemVer;
