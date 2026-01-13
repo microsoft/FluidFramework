@@ -195,7 +195,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		// rolling.
 		if (!local && !this.joined) {
 			const selfClientId = this.runtime.getClientId();
-			assert(selfClientId !== undefined, "Received signal without clientId");
+			assert(selfClientId !== undefined, 0xcbf /* Received signal without clientId */);
 			this.onJoin(selfClientId, /* alternateUpdateProvider */ message.clientId);
 		}
 
