@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
 import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	InternalUtilityTypes,
@@ -369,15 +367,10 @@ export function prepareDisconnectedPresence(
 	runtime.clientId = undefined;
 	runtime.joined = false;
 
-	// Ensure client connection id is not already in audience or quorum
-	assert(
-		runtime.audience.getMember(clientConnectionId) === undefined,
-		`Client connection id ${clientConnectionId} should not be in audience`,
-	);
-	assert(
-		runtime.getQuorum().getMember(clientConnectionId) === undefined,
-		`Client connection id ${clientConnectionId} should not be in quorum`,
-	);
+	// Remove client connection id from audience if present
+	if (runtime.audience.getMember(clientConnectionId) !== undefined) {
+		runtime.removeMember(clientConnectionId);
+	}
 
 	const { presence, processSignal } = createPresence(runtime, attendeeId, logger);
 
