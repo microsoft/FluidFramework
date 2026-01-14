@@ -674,4 +674,3 @@ extends:
                   # Using 'all' signifies that we will upload all stages
                   stageIdFilter: 'all'
                   pipelineIdentifierForTelemetry: BuildClient
-                  testWorkspace: $(Pipeline.Workspace)

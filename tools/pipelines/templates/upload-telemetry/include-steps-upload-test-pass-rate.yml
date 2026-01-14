@@ -17,10 +17,6 @@ parameters:
 - name: pipelineIdentifierForTelemetry
   type: string
 
-# The sources directory that was used for the test run
-- name: testWorkspace
-  type: string
-
 steps:
 - task: Bash@3
   displayName: Get test pass rate data from ADO
@@ -28,7 +24,7 @@ steps:
     BUILD_ID: $(Build.BuildId)
     STAGE_ID: ${{ parameters.stageIdFilter }}
     ADO_API_TOKEN: $(System.AccessToken)
-    WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTestPassRate
+    WORK_FOLDER: $(Agent.TempDirectory)/stageTestPassRate
   inputs:
     targetType: 'inline'
     script: |
@@ -42,7 +38,7 @@ steps:
     BUILD_ID: $(Build.BuildId)
     STAGE_ID: ${{ parameters.stageIdFilter }}
     PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
-    WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTestPassRate
+    WORK_FOLDER: $(Agent.TempDirectory)/stageTestPassRate
   inputs:
     targetType: 'inline'
     workingDirectory: $(Build.SourcesDirectory)

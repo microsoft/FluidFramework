@@ -17,17 +17,13 @@ parameters:
 - name: pipelineIdentifierForTelemetry
   type: string
 
-# The sources directory that was used for the test run
-- name: testWorkspace
-  type: string
-
 steps:
 - task: Bash@3
   displayName: Get stage timing and result data from ADO
   env:
     BUILD_ID: $(Build.BuildId)
     ADO_API_TOKEN: $(System.AccessToken)
-    WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTimingAndResult
+    WORK_FOLDER: $(Agent.TempDirectory)/stageTimingAndResult
   inputs:
     targetType: 'inline'
     script: |
@@ -48,7 +44,7 @@ steps:
     ${{ if ne(parameters.stageIdFilter, 'all') }}:
       STAGE_ID: ${{ parameters.stageIdFilter }}
     PIPELINE: ${{ parameters.pipelineIdentifierForTelemetry }}
-    WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTimingAndResult
+    WORK_FOLDER: $(Agent.TempDirectory)/stageTimingAndResult
   inputs:
     targetType: 'inline'
     workingDirectory: $(Build.SourcesDirectory)
