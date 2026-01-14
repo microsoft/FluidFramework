@@ -126,6 +126,31 @@ export interface IIdCompressorCore {
 	beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
 
 	/**
+	 * Shards the ID space of this compressor such that multiple local compressors can safely share it without colliding.
+	 * This can allow multiple local instantiations of the same compressor to safely share an ID space in scenarios where
+	 * different threads do not have access to a central ID compressor.
+	 * @param newShardCount - The number of additional different shards to split this compressor into.
+	 * @returns An array of serialized compressors of size `newShardCount`.
+	 * These can be passed across a marshalling boundary and rehydrated on the other side, and will safely share the ID space of `this`.
+	 * Note that this method should only be needed when multiple JS runtimes are in play, as sharded compressors essentially
+	 * attempt to emulate a single static compressor and any code running in the same JS runtime can simply use statics.
+	 */
+	shard(newShardCount: number): SerializedIdCompressorWithOngoingSession[];
+
+	/**
+	 * Deregisters the specific shard, allowing `this` to reclaim and use its subset of the ID space.
+	 * Once called, it is no longer safe to use the sharded compressor that the ID came from.
+	 * @param shardId - The ID for the shard, obtained by calling `shardId`.
+	 */
+	unshard(shardId: CompressorShardId): void;
+
+	/**
+	 * @returns the shard ID for this compressor if it is part of a group of shards, otherwise undefined.
+	 * This is serializable and can be passed across marshaling boundaries in order to unshard.
+	 */
+	shardId(): CompressorShardId | undefined;
+
+	/**
 	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
 	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
 	 */
@@ -136,6 +161,15 @@ export interface IIdCompressorCore {
 	 * This only includes finalized state and is therefore suitable for use in summaries.
 	 */
 	serialize(withSession: false): SerializedIdCompressorWithNoSession;
+}
+
+/**
+ * An ID that uniquely identifies an ID compressor shard.
+ */
+export interface CompressorShardId {
+	sessionId: SessionId;
+	shardId: number;
+	generatedIdCount: number;
 }
 
 /**

@@ -63,8 +63,9 @@ import {
 /**
  * The version of IdCompressor that is currently persisted.
  * This should not be changed without careful consideration to compatibility.
+ * Version 3 adds optional sharding state to the serialization format.
  */
-const currentWrittenVersion = 2;
+const currentWrittenVersion = 3;
 
 function rangeFinalizationError(expectedStart: number, actualStart: number): LoggingError {
 	return new LoggingError("Ranges finalized out of order", {
@@ -118,6 +119,21 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private telemetryEagerFinalIdCount = 0;
 	// The ongoing ghost session, if one exists.
 	private ongoingGhostSession?: { cluster?: IdCluster; ghostSessionId: SessionId } | undefined;
+	/**
+	 * The sharding state of this compressor, if it has been sharded or is a shard itself.
+	 * When defined, this compressor operates in "sharding mode" where:
+	 * - IDs are generated using stride-based allocation (no eager finals)
+	 * - The normalizer backfills all IDs in each stride cycle
+	 * - Normal operation resumes when activeShardCount reaches 0
+	 */
+	private shardingState?: {
+		/** Total number of shards in the current stride pattern (the stride) */
+		totalShards: number;
+		/** This compressor's offset in the stride pattern (0 to totalShards-1) */
+		shardOffset: number;
+		/** Counter of how many child shards are still active */
+		activeShardCount: number;
+	} | undefined;
 
 	// #endregion
 
@@ -157,30 +173,38 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			return lastFinalizedFinal(
 				this.ongoingGhostSession.cluster,
 			) as unknown as SessionSpaceCompressedId;
-		} else {
-			this.localGenCount++;
-			const lastCluster = this.localSession.getLastCluster();
-			if (lastCluster === undefined) {
-				this.telemetryLocalIdCount++;
-				return this.generateNextLocalId();
-			}
+		}
 
-			// If there exists a cluster of final IDs already claimed by the local session that still has room in it,
-			// it is known prior to range sequencing what a local ID's corresponding final ID will be.
-			// In this case, it is safe to return the final ID immediately. This is guaranteed to be safe because
-			// any op that the local session sends that contains one of those final IDs are guaranteed to arrive to
-			// collaborators *after* the one containing the creation range.
-			const clusterOffset = this.localGenCount - genCountFromLocalId(lastCluster.baseLocalId);
-			if (lastCluster.capacity > clusterOffset) {
-				this.telemetryEagerFinalIdCount++;
-				// Space in the cluster: eager final
-				return ((lastCluster.baseFinalId as number) +
-					clusterOffset) as SessionSpaceCompressedId;
-			}
-			// No space in the cluster, return next local
+		// In sharding mode, always generate local IDs with stride-based allocation
+		// Never use eager finals to maintain consistency across shards
+		if (this.shardingState !== undefined) {
+			this.telemetryLocalIdCount++;
+			return this.generateNextLocalIdWithStride();
+		}
+
+		// Normal ID generation
+		this.localGenCount++;
+		const lastCluster = this.localSession.getLastCluster();
+		if (lastCluster === undefined) {
 			this.telemetryLocalIdCount++;
 			return this.generateNextLocalId();
 		}
+
+		// If there exists a cluster of final IDs already claimed by the local session that still has room in it,
+		// it is known prior to range sequencing what a local ID's corresponding final ID will be.
+		// In this case, it is safe to return the final ID immediately. This is guaranteed to be safe because
+		// any op that the local session sends that contains one of those final IDs are guaranteed to arrive to
+		// collaborators *after* the one containing the creation range.
+		const clusterOffset = this.localGenCount - genCountFromLocalId(lastCluster.baseLocalId);
+		if (lastCluster.capacity > clusterOffset) {
+			this.telemetryEagerFinalIdCount++;
+			// Space in the cluster: eager final
+			return ((lastCluster.baseFinalId as number) +
+				clusterOffset) as SessionSpaceCompressedId;
+		}
+		// No space in the cluster, return next local
+		this.telemetryLocalIdCount++;
+		return this.generateNextLocalId();
 	}
 
 	public generateDocumentUniqueId():
@@ -211,10 +235,202 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
+	/**
+	 * {@inheritdoc IIdCompressorCore.shard}
+	 */
+	public shard(newShardCount: number): SerializedIdCompressorWithOngoingSession[] {
+		assert(newShardCount > 0, 0x8ab /* Shard count must be positive */);
+		assert(
+			newShardCount <= 1000,
+			0x8ac /* Shard count too large - recommend < 1000 shards */,
+		);
+		assert(
+			!this.ongoingGhostSession,
+			0x8ad /* Cannot shard during ghost session */,
+		);
+
+		// Determine current sharding state
+		const currentStride = this.shardingState?.totalShards ?? 1;
+		const currentOffset = this.shardingState?.shardOffset ?? 0;
+		const currentActiveCount = this.shardingState?.activeShardCount ?? 0;
+
+		// Calculate new stride: parent and all children share this stride
+		const newTotalShards = currentStride * (newShardCount + 1);
+
+		// Create serialized shards for each child
+		// We'll use a temporary approach: serialize the parent, then modify the serialized data
+		// to set the correct sharding state for each child
+		const shards: SerializedIdCompressorWithOngoingSession[] = [];
+
+		for (let i = 1; i <= newShardCount; i++) {
+			const childOffset = currentOffset + i * currentStride;
+
+			// Create a child shard with the correct sharding state
+			// We do this by creating a temporary child compressor with the right state
+			const childShard = this.createChildShard(newTotalShards, childOffset);
+			shards.push(childShard);
+		}
+
+		// Update parent compressor's sharding state
+		this.shardingState = {
+			totalShards: newTotalShards,
+			shardOffset: currentOffset, // Parent keeps its offset
+			activeShardCount: currentActiveCount + newShardCount,
+		};
+
+		return shards;
+	}
+
+	/**
+	 * Helper method to create a child shard with specific sharding state.
+	 * Creates a serialized compressor that has:
+	 * - Same finalized state (clusters, sessions) as parent
+	 * - Same normalizer as parent
+	 * - localGenCount = 0 (child starts fresh)
+	 * - Specified sharding state
+	 */
+	private createChildShard(
+		totalShards: number,
+		shardOffset: number,
+	): SerializedIdCompressorWithOngoingSession {
+		// Temporarily store parent's sharding state
+		const parentShardingState = this.shardingState;
+
+		// Set child's sharding state
+		this.shardingState = {
+			totalShards,
+			shardOffset,
+			activeShardCount: 0, // Child has no children initially
+		};
+
+		// Temporarily store parent's localGenCount and normalizer state
+		const parentLocalGenCount = this.localGenCount;
+		this.localGenCount = 0; // Child starts with no generated IDs
+
+		// Save parent's normalizer ranges and clear for child
+		// Child should start with empty normalizer since it hasn't generated any IDs
+		const parentNormalizerRanges: [number, number][] = [];
+		for (const [genCount, count] of this.normalizer.idRanges.entries()) {
+			parentNormalizerRanges.push([genCount, count]);
+		}
+
+		// Replace normalizer with empty one for serialization
+		// Use Object.defineProperty to work around readonly constraint
+		const parentNormalizer = this.normalizer;
+		Object.defineProperty(this, "normalizer", {
+			value: new SessionSpaceNormalizer(),
+			writable: true,
+			configurable: true,
+		});
+
+		// Serialize with the child's state
+		const childSerialized = this.serialize(true);
+
+		// Restore parent's normalizer
+		Object.defineProperty(this, "normalizer", {
+			value: parentNormalizer,
+			writable: false,
+			configurable: true,
+		});
+
+		// Restore parent's state
+		this.localGenCount = parentLocalGenCount;
+		this.shardingState = parentShardingState;
+
+		return childSerialized;
+	}
+
+	/**
+	 * {@inheritdoc IIdCompressorCore.unshard}
+	 */
+	public unshard(shardId: import("./types/idCompressor.js").CompressorShardId): void {
+		assert(
+			shardId.sessionId === this.localSessionId,
+			0x8ae /* Shard must belong to this session */,
+		);
+		assert(this.shardingState !== undefined, 0x8af /* Must be in sharding mode */);
+		assert(
+			this.shardingState.activeShardCount > 0,
+			0x8b0 /* No active shards to unshard */,
+		);
+
+		// Calculate the highest genCount that needs to be covered by the child's generation
+		const childStride = this.shardingState.totalShards;
+		const highestGenCount = shardId.generatedIdCount * childStride;
+
+		// Backfill normalizer for any genCounts between our current localGenCount and the child's highest
+		// The parent has already backfilled [1, localGenCount] during its own ID generation
+		// We only need to backfill [localGenCount + 1, highestGenCount]
+		if (highestGenCount > this.localGenCount) {
+			const startGenCount = this.localGenCount + 1;
+			const countToAdd = highestGenCount - this.localGenCount;
+			this.normalizer.addLocalRange(startGenCount, countToAdd);
+		}
+
+		// Advance localGenCount to cover all IDs that could have been generated
+		// by any shard in this stride pattern up to the child's highest ID
+		this.localGenCount = Math.max(this.localGenCount, highestGenCount);
+
+		// Decrement active shard counter
+		this.shardingState.activeShardCount--;
+
+		// Exit sharding mode if all shards have been returned
+		if (this.shardingState.activeShardCount === 0) {
+			this.shardingState = undefined;
+			// Future generateCompressedId() calls will check for eager finals again
+		}
+	}
+
+	/**
+	 * {@inheritdoc IIdCompressorCore.shardId}
+	 */
+	public shardId(): import("./types/idCompressor.js").CompressorShardId | undefined {
+		if (this.shardingState === undefined) {
+			return undefined;
+		}
+
+		return {
+			sessionId: this.localSessionId,
+			shardId: this.shardingState.shardOffset,
+			generatedIdCount: this.localGenCount,
+		};
+	}
+
 	private generateNextLocalId(): LocalCompressedId {
 		// Must tell the normalizer that we generated a local ID
 		this.normalizer.addLocalRange(this.localGenCount, 1);
 		return localIdFromGenCount(this.localGenCount);
+	}
+
+	/**
+	 * Generates the next local ID using stride-based allocation for sharding mode.
+	 * This method:
+	 * 1. Calculates the genCount for the ID based on the shard's offset and stride
+	 * 2. Backfills the normalizer with ALL IDs in the current stride cycle
+	 * 3. Increments localGenCount
+	 * 4. Returns the local ID
+	 */
+	private generateNextLocalIdWithStride(): LocalCompressedId {
+		assert(this.shardingState !== undefined, 0x8aa /* Must be in sharding mode */);
+
+		const { totalShards, shardOffset } = this.shardingState;
+
+		// Calculate the genCount for the ID we're about to generate
+		// Formula: offset + 1 + (count * stride)
+		// Example: offset=0, stride=3, count=0 → genCount=1 (ID -1)
+		//          offset=1, stride=3, count=0 → genCount=2 (ID -2)
+		const genCount = shardOffset + 1 + this.localGenCount * totalShards;
+
+		// Backfill normalizer with ALL IDs in this stride cycle
+		// This ensures the normalizer knows about IDs generated by other shards in this cycle
+		// Example: stride=3, count=0 → add range [1, 3] covering genCounts 1-3 (IDs -1,-2,-3)
+		const cycleBaseGenCount = this.localGenCount * totalShards + 1;
+		this.normalizer.addLocalRange(cycleBaseGenCount, totalShards);
+
+		this.localGenCount++;
+
+		// Convert genCount to local ID
+		return localIdFromGenCount(genCount);
 	}
 
 	public takeNextCreationRange(): IdCreationRange {
@@ -565,11 +781,19 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				sessionIndex++;
 			}
 		}
+		const shardingStateSize =
+			hasLocalState && this.shardingState !== undefined
+				? 1 + // has sharding state boolean
+					3 // totalShards, shardOffset, activeShardCount
+				: hasLocalState
+					? 1 // just the boolean indicating no sharding state
+					: 0;
 		const localStateSize = hasLocalState
 			? 1 + // generated ID count
 				1 + // next range base genCount
 				1 + // count of normalizer pairs
-				normalizer.idRanges.size * 2 // pairs
+				normalizer.idRanges.size * 2 + // pairs
+				shardingStateSize // sharding state if present
 			: 0;
 		// Layout size, in 8 byte increments
 		const totalSize =
@@ -611,6 +835,14 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				index = writeNumber(serializedFloat, index, leadingGenCount);
 				index = writeNumber(serializedFloat, index, count);
 			}
+
+			// Write sharding state (version 3+)
+			index = writeBoolean(serializedFloat, index, this.shardingState !== undefined);
+			if (this.shardingState !== undefined) {
+				index = writeNumber(serializedFloat, index, this.shardingState.totalShards);
+				index = writeNumber(serializedFloat, index, this.shardingState.shardOffset);
+				index = writeNumber(serializedFloat, index, this.shardingState.activeShardCount);
+			}
 		}
 
 		assert(index === totalSize, 0x75b /* Serialized size was incorrectly calculated. */);
@@ -651,6 +883,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			}
 			case 2: {
 				return IdCompressor.deserialize2_0(index, newSessionId, logger);
+			}
+			case 3: {
+				return IdCompressor.deserialize3_0(index, newSessionId, logger);
 			}
 			default: {
 				throw new Error("Unknown IdCompressor serialized version.");
@@ -720,6 +955,85 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		assert(
 			index.index === index.bufferFloat.length,
 			0x75f /* Failed to read entire serialized compressor. */,
+		);
+		return compressor;
+	}
+
+	/**
+	 * Deserializes version 3.0 format which includes optional sharding state.
+	 */
+	static deserialize3_0(
+		index: Index,
+		sessionId: SessionId | undefined,
+		logger: ITelemetryLoggerExt | undefined,
+	): IdCompressor {
+		const hasLocalState = readBoolean(index);
+		const sessionCount = readNumber(index);
+		const clusterCount = readNumber(index);
+
+		// Sessions
+		let sessionOffset = 0;
+		const sessions: [NumericUuid, Session][] = [];
+		if (hasLocalState) {
+			assert(
+				sessionId === undefined,
+				0x8b1 /* Local state should not exist in serialized form. */,
+			);
+		} else {
+			// If !hasLocalState, there won't be a serialized local session ID so insert one at the beginning
+			assert(sessionId !== undefined, 0x8b2 /* Local session ID is undefined. */);
+			const localSessionNumeric = numericUuidFromStableId(sessionId);
+			sessions.push([localSessionNumeric, new Session(localSessionNumeric)]);
+			sessionOffset = 1;
+		}
+
+		for (let i = 0; i < sessionCount; i++) {
+			const numeric = readNumericUuid(index);
+			sessions.push([numeric, new Session(numeric)]);
+		}
+
+		const compressor = new IdCompressor(new Sessions(sessions), logger);
+
+		// Clusters
+		let baseFinalId = 0;
+		for (let i = 0; i < clusterCount; i++) {
+			const sessionIndex = readNumber(index);
+			const sessionArray = sessions[sessionIndex + sessionOffset];
+			assert(
+				sessionArray !== undefined,
+				0x8b3 /* sessionArray is undefined in IdCompressor.deserialize3_0 */,
+			);
+			const session = sessionArray[1];
+			const capacity = readNumber(index);
+			const count = readNumber(index);
+			const cluster = session.addNewCluster(baseFinalId as FinalCompressedId, capacity, count);
+			compressor.finalSpace.addCluster(cluster);
+			baseFinalId += capacity;
+		}
+
+		// Local state
+		if (hasLocalState) {
+			compressor.localGenCount = readNumber(index);
+			compressor.nextRangeBaseGenCount = readNumber(index);
+			const normalizerCount = readNumber(index);
+			for (let i = 0; i < normalizerCount; i++) {
+				compressor.normalizer.addLocalRange(readNumber(index), readNumber(index));
+			}
+
+			// Sharding state (version 3+)
+			const hasShardingState = readBoolean(index);
+			if (hasShardingState) {
+				compressor.shardingState = {
+					totalShards: readNumber(index),
+					shardOffset: readNumber(index),
+					activeShardCount: readNumber(index),
+				};
+			}
+		}
+
+		assert(
+			index.index === index.bufferFloat.length,
+			0x8b4 /* Failed to read entire serialized compressor. */,
 		);
 		return compressor;
 	}
