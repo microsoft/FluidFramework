@@ -142,15 +142,7 @@ export interface BranchableTree extends ViewableTree {
 }
 
 // @alpha @sealed
-export type ChangeMetadata = CommitMetadata & ({
-    readonly isLocal: true;
-    getChange(): JsonCompatibleReadOnly;
-    getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
-} | {
-    readonly isLocal: false;
-    readonly getChange?: undefined;
-    readonly getRevertible?: undefined;
-});
+export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
 // @alpha
 export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
@@ -1059,6 +1051,13 @@ export type Listeners<T extends object> = {
     [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
 };
 
+// @alpha @sealed
+export interface LocalChangeMetadata extends CommitMetadata {
+    getChange(): JsonCompatibleReadOnly;
+    getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
+    readonly isLocal: true;
+}
+
 // @public @sealed
 export interface MakeNominal {
 }
@@ -1231,6 +1230,13 @@ export type RecordNodeSchema<TName extends string = string, T extends ImplicitAl
 export const RecordNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is RecordNodeSchema<string, ImplicitAllowedTypes, true, unknown>;
 };
+
+// @alpha @sealed
+export interface RemoteChangeMetadata extends CommitMetadata {
+    readonly getChange?: undefined;
+    readonly getRevertible?: undefined;
+    readonly isLocal: false;
+}
 
 // @alpha
 export function replaceConciseTreeHandles<T>(tree: ConciseTree, replacer: HandleConverter<T>): ConciseTree<T>;
