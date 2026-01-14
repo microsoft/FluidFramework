@@ -202,7 +202,7 @@ export type ChangeMetadata = CommitMetadata &
 				 * @param onDisposed - A callback that will be invoked when the `Revertible` is disposed.
 				 * This happens when the `Revertible` is disposed manually or when the `TreeView` that the `Revertible` belongs to is disposed - whichever happens first.
 				 * This is typically used to clean up any resources associated with the `Revertible` in the host application.
-				 * @throws an error if called outside the scope of the `changed` event that provided it.
+				 * @throws Throws an error if called outside the scope of the `changed` event that provided it.
 				 */
 				getRevertible(
 					onDisposed?: (revertible: RevertibleAlpha) => void,
