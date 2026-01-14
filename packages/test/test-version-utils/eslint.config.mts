@@ -10,8 +10,8 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"import-x/no-deprecated": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+			"import-x/no-deprecated": "off", // This package tests deprecated DDSes like SparseMatrix
 			"import-x/no-nodejs-modules": "off",
 		},
 	},

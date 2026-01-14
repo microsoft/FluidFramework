@@ -12,6 +12,7 @@ const config: Linter.Config[] = [
 		rules: {
 			"@typescript-eslint/no-use-before-define": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
+			// TODO: consider re-enabling once we have addressed how this rule conflicts with our error codes.
 			"unicorn/numeric-separators-style": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
@@ -19,6 +20,7 @@ const config: Linter.Config[] = [
 	{
 		files: ["src/test/**"],
 		rules: {
+			// Allow tests (which only run in Node.js) use `__dirname`
 			"unicorn/prefer-module": "off",
 		},
 	},

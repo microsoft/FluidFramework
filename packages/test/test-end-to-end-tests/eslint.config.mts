@@ -10,10 +10,13 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
+			// #region TODO: Fix violations and remove these rule disables
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"@typescript-eslint/explicit-function-return-type": "warn",
-			"@typescript-eslint/strict-boolean-expressions": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
 			"prefer-arrow-callback": "off",
+			// #endregion
+			// This library is used in the browser, so we don't want dependencies on most node libraries.
 			"import-x/no-nodejs-modules": ["error"],
 			"@typescript-eslint/no-restricted-imports": [
 				"error",
@@ -82,12 +85,29 @@ const config: Linter.Config[] = [
 					],
 				},
 			],
+			/*
+			 * This rule causes the following errors, so is temporarily disabled.
+			 * @fluid-private/test-end-to-end-tests: Error: Circularity detected while resolving configuration: /home/tylerbu/code/release-1/common/build/build-common/tsconfig.base.json
+			 * @fluid-private/test-end-to-end-tests: Occurred while linting /home/tylerbu/code/release-1/packages/test/test-end-to-end-tests/src/mocking.ts:6
+			 * @fluid-private/test-end-to-end-tests: Rule: "import-x/no-deprecated"
+			 * @fluid-private/test-end-to-end-tests:     at Be (/home/tylerbu/code/release-1/node_modules/.pnpm/get-tsconfig@4.7.2/node_modules/get-tsconfig/dist/index.cjs:3:9255)
+			 * @fluid-private/test-end-to-end-tests:     at ie (/home/tylerbu/code/release-1/node_modules/.pnpm/get-tsconfig@4.7.2/node_modules/get-tsconfig/dist/index.cjs:3:10245)
+			 * @fluid-private/test-end-to-end-tests:     at Be (/home/tylerbu/code/release-1/node_modules/.pnpm/get-tsconfig@4.7.2/node_modules/get-tsconfig/dist/index.cjs:3:9365)
+			 * @fluid-private/test-end-to-end-tests:     at ie (/home/tylerbu/code/release-1/node_modules/.pnpm/get-tsconfig@4.7.2/node_modules/get-tsconfig/dist/index.cjs:3:10245)
+			 * @fluid-private/test-end-to-end-tests:     at le (/home/tylerbu/code/release-1/node_modules/.pnpm/get-tsconfig@4.7.2/node_modules/get-tsconfig/dist/index.cjs:3:10975)
+			 * @fluid-private/test-end-to-end-tests:     at Le (/home/tylerbu/code/release-1/node_modules/.pnpm/get-tsconfig@4.7.2/node_modules/get-tsconfig/dist/index.cjs:3:11080)
+			 * @fluid-private/test-end-to-end-tests:     at isEsModuleInterop (/home/tylerbu/code/release-1/node_modules/.pnpm/eslint-plugin-i@2.29.0_j7h7oj6rrhtikhzta4fgkou42e/node_modules/eslint-plugin-i/lib/ExportMap.js:809:1291)
+			 * @fluid-private/test-end-to-end-tests:     at ExportMap.parse (/home/tylerbu/code/release-1/node_modules/.pnpm/eslint-plugin-i@2.29.0_j7h7oj6rrhtikhzta4fgkou42e/node_modules/eslint-plugin-i/lib/ExportMap.js:799:317)
+			 * @fluid-private/test-end-to-end-tests:     at ExportMap.for (/home/tylerbu/code/release-1/node_modules/.pnpm/eslint-plugin-i@2.29.0_j7h7oj6rrhtikhzta4fgkou42e/node_modules/eslint-plugin-i/lib/ExportMap.js:798:201)
+			 * @fluid-private/test-end-to-end-tests:     at ExportMap.get (/home/tylerbu/code/release-1/node_modules/.pnpm/eslint-plugin-i@2.29.0_j7h7oj6rrhtikhzta4fgkou42e/node_modules/eslint-plugin-i/lib/ExportMap.js:792:465)
+			 */
 			"import-x/no-deprecated": "off",
 		},
 	},
 	{
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {
+			// Test files are run in node only so additional node libraries can be used.
 			"import-x/no-nodejs-modules": [
 				"error",
 				{
@@ -99,6 +119,9 @@ const config: Linter.Config[] = [
 	{
 		files: ["src/test/benchmark/**"],
 		rules: {
+			// General guidance to avoid importing compat-provided APIs does not apply to the benchmark tests,
+			// since they don't currently aim to test performance of mixed-versioned packages or cross-client
+			// collaboration between clients.
 			"@typescript-eslint/no-restricted-imports": "off",
 		},
 	},

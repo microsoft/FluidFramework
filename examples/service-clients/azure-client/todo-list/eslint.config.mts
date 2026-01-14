@@ -12,6 +12,8 @@ const config: Linter.Config[] = [
 	...sharedConfig,
 	{
 		rules: {
+			// Demoted to warning as a workaround to layer-check challenges. Tracked by:
+			// https://github.com/microsoft/FluidFramework/issues/10226
 			"import-x/no-extraneous-dependencies": "warn",
 		},
 	},

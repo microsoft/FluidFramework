@@ -12,6 +12,7 @@ const config: Linter.Config[] = [
 		rules: {
 			"import-x/no-unassigned-import": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
+			// Useful for developer accessibility
 			"unicorn/prevent-abbreviations": [
 				"error",
 				{

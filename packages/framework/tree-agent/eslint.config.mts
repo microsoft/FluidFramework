@@ -10,6 +10,7 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
+			// Allow reaching into FluidFramework package paths that end with alpha, beta, legacy, or internal
 			"import-x/no-internal-modules": [
 				"error",
 				{
@@ -32,6 +33,7 @@ const config: Linter.Config[] = [
 			},
 		},
 		rules: {
+			// Test files can import from submodules for testing purposes
 			"import-x/no-internal-modules": [
 				"error",
 				{

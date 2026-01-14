@@ -10,7 +10,7 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
 			"import-x/no-nodejs-modules": "off",
 			"import-x/no-extraneous-dependencies": [
 				"error",

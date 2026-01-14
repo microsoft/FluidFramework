@@ -16,7 +16,7 @@ const config: Linter.Config[] = [
 	{
 		rules: {
 			"@typescript-eslint/no-use-before-define": "off",
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
+			"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-internal-modules": [
 				"error",
@@ -27,6 +27,7 @@ const config: Linter.Config[] = [
 			"max-len": "off",
 			"no-bitwise": "off",
 			"no-case-declarations": "off",
+			// Disabled because the rule is crashing on this package - AB#51780
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},

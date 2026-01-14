@@ -10,6 +10,7 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
+			// TODO: remove these overrides and fix violations
 			"@typescript-eslint/no-use-before-define": "off",
 			"no-case-declarations": "off",
 		},
@@ -17,6 +18,7 @@ const config: Linter.Config[] = [
 	{
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {
+			// Test files are run in node only so additional node libraries can be used.
 			"import-x/no-nodejs-modules": [
 				"error",
 				{

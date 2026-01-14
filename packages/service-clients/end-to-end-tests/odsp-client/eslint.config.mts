@@ -11,7 +11,7 @@ const config: Linter.Config[] = [
 	{
 		rules: {
 			"prefer-arrow-callback": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
 			"import-x/namespace": "off",
 			"@typescript-eslint/consistent-type-imports": [
 				"error",
@@ -26,6 +26,7 @@ const config: Linter.Config[] = [
 		files: ["**/*.{ts,tsx}"],
 		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
 		rules: {
+			// #region TODO: remove these once this config has been updated to use our "recommended" base instead of our deprecated minimal one.
 			"@typescript-eslint/consistent-type-exports": [
 				"error",
 				{
