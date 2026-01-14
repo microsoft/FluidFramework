@@ -587,9 +587,7 @@ async function findLegacyConfigs(
 						if (ignoresMatch) {
 							// Extract the patterns from the existing config
 							const patternsStr = ignoresMatch[1];
-							const patterns = Array.from(patternsStr.matchAll(/"([^"]+)"/g)).map(
-								(m) => m[1],
-							);
+							const patterns = Array.from(patternsStr.matchAll(/"([^"]+)"/g)).map((m) => m[1]);
 							if (patterns.length > 0) {
 								eslintIgnorePatterns = patterns;
 								console.log(
@@ -697,7 +695,11 @@ async function findLegacyConfigs(
 					// Extract comments from the legacy config source
 					const sourceComments = extractComments(content);
 					const ruleLocations = findRuleLocations(content);
-					const commentMap = associateCommentsWithRules(sourceComments, ruleLocations, content);
+					const commentMap = associateCommentsWithRules(
+						sourceComments,
+						ruleLocations,
+						content,
+					);
 
 					results.push({
 						packageDir: full,
@@ -752,7 +754,24 @@ function serializeRulesWithComments(
 		// Add leading comments
 		if (commentInfo?.leadingComments && commentInfo.leadingComments.length > 0) {
 			for (const comment of commentInfo.leadingComments) {
-				lines.push(`${indent}\t// ${comment}`);
+				// Check if this is a multi-line comment (contains newlines)
+				if (comment.includes("\n")) {
+					// Format as a multi-line /* */ comment
+					const commentLines = comment.split("\n");
+					lines.push(`${indent}\t/*`);
+					for (const commentLine of commentLines) {
+						// Preserve the * prefix pattern, or add one if missing
+						const trimmed = commentLine.trim();
+						if (trimmed.startsWith("*")) {
+							lines.push(`${indent}\t ${trimmed}`);
+						} else if (trimmed.length > 0) {
+							lines.push(`${indent}\t * ${trimmed}`);
+						}
+					}
+					lines.push(`${indent}\t */`);
+				} else {
+					lines.push(`${indent}\t// ${comment}`);
+				}
 			}
 		}
 
