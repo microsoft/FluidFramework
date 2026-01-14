@@ -17,6 +17,14 @@ export const permittedImports = [
 	"@fluid-tools/*/internal",
 	"@fluidframework/*/internal",
 
+	// Allow /legacy imports for backwards compatibility during API transition
+	"@fluid-example/*/legacy",
+	"@fluid-experimental/*/legacy",
+	"@fluid-internal/*/legacy",
+	"@fluid-private/*/legacy",
+	"@fluid-tools/*/legacy",
+	"@fluidframework/*/legacy",
+
 	// Experimental package APIs and exports are unknown, so allow any imports from them.
 	"@fluid-experimental/**",
 
