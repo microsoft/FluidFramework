@@ -71,8 +71,7 @@ export class DocumentManager implements IDocumentManager {
 				"Falling back to database after attempting to read cached static document data, because the DocumentManager cache is undefined.",
 				getLumberBaseProperties(documentId, tenantId),
 			);
-			const document = (await this.readDocument(tenantId, documentId)) ?? undefined;
-			return document as IDocumentStaticProperties | undefined;
+			return this.getDocumentStaticProperties(tenantId, documentId);
 		}
 
 		// Retrieve cached static document props
@@ -86,15 +85,7 @@ export class DocumentManager implements IDocumentManager {
 				"Falling back to database after attempting to read cached static document data.",
 				getLumberBaseProperties(documentId, tenantId),
 			);
-			const document = await this.readDocument(tenantId, documentId);
-			if (!document) {
-				Lumberjack.warning(
-					"Fallback to database failed, document not found.",
-					getLumberBaseProperties(documentId, tenantId),
-				);
-				return undefined;
-			}
-			return DocumentManager.getStaticPropsFromDoc(document);
+			return this.getDocumentStaticProperties(tenantId, documentId);
 		}
 
 		// Return the static data, parsed into a JSON object
@@ -121,6 +112,21 @@ export class DocumentManager implements IDocumentManager {
 
 		const staticPropsKey: string = DocumentManager.getDocumentStaticKey(documentId);
 		await this.documentStaticDataCache.delete(staticPropsKey);
+	}
+
+	private async getDocumentStaticProperties(
+		tenantId: string,
+		documentId: string,
+	): Promise<IDocumentStaticProperties | undefined> {
+		const document = await this.readDocument(tenantId, documentId);
+		if (!document) {
+			Lumberjack.warning(
+				"Fallback to database failed, document not found.",
+				getLumberBaseProperties(documentId, tenantId),
+			);
+			return undefined;
+		}
+		return DocumentManager.getStaticPropsFromDoc(document);
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string) {

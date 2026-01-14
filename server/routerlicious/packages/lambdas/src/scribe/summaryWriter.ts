@@ -46,7 +46,33 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import safeStringify from "json-stringify-safe";
 
-import type { ISummaryWriteResponse, ISummaryWriter } from "./interfaces";
+import type { ISummaryWriteResponse, ISummaryWriter, ISummaryWriterFactory } from "./interfaces";
+
+export class SummaryWriterFactory implements ISummaryWriterFactory {
+	public create(
+		tenantId: string,
+		documentId: string,
+		gitManager: IGitManager,
+		deltaManager: IDeltaService,
+		messageCollection: ICollection<ISequencedOperationMessage>,
+		enableWholeSummaryUpload: boolean,
+		lastSummaryMessages: ISequencedDocumentMessage[],
+		getDeltasViaAlfred: boolean,
+		maxLogtailLength: number,
+	): ISummaryWriter {
+		return new SummaryWriter(
+			tenantId,
+			documentId,
+			gitManager,
+			deltaManager,
+			messageCollection,
+			enableWholeSummaryUpload,
+			lastSummaryMessages,
+			getDeltasViaAlfred,
+			maxLogtailLength,
+		);
+	}
+}
 
 /**
  * Git specific implementation of ISummaryWriter
@@ -55,8 +81,8 @@ import type { ISummaryWriteResponse, ISummaryWriter } from "./interfaces";
 export class SummaryWriter implements ISummaryWriter {
 	private readonly lumberProperties: Record<string, any>;
 	constructor(
-		private readonly tenantId: string,
-		private readonly documentId: string,
+		protected readonly tenantId: string,
+		protected readonly documentId: string,
 		private readonly summaryStorage: IGitManager,
 		private readonly deltaService: IDeltaService | undefined,
 		private readonly opStorage: ICollection<ISequencedOperationMessage> | undefined,
@@ -100,6 +126,18 @@ export class SummaryWriter implements ISummaryWriter {
 	): Promise<ISummaryWriteResponse> {
 		const clientSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ClientSummary);
 		this.setSummaryProperties(clientSummaryMetric, op, isEphemeralContainer);
+		if (!(await this.isDocumentValid(isEphemeralContainer))) {
+			clientSummaryMetric.error(`Document is not valid to accept summaries`);
+			return {
+				message: {
+					message: `Document is not valid to accept summaries`,
+					summaryProposal: {
+						summarySequenceNumber: op.sequenceNumber,
+					},
+				},
+				status: false,
+			};
+		}
 		const content = JSON.parse(op.contents as string) as ISummaryContent;
 		try {
 			// The summary must reference the existing summary to be valid. This guards against accidental sends of
@@ -408,6 +446,10 @@ export class SummaryWriter implements ISummaryWriter {
 	): Promise<string | false> {
 		const serviceSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ServiceSummary);
 		this.setSummaryProperties(serviceSummaryMetric, op, isEphemeralContainer);
+		if (!(await this.isDocumentValid(isEphemeralContainer))) {
+			serviceSummaryMetric.error(`Document is not valid to accept summaries`);
+			return false;
+		}
 		try {
 			const existingRef = await requestWithRetry(
 				async () => this.summaryStorage.getRef(encodeURIComponent(this.documentId)),
@@ -577,6 +619,14 @@ export class SummaryWriter implements ISummaryWriter {
 			}
 			throw error;
 		}
+	}
+
+	/**
+	 * Validates whether the document is in a valid state to accept summaries.
+	 * @returns A boolean indicating whether the document is valid.
+	 */
+	protected async isDocumentValid(isEphemeralContainer: boolean | undefined): Promise<boolean> {
+		return true;
 	}
 
 	private setSummaryProperties(
