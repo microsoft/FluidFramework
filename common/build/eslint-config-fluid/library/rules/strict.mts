@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Strict ESLint rules.
+ *
+ * This module contains the strictest rules, extending the recommended configuration.
+ * The strict config adds mandatory JSDoc requirements, explicit member accessibility,
+ * and enables additional TypeScript rules that are disabled in lower-level configs.
+ * Use this config for packages requiring comprehensive documentation and strict type safety.
+ */
+
 import type { Linter } from "eslint";
 
 /**

@@ -3,6 +3,17 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Shared constants for ESLint configuration.
+ *
+ * This module contains reusable constant values used across multiple config files:
+ * - permittedImports: Allowed import patterns for the import-x/no-internal-modules rule
+ * - restrictedImportPaths: Import paths that should be restricted
+ * - restrictedImportPatternsForProductionCode: Import patterns restricted in production code
+ * - testFilePatterns: Glob patterns for identifying test files
+ * - globalIgnores: Global ignore patterns for ESLint
+ */
+
 import type { Linter } from "eslint";
 
 /**

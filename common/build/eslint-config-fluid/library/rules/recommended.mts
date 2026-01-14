@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Recommended ESLint rules.
+ *
+ * This module contains rules that extend the minimal-deprecated configuration.
+ * The recommended config adds stricter type safety rules, unicorn/recommended overrides,
+ * and enables rules that were disabled at lower levels. This is the standard config
+ * for most Fluid Framework packages.
+ */
+
 import type { Linter } from "eslint";
 
 /**

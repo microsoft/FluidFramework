@@ -4,6 +4,14 @@
  */
 
 /**
+ * ESLint plugin settings.
+ *
+ * This module contains the `settings` objects for various ESLint plugins:
+ * - importXSettings: Settings for eslint-plugin-import-x (file extensions, parser config, resolver)
+ * - jsdocSettings: Settings for eslint-plugin-jsdoc (tag name preferences)
+ */
+
+/**
  * Settings for eslint-plugin-import-x.
  */
 export const importXSettings = {

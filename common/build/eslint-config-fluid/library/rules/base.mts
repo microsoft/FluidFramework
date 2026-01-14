@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Base ESLint rules.
+ *
+ * This module contains the foundational rules applied by the base configuration.
+ * These rules are inherited by all higher-level configs (minimal-deprecated, recommended, strict).
+ * Rules are organized by plugin/source and include custom Fluid rules, TypeScript rules,
+ * import-x rules, unicorn rules, and core ESLint rules.
+ */
+
 import type { Linter } from "eslint";
 
 /**

@@ -3,6 +3,21 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Base ESLint flat config builder.
+ *
+ * This module provides the foundational configuration that all other configs build upon.
+ * It includes:
+ * - Global ignore patterns
+ * - eslint:recommended rules
+ * - typescript-eslint recommended-type-checked and stylistic-type-checked configs
+ * - import-x recommended and typescript configs
+ * - Core plugin registrations (eslint-comments, fluid, rushstack, jsdoc, promise, tsdoc, unicorn, unused-imports)
+ * - Prettier config for disabling conflicting formatting rules
+ *
+ * All higher-level configs (minimal-deprecated, recommended, strict) extend from this base.
+ */
+
 import eslintJs from "@eslint/js";
 import eslintCommentsPlugin from "@eslint-community/eslint-plugin-eslint-comments";
 import fluidPlugin from "@fluid-internal/eslint-plugin-fluid";
@@ -77,21 +92,15 @@ export function buildBaseConfig(): FlatConfigArray {
 				"@typescript-eslint/no-unsafe-member-access": "off",
 			},
 		},
+		// Type validation files need relaxed rules for type compatibility testing
+		{
+			files: ["**/types/*validate*Previous*.ts"],
+			rules: {
+				"@typescript-eslint/no-explicit-any": "off",
+				"@typescript-eslint/no-unsafe-argument": "off",
+			},
+		},
 		// Prettier disables conflicting rules - must come after custom rules
 		prettierConfig,
 	];
 }
-
-// Re-export plugins and configs needed by other modules
-export {
-	eslintCommentsPlugin,
-	fluidPlugin,
-	rushstackPlugin,
-	importXPlugin,
-	jsdocPlugin,
-	promisePlugin,
-	tsdocPlugin,
-	unicornPlugin,
-	unusedImportsPlugin,
-	prettierConfig,
-};

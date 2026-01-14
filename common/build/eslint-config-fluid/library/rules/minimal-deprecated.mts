@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Minimal-deprecated ESLint rules.
+ *
+ * This module contains rules that extend the base configuration. The "minimal-deprecated"
+ * configuration is the lightest recommended config and serves as the foundation for
+ * the recommended and strict configs. It includes additional TypeScript rules, JSDoc/TSDoc
+ * validation, import restrictions, and Fluid-specific custom rules.
+ */
+
 import type { Linter } from "eslint";
 
 import {

@@ -3,6 +3,21 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Config factory functions for building ESLint flat configs.
+ *
+ * This module provides factory functions that compose the various rule sets and overrides
+ * into complete, usable ESLint configurations. It defines the configuration hierarchy:
+ *
+ * - buildMinimalDeprecatedConfig: Base + minimal-deprecated rules + depend plugin
+ * - buildRecommendedConfig: minimal-deprecated + unicorn/recommended + recommended rules
+ * - buildStrictConfig: recommended + strict rules
+ * - buildStrictBiomeConfig: strict + biome config for Biome formatter compatibility
+ *
+ * The "create*" functions add shared configs (project service, test config, React, etc.)
+ * to produce the final exported configurations.
+ */
+
 import unicornPlugin from "eslint-plugin-unicorn";
 import biomeConfig from "eslint-config-biome";
 
@@ -55,14 +70,6 @@ export function buildRecommendedConfig(): FlatConfigArray {
 		},
 		{
 			rules: recommendedRules,
-		},
-		// Type validation files override (from recommended.js)
-		{
-			files: ["**/types/*validate*Previous*.ts"],
-			rules: {
-				"@typescript-eslint/no-explicit-any": "off",
-				"@typescript-eslint/no-unsafe-argument": "off",
-			},
 		},
 	];
 }

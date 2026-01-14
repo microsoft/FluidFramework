@@ -3,6 +3,25 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * File-specific config overrides and shared config objects.
+ *
+ * This module contains ESLint configurations that apply to specific file patterns or
+ * provide specialized behavior:
+ *
+ * - dependConfig: eslint-plugin-depend configuration for dependency checking
+ * - useProjectService: TypeScript project service for automatic tsconfig discovery
+ * - testProjectConfig: Test file configuration with explicit project paths and relaxed rules
+ * - internalModulesConfig: import-x/no-internal-modules rule for production code
+ * - reactConfig: React and React Hooks plugin configurations
+ * - cjsFileConfig: CommonJS file rule overrides
+ * - jsNoProject: Disables type-aware parsing for JS and .d.ts files
+ * - jsTypeAwareDisable: Disables type-aware rules for JS files
+ * - reactRecommendedOverride: React file overrides for recommended config
+ * - testRecommendedOverride: Test file overrides for recommended config
+ * - addSharedConfigs: Helper function to add all shared configs to a config array
+ */
+
 import dependPlugin from "eslint-plugin-depend";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
