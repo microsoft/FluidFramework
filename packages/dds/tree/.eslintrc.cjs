@@ -99,5 +99,4 @@ module.exports = {
 			},
 		},
 	},
-	ignorePatterns: ["src/test/simple-tree/schemaSnapshots/**"],
 };
