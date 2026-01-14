@@ -21,7 +21,7 @@ export type TupleBTree<K extends readonly DefaultComparable[], V> = Brand<
 /**
  * Create a new {@link TupleBTree}.
  */
-export function newTupleBTree<K extends readonly DefaultComparable[], V>(
+export function newTupleBTree<const K extends readonly DefaultComparable[], V>(
 	entries?: [K, V][],
 ): TupleBTree<K, V> {
 	return brand(new BTree<K, V>(entries, compareTuples));
