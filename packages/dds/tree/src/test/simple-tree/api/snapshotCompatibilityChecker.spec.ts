@@ -307,11 +307,14 @@ describe("snapshotCompatibilityChecker", () => {
 			return [fileSystem, snapshots];
 		}
 
+		// Tests the various operations a user of the checkSchemaCompatibilitySnapshots function might perform across various versions of their codebase.
 		it("workflow over time", () => {
 			const snapshotDirectory = "dir";
 			const [fileSystem, snapshots] = mapFileSystem();
 
 			const factory = new SchemaFactoryBeta("test");
+
+			// For this scenario the application will evolve through three versions of a Point schema across 3 versions of the app.
 
 			class Point1 extends factory.object("Point", {
 				x: factory.number,
@@ -333,6 +336,7 @@ describe("snapshotCompatibilityChecker", () => {
 				z: factory.optional(factory.number),
 			}) {}
 
+			// The first time they use checkSchemaCompatibilitySnapshots, no snapshot will exist, and it must error suggesting a snapshot be created using update.
 			assert.throws(
 				() =>
 					checkSchemaCompatibilitySnapshots({
@@ -350,8 +354,10 @@ describe("snapshotCompatibilityChecker", () => {
 				),
 			);
 
+			// Confirm no snapshots were created during the failed test above since it was in test mode.
 			assert.deepEqual([...snapshots.keys()], []);
 
+			// Update, as directed by the error message, to create the initial snapshot.
 			checkSchemaCompatibilitySnapshots({
 				version: "1.0.0",
 				schema: new TreeViewConfiguration({ schema: Point1 }),
@@ -361,8 +367,11 @@ describe("snapshotCompatibilityChecker", () => {
 				snapshotDirectory,
 			});
 
+			// Confirm the snapshot for v1.0.0 was created.
 			assert.deepEqual([...snapshots.keys()], ["1.0.0.json"]);
 
+			// Now that the snapshot exists, test should pass.
+			// This would be the first state the app author would commit, and would be released as 1.0.0.
 			checkSchemaCompatibilitySnapshots({
 				version: "1.0.0",
 				schema: new TreeViewConfiguration({ schema: Point1 }),
@@ -372,6 +381,7 @@ describe("snapshotCompatibilityChecker", () => {
 				snapshotDirectory,
 			});
 
+			// If a developer accidentally changed leading up to the 1.0.0 release, the test catches it like this:
 			assert.throws(
 				() =>
 					checkSchemaCompatibilitySnapshots({
@@ -386,6 +396,7 @@ describe("snapshotCompatibilityChecker", () => {
  - Snapshot for current version "1.0.0" is out of date: schema has changed since latest existing snapshot version "1.0.0". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.`),
 			);
 
+			// If the change was actually intentional, the (and this case part of 2.0.0) a new snapshot can be take like this:
 			checkSchemaCompatibilitySnapshots({
 				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: Point2 }),
@@ -406,6 +417,8 @@ describe("snapshotCompatibilityChecker", () => {
 				snapshotDirectory,
 			});
 
+			// Now we can make a breaking schema change, dropping support for collaboration with 1.0.0 by moving to Point3.
+			// In this case the developer did not realize it is a breaking change, and so the test notifies them of the issue:
 			assert.throws(
 				() =>
 					checkSchemaCompatibilitySnapshots({
@@ -422,6 +435,8 @@ describe("snapshotCompatibilityChecker", () => {
 
 			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json", "3.0.0.json"]);
 
+			// In this case the developer is ok with dropping support for collaboration with 1.0.0,
+			// so they update minVersionForCollaboration to 2.0.0 acknowledging the break.
 			checkSchemaCompatibilitySnapshots({
 				version: "3.0.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
@@ -431,7 +446,7 @@ describe("snapshotCompatibilityChecker", () => {
 				snapshotDirectory,
 			});
 
-			// Version bumps should not cause errors unless schema also changes or snapshotUnchangedVersions is true.
+			// If they go to publish patch or minor versions, the snapshots should not need updating (since  snapshotUnchangedVersions is false) as confirmed by this test:
 			checkSchemaCompatibilitySnapshots({
 				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
@@ -441,6 +456,7 @@ describe("snapshotCompatibilityChecker", () => {
 				snapshotDirectory,
 			});
 
+			// If the app developers specifically want to snapshot every version's schema, they can require that with `snapshotUnchangedVersions: true` as validated here:
 			assert.throws(
 				() =>
 					checkSchemaCompatibilitySnapshots({
@@ -456,7 +472,7 @@ describe("snapshotCompatibilityChecker", () => {
  - No snapshot found for version "3.1.0": snapshotUnchangedVersions is true, so every version must be snapshotted. If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.`),
 			);
 
-			// No-op update since snapshotUnchangedVersions is not true.
+			// Here we confirm that even when running update, no new snapshot is taken if the schema is unchanged and snapshotUnchangedVersions is false.
 			checkSchemaCompatibilitySnapshots({
 				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
@@ -468,6 +484,7 @@ describe("snapshotCompatibilityChecker", () => {
 
 			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json", "3.0.0.json"]);
 
+			// But if snapshotUnchangedVersions is true, a new snapshot is taken even though the schema is unchanged.
 			checkSchemaCompatibilitySnapshots({
 				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
@@ -483,6 +500,7 @@ describe("snapshotCompatibilityChecker", () => {
 				["1.0.0.json", "2.0.0.json", "3.0.0.json", "3.1.0.json"],
 			);
 
+			// Confirm that tests pass with "test" mode and snapshotUnchangedVersions true.
 			checkSchemaCompatibilitySnapshots({
 				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
@@ -493,7 +511,8 @@ describe("snapshotCompatibilityChecker", () => {
 				snapshotUnchangedVersions: true,
 			});
 
-			// minVersionForCollaboration must be exact match when snapshotUnchangedVersions is false.
+			// Confirm that when using snapshotUnchangedVersions, it is an error if minVersionForCollaboration is a version between snapshots
+			// since in that mode it is assumed every released version has a snapshot.
 			assert.throws(
 				() =>
 					checkSchemaCompatibilitySnapshots({
@@ -509,6 +528,7 @@ describe("snapshotCompatibilityChecker", () => {
  - Using snapshotUnchangedVersions: a snapshot of the exact minVersionForCollaboration "2.1.0" is required. No snapshot found.`),
 			);
 
+			// Final sanity check that everything is left in a good state.
 			checkSchemaCompatibilitySnapshots({
 				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
