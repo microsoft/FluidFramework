@@ -3,8 +3,7 @@
 
 # include-steps-upload-stage-timing
 
-# This template adds steps to the upload-telemetry stage to include the upload of stage timing.
-# The new stage "targets" another stage (specified as a parameter) and uploads telemetry about that stage to Kusto.
+# Steps that can be added to the upload-telemetry stage (`include-stage-upload-telemetry.yml`) to include the upload of stage timing.
 
 parameters:
 
