@@ -67,6 +67,8 @@ export function createSpecificAttendeeId<const T extends string>(
 	return id as SpecificAttendeeId<T>;
 }
 
+export { initialLocalClientConnectionId } from "./mockEphemeralRuntime.js";
+
 /**
  * Mock {@link AttendeeId}.
  */
@@ -446,5 +448,3 @@ export const createSpiedValidator = <T extends object>(
 	validatorFunction: StateSchemaValidator<T> = nullValidator<T>,
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 ) => spy(validatorFunction) satisfies StateSchemaValidator<T>;
-
-export { initialLocalClientConnectionId } from "./mockEphemeralRuntime.js";
