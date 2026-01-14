@@ -109,5 +109,8 @@ export const globalIgnores: Linter.Config = {
 		// Common non-source directories
 		"**/coverage/**",
 		"**/.nyc_output/**",
+
+		// Mocha config files (must be CommonJS, not compatible with TS-focused linting)
+		"**/.mocharc*.cjs",
 	],
 };
