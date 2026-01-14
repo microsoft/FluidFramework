@@ -18,7 +18,6 @@ export interface MainViewProps {
 	root: PropTreeNode<TextAsTree.Tree>;
 }
 
-
 export const MainView: React.FC<MainViewProps> = ({ root }) => {
 	return <TextEditorView root={root} />;
 };
