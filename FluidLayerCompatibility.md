@@ -147,6 +147,102 @@ The compatibility system enforces validation at specific **layer boundaries**:
     - Load flow: During data store realization
 - **Why:** Ensures DataStores can communicate with Runtime and use its features
 
+## Architecture Diagram
+
+```mermaid
+flowchart
+    %% Application Layer (Outermost container)
+    subgraph App ["Application"]
+        %% Experience at the top, larger box
+        Experience["<br/><br/>Experience<br/><br/>"]
+
+        %% Driver positioned below Experience
+        Driver["Driver (N-3)"]
+
+        %% Loader contains everything inside Application
+        subgraph Loader ["Loader (N-2)"]
+            %% Host API at loader level
+            HostAPI["Host API"]
+
+            %% Runtime contains datastores
+            subgraph Runtime ["Runtime (N-1)"]
+                %% Runtime components grouped together
+                subgraph RuntimeComponents [" "]
+                    EntrypointR["Entrypoint"]
+                    APIR["API"]
+                    RenderingR["Rendering"]
+
+                    %% Connections
+                    BusinessLogicR["Business Logic"]
+                    EntrypointR --- APIR
+                    EntrypointR --- RenderingR
+                    APIR --- BusinessLogicR
+                    RenderingR --- BusinessLogicR
+                end
+
+                %% DataStore positioned to the right of RuntimeComponents
+                subgraph DataStore ["DataStore (N)"]
+                    %% DDSes are contained within Datastore
+                    DDSes["DDSes"]
+                    %% DataStore components grouped together
+                    subgraph DataStoreComponents [" "]
+                        EntrypointD["Entrypoint"]
+                        APID["API"]
+                        RenderingD["Rendering"]
+                        BusinessLogicD["Business Logic"]
+
+                        %% Connections
+                        EntrypointD --- APID
+                        EntrypointD --- RenderingD
+                        APID --- BusinessLogicD
+                        RenderingD --- BusinessLogicD
+                    end
+                end
+
+                %% Position side by side
+                RuntimeComponents ~~~ DataStore
+            end
+        end
+    end
+
+    %% Bottom services row (outside the hierarchy) - moved to very bottom
+    FluidServicesLoader["Fluid Framework<br/>services (Loader)"]
+    FluidServicesRuntime["Fluid Framework<br/>services (Runtime)"]
+    FluidServicesDataStore["Fluid Framework<br/>services (DataStore)"]
+
+    %% Align services in a straight horizontal line at the bottom
+    FluidServicesLoader --- FluidServicesRuntime
+    FluidServicesRuntime --- FluidServicesDataStore
+
+    %% Connections matching the original diagram
+    HostAPI --> Experience
+    Driver --> FluidServicesLoader
+    FluidServicesLoader --> HostAPI
+    FluidServicesRuntime --> BusinessLogicR
+    FluidServicesDataStore --> BusinessLogicD
+    DDSes --> BusinessLogicD
+    RuntimeComponents --> Experience
+    DataStoreComponents --> BusinessLogicR
+
+    %% Styling to match original colors
+    classDef blueBox fill:#4a90e2,stroke:#333,stroke-width:2px,color:#fff
+    classDef orangeBox fill:#ff8c42,stroke:#333,stroke-width:2px,color:#fff
+    classDef greenBox fill:#7cb342,stroke:#333,stroke-width:2px,color:#fff
+    classDef blueOutline fill:#fff,stroke:#4a90e2,stroke-width:2px,color:#4a90e2
+    classDef orangeOutline fill:#fff,stroke:#ff8c42,stroke-width:2px,color:#ff8c42
+
+    %% Apply styles based on ownership
+    class Experience greenBox
+    class HostAPI,Driver,DDSes blueBox
+    class EntrypointR,APIR,RenderingR,EntrypointD,APID,RenderingD orangeBox
+    class FluidServicesLoader,FluidServicesRuntime,FluidServicesDataStore blueOutline
+    class BusinessLogicR,BusinessLogicD orangeOutline
+```
+- Driver layer is package version N-3.
+- Loader layer is package version N-2.
+- Runtime layer is package version N-1.
+- DataStore layer is package version N.
+
 ## Compatibility Mechanics
 
 ### Generation Numbers
