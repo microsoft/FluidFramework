@@ -146,12 +146,11 @@ assert(existsSync(schemaCompatibilitySnapshotsFolder));
 /**
  * Test schema snapshots for shared tree components which are part of this package.
  * @remarks
- * Snapshots are stored in a subdirectory of {@link schemaCompatibilitySnapshotsFolder} based off of `domainName`.
- * based on the provided {@link domainName} parameter.
+ * Snapshots are stored in a subdirectory of {@link schemaCompatibilitySnapshotsFolder} based on the provided `domainName`.
  */
 export function testSchemaCompatibilitySnapshots(
 	currentViewSchema: TreeViewConfiguration,
-	minAppVersionForCollaboration: MinimumVersionForCollab,
+	minVersionForCollaboration: MinimumVersionForCollab,
 	domainName: string,
 ): void {
 	const snapshotDirectory = path.join(schemaCompatibilitySnapshotsFolder, domainName);
@@ -160,7 +159,7 @@ export function testSchemaCompatibilitySnapshots(
 		fileSystem: { ...fs, ...path },
 		version: cleanedPackageVersion,
 		schema: currentViewSchema,
-		minVersionForCollaboration: minAppVersionForCollaboration,
+		minVersionForCollaboration,
 		mode: regenerateSnapshots ? "update" : "test",
 	});
 }
