@@ -282,7 +282,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 * The mode of operation, either "test" or "update".
 	 * @remarks
 	 * In "update" mode, a new snapshot is created if the current schema differs from the latest existing snapshot.
-	 * {@link SchemaCompatibilitySnapshotsOptions.snapshotUnchangedVersions} impacts this: see it for details.
+	 * Note: {@link SchemaCompatibilitySnapshotsOptions.snapshotUnchangedVersions} impacts this behavior.
 	 *
 	 * In "test" mode, an error is thrown if running in "update" mode would have made any changes.
 	 *
