@@ -1364,7 +1364,7 @@ describe("sharedTreeView", () => {
 			assert.equal(callCount, 1);
 		});
 
-		it("can provide an enricher for a transaction-less edit that is has just been applied", () => {
+		it("can provide an enricher for a transaction-less edit that has just been applied", () => {
 			const { view1, view1Revertibles } = setup([{ id: "A" }]);
 			view1.root.removeAt(0);
 
