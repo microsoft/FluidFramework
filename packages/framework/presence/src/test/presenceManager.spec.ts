@@ -98,7 +98,7 @@ describe("Presence", () => {
 				runtime.removeMember(initialLocalClientConnectionId);
 			});
 
-			it("is announced via `attendeeConnected` upon initial connection", () => {
+			it("is announced via `attendeeConnected` while self is in audience upon initial connection", () => {
 				// Setup - create presence in disconnected state
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
