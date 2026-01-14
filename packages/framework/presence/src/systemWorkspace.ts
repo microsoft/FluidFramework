@@ -188,7 +188,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		const selfInAudience = this.audience.getMember(clientConnectionId) !== undefined;
 		assert(
 			selfInAudience || audienceOutOfDate,
-			"Local client must be in audience for presence to handle added connection.",
+			0xcc0 /* Local client must be in audience for presence to handle added connection. */,
 		);
 
 		if (!(clientConnectionId in this.datastore.clientToSessionId)) {

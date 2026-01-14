@@ -12,25 +12,6 @@ const config: Linter.Config[] = [
 		rules: {
 			"@typescript-eslint/no-unsafe-return": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
-			"@typescript-eslint/consistent-type-imports": [
-				"error",
-				{
-					"fixStyle": "inline-type-imports",
-				},
-			],
-			"@typescript-eslint/no-import-type-side-effects": "error",
-		},
-	},
-	{
-		files: ["**/*.{ts,tsx}"],
-		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
-		rules: {
-			"@typescript-eslint/consistent-type-exports": [
-				"error",
-				{
-					"fixMixedExportsWithInlineTypeSpecifier": true,
-				},
-			],
 		},
 	},
 ];

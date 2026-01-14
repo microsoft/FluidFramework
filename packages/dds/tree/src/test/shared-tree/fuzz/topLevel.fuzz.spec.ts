@@ -106,7 +106,7 @@ describe("Fuzz - Top-Level", () => {
 		};
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
-			reconnectProbability: 0.0,
+			reconnectProbability: 0,
 			rollbackProbability: 0,
 			defaultTestCount: runsPerBatch,
 			rebaseProbability: 0.2,

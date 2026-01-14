@@ -351,7 +351,7 @@ function generateEventAndPerformance(
 	const eventSubTopicIdSet = new Set<number>();
 	if (numTopicsToInclude > 0) {
 		let processedTopicIdCount = 0;
-		eventTopicIdSet.forEach((topicId) => {
+		for (const topicId of eventTopicIdSet) {
 			const topicSubTopicIds = topicSubTopics[`${topicId}`];
 			// This reserves atleast 1 subtopicId to be added for each topic id.
 			const unprocessedTopicIds = eventTopicIdSet.size - processedTopicIdCount;
@@ -374,7 +374,7 @@ function generateEventAndPerformance(
 				eventSubTopicIdSet.add(subTopicIdToAdd);
 			}
 			processedTopicIdCount++;
-		});
+		}
 	}
 
 	// All logo strings in the original follow this pattern. and have a 48.913% chance of being null
@@ -423,7 +423,7 @@ function generateEventAndPerformance(
 		seatCategoryId: number;
 	}[] = [];
 	const availableAreaIds = Object.keys(areaNames);
-	prices.forEach((priceObject) => {
+	for (const priceObject of prices) {
 		const numAreaIdsToAdd = random.integer(1, Math.min(availableAreaIds.length, 16));
 		const areas = [];
 		for (let i = 0; i < numAreaIdsToAdd; i++) {
@@ -436,7 +436,7 @@ function generateEventAndPerformance(
 			areas,
 			seatCategoryId: priceObject.seatCategoryId,
 		});
-	});
+	}
 	const performance: Performance = {
 		eventId: event.id,
 		id: idNumberCounter,

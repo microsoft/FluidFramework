@@ -29,11 +29,13 @@ import {
 	type FieldKindConfigurationEntry,
 	makeModularChangeCodecFamily,
 	ModularChangeFamily,
-	type EncodedModularChangeset,
+	type EncodedModularChangesetV2,
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type EditDescription,
 	jsonableTreeFromFieldCursor,
+	DefaultRevisionReplacer,
+	type ChangeAtomIdBTree,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -51,7 +53,6 @@ import {
 	type ChangeEncodingContext,
 	type ChangeAtomIdMap,
 	Multiplicity,
-	replaceAtomRevisions,
 	type FieldUpPath,
 	type RevisionInfo,
 } from "../../../core/index.js";
@@ -82,7 +83,6 @@ import { ajvValidator } from "../../codec/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import {
 	newCrossFieldKeyTable,
-	type ChangeAtomIdBTree,
 	type CrossFieldKeyTable,
 	type FieldChangeMap,
 	type FieldId,
@@ -116,8 +116,9 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	mute: (change: SingleNodeChangeset) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
-	replaceRevisions: (change, oldRevisions, newRevision) =>
-		change !== undefined ? replaceAtomRevisions(change, oldRevisions, newRevision) : undefined,
+	replaceRevisions: (change, replacer) =>
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- replacer type inference issue
+		change === undefined ? undefined : replacer.getUpdatedAtomId(change),
 };
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {
@@ -149,10 +150,10 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
-		local: [{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined }],
+		local: [{ count: 1, fields: change === undefined ? undefined : deltaFromChild(change) }],
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
-		change !== undefined ? relevantRemovedRootsFromChild(change) : [],
+		change === undefined ? [] : relevantRemovedRootsFromChild(change),
 
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
@@ -186,12 +187,12 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const codec = makeModularChangeCodecFamily(
-	new Map([[1, fieldKindConfiguration]]),
+	new Map([[5, fieldKindConfiguration]]),
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
-const family = new ModularChangeFamily(fieldKinds, codec);
+const family = new ModularChangeFamily(fieldKinds, codec, codecOptions);
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -1409,7 +1410,7 @@ describe("ModularChangeFamily", () => {
 		};
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
-			EncodedModularChangeset,
+			EncodedModularChangesetV2,
 			ChangeEncodingContext
 		> = {
 			successes: [
@@ -1452,6 +1453,28 @@ describe("ModularChangeFamily", () => {
 				[
 					"without node field changes",
 					inlineRevision(rootChangeWithoutNodeFieldChanges, tag1),
+					context,
+				],
+				[
+					"with no change constraint",
+					inlineRevision(
+						{
+							...buildChangeset([]),
+							noChangeConstraint: { violated: false },
+						},
+						tag1,
+					),
+					context,
+				],
+				[
+					"with violated no change constraint",
+					inlineRevision(
+						{
+							...buildChangeset([]),
+							noChangeConstraint: { violated: true },
+						},
+						tag1,
+					),
 					context,
 				],
 			],
@@ -1593,7 +1616,10 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 }
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
-	return family.changeRevision(change, revision);
+	return family.changeRevision(
+		change,
+		new DefaultRevisionReplacer(revision, family.getRevisions(change)),
+	);
 }
 
 function tagChangeInline(

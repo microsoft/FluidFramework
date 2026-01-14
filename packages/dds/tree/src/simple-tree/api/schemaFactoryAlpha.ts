@@ -94,7 +94,7 @@ export class SchemaFactoryAlpha<
 	} {
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
-			...(options ?? {}),
+			...options,
 		});
 	}
 

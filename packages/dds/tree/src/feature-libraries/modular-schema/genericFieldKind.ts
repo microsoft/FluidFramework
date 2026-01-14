@@ -11,8 +11,7 @@ import {
 	type DeltaMark,
 	type FieldKindIdentifier,
 	Multiplicity,
-	type RevisionTag,
-	replaceAtomRevisions,
+	type RevisionReplacer,
 } from "../../core/index.js";
 
 import type {
@@ -78,7 +77,7 @@ function compose(
 	const composed = change1.clone();
 	for (const [index, id2] of change2.entries()) {
 		const id1 = composed.get(index);
-		const idComposed = id1 !== undefined ? composeChildren(id1, id2) : id2;
+		const idComposed = id1 === undefined ? id2 : composeChildren(id1, id2);
 		composed.set(index, idComposed);
 	}
 
@@ -157,10 +156,9 @@ function pruneGenericChange(
 
 function replaceRevisions(
 	changeset: GenericChangeset,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
+	replacer: RevisionReplacer,
 ): GenericChangeset {
-	return changeset.mapValues((node) => replaceAtomRevisions(node, oldRevisions, newRevision));
+	return changeset.mapValues((node) => replacer.getUpdatedAtomId(node));
 }
 
 /**

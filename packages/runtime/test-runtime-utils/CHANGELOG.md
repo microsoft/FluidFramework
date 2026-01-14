@@ -1,5 +1,17 @@
 # @fluidframework/test-runtime-utils
 
+## 2.80.0
+
+### Minor Changes
+
+- Types not intended for consumer implementation/extension are now @sealed ([#26024](https://github.com/microsoft/FluidFramework/pull/26024)) [75a3861ba8b](https://github.com/microsoft/FluidFramework/commit/75a3861ba8bd4b1b0043bb137a17e0c8d4d3b330)
+
+  The following types are now explicitly marked as `@sealed` to indicate that they are not intended for consumer implementation or extension.
+  - `MockFluidDataStoreRuntime` class in `@fluidframework/test-runtime-utils`
+  - `IFluidParentContext` interface in `@fluidframework/runtime-definitions`
+  - `IFluidDataStoreContext` interface in `@fluidframework/runtime-definitions`
+  - `IFluidDataStoreContextDetached` interface in `@fluidframework/runtime-definitions`
+
 ## 2.74.0
 
 Dependency updates only.

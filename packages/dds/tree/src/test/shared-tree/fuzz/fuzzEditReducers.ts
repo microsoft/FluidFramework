@@ -205,9 +205,9 @@ export function applyForkMergeOperation(state: FuzzTestState, branchEdit: ForkMe
 			}
 
 			const view =
-				branchEdit.contents.branchNumber !== undefined
-					? clientForkedViews[branchEdit.contents.branchNumber]
-					: viewFromState(state);
+				branchEdit.contents.branchNumber === undefined
+					? viewFromState(state)
+					: clientForkedViews[branchEdit.contents.branchNumber];
 			assert(view !== undefined);
 			const forkedView = view.fork();
 			convertToFuzzView(forkedView, view.currentSchema);
@@ -222,9 +222,9 @@ export function applyForkMergeOperation(state: FuzzTestState, branchEdit: ForkMe
 			const clientForkedViews = forkedViews.get(state.client.channel) ?? [];
 
 			const baseBranch =
-				branchEdit.contents.baseBranch !== undefined
-					? clientForkedViews[branchEdit.contents.baseBranch]
-					: viewFromState(state);
+				branchEdit.contents.baseBranch === undefined
+					? viewFromState(state)
+					: clientForkedViews[branchEdit.contents.baseBranch];
 			assert(forkBranchIndex !== undefined);
 			const forkedBranch = clientForkedViews[forkBranchIndex];
 			if (baseBranch.checkout.transaction.isInProgress() === true) {

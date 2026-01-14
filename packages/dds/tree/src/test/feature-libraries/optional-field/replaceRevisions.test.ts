@@ -12,6 +12,10 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { Change, assertEqual } from "./optionalFieldUtils.js";
+import {
+	DefaultRevisionReplacer,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
@@ -26,16 +30,12 @@ const atom3: ChangeAtomId = { localId: brand(100) };
 const inputRevs = new Set([tag1, tag2, undefined]);
 
 export function testReplaceRevisions() {
-	describe("replaceRevisions", () => {
-		for (const outputRev of [tagOut, undefined]) {
-			describe(`{${[...inputRevs.keys()].join(",")}} -> ${outputRev}`, () => {
-				runCases(outputRev);
-			});
-		}
+	describe(`replaceRevisions {${[...inputRevs.keys()].join(",")}} -> ${tagOut}`, () => {
+		runCases(tagOut);
 	});
 }
 
-function runCases(outputRev: RevisionTag | undefined) {
+function runCases(outputRev: RevisionTag) {
 	const atomOut1: Mutable<ChangeAtomId> = { localId: brand(1) };
 	const atomOut2: Mutable<ChangeAtomId> = { localId: brand(10) };
 	const atomOut3: Mutable<ChangeAtomId> = { localId: brand(100) };
@@ -46,7 +46,8 @@ function runCases(outputRev: RevisionTag | undefined) {
 	}
 
 	function process(changeset: OptionalChangeset): OptionalChangeset {
-		return optionalChangeRebaser.replaceRevisions(changeset, inputRevs, outputRev);
+		const replacer = new DefaultRevisionReplacer(outputRev, inputRevs);
+		return optionalChangeRebaser.replaceRevisions(changeset, replacer);
 	}
 
 	it("moves", () => {

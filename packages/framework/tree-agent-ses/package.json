@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree-agent-ses",
-	"version": "2.80.0",
+	"version": "2.81.0",
 	"description": "SES integration helpers for @fluidframework/tree-agent",
 	"homepage": "https://fluidframework.com",
 	"repository": {

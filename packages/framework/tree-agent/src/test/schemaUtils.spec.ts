@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/no-array-callback-reference */
-
 import { strict as assert } from "node:assert";
 
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
@@ -279,5 +277,3 @@ describe("findNamedSchemas", () => {
 		assert.ok(!identifiers.includes("number"));
 	});
 });
-
-/* eslint-enable unicorn/no-array-callback-reference */
