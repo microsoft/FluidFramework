@@ -381,7 +381,7 @@ describe("snapshotCompatibilityChecker", () => {
 				snapshotDirectory,
 			});
 
-			// If a developer accidentally changed leading up to the 1.0.0 release, the test catches it like this:
+			// If a developer accidentally changed the schema leading up to the 1.0.0 release, the test catches it like this:
 			assert.throws(
 				() =>
 					checkSchemaCompatibilitySnapshots({
@@ -396,7 +396,7 @@ describe("snapshotCompatibilityChecker", () => {
  - Snapshot for current version "1.0.0" is out of date: schema has changed since latest existing snapshot version "1.0.0". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.`),
 			);
 
-			// If the change was actually intentional, the (and this case part of 2.0.0) a new snapshot can be take like this:
+			// If the change was desired, a new snapshot can be taken to include it in 2.0.0:
 			checkSchemaCompatibilitySnapshots({
 				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: Point2 }),
