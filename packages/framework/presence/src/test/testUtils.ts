@@ -259,9 +259,9 @@ function processJoinSignalAndResponse(
 const localAvgLatency = 10;
 
 /**
- * Creates presence manager and validates initialization expectations.
+ * Creates presence manager for testing.
  */
-function createPresenceAndValidate(
+function createPresence(
 	runtime: MockEphemeralRuntime,
 	attendeeId: string,
 	logger?: EventAndErrorTrackingLogger,
@@ -315,7 +315,7 @@ export function prepareConnectedPresence(
 		clock,
 	);
 
-	const { presence, processSignal } = createPresenceAndValidate(runtime, attendeeId, logger);
+	const { presence, processSignal } = createPresence(runtime, attendeeId, logger);
 	runtime.assertAllSignalsSubmitted();
 
 	processJoinSignalAndResponse(
@@ -379,7 +379,7 @@ export function prepareDisconnectedPresence(
 		`Client connection id ${clientConnectionId} should not be in quorum`,
 	);
 
-	const { presence, processSignal } = createPresenceAndValidate(runtime, attendeeId, logger);
+	const { presence, processSignal } = createPresence(runtime, attendeeId, logger);
 
 	const connect = (): void => {
 		const { expectedClientJoin, updateProviders } = prepareExpectedClientJoin(
