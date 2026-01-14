@@ -64,13 +64,16 @@ export function visitDelta(
 	const rootTransfers: Delta.DetachedNodeRename[] = [];
 	const rootDestructions: Delta.DetachedNodeDestruction[] = [];
 	const refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous> = new Map();
-	delta.refreshers?.forEach(({ id: { major, minor }, trees }) => {
+	for (const {
+		id: { major, minor },
+		trees,
+	} of delta.refreshers ?? []) {
 		const treeCursors = nodeCursorsFromChunk(trees);
 		for (let i = 0; i < trees.topLevelLength; i += 1) {
 			const offsettedId = minor + i;
 			setInNestedMap(refreshers, major, offsettedId, treeCursors[i]);
 		}
-	});
+	}
 	const detachConfig: PassConfig = {
 		func: detachPass,
 		latestRevision,
@@ -204,6 +207,7 @@ function transferRoots(
 				delayed.push({ oldId, newId });
 				continue;
 			}
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- intentional behavior
 			newRootId = detachedFieldIndex.createEntry(newId, revision);
 			const fields = mapToUpdate.get(oldRootId);
 			if (fields !== undefined) {

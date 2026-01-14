@@ -367,10 +367,10 @@ describe("DetachedFieldIndex methods", () => {
 			const revisionTag2 = mintRevisionTag();
 			detachedIndex.createEntry(detachedNodeId1, revisionTag2, 2);
 
-			const rootIds = Array.from(detachedIndex.getRootsLastTouchedByRevision(revisionTag2));
+			const rootIds = [...detachedIndex.getRootsLastTouchedByRevision(revisionTag2)];
 			assert.equal(rootIds.length, 2);
 
-			const entries = Array.from(detachedIndex.entries());
+			const entries = [...detachedIndex.entries()];
 			assert.deepEqual(entries, [
 				{ root: rootIds[0], latestRelevantRevision: revisionTag2, id: detachedNodeId1 },
 				{
@@ -393,7 +393,7 @@ describe("DetachedFieldIndex methods", () => {
 		const rootId1 = detachedIndex.createEntry(detachedNodeId1, revisionTag2);
 		const rootId2 = detachedIndex.createEntry(detachedNodeId2, revisionTag2, 2);
 
-		const entries = Array.from(detachedIndex.entries());
+		const entries = [...detachedIndex.entries()];
 		assert.deepEqual(entries, [
 			{ root: rootId1, latestRelevantRevision: revisionTag2, id: detachedNodeId1 },
 			{ root: rootId2, latestRelevantRevision: revisionTag2, id: detachedNodeId2 },
@@ -459,7 +459,7 @@ describe("DetachedFieldIndex methods", () => {
 		detachedIndex.createEntry(detachedNodeId2, revisionTag2);
 
 		detachedIndex.purge();
-		assert.equal(Array.from(detachedIndex.entries()).length, 0);
+		assert.equal([...detachedIndex.entries()].length, 0);
 	});
 
 	it("loadData preserves maxId and entries, and sets latestRelevantRevision to undefined.", () => {
@@ -478,7 +478,7 @@ describe("DetachedFieldIndex methods", () => {
 		assert.equal(detachedIndex2.tryGetEntry(detachedNodeId), rootId);
 
 		// Check that loadData set the latestRelevantRevision to undefined.
-		assert.equal(Array.from(detachedIndex2.entries())[0].latestRelevantRevision, undefined);
+		assert.equal([...detachedIndex2.entries()][0].latestRelevantRevision, undefined);
 
 		// Check that the maxId is preserved, and doesn't reset
 		const emptyId = detachedIndex2.createEntry(undefined, undefined);
@@ -503,11 +503,12 @@ describe("DetachedFieldIndex methods", () => {
 		// Sets the new revision tag after loading
 		const revisionTag3 = mintRevisionTag();
 		detachedIndex2.setRevisionsForLoadedData(revisionTag3);
-		assert.equal(Array.from(detachedIndex2.entries())[0].latestRelevantRevision, revisionTag3);
+		assert.equal([...detachedIndex2.entries()][0].latestRelevantRevision, revisionTag3);
 		// Check that it was last touched by revisionTag3
-		assert.deepEqual(Array.from(detachedIndex2.getRootsLastTouchedByRevision(revisionTag3)), [
-			rootId,
-		]);
+		assert.deepEqual(
+			[...detachedIndex2.getRootsLastTouchedByRevision(revisionTag3)],
+			[rootId],
+		);
 
 		// Throws if setRevisionsForLoadedData is called more than once.
 		assert.throws(() => detachedIndex2.setRevisionsForLoadedData(mintRevisionTag()));
@@ -522,19 +523,18 @@ describe("DetachedFieldIndex methods", () => {
 
 			const revisionTag2 = mintRevisionTag();
 			const rootId = detachedIndex.createEntry(detachedNodeId, revisionTag2);
-			assert.deepEqual(Array.from(detachedIndex.getRootsLastTouchedByRevision(revisionTag2)), [
-				rootId,
-			]);
+			assert.deepEqual(
+				[...detachedIndex.getRootsLastTouchedByRevision(revisionTag2)],
+				[rootId],
+			);
 
 			const revisionTag3 = mintRevisionTag();
 			detachedIndex.updateLatestRevision(detachedNodeId, revisionTag3);
-			assert.deepEqual(Array.from(detachedIndex.getRootsLastTouchedByRevision(revisionTag3)), [
-				rootId,
-			]);
 			assert.deepEqual(
-				Array.from(detachedIndex.getRootsLastTouchedByRevision(revisionTag2)),
-				[],
+				[...detachedIndex.getRootsLastTouchedByRevision(revisionTag3)],
+				[rootId],
 			);
+			assert.deepEqual([...detachedIndex.getRootsLastTouchedByRevision(revisionTag2)], []);
 		});
 	});
 

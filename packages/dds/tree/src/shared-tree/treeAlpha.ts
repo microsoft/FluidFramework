@@ -93,14 +93,20 @@ const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => 
 };
 
 identifier.shorten = (branch: TreeBranch, nodeIdentifier: string): number | undefined => {
-	assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
+	assert(
+		branch instanceof SchematizingSimpleTreeView,
+		0xcac /* Unexpected branch implementation */,
+	);
 	const { nodeKeyManager } = branch;
 	const localNodeKey = nodeKeyManager.tryLocalizeNodeIdentifier(nodeIdentifier);
 	return localNodeKey === undefined ? undefined : extractFromOpaque(localNodeKey);
 };
 
 identifier.lengthen = (branch: TreeBranch, nodeIdentifier: number): string => {
-	assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
+	assert(
+		branch instanceof SchematizingSimpleTreeView,
+		0xcad /* Unexpected branch implementation */,
+	);
 	const { nodeKeyManager } = branch;
 	const local = brand<LocalNodeIdentifier>(nodeIdentifier as SessionSpaceCompressedId);
 	return nodeKeyManager.stabilizeNodeIdentifier(local);
@@ -631,12 +637,12 @@ class NodeSubscription {
 					return;
 				}
 				const subscription = subscriptions.get(flexNode);
-				if (subscription !== undefined) {
-					// Already subscribed to this node.
-					subscription.keys = undefined; // Now subscribed to all keys.
-				} else {
+				if (subscription === undefined) {
 					const newSubscription = new NodeSubscription(invalidate, flexNode);
 					subscriptions.set(flexNode, newSubscription);
+				} else {
+					// Already subscribed to this node.
+					subscription.keys = undefined; // Now subscribed to all keys.
 				}
 			},
 			observeNodeField(flexNode: FlexTreeNode, key: FieldKey): void {
@@ -645,15 +651,15 @@ class NodeSubscription {
 					return;
 				}
 				const subscription = subscriptions.get(flexNode);
-				if (subscription !== undefined) {
+				if (subscription === undefined) {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					newSubscription.keys = new Set([key]);
+					subscriptions.set(flexNode, newSubscription);
+				} else {
 					// Already subscribed to this node: if not subscribed to all keys, subscribe to this one.
 					// TODO:Performance: due to how JavaScript set ordering works,
 					// it might be faster to check `has` and only add if not present in case the same field is viewed many times.
 					subscription.keys?.add(key);
-				} else {
-					const newSubscription = new NodeSubscription(invalidate, flexNode);
-					newSubscription.keys = new Set([key]);
-					subscriptions.set(flexNode, newSubscription);
 				}
 			},
 			observeParentOf(node: FlexTreeNode): void {

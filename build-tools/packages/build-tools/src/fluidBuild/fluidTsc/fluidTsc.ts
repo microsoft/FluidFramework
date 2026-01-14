@@ -8,7 +8,7 @@ import { tsCompile } from "../tsCompile";
 
 const { log, errorLog: error } = defaultLogger;
 
-function printUsage() {
+function printUsage(): void {
 	log(
 		`
 Runs tsc using arguments given in an environment where local package.json "type" property is overridden. This enables single package to support both CommonJS and ESM.
@@ -24,7 +24,7 @@ Example: fluid-tsc commonjs --project tsconfig.cjs.json
 	);
 }
 
-async function main() {
+async function main(): Promise<void> {
 	const firstArg = process.argv[2];
 
 	if (firstArg === "-?" || firstArg === "--help") {
@@ -49,7 +49,7 @@ async function main() {
 	}
 }
 
-main().catch((e) => {
+main().catch((e): void => {
 	error(`Unexpected error. ${e.message}`);
 	error(e.stack);
 	process.exit(1);

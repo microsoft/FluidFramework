@@ -289,7 +289,7 @@ export class SquashingTransactionStack<
 				transactionBranch.editor.enterTransaction();
 				// Invoked when an outer transaction ends
 				const onOuterTransactionPop: OnPop = (result) => {
-					assert(!this.isInProgress(), "The outer transaction should be ending");
+					assert(!this.isInProgress(), 0xcae /* The outer transaction should be ending */);
 					transactionBranch.editor.exitTransaction();
 					switch (result) {
 						case TransactionResult.Abort: {
@@ -308,7 +308,7 @@ export class SquashingTransactionStack<
 								for (const commit of removedCommits) {
 									assert(
 										commit.revision === transactionRevision,
-										"Unexpected commit in transaction",
+										0xcaf /* Unexpected commit in transaction */,
 									);
 								}
 								const squash = this.branch.changeFamily.rebaser.compose(removedCommits);

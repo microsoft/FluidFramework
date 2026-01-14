@@ -108,7 +108,7 @@ function composeList(changes: TestChange[], verify: boolean = true): TestChange 
 			intentions = composeIntentions(intentions, change.intentions);
 		}
 	}
-	if (intentions.length !== 0 && inputContext !== undefined) {
+	if (intentions.length > 0 && inputContext !== undefined) {
 		return {
 			inputContext,
 			intentions,
@@ -253,11 +253,11 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 		);
 	}
 
-	public changeRevision(
-		change: TestChange,
-		newRevision: RevisionTag | undefined,
-		rollbackOf?: RevisionTag,
-	): TestChange {
+	public getRevisions(change: TestChange): Set<RevisionTag | undefined> {
+		return new Set();
+	}
+
+	public changeRevision(change: TestChange): TestChange {
 		return change;
 	}
 }
