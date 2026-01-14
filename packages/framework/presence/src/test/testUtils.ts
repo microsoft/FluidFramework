@@ -32,10 +32,8 @@ import type {
 } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
-import {
-	type MockEphemeralRuntime,
-	initialLocalClientConnectionId,
-} from "./mockEphemeralRuntime.js";
+import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { initialLocalClientConnectionId } from "./mockEphemeralRuntime.js";
 
 /**
  * Use to compile-time assert types of two variables are identical.
