@@ -9,6 +9,8 @@ import type { ZodType, ZodTypeAny, ZodTypeDef, infer as ZodInfer } from "zod";
 
 import type { BindableSchema, Ctor } from "./methodBinding.js";
 import { instanceOf } from "./renderZodTypeScript.js";
+import type { TypeFactoryType } from "./treeAgentTypes.js";
+import { isTypeFactoryType } from "./treeAgentTypes.js";
 
 /**
  * A symbol used to expose properties to the LLM.
@@ -73,9 +75,21 @@ export type TypeMatchOrError<Expected, Received> = [Received] extends [Expected]
  */
 export class PropertyDef {
 	public constructor(
+		/**
+		 * The name of the property.
+		 */
 		public readonly name: string,
+		/**
+		 * Optional description of the property.
+		 */
 		public readonly description: string | undefined,
-		public readonly schema: ZodTypeAny,
+		/**
+		 * The schema defining the property's type (either Zod or TypeFactory).
+		 */
+		public readonly schema: ZodTypeAny | TypeFactoryType,
+		/**
+		 * Whether the property is readonly.
+		 */
 		public readonly readOnly: boolean,
 	) {}
 }
@@ -85,6 +99,9 @@ export class PropertyDef {
  * @alpha
  */
 export interface ExposedProperties {
+	/**
+	 * Expose a property with Zod type checking.
+	 */
 	exposeProperty<
 		S extends BindableSchema & Ctor,
 		K extends string & ExposableKeys<InstanceType<S>>,
@@ -96,6 +113,29 @@ export interface ExposedProperties {
 			TypeMatchOrError<InstanceType<S>[K], ZodInfer<TZ>>,
 	): void;
 
+	/**
+	 * Expose a property with type factory type and metadata.
+	 */
+	exposeProperty<
+		S extends BindableSchema & Ctor,
+		K extends string & ExposableKeys<InstanceType<S>>,
+	>(
+		schema: S,
+		name: K,
+		def: { schema: TypeFactoryType; description?: string; readOnly?: boolean },
+	): void;
+
+	/**
+	 * Expose a property with type factory type (simple form).
+	 */
+	exposeProperty<
+		S extends BindableSchema & Ctor,
+		K extends string & ExposableKeys<InstanceType<S>>,
+	>(schema: S, name: K, tfType: TypeFactoryType): void;
+
+	/**
+	 * Create a Zod type that references a SharedTree schema class.
+	 */
 	instanceOf<T extends TreeNodeSchemaClass>(
 		schema: T,
 	): ZodType<InstanceType<T>, ZodTypeDef, InstanceType<T>>;
@@ -116,6 +156,9 @@ export interface ExposedProperties {
  * @alpha
  */
 export interface IExposedProperties {
+	/**
+	 * Static method that exposes properties of this schema class to an agent.
+	 */
 	[exposePropertiesSymbol]?(properties: ExposedProperties): void;
 }
 
@@ -132,18 +175,32 @@ class ExposedPropertiesI implements ExposedProperties {
 	>(
 		schema: S,
 		name: K,
-		def: { schema: TZ; description?: string } & ReadOnlyRequirement<InstanceType<S>, K> &
-			TypeMatchOrError<InstanceType<S>[K], ZodInfer<TZ>>,
+		defOrType:
+			| ({ schema: TZ; description?: string } & ReadOnlyRequirement<InstanceType<S>, K> &
+					TypeMatchOrError<InstanceType<S>[K], ZodInfer<TZ>>)
+			| TypeFactoryType,
 	): void {
 		if (schema !== this.schemaClass) {
 			throw new Error('Must expose properties on the "this" schema class');
 		}
-		this.properties[name] = new PropertyDef(
-			name,
-			def.description,
-			def.schema,
-			def.readOnly === true,
-		);
+
+		// Handle TypeFactoryType (simple case - type passed directly)
+		if (isTypeFactoryType(defOrType)) {
+			this.properties[name] = new PropertyDef(name, undefined, defOrType, false);
+		} else {
+			// Handle object with schema property (works for both Zod and TypeFactory)
+			const def = defOrType as {
+				schema: TZ | TypeFactoryType;
+				description?: string;
+				readOnly?: boolean;
+			};
+			this.properties[name] = new PropertyDef(
+				name,
+				def.description,
+				def.schema,
+				def.readOnly === true,
+			);
+		}
 	}
 
 	public instanceOf<T extends TreeNodeSchemaClass>(

@@ -197,6 +197,9 @@ export {
 	checkCompatibility,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
+	checkSchemaCompatibilitySnapshots,
+	type SnapshotFileSystem,
+	type SchemaCompatibilitySnapshotsOptions,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,

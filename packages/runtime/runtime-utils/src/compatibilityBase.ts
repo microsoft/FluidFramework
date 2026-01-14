@@ -165,24 +165,40 @@ export function getConfigForMinVersionForCollabIterable<T>(
 	entries: Iterable<readonly [MinimumMinorSemanticVersion | MinimumVersionForCollab, T]>, // [[typeof lowestMinVersionForCollab, T], ...[MinimumVersionForCollab, T][]],
 ): T {
 	// Validate and strongly type the versions from the configMap.
-	const versions: [MinimumVersionForCollab, unknown][] = Array.from(
-		entries,
-		([version, value]) => {
-			validateMinimumVersionForCollab(version);
-			return [version, value];
-		},
-	);
-	// Sort the versions in descending order to find the largest compatible entry.
-	// TODO: Enforcing a sorted order might be a good idea. For now tolerates any order.
+	const versions: [MinimumVersionForCollab, T][] = Array.from(entries, ([version, value]) => {
+		validateMinimumVersionForCollab(version);
+		return [version, value];
+	});
+	return (selectVersionRoundedDown(minVersionForCollab, versions) ??
+		fail(0xcb8 /* No config map entry for version */))[1];
+}
+
+/**
+ * Finds the entry for the highest version that is less than or equal to the provided minVersionForCollab.
+ * @remarks
+ * If none is found, returns undefined.
+ *
+ * When used with Fluid client versions, use the stricter {@link getConfigForMinVersionForCollabIterable} instead.
+ *
+ * @internal
+ */
+export function selectVersionRoundedDown<T>(
+	minVersionForCollab: string,
+	entries: Iterable<readonly [string, T]>,
+): readonly [string, T] | undefined {
+	// Sort a copy of the iterable in descending order
+	const versions: (readonly [string, T])[] = [...entries];
 	versions.sort((a, b) => compare(b[0], a[0]));
+
 	// For each config, we iterate over the keys and check if minVersionForCollab is greater than or equal to the version.
 	// If so, we set it as the default value for the option.
-	for (const [version, value] of versions) {
+	for (const pair of versions) {
+		const [version, _] = pair;
 		if (gte(minVersionForCollab, version)) {
-			return value as T;
+			return pair;
 		}
 	}
-	fail(0xcb8 /* No config map entry for version */);
+	return undefined;
 }
 
 /**

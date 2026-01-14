@@ -6,7 +6,15 @@
 import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../core/index.js";
 import type { TupleBTree } from "../util/index.js";
 
-export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;
+/**
+ * A BTree which uses ChangeAtomId flattened into a tuple as the key.
+ * @remarks
+ * Read values with {@link getFromChangeAtomIdMap} and write values with {@link setInChangeAtomIdMap}.
+ */
+export type ChangeAtomIdBTree<V> = TupleBTree<
+	readonly [RevisionTag | undefined, ChangesetLocalId],
+	V
+>;
 
 export function getFromChangeAtomIdMap<T>(
 	map: ChangeAtomIdBTree<T>,

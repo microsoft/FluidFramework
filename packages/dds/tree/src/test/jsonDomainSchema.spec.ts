@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { Tree } from "../shared-tree/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import type { areSafelyAssignable, requireTrue } from "../util/index.js";
-import { TreeBeta } from "../simple-tree/index.js";
+import { TreeBeta, TreeViewConfiguration } from "../simple-tree/index.js";
+import { testSchemaCompatibilitySnapshots } from "./snapshots/index.js";
 
 describe("JsonDomainSchema", () => {
 	it("examples", () => {
@@ -64,5 +66,10 @@ describe("JsonDomainSchema", () => {
 		// Due to the nature of this issue possibly being impacted by details of the .d.ts generation,
 		// there is also some testing in examples/utils/import-testing/src/test/importer.spec.ts
 		// which ensures it works from outside the package with both CJS and ESM.
+	});
+
+	it("compatibility", () => {
+		const currentViewSchema = new TreeViewConfiguration({ schema: JsonAsTree.Tree });
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.80.0", "json");
 	});
 });
