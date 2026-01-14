@@ -659,6 +659,7 @@ export class FluidDataStoreRuntime
 		id: string,
 		tree: ISnapshotTree,
 		flatBlobs?: Map<string, ArrayBufferLike>,
+		loadingFromPendingState?: boolean,
 	): RehydratedLocalChannelContext {
 		return new RehydratedLocalChannelContext(
 			id,
@@ -671,6 +672,7 @@ export class FluidDataStoreRuntime
 			(address: string) => this.setChannelDirty(address),
 			tree,
 			flatBlobs,
+			loadingFromPendingState,
 		);
 	}
 
@@ -765,11 +767,14 @@ export class FluidDataStoreRuntime
 			const blobs = new Map<string, ArrayBufferLike>();
 			const snapshotTree = buildSnapshotTree(itree.entries, blobs);
 
-			// Create a RehydratedLocalChannelContext for this pending channel
+			// Create a RehydratedLocalChannelContext for this pending channel.
+			// Pass loadingFromPendingState=true so the channel knows it was never attached
+			// and should report isAttached()=false.
 			const channelContext = this.createRehydratedLocalChannelContext(
 				channelId,
 				snapshotTree,
 				blobs,
+				true, // loadingFromPendingState
 			);
 
 			// Add it to the contexts

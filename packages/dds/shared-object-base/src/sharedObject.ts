@@ -300,12 +300,16 @@ export abstract class SharedObjectCore<
 	 */
 	public async load(services: IChannelServices): Promise<void> {
 		this.services = services;
-		// set this before load so that isAttached is true
-		// for attached runtimes when load core is running
-		this._isBoundToContext = true;
 		await this.loadCore(services.objectStorage);
 		this.attachDeltaHandler();
-		this.setBoundAndHandleAttach();
+		// For channels loading from pending state (never actually attached),
+		// skip setBoundAndHandleAttach() to keep isAttached()=false.
+		// Just set the connection state since they still need to process ops.
+		if (services.loadingFromPendingState === true) {
+			this.setConnectionState(this.runtime.connected);
+		} else {
+			this.setBoundAndHandleAttach();
+		}
 	}
 
 	/**
