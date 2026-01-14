@@ -195,6 +195,7 @@ describeCompat(
 			);
 
 			// Channel should get attached as it was registered to its dataStore
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- intentional comparison
 			assert.strictEqual(
 				channel.handle.isAttached,
 				true,
@@ -225,6 +226,7 @@ describeCompat(
 			toFluidHandleInternal(channel.handle).attachGraph();
 
 			// Channel should get attached as it was registered to its dataStore
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- intentional comparison
 			assert.strictEqual(
 				channel.handle.isAttached,
 				true,
