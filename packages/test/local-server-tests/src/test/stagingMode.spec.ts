@@ -114,9 +114,18 @@ class DataObjectWithStagingMode extends DataObject {
 	 * Enumerate the data store's data, traversing handles to other DDSes and including their data as nested keys.
 	 */
 	public async enumerateDataWithHandlesResolved(): Promise<Record<string, unknown>> {
-		const loadStateInt = async (
-			map: SharedMap,
-		): Promise<Record<string, unknown>> => {
+		// Duck-typed interface for map-like objects (works with both ISharedDirectory and ISharedMap)
+		interface MapLike {
+			keys(): IterableIterator<string>;
+			get(key: string): unknown;
+		}
+		const isMapLike = (obj: unknown): obj is MapLike =>
+			typeof obj === "object" &&
+			obj !== null &&
+			typeof (obj as MapLike).keys === "function" &&
+			typeof (obj as MapLike).get === "function";
+
+		const loadStateInt = async (map: MapLike): Promise<Record<string, unknown>> => {
 			const state: Record<string, unknown> = {};
 			for (const key of map.keys()) {
 				const value = (state[key] = map.get(key));
@@ -124,7 +133,7 @@ class DataObjectWithStagingMode extends DataObject {
 					const obj = await value.get();
 					if (obj instanceof DataObjectWithStagingMode) {
 						state[key] = await obj.enumerateDataWithHandlesResolved();
-					} else if (obj instanceof SharedMap) {
+					} else if (isMapLike(obj)) {
 						state[key] = await loadStateInt(obj);
 					} else {
 						// For other resolved handle types, just keep the resolved value
