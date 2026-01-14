@@ -2380,7 +2380,7 @@ describe("TableFactory unit tests", () => {
 			assert.equal(table.columns.length, 0);
 
 			// The constraint causes the revert to be dropped so the cell remains removed
-			fork.rebaseOnto(view);	
+			fork.rebaseOnto(view);
 			assert.equal(branchTable.columns.length, 0);
 			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" }), undefined);
 

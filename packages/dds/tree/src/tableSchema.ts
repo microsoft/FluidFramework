@@ -654,7 +654,7 @@ export namespace System_TableSchema {
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
 					}
-				}
+				};
 
 				// Ensure events are paused until all of the edits are applied.
 				withBufferedTreeEvents(() => {
@@ -718,7 +718,10 @@ export namespace System_TableSchema {
 							}),
 						);
 
-						branch.runTransaction(insertOp, columnConstraints.length > 0 ? { preconditions: columnConstraints } : undefined);
+						branch.runTransaction(
+							insertOp,
+							columnConstraints.length > 0 ? { preconditions: columnConstraints } : undefined,
+						);
 					}
 				});
 
