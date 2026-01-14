@@ -7,6 +7,11 @@ import type { Linter } from "eslint";
 
 /**
  * Shared list of permitted imports for configuring the `import-x/no-internal-modules` rule.
+ *
+ * NOTE: The `/legacy` patterns below are an intentional enhancement over the legacy CJS config
+ * (minimal-deprecated.js). They were added during the ESLint 9 flat config migration to support
+ * backwards compatibility during API transitions. Many packages in the codebase import from
+ * `/legacy` entry points (e.g., `@fluidframework/map/legacy`).
  */
 export const permittedImports = [
 	// Within Fluid Framework allow import of '/internal' from other FF packages.
@@ -17,7 +22,8 @@ export const permittedImports = [
 	"@fluid-tools/*/internal",
 	"@fluidframework/*/internal",
 
-	// Allow /legacy imports for backwards compatibility during API transition
+	// Allow /legacy imports for backwards compatibility during API transition.
+	// This is an intentional enhancement over the legacy CJS config.
 	"@fluid-example/*/legacy",
 	"@fluid-experimental/*/legacy",
 	"@fluid-internal/*/legacy",
