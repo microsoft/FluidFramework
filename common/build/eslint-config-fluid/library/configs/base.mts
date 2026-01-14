@@ -30,6 +30,7 @@ import tsdocPlugin from "eslint-plugin-tsdoc";
 import unicornPlugin from "eslint-plugin-unicorn";
 import unusedImportsPlugin from "eslint-plugin-unused-imports";
 import prettierConfig from "eslint-config-prettier";
+import globals from "globals";
 import type { Linter } from "eslint";
 
 import { globalIgnores } from "../constants.mjs";
@@ -47,6 +48,15 @@ export type FlatConfigArray = Linter.Config[];
 export function buildBaseConfig(): FlatConfigArray {
 	return [
 		globalIgnores,
+		// Global language options: browser and Node.js globals (matches legacy env: { browser: true, node: true })
+		{
+			languageOptions: {
+				globals: {
+					...globals.browser,
+					...globals.node,
+				},
+			},
+		},
 		// eslint:recommended
 		eslintJs.configs.recommended,
 		// @typescript-eslint/recommended-type-checked and stylistic-type-checked
