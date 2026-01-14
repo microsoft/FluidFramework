@@ -38,7 +38,7 @@ steps:
 
       echo "Retrieving data from ADO API";
       echo "curl -u \":<REDACTED>\" \"https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2\""
-      curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version=7.1-preview.2" > $WORK_FOLDER/output.json
+      curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1-preview.2" > $WORK_FOLDER/output.json
 
 - task: Bash@3
   displayName: Submit telemetry for stage timing and result
