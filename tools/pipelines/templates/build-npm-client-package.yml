@@ -834,8 +834,7 @@ extends:
             buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
       # Capture pipeline stage results
-      # - ${{ if eq(parameters.telemetry, true) }}:
-      # - ${{ if eq(true, true) }}:
+      - ${{ if eq(parameters.telemetry, true) }}:
         - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
           parameters:
             dependsOn:
