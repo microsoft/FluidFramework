@@ -18,14 +18,7 @@ export interface MainViewProps {
 	root: PropTreeNode<TextAsTree.Tree>;
 }
 
-/**
- * Top level view for this example.
- * @remarks
- * This component does not use any of the tree invalidation logic.
- * This is safe because the node is passed in as a PropTreeNode:
- * the type system will not allow this component to access any of the contents of the node that can change
- * and thus no custom invalidation is needed.
- */
+
 export const MainView: React.FC<MainViewProps> = ({ root }) => {
 	return <TextEditorView root={root} />;
 };
@@ -35,7 +28,7 @@ export const MainView: React.FC<MainViewProps> = ({ root }) => {
  * Uses TextAsTree for collaborative plain text storage.
  *
  * @remarks This uses withMemoizedTreeObservations to automatically re-render
- * when the tree changes, following the same pattern as inventory-app.
+ * when the tree changes
  */
 const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTree.Tree }) => {
 	const editorRef = React.useRef<HTMLDivElement>(null);
@@ -53,7 +46,7 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 				theme: "snow",
 				placeholder: "Start typing...",
 				modules: {
-					// disable toolbar
+					// disable toolbar. No formatting supported yet
 					toolbar: false,
 				},
 			});

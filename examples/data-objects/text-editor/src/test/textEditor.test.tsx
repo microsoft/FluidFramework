@@ -13,6 +13,8 @@ import * as React from "react";
 import { TextAsTree } from "../schema.js";
 import { MainView } from "../view/index.js";
 
+// TODO add collaboration tests when rich formatting is supported using TestContainerRuntimeFactory from
+// @fluidframework/test-utils to test rich formatting data sync between multiple collaborators
 describe("textEditor", () => {
 	describe("dom tests", () => {
 		let cleanup: () => void;
@@ -52,7 +54,6 @@ describe("textEditor", () => {
 					const content = <MainView root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
-					// Verify the editor container exists
 					const editorContainer = rendered.baseElement.querySelector(".ql-editor");
 					assert(editorContainer !== null, "Editor container should exist");
 
