@@ -162,6 +162,7 @@ describe("tree indexes", () => {
 				assertSameElements(index, expectedEntries);
 
 				const set = new Map(expectedEntries);
+				// eslint-disable-next-line unicorn/no-array-for-each -- Testing forEach API (third param is the map)
 				index.forEach((value, key, i) => {
 					assert.equal(i, index);
 					assert.deepEqual(value, set.get(key));
@@ -329,6 +330,7 @@ describe("tree indexes", () => {
 					assertSameElements(index, expectedEntries);
 
 					const set = new Map(expectedEntries);
+					// eslint-disable-next-line unicorn/no-array-for-each -- Testing forEach API (third param is the map)
 					index.forEach((value, key, i) => {
 						assert.equal(i, index);
 						assert.deepEqual(value, set.get(key));
@@ -444,6 +446,7 @@ describe("tree indexes", () => {
 
 		assert.throws(() => [...index.allEntries()]);
 		assert.throws(() => [...index.entries()]);
+		// eslint-disable-next-line unicorn/no-array-for-each -- Testing forEach API on disposed index
 		assert.throws(() => index.forEach(() => {}));
 		assert.throws(() => index.get(childId));
 		assert.throws(() => index.has(childId));

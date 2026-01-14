@@ -6,8 +6,9 @@
 import * as assert from "assert";
 import { type AsyncPriorityQueue, priorityQueue } from "async";
 import registerDebug from "debug";
+import type { Package } from "../../common/npmPackage";
 import type { BuildContext } from "../buildContext";
-import { type BuildPackage } from "../buildGraph";
+import type { BuildPackage } from "../buildGraph";
 import { BuildResult } from "../buildResult";
 import { options } from "../options";
 import type { LeafTask } from "./leaf/leafTask";
@@ -42,10 +43,10 @@ export abstract class Task {
 	private runP?: Promise<BuildResult>;
 	private isUpToDateP?: Promise<boolean>;
 
-	public get name() {
+	public get name(): string {
 		return `${this.node.pkg.name}#${this.taskName ?? `<${this.command}>`}`;
 	}
-	public get nameColored() {
+	public get nameColored(): string {
 		return `${this.node.pkg.nameColored}#${this.taskName ?? `<${this.command}>`}`;
 	}
 
@@ -62,13 +63,13 @@ export abstract class Task {
 		}
 	}
 
-	public get package() {
+	public get package(): Package {
 		return this.node.pkg;
 	}
 
 	// Initialize dependent tasks and collect newly created tasks to be initialized iteratively
 	// See `BuildPackage.createTasks`
-	public initializeDependentTasks(pendingInitDep: Task[]) {
+	public initializeDependentTasks(pendingInitDep: Task[]): void {
 		// This function should only be called once
 		assert.strictEqual(this.dependentTasks, undefined);
 		// This function should only be called by task with task names
@@ -78,7 +79,7 @@ export abstract class Task {
 	}
 
 	// Add dependent task. For group tasks, propagate to unnamed subtask only if it's a default dependency
-	public addDependentTasks(dependentTasks: Task[], isDefault?: boolean) {
+	public addDependentTasks(dependentTasks: Task[], isDefault?: boolean): void {
 		if (traceTaskDepTask.enabled) {
 			dependentTasks.forEach((dependentTask) => {
 				traceTaskDepTask(
@@ -92,7 +93,7 @@ export abstract class Task {
 		this.dependentTasks!.push(...dependentTasks);
 	}
 
-	protected get transitiveDependentLeafTask() {
+	protected get transitiveDependentLeafTask(): LeafTask[] {
 		if (this._transitiveDependentLeafTasks === null) {
 			// Circular dependency, start unrolling
 			throw [this];
@@ -150,7 +151,7 @@ export abstract class Task {
 		return this.isUpToDateP;
 	}
 
-	public toString() {
+	public toString(): string {
 		return `"${this.command}" in ${this.node.pkg.nameColored}`;
 	}
 
@@ -162,11 +163,11 @@ export abstract class Task {
 	protected abstract checkIsUpToDate(): Promise<boolean>;
 	protected abstract runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult>;
 
-	public get forced() {
+	public get forced(): boolean {
 		return options.force && (options.matchedOnly !== true || this.package.matched);
 	}
 
-	protected traceExec(msg: string) {
+	protected traceExec(msg: string): void {
 		traceTaskExec(`${this.nameColored}: ${msg}`);
 	}
 }

@@ -30,6 +30,7 @@ import {
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
 } from "./editManagerTestUtils.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
 
 describe("EditManager - Bench", () => {
 	interface Scenario {
@@ -56,7 +57,10 @@ describe("EditManager - Bench", () => {
 		readonly maxEditCount: number;
 	}
 
-	const defaultFamily = new DefaultChangeFamily(failCodecFamily);
+	const defaultFamily = new DefaultChangeFamily(failCodecFamily, {
+		jsonValidator: FormatValidatorBasic,
+		minVersionForCollab: FluidClientVersion.v2_0,
+	});
 	const sequencePrepend: Editor = (builder) => {
 		builder
 			.sequenceField({ parent: undefined, field: rootFieldKey })
@@ -78,15 +82,15 @@ describe("EditManager - Bench", () => {
 			changeFamily: defaultFamily,
 			mintChange: (revision) => {
 				const change = makeEditMinter(defaultFamily, sequencePrepend)();
-				return revision !== undefined
-					? defaultFamily.rebaser.changeRevision(
+				return revision === undefined
+					? change
+					: defaultFamily.rebaser.changeRevision(
 							change,
 							new DefaultRevisionReplacer(
 								revision,
 								defaultFamily.rebaser.getRevisions(change),
 							),
-						)
-					: change;
+						);
 			},
 			maxEditCount: 350,
 		},

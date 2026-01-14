@@ -11,7 +11,7 @@
  * interdependencies between packages across a BuildProject. It then provides APIs to select, filter, and work with
  * those package groups.
  *
- * @module default entrypoint
+ * @packageDocumentation
  */
 
 export {

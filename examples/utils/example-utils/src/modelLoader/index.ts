@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	IDetachedModel,
 	IModelLoader,
 } from "./interfaces.js";
 export {
 	ModelContainerRuntimeFactory,
-	IModelContainerRuntimeEntryPoint,
+	type IModelContainerRuntimeEntryPoint,
 } from "./modelContainerRuntimeFactory.js";
 export { ModelLoader } from "./modelLoader.js";
 export { SessionStorageModelLoader } from "./sessionStorageModelLoader.js";

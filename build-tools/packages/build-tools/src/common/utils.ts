@@ -14,7 +14,10 @@ import * as path from "path";
  */
 const defaultMultiCommandExecutables = ["flub", "biome"] as const;
 
-export function getExecutableFromCommand(command: string, multiCommandExecutables: string[]) {
+export function getExecutableFromCommand(
+	command: string,
+	multiCommandExecutables: string[],
+): string {
 	let toReturn: string;
 	const commands = command.split(" ");
 	const multiExecutables: Set<string> = new Set([
@@ -76,7 +79,7 @@ export async function execWithErrorAsync(
 	return ret;
 }
 
-async function rimrafAsync(deletePath: string) {
+async function rimrafAsync(deletePath: string): Promise<ExecAsyncResult> {
 	return execAsync(`rimraf "${deletePath}"`, {
 		env: {
 			PATH: `${process.env["PATH"]}${path.delimiter}${path.join(
@@ -90,7 +93,10 @@ async function rimrafAsync(deletePath: string) {
 	});
 }
 
-export async function rimrafWithErrorAsync(deletePath: string, errorPrefix: string) {
+export async function rimrafWithErrorAsync(
+	deletePath: string,
+	errorPrefix: string,
+): Promise<ExecAsyncResult> {
 	const ret = await rimrafAsync(deletePath);
 	printExecError(ret, `rimraf ${deletePath}`, errorPrefix, true);
 	return ret;
@@ -101,7 +107,7 @@ function printExecError(
 	command: string,
 	errorPrefix: string,
 	warning: boolean,
-) {
+): void {
 	if (ret.error) {
 		console.error(`${errorPrefix}: error during command ${command}`);
 		console.error(`${errorPrefix}: ${ret.error.message}`);
@@ -120,8 +126,9 @@ function printExecError(
 export async function lookUpDirAsync(
 	dir: string,
 	callback: (currentDir: string) => Promise<boolean>,
-) {
+): Promise<string | undefined> {
 	let curr = path.resolve(dir);
+
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		if (await callback(curr)) {
@@ -138,8 +145,12 @@ export async function lookUpDirAsync(
 	return undefined;
 }
 
-export function lookUpDirSync(dir: string, callback: (currentDir: string) => boolean) {
+export function lookUpDirSync(
+	dir: string,
+	callback: (currentDir: string) => boolean,
+): string | undefined {
 	let curr = path.resolve(dir);
+
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		if (callback(curr)) {
@@ -156,7 +167,7 @@ export function lookUpDirSync(dir: string, callback: (currentDir: string) => boo
 	return undefined;
 }
 
-export function isSameFileOrDir(f1: string, f2: string) {
+export function isSameFileOrDir(f1: string, f2: string): boolean {
 	if (f1 === f2) {
 		return true;
 	}
@@ -185,7 +196,7 @@ export async function exec(
 	error: string,
 	pipeStdIn?: string,
 	options?: Omit<child_process.ExecOptions, "cwd">,
-) {
+): Promise<string> {
 	const result = await execAsync(cmd, { ...options, cwd: dir }, pipeStdIn);
 	if (result.error) {
 		throw new Error(

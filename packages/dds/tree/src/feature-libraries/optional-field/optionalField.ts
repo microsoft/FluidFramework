@@ -178,10 +178,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const childChanges2ByOriginalId = new RegisterMap<NodeId>();
 		for (const [id, change] of change2.childChanges) {
 			if (id === "self") {
-				if (change1FieldSrc !== undefined) {
-					childChanges2ByOriginalId.set(change1FieldSrc, change);
-				} else {
+				if (change1FieldSrc === undefined) {
 					childChanges2ByOriginalId.set("self", change);
+				} else {
+					childChanges2ByOriginalId.set(change1FieldSrc, change);
 				}
 			} else {
 				if (change1FieldDst !== undefined && areEqualChangeAtomIds(change1FieldDst, id)) {
@@ -684,15 +684,15 @@ export function optionalFieldIntoDelta(
 		const globals: DeltaDetachedNodeChanges[] = [];
 		for (const [id, childChange] of change.childChanges) {
 			const childDelta = deltaFromChild(childChange);
-			if (id !== "self") {
+			if (id === "self") {
+				mark.fields = childDelta;
+				markIsANoop = false;
+			} else {
 				const fields = childDelta;
 				globals.push({
 					id: { major: id.revision, minor: id.localId },
 					fields,
 				});
-			} else {
-				mark.fields = childDelta;
-				markIsANoop = false;
 			}
 		}
 
@@ -748,9 +748,9 @@ function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
 					? undefined
 					: 0
 				: // If the node starts out as removed, then it remains removed in the output context iff it is not the node that is moved into the field
-					!areEqualRegisterIdsOpt(register, nodeMovedIntoField)
-					? undefined
-					: 0;
+					areEqualRegisterIdsOpt(register, nodeMovedIntoField)
+					? 0
+					: undefined;
 		return [nodeId, inputIndex, outputIndex];
 	});
 }

@@ -6,6 +6,7 @@
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import chalk from "picocolors";
+// eslint-disable-next-line import-x/no-named-as-default -- prompts default export is the intended API
 import prompts from "prompts";
 import stripAnsi from "strip-ansi";
 

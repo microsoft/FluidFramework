@@ -59,16 +59,24 @@ import { initializeForest } from "../feature-libraries/index.js";
 
 const content: JsonCompatible = { x: 42 };
 
-const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
+const codecOptions = {
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: FluidClientVersion.v2_0,
+};
+const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily, codecOptions);
 
 const dataChanges: ModularChangeset[] = [];
-const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (taggedChange) =>
-	dataChanges.push(taggedChange.change),
+const defaultEditor = new DefaultEditBuilder(
+	modularFamily,
+	mintRevisionTag,
+	(taggedChange) => dataChanges.push(taggedChange.change),
+	codecOptions,
 );
 const modularBuilder = new ModularEditBuilder(
 	modularFamily,
 	modularFamily.fieldKinds,
 	() => {},
+	codecOptions,
 );
 
 // Side effects results in `dataChanges` being populated

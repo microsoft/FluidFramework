@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
-import type { Package } from "@fluidframework/build-tools";
+import type { FluidRepo, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { lilconfig } from "lilconfig";
 import {
@@ -184,6 +184,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		const dataMap = new Map<PackageWithKind, PackageData>();
 		const config = lilconfig(configName, { searchPlaces });
 
+		const { repo } = await this.getContext();
+
 		for (const pkg of packages) {
 			// Package configuration:
 			// eslint-disable-next-line no-await-in-loop
@@ -208,12 +210,27 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 
 			// load the project based on the tsconfig
 			const project = new Project({
-				skipFileDependencyResolution: true,
+				// Be sure not to skip dependency resolution, as we want to
+				// process all files in a package.
+				skipFileDependencyResolution: false,
 				tsConfigFilePath: tsconfigPath,
 			});
 
+			// Filter to package local sources of interest
+			const sourceFiles = project
+				.getSourceFiles(
+					// Limit to sources in the current package directory
+					`${pkg.directory.replaceAll("\\", "/")}/**`,
+				)
+				// Filter out type files - only interested in runtime sources
+				.filter((source) => source.getExtension() !== ".d.ts");
+
+			this.info(
+				`Processing '${pkg.name}'s (${repo.relativeToRepo(pkg.directory)}) ${sourceFiles.length} source files.`,
+			);
 			const newAssertFiles = this.collectAssertData(
-				project,
+				repo,
+				sourceFiles,
 				assertionFunctions,
 				collected,
 				errors,
@@ -236,7 +253,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 	}
 
 	private collectAssertData(
-		project: Project,
+		repo: FluidRepo,
+		sources: Iterable<SourceFile>,
 		assertionFunctions: AssertionFunctions,
 		collected: CollectedData,
 		errors: string[],
@@ -245,8 +263,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		const otherErrors: Node[] = [];
 		const newAssertFiles = new Set<SourceFile>();
 
-		// walk all the files in the project
-		for (const sourceFile of project.getSourceFiles()) {
+		for (const sourceFile of sources) {
+			this.verbose(` Processing ${repo.relativeToRepo(sourceFile.getFilePath())}`);
 			// walk the assert message params in the file
 			for (const msg of getAssertMessageParams(sourceFile, assertionFunctions)) {
 				const nodeKind = msg.getKind();
@@ -284,8 +302,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 						if (comments.length > 0) {
 							let originalErrorText = comments[0]
 								.getText()
-								.replace(/\/\*/g, "")
-								.replace(/\*\//g, "")
+								.replaceAll("/*", "")
+								.replaceAll("*/", "")
 								.trim();
 
 							// Replace leading+trailing double quotes and backticks.

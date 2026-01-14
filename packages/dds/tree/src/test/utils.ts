@@ -50,6 +50,7 @@ import {
 
 import {
 	currentVersion,
+	type CodecWriteOptions,
 	type FormatVersion,
 	type ICodecFamily,
 	type IJsonCodec,
@@ -501,16 +502,16 @@ export class TestTreeProviderLite {
 	public synchronizeMessages(options?: { count?: number; flush?: boolean }): void {
 		const flush = options?.flush ?? true;
 		if (flush) {
-			this.containerRuntimeMap.forEach((containerRuntime) => {
+			for (const containerRuntime of this.containerRuntimeMap.values()) {
 				containerRuntime.flush();
-			});
+			}
 		}
 
 		const count = options?.count;
-		if (count !== undefined) {
-			this.runtimeFactory.processSomeMessages(count);
-		} else {
+		if (count === undefined) {
 			this.runtimeFactory.processAllMessages();
+		} else {
+			this.runtimeFactory.processSomeMessages(count);
 		}
 	}
 
@@ -816,6 +817,7 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 		forestType?: ForestType;
 		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -830,6 +832,7 @@ function createCheckoutWithContent(
 			HasListeners<CheckoutEvents>;
 		forestType?: ForestType;
 		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
@@ -1105,9 +1108,9 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			// This block makes sure we still validate the encoded data schema for codecs following the latter
 			// pattern.
 			const jsonCodec =
-				codec.json.encodedSchema !== undefined
-					? withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic)
-					: codec.json;
+				codec.json.encodedSchema === undefined
+					? codec.json
+					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
 					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
@@ -1179,9 +1182,9 @@ export function makeDiscontinuedEncodingTestSuite(
 		describe(`${version} (discontinued)`, () => {
 			const codec = family.resolve(version);
 			const jsonCodec =
-				codec.json.encodedSchema !== undefined
-					? withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic)
-					: codec.json;
+				codec.json.encodedSchema === undefined
+					? codec.json
+					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
 			it("throws when encoding", () => {
 				assert.throws(
 					() => jsonCodec.encode({}, {}),
@@ -1315,13 +1318,13 @@ export function createTestUndoRedoStacks(
 
 	function onDispose(disposed: RevertibleAlpha): void {
 		const redoIndex = redoStack.indexOf(disposed);
-		if (redoIndex !== -1) {
-			redoStack.splice(redoIndex, 1);
-		} else {
+		if (redoIndex === -1) {
 			const undoIndex = undoStack.indexOf(disposed);
 			if (undoIndex !== -1) {
 				undoStack.splice(undoIndex, 1);
 			}
+		} else {
+			redoStack.splice(redoIndex, 1);
 		}
 	}
 

@@ -12,7 +12,7 @@ import YAML from "yaml";
 import type { IFluidBuildDir } from "../fluidBuild/fluidBuildConfig";
 import { defaultLogger, type Logger } from "./logging";
 import { Package } from "./npmPackage";
-import { execWithErrorAsync, rimrafWithErrorAsync } from "./utils";
+import { type ExecAsyncResult, execWithErrorAsync, rimrafWithErrorAsync } from "./utils";
 
 const traceInit = registerDebug("fluid-build:init");
 
@@ -61,7 +61,7 @@ export class MonoRepo {
 		return this.kind as "build-tools" | "client" | "server" | "gitrest" | "historian";
 	}
 
-	static load(group: string, repoPackage: IFluidBuildDir) {
+	static load(group: string, repoPackage: IFluidBuildDir): MonoRepo | undefined {
 		const { directory, ignoredDirs } = repoPackage;
 		let packageManager: PackageManager;
 		let packageDirs: string[];
@@ -173,7 +173,7 @@ export class MonoRepo {
 		}
 	}
 
-	public static isSame(a: MonoRepo | undefined, b: MonoRepo | undefined) {
+	public static isSame(a: MonoRepo | undefined, b: MonoRepo | undefined): boolean {
 		return a !== undefined && a === b;
 	}
 
@@ -185,15 +185,15 @@ export class MonoRepo {
 				: "npm i --no-package-lock --no-shrinkwrap";
 	}
 
-	public getNodeModulePath() {
+	public getNodeModulePath(): string {
 		return path.join(this.repoPath, "node_modules");
 	}
 
-	public async install() {
+	public async install(): Promise<ExecAsyncResult> {
 		this.logger.log(`Release group ${this.kind}: Installing - ${this.installCommand}`);
 		return execWithErrorAsync(this.installCommand, { cwd: this.repoPath }, this.repoPath);
 	}
-	public async uninstall() {
+	public async uninstall(): Promise<ExecAsyncResult> {
 		return rimrafWithErrorAsync(this.getNodeModulePath(), this.repoPath);
 	}
 }

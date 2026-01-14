@@ -13,7 +13,7 @@ import type { BuildPackage } from "../../buildGraph";
 import { globFn, toPosixPath } from "../taskUtils";
 import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
-function unquote(str: string) {
+function unquote(str: string): string {
 	if (str.length >= 2 && str[0] === '"' && str[str.length - 1] === '"') {
 		return str.substr(1, str.length - 2);
 	}
@@ -21,25 +21,25 @@ function unquote(str: string) {
 }
 
 export class EchoTask extends LeafTask {
-	protected get isIncremental() {
+	protected get isIncremental(): boolean {
 		return true;
 	}
-	protected get taskWeight() {
+	protected get taskWeight(): number {
 		return 0; // generally cheap relative to other tasks
 	}
-	protected async checkLeafIsUpToDate() {
+	protected async checkLeafIsUpToDate(): Promise<boolean> {
 		return true;
 	}
 }
 
 export class LesscTask extends LeafTask {
-	protected get isIncremental() {
+	protected get isIncremental(): boolean {
 		return true;
 	}
-	protected get taskWeight() {
+	protected get taskWeight(): number {
 		return 0; // generally cheap relative to other tasks
 	}
-	protected async checkLeafIsUpToDate() {
+	protected async checkLeafIsUpToDate(): Promise<boolean> {
 		// TODO: assume lessc <src> <dst>
 		const args = this.command.split(" ");
 		if (args.length !== 3) {
@@ -152,10 +152,10 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 		return true;
 	}
 
-	protected get taskWeight() {
+	protected get taskWeight(): number {
 		return 0; // generally cheap relative to other tasks
 	}
-	protected async getInputFiles() {
+	protected async getInputFiles(): Promise<string[]> {
 		if (!this.parsed) {
 			// If we can't parse the argument, we don't know what we are doing.
 			throw new Error("error parsing command line");
@@ -175,7 +175,7 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 		return this._srcFiles;
 	}
 
-	protected async getOutputFiles() {
+	protected async getOutputFiles(): Promise<string[]> {
 		if (!this.parsed) {
 			// If we can't parse the argument, we don't know what we are doing.
 			throw new Error("error parsing command line");
@@ -207,13 +207,13 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 }
 
 export class GenVerTask extends LeafTask {
-	protected get isIncremental() {
+	protected get isIncremental(): boolean {
 		return true;
 	}
-	protected get taskWeight() {
+	protected get taskWeight(): number {
 		return 0; // generally cheap relative to other tasks
 	}
-	protected async checkLeafIsUpToDate() {
+	protected async checkLeafIsUpToDate(): Promise<boolean> {
 		const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
 		try {
 			const content = await readFile(file, "utf8");
@@ -283,7 +283,7 @@ export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 }
 
 export class GoodFence extends LeafWithFileStatDoneFileTask {
-	protected get taskWeight() {
+	protected get taskWeight(): number {
 		return 0; // generally cheap relative to other tasks
 	}
 	private inputFiles: string[] | undefined;

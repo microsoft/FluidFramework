@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// TODO: Fix prefer-nullish-coalescing and prefer-optional-chain lint violations
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/prefer-optional-chain */
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
@@ -40,7 +43,7 @@ import type {
 	IDirectoryEvents,
 	IDirectoryValueChanged,
 	ISharedDirectory,
-	ISharedDirectoryEventsInternal,
+	ISharedDirectoryEvents,
 	IValueChanged,
 } from "./interfaces.js";
 import type {
@@ -402,7 +405,7 @@ interface SequenceData {
  * @sealed
  */
 export class SharedDirectory
-	extends SharedObject<ISharedDirectoryEventsInternal>
+	extends SharedObject<ISharedDirectoryEvents>
 	implements ISharedDirectory
 {
 	/**
@@ -525,7 +528,7 @@ export class SharedDirectory
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
-		// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
+		// eslint-disable-next-line unicorn/no-array-for-each
 		this.root.forEach(callback);
 	}
 
@@ -1574,7 +1577,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (!this.directory.isAttached()) {
 			this.sequencedStorageData.clear();
 			this.directory.emit("clear", true, this.directory);
-			this.directory.emit("clearInternal", this.absolutePath, true, this.directory);
+			this.directory.emit("cleared", this.absolutePath, true, this.directory);
 			return;
 		}
 
@@ -1586,7 +1589,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.pendingStorageData.push(pendingClear);
 
 		this.directory.emit("clear", true, this.directory);
-		this.directory.emit("clearInternal", this.absolutePath, true, this.directory);
+		this.directory.emit("cleared", this.absolutePath, true, this.directory);
 		const op: IDirectoryOperation = {
 			type: "clear",
 			path: this.absolutePath,
@@ -1937,7 +1940,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Don't emit events if this directory has been disposed or no longer exists
 			if (!this.pendingStorageData.some((entry) => entry.type === "clear")) {
 				this.directory.emit("clear", local, this.directory);
-				this.directory.emit("clearInternal", this.absolutePath, local, this.directory);
+				this.directory.emit("cleared", this.absolutePath, local, this.directory);
 			}
 
 			// For pending set operations, emit valueChanged events
