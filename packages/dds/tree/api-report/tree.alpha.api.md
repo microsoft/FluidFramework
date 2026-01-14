@@ -138,9 +138,11 @@ export interface BranchableTree extends ViewableTree {
 export type ChangeMetadata = CommitMetadata & ({
     readonly isLocal: true;
     getChange(): JsonCompatibleReadOnly;
+    getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
 } | {
     readonly isLocal: false;
     readonly getChange?: undefined;
+    readonly getRevertible?: undefined;
 });
 
 // @alpha
