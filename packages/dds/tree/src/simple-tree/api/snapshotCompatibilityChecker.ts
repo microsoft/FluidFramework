@@ -215,8 +215,6 @@ export interface SnapshotFileSystem {
 
 /**
  * The combined compatibility status for both backwards and forwards compatibility checks.
- * @privateRemarks
- * TODO: what is forward and backwards here seems reversed. Either add docs which phrase things in a way this makes sense or swap them.
  */
 export interface CombinedSchemaCompatibilityStatus {
 	/**
