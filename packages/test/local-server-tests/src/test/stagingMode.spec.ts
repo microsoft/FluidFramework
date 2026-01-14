@@ -7,27 +7,27 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import {
-	type IContainer,
-	type IRuntime,
-	type IRuntimeFactory,
+import type {
+	IContainer,
+	IRuntime,
+	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
 	ConnectionState,
-	type ContainerAlpha,
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
+import type { ContainerAlpha } from "@fluidframework/container-loader/internal";
 import {
-	IContainerRuntimeOptions,
 	loadContainerRuntimeAlpha,
 } from "@fluidframework/container-runtime/internal";
-import {
-	type ConfigTypes,
-	type FluidObject,
-	type IConfigProviderBase,
-	type IErrorBase,
-	type IFluidHandle,
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type {
+	ConfigTypes,
+	FluidObject,
+	IConfigProviderBase,
+	IErrorBase,
+	IFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
@@ -114,15 +114,22 @@ class DataObjectWithStagingMode extends DataObject {
 	 * Enumerate the data store's data, traversing handles to other DDSes and including their data as nested keys.
 	 */
 	public async enumerateDataWithHandlesResolved(): Promise<Record<string, unknown>> {
-		const loadStateInt = async (map) => {
+		const loadStateInt = async (
+			map: SharedMap,
+		): Promise<Record<string, unknown>> => {
 			const state: Record<string, unknown> = {};
 			for (const key of map.keys()) {
 				const value = (state[key] = map.get(key));
 				if (isFluidHandle(value)) {
 					const obj = await value.get();
-					state[key] = await (obj instanceof DataObjectWithStagingMode
-						? obj.enumerateDataWithHandlesResolved()
-						: loadStateInt(obj));
+					if (obj instanceof DataObjectWithStagingMode) {
+						state[key] = await obj.enumerateDataWithHandlesResolved();
+					} else if (obj instanceof SharedMap) {
+						state[key] = await loadStateInt(obj);
+					} else {
+						// For other resolved handle types, just keep the resolved value
+						state[key] = obj;
+					}
 				}
 			}
 			return state;
