@@ -194,6 +194,33 @@ function calculateUpdateProviders(
 }
 
 /**
+ * Prepares the expected client join signal and calculates update providers.
+ */
+function prepareExpectedClientJoin(
+	runtime: MockEphemeralRuntime,
+	attendeeId: string,
+	clientConnectionId: ClientConnectionId,
+	clock: Omit<SinonFakeTimers, "restore">,
+): {
+	expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">>;
+	updateProviders: ClientConnectionId[];
+} {
+	const updateProviders = calculateUpdateProviders(runtime, clientConnectionId);
+
+	const expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
+		attendeeId,
+		clientConnectionId,
+		updateProviders,
+	});
+	delete expectedClientJoin.clientId;
+	runtime.signalsExpected.push([expectedClientJoin]);
+
+	return { expectedClientJoin, updateProviders };
+}
+
+/**
  * Processes the local join signal and sends a fake join response.
  */
 function processJoinSignalAndResponse(
@@ -290,16 +317,12 @@ export function prepareConnectedPresence(
 	runtime.clientId = clientConnectionId;
 	runtime.joined = true;
 
-	const updateProviders = calculateUpdateProviders(runtime, clientConnectionId);
-
-	const expectedClientJoin: OutboundClientJoinMessage &
-		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
+	const { expectedClientJoin, updateProviders } = prepareExpectedClientJoin(
+		runtime,
 		attendeeId,
 		clientConnectionId,
-		updateProviders,
-	});
-	delete expectedClientJoin.clientId;
-	runtime.signalsExpected.push([expectedClientJoin]);
+		clock,
+	);
 
 	const { presence, processSignal } = createPresenceAndValidate(runtime, attendeeId, logger);
 	runtime.assertAllSignalsSubmitted();
@@ -368,19 +391,12 @@ export function prepareDisconnectedPresence(
 	const { presence, processSignal } = createPresenceAndValidate(runtime, attendeeId, logger);
 
 	const connect = (): void => {
-		const updateProviders = calculateUpdateProviders(runtime, clientConnectionId);
-
-		const expectedClientJoin: OutboundClientJoinMessage &
-			Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(
-			clock.now,
-			{
-				attendeeId,
-				clientConnectionId,
-				updateProviders,
-			},
+		const { expectedClientJoin, updateProviders } = prepareExpectedClientJoin(
+			runtime,
+			attendeeId,
+			clientConnectionId,
+			clock,
 		);
-		delete expectedClientJoin.clientId;
-		runtime.signalsExpected.push([expectedClientJoin]);
 
 		// Simulate connection
 		runtime.connect(clientConnectionId, undefined);
