@@ -82,10 +82,6 @@ parameters:
   type: string
   default: true
 
-- name: loggerPackage
-  type: string
-  default: '@ff-internal/aria-logger'
-
 - name: tenantSetupPackage
   type: string
   default: '@ff-internal/trips-setup'

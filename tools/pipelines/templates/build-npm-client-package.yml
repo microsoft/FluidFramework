@@ -154,7 +154,7 @@ resources:
       ref: refs/tags/release
     - repository: ff_pipeline_host
       type: git
-      name: ff_pipeline_host
+      name: internal/ff_pipeline_host
   # Listing a pipeline as a resource makes its artifacts available for download in any job
   pipelines:
     # Access to this pipelines artifacts allows 1ES deployment jobs to install build tools without checking out out a repo.
@@ -188,8 +188,12 @@ extends:
         image: windows-2022
         os: windows
       sourceRepositoriesToScan:
-        include:
-        - repository: ff_pipeline_host
+        ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+          include:
+            - repository: ff_pipeline_host
+        ${{ else }}:
+          exclude:
+            - repository: ff_pipeline_host
       # Tentative workaround for the occasional Credscan failures
       credscan:
         batchSize: 4
