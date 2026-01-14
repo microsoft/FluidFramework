@@ -81,11 +81,35 @@ export const minimalDeprecatedRules: Linter.RulesRecord = {
 	"unicorn/prefer-ternary": "error",
 	"unicorn/prefer-type-error": "error",
 
+	// Rules enabled with warn severity (from minimal-deprecated.js)
+	// Note: these will be promoted to "error" in future releases
+	"@typescript-eslint/consistent-type-exports": [
+		"warn",
+		{
+			fixMixedExportsWithInlineTypeSpecifier: true,
+		},
+	],
+	"@typescript-eslint/consistent-type-imports": ["warn", { fixStyle: "inline-type-imports" }],
+	"@typescript-eslint/explicit-module-boundary-types": "warn",
+	"@typescript-eslint/no-explicit-any": [
+		"warn",
+		{
+			ignoreRestArgs: true,
+		},
+	],
+	"@typescript-eslint/no-unsafe-argument": "warn",
+	"@typescript-eslint/no-unsafe-assignment": "warn",
+	"@typescript-eslint/no-unsafe-call": "warn",
+	"@typescript-eslint/no-unsafe-member-access": "warn",
+	"@typescript-eslint/no-unsafe-return": "warn",
+	"no-void": "warn",
+	"require-atomic-updates": "warn",
+	"unicorn/numeric-separators-style": ["warn", { onlyIfContainsSeparator: true }],
+
 	// Disabled intentionally (from minimal-deprecated.js)
 	"@rushstack/typedef-var": "off",
 	"@typescript-eslint/explicit-member-accessibility": "off",
 	"@typescript-eslint/member-ordering": "off",
-	"@typescript-eslint/no-explicit-any": "off",
 	"@typescript-eslint/no-unused-vars": "off",
 	"@typescript-eslint/no-use-before-define": "off",
 	"@typescript-eslint/typedef": "off",
@@ -96,11 +120,7 @@ export const minimalDeprecatedRules: Linter.RulesRecord = {
 	"@typescript-eslint/no-unsafe-enum-comparison": "off",
 	"@typescript-eslint/no-redundant-type-constituents": "off",
 	"@typescript-eslint/consistent-generic-constructors": "off",
-	"@typescript-eslint/consistent-type-exports": "off",
-	"@typescript-eslint/consistent-type-imports": "off",
 	"func-call-spacing": "off",
-	"no-void": "off",
-	"require-atomic-updates": "off",
 	"dot-notation": "off",
 	"no-unused-expressions": "off",
 
