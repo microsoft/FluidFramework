@@ -182,7 +182,7 @@ export function getConfigForMinVersionForCollabIterable<T>(
 			return value as T;
 		}
 	}
-	fail("No config map entry for version");
+	fail(0xcb8 /* No config map entry for version */);
 }
 
 /**
@@ -222,7 +222,7 @@ export function isValidMinVersionForCollab(
 	return isValidSemver && isGteLowestMinVersion && isLtePkgVersion;
 }
 
-const parsedPackageVersion = parse(pkgVersion) ?? fail("Invalid package version");
+const parsedPackageVersion = parse(pkgVersion) ?? fail(0xcb9 /* Invalid package version */);
 
 /**
  * `pkgVersion` version without pre-release.

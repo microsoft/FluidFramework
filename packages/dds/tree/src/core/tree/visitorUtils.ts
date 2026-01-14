@@ -78,24 +78,40 @@ export function combineVisitors(visitors: readonly CombinableVisitor[]): Combine
 	return {
 		type: "Combined",
 		visitors: allVisitors,
-		free: () => visitors.forEach((v) => v.free()),
+		free: () => {
+			for (const v of visitors) {
+				v.free();
+			}
+		},
 		create: (...args) => {
-			allVisitors.forEach((v) => v.create(...args));
-			announcedVisitors.forEach((v) => v.afterCreate(...args));
+			for (const v of allVisitors) {
+				v.create(...args);
+			}
+			for (const v of announcedVisitors) {
+				v.afterCreate(...args);
+			}
 		},
 		destroy: (...args) => {
-			announcedVisitors.forEach((v) => v.beforeDestroy(...args));
-			allVisitors.forEach((v) => v.destroy(...args));
+			for (const v of announcedVisitors) {
+				v.beforeDestroy(...args);
+			}
+			for (const v of allVisitors) {
+				v.destroy(...args);
+			}
 		},
 		attach: (source: FieldKey, count: number, destination: PlaceIndex) => {
-			announcedVisitors.forEach((v) => v.beforeAttach(source, count, destination));
-			allVisitors.forEach((v) => v.attach(source, count, destination));
-			announcedVisitors.forEach((v) =>
+			for (const v of announcedVisitors) {
+				v.beforeAttach(source, count, destination);
+			}
+			for (const v of allVisitors) {
+				v.attach(source, count, destination);
+			}
+			for (const v of announcedVisitors) {
 				v.afterAttach(source, {
 					start: destination,
 					end: destination + count,
-				}),
-			);
+				});
+			}
 		},
 		detach: (
 			source: Range,
@@ -103,16 +119,36 @@ export function combineVisitors(visitors: readonly CombinableVisitor[]): Combine
 			id: DetachedNodeId,
 			isReplaced: boolean,
 		) => {
-			announcedVisitors.forEach((v) => v.beforeDetach(source, destination, isReplaced));
-			allVisitors.forEach((v) => v.detach(source, destination, id, isReplaced));
-			announcedVisitors.forEach((v) =>
-				v.afterDetach(source.start, source.end - source.start, destination, isReplaced),
-			);
+			for (const v of announcedVisitors) {
+				v.beforeDetach(source, destination, isReplaced);
+			}
+			for (const v of allVisitors) {
+				v.detach(source, destination, id, isReplaced);
+			}
+			for (const v of announcedVisitors) {
+				v.afterDetach(source.start, source.end - source.start, destination, isReplaced);
+			}
 		},
-		enterNode: (...args) => allVisitors.forEach((v) => v.enterNode(...args)),
-		exitNode: (...args) => allVisitors.forEach((v) => v.exitNode(...args)),
-		enterField: (...args) => allVisitors.forEach((v) => v.enterField(...args)),
-		exitField: (...args) => allVisitors.forEach((v) => v.exitField(...args)),
+		enterNode: (...args) => {
+			for (const v of allVisitors) {
+				v.enterNode(...args);
+			}
+		},
+		exitNode: (...args) => {
+			for (const v of allVisitors) {
+				v.exitNode(...args);
+			}
+		},
+		enterField: (...args) => {
+			for (const v of allVisitors) {
+				v.enterField(...args);
+			}
+		},
+		exitField: (...args) => {
+			for (const v of allVisitors) {
+				v.exitField(...args);
+			}
+		},
 	};
 }
 

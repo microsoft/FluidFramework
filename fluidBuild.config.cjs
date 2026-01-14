@@ -49,7 +49,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
+			dependsOn: ["commonjs", "build:esnext", "^api", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -78,9 +78,9 @@ module.exports = {
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
-		"build:test": ["typetests:gen", "tsc"],
-		"build:test:cjs": ["typetests:gen", "tsc"],
-		"build:test:esm": ["typetests:gen", "build:esnext"],
+		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
+		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
+		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
@@ -609,8 +609,7 @@ module.exports = {
 	},
 
 	assertTagging: {
-		// TODO: AB#55437: excluding packages under packages/test should not be required: there is a config file at packages/test/assertTagging.config.mjs which used to accomplish this but it stopped working.
-		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages\/(?!test\/)/i],
+		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages/i],
 	},
 
 	// `flub bump` config. These settings influence `flub bump` behavior for a release group. These settings can be

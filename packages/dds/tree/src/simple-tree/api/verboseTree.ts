@@ -127,9 +127,8 @@ export function applySchemaToParserOptions(
 
 	return {
 		keyConverter:
-			config.keys !== KeyEncodingOptions.usePropertyKeys
-				? undefined
-				: {
+			config.keys === KeyEncodingOptions.usePropertyKeys
+				? {
 						encode: (type, key: FieldKey): string => {
 							// translate stored key into property key.
 							const simpleNodeSchema =
@@ -167,7 +166,8 @@ export function applySchemaToParserOptions(
 							}
 							return brand(inputKey);
 						},
-					},
+					}
+				: undefined,
 	};
 }
 

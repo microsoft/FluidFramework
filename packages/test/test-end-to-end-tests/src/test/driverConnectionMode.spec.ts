@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
-import { type ConnectionMode } from "@fluidframework/driver-definitions/internal";
+import type { ConnectionMode } from "@fluidframework/driver-definitions/internal";
 import {
 	createTestConfigProvider,
 	waitForContainerConnection,

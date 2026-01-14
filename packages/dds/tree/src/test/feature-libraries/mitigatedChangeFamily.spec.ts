@@ -11,6 +11,7 @@ import type {
 	TaggedChange,
 	ChangeEncodingContext,
 	RevisionTag,
+	RevisionReplacer,
 } from "../../core/index.js";
 import { makeMitigatedChangeFamily } from "../../feature-libraries/index.js";
 import type { ICodecFamily } from "../../codec/index.js";
@@ -49,7 +50,13 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(over, arg2);
 			throw new Error("rebase");
 		},
-		changeRevision: (): string => {
+		getRevisions: (change: string): Set<RevisionTag | undefined> => {
+			assert.equal(change, arg1);
+			throw new Error("getRevisions");
+		},
+		changeRevision: (change: string, replacer: RevisionReplacer): string => {
+			assert.equal(change, arg1);
+			assert.equal(replacer, arg2);
 			throw new Error("changeRevision");
 		},
 	},
@@ -79,7 +86,15 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(over, arg2);
 			return "rebase";
 		},
-		changeRevision: (change: string): string => change,
+		getRevisions: (change: string): Set<RevisionTag | undefined> => {
+			assert.equal(change, arg1);
+			return "getRevisions" as unknown as Set<RevisionTag | undefined>;
+		},
+		changeRevision: (change: string, replacer: RevisionReplacer): string => {
+			assert.equal(change, arg1);
+			assert.equal(replacer, arg2);
+			return "changeRevision";
+		},
 	},
 	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext>,
 };
@@ -111,6 +126,14 @@ describe("makeMitigatedChangeFamily", () => {
 			returningRebaser.invert(arg1, arg2, revision),
 		);
 		assert.equal(mitigatedReturningRebaser.compose(arg1), returningRebaser.compose(arg1));
+		assert.equal(
+			mitigatedReturningRebaser.getRevisions(arg1),
+			returningRebaser.getRevisions(arg1),
+		);
+		assert.equal(
+			mitigatedReturningRebaser.changeRevision(arg1, arg2),
+			returningRebaser.changeRevision(arg1, arg2),
+		);
 	});
 	describe("catches errors from", () => {
 		it("rebase", () => {
@@ -127,6 +150,16 @@ describe("makeMitigatedChangeFamily", () => {
 			errorLog.length = 0;
 			assert.equal(mitigatedThrowingRebaser.compose(arg1), fallback);
 			assert.deepEqual(errorLog, ["compose"]);
+		});
+		it("getRevisions", () => {
+			errorLog.length = 0;
+			assert.deepEqual(mitigatedThrowingRebaser.getRevisions(arg1), new Set());
+			assert.deepEqual(errorLog, ["getRevisions"]);
+		});
+		it("changeRevision", () => {
+			errorLog.length = 0;
+			assert.equal(mitigatedThrowingRebaser.changeRevision(arg1, arg2), fallback);
+			assert.deepEqual(errorLog, ["changeRevision"]);
 		});
 	});
 	it("does not catch errors from buildEditor", () => {

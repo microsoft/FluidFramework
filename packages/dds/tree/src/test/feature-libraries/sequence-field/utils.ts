@@ -35,8 +35,11 @@ import {
 	setInCrossFieldMap,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/index.js";
+import {
+	DefaultRevisionReplacer,
+	rebaseRevisionMetadataFromInfo,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
 import {
@@ -177,9 +180,9 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Source);
 				const normalized: Mutable<SF.MoveIn> = { ...effect };
 				normalized.finalEndpoint =
-					normalized.finalEndpoint !== undefined
-						? normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Destination)
-						: normalizeAtom(effectId, CrossFieldTarget.Destination);
+					normalized.finalEndpoint === undefined
+						? normalizeAtom(effectId, CrossFieldTarget.Destination)
+						: normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Destination);
 				normalized.id = atom.localId;
 				normalized.revision = atom.revision;
 				return normalized as TEffect;
@@ -188,14 +191,15 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<SF.MoveOut> = { ...effect };
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (normalized.idOverride === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
 					normalized.idOverride = effectId;
 				}
 				normalized.finalEndpoint =
-					normalized.finalEndpoint !== undefined
-						? normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Source)
-						: normalizeAtom(effectId, CrossFieldTarget.Source);
+					normalized.finalEndpoint === undefined
+						? normalizeAtom(effectId, CrossFieldTarget.Source)
+						: normalizeAtom(normalized.finalEndpoint, CrossFieldTarget.Source);
 				normalized.id = atom.localId;
 				normalized.revision = atom.revision;
 				return normalized as TEffect;
@@ -204,6 +208,7 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<SF.Remove> = { ...effect };
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (normalized.idOverride === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
 					normalized.idOverride = effectId;
@@ -239,15 +244,18 @@ export function composeDeep(
 ): WrappedChange {
 	const metadata = revisionMetadata ?? defaultRevisionMetadataFromChanges(changes);
 
-	return changes.length === 0
-		? ChangesetWrapper.create([])
-		: changes.reduce((change1, change2) =>
-				makeAnonChange(
-					ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
-						composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
-					),
-				),
-			).change;
+	if (changes.length === 0) {
+		return ChangesetWrapper.create([]);
+	}
+	let result = changes[0];
+	for (let i = 1; i < changes.length; i++) {
+		result = makeAnonChange(
+			ChangesetWrapper.compose(result, changes[i], (c1, c2, composeChild) =>
+				composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
+			),
+		);
+	}
+	return result.change;
 }
 
 export function composeNoVerify(
@@ -311,11 +319,11 @@ function composeI(
 	const changes = taggedChanges.map(({ change }) => change);
 	const idAllocator = continuingAllocator(changes);
 	const metadata =
-		revInfos !== undefined
-			? Array.isArray(revInfos)
+		revInfos === undefined
+			? defaultRevisionMetadataFromChanges(taggedChanges)
+			: Array.isArray(revInfos)
 				? revisionMetadataSourceFromInfo(revInfos)
-				: revInfos
-			: defaultRevisionMetadataFromChanges(taggedChanges);
+				: revInfos;
 
 	let composed: SF.Changeset = [];
 	for (const change of changes) {
@@ -810,17 +818,14 @@ export function tagChangeInline(
 	rollbackOf?: RevisionTag,
 ): TaggedChange<Changeset> {
 	const inlined = inlineRevision(change, revision);
-	return rollbackOf !== undefined
-		? tagRollbackInverse(inlined, revision, rollbackOf)
-		: tagChange(inlined, revision);
+	return rollbackOf === undefined
+		? tagChange(inlined, revision)
+		: tagRollbackInverse(inlined, revision, rollbackOf);
 }
 
 export function inlineRevision(change: Changeset, revision: RevisionTag): Changeset {
-	return SF.sequenceFieldChangeRebaser.replaceRevisions(
-		change,
-		new Set([undefined]),
-		revision,
-	);
+	const replacer = new DefaultRevisionReplacer(revision, new Set([undefined]));
+	return SF.sequenceFieldChangeRebaser.replaceRevisions(change, replacer);
 }
 
 interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {

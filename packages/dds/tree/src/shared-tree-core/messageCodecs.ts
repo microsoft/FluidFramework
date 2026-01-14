@@ -55,6 +55,7 @@ export function clientVersionToMessageFormatVersion(
 		getConfigForMinVersionForCollab(clientVersion, {
 			[lowestMinVersionForCollab]: MessageFormatVersion.v3,
 			[FluidClientVersion.v2_43]: MessageFormatVersion.v4,
+			[FluidClientVersion.v2_80]: MessageFormatVersion.v6,
 		}),
 	);
 	return writeVersionOverride ?? compatibleVersion;
@@ -130,7 +131,7 @@ export function makeMessageCodecs<TChangeset>(
 			JsonCompatibleReadOnly,
 			MessageEncodingContext
 		>,
-	][] = Array.from(messageFormatVersions).map((version) => {
+	][] = [...messageFormatVersions].map((version) => {
 		switch (version) {
 			case unbrand(MessageFormatVersion.undefined):
 			case unbrand(MessageFormatVersion.v1):
@@ -143,7 +144,8 @@ export function makeMessageCodecs<TChangeset>(
 				];
 			}
 			case unbrand(MessageFormatVersion.v3):
-			case unbrand(MessageFormatVersion.v4): {
+			case unbrand(MessageFormatVersion.v4):
+			case unbrand(MessageFormatVersion.v6): {
 				const changeCodec = changeCodecs.resolve(
 					dependentChangeFormatVersion.lookup(version),
 				).json;
