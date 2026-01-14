@@ -241,6 +241,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	private insertInternal(...values: any[]): void {
 		for (const value of values) {
 			if (value) {
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (!value._id) {
 					value._id = uuid();
 				}

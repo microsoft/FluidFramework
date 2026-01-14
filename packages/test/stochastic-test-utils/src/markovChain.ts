@@ -82,6 +82,7 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 
 	constructor(random: IRandom = makeRandom(1), chain?: Record<string, [string, number][]>) {
 		super();
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ?? could change behavior for falsy values
 		this.chain = chain ? chain : {};
 
 		this.random = random;
@@ -97,6 +98,7 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 			let prevWord: string | null = null;
 			for (let i = 0; i < sentence.length; i++) {
 				const word = sentence[i];
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (initialChain[word] === undefined) {
 					initialChain[word] = {};
 				}
@@ -220,6 +222,7 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 
 	constructor(random: IRandom = makeRandom(1), chain?: Record<string, string[]>) {
 		super();
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ?? could change behavior for falsy values
 		this.chain = chain ? chain : {};
 		this.random = random;
 	}
@@ -233,6 +236,7 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 			let prevWord: string | null = null;
 			for (let i = 0; i < sentence.length; i++) {
 				const word = sentence[i];
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (this.chain[word] === undefined) {
 					this.chain[word] = [];
 				}

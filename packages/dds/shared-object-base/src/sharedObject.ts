@@ -238,6 +238,7 @@ export abstract class SharedObjectCore<
 	 * @param error - error object that is thrown whenever an attempt is made to modify this object
 	 */
 	private closeWithError(error: IFluidErrorBase | undefined): void {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.closeError === undefined) {
 			this.closeError = error;
 		}

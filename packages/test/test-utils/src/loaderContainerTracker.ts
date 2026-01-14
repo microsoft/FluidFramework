@@ -515,6 +515,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		for (const container of containersToApply) {
 			const record = this.containers.get(container);
 			if (record !== undefined && !record.paused) {
+				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 				if (record.pauseP === undefined) {
 					record.pauseP = this.pauseContainer(container, record);
 				}

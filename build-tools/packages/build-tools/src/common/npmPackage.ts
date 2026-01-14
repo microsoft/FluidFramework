@@ -177,20 +177,20 @@ export class Package {
 		return this.monoRepo !== undefined && this.directory === this.monoRepo.repoPath;
 	}
 
-	public get matched() {
+	public get matched(): boolean {
 		return this._matched;
 	}
 
-	public setMatched() {
+	public setMatched(): void {
 		this._matched = true;
 	}
 
-	public get dependencies() {
+	public get dependencies(): string[] {
 		return Object.keys(this.packageJson.dependencies ?? {});
 	}
 
 	public get combinedDependencies(): Generator<PackageDependency, void> {
-		const it = function* (packageJson: PackageJson) {
+		const it = function* (packageJson: PackageJson): Generator<PackageDependency, void> {
 			for (const item in packageJson.dependencies) {
 				yield {
 					name: item,
@@ -227,7 +227,7 @@ export class Package {
 	 * Get the full path for the lock file.
 	 * @returns full path for the lock file, or undefined if one doesn't exist
 	 */
-	public getLockFilePath() {
+	public getLockFilePath(): string | undefined {
 		const directory = this.monoRepo ? this.monoRepo.repoPath : this.directory;
 		const lockFileNames = ["pnpm-lock.yaml", "yarn.lock", "package-lock.json"];
 		for (const lockFileName of lockFileNames) {
@@ -247,7 +247,7 @@ export class Package {
 				: "npm i";
 	}
 
-	private get color() {
+	private get color(): (typeof Package.chalkColor)[number] {
 		return Package.chalkColor[this.packageId % Package.chalkColor.length];
 	}
 
@@ -255,19 +255,19 @@ export class Package {
 		return this.packageJson.scripts ? this.packageJson.scripts[name] : undefined;
 	}
 
-	public async cleanNodeModules() {
+	public async cleanNodeModules(): Promise<ExecAsyncResult> {
 		return rimrafWithErrorAsync(path.join(this.directory, "node_modules"), this.nameColored);
 	}
 
-	public async savePackageJson() {
+	public async savePackageJson(): Promise<void> {
 		writePackageJson(this.packageJsonFileName, this.packageJson, this._indent);
 	}
 
-	public reload() {
+	public reload(): void {
 		this._packageJson = readJsonSync(this.packageJsonFileName);
 	}
 
-	public async checkInstall(print: boolean = true) {
+	public async checkInstall(print: boolean = true): Promise<boolean> {
 		if (this.combinedDependencies.next().done) {
 			// No dependencies
 			return true;
@@ -296,7 +296,7 @@ export class Package {
 		return succeeded;
 	}
 
-	public async install() {
+	public async install(): Promise<ExecAsyncResult> {
 		if (this.monoRepo) {
 			throw new Error("Package in a monorepo shouldn't be installed");
 		}
@@ -320,7 +320,7 @@ export class Package {
 		group: string,
 		monoRepo?: MonoRepo,
 		additionalProperties?: TAddProps,
-	) {
+	): InstanceType<T> & TAddProps {
 		return new this(
 			packageJsonFileName,
 			group,
@@ -346,7 +346,7 @@ export class Package {
 		group: string,
 		monoRepo?: MonoRepo,
 		additionalProperties?: TAddProps,
-	) {
+	): InstanceType<T> & TAddProps {
 		return Package.load(
 			path.join(packageDir, "package.json"),
 			group,
@@ -366,7 +366,7 @@ async function queueExec<TItem, TResult>(
 	items: Iterable<TItem>,
 	exec: (item: TItem) => Promise<TResult>,
 	messageCallback?: (item: TItem) => string,
-) {
+): Promise<TResult[]> {
 	let numDone = 0;
 	const timedExec = messageCallback
 		? async (item: TItem) => {
@@ -401,7 +401,7 @@ export class Packages {
 		group: string,
 		ignoredDirFullPaths: string[] | undefined,
 		monoRepo?: MonoRepo,
-	) {
+	): Package[] {
 		const packageJsonFileName = path.join(dirFullPath, "package.json");
 		if (existsSync(packageJsonFileName)) {
 			return [Package.load(packageJsonFileName, group, monoRepo)];
@@ -423,7 +423,7 @@ export class Packages {
 		return packages;
 	}
 
-	public async cleanNodeModules() {
+	public async cleanNodeModules(): Promise<boolean> {
 		return this.queueExecOnAllPackage((pkg) => pkg.cleanNodeModules(), "rimraf node_modules");
 	}
 
@@ -431,7 +431,7 @@ export class Packages {
 		exec: (pkg: Package) => Promise<TResult>,
 		parallel: boolean,
 		message?: string,
-	) {
+	): Promise<TResult[]> {
 		if (parallel) {
 			return this.queueExecOnAllPackageCore(exec, message);
 		}
@@ -443,10 +443,13 @@ export class Packages {
 		return results;
 	}
 
-	public static async clean(packages: Package[], status: boolean) {
+	public static async clean(packages: Package[], status: boolean): Promise<boolean> {
 		const cleanP: Promise<ExecAsyncResult>[] = [];
 		let numDone = 0;
-		const execCleanScript = async (pkg: Package, cleanScript: string) => {
+		const execCleanScript = async (
+			pkg: Package,
+			cleanScript: string,
+		): Promise<ExecAsyncResult> => {
 			const startTime = Date.now();
 			const result = await execWithErrorAsync(
 				cleanScript,
@@ -486,7 +489,7 @@ export class Packages {
 	private async queueExecOnAllPackageCore<TResult>(
 		exec: (pkg: Package) => Promise<TResult>,
 		message?: string,
-	) {
+	): Promise<TResult[]> {
 		const messageCallback = message
 			? (pkg: Package) => ` ${pkg.nameColored}: ${message}`
 			: undefined;
@@ -496,7 +499,7 @@ export class Packages {
 	private async queueExecOnAllPackage(
 		exec: (pkg: Package) => Promise<ExecAsyncResult>,
 		message?: string,
-	) {
+	): Promise<boolean> {
 		const results = await this.queueExecOnAllPackageCore(exec, message);
 		return !results.some((result) => result.error);
 	}
@@ -522,6 +525,6 @@ export function readPackageJsonAndIndent(
 /**
  * Writes a PackageJson object to a file using the provided indentation.
  */
-function writePackageJson(packagePath: string, pkgJson: PackageJson, indent: string) {
+function writePackageJson(packagePath: string, pkgJson: PackageJson, indent: string): void {
 	return writeJsonSync(packagePath, sortPackageJson(pkgJson), { spaces: indent });
 }

@@ -6,7 +6,7 @@
 import type { AsyncPriorityQueue } from "async";
 
 import type { BuildContext } from "../buildContext";
-import { type BuildPackage } from "../buildGraph";
+import type { BuildPackage } from "../buildGraph";
 import { BuildResult } from "../buildResult";
 import type { LeafTask } from "./leaf/leafTask";
 import { Task, type TaskExec } from "./task";
@@ -23,7 +23,7 @@ export class GroupTask extends Task {
 		super(node, command, context, taskName);
 	}
 
-	public initializeDependentLeafTasks() {
+	public initializeDependentLeafTasks(): void {
 		// Push this task's dependencies to the leaves
 		this.addDependentLeafTasks(this.transitiveDependentLeafTask);
 
@@ -54,7 +54,7 @@ export class GroupTask extends Task {
 		}
 	}
 
-	public collectLeafTasks(leafTasks: Set<LeafTask>) {
+	public collectLeafTasks(leafTasks: Set<LeafTask>): void {
 		for (const task of this.subTasks) {
 			task.collectLeafTasks(leafTasks);
 		}
@@ -66,7 +66,7 @@ export class GroupTask extends Task {
 		}
 	}
 
-	public initializeWeight() {
+	public initializeWeight(): void {
 		for (const task of this.subTasks) {
 			task.initializeWeight();
 		}

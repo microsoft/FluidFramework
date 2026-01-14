@@ -7,16 +7,16 @@ import { getApiExtractorConfigFilePath, getInstalledPackageVersion } from "../ta
 import { TscDependentTask } from "./tscTask.js";
 
 export class ApiExtractorTask extends TscDependentTask {
-	protected get configFileFullPaths() {
+	protected get configFileFullPaths(): string[] {
 		// TODO: read all configs used by command via api-extractor simple extension pattern
 		return [this.getPackageFileFullPath(getApiExtractorConfigFilePath(this.command))];
 	}
 
-	protected async getToolVersion() {
+	protected async getToolVersion(): Promise<string> {
 		return getInstalledPackageVersion("@microsoft/api-extractor", this.node.pkg.directory);
 	}
 
-	protected get useWorker() {
+	protected get useWorker(): boolean {
 		return useWorker(this.command);
 	}
 }

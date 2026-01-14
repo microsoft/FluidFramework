@@ -86,6 +86,10 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		this.prefetchTreeCore(tree, secondary);
 
 		for (const blob of secondary) {
+			// Skip if already cached (avoids unnecessary async overhead)
+			if (this.prefetchCache.has(blob)) {
+				continue;
+			}
 			// Fire-and-forget prefetch. The .catch() prevents unhandled rejection
 			// since cachedRead is async and returns a separate promise chain.
 			this.cachedRead(blob).catch(() => {});
@@ -95,7 +99,8 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 	private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]): void {
 		for (const [blobKey, blob] of Object.entries(tree.blobs)) {
 			if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
-				if (blob !== null) {
+				// Skip if already cached (avoids unnecessary async overhead)
+				if (blob !== null && !this.prefetchCache.has(blob)) {
 					// Fire-and-forget prefetch. The .catch() prevents unhandled rejection
 					// since cachedRead is async and returns a separate promise chain.
 					this.cachedRead(blob).catch(() => {});

@@ -232,6 +232,7 @@ export function setValidateRefCount(
 export class LocalReferenceCollection {
 	public static append(seg1: ISegmentInternal, seg2: ISegmentInternal): void {
 		if (seg2.localRefs && !seg2.localRefs.empty) {
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 			if (!seg1.localRefs) {
 				seg1.localRefs = new LocalReferenceCollection(seg1);
 			}

@@ -81,6 +81,7 @@ export class LazyPromise<T> implements Promise<T> {
 	}
 
 	private async getPromise(): Promise<T> {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if result is a falsy value
 		if (this.result === undefined) {
 			this.result = this.execute();
 		}

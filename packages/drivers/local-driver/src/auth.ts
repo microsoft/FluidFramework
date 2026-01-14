@@ -21,6 +21,7 @@ export function generateToken(
 	lifetime: number = 60 * 60,
 	ver: string = "1.0",
 ): string {
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ?? could change behavior for falsy values
 	let userClaim = user ? user : generateUser();
 	if (userClaim.id === "" || userClaim.id === undefined) {
 		userClaim = generateUser();

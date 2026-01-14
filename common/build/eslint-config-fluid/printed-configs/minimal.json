@@ -650,10 +650,16 @@
             "error"
         ],
         "@typescript-eslint/consistent-type-exports": [
-            "off"
+            "warn",
+            {
+                "fixMixedExportsWithInlineTypeSpecifier": true
+            }
         ],
         "@typescript-eslint/consistent-type-imports": [
-            "off"
+            "warn",
+            {
+                "fixStyle": "inline-type-imports"
+            }
         ],
         "@typescript-eslint/dot-notation": [
             "error",
@@ -679,7 +685,7 @@
             "off"
         ],
         "@typescript-eslint/explicit-module-boundary-types": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/func-call-spacing": [
             "off"
@@ -746,7 +752,10 @@
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
-            "off"
+            "warn",
+            {
+                "ignoreRestArgs": true
+            }
         ],
         "@typescript-eslint/no-extra-non-null-assertion": [
             "error"
@@ -858,13 +867,13 @@
             "error"
         ],
         "@typescript-eslint/no-unsafe-argument": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-assignment": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-call": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-declaration-merging": [
             "error"
@@ -876,10 +885,10 @@
             "error"
         ],
         "@typescript-eslint/no-unsafe-member-access": [
-            "off"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-return": [
-            "error"
+            "warn"
         ],
         "@typescript-eslint/no-unsafe-unary-minus": [
             "error"
@@ -1733,7 +1742,7 @@
             "error"
         ],
         "no-void": [
-            "off",
+            "warn",
             {
                 "allowAsStatement": false
             }
@@ -1879,7 +1888,7 @@
             "off"
         ],
         "require-atomic-updates": [
-            "off",
+            "warn",
             {
                 "allowProperties": false
             }
@@ -2001,6 +2010,12 @@
         ],
         "unicorn/number-literal-case": [
             "off"
+        ],
+        "unicorn/numeric-separators-style": [
+            "warn",
+            {
+                "onlyIfContainsSeparator": true
+            }
         ],
         "unicorn/prefer-switch": [
             "error"

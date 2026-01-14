@@ -321,9 +321,9 @@ export class Layout extends EventEmitter {
 		const candidate = stack?.[this.formatStack.length];
 
 		// If we find the same kind of formatter at the expected depth, pass the previous output state.
-		const prevOut = (
-			candidate && candidate.formatter === formatter ? candidate.state : undefined
-		) as TState;
+		const prevOut =
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
+			(candidate && candidate.formatter === formatter ? candidate.state : undefined) as TState;
 
 		const state = formatter.begin(this, init, prevOut);
 

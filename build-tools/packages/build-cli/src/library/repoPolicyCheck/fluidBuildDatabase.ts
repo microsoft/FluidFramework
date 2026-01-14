@@ -143,6 +143,9 @@ function tscOutput(
 		throw new Error(`Error parsing ${pkg.name} tsc command line: ${commandLine}`);
 	}
 	const configFile = tscUtils.findConfigFile(packageDir, parsedCommand);
+	if (configFile === undefined) {
+		throw new Error(`Could not find config file for ${pkg.name} in ${packageDir}`);
+	}
 	const configJson = tscUtils.readConfigFile(configFile) as TsConfigJson;
 	if (configJson === undefined) {
 		throw new Error(`Failed to load config file '${configFile}'`);

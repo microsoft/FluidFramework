@@ -587,6 +587,7 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- intentional comparison
 export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs([
 	[
 		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v3),

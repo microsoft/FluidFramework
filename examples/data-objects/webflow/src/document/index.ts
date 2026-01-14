@@ -323,6 +323,7 @@ export class FlowDocument extends DataObject {
 
 		// Perform removals in descending order, otherwise earlier deletions will shift the positions
 		// of later ops.  Because each effected interval is non-overlapping, a simple sort suffices.
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- intentional comparison
 		ops.sort((left, right) => right.pos1 - left.pos1);
 
 		this.sharedString.groupOperation({

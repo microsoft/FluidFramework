@@ -645,6 +645,9 @@ function getTscCommandDependencies(
 		throw new Error(`Error parsing tsc command for script '${script}': ${command}`);
 	}
 	const configFile = TscUtils.findConfigFile(packageDir, parsedCommand);
+	if (configFile === undefined) {
+		throw new Error(`Could not find config file for script '${script}' in ${packageDir}`);
+	}
 	const configJson = TscUtils.readConfigFile(configFile) as TsConfigJson;
 	if (configJson === undefined) {
 		throw new Error(`Failed to load config file '${configFile}'`);
@@ -857,6 +860,11 @@ export const handlers: Handler[] = [
 						throw new Error(`Error parsing tsc command for script '${script}': ${command}`);
 					}
 					const configFile = TscUtils.findConfigFile(packageDir, parsedCommand);
+					if (configFile === undefined) {
+						throw new Error(
+							`Could not find config file for script '${script}' in ${packageDir}`,
+						);
+					}
 					const previousUse = projectMap.get(configFile);
 					if (previousUse !== undefined) {
 						return `'${previousUse}' and '${script}' tasks share use of ${configFile}`;

@@ -191,6 +191,7 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<SF.MoveOut> = { ...effect };
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (normalized.idOverride === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
 					normalized.idOverride = effectId;
@@ -207,6 +208,7 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<SF.Remove> = { ...effect };
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (normalized.idOverride === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
 					normalized.idOverride = effectId;

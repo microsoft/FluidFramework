@@ -308,6 +308,7 @@ function createE2EDocsDescribe(docTypes?: DescribeE2EDocInfo[]): DescribeE2EDocS
 
 	const d: DescribeE2EDocSuite = (title, tests, testType) => {
 		describe(
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string -- testType toString is expected to return meaningful string
 			`${testType} -`,
 			createE2EDocCompatSuite(
 				title,

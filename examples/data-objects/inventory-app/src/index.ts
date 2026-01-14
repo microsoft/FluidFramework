@@ -9,8 +9,7 @@ import * as React from "react";
 
 import { InventoryListFactory } from "./inventoryList.js";
 import type { Inventory } from "./schema.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { MainView } from "./view/inventoryList.js";
+import { MainView } from "./view/index.js";
 
 export const fluidExport = new ContainerViewRuntimeFactory(
 	InventoryListFactory,

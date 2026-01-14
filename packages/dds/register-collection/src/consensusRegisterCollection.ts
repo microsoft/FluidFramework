@@ -295,6 +295,7 @@ export class ConsensusRegisterCollection<T>
 				case "write": {
 					// backward compatibility: File at rest written with runtime <= 0.13 do not have refSeq
 					// when the refSeq property didn't exist
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (op.refSeq === undefined) {
 						op.refSeq = messageEnvelope.referenceSequenceNumber;
 					}

@@ -580,6 +580,7 @@ export abstract class FluidDataStoreContext
 			!this.detachedRuntimeCreation,
 			0x13d /* "Detached runtime creation on realize()" */,
 		);
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (!this.channelP) {
 			this.channelP = this.realizeCore(this.existing).catch((error) => {
 				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
