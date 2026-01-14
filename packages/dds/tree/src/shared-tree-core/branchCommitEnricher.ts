@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { GraphCommit } from "../core/index.js";
-import type { ChangeEnricherProvider } from "./changeEnricher.js";
+import type { ChangeEnricher } from "./changeEnricher.js";
 import { hasSome } from "../util/index.js";
 
 /**
@@ -19,9 +19,9 @@ export class BranchCommitEnricher<TChange> {
 	 * Each entry is removed when it is {@link BranchCommitEnricher.retrieveChange | retrieved}.
 	 * In the event that an entry is not explicitly removed, it will eventually be {@link WeakMap | dropped from memory} along with the associated commit.
 	 */
-	private readonly prepared: WeakMap<GraphCommit<TChange>, TChange> = new Map();
+	private readonly prepared: WeakMap<GraphCommit<TChange>, TChange> = new WeakMap();
 
-	public constructor(private readonly enricherProvider: ChangeEnricherProvider<TChange>) {}
+	public constructor(private readonly enricher: ChangeEnricher<TChange>) {}
 
 	/**
 	 * Process the given commits for later {@link BranchCommitEnricher.retrieveChange | retrieval}.
@@ -29,14 +29,14 @@ export class BranchCommitEnricher<TChange> {
 	 */
 	public prepareChanges(commits: readonly GraphCommit<TChange>[]): void {
 		if (hasSome(commits)) {
-			this.enricherProvider.runEnrichmentBatch(commits[0], (enricher) => {
-				for (const newCommit of commits) {
-					const newChange = enricher.enrich(newCommit.change);
-					this.prepared.set(newCommit, newChange);
-					// The last call to this is unnecessary, but has negligible performance impact so long as the enricher is lazy.
-					enricher.enqueueChange(newCommit);
-				}
-			});
+			const startingState = commits[0].parent;
+			assert(startingState !== undefined, "New commits must have a parent.");
+			const enrichedCommits = this.enricher.enrich(startingState, commits);
+			for (const [index, commit] of commits.entries()) {
+				const enrichedCommit = enrichedCommits[index];
+				assert(enrichedCommit !== undefined, "Missing enriched commit.");
+				this.prepared.set(commit, enrichedCommit);
+			}
 		}
 	}
 

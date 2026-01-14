@@ -8,7 +8,7 @@ import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { GraphCommit, RevisionTag } from "../core/index.js";
 import { hasSome } from "../util/index.js";
 
-import type { ChangeEnricherProvider } from "./changeEnricher.js";
+import type { ChangeEnricher } from "./changeEnricher.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
 
 interface PendingChange<TChange> {
@@ -36,7 +36,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		 * Change enricher that represent the tip of the top-level local branch (i.e., the branch on which in-flight
 		 * commits are applied and automatically rebased).
 		 */
-		private readonly provider: ChangeEnricherProvider<TChange>,
+		private readonly enricher: ChangeEnricher<TChange>,
 	) {}
 
 	public onCommitSubmitted(commit: GraphCommit<TChange>): void {
@@ -63,41 +63,46 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			return;
 		}
 
-		const pendingChanges = getLocalCommits().map((newCommit) => {
+		const newCommits = getLocalCommits();
+
+		const staleChanges: {
+			readonly pending: PendingChange<TChange>;
+			readonly newCommit: GraphCommit<TChange>;
+		}[] = [];
+		for (const newCommit of newCommits) {
 			const pending = this.getPendingChange(newCommit.revision);
 			assert(
 				pending !== undefined,
 				0xbda /* there must be an inflight commit for each resubmit commit */,
 			);
 			const isStale = pending.lastEnrichment < this.currentEnrichment;
-			return { pending, newCommit, isStale };
-		});
+			if (isStale) {
+				staleChanges.push({ pending, newCommit });
+			} else {
+				// We have reached a commit with a valid enrichment. Later commits must also be valid.
+				break;
+			}
+		}
 
 		assert(
-			hasSome(pendingChanges) && pendingChanges[0].newCommit.revision === revision,
+			hasSome(staleChanges) && staleChanges[0].newCommit.revision === revision,
 			0xc79 /* Expected local commits to start with specified revision */,
 		);
 
+		const startingState = staleChanges[0].newCommit.parent;
+		assert(startingState !== undefined, "New commits must have a parent.");
 		// Some in-flight commits have stale enrichments, so we recompute them.
-		this.provider.runEnrichmentBatch(pendingChanges[0].newCommit, (enricher) => {
-			for (const [index, { pending, newCommit, isStale }] of pendingChanges.entries()) {
-				if (isStale) {
-					const enrichedChange = enricher.enrich(newCommit.change);
-					const enrichedCommit = { ...newCommit, change: enrichedChange };
-
-					enricher.enqueueChange(enrichedCommit);
-
-					pending.commit = enrichedCommit;
-					pending.lastEnrichment = this.currentEnrichment;
-				} else {
-					assert(
-						!pendingChanges.slice(index + 1).some((pc) => pc.isStale),
-						"Unexpected non-stale commit after stale enrichment",
-					);
-					break;
-				}
-			}
-		});
+		const enriched = this.enricher.enrich(
+			startingState,
+			newCommits.slice(0, staleChanges.length),
+		);
+		for (const [index, { pending, newCommit }] of staleChanges.entries()) {
+			const enrichedChange = enriched[index];
+			assert(enrichedChange !== undefined, "Missing enriched commit.");
+			const enrichedCommit = { ...newCommit, change: enrichedChange };
+			pending.commit = enrichedCommit;
+			pending.lastEnrichment = this.currentEnrichment;
+		}
 	}
 
 	public getEnrichedCommit(

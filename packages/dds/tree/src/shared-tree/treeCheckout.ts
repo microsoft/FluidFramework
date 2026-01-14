@@ -55,6 +55,7 @@ import {
 	type ChangeEncodingContext,
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
+	type TaggedChange,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -74,12 +75,12 @@ import {
 	onForkTransitive,
 	type SharedTreeBranchChange,
 	type Transactor,
-	type ChangeEnricherCheckout,
 } from "../shared-tree-core/index.js";
 import {
 	Breakable,
 	disposeSymbol,
 	getOrCreate,
+	hasSome,
 	type JsonCompatibleReadOnly,
 	type WithBreakable,
 } from "../util/index.js";
@@ -1176,10 +1177,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		return { ...this.enrichmentStats };
 	}
 
-	public runEnrichmentBatch(
-		toEnrich: GraphCommit<SharedTreeChange>,
-		callback: (enricher: ChangeEnricherCheckout<SharedTreeChange>) => void,
-	): void {
+	public enrich(
+		context: GraphCommit<SharedTreeChange>,
+		changes: readonly TaggedChange<SharedTreeChange>[],
+	): SharedTreeChange[] {
+		if (!hasSome(changes)) {
+			return [];
+		}
 		this.enrichmentStats.batches += 1;
 		const enricher = new SharedTreeChangeEnricher(
 			this.forest,
@@ -1194,21 +1198,25 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// This `lastCommitApplied` may be on the main branch or on a transaction branch.
 		// In either case, it is crucial that the state of the forest & detached field index reflects all changes up to and including this commit.
 		const lastCommitApplied = this.#transaction.activeBranch.getHead();
-		if (toEnrich.parent !== lastCommitApplied) {
+		if (context !== lastCommitApplied) {
 			enricher.enqueueChange(() => {
 				this.enrichmentStats.diffs += 1;
-				assert(toEnrich.parent !== undefined, "Commit to enrich must have a parent.");
 				const diff = diffHistories(
 					this.changeFamily.rebaser,
 					lastCommitApplied,
-					toEnrich.parent,
+					context,
 					this.mintRevisionTag,
 				);
 				return makeAnonChange(diff);
 			});
 		}
-		callback(enricher);
+		const enriched: SharedTreeChange[] = [];
+		for (const change of changes) {
+			enriched.push(enricher.enrich(change.change));
+			enricher.enqueueChange(change);
+		}
 		enricher[disposeSymbol]();
+		return enriched;
 	}
 
 	public get mainBranch(): SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange> {

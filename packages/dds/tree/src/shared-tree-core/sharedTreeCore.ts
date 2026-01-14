@@ -48,7 +48,7 @@ import {
 
 import type { BranchId, SharedTreeBranch } from "./branch.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
-import type { ChangeEnricherProvider } from "./changeEnricher.js";
+import type { ChangeEnricher } from "./changeEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec, type EditManagerCodecOptions } from "./editManagerCodecs.js";
@@ -83,7 +83,7 @@ export interface SharedTreeCoreOptionsInternal
 		MessageCodecOptions {}
 
 export interface EnrichmentConfig<TChange> {
-	readonly provider: ChangeEnricherProvider<TChange>;
+	readonly enricher: ChangeEnricher<TChange>;
 	readonly resubmitMachine?: ResubmitMachine<TChange>;
 }
 
@@ -217,7 +217,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		if (enrichmentConfig !== undefined) {
 			this.registerSharedBranchForEditing(
 				"main",
-				enrichmentConfig.provider,
+				enrichmentConfig.enricher,
 				enrichmentConfig.resubmitMachine,
 			);
 		}
@@ -641,14 +641,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 	protected registerSharedBranchForEditing(
 		branchId: BranchId,
-		changeEnricherProvider: ChangeEnricherProvider<TChange>,
+		enricher: ChangeEnricher<TChange>,
 		resubmitMachine?: ResubmitMachine<TChange>,
 	): void {
-		const commitEnricher = new BranchCommitEnricher(changeEnricherProvider);
+		const commitEnricher = new BranchCommitEnricher(enricher);
 		assert(!this.enrichers.has(branchId), 0xc6d /* Branch already registered */);
 		this.enrichers.set(branchId, {
 			enricher: commitEnricher,
-			resubmitMachine: resubmitMachine ?? new DefaultResubmitMachine(changeEnricherProvider),
+			resubmitMachine: resubmitMachine ?? new DefaultResubmitMachine(enricher),
 		});
 	}
 

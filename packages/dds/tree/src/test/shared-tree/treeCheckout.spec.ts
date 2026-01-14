@@ -1345,10 +1345,8 @@ describe("sharedTreeView", () => {
 				assert.equal(change.newCommits.length, 1);
 				const commit = change.newCommits[0];
 				view1.checkout.resetEnrichmentStats();
-				view1.checkout.runEnrichmentBatch(commit, (enricher) => {
-					const enriched = enricher.enrich(commit.change);
-					assertEnrichmentCount(enriched, 1);
-				});
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 1);
 				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
 					batches: 1,
 					diffs: 0,
@@ -1375,10 +1373,8 @@ describe("sharedTreeView", () => {
 				assert.equal(change.newCommits.length, 1);
 				const commit = change.newCommits[0];
 				view1.checkout.resetEnrichmentStats();
-				view1.checkout.runEnrichmentBatch(commit, (enricher) => {
-					const enriched = enricher.enrich(commit.change);
-					assertEnrichmentCount(enriched, 1);
-				});
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 1);
 				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
 					batches: 1,
 					diffs: 1,
@@ -1410,19 +1406,14 @@ describe("sharedTreeView", () => {
 				callCount += 1;
 				assert.equal(change.type, "append");
 				assert.equal(change.newCommits.length, 3);
-				const commit = change.newCommits[0];
 				view1.checkout.resetEnrichmentStats();
-				view1.checkout.runEnrichmentBatch(commit, (enricher) => {
-					const enriched1 = enricher.enrich(change.newCommits[0].change);
-					assertEnrichmentCount(enriched1, 1);
-					enricher.enqueueChange(change.newCommits[0]);
-					const enriched2 = enricher.enrich(change.newCommits[1].change);
-					assertEnrichmentCount(enriched2, 0);
-					enricher.enqueueChange(change.newCommits[1]);
-					const enriched3 = enricher.enrich(change.newCommits[2].change);
-					assertEnrichmentCount(enriched3, 1);
-					enricher.enqueueChange(change.newCommits[2]);
-				});
+				const enriched = view1.checkout.enrich(
+					change.newCommits[0].parent ?? assert.fail(),
+					change.newCommits,
+				);
+				assertEnrichmentCount(enriched[0], 1);
+				assertEnrichmentCount(enriched[1], 0);
+				assertEnrichmentCount(enriched[2], 1);
 				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
 					batches: 1,
 					diffs: 0,
@@ -1453,19 +1444,14 @@ describe("sharedTreeView", () => {
 				callCount += 1;
 				assert.equal(change.type, "append");
 				assert.equal(change.newCommits.length, 3);
-				const commit = change.newCommits[0];
 				view1.checkout.resetEnrichmentStats();
-				view1.checkout.runEnrichmentBatch(commit, (enricher) => {
-					const enriched1 = enricher.enrich(change.newCommits[0].change);
-					assertEnrichmentCount(enriched1, 1);
-					enricher.enqueueChange(change.newCommits[0]);
-					const enriched2 = enricher.enrich(change.newCommits[1].change);
-					assertEnrichmentCount(enriched2, 0);
-					enricher.enqueueChange(change.newCommits[1]);
-					const enriched3 = enricher.enrich(change.newCommits[2].change);
-					assertEnrichmentCount(enriched3, 1);
-					enricher.enqueueChange(change.newCommits[2]);
-				});
+				const enriched = view1.checkout.enrich(
+					change.newCommits[0].parent ?? assert.fail(),
+					change.newCommits,
+				);
+				assertEnrichmentCount(enriched[0], 1);
+				assertEnrichmentCount(enriched[1], 0);
+				assertEnrichmentCount(enriched[2], 1);
 				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
 					batches: 1,
 					diffs: 1,
@@ -1491,10 +1477,8 @@ describe("sharedTreeView", () => {
 				assert.equal(change.newCommits.length, 1);
 				const commit = change.newCommits[0];
 				view1.checkout.resetEnrichmentStats();
-				view1.checkout.runEnrichmentBatch(commit, (enricher) => {
-					const enriched = enricher.enrich(commit.change);
-					assertEnrichmentCount(enriched, 0);
-				});
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 0);
 				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
 					batches: 1,
 					diffs: 0,
@@ -1526,10 +1510,8 @@ describe("sharedTreeView", () => {
 				assert.equal(change.newCommits.length, 1);
 				const commit = change.newCommits[0];
 				view1.checkout.resetEnrichmentStats();
-				view1.checkout.runEnrichmentBatch(commit, (enricher) => {
-					const enriched = enricher.enrich(commit.change);
-					assertEnrichmentCount(enriched, 0);
-				});
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 0);
 				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
 					batches: 1,
 					diffs: 0,
@@ -1559,10 +1541,10 @@ describe("sharedTreeView", () => {
 			view1.root.insertAtEnd({ id: "C" });
 
 			view1.checkout.resetEnrichmentStats();
-			view1.checkout.runEnrichmentBatch(revertCommit, (enricher) => {
-				const enriched = enricher.enrich(revertCommit.change);
-				assertEnrichmentCount(enriched, 1);
-			});
+			const enriched = view1.checkout.enrich(revertCommit.parent ?? assert.fail(), [
+				revertCommit,
+			]);
+			assertEnrichmentCount(enriched[0], 1);
 			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
 				batches: 1,
 				diffs: 1,
@@ -1581,9 +1563,7 @@ describe("sharedTreeView", () => {
 			view1.root.insertAtEnd({ id: "C" });
 
 			view1.checkout.resetEnrichmentStats();
-			view1.checkout.runEnrichmentBatch(commit, (enricher) => {
-				enricher.enrich(commit.change);
-			});
+			view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
 			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
 				batches: 1,
 				diffs: 0,
@@ -1596,6 +1576,7 @@ describe("sharedTreeView", () => {
 
 		it("delays apply changes if no refresher is needed", () => {
 			const { view1 } = setup([]);
+			const start = view1.checkout.mainBranch.getHead();
 			view1.root.insertAtEnd({ id: "A" });
 			const commit1 = view1.checkout.mainBranch.getHead();
 			view1.root.insertAtEnd({ id: "B" });
@@ -1604,14 +1585,7 @@ describe("sharedTreeView", () => {
 			const commit3 = view1.checkout.mainBranch.getHead();
 
 			view1.checkout.resetEnrichmentStats();
-			view1.checkout.runEnrichmentBatch(commit1, (enricher) => {
-				enricher.enrich(commit1.change);
-				enricher.enqueueChange(commit1);
-				enricher.enrich(commit2.change);
-				enricher.enqueueChange(commit2);
-				enricher.enrich(commit3.change);
-				enricher.enqueueChange(commit3);
-			});
+			view1.checkout.enrich(start, [commit1, commit2, commit3]);
 			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
 				batches: 1,
 				diffs: 0,

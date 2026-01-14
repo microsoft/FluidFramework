@@ -27,7 +27,6 @@ import {
 import { disposeSymbol } from "../util/index.js";
 import { updateRefreshers } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { ChangeEnricherCheckout } from "../shared-tree-core/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 interface BorrowedState {
@@ -40,7 +39,7 @@ interface OwnedState {
 	readonly removedRoots: DetachedFieldIndex;
 }
 
-export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTreeChange> {
+export class SharedTreeChangeEnricher {
 	/**
 	 * Queue of changes to be applied before querying for detached roots.
 	 */

@@ -40,10 +40,7 @@ export { VersionedSummarizer } from "./versionedSummarizer.js";
 export type { ResubmitMachine } from "./resubmitMachine.js";
 export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 
-export {
-	type ChangeEnricherCheckout,
-	type ChangeEnricherProvider,
-} from "./changeEnricher.js";
+export { type ChangeEnricher } from "./changeEnricher.js";
 
 export {
 	makeEditManagerCodec,

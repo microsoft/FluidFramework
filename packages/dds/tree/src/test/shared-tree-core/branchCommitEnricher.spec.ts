@@ -9,7 +9,7 @@ import { testIdCompressor } from "../utils.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BranchCommitEnricher } from "../../shared-tree-core/branchCommitEnricher.js";
 import {
-	MockChangeEnricherProvider,
+	MockChangeEnricher,
 	type MockEnrichableChange,
 } from "./defaultResubmitMachine.spec.js";
 
@@ -71,37 +71,37 @@ const expectedEnriched3: MockEnrichableChange = {
 
 describe("BranchCommitEnricher", () => {
 	it("Can enrich zero commits", () => {
-		const provider = new MockChangeEnricherProvider();
-		const enricher = new BranchCommitEnricher(provider);
-		enricher.prepareChanges([]);
-		assert.equal(provider.checkoutsCreated, 0);
-		assert.equal(provider.commitsEnriched, 0);
-		assert.equal(provider.commitsApplied, 0);
+		const changeEnricher = new MockChangeEnricher();
+		const branchEnricher = new BranchCommitEnricher(changeEnricher);
+		branchEnricher.prepareChanges([]);
+		assert.equal(changeEnricher.calls, 0);
+		assert.equal(changeEnricher.enriched, 0);
+		assert.equal(changeEnricher.applied, 0);
 	});
 
 	it("Can enrich a single commit", () => {
-		const provider = new MockChangeEnricherProvider();
-		const enricher = new BranchCommitEnricher(provider);
-		enricher.prepareChanges([commit1]);
-		const actualEnriched1 = enricher.retrieveChange(commit1);
+		const changeEnricher = new MockChangeEnricher();
+		const branchEnricher = new BranchCommitEnricher(changeEnricher);
+		branchEnricher.prepareChanges([commit1]);
+		const actualEnriched1 = branchEnricher.retrieveChange(commit1);
 		assert.deepEqual(actualEnriched1, expectedEnriched1);
-		assert.equal(provider.checkoutsCreated, 1);
-		assert.equal(provider.commitsEnriched, 1);
-		assert.equal(provider.commitsApplied, 1);
+		assert.equal(changeEnricher.calls, 1);
+		assert.equal(changeEnricher.enriched, 1);
+		assert.equal(changeEnricher.applied, 1);
 	});
 
 	it("Can enrich multiple commits", () => {
-		const provider = new MockChangeEnricherProvider();
-		const enricher = new BranchCommitEnricher(provider);
-		enricher.prepareChanges([commit1, commit2, commit3]);
-		const actualEnriched1 = enricher.retrieveChange(commit1);
+		const changeEnricher = new MockChangeEnricher();
+		const branchEnricher = new BranchCommitEnricher(changeEnricher);
+		branchEnricher.prepareChanges([commit1, commit2, commit3]);
+		const actualEnriched1 = branchEnricher.retrieveChange(commit1);
 		assert.deepEqual(actualEnriched1, expectedEnriched1);
-		const actualEnriched2 = enricher.retrieveChange(commit2);
+		const actualEnriched2 = branchEnricher.retrieveChange(commit2);
 		assert.deepEqual(actualEnriched2, expectedEnriched2);
-		const actualEnriched3 = enricher.retrieveChange(commit3);
+		const actualEnriched3 = branchEnricher.retrieveChange(commit3);
 		assert.deepEqual(actualEnriched3, expectedEnriched3);
-		assert.equal(provider.checkoutsCreated, 1);
-		assert.equal(provider.commitsEnriched, 3);
-		assert.equal(provider.commitsApplied, 3);
+		assert.equal(changeEnricher.calls, 1);
+		assert.equal(changeEnricher.enriched, 3);
+		assert.equal(changeEnricher.applied, 3);
 	});
 });
