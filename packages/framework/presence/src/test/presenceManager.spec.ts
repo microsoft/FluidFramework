@@ -21,8 +21,6 @@ import {
 	assertFinalExpectations,
 	localAttendeeId,
 	initialLocalClientConnectionId,
-	rejoinedLocalClientConnectionId1,
-	rejoinedLocalClientConnectionId2,
 	createSpecificAttendeeId,
 	generateBasicClientJoin,
 	prepareConnectedPresence,
@@ -30,6 +28,16 @@ import {
 } from "./testUtils.js";
 
 const collateralSessionId = createSpecificAttendeeId("collateral-id");
+/**
+ * Mock {@link ClientConnectionId} for the local client after first reconnection.
+ */
+const rejoinedLocalClientConnectionId1 =
+	"localClientRejoin1" as const satisfies ClientConnectionId;
+/**
+ * Mock {@link ClientConnectionId} for the local client after second reconnection.
+ */
+const rejoinedLocalClientConnectionId2 =
+	"localClientRejoin2" as const satisfies ClientConnectionId;
 
 function verify<T>(value: T | undefined, message?: string): T {
 	assert(value !== undefined, message ?? "Expected value to be defined");

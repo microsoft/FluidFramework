@@ -79,16 +79,7 @@ export const connectionId1 = "client1" as const satisfies ClientConnectionId;
  * Mock {@link AttendeeId} for the local client in tests.
  */
 export const localAttendeeId = createSpecificAttendeeId("localAttendeeId");
-/**
- * Mock {@link ClientConnectionId} for the local client after first reconnection.
- */
-export const rejoinedLocalClientConnectionId1 =
-	"localClientRejoin1" as const satisfies ClientConnectionId;
-/**
- * Mock {@link ClientConnectionId} for the local client after second reconnection.
- */
-export const rejoinedLocalClientConnectionId2 =
-	"localClientRejoin2" as const satisfies ClientConnectionId;
+
 /**
  * Generates expected inbound join signal for a client that was initialized while connected.
  */
