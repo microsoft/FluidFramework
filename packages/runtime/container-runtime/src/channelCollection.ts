@@ -23,7 +23,6 @@ import {
 	type ISnapshotTree,
 	type ISequencedDocumentMessage,
 	SummaryType,
-	type ISummaryTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,
@@ -1769,14 +1768,7 @@ export class ChannelCollection
 
 				// Realize the datastore runtime and load the pending channels into it
 				const channel = await existingContext.realize();
-				// Cast to access the loadPendingChannels method (from FluidDataStoreRuntime)
-				if ("loadPendingChannels" in channel) {
-					(
-						channel as {
-							loadPendingChannels: (channels: ISummaryTree) => void;
-						}
-					).loadPendingChannels(channelsTree);
-				}
+				channel.loadPendingChannels?.(channelsTree);
 			}
 		}
 	}
