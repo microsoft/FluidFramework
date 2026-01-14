@@ -100,7 +100,7 @@ describe("Presence", () => {
 		});
 
 		describe("self attendee", () => {
-			it("is announced via `attendeeConnected`upon connect while self is in audience", () => {
+			it("is announced via `attendeeConnected` upon connect while self is in audience", () => {
 				// Setup - create presence in disconnected state
 				const { presence, connect } = prepareDisconnectedPresence(
 					runtime,
