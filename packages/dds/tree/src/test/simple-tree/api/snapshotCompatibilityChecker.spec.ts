@@ -177,6 +177,7 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	it("SnapshotFileSystem", () => {
+		// Validate example for how to use implement SnapshotFileSystem using node fs and path modules works.
 		allowUnused<requireAssignableTo<typeof nodeFileSystem, SnapshotFileSystem>>();
 	});
 
@@ -192,6 +193,8 @@ describe("snapshotCompatibilityChecker", () => {
 
 			const config = new TreeViewConfiguration({ schema: Point });
 			const snapshotDirectory = path.join(testSrcPath, "schemaSnapshots", "point");
+
+			// This test is included in the docs for checkSchemaCompatibilitySnapshots, and should be kept in sync with it.
 			it("schema compatibility", () => {
 				checkSchemaCompatibilitySnapshots({
 					version: pkgVersion,
@@ -268,6 +271,7 @@ describe("snapshotCompatibilityChecker", () => {
  - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being "1.0.0".`),
 			);
 
+			// Avoids all the above tested issues, and matches saved snapshot, so should pass
 			checkSchemaCompatibilitySnapshots({
 				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: Point3D }),
