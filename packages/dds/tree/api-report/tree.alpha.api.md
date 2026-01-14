@@ -200,7 +200,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
     idCompressor?: IIdCompressor | undefined;
 } & {
     content?: undefined;
-}) | (ICodecOptions & {
+} & Partial<CodecWriteOptions>) | (ICodecOptions & {
     content: ViewContent;
 } & {
     idCompressor?: undefined;
@@ -470,7 +470,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 // @alpha
 export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: ForestOptions & {
     idCompressor?: IIdCompressor | undefined;
-}): TreeViewAlpha<TSchema>;
+} & Partial<CodecWriteOptions>): TreeViewAlpha<TSchema>;
 
 // @public @system
 type _InlineTrick = 0;

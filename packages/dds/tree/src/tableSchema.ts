@@ -644,35 +644,27 @@ export namespace System_TableSchema {
 
 				const branch = TreeAlpha.branch(this);
 
+				const insertOp = (): void => {
+					// TypeScript is unable to narrow the column type correctly here, hence the casts below.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					if (index === undefined) {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
+					} else {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
+					}
+				}
+
 				// Ensure events are paused until all of the edits are applied.
 				withBufferedTreeEvents(() => {
 					if (branch === undefined) {
-						// If this node does not have a corresponding branch, then it is unhydrated.
-						// TypeScript is unable to narrow the column type correctly here, hence the casts below.
-						// See: https://github.com/microsoft/TypeScript/issues/52144
-						if (index === undefined) {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
-						} else {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
-						}
+						insertOp();
 					} else {
-						// For hydrated trees, run in a transaction with revert noChange constraint
 						branch.runTransaction(() => {
-							// TypeScript is unable to narrow the column type correctly here, hence the casts below.
-							// See: https://github.com/microsoft/TypeScript/issues/52144
-							if (index === undefined) {
-								// eslint-disable-next-line @typescript-eslint/no-explicit-any
-								this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
-							} else {
-								// eslint-disable-next-line @typescript-eslint/no-explicit-any
-								this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
-							}
-
-							// Add a revert noChange constraint to ensure no rows are added when reverting column insertion
+							insertOp();
 							return {
-								preconditionsOnRevert: [{ type: "noChange" as const }],
+								preconditionsOnRevert: [{ type: "noChange" }],
 							};
 						});
 					}
@@ -698,15 +690,37 @@ export namespace System_TableSchema {
 
 				// #endregion
 
-				// TypeScript is unable to narrow the row type correctly here, hence the casts below.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				if (index === undefined) {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.table.rows.insertAtEnd(TreeArrayNode.spread(rows) as any);
-				} else {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.table.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
-				}
+				const branch = TreeAlpha.branch(this);
+
+				const insertOp = (): void => {
+					// TypeScript is unable to narrow the row type correctly here, hence the casts below.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					if (index === undefined) {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						this.table.rows.insertAtEnd(TreeArrayNode.spread(rows) as any);
+					} else {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						this.table.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
+					}
+				};
+
+				// Ensure events are paused until all of the edits are applied.
+				withBufferedTreeEvents(() => {
+					if (branch === undefined) {
+						insertOp();
+					} else {
+						// For hydrated trees, run in a transaction with nodeInDocument constraint per column
+						// to ensure no columns were removed
+						const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
+							(column) => ({
+								type: "nodeInDocument",
+								node: column as ColumnValueType,
+							}),
+						);
+
+						branch.runTransaction(insertOp, columnConstraints.length > 0 ? { preconditions: columnConstraints } : undefined);
+					}
+				});
 
 				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
 				return rows as unknown as RowValueType[];
@@ -721,7 +735,24 @@ export namespace System_TableSchema {
 				const row = this.#getRow(rowOrId);
 				const column = this.#getColumn(columnOrId);
 
-				(row as RowValueInternalType).cells[column.id] = cell as CellValueType;
+				const branch = TreeAlpha.branch(this);
+				const setOp = (): void => {
+					(row as RowValueInternalType).cells[column.id] = cell as CellValueType;
+				};
+
+				if (branch === undefined) {
+					setOp();
+				} else {
+					// Hydrated tree: use transaction with nodeInDocument constraint on the column
+					branch.runTransaction(setOp, {
+						preconditions: [
+							{
+								type: "nodeInDocument",
+								node: column,
+							},
+						],
+					});
+				}
 			}
 
 			public removeColumns(
@@ -761,7 +792,7 @@ export namespace System_TableSchema {
 							"Table.removeColumns",
 						);
 						removedColumns = columnsToRemove;
-					}, [{ type: "noChange" as const }]);
+					}, [{ type: "noChange" }]);
 					return removedColumns ?? fail(0xc1f /* Transaction did not complete. */);
 				} else {
 					// If there are no columns to remove, do nothing
@@ -795,7 +826,7 @@ export namespace System_TableSchema {
 							// We have already validated that all of the columns exist above, so this is safe.
 							this.table.columns.removeAt(this.table.columns.indexOf(columnToRemove));
 						}
-					}, [{ type: "noChange" as const }]);
+					}, [{ type: "noChange" }]);
 					return columnsToRemove;
 				}
 			}
@@ -805,6 +836,7 @@ export namespace System_TableSchema {
 				count?: number | undefined,
 			): RowValueType[] {
 				if (typeof indexOrRows === "number" || indexOrRows === undefined) {
+					let removedRows: RowValueType[] | undefined;
 					const startIndex = indexOrRows ?? 0;
 					const endIndex = count === undefined ? this.table.rows.length : startIndex + count;
 
@@ -813,12 +845,28 @@ export namespace System_TableSchema {
 						return [];
 					}
 
-					return removeRangeFromArray(
-						startIndex,
-						endIndex,
-						this.table.rows,
-						"Table.removeRows",
+					validateIndexRange(startIndex, endIndex, this.table.rows, "Table.removeRows");
+
+					// Add a nodeInDocument constraint on revert per column to ensure no columns were removed
+					const columnConstraintsOnRevert: TransactionConstraintAlpha[] =
+						this.table.columns.map((column) => ({
+							type: "nodeInDocument",
+							node: column as ColumnValueType,
+						}));
+
+					this.#applyEditsInBatch(
+						() => {
+							removedRows = removeRangeFromArray(
+								startIndex,
+								endIndex,
+								this.table.rows,
+								"Table.removeRows",
+							);
+						},
+						undefined,
+						columnConstraintsOnRevert.length > 0 ? columnConstraintsOnRevert : undefined,
 					);
+					return removedRows ?? fail("Transaction did not complete");
 				}
 
 				// If there are no rows to remove, do nothing
@@ -834,15 +882,27 @@ export namespace System_TableSchema {
 					rowsToRemove.push(this.#getRow(rowToRemove));
 				}
 
-				this.#applyEditsInBatch(() => {
-					// Note, throwing an error within a transaction will abort the entire transaction.
-					// So if we throw an error here for any row, no rows will be removed.
-					for (const rowToRemove of rowsToRemove) {
-						// We have already validated that all of the rows exist above, so this is safe.
-						const index = this.table.rows.indexOf(rowToRemove);
-						this.table.rows.removeAt(index);
-					}
-				});
+				// Add a nodeInDocument constraint on revert per column to ensure no columns were removed
+				const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
+					(column) => ({
+						type: "nodeInDocument",
+						node: column as ColumnValueType,
+					}),
+				);
+
+				this.#applyEditsInBatch(
+					() => {
+						// Note, throwing an error within a transaction will abort the entire transaction.
+						// So if we throw an error here for any row, no rows will be removed.
+						for (const rowToRemove of rowsToRemove) {
+							// We have already validated that all of the rows exist above, so this is safe.
+							const index = this.table.rows.indexOf(rowToRemove);
+							this.table.rows.removeAt(index);
+						}
+					},
+					undefined,
+					columnConstraints.length > 0 ? columnConstraints : undefined,
+				);
 				return rowsToRemove;
 			}
 
@@ -858,8 +918,29 @@ export namespace System_TableSchema {
 					return undefined;
 				}
 
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-				delete row.cells[column.id];
+				const branch = TreeAlpha.branch(this);
+				const removeOp = (): void => {
+					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+					delete row.cells[column.id];
+				};
+
+				if (branch === undefined) {
+					removeOp();
+				} else {
+					branch.runTransaction(() => {
+						removeOp();
+
+						return {
+							preconditionsOnRevert: [
+								{
+									type: "nodeInDocument",
+									node: column,
+								},
+							],
+						};
+					});
+				}
+
 				return cell;
 			}
 
@@ -889,6 +970,7 @@ export namespace System_TableSchema {
 			#applyEditsInBatch(
 				applyEdits: () => void,
 				preconditions?: readonly TransactionConstraintAlpha[],
+				preconditionsOnRevert?: readonly TransactionConstraintAlpha[],
 			): void {
 				const branch = TreeAlpha.branch(this);
 
@@ -905,6 +987,9 @@ export namespace System_TableSchema {
 						branch.runTransaction(
 							() => {
 								applyEdits();
+								if (preconditionsOnRevert !== undefined) {
+									return { preconditionsOnRevert };
+								}
 							},
 							preconditions === undefined ? undefined : { preconditions },
 						);

@@ -14,6 +14,7 @@ import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
@@ -51,6 +52,7 @@ import {
 import {
 	currentVersion,
 	type CodecWriteOptions,
+	FluidClientVersion,
 	type FormatVersion,
 	type ICodecFamily,
 	type IJsonCodec,
@@ -214,6 +216,8 @@ import { initializeForest } from "./feature-libraries/index.js";
  */
 export const DefaultTestSharedTreeKind = configuredSharedTree({
 	jsonValidator: FormatValidatorBasic,
+	// Default to v2_80 to support noChange constraints in table operations
+	minVersionForCollab: FluidClientVersion.v2_80,
 }) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
@@ -1380,11 +1384,15 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & {
 		idCompressor?: IIdCompressor | undefined;
+		minVersionForCollab?: MinimumVersionForCollab;
 	} = {},
 ): SchematizingSimpleTreeView<TSchema> {
+	// Default to v2_80 to support noChange constraints in table operations
+	const minVersionForCollab = options.minVersionForCollab ?? FluidClientVersion.v2_80;
 	const view = independentView(config, {
-		idCompressor: createSnapshotCompressor(),
 		...options,
+		idCompressor: createSnapshotCompressor(),
+		minVersionForCollab,
 	});
 	assert(view instanceof SchematizingSimpleTreeView);
 	return view;

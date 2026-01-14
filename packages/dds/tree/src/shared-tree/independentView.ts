@@ -71,7 +71,9 @@ import { combineChunks } from "../feature-libraries/index.js";
  */
 export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options?: ForestOptions & { idCompressor?: IIdCompressor | undefined },
+	options?: ForestOptions & {
+		idCompressor?: IIdCompressor | undefined;
+	} & Partial<CodecWriteOptions>,
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
 }
@@ -171,7 +173,9 @@ export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSch
 export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
 	options?: ForestOptions &
 		(
-			| ({ idCompressor?: IIdCompressor | undefined } & { content?: undefined })
+			| ({ idCompressor?: IIdCompressor | undefined } & {
+					content?: undefined;
+			  } & Partial<CodecWriteOptions>)
 			| (ICodecOptions & { content: ViewContent } & { idCompressor?: undefined })
 		),
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
@@ -192,10 +196,18 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		defaultIncrementalEncodingPolicy,
 	);
 
+	const codecOptions: Partial<CodecWriteOptions> | undefined =
+		options !== undefined &&
+		"minVersionForCollab" in options &&
+		options.minVersionForCollab !== undefined
+			? { minVersionForCollab: options.minVersionForCollab }
+			: undefined;
+
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
 		schema: schemaRepository,
 		breaker,
+		codecOptions,
 	});
 
 	if (options?.content !== undefined) {
