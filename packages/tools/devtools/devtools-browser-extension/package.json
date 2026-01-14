@@ -20,7 +20,7 @@
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./e2e-tests/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./e2e-tests/tsconfig.json",
-		"build:webpack": "npm run webpack",
+		"build:webpack": "fluid-build . --task webpack",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
