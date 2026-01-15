@@ -8,6 +8,17 @@ import { recommended } from "../../../../common/build/eslint-config-fluid/flat.m
 
 const config: Linter.Config[] = [
 	...recommended,
+	// This package is test-only and only has src/test/tsconfig.json (no root tsconfig.json).
+	// Override the base config's parserOptions to only use the test tsconfig.
+	{
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: ["./src/test/tsconfig.json"],
+			},
+		},
+	},
 	{
 		rules: {
 			"prefer-arrow-callback": "off",
