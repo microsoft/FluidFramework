@@ -31,7 +31,7 @@ const config: Linter.Config[] = [
 			"import-x/order": "off",
 			"jsdoc/require-description": "warn",
 			"unicorn/consistent-function-scoping": "off",
-			"unicorn/no-array-method-this-argument": "off",
+			"unicorn/no-await-expression-member": "off",
 			"unicorn/no-null": "off",
 			"unicorn/prefer-export-from": "off",
 			"unicorn/text-encoding-identifier-case": "off",
