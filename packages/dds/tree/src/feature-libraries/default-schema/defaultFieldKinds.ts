@@ -33,11 +33,6 @@ import type { SequenceFieldEditor } from "../sequence-field/index.js";
 import { noChangeCodecFamily } from "./noChangeCodecs.js";
 import type { CodecTree } from "../../codec/index.js";
 import { brand, type Brand } from "../../util/index.js";
-import type {
-	optionalIdentifier,
-	requiredIdentifier,
-	sequenceIdentifier,
-} from "../fieldKindIdentifiers.js";
 import { identifierFieldIdentifier } from "../fieldKindIdentifiers.js";
 import { sequence } from "../sequence-field/index.js";
 
@@ -183,31 +178,27 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new M
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
 export interface Required
-	extends FlexFieldKind<RequiredFieldEditor, typeof requiredIdentifier, Multiplicity.Single> {}
+	extends FlexFieldKind<
+		RequiredFieldEditor,
+		typeof required.identifier,
+		Multiplicity.Single
+	> {}
 export interface Optional
 	extends FlexFieldKind<
 		OptionalFieldEditor,
-		typeof optionalIdentifier,
+		typeof optional.identifier,
 		Multiplicity.Optional
 	> {}
 export interface Sequence
 	extends FlexFieldKind<
 		SequenceFieldEditor,
-		typeof sequenceIdentifier,
+		typeof sequence.identifier,
 		Multiplicity.Sequence
 	> {}
 export interface Identifier
-	extends FlexFieldKind<
-		FieldEditor<0>,
-		typeof identifierFieldIdentifier,
-		Multiplicity.Single
-	> {}
+	extends FlexFieldKind<FieldEditor<0>, typeof identifier.identifier, Multiplicity.Single> {}
 export interface Forbidden
-	extends FlexFieldKind<
-		FieldEditor<0>,
-		typeof forbiddenFieldKindIdentifier,
-		Multiplicity.Forbidden
-	> {}
+	extends FlexFieldKind<FieldEditor<0>, typeof forbidden.identifier, Multiplicity.Forbidden> {}
 
 /**
  * Default FieldKinds with their editor types erased.
