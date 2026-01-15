@@ -217,45 +217,44 @@ describe("IdCompressor Sharding", () => {
 		});
 
 		it("shards cannot decompress IDs beyond their generation count", () => {
+			// When a shard generates an ID, it "backfills" the entire cycle containing that ID.
+			// A cycle is a group of consecutive genCounts equal to the stride size.
+			// For stride=3: cycle 0 = [1,2,3], cycle 1 = [4,5,6], cycle 2 = [7,8,9], etc.
+			// Shards can only decompress IDs within cycles they have backfilled.
+
 			const sessionId = createSessionId();
 			const parent = new IdCompressor(sessionId, undefined);
 
-			// Create 2 shards (stride = 3)
+			// Create 2 child shards (stride = 3 total)
+			// Parent: offset=0, generates genCounts 1, 4, 7, ...
+			// Child1: offset=1, generates genCounts 2, 5, 8, ...
 			const [serializedChild1] = parent.shard(2);
 			const child1 = IdCompressor.deserialize({ serialized: serializedChild1 });
 
-			// Parent (offset=0) generates 2 IDs: -1 (genCount 1), -4 (genCount 4)
-			// This backfills cycles [1, 2, 3] and [4, 5, 6]
-			const parentId1 = parent.generateCompressedId();
-			const parentId2 = parent.generateCompressedId();
+			// Parent generates 2 IDs, backfilling cycles 0 and 1
+			const parentId1 = parent.generateCompressedId(); // genCount 1, backfills cycle 0
+			const parentId2 = parent.generateCompressedId(); // genCount 4, backfills cycle 1
 			assert.equal(parentId1, -1);
 			assert.equal(parentId2, -4);
 
-			// Child1 (offset=1) generates 1 ID: -2 (genCount 2)
-			// This backfills cycle [1, 2, 3] in child1's normalizer
-			const child1Id1 = child1.generateCompressedId();
+			// Child1 generates 1 ID, backfilling only cycle 0
+			const child1Id1 = child1.generateCompressedId(); // genCount 2, backfills cycle 0
 			assert.equal(child1Id1, -2);
 
-			// Verify each can decompress their own IDs
+			// Each shard can decompress its own IDs
 			assert(parent.decompress(parentId1) !== undefined);
 			assert(parent.decompress(parentId2) !== undefined);
 			assert(child1.decompress(child1Id1) !== undefined);
 
-			// Due to backfilling, shards in the same cycle can decompress each other's IDs
-			// Child1 backfilled [1, 2, 3] so it can decompress parentId1 (-1, genCount 1)
+			// Child1 can decompress parent's ID from cycle 0 (both backfilled it)
 			assert(child1.decompress(parentId1) !== undefined);
 
-			// But child1 has only backfilled up to cycle [1, 2, 3], not [4, 5, 6]
-			// So child1 should NOT be able to decompress parentId2 (-4, genCount 4)
+			// Child1 cannot decompress parent's ID from cycle 1 (child1 never backfilled it)
 			assert.throws(() => child1.decompress(parentId2), /Unknown ID/);
 
-			// Parent has backfilled [1, 2, 3] and [4, 5, 6]
-			// Parent should NOT be able to decompress -7 (genCount 7) in the next cycle [7, 8, 9]
-			assert.throws(() => parent.decompress(-7 as SessionSpaceCompressedId), /Unknown ID/);
-
-			// Child1 has only backfilled [1, 2, 3]
-			// Child1 should NOT be able to decompress -5 (genCount 5) in cycle [4, 5, 6]
-			assert.throws(() => child1.decompress(-5 as SessionSpaceCompressedId), /Unknown ID/);
+			// Neither shard can decompress IDs from cycles they haven't backfilled
+			assert.throws(() => parent.decompress(-7 as SessionSpaceCompressedId), /Unknown ID/); // cycle 2
+			assert.throws(() => child1.decompress(-5 as SessionSpaceCompressedId), /Unknown ID/); // cycle 1
 		});
 	});
 
