@@ -33,10 +33,6 @@ module.exports = (env) => {
 						use: [require.resolve("source-map-loader")],
 						enforce: "pre",
 					},
-					{
-						test: /\.css$/,
-						use: ["style-loader", "css-loader"],
-					},
 				],
 			},
 			output: {

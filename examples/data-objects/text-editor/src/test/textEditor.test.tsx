@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import { toPropTreeNode } from "@fluidframework/react/alpha";
 import { render } from "@testing-library/react";
-import globalJsdom from "global-jsdom";
 import * as React from "react";
 
 import { MainView } from "../quillView.js";
@@ -16,17 +15,10 @@ import { TextAsTree } from "../schema.js";
 // TODO add collaboration tests when rich formatting is supported using TestContainerRuntimeFactory from
 // @fluidframework/test-utils to test rich formatting data sync between multiple collaborators
 describe("textEditor", () => {
+	// Note: JSDOM is initialized once in mochaHooks.mjs before Quill is imported,
+	// since Quill requires document at import time. DOM state may accumulate
+	// across tests. See src/test/mochaHooks.mjs.
 	describe("dom tests", () => {
-		let cleanup: () => void;
-
-		before(() => {
-			cleanup = globalJsdom();
-		});
-
-		after(() => {
-			cleanup();
-		});
-
 		// Run without strict mode to make sure it works in a normal production setup.
 		// Run with strict mode to potentially detect additional issues.
 		for (const reactStrictMode of [false, true]) {
@@ -93,6 +85,59 @@ describe("textEditor", () => {
 					// Rerender and verify the tree state
 					rendered.rerender(content);
 					assert.equal(text.fullString(), "Replaced");
+				});
+
+				// Tests for surrogate pair characters (emojis use 2 UTF-16 code units)
+				// These verify correct handling where Quill's indexing may differ from iteration.
+
+				it("renders MainView with surrogate pair characters", () => {
+					// 😀 is a surrogate pair: "😀".length === 2, but [...\"😀\"].length === 1
+					const text = TextAsTree.Tree.fromString("Hello 😀 World");
+					const content = <MainView root={toPropTreeNode(text)} />;
+					const rendered = render(content, { reactStrictMode });
+
+					const editorContainer = rendered.baseElement.querySelector(".ql-editor");
+					assert(editorContainer !== null, "Editor container should exist");
+					assert.equal(text.fullString(), "Hello 😀 World");
+				});
+
+				it("inserts text after surrogate pair characters", () => {
+					const text = TextAsTree.Tree.fromString("A😀B");
+					const content = <MainView root={toPropTreeNode(text)} />;
+					const rendered = render(content, { reactStrictMode });
+
+					// Insert after the emoji (index 2 in character count: A, 😀, B)
+					text.insertAt(2, "X");
+
+					rendered.rerender(content);
+					assert.equal(text.fullString(), "A😀XB");
+				});
+
+				it("removes surrogate pair characters", () => {
+					const text = TextAsTree.Tree.fromString("A😀B");
+					const content = <MainView root={toPropTreeNode(text)} />;
+					const rendered = render(content, { reactStrictMode });
+
+					// Remove the emoji (index 1, length 1 in character count)
+					text.removeRange(1, 2);
+
+					rendered.rerender(content);
+					assert.equal(text.fullString(), "AB");
+				});
+
+				it("handles multiple surrogate pair characters", () => {
+					const text = TextAsTree.Tree.fromString("👋🌍🎉");
+					const content = <MainView root={toPropTreeNode(text)} />;
+					const rendered = render(content, { reactStrictMode });
+
+					const editorContainer = rendered.baseElement.querySelector(".ql-editor");
+					assert(editorContainer !== null, "Editor container should exist");
+
+					// Insert between emojis
+					text.insertAt(2, "!");
+
+					rendered.rerender(content);
+					assert.equal(text.fullString(), "👋🌍!🎉");
 				});
 			});
 		}

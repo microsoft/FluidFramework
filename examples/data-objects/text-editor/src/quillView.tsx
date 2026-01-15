@@ -5,8 +5,6 @@
 
 import { type PropTreeNode, withMemoizedTreeObservations } from "@fluidframework/react/alpha";
 import Quill from "quill";
-// eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
-import "quill/dist/quill.snow.css";
 import * as React from "react";
 
 import type { TextAsTree } from "./schema.js";
@@ -26,12 +24,16 @@ export const MainView: React.FC<MainViewProps> = ({ root }) => {
  * The text editor view component with Quill integration.
  * Uses TextAsTree for collaborative plain text storage.
  *
- * @remarks This uses withMemoizedTreeObservations to automatically re-render
- * when the tree changes
+ * @remarks
+ * This uses withMemoizedTreeObservations to automatically re-render
+ * when the tree changes.
  */
 const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTree.Tree }) => {
+	// DOM element where Quill will mount its editor
 	const editorRef = React.useRef<HTMLDivElement>(null);
+	// Quill instance, persisted across renders to avoid re-initialization
 	const quillRef = React.useRef<Quill | null>(null);
+	// Guards against update loops between Quill and the tree
 	const isUpdatingRef = React.useRef<boolean>(false);
 
 	// Access tree content during render to establish observation.
@@ -42,17 +44,13 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 	React.useEffect(() => {
 		if (editorRef.current && !quillRef.current) {
 			const quill = new Quill(editorRef.current, {
-				theme: "snow",
 				placeholder: "Start typing...",
-				modules: {
-					// disable toolbar. No formatting supported yet
-					toolbar: false,
-				},
 			});
 
-			// Set initial content from tree
+			// Set initial content from tree (add trailing newline to match Quill's convention)
 			if (currentText.length > 0) {
-				quill.setText(currentText);
+				const textWithNewline = currentText.endsWith("\n") ? currentText : `${currentText}\n`;
+				quill.setText(textWithNewline);
 			}
 
 			// Listen to local Quill changes
@@ -60,9 +58,8 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 				if (source === "user" && !isUpdatingRef.current) {
 					isUpdatingRef.current = true;
 
-					// Get plain text from Quill
+					// Get plain text from Quill and preserve trailing newline
 					const text = quill.getText();
-					const cleanText = text.endsWith("\n") ? text.slice(0, -1) : text;
 
 					// TODO: Once TextAsTree supports character attributes, use quill.getContents()
 					// to get the Delta with formatting info (bold, italic, color, etc.) and store
@@ -73,8 +70,8 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 					if (length > 0) {
 						root.removeRange(0, length);
 					}
-					if (cleanText.length > 0) {
-						root.insertAt(0, cleanText);
+					if (text.length > 0) {
+						root.insertAt(0, text);
 					}
 
 					isUpdatingRef.current = false;
@@ -83,40 +80,69 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 
 			quillRef.current = quill;
 		}
-		// Only run on mount - quill initialization should happen once
+		// In React strict mode, effects run twice. The `!quillRef.current` check above
+		// makes the second call a no-op, preventing double-initialization of Quill.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	// Update Quill when tree changes from remote (detected via re-render from HOC)
-	React.useEffect(() => {
-		if (quillRef.current && !isUpdatingRef.current) {
-			const quillText = quillRef.current.getText();
-			const cleanQuillText = quillText.endsWith("\n") ? quillText.slice(0, -1) : quillText;
+	// Sync Quill when tree changes externally.
+	// We skip this if isUpdatingRef is true, meaning we caused the tree change ourselves
+	// via the text-change handler above - in that case Quill already has the correct content.
+	// No update is lost because isUpdatingRef is only true synchronously during our own
+	// handler execution, so Quill already reflects the change.
+	if (quillRef.current && !isUpdatingRef.current) {
+		const quillText = quillRef.current.getText();
+		// Normalize tree text to match Quill's trailing newline convention
+		const treeTextWithNewline = currentText.endsWith("\n") ? currentText : `${currentText}\n`;
 
-			// Only update if content actually differs (avoids cursor jump on local edits)
-			if (cleanQuillText !== currentText) {
-				isUpdatingRef.current = true;
+		// Only update if content actually differs (avoids cursor jump on local edits)
+		if (quillText !== treeTextWithNewline) {
+			isUpdatingRef.current = true;
 
-				const selection = quillRef.current.getSelection();
-				quillRef.current.setText(currentText);
-				if (selection) {
-					const length = quillRef.current.getLength();
-					const newPosition = Math.min(selection.index, length - 1);
-					quillRef.current.setSelection(newPosition, 0);
-				}
-
-				isUpdatingRef.current = false;
+			const selection = quillRef.current.getSelection();
+			quillRef.current.setText(treeTextWithNewline);
+			if (selection) {
+				const length = quillRef.current.getLength();
+				const newPosition = Math.min(selection.index, length - 1);
+				quillRef.current.setSelection(newPosition, 0);
 			}
+
+			isUpdatingRef.current = false;
 		}
-	}, [currentText]);
+	}
 
 	return (
 		<div
 			className="text-editor-container"
 			style={{ height: "100%", display: "flex", flexDirection: "column" }}
 		>
+			<style>
+				{`
+					.ql-container {
+						height: 100%;
+						font-size: 14px;
+					}
+					.ql-editor {
+						height: 100%;
+						outline: none;
+					}
+					.ql-editor.ql-blank::before {
+						color: #999;
+						font-style: italic;
+					}
+				`}
+			</style>
 			<h2 style={{ margin: "10px 0" }}>Collaborative Text Editor</h2>
-			<div ref={editorRef} style={{ flex: 1, minHeight: "300px" }} />
+			<div
+				ref={editorRef}
+				style={{
+					flex: 1,
+					minHeight: "300px",
+					border: "1px solid #ccc",
+					borderRadius: "4px",
+					padding: "8px",
+				}}
+			/>
 		</div>
 	);
 });

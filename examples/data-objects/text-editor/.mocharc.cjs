@@ -9,7 +9,7 @@ const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mochar
 
 const config = getFluidTestMochaConfig(__dirname);
 
-// Add CSS loader hook to handle .css imports from Quill
+// Set up JSDOM before Quill is imported (Quill requires document at import time)
 config["node-option"] = [...(config["node-option"] ?? []), "import=./src/test/mochaHooks.mjs"];
 
 module.exports = config;
