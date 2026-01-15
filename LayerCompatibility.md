@@ -257,7 +257,7 @@ For testing or migration scenarios, layer validation can be bypassed using the c
 
 ```typescript
 // In config provider
-configProvider.set("Fluid.Container.AllowIncompatibleLayers", true);
+configProvider.set("Fluid.AllowIncompatibleLayers", true);
 ```
 
 This will log a warning event but allow incompatible layers to work together. **Use with caution** - this should only be used in controlled scenarios.
@@ -287,7 +287,7 @@ To add a new feature that requires compatibility validation:
 
 3. **Add logic to conditionally use feature** in the layer that needs the feature. Basically, if the other layer supports the feature, use it, else don't.
 
-4. **Add to required features** in the layer requiring the feature after it has been in supported features for longer than the supported compatibility window for that layer boundary. If this is done sooner than that, it will incorrectly fail compatibility across that layer. A simple approach is to note the `generation` number when the feature was added (via comment added in the step 2), then move it to required when the difference between current generation and the generation where features is added is greater than the supported compatibility window (in months).
+4. **Add to required features** in the layer requiring the feature after it has been in supported features for longer than the supported compatibility window for that layer boundary. If this is done sooner than that, it will incorrectly fail compatibility across that layer. A simple approach is to note the `generation` number when the feature was added (via comment added in the step 2), then move it to required when the difference between current generation and the generation where the feature was added is greater than the supported compatibility window (in months).
 For example, say the supported compatibility window across the Runtime ↔ DataStore boundary is 6 months. The feature can be made required in generation 17+.
 
     ```typescript
@@ -299,7 +299,7 @@ For example, say the supported compatibility window across the Runtime ↔ DataS
 
 Generation numbers are updated on a regular cadence (monthly) coordinated across the codebase. This happens automatically during minor / major releases if the following criteria is met:
 - At least a month has passed since the last update to the generation.
-- Between two subsequent releases, the generation should not be incremented by more than the minimum compat window between 2 layers across all layers boundaries. For example, say compat window between Loader / Runtime is 12 months but between Runtime / Datastore it is only 3 months. Then between 2 subsequent releases, generation should not increment by more than 2. If that happens, it doesn't give customers enough time to upgrade their packages and saturate a release before upgrading to the next one. Layer compatibility will break as soon they upgrade.
+- Between two subsequent releases, the generation should not be incremented by more than the minimum compat window between 2 layers across all layers boundaries. For example, say compat window between Loader / Runtime is 12 months but between Runtime / Datastore it is only 3 months. Then between 2 subsequent releases, generation should not increment by more than 2. If that happens, it doesn't give customers enough time to upgrade their packages and saturate a release before upgrading to the next one. Layer compatibility will break as soon as they upgrade.
 
 ### Testing Compatibility
 

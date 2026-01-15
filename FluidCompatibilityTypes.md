@@ -38,9 +38,9 @@ Layer compatibility implies that a single client can have different versions for
 This compatibility concern exists to support the following scenarios:
 
 Dynamic loading, where code executed is retrieved from the network in a way that allows the code of each layer to change independently. This differs from other types of lazily loaded code, like webpack chunks, which are still part of the same compiled package, and will always return the same code. Because the layers can be different, each layer must support interacting with other layers of a different version.
-For example, applications such as Teams compile driver / loader and they generally update at a slow pace. It dynamically Loop container which compiles Runtime and updates more frequently.
+For example, applications such as Teams compile driver / loader and they generally update at a slow pace. It dynamically loads the Loop container which compiles Runtime and updates more frequently.
 
-Applications can import and build from different repos. These repos can be released and updated at different frequencies. Without any compatibility, they would need to update all of them to an FF version at the same time to be interoperable. For example, Loop container complies Runtime. It imports and builds Loop components which complies Datastores. These Loop components can be on a different repo and updates at a different frequency.
+Applications can import and build from different repos. These repos can be released and updated at different frequencies. Without any compatibility, they would need to update all of them to an FF version at the same time to be interoperable. For example, Loop container compiles Runtime. It imports and builds Loop components which compiles Datastores. These Loop components can be on a different repo and update at a different frequency.
 
 
 ### Architecture diagram
@@ -97,7 +97,7 @@ This diagram shows different Fluid layers with different versions in a client:
 
 ### Details
 
-Layer compatibility is described in more detail in [Fluid Layer Compatibility](./FluidLayerCompatibility.md).
+Layer compatibility is described in more detail in [Fluid Layer Compatibility](./LayerCompatibility.md).
 
 ## Cross-client compatibility
 
