@@ -61,8 +61,8 @@ import { initialize, initializerFromChunk } from "./schematizeTree.js";
 import { combineChunks } from "../feature-libraries/index.js";
 
 /**
- * Options for creating an independent tree view.
- * @alpha
+ * {@link independentView} options.
+ * @alpha @input
  */
 export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
 	/**
@@ -71,6 +71,33 @@ export interface IndependentViewOptions extends ForestOptions, Partial<CodecWrit
 	 */
 	idCompressor?: IIdCompressor | undefined;
 }
+
+/**
+ * {@link createIndependentTreeAlpha} options.
+ * @alpha
+ */
+export type CreateIndependentTreeAlphaOptions = ForestOptions &
+	(
+		| (IndependentViewOptions & {
+				/**
+				 * Optional content for initializing the tree.
+				 * If not provided, the tree will be uninitialized.
+				 */
+				content?: undefined;
+		  })
+		| (ICodecOptions & {
+				/**
+				 * Content for initializing the tree.
+				 * The content includes the idCompressor, so idCompressor should not be provided at the top level.
+				 */
+				content: ViewContent;
+				/**
+				 * Should not be provided when content is specified.
+				 * The idCompressor will be obtained from the content.
+				 */
+				idCompressor?: undefined;
+		  })
+	);
 
 /**
  * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
@@ -181,13 +208,7 @@ export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSch
  * @alpha
  */
 export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
-	options?: ForestOptions &
-		(
-			| ({ idCompressor?: IIdCompressor | undefined } & {
-					content?: undefined;
-			  } & Partial<CodecWriteOptions>)
-			| (ICodecOptions & { content: ViewContent } & { idCompressor?: undefined })
-		),
+	options?: CreateIndependentTreeAlphaOptions,
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
 	const breaker = new Breakable("independentView");
 	const idCompressor: IIdCompressor =
