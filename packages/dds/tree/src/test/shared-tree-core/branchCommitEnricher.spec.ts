@@ -13,8 +13,6 @@ import { mintRevisionTag } from "../utils.js";
 
 import { TestChangeEnricher } from "./utils.js";
 
-// eslint-disable-next-line import-x/no-internal-modules
-
 const rebaser = new TestChangeRebaser();
 const enricher = new TestChangeEnricher();
 const change = { change: TestChange.emptyChange, revision: undefined };

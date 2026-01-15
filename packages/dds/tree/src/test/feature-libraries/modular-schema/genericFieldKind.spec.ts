@@ -32,8 +32,6 @@ import {
 
 import { testSnapshots } from "./genericFieldSnapshots.test.js";
 
-// eslint-disable-next-line import-x/no-internal-modules
-
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 const nodeId3: NodeId = { localId: brand(3) };

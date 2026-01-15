@@ -21,8 +21,6 @@ import {
 } from "../../../simple-tree/index.js";
 import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 
-// eslint-disable-next-line import-x/no-internal-modules
-
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
 	rootFieldSchema: storedEmptyFieldSchema,

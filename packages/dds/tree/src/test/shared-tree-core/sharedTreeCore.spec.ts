@@ -79,7 +79,6 @@ import {
 } from "../utils.js";
 
 import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
 
 const enableSchemaValidation = true;
 

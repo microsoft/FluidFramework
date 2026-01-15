@@ -63,8 +63,6 @@ import {
 	type ForkMergeOperation,
 } from "./operationTypes.js";
 
-// eslint-disable-next-line import-x/no-internal-modules
-
 const syncFuzzReducer = combineReducers<
 	Operation,
 	DDSFuzzTestState<IChannelFactory<ISharedTree>>

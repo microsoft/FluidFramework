@@ -15,7 +15,6 @@ import { brand } from "../../../util/index.js";
 import { mintRevisionTag } from "../../utils.js";
 
 import { MarkMaker as Mark } from "./testEdits.js";
-// eslint-disable-next-line import-x/no-internal-modules
 
 const tag1: RevisionTag = mintRevisionTag();
 const nodeId1: NodeId = { localId: brand(1) };

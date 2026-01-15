@@ -46,8 +46,6 @@ import { CitmCatalog, generateCitmJson } from "./citm.js";
 import { clone } from "./jsObjectUtil.js";
 import { generateTwitterJsonByByteSize } from "./twitter.js";
 
-// eslint-disable-next-line import-x/no-internal-modules
-
 // Shared tree keys that map to the type used by the Twitter type/dataset
 export const TwitterKey = {
 	statuses: brand<FieldKey>("statuses"),

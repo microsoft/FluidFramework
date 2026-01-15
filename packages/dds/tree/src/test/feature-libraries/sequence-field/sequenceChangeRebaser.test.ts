@@ -42,7 +42,6 @@ import type {
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
 
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {

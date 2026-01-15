@@ -38,7 +38,6 @@ import {
 	moveWithin,
 	TestTreeProviderLite,
 } from "../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
 
 const rootPath: NormalizedUpPath = {
 	detachedNodeId: undefined,

@@ -17,7 +17,6 @@ import {
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository } from "../../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
 
 function assertEnumEqual<TEnum extends { [key: number]: string }>(
 	enumObject: TEnum,

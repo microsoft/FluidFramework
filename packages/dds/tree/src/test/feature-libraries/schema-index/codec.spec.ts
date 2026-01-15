@@ -35,8 +35,6 @@ import { SchemaFactory } from "../../../simple-tree/index.js";
 import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
-// eslint-disable-next-line import-x/no-internal-modules
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,

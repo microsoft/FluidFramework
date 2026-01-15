@@ -44,8 +44,6 @@ import {
 import { toInitialSchema } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-// eslint-disable-next-line import-x/no-internal-modules
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {

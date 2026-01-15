@@ -59,8 +59,6 @@ import type {
 } from "../../../../util/index.js";
 import { getView } from "../../../utils.js";
 import { describeHydration, hydrate, pretty } from "../../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
-// eslint-disable-next-line import-x/no-internal-modules
 
 const schemaFactory = new SchemaFactory("Test");
 

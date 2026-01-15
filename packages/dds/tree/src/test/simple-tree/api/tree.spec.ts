@@ -27,7 +27,6 @@ import {
 import { SharedTree } from "../../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { getView } from "../../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
 
 const schema = new SchemaFactory("com.example");
 

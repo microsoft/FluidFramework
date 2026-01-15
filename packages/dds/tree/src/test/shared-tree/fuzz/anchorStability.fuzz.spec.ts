@@ -37,7 +37,6 @@ import {
 	createOnCreate,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-// eslint-disable-next-line import-x/no-internal-modules
 
 interface AnchorFuzzTestState extends FuzzTestState {
 	// Parallel array to `clients`: set in testStart

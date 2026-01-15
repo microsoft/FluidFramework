@@ -32,7 +32,6 @@ import { sum } from "../../domains/json/benchmarks.js";
 import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 
 import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData.js";
-// eslint-disable-next-line import-x/no-internal-modules
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
 function validateShape(shape: ChunkShape): void {

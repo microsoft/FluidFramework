@@ -29,11 +29,7 @@ import type { requireAssignableTo } from "../../util/index.js";
 import { hydrate } from "../simple-tree/utils.js";
 import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
 
-// eslint-disable-next-line import-x/no-internal-modules
-
-// eslint-disable-next-line import-x/no-internal-modules
 // Including tests for TreeAlpha here so they don't have to move if/when stabilized
-// eslint-disable-next-line import-x/no-internal-modules
 
 describe("treeApi", () => {
 	describe("runTransaction", () => {

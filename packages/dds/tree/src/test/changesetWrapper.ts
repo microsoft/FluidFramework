@@ -32,7 +32,6 @@ import {
 } from "../util/index.js";
 
 import { TestChange } from "./testChange.js";
-// eslint-disable-next-line import-x/no-internal-modules
 
 export interface ChangesetWrapper<T> {
 	fieldChange: T;

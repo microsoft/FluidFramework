@@ -84,7 +84,6 @@ import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 import { TestChange } from "../testChange.js";
 import { testIdCompressor } from "../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
 
 export const testCodecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,

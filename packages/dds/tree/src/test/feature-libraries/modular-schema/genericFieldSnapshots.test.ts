@@ -13,7 +13,6 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { snapshotSessionId, testIdCompressor } from "../../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
 
 const nodeChange = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));
 const testChangesets: { name: string; change: GenericChangeset }[] = [

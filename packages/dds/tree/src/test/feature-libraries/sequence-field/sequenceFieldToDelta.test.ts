@@ -26,7 +26,6 @@ import { assertFieldChangesEqual, mintRevisionTag } from "../../utils.js";
 
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import { inlineRevision, toDelta } from "./utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
 
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);
