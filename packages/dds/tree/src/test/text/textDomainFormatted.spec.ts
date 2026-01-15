@@ -8,8 +8,15 @@ import { strict as assert } from "node:assert";
 // Allow importing file being tested
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree } from "../../text/textDomainFormatted.js";
+import { TreeViewConfiguration } from "../../simple-tree/index.js";
+import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 
 describe("textDomainFormatted", () => {
+	it("compatibility", () => {
+		const currentViewSchema = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.81.0", "formattedText");
+	});
+
 	it("basic unformatted use", () => {
 		const text = FormattedTextAsTree.Tree.fromString("hello");
 		assert.equal(text.fullString(), "hello");
