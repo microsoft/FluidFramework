@@ -44,7 +44,7 @@ class TextNode
 		return mapIterable(this.content, (atom) => atom.content.content);
 	}
 	public fullString(): string {
-		return this.content.join("");
+		return [...this.characters()].join("");
 	}
 
 	public static fromString(value: string, format?: CharacterFormat): TextNode {
@@ -141,7 +141,7 @@ class StringLineAtom extends sf.object("StringLineAtom", {
 const StringAtomContent = [StringTextAtom, StringLineAtom] as const;
 type StringAtomContent = TreeNodeFromImplicitAllowedTypes<typeof StringAtomContent>;
 
-class StringAtom extends sf.object("StringTextAtom", {
+class StringAtom extends sf.object("StringAtom", {
 	content: SchemaFactory.required(StringAtomContent, { key: EmptyKey }),
 	format: CharacterFormat,
 }) {}
