@@ -61,6 +61,18 @@ import { initialize, initializerFromChunk } from "./schematizeTree.js";
 import { combineChunks } from "../feature-libraries/index.js";
 
 /**
+ * Options for creating an independent tree view.
+ * @alpha
+ */
+export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
+	/**
+	 * Optional ID compressor for generating and compressing identifiers.
+	 * If not provided, a new one will be created.
+	 */
+	idCompressor?: IIdCompressor | undefined;
+}
+
+/**
  * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
  *
  * @remarks
@@ -71,9 +83,7 @@ import { combineChunks } from "../feature-libraries/index.js";
  */
 export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options?: ForestOptions & {
-		idCompressor?: IIdCompressor | undefined;
-	} & Partial<CodecWriteOptions>,
+	options?: IndependentViewOptions,
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
 }

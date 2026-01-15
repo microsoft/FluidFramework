@@ -74,6 +74,7 @@ export {
 	type ObservationResults,
 	type TreeIdentifierUtils,
 	independentView,
+	type IndependentViewOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
 	ForestTypeOptimized,

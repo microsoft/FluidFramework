@@ -59,6 +59,7 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	independentView,
+	type IndependentViewOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
 } from "./independentView.js";

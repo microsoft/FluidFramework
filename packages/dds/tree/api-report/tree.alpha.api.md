@@ -468,9 +468,12 @@ export const incrementalSummaryHint: unique symbol;
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeViewAlpha<TSchema>;
 
 // @alpha
-export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: ForestOptions & {
+export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: IndependentViewOptions): TreeViewAlpha<TSchema>;
+
+// @alpha
+export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
     idCompressor?: IIdCompressor | undefined;
-} & Partial<CodecWriteOptions>): TreeViewAlpha<TSchema>;
+}
 
 // @public @system
 type _InlineTrick = 0;

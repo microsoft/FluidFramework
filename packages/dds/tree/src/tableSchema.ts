@@ -44,7 +44,7 @@ import { EmptyKey } from "./core/index.js";
 // - Omit `props` properties from Row and Column schemas when not provided?
 
 // Longer-term work:
-// - Add constraint APIs to make it possible to avoid situations that could yield "orphaned" cells.
+// - Use more focused constraint APIs to protect against leaked cells
 
 /**
  * Scope for table schema built-in types.
@@ -664,6 +664,8 @@ export namespace System_TableSchema {
 						branch.runTransaction(() => {
 							insertOp();
 							return {
+								// Prevents cell leaks from concurrently added rows in earlier-sequenced edits.
+								// TODO: Replace with "no attach on revert" constraint on the row array when available.
 								preconditionsOnRevert: [{ type: "noChange" }],
 							};
 						});
@@ -709,8 +711,8 @@ export namespace System_TableSchema {
 					if (branch === undefined) {
 						insertOp();
 					} else {
-						// For hydrated trees, run in a transaction with nodeInDocument constraint per column
-						// to ensure no columns were removed
+						// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits.
+						// TODO: Replace with "no detach" constraint on the column array when available.
 						const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
 							(column) => ({
 								type: "nodeInDocument",
@@ -746,7 +748,7 @@ export namespace System_TableSchema {
 				if (branch === undefined) {
 					setOp();
 				} else {
-					// Hydrated tree: use transaction with nodeInDocument constraint on the column
+					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits.
 					branch.runTransaction(setOp, {
 						preconditions: [
 							{
@@ -775,27 +777,31 @@ export namespace System_TableSchema {
 
 					validateIndexRange(startIndex, endIndex, this.table.columns, "Table.removeColumns");
 
-					// Add a noChange constraint to ensure no rows are added during column removal
-					this.#applyEditsInBatch(() => {
-						const columnsToRemove = this.table.columns.slice(
-							startIndex,
-							endIndex,
-						) as ColumnValueType[];
+					this.#applyEditsInBatch({
+						applyEdits: () => {
+							const columnsToRemove = this.table.columns.slice(
+								startIndex,
+								endIndex,
+							) as ColumnValueType[];
 
-						// First, remove all cells that correspond to each column from each row:
-						for (const column of columnsToRemove) {
-							this.#removeCells(column);
-						}
+							// First, remove all cells that correspond to each column from each row:
+							for (const column of columnsToRemove) {
+								this.#removeCells(column);
+							}
 
-						// Second, remove the column nodes:
-						removeRangeFromArray(
-							startIndex,
-							endIndex,
-							this.table.columns,
-							"Table.removeColumns",
-						);
-						removedColumns = columnsToRemove;
-					}, [{ type: "noChange" }]);
+							// Second, remove the column nodes:
+							removeRangeFromArray(
+								startIndex,
+								endIndex,
+								this.table.columns,
+								"Table.removeColumns",
+							);
+							removedColumns = columnsToRemove;
+						},
+						// Prevents cell leaks from concurrently added rows in earlier-sequenced edits.
+						// TODO: Replace with "no attach" constraint on the row array when available.
+						preconditions: [{ type: "noChange" }],
+					});
 					return removedColumns ?? fail(0xc1f /* Transaction did not complete. */);
 				} else {
 					// If there are no columns to remove, do nothing
@@ -811,25 +817,29 @@ export namespace System_TableSchema {
 						columnsToRemove.push(this.#getColumn(columnOrIdToRemove));
 					}
 
-					// Add a noChange constraint to ensure no rows are added during column removal
-					this.#applyEditsInBatch(() => {
-						// Note, throwing an error within a transaction will abort the entire transaction.
-						// So if we throw an error here for any column, no columns will be removed.
-						for (const columnToRemove of columnsToRemove) {
-							// Remove the corresponding cell from all rows.
-							for (const row of this.table.rows) {
-								// TypeScript is unable to narrow the row type correctly here, hence the cast.
-								// See: https://github.com/microsoft/TypeScript/issues/52144
-								this.removeCell({
-									column: columnToRemove,
-									row: row as RowValueType,
-								});
-							}
+					this.#applyEditsInBatch({
+						applyEdits: () => {
+							// Note, throwing an error within a transaction will abort the entire transaction.
+							// So if we throw an error here for any column, no columns will be removed.
+							for (const columnToRemove of columnsToRemove) {
+								// Remove the corresponding cell from all rows.
+								for (const row of this.table.rows) {
+									// TypeScript is unable to narrow the row type correctly here, hence the cast.
+									// See: https://github.com/microsoft/TypeScript/issues/52144
+									this.removeCell({
+										column: columnToRemove,
+										row: row as RowValueType,
+									});
+								}
 
-							// We have already validated that all of the columns exist above, so this is safe.
-							this.table.columns.removeAt(this.table.columns.indexOf(columnToRemove));
-						}
-					}, [{ type: "noChange" }]);
+								// We have already validated that all of the columns exist above, so this is safe.
+								this.table.columns.removeAt(this.table.columns.indexOf(columnToRemove));
+							}
+						},
+						// Prevents cell leaks from concurrently added rows in earlier-sequenced edits.
+						// TODO: Replace with "no attach" constraint on the row array when available.
+						preconditions: [{ type: "noChange" }],
+					});
 					return columnsToRemove;
 				}
 			}
@@ -850,15 +860,16 @@ export namespace System_TableSchema {
 
 					validateIndexRange(startIndex, endIndex, this.table.rows, "Table.removeRows");
 
-					// Add a nodeInDocument constraint on revert per column to ensure no columns were removed
+					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits.
+					// TODO: Replace with "no detach on revert" constraint on the column array when available.
 					const columnConstraintsOnRevert: TransactionConstraintAlpha[] =
 						this.table.columns.map((column) => ({
 							type: "nodeInDocument",
 							node: column as ColumnValueType,
 						}));
 
-					this.#applyEditsInBatch(
-						() => {
+					this.#applyEditsInBatch({
+						applyEdits: () => {
 							removedRows = removeRangeFromArray(
 								startIndex,
 								endIndex,
@@ -866,9 +877,9 @@ export namespace System_TableSchema {
 								"Table.removeRows",
 							);
 						},
-						undefined,
-						columnConstraintsOnRevert.length > 0 ? columnConstraintsOnRevert : undefined,
-					);
+						preconditionsOnRevert:
+							columnConstraintsOnRevert.length > 0 ? columnConstraintsOnRevert : undefined,
+					});
 					return removedRows ?? fail("Transaction did not complete");
 				}
 
@@ -885,7 +896,8 @@ export namespace System_TableSchema {
 					rowsToRemove.push(this.#getRow(rowToRemove));
 				}
 
-				// Add a nodeInDocument constraint on revert per column to ensure no columns were removed
+				// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits.
+				// TODO: Replace with "no detach on revert" constraint on the column array when available.
 				const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
 					(column) => ({
 						type: "nodeInDocument",
@@ -893,8 +905,8 @@ export namespace System_TableSchema {
 					}),
 				);
 
-				this.#applyEditsInBatch(
-					() => {
+				this.#applyEditsInBatch({
+					applyEdits: () => {
 						// Note, throwing an error within a transaction will abort the entire transaction.
 						// So if we throw an error here for any row, no rows will be removed.
 						for (const rowToRemove of rowsToRemove) {
@@ -903,9 +915,8 @@ export namespace System_TableSchema {
 							this.table.rows.removeAt(index);
 						}
 					},
-					undefined,
-					columnConstraints.length > 0 ? columnConstraints : undefined,
-				);
+					preconditionsOnRevert: columnConstraints.length > 0 ? columnConstraints : undefined,
+				});
 				return rowsToRemove;
 			}
 
@@ -934,6 +945,7 @@ export namespace System_TableSchema {
 						removeOp();
 
 						return {
+							// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits.
 							preconditionsOnRevert: [
 								{
 									type: "nodeInDocument",
@@ -970,11 +982,15 @@ export namespace System_TableSchema {
 			 * Transactions are not supported for unhydrated trees, so we cannot run a transaction in that case.
 			 * But since there are no collaborators, this is not an issue.
 			 */
-			#applyEditsInBatch(
-				applyEdits: () => void,
-				preconditions?: readonly TransactionConstraintAlpha[],
-				preconditionsOnRevert?: readonly TransactionConstraintAlpha[],
-			): void {
+			#applyEditsInBatch(options: {
+				/** The edits to apply. */
+				applyEdits: () => void;
+				/** Optional constraints that must be satisfied for the transaction to proceed. */
+				preconditions?: readonly TransactionConstraintAlpha[];
+				/** Optional constraints that must be satisfied on revert for the transaction to proceed. */
+				preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
+			}): void {
+				const { applyEdits, preconditions, preconditionsOnRevert } = options;
 				const branch = TreeAlpha.branch(this);
 
 				// Ensure events are paused until all of the edits are applied.
@@ -1350,12 +1366,6 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  *
  * Column and Row schema created using these APIs are extensible via the `props` field.
  * This allows association of additional properties with column and row nodes.
- *
- * Cells in the table may become "orphaned."
- * That is, it is possible to enter a state where one or more rows contain cells with no corresponding column.
- * To reduce the likelihood of this, you can manually remove corresponding cells when removing columns.
- * Either way, it is possible to enter such a state via the merging of edits.
- * For example: one client might add a row while another concurrently removes a column, orphaning the cell where the column and row intersected.
  *
  * @example Defining a Table schema
  *
