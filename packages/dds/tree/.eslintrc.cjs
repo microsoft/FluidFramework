@@ -66,6 +66,8 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-unused-vars": ["off"],
 				"@typescript-eslint/explicit-function-return-type": "off",
+				// Test files commonly define helper functions inside describe blocks for better readability
+				"unicorn/consistent-function-scoping": "off",
 			},
 		},
 	],

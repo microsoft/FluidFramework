@@ -33,55 +33,6 @@ const nodesCountDeep = [
 	[100, BenchmarkType.Measurement],
 ];
 
-/**
- * Creates a pair of benchmarks to test accessing leaf values in a tree, one for unhydrated nodes and one for flex
- * nodes.
- * @param title - The title for the test.
- * @param unhydratedNodeInitFunction - Function that returns the test tree with unhydrated nodes.
- * @param flexNodeInitFunction - Function that returns the test tree with flex nodes.
- * @param treeReadingFunction - Function that reads the leaf value from the tree. It should have no side-effects.
- * @param expectedValue - The expected value of the leaf.
- */
-function generateBenchmarkPair<RootNode>(
-	title: string,
-	unhydratedNodeInitFunction: () => RootNode,
-	flexNodeInitFunction: () => RootNode,
-	treeReadingFunction: (tree: RootNode) => number | undefined,
-	expectedValue: number | undefined,
-) {
-	let unhydratedTree: RootNode | undefined;
-	let readNumber: number | undefined;
-	benchmark({
-		type: BenchmarkType.Measurement,
-		title: `${title} (unhydrated node)`,
-		before: () => {
-			unhydratedTree = unhydratedNodeInitFunction();
-		},
-		benchmarkFn: () => {
-			readNumber = treeReadingFunction(
-				unhydratedTree ?? fail("Expected unhydratedTree to be set"),
-			);
-		},
-		after: () => {
-			assert.equal(readNumber, expectedValue);
-		},
-	});
-	let flexTree: RootNode | undefined;
-	benchmark({
-		type: BenchmarkType.Measurement,
-		title: `${title} (flex node)`,
-		before: () => {
-			flexTree = flexNodeInitFunction();
-		},
-		benchmarkFn: () => {
-			readNumber = treeReadingFunction(flexTree ?? fail("Expected flexTree to be set"));
-		},
-		after: () => {
-			assert.equal(readNumber, expectedValue);
-		},
-	});
-}
-
 describe("SimpleTree benchmarks", () => {
 	configureBenchmarkHooks();
 	describe("Read SimpleTree", () => {
@@ -135,6 +86,55 @@ describe("SimpleTree benchmarks", () => {
 		}
 
 		describe("Access to leaves", () => {
+			/**
+			 * Creates a pair of benchmarks to test accessing leaf values in a tree, one for unhydrated nodes and one for flex
+			 * nodes.
+			 * @param title - The title for the test.
+			 * @param unhydratedNodeInitFunction - Function that returns the test tree with unhydrated nodes.
+			 * @param flexNodeInitFunction - Function that returns the test tree with flex nodes.
+			 * @param treeReadingFunction - Function that reads the leaf value from the tree. It should have no side-effects.
+			 * @param expectedValue - The expected value of the leaf.
+			 */
+			function generateBenchmarkPair<RootNode>(
+				title: string,
+				unhydratedNodeInitFunction: () => RootNode,
+				flexNodeInitFunction: () => RootNode,
+				treeReadingFunction: (tree: RootNode) => number | undefined,
+				expectedValue: number | undefined,
+			) {
+				let unhydratedTree: RootNode | undefined;
+				let readNumber: number | undefined;
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `${title} (unhydrated node)`,
+					before: () => {
+						unhydratedTree = unhydratedNodeInitFunction();
+					},
+					benchmarkFn: () => {
+						readNumber = treeReadingFunction(
+							unhydratedTree ?? fail("Expected unhydratedTree to be set"),
+						);
+					},
+					after: () => {
+						assert.equal(readNumber, expectedValue);
+					},
+				});
+				let flexTree: RootNode | undefined;
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `${title} (flex node)`,
+					before: () => {
+						flexTree = flexNodeInitFunction();
+					},
+					benchmarkFn: () => {
+						readNumber = treeReadingFunction(flexTree ?? fail("Expected flexTree to be set"));
+					},
+					after: () => {
+						assert.equal(readNumber, expectedValue);
+					},
+				});
+			}
+
 			describe("Optional object property", () => {
 				const factory = new SchemaFactory("test");
 				class MySchema extends factory.object("root", {
@@ -257,13 +257,8 @@ describe("SimpleTree benchmarks", () => {
 				for (const { title, mapType } of valueTestCases) {
 					const initUnhydrated = () => new mapType([["a", 1]]);
 					const initFlex = () => hydrateUnsafe(mapType, initUnhydrated());
-					generateBenchmarkPair(
-						title,
-						initUnhydrated,
-						initFlex,
-						(tree: CombinedTypes) => tree.get("a") as number,
-						1,
-					);
+					const readFunction = (tree: CombinedTypes) => tree.get("a") as number;
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, 1);
 				}
 
 				const undefinedTestCases = [
@@ -290,13 +285,8 @@ describe("SimpleTree benchmarks", () => {
 				for (const { title, mapType } of undefinedTestCases) {
 					const initUnhydrated = () => new mapType([["a", 1]]);
 					const initFlex = () => hydrateUnsafe(mapType, initUnhydrated());
-					generateBenchmarkPair(
-						title,
-						initUnhydrated,
-						initFlex,
-						(tree: CombinedTypes) => tree.get("b") as number,
-						undefined,
-					);
+					const readFunction = (tree: CombinedTypes) => tree.get("b") as number;
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, undefined);
 				}
 			});
 
@@ -332,13 +322,8 @@ describe("SimpleTree benchmarks", () => {
 				for (const { title, recordType } of valueTestCases) {
 					const initUnhydrated = () => new recordType({ a: 1 });
 					const initFlex = () => hydrateUnsafe(recordType, initUnhydrated());
-					generateBenchmarkPair(
-						title,
-						initUnhydrated,
-						initFlex,
-						(tree: CombinedTypes) => tree.a as number,
-						1,
-					);
+					const readFunction = (tree: CombinedTypes) => tree.a as number;
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, 1);
 				}
 
 				const undefinedTestCases = [
@@ -365,13 +350,8 @@ describe("SimpleTree benchmarks", () => {
 				for (const { title, recordType } of undefinedTestCases) {
 					const initUnhydrated = () => new recordType({ a: 1 });
 					const initFlex = () => hydrateUnsafe(recordType, initUnhydrated());
-					generateBenchmarkPair(
-						title,
-						initUnhydrated,
-						initFlex,
-						(tree: CombinedTypes) => tree.b as number,
-						undefined,
-					);
+					const readFunction = (tree: CombinedTypes) => tree.b as number;
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, undefined);
 				}
 			});
 
@@ -402,13 +382,8 @@ describe("SimpleTree benchmarks", () => {
 				for (const { title, arrayType } of testCases) {
 					const initUnhydrated = () => new arrayType([1]);
 					const initFlex = () => hydrateUnsafe(arrayType, initUnhydrated());
-					generateBenchmarkPair(
-						title,
-						initUnhydrated,
-						initFlex,
-						(tree: NumArray | NumStringArray | NumObjectArray) => tree[0] as number,
-						1,
-					);
+					const read = (tree: NumArray | NumStringArray | NumObjectArray) => tree[0] as number;
+					generateBenchmarkPair(title, initUnhydrated, initFlex, read, 1);
 				}
 			});
 		});

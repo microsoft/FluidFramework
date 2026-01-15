@@ -50,19 +50,6 @@ const nodesCountDeep: [numberOfNodes: number, minLength: number, maxLength: numb
 	[200, 1000, 5000000],
 ];
 
-function processSummary(
-	summaryTree: ISummaryTree,
-	reporter: IMeasurementReporter,
-	minLength: number,
-	maxLength: number,
-) {
-	const summaryString = JSON.stringify(summaryTree);
-	const summarySize = IsoBuffer.from(summaryString).byteLength;
-	reporter.addMeasurement("summarySize", summarySize);
-	assert(summarySize > minLength);
-	assert(summarySize < maxLength);
-}
-
 describe("Summary benchmarks", () => {
 	configureBenchmarkHooks();
 	// TODO: report these sizes as benchmark output which can be tracked over time.
@@ -75,6 +62,19 @@ describe("Summary benchmarks", () => {
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
 			assert(summarySize < 900);
 		});
+
+		function processSummary(
+			summaryTree: ISummaryTree,
+			reporter: IMeasurementReporter,
+			minLength: number,
+			maxLength: number,
+		) {
+			const summaryString = JSON.stringify(summaryTree);
+			const summarySize = IsoBuffer.from(summaryString).byteLength;
+			reporter.addMeasurement("summarySize", summarySize);
+			assert(summarySize > minLength);
+			assert(summarySize < maxLength);
+		}
 
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountWide) {
 			benchmarkCustom({
@@ -109,7 +109,6 @@ describe("Summary benchmarks", () => {
 	});
 
 	describe("load speed of", () => {
-		// eslint-disable-next-line unicorn/consistent-function-scoping -- benchmark helper
 		function runSummaryBenchmark<T extends ImplicitFieldSchema>(
 			title: string,
 			content: TreeSimpleContentTyped<T>,

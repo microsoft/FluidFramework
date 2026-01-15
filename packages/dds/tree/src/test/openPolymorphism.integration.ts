@@ -106,10 +106,6 @@ class TextItem
 	}
 }
 
-// Module-level helpers for textComponent patterns used in tests
-const textItemSchemaArray = () => [() => TextItem];
-const textItemSchemaObject = () => ({ items: () => [() => TextItem] });
-
 describe("Open Polymorphism design pattern examples and tests for them", () => {
 	// Currently, allowed type arrays are processed eagerly, making this pattern no longer work.
 	describe.skip("mutable static registry", () => {
@@ -309,7 +305,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			() => createContainer(lazyConfig()),
 		];
 
-		const textComponent: MyAppComponent = textItemSchemaArray;
+		const textComponent: MyAppComponent = () => [() => TextItem];
 
 		/**
 		 * Subset of `MyAppConfig` which is available while composing components.
@@ -397,7 +393,6 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 
 		// An example component which recursively depends on all components.
 		const containerComponent: MyAppComponent = (lazyConfig) => {
-			// eslint-disable-next-line unicorn/consistent-function-scoping -- local helper used with lazyConfig
 			function createContainer(config: MyAppConfigPartial): ItemSchema {
 				class Container extends sf.array("Container", config.allowedItemTypes) {}
 				class ContainerItem extends sf.object("ContainerItem", {
@@ -420,7 +415,9 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			};
 		};
 
-		const textComponent: MyAppComponent = textItemSchemaObject;
+		const textComponent: MyAppComponent = () => ({
+			items: () => [() => TextItem],
+		});
 
 		class Color
 			extends sf.object("Color", { r: sf.number, g: sf.number, b: sf.number })

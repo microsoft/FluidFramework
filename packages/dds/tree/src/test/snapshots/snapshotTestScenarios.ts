@@ -15,60 +15,6 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 
 const enableSchemaValidation = true;
 
-function generateCompleteTree(
-	mapKeys: string[],
-	startingHeight: number,
-	nodesPerField: number,
-	options: SharedTreeOptions,
-): ISharedTree {
-	const schemaFactory = new SchemaFactory("test trees");
-	class StringArray extends schemaFactory.array("String Array", [schemaFactory.string]) {}
-	class RecursiveMap extends schemaFactory.mapRecursive("Recursive Map", [
-		() => RecursiveMap,
-		StringArray,
-	]) {}
-
-	const provider = new TestTreeProviderLite(
-		1,
-		configuredSharedTree(options).getFactory(),
-		true,
-	);
-	const tree = provider.trees[0];
-	const view = tree.viewWith(
-		new TreeViewConfiguration({
-			schema: [RecursiveMap, StringArray],
-			enableSchemaValidation,
-		}),
-	);
-
-	function generateTreeRecursively(
-		keys: string[],
-		height: number,
-		currentValue: { value: number },
-	): RecursiveMap | StringArray {
-		if (height === 1) {
-			const values: string[] = [];
-			for (let i = 0; i < nodesPerField; i++) {
-				values.push(currentValue.value.toString());
-				currentValue.value++;
-			}
-			return new StringArray(values);
-		} else {
-			const map = new Map<string, RecursiveMap | StringArray>();
-			if (height > 1) {
-				for (const key of keys) {
-					map.set(key, generateTreeRecursively(keys, height - 1, currentValue));
-				}
-			}
-			return new RecursiveMap(map);
-		}
-	}
-
-	view.initialize(generateTreeRecursively(mapKeys, startingHeight, { value: 1 }));
-	provider.synchronizeMessages();
-	return tree;
-}
-
 export interface TestTree {
 	only?: boolean;
 	skip?: boolean;
@@ -291,8 +237,63 @@ export function generateTestTrees(options: SharedTreeOptions) {
 		{
 			name: "complete-3x3",
 			runScenario: async (takeSnapshot) => {
+				function generateCompleteTree(
+					mapKeys: string[],
+					startingHeight: number,
+					nodesPerField: number,
+				): ISharedTree {
+					const schemaFactory = new SchemaFactory("test trees");
+					class StringArray extends schemaFactory.array("String Array", [
+						schemaFactory.string,
+					]) {}
+					class RecursiveMap extends schemaFactory.mapRecursive("Recursive Map", [
+						() => RecursiveMap,
+						StringArray,
+					]) {}
+
+					const provider = new TestTreeProviderLite(
+						1,
+						configuredSharedTree(options).getFactory(),
+						true,
+					);
+					const tree = provider.trees[0];
+					const view = tree.viewWith(
+						new TreeViewConfiguration({
+							schema: [RecursiveMap, StringArray],
+							enableSchemaValidation,
+						}),
+					);
+
+					function generateTreeRecursively(
+						keys: string[],
+						height: number,
+						currentValue: { value: number },
+					): RecursiveMap | StringArray {
+						if (height === 1) {
+							const values: string[] = [];
+							for (let i = 0; i < nodesPerField; i++) {
+								values.push(currentValue.value.toString());
+								currentValue.value++;
+							}
+							return new StringArray(values);
+						} else {
+							const map = new Map<string, RecursiveMap | StringArray>();
+							if (height > 1) {
+								for (const key of keys) {
+									map.set(key, generateTreeRecursively(keys, height - 1, currentValue));
+								}
+							}
+							return new RecursiveMap(map);
+						}
+					}
+
+					view.initialize(generateTreeRecursively(mapKeys, startingHeight, { value: 1 }));
+					provider.synchronizeMessages();
+					return tree;
+				}
+
 				await takeSnapshot(
-					generateCompleteTree(["FieldA", "FieldB", "FieldC"], 4, 3, options),
+					generateCompleteTree(["FieldA", "FieldB", "FieldC"], 4, 3),
 					"final",
 				);
 			},

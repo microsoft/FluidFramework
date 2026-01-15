@@ -32,12 +32,6 @@ import {
 } from "./editManagerTestUtils.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
 
-const sequencePrepend: Editor = (builder) => {
-	builder
-		.sequenceField({ parent: undefined, field: rootFieldKey })
-		.insert(0, chunkFromJsonTrees([1]));
-};
-
 describe("EditManager - Bench", () => {
 	interface Scenario {
 		readonly type: BenchmarkType;
@@ -67,6 +61,11 @@ describe("EditManager - Bench", () => {
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab: FluidClientVersion.v2_0,
 	});
+	const sequencePrepend: Editor = (builder) => {
+		builder
+			.sequenceField({ parent: undefined, field: rootFieldKey })
+			.insert(0, chunkFromJsonTrees([1]));
+	};
 
 	// Family is invariant over the change type, so using any is required to write generic Family processing code.
 	// Refactors to make this more type safe are possible for some usages (ex: extracting a non generic base interface), but are not practical for the tests here.

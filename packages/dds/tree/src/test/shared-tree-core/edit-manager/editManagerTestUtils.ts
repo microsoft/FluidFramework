@@ -40,14 +40,13 @@ export function testChangeEditManagerFactory(options: {
 	return { manager, family };
 }
 
-const genId = () => testIdCompressor.generateCompressedId();
-
 export function editManagerFactory<TChange = TestChange>(
 	family: ChangeFamily<ChangeFamilyEditor, TChange>,
 	options: {
 		sessionId?: SessionId;
 	} = {},
 ): EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>> {
+	const genId = () => testIdCompressor.generateCompressedId();
 	const manager = new EditManager<
 		ChangeFamilyEditor,
 		TChange,
