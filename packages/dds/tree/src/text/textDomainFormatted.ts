@@ -30,7 +30,8 @@ class TextNode
 	})
 	implements FormattedTextAsTree.Members
 {
-	public defaultFormat: CharacterFormat = new CharacterFormat(defaultFormat);
+	public defaultFormat: FormattedTextAsTree.CharacterFormat =
+		new FormattedTextAsTree.CharacterFormat(defaultFormat);
 
 	public insertAt(index: number, additionalCharacters: string): void {
 		this.content.insertAt(
@@ -48,28 +49,36 @@ class TextNode
 		return [...this.characters()].join("");
 	}
 
-	public static fromString(value: string, format?: CharacterFormat): TextNode {
+	public static fromString(
+		value: string,
+		format?: FormattedTextAsTree.CharacterFormat,
+	): TextNode {
 		// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like its not necessary here,
 		// but to reduce the risk of incorrect data interpretation, we actually ban this in the special case where the iterable is a string directly, which is the case here.
 		// Thus the array construction here is necessary to avoid a runtime error.
 		return new TextNode({
-			content: [...textAtomsFromString(value, format ?? new CharacterFormat(defaultFormat))],
+			content: [
+				...textAtomsFromString(
+					value,
+					format ?? new FormattedTextAsTree.CharacterFormat(defaultFormat),
+				),
+			],
 		});
 	}
 
-	public charactersFormatted(): Iterable<StringAtom> {
+	public charactersFormatted(): Iterable<FormattedTextAsTree.StringAtom> {
 		return this.content;
 	}
 	public insertFormattedAt(
 		index: number,
-		additionalCharacters: Iterable<InsertableTypedNode<typeof StringAtom>>,
+		additionalCharacters: Iterable<InsertableTypedNode<typeof FormattedTextAsTree.StringAtom>>,
 	): void {
 		this.content.insertAt(index, TreeArrayNode.spread(additionalCharacters));
 	}
 	public formatRange(
 		startIndex: number,
 		length: number,
-		format: Partial<CharacterFormat>,
+		format: Partial<FormattedTextAsTree.CharacterFormat>,
 	): void {
 		for (let i = startIndex; i < startIndex + length; i++) {
 			const atom = this.content[i];
@@ -77,13 +86,13 @@ class TextNode
 				throw new UsageError("Index out of bounds while formatting text range.");
 			}
 			for (const [key, value] of Object.entries(format) as [
-				keyof CharacterFormat,
+				keyof FormattedTextAsTree.CharacterFormat,
 				unknown,
 			][]) {
 				if (typeof key !== "string") {
 					throw new UsageError(`Invalid format key: ${key.toString()}`);
 				}
-				const f = CharacterFormat.fields.get(key);
+				const f = FormattedTextAsTree.CharacterFormat.fields.get(key);
 				if (f === undefined) {
 					throw new UsageError(`Unknown format key: ${key}`);
 				}
@@ -102,55 +111,22 @@ const defaultFormat = {
 	font: "Arial",
 } as const;
 
-function textAtomsFromString(value: string, format: CharacterFormat): Iterable<StringAtom> {
+function textAtomsFromString(
+	value: string,
+	format: FormattedTextAsTree.CharacterFormat,
+): Iterable<FormattedTextAsTree.StringAtom> {
 	const result = mapIterable(
 		charactersFromString(value),
 		(char) =>
-			new StringAtom({
+			new FormattedTextAsTree.StringAtom({
 				content: { content: char },
-				format: TreeBeta.clone<typeof CharacterFormat>(format),
+				format: TreeBeta.clone<typeof FormattedTextAsTree.CharacterFormat>(format),
 			}),
 	);
 	return result;
 }
 
-class CharacterFormat extends sf.objectAlpha("CharacterFormat", {
-	bold: SchemaFactory.boolean,
-	italic: SchemaFactory.boolean,
-	underline: SchemaFactory.boolean,
-	size: SchemaFactory.number,
-	font: SchemaFactory.string,
-}) {}
-
-class StringTextAtom extends sf.object("StringTextAtom", {
-	content: SchemaFactory.required([SchemaFactory.string], { key: EmptyKey }),
-}) {}
-
-const LineTag = enumFromStrings(sf.scopedFactory("lineTag"), [
-	"h1",
-	"h2",
-	"h3",
-	"h4",
-	"h5",
-	"li",
-]);
-type LineTag = TreeNodeFromImplicitAllowedTypes<typeof LineTag.schema>;
-
-class StringLineAtom extends sf.object("StringLineAtom", {
-	tag: LineTag.schema,
-}) {
-	public readonly content = "\n";
-}
-
-const StringAtomContent = [StringTextAtom, StringLineAtom] as const;
-type StringAtomContent = TreeNodeFromImplicitAllowedTypes<typeof StringAtomContent>;
-
-class StringAtom extends sf.object("StringAtom", {
-	content: SchemaFactory.required(StringAtomContent, { key: EmptyKey }),
-	format: CharacterFormat,
-}) {}
-
-class StringArray extends sf.array("StringArray", StringAtom) {}
+class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.StringAtom]) {}
 
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
@@ -162,6 +138,78 @@ class StringArray extends sf.array("StringArray", StringAtom) {}
  * @internal
  */
 export namespace FormattedTextAsTree {
+	/**
+	 * Formatting options for characters.
+	 * @internal
+	 */
+	export class CharacterFormat extends sf.objectAlpha("CharacterFormat", {
+		bold: SchemaFactory.boolean,
+		italic: SchemaFactory.boolean,
+		underline: SchemaFactory.boolean,
+		size: SchemaFactory.number,
+		font: SchemaFactory.string,
+	}) {}
+
+	/**
+	 * Unit in the string representing a single character.
+	 * @internal
+	 */
+	export class StringTextAtom extends sf.object("StringTextAtom", {
+		content: SchemaFactory.required([SchemaFactory.string], { key: EmptyKey }),
+	}) {}
+
+	/**
+	 * Tag with with a line in text can be formatted from HTML.
+	 * @internal
+	 */
+	export const LineTag = enumFromStrings(sf.scopedFactory("lineTag"), [
+		"h1",
+		"h2",
+		"h3",
+		"h4",
+		"h5",
+		"li",
+	]);
+	/**
+	 * {@inheritdoc FormattedTextAsTree.(LineTag:variable)}
+	 * @internal
+	 */
+	export type LineTag = TreeNodeFromImplicitAllowedTypes<typeof LineTag.schema>;
+
+	/**
+	 * Unit in the string representing a new line character with line formatting.
+	 * @remarks
+	 * This aligns with how Quill represents line formatting.
+	 * Note that not all new lines will use this,
+	 * but only ones using this can have line specific formatting.
+	 * @internal
+	 */
+	export class StringLineAtom extends sf.object("StringLineAtom", {
+		tag: LineTag.schema,
+	}) {
+		public readonly content = "\n";
+	}
+
+	/**
+	 * Types of "atoms" that make up the text.
+	 * @internal
+	 */
+	export const StringAtomContent = [StringTextAtom, StringLineAtom] as const;
+	/**
+	 * {@inheritdoc FormattedTextAsTree.(StringAtomContent:variable)}
+	 * @internal
+	 */
+	export type StringAtomContent = TreeNodeFromImplicitAllowedTypes<typeof StringAtomContent>;
+
+	/**
+	 * A unit of the text, with formatting.
+	 * @internal
+	 */
+	export class StringAtom extends sf.object("StringAtom", {
+		content: SchemaFactory.required(StringAtomContent, { key: EmptyKey }),
+		format: CharacterFormat,
+	}) {}
+
 	/**
 	 * Statics for text nodes.
 	 * @internal
