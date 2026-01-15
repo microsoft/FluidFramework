@@ -18,6 +18,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-use-before-define": "off",
 			"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 			"@typescript-eslint/strict-boolean-expressions": "off",
+			// package hasn't converted to barrel files (which may not be a bad thing)
 			"import-x/no-internal-modules": [
 				"error",
 				{
@@ -31,6 +32,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},
+	// This should not be needed. For some reason no overrides from "../../.eslintrc.cjs" come thru.
 	{
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {
@@ -43,10 +45,5 @@ const config: Linter.Config[] = [
 		},
 	},
 ];
-
-/*
- * Comments from legacy config that couldn't be automatically migrated:
- * package hasn't converted to barrel files (which may not be a bad thing)
- */
 
 export default config;

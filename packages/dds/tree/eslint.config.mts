@@ -57,10 +57,4 @@ const config: Linter.Config[] = [
 	},
 ];
 
-/*
- * Comments from legacy config that couldn't be automatically migrated:
- * Default condition names below, see https://www.npmjs.com/package/eslint-import-resolver-typescript#conditionnames
- * APF: https://angular.io/guide/angular-package-format
- */
-
 export default config;

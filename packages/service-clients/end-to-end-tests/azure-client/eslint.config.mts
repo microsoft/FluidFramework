@@ -48,11 +48,22 @@ const config: Linter.Config[] = [
 				"error",
 				{
 					"allow": [
+						// Allow import of Fluid Framework external API exports.
 						"@fluidframework/*/{beta,alpha,legacy}",
 						"fluid-framework/{beta,alpha,legacy}",
+
+						// Allow import of Fluid Framework non-production test-utils APIs.
 						"@fluidframework/*/test-utils",
+
+						// Allow imports from sibling and ancestral sibling directories,
+						// but not from cousin directories. Parent is allowed but only
+						// because there isn't a known way to deny it.
 						"*/index.js",
+
+						// Should `telemetry-utils` provide support through `/test-utils` instead of `/internal`?
 						"@fluidframework/telemetry-utils/internal",
+
+						// Should `test-*utils` provide support through `/test-utils` instead of `/internal`?
 						"@fluidframework/test-utils/internal",
 						"@fluidframework/test-runtime-utils/internal",
 					],
@@ -61,16 +72,5 @@ const config: Linter.Config[] = [
 		},
 	},
 ];
-
-/*
- * Comments from legacy config that couldn't be automatically migrated:
- * Allow import of Fluid Framework external API exports.
- * Allow import of Fluid Framework non-production test-utils APIs.
- * Allow imports from sibling and ancestral sibling directories,
- * but not from cousin directories. Parent is allowed but only
- * because there isn't a known way to deny it.
- * Should `telemetry-utils` provide support through `/test-utils` instead of `/internal`?
- * Should `test-*utils` provide support through `/test-utils` instead of `/internal`?
- */
 
 export default config;

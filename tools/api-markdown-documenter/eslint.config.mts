@@ -22,6 +22,7 @@ const config: Linter.Config[] = [
 				"error",
 				{
 					"allowList": {
+						// Industry-standard index variable name.
 						"i": true,
 					},
 				},
@@ -47,10 +48,5 @@ const config: Linter.Config[] = [
 		},
 	},
 ];
-
-/*
- * Comments from legacy config that couldn't be automatically migrated:
- * Industry-standard index variable name.
- */
 
 export default config;
