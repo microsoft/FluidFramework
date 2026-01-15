@@ -39,6 +39,7 @@ import {
 	lastFinalizedLocal,
 } from "./sessions.js";
 import type {
+	CompressorShardId,
 	IIdCompressor,
 	IIdCompressorCore,
 	IdCreationRange,
@@ -257,16 +258,16 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// Calculate new stride: parent and all children share this stride
 		const newTotalShards = currentStride * (newShardCount + 1);
 
+		// Store parent's localGenCount before creating shards
+		const parentLocalGenCountBeforeShard = this.localGenCount;
+
 		// Create serialized shards for each child
-		// We'll use a temporary approach: serialize the parent, then modify the serialized data
-		// to set the correct sharding state for each child
 		const shards: SerializedIdCompressorWithOngoingSession[] = [];
 
 		for (let i = 1; i <= newShardCount; i++) {
 			const childOffset = currentOffset + i * currentStride;
 
 			// Create a child shard with the correct sharding state
-			// We do this by creating a temporary child compressor with the right state
 			const childShard = this.createChildShard(newTotalShards, childOffset);
 			shards.push(childShard);
 		}
@@ -278,6 +279,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			activeShardCount: currentActiveCount + newShardCount,
 		};
 
+		// Update parent's localGenCount to reflect the stride-based view
+		// Parent now only "owns" its stride's genCounts, so recalculate how many of those it has generated
+		const completedCycles = Math.floor(parentLocalGenCountBeforeShard / newTotalShards);
+		const idsInIncompleteCycle = parentLocalGenCountBeforeShard % newTotalShards;
+		this.localGenCount = completedCycles + (currentOffset < idsInIncompleteCycle ? 1 : 0);
+
 		return shards;
 	}
 
@@ -285,8 +292,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * Helper method to create a child shard with specific sharding state.
 	 * Creates a serialized compressor that has:
 	 * - Same finalized state (clusters, sessions) as parent
-	 * - Same normalizer as parent
-	 * - localGenCount = 0 (child starts fresh)
+	 * - Same normalizer as parent (child is a fork and recognizes pre-shard IDs)
+	 * - Calculated localGenCount based on parent's count and child's offset
 	 * - Specified sharding state
 	 */
 	private createChildShard(
@@ -303,35 +310,24 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			activeShardCount: 0, // Child has no children initially
 		};
 
-		// Temporarily store parent's localGenCount and normalizer state
+		// Calculate child's starting localGenCount
+		// The child "inherits" responsibility for its stride's genCounts that were generated pre-shard
+		// For example, if parent generated genCounts 1,2,3 and we shard with stride=3:
+		//   - Offset 0 owns genCounts {1,4,7,...}, has generated 1, so localGenCount=1
+		//   - Offset 1 owns genCounts {2,5,8,...}, has generated 1, so localGenCount=1
+		//   - Offset 2 owns genCounts {3,6,9,...}, has generated 1, so localGenCount=1
 		const parentLocalGenCount = this.localGenCount;
-		this.localGenCount = 0; // Child starts with no generated IDs
+		const completedCycles = Math.floor(parentLocalGenCount / totalShards);
+		const idsInIncompleteCycle = parentLocalGenCount % totalShards;
+		const childLocalGenCount =
+			completedCycles + (shardOffset < idsInIncompleteCycle ? 1 : 0);
 
-		// Save parent's normalizer ranges and clear for child
-		// Child should start with empty normalizer since it hasn't generated any IDs
-		const parentNormalizerRanges: [number, number][] = [];
-		for (const [genCount, count] of this.normalizer.idRanges.entries()) {
-			parentNormalizerRanges.push([genCount, count]);
-		}
-
-		// Replace normalizer with empty one for serialization
-		// Use Object.defineProperty to work around readonly constraint
-		const parentNormalizer = this.normalizer;
-		Object.defineProperty(this, "normalizer", {
-			value: new SessionSpaceNormalizer(),
-			writable: true,
-			configurable: true,
-		});
+		// Temporarily store parent's localGenCount
+		this.localGenCount = childLocalGenCount;
 
 		// Serialize with the child's state
+		// Child inherits parent's normalizer (they share the same session and need to recognize pre-shard IDs)
 		const childSerialized = this.serialize(true);
-
-		// Restore parent's normalizer
-		Object.defineProperty(this, "normalizer", {
-			value: parentNormalizer,
-			writable: false,
-			configurable: true,
-		});
 
 		// Restore parent's state
 		this.localGenCount = parentLocalGenCount;
@@ -343,7 +339,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	/**
 	 * {@inheritdoc IIdCompressorCore.unshard}
 	 */
-	public unshard(shardId: import("./types/idCompressor.js").CompressorShardId): void {
+	public unshard(shardId: CompressorShardId): void {
 		assert(
 			shardId.sessionId === this.localSessionId,
 			0x8ae /* Shard must belong to this session */,
@@ -384,7 +380,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	/**
 	 * {@inheritdoc IIdCompressorCore.shardId}
 	 */
-	public shardId(): import("./types/idCompressor.js").CompressorShardId | undefined {
+	public shardId(): CompressorShardId | undefined {
 		if (this.shardingState === undefined) {
 			return undefined;
 		}

@@ -34,7 +34,138 @@ describe("IdCompressor Sharding", () => {
 			const parentShardId = parent.shardId();
 			assert(parentShardId !== undefined);
 			assert.equal(parentShardId.shardId, 0);
-			assert.equal(parentShardId.generatedIdCount, 3);
+			assert.equal(parentShardId.generatedIdCount, 1); // Parent now only "owns" genCount 1 in stride pattern
+		});
+
+		it("children inherit parent's pre-shard IDs", () => {
+			const sessionId = createSessionId();
+			const parent = new IdCompressor(sessionId, undefined);
+
+			// Generate 3 IDs before sharding (genCounts 1, 2, 3 → IDs -1, -2, -3)
+			const id1 = parent.generateCompressedId();
+			const id2 = parent.generateCompressedId();
+			const id3 = parent.generateCompressedId();
+
+			assert.equal(id1, -1);
+			assert.equal(id2, -2);
+			assert.equal(id3, -3);
+
+			// Get UUIDs for these IDs from parent
+			const uuid1 = parent.decompress(id1);
+			const uuid2 = parent.decompress(id2);
+			const uuid3 = parent.decompress(id3);
+
+			// Shard into 3 (stride=3, offsets 0,1,2)
+			const [child1Ser, child2Ser] = parent.shard(2);
+			const child1 = IdCompressor.deserialize({ serialized: child1Ser });
+			const child2 = IdCompressor.deserialize({ serialized: child2Ser });
+
+			// Children should be able to decompress parent's pre-shard IDs
+			// They share the same session and are forks of the parent
+			assert.equal(child1.decompress(id1), uuid1);
+			assert.equal(child1.decompress(id2), uuid2);
+			assert.equal(child1.decompress(id3), uuid3);
+
+			assert.equal(child2.decompress(id1), uuid1);
+			assert.equal(child2.decompress(id2), uuid2);
+			assert.equal(child2.decompress(id3), uuid3);
+
+			// Parent should still be able to decompress
+			assert.equal(parent.decompress(id1), uuid1);
+			assert.equal(parent.decompress(id2), uuid2);
+			assert.equal(parent.decompress(id3), uuid3);
+		});
+
+		it("sharding with pre-existing IDs follows stride pattern correctly", () => {
+			const sessionId = createSessionId();
+			const parent = new IdCompressor(sessionId, undefined);
+
+			// Generate 3 IDs before sharding (genCounts 1,2,3 occupy first cycle)
+			parent.generateCompressedId(); // -1
+			parent.generateCompressedId(); // -2
+			parent.generateCompressedId(); // -3
+
+			// Shard into 3 (stride=3)
+			// After sharding, stride pattern distributes future genCounts:
+			//   - Parent (offset=0) owns: 1, 4, 7, 10, ... (has generated 1, next is 4)
+			//   - Child1 (offset=1) owns: 2, 5, 8, 11, ... (has generated 1, next is 5)
+			//   - Child2 (offset=2) owns: 3, 6, 9, 12, ... (has generated 1, next is 6)
+			const [child1Ser, child2Ser] = parent.shard(2);
+			const child1 = IdCompressor.deserialize({ serialized: child1Ser });
+			const child2 = IdCompressor.deserialize({ serialized: child2Ser });
+
+			// Verify starting localGenCount for each shard
+			const parentShardId = parent.shardId();
+			const child1ShardId = child1.shardId();
+			const child2ShardId = child2.shardId();
+
+			assert(parentShardId !== undefined);
+			assert(child1ShardId !== undefined);
+			assert(child2ShardId !== undefined);
+
+			assert.equal(parentShardId.generatedIdCount, 1); // Has generated 1 from its stride
+			assert.equal(child1ShardId.generatedIdCount, 1); // Has generated 1 from its stride
+			assert.equal(child2ShardId.generatedIdCount, 1); // Has generated 1 from its stride
+
+			// Now generate next IDs - should follow stride pattern from genCount 4 onward
+			const parentNext = parent.generateCompressedId();
+			const child1Next = child1.generateCompressedId();
+			const child2Next = child2.generateCompressedId();
+
+			assert.equal(parentNext, -4); // genCount 4
+			assert.equal(child1Next, -5); // genCount 5
+			assert.equal(child2Next, -6); // genCount 6
+
+			// Verify no collisions
+			const allIds = [parentNext, child1Next, child2Next];
+			const uniqueIds = new Set(allIds);
+			assert.equal(uniqueIds.size, 3, "All new IDs should be unique");
+		});
+
+		it("sharding with partial cycle follows stride pattern correctly", () => {
+			const sessionId = createSessionId();
+			const parent = new IdCompressor(sessionId, undefined);
+
+			// Generate 5 IDs before sharding (completes 1 cycle, half-fills second)
+			parent.generateCompressedId(); // -1
+			parent.generateCompressedId(); // -2
+			parent.generateCompressedId(); // -3
+			parent.generateCompressedId(); // -4
+			parent.generateCompressedId(); // -5
+
+			// Shard into 3 (stride=3)
+			// Distribution after sharding:
+			//   - Cycle 0 (genCounts 1-3): all filled
+			//   - Cycle 1 (genCounts 4-6): slots 4,5 filled, slot 6 empty
+			// After sharding:
+			//   - Parent (offset=0) owns: 1, 4, 7, ... (has generated 2: genCounts 1,4)
+			//   - Child1 (offset=1) owns: 2, 5, 8, ... (has generated 2: genCounts 2,5)
+			//   - Child2 (offset=2) owns: 3, 6, 9, ... (has generated 1: genCount 3)
+			const [child1Ser, child2Ser] = parent.shard(2);
+			const child1 = IdCompressor.deserialize({ serialized: child1Ser });
+			const child2 = IdCompressor.deserialize({ serialized: child2Ser });
+
+			// Verify localGenCount
+			const parentShardId = parent.shardId();
+			const child1ShardId = child1.shardId();
+			const child2ShardId = child2.shardId();
+
+			assert(parentShardId !== undefined);
+			assert(child1ShardId !== undefined);
+			assert(child2ShardId !== undefined);
+
+			assert.equal(parentShardId.generatedIdCount, 2); // Completed 1 cycle + 1 in partial
+			assert.equal(child1ShardId.generatedIdCount, 2); // Completed 1 cycle + 1 in partial
+			assert.equal(child2ShardId.generatedIdCount, 1); // Completed 1 cycle + 0 in partial
+
+			// Generate next IDs
+			const parentNext = parent.generateCompressedId();
+			const child1Next = child1.generateCompressedId();
+			const child2Next = child2.generateCompressedId();
+
+			assert.equal(parentNext, -7); // genCount 7
+			assert.equal(child1Next, -8); // genCount 8
+			assert.equal(child2Next, -6); // genCount 6 (filling the empty slot)
 		});
 
 		it("generates IDs with stride pattern", () => {
@@ -193,9 +324,15 @@ describe("IdCompressor Sharding", () => {
 			child3.generateCompressedId();
 
 			// Unshard in reverse order
-			parent.unshard(child3.shardId()!);
-			parent.unshard(child1.shardId()!);
-			parent.unshard(child2.shardId()!);
+			const child3ShardId = child3.shardId();
+			const child1ShardId = child1.shardId();
+			const child2ShardId = child2.shardId();
+			assert(child3ShardId !== undefined);
+			assert(child1ShardId !== undefined);
+			assert(child2ShardId !== undefined);
+			parent.unshard(child3ShardId);
+			parent.unshard(child1ShardId);
+			parent.unshard(child2ShardId);
 
 			// Should have exited sharding mode
 			assert.equal(parent.shardId(), undefined);
