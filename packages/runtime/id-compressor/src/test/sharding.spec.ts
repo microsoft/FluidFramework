@@ -5,21 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
-import { IdCompressor } from "../idCompressor.js";
+import { IdCompressor, SerializationVersion } from "../idCompressor.js";
 import { isFinalId } from "../identifiers.js";
 import type { SessionSpaceCompressedId } from "../index.js";
 import { createSessionId } from "../utilities.js";
 
 import { isLocalId } from "./testCommon.js";
 
-// Sharding requires document version 3
-const SHARDING_VERSION = 3;
-
 describe("IdCompressor Sharding", () => {
 	describe("Basic Sharding", () => {
 		it("can create shards", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Generate some IDs before sharding
 			const id1 = parent.generateCompressedId();
@@ -38,12 +35,12 @@ describe("IdCompressor Sharding", () => {
 			const parentShardId = parent.shardId();
 			assert(parentShardId !== undefined);
 			assert.equal(parentShardId.shardId, 0);
-			assert.equal(parentShardId.generatedIdCount, 1); // Parent now only "owns" genCount 1 in stride pattern
+			assert.equal(parentShardId.strideFillCount, 1); // Parent now only "owns" genCount 1 in stride pattern
 		});
 
 		it("children recognize parent's pre-shard IDs", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Generate 3 IDs before sharding (genCounts 1, 2, 3 → IDs -1, -2, -3)
 			const id1 = parent.generateCompressedId();
@@ -82,7 +79,7 @@ describe("IdCompressor Sharding", () => {
 
 		it("shards do not recognize IDs generated after sharding in other shards", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Create 2 shards (stride=3)
 			const [child1Ser, child2Ser] = parent.shard(2);
@@ -109,7 +106,7 @@ describe("IdCompressor Sharding", () => {
 
 		it("sharding with pre-existing IDs follows stride pattern correctly", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Generate 3 IDs before sharding (genCounts 1,2,3 occupy first cycle)
 			parent.generateCompressedId(); // -1
@@ -134,9 +131,9 @@ describe("IdCompressor Sharding", () => {
 			assert(child1ShardId !== undefined);
 			assert(child2ShardId !== undefined);
 
-			assert.equal(parentShardId.generatedIdCount, 1); // Has generated 1 from its stride
-			assert.equal(child1ShardId.generatedIdCount, 1); // Has generated 1 from its stride
-			assert.equal(child2ShardId.generatedIdCount, 1); // Has generated 1 from its stride
+			assert.equal(parentShardId.strideFillCount, 1); // Has generated 1 from its stride
+			assert.equal(child1ShardId.strideFillCount, 1); // Has generated 1 from its stride
+			assert.equal(child2ShardId.strideFillCount, 1); // Has generated 1 from its stride
 
 			// Now generate next IDs - should follow stride pattern from genCount 4 onward
 			const parentNext = parent.generateCompressedId();
@@ -150,7 +147,7 @@ describe("IdCompressor Sharding", () => {
 
 		it("sharding with partial cycle follows stride pattern correctly", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Generate 5 IDs before sharding (completes 1 cycle, half-fills second)
 			parent.generateCompressedId(); // -1
@@ -180,9 +177,9 @@ describe("IdCompressor Sharding", () => {
 			assert(child1ShardId !== undefined);
 			assert(child2ShardId !== undefined);
 
-			assert.equal(parentShardId.generatedIdCount, 2); // Completed 1 cycle + 1 in partial
-			assert.equal(child1ShardId.generatedIdCount, 2); // Completed 1 cycle + 1 in partial
-			assert.equal(child2ShardId.generatedIdCount, 1); // Completed 1 cycle + 0 in partial
+			assert.equal(parentShardId.strideFillCount, 2); // Completed 1 cycle + 1 in partial
+			assert.equal(child1ShardId.strideFillCount, 2); // Completed 1 cycle + 1 in partial
+			assert.equal(child2ShardId.strideFillCount, 1); // Completed 1 cycle + 0 in partial
 
 			// Generate next IDs
 			const parentNext = parent.generateCompressedId();
@@ -196,7 +193,7 @@ describe("IdCompressor Sharding", () => {
 
 		it("generates IDs with stride pattern", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Create 2 shards (stride = 3)
 			const [serializedChild1, serializedChild2] = parent.shard(2);
@@ -225,7 +222,7 @@ describe("IdCompressor Sharding", () => {
 
 		it("no eager finals during sharding", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Generate and finalize some IDs to create a cluster
 			parent.generateCompressedId();
@@ -254,7 +251,7 @@ describe("IdCompressor Sharding", () => {
 			// Shards can only decompress IDs within cycles they have backfilled.
 
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Create 2 child shards (stride = 3 total)
 			// Parent: offset=0, generates genCounts 1, 4, 7, ...
@@ -292,7 +289,7 @@ describe("IdCompressor Sharding", () => {
 	describe("Unsharding", () => {
 		it("can unshard and resume normal operation", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Create shards
 			const [serializedChild] = parent.shard(1);
@@ -304,7 +301,7 @@ describe("IdCompressor Sharding", () => {
 
 			const childShardId = child.shardId();
 			assert(childShardId !== undefined);
-			assert.equal(childShardId.generatedIdCount, 2);
+			assert.equal(childShardId.strideFillCount, 2);
 
 			// Unshard
 			parent.unshard(childShardId);
@@ -319,7 +316,7 @@ describe("IdCompressor Sharding", () => {
 
 		it("resumes eager final ID allocation after unsharding", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Generate and finalize IDs to create a cluster with capacity
 			for (let i = 0; i < 3; i++) {
@@ -351,7 +348,7 @@ describe("IdCompressor Sharding", () => {
 
 		it("merges normalizer state correctly", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Create shards (stride=2)
 			const [serializedChild] = parent.shard(1);
@@ -380,7 +377,7 @@ describe("IdCompressor Sharding", () => {
 
 		it("handles empty shards", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Create shard
 			const [serializedChild] = parent.shard(1);
@@ -389,7 +386,7 @@ describe("IdCompressor Sharding", () => {
 			// Don't generate any IDs in child
 			const childShardId = child.shardId();
 			assert(childShardId !== undefined);
-			assert.equal(childShardId.generatedIdCount, 0);
+			assert.equal(childShardId.strideFillCount, 0);
 
 			// Unshard empty child
 			parent.unshard(childShardId);
@@ -401,7 +398,7 @@ describe("IdCompressor Sharding", () => {
 
 		it("handles unsharding in any order", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Create 3 shards
 			const [s1, s2, s3] = parent.shard(3);
@@ -440,7 +437,7 @@ describe("IdCompressor Sharding", () => {
 	describe("Recursive Sharding", () => {
 		it("supports recursive sharding", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// First shard: create 2 children (stride=3)
 			const [child1Ser] = parent.shard(2);
@@ -451,10 +448,6 @@ describe("IdCompressor Sharding", () => {
 
 			// Second shard on parent: create 1 more child (stride=6)
 			const [child3Ser] = parent.shard(1);
-
-			// NOTE: Skipping parent ID generation to test child3 first
-			// const parentId2 = parent.generateCompressedId();
-			// assert.equal(parentId2, -7);
 
 			// Child3 has stride=6, offset=3
 			const child3 = IdCompressor.deserialize({ serialized: child3Ser });
@@ -473,7 +466,7 @@ describe("IdCompressor Sharding", () => {
 
 		it("handles complex multi-level sharding and unsharding", () => {
 			const sessionId = createSessionId();
-			const root = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const root = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Level 1: Root shards into 2 children (stride=3)
 			const [child1Ser, child2Ser] = root.shard(2);
@@ -538,19 +531,13 @@ describe("IdCompressor Sharding", () => {
 			// Generate some more IDs to verify behavior
 			const child2Id2 = child2.generateCompressedId();
 			assert.equal(child2Id2, -6); // Child2's second ID in stride=3
-
-			// This test demonstrates successful recursive sharding:
-			// - Root sharded into child1 and child2
-			// - Child1 further sharded into grandchildren
-			// - Child1 successfully unsharded its grandchildren
-			// All compressors continue operating correctly with their IDs
 		});
 	});
 
 	describe("Serialization", () => {
 		it("serializes and deserializes sharding state", () => {
 			const sessionId = createSessionId();
-			const parent = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Create shards
 			parent.shard(2);
@@ -569,7 +556,7 @@ describe("IdCompressor Sharding", () => {
 			const restoredShardId = restored.shardId();
 			assert(restoredShardId !== undefined);
 			assert.equal(restoredShardId.shardId, 0);
-			assert.equal(restoredShardId.generatedIdCount, 2);
+			assert.equal(restoredShardId.strideFillCount, 2);
 
 			// Verify can continue generating with correct stride
 			const nextId = restored.generateCompressedId();
@@ -578,23 +565,79 @@ describe("IdCompressor Sharding", () => {
 
 		it("handles version 2 documents without sharding state", () => {
 			const sessionId = createSessionId();
-			const compressor = new IdCompressor(sessionId, undefined, SHARDING_VERSION);
+			// Create a version 2 document (no sharding support)
+			const compressor = new IdCompressor(sessionId, undefined, SerializationVersion.V2);
 
 			// Generate some IDs
 			compressor.generateCompressedId();
 			compressor.generateCompressedId();
 
-			// This would be a version 2 document (no sharding)
-			// When deserialized in version 3 code, should work fine
+			// Serialize as version 2 (no sharding state)
 			const serialized = compressor.serialize(true);
+
+			// Deserialize - should work fine even though deserialization code supports V3
 			const restored = IdCompressor.deserialize({ serialized });
 
-			// Should have no sharding state
-			assert.equal(restored.shardId(), undefined);
+			// Calling shardId() on V2 document should throw
+			assert.throws(() => {
+				restored.shardId();
+			}, /Sharding requires document version 3 or higher/);
 
 			// Should work normally
 			const id = restored.generateCompressedId();
 			assert.equal(id, -3);
+		});
+
+		it("serializes and deserializes recursive sharding state", () => {
+			const sessionId = createSessionId();
+			const root = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+
+			// Root shards into 2 children
+			const [child1Ser] = root.shard(2);
+			const child1 = IdCompressor.deserialize({ serialized: child1Ser });
+
+			// Child1 recursively shards into 2 grandchildren
+			const [grandchild1Ser] = child1.shard(2);
+			const grandchild1 = IdCompressor.deserialize({ serialized: grandchild1Ser });
+
+			// Generate IDs at each level
+			root.generateCompressedId(); // -1
+			child1.generateCompressedId(); // -5
+			grandchild1.generateCompressedId(); // -9
+
+			// Serialize each compressor
+			const rootSerialized = root.serialize(true);
+			const child1Serialized = child1.serialize(true);
+			const grandchild1Serialized = grandchild1.serialize(true);
+
+			// Deserialize and verify sharding state is preserved
+			const rootRestored = IdCompressor.deserialize({ serialized: rootSerialized });
+			const child1Restored = IdCompressor.deserialize({ serialized: child1Serialized });
+			const grandchild1Restored = IdCompressor.deserialize({
+				serialized: grandchild1Serialized,
+			});
+
+			// Verify shard IDs are correct after deserialization
+			const rootShardId = rootRestored.shardId();
+			const child1ShardId = child1Restored.shardId();
+			const grandchild1ShardId = grandchild1Restored.shardId();
+
+			assert(rootShardId !== undefined);
+			assert(child1ShardId !== undefined);
+			assert(grandchild1ShardId !== undefined);
+
+			assert.equal(rootShardId.shardId, 0); // offset 0 in root's stride
+			assert.equal(child1ShardId.shardId, 1); // offset 1 from root's sharding
+			assert.equal(grandchild1ShardId.shardId, 4); // offset 4 in combined stride pattern
+
+			// Verify they continue generating IDs correctly after deserialization
+			const rootNext = rootRestored.generateCompressedId();
+			const child1Next = child1Restored.generateCompressedId();
+			const grandchild1Next = grandchild1Restored.generateCompressedId();
+
+			assert.equal(rootNext, -4); // Next in stride for root
+			assert.equal(child1Next, -11); // Next in stride for child1
+			assert.equal(grandchild1Next, -14); // Next in stride for grandchild1
 		});
 	});
 });

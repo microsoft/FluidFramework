@@ -63,10 +63,8 @@ import {
 
 /**
  * Serialization format versions for IdCompressor.
- * Version 2: Base format without sharding support
- * Version 3: Adds optional sharding state to the serialization format
  */
-const SerializationVersion = {
+export const SerializationVersion = {
 	/**
 	 * Base format without sharding support
 	 */
@@ -106,7 +104,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	// #region Final state
 
 	// The gen count to be annotated on the range returned by the next call to `takeNextCreationRange`.
-	// This is updated to be equal to `generatedIdCount` + 1 each time it is called.
+	// This is updated to be equal to `strideFillCount` + 1 each time it is called.
 	private nextRangeBaseGenCount = 1;
 	private readonly sessions = new Sessions();
 	private readonly finalSpace = new FinalSpace();
@@ -170,14 +168,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public constructor(
 		localSessionIdOrDeserialized: SessionId | Sessions,
 		private readonly logger: ITelemetryLoggerExt | undefined,
-		documentVersion?: number,
+		documentVersion: number,
 	) {
 		if (typeof localSessionIdOrDeserialized === "string") {
 			this.localSessionId = localSessionIdOrDeserialized;
 			this.localSession = this.sessions.getOrCreate(localSessionIdOrDeserialized);
-			// New documents default to V2 for backward compatibility
-			// Sharding features require explicitly creating with V3
-			this.documentVersion = documentVersion ?? SerializationVersion.V2;
+			this.documentVersion = documentVersion;
 		} else {
 			// Deserialize case
 			this.sessions = localSessionIdOrDeserialized;
@@ -192,7 +188,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			// Deserialized documents must specify their version
 			assert(
 				documentVersion !== undefined,
-				0x9df /* Document version must be specified when deserializing */,
+				"Document version must be specified when deserializing",
 			);
 			this.documentVersion = documentVersion;
 		}
@@ -413,7 +409,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		// Calculate the highest genCount that needs to be covered by the child's generation
-		const highestGenCount = shardId.generatedIdCount * this.shardingState.totalShards;
+		const highestGenCount = shardId.strideFillCount * this.shardingState.totalShards;
 
 		// Backfill normalizer for any genCounts not yet covered
 		this.backfillNormalizerToGenCount(highestGenCount);
@@ -447,7 +443,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return {
 			sessionId: this.localSessionId,
 			shardId: this.shardingState.shardOffset,
-			generatedIdCount: this.localGenCount,
+			strideFillCount: this.localGenCount,
 		};
 	}
 
@@ -1096,40 +1092,51 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 /**
  * Create a new {@link IIdCompressor}.
+ * @param documentVersion - The version of the document format to use. Use SerializationVersion.V2 for base format, or SerializationVersion.V3 for sharding support.
+ * @param logger - Optional telemetry logger.
  * @legacy @beta
  */
 export function createIdCompressor(
+	documentVersion: number,
 	logger?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore;
 /**
  * Create a new {@link IIdCompressor}.
  * @param sessionId - The seed ID for the compressor.
+ * @param documentVersion - The version of the document format to use. Use SerializationVersion.V2 for base format, or SerializationVersion.V3 for sharding support.
+ * @param logger - Optional telemetry logger.
  * @legacy @beta
  */
 export function createIdCompressor(
 	sessionId: SessionId,
+	documentVersion: number,
 	logger?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore;
 export function createIdCompressor(
-	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
+	sessionIdOrDocumentVersion: SessionId | number,
+	documentVersionOrLogger?: number | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore {
 	let localSessionId: SessionId;
+	let documentVersion: number;
 	let logger: ITelemetryBaseLogger | undefined;
-	if (sessionIdOrLogger === undefined) {
-		localSessionId = createSessionId();
+
+	if (typeof sessionIdOrDocumentVersion === "string") {
+		// Called with sessionId, documentVersion, logger?
+		localSessionId = sessionIdOrDocumentVersion;
+		documentVersion = documentVersionOrLogger as number;
+		logger = loggerOrUndefined;
 	} else {
-		if (typeof sessionIdOrLogger === "string") {
-			localSessionId = sessionIdOrLogger;
-			logger = loggerOrUndefined;
-		} else {
-			localSessionId = createSessionId();
-			logger = sessionIdOrLogger;
-		}
+		// Called with documentVersion, logger?
+		localSessionId = createSessionId();
+		documentVersion = sessionIdOrDocumentVersion;
+		logger = documentVersionOrLogger as ITelemetryBaseLogger | undefined;
 	}
+
 	const compressor = new IdCompressor(
 		localSessionId,
 		logger === undefined ? undefined : createChildLogger({ logger }),
+		documentVersion,
 	);
 	return compressor;
 }

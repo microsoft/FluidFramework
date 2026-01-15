@@ -18,7 +18,7 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
-import { IdCompressor } from "../idCompressor.js";
+import { IdCompressor, SerializationVersion } from "../idCompressor.js";
 import {
 	type IIdCompressor,
 	type IIdCompressorCore,
@@ -112,7 +112,11 @@ export class CompressorFactory {
 		clusterCapacity = 5,
 		logger?: ITelemetryBaseLogger,
 	): IdCompressor {
-		const compressor = createIdCompressor(sessionId, logger) as IdCompressor;
+		const compressor = createIdCompressor(
+			sessionId,
+			SerializationVersion.V2,
+			logger,
+		) as IdCompressor;
 		modifyClusterSize(compressor, clusterCapacity);
 		return compressor;
 	}
@@ -1083,7 +1087,11 @@ export function createAlwaysFinalizedIdCompressor(
 	// This local session is unused, but it needs to not collide with the GhostSession, so allocate a random one.
 	// This causes the compressor to serialize non-deterministically even when provided an explicit SessionId.
 	// This can be fixed in the future if needed.
-	const compressor = createIdCompressor(random.uuid4() as SessionId, logger);
+	const compressor = createIdCompressor(
+		random.uuid4() as SessionId,
+		SerializationVersion.V2,
+		logger,
+	);
 	// Permanently put the compressor in a ghost session
 	(compressor as IdCompressor).startGhostSession(sessionId);
 	return compressor;

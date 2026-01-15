@@ -9,7 +9,12 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
 import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
+import {
+	IdCompressor,
+	SerializationVersion,
+	createIdCompressor,
+	deserializeIdCompressor,
+} from "../idCompressor.js";
 import type {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -917,7 +922,7 @@ describe("IdCompressor", () => {
 
 		it("correctly passes logger when no session specified", () => {
 			const mockLogger = new MockLogger();
-			const compressor = createIdCompressor(mockLogger);
+			const compressor = createIdCompressor(SerializationVersion.V2, mockLogger);
 			compressor.generateCompressedId();
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			mockLogger.assertMatchAny([

@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { SerializationVersion } from "../../idCompressor.js";
 import { type SessionId, createIdCompressor } from "../../index.js";
 import { modifyClusterSize } from "../idCompressorTestUtilities.js";
 
@@ -88,15 +89,15 @@ describe("snapshot tests", () => {
 	useSnapshotDirectory();
 
 	it("empty compressor summary", () => {
-		const compressor = createIdCompressor(client1);
+		const compressor = createIdCompressor(client1, SerializationVersion.V2);
 		const summary = compressor.serialize(false);
 
 		takeSnapshot(summary);
 	});
 
 	it("compressor with finalized range from one client", () => {
-		const compressor = createIdCompressor(client1);
-		const compressor2 = createIdCompressor(client2);
+		const compressor = createIdCompressor(client1, SerializationVersion.V2);
+		const compressor2 = createIdCompressor(client2, SerializationVersion.V2);
 		for (let i = 0; i < 10; i++) {
 			compressor.generateCompressedId();
 		}
@@ -110,8 +111,8 @@ describe("snapshot tests", () => {
 	});
 
 	it("compressors with finalized ranges from two clients", () => {
-		const compressor = createIdCompressor(client1);
-		const compressor2 = createIdCompressor(client2);
+		const compressor = createIdCompressor(client1, SerializationVersion.V2);
+		const compressor2 = createIdCompressor(client2, SerializationVersion.V2);
 
 		for (let i = 0; i < 10; i++) {
 			compressor.generateCompressedId();
@@ -133,8 +134,8 @@ describe("snapshot tests", () => {
 	});
 
 	it("expansion semantics", () => {
-		const compressor = createIdCompressor(client1);
-		const compressor2 = createIdCompressor(client2);
+		const compressor = createIdCompressor(client1, SerializationVersion.V2);
+		const compressor2 = createIdCompressor(client2, SerializationVersion.V2);
 		modifyClusterSize(compressor, 2);
 		compressor.generateCompressedId();
 		const idRange = compressor.takeNextCreationRange();

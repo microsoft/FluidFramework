@@ -6,16 +6,16 @@
 
 // @beta @legacy
 export interface CompressorShardId {
-    generatedIdCount: number;
     sessionId: SessionId;
     shardId: number;
+    strideFillCount: number;
 }
 
 // @beta @legacy
-export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
+export function createIdCompressor(documentVersion: number, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
 
 // @beta @legacy
-export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
+export function createIdCompressor(sessionId: SessionId, documentVersion: number, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
 
 // @beta @legacy
 export function createSessionId(): SessionId;
