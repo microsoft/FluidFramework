@@ -964,8 +964,11 @@ async function findLegacyConfigs(
 
 					// Extract comments from the legacy config source
 					const sourceComments = extractComments(content);
-					const { rules: ruleLocations, overrideBlocks, rulesBlocks } =
-						findRuleLocations(content);
+					const {
+						rules: ruleLocations,
+						overrideBlocks,
+						rulesBlocks,
+					} = findRuleLocations(content);
 					const commentData = associateCommentsWithRules(
 						sourceComments,
 						ruleLocations,

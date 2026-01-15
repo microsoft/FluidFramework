@@ -267,9 +267,7 @@ async function main(): Promise<void> {
 		const relativePath = comparison.packagePath;
 
 		if (comparison.missingComments.length === 0) {
-			console.log(
-				`✅ ${relativePath}: ${comparison.legacyComments.length} comments (match)`,
-			);
+			console.log(`✅ ${relativePath}: ${comparison.legacyComments.length} comments (match)`);
 			matchCount++;
 		} else {
 			console.log(
@@ -290,7 +288,9 @@ async function main(): Promise<void> {
 	console.log(`  Total: ${matchCount + mismatchCount}`);
 
 	if (mismatches.length > 0) {
-		console.log(`\n⚠️  ${mismatches.length} packages have missing comments that need manual review.`);
+		console.log(
+			`\n⚠️  ${mismatches.length} packages have missing comments that need manual review.`,
+		);
 	}
 }
 
