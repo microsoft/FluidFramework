@@ -154,6 +154,7 @@ resources:
       ref: refs/tags/release
     - repository: ff_pipeline_host
       type: git
+      # Specify internal project, since this pipeline runs in both the public and internal projects
       name: internal/ff_pipeline_host
   # Listing a pipeline as a resource makes its artifacts available for download in any job
   pipelines:
@@ -188,6 +189,8 @@ extends:
         image: windows-2022
         os: windows
       sourceRepositoriesToScan:
+        # We must specify whether the ff_pipeline_host resource should be scanned or not, but it is only accessible
+        # when this pipeline is run in the internal project.
         ${{ if eq(variables['System.TeamProject'], 'internal') }}:
           include:
             - repository: ff_pipeline_host
