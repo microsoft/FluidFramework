@@ -291,13 +291,20 @@ describe("Op Size", () => {
 	let currentBenchmarkName = "";
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
+	interface ITreeWithSubmitLocalMessage {
+		submitLocalMessage: (
+			content: ISequencedDocumentMessage,
+			localOpMetadata?: unknown,
+		) => void;
+	}
+
 	function registerOpListener(
 		tree: ITreePrivate,
 		resultArray: ISequencedDocumentMessage[],
 	): void {
 		// TODO: better way to hook this up. Needs to detect local ops exactly once.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const oldSubmitLocalMessage = (tree as any).submitLocalMessage.bind(tree);
+		const treeInternal = tree as unknown as ITreeWithSubmitLocalMessage;
+		const oldSubmitLocalMessage = treeInternal.submitLocalMessage.bind(tree);
 		function submitLocalMessage(
 			content: ISequencedDocumentMessage,
 			localOpMetadata: unknown = undefined,
@@ -305,8 +312,7 @@ describe("Op Size", () => {
 			resultArray.push(content);
 			oldSubmitLocalMessage(content, localOpMetadata);
 		}
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(tree as any).submitLocalMessage = submitLocalMessage;
+		treeInternal.submitLocalMessage = submitLocalMessage;
 	}
 
 	const getOperationsStats = (
