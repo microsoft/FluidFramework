@@ -6,7 +6,7 @@
 import type { SessionId } from "@fluidframework/id-compressor";
 import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { Changeset } from "../../../feature-libraries/sequence-field/index.js";
+import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
 import { brand, type JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {

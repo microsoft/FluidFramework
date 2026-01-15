@@ -24,7 +24,6 @@ import {
 	DefaultEditBuilder,
 	type FlexFieldKind,
 	type ModularChangeset,
-	type SequenceField as SF,
 	type EditDescription,
 	genericFieldKind,
 	DefaultRevisionReplacer,
@@ -62,6 +61,8 @@ import { assertEqual, Change, removeAliases } from "./modular-schema/modularChan
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
 
 const sequenceIdentifier = defaultFieldKinds.sequence.identifier;
 
@@ -387,7 +388,7 @@ describe("ModularChangeFamily integration", () => {
 				defaultRevisionMetadataFromChanges([taggedMoves]),
 			);
 
-			const fieldAExpected: SF.Changeset = [
+			const fieldAExpected: Changeset = [
 				{ count: 2 },
 				{
 					count: 1,
@@ -395,7 +396,7 @@ describe("ModularChangeFamily integration", () => {
 				},
 			];
 
-			const fieldBExpected: SF.Changeset = [
+			const fieldBExpected: Changeset = [
 				{ count: 2 },
 				{
 					count: 1,
@@ -936,7 +937,7 @@ describe("ModularChangeFamily integration", () => {
 
 			const inverse = removeAliases(family.invert(tagChangeInline(moves, tag1), false, tag2));
 
-			const fieldAExpected: SF.Changeset = [
+			const fieldAExpected: Changeset = [
 				MarkMaker.moveOut(1, brand(0)),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),

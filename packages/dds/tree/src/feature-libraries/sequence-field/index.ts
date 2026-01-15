@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export type { CellId, Changeset } from "./types.js";
-export { type SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
-
+export type { CellId } from "./types.js";
+export { type SequenceFieldEditor } from "./sequenceFieldEditor.js";
 export { sequence } from "./sequenceKind.js";

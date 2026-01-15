@@ -27,6 +27,7 @@ import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import type {
 	CellMark,
+	Changeset,
 	MoveIn,
 	MoveOut,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -38,11 +39,11 @@ const tag3: RevisionTag = mintRevisionTag();
 const tag4: RevisionTag = mintRevisionTag();
 
 function rebase(
-	change: SF.Changeset,
-	base: SF.Changeset,
+	change: Changeset,
+	base: Changeset,
 	baseRev?: RevisionTag,
 	config?: RebaseConfig,
-): SF.Changeset {
+): Changeset {
 	return rebaseI(makeAnonChange(change), tagChangeInline(base, baseRev ?? tag1), config);
 }
 
@@ -1178,7 +1179,7 @@ export function testRebase() {
 
 		describe("Over composition", () => {
 			it("insert ↷ [remove, remove]", () => {
-				const removes: SF.Changeset = shallowCompose([
+				const removes: Changeset = shallowCompose([
 					tagChangeInline(Change.remove(1, 2, tag1), tag1),
 					tagChangeInline(Change.remove(0, 2, tag2), tag2),
 				]);
@@ -1203,7 +1204,7 @@ export function testRebase() {
 			});
 
 			it("modify ↷ [remove, remove]", () => {
-				const removes: SF.Changeset = shallowCompose([
+				const removes: Changeset = shallowCompose([
 					tagChangeInline(Change.remove(1, 3, tag1), tag1),
 					tagChangeInline(Change.remove(0, 2, tag2), tag2),
 				]);

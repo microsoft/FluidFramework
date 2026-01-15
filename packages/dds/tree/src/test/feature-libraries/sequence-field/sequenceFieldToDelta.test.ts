@@ -26,6 +26,8 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import type { FieldChangeDelta } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
 
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);
@@ -36,7 +38,7 @@ const fooField = brand<FieldKey>("foo");
 const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 const deltaNodeId: DeltaDetachedNodeId = { major: cellId.revision, minor: cellId.localId };
 
-function toDeltaShallow(change: SF.Changeset): FieldChangeDelta {
+function toDeltaShallow(change: Changeset): FieldChangeDelta {
 	deepFreeze(change);
 	return sequenceFieldToDelta(change, () => fail("Unexpected call to child ToDelta"));
 }
@@ -219,7 +221,7 @@ export function testToDelta() {
 		});
 
 		it("multiple changes", () => {
-			const changeset: SF.Changeset = [
+			const changeset: Changeset = [
 				Mark.remove(10, brand(42)),
 				{ count: 3 },
 				Mark.insert(1, brand(52)),
@@ -313,7 +315,7 @@ export function testToDelta() {
 
 			it("insert & move", () => {
 				const [moveOut, moveIn] = Mark.move(2, brand(2));
-				const changeset: SF.Changeset = [
+				const changeset: Changeset = [
 					{ ...moveOut, cellId: { localId: brand(0) } },
 					{ count: 1 },
 					moveIn,
@@ -347,7 +349,7 @@ export function testToDelta() {
 
 			it("insert & move & remove", () => {
 				const [moveOut, moveIn] = Mark.move(2, brand(2));
-				const changeset: SF.Changeset = [
+				const changeset: Changeset = [
 					{ ...moveOut, cellId: { localId: brand(0) } },
 					{ count: 1 },
 					Mark.attachAndDetach(moveIn, Mark.remove(2, brand(6))),

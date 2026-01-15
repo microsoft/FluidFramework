@@ -26,6 +26,8 @@ import {
 	tagChangeInline,
 } from "./utils.js";
 import { mintRevisionTag } from "../../utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -483,7 +485,7 @@ export function testCompose() {
 				tagChangeInline(revive, tag2),
 				tagChangeInline(deletion, tag3),
 			]);
-			const expected: SF.Changeset = [
+			const expected: Changeset = [
 				Mark.remove(
 					1,
 					{ localId: brand(0), revision: tag3 },
