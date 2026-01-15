@@ -44,12 +44,11 @@ import {
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
-import {
-	type CellId,
-	type Changeset,
-	type HasMarkFields,
-	MarkListFactory,
-	type MoveId,
+import type {
+	CellId,
+	Changeset,
+	HasMarkFields,
+	MoveId,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/index.js";
 import {
@@ -97,6 +96,8 @@ import { compose } from "../../../feature-libraries/sequence-field/compose.js";
 import { rebase } from "../../../feature-libraries/sequence-field/rebase.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { invert } from "../../../feature-libraries/sequence-field/invert.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { MarkListFactory } from "../../../feature-libraries/sequence-field/markListFactory.js";
 
 export function assertWrappedChangesetsEqual(
 	actual: WrappedChange,
@@ -548,7 +549,7 @@ export function withoutTombstonesDeep(changeset: WrappedChange): WrappedChange {
 }
 
 export function withoutTombstones(changeset: SF.Changeset): SF.Changeset {
-	const factory = new SF.MarkListFactory();
+	const factory = new MarkListFactory();
 	for (const mark of changeset) {
 		if (!isTombstone(mark)) {
 			factory.push(mark);
