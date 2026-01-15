@@ -4,15 +4,16 @@
  */
 
 /**
- * Config factory functions for building ESLint flat configs.
+ * ESLint flat config definitions and factory functions.
  *
- * This module provides factory functions that compose the various rule sets and overrides
- * into complete, usable ESLint configurations. It defines the configuration hierarchy:
+ * This module defines the core ESLint configurations and factory functions that compose
+ * rule sets and overrides into complete, usable ESLint configurations.
  *
- * - buildMinimalDeprecatedConfig: Base + minimal-deprecated rules + depend plugin
- * - buildRecommendedConfig: minimal-deprecated + unicorn/recommended + recommended rules
- * - buildStrictConfig: recommended + strict rules
- * - buildStrictBiomeConfig: strict + biome config for Biome formatter compatibility
+ * Configuration hierarchy (each extends the previous):
+ * - minimalDeprecatedConfig: Base + minimal-deprecated rules + depend plugin
+ * - recommendedConfig: minimal-deprecated + unicorn/recommended + recommended rules
+ * - strictConfig: recommended + strict rules
+ * - strictBiomeConfig: strict + biome config for Biome formatter compatibility
  *
  * The "create*" functions add shared configs (project service, test config, React, etc.)
  * to produce the final exported configurations.
@@ -21,7 +22,7 @@
 import unicornPlugin from "eslint-plugin-unicorn";
 import biomeConfig from "eslint-config-biome";
 
-import { buildBaseConfig, type FlatConfigArray } from "./base.mjs";
+import { baseConfig, type FlatConfigArray } from "./base.mjs";
 import { minimalDeprecatedRules } from "../rules/minimal-deprecated.mjs";
 import { recommendedRules } from "../rules/recommended.mjs";
 import { strictRules, strictTsRules } from "../rules/strict.mjs";
@@ -33,76 +34,68 @@ import {
 } from "./overrides.mjs";
 
 /**
- * Builds the minimal-deprecated configuration.
+ * Minimal-deprecated configuration.
  */
-export function buildMinimalDeprecatedConfig(): FlatConfigArray {
-	return [
-		...buildBaseConfig(),
-		{
-			rules: minimalDeprecatedRules,
+export const minimalDeprecatedConfig: FlatConfigArray = [
+	...baseConfig,
+	{
+		rules: minimalDeprecatedRules,
+	},
+	// TypeScript file override (from minimal-deprecated.js)
+	{
+		files: ["**/*.ts", "**/*.tsx"],
+		rules: {
+			"dot-notation": "off",
+			"no-unused-expressions": "off",
 		},
-		// TypeScript file override (from minimal-deprecated.js)
-		{
-			files: ["**/*.ts", "**/*.tsx"],
-			rules: {
-				"dot-notation": "off",
-				"no-unused-expressions": "off",
-			},
-			settings: {
-				jsdoc: {
-					mode: "typescript",
-				},
+		settings: {
+			jsdoc: {
+				mode: "typescript",
 			},
 		},
-		dependConfig,
-	];
-}
+	},
+	dependConfig,
+];
 
 /**
- * Builds the recommended configuration.
+ * Recommended configuration.
  */
-export function buildRecommendedConfig(): FlatConfigArray {
-	return [
-		...buildMinimalDeprecatedConfig(),
-		// unicorn/recommended rules (plugin already registered in base)
-		{
-			rules: unicornPlugin.configs["flat/recommended"].rules,
-		},
-		{
-			rules: recommendedRules,
-		},
-	];
-}
+export const recommendedConfig: FlatConfigArray = [
+	...minimalDeprecatedConfig,
+	// unicorn/recommended rules (plugin already registered in base)
+	{
+		rules: unicornPlugin.configs["flat/recommended"].rules,
+	},
+	{
+		rules: recommendedRules,
+	},
+];
 
 /**
- * Builds the strict configuration.
+ * Strict configuration.
  */
-export function buildStrictConfig(): FlatConfigArray {
-	return [
-		...buildRecommendedConfig(),
-		{
-			rules: strictRules,
-		},
-		// TypeScript file override for strict (from strict.js)
-		{
-			files: ["**/*.ts", "**/*.tsx"],
-			rules: strictTsRules,
-		},
-	];
-}
+export const strictConfig: FlatConfigArray = [
+	...recommendedConfig,
+	{
+		rules: strictRules,
+	},
+	// TypeScript file override for strict (from strict.js)
+	{
+		files: ["**/*.ts", "**/*.tsx"],
+		rules: strictTsRules,
+	},
+];
 
 /**
- * Builds the strict-biome configuration.
+ * Strict-biome configuration.
  */
-export function buildStrictBiomeConfig(): FlatConfigArray {
-	return [...buildStrictConfig(), biomeConfig];
-}
+export const strictBiomeConfig: FlatConfigArray = [...strictConfig, biomeConfig];
 
 /**
  * Creates the final minimalDeprecated config with shared overrides.
  */
 export function createMinimalDeprecatedConfig(): FlatConfigArray {
-	return addSharedConfigs(buildMinimalDeprecatedConfig());
+	return addSharedConfigs(minimalDeprecatedConfig);
 }
 
 /**
@@ -110,7 +103,7 @@ export function createMinimalDeprecatedConfig(): FlatConfigArray {
  */
 export function createRecommendedConfig(): FlatConfigArray {
 	return addSharedConfigs([
-		...buildRecommendedConfig(),
+		...recommendedConfig,
 		reactRecommendedOverride,
 		testRecommendedOverride,
 	]);
@@ -120,11 +113,7 @@ export function createRecommendedConfig(): FlatConfigArray {
  * Creates the final strict config with shared overrides.
  */
 export function createStrictConfig(): FlatConfigArray {
-	return addSharedConfigs([
-		...buildStrictConfig(),
-		reactRecommendedOverride,
-		testRecommendedOverride,
-	]);
+	return addSharedConfigs([...strictConfig, reactRecommendedOverride, testRecommendedOverride]);
 }
 
 /**
@@ -132,7 +121,7 @@ export function createStrictConfig(): FlatConfigArray {
  */
 export function createStrictBiomeConfig(): FlatConfigArray {
 	return addSharedConfigs([
-		...buildStrictBiomeConfig(),
+		...strictBiomeConfig,
 		reactRecommendedOverride,
 		testRecommendedOverride,
 	]);

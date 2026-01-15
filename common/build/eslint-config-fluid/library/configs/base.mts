@@ -40,77 +40,75 @@ import { baseRules, eslintCommentsRecommendedRules } from "../rules/base.mjs";
 export type FlatConfigArray = Linter.Config[];
 
 /**
- * Builds the base configuration array.
+ * Base configuration array.
  * Contains: globalIgnores, eslint:recommended, typescript-eslint/recommended-type-checked,
  * typescript-eslint/stylistic-type-checked, import-x/recommended, import-x/typescript,
  * and custom rules from base.js.
  */
-export function buildBaseConfig(): FlatConfigArray {
-	return [
-		globalIgnores,
-		// Global language options: browser and Node.js globals (matches legacy env: { browser: true, node: true })
-		{
-			languageOptions: {
-				globals: {
-					...globals.browser,
-					...globals.node,
-				},
+export const baseConfig: FlatConfigArray = [
+	globalIgnores,
+	// Global language options: browser and Node.js globals (matches legacy env: { browser: true, node: true })
+	{
+		languageOptions: {
+			globals: {
+				...globals.browser,
+				...globals.node,
 			},
 		},
-		// eslint:recommended
-		eslintJs.configs.recommended,
-		// @typescript-eslint/recommended-type-checked and stylistic-type-checked
-		...tseslint.configs.recommendedTypeChecked,
-		...tseslint.configs.stylisticTypeChecked,
-		// import-x/recommended and import-x/typescript
-		importXPlugin.flatConfigs.recommended,
-		importXPlugin.flatConfigs.typescript,
-		// Base config with all plugins and custom rules
-		{
-			plugins: {
-				"@eslint-community/eslint-comments": eslintCommentsPlugin,
-				"@fluid-internal/fluid": fluidPlugin,
-				"@rushstack": rushstackPlugin,
-				"jsdoc": jsdocPlugin,
-				"promise": promisePlugin,
-				"tsdoc": tsdocPlugin,
-				"unicorn": unicornPlugin,
-				"unused-imports": unusedImportsPlugin,
-			},
-			settings: {
-				...importXSettings,
-				...jsdocSettings,
-			},
-			rules: {
-				// @eslint-community/eslint-comments/recommended rules
-				...eslintCommentsRecommendedRules,
-				...baseRules,
-			},
+	},
+	// eslint:recommended
+	eslintJs.configs.recommended,
+	// @typescript-eslint/recommended-type-checked and stylistic-type-checked
+	...tseslint.configs.recommendedTypeChecked,
+	...tseslint.configs.stylisticTypeChecked,
+	// import-x/recommended and import-x/typescript
+	importXPlugin.flatConfigs.recommended,
+	importXPlugin.flatConfigs.typescript,
+	// Base config with all plugins and custom rules
+	{
+		plugins: {
+			"@eslint-community/eslint-comments": eslintCommentsPlugin,
+			"@fluid-internal/fluid": fluidPlugin,
+			"@rushstack": rushstackPlugin,
+			"jsdoc": jsdocPlugin,
+			"promise": promisePlugin,
+			"tsdoc": tsdocPlugin,
+			"unicorn": unicornPlugin,
+			"unused-imports": unusedImportsPlugin,
 		},
-		// TypeScript file override from base.js (lines 328-343)
-		// These rules are disabled by default but re-enabled in recommended.js
-		{
-			files: ["**/*.ts", "**/*.tsx"],
-			rules: {
-				"@typescript-eslint/indent": "off",
-				"func-call-spacing": "off",
-				// TODO: Enable these ASAP (from base.js)
-				"@typescript-eslint/explicit-module-boundary-types": "off",
-				"@typescript-eslint/no-unsafe-argument": "off",
-				"@typescript-eslint/no-unsafe-assignment": "off",
-				"@typescript-eslint/no-unsafe-call": "off",
-				"@typescript-eslint/no-unsafe-member-access": "off",
-			},
+		settings: {
+			...importXSettings,
+			...jsdocSettings,
 		},
-		// Type validation files need relaxed rules for type compatibility testing
-		{
-			files: ["**/types/*validate*Previous*.ts"],
-			rules: {
-				"@typescript-eslint/no-explicit-any": "off",
-				"@typescript-eslint/no-unsafe-argument": "off",
-			},
+		rules: {
+			// @eslint-community/eslint-comments/recommended rules
+			...eslintCommentsRecommendedRules,
+			...baseRules,
 		},
-		// Prettier disables conflicting rules - must come after custom rules
-		prettierConfig,
-	];
-}
+	},
+	// TypeScript file override from base.js (lines 328-343)
+	// These rules are disabled by default but re-enabled in recommended.js
+	{
+		files: ["**/*.ts", "**/*.tsx"],
+		rules: {
+			"@typescript-eslint/indent": "off",
+			"func-call-spacing": "off",
+			// TODO: Enable these ASAP (from base.js)
+			"@typescript-eslint/explicit-module-boundary-types": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+		},
+	},
+	// Type validation files need relaxed rules for type compatibility testing
+	{
+		files: ["**/types/*validate*Previous*.ts"],
+		rules: {
+			"@typescript-eslint/no-explicit-any": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+		},
+	},
+	// Prettier disables conflicting rules - must come after custom rules
+	prettierConfig,
+];
