@@ -494,7 +494,7 @@ describe("Undo and redo", () => {
 		view.initialize({ foo: 1 });
 		assert.equal(tree.isAttached(), false);
 		let revertible: Revertible | undefined;
-		view.events.on("changed", (_, getRevertible) => {
+		view.events.on("changed", ({ getRevertible }) => {
 			revertible = getRevertible?.();
 		});
 		view.root.foo = 2;
@@ -510,7 +510,7 @@ describe("Undo and redo", () => {
 		const view = getView(new TreeViewConfiguration({ schema: Schema }));
 		view.initialize({ foo: 1 });
 		let revertible: Revertible | undefined;
-		view.events.on("changed", (_, getRevertible) => {
+		view.events.on("changed", ({ getRevertible }) => {
 			revertible = getRevertible?.();
 		});
 		view.root.foo = 2;

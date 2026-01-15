@@ -132,8 +132,6 @@ export interface CheckoutEvents {
 	 * can use to filter on changes they care about e.g. local vs remote changes.
 	 *
 	 * @param data - information about the change
-	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
-	 * this change is not revertible.
 	 */
 	changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 
@@ -566,6 +564,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							change: encodedChange,
 						} satisfies SerializedChange;
 					},
+					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);
