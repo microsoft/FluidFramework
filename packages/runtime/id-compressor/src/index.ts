@@ -25,4 +25,5 @@ export type {
 	SessionId,
 	StableId,
 	IdCreationRange,
+	CompressorShardId,
 } from "./types/index.js";

@@ -165,6 +165,7 @@ export interface IIdCompressorCore {
 
 /**
  * An ID that uniquely identifies an ID compressor shard.
+ * @legacy @beta
  */
 export interface CompressorShardId {
 	sessionId: SessionId;

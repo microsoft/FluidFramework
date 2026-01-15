@@ -127,19 +127,27 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * - The normalizer backfills all IDs in each stride cycle
 	 * - Normal operation resumes when activeShardCount reaches 0
 	 */
-	private shardingState?: {
-		/** Total number of shards in the current stride pattern (the stride) */
-		totalShards: number;
-		/** This compressor's offset in the stride pattern (0 to totalShards-1) */
-		shardOffset: number;
-		/** Counter of how many child shards are still active */
-		activeShardCount: number;
-		/**
-		 * Highest genCount that has been backfilled in the normalizer during sharding.
-		 * Used to avoid duplicate backfilling in recursive sharding scenarios.
-		 */
-		highestBackfilledGenCount: number;
-	} | undefined;
+	private shardingState?:
+		| {
+				/**
+				 * Total number of shards in the current stride pattern (the stride)
+				 */
+				totalShards: number;
+				/**
+				 * This compressor's offset in the stride pattern (0 to totalShards-1)
+				 */
+				shardOffset: number;
+				/**
+				 * Counter of how many child shards are still active
+				 */
+				activeShardCount: number;
+				/**
+				 * Highest genCount that has been backfilled in the normalizer during sharding.
+				 * Used to avoid duplicate backfilling in recursive sharding scenarios.
+				 */
+				highestBackfilledGenCount: number;
+		  }
+		| undefined;
 
 	// #endregion
 
@@ -221,8 +229,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (lastCluster.capacity > clusterOffset) {
 			this.telemetryEagerFinalIdCount++;
 			// Space in the cluster: eager final
-			return ((lastCluster.baseFinalId as number) +
-				clusterOffset) as SessionSpaceCompressedId;
+			return ((lastCluster.baseFinalId as number) + clusterOffset) as SessionSpaceCompressedId;
 		}
 		// No space in the cluster, return next local
 		this.telemetryLocalIdCount++;
@@ -288,7 +295,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const parentLocalGenCountBeforeShard = this.localGenCount;
 
 		// Update parent compressor's sharding state
-		const previousHighestBackfilled = this.shardingState?.highestBackfilledGenCount ?? parentLocalGenCountBeforeShard;
+		const previousHighestBackfilled =
+			this.shardingState?.highestBackfilledGenCount ?? parentLocalGenCountBeforeShard;
 		this.shardingState = {
 			totalShards: newTotalShards,
 			shardOffset: currentOffset, // Parent keeps its offset
@@ -306,7 +314,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 			// Create a child shard with the correct sharding state
 			// Pass the original parent localGenCount so child can calculate correctly
-			const childShard = this.createChildShard(newTotalShards, childOffset, parentLocalGenCountBeforeShard);
+			const childShard = this.createChildShard(
+				newTotalShards,
+				childOffset,
+				parentLocalGenCountBeforeShard,
+			);
 			shards.push(childShard);
 		}
 
@@ -342,7 +354,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		//   - Offset 0 owns genCounts {1,4,7,...}, has generated 1, so localGenCount=1
 		//   - Offset 1 owns genCounts {2,5,8,...}, has generated 1, so localGenCount=1
 		//   - Offset 2 owns genCounts {3,6,9,...}, has generated 1, so localGenCount=1
-		const parentHighestBackfilled = parentShardingState?.highestBackfilledGenCount ?? parentLocalGenCountBeforeShard;
+		const parentHighestBackfilled =
+			parentShardingState?.highestBackfilledGenCount ?? parentLocalGenCountBeforeShard;
 
 		// Set child's sharding state
 		this.shardingState = {
@@ -354,8 +367,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		};
 		const completedCycles = Math.floor(parentLocalGenCountBeforeShard / totalShards);
 		const idsInIncompleteCycle = parentLocalGenCountBeforeShard % totalShards;
-		const childLocalGenCount =
-			completedCycles + (shardOffset < idsInIncompleteCycle ? 1 : 0);
+		const childLocalGenCount = completedCycles + (shardOffset < idsInIncompleteCycle ? 1 : 0);
 
 		// Temporarily set to child's localGenCount for serialization
 		this.localGenCount = childLocalGenCount;
@@ -883,7 +895,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				index = writeNumber(serializedFloat, index, this.shardingState.totalShards);
 				index = writeNumber(serializedFloat, index, this.shardingState.shardOffset);
 				index = writeNumber(serializedFloat, index, this.shardingState.activeShardCount);
-				index = writeNumber(serializedFloat, index, this.shardingState.highestBackfilledGenCount);
+				index = writeNumber(
+					serializedFloat,
+					index,
+					this.shardingState.highestBackfilledGenCount,
+				);
 			}
 		}
 
@@ -953,10 +969,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		let sessionOffset = 0;
 		const sessions: [NumericUuid, Session][] = [];
 		if (hasLocalState) {
-			assert(
-				sessionId === undefined,
-				"Local state should not exist in serialized form.",
-			);
+			assert(sessionId === undefined, "Local state should not exist in serialized form.");
 		} else {
 			// If !hasLocalState, there won't be a serialized local session ID so insert one at the beginning
 			assert(sessionId !== undefined, "Local session ID is undefined.");
