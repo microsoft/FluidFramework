@@ -9,7 +9,7 @@ import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import * as React from "react";
 
-import type { TextAsTree } from "../../schema.js";
+import type { TextAsTree } from "./schema.js";
 
 /**
  * Props for the MainView component.

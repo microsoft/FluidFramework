@@ -10,8 +10,8 @@ import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import * as React from "react";
 
+import { MainView } from "../quillView.js";
 import { TextAsTree } from "../schema.js";
-import { MainView } from "../view/index.js";
 
 // TODO add collaboration tests when rich formatting is supported using TestContainerRuntimeFactory from
 // @fluidframework/test-utils to test rich formatting data sync between multiple collaborators
