@@ -1602,6 +1602,13 @@ ${imports}
 		configContent += `\nexport default config;\n`;
 	} else {
 		// Complex case: include local rules/overrides/custom project config
+		const reasons: string[] = [];
+		if (hasLocalRules) reasons.push("local rules");
+		if (hasOverrides) reasons.push("overrides");
+		if (hasNonStandardProject) reasons.push("non-standard parserOptions.project");
+		if (hasEslintIgnore) reasons.push("eslintignore patterns");
+		console.log(`    Complex config: ${reasons.join(", ")}`);
+
 		const baseConfig = sharedFlatConfigImport
 			? `...${variant},\n\t...sharedConfig,\n`
 			: `...${variant},\n`;
@@ -1694,6 +1701,7 @@ ${imports}
 						overrideProjectPaths.length === 1;
 
 					if (!isStandardOverridePattern) {
+						console.log(`    Override explicit parserOptions.project: ${JSON.stringify(overrideProjectPaths)}`);
 						configContent += `\t\tlanguageOptions: {\n`;
 						configContent += `\t\t\tparserOptions: {\n`;
 						configContent += `\t\t\t\tprojectService: false,\n`;
@@ -1743,6 +1751,7 @@ ${imports}
 				// When parserOptions.project is at the top level in the legacy config,
 				// it applies to ALL files, not just test files. We need to apply it
 				// to all TypeScript files to override the shared config's projectService.
+				console.log(`    Explicit parserOptions.project: ${JSON.stringify(projectPaths)}`);
 				configContent += `\t{\n`;
 				configContent += `\t\tfiles: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],\n`;
 				configContent += `\t\tlanguageOptions: {\n`;
