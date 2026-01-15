@@ -502,7 +502,7 @@ function composeMark<TMark extends Mark>(
 	moveEffects: MoveEffectTable,
 	composeChild: (node: NodeId) => NodeId | undefined,
 ): TMark {
-	const nodeChanges = mark.changes !== undefined ? composeChild(mark.changes) : undefined;
+	const nodeChanges = mark.changes === undefined ? undefined : composeChild(mark.changes);
 	const updatedMark = withUpdatedEndpoint(mark, mark.count, moveEffects);
 	return withNodeChange(updatedMark, nodeChanges);
 }
@@ -684,7 +684,7 @@ function setModifyAfter(
 	const count = 1;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
 	const newEffect: MoveEffect =
-		effect.value !== undefined ? { ...effect.value, modifyAfter } : { modifyAfter };
+		effect.value === undefined ? { modifyAfter } : { ...effect.value, modifyAfter };
 	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
 }
 
@@ -696,7 +696,7 @@ function setEndpoint(
 	endpoint: ChangeAtomId,
 ): void {
 	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count, false);
-	const newEffect = effect.value !== undefined ? { ...effect.value, endpoint } : { endpoint };
+	const newEffect = effect.value === undefined ? { endpoint } : { ...effect.value, endpoint };
 	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
 
 	const remainingCount = count - effect.length;
@@ -720,9 +720,9 @@ function setTruncatedEndpoint(
 ): void {
 	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
 	const newEffect =
-		effect.value !== undefined
-			? { ...effect.value, truncatedEndpoint }
-			: { truncatedEndpoint };
+		effect.value === undefined
+			? { truncatedEndpoint }
+			: { ...effect.value, truncatedEndpoint };
 
 	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
 
@@ -747,9 +747,9 @@ function setTruncatedEndpointForInner(
 ): void {
 	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
 	const newEffect =
-		effect.value !== undefined
-			? { ...effect.value, truncatedEndpointForInner }
-			: { truncatedEndpointForInner };
+		effect.value === undefined
+			? { truncatedEndpointForInner }
+			: { ...effect.value, truncatedEndpointForInner };
 	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
 
 	const remainingCount = count - effect.length;

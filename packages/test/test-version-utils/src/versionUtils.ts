@@ -304,6 +304,7 @@ export async function ensureInstalled(
 								error instanceof Error
 									? `${error.message}\n${error.stack}`
 									: JSON.stringify(error);
+							// eslint-disable-next-line @typescript-eslint/no-base-to-string -- known limitation
 							reject(
 								new Error(
 									`Failed to install in ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
@@ -324,7 +325,9 @@ export async function ensureInstalled(
 		// Remove the `as any` cast once node typing is updated.
 		try {
 			(rmdirSync as any)(modulePath, { recursive: true });
-		} catch (ex) {}
+		} catch (ex) {
+			// TODO: document why we are ignoring the error here
+		}
 		throw new Error(`Unable to install version ${version}\n${e}`);
 	} finally {
 		release();

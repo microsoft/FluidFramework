@@ -1,0 +1,585 @@
+{
+  "type": "tree",
+  "entries": [
+    {
+      "type": "blob",
+      ".metadata": {
+        "type": "blob",
+        "content": {
+          "version": 2
+        },
+        "encoding": "utf-8"
+      }
+    },
+    {
+      "type": "tree",
+      "indexes": {
+        "type": "tree",
+        "entries": [
+          {
+            "type": "tree",
+            "EditManager": {
+              "type": "tree",
+              "entries": [
+                {
+                  "type": "blob",
+                  ".metadata": {
+                    "type": "blob",
+                    "content": {
+                      "version": 2
+                    },
+                    "encoding": "utf-8"
+                  }
+                },
+                {
+                  "type": "blob",
+                  "String": {
+                    "type": "blob",
+                    "content": {
+                      "trunk": [
+                        {
+                          "change": [
+                            {
+                              "schema": {
+                                "new": {
+                                  "version": 1,
+                                  "nodes": {
+                                    "com.fluidframework.leaf.string": {
+                                      "leaf": 1
+                                    },
+                                    "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>": {
+                                      "object": {
+                                        "": {
+                                          "kind": "Sequence",
+                                          "types": [
+                                            "com.fluidframework.leaf.string"
+                                          ]
+                                        }
+                                      }
+                                    },
+                                    "move-across-fields.Node": {
+                                      "object": {
+                                        "bar": {
+                                          "kind": "Value",
+                                          "types": [
+                                            "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>"
+                                          ]
+                                        },
+                                        "foo": {
+                                          "kind": "Value",
+                                          "types": [
+                                            "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>"
+                                          ]
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "root": {
+                                    "kind": "Optional",
+                                    "types": [
+                                      "move-across-fields.Node"
+                                    ]
+                                  }
+                                },
+                                "old": {
+                                  "version": 1,
+                                  "nodes": {},
+                                  "root": {
+                                    "kind": "Forbidden",
+                                    "types": []
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "data": {
+                                "maxId": 1,
+                                "changes": [
+                                  {
+                                    "fieldKey": "rootFieldKey",
+                                    "fieldKind": "Optional",
+                                    "change": {
+                                      "r": {
+                                        "e": true,
+                                        "d": 0,
+                                        "s": 1
+                                      }
+                                    }
+                                  }
+                                ],
+                                "builds": {
+                                  "builds": [
+                                    [
+                                      [
+                                        [
+                                          1,
+                                          0
+                                        ]
+                                      ]
+                                    ]
+                                  ],
+                                  "trees": {
+                                    "version": 2,
+                                    "identifiers": [],
+                                    "shapes": [
+                                      {
+                                        "c": {
+                                          "extraFields": 1
+                                        }
+                                      },
+                                      {
+                                        "a": 0
+                                      }
+                                    ],
+                                    "data": [
+                                      [
+                                        1,
+                                        [
+                                          "move-across-fields.Node",
+                                          false,
+                                          [
+                                            "foo",
+                                            [
+                                              "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>",
+                                              false,
+                                              [
+                                                "",
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "a",
+                                                  [],
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "b",
+                                                  [],
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "c",
+                                                  []
+                                                ]
+                                              ]
+                                            ],
+                                            "bar",
+                                            [
+                                              "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>",
+                                              false,
+                                              [
+                                                "",
+                                                [
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "d",
+                                                  [],
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "e",
+                                                  [],
+                                                  "com.fluidframework.leaf.string",
+                                                  true,
+                                                  "f",
+                                                  []
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "schema": {
+                                "new": {
+                                  "version": 1,
+                                  "nodes": {
+                                    "com.fluidframework.leaf.string": {
+                                      "leaf": 1
+                                    },
+                                    "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>": {
+                                      "object": {
+                                        "": {
+                                          "kind": "Sequence",
+                                          "types": [
+                                            "com.fluidframework.leaf.string"
+                                          ]
+                                        }
+                                      }
+                                    },
+                                    "move-across-fields.Node": {
+                                      "object": {
+                                        "bar": {
+                                          "kind": "Value",
+                                          "types": [
+                                            "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>"
+                                          ]
+                                        },
+                                        "foo": {
+                                          "kind": "Value",
+                                          "types": [
+                                            "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>"
+                                          ]
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "root": {
+                                    "kind": "Value",
+                                    "types": [
+                                      "move-across-fields.Node"
+                                    ]
+                                  }
+                                },
+                                "old": {
+                                  "version": 1,
+                                  "nodes": {
+                                    "com.fluidframework.leaf.string": {
+                                      "leaf": 1
+                                    },
+                                    "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>": {
+                                      "object": {
+                                        "": {
+                                          "kind": "Sequence",
+                                          "types": [
+                                            "com.fluidframework.leaf.string"
+                                          ]
+                                        }
+                                      }
+                                    },
+                                    "move-across-fields.Node": {
+                                      "object": {
+                                        "bar": {
+                                          "kind": "Value",
+                                          "types": [
+                                            "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>"
+                                          ]
+                                        },
+                                        "foo": {
+                                          "kind": "Value",
+                                          "types": [
+                                            "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>"
+                                          ]
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "root": {
+                                    "kind": "Optional",
+                                    "types": [
+                                      "move-across-fields.Node"
+                                    ]
+                                  }
+                                }
+                              }
+                            }
+                          ],
+                          "revision": 0,
+                          "sequenceNumber": 2,
+                          "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                        },
+                        {
+                          "change": [
+                            {
+                              "data": {
+                                "maxId": 7,
+                                "changes": [
+                                  {
+                                    "fieldKey": "rootFieldKey",
+                                    "fieldKind": "ModularEditBuilder.Generic",
+                                    "change": [
+                                      [
+                                        0,
+                                        {
+                                          "fieldChanges": [
+                                            {
+                                              "fieldKey": "foo",
+                                              "fieldKind": "ModularEditBuilder.Generic",
+                                              "change": [
+                                                [
+                                                  0,
+                                                  {
+                                                    "fieldChanges": [
+                                                      {
+                                                        "fieldKey": "",
+                                                        "fieldKind": "Sequence",
+                                                        "change": [
+                                                          {
+                                                            "count": 1
+                                                          },
+                                                          {
+                                                            "count": 2,
+                                                            "effect": {
+                                                              "moveOut": {
+                                                                "id": 0
+                                                              }
+                                                            }
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              ]
+                                            },
+                                            {
+                                              "fieldKey": "bar",
+                                              "fieldKind": "ModularEditBuilder.Generic",
+                                              "change": [
+                                                [
+                                                  0,
+                                                  {
+                                                    "fieldChanges": [
+                                                      {
+                                                        "fieldKey": "",
+                                                        "fieldKind": "Sequence",
+                                                        "change": [
+                                                          {
+                                                            "count": 1
+                                                          },
+                                                          {
+                                                            "count": 2,
+                                                            "effect": {
+                                                              "moveIn": {
+                                                                "id": 0
+                                                              }
+                                                            },
+                                                            "cellId": 2
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "revision": 1,
+                          "sequenceNumber": 4,
+                          "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                        }
+                      ],
+                      "branches": [],
+                      "version": 6
+                    },
+                    "encoding": "utf-8"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "type": "tree",
+            "Schema": {
+              "type": "tree",
+              "entries": [
+                {
+                  "type": "blob",
+                  ".metadata": {
+                    "type": "blob",
+                    "content": {
+                      "version": 2
+                    },
+                    "encoding": "utf-8"
+                  }
+                },
+                {
+                  "type": "blob",
+                  "SchemaString": {
+                    "type": "blob",
+                    "content": {
+                      "version": 2,
+                      "nodes": {
+                        "com.fluidframework.leaf.string": {
+                          "kind": {
+                            "leaf": 1
+                          }
+                        },
+                        "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>": {
+                          "kind": {
+                            "object": {
+                              "": {
+                                "kind": "Sequence",
+                                "types": [
+                                  "com.fluidframework.leaf.string"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "move-across-fields.Node": {
+                          "kind": {
+                            "object": {
+                              "bar": {
+                                "kind": "Value",
+                                "types": [
+                                  "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>"
+                                ]
+                              },
+                              "foo": {
+                                "kind": "Value",
+                                "types": [
+                                  "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "root": {
+                        "kind": "Value",
+                        "types": [
+                          "move-across-fields.Node"
+                        ]
+                      }
+                    },
+                    "encoding": "utf-8"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "type": "tree",
+            "Forest": {
+              "type": "tree",
+              "entries": [
+                {
+                  "type": "blob",
+                  ".metadata": {
+                    "type": "blob",
+                    "content": {
+                      "version": 3
+                    },
+                    "encoding": "utf-8"
+                  }
+                },
+                {
+                  "type": "blob",
+                  "contents": {
+                    "type": "blob",
+                    "content": {
+                      "keys": [
+                        "rootFieldKey"
+                      ],
+                      "fields": {
+                        "version": 2,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1
+                            }
+                          },
+                          {
+                            "a": 0
+                          }
+                        ],
+                        "data": [
+                          [
+                            1,
+                            [
+                              "move-across-fields.Node",
+                              false,
+                              [
+                                "foo",
+                                [
+                                  "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>",
+                                  false,
+                                  [
+                                    "",
+                                    [
+                                      "com.fluidframework.leaf.string",
+                                      true,
+                                      "a",
+                                      []
+                                    ]
+                                  ]
+                                ],
+                                "bar",
+                                [
+                                  "move-across-fields.Array<[\"com.fluidframework.leaf.string\"]>",
+                                  false,
+                                  [
+                                    "",
+                                    [
+                                      "com.fluidframework.leaf.string",
+                                      true,
+                                      "d",
+                                      [],
+                                      "com.fluidframework.leaf.string",
+                                      true,
+                                      "b",
+                                      [],
+                                      "com.fluidframework.leaf.string",
+                                      true,
+                                      "c",
+                                      [],
+                                      "com.fluidframework.leaf.string",
+                                      true,
+                                      "e",
+                                      [],
+                                      "com.fluidframework.leaf.string",
+                                      true,
+                                      "f",
+                                      []
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      },
+                      "version": 2
+                    },
+                    "encoding": "utf-8"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "type": "tree",
+            "DetachedFieldIndex": {
+              "type": "tree",
+              "entries": [
+                {
+                  "type": "blob",
+                  ".metadata": {
+                    "type": "blob",
+                    "content": {
+                      "version": 2
+                    },
+                    "encoding": "utf-8"
+                  }
+                },
+                {
+                  "type": "blob",
+                  "DetachedFieldIndexBlob": {
+                    "type": "blob",
+                    "content": {
+                      "version": 2,
+                      "data": [],
+                      "maxId": 2
+                    },
+                    "encoding": "utf-8"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,5 +1,9 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## 2.80.0
+
+Dependency updates only.
+
 ## 2.74.0
 
 Dependency updates only.
@@ -70,6 +74,8 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 
 - `unicorn/import-style`: Changed from `"error"` to `"off"`
 - `unicorn/consistent-destructuring`: Changed from `"error"` to `"off"`
+- `unicorn/no-array-callback-reference`: Changed from `"error"` to `"off"`
+    - Yields false positives for calls to `map` methods on non-array types.
 
 **Unicorn rules changed to warnings** (to surface occurrences without breaking builds):
 
@@ -77,6 +83,19 @@ Packages can now use `eslint.config.mjs` instead of `.eslintrc.cjs`, but the leg
 - `unicorn/prefer-string-raw`: New rule set to `"warn"`
 - `unicorn/prefer-string-replace-all`: Changed from `"off"` to `"warn"`
 - `unicorn/prefer-structured-clone`: New rule set to `"warn"`
+
+#### Rule promotions
+
+**recommended -> minimal**
+
+- `@typescript-eslint/explicit-function-return-type`
+- `@typescript-eslint/no-import-type-side-effects`
+- `jsdoc/multiline-blocks`
+- `no-empty`
+
+#### Rule modifications
+
+- `jsdoc/multiline-blocks`: Updated to allow single-line comments to be expressed as a single line. E.g. `/** Single-line comment */`.
 
 ## [9.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v9.0_0)
 

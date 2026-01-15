@@ -160,7 +160,9 @@ export {
 	type SchemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	type NodeInDocumentConstraint,
+	type NoChangeConstraint,
 	type RunTransactionParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -195,6 +197,9 @@ export {
 	checkCompatibility,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
+	checkSchemaCompatibilitySnapshots,
+	type SnapshotFileSystem,
+	type SchemaCompatibilitySnapshotsOptions,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,

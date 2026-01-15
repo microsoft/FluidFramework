@@ -424,10 +424,8 @@ export class AnchorSet implements AnchorLocator {
 	 * Does not add a ref!
 	 */
 	public find(path: UpPath): PathNode | undefined {
-		if (path instanceof PathNode) {
-			if (path.anchorSet === this) {
-				return path;
-			}
+		if (path instanceof PathNode && path.anchorSet === this) {
+			return path;
 		}
 		const parent = path.parent ?? this.root;
 		const parentPath = this.find(parent);
@@ -1185,6 +1183,7 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 		assert(this.status !== Status.Disposed, 0x41d /* PathNode must not be disposed */);
 		if (this.isUnreferenced() && this.children.size === 0 && !this.events.hasListeners()) {
 			if (this.status === Status.Alive) {
+				// eslint-disable-next-line unicorn/prefer-dom-node-remove -- Custom tree structure, not DOM
 				this.parentPath?.removeChild(this);
 			}
 			this.status = Status.Disposed;
@@ -1211,6 +1210,7 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 function binaryFind(sorted: readonly PathNode[], index: number): PathNode | undefined {
 	// Try guessing the list is not sparse as a starter:
 	const guess = sorted[index];
+	// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 	if (guess !== undefined && guess.parentIndex === index) {
 		return guess;
 	}

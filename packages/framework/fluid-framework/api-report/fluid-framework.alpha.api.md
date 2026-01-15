@@ -142,16 +142,13 @@ export interface BranchableTree extends ViewableTree {
 }
 
 // @alpha @sealed
-export type ChangeMetadata = CommitMetadata & ({
-    readonly isLocal: true;
-    getChange(): JsonCompatibleReadOnly;
-} | {
-    readonly isLocal: false;
-    readonly getChange?: undefined;
-});
+export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
 // @alpha
 export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
+
+// @alpha
+export function checkSchemaCompatibilitySnapshots(options: SchemaCompatibilitySnapshotsOptions): void;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
@@ -416,6 +413,7 @@ export const FluidClientVersion: {
     readonly v2_52: "2.52.0";
     readonly v2_73: "2.73.0";
     readonly v2_74: "2.74.0";
+    readonly v2_80: "2.80.0";
 };
 
 // @public
@@ -1056,6 +1054,13 @@ export type Listeners<T extends object> = {
     [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
 };
 
+// @alpha @sealed
+export interface LocalChangeMetadata extends CommitMetadata {
+    getChange(): JsonCompatibleReadOnly;
+    getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
+    readonly isLocal: true;
+}
+
 // @public @sealed
 export interface MakeNominal {
 }
@@ -1097,6 +1102,12 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
 };
+
+// @alpha
+export interface NoChangeConstraint {
+    // (undocumented)
+    readonly type: "noChange";
+}
 
 // @public @system
 type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild> ? TBuild : never;
@@ -1223,6 +1234,13 @@ export const RecordNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is RecordNodeSchema<string, ImplicitAllowedTypes, true, unknown>;
 };
 
+// @alpha @sealed
+export interface RemoteChangeMetadata extends CommitMetadata {
+    readonly getChange?: undefined;
+    readonly getRevertible?: undefined;
+    readonly isLocal: false;
+}
+
 // @alpha
 export function replaceConciseTreeHandles<T>(tree: ConciseTree, replacer: HandleConverter<T>): ConciseTree<T>;
 
@@ -1296,7 +1314,18 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParams {
-    readonly preconditions?: readonly TransactionConstraint[];
+    readonly preconditions?: readonly TransactionConstraintAlpha[];
+}
+
+// @alpha @input
+export interface SchemaCompatibilitySnapshotsOptions {
+    readonly fileSystem: SnapshotFileSystem;
+    readonly minVersionForCollaboration: string;
+    readonly mode: "test" | "update";
+    readonly schema: TreeViewConfiguration;
+    readonly snapshotDirectory: string;
+    readonly snapshotUnchangedVersions?: true;
+    readonly version: string;
 }
 
 // @public @sealed
@@ -1529,6 +1558,19 @@ export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
 export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
+
+// @alpha @input
+export interface SnapshotFileSystem {
+    join(parentPath: string, childPath: string): string;
+    mkdirSync(dir: string, options: {
+        recursive: true;
+    }): void;
+    readdirSync(dir: string): readonly string[];
+    readFileSync(file: string, encoding: "utf8"): string;
+    writeFileSync(file: string, data: string, options: {
+        encoding: "utf8";
+    }): void;
+}
 
 // @alpha @system
 export namespace System_TableSchema {
@@ -1778,11 +1820,14 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ({
     rollback: true;
     value: TFailureValue;
 }) & {
-    preconditionsOnRevert?: readonly TransactionConstraint[];
+    preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 };
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @alpha @sealed
+export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
 
 // @alpha
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;

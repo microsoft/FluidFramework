@@ -20,6 +20,7 @@ import {
 	brandedNumberType,
 	brandedStringType,
 } from "../../util/index.js";
+import type { RevertibleAlpha } from "../revertible.js";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -125,23 +126,6 @@ export function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtom
 	return { ...id, localId: brand(id.localId + offset) };
 }
 
-export function replaceAtomRevisions(
-	id: ChangeAtomId,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-): ChangeAtomId {
-	return oldRevisions.has(id.revision) ? atomWithRevision(id, newRevision) : id;
-}
-
-function atomWithRevision(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
-	const updated = { ...id, revision };
-	if (revision === undefined) {
-		delete updated.revision;
-	}
-
-	return updated;
-}
-
 /**
  * A node in a graph of commits. A commit's parent is the commit on which it was based.
  */
@@ -190,28 +174,64 @@ export interface CommitMetadata {
 }
 
 /**
- * Information about a commit that has been applied.
- *
+ * Information about a change that has been applied by the local client.
  * @sealed @alpha
  */
-export type ChangeMetadata = CommitMetadata &
-	(
-		| {
-				readonly isLocal: true;
-				/**
-				 * A serializable object that encodes the change.
-				 * @remarks This change object can be {@link TreeBranchAlpha.applyChange | applied to another branch} in the same state as the one which generated it.
-				 * The change object must be applied to a SharedTree with the same IdCompressor session ID as it was created from.
-				 * @privateRemarks
-				 * This is a `SerializedChange` from treeCheckout.ts.
-				 */
-				getChange(): JsonCompatibleReadOnly;
-		  }
-		| {
-				readonly isLocal: false;
-				readonly getChange?: undefined;
-		  }
-	);
+export interface LocalChangeMetadata extends CommitMetadata {
+	/**
+	 * Whether the change was made on the local machine/client or received from a remote client.
+	 */
+	readonly isLocal: true;
+	/**
+	 * Returns a serializable object that encodes the change.
+	 * @remarks This is only available for local changes.
+	 * This change object can be {@link TreeBranchAlpha.applyChange | applied to another branch} in the same state as the one which generated it.
+	 * The change object must be applied to a SharedTree with the same IdCompressor session ID as it was created from.
+	 * @privateRemarks
+	 * This is a `SerializedChange` from treeCheckout.ts.
+	 */
+	getChange(): JsonCompatibleReadOnly;
+	/**
+	 * Returns an object (a {@link RevertibleAlpha | "revertible"}) that can be used to revert the change that produced this event.
+	 * @remarks This is only available for local changes.
+	 * If the change is not revertible (for example, it was a change to the application schema), then this will return `undefined`.
+	 * Revertibles should be disposed when they are no longer needed.
+	 * @param onDisposed - A callback that will be invoked when the `Revertible` is disposed.
+	 * This happens when the `Revertible` is disposed manually or when the `TreeView` that the `Revertible` belongs to is disposed - whichever happens first.
+	 * This is typically used to clean up any resources associated with the `Revertible` in the host application.
+	 * @throws Throws an error if called outside the scope of the `changed` event that provided it.
+	 */
+	getRevertible(
+		onDisposed?: (revertible: RevertibleAlpha) => void,
+	): RevertibleAlpha | undefined;
+}
+
+/**
+ * Information about a change that has been applied by a remote client.
+ * @sealed @alpha
+ */
+export interface RemoteChangeMetadata extends CommitMetadata {
+	/**
+	 * Whether the change was made on the local machine/client or received from a remote client.
+	 */
+	readonly isLocal: false;
+	/**
+	 * Returns a serializable object that encodes the change.
+	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
+	 */
+	readonly getChange?: undefined;
+	/**
+	 * Returns an object (a {@link RevertibleAlpha | "revertible"}) that can be used to revert the change that produced this event.
+	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
+	 */
+	readonly getRevertible?: undefined;
+}
+
+/**
+ * Information about a {@link LocalChangeMetadata | local} or {@link RemoteChangeMetadata | remote} change that has been applied.
+ * @sealed @alpha
+ */
+export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
 /**
  * Creates a new graph commit object. This is useful for creating copies of commits with different parentage.

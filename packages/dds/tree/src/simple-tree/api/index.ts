@@ -153,7 +153,9 @@ export {
 
 export {
 	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	type NodeInDocumentConstraint,
+	type NoChangeConstraint,
 	type RunTransactionParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -178,4 +180,7 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
+	checkSchemaCompatibilitySnapshots,
+	type SnapshotFileSystem,
+	type SchemaCompatibilitySnapshotsOptions,
 } from "./snapshotCompatibilityChecker.js";

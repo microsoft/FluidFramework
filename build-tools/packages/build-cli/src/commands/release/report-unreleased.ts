@@ -70,6 +70,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
  * @param fullReleaseReport - The format of the "full" release report.
  * @param version - The version string for the reports.
  * @param outDir - The output directory for the reports.
+ * @param branchName - The branch name for the reports.
  * @param log - The logger object for logging messages.
  */
 async function generateReleaseReport(

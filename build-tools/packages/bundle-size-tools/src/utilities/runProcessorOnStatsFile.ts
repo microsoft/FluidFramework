@@ -16,7 +16,7 @@ import type {
  * @param bundleName - A friendly name of the bundle being processed, used for error handling
  * @param stats - The webpack stats file being processed
  * @param config - An optional bundle specific configuration for specifying custom metrics
- * @param statsProcessors  - The set of processors to run on this bundle
+ * @param statsProcessors - The set of processors to run on this bundle
  */
 export function runProcessorsOnStatsFile(
 	bundleName: string,
