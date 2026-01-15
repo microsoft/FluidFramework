@@ -57,9 +57,9 @@ interface ESLintInstance {
  * Requires ESLint 8.57.0+ which introduced the loadESLint API.
  */
 interface ESLintModuleType {
-	loadESLint: (opts?: { cwd?: string }) => Promise<
-		new (instanceOpts?: { cwd?: string }) => ESLintInstance
-	>;
+	loadESLint: (opts?: {
+		cwd?: string;
+	}) => Promise<new (instanceOpts?: { cwd?: string }) => ESLintInstance>;
 }
 
 /**
