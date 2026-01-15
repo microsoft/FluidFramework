@@ -25,6 +25,12 @@ import {
 import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
+import type {
+	CellMark,
+	MoveIn,
+	MoveOut,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/sequence-field/types.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -832,8 +838,8 @@ export function testRebase() {
 			const [mo1, mi1] = Mark.move(1, brand(1));
 			const [mo2, mi2] = Mark.move(1, brand(10));
 			const [mo3, mi3] = Mark.move(1, brand(20));
-			const src: SF.CellMark<SF.MoveOut> = { ...mo1, finalEndpoint: { localId: brand(20) } };
-			const dst: SF.CellMark<SF.MoveIn> = { ...mi3, finalEndpoint: { localId: brand(1) } };
+			const src: CellMark<MoveOut> = { ...mo1, finalEndpoint: { localId: brand(20) } };
+			const dst: CellMark<MoveIn> = { ...mi3, finalEndpoint: { localId: brand(1) } };
 			const move = [
 				src,
 				Mark.skip(1),

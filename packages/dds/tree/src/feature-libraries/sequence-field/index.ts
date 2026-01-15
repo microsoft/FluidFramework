@@ -3,36 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export type {
-	Changeset,
-	Remove,
-	Detach,
-	HasMoveId,
-	HasRevisionTag,
-	Insert,
-	Mark,
-	MarkList,
-	MoveIn,
-	MoveOut,
-	CellCount as NodeCount,
-	MoveId,
-	Attach,
-	NoopMark,
-	CellId,
-	HasMarkFields,
-	CellMark,
-	AttachAndDetach,
-	Rename,
-} from "./types.js";
-export { DetachIdOverrideType } from "./formatV1.js";
-export {
-	type SequenceFieldChangeHandler,
-	sequenceFieldChangeHandler,
-} from "./sequenceFieldChangeHandler.js";
-export {
-	type SequenceChangeRebaser,
-	sequenceFieldChangeRebaser,
-} from "./sequenceFieldChangeRebaser.js";
+export type { CellId, Changeset } from "./types.js";
 export { type SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
 
 export { sequence } from "./sequenceKind.js";

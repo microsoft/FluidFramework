@@ -44,13 +44,6 @@ import {
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
-import type {
-	CellId,
-	Changeset,
-	HasMarkFields,
-	MoveId,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/sequence-field/index.js";
 import {
 	areInputCellsEmpty,
 	cloneMark,
@@ -88,6 +81,14 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type MarkEffect,
 	NoopMarkType,
+	CellId,
+	Changeset,
+	HasMarkFields,
+	MoveId,
+	type Remove,
+	type Mark,
+	type MoveOut,
+	type MoveIn,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -100,6 +101,8 @@ import { invert } from "../../../feature-libraries/sequence-field/invert.js";
 import { MarkListFactory } from "../../../feature-libraries/sequence-field/markListFactory.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldChangeRebaser } from "../../../feature-libraries/sequence-field/sequenceFieldChangeRebaser.js";
 
 export function assertWrappedChangesetsEqual(
 	actual: WrappedChange,
@@ -153,7 +156,7 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 		return normal;
 	}
 
-	function normalizeMark(mark: SF.Mark): SF.Mark {
+	function normalizeMark(mark: Mark): Mark {
 		const effect = extractMarkEffect(mark);
 		const nonEffect = omitMarkEffect(mark);
 		return {
@@ -189,7 +192,7 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 			case "MoveIn": {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Source);
-				const normalized: Mutable<SF.MoveIn> = { ...effect };
+				const normalized: Mutable<MoveIn> = { ...effect };
 				normalized.finalEndpoint =
 					normalized.finalEndpoint === undefined
 						? normalizeAtom(effectId, CrossFieldTarget.Destination)
@@ -201,7 +204,7 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 			case "MoveOut": {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
-				const normalized: Mutable<SF.MoveOut> = { ...effect };
+				const normalized: Mutable<MoveOut> = { ...effect };
 				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (normalized.idOverride === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
@@ -218,7 +221,7 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 			case "Remove": {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
-				const normalized: Mutable<SF.Remove> = { ...effect };
+				const normalized: Mutable<Remove> = { ...effect };
 				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (normalized.idOverride === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
@@ -229,16 +232,16 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				return normalized as TEffect;
 			}
 			default: {
-				assert.fail(`Unexpected mark type: ${(effect as SF.Mark).type}`);
+				assert.fail(`Unexpected mark type: ${(effect as Mark).type}`);
 			}
 		}
 	}
 	const output = new MarkListFactory();
 
 	for (const mark of change) {
-		let nextMark: SF.Mark | undefined = mark;
+		let nextMark: Mark | undefined = mark;
 		while (nextMark !== undefined) {
-			let currMark: SF.Mark = nextMark;
+			let currMark: Mark = nextMark;
 			nextMark = undefined;
 			if (currMark.count > 1) {
 				[currMark, nextMark] = splitMark(currMark, 1);
@@ -299,10 +302,7 @@ export function prune(
 	change: SF.Changeset,
 	childPruner?: (child: NodeId) => NodeId | undefined,
 ): SF.Changeset {
-	return SF.sequenceFieldChangeRebaser.prune(
-		change,
-		childPruner ?? ((child: NodeId) => child),
-	);
+	return sequenceFieldChangeRebaser.prune(change, childPruner ?? ((child: NodeId) => child));
 }
 
 export function shallowCompose(
@@ -836,7 +836,7 @@ export function tagChangeInline(
 
 export function inlineRevision(change: Changeset, revision: RevisionTag): Changeset {
 	const replacer = new DefaultRevisionReplacer(revision, new Set([undefined]));
-	return SF.sequenceFieldChangeRebaser.replaceRevisions(change, replacer);
+	return sequenceFieldChangeRebaser.replaceRevisions(change, replacer);
 }
 
 interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {

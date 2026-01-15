@@ -17,7 +17,8 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-import type { SequenceField as SF } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type * as SF from "../../../feature-libraries/sequence-field/types.js";
 import type {
 	BoundFieldChangeRebaser,
 	ChildStateGenerator,

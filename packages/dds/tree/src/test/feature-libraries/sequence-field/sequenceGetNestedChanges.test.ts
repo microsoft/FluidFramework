@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { NodeId } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { sequenceFieldChangeHandler } from "../../../feature-libraries/sequence-field/index.js";
+import { sequenceFieldChangeHandler } from "../../../feature-libraries/sequence-field/sequenceFieldChangeHandler.js";
 import { brand } from "../../../util/index.js";
 import { MarkMaker as Mark } from "./testEdits.js";
 import type { RevisionTag } from "../../../core/index.js";

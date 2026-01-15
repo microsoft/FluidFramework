@@ -15,6 +15,8 @@ import {
 	DefaultRevisionReplacer,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldChangeRebaser } from "../../../feature-libraries/sequence-field/sequenceFieldChangeRebaser.js";
 
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
@@ -47,7 +49,7 @@ function runCases(outputRev: RevisionTag) {
 	function process(changeset: SF.Changeset): SF.Changeset {
 		deepFreeze(changeset);
 		const replacer = new DefaultRevisionReplacer(outputRev, inputRevs);
-		return SF.sequenceFieldChangeRebaser.replaceRevisions(changeset, replacer);
+		return sequenceFieldChangeRebaser.replaceRevisions(changeset, replacer);
 	}
 
 	it("tombstones", () => {
