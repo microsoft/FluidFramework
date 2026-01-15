@@ -151,6 +151,31 @@ describe("Presence", () => {
 				);
 			});
 
+			it('has status "Disconnected" when runtime is connected but self is not yet in Audience', () => {
+				// This simulates the CatchingUp race condition where runtime is connected
+				// to service but the ClientJoin signal for self hasn't been processed yet.
+
+				// Setup - set runtime to connected state but remove self from audience
+				runtime.clientId = initialLocalClientConnectionId;
+				runtime.joined = true;
+				runtime.removeMember(initialLocalClientConnectionId);
+
+				// Create presence - it will see runtime as connected but self not in audience
+				logger.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
+				const presence = createPresenceManager(runtime, localAttendeeId);
+
+				// Verify - self attendee should have "Disconnected" status since
+				// we haven't received the ClientJoin signal yet
+				const selfAttendee = presence.attendees.getMyself();
+				assert.strictEqual(
+					selfAttendee.getConnectionStatus(),
+					AttendeeStatus.Disconnected,
+					"Self attendee should have status 'Disconnected' when runtime is connected but self is not yet in Audience",
+				);
+
+				assertFinalExpectations(runtime, logger);
+			});
+
 			it('has status "Connected" when announced via `attendeeConnected`', () => {
 				// Setup - create presence in disconnected state
 				const { presence, connect } = prepareDisconnectedPresence(
