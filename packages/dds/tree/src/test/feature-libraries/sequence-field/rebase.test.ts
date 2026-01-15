@@ -14,7 +14,7 @@ import {
 	type RebaseConfig,
 	assertChangesetsEqual,
 	checkDeltaEquality,
-	rebase as rebaseI,
+	testRebase as rebaseI,
 	rebaseOverChanges,
 	rebaseOverComposition,
 	rebaseTagged,

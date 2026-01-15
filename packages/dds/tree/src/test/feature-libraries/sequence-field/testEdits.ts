@@ -16,6 +16,8 @@ import {
 	asChangeAtomId,
 	offsetChangeAtomId,
 } from "../../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { extractMarkEffect } from "../../../feature-libraries/sequence-field/utils.js";
 
 const tag: RevisionTag = mintRevisionTag();
 
@@ -437,8 +439,8 @@ function createAttachAndDetachMark(
 		type: "AttachAndDetach",
 		count: attach.count,
 		cellId: attach.cellId,
-		attach: SF.extractMarkEffect(attach),
-		detach: SF.extractMarkEffect(detach),
+		attach: extractMarkEffect(attach),
+		detach: extractMarkEffect(detach),
 		...overrides,
 	};
 	return mark;

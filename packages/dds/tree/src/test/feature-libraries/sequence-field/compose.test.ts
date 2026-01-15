@@ -20,7 +20,7 @@ import { cases, ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js"
 import {
 	areComposable,
 	assertChangesetsEqual,
-	compose,
+	testCompose as compose,
 	composeNoVerify,
 	shallowCompose,
 	tagChangeInline,

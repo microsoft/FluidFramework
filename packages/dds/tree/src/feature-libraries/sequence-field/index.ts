@@ -37,21 +37,5 @@ export { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs.js";
 export { sequenceFieldToDelta } from "./sequenceFieldToDelta.js";
 export { type SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
 export { MarkListFactory } from "./markListFactory.js";
-export { rebase } from "./rebase.js";
-export { invert } from "./invert.js";
-export { compose } from "./compose.js";
-export {
-	getInputLength,
-	isDetach,
-	cloneMark,
-	extractMarkEffect,
-} from "./utils.js";
-export {
-	isMoveMark,
-	type MoveMark,
-	type MoveEffectTable,
-	type MoveEffect,
-} from "./moveEffectTable.js";
 
-export { relevantRemovedRoots } from "./relevantRemovedRoots.js";
 export { sequence } from "./sequenceKind.js";

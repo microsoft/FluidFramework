@@ -24,6 +24,8 @@ import {
 	tagRollbackInverse,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { isMoveMark } from "../../../feature-libraries/sequence-field/moveEffectTable.js";
 import {
 	addCrossFieldQuery,
 	type CrossFieldManager,
@@ -48,15 +50,15 @@ import {
 	type HasMarkFields,
 	MarkListFactory,
 	type MoveId,
-	cloneMark,
-	extractMarkEffect,
-	getInputLength,
-	isDetach,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/index.js";
 import {
 	areInputCellsEmpty,
+	cloneMark,
+	extractMarkEffect,
+	getInputLength,
 	isActiveReattach,
+	isDetach,
 	isNewAttach,
 	isTombstone,
 	markEmptiesCells,
@@ -89,6 +91,12 @@ import {
 	NoopMarkType,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { compose } from "../../../feature-libraries/sequence-field/compose.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { rebase } from "../../../feature-libraries/sequence-field/rebase.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { invert } from "../../../feature-libraries/sequence-field/invert.js";
 
 export function assertWrappedChangesetsEqual(
 	actual: WrappedChange,
@@ -272,7 +280,7 @@ export function composeShallow(changes: TaggedChange<SF.Changeset>[]): SF.Change
 	);
 }
 
-export function compose(
+export function testCompose(
 	changes: TaggedChange<SF.Changeset>[],
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 	childComposer?: (change1: NodeId | undefined, change2: NodeId | undefined) => NodeId,
@@ -341,11 +349,11 @@ function composePair(
 	idAllocator: IdAllocator,
 ): SF.Changeset {
 	const moveEffects = newCrossFieldTable();
-	let composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
+	let composed = compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
-		composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
+		composed = compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 	}
 	return composed;
 }
@@ -358,7 +366,7 @@ export interface RebaseConfig {
 	) => NodeId | undefined;
 }
 
-export function rebase(
+export function testRebase(
 	change: TaggedChange<SF.Changeset>,
 	base: TaggedChange<SF.Changeset>,
 	config: RebaseConfig = {},
@@ -378,7 +386,7 @@ export function rebase(
 
 	const moveEffects = newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change.change, base.change));
-	let rebasedChange = SF.rebase(
+	let rebasedChange = rebase(
 		change.change,
 		base.change,
 		childRebaser,
@@ -388,7 +396,7 @@ export function rebase(
 	);
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
-		rebasedChange = SF.rebase(
+		rebasedChange = rebase(
 			change.change,
 			base.change,
 			childRebaser,
@@ -416,7 +424,7 @@ export function rebaseOverChanges(
 	const revisionInfo = revInfos ?? defaultRevInfosFromChanges([...baseChanges, change]);
 	for (const base of baseChanges) {
 		currChange = tagChange(
-			rebase(currChange, base, {
+			testRebase(currChange, base, {
 				metadata: rebaseRevisionMetadataFromInfo(revisionInfo, change.revision, [
 					base.revision,
 				]),
@@ -433,7 +441,7 @@ export function rebaseOverComposition(
 	base: SF.Changeset,
 	metadata: RebaseRevisionMetadata,
 ): SF.Changeset {
-	return rebase(makeAnonChange(change), makeAnonChange(base), { metadata });
+	return testRebase(makeAnonChange(change), makeAnonChange(base), { metadata });
 }
 
 export type WrappedChange = ChangesetWrapper<SF.Changeset>;
@@ -446,7 +454,7 @@ export function rebaseDeepTagged(
 	return mapTaggedChange(
 		change,
 		ChangesetWrapper.rebase(change, base, (c, b, childRebaser) =>
-			rebase(c, b, { childRebaser, metadata }),
+			testRebase(c, b, { childRebaser, metadata }),
 		),
 	);
 }
@@ -461,17 +469,17 @@ export function invertDeep(
 	change: TaggedChange<WrappedChange>,
 	revision: RevisionTag | undefined,
 ): WrappedChange {
-	return ChangesetWrapper.invert(change, (c) => invert(c, revision), revision);
+	return ChangesetWrapper.invert(change, (c) => testInvert(c, revision), revision);
 }
 
-export function invert(
+export function testInvert(
 	change: TaggedChange<SF.Changeset>,
 	revision: RevisionTag | undefined,
 	isRollback = true,
 ): SF.Changeset {
 	deepFreeze(change.change);
 	const table = newCrossFieldTable();
-	let inverted = SF.invert(
+	let inverted = invert(
 		change.change,
 		isRollback,
 		// Sequence fields should not generate IDs during invert
@@ -484,7 +492,7 @@ export function invert(
 		table.isInvalidated = false;
 		table.srcQueries.clear();
 		table.dstQueries.clear();
-		inverted = SF.invert(
+		inverted = invert(
 			change.change,
 			isRollback,
 			// Sequence fields should not generate IDs during invert
@@ -516,7 +524,7 @@ export function getMaxId(...changes: SF.Changeset[]): ChangesetLocalId | undefin
 	let max: ChangesetLocalId | undefined;
 	for (const change of changes) {
 		for (const mark of change) {
-			if (SF.isMoveMark(mark)) {
+			if (isMoveMark(mark)) {
 				max = max === undefined ? mark.id : brand(Math.max(max, mark.id));
 			}
 		}

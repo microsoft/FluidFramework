@@ -16,7 +16,11 @@ import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 import { brand } from "../../../util/index.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { invert as invertChange, assertChangesetsEqual, tagChangeInline } from "./utils.js";
+import {
+	testInvert as invertChange,
+	assertChangesetsEqual,
+	tagChangeInline,
+} from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 
 const tag1: RevisionTag = mintRevisionTag();
