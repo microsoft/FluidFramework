@@ -6,7 +6,6 @@
 import { fail } from "@fluidframework/core-utils/internal";
 
 import {
-	type ChangeAtomId,
 	type DeltaDetachedNodeId,
 	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
@@ -24,19 +23,23 @@ import {
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
 import {
-	type OptionalChangeset,
 	type OptionalFieldEditor,
-	optionalChangeHandler,
-	optionalFieldEditor,
+	optional,
+	required,
+	type RequiredFieldEditor,
 } from "../optional-field/index.js";
-import {
-	sequenceFieldChangeHandler,
-	type SequenceFieldEditor,
-} from "../sequence-field/index.js";
+import type { SequenceFieldEditor } from "../sequence-field/index.js";
 
 import { noChangeCodecFamily } from "./noChangeCodecs.js";
 import type { CodecTree } from "../../codec/index.js";
-import { brand, brandConst, type Brand } from "../../util/index.js";
+import { brand, type Brand } from "../../util/index.js";
+import type {
+	optionalIdentifier,
+	requiredIdentifier,
+	sequenceIdentifier,
+} from "../fieldKindIdentifiers.js";
+import { identifierFieldIdentifier } from "../fieldKindIdentifiers.js";
+import { sequence } from "../sequence-field/index.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -57,76 +60,6 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	createEmpty: () => 0,
 	getCrossFieldKeys: () => [],
 };
-
-/**
- * {@link FieldEditor} for required fields (always contain exactly 1 child).
- * @remarks
- * This shares code with optional fields, since they are the same edit wise except setting to empty is not allowed,
- * and the content is always assumed to not be empty.
- * This means the actual edits implemented for optional fields are sufficient to support required fields
- * which is why this is defined and implemented in terms of optional fields.
- */
-export interface RequiredFieldEditor extends FieldEditor<OptionalChangeset> {
-	/**
-	 * Creates a change which replaces the current value of the field with `newValue`.
-	 * @param ids - The ids for the fill and detach fields.
-	 */
-	set(ids: { fill: ChangeAtomId; detach: ChangeAtomId }): OptionalChangeset;
-}
-
-const optionalIdentifier = brandConst("Optional")<FieldKindIdentifier>();
-const requiredIdentifier = brandConst("Value")<FieldKindIdentifier>();
-const sequenceIdentifier = brandConst("Sequence")<FieldKindIdentifier>();
-const identifierFieldIdentifier = brandConst("Identifier")<FieldKindIdentifier>();
-
-/**
- * 0 or 1 items.
- */
-export const optional = new FlexFieldKind(optionalIdentifier, Multiplicity.Optional, {
-	changeHandler: optionalChangeHandler,
-	allowMonotonicUpgradeFrom: new Set([
-		identifierFieldIdentifier,
-		requiredIdentifier,
-		forbiddenFieldKindIdentifier,
-	]),
-});
-
-export const requiredFieldEditor: RequiredFieldEditor = {
-	...optionalFieldEditor,
-	set: (ids: {
-		fill: ChangeAtomId;
-		detach: ChangeAtomId;
-	}): OptionalChangeset => optionalFieldEditor.set(false, ids),
-};
-
-export const requiredFieldChangeHandler: FieldChangeHandler<
-	OptionalChangeset,
-	RequiredFieldEditor
-> = {
-	...optionalChangeHandler,
-	editor: requiredFieldEditor,
-};
-
-/**
- * Exactly one item.
- */
-export const required = new FlexFieldKind(requiredIdentifier, Multiplicity.Single, {
-	changeHandler: requiredFieldChangeHandler,
-	allowMonotonicUpgradeFrom: new Set([identifierFieldIdentifier]),
-});
-
-/**
- * 0 or more items.
- */
-export const sequence = new FlexFieldKind(sequenceIdentifier, Multiplicity.Sequence, {
-	changeHandler: sequenceFieldChangeHandler,
-	allowMonotonicUpgradeFrom: new Set([
-		required.identifier,
-		optional.identifier,
-		identifierFieldIdentifier,
-		forbiddenFieldKindIdentifier,
-	]),
-});
 
 /**
  * Exactly one identifier.

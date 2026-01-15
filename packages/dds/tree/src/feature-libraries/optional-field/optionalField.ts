@@ -12,9 +12,11 @@ import {
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeId,
 	type DeltaMark,
+	Multiplicity,
 	type RevisionReplacer,
 	type RevisionTag,
 	areEqualChangeAtomIds,
+	forbiddenFieldKindIdentifier,
 	makeChangeAtomId,
 	taggedAtomId,
 } from "../../core/index.js";
@@ -40,6 +42,7 @@ import {
 	type ToDelta,
 	type NestedChangesIndices,
 	type FieldChangeDelta,
+	FlexFieldKind,
 } from "../modular-schema/index.js";
 
 import type {
@@ -50,6 +53,11 @@ import type {
 	Replace,
 } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
+import {
+	optionalIdentifier,
+	identifierFieldIdentifier,
+	requiredIdentifier,
+} from "../fieldKindIdentifiers.js";
 
 export interface IRegisterMap<T> {
 	set(id: RegisterId, childChange: T): void;
@@ -783,3 +791,15 @@ function* relevantRemovedRoots(
 		yield nodeIdFromChangeAtom(selfSrc);
 	}
 }
+
+/**
+ * 0 or 1 items.
+ */
+export const optional = new FlexFieldKind(optionalIdentifier, Multiplicity.Optional, {
+	changeHandler: optionalChangeHandler,
+	allowMonotonicUpgradeFrom: new Set([
+		identifierFieldIdentifier,
+		requiredIdentifier,
+		forbiddenFieldKindIdentifier,
+	]),
+});

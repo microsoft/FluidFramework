@@ -54,3 +54,4 @@ export {
 } from "./moveEffectTable.js";
 
 export { relevantRemovedRoots } from "./relevantRemovedRoots.js";
+export { sequence } from "./sequenceKind.js";

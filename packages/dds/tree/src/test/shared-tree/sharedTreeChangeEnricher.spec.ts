@@ -18,11 +18,10 @@ import {
 } from "../../core/index.js";
 import { cursorToJsonObject, fieldJsonCursor } from "../json/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
 	DefaultRevisionReplacer,
+	FieldKinds,
 	ModularChangeFamily,
 	type ModularChangeset,
 	ModularEditBuilder,
@@ -161,7 +160,7 @@ describe("SharedTreeChangeEnricher", () => {
 						{
 							type: "field",
 							field: { parent: undefined, field: rootFieldKey },
-							fieldKind: optional.identifier,
+							fieldKind: FieldKinds.optional.identifier,
 							change: brand(restore),
 							revision: tagForRestore,
 						},
