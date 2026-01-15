@@ -13,7 +13,9 @@ describe("blobs", () => {
 
 	beforeAll(async () => {
 		// Launch the browser once for all tests
-		browser = await puppeteer.launch();
+		// Use chrome-headless-shell since some tests don't work as-is with the new headless mode.
+		// AB#7150: Remove this once we have fixed the tests.
+		browser = await puppeteer.launch({ headless: "shell" });
 		// Load the page once to avoid a cold load on first test - otherwise the first test takes
 		// significantly longer to load. This way we can extend just the timeout for the cold load.
 		page = await browser.newPage();
