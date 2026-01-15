@@ -37,15 +37,15 @@ const config: Linter.Config[] = [
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [
-						"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
-						"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
-						"@fluid-experimental/**",
-						"@fluidframework/*/test-utils",
-						"@fluid-example/*/{beta,alpha}",
-						"*/index.js",
-					],
-				},
+				"allow": [
+					"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
+					"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
+					"@fluid-experimental/**",
+					"@fluidframework/*/test-utils",
+					"@fluid-example/*/{beta,alpha}",
+					"*/index.js",
+				],
+			},
 			],
 		},
 	},
@@ -55,17 +55,17 @@ const config: Linter.Config[] = [
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [
-						"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
-						"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
-						"@fluid-experimental/**",
-						"@fluidframework/*/test-utils",
-						"@fluid-example/*/{beta,alpha}",
-						"*/index.js",
-						"@fluidframework/test-utils/internal",
-						"*/*.js",
-					],
-				},
+				"allow": [
+					"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
+					"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
+					"@fluid-experimental/**",
+					"@fluidframework/*/test-utils",
+					"@fluid-example/*/{beta,alpha}",
+					"*/index.js",
+					"@fluidframework/test-utils/internal",
+					"*/*.js",
+				],
+			},
 			],
 		},
 	},
