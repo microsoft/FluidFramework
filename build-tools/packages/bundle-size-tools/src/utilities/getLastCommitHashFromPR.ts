@@ -12,7 +12,7 @@ export async function getLastCommitHashFromPR(
 	adoConnection: WebApi,
 	prId: number,
 	repoGuid: string,
-) {
+): Promise<string | undefined> {
 	const gitApi = await adoConnection.getGitApi();
 	const prCommits = await gitApi.getPullRequestCommits(repoGuid, prId);
 

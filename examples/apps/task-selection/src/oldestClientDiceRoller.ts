@@ -82,6 +82,7 @@ export class OldestClientDiceRoller extends DataObject implements IDiceRoller {
 
 	private startAutoRollTask(): void {
 		console.log("Starting autoroll from OldestClientDiceRoller");
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (this.autoRollInterval === undefined) {
 			this.autoRollInterval = setInterval(() => {
 				this.roll();
