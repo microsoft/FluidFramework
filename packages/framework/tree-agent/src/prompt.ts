@@ -12,12 +12,7 @@ import { normalizeFieldSchema } from "@fluidframework/tree/internal";
 
 import type { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
-import {
-	getFriendlyName,
-	communize,
-	findSchemas,
-	mapToFriendlyIdentifiers,
-} from "./utils.js";
+import { getFriendlyName, communize, findSchemas, mapToFriendlyIdentifiers } from "./utils.js";
 
 /**
  * Produces a "system" prompt for the tree agent, based on the provided subtree.

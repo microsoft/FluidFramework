@@ -329,7 +329,16 @@ describe("resolveShortNameCollisions", () => {
 	});
 
 	it("multi-level scope collisions are resolved with counters as suffixes", () => {
-		const input = ["outer1.inner1.Foo", "outer2.inner1.Foo", "outer1.inner2.Foo", "outer2.inner2.Foo", "outer1.inner1.Bar", "outer2.inner1.Bar", "outer1.inner2.Bar", "outer2.inner2.Bar"]
+		const input = [
+			"outer1.inner1.Foo",
+			"outer2.inner1.Foo",
+			"outer1.inner2.Foo",
+			"outer2.inner2.Foo",
+			"outer1.inner1.Bar",
+			"outer2.inner1.Bar",
+			"outer1.inner2.Bar",
+			"outer2.inner2.Bar",
+		];
 		const result = mapToFriendlyIdentifiers(input);
 		assert.equal(result[0], "Foo_1");
 		assert.equal(result[1], "Foo_2");
