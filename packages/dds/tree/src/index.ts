@@ -9,6 +9,8 @@ export {
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	type LocalChangeMetadata,
+	type RemoteChangeMetadata,
 	type ChangeMetadata,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
