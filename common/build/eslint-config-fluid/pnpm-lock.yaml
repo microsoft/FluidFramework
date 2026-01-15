@@ -14,9 +14,6 @@ importers:
       '@eslint-community/eslint-plugin-eslint-comments':
         specifier: ~4.5.0
         version: 4.5.0(eslint@9.39.2(jiti@2.6.1))
-      '@eslint/eslintrc':
-        specifier: ^3.3.3
-        version: 3.3.3
       '@eslint/js':
         specifier: ^8.57.1
         version: 8.57.1

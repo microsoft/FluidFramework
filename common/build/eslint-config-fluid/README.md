@@ -2,27 +2,50 @@
 
 This package contains a shared ESLint config used by all the packages in the Fluid Framework repo.
 
-It exports the following shared ESLint configs:
+## Requirements
 
-## ESLint 9 Flat Config Support
+- **ESLint 9** (recommended), or
+- **ESLint 8.21+** with `ESLINT_USE_FLAT_CONFIG=true` environment variable
 
-This package supports **ESLint 9 flat config format** via the `flat.mjs` export. Packages can use `eslint.config.mjs` files that import from this module.
+This package uses ESLint's flat config format exclusively. Legacy `.eslintrc` format is not supported.
 
-For flat config (ESLint 9), import from `@fluidframework/eslint-config-fluid/flat.mjs`:
+## Usage
+
+Import the desired configuration and spread it into your `eslint.config.mjs`:
 
 ```javascript
 // eslint.config.mjs
-import { strict } from "@fluidframework/eslint-config-fluid/flat.mjs";
+import { strict } from "@fluidframework/eslint-config-fluid";
 export default [...strict];
 ```
 
-### Modular Structure
+### ESLint 8.21+ Users
 
-The flat config is organized into a modular structure for maintainability:
+If you're using ESLint 8.21-8.x, you must enable flat config support via environment variable:
+
+```bash
+ESLINT_USE_FLAT_CONFIG=true eslint .
+```
+
+Or in your npm scripts:
+
+```json
+{
+	"scripts": {
+		"lint": "cross-env ESLINT_USE_FLAT_CONFIG=true eslint ."
+	}
+}
+```
+
+**Note:** ESLint 8.x flat config support was experimental. We recommend upgrading to ESLint 9 for the best experience.
+
+## Package Structure
+
+The config is organized into a modular structure for maintainability:
 
 ```
 eslint-config-fluid/
-├── flat.mts                    # Main entry point (~30 lines)
+├── flat.mts                    # Main entry point
 ├── library/
 │   ├── constants.mts           # Shared constants (ignores, file patterns, import restrictions)
 │   ├── settings.mts            # Plugin settings (import-x, jsdoc)
@@ -32,46 +55,52 @@ eslint-config-fluid/
 │   │   ├── recommended.mts     # Rules for recommended config (unicorn, type safety)
 │   │   └── strict.mts          # Rules for strict config (jsdoc requirements, explicit access)
 │   └── configs/
-│       ├── base.mts            # Base config builder with all plugins
+│       ├── base.mts            # Base config with all plugins
 │       ├── overrides.mts       # Shared overrides (test files, React, JS files)
-│       └── factory.mts         # Config factory functions
-└── [legacy files]              # Legacy eslintrc-style configs (deprecated)
+│       └── factory.mts         # Config definitions and factory functions
 ```
-
-This structure ensures:
-
-- No single file exceeds ~250 lines
-- Single source of truth for constants and settings
-- Each module has a single responsibility
-- Easy to understand and maintain
 
 ## Configurations
 
 ### Recommended
 
-This is the standard config for use in Fluid Framework libraries.
-It is also the default library export.
+The standard config for use in Fluid Framework libraries. This is the default export.
+
+```javascript
+import { recommended } from "@fluidframework/eslint-config-fluid";
+export default [...recommended];
+```
 
 This configuration is recommended for all libraries in the repository, though use of the [strict](#strict) config is preferred whenever reasonable.
 
-**Legacy format:** Imported via `@fluidframework/eslint-config-fluid` (or `@fluidframework/eslint-config-fluid/recommended`).
-**Flat config:** Import `recommended` from `@fluidframework/eslint-config-fluid/flat.mjs`.
-
 ### Strict
 
-The strictest config for use in Fluid Framework libraries.
-Recommended for highest code quality enforcement.
+The strictest config for use in Fluid Framework libraries. Recommended for highest code quality enforcement.
 
-In particular, use of this config is encouraged for libraries with public facing APIs, and those used as external-facing examples (e.g. those mentioned on `fluidframework.com`).
+```javascript
+import { strict } from "@fluidframework/eslint-config-fluid";
+export default [...strict];
+```
 
-**Legacy format:** Imported via `@fluidframework/eslint-config-fluid/strict`.
-**Flat config:** Import `strict` from `@fluidframework/eslint-config-fluid/flat.mjs`.
+Use of this config is encouraged for libraries with public facing APIs, and those used as external-facing examples (e.g. those mentioned on `fluidframework.com`).
 
 ### Strict-Biome
 
-A version of the "strict" config that disables rules that are supported by Biome's "recommended" lint config.
-This config is intended to be used in projects that use both eslint and Biome for linting.
-This config is considered experimental.
+A version of the "strict" config that disables rules covered by Biome's "recommended" lint config. Intended for projects using both ESLint and Biome.
+
+```javascript
+import { strictBiome } from "@fluidframework/eslint-config-fluid";
+export default [...strictBiome];
+```
+
+### Minimal-Deprecated
+
+A lighter config that serves as the base for recommended and strict. Not recommended for general use.
+
+```javascript
+import { minimalDeprecated } from "@fluidframework/eslint-config-fluid";
+export default [...minimalDeprecated];
+```
 
 ## Changing the lint config
 
