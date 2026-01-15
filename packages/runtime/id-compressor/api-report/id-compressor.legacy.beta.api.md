@@ -5,6 +5,16 @@
 ```ts
 
 // @beta @legacy
+export interface CompressorShardId {
+    // (undocumented)
+    generatedIdCount: number;
+    // (undocumented)
+    sessionId: SessionId;
+    // (undocumented)
+    shardId: number;
+}
+
+// @beta @legacy
 export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
 
 // @beta @legacy
@@ -42,6 +52,20 @@ export interface IIdCompressor {
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
     recompress(uncompressed: StableId): SessionSpaceCompressedId;
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
+}
+
+// @beta @legacy
+export interface IIdCompressorCore {
+    beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
+    finalizeCreationRange(range: IdCreationRange): void;
+    serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
+    serialize(withSession: false): SerializedIdCompressorWithNoSession;
+    shard(newShardCount: number): SerializedIdCompressorWithOngoingSession[];
+    // (undocumented)
+    shardId(): CompressorShardId | undefined;
+    takeNextCreationRange(): IdCreationRange;
+    takeUnfinalizedCreationRange(): IdCreationRange;
+    unshard(shardId: CompressorShardId): void;
 }
 
 // @public
