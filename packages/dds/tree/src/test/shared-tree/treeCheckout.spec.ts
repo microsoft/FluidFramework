@@ -200,7 +200,7 @@ describe("sharedTreeView", () => {
 
 				const log: string[] = [];
 				const unsubscribe = checkout.events.on("changed", ({ getRevertible }) =>
-					log.push(getRevertible === undefined ? "not-revertible" : "revertible"),
+					log.push(getRevertible?.() === undefined ? "not-revertible" : "revertible"),
 				);
 
 				assert.deepEqual(log, []);
