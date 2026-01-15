@@ -29,6 +29,7 @@
 			"!**/fluid-runner/src/test/telemetryExpectedOutputs/**",
 			"!**/snapshots/**/*.json",
 			"!**/snapshots/content",
+			"!**/domain-schema-compatibility-snapshots/*/*.json",
 
 			// Generated files
 			"!**/src/**/test/types/**/*.generated.ts",
