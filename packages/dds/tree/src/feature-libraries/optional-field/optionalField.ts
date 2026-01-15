@@ -126,6 +126,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			if (movedChangeEntry?.detachId !== undefined) {
 				rebased.nodeDetach = movedChangeEntry.detachId;
+				if (rebased.valueReplace !== undefined) {
+					// Now that the rebased change has a node detach,
+					// the detach from the value replace no longer takes effect.
+					nodeManager.removeDetach(rebased.valueReplace.dst, 1);
+				}
 			}
 		} else if (overDetach === undefined) {
 			// `overChange` did not change which node is in the field.
@@ -148,12 +153,16 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		const detachId = getEffectiveDetachId(newChange);
-		if (detachId !== undefined) {
+		const rebasedDetachId = getEffectiveDetachId(rebased);
+
+		if (detachId !== undefined && !areEqualChangeAtomIdOpts(detachId, rebasedDetachId)) {
 			nodeManager.removeDetach(detachId, 1);
 		}
 
-		const rebasedDetachId = getEffectiveDetachId(rebased);
-		if (rebasedDetachId !== undefined) {
+		if (
+			rebasedDetachId !== undefined &&
+			!areEqualChangeAtomIdOpts(rebasedDetachId, detachId)
+		) {
 			nodeManager.addDetach(rebasedDetachId, 1);
 		}
 
