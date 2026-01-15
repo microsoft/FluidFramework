@@ -48,7 +48,6 @@ describe("Presence", () => {
 
 		let clock: SinonFakeTimers;
 		let logger: EventAndErrorTrackingLogger;
-		let localAvgLatency: number;
 		let presence: PresenceWithNotifications;
 		let processSignal: ProcessSignalFunction;
 		let runtime: MockEphemeralRuntime;
@@ -62,6 +61,7 @@ describe("Presence", () => {
 			runtime = new MockEphemeralRuntime(logger);
 			clock.setSystemTime(initialTime);
 
+			let localAvgLatency: number;
 			({ presence, processSignal, localAvgLatency } = prepareConnectedPresence(
 				runtime,
 				localAttendeeId,
