@@ -1446,9 +1446,12 @@ describe("SharedTree", () => {
 
 			function makeUndoableEdit(peer: Peer, edit: () => void): Revertible {
 				const undos: Revertible[] = [];
-				const unsubscribe = peer.view.events.on("changed", ({ kind }, getRevertible) => {
-					if (kind !== CommitKind.Undo && getRevertible !== undefined) {
-						undos.push(getRevertible());
+				const unsubscribe = peer.view.events.on("changed", ({ kind, getRevertible }) => {
+					if (kind !== CommitKind.Undo) {
+						const revertible = getRevertible?.();
+						if (revertible !== undefined) {
+							undos.push(revertible);
+						}
 					}
 				});
 

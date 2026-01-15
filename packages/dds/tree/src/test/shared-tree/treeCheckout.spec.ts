@@ -17,7 +17,6 @@ import {
 	RevertibleStatus,
 	CommitKind,
 	EmptyKey,
-	type RevertibleFactory,
 	type NormalizedFieldUpPath,
 	TreeStoredSchemaRepository,
 } from "../../core/index.js";
@@ -200,8 +199,8 @@ describe("sharedTreeView", () => {
 				const checkout = provider.trees[0].kernel.checkout;
 
 				const log: string[] = [];
-				const unsubscribe = checkout.events.on("changed", (data, getRevertible) =>
-					log.push(getRevertible === undefined ? "not-revertible" : "revertible"),
+				const unsubscribe = checkout.events.on("changed", ({ getRevertible }) =>
+					log.push(getRevertible?.() === undefined ? "not-revertible" : "revertible"),
 				);
 
 				assert.deepEqual(log, []);
@@ -993,9 +992,9 @@ describe("sharedTreeView", () => {
 	describe("revertibles", () => {
 		itView("can be generated for changes made to the local branch", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
+			const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
+				const revertible = getRevertible?.();
+				assert(revertible !== undefined, "commit should be revertible");
 				assert.equal(revertible.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(revertible);
 			});
@@ -1021,9 +1020,9 @@ describe("sharedTreeView", () => {
 			({ view }) => {
 				const revertiblesCreated: Revertible[] = [];
 
-				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
-					assert(getRevertible !== undefined, "commit should be revertible");
-					const revertible = getRevertible(onRevertibleDisposed);
+				const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
+					const revertible = getRevertible?.(onRevertibleDisposed);
+					assert(revertible !== undefined, "commit should be revertible");
 					assert.equal(revertible.status, RevertibleStatus.Valid);
 					revertiblesCreated.push(revertible);
 				});
@@ -1059,8 +1058,8 @@ describe("sharedTreeView", () => {
 		itView(
 			"revertibles cannot be acquired outside of the changed event callback",
 			({ view }) => {
-				let acquireRevertible: RevertibleFactory | undefined;
-				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+				let acquireRevertible: (() => void) | undefined;
+				const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
 					assert(getRevertible !== undefined, "commit should be revertible");
 					acquireRevertible = getRevertible;
 				});
@@ -1074,15 +1073,13 @@ describe("sharedTreeView", () => {
 
 		itView("revertibles cannot be acquired more than once", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
-				assert.equal(revertible.status, RevertibleStatus.Valid);
+			const unsubscribe1 = view.events.on("changed", ({ getRevertible }) => {
+				const revertible = getRevertible?.();
+				assert.equal(revertible?.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(revertible);
 			});
-			const unsubscribe2 = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				assert.throws(() => getRevertible());
+			const unsubscribe2 = view.events.on("changed", ({ getRevertible }) => {
+				assert.throws(() => getRevertible?.());
 			});
 
 			view.root.insertAtStart("A");
@@ -1092,9 +1089,9 @@ describe("sharedTreeView", () => {
 
 		itView("disposed revertibles cannot be released or reverted", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const r = getRevertible();
+			const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
+				const r = getRevertible?.();
+				assert(r !== undefined, "commit should be revertible");
 				assert.equal(r.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(r);
 			});
@@ -1117,10 +1114,9 @@ describe("sharedTreeView", () => {
 		itView("changed events have the correct commit kinds", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
 			const commitKinds: CommitKind[] = [];
-			const unsubscribe = view.events.on("changed", ({ kind }, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
-				assert.equal(revertible.status, RevertibleStatus.Valid);
+			const unsubscribe = view.events.on("changed", ({ kind, getRevertible }) => {
+				const revertible = getRevertible?.();
+				assert(revertible !== undefined, "commit should be revertible");
 				revertiblesCreated.push(revertible);
 				commitKinds.push(kind);
 			});
@@ -1138,9 +1134,9 @@ describe("sharedTreeView", () => {
 			const treeBranch = tree.branch();
 			const viewBranch = asAlpha(treeBranch.viewWith(view.config));
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = viewBranch.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const r = getRevertible(onRevertibleDisposed);
+			const unsubscribe = viewBranch.events.on("changed", ({ getRevertible }) => {
+				const r = getRevertible?.(onRevertibleDisposed);
+				assert(r !== undefined, "commit should be revertible");
 				assert.equal(r.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(r);
 			});
@@ -1192,7 +1188,7 @@ describe("sharedTreeView", () => {
 		for (const ageToTest of [0, 1, 5]) {
 			itView(`Telemetry logs track reversion age (${ageToTest})`, ({ view, logger }) => {
 				let revertible: Revertible | undefined;
-				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+				const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
 					assert(getRevertible !== undefined, "Expected commit to be revertible.");
 					// Only save off the first revertible, as it's the only one we'll use.
 					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
@@ -1285,14 +1281,14 @@ describe("sharedTreeView", () => {
 			let revertible: Revertible | undefined;
 			expectErrorDuringEdit({
 				setup: (view) => {
-					const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+					const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
 						revertible = getRevertible?.();
 					});
 					view.root.number = 4;
 					unsubscribe();
 					assert(revertible !== undefined, "Expected revertible to be created.");
 				},
-				duringEdit: (view) => revertible?.revert(),
+				duringEdit: () => revertible?.revert(),
 				error: "Reverting a commit is forbidden during a nodeChanged or treeChanged event",
 			});
 		});
