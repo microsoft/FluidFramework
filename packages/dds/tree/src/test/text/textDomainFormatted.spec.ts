@@ -35,4 +35,41 @@ describe("textDomainFormatted", () => {
 			],
 		);
 	});
+
+	it("insertFormattedAt", () => {
+		const text = FormattedTextAsTree.Tree.fromString("ab");
+		text.insertFormattedAt(1, [
+			{ content: { content: "c" }, format: { ...text.defaultFormat, italic: true } },
+		]);
+		assert.equal(text.fullString(), "acb");
+		assert.deepEqual(
+			[...text.charactersFormatted()].map((atom) => [
+				atom.content.content,
+				atom.format.italic,
+			]),
+			[
+				["a", false],
+				["c", true],
+				["b", false],
+			],
+		);
+	});
+
+	it("defaultFormat", () => {
+		const text = FormattedTextAsTree.Tree.fromString("ab");
+		text.defaultFormat.underline = true;
+		text.insertAt(2, "cd");
+		assert.deepEqual(
+			[...text.charactersFormatted()].map((atom) => [
+				atom.content.content,
+				atom.format.underline,
+			]),
+			[
+				["a", false],
+				["b", false],
+				["c", true],
+				["d", true],
+			],
+		);
+	});
 });

@@ -14,6 +14,7 @@ import {
 	TreeBeta,
 } from "../simple-tree/index.js";
 import type {
+	InsertableTypedNode,
 	TreeNode,
 	TreeNodeFromImplicitAllowedTypes,
 	WithType,
@@ -59,7 +60,10 @@ class TextNode
 	public charactersFormatted(): Iterable<StringAtom> {
 		return this.content;
 	}
-	public insertFormattedAt(index: number, additionalCharacters: Iterable<StringAtom>): void {
+	public insertFormattedAt(
+		index: number,
+		additionalCharacters: Iterable<InsertableTypedNode<typeof StringAtom>>,
+	): void {
 		this.content.insertAt(index, TreeArrayNode.spread(additionalCharacters));
 	}
 	public formatRange(
@@ -217,7 +221,10 @@ export namespace FormattedTextAsTree {
 		 * Another option would be to take an approach like Table,
 		 * where the user of the API uses a factory function to generate the schema, and can inject custom logic, like a string character iterator.
 		 */
-		insertFormattedAt(index: number, additionalCharacters: Iterable<StringAtom>): void;
+		insertFormattedAt(
+			index: number,
+			additionalCharacters: Iterable<InsertableTypedNode<typeof StringAtom>>,
+		): void;
 
 		/**
 		 * Apply formatting to a range of characters based on character index.
