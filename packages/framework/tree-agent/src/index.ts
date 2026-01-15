@@ -37,6 +37,9 @@ export {
 	type BindableSchema,
 	type Ctor,
 	type Infer,
+	type InferZod,
+	type InferArgsZod,
+	type InferTypeFactory,
 	type IExposedMethods,
 } from "./methodBinding.js";
 export type {
@@ -50,3 +53,31 @@ export type {
 	TypeMatchOrError,
 	IfEquals,
 } from "./propertyBinding.js";
+
+export {
+	typeFactory,
+	isTypeFactoryType,
+	instanceOfsTypeFactory,
+} from "./treeAgentTypes.js";
+
+export type {
+	TypeFactoryType,
+	TypeFactoryTypeKind,
+	TypeFactoryString,
+	TypeFactoryNumber,
+	TypeFactoryBoolean,
+	TypeFactoryVoid,
+	TypeFactoryUndefined,
+	TypeFactoryNull,
+	TypeFactoryUnknown,
+	TypeFactoryArray,
+	TypeFactoryObject,
+	TypeFactoryRecord,
+	TypeFactoryMap,
+	TypeFactoryTuple,
+	TypeFactoryUnion,
+	TypeFactoryLiteral,
+	TypeFactoryOptional,
+	TypeFactoryReadonly,
+	TypeFactoryInstanceOf,
+} from "./treeAgentTypes.js";

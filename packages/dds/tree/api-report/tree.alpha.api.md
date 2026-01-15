@@ -135,16 +135,13 @@ export interface BranchableTree extends ViewableTree {
 }
 
 // @alpha @sealed
-export type ChangeMetadata = CommitMetadata & ({
-    readonly isLocal: true;
-    getChange(): JsonCompatibleReadOnly;
-} | {
-    readonly isLocal: false;
-    readonly getChange?: undefined;
-});
+export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
 // @alpha
 export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
+
+// @alpha
+export function checkSchemaCompatibilitySnapshots(options: SchemaCompatibilitySnapshotsOptions): void;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
@@ -706,6 +703,13 @@ export type Listenable<T extends object> = Listenable_2<T>;
 // @public @deprecated
 export type Listeners<T extends object> = Listeners_2<T>;
 
+// @alpha @sealed
+export interface LocalChangeMetadata extends CommitMetadata {
+    getChange(): JsonCompatibleReadOnly;
+    getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
+    readonly isLocal: true;
+}
+
 // @public @sealed
 export interface MakeNominal {
 }
@@ -868,6 +872,13 @@ export const RecordNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is RecordNodeSchema<string, ImplicitAllowedTypes, true, unknown>;
 };
 
+// @alpha @sealed
+export interface RemoteChangeMetadata extends CommitMetadata {
+    readonly getChange?: undefined;
+    readonly getRevertible?: undefined;
+    readonly isLocal: false;
+}
+
 // @alpha
 export function replaceConciseTreeHandles<T>(tree: ConciseTree, replacer: HandleConverter<T>): ConciseTree<T>;
 
@@ -937,6 +948,17 @@ export interface RunTransaction {
 // @alpha @input
 export interface RunTransactionParams {
     readonly preconditions?: readonly TransactionConstraintAlpha[];
+}
+
+// @alpha @input
+export interface SchemaCompatibilitySnapshotsOptions {
+    readonly fileSystem: SnapshotFileSystem;
+    readonly minVersionForCollaboration: string;
+    readonly mode: "test" | "update";
+    readonly schema: TreeViewConfiguration;
+    readonly snapshotDirectory: string;
+    readonly snapshotUnchangedVersions?: true;
+    readonly version: string;
 }
 
 // @public @sealed
@@ -1161,6 +1183,19 @@ export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
 export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
+
+// @alpha @input
+export interface SnapshotFileSystem {
+    join(parentPath: string, childPath: string): string;
+    mkdirSync(dir: string, options: {
+        recursive: true;
+    }): void;
+    readdirSync(dir: string): readonly string[];
+    readFileSync(file: string, encoding: "utf8"): string;
+    writeFileSync(file: string, data: string, options: {
+        encoding: "utf8";
+    }): void;
+}
 
 // @alpha @system
 export namespace System_TableSchema {
