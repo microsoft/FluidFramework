@@ -10,15 +10,19 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
+			// Disabled because they conflict with Prettier.
 			"unicorn/no-nested-ternary": "off",
+			// Disabled because it is incompatible with API-Extractor.
 			"@typescript-eslint/no-namespace": "off",
 		},
 	},
+	// Overrides for test files
 	{
 		files: ["src/test/**"],
 		rules: {
 			"import-x/no-nodejs-modules": "off",
 			"unicorn/prefer-module": "off",
+			// Superseded by chai-expect rule
 			"@typescript-eslint/no-unused-expressions": "off",
 		},
 	},

@@ -12,13 +12,15 @@ const config: Linter.Config[] = [
 		rules: {
 			"import-x/no-nodejs-modules": ["error"],
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			// Disabled because the rule is crashing on this package - AB#51780
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},
+	// Rules only for test files
 	{
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {
-			"import-x/no-nodejs-modules": "off",
+			"import-x/no-nodejs-modules": "off", // Node libraries are OK for test files.
 		},
 	},
 ];

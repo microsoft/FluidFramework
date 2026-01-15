@@ -6,6 +6,8 @@
 import type { Linter } from "eslint";
 import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
 
+// There are a lot of internal APIs leveraged here.
+// (Does not extend ../../eslint.config.data.mts)
 const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{

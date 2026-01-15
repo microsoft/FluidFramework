@@ -10,7 +10,7 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"import-x/no-deprecated": "off",
+			"import-x/no-deprecated": "off", // This package uses deprecated APIs by design.
 			"@typescript-eslint/no-use-before-define": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 		},

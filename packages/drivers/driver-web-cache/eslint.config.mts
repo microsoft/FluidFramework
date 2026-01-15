@@ -15,6 +15,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"@typescript-eslint/promise-function-async": "off",
 			"@typescript-eslint/no-misused-promises": "off",
+			// Disabled because the rule is crashing on this package - AB#51780
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},

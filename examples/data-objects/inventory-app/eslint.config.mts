@@ -13,6 +13,8 @@ const config: Linter.Config[] = [
 	{
 		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
+			// TODO: AB#18875 - Re-enable react/no-deprecated once we replace uses of the deprecated ReactDOM.render()
+			// with the new React 18 createRoot().
 			"react/no-deprecated": "off",
 			"react-hooks/exhaustive-deps": ["error"],
 			"react-hooks/rules-of-hooks": "error",
@@ -35,6 +37,9 @@ const config: Linter.Config[] = [
 			],
 			"react/self-closing-comp": "error",
 			"react/jsx-no-target-blank": "error",
+			// This is useful for catching potential performance issues, but also makes the code more verbose.
+			// "react/jsx-no-bind": "error",
+			// Avoid using fragments when `null` could be used instead
 			"react/jsx-no-useless-fragment": [
 				"error",
 				{

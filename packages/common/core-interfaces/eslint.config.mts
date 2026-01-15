@@ -10,9 +10,11 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
+			// TODO: Enabling this may require breaking changes.
 			"@typescript-eslint/consistent-indexed-object-style": "off",
 		},
 	},
+	// Rules only for test files
 	{
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {

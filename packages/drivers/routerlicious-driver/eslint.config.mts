@@ -14,6 +14,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"no-case-declarations": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			// Disabled because the rule is crashing on this package - AB#51780
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},

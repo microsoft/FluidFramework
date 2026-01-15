@@ -16,10 +16,6 @@ const config: Linter.Config[] = [
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
 	},
-	// Migrated from .eslintignore
-	{
-		ignores: ["*.spec.ts"],
-	},
 ];
 
 export default config;

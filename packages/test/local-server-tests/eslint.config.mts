@@ -8,18 +8,8 @@ import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/fla
 
 const config: Linter.Config[] = [
 	...minimalDeprecated,
-	{
-		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"import-x/no-nodejs-modules": "off",
-			"import-x/no-extraneous-dependencies": [
-				"error",
-				{
-					"devDependencies": ["src/utils.ts", "src/test/**"],
-				},
-			],
-		},
-	},
+	// This package is test-only and only has src/test/tsconfig.json (no root tsconfig.json).
+	// Override the base config's parserOptions to only use the test tsconfig.
 	{
 		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 		languageOptions: {
@@ -27,6 +17,21 @@ const config: Linter.Config[] = [
 				projectService: false,
 				project: ["./src/test/tsconfig.json"],
 			},
+		},
+	},
+	{
+		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+			"import-x/no-nodejs-modules": "off",
+			"import-x/no-extraneous-dependencies": [
+				"error",
+				{
+					"devDependencies": ["src/utils.ts", "src/test/**"],
+				},
+			],
+
+			// This package is only used to run its tests. It's ok for the src/utils.ts to import from devDependencies, in
+			// addition to the test files
 		},
 	},
 ];

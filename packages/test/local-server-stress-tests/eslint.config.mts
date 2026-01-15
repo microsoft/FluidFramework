@@ -8,11 +8,8 @@ import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/fla
 
 const config: Linter.Config[] = [
 	...minimalDeprecated,
-	{
-		rules: {
-			"import-x/no-nodejs-modules": "off",
-		},
-	},
+	// This package is test-only and only has src/tsconfig.json (no root tsconfig.json).
+	// Override the base config's parserOptions to only use the test tsconfig.
 	{
 		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 		languageOptions: {
@@ -20,6 +17,11 @@ const config: Linter.Config[] = [
 				projectService: false,
 				project: ["./src/tsconfig.json"],
 			},
+		},
+	},
+	{
+		rules: {
+			"import-x/no-nodejs-modules": "off",
 		},
 	},
 ];
