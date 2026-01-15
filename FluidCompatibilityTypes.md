@@ -19,7 +19,7 @@ Data-at-rest compat implies that all FF data (ops and snapshots under the hood) 
 
 ### Motivation
 
-We want to support scenarios where documents that are not opened (at rest) for a long period of time can still be opened without undergoing conversions or loading via intermediate versions. Having those limitations are very painful for app developers and customers.
+Applications need to open documents that have been dormant for extended periods without requiring data conversions or loading through intermediate versions. Such limitations create significant friction for application developers and end users who expect seamless access to their historical documents.
 
 ## API compatibility
 
@@ -27,7 +27,7 @@ API compat implies that we cannot break existing APIs within the supported set o
 
 ### Motivation
 
-We want to ensure that customers have a clear path to upgrade to newer Fluid versions where API breaks, if any, are documented and communicated to help them prepare for a great upgrade experience.
+Application developers need a clear, predictable upgrade path to newer Fluid versions. When API changes occur, documented and well-communicated breaking changes allow teams to plan and execute upgrades with confidence.
 
 ## Layer compatibility
 
@@ -101,7 +101,7 @@ Cross-client compat implies that clients within a supported set of versions shou
 
 ### Motivation
 
-When upgrading from one version to another, there will be a time window when clients with both these versions will coexist and collaborate. We want to support this scenario.
+During version upgrades, there is an unavoidable transition window when clients running different versions must coexist and collaborate. This compatibility ensures users can continue working together seamlessly regardless of whether their application instance has been updated yet.
 
 ### Architecture diagram
 

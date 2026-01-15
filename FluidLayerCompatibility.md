@@ -2,7 +2,11 @@
 
 ## Overview
 
-Fluid Framework uses a **compatibility layer system** to enable different versions of Fluid packages to work together seamlessly. This system is critical for production deployments where clients may be running different versions of the framework due to dynamic loading, where code executed is retrieved from the network in a way that allows the code of each layer to change independently. This differs from other types of lazily loaded code, like webpack chunks, which are still part of the same compiled package, and will always return the same code. Because the layers can be different, each layer must support interacting with other layers of a different version.
+Fluid Framework uses a **compatibility layer system** to enable different versions of Fluid packages to work together seamlessly within a single client. This system addresses two key scenarios:
+
+1. **Dynamic loading**: Applications may retrieve layer code from the network independently, allowing each layer to update on its own schedule. Unlike webpack chunks that are part of the same compiled package, dynamically loaded layers can run different versions simultaneously. For example, a host application like Teams may compile the Driver and Loader layers and update infrequently, while dynamically loading a container that compiles the Runtime layer and updates more frequently.
+
+2. **Multi-repo development**: Applications often import and build from multiple repositories that release on different cadences. Without layer compatibility, all repositories would need to coordinate updates to the same Fluid version simultaneously. For example, a container may compile the Runtime layer while importing components from a separate repository that compile Datastores—each updating independently.
 
 The compatibility system consists of **four distinct layers**:
 
