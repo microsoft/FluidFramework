@@ -1,30 +1,27 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
-import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-const config: Linter.Config[] = [
-	...recommended,
-	{
-		rules: {
-			"@typescript-eslint/no-use-before-define": "off",
-			"no-case-declarations": "off",
-		},
-	},
-	{
-		files: ["*.spec.ts", "src/test/**"],
-		rules: {
-			"import-x/no-nodejs-modules": [
-				"error",
-				{
-					"allow": ["node:assert"],
-				},
-			],
-		},
-	},
-];
+module.exports = {
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/recommended"), "prettier"],
 
-export default config;
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+	},
+	rules: {
+		// TODO: remove these overrides and fix violations
+		"@typescript-eslint/no-use-before-define": "off",
+		"no-case-declarations": "off",
+	},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				// Test files are run in node only so additional node libraries can be used.
+				"import-x/no-nodejs-modules": ["error", { allow: ["node:assert"] }],
+			},
+		},
+	],
+};

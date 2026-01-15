@@ -1,30 +1,32 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
-import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-const config: Linter.Config[] = [
-	...minimalDeprecated,
-	{
-		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
-		},
+module.exports = {
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+	],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-	{
-		files: ["src/assertionShortCodesMap.ts"],
-		rules: {
-			"@typescript-eslint/comma-dangle": "off",
-		},
+	rules: {
+		"@typescript-eslint/strict-boolean-expressions": "off",
 	},
-	{
-		files: ["src/test/**"],
-		rules: {
-			"import-x/no-nodejs-modules": "off",
+	overrides: [
+		{
+			// The assertion shortcode map file is auto-generated, so disable some rules.
+			files: ["src/assertionShortCodesMap.ts"],
+			rules: {
+				"@typescript-eslint/comma-dangle": "off",
+			},
 		},
-	},
-];
-
-export default config;
+		{
+			files: ["src/test/**"],
+			rules: {
+				"import-x/no-nodejs-modules": "off",
+			},
+		},
+	],
+};

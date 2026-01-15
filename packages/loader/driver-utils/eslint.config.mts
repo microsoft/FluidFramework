@@ -1,26 +1,30 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
-import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-const config: Linter.Config[] = [
-	...minimalDeprecated,
-	{
-		rules: {
-			"import-x/no-nodejs-modules": ["error"],
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-			"@typescript-eslint/unbound-method": "off",
-		},
+module.exports = {
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+	],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-	{
-		files: ["*.spec.ts", "src/test/**"],
-		rules: {
-			"import-x/no-nodejs-modules": "off",
-		},
-	},
-];
+	rules: {
+		"import-x/no-nodejs-modules": ["error"],
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
-export default config;
+		// Disabled because the rule is crashing on this package - AB#51780
+		"@typescript-eslint/unbound-method": "off",
+	},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				"import-x/no-nodejs-modules": "off", // Node libraries are OK for test files.
+			},
+		},
+	],
+};

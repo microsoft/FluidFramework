@@ -1,23 +1,23 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
-import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
-import sharedConfig from "../../eslint.config.data.mts";
 
-const config: Linter.Config[] = [
-	...minimalDeprecated,
-	...sharedConfig,
-	{
-		rules: {
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"import-x/no-deprecated": "off",
-			"@typescript-eslint/unbound-method": "off",
-		},
+module.exports = {
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+		"../../.eslintrc.cjs",
+	],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-];
+	rules: {
+		"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
+		"@typescript-eslint/strict-boolean-expressions": "off",
+		"import-x/no-deprecated": "off", // This package as a whole is deprecated so it uses deprecated APIs
 
-export default config;
+		// Disabled because the rule is crashing on this package - AB#51780
+		"@typescript-eslint/unbound-method": "off",
+	},
+};
