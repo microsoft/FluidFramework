@@ -20,12 +20,29 @@ import type { Linter } from "eslint";
  * @typescript-eslint/stylistic-type-checked, import-x/recommended, import-x/typescript.
  */
 export const baseRules: Linter.RulesRecord = {
-	// #region Fluid Custom Rules (from base.js)
+	// Please keep entries alphabetized within a group
+
+	// #region Fluid Custom Rules
+
+	/**
+	 * Disallow `-` immediately following a JSDoc/TSDoc tag (e.g. `@deprecated - foo`).
+	 */
 	"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "error",
+
+	/**
+	 * Disallow file path based links in JSDoc/TSDoc comments.
+	 */
 	"@fluid-internal/fluid/no-file-path-links-in-jsdoc": "error",
+
+	/**
+	 * Disallow the use of Markdown-syntax links in JSDoc/TSDoc comments.
+	 */
 	"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "error",
 
-	// #region @typescript-eslint (from base.js)
+	// #endregion
+
+	// #region @typescript-eslint
+
 	"@typescript-eslint/adjacent-overload-signatures": "error",
 	"@typescript-eslint/array-type": "error",
 	"@typescript-eslint/await-thenable": "error",
@@ -87,7 +104,9 @@ export const baseRules: Linter.RulesRecord = {
 	"@typescript-eslint/unified-signatures": "error",
 	"@typescript-eslint/no-wrapper-object-types": "error",
 
-	// @eslint-community/eslint-plugin-eslint-comments
+	// #endregion
+
+	// #region @eslint-community/eslint-plugin-eslint-comments
 	"@eslint-community/eslint-comments/disable-enable-pair": [
 		"error",
 		{
@@ -95,7 +114,11 @@ export const baseRules: Linter.RulesRecord = {
 		},
 	],
 
-	// #region eslint-plugin-import-x (from base.js)
+	// #endregion
+
+	// #region eslint-plugin-import-x
+	// Note: Additional import-x settings are in the settings.mts module
+
 	"import-x/no-default-export": "error",
 	"import-x/no-deprecated": "off",
 	"import-x/no-extraneous-dependencies": "error",
@@ -115,12 +138,19 @@ export const baseRules: Linter.RulesRecord = {
 			"newlines-between": "always",
 			"alphabetize": {
 				order: "asc",
+				// Sorting is case-sensitive by default, which is the same as Biome. To avoid
+				// another huge set of changes to order things case-insensitively, we'll just
+				// use the rule with this config for now. This decision should be considered
+				// pragmatic and not a statement of preference, and we should revisit this.
 				caseInsensitive: false,
 			},
 		},
 	],
 
-	// eslint-plugin-unicorn (from base.js)
+	// #endregion
+
+	// #region eslint-plugin-unicorn
+
 	"unicorn/better-regex": "error",
 	"unicorn/filename-case": [
 		"error",
@@ -131,30 +161,36 @@ export const baseRules: Linter.RulesRecord = {
 			},
 		},
 	],
+	// Rationale: Destructuring of `Array.entries()` in order to get the index variable results in a
+	// significant performance regression [node 14 x64].
 	"unicorn/no-for-loop": "off",
 	"unicorn/no-new-buffer": "error",
+	// The rule seems to crash on some of our code
 	"unicorn/expiring-todo-comments": "off",
 
-	// eslint core rules (from base.js)
+	// #endregion
+
+	// #region eslint core rules
+
 	"arrow-body-style": "off",
 	"arrow-parens": ["error", "always"],
-	"camelcase": "off",
-	"brace-style": "off",
+	"camelcase": "off", // Superseded by @typescript-eslint/naming-convention
+	"brace-style": "off", // Superseded by @typescript-eslint/brace-style
 	"capitalized-comments": "off",
-	"comma-dangle": "off",
-	"comma-spacing": "off",
+	"comma-dangle": "off", // Superseded by @typescript-eslint/comma-dangle
+	"comma-spacing": "off", // Superseded by @typescript-eslint/comma-spacing
 	"complexity": "off",
 	"constructor-super": "error",
 	"curly": "error",
 	"default-case": "error",
-	"dot-notation": "off",
+	"dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
 	"eol-last": "error",
 	"eqeqeq": ["error", "smart"],
-	"func-call-spacing": "off",
+	"func-call-spacing": "off", // Superseded by @typescript-eslint/func-call-spacing
 	"guard-for-in": "error",
 	"id-match": "error",
 	"linebreak-style": "off",
-	"keyword-spacing": "off",
+	"keyword-spacing": "off", // Superseded by @typescript-eslint/keyword-spacing
 	"max-classes-per-file": "off",
 	"max-len": [
 		"error",
@@ -174,15 +210,15 @@ export const baseRules: Linter.RulesRecord = {
 	"no-control-regex": "error",
 	"no-debugger": "off",
 	"no-duplicate-case": "error",
-	"no-duplicate-imports": "off",
+	"no-duplicate-imports": "off", // Doesn't work with TypeScript
 	"no-empty": "off",
 	"no-eval": "error",
-	"no-extra-semi": "off",
+	"no-extra-semi": "off", // Superseded by @typescript-eslint/no-extra-semi
 	"no-fallthrough": "off",
 	"no-invalid-regexp": "error",
-	"no-invalid-this": "off",
+	"no-invalid-this": "off", // Superseded by @typescript-eslint/no-invalid-this
 	"no-irregular-whitespace": "error",
-	"no-magic-numbers": "off",
+	"no-magic-numbers": "off", // Superseded by @typescript-eslint/no-magic-numbers
 	"no-multi-str": "off",
 	"no-multiple-empty-lines": [
 		"error",
@@ -192,13 +228,13 @@ export const baseRules: Linter.RulesRecord = {
 			maxEOF: 0,
 		},
 	],
-	"no-nested-ternary": "off",
+	"no-nested-ternary": "off", // Superseded by unicorn/no-nested-ternary
 	"no-new-func": "error",
 	"no-new-wrappers": "error",
 	"no-octal": "error",
 	"no-octal-escape": "error",
 	"no-param-reassign": "error",
-	"no-redeclare": "off",
+	"no-redeclare": "off", // Superseded by @typescript-eslint/no-redeclare
 	"no-regex-spaces": "error",
 	"no-restricted-syntax": [
 		"error",
@@ -210,21 +246,21 @@ export const baseRules: Linter.RulesRecord = {
 		"ForInStatement",
 	],
 	"no-sequences": "error",
-	"no-shadow": "off",
+	"no-shadow": "off", // Superseded by @typescript-eslint/no-shadow
 	"no-sparse-arrays": "error",
 	"no-template-curly-in-string": "error",
-	"no-throw-literal": "off",
+	"no-throw-literal": "off", // Superseded by @typescript-eslint/only-throw-error
 	"no-trailing-spaces": "error",
 	"no-undef-init": "error",
 	"no-underscore-dangle": "off",
 	"no-unsafe-finally": "error",
-	"no-unused-expressions": "off",
+	"no-unused-expressions": "off", // Superseded by @typescript-eslint/no-unused-expressions
 	"no-unused-labels": "error",
-	"no-unused-vars": "off",
+	"no-unused-vars": "off", // Superseded by @typescript-eslint/no-unused-vars
 	"no-var": "error",
 	"no-void": "off",
 	"no-whitespace-before-property": "error",
-	"object-curly-spacing": "off",
+	"object-curly-spacing": "off", // Superseded by @typescript-eslint/object-curly-spacing
 	"object-shorthand": "error",
 	"one-var": ["error", "never"],
 	"padded-blocks": ["error", "never"],
@@ -242,14 +278,14 @@ export const baseRules: Linter.RulesRecord = {
 	"prefer-promise-reject-errors": "error",
 	"prefer-template": "error",
 	"quote-props": ["error", "consistent-as-needed"],
-	"quotes": "off",
+	"quotes": "off", // Superseded by @typescript-eslint/quotes
 	"radix": "error",
-	"require-await": "off",
-	"semi": "off",
+	"require-await": "off", // Superseded by @typescript-eslint/require-await
+	"semi": "off", // Superseded by @typescript-eslint/semi
 	"semi-spacing": "error",
 	"space-before-blocks": "error",
-	"space-before-function-paren": "off",
-	"space-infix-ops": "off",
+	"space-before-function-paren": "off", // Superseded by @typescript-eslint/space-before-function-paren
+	"space-infix-ops": "off", // Superseded by @typescript-eslint/space-infix-ops
 	"space-in-parens": ["error", "never"],
 	"spaced-comment": [
 		"error",
@@ -264,6 +300,8 @@ export const baseRules: Linter.RulesRecord = {
 	"use-isnan": "error",
 	"valid-typeof": "off",
 	"yoda": "off",
+
+	// #endregion
 };
 
 /**
