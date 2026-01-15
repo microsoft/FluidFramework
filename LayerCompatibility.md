@@ -327,7 +327,7 @@ The `test-version-utils` package provides infrastructure for testing compatibili
 - [odspLayerCompatState.ts](./packages/drivers/odsp-driver/src/odspLayerCompatState.ts) - ODSP Driver compat details
 - [r11sLayerCompatState.ts](./packages/drivers/routerlicious-driver/src/r11sLayerCompatState.ts) - Routerlicious / AFR driver compat details
 
-### Testing and Documentation
+### Testing
 
 - [layerCompat.spec.ts](./packages/test/test-end-to-end-tests/src/test/layerCompat.spec.ts) - Compatibility test suite
 - [layerCompatError.ts](./packages/utils/telemetry-utils/src/layerCompatError.ts) - Error handling and telemetry
