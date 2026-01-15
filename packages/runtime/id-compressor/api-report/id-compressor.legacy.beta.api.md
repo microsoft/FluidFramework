@@ -6,11 +6,8 @@
 
 // @beta @legacy
 export interface CompressorShardId {
-    // (undocumented)
     generatedIdCount: number;
-    // (undocumented)
     sessionId: SessionId;
-    // (undocumented)
     shardId: number;
 }
 

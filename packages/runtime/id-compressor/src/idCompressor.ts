@@ -62,11 +62,20 @@ import {
 } from "./utilities.js";
 
 /**
- * The version of IdCompressor that is currently persisted.
- * This should not be changed without careful consideration to compatibility.
- * Version 3 adds optional sharding state to the serialization format.
+ * Serialization format versions for IdCompressor.
+ * Version 2: Base format without sharding support
+ * Version 3: Adds optional sharding state to the serialization format
  */
-const currentWrittenVersion = 3;
+const SerializationVersion = {
+	/**
+	 * Base format without sharding support
+	 */
+	V2: 2,
+	/**
+	 * Adds optional sharding state
+	 */
+	V3: 3,
+} as const;
 
 function rangeFinalizationError(expectedStart: number, actualStart: number): LoggingError {
 	return new LoggingError("Ranges finalized out of order", {
@@ -166,8 +175,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (typeof localSessionIdOrDeserialized === "string") {
 			this.localSessionId = localSessionIdOrDeserialized;
 			this.localSession = this.sessions.getOrCreate(localSessionIdOrDeserialized);
-			// New documents use the current version
-			this.documentVersion = documentVersion ?? currentWrittenVersion;
+			// New documents default to V2 for backward compatibility
+			// Sharding features require explicitly creating with V3
+			this.documentVersion = documentVersion ?? SerializationVersion.V2;
 		} else {
 			// Deserialize case
 			this.sessions = localSessionIdOrDeserialized;
@@ -277,9 +287,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (this.ongoingGhostSession) {
 			throw new Error("Cannot shard during ghost session");
 		}
-		if (this.documentVersion < 3) {
+		if (this.documentVersion < SerializationVersion.V3) {
 			throw new Error(
-				`Sharding requires document version 3 or higher, but this document is version ${this.documentVersion}`,
+				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.documentVersion}`,
 			);
 		}
 
@@ -387,6 +397,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * {@inheritdoc IIdCompressorCore.unshard}
 	 */
 	public unshard(shardId: CompressorShardId): void {
+		if (this.documentVersion < SerializationVersion.V3) {
+			throw new Error(
+				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.documentVersion}`,
+			);
+		}
 		if (shardId.sessionId !== this.localSessionId) {
 			throw new Error("Shard must belong to this session");
 		}
@@ -420,6 +435,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * {@inheritdoc IIdCompressorCore.shardId}
 	 */
 	public shardId(): CompressorShardId | undefined {
+		if (this.documentVersion < SerializationVersion.V3) {
+			throw new Error(
+				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.documentVersion}`,
+			);
+		}
 		if (this.shardingState === undefined) {
 			return undefined;
 		}
@@ -835,12 +855,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			}
 		}
 		const shardingStateSize =
-			hasLocalState && this.shardingState !== undefined
-				? 1 + // has sharding state boolean
-					4 // totalShards, shardOffset, activeShardCount, highestBackfilledGenCount
-				: hasLocalState
+			hasLocalState && this.documentVersion >= SerializationVersion.V3
+				? this.shardingState === undefined
 					? 1 // just the boolean indicating no sharding state
-					: 0;
+					: 1 + // has sharding state boolean
+						4 // totalShards, shardOffset, activeShardCount, highestBackfilledGenCount
+				: 0;
 		const localStateSize = hasLocalState
 			? 1 + // generated ID count
 				1 + // next range base genCount
@@ -890,16 +910,18 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			}
 
 			// Write sharding state (version 3+)
-			index = writeBoolean(serializedFloat, index, this.shardingState !== undefined);
-			if (this.shardingState !== undefined) {
-				index = writeNumber(serializedFloat, index, this.shardingState.totalShards);
-				index = writeNumber(serializedFloat, index, this.shardingState.shardOffset);
-				index = writeNumber(serializedFloat, index, this.shardingState.activeShardCount);
-				index = writeNumber(
-					serializedFloat,
-					index,
-					this.shardingState.highestBackfilledGenCount,
-				);
+			if (this.documentVersion >= SerializationVersion.V3) {
+				index = writeBoolean(serializedFloat, index, this.shardingState !== undefined);
+				if (this.shardingState !== undefined) {
+					index = writeNumber(serializedFloat, index, this.shardingState.totalShards);
+					index = writeNumber(serializedFloat, index, this.shardingState.shardOffset);
+					index = writeNumber(serializedFloat, index, this.shardingState.activeShardCount);
+					index = writeNumber(
+						serializedFloat,
+						index,
+						this.shardingState.highestBackfilledGenCount,
+					);
+				}
 			}
 		}
 
