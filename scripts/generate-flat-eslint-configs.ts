@@ -1701,7 +1701,9 @@ ${imports}
 						overrideProjectPaths.length === 1;
 
 					if (!isStandardOverridePattern) {
-						console.log(`    Override explicit parserOptions.project: ${JSON.stringify(overrideProjectPaths)}`);
+						console.log(
+							`    Override explicit parserOptions.project: ${JSON.stringify(overrideProjectPaths)}`,
+						);
 						configContent += `\t\tlanguageOptions: {\n`;
 						configContent += `\t\t\tparserOptions: {\n`;
 						configContent += `\t\t\t\tprojectService: false,\n`;
