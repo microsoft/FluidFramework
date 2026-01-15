@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import { FluidClientVersion } from "../../codec/index.js";
 import {
 	type ChangesetLocalId,
 	DetachedFieldIndex,
@@ -16,7 +18,6 @@ import {
 	rootFieldKey,
 	tagChange,
 } from "../../core/index.js";
-import { cursorToJsonObject, fieldJsonCursor } from "../json/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
@@ -44,7 +45,11 @@ import {
 	idAllocatorFromMaxId,
 } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { initializeForest } from "../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.js";
+import { cursorToJsonObject, fieldJsonCursor } from "../json/index.js";
+import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
 import {
 	buildTestForest,
 	failCodecFamily,
@@ -53,9 +58,6 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
-import { FluidClientVersion } from "../../codec/index.js";
-import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
-import { initializeForest } from "../feature-libraries/index.js";
 
 const content: JsonCompatible = { x: 42 };
 

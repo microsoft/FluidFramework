@@ -16,6 +16,8 @@ import type { NodeId, SequenceField as SF } from "../../../feature-libraries/ind
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
+import { mintRevisionTag } from "../../utils.js";
+
 import { cases, ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
 	areComposable,
@@ -25,7 +27,6 @@ import {
 	shallowCompose,
 	tagChangeInline,
 } from "./utils.js";
-import { mintRevisionTag } from "../../utils.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();

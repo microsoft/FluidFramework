@@ -5,6 +5,8 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	type ChangeAtomId,
 	type TaggedChange,
@@ -18,6 +20,12 @@ import type {
 	RelevantRemovedRootsFromChild,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import type {
+	FieldChangeDelta,
+	NestedChangesIndices,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	type OptionalChangeset,
@@ -28,25 +36,20 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 import {
 	assertFieldChangesEqual,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 	mintRevisionTag,
 } from "../../utils.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { TestChange } from "../../testChange.js";
-import { Change, assertEqual, inlineRevision, tagChangeInline } from "./optionalFieldUtils.js";
-import { testSnapshots } from "./optionalFieldSnapshots.test.js";
+
 import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import { testSnapshots } from "./optionalFieldSnapshots.test.js";
+import { Change, assertEqual, inlineRevision, tagChangeInline } from "./optionalFieldUtils.js";
 import { testReplaceRevisions } from "./replaceRevisions.test.js";
-import type {
-	FieldChangeDelta,
-	NestedChangesIndices,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.

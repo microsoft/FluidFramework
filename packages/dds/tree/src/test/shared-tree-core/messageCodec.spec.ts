@@ -4,16 +4,20 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
 import type {
 	EncodedRevisionTag,
 	GraphCommit,
 	ChangeEncodingContext,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -27,8 +31,6 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
-import { currentVersion, DependentFormatVersion } from "../../codec/index.js";
-import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),

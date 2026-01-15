@@ -7,6 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { EmptyKey, storedEmptyFieldSchema } from "../../../core/index.js";
 import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discrepancies.js";
 import {
 	SchemaCompatibilityTester,
 	SchemaFactoryAlpha,
@@ -16,7 +18,6 @@ import {
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository } from "../../utils.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discrepancies.js";
 
 function assertEnumEqual<TEnum extends { [key: number]: string }>(
 	enumObject: TEnum,

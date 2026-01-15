@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 import type { IJsonCodec, IMultiFormatCodec } from "../codec/index.js";
 import type {
@@ -14,14 +14,15 @@ import type {
 	SchemaAndPolicy,
 } from "../core/index.js";
 import { mapIterable, type JsonCompatibleReadOnly, type Mutable } from "../util/index.js";
+
+import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
+import type { SharedBranchSummaryData } from "./editManager.js";
 import type {
 	Commit,
 	EncodedCommit,
 	EncodedSharedBranch,
 	SequencedCommit,
 } from "./editManagerFormatCommons.js";
-import type { SharedBranchSummaryData } from "./editManager.js";
-import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;

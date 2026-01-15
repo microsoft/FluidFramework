@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ChangeAtomId,
@@ -55,6 +56,11 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/index.js";
 import {
+	type MarkEffect,
+	NoopMarkType,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/sequence-field/types.js";
+import {
 	areInputCellsEmpty,
 	isActiveReattach,
 	isNewAttach,
@@ -74,21 +80,14 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
+import { ChangesetWrapper } from "../../changesetWrapper.js";
+import { TestNodeId } from "../../testNodeId.js";
 import {
 	assertFieldChangesEqual,
 	assertIsSessionId,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils.js";
-
-import { ChangesetWrapper } from "../../changesetWrapper.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import {
-	type MarkEffect,
-	NoopMarkType,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/sequence-field/types.js";
 
 export function assertWrappedChangesetsEqual(
 	actual: WrappedChange,

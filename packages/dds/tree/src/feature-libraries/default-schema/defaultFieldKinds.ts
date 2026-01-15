@@ -5,6 +5,7 @@
 
 import { fail } from "@fluidframework/core-utils/internal";
 
+import type { CodecTree } from "../../codec/index.js";
 import {
 	type ChangeAtomId,
 	type DeltaDetachedNodeId,
@@ -12,6 +13,7 @@ import {
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
 } from "../../core/index.js";
+import { brand, brandConst, type Brand } from "../../util/index.js";
 import {
 	type FieldChangeDelta,
 	type FieldChangeHandler,
@@ -35,8 +37,6 @@ import {
 } from "../sequence-field/index.js";
 
 import { noChangeCodecFamily } from "./noChangeCodecs.js";
-import type { CodecTree } from "../../codec/index.js";
-import { brand, brandConst, type Brand } from "../../util/index.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.

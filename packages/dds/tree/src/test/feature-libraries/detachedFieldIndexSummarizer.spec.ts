@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	SummaryType,
 	type ISummaryBlob,
@@ -13,11 +14,14 @@ import {
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { FluidClientVersion } from "../../codec/index.js";
 import {
 	DetachedFieldIndex,
 	DetachedFieldIndexFormatVersion,
 	type ForestRootId,
 } from "../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FormatV1 } from "../../core/tree/detachedFieldIndexFormatV1.js";
 import {
 	DetachedFieldIndexSummarizer,
 	DetachedFieldIndexSummaryFormatVersion,
@@ -25,14 +29,12 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/detachedFieldIndexSummarizer.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../../core/tree/detachedFieldIndexFormatV1.js";
-import { FluidClientVersion } from "../../codec/index.js";
-import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
-import { brand, type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../shared-tree-core/index.js";
+import { brand, type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
+import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 function createDetachedFieldIndexSummarizer(options?: {
 	minVersionForCollab?: MinimumVersionForCollab;

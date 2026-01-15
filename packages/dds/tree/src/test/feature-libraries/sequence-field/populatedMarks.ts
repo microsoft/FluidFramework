@@ -14,9 +14,9 @@ import type {
 	MarkEffect,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
-import { TestNodeId } from "../../testNodeId.js";
 import { type Populated, brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 
 export type PopulatedMark = Populated<CellMark<Populated<MarkEffect>>>;
 

@@ -4,11 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
-import { type Mutable, brand } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
-import { mintRevisionTag } from "../../utils.js";
-import { TestNodeId } from "../../testNodeId.js";
+
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
@@ -16,6 +12,11 @@ import {
 	asChangeAtomId,
 	offsetChangeAtomId,
 } from "../../../core/index.js";
+import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+import { type Mutable, brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { mintRevisionTag } from "../../utils.js";
 
 const tag: RevisionTag = mintRevisionTag();
 

@@ -6,7 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
-import type { CrossFieldManager } from "../../../feature-libraries/index.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
@@ -19,6 +20,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
+import type { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
 	DefaultRevisionReplacer,
 	type FieldChangeDelta,
@@ -43,6 +45,7 @@ import {
 	idAllocatorFromMaxId,
 	setInNestedMap,
 } from "../../../util/index.js";
+import { ChangesetWrapper } from "../../changesetWrapper.js";
 import {
 	type ChildStateGenerator,
 	type FieldStateTree,
@@ -56,15 +59,14 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 // since OptionalChangeset is not generic over the child changeset type.
 // Search this file for "as any" and "as NodeChangeset"
 import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 import {
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
 } from "../../utils.js";
-import { TestNodeId } from "../../testNodeId.js";
+
 import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
-import { ChangesetWrapper } from "../../changesetWrapper.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 type RevisionTagMinter = () => RevisionTag;
 

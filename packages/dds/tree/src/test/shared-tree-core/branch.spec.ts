@@ -19,6 +19,7 @@ import {
 	type DefaultChangeset,
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 import {
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
@@ -26,7 +27,6 @@ import {
 } from "../../shared-tree-core/index.js";
 import { brand } from "../../util/index.js";
 import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
-import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
 	jsonValidator: FormatValidatorBasic,

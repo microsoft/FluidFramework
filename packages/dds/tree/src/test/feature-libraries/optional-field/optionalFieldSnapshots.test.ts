@@ -15,10 +15,11 @@ import {
 } from "../../../feature-libraries/optional-field/index.js";
 import { brand } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { Change } from "./optionalFieldUtils.js";
 import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
+
+import { Change } from "./optionalFieldUtils.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,

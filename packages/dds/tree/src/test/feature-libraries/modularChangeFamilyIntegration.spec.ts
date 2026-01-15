@@ -31,11 +31,18 @@ import {
 	genericFieldKind,
 	DefaultRevisionReplacer,
 } from "../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import {
 	ModularChangeFamily,
 	intoDelta,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+import type {
+	NodeId,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../feature-libraries/modular-schema/modularChangeTypes.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 import {
 	type IdAllocator,
 	type Mutable,
@@ -52,17 +59,10 @@ import {
 	testChangeReceiver,
 } from "../utils.js";
 
-import type {
-	NodeId,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../feature-libraries/modular-schema/modularChangeTypes.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { assertEqual, Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
-import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
+import { MarkMaker } from "./sequence-field/testEdits.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map([
 	[sequence.identifier, sequence],

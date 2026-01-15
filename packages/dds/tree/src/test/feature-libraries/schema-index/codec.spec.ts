@@ -8,6 +8,11 @@ import { strict as assert } from "node:assert";
 // Allow importing from this specific file which is being tested:
 
 import {
+	currentVersion,
+	makeCodecFamily,
+	type CodecWriteOptions,
+} from "../../../codec/index.js";
+import {
 	SchemaFormatVersion,
 	type FieldKindIdentifier,
 	type TreeStoredSchema,
@@ -19,22 +24,19 @@ import {
 	makeSchemaCodec,
 } from "../../../feature-libraries/index.js";
 /* eslint-disable-next-line import-x/no-internal-modules */
+import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { Format as FormatV1 } from "../../../feature-libraries/schema-index/formatV1.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { Format as FormatV2 } from "../../../feature-libraries/schema-index/formatV2.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { SchemaFactory } from "../../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
-import { SchemaFactory } from "../../../simple-tree/index.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import {
-	currentVersion,
-	makeCodecFamily,
-	type CodecWriteOptions,
-} from "../../../codec/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,

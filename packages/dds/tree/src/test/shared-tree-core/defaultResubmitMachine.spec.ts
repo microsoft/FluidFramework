@@ -4,13 +4,14 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import type { GraphCommit, RevisionTag, TaggedChange } from "../../core/index.js";
-import { testIdCompressor } from "../utils.js";
 import {
 	type ChangeEnricherMutableCheckout,
 	DefaultResubmitMachine,
 } from "../../shared-tree-core/index.js";
 import { disposeSymbol } from "../../util/index.js";
+import { testIdCompressor } from "../utils.js";
 
 export interface MockEnrichableChange {
 	readonly inputContext: RevisionTag;

@@ -18,10 +18,11 @@ import type {
 } from "../../core/index.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
+
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
-import type { ModularChangeset } from "./modularChangeTypes.js";
 import { makeModularChangeCodecV1 } from "./modularChangeCodecV1.js";
 import { makeModularChangeCodecV2 } from "./modularChangeCodecV2.js";
+import type { ModularChangeset } from "./modularChangeTypes.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,

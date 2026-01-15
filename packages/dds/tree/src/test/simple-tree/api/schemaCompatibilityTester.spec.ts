@@ -4,12 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	EmptyKey,
 	storedEmptyFieldSchema,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
@@ -19,7 +22,6 @@ import {
 import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
-import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
 
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),

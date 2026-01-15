@@ -4,8 +4,9 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { BTree } from "@tylerbu/sorted-btree-es6";
+import { lt } from "semver-ts";
 
 import {
 	FluidClientVersion,
@@ -61,6 +62,11 @@ import {
 	RangeMap,
 	balancedReduce,
 } from "../../util/index.js";
+import {
+	getFromChangeAtomIdMap,
+	setInChangeAtomIdMap,
+	type ChangeAtomIdBTree,
+} from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
 import {
@@ -75,6 +81,7 @@ import {
 	NodeAttachState,
 	type RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
+import type { FlexFieldKind } from "./fieldKind.js";
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import type { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
@@ -91,13 +98,6 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import type { FlexFieldKind } from "./fieldKind.js";
-import {
-	getFromChangeAtomIdMap,
-	setInChangeAtomIdMap,
-	type ChangeAtomIdBTree,
-} from "../changeAtomIdBTree.js";
-import { lt } from "semver-ts";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind

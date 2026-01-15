@@ -6,16 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
+
 import type { GenericChangeset, CrossFieldManager } from "../../../feature-libraries/index.js";
-import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
-import {
-	type EncodingTestData,
-	defaultRevisionMetadataFromChanges,
-	makeEncodingTestSuite,
-	mintRevisionTag,
-	testIdCompressor,
-	testRevisionTagCodec,
-} from "../../utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import {
 	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
@@ -24,11 +18,21 @@ import {
 	genericChangeHandler,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { TestNodeId } from "../../testNodeId.js";
+import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
+import {
+	type EncodingTestData,
+	defaultRevisionMetadataFromChanges,
+	makeEncodingTestSuite,
+	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
+} from "../../utils.js";
+
 import { testSnapshots } from "./genericFieldSnapshots.test.js";
+
 // eslint-disable-next-line import-x/no-internal-modules
-import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };

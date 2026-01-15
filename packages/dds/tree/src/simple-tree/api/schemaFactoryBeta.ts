@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { RestrictiveStringRecord } from "../../util/index.js";
 import {
 	AnnotatedAllowedTypesInternal,
 	createSchemaUpgrade,
@@ -19,7 +20,7 @@ import {
 	type TreeNodeSchemaNonClass,
 	type WithType,
 } from "../core/index.js";
-
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import {
 	objectSchema,
 	recordSchema,
@@ -28,6 +29,7 @@ import {
 	type TreeObjectNode,
 	type TreeRecordNode,
 } from "../node-kinds/index.js";
+
 import {
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
@@ -48,16 +50,6 @@ import type {
 
 // These imports prevent a large number of type references in the API reports from showing up as *_2.
 /* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
-import type {
-	FieldProps,
-	FieldSchemaAlpha,
-	FieldPropsAlpha,
-	FieldKind,
-	ImplicitFieldSchema,
-} from "../fieldSchema.js";
-import type { LeafSchema } from "../leafNodeSchema.js";
-import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
-import type { RestrictiveStringRecord } from "../../util/index.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 
 /**
