@@ -792,14 +792,25 @@ function* relevantRemovedRoots(
 	}
 }
 
+interface Optional
+	extends FlexFieldKind<
+		OptionalFieldEditor,
+		typeof optionalIdentifier,
+		Multiplicity.Optional
+	> {}
+
 /**
  * 0 or 1 items.
  */
-export const optional = new FlexFieldKind(optionalIdentifier, Multiplicity.Optional, {
-	changeHandler: optionalChangeHandler,
-	allowMonotonicUpgradeFrom: new Set([
-		identifierFieldIdentifier,
-		requiredIdentifier,
-		forbiddenFieldKindIdentifier,
-	]),
-});
+export const optional: Optional = new FlexFieldKind(
+	optionalIdentifier,
+	Multiplicity.Optional,
+	{
+		changeHandler: optionalChangeHandler,
+		allowMonotonicUpgradeFrom: new Set([
+			identifierFieldIdentifier,
+			requiredIdentifier,
+			forbiddenFieldKindIdentifier,
+		]),
+	},
+);

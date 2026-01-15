@@ -49,10 +49,13 @@ export const requiredFieldChangeHandler: FieldChangeHandler<
 	editor: requiredFieldEditor,
 };
 
+interface Required
+	extends FlexFieldKind<RequiredFieldEditor, typeof requiredIdentifier, Multiplicity.Single> {}
+
 /**
  * Exactly one item.
  */
-export const required = new FlexFieldKind(requiredIdentifier, Multiplicity.Single, {
+export const required: Required = new FlexFieldKind(requiredIdentifier, Multiplicity.Single, {
 	changeHandler: requiredFieldChangeHandler,
 	allowMonotonicUpgradeFrom: new Set([identifierFieldIdentifier]),
 });

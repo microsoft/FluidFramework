@@ -4,5 +4,4 @@
  */
 
 export type { CellId } from "./types.js";
-export { type SequenceFieldEditor } from "./sequenceFieldEditor.js";
 export { sequence } from "./sequenceKind.js";

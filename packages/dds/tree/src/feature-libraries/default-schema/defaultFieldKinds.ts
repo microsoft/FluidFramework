@@ -22,13 +22,7 @@ import {
 	type ToDelta,
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
-import {
-	type OptionalFieldEditor,
-	optional,
-	required,
-	type RequiredFieldEditor,
-} from "../optional-field/index.js";
-import type { SequenceFieldEditor } from "../sequence-field/index.js";
+import { optional, required } from "../optional-field/index.js";
 
 import { noChangeCodecFamily } from "./noChangeCodecs.js";
 import type { CodecTree } from "../../codec/index.js";
@@ -59,15 +53,19 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 /**
  * Exactly one identifier.
  */
-export const identifier = new FlexFieldKind(identifierFieldIdentifier, Multiplicity.Single, {
-	changeHandler: noChangeHandler,
-	// By omitting required here,
-	// this is making a policy choice that a schema upgrade cannot be done from required to identifier.
-	// Since an identifier can be upgraded into a required field,
-	// preventing the inverse helps ensure that schema upgrades are monotonic.
-	// Which direction is allowed is a subjective policy choice.
-	allowMonotonicUpgradeFrom: new Set([]),
-});
+export const identifier: Identifier = new FlexFieldKind(
+	identifierFieldIdentifier,
+	Multiplicity.Single,
+	{
+		changeHandler: noChangeHandler,
+		// By omitting required here,
+		// this is making a policy choice that a schema upgrade cannot be done from required to identifier.
+		// Since an identifier can be upgraded into a required field,
+		// preventing the inverse helps ensure that schema upgrades are monotonic.
+		// Which direction is allowed is a subjective policy choice.
+		allowMonotonicUpgradeFrom: new Set([]),
+	},
+);
 
 /**
  * Exactly 0 items.
@@ -97,7 +95,7 @@ export const identifier = new FlexFieldKind(identifierFieldIdentifier, Multiplic
  *
  * See {@link emptyField} for a constant, reusable field using Forbidden.
  */
-export const forbidden = new FlexFieldKind(
+export const forbidden: Forbidden = new FlexFieldKind(
 	forbiddenFieldKindIdentifier,
 	Multiplicity.Forbidden,
 	{
@@ -177,37 +175,27 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new M
 // TODO: Find a way to make docs like {@inheritDoc required} work in vscode.
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
-export interface Required
+export interface Identifier
 	extends FlexFieldKind<
-		RequiredFieldEditor,
-		typeof required.identifier,
+		FieldEditor<0>,
+		typeof identifierFieldIdentifier,
 		Multiplicity.Single
 	> {}
-export interface Optional
-	extends FlexFieldKind<
-		OptionalFieldEditor,
-		typeof optional.identifier,
-		Multiplicity.Optional
-	> {}
-export interface Sequence
-	extends FlexFieldKind<
-		SequenceFieldEditor,
-		typeof sequence.identifier,
-		Multiplicity.Sequence
-	> {}
-export interface Identifier
-	extends FlexFieldKind<FieldEditor<0>, typeof identifier.identifier, Multiplicity.Single> {}
 export interface Forbidden
-	extends FlexFieldKind<FieldEditor<0>, typeof forbidden.identifier, Multiplicity.Forbidden> {}
+	extends FlexFieldKind<
+		FieldEditor<0>,
+		typeof forbiddenFieldKindIdentifier,
+		Multiplicity.Forbidden
+	> {}
 
 /**
  * Default FieldKinds with their editor types erased.
  */
 export const FieldKinds: {
 	// TODO: inheritDoc for these somehow
-	readonly required: Required;
-	readonly optional: Optional;
-	readonly sequence: Sequence;
+	readonly required: typeof required;
+	readonly optional: typeof optional;
+	readonly sequence: typeof sequence;
 	readonly identifier: Identifier;
 	readonly forbidden: Forbidden;
 } = { required, optional, sequence, identifier, forbidden };
