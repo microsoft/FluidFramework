@@ -203,10 +203,7 @@ export const recommendedRules: Linter.RulesRecord = {
 	 *
 	 * @see {@link https://typescript-eslint.io/rules/consistent-type-imports/}
 	 */
-	"@typescript-eslint/consistent-type-imports": [
-		"error",
-		{ fixStyle: "separate-type-imports" },
-	],
+	"@typescript-eslint/consistent-type-imports": ["error", { fixStyle: "separate-type-imports" }],
 
 	// #endregion
 };
