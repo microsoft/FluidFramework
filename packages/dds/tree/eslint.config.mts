@@ -1,8 +1,8 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
 import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
@@ -32,7 +32,6 @@ const config: Linter.Config[] = [
 			"jsdoc/require-description": "warn",
 			"unicorn/consistent-function-scoping": "off",
 			"unicorn/no-array-method-this-argument": "off",
-			"unicorn/no-await-expression-member": "off",
 			"unicorn/no-null": "off",
 			"unicorn/prefer-export-from": "off",
 			"unicorn/text-encoding-identifier-case": "off",

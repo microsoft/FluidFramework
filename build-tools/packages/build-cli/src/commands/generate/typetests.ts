@@ -432,8 +432,8 @@ function getNodeTypeData(node: Node, log: Logger, exportedName: string): TypeDat
 			tags: getTags(docs),
 		};
 
-		const escapedTypeName = exportedName.replace(/\./g, "_");
-		const trimmedKind = node.getKindName().replace(/Declaration/g, "");
+		const escapedTypeName = exportedName.replaceAll(".", "_");
+		const trimmedKind = node.getKindName().replaceAll("Declaration", "");
 
 		if (
 			// Covers instance type of the class (including generics of it)
