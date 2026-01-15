@@ -152,9 +152,6 @@ describe("Presence", () => {
 			});
 
 			it('has status "Disconnected" when runtime is connected but self is not yet in Audience', () => {
-				// This simulates the CatchingUp race condition where runtime is connected
-				// to service but the ClientJoin signal for self hasn't been processed yet.
-
 				// Setup - set runtime to connected state but remove self from audience
 				runtime.clientId = initialLocalClientConnectionId;
 				runtime.joined = true;
@@ -171,6 +168,68 @@ describe("Presence", () => {
 					selfAttendee.getConnectionStatus(),
 					AttendeeStatus.Disconnected,
 					"Self attendee should have status 'Disconnected' when runtime is connected but self is not yet in Audience",
+				);
+
+				assertFinalExpectations(runtime, logger);
+			});
+
+			it("is announced via `attendeeConnected` when added to Audience while runtime is connected", () => {
+				// Setup - set runtime to connected state but remove self from audience
+				runtime.clientId = initialLocalClientConnectionId;
+				runtime.joined = true;
+				runtime.removeMember(initialLocalClientConnectionId);
+
+				// Create presence - it will see runtime as connected but self not in audience
+				logger.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
+				const presence = createPresenceManager(runtime, localAttendeeId);
+
+				// Verify initial state - self is Disconnected
+				const selfAttendee = presence.attendees.getMyself();
+				assert.strictEqual(
+					selfAttendee.getConnectionStatus(),
+					AttendeeStatus.Disconnected,
+					"Self attendee should initially have status 'Disconnected'",
+				);
+
+				// Listen for attendeeConnected
+				const connectedAttendees: Attendee[] = [];
+				presence.attendees.events.on("attendeeConnected", (attendee) => {
+					connectedAttendees.push(attendee);
+				});
+
+				// Expect join signal when self is added to audience while connected
+				const expectedJoin = generateBasicClientJoin(clock.now, {
+					attendeeId: localAttendeeId,
+					clientConnectionId: initialLocalClientConnectionId,
+					updateProviders: ["client0", "client1", "client3"],
+				});
+				delete (expectedJoin as Partial<typeof expectedJoin>).clientId;
+				runtime.signalsExpected.push([expectedJoin]);
+
+				// Act - self added to audience
+				runtime.audience.addMember(initialLocalClientConnectionId, {
+					mode: "write",
+					details: { capabilities: { interactive: true } },
+					permission: [],
+					user: { id: "test-user" },
+					scopes: [],
+				});
+
+				// Verify - attendeeConnected was raised for self with Connected status
+				assert.strictEqual(
+					connectedAttendees.length,
+					1,
+					"Expected exactly one attendee to be announced",
+				);
+				assert.strictEqual(
+					connectedAttendees[0],
+					selfAttendee,
+					"Expected self attendee to be announced",
+				);
+				assert.strictEqual(
+					selfAttendee.getConnectionStatus(),
+					AttendeeStatus.Connected,
+					"Self attendee should have status 'Connected' after being added to Audience",
 				);
 
 				assertFinalExpectations(runtime, logger);
