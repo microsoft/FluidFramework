@@ -43,12 +43,6 @@ Each layer validates compatibility with adjacent layers using a combination of *
 
 **Validated By:** Loader layer validates Driver compatibility
 
-**Compatibility State Files:**
-
-- [localLayerCompatState.ts](./packages/drivers/local-driver/src/localLayerCompatState.ts)
-- [odspLayerCompatState.ts](./packages/drivers/odsp-driver/src/odspLayerCompatState.ts)
-- [r11sLayerCompatState.ts](./packages/drivers/routerlicious-driver/src/r11sLayerCompatState.ts)
-
 ### 2. Loader Layer
 
 **Purpose:** The minimal kernel of the Fluid runtime, providing access to storage and consensus.
@@ -67,10 +61,6 @@ Each layer validates compatibility with adjacent layers using a combination of *
 
 **Validates:** Driver and Runtime layers
 **Validated By:** Runtime layer
-
-**Compatibility State File:**
-
-- [loaderLayerCompatState.ts](./packages/loader/container-loader/src/loaderLayerCompatState.ts)
 
 The Loader is the **central coordination layer** that sits between the Driver (below) and Runtime (above), ensuring both are compatible with its version.
 
@@ -94,10 +84,6 @@ The Loader is the **central coordination layer** that sits between the Driver (b
 **Validates:** Loader and DataStore layers
 **Validated By:** Loader and DataStore layers
 
-**Compatibility State File:**
-
-- [runtimeLayerCompatState.ts](./packages/runtime/container-runtime/src/runtimeLayerCompatState.ts)
-
 The Runtime layer has **bidirectional validation** with both Loader and DataStore layers, as it acts as a coordinator between them.
 
 ### 4. DataStore Layer
@@ -117,10 +103,6 @@ The Runtime layer has **bidirectional validation** with both Loader and DataStor
 
 **Validates:** Runtime layer
 **Validated By:** Runtime layer
-
-**Compatibility State File:**
-
-- [dataStoreLayerCompatState.ts](./packages/runtime/datastore/src/dataStoreLayerCompatState.ts)
 
 ## Layer Boundaries and Validation
 
@@ -341,7 +323,9 @@ The `test-version-utils` package provides infrastructure for testing compatibili
 - [loaderLayerCompatState.ts](./packages/loader/container-loader/src/loaderLayerCompatState.ts) - Loader compat details
 - [runtimeLayerCompatState.ts](./packages/runtime/container-runtime/src/runtimeLayerCompatState.ts) - Runtime compat details
 - [dataStoreLayerCompatState.ts](./packages/runtime/datastore/src/dataStoreLayerCompatState.ts) - DataStore compat details
-- **Driver compat details** - In each driver package's `*LayerCompatState.ts` file
+- [localLayerCompatState.ts](./packages/drivers/local-driver/src/localLayerCompatState.ts) - Local Driver compat details
+- [odspLayerCompatState.ts](./packages/drivers/odsp-driver/src/odspLayerCompatState.ts) - ODSP Driver compat details
+- [r11sLayerCompatState.ts](./packages/drivers/routerlicious-driver/src/r11sLayerCompatState.ts) - Routerlicious / AFR driver compat details
 
 ### Testing and Documentation
 
