@@ -30,7 +30,7 @@ export const commonOptionString = `     --defroot <path> Default root directory 
   -v --verbose        Verbose messages
 `;
 
-export function parseOption(argv: string[], i: number) {
+export function parseOption(argv: string[], i: number): number {
 	const arg = argv[i];
 	if (arg === "-v" || arg === "--verbose") {
 		commonOptions.verbose = true;

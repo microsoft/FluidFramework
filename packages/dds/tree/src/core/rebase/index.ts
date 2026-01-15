@@ -12,6 +12,8 @@ export {
 	type GraphCommit,
 	CommitKind,
 	type CommitMetadata,
+	type LocalChangeMetadata,
+	type RemoteChangeMetadata,
 	type ChangeMetadata,
 	type RevisionTag,
 	RevisionTagSchema,
@@ -27,7 +29,6 @@ export {
 	offsetChangeAtomId,
 	StableIdSchema,
 	subtractChangeAtomIds,
-	replaceAtomRevisions,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
 	compareRevisions,
@@ -44,6 +45,7 @@ export {
 	type TaggedChange,
 	type RevisionMetadataSource,
 	type RevisionInfo,
+	type RevisionReplacer,
 } from "./changeRebaser.js";
 export {
 	findAncestor,

@@ -14,19 +14,21 @@ const schemaFactory = new SchemaFactory("test");
 describe("List", () => {
 	/** Formats 'args' array, inserting commas and eliding trailing `undefine`s.  */
 	function prettyArgs(...args: any[]) {
-		return args.reduce((prev: string, arg, index) => {
+		let result = "";
+		for (let index = 0; index < args.length; index++) {
 			// If all remaining arguments are 'undefined' elide them.
 			if (!args.slice(index).some((value) => value !== undefined)) {
-				return prev;
+				break;
 			}
 
 			// If not the first argument add a comma separator.
-			let next = index > 0 ? `${prev}, ` : prev;
+			if (index > 0) {
+				result += ", ";
+			}
 
-			next += pretty(arg);
-
-			return next;
-		}, "");
+			result += pretty(args[index]);
+		}
+		return result;
 	}
 
 	// eslint-disable-next-line @fluid-internal/fluid/no-markdown-links-in-jsdoc -- false positive AB#51719
@@ -233,7 +235,7 @@ describe("List", () => {
 				...args: unknown[]
 			) {
 				const expectedFn = Reflect.get(array, fnName) as (...args: unknown[]) => unknown;
-				const expected = expectedFn.call(init(array.slice()), ...args);
+				const expected = expectedFn.call(init([...array]), ...args);
 
 				function innerTest(subject: readonly string[], fnSource: readonly string[]) {
 					const fn = Reflect.get(fnSource, fnName) as (...args: unknown[]) => unknown;
@@ -295,12 +297,15 @@ describe("List", () => {
 				};
 
 				const checkRhs = (left: string[], others: string[][], spreadable: boolean) => {
+					// eslint-disable-next-line unicorn/prefer-spread -- testing concat() behavior
 					const clones = others.map((other) => setSpreadable(other.slice(), spreadable));
+					// eslint-disable-next-line unicorn/prefer-spread -- testing concat() behavior
 					const expected = left.concat(...clones);
 					it(`${prettyCall("concat", left, others, expected)}`, () => {
 						const proxies = others.map((other) =>
 							setSpreadable(createStringList(other), spreadable),
 						);
+						// eslint-disable-next-line unicorn/prefer-spread -- testing concat() behavior
 						const actual = left.concat(...proxies);
 						assert.deepEqual(actual, expected);
 					});
@@ -407,7 +412,7 @@ describe("List", () => {
 
 					return (array: readonly string[], ...otherArgs: unknown[]) => {
 						// Compute the expected result and log the expected arguments to the callback.
-						const expected = array.slice();
+						const expected = [...array];
 						const expectedFn = Reflect.get(expected, fnName) as IterativeFn;
 						const expectedArgs: unknown[][] = [];
 						const expectedResult = expectedFn.apply(expected, [
@@ -427,7 +432,7 @@ describe("List", () => {
 								...otherArgs,
 							]);
 
-							const actual = subject.slice();
+							const actual = [...subject];
 							assert.deepEqual(actual, expected);
 							assert.deepEqual(actualResult, expectedResult);
 							assert.deepEqual(actualArgs, expectedArgs);
@@ -451,53 +456,71 @@ describe("List", () => {
 				describe("every()", () => {
 					const check = test3("every");
 
-					tests.forEach(check);
+					for (const test of tests) {
+						check(test);
+					}
 				});
 
 				describe("filter()", () => {
 					const check = test3("filter");
 
-					tests.forEach(check);
+					for (const test of tests) {
+						check(test);
+					}
 				});
 
 				describe("find()", () => {
 					const check = test3("find");
 
-					tests.forEach(check);
+					for (const test of tests) {
+						check(test);
+					}
 				});
 
 				describe("findIndex()", () => {
 					const check = test3("findIndex");
 
-					tests.forEach(check);
+					for (const test of tests) {
+						check(test);
+					}
 				});
 
 				describe("forEach()", () => {
 					const check = test3("forEach");
 
-					tests.forEach(check);
+					for (const test of tests) {
+						check(test);
+					}
 				});
 
 				describe("map()", () => {
 					const check = test3("map");
 
-					tests.forEach(check);
+					for (const test of tests) {
+						check(test);
+					}
 				});
 
 				describe("reduce()", () => {
 					const check = test3("reduce", (previous: unknown[], value, index) => {
+						// eslint-disable-next-line unicorn/prefer-spread -- concat preserves type better than spread here
 						return previous.concat(value, index);
 					});
 
-					[[], ["a"], ["a", "b"]].forEach((init) => check(init, []));
+					for (const init of [[], ["a"], ["a", "b"]]) {
+						check(init, []);
+					}
 				});
 
 				describe("reduceRight()", () => {
 					const check = test3("reduceRight", (previous: unknown[], value, index) => {
+						// eslint-disable-next-line unicorn/prefer-spread -- concat preserves type better than spread here
 						return previous.concat(value, index);
 					});
 
-					[[], ["a"], ["a", "b"]].forEach((init) => check(init, []));
+					for (const init of [[], ["a"], ["a", "b"]]) {
+						check(init, []);
+					}
 				});
 			});
 
@@ -557,10 +580,10 @@ describe("List", () => {
 				check(["a", "b"], -2.5); // Truncated to -2 - first element
 				// Non-integer indices at and close to the valid "edges"
 				check(["a", "b"], 1.999999); // Truncated to -1 - second element
-				check(["a", "b"], 2.0); // Truncated to -2 - first element
+				check(["a", "b"], 2); // Truncated to -2 - first element
 				check(["a", "b"], 2.000001); // Truncated to -2 - first element
 				check(["a", "b"], -2.999999); // Truncated to -2 - first element
-				check(["a", "b"], -3.0); // Truncated to -3 - out of bounds
+				check(["a", "b"], -3); // Truncated to -3 - out of bounds
 				check(["a", "b"], -3.000001); // Truncated to -3 - out of bounds
 				check(["a", "b"], -3.5); // Truncated to -3 - out of bounds
 				// Extreme values
@@ -637,7 +660,9 @@ describe("List", () => {
 					test2("some", array, noInit, predicate);
 				};
 
-				[[], ["a"], ["b"], ["b", "c"], ["b", "c", "c"]].forEach(check);
+				for (const array of [[], ["a"], ["b"], ["b", "c"], ["b", "c", "c"]]) {
+					check(array);
+				}
 			});
 
 			describe("toLocaleString()", () => {
@@ -654,7 +679,9 @@ describe("List", () => {
 				// TODO: Pass explicit locale when permitted by TS lib.
 				// For now, the results should at least be consistent on the same machine.
 				// In 'en' locale, we're expecting to see a comma thousands separator.
-				[[1000, 2000, 3000]].forEach(check);
+				for (const array of [[1000, 2000, 3000]]) {
+					check(array);
+				}
 			});
 
 			describe("toString()", () => {
@@ -669,7 +696,9 @@ describe("List", () => {
 				};
 
 				// We do not expect to see a thousands separator.
-				[[1000, 2000, 3000]].forEach(check);
+				for (const array of [[1000, 2000, 3000]]) {
+					check(array);
+				}
 			});
 		});
 	});

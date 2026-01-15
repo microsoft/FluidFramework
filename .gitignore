@@ -52,3 +52,6 @@ UPCOMING.md
 # This is created to later publish its content on the pipeline and do not need to be included on git as
 # artifacts or bundleAnalysis folders. See scripts/pack-build-output.sh for more details.
 build_output_archive
+
+# Claude Code
+.claude/

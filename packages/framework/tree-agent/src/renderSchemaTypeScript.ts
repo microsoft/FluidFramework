@@ -19,7 +19,13 @@ import { z } from "zod";
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
 import { getExposedProperties, type PropertyDef } from "./propertyBinding.js";
+import {
+	instanceOfsTypeFactory,
+	renderTypeFactoryTypeScript,
+} from "./renderTypeFactoryTypeScript.js";
 import { instanceOfs, renderZodTypeScript } from "./renderZodTypeScript.js";
+import type { TypeFactoryOptional, TypeFactoryType } from "./treeAgentTypes.js";
+import { isTypeFactoryType } from "./treeAgentTypes.js";
 import {
 	getFriendlyName,
 	isNamedSchema,
@@ -449,7 +455,7 @@ function renderPropertyLines(properties: Record<string, PropertyDef>): string[] 
 			}
 		}
 		const modifier = property.readOnly ? "readonly " : "";
-		lines.push(`${modifier}${name}: ${renderZodType(property.schema)};`);
+		lines.push(`${modifier}${name}: ${renderType(property.schema)};`);
 	}
 	return lines;
 }
@@ -458,13 +464,13 @@ function formatMethod(name: string, method: FunctionWrapper): string {
 	const args: string[] = [];
 	for (const [argName, argType] of method.args) {
 		const { innerType, optional } = unwrapOptional(argType);
-		const renderedType = renderZodType(innerType);
+		const renderedType = renderType(innerType);
 		args.push(`${argName}${optional ? "?" : ""}: ${renderedType}`);
 	}
 	if (method.rest !== null) {
-		args.push(`...rest: ${renderZodType(method.rest)}[]`);
+		args.push(`...rest: ${renderType(method.rest)}[]`);
 	}
-	return `${name}(${args.join(", ")}): ${renderZodType(method.returns)};`;
+	return `${name}(${args.join(", ")}): ${renderType(method.returns)};`;
 }
 
 function renderLeaf(leafKind: ValueSchema): string {
@@ -497,7 +503,15 @@ function formatExpression(
 /**
  * Detects optional zod wrappers so argument lists can keep TypeScript optional markers in sync.
  */
-function unwrapOptional(type: z.ZodTypeAny): { innerType: z.ZodTypeAny; optional: boolean } {
+function unwrapOptional(type: z.ZodTypeAny | TypeFactoryType): {
+	innerType: z.ZodTypeAny | TypeFactoryType;
+	optional: boolean;
+} {
+	// Handle type factory optional type
+	if (isTypeFactoryType(type) && type._kind === "optional") {
+		return { innerType: (type as TypeFactoryOptional).innerType, optional: true };
+	}
+	// Handle Zod optional type
 	if (type instanceof z.ZodOptional) {
 		const inner = type.unwrap() as z.ZodTypeAny;
 		return { innerType: inner, optional: true };
@@ -531,8 +545,10 @@ function ensureNoMemberConflicts(
 }
 
 /**
- * Converts schema metadata into TypeScript declarations suitable for prompt inclusion.
+ * Dispatches to the correct renderer based on whether the type is Zod or type factory.
  */
-function renderZodType(type: z.ZodTypeAny): string {
-	return renderZodTypeScript(type, getFriendlyName, instanceOfs);
+function renderType(type: z.ZodTypeAny | TypeFactoryType): string {
+	return isTypeFactoryType(type)
+		? renderTypeFactoryTypeScript(type, getFriendlyName, instanceOfsTypeFactory)
+		: renderZodTypeScript(type, getFriendlyName, instanceOfs);
 }

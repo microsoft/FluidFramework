@@ -33,7 +33,8 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		| typeof MessageFormatVersion.v1
 		| typeof MessageFormatVersion.v2
 		| typeof MessageFormatVersion.v3
-		| typeof MessageFormatVersion.v4,
+		| typeof MessageFormatVersion.v4
+		| typeof MessageFormatVersion.v6,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,

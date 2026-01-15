@@ -11,7 +11,11 @@ import {
 	UsageError,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { FluidClientVersion, FormatValidatorNoOp } from "../codec/index.js";
+import {
+	FluidClientVersion,
+	FormatValidatorNoOp,
+	type CodecWriteOptions,
+} from "../codec/index.js";
 import {
 	type Anchor,
 	type AnchorLocator,
@@ -128,8 +132,6 @@ export interface CheckoutEvents {
 	 * can use to filter on changes they care about e.g. local vs remote changes.
 	 *
 	 * @param data - information about the change
-	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
-	 * this change is not revertible.
 	 */
 	changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 
@@ -300,21 +302,23 @@ export function createTreeCheckout(
 		logger?: ITelemetryLoggerExt;
 		breaker?: Breakable;
 		disposeForksAfterTransaction?: boolean;
+		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
 	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest(breaker, schema);
-	const defaultCodecOptions = {
+	const defaultCodecOptions: CodecWriteOptions = {
 		jsonValidator: FormatValidatorNoOp,
 		minVersionForCollab: FluidClientVersion.v2_0,
 	};
+	const codecOptions: CodecWriteOptions = { ...defaultCodecOptions, ...args?.codecOptions };
 	const changeFamily =
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
 			revisionTagCodec,
-			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
-			defaultCodecOptions,
+			args?.fieldBatchCodec ?? makeFieldBatchCodec(codecOptions),
+			codecOptions,
 			args?.chunkCompressionStrategy,
 			idCompressor,
 		);
@@ -560,6 +564,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							change: encodedChange,
 						} satisfies SerializedChange;
 					},
+					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);
@@ -585,7 +590,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.#events.emit("afterBatch");
 		this.editLock.unlock();
 		if (event.type === "append") {
-			event.newCommits.forEach((commit) => this.validateCommit(commit));
+			for (const commit of event.newCommits) {
+				this.validateCommit(commit);
+			}
 		}
 	};
 
@@ -647,7 +654,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
 		// trimmed revisions.
 		this.withCombinedVisitor((visitor) => {
-			revisions.forEach((revision) => {
+			for (const revision of revisions) {
 				// get all the roots last created or used by the revision
 				const roots = this._removedRoots.getRootsLastTouchedByRevision(revision);
 
@@ -657,7 +664,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 
 				this._removedRoots.deleteRootsLastTouchedByRevision(revision);
-			});
+			}
 		});
 	};
 
@@ -966,7 +973,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			const tree = jsonableTreeFromCursor(cursor);
 			// This method is used for tree consistency comparison.
 			const { major, minor } = id;
-			const finalizedMajor = major !== undefined ? this.revisionTagCodec.encode(major) : major;
+			const finalizedMajor = major === undefined ? major : this.revisionTagCodec.encode(major);
 			trees.push([finalizedMajor, minor, tree]);
 		}
 		cursor.free();
@@ -1120,7 +1127,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	private validateCommit(commit: GraphCommit<SharedTreeChange>): void {
 		const validated = getOrCreate(this.#validatedCommits, commit, () => []);
 		if (validated !== true) {
-			validated.forEach((fn) => fn(commit));
+			for (const fn of validated) {
+				fn(commit);
+			}
 			this.#validatedCommits.set(commit, true);
 		}
 	}
@@ -1190,6 +1199,12 @@ class EditLock {
 			addNodeExistsConstraintOnRevert(path) {
 				editor.addNodeExistsConstraintOnRevert(path);
 			},
+			addNoChangeConstraint() {
+				editor.addNoChangeConstraint();
+			},
+			addNoChangeConstraintOnRevert() {
+				editor.addNoChangeConstraintOnRevert();
+			},
 		};
 	}
 
@@ -1248,8 +1263,12 @@ function trackForksForDisposal(checkout: TreeCheckout): () => void {
 	let disposed = false;
 	return () => {
 		assert(!disposed, 0xaa9 /* Forks may only be disposed once */);
-		forks.forEach((fork) => fork.dispose());
-		onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+		for (const fork of forks) {
+			fork.dispose();
+		}
+		for (const unsubscribe of onDisposeUnSubscribes) {
+			unsubscribe();
+		}
 		onForkUnSubscribe();
 		disposed = true;
 	};

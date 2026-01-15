@@ -6,6 +6,9 @@
 	// These dependencies can go away once getPresence.ts is removed from the package.
 	// Ideally, tsconfig.main.json would be the tsconfig.json, but there are plenty of
 	// tools including api-extractor that would need reconfigured to use that pattern.
+	//
+	// This splitting of src into multiple tsconfig files is likely the cause of
+	// assert-tagging not handling asserts in the code included via /tsconfig.main.json.
 	"extends": "./tsconfig.main.json",
 	"include": ["src/getPresence.ts", "src/index.ts"],
 	"exclude": [],

@@ -8,7 +8,7 @@ import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../codec
 import type { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
 import { EncodedGenericChangeset } from "./genericFieldKindFormat.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
-import { EncodedNodeChangeset } from "./modularChangeFormat.js";
+import { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 
 export function makeGenericChangeCodec(): ICodecFamily<
 	GenericChangeset,

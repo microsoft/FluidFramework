@@ -175,6 +175,8 @@ export {
 	type GraphCommit,
 	CommitKind,
 	type CommitMetadata,
+	type LocalChangeMetadata,
+	type RemoteChangeMetadata,
 	type ChangeMetadata,
 	type RevisionTag,
 	RevisionTagSchema,
@@ -204,7 +206,6 @@ export {
 	offsetChangeAtomId,
 	StableIdSchema,
 	subtractChangeAtomIds,
-	replaceAtomRevisions,
 	replaceChange,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
@@ -213,6 +214,7 @@ export {
 	newChangeAtomIdRangeMap,
 	compareRevisions,
 	diffHistories,
+	type RevisionReplacer,
 } from "./rebase/index.js";
 
 export {
