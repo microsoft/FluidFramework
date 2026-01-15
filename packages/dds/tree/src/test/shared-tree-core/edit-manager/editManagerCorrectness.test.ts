@@ -939,7 +939,9 @@ function trackTrimmed(
 ): ReadonlySet<RevisionTag> {
 	const trimmedCommits = new Set<RevisionTag>();
 	branch.events.on("ancestryTrimmed", (trimmedRevisions) => {
-		trimmedRevisions.forEach((revision) => trimmedCommits.add(revision));
+		for (const revision of trimmedRevisions) {
+			trimmedCommits.add(revision);
+		}
 	});
 	return trimmedCommits;
 }

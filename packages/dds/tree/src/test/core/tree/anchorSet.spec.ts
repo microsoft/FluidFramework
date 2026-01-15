@@ -616,14 +616,15 @@ type PathStep = [FieldKey, number];
 
 function makePath(...steps: [PathStep, ...PathStep[]]): UpPath {
 	assert(steps.length > 0, "Path cannot be empty");
-	return steps.reduce(
-		(path: UpPath | undefined, step: PathStep) => ({
+	let path: UpPath | undefined;
+	for (const step of steps) {
+		path = {
 			parent: path,
 			parentField: step[0],
 			parentIndex: step[1],
-		}),
-		undefined,
-	) as UpPath;
+		};
+	}
+	return path as UpPath;
 }
 
 function makeFieldPath(field: FieldKey, ...stepsToFieldParent: PathStep[]): FieldUpPath {

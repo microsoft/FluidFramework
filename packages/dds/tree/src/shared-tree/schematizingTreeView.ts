@@ -461,7 +461,9 @@ export class SchematizingSimpleTreeView<
 			this.flexTreeContext[disposeSymbol]();
 			this.flexTreeContext = undefined;
 		}
-		this.flexTreeViewUnregisterCallbacks.forEach((unregister) => unregister());
+		for (const unregister of this.flexTreeViewUnregisterCallbacks) {
+			unregister();
+		}
 		this.flexTreeViewUnregisterCallbacks.clear();
 		anchors.slots.delete(SimpleContextSlot);
 	}
@@ -476,7 +478,9 @@ export class SchematizingSimpleTreeView<
 	public dispose(): void {
 		this.disposed = true;
 		this.disposeFlexView();
-		this.unregisterCallbacks.forEach((unregister) => unregister());
+		for (const unregister of this.unregisterCallbacks) {
+			unregister();
+		}
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.onDispose?.();

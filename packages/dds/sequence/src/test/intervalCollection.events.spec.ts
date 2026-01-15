@@ -14,7 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISequenceIntervalCollection } from "../intervalCollection.js";
+import type { ISequenceIntervalCollection } from "../intervalCollection.js";
 import { SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass, ISharedString } from "../sharedString.js";
