@@ -79,13 +79,6 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public readonly quorum: MockQuorumClients;
 	public readonly audience: MockAudience;
 
-	/**
-	 * Tracks the next sequence number to assign to quorum members.
-	 * This only increases to ensure sequence numbers are always monotonically increasing,
-	 * even if quorum members are removed.
-	 */
-	private nextSequenceNumber: number;
-
 	public readonly listeners: {
 		joined: ((props: { clientId: ClientConnectionId; canWrite: boolean }) => void)[];
 		disconnected: (() => void)[];
@@ -122,9 +115,6 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		);
 		this.quorum = makeMockQuorum(clientsData);
 		this.audience = makeMockAudience(clientsData);
-		// Initial quorum members have sequence numbers 0, 10, 20, ..., 50
-		// so next available is 60
-		this.nextSequenceNumber = 10 * numWriteClients;
 		this.events = {
 			on: (
 				event: string,
@@ -180,31 +170,6 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 			this.quorum.removeMember(clientId);
 		}
 		this.audience.removeMember(clientId);
-	}
-
-	/**
-	 * Adds audience write clients to quorum if not already present.
-	 *
-	 * @remarks
-	 * Quorum membership is op-based while audience membership is
-	 * signal-based, so quorum membership lags behind audience. This
-	 * function allows tests to control when newly joined audience members are
-	 * show up in quorum.
-	 *
-	 * Note: New audience members are added upon {@link connect}, and member
-	 * removal is handled by {@link removeMember} which removes from both
-	 * audience and quorum together.
-	 */
-	public addAudienceWriteClientsToQuorum(): void {
-		for (const [clientId, client] of this.audience.getMembers()) {
-			if (client.mode === "write" && this.quorum.getMember(clientId) === undefined) {
-				this.quorum.addMember(clientId, {
-					client,
-					sequenceNumber: this.nextSequenceNumber,
-				});
-				this.nextSequenceNumber += 10;
-			}
-		}
 	}
 
 	public connect(clientId: string, oldClientId: string | undefined): void {
