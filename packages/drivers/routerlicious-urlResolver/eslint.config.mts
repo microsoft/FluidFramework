@@ -3,38 +3,38 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
-	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
-	},
-	rules: {
-		"@typescript-eslint/strict-boolean-expressions": "off",
-		"unicorn/filename-case": [
-			"error",
-			{
-				cases: {
-					camelCase: true,
-					pascalCase: true,
-				},
-				ignore: [/.*routerlicious-urlResolver\.spec\.ts/],
-			},
-		],
+import type { Linter } from "eslint";
+import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-		// This library is used in the browser, so we don't want dependencies on most node libraries.
-		"import-x/no-nodejs-modules": ["error"],
-	},
-	overrides: [
-		{
-			// Rules only for test files
-			files: ["*.spec.ts", "src/test/**"],
-			rules: {
-				// Test files are run in node only so additional node libraries can be used.
-				"import-x/no-nodejs-modules": ["error", { allow: ["assert"] }],
-			},
+const config: Linter.Config[] = [
+	...minimalDeprecated,
+	{
+		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"unicorn/filename-case": [
+				"error",
+				{
+					"cases": {
+						"camelCase": true,
+						"pascalCase": true,
+					},
+					"ignore": [{}],
+				},
+			],
+			"import-x/no-nodejs-modules": ["error"],
 		},
-	],
-};
+	},
+	{
+		files: ["*.spec.ts", "src/test/**"],
+		rules: {
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["assert"],
+				},
+			],
+		},
+	},
+];
+
+export default config;

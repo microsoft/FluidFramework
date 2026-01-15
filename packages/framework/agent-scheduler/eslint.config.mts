@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/recommended"), "prettier"],
-	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+import type { Linter } from "eslint";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+
+const config: Linter.Config[] = [
+	...recommended,
+	{
+		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "off",
+		},
 	},
-	rules: {
-		// TODO: remove this override and fix violations
-		"@typescript-eslint/strict-boolean-expressions": "off",
-	},
-};
+];
+
+export default config;

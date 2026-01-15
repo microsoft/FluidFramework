@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-		"../../.eslintrc.cjs",
-	],
-	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
-	},
-	rules: {
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+import type { Linter } from "eslint";
+import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import sharedConfig from "../../eslint.config.data.mts";
 
-		// Disabled because the rule is crashing on this package - AB#51780
-		"@typescript-eslint/unbound-method": "off",
+const config: Linter.Config[] = [
+	...minimalDeprecated,
+	...sharedConfig,
+	{
+		rules: {
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"@typescript-eslint/unbound-method": "off",
+		},
 	},
-};
+];
+
+export default config;

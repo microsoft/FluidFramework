@@ -1,58 +1,52 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
+/* eslint-disable */
+/**
+ * GENERATED FILE - DO NOT EDIT DIRECTLY.
+ * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
  */
+import type { Linter } from "eslint";
+import { strict } from "../../common/build/eslint-config-fluid/flat.mts";
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
-	parserOptions: {
-		project: ["./tsconfig.json"],
-	},
-	rules: {
-		// Too many false positives with array access
-		"@fluid-internal/fluid/no-unchecked-record-access": "off",
-
-		// Rule is reported in a lot of places where it would be invalid to follow the suggested pattern
-		"@typescript-eslint/class-literal-property-style": "off",
-
-		// Comparing general input strings against system-known values (via enums) is used commonly to support
-		// extensibility.
-		"@typescript-eslint/no-unsafe-enum-comparison": "off",
-
-		// Useful for developer accessibility
-		"unicorn/prevent-abbreviations": [
-			"error",
-			{
-				allowList: {
-					// Industry-standard index variable name.
-					i: true,
-				},
-			},
-		],
-
-		"unicorn/prefer-module": "off",
-		"unicorn/prefer-negative-index": "off",
-
-		// This package is exclusively used in a Node.js context
-		"import/no-nodejs-modules": "off",
-	},
-	overrides: [
-		{
-			// Overrides for test files
-			files: ["src/**/test/**"],
-			plugins: ["chai-expect", "chai-friendly"],
-			extends: ["plugin:chai-expect/recommended", "plugin:chai-friendly/recommended"],
-			rules: {
-				"import/no-extraneous-dependencies": [
-					"error",
-					{
-						devDependencies: true,
+const config: Linter.Config[] = [
+	...strict,
+	{
+		rules: {
+			"@fluid-internal/fluid/no-unchecked-record-access": "off",
+			"@typescript-eslint/class-literal-property-style": "off",
+			"@typescript-eslint/no-unsafe-enum-comparison": "off",
+			"unicorn/prevent-abbreviations": [
+				"error",
+				{
+					"allowList": {
+						"i": true,
 					},
-				],
-
-				// Handled by chai-friendly instead.
-				"@typescript-eslint/no-unused-expressions": "off",
+				},
+			],
+			"unicorn/prefer-module": "off",
+			"unicorn/prefer-negative-index": "off",
+			"import/no-nodejs-modules": "off",
+		},
+	},
+	{
+		files: ["src/**/test/**"],
+		rules: {
+			"import/no-extraneous-dependencies": [
+				"error",
+				{
+					"devDependencies": true,
+				},
+			],
+			"@typescript-eslint/no-unused-expressions": "off",
+		},
+	},
+	{
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: ["./tsconfig.json"],
 			},
 		},
-	],
-};
+	},
+];
+
+export default config;

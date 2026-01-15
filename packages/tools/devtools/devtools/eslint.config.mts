@@ -3,26 +3,33 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
-	parserOptions: {
-		project: ["./tsconfig.json"],
-	},
-	rules: {
-		// Disabled because they conflict with Prettier.
-		"unicorn/no-nested-ternary": "off",
+import type { Linter } from "eslint";
+import { strict } from "../../../../common/build/eslint-config-fluid/flat.mts";
 
-		// Disabled because it is incompatible with API-Extractor.
-		"@typescript-eslint/no-namespace": "off",
+const config: Linter.Config[] = [
+	...strict,
+	{
+		rules: {
+			"unicorn/no-nested-ternary": "off",
+			"@typescript-eslint/no-namespace": "off",
+		},
 	},
-	overrides: [
-		{
-			// Overrides for test files
-			files: ["*.spec.ts", "*.test.ts", "src/test/**"],
-			rules: {
-				"import-x/no-nodejs-modules": "off",
-				"unicorn/prefer-module": "off",
+	{
+		files: ["*.spec.ts", "*.test.ts", "src/test/**"],
+		rules: {
+			"import-x/no-nodejs-modules": "off",
+			"unicorn/prefer-module": "off",
+		},
+	},
+	{
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: ["./tsconfig.json"],
 			},
 		},
-	],
-};
+	},
+];
+
+export default config;

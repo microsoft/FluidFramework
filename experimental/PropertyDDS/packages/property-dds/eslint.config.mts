@@ -3,24 +3,25 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
-	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+import type { Linter } from "eslint";
+import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/flat.mts";
+
+const config: Linter.Config[] = [
+	...minimalDeprecated,
+	{
+		rules: {
+			"@typescript-eslint/explicit-function-return-type": "warn",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"tsdoc/syntax": "off",
+			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"depend/ban-dependencies": [
+				"error",
+				{
+					"allowed": ["axios", "lodash"],
+				},
+			],
+		},
 	},
-	rules: {
-		"@typescript-eslint/explicit-function-return-type": "warn",
-		"@typescript-eslint/strict-boolean-expressions": "off",
-		"tsdoc/syntax": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-		"depend/ban-dependencies": [
-			"error",
-			{
-				allowed: ["axios", "lodash"],
-			},
-		],
-	},
-};
+];
+
+export default config;

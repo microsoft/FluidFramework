@@ -3,26 +3,23 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
-	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
-	},
-	rules: {
-		// TODO: remove this override and fix violations
-		"@typescript-eslint/strict-boolean-expressions": "off",
+import type { Linter } from "eslint";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-		// This package implements test utils to be run under Node.JS.
-		"import-x/no-nodejs-modules": "off",
-
-		"depend/ban-dependencies": [
-			"error",
-			{
-				allowed: [
-					// TODO: This package should use tinyexec or child_process directly instead of execa
-					"execa",
-				],
-			},
-		],
+const config: Linter.Config[] = [
+	...recommended,
+	{
+		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"import-x/no-nodejs-modules": "off",
+			"depend/ban-dependencies": [
+				"error",
+				{
+					"allowed": ["execa"],
+				},
+			],
+		},
 	},
-};
+];
+
+export default config;

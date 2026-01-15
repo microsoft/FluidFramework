@@ -3,24 +3,32 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
-	rules: {
-		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
-		"import-x/no-nodejs-modules": "off",
-		"import-x/no-extraneous-dependencies": [
-			"error",
-			{
-				// This package is only used to run its tests. It's ok for the src/utils.ts to import from devDependencies, in
-				// addition to the test files
-				devDependencies: ["src/utils.ts", "src/test/**"],
+import type { Linter } from "eslint";
+import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+
+const config: Linter.Config[] = [
+	...minimalDeprecated,
+	{
+		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"import-x/no-nodejs-modules": "off",
+			"import-x/no-extraneous-dependencies": [
+				"error",
+				{
+					"devDependencies": ["src/utils.ts", "src/test/**"],
+				},
+			],
+		},
+	},
+	{
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: ["./src/test/tsconfig.json"],
 			},
-		],
+		},
 	},
-	parserOptions: {
-		project: ["./src/test/tsconfig.json"],
-	},
-};
+];
+
+export default config;

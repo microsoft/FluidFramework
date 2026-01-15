@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-		"../../../.eslintrc.cjs",
-	],
-	rules: {},
-};
+import type { Linter } from "eslint";
+import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/flat.mts";
+import sharedConfig from "../../../eslint.config.data.mts";
+
+const config: Linter.Config[] = [...minimalDeprecated, ...sharedConfig];
+
+export default config;

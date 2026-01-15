@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
-	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+import type { Linter } from "eslint";
+import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
+
+const config: Linter.Config[] = [
+	...strict,
+	{
+		rules: {
+			"unicorn/numeric-separators-style": "off",
+		},
 	},
-	rules: {
-		// TODO: consider re-enabling once we have addressed how this rule conflicts with our error codes.
-		"unicorn/numeric-separators-style": "off",
-	},
-};
+];
+
+export default config;

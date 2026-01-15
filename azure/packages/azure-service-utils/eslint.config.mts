@@ -3,33 +3,31 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
-	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
-	},
-	rules: {
-		"import-x/no-unassigned-import": "off",
-		"@typescript-eslint/strict-boolean-expressions": "off",
+import type { Linter } from "eslint";
+import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-		// Useful for developer accessibility
-		"unicorn/prevent-abbreviations": [
-			"error",
-			{
-				allowList: {
-					// Industry-standard index variable name.
-					i: true,
+const config: Linter.Config[] = [
+	...strict,
+	{
+		rules: {
+			"import-x/no-unassigned-import": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"unicorn/prevent-abbreviations": [
+				"error",
+				{
+					"allowList": {
+						"i": true,
+					},
 				},
-			},
-		],
-	},
-	overrides: [
-		{
-			// Overrides for type-tests
-			files: ["src/test/types/*"],
-			rules: {
-				"unicorn/prevent-abbreviations": "off",
-			},
+			],
 		},
-	],
-};
+	},
+	{
+		files: ["src/test/types/*"],
+		rules: {
+			"unicorn/prevent-abbreviations": "off",
+		},
+	},
+];
+
+export default config;

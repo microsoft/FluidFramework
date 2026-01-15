@@ -3,14 +3,18 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/strict"),
-		"../../../.eslintrc.cjs",
-	],
-	rules: {
-		// Demoted to warning as a workaround to layer-check challenges. Tracked by:
-		// https://github.com/microsoft/FluidFramework/issues/10226
-		"import-x/no-extraneous-dependencies": "warn",
+import type { Linter } from "eslint";
+import { strict } from "../../../../common/build/eslint-config-fluid/flat.mts";
+import sharedConfig from "../../../eslint.config.data.mts";
+
+const config: Linter.Config[] = [
+	...strict,
+	...sharedConfig,
+	{
+		rules: {
+			"import-x/no-extraneous-dependencies": "warn",
+		},
 	},
-};
+];
+
+export default config;
