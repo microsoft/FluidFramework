@@ -209,7 +209,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	 * Optional label provided by the user when commit was created.
 	 * This can be used by undo/redo to group or classify edits.
 	 */
-	label?: unknown;
+	readonly label?: unknown;
 }
 
 /**
