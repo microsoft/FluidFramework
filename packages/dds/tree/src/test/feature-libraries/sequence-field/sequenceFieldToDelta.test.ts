@@ -24,6 +24,8 @@ import { inlineRevision, toDelta } from "./utils.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FieldChangeDelta } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
 
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);
@@ -36,7 +38,7 @@ const deltaNodeId: DeltaDetachedNodeId = { major: cellId.revision, minor: cellId
 
 function toDeltaShallow(change: SF.Changeset): FieldChangeDelta {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(change, () => fail("Unexpected call to child ToDelta"));
+	return sequenceFieldToDelta(change, () => fail("Unexpected call to child ToDelta"));
 }
 
 const nodeId1: NodeId = { localId: brand(1) };
@@ -109,7 +111,7 @@ export function testToDelta() {
 				assert.deepEqual(child, nodeId);
 				return fieldChanges;
 			};
-			const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
+			const actual = sequenceFieldToDelta(changeset, deltaFromChild);
 			const expected: FieldChangeDelta = {
 				local: [
 					{
@@ -293,7 +295,7 @@ export function testToDelta() {
 				assert.deepEqual(child, nodeId);
 				return nestedMoveDelta;
 			};
-			const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
+			const actual = sequenceFieldToDelta(changeset, deltaFromChild);
 			assertFieldChangesEqual(actual, expected);
 		});
 

@@ -33,8 +33,6 @@ export {
 	type SequenceChangeRebaser,
 	sequenceFieldChangeRebaser,
 } from "./sequenceFieldChangeRebaser.js";
-export { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs.js";
-export { sequenceFieldToDelta } from "./sequenceFieldToDelta.js";
 export { type SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
 
 export { sequence } from "./sequenceKind.js";

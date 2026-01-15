@@ -98,6 +98,8 @@ import { rebase } from "../../../feature-libraries/sequence-field/rebase.js";
 import { invert } from "../../../feature-libraries/sequence-field/invert.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { MarkListFactory } from "../../../feature-libraries/sequence-field/markListFactory.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
 
 export function assertWrappedChangesetsEqual(
 	actual: WrappedChange,
@@ -512,12 +514,12 @@ export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset)
 
 export function toDelta(change: SF.Changeset): FieldChangeDelta {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
+	return sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
 }
 
 export function toDeltaWrapped(change: WrappedChange) {
 	return ChangesetWrapper.toDelta(change, (c, deltaFromChild) =>
-		SF.sequenceFieldToDelta(c, deltaFromChild),
+		sequenceFieldToDelta(c, deltaFromChild),
 	);
 }
 
