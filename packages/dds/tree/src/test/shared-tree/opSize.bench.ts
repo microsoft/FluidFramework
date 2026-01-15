@@ -292,10 +292,7 @@ describe("Op Size", () => {
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
 	interface ITreeWithSubmitLocalMessage {
-		submitLocalMessage: (
-			content: ISequencedDocumentMessage,
-			localOpMetadata?: unknown,
-		) => void;
+		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void;
 	}
 
 	function registerOpListener(
@@ -305,11 +302,8 @@ describe("Op Size", () => {
 		// TODO: better way to hook this up. Needs to detect local ops exactly once.
 		const treeInternal = tree as unknown as ITreeWithSubmitLocalMessage;
 		const oldSubmitLocalMessage = treeInternal.submitLocalMessage.bind(tree);
-		function submitLocalMessage(
-			content: ISequencedDocumentMessage,
-			localOpMetadata: unknown = undefined,
-		): void {
-			resultArray.push(content);
+		function submitLocalMessage(content: unknown, localOpMetadata?: unknown): void {
+			resultArray.push(content as ISequencedDocumentMessage);
 			oldSubmitLocalMessage(content, localOpMetadata);
 		}
 		treeInternal.submitLocalMessage = submitLocalMessage;
