@@ -28,8 +28,6 @@ resources:
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
-- name: testWorkspace
-  value: $(Pipeline.Workspace)/test
 - name: testPackage
   value: "@fluidframework/azure-end-to-end-tests"
   readonly: true
@@ -52,7 +50,6 @@ stages:
       stageDisplayName: e2e - azure-client with AFR
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       testCommand: test:realsvc:azure
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
@@ -70,7 +67,6 @@ stages:
       stageDisplayName: e2e - azure-client with Azure local service
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       testCommand: test:realsvc:tinylicious
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
@@ -88,7 +84,6 @@ stages:
       stageDisplayName: e2e - odsp-client with ODSP service
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testOdspPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       testCommand: test:realsvc:odsp
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
