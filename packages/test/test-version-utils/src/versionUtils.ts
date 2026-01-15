@@ -304,6 +304,7 @@ export async function ensureInstalled(
 								error instanceof Error
 									? `${error.message}\n${error.stack}`
 									: JSON.stringify(error);
+							// eslint-disable-next-line @typescript-eslint/no-base-to-string -- known limitation
 							reject(
 								new Error(
 									`Failed to install in ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,

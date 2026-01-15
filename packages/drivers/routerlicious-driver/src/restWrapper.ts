@@ -25,7 +25,6 @@ import {
 import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
 
-import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
 import {
 	getUrlForTelemetry,
 	RouterliciousErrorTypes,
@@ -33,21 +32,22 @@ import {
 } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { addOrUpdateQueryParams, type QueryStringType } from "./queryStringUtils.js";
+import type { RequestConfig, RawRequestHeaders } from "./request.cjs";
 import { RestWrapper } from "./restWrapperBase.js";
 import { ITokenProvider, ITokenResponse } from "./tokens.js";
 
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
 export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
 
-const buildRequestUrl = (requestConfig: AxiosRequestConfig): string =>
+const buildRequestUrl = (requestConfig: RequestConfig): string =>
 	requestConfig.baseURL !== undefined
 		? `${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`
 		: (requestConfig.url ?? "");
 
-const axiosBuildRequestInitConfig = (requestConfig: AxiosRequestConfig): RequestInit => {
+const buildRequestInitConfig = (requestConfig: RequestConfig): RequestInit => {
 	const requestInit: RequestInit = {
 		method: requestConfig.method,
-		// NOTE: I believe that although the Axios type permits non-string values in the header, here we are
+		// NOTE: Although the RequestHeaders type permits non-string values in the header, here we are
 		// guaranteed the requestConfig only has string values in its header.
 		headers: requestConfig.headers as Record<string, string>,
 		body: requestConfig.data,
@@ -139,7 +139,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 	}
 
 	protected async request<T>(
-		requestConfig: AxiosRequestConfig,
+		requestConfig: RequestConfig,
 		statusCode: number,
 		canRetry = true,
 	): Promise<IR11sResponse<T>> {
@@ -151,7 +151,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 		// Build the complete request url including baseUrl, url and query params. (all except 'retry' query param)
 		let completeRequestUrl = addOrUpdateQueryParams(
 			buildRequestUrl(requestConfig),
-			requestConfig.params,
+			requestConfig.params ?? {},
 		);
 
 		// Check whether this request has been made before or if it is a retry.
@@ -164,13 +164,17 @@ class RouterliciousRestWrapper extends RestWrapper {
 			});
 		}
 
-		const config = {
+		const config: RequestConfig = {
 			...requestConfig,
 			headers: await this.generateHeaders(requestConfig.headers),
 		};
 
-		const translatedConfig = this.useRestLess ? this.restLess.translate(config) : config;
-		const fetchRequestConfig = axiosBuildRequestInitConfig(translatedConfig);
+		// RestLessClient.translate() returns AxiosRequestConfig (from server-services-client),
+		// which is structurally compatible with our RequestConfig type.
+		const translatedConfig: RequestConfig = this.useRestLess
+			? (this.restLess.translate(config) as RequestConfig)
+			: config;
+		const fetchRequestConfig = buildRequestInitConfig(translatedConfig);
 
 		const res = await this.rateLimiter.schedule(async () => {
 			const perfStart = performanceNow();
@@ -292,11 +296,11 @@ class RouterliciousRestWrapper extends RestWrapper {
 	}
 
 	private async generateHeaders(
-		requestHeaders?: RawAxiosRequestHeaders | undefined,
-	): Promise<RawAxiosRequestHeaders> {
+		requestHeaders?: RawRequestHeaders | undefined,
+	): Promise<RawRequestHeaders> {
 		const token = await this.getToken();
 		assert(token !== undefined, 0x679 /* token should be present */);
-		const headers: RawAxiosRequestHeaders = {
+		const headers: RawRequestHeaders = {
 			...requestHeaders,
 			[DriverVersionHeaderName]: driverVersion,
 			// NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?

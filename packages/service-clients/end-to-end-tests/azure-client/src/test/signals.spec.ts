@@ -10,7 +10,6 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import type { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,
@@ -103,12 +102,11 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			if (id === undefined) {
 				if (isEphemeral) {
-					const containerResponse: AxiosResponse | undefined =
-						await createContainerFromPayload(
-							ephemeralSummaryTrees.sendAndRecieveSignals,
-							"test-user-id-1",
-							"test-user-name-1",
-						);
+					const containerResponse = await createContainerFromPayload(
+						ephemeralSummaryTrees.sendAndRecieveSignals,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 					containerId = getContainerIdFromPayloadResponse(containerResponse);
 					({ container, services } = await client.getContainer(containerId, schema, "2"));
 				} else {
