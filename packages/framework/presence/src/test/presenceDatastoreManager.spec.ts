@@ -265,7 +265,7 @@ describe("Presence", () => {
 				it("and no other responses ... with broadcast after delay", () => {
 					// Setup
 					const responseOrder = 2;
-					// 3 * named length (client0 and client1) + quorum sequence order
+					// 3 * named length (client0 and client1) + quorum sequence order (third -> 2)
 					const responderIndex = 3 * 2 + responseOrder;
 					const updateTime =
 						clock.now +
@@ -344,7 +344,7 @@ describe("Presence", () => {
 				it("and other has partially responded ... with broadcast after delay", () => {
 					// Setup
 					const responseOrder = 2;
-					// 3 * named length (client0 and client1) + quorum sequence order
+					// 3 * named length (client0 and client1) + quorum sequence order (third -> 2)
 					const responderIndex = 3 * 2 + responseOrder;
 					const client4ResponseDelay =
 						broadcastJoinResponseDelaysMs.namedResponder +

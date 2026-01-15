@@ -132,8 +132,8 @@ describe("Presence", () => {
 				);
 			});
 
-			it('has status "Disconnected" when presence initializes while self not in Audience', () => {
-				// Setup - create presence in disconnected state
+			it('has status "Disconnected" when presence initializes while container is disconnected', () => {
+				// Setup - create presence while container is disconnected
 				const { presence } = prepareDisconnectedPresence(
 					runtime,
 					localAttendeeId,
@@ -147,7 +147,7 @@ describe("Presence", () => {
 				assert.strictEqual(
 					selfAttendee.getConnectionStatus(),
 					AttendeeStatus.Disconnected,
-					"Self attendee should have status 'Disconnected' when presence initializes while self not in Audience",
+					"Self attendee should have status 'Disconnected' when presence initializes while container is disconnected",
 				);
 			});
 
