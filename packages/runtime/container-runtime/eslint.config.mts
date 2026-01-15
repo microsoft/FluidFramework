@@ -26,8 +26,8 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": [
 				"error",
 				{
-				"allow": ["node:assert", "node:crypto"],
-			},
+					"allow": ["node:assert", "node:crypto"],
+				},
 			],
 		},
 	},

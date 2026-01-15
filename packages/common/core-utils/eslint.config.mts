@@ -23,8 +23,8 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": [
 				"error",
 				{
-				"allow": ["node:assert", "node:process"],
-			},
+					"allow": ["node:assert", "node:process"],
+				},
 			],
 			// Does not work well with describe/it block scoping
 			"unicorn/consistent-function-scoping": "off",

@@ -15,8 +15,8 @@ const config: Linter.Config[] = [
 			"import-x/no-extraneous-dependencies": [
 				"error",
 				{
-				"devDependencies": ["src/utils.ts", "src/test/**"],
-			},
+					"devDependencies": ["src/utils.ts", "src/test/**"],
+				},
 			],
 
 			// This package is only used to run its tests. It's ok for the src/utils.ts to import from devDependencies, in

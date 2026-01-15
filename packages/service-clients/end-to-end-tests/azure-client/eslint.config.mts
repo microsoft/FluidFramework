@@ -12,9 +12,12 @@ const config: Linter.Config[] = [
 		rules: {
 			"prefer-arrow-callback": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
-			"@typescript-eslint/consistent-type-imports": ["error", {
-				"fixStyle": "inline-type-imports",
-			}],
+			"@typescript-eslint/consistent-type-imports": [
+				"error",
+				{
+					"fixStyle": "inline-type-imports",
+				},
+			],
 			"@typescript-eslint/no-import-type-side-effects": "error",
 
 			// #endregion
@@ -28,8 +31,8 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/consistent-type-exports": [
 				"error",
 				{
-				"fixMixedExportsWithInlineTypeSpecifier": true,
-			},
+					"fixMixedExportsWithInlineTypeSpecifier": true,
+				},
 			],
 
 			// #endregion
@@ -44,16 +47,16 @@ const config: Linter.Config[] = [
 			"import-x/no-internal-modules": [
 				"error",
 				{
-				"allow": [
-					"@fluidframework/*/{beta,alpha,legacy}",
-					"fluid-framework/{beta,alpha,legacy}",
-					"@fluidframework/*/test-utils",
-					"*/index.js",
-					"@fluidframework/telemetry-utils/internal",
-					"@fluidframework/test-utils/internal",
-					"@fluidframework/test-runtime-utils/internal",
-				],
-			},
+					"allow": [
+						"@fluidframework/*/{beta,alpha,legacy}",
+						"fluid-framework/{beta,alpha,legacy}",
+						"@fluidframework/*/test-utils",
+						"*/index.js",
+						"@fluidframework/telemetry-utils/internal",
+						"@fluidframework/test-utils/internal",
+						"@fluidframework/test-runtime-utils/internal",
+					],
+				},
 			],
 		},
 	},

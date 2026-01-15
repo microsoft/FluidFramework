@@ -13,13 +13,15 @@ const config: Linter.Config[] = [
 			"import-x/no-unassigned-import": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			// Useful for developer accessibility
-			"unicorn/prevent-abbreviations": ["error", {
-				"allowList": {
-					// Industry-standard index variable name.
-					"i": true,
+			"unicorn/prevent-abbreviations": [
+				"error",
+				{
+					"allowList": {
+						// Industry-standard index variable name.
+						"i": true,
+					},
 				},
-			}],
-
+			],
 		},
 	},
 	// Overrides for type-tests

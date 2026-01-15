@@ -18,13 +18,13 @@ const config: Linter.Config[] = [
 			"import-x/no-internal-modules": [
 				"error",
 				{
-				"allow": [
-					"@fluidframework/*/internal{,/**}",
-					"*/index.js",
-					"@fluidframework/presence/alpha",
-					"@fluidframework/presence/beta",
-				],
-			},
+					"allow": [
+						"@fluidframework/*/internal{,/**}",
+						"*/index.js",
+						"@fluidframework/presence/alpha",
+						"@fluidframework/presence/beta",
+					],
+				},
 			],
 		},
 	},
@@ -36,9 +36,12 @@ const config: Linter.Config[] = [
 			// TODO: There are several violations, mostly in test code. Set to warn to enable cleanup while unblocking lint upgrades.
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			// Test files are run in node only so additional node libraries can be used.
-			"import-x/no-nodejs-modules": ["error", {
-				"allow": ["node:assert"],
-			}],
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["node:assert"],
+				},
+			],
 		},
 	},
 	{
@@ -46,11 +49,7 @@ const config: Linter.Config[] = [
 		languageOptions: {
 			parserOptions: {
 				projectService: false,
-				project: [
-					"./tsconfig.main.json",
-					"./tsconfig.json",
-					"./src/test/tsconfig.json",
-				],
+				project: ["./tsconfig.main.json", "./tsconfig.json", "./src/test/tsconfig.json"],
 			},
 		},
 	},

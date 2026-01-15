@@ -21,8 +21,8 @@ const config: Linter.Config[] = [
 			"import-x/no-internal-modules": [
 				"error",
 				{
-				"allow": ["@fluidframework/*/internal{,/**}"],
-			},
+					"allow": ["@fluidframework/*/internal{,/**}"],
+				},
 			],
 		},
 	},

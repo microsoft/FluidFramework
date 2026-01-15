@@ -21,59 +21,69 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-restricted-imports": [
 				"error",
 				{
-				"paths": [
-					{
-					"name": "@fluidframework/cell",
-					"message": "Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
-					"allowTypeImports": true,
+					"paths": [
+						{
+							"name": "@fluidframework/cell",
+							"message":
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+							"allowTypeImports": true,
+						},
+						{
+							"name": "@fluidframework/counter",
+							"message":
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+							"allowTypeImports": true,
+						},
+						{
+							"name": "@fluidframework/map",
+							"message":
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+							"allowTypeImports": true,
+						},
+						{
+							"name": "@fluidframework/matrix",
+							"message":
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+							"allowTypeImports": true,
+						},
+						{
+							"name": "@fluidframework/ordered-collection",
+							"message":
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+							"allowTypeImports": true,
+						},
+						{
+							"name": "@fluidframework/register-collection",
+							"message":
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+							"allowTypeImports": true,
+						},
+						{
+							"name": "@fluidframework/sequence",
+							"message":
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+							"allowTypeImports": true,
+						},
+						{
+							"name": "@fluid-experimental/sequence-deprecated",
+							"message":
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+							"allowTypeImports": true,
+						},
+						{
+							"name": "@fluidframework/aqueduct",
+							"message":
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+							"allowTypeImports": true,
+						},
+						{
+							"name": "@fluidframework/datastore",
+							"message":
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+							"allowTypeImports": true,
+						},
+					],
 				},
-					{
-					"name": "@fluidframework/counter",
-					"message": "Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
-					"allowTypeImports": true,
-				},
-					{
-					"name": "@fluidframework/map",
-					"message": "Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
-					"allowTypeImports": true,
-				},
-					{
-					"name": "@fluidframework/matrix",
-					"message": "Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
-					"allowTypeImports": true,
-				},
-					{
-					"name": "@fluidframework/ordered-collection",
-					"message": "Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
-					"allowTypeImports": true,
-				},
-					{
-					"name": "@fluidframework/register-collection",
-					"message": "Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
-					"allowTypeImports": true,
-				},
-					{
-					"name": "@fluidframework/sequence",
-					"message": "Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
-					"allowTypeImports": true,
-				},
-					{
-					"name": "@fluid-experimental/sequence-deprecated",
-					"message": "Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
-					"allowTypeImports": true,
-				},
-					{
-					"name": "@fluidframework/aqueduct",
-					"message": "Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
-					"allowTypeImports": true,
-				},
-					{
-					"name": "@fluidframework/datastore",
-					"message": "Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
-					"allowTypeImports": true,
-				},
-				],
-			},
 			],
 			/*
 			 * This rule causes the following errors, so is temporarily disabled.
@@ -99,9 +109,12 @@ const config: Linter.Config[] = [
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {
 			// Test files are run in node only so additional node libraries can be used.
-			"import-x/no-nodejs-modules": ["error", {
-				"allow": ["assert"],
-			}],
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["assert"],
+				},
+			],
 		},
 	},
 	{

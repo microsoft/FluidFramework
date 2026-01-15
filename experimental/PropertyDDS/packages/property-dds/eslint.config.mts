@@ -14,9 +14,12 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"tsdoc/syntax": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-			"depend/ban-dependencies": ["error", {
-				"allowed": ["axios", "lodash"],
-			}],
+			"depend/ban-dependencies": [
+				"error",
+				{
+					"allowed": ["axios", "lodash"],
+				},
+			],
 		},
 	},
 ];

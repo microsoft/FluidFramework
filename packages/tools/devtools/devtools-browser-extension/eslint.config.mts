@@ -19,9 +19,12 @@ const config: Linter.Config[] = [
 			// dev dependencies in test code.
 			// TODO: Remove this override once the base config is more flexible around where test code
 			// lives in a package.
-			"import-x/no-extraneous-dependencies": ["error", {
-				"devDependencies": ["src/**/test/**"],
-			}],
+			"import-x/no-extraneous-dependencies": [
+				"error",
+				{
+					"devDependencies": ["src/**/test/**"],
+				},
+			],
 		},
 	},
 	// Overrides for test files

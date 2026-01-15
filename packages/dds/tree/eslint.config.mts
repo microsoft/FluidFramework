@@ -21,10 +21,10 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unused-vars": [
 				"error",
 				{
-				"argsIgnorePattern": "^",
-				"varsIgnorePattern": "^_",
-				"caughtErrorsIgnorePattern": "^_",
-			},
+					"argsIgnorePattern": "^",
+					"varsIgnorePattern": "^_",
+					"caughtErrorsIgnorePattern": "^_",
+				},
 			],
 			// TODO: Remove this override once this config has been updated to extend the "strict" base config.
 			"@typescript-eslint/explicit-member-accessibility": "error",

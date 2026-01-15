@@ -14,12 +14,15 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": [
 				"error",
 				{
-				"allow": ["child_process", "fs", "util"],
-			},
+					"allow": ["child_process", "fs", "util"],
+				},
 			],
-			"@typescript-eslint/consistent-type-imports": ["error", {
-				"fixStyle": "inline-type-imports",
-			}],
+			"@typescript-eslint/consistent-type-imports": [
+				"error",
+				{
+					"fixStyle": "inline-type-imports",
+				},
+			],
 			"@typescript-eslint/no-import-type-side-effects": "error",
 
 			// #endregion
@@ -33,8 +36,8 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/consistent-type-exports": [
 				"error",
 				{
-				"fixMixedExportsWithInlineTypeSpecifier": true,
-			},
+					"fixMixedExportsWithInlineTypeSpecifier": true,
+				},
 			],
 
 			// #endregion

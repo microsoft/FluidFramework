@@ -14,12 +14,12 @@ const config: Linter.Config[] = [
 			"unicorn/filename-case": [
 				"error",
 				{
-				"cases": {
-					"camelCase": true,
-					"pascalCase": true,
+					"cases": {
+						"camelCase": true,
+						"pascalCase": true,
+					},
+					"ignore": [{}],
 				},
-				"ignore": [{}],
-			},
 			],
 			// This library is used in the browser, so we don't want dependencies on most node libraries.
 			"import-x/no-nodejs-modules": ["error"],
@@ -30,9 +30,12 @@ const config: Linter.Config[] = [
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {
 			// Test files are run in node only so additional node libraries can be used.
-			"import-x/no-nodejs-modules": ["error", {
-				"allow": ["assert"],
-			}],
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["assert"],
+				},
+			],
 		},
 	},
 ];

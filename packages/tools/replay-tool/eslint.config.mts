@@ -15,9 +15,12 @@ const config: Linter.Config[] = [
 			"import-x/no-deprecated": "off", // This package often uses deprecated APIs because it's used to replay ops from older versions of the runtime
 			"import-x/no-nodejs-modules": "off",
 			"no-case-declarations": "off",
-			"@typescript-eslint/consistent-type-imports": ["error", {
-				"fixStyle": "inline-type-imports",
-			}],
+			"@typescript-eslint/consistent-type-imports": [
+				"error",
+				{
+					"fixStyle": "inline-type-imports",
+				},
+			],
 			"@typescript-eslint/no-import-type-side-effects": "error",
 
 			// #endregion
@@ -31,8 +34,8 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/consistent-type-exports": [
 				"error",
 				{
-				"fixMixedExportsWithInlineTypeSpecifier": true,
-			},
+					"fixMixedExportsWithInlineTypeSpecifier": true,
+				},
 			],
 
 			// #endregion

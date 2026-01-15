@@ -13,9 +13,12 @@ const config: Linter.Config[] = [
 			"prefer-arrow-callback": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
 			"import-x/namespace": "off",
-			"@typescript-eslint/consistent-type-imports": ["error", {
-				"fixStyle": "inline-type-imports",
-			}],
+			"@typescript-eslint/consistent-type-imports": [
+				"error",
+				{
+					"fixStyle": "inline-type-imports",
+				},
+			],
 			"@typescript-eslint/no-import-type-side-effects": "error",
 
 			// #endregion
@@ -29,8 +32,8 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/consistent-type-exports": [
 				"error",
 				{
-				"fixMixedExportsWithInlineTypeSpecifier": true,
-			},
+					"fixMixedExportsWithInlineTypeSpecifier": true,
+				},
 			],
 
 			// #endregion

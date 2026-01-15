@@ -14,13 +14,13 @@ const config: Linter.Config[] = [
 			"import-x/no-internal-modules": [
 				"error",
 				{
-				"allow": [
-					"@fluidframework/*/alpha",
-					"@fluidframework/*/beta",
-					"@fluidframework/*/legacy",
-					"@fluidframework/*/internal",
-				],
-			},
+					"allow": [
+						"@fluidframework/*/alpha",
+						"@fluidframework/*/beta",
+						"@fluidframework/*/legacy",
+						"@fluidframework/*/internal",
+					],
+				},
 			],
 		},
 	},
@@ -30,14 +30,14 @@ const config: Linter.Config[] = [
 			"import-x/no-internal-modules": [
 				"error",
 				{
-				"allow": [
-					"*/index.js",
-					"@fluidframework/*/alpha",
-					"@fluidframework/*/beta",
-					"@fluidframework/*/legacy",
-					"@fluidframework/*/internal",
-				],
-			},
+					"allow": [
+						"*/index.js",
+						"@fluidframework/*/alpha",
+						"@fluidframework/*/beta",
+						"@fluidframework/*/legacy",
+						"@fluidframework/*/internal",
+					],
+				},
 			],
 			"import-x/no-unresolved": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",

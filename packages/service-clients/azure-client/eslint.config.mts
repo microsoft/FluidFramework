@@ -14,11 +14,11 @@ const config: Linter.Config[] = [
 			"unicorn/prevent-abbreviations": [
 				"error",
 				{
-				"allowList": {
-					"i": true,
+					"allowList": {
+						"i": true,
+					},
+					"ignore": ["[pP]rops"],
 				},
-				"ignore": ["[pP]rops"],
-			},
 			],
 
 			// Exact variable name checks.

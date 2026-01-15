@@ -25,9 +25,12 @@ const config: Linter.Config[] = [
 			// We have a couple of components that still use it, but new usages should not be added without due consideration.
 			"no-restricted-imports": ["error", "@fluentui/react"],
 			// Allow unassigned imports for testing-library/jest-dom
-			"import-x/no-unassigned-import": ["error", {
-				"allow": ["@testing-library/jest-dom"],
-			}],
+			"import-x/no-unassigned-import": [
+				"error",
+				{
+					"allow": ["@testing-library/jest-dom"],
+				},
+			],
 		},
 	},
 	{

@@ -18,11 +18,14 @@ const config: Linter.Config[] = [
 			// extensibility.
 			"@typescript-eslint/no-unsafe-enum-comparison": "off",
 			// Useful for developer accessibility
-			"unicorn/prevent-abbreviations": ["error", {
-				"allowList": {
-					"i": true,
+			"unicorn/prevent-abbreviations": [
+				"error",
+				{
+					"allowList": {
+						"i": true,
+					},
 				},
-			}],
+			],
 			"unicorn/prefer-module": "off",
 			"unicorn/prefer-negative-index": "off",
 			// This package is exclusively used in a Node.js context
@@ -33,9 +36,12 @@ const config: Linter.Config[] = [
 	{
 		files: ["src/**/test/**"],
 		rules: {
-			"import/no-extraneous-dependencies": ["error", {
-				"devDependencies": true,
-			}],
+			"import/no-extraneous-dependencies": [
+				"error",
+				{
+					"devDependencies": true,
+				},
+			],
 			// Handled by chai-friendly instead.
 			"@typescript-eslint/no-unused-expressions": "off",
 		},

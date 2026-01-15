@@ -13,9 +13,12 @@ const config: Linter.Config[] = [
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {
 			// Test files are run in node only so additional node libraries can be used.
-			"import-x/no-nodejs-modules": ["error", {
-				"allow": ["assert"],
-			}],
+			"import-x/no-nodejs-modules": [
+				"error",
+				{
+					"allow": ["assert"],
+				},
+			],
 		},
 	},
 ];
