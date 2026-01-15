@@ -1548,16 +1548,27 @@ ${imports}
 	const hasEslintIgnore = eslintIgnorePatterns && eslintIgnorePatterns.length > 0;
 
 	// Check if there's a non-standard project configuration
+	// projectService: true (from the shared flat config) handles automatic tsconfig discovery,
+	// so most legacy parserOptions.project patterns are now unnecessary.
+	// We only need to preserve truly non-standard patterns that projectService can't handle.
 	let hasNonStandardProject = false;
 	if (
 		legacyConfig?.parserOptions?.project &&
 		Array.isArray(legacyConfig.parserOptions.project)
 	) {
 		const projectPaths = legacyConfig.parserOptions.project;
+		// Standard patterns that projectService handles automatically:
+		// - ["./tsconfig.json", "./src/test/tsconfig.json"] - common dual-config pattern
+		// - ["./tsconfig.json"] - single main config
+		// - ["./tsconfig.eslint.json"] or similar single config variants
+		// - ["./src/test/tsconfig.json"] - test-only config
 		const isStandardPattern =
-			projectPaths.length === 2 &&
-			projectPaths.includes("./tsconfig.json") &&
-			projectPaths.includes("./src/test/tsconfig.json");
+			// Two-config pattern: main + test
+			(projectPaths.length === 2 &&
+				projectPaths.includes("./tsconfig.json") &&
+				projectPaths.includes("./src/test/tsconfig.json")) ||
+			// Single config pattern (any single tsconfig file)
+			projectPaths.length === 1;
 		hasNonStandardProject = !isStandardPattern;
 	}
 
@@ -1664,14 +1675,29 @@ ${imports}
 				if (override.excludedFiles) {
 					configContent += `\t\tignores: ${serializeValue(override.excludedFiles, "\t\t")},\n`;
 				}
-				// Handle parserOptions.project in overrides
+				// Handle parserOptions.project in overrides - only for non-standard patterns
+				// projectService: true handles most tsconfig discovery automatically
 				if (override.parserOptions?.project) {
-					configContent += `\t\tlanguageOptions: {\n`;
-					configContent += `\t\t\tparserOptions: {\n`;
-					configContent += `\t\t\t\tprojectService: false,\n`;
-					configContent += `\t\t\t\tproject: ${serializeValue(override.parserOptions.project, "\t\t\t\t")},\n`;
-					configContent += `\t\t\t},\n`;
-					configContent += `\t\t},\n`;
+					const overrideProjectPaths = Array.isArray(override.parserOptions.project)
+						? override.parserOptions.project
+						: [override.parserOptions.project];
+					// Standard patterns that projectService handles automatically
+					const isStandardOverridePattern =
+						// Two-config pattern: main + test
+						(overrideProjectPaths.length === 2 &&
+							overrideProjectPaths.includes("./tsconfig.json") &&
+							overrideProjectPaths.includes("./src/test/tsconfig.json")) ||
+						// Single config pattern (any single tsconfig file)
+						overrideProjectPaths.length === 1;
+
+					if (!isStandardOverridePattern) {
+						configContent += `\t\tlanguageOptions: {\n`;
+						configContent += `\t\t\tparserOptions: {\n`;
+						configContent += `\t\t\t\tprojectService: false,\n`;
+						configContent += `\t\t\t\tproject: ${serializeValue(override.parserOptions.project, "\t\t\t\t")},\n`;
+						configContent += `\t\t\t},\n`;
+						configContent += `\t\t},\n`;
+					}
 					// Check if this override targets test files
 					const files = Array.isArray(override.files) ? override.files : [override.files];
 					if (files.some((f: string) => f.includes("test") || f.includes("spec"))) {
@@ -1688,8 +1714,8 @@ ${imports}
 		}
 
 		// Add parserOptions.project configuration only if it's non-standard
-		// The default shared config already handles the common pattern: ["./tsconfig.json", "./src/test/tsconfig.json"]
-		// Only add custom project config if the package uses a different pattern
+		// projectService: true (from the shared flat config) handles automatic tsconfig discovery,
+		// so most legacy parserOptions.project patterns are now unnecessary.
 		// Skip if an override already handles test file parserOptions
 		if (
 			!overrideHandlesTestParserOptions &&
@@ -1697,10 +1723,18 @@ ${imports}
 			Array.isArray(legacyConfig.parserOptions.project)
 		) {
 			const projectPaths = legacyConfig.parserOptions.project;
+			// Standard patterns that projectService handles automatically:
+			// - ["./tsconfig.json", "./src/test/tsconfig.json"] - common dual-config pattern
+			// - ["./tsconfig.json"] - single main config
+			// - ["./tsconfig.eslint.json"] or similar single config variants
+			// - ["./src/test/tsconfig.json"] - test-only config
 			const isStandardPattern =
-				projectPaths.length === 2 &&
-				projectPaths.includes("./tsconfig.json") &&
-				projectPaths.includes("./src/test/tsconfig.json");
+				// Two-config pattern: main + test
+				(projectPaths.length === 2 &&
+					projectPaths.includes("./tsconfig.json") &&
+					projectPaths.includes("./src/test/tsconfig.json")) ||
+				// Single config pattern (any single tsconfig file)
+				projectPaths.length === 1;
 
 			if (!isStandardPattern) {
 				// When parserOptions.project is at the top level in the legacy config,
