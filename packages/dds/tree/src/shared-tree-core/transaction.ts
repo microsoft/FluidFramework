@@ -228,7 +228,7 @@ export class TransactionStack implements Transactor, IDisposable {
  * @remarks This function runs just after the transaction ends, so if this is the end of an outermost (not nested) transaction then {@link Transactor.isInProgress} will be false during its execution.
  * @param result - The result of the transaction.
  * @param viewUpdate - The change that needs to be applied to the view to keep it up-to-date with the branch after the transaction ends.
- * This in needed in asynchronous transactions where new commits have been added to the branch while the transaction was in progress.
+ * This is needed in asynchronous transactions where new commits have been added to the branch while the transaction was in progress.
  * This will be `undefined` if no such change is necessary.
  */
 export type OnPopWithViewUpdate<TChange> = (
