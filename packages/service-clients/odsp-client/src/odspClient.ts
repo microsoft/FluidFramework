@@ -162,10 +162,6 @@ export class OdspClient {
 			container,
 			this.connectionConfig,
 		);
-		// Perform type guard to access internal APIs exposed by OdspFluidContainer.
-		if (!isInternalFluidContainer(fluidContainer)) {
-			throw new Error("Fluid container is not internal");
-		}
 
 		const services = await this.getContainerServices(container);
 
