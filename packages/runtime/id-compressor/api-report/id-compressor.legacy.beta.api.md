@@ -58,7 +58,6 @@ export interface IIdCompressorCore {
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;
     shard(newShardCount: number): SerializedIdCompressorWithOngoingSession[];
-    // (undocumented)
     shardId(): CompressorShardId | undefined;
     takeNextCreationRange(): IdCreationRange;
     takeUnfinalizedCreationRange(): IdCreationRange;

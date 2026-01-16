@@ -145,8 +145,15 @@ export interface IIdCompressorCore {
 	unshard(shardId: CompressorShardId): void;
 
 	/**
-	 * @returns the shard ID for this compressor if it is part of a group of shards, otherwise undefined.
-	 * This is serializable and can be passed across marshaling boundaries in order to unshard.
+	 * Returns the shard ID for this compressor if it is part of a sharded group.
+	 *
+	 * When a compressor is sharded using {@link IIdCompressorCore.shard}, each resulting shard is assigned a unique
+	 * shard ID that identifies its position in the stride pattern. This ID can be used to unshard the compressor
+	 * by calling {@link IIdCompressorCore.unshard}.
+	 *
+	 * @returns The shard ID if this compressor is part of a sharded group, otherwise undefined.
+	 * The returned ID is serializable and can be passed across marshaling boundaries.
+	 * @throws If called on a compressor with writeVersion less than V3, as sharding requires V3 or higher.
 	 */
 	shardId(): CompressorShardId | undefined;
 
