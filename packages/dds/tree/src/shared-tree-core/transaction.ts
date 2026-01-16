@@ -325,6 +325,7 @@ export class SquashingTransactionStack<
 				);
 				this.setTransactionBranch(transactionBranch);
 				transactionBranch.editor.enterTransaction();
+
 				// Invoked when an outer transaction ends
 				const onOuterTransactionPop: OnPop = (result) => {
 					assert(!this.isInProgress(), 0xcae /* The outer transaction should be ending */);
@@ -338,17 +339,20 @@ export class SquashingTransactionStack<
 					);
 					assert(ancestor !== undefined, "branches must be related");
 
+					const transactionSteps: GraphCommit<TChange>[] = [];
+					findAncestor(
+						[transactionBranch.getHead(), transactionSteps],
+						(c) => c === startHead,
+					);
+
 					let viewUpdate: TChange | undefined;
 					switch (result) {
 						case TransactionResult.Abort: {
-							// When a transaction is aborted, roll back all the transaction's changes on the current branch
-							transactionBranch.removeAfter(startHead);
-							if (targetPath.length > 0) {
-								// Changes were made on `branch` since the transaction began.
-								// The view will need to be updated to reflect those changes.
+							// When a transaction is aborted, update the view if it is out of date
+							if (transactionSteps.length > 0 || targetPath.length > 0) {
 								viewUpdate = diffHistories(
 									rebaser,
-									startHead,
+									this.activeBranch.getHead(),
 									this.branch.getHead(),
 									mintRevisionTag,
 								);
@@ -356,12 +360,6 @@ export class SquashingTransactionStack<
 							break;
 						}
 						case TransactionResult.Commit: {
-							// Squash all the new commits on the transaction branch into a new commit on the original branch
-							const transactionSteps: GraphCommit<TChange>[] = [];
-							findAncestor(
-								[transactionBranch.getHead(), transactionSteps],
-								(c) => c === startHead,
-							);
 							if (transactionSteps.length > 0) {
 								assert(
 									transactionRevision !== undefined,
@@ -373,6 +371,7 @@ export class SquashingTransactionStack<
 										0xcaf /* Unexpected commit in transaction */,
 									);
 								}
+								// Squash all the new commits on the transaction branch into a new commit on the original branch
 								const squash = rebaser.compose(transactionSteps);
 
 								if (targetPath.length === 0) {
