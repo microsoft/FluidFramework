@@ -227,21 +227,20 @@ export class SchematizingSimpleTreeView<
 				},
 			);
 
-			this.checkout.transaction.start();
-
-			initialize(
-				this.checkout,
-				schema,
-				initializerFromChunk(this.checkout, () => {
-					// This must be done after initial schema is set!
-					return combineChunks(
-						this.checkout.forest.chunkField(
-							cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
-						),
-					);
-				}),
-			);
-			this.checkout.transaction.commit();
+			this.runTransaction(() => {
+				initialize(
+					this.checkout,
+					schema,
+					initializerFromChunk(this.checkout, () => {
+						// This must be done after initial schema is set!
+						return combineChunks(
+							this.checkout.forest.chunkField(
+								cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+							),
+						);
+					}),
+				);
+			});
 		});
 	}
 
@@ -296,7 +295,7 @@ export class SchematizingSimpleTreeView<
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		const { checkout } = this;
 
-		checkout.transaction.start();
+		checkout.transaction.start(false);
 
 		// Validate preconditions before running the transaction callback.
 		addConstraintsToTransaction(
@@ -354,7 +353,7 @@ export class SchematizingSimpleTreeView<
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
 		const { checkout } = this;
 
-		checkout.transaction.start();
+		checkout.transaction.start(true);
 
 		// Validate preconditions before running the transaction callback.
 		addConstraintsToTransaction(

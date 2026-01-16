@@ -19,7 +19,15 @@ import {
 	type GraphCommit,
 	type RevisionTag,
 } from "../core/index.js";
-import { getLast, getOrCreate, hasSome } from "../util/index.js";
+import {
+	getLast,
+	getOrCreate,
+	hasSome,
+	idAllocatorFromMaxId,
+	type Brand,
+	type IdAllocator,
+	type Opaque,
+} from "../util/index.js";
 
 import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 
@@ -46,6 +54,8 @@ export interface Transactor {
 	 * Start a new transaction.
 	 * If a transaction is already in progress when this new transaction starts, then this transaction will be "nested" inside of it,
 	 * i.e. the outer transaction will still be in progress after this new transaction is committed or aborted.
+	 * @param isAsync - Whether the transaction is asynchronous.
+	 * An error will be thrown if an asynchronous transaction is started while a synchronous transaction is in progress.
 	 *
 	 * @remarks Asynchronous transactions are not supported on the root checkout,
 	 * since it is always kept up-to-date with the latest remote edits and the results of this rebasing (which might invalidate
@@ -59,7 +69,7 @@ export interface Transactor {
 	 * @privateRemarks There is currently no enforcement that asynchronous transactions don't happen on the root checkout.
 	 * AB#6488 tracks adding some enforcement to make it more clear to application authors that this is not supported.
 	 */
-	start(): void;
+	start(isAsync: boolean): void;
 	/**
 	 * Close this transaction by squashing its edits and committing them as a single edit.
 	 * If this is the root checkout and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
@@ -130,12 +140,23 @@ export type OnPush = () => Callbacks | void;
  */
 export type OnPop = (result: TransactionResult) => void;
 
+interface TransactionId extends Opaque<Brand<number, "@fluidframework/tree.TransactionId">> {}
+
+interface TransactionData {
+	readonly callbacks: Callbacks;
+	readonly id: TransactionId;
+	readonly isAsync: boolean;
+}
+
 /**
  * An implementation of {@link Transactor} that uses a stack to manage transactions.
  * @remarks Using a stack allows transactions to nest - i.e. an inner transaction may be started while an outer transaction is already in progress.
  */
 export class TransactionStack implements Transactor, IDisposable {
-	readonly #stack: Callbacks[] = [];
+	private readonly idAllocator: IdAllocator<TransactionId> = idAllocatorFromMaxId(
+		0,
+	) as unknown as IdAllocator<TransactionId>;
+	readonly #stack: TransactionData[] = [];
 	readonly #onPush?: OnPush;
 
 	readonly #events = createEmitter<TransactionEvents>();
@@ -161,11 +182,21 @@ export class TransactionStack implements Transactor, IDisposable {
 		return this.#stack.length > 0;
 	}
 
-	public start(): void {
+	public start(isAsync: boolean): void {
 		this.ensureNotDisposed();
-		const onPushCurrent = hasSome(this.#stack) ? getLast(this.#stack).onPush : this.#onPush;
+		const last = getLast(this.#stack);
+		if (last !== undefined && !last.isAsync && isAsync) {
+			throw new UsageError(
+				"An asynchronous transaction cannot be started while a synchronous transaction is in progress.",
+			);
+		}
+		const onPushCurrent = last === undefined ? this.#onPush : last.callbacks.onPush;
 		const { onPush, onPop } = onPushCurrent?.() ?? {};
-		this.#stack.push({ onPop, onPush: onPush ?? onPushCurrent });
+		this.#stack.push({
+			callbacks: { onPop, onPush: onPush ?? onPushCurrent },
+			id: this.idAllocator.allocate(),
+			isAsync,
+		});
 		this.#events.emit("started");
 	}
 
@@ -175,7 +206,7 @@ export class TransactionStack implements Transactor, IDisposable {
 			throw new UsageError("No transaction to commit");
 		}
 		this.#events.emit("committing");
-		this.#stack.pop()?.onPop?.(TransactionResult.Commit);
+		this.#stack.pop()?.callbacks.onPop?.(TransactionResult.Commit);
 	}
 
 	public abort(): void {
@@ -184,7 +215,7 @@ export class TransactionStack implements Transactor, IDisposable {
 			throw new UsageError("No transaction to abort");
 		}
 		this.#events.emit("aborting");
-		this.#stack.pop()?.onPop?.(TransactionResult.Abort);
+		this.#stack.pop()?.callbacks.onPop?.(TransactionResult.Abort);
 	}
 
 	public dispose(): void {

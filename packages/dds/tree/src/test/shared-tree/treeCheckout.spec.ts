@@ -54,6 +54,7 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	type TransactionResult,
 	type TreeBranch,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -773,14 +774,37 @@ describe("sharedTreeView", () => {
 
 		itView("statuses are reported correctly", ({ view }) => {
 			assert.equal(view.checkout.transaction.isInProgress(), false);
-			view.checkout.transaction.start();
-			assert.equal(view.checkout.transaction.isInProgress(), true);
-			view.checkout.transaction.start();
-			assert.equal(view.checkout.transaction.isInProgress(), true);
-			view.checkout.transaction.commit();
-			assert.equal(view.checkout.transaction.isInProgress(), true);
-			view.checkout.transaction.abort();
+			view.runTransaction(() => {
+				assert.equal(view.checkout.transaction.isInProgress(), true);
+				view.runTransaction(() => {
+					assert.equal(view.checkout.transaction.isInProgress(), true);
+				});
+				assert.equal(view.checkout.transaction.isInProgress(), true);
+				return { rollback: true };
+			});
 			assert.equal(view.checkout.transaction.isInProgress(), false);
+		});
+
+		it("rejects async transactions within synchronous transactions", async () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+
+			let transactionPromise: Promise<TransactionResult> | undefined;
+			view.runTransaction(() => {
+				view.root.insertAtEnd("42");
+				transactionPromise = view.runAsyncTransaction(async () => {
+					view.root.insertAtEnd("43");
+				});
+			});
+
+			await assert.rejects(
+				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+				validateUsageError(
+					"An asynchronous transaction cannot be started while a synchronous transaction is in progress.",
+				),
+			);
 		});
 	});
 
