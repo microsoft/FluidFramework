@@ -13,9 +13,24 @@ import globby from "globby";
 import type { PackageJson } from "../../common/npmPackage";
 import { lookUpDirSync } from "../../common/utils";
 
-export function getEsLintConfigFilePath(dir: string) {
+export function getEsLintConfigFilePath(dir: string): string | undefined {
+	// ESLint 9 flat config files (checked first as they take precedence)
+	// Then legacy eslintrc files for backwards compatibility
 	// TODO: we currently don't support .yaml and .yml, or config in package.json
-	const possibleConfig = [".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json", ".eslintrc"];
+	const possibleConfig = [
+		// ESLint 9 flat config files
+		"eslint.config.mjs",
+		"eslint.config.mts",
+		"eslint.config.cjs",
+		"eslint.config.cts",
+		"eslint.config.js",
+		"eslint.config.ts",
+		// Legacy eslintrc files
+		".eslintrc.js",
+		".eslintrc.cjs",
+		".eslintrc.json",
+		".eslintrc",
+	];
 	for (const configFile of possibleConfig) {
 		const configFileFullPath = path.join(dir, configFile);
 		if (existsSync(configFileFullPath)) {
@@ -25,7 +40,10 @@ export function getEsLintConfigFilePath(dir: string) {
 	return undefined;
 }
 
-export async function getInstalledPackageVersion(packageName: string, cwd: string) {
+export async function getInstalledPackageVersion(
+	packageName: string,
+	cwd: string,
+): Promise<string> {
 	const resolvedPath = require.resolve(packageName, { paths: [cwd] });
 	const packageJsonPath = lookUpDirSync(resolvedPath, (currentDir) => {
 		return existsSync(path.join(currentDir, "package.json"));
@@ -42,7 +60,7 @@ export async function getInstalledPackageVersion(packageName: string, cwd: strin
 /**
  * Given a directory path, returns an array of all files within the path, rooted in the provided path.
  */
-export async function getRecursiveFiles(pathName: string) {
+export async function getRecursiveFiles(pathName: string): Promise<string[]> {
 	const files = await readdir(pathName, { withFileTypes: true });
 	const result: string[] = [];
 	for (let i = 0; i < files.length; i++) {
@@ -75,7 +93,7 @@ export function getApiExtractorConfigFilePath(commandLine: string): string {
 	return "api-extractor.json";
 }
 
-export function toPosixPath(s: string) {
+export function toPosixPath(s: string): string {
 	return s.replace(/\\/g, "/");
 }
 
@@ -110,7 +128,7 @@ export async function globFn(pattern: string, options: glob.IOptions = {}): Prom
 	});
 }
 
-export async function loadModule(modulePath: string, moduleType?: string) {
+export async function loadModule(modulePath: string, moduleType?: string): Promise<unknown> {
 	const ext = path.extname(modulePath);
 	const esm = ext === ".mjs" || (ext === ".js" && moduleType === "module");
 	if (esm) {

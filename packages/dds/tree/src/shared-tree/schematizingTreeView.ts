@@ -299,17 +299,16 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		const addConstraints = (
-			constraintsOnRevert: boolean,
-			constraints: readonly TransactionConstraintAlpha[] = [],
-		): void => {
-			addConstraintsToTransaction(this.checkout, constraintsOnRevert, constraints);
-		};
+		const { checkout } = this;
 
-		this.checkout.transaction.start();
+		checkout.transaction.start();
 
 		// Validate preconditions before running the transaction callback.
-		addConstraints(false /* constraintsOnRevert */, params?.preconditions);
+		addConstraintsToTransaction(
+			checkout,
+			false /* constraintsOnRevert */,
+			params?.preconditions,
+		);
 		const transactionCallbackStatus = transaction();
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
@@ -317,19 +316,20 @@ export class SchematizingSimpleTreeView<
 		)?.value;
 
 		if (rollback === true) {
-			this.checkout.transaction.abort();
+			checkout.transaction.abort();
 			return value === undefined
 				? { success: false }
 				: { success: false, value: value as TFailureValue };
 		}
 
 		// Validate preconditions on revert after running the transaction callback and was successful.
-		addConstraints(
+		addConstraintsToTransaction(
+			checkout,
 			true /* constraintsOnRevert */,
 			transactionCallbackStatus?.preconditionsOnRevert,
 		);
 
-		this.checkout.transaction.commit();
+		checkout.transaction.commit();
 		return value === undefined
 			? { success: true }
 			: { success: true, value: value as TSuccessValue };

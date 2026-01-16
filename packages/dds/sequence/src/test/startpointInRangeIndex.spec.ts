@@ -10,7 +10,7 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { TestClient } from "@fluidframework/merge-tree/internal/test";
 
 import { IStartpointInRangeIndex, StartpointInRangeIndex } from "../intervalIndex/index.js";
-import { type SequenceInterval } from "../intervals/index.js";
+import type { SequenceInterval } from "../intervals/index.js";
 
 import {
 	assertOrderedSequenceIntervals,

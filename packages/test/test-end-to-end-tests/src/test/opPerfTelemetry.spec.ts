@@ -5,7 +5,7 @@
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { ILoaderProps } from "@fluidframework/container-loader/internal";
-import { type SharedString } from "@fluidframework/sequence/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	DataObjectFactoryType,

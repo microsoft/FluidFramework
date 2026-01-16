@@ -14,7 +14,7 @@ import {
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line import-x/no-internal-modules
-import { type IPendingRuntimeState } from "@fluidframework/container-runtime/internal/test/containerRuntime";
+import type { IPendingRuntimeState } from "@fluidframework/container-runtime/internal/test/containerRuntime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type {
