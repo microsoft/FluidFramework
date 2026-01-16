@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
+import type { Linter } from 'eslint';
+import { minimalDeprecated } from '../../../common/build/eslint-config-fluid/flat.mts';
 
 const config: Linter.Config[] = [
 	...minimalDeprecated,
@@ -14,35 +14,35 @@ const config: Linter.Config[] = [
 			// '@typescript-eslint/no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
 
 			// This package is effectively deprecated. The below rules are disabled for ease of migration and will not be enabled.
-			"@typescript-eslint/explicit-function-return-type": "off",
-			"@typescript-eslint/no-shadow": "off",
-			"no-shadow": "off",
-			"@typescript-eslint/no-unsafe-return": "off",
-			"import-x/no-deprecated": "off",
-			"@fluid-internal/fluid/no-unchecked-record-access": "off",
+			'@typescript-eslint/explicit-function-return-type': 'off',
+			'@typescript-eslint/no-shadow': 'off',
+			'no-shadow': 'off',
+			'@typescript-eslint/no-unsafe-return': 'off',
+			'import-x/no-deprecated': 'off',
+			'@fluid-internal/fluid/no-unchecked-record-access': 'off',
 		},
 	},
 	{
-		files: ["src/test/**"],
+		files: ['src/test/**'],
 		rules: {
 			// Chai assertions trigger the unused expression lint rule.
-			"@typescript-eslint/no-unused-expressions": "off",
+			'@typescript-eslint/no-unused-expressions': 'off',
 
 			// Dev dependencies and internal modules may be used in test code
-			"import-x/no-extraneous-dependencies": [
-				"error",
+			'import-x/no-extraneous-dependencies': [
+				'error',
 				{
 					devDependencies: true,
 				},
 			],
-			"import-x/no-internal-modules": "off",
+			'import-x/no-internal-modules': 'off',
 		},
 	},
 	{
 		// Test code and the main package export shouldn't be linted for unused exports
-		files: ["**/test/**", "src/index.ts"],
+		files: ['**/test/**', 'src/index.ts'],
 		rules: {
-			"import-x/no-unused-modules": "off",
+			'import-x/no-unused-modules': 'off',
 		},
 	},
 ];
