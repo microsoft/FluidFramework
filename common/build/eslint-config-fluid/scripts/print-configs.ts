@@ -47,7 +47,7 @@ interface ConfigToPrint {
 // Flat configs use "recommended.mjs" for default and "minimal.mjs" for minimal.
 const defaultConfigFile = useFlatConfig ? "recommended.mjs" : "index.js";
 const minimalConfigFile = `minimal${useFlatConfig ? "" : "-deprecated"}${configExt}`;
-const strictBiomeConfigFile = `strict-biome${configExt}`;
+const strictBiomeConfigFile = `strict${useFlatConfig ? "" : "-biome"}${configExt}`;
 
 const configsToPrint: ConfigToPrint[] = [
 	{

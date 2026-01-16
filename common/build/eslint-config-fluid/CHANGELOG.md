@@ -10,28 +10,6 @@ Dependency updates only.
 
 ## Unreleased
 
-### Native ESLint 9 Flat Config (No FlatCompat)
-
-The flat config implementation has been refactored to use native ESLint 9 flat config format, removing the dependency on `FlatCompat` from `@eslint/eslintrc`. This provides cleaner configuration and better compatibility with ESLint 9.
-
-#### Flat Config Exports
-
-The `flat.mts` module now exports four configurations:
-
-- `recommended` - The recommended configuration for most projects
-- `strict` - Stricter rules for production code
-- `minimalDeprecated` - Minimal configuration (deprecated, use recommended)
-- `strictBiome` - Strict configuration with Biome formatter compatibility
-
-#### Modular Structure
-
-The configuration is now organized into a modular structure under `library/`:
-
-- `library/constants.mts` - Shared constants (ignores, file patterns, import restrictions)
-- `library/settings.mts` - Plugin settings (import-x, jsdoc)
-- `library/rules/` - Rule definitions organized by config level (base, minimal-deprecated, recommended, strict)
-- `library/configs/` - Config builders and shared overrides
-
 ### Removed Rushstack Dependencies
 
 The following packages have been removed from dependencies:

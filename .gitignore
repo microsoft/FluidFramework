@@ -55,7 +55,3 @@ build_output_archive
 
 # Claude Code
 .claude/
-
-# ESLint config migration diff tool output
-eslint-config-migration.diff
-eslint-config-migration.json
