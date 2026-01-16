@@ -63,6 +63,7 @@ import {
 
 /**
  * Serialization format versions for IdCompressor.
+ * @legacy @beta
  */
 export const SerializationVersion = {
 	/**
@@ -74,6 +75,13 @@ export const SerializationVersion = {
 	 */
 	V3: 3,
 } as const;
+
+/**
+ * Type representing valid serialization version values.
+ * @legacy @beta
+ */
+export type SerializationVersion =
+	(typeof SerializationVersion)[keyof typeof SerializationVersion];
 
 function rangeFinalizationError(expectedStart: number, actualStart: number): LoggingError {
 	return new LoggingError("Ranges finalized out of order", {
@@ -132,22 +140,22 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * When defined, this compressor operates in "sharding mode" where:
 	 * - IDs are generated using stride-based allocation (no eager finals)
 	 * - The normalizer backfills all IDs in each stride cycle
-	 * - Normal operation resumes when activeShardCount reaches 0
+	 * - Normal operation resumes when activeChildCount reaches 0
 	 */
 	private shardingState?:
 		| {
 				/**
 				 * Total number of shards in the current stride pattern (the stride)
 				 */
-				totalShards: number;
+				stride: number;
 				/**
-				 * This compressor's offset in the stride pattern (0 to totalShards-1)
+				 * This compressor's offset in the stride pattern (0 to stride-1)
 				 */
 				shardOffset: number;
 				/**
 				 * Counter of how many child shards are still active
 				 */
-				activeShardCount: number;
+				activeChildCount: number;
 				/**
 				 * Highest genCount that has been backfilled in the normalizer during sharding.
 				 * Used to avoid duplicate backfilling in recursive sharding scenarios.
@@ -163,12 +171,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * This version determines what features are available and what format will be used for serialization.
 	 * Documents with version less than 3 cannot use sharding.
 	 */
-	private readonly writeVersion: number;
+	private readonly writeVersion: SerializationVersion;
 
 	public constructor(
 		localSessionIdOrDeserialized: SessionId | Sessions,
 		private readonly logger: ITelemetryLoggerExt | undefined,
-		writeVersion: number,
+		writeVersion: SerializationVersion,
 	) {
 		if (typeof localSessionIdOrDeserialized === "string") {
 			this.localSessionId = localSessionIdOrDeserialized;
@@ -290,9 +298,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		// Determine current sharding state
-		const currentStride = this.shardingState?.totalShards ?? 1;
+		const currentStride = this.shardingState?.stride ?? 1;
 		const currentOffset = this.shardingState?.shardOffset ?? 0;
-		const currentActiveCount = this.shardingState?.activeShardCount ?? 0;
+		const currentActiveCount = this.shardingState?.activeChildCount ?? 0;
 
 		// Calculate new stride: parent and all children share this stride
 		const newTotalShards = currentStride * (newShardCount + 1);
@@ -304,9 +312,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const previousHighestBackfilled =
 			this.shardingState?.highestBackfilledGenCount ?? parentLocalGenCountBeforeShard;
 		this.shardingState = {
-			totalShards: newTotalShards,
+			stride: newTotalShards,
 			shardOffset: currentOffset, // Parent keeps its offset
-			activeShardCount: currentActiveCount + newShardCount,
+			activeChildCount: currentActiveCount + newShardCount,
 			// Preserve the highest backfilled genCount from previous sharding, or use current localGenCount if first shard
 			highestBackfilledGenCount: previousHighestBackfilled,
 		};
@@ -346,7 +354,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * - Specified sharding state
 	 */
 	private createChildShard(
-		totalShards: number,
+		stride: number,
 		shardOffset: number,
 		parentLocalGenCountBeforeShard: number,
 	): SerializedIdCompressorWithOngoingSession {
@@ -365,14 +373,14 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		// Set child's sharding state
 		this.shardingState = {
-			totalShards,
+			stride,
 			shardOffset,
-			activeShardCount: 0, // Child has no children initially
+			activeChildCount: 0, // Child has no children initially
 			// Inherit parent's highest backfilled genCount to avoid re-backfilling
 			highestBackfilledGenCount: parentHighestBackfilled,
 		};
-		const completedCycles = Math.floor(parentLocalGenCountBeforeShard / totalShards);
-		const idsInIncompleteCycle = parentLocalGenCountBeforeShard % totalShards;
+		const completedCycles = Math.floor(parentLocalGenCountBeforeShard / stride);
+		const idsInIncompleteCycle = parentLocalGenCountBeforeShard % stride;
 		const childLocalGenCount = completedCycles + (shardOffset < idsInIncompleteCycle ? 1 : 0);
 
 		// Temporarily set to child's localGenCount for serialization
@@ -404,12 +412,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (this.shardingState === undefined) {
 			throw new Error("Must be in sharding mode");
 		}
-		if (this.shardingState.activeShardCount <= 0) {
+		if (this.shardingState.activeChildCount <= 0) {
 			throw new Error("No active shards to unshard");
 		}
 
 		// Calculate the highest genCount that needs to be covered by the child's generation
-		const highestGenCount = shardId.strideFillCount * this.shardingState.totalShards;
+		const highestGenCount = shardId.strideFillCount * this.shardingState.stride;
 
 		// Backfill normalizer for any genCounts not yet covered
 		this.backfillNormalizerToGenCount(highestGenCount);
@@ -418,10 +426,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		this.localGenCount = Math.max(this.localGenCount, highestGenCount);
 
 		// Decrement active shard counter
-		this.shardingState.activeShardCount--;
+		this.shardingState.activeChildCount--;
 
 		// Exit sharding mode if all shards have been returned
-		if (this.shardingState.activeShardCount === 0) {
+		if (this.shardingState.activeChildCount === 0) {
 			this.shardingState = undefined;
 			// Future generateCompressedId() calls will check for eager finals again
 		}
@@ -482,18 +490,18 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private generateNextLocalIdWithStride(): LocalCompressedId {
 		assert(this.shardingState !== undefined, "Must be in sharding mode");
 
-		const { totalShards, shardOffset } = this.shardingState;
+		const { stride, shardOffset } = this.shardingState;
 
 		// Calculate the genCount for the ID we're about to generate
 		// Formula: offset + 1 + (count * stride)
 		// Example: offset=0, stride=3, count=0 → genCount=1 (ID -1)
 		//          offset=1, stride=3, count=0 → genCount=2 (ID -2)
-		const genCount = shardOffset + 1 + this.localGenCount * totalShards;
+		const genCount = shardOffset + 1 + this.localGenCount * stride;
 
 		// Backfill normalizer with ALL IDs in this stride cycle
 		// This ensures the normalizer knows about IDs generated by other shards in this cycle
 		// Example: stride=3, count=0 → add range [1, 3] covering genCounts 1-3 (IDs -1,-2,-3)
-		const cycleEndGenCount = (this.localGenCount + 1) * totalShards;
+		const cycleEndGenCount = (this.localGenCount + 1) * stride;
 		this.backfillNormalizerToGenCount(cycleEndGenCount);
 
 		this.localGenCount++;
@@ -855,7 +863,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				? this.shardingState === undefined
 					? 1 // just the boolean indicating no sharding state
 					: 1 + // has sharding state boolean
-						4 // totalShards, shardOffset, activeShardCount, highestBackfilledGenCount
+						4 // stride, shardOffset, activeChildCount, highestBackfilledGenCount
 				: 0;
 		const localStateSize = hasLocalState
 			? 1 + // generated ID count
@@ -909,9 +917,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			if (this.writeVersion >= SerializationVersion.V3) {
 				index = writeBoolean(serializedFloat, index, this.shardingState !== undefined);
 				if (this.shardingState !== undefined) {
-					index = writeNumber(serializedFloat, index, this.shardingState.totalShards);
+					index = writeNumber(serializedFloat, index, this.shardingState.stride);
 					index = writeNumber(serializedFloat, index, this.shardingState.shardOffset);
-					index = writeNumber(serializedFloat, index, this.shardingState.activeShardCount);
+					index = writeNumber(serializedFloat, index, this.shardingState.activeChildCount);
 					index = writeNumber(
 						serializedFloat,
 						index,
@@ -936,14 +944,14 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		params:
 			| {
 					serialized: SerializedIdCompressorWithOngoingSession;
-					writeVersion: number;
+					writeVersion: SerializationVersion;
 					logger?: ITelemetryLoggerExt | undefined;
 					newSessionId?: never;
 			  }
 			| {
 					serialized: SerializedIdCompressorWithNoSession;
 					newSessionId: SessionId;
-					writeVersion: number;
+					writeVersion: SerializationVersion;
 					logger?: ITelemetryLoggerExt | undefined;
 			  },
 	): IdCompressor {
@@ -979,7 +987,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		index: Index,
 		sessionId: SessionId | undefined,
 		logger: ITelemetryLoggerExt | undefined,
-		version: number,
+		version: SerializationVersion,
 	): IdCompressor {
 		const hasLocalState = readBoolean(index);
 		const sessionCount = readNumber(index);
@@ -1036,9 +1044,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				const hasShardingState = readBoolean(index);
 				if (hasShardingState) {
 					compressor.shardingState = {
-						totalShards: readNumber(index),
+						stride: readNumber(index),
 						shardOffset: readNumber(index),
-						activeShardCount: readNumber(index),
+						activeChildCount: readNumber(index),
 						highestBackfilledGenCount: readNumber(index),
 					};
 				}
@@ -1059,7 +1067,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		index: Index,
 		sessionId: SessionId | undefined,
 		logger: ITelemetryLoggerExt | undefined,
-		writeVersion: number,
+		writeVersion: SerializationVersion,
 	): IdCompressor {
 		return IdCompressor.deserializeCommon(index, sessionId, logger, writeVersion);
 	}
@@ -1071,7 +1079,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		index: Index,
 		sessionId: SessionId | undefined,
 		logger: ITelemetryLoggerExt | undefined,
-		writeVersion: number,
+		writeVersion: SerializationVersion,
 	): IdCompressor {
 		return IdCompressor.deserializeCommon(index, sessionId, logger, writeVersion);
 	}
@@ -1101,7 +1109,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
  * @legacy @beta
  */
 export function createIdCompressor(
-	writeVersion: number,
+	writeVersion: SerializationVersion,
 	logger?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore;
 /**
@@ -1113,22 +1121,22 @@ export function createIdCompressor(
  */
 export function createIdCompressor(
 	sessionId: SessionId,
-	writeVersion: number,
+	writeVersion: SerializationVersion,
 	logger?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore;
 export function createIdCompressor(
-	sessionIdOrDocumentVersion: SessionId | number,
-	writeVersionOrLogger?: number | ITelemetryBaseLogger,
+	sessionIdOrDocumentVersion: SessionId | SerializationVersion,
+	writeVersionOrLogger?: SerializationVersion | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore {
 	let localSessionId: SessionId;
-	let writeVersion: number;
+	let writeVersion: SerializationVersion;
 	let logger: ITelemetryBaseLogger | undefined;
 
 	if (typeof sessionIdOrDocumentVersion === "string") {
 		// Called with sessionId, writeVersion, logger?
 		localSessionId = sessionIdOrDocumentVersion;
-		writeVersion = writeVersionOrLogger as number;
+		writeVersion = writeVersionOrLogger as SerializationVersion;
 		logger = loggerOrUndefined;
 	} else {
 		// Called with writeVersion, logger?
@@ -1154,7 +1162,7 @@ export function createIdCompressor(
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithOngoingSession,
-	writeVersion: number,
+	writeVersion: SerializationVersion,
 	logger?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore;
 /**
@@ -1168,13 +1176,13 @@ export function deserializeIdCompressor(
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithNoSession,
 	newSessionId: SessionId,
-	writeVersion: number,
+	writeVersion: SerializationVersion,
 	logger?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore;
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressor | SerializedIdCompressorWithNoSession,
-	sessionIdOrDocumentVersion: SessionId | number,
-	writeVersionOrLogger?: number | ITelemetryLoggerExt,
+	sessionIdOrDocumentVersion: SessionId | SerializationVersion,
+	writeVersionOrLogger?: SerializationVersion | ITelemetryLoggerExt,
 	loggerOrUndefined?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore {
 	if (typeof sessionIdOrDocumentVersion === "string") {
@@ -1183,7 +1191,7 @@ export function deserializeIdCompressor(
 			serialized: serialized as SerializedIdCompressorWithNoSession,
 			logger: loggerOrUndefined,
 			newSessionId: sessionIdOrDocumentVersion,
-			writeVersion: writeVersionOrLogger as number,
+			writeVersion: writeVersionOrLogger as SerializationVersion,
 		});
 	}
 
