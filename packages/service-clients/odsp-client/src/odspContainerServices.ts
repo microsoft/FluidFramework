@@ -74,7 +74,7 @@ export class OdspContainerServices implements IOdspContainerServices, IDisposabl
 		return this.#container.containerMetadata.sensitivityLabelsInfo;
 	}
 
-	public lookupTemporaryBlobURL(handle: IFluidHandle): string | undefined {
+	public lookupTemporaryBlobUrl(handle: IFluidHandle): string | undefined {
 		return this.lookupBlobUrl?.(handle);
 	}
 }

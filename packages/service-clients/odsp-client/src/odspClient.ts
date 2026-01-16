@@ -283,6 +283,7 @@ export class OdspClient {
 			return undefined;
 		}
 
+		// ODSP exposes the actual blob/file content stream by appending `/content` to the attachment GET URL.
 		return `${attachmentGETUrl}/${encodeURIComponent(storageId)}/content`;
 	}
 
@@ -299,12 +300,19 @@ export class OdspClient {
 			return (entryPoint as IMaybeFluidObjectWithContainerRuntime).IStaticEntryPoint
 				.extensionStore;
 		}
+
+		return undefined;
 	}
 }
 
 /**
- * Access the container runtime from the entry point.
- * fluid-static guarantees this exists on the container's entry point via IStaticEntryPoint.
+ * Type guard interface to access the container runtime from the entry point.
+ *
+ * @remarks
+ * The "Maybe" prefix indicates this interface represents a type guard pattern where the property
+ * may or may not exist at runtime. fluid-static guarantees this exists on the container's entry
+ * point via IStaticEntryPoint, but a runtime check is performed in `getContainerRuntime` to handle
+ * cases where the entry point structure differs.
  */
 interface IMaybeFluidObjectWithContainerRuntime extends FluidObject {
 	IStaticEntryPoint: {
