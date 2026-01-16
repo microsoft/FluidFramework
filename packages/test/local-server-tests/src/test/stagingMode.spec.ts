@@ -18,9 +18,7 @@ import {
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type { ContainerAlpha } from "@fluidframework/container-loader/internal";
-import {
-	loadContainerRuntimeAlpha,
-} from "@fluidframework/container-runtime/internal";
+import { loadContainerRuntimeAlpha } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type {
 	ConfigTypes,

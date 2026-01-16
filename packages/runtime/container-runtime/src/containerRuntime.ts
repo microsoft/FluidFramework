@@ -838,6 +838,7 @@ export async function loadContainerRuntimeAlpha(params: LoadContainerRuntimePara
 	return ContainerRuntime.loadRuntime2({
 		...params,
 		registry: new FluidDataStoreRegistry(params.registryEntries),
+		enableStagingModeOnPendingState: true,
 	});
 }
 
@@ -941,6 +942,12 @@ export class ContainerRuntime
 			 * {@link LoadContainerRuntimeParams.runtimeOptions}, except with additional internal only options.
 			 */
 			runtimeOptions?: IContainerRuntimeOptionsInternal;
+			/**
+			 * If true, automatically enter staging mode when loading with pending local state.
+			 * This allows the caller to review and commit/discard pending changes via stageControls.
+			 * @defaultValue false
+			 */
+			enableStagingModeOnPendingState?: boolean;
 		},
 	): Promise<{ runtime: ContainerRuntime; stageControls: StageControlsInternal | undefined }> {
 		const {
@@ -953,6 +960,7 @@ export class ContainerRuntime
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
 			minVersionForCollab = defaultMinVersionForCollab,
+			enableStagingModeOnPendingState = false,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -1277,8 +1285,14 @@ export class ContainerRuntime
 			recentBatchInfo,
 		);
 
+		// Enter staging mode if enabled and we have pending local state (and not detached)
+		// This allows the caller to review and commit or discard the pending changes
 		const stageControls =
-			context.pendingLocalState === undefined ? undefined : runtime.enterStagingMode();
+			!enableStagingModeOnPendingState ||
+			context.pendingLocalState === undefined ||
+			context.attachState === AttachState.Detached
+				? undefined
+				: runtime.enterStagingMode();
 
 		runtime.sharePendingBlobs();
 
