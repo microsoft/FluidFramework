@@ -17,21 +17,22 @@ const config: Linter.Config[] = [
 			"unicorn/filename-case": [
 				"error",
 				{
-					"cases": {
-						"camelCase": true,
-						"pascalCase": true,
+					cases: {
+						camelCase: true,
+						pascalCase: true,
 					},
-					"ignore": ["fluid-runner", "sample-executable"],
+					ignore: ["fluid-runner", "sample-executable"],
 				},
 			],
+
+			// #region TODO: remove these once this config has been updated to use our "recommended" base instead of our deprecated minimal one.
 			"@typescript-eslint/consistent-type-imports": [
 				"error",
 				{
-					"fixStyle": "inline-type-imports",
+					fixStyle: "inline-type-imports",
 				},
 			],
 			"@typescript-eslint/no-import-type-side-effects": "error",
-
 			// #endregion
 		},
 	},
@@ -43,7 +44,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/consistent-type-exports": [
 				"error",
 				{
-					"fixMixedExportsWithInlineTypeSpecifier": true,
+					fixMixedExportsWithInlineTypeSpecifier: true,
 				},
 			],
 

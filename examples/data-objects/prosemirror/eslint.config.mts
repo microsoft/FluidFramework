@@ -11,6 +11,9 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	...sharedConfig,
 	{
+		ignores: ["*.spec.ts"],
+	},
+	{
 		rules: {
 			"@typescript-eslint/no-use-before-define": "off",
 			"@typescript-eslint/restrict-plus-operands": "off",

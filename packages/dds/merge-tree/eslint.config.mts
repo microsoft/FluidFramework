@@ -15,7 +15,8 @@ const config: Linter.Config[] = [
 			"keyword-spacing": "off", // Off because it conflicts with typescript-formatter
 			"no-case-declarations": "off",
 			"prefer-arrow/prefer-arrow-functions": "off",
-			"unicorn/no-useless-spread": "off", // Off because it generates incorrect code in autofixes and cannot distinguish useful copies of arrays from useless ones
+			// Off because it generates incorrect code in autofixes and cannot distinguish useful copies of arrays from useless ones
+			"unicorn/no-useless-spread": "off",
 		},
 	},
 ];

@@ -12,6 +12,7 @@ const config: Linter.Config[] = [
 		rules: {
 			// TODO: Enabling this may require breaking changes.
 			"@typescript-eslint/consistent-indexed-object-style": "off",
+
 			// Disabled because the rule is crashing on this package - AB#51780
 			"@typescript-eslint/unbound-method": "off",
 		},
@@ -24,7 +25,7 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": [
 				"error",
 				{
-					"allow": ["assert"],
+					allow: ["assert"],
 				},
 			],
 		},

@@ -14,6 +14,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/consistent-indexed-object-style": "off",
 		},
 	},
+
 	// Rules only for test files
 	{
 		files: ["*.spec.ts", "src/test/**"],
@@ -21,7 +22,7 @@ const config: Linter.Config[] = [
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": ["@fluidframework/*/internal{,/**}"],
+					allow: ["@fluidframework/*/internal{,/**}"],
 				},
 			],
 		},

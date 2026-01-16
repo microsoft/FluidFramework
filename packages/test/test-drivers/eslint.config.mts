@@ -11,6 +11,7 @@ const config: Linter.Config[] = [
 	{
 		rules: {
 			"import-x/no-nodejs-modules": "off",
+
 			// Disabled because the rule is crashing on this package - AB#51780
 			"@typescript-eslint/unbound-method": "off",
 		},
