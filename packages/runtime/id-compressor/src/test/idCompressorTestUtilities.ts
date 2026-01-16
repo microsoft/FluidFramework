@@ -114,7 +114,7 @@ export class CompressorFactory {
 	): IdCompressor {
 		const compressor = createIdCompressor(
 			sessionId,
-			SerializationVersion.V2,
+			SerializationVersion.V3,
 			logger,
 		) as IdCompressor;
 		modifyClusterSize(compressor, clusterCapacity);
@@ -734,7 +734,10 @@ export function roundtrip(
 	const capacity: number = getClusterSize(compressor);
 	if (withSession) {
 		const serialized = compressor.serialize(withSession);
-		const roundtripped = IdCompressor.deserialize({ serialized });
+		const roundtripped = IdCompressor.deserialize({
+			serialized,
+			documentVersion: SerializationVersion.V3,
+		});
 		modifyClusterSize(roundtripped, capacity);
 		return [serialized, roundtripped];
 	} else {
@@ -742,6 +745,7 @@ export function roundtrip(
 		const roundtripped = IdCompressor.deserialize({
 			serialized: nonLocalSerialized,
 			newSessionId: createSessionId(),
+			documentVersion: SerializationVersion.V3,
 		});
 		modifyClusterSize(roundtripped, capacity);
 		return [nonLocalSerialized, roundtripped];
@@ -1089,7 +1093,7 @@ export function createAlwaysFinalizedIdCompressor(
 	// This can be fixed in the future if needed.
 	const compressor = createIdCompressor(
 		random.uuid4() as SessionId,
-		SerializationVersion.V2,
+		SerializationVersion.V3,
 		logger,
 	);
 	// Permanently put the compressor in a ghost session

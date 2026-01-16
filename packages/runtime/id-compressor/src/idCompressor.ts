@@ -936,16 +936,18 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		params:
 			| {
 					serialized: SerializedIdCompressorWithOngoingSession;
+					documentVersion: number;
 					logger?: ITelemetryLoggerExt | undefined;
 					newSessionId?: never;
 			  }
 			| {
 					serialized: SerializedIdCompressorWithNoSession;
 					newSessionId: SessionId;
+					documentVersion: number;
 					logger?: ITelemetryLoggerExt | undefined;
 			  },
 	): IdCompressor {
-		const { serialized, newSessionId, logger } = params;
+		const { serialized, newSessionId, logger, documentVersion } = params;
 		const buffer = stringToBuffer(serialized, "base64");
 		const index: Index = {
 			index: 0,
@@ -958,10 +960,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				throw new Error("IdCompressor version 1.0 is no longer supported.");
 			}
 			case 2: {
-				return IdCompressor.deserialize2_0(index, newSessionId, logger);
+				return IdCompressor.deserialize2_0(index, newSessionId, logger, documentVersion);
 			}
 			case 3: {
-				return IdCompressor.deserialize3_0(index, newSessionId, logger);
+				return IdCompressor.deserialize3_0(index, newSessionId, logger, documentVersion);
 			}
 			default: {
 				throw new Error("Unknown IdCompressor serialized version.");
@@ -1057,8 +1059,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		index: Index,
 		sessionId: SessionId | undefined,
 		logger: ITelemetryLoggerExt | undefined,
+		documentVersion: number,
 	): IdCompressor {
-		return IdCompressor.deserializeCommon(index, sessionId, logger, 2);
+		return IdCompressor.deserializeCommon(index, sessionId, logger, documentVersion);
 	}
 
 	/**
@@ -1068,8 +1071,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		index: Index,
 		sessionId: SessionId | undefined,
 		logger: ITelemetryLoggerExt | undefined,
+		documentVersion: number,
 	): IdCompressor {
-		return IdCompressor.deserializeCommon(index, sessionId, logger, 3);
+		return IdCompressor.deserializeCommon(index, sessionId, logger, documentVersion);
 	}
 
 	public equals(other: IdCompressor, includeLocalState: boolean): boolean {
@@ -1143,40 +1147,50 @@ export function createIdCompressor(
 
 /**
  * Deserializes the supplied state into an ID compressor.
+ * @param serialized - The serialized compressor state with an ongoing session.
+ * @param documentVersion - The document version to use for the deserialized compressor.
+ * @param logger - Optional telemetry logger.
  * @legacy @beta
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithOngoingSession,
+	documentVersion: number,
 	logger?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore;
 /**
  * Deserializes the supplied state into an ID compressor.
+ * @param serialized - The serialized compressor state without a session.
+ * @param newSessionId - The session ID to use for the deserialized compressor.
+ * @param documentVersion - The document version to use for the deserialized compressor.
+ * @param logger - Optional telemetry logger.
  * @legacy @beta
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithNoSession,
 	newSessionId: SessionId,
+	documentVersion: number,
 	logger?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore;
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressor | SerializedIdCompressorWithNoSession,
-	sessionIdOrLogger: SessionId | ITelemetryLoggerExt | undefined,
+	sessionIdOrDocumentVersion: SessionId | number,
+	documentVersionOrLogger?: number | ITelemetryLoggerExt,
 	loggerOrUndefined?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore {
-	if (typeof sessionIdOrLogger === "string") {
+	if (typeof sessionIdOrDocumentVersion === "string") {
+		// Called with (serialized, sessionId, documentVersion, logger?)
 		return IdCompressor.deserialize({
 			serialized: serialized as SerializedIdCompressorWithNoSession,
 			logger: loggerOrUndefined,
-			newSessionId: sessionIdOrLogger,
+			newSessionId: sessionIdOrDocumentVersion,
+			documentVersion: documentVersionOrLogger as number,
 		});
 	}
 
-	assert(
-		loggerOrUndefined === undefined,
-		0xc2d /* logger would be in sessionIdOrLogger in this codepath */,
-	);
+	// Called with (serialized, documentVersion, logger?)
 	return IdCompressor.deserialize({
 		serialized: serialized as SerializedIdCompressorWithOngoingSession,
-		logger: sessionIdOrLogger,
+		logger: documentVersionOrLogger as ITelemetryLoggerExt | undefined,
+		documentVersion: sessionIdOrDocumentVersion,
 	});
 }

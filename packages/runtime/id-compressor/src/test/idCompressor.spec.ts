@@ -922,7 +922,7 @@ describe("IdCompressor", () => {
 
 		it("correctly passes logger when no session specified", () => {
 			const mockLogger = new MockLogger();
-			const compressor = createIdCompressor(SerializationVersion.V2, mockLogger);
+			const compressor = createIdCompressor(SerializationVersion.V3, mockLogger);
 			compressor.generateCompressedId();
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			mockLogger.assertMatchAny([
@@ -951,6 +951,7 @@ describe("IdCompressor", () => {
 			const [_, serializedWithSession] = expectSerializes(compressor1);
 			const compressorResumed = IdCompressor.deserialize({
 				serialized: serializedWithSession,
+				documentVersion: SerializationVersion.V3,
 			});
 			compressorResumed.generateCompressedId();
 			const range2 = compressorResumed.takeNextCreationRange();
@@ -977,7 +978,7 @@ describe("IdCompressor", () => {
 				"base64",
 			) as SerializedIdCompressorWithNoSession;
 			assert.throws(
-				() => deserializeIdCompressor(docString1, createSessionId()),
+				() => deserializeIdCompressor(docString1, createSessionId(), SerializationVersion.V3),
 				(e: Error) => e.message === "IdCompressor version 1.0 is no longer supported.",
 			);
 		});
@@ -990,7 +991,7 @@ describe("IdCompressor", () => {
 				"base64",
 			) as SerializedIdCompressorWithOngoingSession;
 			assert.throws(
-				() => deserializeIdCompressor(serializedWithUnknownVersion),
+				() => deserializeIdCompressor(serializedWithUnknownVersion, SerializationVersion.V3),
 				(e: Error) => e.message === "Unknown IdCompressor serialized version.",
 			);
 		});
@@ -1006,6 +1007,7 @@ describe("IdCompressor", () => {
 			// Resume with logger and ensure telemetry emits on serialize
 			const resumed = deserializeIdCompressor(
 				serializedWithSession,
+				SerializationVersion.V3,
 				createChildLogger({ logger: mockLogger }),
 			);
 			resumed.serialize(false);
@@ -1025,6 +1027,7 @@ describe("IdCompressor", () => {
 			const resumed = deserializeIdCompressor(
 				serializedNoSession,
 				newSessionId,
+				SerializationVersion.V3,
 				createChildLogger({ logger: mockLogger }),
 			);
 			resumed.serialize(false);
@@ -1040,6 +1043,7 @@ describe("IdCompressor", () => {
 			const serializedWithSession = compressor.serialize(true);
 			const resumed = IdCompressor.deserialize({
 				serialized: serializedWithSession,
+				documentVersion: SerializationVersion.V3,
 				logger: createChildLogger({ logger: mockLogger }),
 			});
 			resumed.serialize(false);
@@ -1058,6 +1062,7 @@ describe("IdCompressor", () => {
 			const resumed = IdCompressor.deserialize({
 				serialized: serializedNoSession,
 				newSessionId,
+				documentVersion: SerializationVersion.V3,
 				logger: createChildLogger({ logger: mockLogger }),
 			});
 			resumed.serialize(false);
@@ -1343,6 +1348,7 @@ describe("IdCompressor", () => {
 							IdCompressor.deserialize({
 								serialized: serializedWithoutLocalState,
 								newSessionId: sessionIds.get(Client.Client2),
+								documentVersion: SerializationVersion.V3,
 							}),
 						(e: Error) => e.message === "Cannot resume existing session.",
 					);

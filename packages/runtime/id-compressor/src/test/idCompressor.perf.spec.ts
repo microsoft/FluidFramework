@@ -9,7 +9,7 @@ import { take } from "@fluid-private/stochastic-test-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { IdCompressor } from "../idCompressor.js";
+import { IdCompressor, SerializationVersion } from "../idCompressor.js";
 import type {
 	IdCreationRange,
 	OpSpaceCompressedId,
@@ -380,6 +380,7 @@ describe("IdCompressor Perf", () => {
 				IdCompressor.deserialize({
 					serialized,
 					newSessionId: overrideRemoteSessionId,
+					documentVersion: SerializationVersion.V3,
 				});
 			},
 		});

@@ -21,10 +21,10 @@ export function createIdCompressor(sessionId: SessionId, documentVersion: number
 export function createSessionId(): SessionId;
 
 // @beta @legacy
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, documentVersion: number, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
 
 // @beta @legacy
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, documentVersion: number, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
 
 // @beta @legacy
 export interface IdCreationRange {
