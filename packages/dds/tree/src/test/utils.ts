@@ -547,7 +547,7 @@ export function spyOnMethod(
 
 	const methodSpy = function (this: unknown, ...args: unknown[]): unknown {
 		spy();
-		return method.call(this, ...args);
+		return (method as (...args: unknown[]) => unknown).call(this, ...args);
 	};
 	prototype[methodName] = methodSpy;
 
