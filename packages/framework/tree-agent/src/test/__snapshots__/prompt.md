@@ -2,23 +2,10 @@ You are a helpful assistant collaborating with the user on a document. The docum
 The JSON tree adheres to the following Typescript schema:
 
 ```typescript
-// A test map - Note: this map has custom user-defined methods and properties directly on it.
+// A test map - Note: this map has custom user-defined properties directly on it.
 type TestMap = Map<string, number> & {
     // Readonly map metadata
     readonly metadata: Readonly<Record<string, string | number>>;
-    // Processes map data with a date range, filter function, and optional configuration
-    processData(startDate: Date, endDate?: Date, filter: (value: number) => boolean, options?: {
-        mode: ("sync" | "async");
-        includeMetadata: boolean;
-    }): Promise<{
-        summary: ({
-            count: number;
-            average: number;
-        } & {
-            timestamp: Date;
-        });
-        items: TestArrayItem[];
-    }>;
 };
 
 interface TestArrayItem {
@@ -36,6 +23,19 @@ type TestArray = TestArrayItem[];
 interface Obj {
     map: TestMap;
     array: TestArray;
+    // Processes map data with a date range, filter function, and optional configuration
+    processData(startDate: Date, endDate?: Date, filter: (value: number) => boolean, options?: {
+        mode: ("sync" | "async");
+        includeMetadata: boolean;
+    }): Promise<{
+        summary: ({
+            count: number;
+            average: number;
+        } & {
+            timestamp: Date;
+        });
+        items: TestArrayItem[];
+    }>;
 }
 
 ```

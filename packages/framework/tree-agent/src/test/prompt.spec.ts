@@ -246,45 +246,6 @@ describe("Prompt snapshot", () => {
 		class TestMap extends sf.mapAlpha("TestMap", sf.number, {
 			metadata: { description: "A test map" },
 		}) {
-			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-				methods.expose(
-					TestMap,
-					"processData",
-					buildFunc(
-						{
-							returns: tf.promise(
-								tf.object({
-									summary: tf.intersection([
-										tf.object({
-											count: tf.number(),
-											average: tf.number(),
-										}),
-										tf.object({
-											timestamp: tf.date(),
-										}),
-									]),
-									items: tf.array(tf.instanceOf(NumberValue)),
-								}),
-							),
-							description:
-								"Processes map data with a date range, filter function, and optional configuration",
-						},
-						["startDate", tf.date()],
-						["endDate", tf.optional(tf.date())],
-						["filter", tf.function([["value", tf.number()]], tf.boolean())],
-						[
-							"options",
-							tf.optional(
-								tf.object({
-									mode: tf.union([tf.literal("sync"), tf.literal("async")]),
-									includeMetadata: tf.boolean(),
-								}),
-							),
-						],
-					),
-				);
-			}
-
 			public static [exposePropertiesSymbol](properties: ExposedProperties): void {
 				properties.exposeProperty(TestMap, "metadata", {
 					schema: tf.readonly(tf.record(tf.string(), tf.union([tf.string(), tf.number()]))),
@@ -294,21 +255,6 @@ describe("Prompt snapshot", () => {
 			}
 
 			public readonly metadata: Record<string, string | number> = { version: 1 };
-
-			public async processData(
-				_startDate: Date,
-				_endDate?: Date,
-				_filter?: (value: number) => boolean,
-				_options?: { mode: "sync" | "async"; includeMetadata: boolean },
-			): Promise<{
-				summary: { count: number; average: number; timestamp: Date };
-				items: NumberValue[];
-			}> {
-				return {
-					summary: { count: this.size, average: 0, timestamp: new Date() },
-					items: [],
-				};
-			}
 		}
 		class NumberValue extends sf.object("TestArrayItem", { value: sf.number }) {
 			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
@@ -351,7 +297,61 @@ describe("Prompt snapshot", () => {
 		class Obj extends sf.object("Obj", {
 			map: TestMap,
 			array: TestArray,
-		}) {}
+		}) {
+			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
+				methods.expose(
+					Obj,
+					"processData",
+					buildFunc(
+						{
+							returns: tf.promise(
+								tf.object({
+									summary: tf.intersection([
+										tf.object({
+											count: tf.number(),
+											average: tf.number(),
+										}),
+										tf.object({
+											timestamp: tf.date(),
+										}),
+									]),
+									items: tf.array(tf.instanceOf(NumberValue)),
+								}),
+							),
+							description:
+								"Processes map data with a date range, filter function, and optional configuration",
+						},
+						["startDate", tf.date()],
+						["endDate", tf.optional(tf.date())],
+						["filter", tf.function([["value", tf.number()]], tf.boolean())],
+						[
+							"options",
+							tf.optional(
+								tf.object({
+									mode: tf.union([tf.literal("sync"), tf.literal("async")]),
+									includeMetadata: tf.boolean(),
+								}),
+							),
+						],
+					),
+				);
+			}
+
+			public async processData(
+				_startDate: Date,
+				_endDate?: Date,
+				_filter?: (value: number) => boolean,
+				_options?: { mode: "sync" | "async"; includeMetadata: boolean },
+			): Promise<{
+				summary: { count: number; average: number; timestamp: Date };
+				items: NumberValue[];
+			}> {
+				return {
+					summary: { count: 0, average: 0, timestamp: new Date() },
+					items: [],
+				};
+			}
+		}
 
 		const view = getView(Obj, {
 			map: { a: 1 },
