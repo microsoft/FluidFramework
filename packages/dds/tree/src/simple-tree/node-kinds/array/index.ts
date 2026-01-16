@@ -9,6 +9,8 @@ export {
 	IterableTreeArrayContent,
 	TreeArrayNode,
 	type ReadonlyArrayNode,
+	type ArrayNodeAnchor,
+	createArrayInsertionAnchor,
 } from "./arrayNode.js";
 export {
 	type ArrayNodeCustomizableSchema,

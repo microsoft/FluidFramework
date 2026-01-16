@@ -92,6 +92,12 @@ type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boole
 Kind
 ] extends [FieldKind.Required] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
 
+// @alpha
+export interface ArrayNodeAnchor {
+    // (undocumented)
+    get index(): number;
+}
+
 // @alpha @sealed @system
 export interface ArrayNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Array, TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleArrayNodeSchema<SchemaType.View, TCustomMetadata> {
 }
@@ -188,6 +194,9 @@ export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): Shared
 
 // @alpha
 export const contentSchemaSymbol: unique symbol;
+
+// @alpha
+export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: number): ArrayNodeAnchor;
 
 // @alpha
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;

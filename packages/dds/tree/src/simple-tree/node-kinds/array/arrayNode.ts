@@ -1388,3 +1388,50 @@ function shallowCompatibilityTest(
 
 	return CompatibilityLevel.None;
 }
+
+/**
+ * A location in a {@link (TreeArrayNode:interface)}.
+ * @remarks
+ * Tracks a location even as the array is mutated.
+ * How this is adjusted for edits depends on the specific anchor being used.
+ * @alpha
+ */
+export interface ArrayNodeAnchor {
+	get index(): number;
+}
+
+/**
+ * Create an {@link ArrayNodeAnchor} tracking any future index of the child current at the provided index.
+ *
+ * @param node - The array node to anchor into.
+ * @param currentIndex - The index to track.
+ * @remarks
+ * This anchor will track the item currently at the provided index (or possible the end of the array if the index is after the last item).
+ * How exactly it behaves when that child is removed from the array is subject to change,
+ * but a this will always report a valid index to insert content at (which can be the index after the last item in the array).
+ *
+ * This is intended to track a location like might be used for an insertion point in a text editor: future changes to its details should
+ * make it behave better for such uses.
+ * @privateRemarks
+ * When stabilized, this should probably become a method on {@link (TreeArrayNode:interface)}.
+ * Future versions of this should use rebaser / changeset logic to do a better job of tracking a location across removals or reinsertion.
+ * @alpha
+ */
+export function createArrayInsertionAnchor(
+	node: TreeArrayNode,
+	currentIndex: number,
+): ArrayNodeAnchor {
+	const field = getInnerNode(node).getBoxed(EmptyKey);
+	const child = field.boxedAt(currentIndex);
+	return {
+		get index() {
+			if (child === undefined) {
+				return field.length;
+			}
+			if (child.parentField.parent !== field) {
+				return field.length;
+			}
+			return child.parentField.index;
+		},
+	};
+}

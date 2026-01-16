@@ -266,6 +266,8 @@ export {
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
 	type TreeRecordNode,
+	type ArrayNodeAnchor,
+	createArrayInsertionAnchor,
 } from "./node-kinds/index.js";
 export {
 	unhydratedFlexTreeFromInsertable,
