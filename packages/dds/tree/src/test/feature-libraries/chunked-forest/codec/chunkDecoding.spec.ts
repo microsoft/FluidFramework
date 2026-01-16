@@ -8,7 +8,6 @@ import { strict as assert } from "node:assert";
 import { compareArrays } from "@fluidframework/core-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import-x/no-internal-modules
 import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";

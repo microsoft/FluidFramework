@@ -6,7 +6,6 @@
 import type { TreeNode } from "./treeNode.js";
 import type { NodeKind, TreeNodeSchemaClass } from "./treeNodeSchema.js";
 // Used by doc links:
-// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 
 /**
  * The type of a {@link TreeNode}.

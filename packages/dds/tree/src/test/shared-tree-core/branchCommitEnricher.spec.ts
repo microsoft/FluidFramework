@@ -5,140 +5,105 @@
 
 import { strict as assert } from "node:assert";
 
-import { CommitKind, type GraphCommit } from "../../core/index.js";
+import type { GraphCommit } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BranchCommitEnricher } from "../../shared-tree-core/branchCommitEnricher.js";
-import { TestChange, TestChangeRebaser } from "../testChange.js";
-import { mintRevisionTag } from "../utils.js";
+import { testIdCompressor } from "../utils.js";
 
-import { TestChangeEnricher } from "./utils.js";
+import {
+	MockChangeEnricher,
+	type MockEnrichableChange,
+} from "./defaultResubmitMachine.spec.js";
 
-const rebaser = new TestChangeRebaser();
-const enricher = new TestChangeEnricher();
-const change = { change: TestChange.emptyChange, revision: undefined };
+const revisionRoot = testIdCompressor.generateCompressedId();
+const revision0 = testIdCompressor.generateCompressedId();
+const revision1 = testIdCompressor.generateCompressedId();
+const revision2 = testIdCompressor.generateCompressedId();
+const revision3 = testIdCompressor.generateCompressedId();
 
-function mintCommit(): GraphCommit<TestChange> {
-	const tag = mintRevisionTag();
-	const commit: GraphCommit<TestChange> = {
-		change: TestChange.mint([], tag as number),
-		revision: tag,
-	};
-	return commit;
-}
+const commit0: GraphCommit<MockEnrichableChange> = {
+	change: {
+		inputContext: revisionRoot,
+		outputContext: revision0,
+		updateCount: 0,
+	},
+	revision: revision0,
+};
 
-const actions = [
-	{
-		description: "noop",
-		action: (commitEnricher: BranchCommitEnricher<TestChange>) => {},
+const commit1: GraphCommit<MockEnrichableChange> = {
+	change: {
+		inputContext: revision0,
+		outputContext: revision1,
+		updateCount: 0,
 	},
-	{
-		description: "commit empty transaction",
-		action: (commitEnricher: BranchCommitEnricher<TestChange>) => {
-			commitEnricher.startTransaction();
-			commitEnricher.commitTransaction();
-		},
+	revision: revision1,
+	parent: commit0,
+};
+const commit2: GraphCommit<MockEnrichableChange> = {
+	change: {
+		inputContext: revision1,
+		outputContext: revision2,
+		updateCount: 0,
 	},
-	{
-		description: "abort empty transaction",
-		action: (commitEnricher: BranchCommitEnricher<TestChange>) => {
-			commitEnricher.startTransaction();
-			commitEnricher.abortTransaction();
-		},
+	revision: revision2,
+	parent: commit1,
+};
+const commit3: GraphCommit<MockEnrichableChange> = {
+	change: {
+		inputContext: revision2,
+		outputContext: revision3,
+		updateCount: 0,
 	},
-	{
-		description: "process 1 change (no enrich call)",
-		action: (commitEnricher: BranchCommitEnricher<TestChange>) => {
-			const commit = mintCommit();
-			commitEnricher.processChange({
-				type: "append",
-				change,
-				kind: CommitKind.Default,
-				newCommits: [commit],
-			});
-		},
-	},
-	{
-		description: "process 1 change (with enrich call)",
-		action: (commitEnricher: BranchCommitEnricher<TestChange>) => {
-			const commit = mintCommit();
-			commitEnricher.processChange({
-				type: "append",
-				change,
-				kind: CommitKind.Default,
-				newCommits: [commit],
-			});
-			const actual = commitEnricher.enrich(commit);
-			const expected = {
-				change: enricher.updateChangeEnrichments(commit.change, commit.revision),
-				revision: commit.revision,
-			};
-			assert.deepEqual(actual, expected);
-		},
-	},
-	{
-		description: "process transaction (no enrich call)",
-		action: (commitEnricher: BranchCommitEnricher<TestChange>) => {
-			const innerCommit = mintCommit();
-			const outerCommit = mintCommit();
-			commitEnricher.startTransaction();
-			commitEnricher.addTransactionCommits([innerCommit]);
-			commitEnricher.commitTransaction();
-			commitEnricher.processChange({
-				type: "append",
-				change,
-				kind: CommitKind.Default,
-				newCommits: [outerCommit],
-			});
-		},
-	},
-	{
-		description: "process transaction (with enrich call)",
-		action: (commitEnricher: BranchCommitEnricher<TestChange>) => {
-			const innerCommit = mintCommit();
-			const outerCommit = mintCommit();
-			commitEnricher.startTransaction();
-			commitEnricher.addTransactionCommits([innerCommit]);
-			commitEnricher.commitTransaction();
-			commitEnricher.processChange({
-				type: "append",
-				change,
-				kind: CommitKind.Default,
-				newCommits: [outerCommit],
-			});
-			const actual = commitEnricher.enrich(outerCommit);
-			const expected = {
-				change: enricher.updateChangeEnrichments(innerCommit.change, innerCommit.revision),
-				revision: outerCommit.revision,
-			};
-			assert.deepEqual(actual, expected);
-		},
-	},
-	{
-		description: "abort transaction",
-		action: (commitEnricher: BranchCommitEnricher<TestChange>) => {
-			const commit = mintCommit();
-			commitEnricher.startTransaction();
-			commitEnricher.addTransactionCommits([commit]);
-			commitEnricher.abortTransaction();
-		},
-	},
-];
+	revision: revision3,
+	parent: commit2,
+};
+
+const expectedEnriched1: MockEnrichableChange = {
+	...commit1.change,
+	updateCount: 1,
+};
+const expectedEnriched2: MockEnrichableChange = {
+	...commit2.change,
+	updateCount: 1,
+};
+const expectedEnriched3: MockEnrichableChange = {
+	...commit3.change,
+	updateCount: 1,
+};
 
 describe("BranchCommitEnricher", () => {
-	for (const { description: d1, action: a1 } of actions) {
-		describe(d1, () => {
-			for (const { description: d2, action: a2 } of actions) {
-				describe(d2, () => {
-					for (const { description: d3, action: a3 } of actions) {
-						it(d3, () => {
-							const commitEnricher = new BranchCommitEnricher<TestChange>(rebaser, enricher);
-							a1(commitEnricher);
-							a2(commitEnricher);
-							a3(commitEnricher);
-						});
-					}
-				});
-			}
-		});
-	}
+	it("Can enrich zero commits", () => {
+		const changeEnricher = new MockChangeEnricher();
+		const branchEnricher = new BranchCommitEnricher(changeEnricher);
+		branchEnricher.prepareChanges([]);
+		assert.equal(changeEnricher.calls, 0);
+		assert.equal(changeEnricher.enriched, 0);
+		assert.equal(changeEnricher.applied, 0);
+	});
+
+	it("Can enrich a single commit", () => {
+		const changeEnricher = new MockChangeEnricher();
+		const branchEnricher = new BranchCommitEnricher(changeEnricher);
+		branchEnricher.prepareChanges([commit1]);
+		const actualEnriched1 = branchEnricher.retrieveChange(commit1);
+		assert.deepEqual(actualEnriched1, expectedEnriched1);
+		assert.equal(changeEnricher.calls, 1);
+		assert.equal(changeEnricher.enriched, 1);
+		assert.equal(changeEnricher.applied, 1);
+	});
+
+	it("Can enrich multiple commits", () => {
+		const changeEnricher = new MockChangeEnricher();
+		const branchEnricher = new BranchCommitEnricher(changeEnricher);
+		branchEnricher.prepareChanges([commit1, commit2, commit3]);
+		const actualEnriched1 = branchEnricher.retrieveChange(commit1);
+		assert.deepEqual(actualEnriched1, expectedEnriched1);
+		const actualEnriched2 = branchEnricher.retrieveChange(commit2);
+		assert.deepEqual(actualEnriched2, expectedEnriched2);
+		const actualEnriched3 = branchEnricher.retrieveChange(commit3);
+		assert.deepEqual(actualEnriched3, expectedEnriched3);
+		assert.equal(changeEnricher.calls, 1);
+		assert.equal(changeEnricher.enriched, 3);
+		assert.equal(changeEnricher.applied, 3);
+	});
 });

@@ -28,7 +28,6 @@ import {
 	detachedFieldIndexBlobKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/detachedFieldIndexSummarizer.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,

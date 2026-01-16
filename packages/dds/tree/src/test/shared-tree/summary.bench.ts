@@ -23,7 +23,6 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeViewConfiguration, type ImplicitFieldSchema } from "../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { configuredSharedTree } from "../../treeFactory.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContentTyped } from "../feature-libraries/flex-tree/utils.js";

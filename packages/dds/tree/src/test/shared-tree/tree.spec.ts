@@ -10,6 +10,7 @@ import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-uti
 import { asAlpha } from "../../api.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { runTransaction, Tree } from "../../shared-tree/tree.js";
+// Including tests for TreeAlpha here so they don't have to move if/when stabilized
 // eslint-disable-next-line import-x/no-internal-modules
 import { TreeAlpha } from "../../shared-tree/treeAlpha.js";
 import {
@@ -28,8 +29,6 @@ import type { requireAssignableTo } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
 import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
-
-// Including tests for TreeAlpha here so they don't have to move if/when stabilized
 
 describe("treeApi", () => {
 	describe("runTransaction", () => {

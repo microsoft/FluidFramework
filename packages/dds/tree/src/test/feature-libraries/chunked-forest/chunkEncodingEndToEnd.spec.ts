@@ -77,11 +77,9 @@ import {
 	TreeViewConfiguration,
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { configuredSharedTree } from "../../../treeFactory.js";
 import { brand } from "../../../util/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import {
 	MockTreeCheckout,
 	checkoutWithContent,

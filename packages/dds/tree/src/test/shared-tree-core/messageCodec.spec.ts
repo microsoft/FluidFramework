@@ -16,7 +16,6 @@ import type {
 	ChangeEncodingContext,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { MessageFormatVersion } from "../../shared-tree-core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";

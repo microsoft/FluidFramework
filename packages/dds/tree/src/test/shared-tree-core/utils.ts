@@ -45,7 +45,8 @@ import {
 import {
 	RevisionTagCodec,
 	TreeStoredSchemaRepository,
-	type RevisionTag,
+	type GraphCommit,
+	type TaggedChange,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
@@ -67,22 +68,19 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { dependenciesForChangeFormat } from "../../shared-tree/sharedTreeChangeCodecs.js";
 import {
-	type ChangeEnricherReadonlyCheckout,
 	SquashingTransactionStack,
-	type ResubmitMachine,
 	type SharedTreeBranch,
 	SharedTreeCore,
 	type Summarizable,
-	type ChangeEnricherMutableCheckout,
-	NoOpChangeEnricher,
 	type EditManagerFormatVersion,
 	supportedEditManagerFormatVersions,
 	type MessageFormatVersion,
 	supportedMessageFormatVersions,
+	type EnrichmentConfig,
+	type ChangeEnricher,
 } from "../../shared-tree-core/index.js";
 import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
-import { TestChange } from "../testChange.js";
 import { testIdCompressor } from "../utils.js";
 
 export const testCodecOptions: CodecWriteOptions = {
@@ -98,11 +96,10 @@ class MockSharedObjectHandle extends MockHandle<ISharedObject> implements IShare
 
 export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 	indexes: TIndexes;
-	resubmitMachine?: ResubmitMachine<DefaultChangeset>;
-	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>;
+	enrichmentConfig?: EnrichmentConfig<DefaultChangeset>;
 	codecOptions?: CodecWriteOptions;
 }): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
-	const { indexes, resubmitMachine, enricher, codecOptions } = options;
+	const { indexes, enrichmentConfig, codecOptions } = options;
 	// This could use TestSharedTreeCore then return its kernel instead of using these mocks, but that would depend on far more code than needed (including other mocks).
 
 	// Summarizer requires ISharedObjectHandle. Specifically it looks for `bind` method.
@@ -130,8 +127,7 @@ export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 		createIdCompressor(),
 		new TreeStoredSchemaRepository(),
 		codecOptions ?? testCodecOptions,
-		resubmitMachine,
-		enricher,
+		enrichmentConfig,
 	)[0];
 }
 
@@ -142,8 +138,7 @@ export function createTree<TIndexes extends readonly Summarizable[]>(options: {
  */
 export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>(
 	indexes: TIndexes,
-	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
-	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
+	enrichmentConfig?: EnrichmentConfig<DefaultChangeset>,
 ): TestSharedTreeCore {
 	return new TestSharedTreeCore(
 		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -151,8 +146,7 @@ export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>
 		indexes,
 		undefined,
 		undefined,
-		resubmitMachine,
-		enricher,
+		enrichmentConfig,
 	);
 }
 
@@ -214,8 +208,7 @@ function createTreeInner(
 	idCompressor: IIdCompressor,
 	schema: TreeStoredSchemaRepository,
 	codecOptions: CodecWriteOptions = testCodecOptions,
-	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
-	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
+	enrichmentConfig?: EnrichmentConfig<DefaultChangeset>,
 	editor?: () => DefaultEditBuilder,
 ): [SharedTreeCore<DefaultEditBuilder, DefaultChangeset>, DefaultChangeFamily] {
 	const changeFamily = makeTestDefaultChangeFamily({ idCompressor, chunkCompressionStrategy });
@@ -234,12 +227,20 @@ function createTreeInner(
 			idCompressor,
 			schema,
 			defaultSchemaPolicy,
-			resubmitMachine,
-			enricher,
+			enrichmentConfig ?? { enricher: new NoOpChangeEnricher<DefaultChangeset>() },
 			editor,
 		),
 		changeFamily,
 	];
+}
+
+class NoOpChangeEnricher<TChange> implements ChangeEnricher<TChange> {
+	public enrich(
+		context: GraphCommit<TChange>,
+		changes: readonly TaggedChange<TChange>[],
+	): TChange[] {
+		return changes.map((change) => change.change);
+	}
 }
 
 /**
@@ -279,8 +280,7 @@ export class TestSharedTreeCore extends SharedObject {
 		summarizables: readonly Summarizable[] = [],
 		schema: TreeStoredSchemaRepository = new TreeStoredSchemaRepository(),
 		chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Uncompressed,
-		resubmitMachine?: ResubmitMachine<DefaultChangeset>,
-		enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
+		enrichmentConfig?: EnrichmentConfig<DefaultChangeset>,
 	) {
 		super(id, runtime, TestSharedTreeCore.attributes, id);
 		assert(runtime.idCompressor !== undefined, "The runtime must provide an ID compressor");
@@ -294,8 +294,7 @@ export class TestSharedTreeCore extends SharedObject {
 			runtime.idCompressor,
 			schema,
 			testCodecOptions,
-			resubmitMachine,
-			enricher,
+			enrichmentConfig,
 			() => this.transaction.activeBranchEditor,
 		);
 
@@ -303,28 +302,6 @@ export class TestSharedTreeCore extends SharedObject {
 			this.getLocalBranch(),
 			this.kernel.mintRevisionTag,
 		);
-
-		const commitEnricher = this.kernel.getCommitEnricher("main");
-		this.transaction.events.on("started", () => {
-			if (this.isAttached()) {
-				commitEnricher.startTransaction();
-			}
-		});
-		this.transaction.events.on("aborting", () => {
-			if (this.isAttached()) {
-				commitEnricher.abortTransaction();
-			}
-		});
-		this.transaction.events.on("committing", () => {
-			if (this.isAttached()) {
-				commitEnricher.commitTransaction();
-			}
-		});
-		this.transaction.activeBranchEvents.on("afterChange", (event) => {
-			if (event.type === "append" && this.isAttached() && this.transaction.isInProgress()) {
-				commitEnricher.addTransactionCommits(event.newCommits);
-			}
-		});
 	}
 
 	protected summarizeCore(
@@ -366,21 +343,5 @@ export class TestSharedTreeCore extends SharedObject {
 
 	public get editor(): DefaultEditBuilder {
 		return this.kernel.getEditor();
-	}
-}
-
-export class TestChangeEnricher implements ChangeEnricherReadonlyCheckout<TestChange> {
-	public updateChangeEnrichments(change: TestChange, revision: RevisionTag): TestChange {
-		if (TestChange.isNonEmptyChange(change)) {
-			return {
-				inputContext: change.inputContext.map((i) => i * 1000),
-				intentions: change.intentions.map((i) => i * 1000),
-				outputContext: change.outputContext.map((i) => i * 1000),
-			};
-		}
-		return change;
-	}
-	public fork(): ChangeEnricherMutableCheckout<TestChange> {
-		return new NoOpChangeEnricher();
 	}
 }

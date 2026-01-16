@@ -407,16 +407,16 @@ export interface RunTransaction {
 
 // TODO: Add more constraint types here
 
+/** A type-safe helper to add a "rollback" property (as required by the `RunTransaction` interface) to a given object */
+function defineRollbackProperty<T extends object>(
+	target: T,
+): T & { rollback: typeof rollback } {
+	Reflect.defineProperty(target, "rollback", { value: rollback });
+	return target as T & { readonly rollback: typeof rollback };
+}
+
 /** Creates a copy of `runTransaction` with the `rollback` property added so as to satisfy the `RunTransaction` interface. */
 function createRunTransaction(): RunTransaction {
-	/** A type-safe helper to add a "rollback" property (as required by the `RunTransaction` interface) to a given object */
-	function defineRollbackProperty<T extends object>(
-		target: T,
-	): T & { rollback: typeof rollback } {
-		Reflect.defineProperty(target, "rollback", { value: rollback });
-		return target as T & { readonly rollback: typeof rollback };
-	}
-
 	return defineRollbackProperty(runTransaction.bind({}));
 }
 

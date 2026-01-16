@@ -52,7 +52,6 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/unhydratedFlexTreeFromInsertable.js";
 import { brand } from "../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { createSnapshotCompressor, getView } from "../utils.js";
 
 import { hydrate } from "./utils.js";
@@ -62,6 +61,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const tree = "Hello world";
 
+		
 		const actual = unhydratedFlexTreeFromInsertable(tree, [schemaFactory.string]);
 
 		const expected: MapTree = {

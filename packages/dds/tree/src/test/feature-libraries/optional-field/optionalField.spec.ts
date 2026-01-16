@@ -19,7 +19,6 @@ import type {
 	NodeId,
 	RelevantRemovedRootsFromChild,
 } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import type {
 	FieldChangeDelta,
 	NestedChangesIndices,

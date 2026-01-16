@@ -31,7 +31,6 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { TestTreeProviderLite } from "../../utils.js";
 import { describeHydration, hydrate } from "../utils.js";
 

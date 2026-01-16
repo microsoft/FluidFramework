@@ -35,7 +35,6 @@ import {
 	schemaStringKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/schema-index/schemaSummarizer.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	summarizablesMetadataKey,

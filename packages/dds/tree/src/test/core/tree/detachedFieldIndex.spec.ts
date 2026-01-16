@@ -28,7 +28,6 @@ import type { FormatV1 } from "../../../core/tree/detachedFieldIndexFormatV1.js"
 import type { FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	type IdAllocator,

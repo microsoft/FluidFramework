@@ -63,7 +63,7 @@ describeHydration(
 					assert.equal(child, 1);
 					assert.equal(map, node);
 				}
-				// eslint-disable-next-line unicorn/no-array-for-each -- Testing thisArg binding behavior
+				// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-method-this-argument -- Testing thisArg binding behavior
 				node.forEach(callback, thisArg);
 				assert.deepEqual(log, ["b"]);
 			});
@@ -170,11 +170,12 @@ describeHydration(
 		it("forEach (bound)", () => {
 			const root = init(schema, initialTree);
 			const result: [string, string][] = [];
-			// eslint-disable-next-line unicorn/no-array-for-each -- Testing thisArg binding behavior
+			/* eslint-disable unicorn/no-array-for-each, unicorn/no-array-method-this-argument -- Testing thisArg binding behavior */
 			root.map.forEach(function (this: typeof result, v, k, m) {
 				this.push([k, v]); // Accessing `result` via `this` to ensure that `thisArg` is respected
 				assert.equal(m, root.map);
 			}, result);
+			/* eslint-enable unicorn/no-array-for-each, unicorn/no-array-method-this-argument */
 
 			assert.deepEqual(result, [
 				["foo", "Hello"],

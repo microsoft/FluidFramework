@@ -833,8 +833,8 @@ describe("allowedTypes", () => {
 			const result = AnnotatedAllowedTypesInternal.create(input);
 			assert(Object.isFrozen(input));
 			assert.throws(() => {
-				// @ts-expect-error Array should be readonly, so this error is good.
-				result.push(stringSchema);
+				// Array should be readonly, so this error is good.
+				(result as unknown as unknown[]).push(stringSchema);
 			}, "TypeError: result.push is not a function");
 		});
 
