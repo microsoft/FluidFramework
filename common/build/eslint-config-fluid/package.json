@@ -11,7 +11,11 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "index.js",
+	"type": "module",
+	"exports": {
+		".": "./flat.mts",
+		"./flat.mjs": "./flat.mts"
+	},
 	"scripts": {
 		"build": "npm run print-configs && npm run prettier",
 		"build:readme:disabled": "markdown-magic --files \"**/*.md\"",
@@ -24,7 +28,6 @@
 	},
 	"dependencies": {
 		"@eslint-community/eslint-plugin-eslint-comments": "~4.5.0",
-		"@eslint/eslintrc": "^3.3.3",
 		"@eslint/js": "^8.57.1",
 		"@fluid-internal/eslint-plugin-fluid": "^0.4.1",
 		"@rushstack/eslint-plugin": "~0.22.1",
@@ -41,7 +44,9 @@
 		"eslint-plugin-react-hooks": "~7.0.1",
 		"eslint-plugin-tsdoc": "~0.5.0",
 		"eslint-plugin-unicorn": "~54.0.0",
-		"eslint-plugin-unused-imports": "~4.3.0"
+		"eslint-plugin-unused-imports": "~4.3.0",
+		"globals": "^14.0.0",
+		"typescript-eslint": "~8.18.2"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
