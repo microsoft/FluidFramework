@@ -14,13 +14,13 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 } from "@fluidframework/tree/internal";
-import { z } from "zod";
 
 import type { TreeView } from "../api.js";
 import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { getPrompt } from "../prompt.js";
 import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { Subtree } from "../subtree.js";
+import { typeFactory as tf } from "../treeAgentTypes.js";
 
 const sf = new SchemaFactoryAlpha("test");
 
@@ -93,7 +93,7 @@ describe("Prompt generation", () => {
 					methods.expose(
 						Obj,
 						"method",
-						buildFunc({ returns: z.boolean() }, ["s", z.string()]),
+						buildFunc({ returns: tf.boolean() }, ["s", tf.string()]),
 					);
 				}
 			}
@@ -129,11 +129,11 @@ describe("Prompt generation", () => {
 
 				public static [exposePropertiesSymbol](properties: ExposedProperties): void {
 					properties.exposeProperty(ObjWithProperty, "name", {
-						schema: z.string(),
+						schema: tf.string(),
 						readOnly: true,
 					});
 					properties.exposeProperty(ObjWithProperty, "testProperty", {
-						schema: z.string(),
+						schema: tf.string(),
 						readOnly: true,
 					});
 				}
@@ -249,62 +249,101 @@ describe("Prompt snapshot", () => {
 			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
 				methods.expose(
 					TestMap,
-					"length",
-					buildFunc({
-						returns: methods.instanceOf(NumberValue),
-						description: "Gets the length of the map",
-					}),
+					"processData",
+					buildFunc(
+						{
+							returns: tf.promise(
+								tf.object({
+									summary: tf.intersection([
+										tf.object({
+											count: tf.number(),
+											average: tf.number(),
+										}),
+										tf.object({
+											timestamp: tf.date(),
+										}),
+									]),
+									items: tf.array(tf.instanceOf(NumberValue)),
+								}),
+							),
+							description:
+								"Processes map data with a date range, filter function, and optional configuration",
+						},
+						["startDate", tf.date()],
+						["endDate", tf.optional(tf.date())],
+						["filter", tf.function([["value", tf.number()]], tf.boolean())],
+						[
+							"options",
+							tf.optional(
+								tf.object({
+									mode: tf.union([tf.literal("sync"), tf.literal("async")]),
+									includeMetadata: tf.boolean(),
+								}),
+							),
+						],
+					),
 				);
 			}
 
 			public static [exposePropertiesSymbol](properties: ExposedProperties): void {
-				properties.exposeProperty(TestMap, "testProperty", {
-					schema: z.string(),
+				properties.exposeProperty(TestMap, "metadata", {
+					schema: tf.readonly(tf.record(tf.string(), tf.union([tf.string(), tf.number()]))),
 					readOnly: true,
-				});
-				properties.exposeProperty(TestMap, "property", {
-					schema: z.string(),
-					readOnly: true,
-					description: "A test property",
+					description: "Readonly map metadata",
 				});
 			}
 
-			public readonly testProperty: string = "testProperty";
+			public readonly metadata: Record<string, string | number> = { version: 1 };
 
-			public get property(): string {
-				return this.testProperty;
-			}
-
-			public length(): NumberValue {
-				return new NumberValue({ value: this.size });
+			public async processData(
+				_startDate: Date,
+				_endDate?: Date,
+				_filter?: (value: number) => boolean,
+				_options?: { mode: "sync" | "async"; includeMetadata: boolean },
+			): Promise<{
+				summary: { count: number; average: number; timestamp: Date };
+				items: NumberValue[];
+			}> {
+				return {
+					summary: { count: this.size, average: 0, timestamp: new Date() },
+					items: [],
+				};
 			}
 		}
 		class NumberValue extends sf.object("TestArrayItem", { value: sf.number }) {
 			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
 				methods.expose(
 					NumberValue,
-					"print",
-					buildFunc({ returns: z.string() }, ["radix", z.number()]),
+					"formatValue",
+					buildFunc(
+						{
+							returns: tf.promise(tf.string()),
+							description: "Formats the number value with optional configuration",
+						},
+						["radix", tf.number()],
+						["formatter", tf.optional(tf.function([["n", tf.number()]], tf.string()))],
+					),
 				);
 			}
 			public static [exposePropertiesSymbol](properties: ExposedProperties): void {
-				properties.exposeProperty(NumberValue, "testProperty", {
-					schema: z.string(),
-					readOnly: true,
-				});
-				properties.exposeProperty(NumberValue, "property", {
-					schema: z.string(),
+				properties.exposeProperty(NumberValue, "metadata", {
+					schema: tf.object({
+						id: tf.string(),
+						tags: tf.array(tf.string()),
+					}),
 					readOnly: true,
 				});
 			}
 
-			public readonly testProperty: string = "testProperty";
+			public readonly metadata = { id: "item", tags: [] as string[] };
 
-			public get property(): string {
-				return this.testProperty;
-			}
-
-			public print(radix: number): string {
+			public async formatValue(
+				radix: number,
+				formatter?: (n: number) => string,
+			): Promise<string> {
+				if (formatter) {
+					return formatter(this.value);
+				}
 				return this.value.toString(radix);
 			}
 		}

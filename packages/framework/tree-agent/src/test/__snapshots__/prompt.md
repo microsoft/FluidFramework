@@ -4,18 +4,31 @@ The JSON tree adheres to the following Typescript schema:
 ```typescript
 // A test map - Note: this map has custom user-defined methods and properties directly on it.
 type TestMap = Map<string, number> & {
-    readonly testProperty: string;
-    // A test property
-    readonly property: string;
-    // Gets the length of the map
-    length(): TestArrayItem;
+    // Readonly map metadata
+    readonly metadata: Readonly<Record<string, string | number>>;
+    // Processes map data with a date range, filter function, and optional configuration
+    processData(startDate: Date, endDate?: Date, filter: (value: number) => boolean, options?: {
+        mode: ("sync" | "async");
+        includeMetadata: boolean;
+    }): Promise<{
+        summary: ({
+            count: number;
+            average: number;
+        } & {
+            timestamp: Date;
+        });
+        items: TestArrayItem[];
+    }>;
 };
 
 interface TestArrayItem {
     value: number;
-    readonly testProperty: string;
-    readonly property: string;
-    print(radix: number): string;
+    readonly metadata: {
+        id: string;
+        tags: string[];
+    };
+    // Formats the number value with optional configuration
+    formatValue(radix: number, formatter?: (n: number) => string): Promise<string>;
 }
 
 type TestArray = TestArrayItem[];
@@ -417,19 +430,28 @@ The current state of `context.root` (a `Obj`) is:
       // Type: "TestArrayItem",
       // Index: 0,
       "value": 1,
-      "testProperty": "testProperty"
+      "metadata": {
+        "id": "item",
+        "tags": []
+      }
     },
     {
       // Type: "TestArrayItem",
       // Index: 1,
       "value": 2,
-      "testProperty": "testProperty"
+      "metadata": {
+        "id": "item",
+        "tags": []
+      }
     },
     {
       // Type: "TestArrayItem",
       // Index: 2,
       "value": 3,
-      "testProperty": "testProperty"
+      "metadata": {
+        "id": "item",
+        "tags": []
+      }
     }
   ]
 }
