@@ -163,17 +163,17 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * This version determines what features are available and what format will be used for serialization.
 	 * Documents with version less than 3 cannot use sharding.
 	 */
-	private readonly documentVersion: number;
+	private readonly writeVersion: number;
 
 	public constructor(
 		localSessionIdOrDeserialized: SessionId | Sessions,
 		private readonly logger: ITelemetryLoggerExt | undefined,
-		documentVersion: number,
+		writeVersion: number,
 	) {
 		if (typeof localSessionIdOrDeserialized === "string") {
 			this.localSessionId = localSessionIdOrDeserialized;
 			this.localSession = this.sessions.getOrCreate(localSessionIdOrDeserialized);
-			this.documentVersion = documentVersion;
+			this.writeVersion = writeVersion;
 		} else {
 			// Deserialize case
 			this.sessions = localSessionIdOrDeserialized;
@@ -187,10 +187,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			) as SessionId;
 			// Deserialized documents must specify their version
 			assert(
-				documentVersion !== undefined,
+				writeVersion !== undefined,
 				"Document version must be specified when deserializing",
 			);
-			this.documentVersion = documentVersion;
+			this.writeVersion = writeVersion;
 		}
 	}
 
@@ -283,9 +283,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (this.ongoingGhostSession) {
 			throw new Error("Cannot shard during ghost session");
 		}
-		if (this.documentVersion < SerializationVersion.V3) {
+		if (this.writeVersion < SerializationVersion.V3) {
 			throw new Error(
-				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.documentVersion}`,
+				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.writeVersion}`,
 			);
 		}
 
@@ -393,9 +393,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * {@inheritdoc IIdCompressorCore.unshard}
 	 */
 	public unshard(shardId: CompressorShardId): void {
-		if (this.documentVersion < SerializationVersion.V3) {
+		if (this.writeVersion < SerializationVersion.V3) {
 			throw new Error(
-				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.documentVersion}`,
+				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.writeVersion}`,
 			);
 		}
 		if (shardId.sessionId !== this.localSessionId) {
@@ -431,9 +431,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * {@inheritdoc IIdCompressorCore.shardId}
 	 */
 	public shardId(): CompressorShardId | undefined {
-		if (this.documentVersion < SerializationVersion.V3) {
+		if (this.writeVersion < SerializationVersion.V3) {
 			throw new Error(
-				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.documentVersion}`,
+				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.writeVersion}`,
 			);
 		}
 		if (this.shardingState === undefined) {
@@ -851,7 +851,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			}
 		}
 		const shardingStateSize =
-			hasLocalState && this.documentVersion >= SerializationVersion.V3
+			hasLocalState && this.writeVersion >= SerializationVersion.V3
 				? this.shardingState === undefined
 					? 1 // just the boolean indicating no sharding state
 					: 1 + // has sharding state boolean
@@ -877,7 +877,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const serializedFloat = new Float64Array(totalSize);
 		const serializedUint = new BigUint64Array(serializedFloat.buffer);
 		let index = 0;
-		index = writeNumber(serializedFloat, index, this.documentVersion);
+		index = writeNumber(serializedFloat, index, this.writeVersion);
 		index = writeBoolean(serializedFloat, index, hasLocalState);
 		index = writeNumber(serializedFloat, index, sessionIndexMap.size);
 		index = writeNumber(serializedFloat, index, finalSpace.clusters.length);
@@ -906,7 +906,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			}
 
 			// Write sharding state (version 3+)
-			if (this.documentVersion >= SerializationVersion.V3) {
+			if (this.writeVersion >= SerializationVersion.V3) {
 				index = writeBoolean(serializedFloat, index, this.shardingState !== undefined);
 				if (this.shardingState !== undefined) {
 					index = writeNumber(serializedFloat, index, this.shardingState.totalShards);
@@ -936,18 +936,18 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		params:
 			| {
 					serialized: SerializedIdCompressorWithOngoingSession;
-					documentVersion: number;
+					writeVersion: number;
 					logger?: ITelemetryLoggerExt | undefined;
 					newSessionId?: never;
 			  }
 			| {
 					serialized: SerializedIdCompressorWithNoSession;
 					newSessionId: SessionId;
-					documentVersion: number;
+					writeVersion: number;
 					logger?: ITelemetryLoggerExt | undefined;
 			  },
 	): IdCompressor {
-		const { serialized, newSessionId, logger, documentVersion } = params;
+		const { serialized, newSessionId, logger, writeVersion } = params;
 		const buffer = stringToBuffer(serialized, "base64");
 		const index: Index = {
 			index: 0,
@@ -960,10 +960,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				throw new Error("IdCompressor version 1.0 is no longer supported.");
 			}
 			case 2: {
-				return IdCompressor.deserialize2_0(index, newSessionId, logger, documentVersion);
+				return IdCompressor.deserialize2_0(index, newSessionId, logger, writeVersion);
 			}
 			case 3: {
-				return IdCompressor.deserialize3_0(index, newSessionId, logger, documentVersion);
+				return IdCompressor.deserialize3_0(index, newSessionId, logger, writeVersion);
 			}
 			default: {
 				throw new Error("Unknown IdCompressor serialized version.");
@@ -1059,9 +1059,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		index: Index,
 		sessionId: SessionId | undefined,
 		logger: ITelemetryLoggerExt | undefined,
-		documentVersion: number,
+		writeVersion: number,
 	): IdCompressor {
-		return IdCompressor.deserializeCommon(index, sessionId, logger, documentVersion);
+		return IdCompressor.deserializeCommon(index, sessionId, logger, writeVersion);
 	}
 
 	/**
@@ -1071,9 +1071,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		index: Index,
 		sessionId: SessionId | undefined,
 		logger: ITelemetryLoggerExt | undefined,
-		documentVersion: number,
+		writeVersion: number,
 	): IdCompressor {
-		return IdCompressor.deserializeCommon(index, sessionId, logger, documentVersion);
+		return IdCompressor.deserializeCommon(index, sessionId, logger, writeVersion);
 	}
 
 	public equals(other: IdCompressor, includeLocalState: boolean): boolean {
@@ -1096,51 +1096,51 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 /**
  * Create a new {@link IIdCompressor}.
- * @param documentVersion - The version of the document format to use. Use SerializationVersion.V2 for base format, or SerializationVersion.V3 for sharding support.
+ * @param writeVersion - The version the compressor will write when serializing. Use SerializationVersion.V2 for base format, or SerializationVersion.V3 for sharding support.
  * @param logger - Optional telemetry logger.
  * @legacy @beta
  */
 export function createIdCompressor(
-	documentVersion: number,
+	writeVersion: number,
 	logger?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore;
 /**
  * Create a new {@link IIdCompressor}.
  * @param sessionId - The seed ID for the compressor.
- * @param documentVersion - The version of the document format to use. Use SerializationVersion.V2 for base format, or SerializationVersion.V3 for sharding support.
+ * @param writeVersion - The version the compressor will write when serializing. Use SerializationVersion.V2 for base format, or SerializationVersion.V3 for sharding support.
  * @param logger - Optional telemetry logger.
  * @legacy @beta
  */
 export function createIdCompressor(
 	sessionId: SessionId,
-	documentVersion: number,
+	writeVersion: number,
 	logger?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore;
 export function createIdCompressor(
 	sessionIdOrDocumentVersion: SessionId | number,
-	documentVersionOrLogger?: number | ITelemetryBaseLogger,
+	writeVersionOrLogger?: number | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore {
 	let localSessionId: SessionId;
-	let documentVersion: number;
+	let writeVersion: number;
 	let logger: ITelemetryBaseLogger | undefined;
 
 	if (typeof sessionIdOrDocumentVersion === "string") {
-		// Called with sessionId, documentVersion, logger?
+		// Called with sessionId, writeVersion, logger?
 		localSessionId = sessionIdOrDocumentVersion;
-		documentVersion = documentVersionOrLogger as number;
+		writeVersion = writeVersionOrLogger as number;
 		logger = loggerOrUndefined;
 	} else {
-		// Called with documentVersion, logger?
+		// Called with writeVersion, logger?
 		localSessionId = createSessionId();
-		documentVersion = sessionIdOrDocumentVersion;
-		logger = documentVersionOrLogger as ITelemetryBaseLogger | undefined;
+		writeVersion = sessionIdOrDocumentVersion;
+		logger = writeVersionOrLogger as ITelemetryBaseLogger | undefined;
 	}
 
 	const compressor = new IdCompressor(
 		localSessionId,
 		logger === undefined ? undefined : createChildLogger({ logger }),
-		documentVersion,
+		writeVersion,
 	);
 	return compressor;
 }
@@ -1148,49 +1148,49 @@ export function createIdCompressor(
 /**
  * Deserializes the supplied state into an ID compressor.
  * @param serialized - The serialized compressor state with an ongoing session.
- * @param documentVersion - The document version to use for the deserialized compressor.
+ * @param writeVersion - The version the compressor will write when serializing. This determines what features are available (e.g., V3 enables sharding support).
  * @param logger - Optional telemetry logger.
  * @legacy @beta
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithOngoingSession,
-	documentVersion: number,
+	writeVersion: number,
 	logger?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore;
 /**
  * Deserializes the supplied state into an ID compressor.
  * @param serialized - The serialized compressor state without a session.
  * @param newSessionId - The session ID to use for the deserialized compressor.
- * @param documentVersion - The document version to use for the deserialized compressor.
+ * @param writeVersion - The version the compressor will write when serializing. This determines what features are available (e.g., V3 enables sharding support).
  * @param logger - Optional telemetry logger.
  * @legacy @beta
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithNoSession,
 	newSessionId: SessionId,
-	documentVersion: number,
+	writeVersion: number,
 	logger?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore;
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressor | SerializedIdCompressorWithNoSession,
 	sessionIdOrDocumentVersion: SessionId | number,
-	documentVersionOrLogger?: number | ITelemetryLoggerExt,
+	writeVersionOrLogger?: number | ITelemetryLoggerExt,
 	loggerOrUndefined?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore {
 	if (typeof sessionIdOrDocumentVersion === "string") {
-		// Called with (serialized, sessionId, documentVersion, logger?)
+		// Called with (serialized, sessionId, writeVersion, logger?)
 		return IdCompressor.deserialize({
 			serialized: serialized as SerializedIdCompressorWithNoSession,
 			logger: loggerOrUndefined,
 			newSessionId: sessionIdOrDocumentVersion,
-			documentVersion: documentVersionOrLogger as number,
+			writeVersion: writeVersionOrLogger as number,
 		});
 	}
 
-	// Called with (serialized, documentVersion, logger?)
+	// Called with (serialized, writeVersion, logger?)
 	return IdCompressor.deserialize({
 		serialized: serialized as SerializedIdCompressorWithOngoingSession,
-		logger: documentVersionOrLogger as ITelemetryLoggerExt | undefined,
-		documentVersion: sessionIdOrDocumentVersion,
+		logger: writeVersionOrLogger as ITelemetryLoggerExt | undefined,
+		writeVersion: sessionIdOrDocumentVersion,
 	});
 }

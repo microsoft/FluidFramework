@@ -12,19 +12,19 @@ export interface CompressorShardId {
 }
 
 // @beta @legacy
-export function createIdCompressor(documentVersion: number, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
+export function createIdCompressor(writeVersion: number, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
 
 // @beta @legacy
-export function createIdCompressor(sessionId: SessionId, documentVersion: number, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
+export function createIdCompressor(sessionId: SessionId, writeVersion: number, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
 
 // @beta @legacy
 export function createSessionId(): SessionId;
 
 // @beta @legacy
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, documentVersion: number, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, writeVersion: number, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
 
 // @beta @legacy
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, documentVersion: number, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, writeVersion: number, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
 
 // @beta @legacy
 export interface IdCreationRange {
