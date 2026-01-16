@@ -86,23 +86,20 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 			this.datastoreManager.getWorkspace(`n:${workspaceAddress}`, requestedContent),
 	};
 
-	private readonly mc: MonitoringContext | undefined = undefined;
+	private readonly mc: MonitoringContext;
 
 	public constructor(
 		private readonly runtime: IEphemeralRuntime,
 		attendeeId: AttendeeId,
 	) {
-		const logger = runtime.logger;
-		if (logger) {
-			this.mc = createChildMonitoringContext({ logger, namespace: "Presence" });
-			this.mc.logger.sendTelemetryEvent({ eventName: "PresenceInstantiated" });
-		}
+		this.mc = createChildMonitoringContext({ logger: runtime.logger, namespace: "Presence" });
+		this.mc.logger.sendTelemetryEvent({ eventName: "PresenceInstantiated" });
 
 		[this.datastoreManager, this.systemWorkspace] = setupSubComponents(
 			attendeeId,
 			runtime,
 			this.events,
-			this.mc?.logger,
+			this.mc.logger,
 			this,
 		);
 		this.attendees = this.systemWorkspace;
@@ -222,7 +219,7 @@ function setupSubComponents(
 	runtime: IEphemeralRuntime,
 	events: Listenable<PresenceEvents & AttendeesEvents> &
 		IEmitter<PresenceEvents & AttendeesEvents>,
-	logger: ITelemetryLoggerExt | undefined,
+	logger: ITelemetryLoggerExt,
 	presence: Presence,
 ): [PresenceDatastoreManager, SystemWorkspace] {
 	const systemWorkspaceDatastore: SystemWorkspaceDatastore = {
