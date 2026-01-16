@@ -361,6 +361,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 		instantiateRuntime: async (context, existing) => {
 			// Capture stageControls to pass to the entrypoint after loading.
 			// This must be inside instantiateRuntime so each container instance has its own variable.
+			// eslint-disable-next-line prefer-const -- reassigned after loadContainerRuntimeAlpha returns
 			let pendingStageControls: StageControlsAlpha | undefined;
 
 			const { runtime, stageControls } = await loadContainerRuntimeAlpha({
@@ -385,7 +386,10 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 					// Pass the stageControls (if any) to the DefaultStressDataObject
 					// so it can properly exit staging mode when rehydrated from pending state
 					const maybe: FluidObject<DefaultStressDataObject> | undefined = entryPoint;
-					if (maybe?.DefaultStressDataObject !== undefined && pendingStageControls !== undefined) {
+					if (
+						maybe?.DefaultStressDataObject !== undefined &&
+						pendingStageControls !== undefined
+					) {
 						maybe.DefaultStressDataObject.setStageControls(pendingStageControls);
 					}
 
