@@ -19,12 +19,25 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
+	localAttendeeId,
+	initialLocalClientConnectionId,
 	createSpecificAttendeeId,
 	generateBasicClientJoin,
 	prepareConnectedPresence,
+	prepareDisconnectedPresence,
 } from "./testUtils.js";
 
 const collateralSessionId = createSpecificAttendeeId("collateral-id");
+/**
+ * Mock {@link ClientConnectionId} for the local client after first reconnection.
+ */
+const rejoinedLocalClientConnectionId1 =
+	"localClientRejoin1" as const satisfies ClientConnectionId;
+/**
+ * Mock {@link ClientConnectionId} for the local client after second reconnection.
+ */
+const rejoinedLocalClientConnectionId2 =
+	"localClientRejoin2" as const satisfies ClientConnectionId;
 
 function verify<T>(value: T | undefined, message?: string): T {
 	assert(value !== undefined, message ?? "Expected value to be defined");
@@ -86,6 +99,260 @@ describe("Presence", () => {
 			assert.throws(() => presence.attendees.getAttendee("unknown"), /Attendee not found/);
 		});
 
+		describe("self attendee", () => {
+			it("is announced via `attendeeConnected` upon connect while self is in audience", () => {
+				// Setup - create presence in disconnected state
+				const { presence, connect } = prepareDisconnectedPresence(
+					runtime,
+					localAttendeeId,
+					initialLocalClientConnectionId,
+					clock,
+					logger,
+				);
+
+				const connectedAttendees: Attendee[] = [];
+				presence.attendees.events.on("attendeeConnected", (attendee) => {
+					connectedAttendees.push(attendee);
+				});
+
+				// Act - connect
+				connect();
+
+				// Verify - self attendee was announced
+				const selfAttendee = presence.attendees.getMyself();
+				assert.strictEqual(
+					connectedAttendees.length,
+					1,
+					"Expected exactly one attendee to be announced",
+				);
+				assert.strictEqual(
+					connectedAttendees[0],
+					selfAttendee,
+					"Expected self attendee to be announced",
+				);
+			});
+
+			it('has status "Disconnected" when presence initializes while container is disconnected', () => {
+				// Setup - create presence while container is disconnected
+				const { presence } = prepareDisconnectedPresence(
+					runtime,
+					localAttendeeId,
+					initialLocalClientConnectionId,
+					clock,
+					logger,
+				);
+
+				// Verify - self attendee has "Disconnected" status
+				const selfAttendee = presence.attendees.getMyself();
+				assert.strictEqual(
+					selfAttendee.getConnectionStatus(),
+					AttendeeStatus.Disconnected,
+					"Self attendee should have status 'Disconnected' when presence initializes while container is disconnected",
+				);
+			});
+
+			it('has status "Disconnected" when runtime is connected but self is not yet in Audience', () => {
+				// Setup - set runtime to connected state but remove self from audience
+				runtime.clientId = initialLocalClientConnectionId;
+				runtime.joined = true;
+				runtime.removeMember(initialLocalClientConnectionId);
+
+				// Create presence - it will see runtime as connected but self not in audience
+				logger.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
+				const presence = createPresenceManager(runtime, localAttendeeId);
+
+				// Verify - self attendee should have "Disconnected" status since
+				// we haven't received the ClientJoin signal yet
+				const selfAttendee = presence.attendees.getMyself();
+				assert.strictEqual(
+					selfAttendee.getConnectionStatus(),
+					AttendeeStatus.Disconnected,
+					"Self attendee should have status 'Disconnected' when runtime is connected but self is not yet in Audience",
+				);
+
+				assertFinalExpectations(runtime, logger);
+			});
+
+			it("is announced via `attendeeConnected` when added to Audience while runtime is connected", () => {
+				// Setup - set runtime to connected state but remove self from audience
+				runtime.clientId = initialLocalClientConnectionId;
+				runtime.joined = true;
+				runtime.removeMember(initialLocalClientConnectionId);
+
+				// Create presence - it will see runtime as connected but self not in audience
+				logger.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
+				const presence = createPresenceManager(runtime, localAttendeeId);
+
+				// Verify initial state - self is Disconnected
+				const selfAttendee = presence.attendees.getMyself();
+				assert.strictEqual(
+					selfAttendee.getConnectionStatus(),
+					AttendeeStatus.Disconnected,
+					"Self attendee should initially have status 'Disconnected'",
+				);
+
+				// Listen for attendeeConnected
+				const connectedAttendees: Attendee[] = [];
+				presence.attendees.events.on("attendeeConnected", (attendee) => {
+					connectedAttendees.push(attendee);
+				});
+
+				// Expect join signal when self is added to audience while connected
+				const expectedJoin = generateBasicClientJoin(clock.now, {
+					attendeeId: localAttendeeId,
+					clientConnectionId: initialLocalClientConnectionId,
+					updateProviders: ["client0", "client1", "client3"],
+				});
+				delete (expectedJoin as Partial<typeof expectedJoin>).clientId;
+				runtime.signalsExpected.push([expectedJoin]);
+
+				// Act - self added to audience
+				runtime.audience.addMember(initialLocalClientConnectionId, {
+					mode: "write",
+					details: { capabilities: { interactive: true } },
+					permission: [],
+					user: { id: "test-user" },
+					scopes: [],
+				});
+
+				// Verify - attendeeConnected was raised for self with Connected status
+				assert.strictEqual(
+					connectedAttendees.length,
+					1,
+					"Expected exactly one attendee to be announced",
+				);
+				assert.strictEqual(
+					connectedAttendees[0],
+					selfAttendee,
+					"Expected self attendee to be announced",
+				);
+				assert.strictEqual(
+					selfAttendee.getConnectionStatus(),
+					AttendeeStatus.Connected,
+					"Self attendee should have status 'Connected' after being added to Audience",
+				);
+
+				assertFinalExpectations(runtime, logger);
+			});
+
+			it('has status "Connected" when announced via `attendeeConnected`', () => {
+				// Setup - create presence in disconnected state
+				const { presence, connect } = prepareDisconnectedPresence(
+					runtime,
+					localAttendeeId,
+					initialLocalClientConnectionId,
+					clock,
+					logger,
+				);
+
+				let attendeeConnectedRaised = false;
+				presence.attendees.events.on("attendeeConnected", (attendee) => {
+					if (attendee === presence.attendees.getMyself()) {
+						attendeeConnectedRaised = true;
+						assert.strictEqual(
+							attendee.getConnectionStatus(),
+							AttendeeStatus.Connected,
+							"Self attendee should have status 'Connected' when announced",
+						);
+					}
+				});
+
+				// Act - connect
+				connect();
+
+				// Verify - attendeeConnected was raised
+				assert(
+					attendeeConnectedRaised,
+					"attendeeConnected event should be raised for self attendee",
+				);
+			});
+
+			it("is announced via `attendeeDisconnected` when local client disconnects", () => {
+				// Setup - create presence in disconnected state and connect
+				const { presence, connect } = prepareDisconnectedPresence(
+					runtime,
+					localAttendeeId,
+					initialLocalClientConnectionId,
+					clock,
+					logger,
+				);
+
+				connect();
+
+				const disconnectedAttendees: Attendee[] = [];
+				presence.attendees.events.on("attendeeDisconnected", (attendee) => {
+					disconnectedAttendees.push(attendee);
+				});
+
+				// Act - disconnect
+				runtime.disconnect();
+
+				// Verify - self attendee was announced as disconnected
+				const selfAttendee = presence.attendees.getMyself();
+				assert.strictEqual(
+					disconnectedAttendees.length,
+					1,
+					"Expected exactly one attendee to be announced as disconnected",
+				);
+				assert.strictEqual(
+					disconnectedAttendees[0],
+					selfAttendee,
+					"Expected self attendee to be announced as disconnected",
+				);
+				assert.strictEqual(
+					selfAttendee.getConnectionStatus(),
+					AttendeeStatus.Disconnected,
+					"Self attendee should have status 'Disconnected' after disconnect",
+				);
+			});
+
+			it("is announced via `attendeeConnected` when local client reconnects", () => {
+				// Setup - create presence in disconnected state, connect and then disconnect
+				const { presence, connect } = prepareDisconnectedPresence(
+					runtime,
+					localAttendeeId,
+					initialLocalClientConnectionId,
+					clock,
+					logger,
+				);
+
+				// Initial connection
+				connect();
+
+				// Disconnect
+				runtime.disconnect();
+
+				// Ignore submitted signals for reconnection
+				runtime.submitSignal = () => {};
+
+				const connectedAttendees: Attendee[] = [];
+				presence.attendees.events.on("attendeeConnected", (attendee) => {
+					connectedAttendees.push(attendee);
+				});
+
+				// Act - reconnect with new connection id
+				runtime.connect(rejoinedLocalClientConnectionId1, initialLocalClientConnectionId);
+
+				// Verify - self attendee was announced
+				const selfAttendee = presence.attendees.getMyself();
+				assert.strictEqual(
+					connectedAttendees.length,
+					1,
+					"Expected exactly one attendee to be announced on reconnect",
+				);
+				assert.strictEqual(
+					connectedAttendees[0],
+					selfAttendee,
+					"Expected self attendee to be announced on reconnect",
+				);
+				assert.strictEqual(
+					selfAttendee.getConnectionStatus(),
+					AttendeeStatus.Connected,
+					"Self attendee should have status 'Connected' after reconnect",
+				);
+			});
+		});
+
 		describe("when connected", () => {
 			let presence: Presence;
 			let processSignal: ProcessSignalFunction;
@@ -94,8 +361,8 @@ describe("Presence", () => {
 			beforeEach(() => {
 				({ presence, processSignal } = prepareConnectedPresence(
 					runtime,
-					"attendeeId-2",
-					"client2",
+					localAttendeeId,
+					initialLocalClientConnectionId,
 					clock,
 					logger,
 				));
@@ -169,7 +436,7 @@ describe("Presence", () => {
 						averageLatency: 50,
 						attendeeId: attendeeSessionId,
 						clientConnectionId: initialAttendeeConnectionId,
-						updateProviders: ["client2"],
+						updateProviders: [initialLocalClientConnectionId],
 					});
 
 					rejoinAttendeeSignal = generateBasicClientJoin(clock.now - 20, {
@@ -177,7 +444,7 @@ describe("Presence", () => {
 						attendeeId: attendeeSessionId, // Same session id
 						clientConnectionId: rejoinAttendeeConnectionId, // Different connection id
 						connectionOrder: 1,
-						updateProviders: ["client2"],
+						updateProviders: [initialLocalClientConnectionId],
 						priorClientToSessionId:
 							initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
 					});
@@ -287,7 +554,7 @@ describe("Presence", () => {
 							attendeeId: attendeeSessionId,
 							clientConnectionId: rejoinAttendeeConnectionId,
 							connectionOrder: 1,
-							updateProviders: ["client2"],
+							updateProviders: [initialLocalClientConnectionId],
 							priorClientToSessionId: {
 								...initialAttendeeSignal.content.data["system:presence"].clientToSessionId,
 								[collateralAttendeeConnectionId]: {
@@ -500,7 +767,10 @@ describe("Presence", () => {
 							clock.tick(1000);
 							// Simulate remote client disconnect (while local is disconnected)
 							runtime.audience.removeMember(knownAttendee.getConnectionId());
-							runtime.connect("client8", "client2"); // Simulate local client reconnect with new connection id
+							runtime.connect(
+								rejoinedLocalClientConnectionId1,
+								initialLocalClientConnectionId,
+							); // Simulate local client reconnect with new connection id
 
 							// Verify - attendee with stale connection should still be 'Connected' after 15 seconds
 							clock.tick(15_001);
@@ -545,7 +815,10 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect for 15 second, disconnect local client again, then advance timer
 							runtime.disconnect(); // First disconnect
 							clock.tick(1000);
-							runtime.connect("client8", "client2"); // Reconnect
+							runtime.connect(
+								rejoinedLocalClientConnectionId1,
+								initialLocalClientConnectionId,
+							); // Reconnect
 							clock.tick(15_000); // Advance 15 seconds
 							runtime.disconnect(); // Disconnect again
 							clock.tick(600_000); // Advance 10 minutes
@@ -561,10 +834,12 @@ describe("Presence", () => {
 						it("does not update status of attendee with stale connection if attendee rejoins", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
-							// Setup - fail if attendee joined is announced
+							// Setup - fail if non-self attendee joined is announced
 							afterCleanUp.push(
-								presence.attendees.events.on("attendeeConnected", () => {
-									assert.fail(
+								presence.attendees.events.on("attendeeConnected", (attendee) => {
+									// Self attendee will be announced on reconnect, which is expected
+									assert(
+										attendee === presence.attendees.getMyself(),
 										"No `attendeeConnected` should be announced for rejoining attendee that's already 'Connected'",
 									);
 								}),
@@ -573,7 +848,10 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect, process rejoin signal from known attendee after 15s, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client8", "client2");
+							runtime.connect(
+								rejoinedLocalClientConnectionId1,
+								initialLocalClientConnectionId,
+							);
 							clock.tick(15_000);
 							processJoinSignals([rejoinAttendeeSignal]);
 							clock.tick(600_000);
@@ -589,10 +867,12 @@ describe("Presence", () => {
 						it("does not update status of attendee with stale connection if attendee sends datastore update", () => {
 							assert(knownAttendee !== undefined, "No attendee was set in beforeEach");
 
-							// Setup - fail if attendee joined is announced
+							// Setup - fail if non-self attendee joined is announced
 							afterCleanUp.push(
-								presence.attendees.events.on("attendeeConnected", () => {
-									assert.fail(
+								presence.attendees.events.on("attendeeConnected", (attendee) => {
+									// Self attendee will be announced on reconnect, which is expected
+									assert(
+										attendee === presence.attendees.getMyself(),
 										"No `attendeeConnected` should be announced for active attendee that's already 'Connected'",
 									);
 								}),
@@ -601,7 +881,10 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect, process datatstore update signal from known attendee before 30s delay, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client8", "client2");
+							runtime.connect(
+								rejoinedLocalClientConnectionId1,
+								initialLocalClientConnectionId,
+							);
 							clock.tick(15_000);
 							processSignal(
 								[],
@@ -641,7 +924,10 @@ describe("Presence", () => {
 							// Act - disconnect, reconnect, remove remote client connection, then advance timer
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client8", "client2");
+							runtime.connect(
+								rejoinedLocalClientConnectionId1,
+								initialLocalClientConnectionId,
+							);
 							clock.tick(15_001);
 							runtime.audience.removeMember(initialAttendeeConnectionId); // Remove remote client connection before 30s timeout
 							// Confirm that `attendeeDisconnected` is announced for when active attendee disconnects
@@ -678,13 +964,19 @@ describe("Presence", () => {
 							runtime.disconnect();
 							runtime.audience.removeMember(knownAttendee.getConnectionId()); // Simulate remote client disconnect (while local is disconnected)
 							clock.tick(1000);
-							runtime.connect("client8", "client2");
+							runtime.connect(
+								rejoinedLocalClientConnectionId1,
+								initialLocalClientConnectionId,
+							);
 
 							clock.tick(15_001);
 
 							runtime.disconnect();
 							clock.tick(1000);
-							runtime.connect("client9", "client8");
+							runtime.connect(
+								rejoinedLocalClientConnectionId2,
+								rejoinedLocalClientConnectionId1,
+							);
 
 							// Verify - attendee with stale connection should still be connected after 15 seconds
 							clock.tick(15_001);
