@@ -25,8 +25,7 @@ const config: Linter.Config[] = [
 
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"@typescript-eslint/explicit-function-return-type": "warn",
-			// requires strictNullChecks=true in tsconfig
-			"@typescript-eslint/strict-boolean-expressions": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
 			"prefer-arrow-callback": "off",
 
 			// #endregion

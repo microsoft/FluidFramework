@@ -42,6 +42,7 @@ const config: Linter.Config[] = [
 		// Test code and the main package export shouldn't be linted for unused exports
 		files: ['**/test/**', 'src/index.ts'],
 		rules: {
+			// Test code and the main package export shouldn't be linted for unused exports
 			'import-x/no-unused-modules': 'off',
 		},
 	},
