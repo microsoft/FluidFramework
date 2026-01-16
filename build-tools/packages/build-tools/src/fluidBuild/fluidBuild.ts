@@ -9,7 +9,7 @@ import { Spinner } from "picospinner";
 import { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
-import { type BuildGraph } from "./buildGraph";
+import type { BuildGraph } from "./buildGraph";
 import { BuildResult } from "./buildResult";
 import { commonOptions } from "./commonOptions";
 import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
@@ -21,7 +21,7 @@ const { log, errorLog: error, warning: warn } = defaultLogger;
 
 parseOptions(process.argv);
 
-async function main() {
+async function main(): Promise<void> {
 	const timer = new Timer(commonOptions.timer);
 	const resolvedRoot = await getResolvedFluidRoot(true);
 	const fluidConfig = getFluidBuildConfig(resolvedRoot, false);
@@ -144,7 +144,7 @@ async function main() {
 	process.exit(exitCode);
 }
 
-function buildResultString(buildResult: BuildResult) {
+function buildResultString(buildResult: BuildResult): string {
 	switch (buildResult) {
 		case BuildResult.Success:
 			return chalk.greenBright("succeeded");

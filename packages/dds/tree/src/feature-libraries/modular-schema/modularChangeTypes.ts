@@ -101,8 +101,8 @@ export interface CrossFieldKey extends ChangeAtomId {
 }
 
 export interface CrossFieldKeyRange {
-	key: CrossFieldKey;
-	count: number;
+	readonly key: CrossFieldKey;
+	readonly count: number;
 }
 
 export interface FieldId {
@@ -140,7 +140,7 @@ export interface HasFieldChanges {
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 export interface FieldChange {
-	fieldKind: FieldKindIdentifier;
+	readonly fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
 }
 
