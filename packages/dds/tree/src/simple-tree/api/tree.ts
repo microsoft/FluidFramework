@@ -37,7 +37,6 @@ import type {
 } from "./transactionTypes.js";
 import type { VerboseTree } from "./verboseTree.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
-import type { Transactor } from "../../shared-tree-core/index.js";
 
 /**
  * A tree from which a {@link TreeView} can be created.
