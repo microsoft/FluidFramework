@@ -63,7 +63,7 @@ import {
 
 /**
  * Serialization format versions for IdCompressor.
- * @legacy @beta
+ * @internal
  */
 export const SerializationVersion = {
 	/**
@@ -78,7 +78,7 @@ export const SerializationVersion = {
 
 /**
  * Type representing valid serialization version values.
- * @legacy @beta
+ * @internal
  */
 export type SerializationVersion =
 	(typeof SerializationVersion)[keyof typeof SerializationVersion];
@@ -1109,7 +1109,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
  * Create a new {@link IIdCompressor}.
  * @param writeVersion - The version the compressor will write when serializing. Use SerializationVersion.V2 for base format, or SerializationVersion.V3 for sharding support.
  * @param logger - Optional telemetry logger.
- * @legacy @beta
+ * @internal
  */
 export function createIdCompressor(
 	writeVersion: SerializationVersion,
@@ -1120,7 +1120,7 @@ export function createIdCompressor(
  * @param sessionId - The seed ID for the compressor.
  * @param writeVersion - The version the compressor will write when serializing. Use SerializationVersion.V2 for base format, or SerializationVersion.V3 for sharding support.
  * @param logger - Optional telemetry logger.
- * @legacy @beta
+ * @internal
  */
 export function createIdCompressor(
 	sessionId: SessionId,
@@ -1161,7 +1161,7 @@ export function createIdCompressor(
  * @param serialized - The serialized compressor state with an ongoing session.
  * @param writeVersion - The version the compressor will write when serializing. This determines what features are available (e.g., V3 enables sharding support).
  * @param logger - Optional telemetry logger.
- * @legacy @beta
+ * @internal
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithOngoingSession,
@@ -1174,7 +1174,7 @@ export function deserializeIdCompressor(
  * @param newSessionId - The session ID to use for the deserialized compressor.
  * @param writeVersion - The version the compressor will write when serializing. This determines what features are available (e.g., V3 enables sharding support).
  * @param logger - Optional telemetry logger.
- * @legacy @beta
+ * @internal
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithNoSession,

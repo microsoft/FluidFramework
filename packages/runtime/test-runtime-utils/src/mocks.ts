@@ -48,10 +48,7 @@ import {
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type {
-	IIdCompressorCore,
-	IdCreationRange,
-} from "@fluidframework/id-compressor/internal";
+import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
@@ -249,12 +246,13 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return deltaConnection;
 	}
 
-	public finalizeIdRange(range: IdCreationRange): void {
+	public finalizeIdRange(range: any): void {
 		assert(
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
 		);
-		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
+		// Cast to access internal API
+		(this.dataStoreRuntime.idCompressor as any).finalizeCreationRange(range);
 	}
 
 	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
@@ -451,7 +449,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	private generateIdAllocationOp(): IInternalMockRuntimeMessage | undefined {
-		const idRange = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
+		// Cast to access internal API
+		const idRange = (this.dataStoreRuntime.idCompressor as any)?.takeNextCreationRange();
 		if (idRange?.ids !== undefined) {
 			const allocationOp: IMockContainerRuntimeIdAllocationMessage = {
 				type: "idAllocation",
@@ -866,7 +865,7 @@ export class MockFluidDataStoreRuntime
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
 		logger?: ITelemetryBaseLogger;
-		idCompressor?: IIdCompressor & IIdCompressorCore;
+		idCompressor?: IIdCompressor;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
 		minVersionForCollab?: MinimumVersionForCollab;
@@ -935,7 +934,7 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
-	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+	public idCompressor: IIdCompressor | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
 

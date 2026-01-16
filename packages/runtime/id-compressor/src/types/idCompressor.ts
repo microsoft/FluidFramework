@@ -75,7 +75,7 @@ import type {
  *
  * These two spaces naturally define a rule: consumers of compressed IDs should use session-space IDs, but serialized forms such as ops
  * should use op-space IDs.
- * @legacy @beta
+ * @internal
  */
 export interface IIdCompressorCore {
 	/**
@@ -173,7 +173,7 @@ export interface IIdCompressorCore {
 /**
  * An ID that uniquely identifies an ID compressor shard.
  * This is used to track which shard generated which IDs and to manage unsharding.
- * @legacy @beta
+ * @internal
  */
 export interface CompressorShardId {
 	/**
