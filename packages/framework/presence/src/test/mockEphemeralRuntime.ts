@@ -12,6 +12,12 @@ import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-ut
 import type { ClientConnectionId } from "../baseTypes.js";
 import type { IEphemeralRuntime } from "../internalTypes.js";
 
+/**
+ * Mock {@link ClientConnectionId} for the local client in tests.
+ */
+export const initialLocalClientConnectionId =
+	"localClient" as const satisfies ClientConnectionId;
+
 type ClientData = [string, IClient];
 
 function buildClientDataArray(clientIds: string[], numWriteClients: number): ClientData[] {
@@ -93,9 +99,19 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 			this.logger = logger;
 		}
 
+		const numWriteClients = 6;
 		const clientsData = buildClientDataArray(
-			["client0", "client1", "client2", "client3", "client4", "client5", "client6", "client7"],
-			/* count of write clients (in quorum) */ 6,
+			[
+				"client0",
+				"client1",
+				initialLocalClientConnectionId,
+				"client3",
+				"client4",
+				"client5",
+				"client6",
+				"client7",
+			],
+			numWriteClients,
 		);
 		this.quorum = makeMockQuorum(clientsData);
 		this.audience = makeMockAudience(clientsData);
@@ -144,6 +160,9 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		);
 	}
 
+	/**
+	 * Removes a member from both audience and quorum.
+	 */
 	public removeMember(clientId: ClientConnectionId): void {
 		const client = this.audience.getMember(clientId);
 		assert(client !== undefined, `Attempting to remove unknown connection: ${clientId}`);
@@ -179,7 +198,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 				this.audience.addMember(memberClientId, client);
 			}
 		}
-		// finally add new connection
+		// finally add new connection to audience
 		for (const [newClientId, newMember] of buildClientDataArray([clientId], 1)) {
 			this.audience.addMember(newClientId, newMember);
 		}

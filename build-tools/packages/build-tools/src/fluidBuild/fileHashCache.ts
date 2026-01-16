@@ -10,7 +10,7 @@ type hashFn = (buffer: Buffer) => string;
 export class FileHashCache {
 	private fileHashCaches = new Map<hashFn, Map<string, Promise<string>>>();
 
-	private getFileHashCache(hash: hashFn) {
+	private getFileHashCache(hash: hashFn): Map<string, Promise<string>> {
 		let fileHashCache = this.fileHashCaches.get(hash);
 		if (fileHashCache === undefined) {
 			fileHashCache = new Map<string, Promise<string>>();
@@ -18,7 +18,7 @@ export class FileHashCache {
 		}
 		return fileHashCache;
 	}
-	public async getFileHash(path: string, hash: hashFn = sha256) {
+	public async getFileHash(path: string, hash: hashFn = sha256): Promise<string> {
 		const fileHashCache = this.getFileHashCache(hash);
 		const cachedHashP = fileHashCache.get(path);
 		if (cachedHashP) {
@@ -30,7 +30,7 @@ export class FileHashCache {
 		return newHashP;
 	}
 
-	public clear() {
+	public clear(): void {
 		this.fileHashCaches.clear();
 	}
 }

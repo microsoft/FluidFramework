@@ -16,10 +16,10 @@ interface DoneFileContent {
 	sources: { [srcFile: string]: string };
 }
 export class WebpackTask extends LeafWithDoneFileTask {
-	protected get taskWeight() {
+	protected get taskWeight(): number {
 		return 5; // generally expensive relative to other tasks
 	}
-	protected async getDoneFileContent() {
+	protected async getDoneFileContent(): Promise<string | undefined> {
 		// We don't know all the input dependencies of webpack, Make sure recheckLeafIsUpToDate is false
 		// so we will always execute if any of the dependencies not up-to-date at the beginning of the build
 		// where their output might change the webpack's input.
@@ -46,7 +46,7 @@ export class WebpackTask extends LeafWithDoneFileTask {
 		}
 	}
 
-	private get configFileFullPath() {
+	private get configFileFullPath(): string {
 		// TODO: parse the command line for real, split space for now.
 		const args = this.command.split(" ");
 		for (let i = 1; i < args.length; i++) {
@@ -58,7 +58,7 @@ export class WebpackTask extends LeafWithDoneFileTask {
 		return this.getDefaultConfigFile();
 	}
 
-	private getDefaultConfigFile() {
+	private getDefaultConfigFile(): string {
 		const defaultConfigFileNames = [
 			"webpack.config",
 			".webpack/webpack.config",
@@ -78,10 +78,10 @@ export class WebpackTask extends LeafWithDoneFileTask {
 		return path.join(this.package.directory, "webpack.config.cjs");
 	}
 
-	private getEnvArguments() {
+	private getEnvArguments(): Record<string, string | boolean> {
 		// TODO: parse the command line for real, split space for now.
 		const args = this.command.split(" ");
-		const env = {};
+		const env: Record<string, string | boolean> = {};
 		// Ignore trailing --env
 		for (let i = 1; i < args.length - 1; i++) {
 			if (args[i] == "--env") {
@@ -89,9 +89,10 @@ export class WebpackTask extends LeafWithDoneFileTask {
 				env[value[0]] = value.length === 1 ? true : value[1];
 			}
 		}
+		return env;
 	}
 
-	private async getVersion() {
+	private async getVersion(): Promise<string> {
 		// TODO:  We can get webpack version with "webpack --version", but harder to get the plug-ins
 		// For now we just use the big hammer of the monorepo lock file as are guard against version change
 		return this.node.getLockFileHash();

@@ -31,6 +31,7 @@ import type {
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { initialLocalClientConnectionId } from "./mockEphemeralRuntime.js";
 
 /**
  * Use to compile-time assert types of two variables are identical.
@@ -62,6 +63,8 @@ export function createSpecificAttendeeId<const T extends string>(
 	return id as SpecificAttendeeId<T>;
 }
 
+export { initialLocalClientConnectionId } from "./mockEphemeralRuntime.js";
+
 /**
  * Mock {@link AttendeeId}.
  */
@@ -71,13 +74,9 @@ export const attendeeId1 = createSpecificAttendeeId("attendeeId-1");
  */
 export const connectionId1 = "client1" as const satisfies ClientConnectionId;
 /**
- * Mock {@link AttendeeId}.
+ * Mock {@link AttendeeId} for the local client in tests.
  */
-export const attendeeId2 = createSpecificAttendeeId("attendeeId-2");
-/**
- * Mock {@link ClientConnectionId}.
- */
-export const connectionId2 = "client2" as const satisfies ClientConnectionId;
+export const localAttendeeId = createSpecificAttendeeId("localAttendeeId");
 
 /**
  * Generates expected inbound join signal for a client that was initialized while connected.
@@ -85,8 +84,8 @@ export const connectionId2 = "client2" as const satisfies ClientConnectionId;
 export function generateBasicClientJoin(
 	fixedTime: number,
 	{
-		attendeeId = attendeeId2,
-		clientConnectionId = connectionId2,
+		attendeeId = localAttendeeId,
+		clientConnectionId = initialLocalClientConnectionId,
 		updateProviders = ["client0", "client1", "client3"],
 		connectionOrder = 0,
 		averageLatency = 0,
@@ -129,65 +128,12 @@ export function generateBasicClientJoin(
 export type ProcessSignalFunction = ReturnType<typeof createPresenceManager>["processSignal"];
 
 /**
- * Prepares an instance of presence as it would be if initialized while connected.
- *
- * @param runtime - the mock runtime
- * @param attendeeId - the client session id given to presence
- * @param clientConnectionId - the client connection id
- * @param clock - the fake timer.
- * @param logger - optional logger to track telemetry events
+ * Creates a processSignal wrapper function for a presence manager.
  */
-export function prepareConnectedPresence(
-	runtime: MockEphemeralRuntime,
-	attendeeId: string,
-	clientConnectionId: ClientConnectionId,
-	clock: Omit<SinonFakeTimers, "restore">,
-	logger?: EventAndErrorTrackingLogger,
-): {
-	presence: PresenceWithNotifications;
-	processSignal: ProcessSignalFunction;
-	localAvgLatency: number;
-} {
-	const localAvgLatency = 10;
-
-	// Set runtime to connected state
-	runtime.clientId = clientConnectionId;
-	runtime.joined = true;
-
-	logger?.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
-
-	// This logic needs to be kept in sync with datastore manager.
-	// From PresenceDatastoreManager.getInteractiveMembersExcludingSelf:
-	const members = runtime.audience.getMembers();
-	members.delete(clientConnectionId);
-	const all = new Set<ClientConnectionId>();
-	const writers = new Set<ClientConnectionId>();
-	for (const [id, client] of members) {
-		if (client.details.capabilities.interactive) {
-			all.add(id);
-			if (client.mode === "write") {
-				writers.add(id);
-			}
-		}
-	}
-	// From PresenceDatastoreManager.joinSession:
-	const updateProviders = [...(writers.size > 0 ? writers : all)];
-	if (updateProviders.length > 3) {
-		updateProviders.length = 3;
-	}
-
-	const expectedClientJoin: OutboundClientJoinMessage &
-		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
-		attendeeId,
-		clientConnectionId,
-		updateProviders,
-	});
-	delete expectedClientJoin.clientId;
-	runtime.signalsExpected.push([expectedClientJoin]);
-
-	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
-
-	const processSignal = (
+function createProcessSignal(
+	presence: ReturnType<typeof createPresenceManager>,
+): ProcessSignalFunction {
+	return (
 		addressChain: string[],
 		signalMessage: InboundExtensionMessage<SignalMessages>,
 		local: boolean,
@@ -205,17 +151,78 @@ export function prepareConnectedPresence(
 			local,
 		);
 	};
+}
 
-	// Validate expectations post initialization to make sure logger
-	// and runtime are left in a clean expectation state.
-	const logErrors = getUnexpectedLogErrorException(logger);
-	if (logErrors) {
-		throw logErrors;
+/**
+ * Calculates update providers based on current audience members.
+ */
+function calculateUpdateProviders(
+	runtime: MockEphemeralRuntime,
+	clientConnectionId: ClientConnectionId,
+): ClientConnectionId[] {
+	// This logic needs to be kept in sync with datastore manager.
+	// From PresenceDatastoreManager.getAudienceInformation:
+	const members = runtime.audience.getMembers();
+	members.delete(clientConnectionId);
+	const all = new Set<ClientConnectionId>();
+	const writers = new Set<ClientConnectionId>();
+	for (const [id, client] of members) {
+		if (client.details.capabilities.interactive) {
+			all.add(id);
+			if (client.mode === "write") {
+				writers.add(id);
+			}
+		}
 	}
-	runtime.assertAllSignalsSubmitted();
+	// From PresenceDatastoreManager.joinSession:
+	const updateProviders = [...(writers.size > 0 ? writers : all)];
+	if (updateProviders.length > 3) {
+		updateProviders.length = 3;
+	}
+	return updateProviders;
+}
 
+/**
+ * Prepares the expected client join signal and calculates update providers.
+ */
+function prepareExpectedClientJoin(
+	runtime: MockEphemeralRuntime,
+	attendeeId: string,
+	clientConnectionId: ClientConnectionId,
+	clock: Omit<SinonFakeTimers, "restore">,
+): {
+	expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">>;
+	updateProviders: ClientConnectionId[];
+} {
+	const updateProviders = calculateUpdateProviders(runtime, clientConnectionId);
+
+	const expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
+		attendeeId,
+		clientConnectionId,
+		updateProviders,
+	});
+	delete expectedClientJoin.clientId;
+	runtime.signalsExpected.push([expectedClientJoin]);
+
+	return { expectedClientJoin, updateProviders };
+}
+
+/**
+ * Processes the local join signal and sends a fake join response.
+ */
+function processJoinSignalAndResponse(
+	processSignal: ProcessSignalFunction,
+	expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">>,
+	clientConnectionId: ClientConnectionId,
+	updateProviders: ClientConnectionId[],
+	clock: Omit<SinonFakeTimers, "restore">,
+	latency: number,
+): void {
 	// Pass a little time (to mimic reality)
-	clock.tick(localAvgLatency);
+	clock.tick(latency);
 
 	// Return the [local] join signal
 	processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
@@ -242,6 +249,81 @@ export function prepareConnectedPresence(
 			false,
 		);
 	}
+}
+
+/**
+ * The simulated local average latency used in test helpers.
+ */
+const localAvgLatency = 10;
+
+/**
+ * Creates presence manager for testing.
+ */
+function createPresence(
+	runtime: MockEphemeralRuntime,
+	attendeeId: string,
+	logger: EventAndErrorTrackingLogger,
+): {
+	presence: ReturnType<typeof createPresenceManager>;
+	processSignal: ProcessSignalFunction;
+} {
+	logger.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
+
+	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
+	const processSignal = createProcessSignal(presence);
+
+	// Validate expectations post initialization to make sure logger
+	// and runtime are left in a clean expectation state.
+	const logErrors = getUnexpectedLogErrorException(logger);
+	if (logErrors) {
+		throw logErrors;
+	}
+
+	return { presence, processSignal };
+}
+
+/**
+ * Prepares an instance of presence as it would be if initialized while connected.
+ *
+ * @param runtime - the mock runtime
+ * @param attendeeId - the client session id given to presence
+ * @param clientConnectionId - the client connection id
+ * @param clock - the fake timer.
+ * @param logger - logger to track telemetry events
+ */
+export function prepareConnectedPresence(
+	runtime: MockEphemeralRuntime,
+	attendeeId: string,
+	clientConnectionId: ClientConnectionId,
+	clock: Omit<SinonFakeTimers, "restore">,
+	logger: EventAndErrorTrackingLogger,
+): {
+	presence: PresenceWithNotifications;
+	processSignal: ProcessSignalFunction;
+	localAvgLatency: number;
+} {
+	// Set runtime to connected state
+	runtime.clientId = clientConnectionId;
+	runtime.joined = true;
+
+	const { expectedClientJoin, updateProviders } = prepareExpectedClientJoin(
+		runtime,
+		attendeeId,
+		clientConnectionId,
+		clock,
+	);
+
+	const { presence, processSignal } = createPresence(runtime, attendeeId, logger);
+	runtime.assertAllSignalsSubmitted();
+
+	processJoinSignalAndResponse(
+		processSignal,
+		expectedClientJoin,
+		clientConnectionId,
+		updateProviders,
+		clock,
+		localAvgLatency,
+	);
 
 	return {
 		presence,
@@ -251,11 +333,85 @@ export function prepareConnectedPresence(
 }
 
 /**
+ * Prepares an instance of presence in a disconnected state.
+ *
+ * @remarks
+ * Use this helper when you need to test events that occur during the initial
+ * connection, such as `attendeeConnected` for the local client.
+ *
+ * @param runtime - the mock runtime
+ * @param attendeeId - the client session id given to presence
+ * @param clientConnectionId - the client connection id to use when connecting
+ * @param clock - the fake timer
+ * @param logger - logger to track telemetry events
+ */
+export function prepareDisconnectedPresence(
+	runtime: MockEphemeralRuntime,
+	attendeeId: string,
+	clientConnectionId: ClientConnectionId,
+	clock: Omit<SinonFakeTimers, "restore">,
+	logger: EventAndErrorTrackingLogger,
+): {
+	presence: PresenceWithNotifications;
+	processSignal: ProcessSignalFunction;
+	/**
+	 * Connects presence using the client connection id provided to prepareDisconnectedPresence.
+	 */
+	connect: () => void;
+	/**
+	 * The simulated local average latency used by connect.
+	 */
+	localAvgLatency: number;
+} {
+	// Ensure runtime is in disconnected state
+	runtime.clientId = undefined;
+	runtime.joined = false;
+
+	// Remove client connection id from audience if present
+	if (runtime.audience.getMember(clientConnectionId) !== undefined) {
+		runtime.removeMember(clientConnectionId);
+	}
+
+	const { presence, processSignal } = createPresence(runtime, attendeeId, logger);
+
+	const connect = (): void => {
+		const { expectedClientJoin, updateProviders } = prepareExpectedClientJoin(
+			runtime,
+			attendeeId,
+			clientConnectionId,
+			clock,
+		);
+
+		// Simulate connection
+		runtime.connect(clientConnectionId, undefined);
+
+		// Validate signal was submitted
+		runtime.assertAllSignalsSubmitted();
+
+		processJoinSignalAndResponse(
+			processSignal,
+			expectedClientJoin,
+			clientConnectionId,
+			updateProviders,
+			clock,
+			localAvgLatency,
+		);
+	};
+
+	return {
+		presence,
+		processSignal,
+		connect,
+		localAvgLatency,
+	};
+}
+
+/**
  * Asserts that all expected telemetry and signals were sent.
  */
 export function assertFinalExpectations(
 	runtime: MockEphemeralRuntime,
-	logger?: EventAndErrorTrackingLogger,
+	logger: EventAndErrorTrackingLogger,
 ): void {
 	// Make sure all expected events were logged and there are no unexpected errors.
 	const logErrors = getUnexpectedLogErrorException(logger);

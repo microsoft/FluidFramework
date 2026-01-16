@@ -743,6 +743,7 @@ function calcChannelStats(
 	const channelStats = new Map<string, [number, number]>();
 	for (const [objectId, type] of dataType) {
 		let value = objectStats.get(objectId);
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (value === undefined) {
 			value = [0, 0];
 		}
