@@ -143,6 +143,7 @@ export class OdspClient {
 	 *
 	 * @param serializedContainer - Serialized string representation of the container.
 	 * @param containerSchema - The schema of the container to rehydrate.
+	 * @returns A promise resolving to an object containing the rehydrated container and associated services.
 	 */
 	public async rehydrateContainer<T extends ContainerSchema>(
 		serializedContainer: string,
