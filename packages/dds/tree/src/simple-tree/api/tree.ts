@@ -236,7 +236,7 @@ export interface TreeBranchAlpha extends TreeBranch {
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 *
 	 * Nested transactions:
-	 * This API can be called from within the transaction callback of another `runTransaction` or {@link runAsyncTransaction} call. That will have slightly different behavior:
+	 * This API can be called from within the transaction callback of another `runTransaction` or `runAsyncTransaction` call. That will have slightly different behavior:
 	 *
 	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
 	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
@@ -273,7 +273,7 @@ export interface TreeBranchAlpha extends TreeBranch {
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 *
 	 * Nested transactions:
-	 * This API can be called from within the transaction callback of another `runTransaction` or {@link runAsyncTransaction} call. That will have slightly different behavior:
+	 * This API can be called from within the transaction callback of another `runTransaction` or `runAsyncTransaction` call. That will have slightly different behavior:
 	 *
 	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
 	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
