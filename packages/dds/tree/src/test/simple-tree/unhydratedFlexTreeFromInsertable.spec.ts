@@ -61,7 +61,6 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const tree = "Hello world";
 
-		
 		const actual = unhydratedFlexTreeFromInsertable(tree, [schemaFactory.string]);
 
 		const expected: MapTree = {
