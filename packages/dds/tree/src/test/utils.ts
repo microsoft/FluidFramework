@@ -542,8 +542,11 @@ export function spyOnMethod(
 	methodName: string,
 	spy: () => void,
 ): () => void {
-	const { prototype } = methodClass;
-	const method: unknown = prototype[methodName];
+	const prototype = methodClass.prototype as Record<
+		string,
+		(this: unknown, ...args: unknown[]) => unknown
+	>;
+	const method = prototype[methodName];
 	assert(typeof method === "function", `Method does not exist: ${methodName}`);
 
 	const methodSpy = function (this: unknown, ...args: unknown[]): unknown {
