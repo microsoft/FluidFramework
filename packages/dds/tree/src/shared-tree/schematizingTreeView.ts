@@ -293,40 +293,9 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		const { checkout } = this;
-
-		checkout.transaction.start(false);
-
-		// Validate preconditions before running the transaction callback.
-		addConstraintsToTransaction(
-			checkout,
-			false /* constraintsOnRevert */,
-			params?.preconditions,
-		);
+		this.mountTransaction(params, false);
 		const transactionCallbackStatus = transaction();
-		const rollback = transactionCallbackStatus?.rollback;
-		const value = (
-			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
-		)?.value;
-
-		if (rollback === true) {
-			checkout.transaction.abort();
-			return value === undefined
-				? { success: false }
-				: { success: false, value: value as TFailureValue };
-		}
-
-		// Validate preconditions on revert after running the transaction callback and was successful.
-		addConstraintsToTransaction(
-			checkout,
-			true /* constraintsOnRevert */,
-			transactionCallbackStatus?.preconditionsOnRevert,
-		);
-
-		checkout.transaction.commit();
-		return value === undefined
-			? { success: true }
-			: { success: true, value: value as TSuccessValue };
+		return this.unmountTransaction(transactionCallbackStatus);
 	}
 
 	/**
@@ -351,9 +320,16 @@ export class SchematizingSimpleTreeView<
 		>,
 		params?: RunTransactionParams,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
+		this.mountTransaction(params, true);
+		const transactionCallbackStatus = await transaction();
+		return this.unmountTransaction(transactionCallbackStatus);
+	}
+
+	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
+		this.ensureUndisposed();
 		const { checkout } = this;
 
-		checkout.transaction.start(true);
+		checkout.transaction.start(isAsync);
 
 		// Validate preconditions before running the transaction callback.
 		addConstraintsToTransaction(
@@ -361,7 +337,16 @@ export class SchematizingSimpleTreeView<
 			false /* constraintsOnRevert */,
 			params?.preconditions,
 		);
-		const transactionCallbackStatus = await transaction();
+	}
+
+	private unmountTransaction<TSuccessValue, TFailureValue>(
+		transactionCallbackStatus:
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void,
+	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		this.ensureUndisposed();
+		const { checkout } = this;
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
 			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>

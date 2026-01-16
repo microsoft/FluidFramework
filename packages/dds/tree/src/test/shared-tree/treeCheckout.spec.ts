@@ -792,19 +792,53 @@ describe("sharedTreeView", () => {
 			view.initialize([]);
 
 			let transactionPromise: Promise<TransactionResult> | undefined;
-			view.runTransaction(() => {
-				view.root.insertAtEnd("42");
-				transactionPromise = view.runAsyncTransaction(async () => {
-					view.root.insertAtEnd("43");
-				});
-			});
+			const expectedError = validateUsageError(
+				/An asynchronous transaction cannot be started while a synchronous transaction is in progress./,
+			);
+			assert.throws(
+				() =>
+					view.runTransaction(() => {
+						transactionPromise = view.runAsyncTransaction(async () => {});
+					}),
+				expectedError,
+			);
 
 			await assert.rejects(
 				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
-				validateUsageError(
-					"An asynchronous transaction cannot be started while a synchronous transaction is in progress.",
-				),
+				expectedError,
 			);
+		});
+
+		it("handles async transactions within async transactions", async () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+
+			await view.runAsyncTransaction(async () => {
+				view.root.insertAtEnd("A");
+				await view.runAsyncTransaction(async () => {
+					view.root.insertAtEnd("B");
+				});
+			});
+
+			assert.deepEqual(view.root, ["A", "B"]);
+		});
+
+		it("handles synchronous transactions within async transactions", async () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+
+			await view.runAsyncTransaction(async () => {
+				view.root.insertAtEnd("A");
+				view.runTransaction(() => {
+					view.root.insertAtEnd("B");
+				});
+			});
+
+			assert.deepEqual(view.root, ["A", "B"]);
 		});
 	});
 
