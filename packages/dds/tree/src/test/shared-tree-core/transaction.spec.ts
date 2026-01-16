@@ -10,7 +10,10 @@ import {
 	TransactionResult,
 	TransactionStack,
 } from "../../shared-tree-core/index.js";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
@@ -269,6 +272,17 @@ describe("TransactionStacks", () => {
 		transaction.start(false);
 		transaction.dispose();
 		assert.equal(aborted, 2);
+	});
+
+	it("throws when attempting to start an async transaction within a sync transaction", () => {
+		const transaction = new TransactionStack();
+		transaction.start(false);
+		assert.throws(
+			() => transaction.start(true),
+			validateUsageError(
+				/An asynchronous transaction cannot be started while a synchronous transaction is in progress./,
+			),
+		);
 	});
 });
 

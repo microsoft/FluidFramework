@@ -19,15 +19,7 @@ import {
 	type GraphCommit,
 	type RevisionTag,
 } from "../core/index.js";
-import {
-	getLast,
-	getOrCreate,
-	hasSome,
-	idAllocatorFromMaxId,
-	type Brand,
-	type IdAllocator,
-	type Opaque,
-} from "../util/index.js";
+import { getLast, getOrCreate } from "../util/index.js";
 
 import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 
@@ -140,11 +132,8 @@ export type OnPush = () => Callbacks | void;
  */
 export type OnPop = (result: TransactionResult) => void;
 
-interface TransactionId extends Opaque<Brand<number, "@fluidframework/tree.TransactionId">> {}
-
 interface TransactionData {
 	readonly callbacks: Callbacks;
-	readonly id: TransactionId;
 	readonly isAsync: boolean;
 }
 
@@ -153,9 +142,6 @@ interface TransactionData {
  * @remarks Using a stack allows transactions to nest - i.e. an inner transaction may be started while an outer transaction is already in progress.
  */
 export class TransactionStack implements Transactor, IDisposable {
-	private readonly idAllocator: IdAllocator<TransactionId> = idAllocatorFromMaxId(
-		0,
-	) as unknown as IdAllocator<TransactionId>;
 	readonly #stack: TransactionData[] = [];
 	readonly #onPush?: OnPush;
 
@@ -194,7 +180,6 @@ export class TransactionStack implements Transactor, IDisposable {
 		const { onPush, onPop } = onPushCurrent?.() ?? {};
 		this.#stack.push({
 			callbacks: { onPop, onPush: onPush ?? onPushCurrent },
-			id: this.idAllocator.allocate(),
 			isAsync,
 		});
 		this.#events.emit("started");
