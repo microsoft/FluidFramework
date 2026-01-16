@@ -15,7 +15,7 @@ export const EncodedRegisterId = Type.Union([EncodedChangeAtomId, Type.Null()]);
 export type EncodedRegisterId = Static<typeof EncodedRegisterId>;
 
 // Type is intentionally derived.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Object(
 		{
@@ -36,7 +36,7 @@ export type EncodedOptionalChangeset<Schema extends TSchema> = Static<
 >;
 
 // Type is intentionally derived.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 const EncodedChildChanges = <Schema extends TSchema>(tNodeChange: Schema) =>
 	// Changes to the children of the node that is in the specified register in the input context of this change.
 	Type.Array(Type.Tuple([EncodedRegisterId, tNodeChange]));

@@ -29,12 +29,12 @@ const MarkEffect = Type.Composite(
 );
 
 // Return type is intentionally derived.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>
 	CellMark(MarkEffect, tNodeChange);
 
 // Return type is intentionally derived.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const Changeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Array(Mark(tNodeChange));
 

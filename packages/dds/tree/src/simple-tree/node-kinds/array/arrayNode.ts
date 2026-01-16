@@ -933,7 +933,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		return this.values();
 	}
 
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public get [Symbol.unscopables]() {
 		// This might not be the exact right set of values, but it only matters for `with` clauses which are deprecated and are banned in strict mode, so it shouldn't matter much.
 		// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/with for details.
@@ -1150,7 +1150,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
  * @param name - Unique identifier for this schema including the factory's scope.
  * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function arraySchema<
 	TName extends string,
 	const T extends ImplicitAllowedTypes,

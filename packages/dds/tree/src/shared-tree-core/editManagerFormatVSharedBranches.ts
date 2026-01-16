@@ -12,7 +12,7 @@ import { SessionIdSchema } from "../core/index.js";
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 // Many of the return types in this module are intentionally derived, rather than explicitly specified.
-/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 export interface EncodedEditManager<TChangeset> {
 	readonly version: typeof EditManagerFormatVersion.vSharedBranches;
@@ -32,4 +32,4 @@ export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: Change
 		noAdditionalProps,
 	);
 
-/* eslint-enable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
+/* eslint-enable @typescript-eslint/explicit-function-return-type */

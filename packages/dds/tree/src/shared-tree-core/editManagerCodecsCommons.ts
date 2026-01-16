@@ -28,7 +28,7 @@ export interface EditManagerEncodingContext {
 	readonly schema?: SchemaAndPolicy;
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 	changeCodec: IMultiFormatCodec<
 		TChangeset,
@@ -56,7 +56,7 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 	};
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly>>(
 	changeCodec: IMultiFormatCodec<
 		TChangeset,

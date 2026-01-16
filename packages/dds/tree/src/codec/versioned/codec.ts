@@ -396,7 +396,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 	 * making it easier to create builders without needing to explicitly specify all type parameters.
 	 * This gets better type inference than the constructor.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public static build<
 		Name extends CodecName,
 		Entry extends CodecVersion<unknown, unknown, FormatVersion, never>,

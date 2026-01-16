@@ -53,7 +53,7 @@ export type RootRanges = Static<typeof RootRanges>;
  * For all the roots detached in a revision, represents a mapping from the detached node ID to corresponding root ID.
  */
 // Return type is intentionally derived.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const EncodedRootsForRevision = <Schema extends TSchema>(tRevisionTag: Schema) =>
 	Type.Union([
 		// Used to represent a revision in which more than one node were detached
@@ -70,7 +70,7 @@ export const Format = <
 	tVersion: TVersion,
 	tRevisionTag: TRevisionTagSchema,
 	// Return type is intentionally derived.
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
 	Type.Object(
 		{

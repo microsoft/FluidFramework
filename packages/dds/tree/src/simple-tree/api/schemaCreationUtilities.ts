@@ -35,7 +35,7 @@ import type { UnionToTuple } from "../../util/index.js";
  * @beta
  */
 // Return type is intentionally derived.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function singletonSchema<TScope extends string, TName extends string | number>(
 	factory: SchemaFactory<TScope, TName>,
 	name: TName,
@@ -122,7 +122,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * @see {@link enumFromStrings} for a similar function that works on arrays of strings instead of an enum.
  * @beta
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function adaptEnum<
 	TScope extends string,
 	const TEnum extends Record<string, string | number>,
@@ -147,7 +147,7 @@ export function adaptEnum<
 	type SchemaArray = UnionToTuple<TOut[keyof TEnum]>;
 	const schemaArray: TreeNodeSchema[] = [];
 
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const factoryOut = <TValue extends Values>(value: TValue) => {
 		return new out[
 			inverse.get(value) ?? fail(0xb31 /* missing enum value */)
@@ -233,7 +233,7 @@ export function enumEntries(
  * @see {@link adaptEnum} for a similar function that works on enums instead of arrays of strings.
  * @beta
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function enumFromStrings<
 	TScope extends string,
 	const Members extends readonly string[],
@@ -256,7 +256,7 @@ export function enumFromStrings<
 		>;
 	};
 
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const factoryOut = <TValue extends MembersUnion>(value: TValue) => {
 		// "extends unknown" is required here to handle when TValue is an union: each member of the union should be processed independently.
 		return new recordOut[value]() as TValue extends unknown
@@ -292,7 +292,7 @@ export function enumFromStrings<
 
 // TODO: This generates an invalid d.ts file if exported due to a bug https://github.com/microsoft/TypeScript/issues/58688.
 // TODO: replace enumFromStrings above with this simpler implementation when the TypeScript bug is resolved.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function _enumFromStrings2<TScope extends string, const Members extends readonly string[]>(
 	factory: SchemaFactory<TScope>,
 	members: Members,

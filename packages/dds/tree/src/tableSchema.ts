@@ -174,7 +174,7 @@ export namespace System_TableSchema {
 	 * Factory for creating column schema.
 	 * @system @alpha
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types -- Return type is too complex to be reasonable to specify
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createColumnSchema<
 		const TUserScope extends string,
 		const TCellSchema extends ImplicitAllowedTypes,
@@ -315,7 +315,7 @@ export namespace System_TableSchema {
 	 * Factory for creating row schema.
 	 * @sealed @alpha
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types -- Return type is too complex to be reasonable to specify
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createRowSchema<
 		const TUserScope extends string,
 		const TCellSchema extends ImplicitAllowedTypes,
@@ -468,7 +468,7 @@ export namespace System_TableSchema {
 	 * Factory for creating table schema.
 	 * @system @alpha
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types -- Return type is too complex to be reasonable to specify
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createTableSchema<
 		const TUserScope extends string,
 		const TCellSchema extends ImplicitAllowedTypes,

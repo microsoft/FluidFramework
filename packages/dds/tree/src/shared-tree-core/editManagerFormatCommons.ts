@@ -38,7 +38,7 @@ export type EncodedCommit<TChangeset> = {
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 // Many of the return types in this module are intentionally derived, rather than explicitly specified.
-/* eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object({
@@ -178,4 +178,4 @@ export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVe
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(
 	Object.values(EditManagerFormatVersion),
 );
-/* eslint-enable @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types */
+/* eslint-enable @typescript-eslint/explicit-function-return-type */
