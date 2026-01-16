@@ -997,10 +997,13 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		let sessionOffset = 0;
 		const sessions: [NumericUuid, Session][] = [];
 		if (hasLocalState) {
-			assert(sessionId === undefined, "Local state should not exist in serialized form.");
+			assert(
+				sessionId === undefined,
+				0x75e /* Local state should not exist in serialized form. */,
+			);
 		} else {
 			// If !hasLocalState, there won't be a serialized local session ID so insert one at the beginning
-			assert(sessionId !== undefined, "Local session ID is undefined.");
+			assert(sessionId !== undefined, 0x75d /* Local session ID is undefined. */);
 			const localSessionNumeric = numericUuidFromStableId(sessionId);
 			sessions.push([localSessionNumeric, new Session(localSessionNumeric)]);
 			sessionOffset = 1;
@@ -1020,7 +1023,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			const sessionArray = sessions[sessionIndex + sessionOffset];
 			assert(
 				sessionArray !== undefined,
-				`sessionArray is undefined in IdCompressor.deserialize (version ${version})`,
+				0x9d8 /* sessionArray is undefined in IdCompressor.deserialize2_0 */,
 			);
 			const session = sessionArray[1];
 			const capacity = readNumber(index);
@@ -1055,7 +1058,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		assert(
 			index.index === index.bufferFloat.length,
-			"Failed to read entire serialized compressor.",
+			0x75f /* Failed to read entire serialized compressor. */,
 		);
 		return compressor;
 	}
@@ -1195,6 +1198,10 @@ export function deserializeIdCompressor(
 		});
 	}
 
+	assert(
+		loggerOrUndefined === undefined,
+		0xc2d /* logger would be in sessionIdOrLogger in this codepath */,
+	);
 	// Called with (serialized, writeVersion, logger?)
 	return IdCompressor.deserialize({
 		serialized: serialized as SerializedIdCompressorWithOngoingSession,
