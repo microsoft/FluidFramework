@@ -38,7 +38,7 @@ const config: Linter.Config[] = [
 			"react/self-closing-comp": "error",
 			"react/jsx-no-target-blank": "error",
 			// This is useful for catching potential performance issues, but also makes the code more verbose.
-			//"react/jsx-no-bind": "error",
+			// "react/jsx-no-bind": "error",
 			// Avoid using fragments when `null` could be used instead
 			"react/jsx-no-useless-fragment": [
 				"error",
