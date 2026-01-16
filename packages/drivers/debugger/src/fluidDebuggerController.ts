@@ -91,12 +91,12 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		this.ui = ui;
 	}
 
-	public onClose() {
+	public onClose(): void {
 		this.startSeqDeferred.resolve(DebugReplayController.WindowClosedSeq);
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	public async onVersionSelection(version: IVersion) {
+	public async onVersionSelection(version: IVersion): Promise<void> {
 		if (!this.documentStorageService) {
 			throw new Error("onVersionSelection: no storage");
 		}
@@ -106,13 +106,13 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		this.resolveStorage(seq, new SnapshotStorage(this.documentStorageService, tree), version);
 	}
 
-	public onOpButtonClick(steps: number) {
+	public onOpButtonClick(steps: number): void {
 		if (this.stepsDeferred && !Number.isNaN(steps) && steps > 0) {
 			this.stepsDeferred.resolve(steps);
 		}
 	}
 
-	public onSnapshotFileSelection(file: File) {
+	public onSnapshotFileSelection(file: File): void {
 		if (!/^snapshot.*\.json/.exec(file.name)) {
 			alert(`Incorrect file name: ${file.name}`);
 			return;
@@ -189,7 +189,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 	}
 
 	// Returns true if version / file / ops selections is made.
-	public isSelectionMade() {
+	public isSelectionMade(): boolean {
 		return this.storage !== undefined;
 	}
 
@@ -295,7 +295,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		throw new Error("Reading snapshot tree before storage is setup properly");
 	}
 
-	public async getStartingOpSequence() {
+	public async getStartingOpSequence(): Promise<number> {
 		return this.startSeqDeferred.promise;
 	}
 
@@ -357,7 +357,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		seq: number,
 		storage: ReadDocumentStorageServiceBase,
 		version: IVersion | string,
-	) {
+	): void {
 		assert(
 			!this.isSelectionMade(),
 			0x084 /* "On storage resolve, user selection already made!" */,
@@ -376,7 +376,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 
 async function* generateSequencedMessagesFromDeltaStorage(
 	deltaStorage: IDocumentDeltaStorageService,
-) {
+): AsyncGenerator<ISequencedDocumentMessage[], void, undefined> {
 	const stream = deltaStorage.fetchMessages(1, undefined);
 	while (true) {
 		const result = await stream.read();

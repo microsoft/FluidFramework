@@ -11,15 +11,9 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type RevisionInfo,
-	type RevisionTag,
 } from "../../core/index.js";
-import {
-	brand,
-	RangeMap,
-	type Brand,
-	type RangeQueryResult,
-	type TupleBTree,
-} from "../../util/index.js";
+import { brand, RangeMap, type Brand } from "../../util/index.js";
+import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
@@ -73,6 +67,10 @@ export interface ModularChangeset extends HasFieldChanges {
 	 * If this count is greater than 0, it will prevent the changeset from being applied.
 	 */
 	readonly constraintViolationCount?: number;
+	/** Constraint that the document must be in the same state before this change is applied as it was before this change was authored */
+	readonly noChangeConstraint?: NoChangeConstraint;
+	/** Constraint that the document must be in the same state before the revert of this change is applied as it was after this change was applied */
+	readonly noChangeConstraintOnRevert?: NoChangeConstraint;
 	/**
 	 * The number of constraint violations that apply to the revert of the changeset. If this count is greater than 0, it will
 	 * prevent the changeset from being reverted or undone.
@@ -103,43 +101,6 @@ export interface RootNodeTable {
 	outputDetachLocations: ChangeAtomIdRangeMap<FieldId>;
 }
 
-export type ChangeAtomIdBTree<V> = TupleBTree<ChangeAtomIdKey, V>;
-export type ChangeAtomIdKey = [RevisionTag | undefined, ChangesetLocalId];
-
-export function getFromChangeAtomIdMap<T>(
-	map: ChangeAtomIdBTree<T>,
-	id: ChangeAtomId,
-): T | undefined {
-	return map.get([id.revision, id.localId]);
-}
-
-export function rangeQueryChangeAtomIdMap<T>(
-	map: ChangeAtomIdBTree<T>,
-	id: ChangeAtomId,
-	count: number,
-): RangeQueryResult<T | undefined> {
-	const pair = map.getPairOrNextHigher([id.revision, id.localId]);
-	if (pair === undefined) {
-		return { value: undefined, length: count };
-	}
-
-	const [[revision, localId], value] = pair;
-	const lengthBefore = subtractChangeAtomIds({ revision, localId }, id);
-	if (lengthBefore === 0) {
-		return { value, length: 1 };
-	}
-
-	return { value: undefined, length: Math.min(lengthBefore, count) };
-}
-
-export function setInChangeAtomIdMap<T>(
-	map: ChangeAtomIdBTree<T>,
-	id: ChangeAtomId,
-	value: T,
-): boolean {
-	return map.set([id.revision, id.localId], value);
-}
-
 export type CrossFieldRangeTable<T> = RangeMap<CrossFieldKey, T>;
 export type CrossFieldKeyTable = CrossFieldRangeTable<FieldId>;
 
@@ -168,8 +129,8 @@ export interface CrossFieldKey extends ChangeAtomId {
 }
 
 export interface CrossFieldKeyRange {
-	key: CrossFieldKey;
-	count: number;
+	readonly key: CrossFieldKey;
+	readonly count: number;
 }
 
 export interface FieldId {
@@ -200,6 +161,13 @@ export interface NodeExistsConstraint {
 }
 
 /**
+ * A constraint that is violated whenever the state of the document is different from when the change was authored.
+ */
+export interface NoChangeConstraint {
+	violated: boolean;
+}
+
+/**
  * Changeset for a subtree rooted at a specific node.
  */
 export interface NodeChangeset extends HasFieldChanges {
@@ -219,7 +187,7 @@ export interface HasFieldChanges {
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 export interface FieldChange {
-	fieldKind: FieldKindIdentifier;
+	readonly fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
 }
 

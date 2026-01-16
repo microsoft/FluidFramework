@@ -13,6 +13,13 @@ import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/inter
 import { spy } from "sinon";
 import type { SinonFakeTimers } from "sinon";
 
+import type {
+	AttendeeId,
+	ClientConnectionId,
+	PresenceWithNotifications,
+	StateSchemaValidator,
+} from "@fluidframework/presence/alpha";
+
 import { broadcastJoinResponseDelaysMs } from "../presenceDatastoreManager.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type {
@@ -24,13 +31,6 @@ import type {
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-
-import type {
-	AttendeeId,
-	ClientConnectionId,
-	PresenceWithNotifications,
-	StateSchemaValidator,
-} from "@fluidframework/presence/alpha";
 
 /**
  * Use to compile-time assert types of two variables are identical.

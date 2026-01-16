@@ -12,9 +12,9 @@ import {
 	rootFieldKey,
 	tagChange,
 } from "../../../core/index.js";
-import type {
-	ModularChangeset,
-	NodeId,
+import {
+	type ModularChangeset,
+	type NodeId,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -216,7 +216,7 @@ type OptionalFieldTestState = FieldStateTree<string | undefined, DefaultChangese
 // 	return intentions;
 // }
 
-const editor = defaultFamily.buildEditor(() => undefined);
+const editor = defaultFamily.buildEditor(makeRevisionTagMinter(), () => undefined);
 
 /**
  * See {@link ChildStateGenerator}
@@ -528,9 +528,8 @@ export function testRebaserAxioms() {
 				defaultFieldRebaser,
 				{
 					numberOfEditsToRebase: 3,
-					numberOfEditsToRebaseOver: stressMode !== StressMode.Short ? 5 : 3,
-					numberOfEditsToVerifyAssociativity: stressMode !== StressMode.Short ? 6 : 3,
-					groupSubSuites: false,
+					numberOfEditsToRebaseOver: stressMode === StressMode.Short ? 3 : 5,
+					numberOfEditsToVerifyAssociativity: stressMode === StressMode.Short ? 3 : 6,
 				},
 			);
 		});

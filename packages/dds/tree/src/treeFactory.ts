@@ -225,6 +225,7 @@ function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInte
 	}
 	return {};
 }
+
 const sharedBranchesOptions: SharedTreeOptionsInternal = {
 	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
 	editManagerFormatSelector: editManagerFormatVersionSelectorForSharedBranches,

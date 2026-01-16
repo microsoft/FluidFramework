@@ -210,29 +210,22 @@ export function testCodec() {
 				jsonValidator: FormatValidatorBasic,
 			},
 		);
-
+		// Versions 1 through 4 do not encode the summary originator ID.
+		makeEncodingTestSuite(family, testCases, assertEquivalentSummaryDataIgnoreOriginator, [
+			EditManagerFormatVersion.v3,
+			EditManagerFormatVersion.v4,
+			EditManagerFormatVersion.v6,
+			EditManagerFormatVersion.vDetachedRoots,
+		]);
 		makeDiscontinuedEncodingTestSuite(family, [
 			EditManagerFormatVersion.v1,
 			EditManagerFormatVersion.v2,
 			EditManagerFormatVersion.v5,
 		]);
 
-		makeEncodingTestSuite(
-			family,
-			testCases,
-			assertEquivalentSummaryDataIgnoreOriginator,
-			// Versions that do not encode the summary originator ID.
-			[
-				EditManagerFormatVersion.v3,
-				EditManagerFormatVersion.v4,
-				EditManagerFormatVersion.vDetachedRoots,
-			],
-		);
-
 		makeEncodingTestSuite(family, testCases, undefined, [
 			EditManagerFormatVersion.vSharedBranches,
 		]);
-
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.
 	});

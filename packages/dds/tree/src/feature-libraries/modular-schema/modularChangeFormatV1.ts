@@ -25,7 +25,7 @@ export const EncodedChangeAtomId = Type.Union([
 ]);
 export type EncodedChangeAtomId = Static<typeof EncodedChangeAtomId>;
 
-const EncodedFieldChange = Type.Object(
+export const EncodedFieldChange = Type.Object(
 	{
 		fieldKey: schemaFormatV1.FieldKeySchema,
 		fieldKind: schemaFormatV1.FieldKindIdentifierSchema,
@@ -125,7 +125,7 @@ export const EncodedBuilds = Type.Object(
 
 export type EncodedBuilds = Static<typeof EncodedBuilds>;
 
-export const EncodedModularChangeset = Type.Object(
+export const EncodedModularChangesetV1 = Type.Object(
 	{
 		maxId: Type.Optional(ChangesetLocalIdSchema),
 		changes: EncodedFieldChangeMap,
@@ -143,4 +143,4 @@ export const EncodedModularChangeset = Type.Object(
 	noAdditionalProps,
 );
 
-export type EncodedModularChangeset = Static<typeof EncodedModularChangeset>;
+export type EncodedModularChangesetV1 = Static<typeof EncodedModularChangesetV1>;

@@ -23,8 +23,6 @@ import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/ind
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	EncodedNodeChangeset,
-	getFromChangeAtomIdMap,
-	rangeQueryChangeAtomIdMap,
 	type EncodedChangeAtomId,
 	type FieldChangeEncodingContext,
 } from "../modular-schema/index.js";
@@ -42,6 +40,7 @@ import {
 	type Rename,
 } from "./types.js";
 import { getAttachedRootId, getDetachedRootId, isNoopMark, splitMark } from "./utils.js";
+import { getFromChangeAtomIdMap, rangeQueryChangeAtomIdMap } from "../changeAtomIdBTree.js";
 
 export function makeV2CodecHelpers(
 	revisionTagCodec: IJsonCodec<
@@ -95,9 +94,9 @@ export function makeV2CodecHelpers(
 			encoded: EncodedRevisionTag | undefined,
 			context: ChangeEncodingContext,
 		): RevisionTag =>
-			encoded !== undefined
-				? revisionTagCodec.decode(encoded, context)
-				: (context.revision ?? fail("Expected a default revision")),
+			encoded === undefined
+				? (context.revision ?? fail("Expected a default revision"))
+				: revisionTagCodec.decode(encoded, context),
 
 		decodeMarkEffect: (
 			encoded: Encoded.MarkEffect,
@@ -146,10 +145,10 @@ export function decodeSequenceChangeset(
 		}
 
 		if (mark.changes !== undefined) {
-			if (decodedMark.cellId !== undefined) {
-				context.decodeRootNodeChange(decodedMark.cellId, mark.changes);
-			} else {
+			if (decodedMark.cellId === undefined) {
 				decodedMark.changes = context.decodeNode(mark.changes);
+			} else {
+				context.decodeRootNodeChange(decodedMark.cellId, mark.changes);
 			}
 		}
 
@@ -181,9 +180,9 @@ function makeMarkEffectDecoder(
 	function decodeMoveIn(encoded: Encoded.MoveIn, context: FieldChangeEncodingContext): Attach {
 		const { id, revision } = encoded;
 		const endpoint =
-			encoded.finalEndpoint !== undefined
-				? changeAtomIdCodec.decode(encoded.finalEndpoint, context.baseContext)
-				: undefined;
+			encoded.finalEndpoint === undefined
+				? undefined
+				: changeAtomIdCodec.decode(encoded.finalEndpoint, context.baseContext);
 
 		const mark: Attach = {
 			type: "Insert",
@@ -241,9 +240,9 @@ function makeMarkEffectDecoder(
 			const { id, revision, idOverride } = encoded;
 
 			const cellRename =
-				idOverride !== undefined
-					? changeAtomIdCodec.decode(idOverride, context.baseContext)
-					: undefined;
+				idOverride === undefined
+					? undefined
+					: changeAtomIdCodec.decode(idOverride, context.baseContext);
 
 			return decodeDetach(
 				cellId,
@@ -263,9 +262,9 @@ function makeMarkEffectDecoder(
 		): Detach | Rename {
 			const { id, idOverride, revision, finalEndpoint } = encoded;
 			const cellRename =
-				idOverride !== undefined
-					? changeAtomIdCodec.decode(idOverride, context.baseContext)
-					: undefined;
+				idOverride === undefined
+					? undefined
+					: changeAtomIdCodec.decode(idOverride, context.baseContext);
 
 			const decodedRevision = decodeRevision(revision, context.baseContext);
 			if (finalEndpoint !== undefined) {
@@ -306,18 +305,18 @@ function makeMarkEffectDecoder(
 			);
 
 			const detachId: ChangeAtomId =
-				encoded.detach.remove.idOverride !== undefined
-					? changeAtomIdCodec.decode(encoded.detach.remove.idOverride, context.baseContext)
-					: {
+				encoded.detach.remove.idOverride === undefined
+					? {
 							revision: decodeRevision(encoded.detach.remove.revision, context.baseContext),
 							localId: encoded.detach.remove.id,
-						};
+						}
+					: changeAtomIdCodec.decode(encoded.detach.remove.idOverride, context.baseContext);
 
 			assert(cellId !== undefined, "Attach and detach should target an empty cell");
-			if (encoded.attach.moveIn !== undefined) {
-				context.decodeMoveAndDetach(detachId, count);
-			} else {
+			if (encoded.attach.moveIn === undefined) {
 				context.decodeRootRename(cellId, detachId, count);
+			} else {
+				context.decodeMoveAndDetach(detachId, count);
 			}
 
 			return {
@@ -541,22 +540,24 @@ function encodeRename(
 }
 
 function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): number {
-	let count =
-		mark.cellId !== undefined
-			? rangeQueryChangeAtomIdMap(context.rootNodeChanges, mark.cellId, mark.count).length
-			: mark.count;
+	let count: number =
+		mark.cellId === undefined
+			? mark.count
+			: rangeQueryChangeAtomIdMap(context.rootNodeChanges, mark.cellId, mark.count).length;
 
 	if (mark.cellId !== undefined) {
 		count = context.getInputRootId(mark.cellId, count).length;
 	}
 
 	switch (mark.type) {
-		case "Insert":
+		case "Insert": {
 			count = context.isDetachId(getAttachedRootId(mark), count).length;
 			break;
-		case "Remove":
+		}
+		case "Remove": {
 			count = context.isAttachId(getDetachedRootId(mark), count).length;
 			break;
+		}
 		case "Rename": {
 			count = context.getInputRootId(mark.idOverride, count).length;
 			count = context.isAttachId(mark.idOverride, count).length;
@@ -567,8 +568,9 @@ function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): 
 			count = context.isAttachId(renameEntry.value ?? cellId, count).length;
 			break;
 		}
-		default:
+		default: {
 			break;
+		}
 	}
 
 	return count;
@@ -654,9 +656,9 @@ function encodeMarkEffectV2(
 		}
 		case "Remove": {
 			const encodedIdOverride =
-				mark.cellRename !== undefined
-					? changeAtomIdCodec.encode(mark.cellRename, context.baseContext)
-					: undefined;
+				mark.cellRename === undefined
+					? undefined
+					: changeAtomIdCodec.encode(mark.cellRename, context.baseContext);
 
 			const detachId = getDetachedRootId(mark);
 			const isMove = context.isAttachId(detachId, 1).value;
@@ -706,12 +708,15 @@ function encodeMarkEffectV2(
 						},
 					};
 		}
-		case "Rename":
+		case "Rename": {
 			return encodeRename(mark, context, changeAtomIdCodec, encodeRevision);
-		case NoopMarkType:
+		}
+		case NoopMarkType: {
 			fail(0xb2c /* Mark type: NoopMarkType should not be encoded. */);
-		default:
+		}
+		default: {
 			unreachableCase(type);
+		}
 	}
 }
 

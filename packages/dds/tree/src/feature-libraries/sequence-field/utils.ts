@@ -192,12 +192,12 @@ export function compareCellPositionsUsingTombstones(
 		// If both changesets know of both cells, but we've been asked to compare different cells,
 		// Then either the changesets they originate from do not represent the same context,
 		// or the ordering of their cells in inconsistent.
-		// The only exception to this is when we're composing anonymous changesets in a transaction.
+		// The only exception to this is when we're composing changesets in a transaction since they have the same revision but different sets of cells.
 		assert(
-			oldMarkCell.revision === undefined && newMarkCell.revision === undefined,
+			oldMarkCell.revision === newMarkCell.revision,
 			0x8a0 /* Inconsistent cell ordering */,
 		);
-		// We are composing anonymous changesets in a transaction. The new changeset is creating a cell in a gap
+		// We are composing changesets in a transaction. The new changeset is creating a cell in a gap
 		// where the old changeset knows of some now empty cell. We order the new cell relative to the old cell in a
 		// way that is consistent with its tie-breaking behavior should the old cell be concurrently re-filled.
 		// Since only tie-break left is supported at the moment, the new cell comes first.
@@ -376,15 +376,14 @@ export function areInputCellsEmpty(mark: Mark): mark is EmptyInputCellMark {
 export function areOutputCellsEmpty(mark: Mark): boolean {
 	const type = mark.type;
 	switch (type) {
-		case NoopMarkType:
+		case NoopMarkType: {
 			return mark.cellId !== undefined;
+		}
 		case "Remove":
 		case "Rename":
 			return true;
 		case "Insert":
 			return false;
-		default:
-			unreachableCase(type);
 	}
 }
 
@@ -398,10 +397,12 @@ export function areOutputCellsEmpty(mark: Mark): boolean {
 export function isImpactful(mark: Mark): boolean {
 	const type = mark.type;
 	switch (type) {
-		case NoopMarkType:
+		case NoopMarkType: {
 			return false;
-		case "Rename":
+		}
+		case "Rename": {
 			return true;
+		}
 		case "Remove": {
 			const inputId = getInputCellId(mark);
 			if (inputId === undefined) {
@@ -414,8 +415,6 @@ export function isImpactful(mark: Mark): boolean {
 		case "Insert":
 			// A Revive has no impact if the nodes are already in the document.
 			return mark.cellId !== undefined;
-		default:
-			unreachableCase(type);
 	}
 }
 
@@ -575,8 +574,9 @@ function tryMergeEffects(
 			}
 			break;
 		}
-		default:
+		default: {
 			unreachableCase(type);
+		}
 	}
 
 	return undefined;
@@ -617,8 +617,9 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 ): [TEffect, TEffect] {
 	const type = effect.type;
 	switch (type) {
-		case NoopMarkType:
+		case NoopMarkType: {
 			return [effect, effect];
+		}
 		case "Insert": {
 			const effect1: TEffect = {
 				...effect,
@@ -691,10 +692,10 @@ export function withNodeChange<TMark extends CellMark<TKind>, TKind extends Mark
 	changes: NodeId | undefined,
 ): TMark {
 	const newMark = { ...mark };
-	if (changes !== undefined) {
-		newMark.changes = changes;
-	} else {
+	if (changes === undefined) {
 		delete newMark.changes;
+	} else {
+		newMark.changes = changes;
 	}
 	return newMark;
 }

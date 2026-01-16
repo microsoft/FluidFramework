@@ -27,6 +27,10 @@ import type {
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { SizedNestedMap, type Mutable } from "../../../util/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
+import {
+	DefaultRevisionReplacer,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 
 export const Change = {
 	/**
@@ -331,14 +335,17 @@ export function tagChangeInline(
 	rollbackOf?: RevisionTag,
 ): TaggedChange<OptionalChangeset> {
 	const inlined = inlineRevision(change, revision);
-	return rollbackOf !== undefined
-		? tagRollbackInverse(inlined, revision, rollbackOf)
-		: tagChange(inlined, revision);
+	return rollbackOf === undefined
+		? tagChange(inlined, revision)
+		: tagRollbackInverse(inlined, revision, rollbackOf);
 }
 
 export function inlineRevision(
 	change: OptionalChangeset,
 	revision: RevisionTag,
 ): OptionalChangeset {
-	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
+	return optionalChangeRebaser.replaceRevisions(
+		change,
+		new DefaultRevisionReplacer(revision, new Set([undefined])),
+	);
 }

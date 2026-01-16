@@ -228,7 +228,10 @@ export class ThrottlingError
 /**
  * @internal
  */
-export const createWriteError = (message: string, props: DriverErrorTelemetryProps) =>
+export const createWriteError = (
+	message: string,
+	props: DriverErrorTelemetryProps,
+): NonRetryableError<"writeError"> =>
 	new NonRetryableError(message, DriverErrorTypes.writeError, props);
 
 /**

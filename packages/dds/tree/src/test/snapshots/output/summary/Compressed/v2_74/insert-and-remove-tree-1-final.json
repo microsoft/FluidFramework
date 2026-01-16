@@ -74,7 +74,7 @@
                               }
                             }
                           ],
-                          "revision": 5,
+                          "revision": 2,
                           "sequenceNumber": 6,
                           "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                         }
@@ -83,7 +83,7 @@
                         [
                           "8f95be09-8376-4ff7-8755-ccd7e8124b06",
                           {
-                            "base": 5,
+                            "base": 2,
                             "commits": []
                           }
                         ]
@@ -159,14 +159,14 @@
                   ".metadata": {
                     "type": "blob",
                     "content": {
-                      "version": 2
+                      "version": 3
                     },
                     "encoding": "utf-8"
                   }
                 },
                 {
                   "type": "blob",
-                  "ForestTree": {
+                  "contents": {
                     "type": "blob",
                     "content": {
                       "keys": [
@@ -210,7 +210,7 @@
                           ]
                         ]
                       },
-                      "version": 1
+                      "version": 2
                     },
                     "encoding": "utf-8"
                   }
@@ -241,7 +241,7 @@
                       "version": 2,
                       "data": [
                         [
-                          5,
+                          2,
                           2,
                           2
                         ]

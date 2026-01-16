@@ -42,14 +42,9 @@ export class SharedMapOracle {
 	};
 
 	private readonly onClear = (local: boolean): void => {
-		this.oracle.clear();
-
-		// AB#48665: https://dev.azure.com/fluidframework/internal/_workitems/edit/48665
-		if (!local) {
-			for (const [k, v] of this.fuzzMap.entries()) {
-				this.oracle.set(k, v);
-			}
-		}
+		// The oracle state is updated solely through valueChanged events.
+		// After a clear, valueChanged events will be emitted for all deleted keys,
+		// which will update the oracle accordingly via onValueChanged.
 	};
 
 	public validate(): void {

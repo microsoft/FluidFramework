@@ -41,7 +41,7 @@ import {
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
 	type TreeTypeSet,
-	getCodecTreeForDetachedFieldIndexFormat,
+	detachedFieldIndexCodecBuilder,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
@@ -57,7 +57,6 @@ import {
 	defaultSchemaPolicy,
 	getCodecTreeForFieldBatchFormat,
 	getCodecTreeForForestFormat,
-	getCodecTreeForSchemaFormat,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
@@ -66,7 +65,7 @@ import {
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
+import { schemaCodecBuilder, type FormatV1 } from "../feature-libraries/schema-index/index.js";
 import {
 	type BranchId,
 	clientVersionToEditManagerFormatVersion,
@@ -366,10 +365,12 @@ export class SharedTreeKernel
 			}
 		});
 		checkout.events.on("beforeBatch", (event) => {
-			if (event.type === "append" && this.sharedObject.isAttached()) {
-				if (checkout.transaction.isInProgress()) {
-					enricher.addTransactionCommits(event.newCommits);
-				}
+			if (
+				event.type === "append" &&
+				this.sharedObject.isAttached() &&
+				checkout.transaction.isInProgress()
+			) {
+				enricher.addTransactionCommits(event.newCommits);
 			}
 		});
 	}
@@ -586,6 +587,7 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- intentional comparison
 export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs([
 	[
 		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v3),
@@ -598,6 +600,10 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 	[
 		brand<EditManagerFormatVersion>(EditManagerFormatVersion.vSharedBranches),
 		brand<SharedTreeChangeFormatVersion>(4),
+	],
+	[
+		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v6),
+		brand<SharedTreeChangeFormatVersion>(5),
 	],
 	[
 		brand<EditManagerFormatVersion>(EditManagerFormatVersion.vDetachedRoots),
@@ -623,6 +629,10 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
 	[
 		brand<MessageFormatVersion>(MessageFormatVersion.vSharedBranches),
 		brand<SharedTreeChangeFormatVersion>(4),
+	],
+	[
+		brand<MessageFormatVersion>(MessageFormatVersion.v6),
+		brand<SharedTreeChangeFormatVersion>(5),
 	],
 	[
 		brand<MessageFormatVersion>(MessageFormatVersion.vDetachedRoots),
@@ -651,8 +661,8 @@ export function getCodecTreeForSharedTreeFormat(
 ): CodecTree {
 	const children: CodecTree[] = [];
 	children.push(getCodecTreeForForestFormat(clientVersion));
-	children.push(getCodecTreeForSchemaFormat(clientVersion));
-	children.push(getCodecTreeForDetachedFieldIndexFormat(clientVersion));
+	children.push(schemaCodecBuilder.getCodecTree(clientVersion));
+	children.push(detachedFieldIndexCodecBuilder.getCodecTree(clientVersion));
 	children.push(getCodecTreeForEditManagerFormat(clientVersion));
 	children.push(getCodecTreeForMessageFormat(clientVersion));
 	children.push(getCodecTreeForFieldBatchFormat(clientVersion));
@@ -829,6 +839,8 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
 	messageFormatSelector: clientVersionToMessageFormatVersion,
 	enableSharedBranches: false,
+	writeVersionOverrides: new Map(),
+	allowPossiblyIncompatibleWriteVersionOverrides: false,
 	enableDetachedRootEditing: false,
 };
 
@@ -855,21 +867,26 @@ function exportSimpleFieldSchemaStored(
 ): SimpleFieldSchema<SchemaType.Stored> {
 	let kind: FieldKind;
 	switch (schema.kind) {
-		case FieldKinds.identifier.identifier:
+		case FieldKinds.identifier.identifier: {
 			kind = FieldKind.Identifier;
 			break;
-		case FieldKinds.optional.identifier:
+		}
+		case FieldKinds.optional.identifier: {
 			kind = FieldKind.Optional;
 			break;
-		case FieldKinds.required.identifier:
+		}
+		case FieldKinds.required.identifier: {
 			kind = FieldKind.Required;
 			break;
-		case FieldKinds.forbidden.identifier:
+		}
+		case FieldKinds.forbidden.identifier: {
 			kind = FieldKind.Optional;
 			assert(schema.types.size === 0, 0xa94 /* invalid forbidden field */);
 			break;
-		default:
+		}
+		default: {
 			fail(0xaca /* invalid field kind */);
+		}
 	}
 	return {
 		kind,

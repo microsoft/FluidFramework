@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { Brand } from "../util/index.js";
+import { strictEnum, type Values } from "../util/index.js";
 
 /**
  * The format version for the message.
  */
-export const MessageFormatVersion = {
+export const MessageFormatVersion = strictEnum("MessageFormatVersion", {
 	/**
 	 * NOTE: this is written as `undefined` rather than `0` in the wire format.
 	 * Introduced and retired prior to 2.0.
@@ -48,6 +48,11 @@ export const MessageFormatVersion = {
 	 */
 	v5: 5,
 	/**
+	 * Introduced and made available for writing in 2.80.0
+	 * Adds support for "no change" constraints.
+	 */
+	v6: 6,
+	/**
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
@@ -57,17 +62,15 @@ export const MessageFormatVersion = {
 	 * Only used for testing detached roots.
 	 */
 	vDetachedRoots: "detached-roots|v0.1",
-} as const;
-export type MessageFormatVersion = Brand<
-	(typeof MessageFormatVersion)[keyof typeof MessageFormatVersion],
-	"MessageFormatVersion"
->;
+});
+export type MessageFormatVersion = Values<typeof MessageFormatVersion>;
 export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
 	MessageFormatVersion.v3,
 	MessageFormatVersion.v4,
+	MessageFormatVersion.v6,
 	MessageFormatVersion.vSharedBranches,
 	MessageFormatVersion.vDetachedRoots,
-] as MessageFormatVersion[]);
+]);
 export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set(
-	Object.values(MessageFormatVersion) as MessageFormatVersion[],
+	Object.values(MessageFormatVersion),
 );

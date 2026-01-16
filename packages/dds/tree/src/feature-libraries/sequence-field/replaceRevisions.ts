@@ -5,12 +5,19 @@
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { type RevisionTag, replaceAtomRevisions } from "../../core/index.js";
+import {
+	makeChangeAtomId,
+	type ChangesetLocalId,
+	type RevisionReplacer,
+	type RevisionTag,
+} from "../../core/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
 import {
+	type Attach,
 	type Changeset,
 	type Detach,
+	type HasMoveId,
 	type HasRevisionTag,
 	type Mark,
 	type MarkEffect,
@@ -18,32 +25,24 @@ import {
 } from "./types.js";
 import type { Mutable } from "../../util/index.js";
 
-export function replaceRevisions(
-	changeset: Changeset,
-	revisionsToReplace: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-): Changeset {
+export function replaceRevisions(changeset: Changeset, replacer: RevisionReplacer): Changeset {
 	const updatedMarks = new MarkListFactory();
 	for (const mark of changeset) {
-		const updatedMark = updateMark(mark, revisionsToReplace, newRevision);
+		const updatedMark = updateMark(mark, replacer);
 		updatedMarks.push(updatedMark);
 	}
 
 	return updatedMarks.list;
 }
 
-function updateMark(
-	mark: Mark,
-	revisionsToReplace: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-): Mark {
-	const updatedMark = { ...replaceEffectRevisions(mark, revisionsToReplace, newRevision) };
+function updateMark(mark: Mark, replacer: RevisionReplacer): Mark {
+	const updatedMark = { ...replaceEffectRevisions(mark, replacer) };
 	if (mark.cellId !== undefined) {
-		updatedMark.cellId = replaceAtomRevisions(mark.cellId, revisionsToReplace, newRevision);
+		updatedMark.cellId = replacer.getUpdatedAtomId(mark.cellId);
 	}
 
 	if (mark.changes !== undefined) {
-		updatedMark.changes = replaceAtomRevisions(mark.changes, revisionsToReplace, newRevision);
+		updatedMark.changes = replacer.getUpdatedAtomId(mark.changes);
 	}
 
 	return updatedMark;
@@ -51,69 +50,65 @@ function updateMark(
 
 function replaceEffectRevisions<TMark extends MarkEffect>(
 	mark: TMark,
-	revisionsToReplace: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
+	replacer: RevisionReplacer,
 ): TMark {
 	const type = mark.type;
 	switch (type) {
-		case NoopMarkType:
+		case NoopMarkType: {
 			return mark;
-		case "Insert":
-			return replaceRevision<TMark & HasRevisionTag>(mark, revisionsToReplace, newRevision);
+		}
+		case "Insert": {
+			return updateRevisionAndId(mark as TMark & Attach, replacer);
+		}
 
-		case "Remove":
-			return replaceDetachRevisions<TMark & Detach>(
-				mark as Detach & TMark,
-				revisionsToReplace,
-				newRevision,
-			);
-		case "Rename":
+		case "Remove": {
+			return replaceDetachRevisions<TMark & Detach>(mark as Detach & TMark, replacer);
+		}
+		case "Rename": {
 			return {
 				...mark,
-				idOverride: replaceAtomRevisions(mark.idOverride, revisionsToReplace, newRevision),
+				idOverride: replacer.getUpdatedAtomId(mark.idOverride),
 			};
-		default:
+		}
+		default: {
 			unreachableCase(type);
+		}
 	}
 }
 
 function replaceDetachRevisions<TDetach extends Detach>(
 	detach: TDetach,
-	revisionsToReplace: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
+	replacer: RevisionReplacer,
 ): TDetach {
-	const updated = replaceRevision(detach, revisionsToReplace, newRevision) as Mutable<TDetach>;
+	const updated = updateRevisionAndId(detach, replacer) as Mutable<TDetach>;
 	if (updated.cellRename !== undefined) {
-		updated.cellRename = replaceAtomRevisions(
-			updated.cellRename,
-			revisionsToReplace,
-			newRevision,
-		);
+		updated.cellRename = replacer.getUpdatedAtomId(updated.cellRename);
 	}
 
 	if (updated.detachCellId !== undefined) {
-		updated.detachCellId = replaceAtomRevisions(
-			updated.detachCellId,
-			revisionsToReplace,
-			newRevision,
-		);
+		updated.detachCellId = replacer.getUpdatedAtomId(updated.detachCellId);
 	}
+
 	return updated;
 }
 
-function replaceRevision<T extends HasRevisionTag>(
+function updateRevisionAndId<T extends HasRevisionTag & HasMoveId>(
 	input: T,
-	revisionsToReplace: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
+	replacer: RevisionReplacer,
 ): T {
-	return revisionsToReplace.has(input.revision) ? withRevision(input, newRevision) : input;
+	if (!replacer.isObsolete(input.revision)) {
+		return input;
+	}
+	const newAtom = replacer.getUpdatedAtomId(makeChangeAtomId(input.id, input.revision));
+	return withRevisionAndId(input, newAtom.revision, newAtom.localId);
 }
 
-function withRevision<T extends HasRevisionTag>(
+function withRevisionAndId<T extends HasRevisionTag>(
 	input: T,
 	revision: RevisionTag | undefined,
+	id: ChangesetLocalId,
 ): T {
-	const updated = { ...input, revision };
+	const updated = { ...input, revision, id };
 	if (revision === undefined) {
 		delete updated.revision;
 	}

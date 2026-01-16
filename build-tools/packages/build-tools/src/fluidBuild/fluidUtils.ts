@@ -8,9 +8,9 @@ import { existsSync } from "node:fs";
 import { realpath } from "node:fs/promises";
 import * as path from "node:path";
 import { getPackages } from "@manypkg/get-packages";
-import { cosmiconfigSync } from "cosmiconfig";
 import registerDebug from "debug";
 import { readJson } from "fs-extra";
+import { lilconfigSync } from "lilconfig";
 
 import { defaultLogger } from "../common/logging";
 import { commonOptions } from "./commonOptions";
@@ -25,7 +25,7 @@ const findUp = import("find-up");
 
 const traceInit = registerDebug("fluid-build:init");
 
-async function isFluidRootPackage(dir: string) {
+async function isFluidRootPackage(dir: string): Promise<boolean> {
 	const filename = path.join(dir, "package.json");
 	if (!existsSync(filename)) {
 		traceInit(`InferRoot: package.json not found`);
@@ -40,7 +40,7 @@ async function isFluidRootPackage(dir: string) {
 	return false;
 }
 
-async function inferRoot(buildRoot: boolean) {
+async function inferRoot(buildRoot: boolean): Promise<string | undefined> {
 	const config = await (await findUp).findUp("fluidBuild.config.cjs", {
 		cwd: process.cwd(),
 		type: "file",
@@ -89,7 +89,7 @@ async function inferRoot(buildRoot: boolean) {
 	return undefined;
 }
 
-async function inferFluidRoot(buildRoot: boolean) {
+async function inferFluidRoot(buildRoot: boolean): Promise<string | undefined> {
 	const rootDir = await inferRoot(buildRoot);
 	if (rootDir === undefined) {
 		return undefined;
@@ -99,7 +99,7 @@ async function inferFluidRoot(buildRoot: boolean) {
 	return buildRoot || (await isFluidRootPackage(rootDir)) ? rootDir : undefined;
 }
 
-export async function getResolvedFluidRoot(buildRoot = false) {
+export async function getResolvedFluidRoot(buildRoot = false): Promise<string> {
 	let checkFluidRoot = true;
 	let root = commonOptions.root;
 	if (root) {
@@ -135,11 +135,11 @@ export async function getResolvedFluidRoot(buildRoot = false) {
 const configName = "fluidBuild";
 
 /**
- * A cosmiconfig explorer to find the fluidBuild config. First looks for JavaScript config files and falls back to the
- * `fluidBuild` property in package.json. We create a single explorer here because cosmiconfig internally caches configs
+ * A lilconfig explorer to find the fluidBuild config. First looks for JavaScript config files and falls back to the
+ * `fluidBuild` property in package.json. We create a single explorer here because lilconfig internally caches configs
  * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
  */
-const configExplorer = cosmiconfigSync(configName, {
+const configExplorer = lilconfigSync(configName, {
 	searchPlaces: [`${configName}.config.cjs`, `${configName}.config.js`, "package.json"],
 	packageProp: [configName],
 });

@@ -12,7 +12,10 @@ import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import {
+	IContainerRuntimeBase,
+	type IFluidDataStoreChannel,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -36,7 +39,9 @@ describeCompat(
 		};
 		const sharedStringId = "ss1Key";
 		const sharedMapId = "sm1Key";
-		async function createAttachingContainerAndGetEntryPoint(provider: ITestObjectProvider) {
+		async function createAttachingContainerAndGetEntryPoint(
+			provider: ITestObjectProvider,
+		): Promise<{ container: IContainer; defaultDataStore: TestFluidObject }> {
 			const documentId = createDocumentId();
 			const request = provider.driver.createCreateNewRequest(documentId);
 			const loader = createTestLoader(
@@ -88,7 +93,12 @@ describeCompat(
 			return testLoader;
 		}
 
-		const createPeerDataStore = async (containerRuntime: IContainerRuntimeBase) => {
+		const createPeerDataStore = async (
+			containerRuntime: IContainerRuntimeBase,
+		): Promise<{
+			peerDataStore: ITestFluidObject;
+			peerDataStoreRuntimeChannel: IFluidDataStoreChannel;
+		}> => {
 			const dataStore = await containerRuntime.createDataStore(["default"]);
 			const peerDataStore = (await dataStore.entryPoint.get()) as ITestFluidObject;
 			return {

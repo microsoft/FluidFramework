@@ -10,10 +10,10 @@ import {
 	type ChangesetLocalId,
 	type DeltaFieldChanges,
 	type DeltaMark,
+	type RevisionReplacer,
 	type RevisionTag,
 	areEqualChangeAtomIdOpts,
 	makeChangeAtomId,
-	replaceAtomRevisions,
 } from "../../core/index.js";
 import type { IdAllocator, Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
@@ -185,29 +185,18 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 	replaceRevisions: (
 		change: OptionalChangeset,
-		oldRevisions: Set<RevisionTag | undefined>,
-		newRevision: RevisionTag | undefined,
+		replacer: RevisionReplacer,
 	): OptionalChangeset => {
 		const updated: Mutable<OptionalChangeset> = {};
 
+		const valueReplace = replaceReplaceRevisions(change.valueReplace, replacer);
+
 		if (change.childChange !== undefined) {
-			updated.childChange = replaceAtomRevisions(
-				change.childChange,
-				oldRevisions,
-				newRevision,
-			);
+			updated.childChange = replacer.getUpdatedAtomId(change.childChange);
 		}
 
-		if (change.valueReplace !== undefined) {
-			updated.valueReplace = replaceReplaceRevisions(
-				change.valueReplace,
-				oldRevisions,
-				newRevision,
-			);
-		}
-
-		if (change.nodeDetach !== undefined) {
-			updated.nodeDetach = replaceAtomRevisions(change.nodeDetach, oldRevisions, newRevision);
+		if (valueReplace !== undefined) {
+			updated.valueReplace = valueReplace;
 		}
 
 		return updated;
@@ -372,17 +361,20 @@ function makeChangeset(
 }
 
 function replaceReplaceRevisions(
-	replace: Replace,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-): Replace {
+	replace: Replace | undefined,
+	replacer: RevisionReplacer,
+): Replace | undefined {
+	if (replace === undefined) {
+		return undefined;
+	}
+
 	const updated: Mutable<Replace> = {
 		...replace,
-		dst: replaceAtomRevisions(replace.dst, oldRevisions, newRevision),
+		dst: replacer.getUpdatedAtomId(replace.dst),
 	};
 
 	if (replace.src !== undefined) {
-		updated.src = replaceAtomRevisions(replace.src, oldRevisions, newRevision);
+		updated.src = replacer.getUpdatedAtomId(replace.src);
 	}
 
 	return updated;

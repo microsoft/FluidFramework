@@ -34,7 +34,7 @@ export async function getLatestVersion(): Promise<string> {
  *
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
-async function start() {
+async function start(): Promise<void> {
 	const modelVersion = await getLatestVersion();
 	console.log("Starting app with model version", modelVersion);
 

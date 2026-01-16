@@ -9,6 +9,9 @@ export {
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	type LocalChangeMetadata,
+	type RemoteChangeMetadata,
+	type ChangeMetadata,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
@@ -248,7 +251,9 @@ export {
 	type SchemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	type NodeInDocumentConstraint,
+	type NoChangeConstraint,
 	type RunTransactionParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -289,8 +294,13 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
+	checkSchemaCompatibilitySnapshots,
+	type SnapshotFileSystem,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
+	eraseSchemaDetails,
+	eraseSchemaDetailsSubclassable,
+	type SchemaCompatibilitySnapshotsOptions,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -308,6 +318,8 @@ export {
 	FluidClientVersion,
 	type FormatValidator,
 	FormatValidatorNoOp,
+	type CodecName,
+	type FormatVersion,
 } from "./codec/index.js";
 export { FormatValidatorBasic } from "./external-utilities/index.js";
 
@@ -353,3 +365,5 @@ export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
+
+export { TextAsTree } from "./text/index.js";

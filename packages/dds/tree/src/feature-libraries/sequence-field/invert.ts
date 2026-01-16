@@ -136,8 +136,9 @@ function invertMark(
 		case "Insert": {
 			return invertInsert(mark, revision, crossFieldManager, isRollback);
 		}
-		default:
+		default: {
 			unreachableCase(type);
+		}
 	}
 }
 

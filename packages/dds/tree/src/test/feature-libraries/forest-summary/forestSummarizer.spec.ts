@@ -30,7 +30,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../../../feature-libraries/forest-summary/format.js";
+import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
 import {
 	checkoutWithContent,
 	fieldCursorFromInsertable,
@@ -59,10 +59,17 @@ import {
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import {
-	forestSummaryContentKey,
 	ForestSummaryFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/forest-summary/summaryTypes.js";
+} from "../../../feature-libraries/forest-summary/summaryFormatCommon.js";
+import {
+	summaryContentBlobKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
+import {
+	summaryContentBlobKey as summaryContentBlobKeyV1ToV2,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatV1ToV2.js";
 import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
@@ -198,7 +205,7 @@ function validateSummaryIsIncremental(summary: ISummaryTree, incrementalNodeCoun
 
 	let incrementalNodesFound = 0;
 	for (const [key, value] of Object.entries(summary.tree)) {
-		if (key === forestSummaryContentKey || key === summarizablesMetadataKey) {
+		if (key === summaryContentBlobKey || key === summarizablesMetadataKey) {
 			assert(value.type === SummaryType.Blob, "Forest summary blob not as expected");
 		} else {
 			assert(value.type === SummaryType.Tree, "Incremental summary node should be a tree");
@@ -360,7 +367,7 @@ describe("ForestSummarizer", () => {
 					"Summary tree should only contain two entries",
 				);
 				const forestContentsBlob: SummaryObject | undefined =
-					summary.summary.tree[forestSummaryContentKey];
+					summary.summary.tree[summaryContentBlobKeyV1ToV2];
 				assert(
 					forestContentsBlob?.type === SummaryType.Blob,
 					"Forest summary contents not found",
@@ -400,7 +407,7 @@ describe("ForestSummarizer", () => {
 					"Summary tree should only contain two entries",
 				);
 				const forestContentsBlob: SummaryObject | undefined =
-					summary.summary.tree[forestSummaryContentKey];
+					summary.summary.tree[summaryContentBlobKeyV1ToV2];
 				assert(
 					forestContentsBlob?.type === SummaryType.Blob,
 					"Forest summary contents not found",
@@ -812,6 +819,7 @@ describe("ForestSummarizer", () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
+				minVersionForCollab: FluidClientVersion.v2_73,
 			});
 
 			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -835,6 +843,7 @@ describe("ForestSummarizer", () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
+				minVersionForCollab: FluidClientVersion.v2_73,
 			});
 
 			const summary = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -858,6 +867,7 @@ describe("ForestSummarizer", () => {
 			const { forestSummarizer: forestSummarizer2 } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
+				minVersionForCollab: FluidClientVersion.v2_73,
 			});
 
 			// Should load successfully with version 2
@@ -883,7 +893,7 @@ describe("ForestSummarizer", () => {
 			const summaryTree: ISummaryTree = {
 				type: SummaryType.Tree,
 				tree: {
-					[forestSummaryContentKey]: forestContentBlob,
+					[summaryContentBlobKeyV1ToV2]: forestContentBlob,
 				},
 			};
 
@@ -892,6 +902,7 @@ describe("ForestSummarizer", () => {
 			const { forestSummarizer } = createForestSummarizer({
 				encodeType: TreeCompressionStrategy.Compressed,
 				forestType: ForestTypeOptimized,
+				minVersionForCollab: FluidClientVersion.v2_73,
 			});
 
 			await assert.doesNotReject(async () => forestSummarizer.load(mockStorage, JSON.parse));

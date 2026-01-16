@@ -27,6 +27,7 @@ export interface EncodedEditManager<TChangeset> {
 		| typeof EditManagerFormatVersion.v2
 		| typeof EditManagerFormatVersion.v3
 		| typeof EditManagerFormatVersion.v4
+		| typeof EditManagerFormatVersion.v6
 		| typeof EditManagerFormatVersion.vDetachedRoots;
 }
 
@@ -38,6 +39,7 @@ export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: Change
 				Type.Literal(EditManagerFormatVersion.v2),
 				Type.Literal(EditManagerFormatVersion.v3),
 				Type.Literal(EditManagerFormatVersion.v4),
+				Type.Literal(EditManagerFormatVersion.v6),
 				Type.Literal(EditManagerFormatVersion.vDetachedRoots),
 			]),
 			trunk: Type.Array(SequencedCommit(tChange)),

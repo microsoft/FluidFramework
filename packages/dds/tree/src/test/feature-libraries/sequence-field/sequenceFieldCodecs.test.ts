@@ -104,13 +104,13 @@ export function testCodecs() {
 				it(`version ${version}`, () => {
 					const codec = sequenceFieldCodec.resolve(version);
 					const jsonCodec =
-						codec.json.encodedSchema !== undefined
-							? withSchemaValidation(
+						codec.json.encodedSchema === undefined
+							? codec.json
+							: withSchemaValidation(
 									codec.json.encodedSchema,
 									codec.json,
 									FormatValidatorBasic,
-								)
-							: codec.json;
+								);
 					const actual = jsonCodec.decode(changeset, context);
 					assertChangesetsEqual(actual, expected);
 				});

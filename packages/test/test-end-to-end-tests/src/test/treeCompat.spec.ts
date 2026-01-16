@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { lt } from "semver";
 
 import { describeCompat, type CompatApis } from "@fluid-private/test-version-utils";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	DataObjectFactoryType,
 	getContainerEntryPointBackCompat,
@@ -14,8 +14,8 @@ import {
 	type ITestFluidObject,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { type ITree } from "@fluidframework/tree";
+import type { ITree } from "@fluidframework/tree";
+import { lt } from "semver";
 
 const treeId = "sharedTree";
 const baseTestContainerConfig: ITestContainerConfig = {
@@ -25,6 +25,7 @@ const baseTestContainerConfig: ITestContainerConfig = {
 	},
 };
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: extract schema definition and provide explicit return type
 async function createTreeView(
 	container: IContainer,
 	dataRuntimeApi: CompatApis["dataRuntime"],
@@ -42,6 +43,7 @@ async function createTreeView(
 	return tree.viewWith(treeViewConfig);
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: extract schema definition and provide explicit return type
 async function createContainerAndGetTreeView(provider: ITestObjectProvider, apis: CompatApis) {
 	const { SharedTree } = apis.dataRuntime.dds;
 	const testContainerConfig: ITestContainerConfig = {
@@ -53,6 +55,7 @@ async function createContainerAndGetTreeView(provider: ITestObjectProvider, apis
 	return createTreeView(container, apis.dataRuntime);
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: extract schema definition and provide explicit return type
 async function loadContainerAndGetTreeView(provider: ITestObjectProvider, apis: CompatApis) {
 	const dataRuntimeApi = apis.dataRuntimeForLoading ?? apis.dataRuntime;
 	const { SharedTree } = dataRuntimeApi.dds;

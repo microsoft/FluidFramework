@@ -25,9 +25,10 @@ export {
 	ChangesetLocalIdSchema,
 	EncodedChangeAtomId,
 	EncodedRevisionInfo,
-	EncodedModularChangeset,
+	EncodedModularChangesetV1,
 	EncodedNodeChangeset,
 } from "./modularChangeFormatV1.js";
+export { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export {
 	type FieldChangeHandler,
@@ -54,11 +55,7 @@ export {
 	type ModularChangeset,
 	type NodeExistsConstraint,
 	type NodeId,
-	type ChangeAtomIdBTree,
 	type RebaseVersion,
-	getFromChangeAtomIdMap,
-	setInChangeAtomIdMap,
-	rangeQueryChangeAtomIdMap,
 } from "./modularChangeTypes.js";
 export {
 	convertGenericChange,
@@ -82,3 +79,4 @@ export type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
 } from "./fieldKindConfiguration.js";
+export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";

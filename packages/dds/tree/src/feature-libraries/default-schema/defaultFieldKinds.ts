@@ -201,6 +201,16 @@ export const fieldKindConfigurations: ReadonlyMap<
 		]),
 	],
 	[
+		brand(5),
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[required.identifier, { kind: required, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 2 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 3 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
+		]),
+	],
+	[
 		brand(101), // Detached roots
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[required.identifier, { kind: required, formatVersion: 2 }],
@@ -212,13 +222,13 @@ export const fieldKindConfigurations: ReadonlyMap<
 	],
 ]);
 
-export type ModularChangeFormatVersion = Brand<3 | 4 | 101, "ModularChangeFormatVersion">;
+export type ModularChangeFormatVersion = Brand<3 | 4 | 5 | 101, "ModularChangeFormatVersion">;
 export function getCodecTreeForModularChangeFormat(
 	version: ModularChangeFormatVersion,
 ): CodecTree {
 	const dependencies =
 		fieldKindConfigurations.get(version) ?? fail(0xc7c /* Unknown modular change format */);
-	const children: CodecTree[] = Array.from(dependencies.entries()).map(
+	const children: CodecTree[] = [...dependencies.entries()].map(
 		([key, { formatVersion }]) => ({
 			name: `FieldKind:${key}`,
 			version: formatVersion,

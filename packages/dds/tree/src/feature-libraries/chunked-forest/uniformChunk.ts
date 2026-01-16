@@ -66,7 +66,7 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	}
 
 	public clone(): UniformChunk {
-		return new UniformChunk(this.shape, this.values.slice());
+		return new UniformChunk(this.shape, [...this.values]);
 	}
 
 	public cursor(): Cursor {

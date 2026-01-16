@@ -6,12 +6,21 @@
 import { strict as assert } from "node:assert";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import fs from "node:fs";
 
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { testSrcPath } from "../testSrcPath.cjs";
+import {
+	checkSchemaCompatibilitySnapshots,
+	type TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 
-// Use `pnpm run test:snapshots:regen` to set this flag.
-const regenerateSnapshots = process.argv.includes("--snapshot");
+/**
+ * Use `pnpm run test:snapshots:regen` to set this flag.
+ */
+export const regenerateSnapshots = process.argv.includes("--snapshot");
 
 export function takeJsonSnapshot(data: JsonCompatibleReadOnly, suffix: string = ""): void {
 	const dataStr = JSON.stringify(data, undefined, 2);
@@ -38,19 +47,7 @@ export function takeSnapshot(
 	suffix: string,
 	compare?: (actual: string, expected: string, message: string) => void,
 ): void {
-	assert(
-		currentTestName !== undefined,
-		"use `useSnapshotDirectory` to configure the tests containing describe block to take snapshots",
-	);
-	assert(currentTestFile !== undefined);
-
-	// Ensure test name doesn't accidentally navigate up directories or things like that.
-	// Done here instead of in beforeEach so errors surface better.
-	if (nameCheck.test(currentTestName) === false) {
-		assert.fail(`Expected test name to pass sanitization: "${currentTestName}"`);
-	}
-
-	const fullFile = currentTestFile + suffix;
+	const fullFile = getCurrentSnapshotPath(suffix);
 
 	const exists = existsSync(fullFile);
 	if (regenerateSnapshots) {
@@ -65,6 +62,23 @@ export function takeSnapshot(
 		compare?.(data, pastData, message);
 		assert.equal(data, pastData, message);
 	}
+}
+
+function getCurrentSnapshotPath(suffix: string): string {
+	assert(
+		currentTestName !== undefined,
+		"use `useSnapshotDirectory` to configure the tests containing describe block to take snapshots",
+	);
+	assert(currentTestFile !== undefined);
+
+	// Ensure test name doesn't accidentally navigate up directories or things like that.
+	// Done here instead of in beforeEach so errors surface better.
+	if (nameCheck.test(currentTestName) === false) {
+		assert.fail(`Expected test name to pass sanitization: "${currentTestName}"`);
+	}
+
+	const fullFile = currentTestFile + suffix;
+	return fullFile;
 }
 
 let currentTestName: string | undefined;
@@ -92,14 +106,12 @@ export function useSnapshotDirectory(dirPath: string = "files"): void {
 	// Basic sanity check to avoid accidentally creating snapshots outside of the blessed folder.
 	assert(normalizedDir.startsWith(snapshotsFolder));
 
-	if (regenerateSnapshots) {
-		// This whole function is run (once per call to useSnapshotDirectory) during the test discovery phase.
-		// Snapshots are generated during the test execution phase (after the discovery phase),
-		// so the removal of the directory here is not interleaved with the (re)generation of the snapshots.
-		if (existsSync(snapshotsFolder)) {
-			console.log(`removing snapshot directory: ${snapshotsFolder}`);
-			rmSync(snapshotsFolder, { recursive: true, force: true });
-		}
+	// This whole function is run (once per call to useSnapshotDirectory) during the test discovery phase.
+	// Snapshots are generated during the test execution phase (after the discovery phase),
+	// so the removal of the directory here is not interleaved with the (re)generation of the snapshots.
+	if (regenerateSnapshots && existsSync(snapshotsFolder)) {
+		console.log(`removing snapshot directory: ${snapshotsFolder}`);
+		rmSync(snapshotsFolder, { recursive: true, force: true });
 	}
 
 	before((): void => {
@@ -118,5 +130,36 @@ export function useSnapshotDirectory(dirPath: string = "files"): void {
 		// This hook is run during the test execution phase.
 		currentTestFile = undefined;
 		currentTestName = undefined;
+	});
+}
+
+/**
+ * The folder where schema compatibility snapshots for various domains are stored.
+ * This is separate from other snapshots since it should not be removed when running regenerate.
+ */
+const schemaCompatibilitySnapshotsFolder = path.join(
+	testSrcPath,
+	"domain-schema-compatibility-snapshots",
+);
+assert(existsSync(schemaCompatibilitySnapshotsFolder));
+
+/**
+ * Test schema snapshots for shared tree components which are part of this package.
+ * @remarks
+ * Snapshots are stored in a subdirectory of {@link schemaCompatibilitySnapshotsFolder} based on the provided `domainName`.
+ */
+export function testSchemaCompatibilitySnapshots(
+	currentViewSchema: TreeViewConfiguration,
+	minVersionForCollaboration: MinimumVersionForCollab,
+	domainName: string,
+): void {
+	const snapshotDirectory = path.join(schemaCompatibilitySnapshotsFolder, domainName);
+	checkSchemaCompatibilitySnapshots({
+		snapshotDirectory,
+		fileSystem: { ...fs, ...path },
+		version: cleanedPackageVersion,
+		schema: currentViewSchema,
+		minVersionForCollaboration,
+		mode: regenerateSnapshots ? "update" : "test",
 	});
 }

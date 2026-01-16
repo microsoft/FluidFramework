@@ -10,6 +10,7 @@ import {
 	type TaggedChange,
 } from "../../../core/index.js";
 import {
+	DefaultRevisionReplacer,
 	fieldKindConfigurations,
 	fieldKinds,
 	intoDelta,
@@ -49,9 +50,9 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const fieldKindConfiguration: FieldKindConfiguration =
-	fieldKindConfigurations.get(brand(4)) ?? assert.fail("Field kind configuration not found");
+	fieldKindConfigurations.get(brand(5)) ?? assert.fail("Field kind configuration not found");
 assert(
-	fieldKindConfigurations.get(5 as ModularChangeFormatVersion) === undefined,
+	fieldKindConfigurations.get(6 as ModularChangeFormatVersion) === undefined,
 	"There's a newer configuration. It probably should be used.",
 );
 
@@ -62,7 +63,7 @@ const codec = makeModularChangeCodecFamily(
 	codecOptions,
 );
 
-export const defaultFamily = new ModularChangeFamily(fieldKinds, codec);
+export const defaultFamily = new ModularChangeFamily(fieldKinds, codec, codecOptions);
 
 export const defaultFieldRebaser: BoundFieldChangeRebaser<DefaultChangeset> = {
 	rebase: rebaseModular,
@@ -146,5 +147,8 @@ function inlineRevisionModular(
 	change: ModularChangeset,
 	revision: RevisionTag,
 ): ModularChangeset {
-	return defaultFamily.changeRevision(change, revision);
+	return defaultFamily.changeRevision(
+		change,
+		new DefaultRevisionReplacer(revision, defaultFamily.getRevisions(change)),
+	);
 }

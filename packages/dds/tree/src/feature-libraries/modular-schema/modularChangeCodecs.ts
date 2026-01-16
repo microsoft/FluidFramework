@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
+
 import {
 	type ICodecFamily,
 	type ICodecOptions,
@@ -20,7 +22,7 @@ import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
 import { makeModularChangeCodecV1 } from "./modularChangeCodecV1.js";
 import { makeModularChangeCodecV2 } from "./modularChangeCodecV2.js";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
+import { makeModularChangeCodecV3 } from "./modularChangeCodecV3.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -35,55 +37,51 @@ export function makeModularChangeCodecFamily(
 	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 ): ICodecFamily<ModularChangeset, ChangeEncodingContext> {
 	return makeCodecFamily(
-		Array.from(fieldKindConfigurations.entries(), ([version, fieldKinds]) => [
-			version,
-			makeModularChangeCodec(
-				version,
-				fieldKinds,
-				revisionTagCodec,
-				fieldsCodec,
-				codecOptions,
-				chunkCompressionStrategy,
-			),
-		]),
-	);
-}
-
-const minVersionForCodec2 = 101;
-
-function makeModularChangeCodec(
-	version: number,
-	fieldKinds: FieldKindConfiguration,
-	revisionTagCodec: IJsonCodec<
-		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
-		ChangeEncodingContext
-	>,
-	fieldsCodec: FieldBatchCodec,
-	codecOptions: ICodecOptions,
-	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
-): IJsonCodec<
-	ModularChangeset,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	ChangeEncodingContext
-> {
-	if (version < minVersionForCodec2) {
-		return makeModularChangeCodecV1(
-			fieldKinds,
-			revisionTagCodec,
-			fieldsCodec,
-			codecOptions,
-			chunkCompressionStrategy,
-		);
-	}
-
-	return makeModularChangeCodecV2(
-		fieldKinds,
-		revisionTagCodec,
-		fieldsCodec,
-		codecOptions,
-		chunkCompressionStrategy,
+		Array.from(fieldKindConfigurations.entries(), ([version, fieldKinds]) => {
+			switch (version) {
+				case 1:
+				case 2:
+				case 3:
+				case 4:
+				case 6: {
+					return [
+						version,
+						makeModularChangeCodecV1(
+							fieldKinds,
+							revisionTagCodec,
+							fieldsCodec,
+							codecOptions,
+							chunkCompressionStrategy,
+						),
+					];
+				}
+				case 5: {
+					return [
+						version,
+						makeModularChangeCodecV2(
+							fieldKinds,
+							revisionTagCodec,
+							fieldsCodec,
+							codecOptions,
+							chunkCompressionStrategy,
+						),
+					];
+				}
+				case 101:
+					return [
+						version,
+						makeModularChangeCodecV3(
+							fieldKinds,
+							revisionTagCodec,
+							fieldsCodec,
+							codecOptions,
+							chunkCompressionStrategy,
+						),
+					];
+				default: {
+					fail(`Unsupported modular change codec version`);
+				}
+			}
+		}),
 	);
 }

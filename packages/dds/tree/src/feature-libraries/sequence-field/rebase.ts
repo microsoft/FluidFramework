@@ -179,14 +179,18 @@ class RebaseQueue {
 				this.metadata,
 			);
 			switch (comparison) {
-				case CellOrder.SameCell:
+				case CellOrder.SameCell: {
 					return this.dequeueBoth();
-				case CellOrder.OldThenNew:
+				}
+				case CellOrder.OldThenNew: {
 					return this.dequeueBase();
-				case CellOrder.NewThenOld:
+				}
+				case CellOrder.NewThenOld: {
 					return this.dequeueNew();
-				default:
+				}
+				default: {
 					unreachableCase(comparison);
+				}
 			}
 		} else if (areInputCellsEmpty(newMark)) {
 			return this.dequeueNew();
@@ -199,7 +203,7 @@ class RebaseQueue {
 
 	private dequeueBase(length?: number): RebaseMarks {
 		const baseMark =
-			length !== undefined ? this.baseMarks.dequeueUpTo(length) : this.baseMarks.dequeue();
+			length === undefined ? this.baseMarks.dequeue() : this.baseMarks.dequeueUpTo(length);
 
 		let newMark: Mark = generateNoOpWithCellId(baseMark);
 
@@ -418,8 +422,9 @@ function separateEffectsForMove(
 			}
 			return { remains, follows };
 		}
-		default:
+		default: {
 			unreachableCase(type);
+		}
 	}
 }
 

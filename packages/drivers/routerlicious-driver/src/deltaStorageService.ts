@@ -69,7 +69,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 			from: number,
 			to: number,
 			telemetryProps: ITelemetryBaseProperties,
-		) => {
+		): Promise<IDeltasFetchResult> => {
 			this.snapshotOps = this.logtailSha
 				? await readAndParse<ISequencedDocumentMessage[]>(
 						this.documentStorageService,

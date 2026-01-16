@@ -57,19 +57,22 @@ export function sequenceFieldToDelta(
 					deltaMarks.push(deltaMark);
 					break;
 				}
-				case NoopMarkType:
+				case NoopMarkType: {
 					if (inputCellId === undefined) {
 						deltaMarks.push(deltaMark);
 					}
 					break;
-				case "Rename":
+				}
+				case "Rename": {
 					assert(
 						mark.cellId !== undefined,
 						0x9f9 /* Renames should only target empty cells */,
 					);
 					break;
-				default:
+				}
+				default: {
 					unreachableCase(type);
+				}
 			}
 		}
 	}
