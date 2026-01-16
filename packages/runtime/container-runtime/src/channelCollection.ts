@@ -1073,7 +1073,7 @@ export class ChannelCollection
 		const context =
 			this.contexts.get(id) ?? (await this.contexts.getBoundOrRemoted(id, headerData.wait));
 		if (context === undefined) {
-			// The requested data store does not exits. Throw a 404 response exception.
+			// The requested data store does not exist. Throw a 404 response exception.
 			const request: IRequest = { url: id };
 			throw responseToException(create404Response(request), request);
 		}
