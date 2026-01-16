@@ -15,6 +15,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},
+
 	// Rules only for test files
 	{
 		files: ["*.spec.ts", "src/test/**"],
@@ -22,11 +23,12 @@ const config: Linter.Config[] = [
 			// TODO: remove these overrides and fix violations
 			"@typescript-eslint/explicit-function-return-type": "off",
 			"unicorn/consistent-function-scoping": "off",
+
 			// Test files are run in node only so additional node libraries can be used.
 			"import-x/no-nodejs-modules": [
 				"error",
 				{
-					"allow": ["node:assert", "node:crypto"],
+					allow: ["node:assert", "node:crypto"],
 				},
 			],
 		},

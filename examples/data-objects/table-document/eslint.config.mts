@@ -14,7 +14,9 @@ const config: Linter.Config[] = [
 		rules: {
 			"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 			"@typescript-eslint/strict-boolean-expressions": "off",
-			"import-x/no-deprecated": "off", // This package as a whole is deprecated so it uses deprecated APIs
+			// This package as a whole is deprecated so it uses deprecated APIs
+			"import-x/no-deprecated": "off",
+
 			// Disabled because the rule is crashing on this package - AB#51780
 			"@typescript-eslint/unbound-method": "off",
 		},

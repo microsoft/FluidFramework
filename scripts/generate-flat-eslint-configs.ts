@@ -846,23 +846,28 @@ async function findLegacyConfigs(
 						eslintIgnorePatterns = undefined;
 					}
 				} catch {
-					// No .eslintignore file - check if existing flat config has ignores to preserve
-					const existingFlatConfigPath = path.join(full, "eslint.config.mts");
+					// No .eslintignore file - check existing flat config for ignores blocks
+					const ext = typescriptMode ? "mts" : "mjs";
+					const flatConfigPath = path.join(full, `eslint.config.${ext}`);
 					try {
-						const existingContent = await fs.readFile(existingFlatConfigPath, "utf8");
+						const flatContent = await fs.readFile(flatConfigPath, "utf8");
 						// Look for ignores blocks that were migrated from .eslintignore
-						const ignoresMatch = existingContent.match(
-							/\/\/\s*Migrated from \.eslintignore\s*\n\s*{\s*\n\s*ignores:\s*\[([^\]]+)\]/,
+						// Pattern: { ignores: ["pattern1", "pattern2"] }
+						const ignoresMatch = flatContent.match(
+							/\/\/\s*Migrated from \.eslintignore\s*\n\s*\{\s*ignores:\s*\[([^\]]+)\]/,
 						);
 						if (ignoresMatch) {
-							// Extract the patterns from the existing config
+							// Extract the patterns from the array
 							const patternsStr = ignoresMatch[1];
-							const patterns = Array.from(patternsStr.matchAll(/"([^"]+)"/g)).map((m) => m[1]);
-							if (patterns.length > 0) {
-								eslintIgnorePatterns = patterns;
+							eslintIgnorePatterns = Array.from(
+								patternsStr.matchAll(/"([^"]+)"|'([^']+)'/g),
+							).map((m) => m[1] || m[2]);
+							if (eslintIgnorePatterns.length > 0) {
 								console.log(
-									`  Preserving ${patterns.length} ignore patterns from existing flat config in ${full}`,
+									`  Preserving ${eslintIgnorePatterns.length} ignores from existing flat config in ${full}`,
 								);
+							} else {
+								eslintIgnorePatterns = undefined;
 							}
 						}
 					} catch {
@@ -1097,6 +1102,11 @@ function serializeValue(value: unknown, indent: string = ""): string {
 			const varName = value.substring("__SPREAD__".length);
 			return `...${varName}`;
 		}
+		// Check if this is a marker for a direct variable reference
+		if (value.startsWith("__VAR__")) {
+			const varName = value.substring("__VAR__".length);
+			return varName;
+		}
 		return JSON.stringify(value);
 	}
 
@@ -1138,8 +1148,9 @@ function serializeValue(value: unknown, indent: string = ""): string {
 		if (entries.length === 0) return "{}";
 
 		const lines = entries.map(([key, val]) => {
-			// Always quote keys for consistency with existing style
-			const keyStr = JSON.stringify(key);
+			// Only quote keys that aren't valid JavaScript identifiers
+			const isValidIdentifier = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key);
+			const keyStr = isValidIdentifier ? key : JSON.stringify(key);
 			return `${indent}\t${keyStr}: ${serializeValue(val, indent + "\t")}`;
 		});
 
@@ -1348,16 +1359,48 @@ ${typeImport}`;
 		configContent += `export const ${name}${arrayType} = ${serializeValue(value, "")};\n\n`;
 	}
 
+	// Helper to replace array values with variable references when they match named exports
+	function replaceArraysWithRefs(obj: unknown): unknown {
+		if (Array.isArray(obj)) {
+			// Check if this array matches a named export
+			for (const [name, exportedArray] of Object.entries(namedExports)) {
+				if (
+					obj.length === exportedArray.length &&
+					obj.every((item, i) => item === exportedArray[i])
+				) {
+					// Return a marker that serializeValue will handle
+					return `__VAR__${name}`;
+				}
+			}
+			// Recursively process array elements
+			return obj.map((item) => replaceArraysWithRefs(item));
+		}
+		if (obj && typeof obj === "object") {
+			const result: Record<string, unknown> = {};
+			for (const [key, value] of Object.entries(obj)) {
+				result[key] = replaceArraysWithRefs(value);
+			}
+			return result;
+		}
+		return obj;
+	}
+
+	// Process rules to replace array values with variable references
+	const processedRules = config.rules ? replaceArraysWithRefs(config.rules) : undefined;
+	const processedOverrides = config.overrides
+		? (config.overrides as unknown[]).map((o) => replaceArraysWithRefs(o))
+		: undefined;
+
 	configContent += `${jsdocType}const config${configType} = [\n`;
 
 	// Add rules
-	if (config.rules && Object.keys(config.rules).length > 0) {
-		configContent += `\t{\n\t\trules: ${serializeValue(config.rules, "\t\t")},\n\t},\n`;
+	if (processedRules && Object.keys(processedRules as object).length > 0) {
+		configContent += `\t{\n\t\trules: ${serializeValue(processedRules, "\t\t")},\n\t},\n`;
 	}
 
 	// Add overrides
-	if (config.overrides && config.overrides.length > 0) {
-		for (const override of config.overrides as Array<{
+	if (processedOverrides && processedOverrides.length > 0) {
+		for (const override of processedOverrides as Array<{
 			files?: string | string[];
 			excludedFiles?: string | string[];
 			rules?: Record<string, unknown>;
@@ -1614,6 +1657,14 @@ ${imports}
 			: `...${variant},\n`;
 		configContent += `${jsdocType}const config${configType} = [\n\t${baseConfig}`;
 
+		// Add .eslintignore patterns as global ignores FIRST for better organization
+		// In flat config, a config object with only `ignores` is treated as global
+		if (hasEslintIgnore) {
+			configContent += `\t{\n`;
+			configContent += `\t\tignores: ${serializeValue(eslintIgnorePatterns, "\t\t")},\n`;
+			configContent += `\t},\n`;
+		}
+
 		if (hasLocalRules) {
 			// Split rules into type-aware and non-type-aware
 			// Type-aware rules that are disabled should be applied globally, not just to non-test files
@@ -1671,13 +1722,14 @@ ${imports}
 				parserOptions?: { project?: string[] };
 				rules?: Record<string, unknown>;
 			}>) {
-				// Add override block comments if present
-				const blockComments = overrideCommentMap?.get(overrideIndex);
-				if (blockComments && blockComments.length > 0) {
-					for (const comment of blockComments) {
-						configContent += `\t${comment}\n`;
-					}
+				// Skip empty overrides (those with only files but no rules or other config)
+				const hasRules = override.rules && Object.keys(override.rules).length > 0;
+				const hasParserOptions = override.parserOptions?.project;
+				const hasIgnores = override.excludedFiles;
+				if (!hasRules && !hasParserOptions && !hasIgnores) {
+					continue;
 				}
+
 				configContent += `\t{\n`;
 				if (override.files) {
 					configContent += `\t\tfiles: ${serializeValue(override.files, "\t\t")},\n`;
@@ -1766,38 +1818,7 @@ ${imports}
 			}
 		}
 
-		// Add .eslintignore patterns as global ignores
-		// In flat config, a config object with only `ignores` is treated as global
-		if (hasEslintIgnore) {
-			configContent += `\t// Migrated from .eslintignore\n`;
-			configContent += `\t{\n`;
-			configContent += `\t\tignores: ${serializeValue(eslintIgnorePatterns, "\t\t")},\n`;
-			configContent += `\t},\n`;
-		}
-
-		configContent += `];\n`;
-
-		// Add orphaned comments as a documentation block at the end
-		// These are comments from the legacy config that don't fit in rules/overrides
-		const orphanedComments = commentData?.orphanedComments ?? [];
-		if (orphanedComments.length > 0) {
-			configContent += `\n/*\n * Comments from legacy config that couldn't be automatically migrated:\n`;
-			for (const comment of orphanedComments) {
-				// Format each comment
-				if (comment.includes("\n")) {
-					// Multi-line comment
-					const lines = comment.split("\n");
-					for (const line of lines) {
-						configContent += ` * ${line}\n`;
-					}
-				} else {
-					configContent += ` * ${comment}\n`;
-				}
-			}
-			configContent += ` */\n`;
-		}
-
-		configContent += `\nexport default config;\n`;
+		configContent += `];\n\nexport default config;\n`;
 	}
 	return configContent;
 }

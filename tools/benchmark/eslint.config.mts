@@ -15,7 +15,7 @@ const config: Linter.Config[] = [
 			"import/no-nodejs-modules": [
 				"error",
 				{
-				"allow": ["node:v8", "perf_hooks", "node:child_process"],
+				allow: ["node:v8", "perf_hooks", "node:child_process"],
 			},
 			],
 		},

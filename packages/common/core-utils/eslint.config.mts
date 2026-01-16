@@ -15,6 +15,7 @@ const config: Linter.Config[] = [
 			"unicorn/numeric-separators-style": "off",
 		},
 	},
+
 	// Rules only for test files
 	{
 		files: ["*.spec.ts", "*.test.ts", "src/test/**"],
@@ -23,9 +24,10 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": [
 				"error",
 				{
-					"allow": ["node:assert", "node:process"],
+					allow: ["node:assert", "node:process"],
 				},
 			],
+
 			// Does not work well with describe/it block scoping
 			"unicorn/consistent-function-scoping": "off",
 		},

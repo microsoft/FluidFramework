@@ -14,6 +14,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-shadow": "off",
 		},
 	},
+
 	// Rules only for test files
 	{
 		files: ["*.spec.ts", "src/test/**"],
@@ -22,7 +23,7 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": [
 				"error",
 				{
-					"allow": ["node:assert", "node:path"],
+					allow: ["node:assert", "node:path"],
 				},
 			],
 		},

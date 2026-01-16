@@ -15,7 +15,7 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": [
 				"error",
 				{
-					"allow": ["node:assert", "node:fs", "node:path"],
+					allow: ["node:assert", "node:fs", "node:path"],
 				},
 			],
 			"unicorn/prefer-module": "off",

@@ -22,24 +22,27 @@ const config: Linter.Config[] = [
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [...importInternalModulesAllowed, "*/*.js"],
+					// package hasn't converted to barrel files (which may not be a bad thing)
+					allow: [...importInternalModulesAllowed, "*/*.js"],
 				},
 			],
 			"max-len": "off",
 			"no-bitwise": "off",
 			"no-case-declarations": "off",
+
 			// Disabled because the rule is crashing on this package - AB#51780
 			"@typescript-eslint/unbound-method": "off",
 		},
 	},
-	// This should not be needed. For some reason no overrides from "../../.eslintrc.cjs" come thru.
+
+	// This should not be needed. For some reason no overrides from "../../eslint.config.data.mts" come thru.
 	{
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [...importInternalModulesAllowedForTest],
+					allow: [...importInternalModulesAllowedForTest],
 				},
 			],
 		},

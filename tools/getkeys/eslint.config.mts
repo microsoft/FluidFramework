@@ -26,6 +26,15 @@ const config: Linter.Config[] = [
 			"promise/param-names": "off",
 		},
 	},
+	{
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: ["./tsconfig.lint.json"],
+			},
+		},
+	},
 ];
 
 export default config;

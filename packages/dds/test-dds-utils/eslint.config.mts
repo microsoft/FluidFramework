@@ -12,12 +12,17 @@ const config: Linter.Config[] = [
 		rules: {
 			// TODO: remove this override and fix violations
 			"@typescript-eslint/strict-boolean-expressions": "off",
+
 			// This package implements test utils to be run under Node.JS.
 			"import-x/no-nodejs-modules": "off",
+
 			"depend/ban-dependencies": [
 				"error",
 				{
-					"allowed": ["execa"],
+					allowed: [
+						// TODO: This package should use tinyexec or child_process directly instead of execa
+						"execa",
+					],
 				},
 			],
 

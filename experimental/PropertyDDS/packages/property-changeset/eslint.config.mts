@@ -37,7 +37,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/restrict-plus-operands": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"@typescript-eslint/unbound-method": "off",
-			"eqeqeq": "off",
+			eqeqeq: "off",
 			"import-x/no-internal-modules": "off",
 			"no-case-declarations": "off",
 			"no-inner-declarations": "off",
@@ -56,7 +56,7 @@ const config: Linter.Config[] = [
 			"depend/ban-dependencies": [
 				"error",
 				{
-					"allowed": ["lodash", "traverse"],
+					allowed: ["lodash", "traverse"],
 				},
 			],
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
