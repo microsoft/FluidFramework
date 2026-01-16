@@ -1462,7 +1462,7 @@ describe("sharedTreeView", () => {
 			assert.equal(callCount, 1);
 		});
 
-		it("can provide an enricher for a fast transaction that is about to be applied", () => {
+		it("can provide an enricher for a synchronous transaction that is about to be applied", () => {
 			const { view1, view1Revertibles } = setup([{ id: "A" }]);
 			view1.root.removeAt(0);
 
@@ -1495,7 +1495,7 @@ describe("sharedTreeView", () => {
 			assert.equal(callCount, 1);
 		});
 
-		it("can provide an enricher a for fast transaction that has just been applied", () => {
+		it("can provide an enricher a for synchronous transaction that has just been applied", () => {
 			const { view1, view1Revertibles } = setup([{ id: "A" }]);
 			view1.root.removeAt(0);
 
@@ -1551,7 +1551,7 @@ describe("sharedTreeView", () => {
 			});
 		});
 
-		it("can provide an enricher for a slow unrebased transaction that is about to be applied", () => {
+		it("can provide an enricher for an async unrebased transaction that is about to be applied", async () => {
 			const { view1, view1Revertibles } = setup([{ id: "A" }]);
 			view1.root.removeAt(0);
 
@@ -1575,16 +1575,16 @@ describe("sharedTreeView", () => {
 			});
 
 			assert.equal(view1Revertibles.length, 1);
-			view1.transaction.start();
-			// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-			// TODO AD#57584: Use such an operation here when one is available
-			view1.root.insertAtEnd({ id: "B" });
-			view1.root.insertAtEnd({ id: "C" });
-			view1.transaction.commit();
+			await view1.runAsyncTransaction(async () => {
+				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
+				// TODO AD#57584: Use such an operation here when one is available
+				view1.root.insertAtEnd({ id: "B" });
+				view1.root.insertAtEnd({ id: "C" });
+			});
 			assert.equal(callCount, 1);
 		});
 
-		it("can provide an enricher for a slow unrebased transaction that has just been applied", () => {
+		it("can provide an enricher for an async unrebased transaction that has just been applied", async () => {
 			const { view1, view1Revertibles } = setup([{ id: "A" }]);
 			view1.root.removeAt(0);
 
@@ -1608,78 +1608,78 @@ describe("sharedTreeView", () => {
 			});
 
 			assert.equal(view1Revertibles.length, 1);
-			view1.transaction.start();
-			// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
-			// TODO AD#57584: Use such an operation here when one is available
-			view1.root.insertAtEnd({ id: "B" });
-			view1.root.insertAtEnd({ id: "C" });
-			view1.transaction.commit();
+			await view1.runAsyncTransaction(async () => {
+				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
+				// TODO AD#57584: Use such an operation here when one is available
+				view1.root.insertAtEnd({ id: "B" });
+				view1.root.insertAtEnd({ id: "C" });
+			});
 			assert.equal(callCount, 1);
 		});
 
-		it("can provide an enricher for a slow rebased transaction that is about to be applied", () => {
+		it("can provide an enricher for an async rebased transaction that is about to be applied", async () => {
 			const { provider, view1, view2 } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
 			view2.root.removeAt(2);
 			view2.root.removeAt(0);
 
-			view1.transaction.start();
-			view1.root[0].id = "a"; // Will require a refresher
-			view1.root[1].id = "b";
-			provider.synchronizeMessages();
-			view1.root[2].id = "c"; // Will require a refresher
-
 			let callCount = 0;
-			view1.checkout.mainBranch.events.on("beforeChange", (change) => {
-				callCount += 1;
-				assert.equal(change.type, "append");
-				assert.equal(change.newCommits.length, 1);
-				const commit = change.newCommits[0];
-				view1.checkout.resetEnrichmentStats();
-				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
-				assertEnrichmentCount(enriched[0], 2);
-				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
-					batches: 1,
-					diffs: 1,
-					commitsEnriched: 1,
-					refreshers: 2,
-					forks: 1,
-					applied: 1,
+			await view1.runAsyncTransaction(async () => {
+				view1.root[0].id = "a"; // Will require a refresher
+				view1.root[1].id = "b";
+				provider.synchronizeMessages();
+				view1.root[2].id = "c"; // Will require a refresher
+
+				view1.checkout.mainBranch.events.on("beforeChange", (change) => {
+					callCount += 1;
+					assert.equal(change.type, "append");
+					assert.equal(change.newCommits.length, 1);
+					const commit = change.newCommits[0];
+					view1.checkout.resetEnrichmentStats();
+					const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+					assertEnrichmentCount(enriched[0], 2);
+					assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+						batches: 1,
+						diffs: 1,
+						commitsEnriched: 1,
+						refreshers: 2,
+						forks: 1,
+						applied: 1,
+					});
 				});
 			});
-			view1.transaction.commit();
 			assert.equal(callCount, 1);
 		});
 
-		it("can provide an enricher for a slow rebased transaction that has just been applied", () => {
+		it("can provide an enricher for an async rebased transaction that has just been applied", async () => {
 			const { provider, view1, view2 } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
 			view2.root.removeAt(2);
 			view2.root.removeAt(0);
 
-			view1.transaction.start();
-			view1.root[0].id = "a"; // Will require a refresher
-			view1.root[1].id = "b";
-			provider.synchronizeMessages();
-			view1.root[2].id = "c"; // Will require a refresher
-
 			let callCount = 0;
-			view1.checkout.mainBranch.events.on("afterChange", (change) => {
-				callCount += 1;
-				assert.equal(change.type, "append");
-				assert.equal(change.newCommits.length, 1);
-				const commit = change.newCommits[0];
-				view1.checkout.resetEnrichmentStats();
-				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
-				assertEnrichmentCount(enriched[0], 2);
-				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
-					batches: 1,
-					diffs: 1,
-					commitsEnriched: 1,
-					refreshers: 2,
-					forks: 1,
-					applied: 1,
+			await view1.runAsyncTransaction(async () => {
+				view1.root[0].id = "a"; // Will require a refresher
+				view1.root[1].id = "b";
+				provider.synchronizeMessages();
+				view1.root[2].id = "c"; // Will require a refresher
+
+				view1.checkout.mainBranch.events.on("afterChange", (change) => {
+					callCount += 1;
+					assert.equal(change.type, "append");
+					assert.equal(change.newCommits.length, 1);
+					const commit = change.newCommits[0];
+					view1.checkout.resetEnrichmentStats();
+					const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+					assertEnrichmentCount(enriched[0], 2);
+					assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+						batches: 1,
+						diffs: 1,
+						commitsEnriched: 1,
+						refreshers: 2,
+						forks: 1,
+						applied: 1,
+					});
 				});
 			});
-			view1.transaction.commit();
 			assert.equal(callCount, 1);
 		});
 

@@ -73,7 +73,6 @@ import {
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import type { Transactor } from "../shared-tree-core/index.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -165,10 +164,6 @@ export class SchematizingSimpleTreeView<
 				this.events.emit("commitApplied", data, getRevertible);
 			}),
 		);
-	}
-
-	public get transaction(): Transactor {
-		return this.checkout.transaction;
 	}
 
 	public applyChange(change: JsonCompatibleReadOnly): void {
@@ -310,6 +305,64 @@ export class SchematizingSimpleTreeView<
 			params?.preconditions,
 		);
 		const transactionCallbackStatus = transaction();
+		const rollback = transactionCallbackStatus?.rollback;
+		const value = (
+			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+		)?.value;
+
+		if (rollback === true) {
+			checkout.transaction.abort();
+			return value === undefined
+				? { success: false }
+				: { success: false, value: value as TFailureValue };
+		}
+
+		// Validate preconditions on revert after running the transaction callback and was successful.
+		addConstraintsToTransaction(
+			checkout,
+			true /* constraintsOnRevert */,
+			transactionCallbackStatus?.preconditionsOnRevert,
+		);
+
+		checkout.transaction.commit();
+		return value === undefined
+			? { success: true }
+			: { success: true, value: value as TSuccessValue };
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runAsyncTransaction}
+	 */
+	public runAsyncTransaction<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runAsyncTransaction}
+	 */
+	public runAsyncTransaction(
+		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResult>;
+	public async runAsyncTransaction<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void
+		>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
+		const { checkout } = this;
+
+		checkout.transaction.start();
+
+		// Validate preconditions before running the transaction callback.
+		addConstraintsToTransaction(
+			checkout,
+			false /* constraintsOnRevert */,
+			params?.preconditions,
+		);
+		const transactionCallbackStatus = await transaction();
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
 			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>

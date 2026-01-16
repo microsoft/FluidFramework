@@ -2002,7 +2002,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("tolerates active transactions in the face of inbound commits", () => {
+	describe("tolerates open async transactions in the face of inbound commits", () => {
 		it("committed transaction", async () => {
 			const provider = await TestTreeProvider.create(2);
 			const tree1 = provider.trees[0];
@@ -2016,18 +2016,17 @@ describe("SharedTree", () => {
 			view1.initialize(["A", "C", "E"]);
 			await provider.ensureSynchronized();
 
-			view1.transaction.start();
-			view1.root.insertAt(2, "D");
-			assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+			await view1.runAsyncTransaction(async () => {
+				view1.root.insertAt(2, "D");
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 
-			view2.root.insertAt(1, "B");
-			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
-			await provider.ensureSynchronized();
+				view2.root.insertAt(1, "B");
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+				await provider.ensureSynchronized();
 
-			assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
-			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
-
-			view1.transaction.commit();
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+			});
 			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
 
@@ -2049,18 +2048,18 @@ describe("SharedTree", () => {
 			view1.initialize(["A", "C", "E"]);
 			await provider.ensureSynchronized();
 
-			view1.transaction.start();
-			view1.root.insertAt(2, "D");
-			assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+			await view1.runAsyncTransaction(async () => {
+				view1.root.insertAt(2, "D");
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 
-			view2.root.insertAt(1, "B");
-			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
-			await provider.ensureSynchronized();
+				view2.root.insertAt(1, "B");
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+				await provider.ensureSynchronized();
 
-			assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
-			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
-
-			view1.transaction.abort();
+				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
+				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
+				return { rollback: true };
+			});
 			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
 
