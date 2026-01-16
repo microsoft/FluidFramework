@@ -91,7 +91,7 @@ describe("textEditor", () => {
 				// These verify correct handling where Quill's indexing may differ from iteration.
 
 				it("renders MainView with surrogate pair characters", () => {
-					// 😀 is a surrogate pair: "😀".length === 2, but [...\"😀\"].length === 1
+					// 😀 is a surrogate pair: "😀".length === 2, but [..."😀"].length === 1
 					const text = TextAsTree.Tree.fromString("Hello 😀 World");
 					const content = <MainView root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });

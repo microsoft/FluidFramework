@@ -48,8 +48,9 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 			});
 
 			// Set initial content from tree (add trailing newline to match Quill's convention)
-			if (currentText.length > 0) {
-				const textWithNewline = currentText.endsWith("\n") ? currentText : `${currentText}\n`;
+			const initialText = root.fullString();
+			if (initialText.length > 0) {
+				const textWithNewline = initialText.endsWith("\n") ? initialText : `${initialText}\n`;
 				quill.setText(textWithNewline);
 			}
 
