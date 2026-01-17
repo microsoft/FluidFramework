@@ -267,8 +267,7 @@ export class SharedCell<T = any>
 					0x00c /* "messageId is incorrect from from the local client's ACK" */,
 				);
 				assert(
-					this.pendingMessageIds !== undefined &&
-						this.pendingMessageIds[0] === cellOpMetadata.pendingMessageId,
+					this.pendingMessageIds?.[0] === cellOpMetadata.pendingMessageId,
 					0x471 /* Unexpected pending message received */,
 				);
 				this.pendingMessageIds.shift();
