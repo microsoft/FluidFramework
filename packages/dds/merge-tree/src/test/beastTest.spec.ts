@@ -271,11 +271,7 @@ export function fileTest1(): void {
 				// log(`Trying key ${animal}`);
 				if (prop) {
 					// printStringNumProperty(prop);
-					if (
-						linProp === undefined ||
-						prop.key !== linProp.key ||
-						prop.data !== linProp.data
-					) {
+					if (prop.key !== linProp?.key || prop.data !== linProp.data) {
 						log(`Linear BST does not match RB BST at key ${animal}`);
 					}
 				} else {

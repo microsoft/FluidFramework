@@ -105,6 +105,7 @@ export class TestServer extends TestClient {
 				if (this.clients) {
 					let minCli = this.clientSeqNumbers.peek()?.value;
 					if (
+						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- current check is a falsy check
 						minCli &&
 						minCli.clientId === msg.clientId &&
 						minCli.refSeq < msg.referenceSequenceNumber

@@ -153,6 +153,7 @@ export class TrackingGroupCollection {
 
 	public matches(trackingCollection: TrackingGroupCollection): boolean {
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- current check is a falsy check
 			!trackingCollection ||
 			this._trackingGroups.size !== trackingCollection._trackingGroups.size
 		) {
