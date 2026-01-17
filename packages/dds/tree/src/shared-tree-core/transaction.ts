@@ -348,11 +348,15 @@ export class SquashingTransactionStack<
 					let viewUpdate: TChange | undefined;
 					switch (result) {
 						case TransactionResult.Abort: {
-							// When a transaction is aborted, update the view if it is out of date
-							if (transactionSteps.length > 0 || targetPath.length > 0) {
+							// When a transaction is aborted, roll back all the transaction's changes on the current branch.
+							// It is important that this happens before and separately from updating the view because the `TreeCheckout` needs to
+							// revert some internal (state to match what it was before the transaction began) before applying the view update (if any).
+							transactionBranch.removeAfter(startHead);
+							// If changes were made on `branch` since the transaction began, the view will need to be updated to reflect those changes.
+							if (targetPath.length > 0) {
 								viewUpdate = diffHistories(
 									rebaser,
-									this.activeBranch.getHead(),
+									startHead,
 									this.branch.getHead(),
 									mintRevisionTag,
 								);
