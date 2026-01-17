@@ -245,17 +245,17 @@ export function runUnitTestScenario(
 
 				// For each peer, find its next step and extract the ref number.
 				// The min of all these ref numbers for all peers is the highest possible min sequence number across those peers.
-				const minPeerRef = activePeers
-					.map(
-						(peer) =>
-							steps
-								.filter(
-									(s): s is UnitTestPullStepWithIntention =>
-										s.type === "Pull" && s.from === peer,
-								)
-								.find((s) => s.seq > sequenceNumber)?.ref ?? Number.POSITIVE_INFINITY,
-					)
-					.reduce((p, c) => Math.min(p, c), Number.POSITIVE_INFINITY);
+				const peerRefs = activePeers.map(
+					(peer) =>
+						steps
+							.filter(
+								(s): s is UnitTestPullStepWithIntention =>
+									s.type === "Pull" && s.from === peer,
+							)
+							.find((s) => s.seq > sequenceNumber)?.ref ?? Number.POSITIVE_INFINITY,
+				);
+				const minPeerRef =
+					peerRefs.length > 0 ? Math.min(...peerRefs) : Number.POSITIVE_INFINITY;
 
 				// Compute the true min sequence number by including our local session's last seen sequence number as well.
 				return Math.min(sequenceNumber, minPeerRef);

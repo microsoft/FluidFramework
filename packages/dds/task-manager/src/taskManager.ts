@@ -494,6 +494,7 @@ export class TaskManagerClass
 			}
 			removeListeners();
 			this.subscribedTasks.delete(taskId);
+			abandoned = true;
 		};
 
 		const checkIfRolledBack = (eventTaskId: string): void => {
@@ -503,6 +504,7 @@ export class TaskManagerClass
 
 			removeListeners();
 			this.subscribedTasks.delete(taskId);
+			abandoned = true;
 		};
 
 		setupListeners();

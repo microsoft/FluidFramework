@@ -245,7 +245,9 @@ async function saveSnapshot(
 					if (!paramActualFormatting) {
 						decoded = JSON.stringify(JSON.parse(decoded), undefined, 2);
 					}
-				} catch (e) {}
+				} catch (e) {
+					// TODO: document why we are ignoring the error here
+				}
 				fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`, decoded);
 			} else {
 				// Write out same data for tree decoded or not, except for formatting

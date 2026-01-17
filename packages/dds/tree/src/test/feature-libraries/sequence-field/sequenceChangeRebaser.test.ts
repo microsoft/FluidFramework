@@ -244,7 +244,7 @@ const testChanges: [
 ];
 deepFreeze(testChanges);
 
-export function testRebaserAxioms() {
+export function testRebaserAxioms(): void {
 	describe("Rebaser Axioms", () => {
 		/**
 		 * This test simulates rebasing over an do-inverse pair.
@@ -725,7 +725,7 @@ const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
 	},
 };
 
-export function testStateBasedRebaserAxioms() {
+export function testStateBasedRebaserAxioms(): void {
 	describeStress("State-based Rebaser Axioms", function ({ stressMode }) {
 		this.timeout(stressMode === StressMode.Short ? 5000 : 80_000);
 		const allocator = idAllocatorFromMaxId();
@@ -754,7 +754,7 @@ export function testStateBasedRebaserAxioms() {
 	});
 }
 
-export function testSandwichRebasing() {
+export function testSandwichRebasing(): void {
 	describe("Sandwich Rebasing", () => {
 		it("Nested inserts rebasing", () => {
 			const insertA = tagChangeInline(Change.insert(0, 2, tag1), tag1);
@@ -906,7 +906,7 @@ export function testSandwichRebasing() {
 	});
 }
 
-export function testSandwichComposing() {
+export function testSandwichComposing(): void {
 	describe("Sandwich composing", () => {
 		it("insert ↷ redundant remove", () => {
 			const insertA = tagChangeInline([Mark.insert(1, { localId: brand(0) })], tag3);
@@ -1003,7 +1003,7 @@ export function testSandwichComposing() {
 	});
 }
 
-export function testComposedSandwichRebasing() {
+export function testComposedSandwichRebasing(): void {
 	describe("Composed sandwich rebasing", () => {
 		it("Nested inserts ↷ []", () => {
 			const insertA = tagChangeInline(Change.insert(0, 2, tag1), tag1);
@@ -1016,7 +1016,7 @@ export function testComposedSandwichRebasing() {
 	});
 }
 
-export function testExamples() {
+export function testExamples(): void {
 	describe("Examples", () => {
 		it("a detach can end up with neighboring tombstones", () => {
 			const revive = tagChangeInline(

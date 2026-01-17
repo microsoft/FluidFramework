@@ -28,7 +28,11 @@ import type {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	assertIsStableId,
+	createIdCompressor,
+	type IIdCompressorCore,
+} from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -538,13 +542,16 @@ export function spyOnMethod(
 	methodName: string,
 	spy: () => void,
 ): () => void {
-	const { prototype } = methodClass;
+	const prototype = methodClass.prototype as Record<
+		string,
+		(this: unknown, ...args: unknown[]) => unknown
+	>;
 	const method = prototype[methodName];
 	assert(typeof method === "function", `Method does not exist: ${methodName}`);
 
 	const methodSpy = function (this: unknown, ...args: unknown[]): unknown {
 		spy();
-		return method.call(this, ...args);
+		return (method as (...args: unknown[]) => unknown).call(this, ...args);
 	};
 	prototype[methodName] = methodSpy;
 
@@ -1398,7 +1405,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
  */
 export const snapshotSessionId = assertIsSessionId("beefbeef-beef-4000-8000-000000000001");
 
-export function createSnapshotCompressor(seed?: number) {
+export function createSnapshotCompressor(seed?: number): IIdCompressor & IIdCompressorCore {
 	return createAlwaysFinalizedIdCompressor(snapshotSessionId, undefined, seed);
 }
 
@@ -1504,7 +1511,7 @@ export function moveWithin(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
-) {
+): void {
 	editor.move(field, sourceIndex, count, field, destIndex);
 }
 

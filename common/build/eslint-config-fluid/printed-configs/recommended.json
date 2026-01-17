@@ -1294,10 +1294,7 @@
             "error"
         ],
         "jsdoc/multiline-blocks": [
-            "error",
-            {
-                "noSingleLineBlocks": true
-            }
+            "error"
         ],
         "jsdoc/no-bad-blocks": [
             "error"

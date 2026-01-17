@@ -8,10 +8,11 @@ import { join as pathJoin } from "node:path";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
-import type { SessionId } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
 	deserializeIdCompressor,
+	type IIdCompressorCore,
 } from "@fluidframework/id-compressor/internal";
 
 import {
@@ -146,7 +147,9 @@ export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuz
 	return node as unknown as typeof fuzzFieldSchema;
 }
 
-export function nodeSchemaFromTreeSchema(treeSchema: typeof fuzzFieldSchema) {
+export function nodeSchemaFromTreeSchema(
+	treeSchema: typeof fuzzFieldSchema,
+): typeof FuzzNode | undefined {
 	const nodeSchema = [...treeSchema.allowedTypeSet].find(
 		(treeNodeSchema) => treeNodeSchema.identifier === "treeFuzz.node",
 	) as typeof FuzzNode | undefined;
@@ -171,7 +174,7 @@ export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 	}
 }
 
-export const FuzzTestOnCreate = (tree: ViewableTree) => {
+export const FuzzTestOnCreate = (tree: ViewableTree): void => {
 	const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
 	view.initialize(populatedInitialState);
 	view.dispose();
@@ -205,7 +208,7 @@ export function validateAnchors(
 	anchors: ReadonlyMap<Anchor, [UpPath, Value]>,
 	checkPaths: boolean,
 	tolerateLostAnchors = true,
-) {
+): void {
 	const cursor = view.forest.allocateCursor();
 	for (const [anchor, [path, value]] of anchors) {
 		const result = view.forest.tryMoveCursorToNode(anchor, cursor);
@@ -252,7 +255,7 @@ export const successesDirectory = pathJoin(testSrcPath, "shared-tree/fuzz/succes
 export const createOrDeserializeCompressor = (
 	sessionId: SessionId,
 	summary?: FuzzSerializedIdCompressor,
-) => {
+): IIdCompressor & IIdCompressorCore => {
 	return summary === undefined
 		? createIdCompressor(sessionId)
 		: summary.withSession

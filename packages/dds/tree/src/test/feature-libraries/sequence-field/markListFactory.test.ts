@@ -15,7 +15,7 @@ import { MarkMaker as Mark } from "./testEdits.js";
 const dummyMark = Mark.remove(1, brand(0));
 const detachedBy: RevisionTag = mintRevisionTag();
 
-export function testMarkListFactory() {
+export function testMarkListFactory(): void {
 	describe("MarkListFactory", () => {
 		it("Inserts an offset when there is content after the offset", () => {
 			const factory = new SF.MarkListFactory();

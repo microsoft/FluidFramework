@@ -9,6 +9,8 @@ export {
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	type LocalChangeMetadata,
+	type RemoteChangeMetadata,
 	type ChangeMetadata,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
@@ -292,10 +294,13 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
+	checkSchemaCompatibilitySnapshots,
+	type SnapshotFileSystem,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
+	type SchemaCompatibilitySnapshotsOptions,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -360,3 +365,5 @@ export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
+
+export { TextAsTree } from "./text/index.js";
