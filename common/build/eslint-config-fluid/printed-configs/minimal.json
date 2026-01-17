@@ -1393,6 +1393,9 @@
         "no-const-assign": [
             "off"
         ],
+        "no-constant-binary-expression": [
+            "error"
+        ],
         "no-constant-condition": [
             "error",
             {
@@ -1451,6 +1454,9 @@
                 "allowObjectPatternsAsParameters": false
             }
         ],
+        "no-empty-static-block": [
+            "error"
+        ],
         "no-eval": [
             "error",
             {
@@ -1494,13 +1500,6 @@
         ],
         "no-import-assign": [
             "off"
-        ],
-        "no-inner-declarations": [
-            "error",
-            "functions",
-            {
-                "blockScopedFunctions": "allow"
-            }
         ],
         "no-invalid-regexp": [
             "error",
@@ -1721,6 +1720,9 @@
             }
         ],
         "no-unused-labels": [
+            "error"
+        ],
+        "no-unused-private-class-members": [
             "error"
         ],
         "no-unused-vars": [
