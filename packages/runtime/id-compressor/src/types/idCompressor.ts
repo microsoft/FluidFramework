@@ -16,6 +16,30 @@ import type {
 } from "./persisted-types/index.js";
 
 /**
+ * Serialization format versions for IdCompressor.
+ * @legacy
+ * @beta
+ */
+export const SerializationVersion = {
+	/**
+	 * Base format without sharding support
+	 */
+	V2: 2,
+	/**
+	 * Adds optional sharding state
+	 */
+	V3: 3,
+} as const;
+
+/**
+ * Type representing valid serialization version values.
+ * @legacy
+ * @beta
+ */
+export type SerializationVersion =
+	(typeof SerializationVersion)[keyof typeof SerializationVersion];
+
+/**
  * A distributed UUID generator and compressor.
  *
  * Generates arbitrary non-colliding v4 UUIDs, called stable IDs, for multiple "sessions" (which can be distributed across the network),
@@ -158,13 +182,13 @@ export interface IIdCompressorCore {
 	shardId(): CompressorShardId | undefined;
 
 	/**
-	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
+	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `deserializeIdCompressor()`.
 	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
 	 */
 	serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
 
 	/**
-	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
+	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `deserializeIdCompressor()`.
 	 * This only includes finalized state and is therefore suitable for use in summaries.
 	 */
 	serialize(withSession: false): SerializedIdCompressorWithNoSession;

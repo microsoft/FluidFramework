@@ -9,7 +9,10 @@ import {
 	fail,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
@@ -858,7 +861,7 @@ export const TreeAlpha: TreeAlpha = {
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
 		// If none provided, create a compressor which will not compress anything.
-		const idCompressor = options.idCompressor ?? createIdCompressor();
+		const idCompressor = options.idCompressor ?? createIdCompressor(SerializationVersion.V3);
 
 		// Grabbing an existing stored schema from the node is important to ensure that unknown optional fields can be preserved.
 		// Note that if the node is unhydrated, this can result in all staged allowed types being included in the schema, which might be undesired.
@@ -889,7 +892,7 @@ export const TreeAlpha: TreeAlpha = {
 			// TODO: reevaluate how staged schema should behave in schema import/export APIs before stabilizing this.
 			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
 			tree: compressedData,
-			idCompressor: options.idCompressor ?? createIdCompressor(),
+			idCompressor: options.idCompressor ?? createIdCompressor(SerializationVersion.V3),
 		};
 		const view = independentInitializedView(config, options, content);
 		return TreeBeta.clone<TSchema>(view.root);

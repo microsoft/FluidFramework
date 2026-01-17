@@ -11,6 +11,10 @@ export type {
 } from "./persisted-types/index.js";
 
 export type { IIdCompressorCore, IIdCompressor, CompressorShardId } from "./idCompressor.js";
+export {
+	SerializationVersion,
+	type SerializationVersion as SerializationVersionType,
+} from "./idCompressor.js";
 
 export type {
 	SessionSpaceCompressedId,

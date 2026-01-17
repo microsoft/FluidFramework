@@ -4,6 +4,12 @@
 
 ```ts
 
+// @beta @legacy
+export function createIdCompressor(writeVersion: SerializationVersion, logger?: ITelemetryBaseLogger): IIdCompressor;
+
+// @beta @legacy
+export function createIdCompressor(sessionId: SessionId, writeVersion: SerializationVersion, logger?: ITelemetryBaseLogger): IIdCompressor;
+
 // @public
 export interface IIdCompressor {
     decompress(id: SessionSpaceCompressedId): StableId;
@@ -20,6 +26,17 @@ export interface IIdCompressor {
 export type OpSpaceCompressedId = number & {
     readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
 };
+
+// @beta @legacy
+const SerializationVersion: {
+    readonly V2: 2;
+    readonly V3: 3;
+};
+
+// @beta @legacy
+type SerializationVersion = (typeof SerializationVersion)[keyof typeof SerializationVersion];
+export { SerializationVersion }
+export { SerializationVersion as SerializationVersionType }
 
 // @public
 export type SessionId = StableId & {

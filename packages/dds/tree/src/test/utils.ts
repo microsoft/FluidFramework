@@ -28,7 +28,12 @@ import type {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	assertIsStableId,
+	createIdCompressorInternal,
+	type IIdCompressorCore,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -466,7 +471,7 @@ export class TestTreeProviderLite {
 			const runtime = new MockFluidDataStoreRuntime({
 				clientId: `test-client-${i}`,
 				id: "test",
-				idCompressor: createIdCompressor(sessionId),
+				idCompressor: createIdCompressorInternal(sessionId, SerializationVersion.V3),
 				logger: this.logger,
 			});
 			const tree = this.factory.create(runtime, `tree-${i}`);
@@ -1357,9 +1362,8 @@ export function assertIsSessionId(sessionId: string): SessionId {
 	return sessionId as SessionId;
 }
 
-export const testIdCompressor = createAlwaysFinalizedIdCompressor(
-	assertIsSessionId("00000000-0000-4000-b000-000000000000"),
-);
+export const testIdCompressor: IIdCompressor & IIdCompressorCore =
+	createAlwaysFinalizedIdCompressor(assertIsSessionId("00000000-0000-4000-b000-000000000000"));
 export function mintRevisionTag(): RevisionTag {
 	return testIdCompressor.generateCompressedId();
 }

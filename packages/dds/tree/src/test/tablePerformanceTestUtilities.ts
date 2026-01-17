@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import-x/no-internal-modules
-import { createIdCompressor } from "@fluidframework/id-compressor/legacy";
 import {
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -99,7 +97,6 @@ export function createTableTree({ tableSize, initialCellValue }: TableTreeOption
 } {
 	const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 	const runtime = new MockFluidDataStoreRuntime({
-		idCompressor: createIdCompressor(),
 		attachState: AttachState.Detached,
 	});
 	const tree = sharedTreeFactory.create(runtime, "tree");

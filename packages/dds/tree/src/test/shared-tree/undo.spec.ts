@@ -24,7 +24,6 @@ import {
 	TestTreeProviderLite,
 } from "../utils.js";
 import { insert, jsonSequenceRootSchema, remove } from "../sequenceRootUtils.js";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -488,7 +487,7 @@ describe("Undo and redo", () => {
 	it("can undo while detached", () => {
 		const sf = new SchemaFactory(undefined);
 		class Schema extends sf.object("Object", { foo: sf.number }) {}
-		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const runtime = new MockFluidDataStoreRuntime();
 		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
 		const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: Schema })));
 		view.initialize({ foo: 1 });
@@ -702,7 +701,7 @@ describe("Undo and redo", () => {
  */
 export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITreeCheckout {
 	const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
-	const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+	const runtime = new MockFluidDataStoreRuntime();
 	const tree = sharedTreeFactory.create(runtime, "tree");
 	const runtimeFactory = new MockContainerRuntimeFactory();
 	runtimeFactory.createContainerRuntime(runtime);

@@ -9,10 +9,13 @@
 
 export {
 	createIdCompressor,
+	createIdCompressorInternal,
 	deserializeIdCompressor,
+} from "./idCompressor.js";
+export {
 	SerializationVersion,
 	type SerializationVersion as SerializationVersionType,
-} from "./idCompressor.js";
+} from "./types/index.js";
 export {
 	createSessionId,
 	assertIsStableId,

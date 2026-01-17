@@ -10,7 +10,6 @@
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
@@ -398,7 +397,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const builder = new SchemaFactory("shared-tree-test");
 
 		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			new MockFluidDataStoreRuntime(),
 			"test",
 		);
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
@@ -447,7 +446,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const builder = new SchemaFactory("shared-tree-test");
 
 		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			new MockFluidDataStoreRuntime(),
 			"test",
 		);
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
@@ -566,7 +565,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const builder = new SchemaFactory("shared-tree-test");
 
 		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			new MockFluidDataStoreRuntime(),
 			"test",
 		);
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
@@ -688,7 +687,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const builder = new SchemaFactory("shared-tree-test");
 
 		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			new MockFluidDataStoreRuntime(),
 			"test",
 		);
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
@@ -821,7 +820,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedString.getFactory()] });
 
 		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			new MockFluidDataStoreRuntime(),
 			"test",
 		);
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
@@ -870,7 +869,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedString.getFactory()] });
 
 		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			new MockFluidDataStoreRuntime(),
 			"test",
 		);
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
@@ -980,7 +979,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const builder = new SchemaFactory("shared-tree-test");
 
 		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			new MockFluidDataStoreRuntime(),
 			"test",
 		);
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
@@ -1403,7 +1402,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const builder = new SchemaFactory("shared-tree-test");
 
 		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			new MockFluidDataStoreRuntime(),
 			"test",
 		);
 		const sharedTreeId = getKeyForFluidObject(sharedTree);

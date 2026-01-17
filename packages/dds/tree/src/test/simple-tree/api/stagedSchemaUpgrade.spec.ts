@@ -4,7 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 
 import {
 	extractPersistedSchema,
@@ -166,7 +169,7 @@ describe("staged schema upgrade", () => {
 		});
 
 		// TODO: this is a legacy API: we need a stable alternative.
-		const idCompressor = createIdCompressor();
+		const idCompressor = createIdCompressor(SerializationVersion.V3);
 
 		const content: ViewContent = {
 			tree: TreeAlpha.exportCompressed(viewA.root, {

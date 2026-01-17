@@ -68,7 +68,10 @@ import {
 	type EncodedFieldBatch,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressorInternal,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import {
 	toStoredSchema,
 	restrictiveStoredSchemaGenerationOptions,
@@ -448,8 +451,9 @@ describe("schemaBasedEncoding", () => {
 			// TODO: test non size 1 batches
 			for (const { name, treeFactory, schemaData } of testTrees) {
 				it(name, () => {
-					const idCompressor = createIdCompressor(
+					const idCompressor = createIdCompressorInternal(
 						assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+						SerializationVersion.V3,
 					);
 					const storedSchema = schemaData;
 					const tree = treeFactory(idCompressor);

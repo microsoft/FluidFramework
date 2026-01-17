@@ -5,8 +5,6 @@
 
 import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -120,7 +118,7 @@ describe("simple-tree tree", () => {
 		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
 		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
 		const treeSrc = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			new MockFluidDataStoreRuntime(),
 			"tree",
 		);
 
@@ -130,7 +128,7 @@ describe("simple-tree tree", () => {
 		assert(typeof idFromInitialize === "number");
 
 		const treeDst = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			new MockFluidDataStoreRuntime(),
 			"tree",
 		);
 
@@ -147,7 +145,7 @@ describe("simple-tree tree", () => {
 		class Empty extends schema.object("Empty", {}) {}
 		const config = new TreeViewConfiguration({ schema: Empty });
 		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			new MockFluidDataStoreRuntime(),
 			"tree",
 		);
 

@@ -11,8 +11,7 @@ import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/i
 
 import {
 	IdCompressor,
-	SerializationVersion,
-	createIdCompressor,
+	createIdCompressorInternal,
 	deserializeIdCompressor,
 } from "../idCompressor.js";
 import type {
@@ -23,6 +22,7 @@ import type {
 	StableId,
 	SerializedIdCompressorWithOngoingSession,
 } from "../index.js";
+import { SerializationVersion } from "../types/index.js";
 import { createSessionId } from "../utilities.js";
 
 import {
@@ -922,7 +922,7 @@ describe("IdCompressor", () => {
 
 		it("correctly passes logger when no session specified", () => {
 			const mockLogger = new MockLogger();
-			const compressor = createIdCompressor(SerializationVersion.V3, mockLogger);
+			const compressor = createIdCompressorInternal(SerializationVersion.V3, mockLogger);
 			compressor.generateCompressedId();
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			mockLogger.assertMatchAny([

@@ -51,6 +51,7 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 } from "./types/index.js";
+import { SerializationVersion } from "./types/index.js";
 import {
 	createSessionId,
 	genCountFromLocalId,
@@ -60,28 +61,6 @@ import {
 	stableIdFromNumericUuid,
 	subtractNumericUuids,
 } from "./utilities.js";
-
-/**
- * Serialization format versions for IdCompressor.
- * @internal
- */
-export const SerializationVersion = {
-	/**
-	 * Base format without sharding support
-	 */
-	V2: 2,
-	/**
-	 * Adds optional sharding state
-	 */
-	V3: 3,
-} as const;
-
-/**
- * Type representing valid serialization version values.
- * @internal
- */
-export type SerializationVersion =
-	(typeof SerializationVersion)[keyof typeof SerializationVersion];
 
 function rangeFinalizationError(expectedStart: number, actualStart: number): LoggingError {
 	return new LoggingError("Ranges finalized out of order", {
@@ -1111,7 +1090,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
  * @param logger - Optional telemetry logger.
  * @internal
  */
-export function createIdCompressor(
+export function createIdCompressorInternal(
 	writeVersion: SerializationVersion,
 	logger?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore;
@@ -1122,12 +1101,12 @@ export function createIdCompressor(
  * @param logger - Optional telemetry logger.
  * @internal
  */
-export function createIdCompressor(
+export function createIdCompressorInternal(
 	sessionId: SessionId,
 	writeVersion: SerializationVersion,
 	logger?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore;
-export function createIdCompressor(
+export function createIdCompressorInternal(
 	sessionIdOrDocumentVersion: SessionId | SerializationVersion,
 	writeVersionOrLogger?: SerializationVersion | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
@@ -1154,6 +1133,47 @@ export function createIdCompressor(
 		writeVersion,
 	);
 	return compressor;
+}
+
+/**
+ * Create a new {@link IIdCompressor}.
+ * @param writeVersion - The version the compressor will write when serializing. Use SerializationVersion.V2 for base format, or SerializationVersion.V3 for sharding support.
+ * @param logger - Optional telemetry logger.
+ * @legacy
+ * @beta
+ */
+export function createIdCompressor(
+	writeVersion: SerializationVersion,
+	logger?: ITelemetryBaseLogger,
+): IIdCompressor;
+/**
+ * Create a new {@link IIdCompressor}.
+ * @param sessionId - The seed ID for the compressor.
+ * @param writeVersion - The version the compressor will write when serializing. Use SerializationVersion.V2 for base format, or SerializationVersion.V3 for sharding support.
+ * @param logger - Optional telemetry logger.
+ * @legacy
+ * @beta
+ */
+export function createIdCompressor(
+	sessionId: SessionId,
+	writeVersion: SerializationVersion,
+	logger?: ITelemetryBaseLogger,
+): IIdCompressor;
+export function createIdCompressor(
+	sessionIdOrDocumentVersion: SessionId | SerializationVersion,
+	writeVersionOrLogger?: SerializationVersion | ITelemetryBaseLogger,
+	loggerOrUndefined?: ITelemetryBaseLogger,
+): IIdCompressor {
+	return typeof sessionIdOrDocumentVersion === "string"
+		? createIdCompressorInternal(
+				sessionIdOrDocumentVersion,
+				writeVersionOrLogger as SerializationVersion,
+				loggerOrUndefined,
+			)
+		: createIdCompressorInternal(
+				sessionIdOrDocumentVersion,
+				writeVersionOrLogger as ITelemetryBaseLogger | undefined,
+			);
 }
 
 /**

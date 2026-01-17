@@ -5,9 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { IdCompressor, SerializationVersion } from "../idCompressor.js";
+import { IdCompressor } from "../idCompressor.js";
 import { isFinalId } from "../identifiers.js";
 import type { SessionSpaceCompressedId } from "../index.js";
+import { SerializationVersion } from "../types/index.js";
 import { createSessionId } from "../utilities.js";
 
 import { isLocalId } from "./testCommon.js";

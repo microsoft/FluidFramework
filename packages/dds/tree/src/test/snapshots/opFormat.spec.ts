@@ -5,7 +5,10 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { SessionId } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import {
 	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
@@ -54,7 +57,7 @@ describe("SharedTree op format snapshots", () => {
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				const sessionId = "00000000-0000-4000-b000-000000000000" as SessionId;
 				const runtime = new MockFluidDataStoreRuntime({
-					idCompressor: createIdCompressor(sessionId),
+					idCompressor: createIdCompressor(sessionId, SerializationVersion.V3),
 					attachState: AttachState.Attached,
 				});
 				containerRuntime = containerRuntimeFactory.createContainerRuntime(runtime);

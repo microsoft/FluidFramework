@@ -67,6 +67,7 @@ import type {
 import {
 	createIdCompressor,
 	type IIdCompressor,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 import type {
 	IFluidHandle,
@@ -126,7 +127,7 @@ export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 		logger,
 		indexes,
 		TreeCompressionStrategy.Uncompressed,
-		createIdCompressor(),
+		createIdCompressor(SerializationVersion.V3),
 		new TreeStoredSchemaRepository(),
 		codecOptions ?? testCodecOptions,
 		resubmitMachine,
@@ -145,7 +146,7 @@ export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>
 	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 ): TestSharedTreeCore {
 	return new TestSharedTreeCore(
-		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+		new MockFluidDataStoreRuntime(),
 		undefined,
 		indexes,
 		undefined,
