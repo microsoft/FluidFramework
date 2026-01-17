@@ -53,6 +53,7 @@ const config: Linter.Config[] = [
 
 			"unicorn/consistent-function-scoping": "off",
 			"unicorn/no-array-method-this-argument": "off",
+			"unicorn/no-await-expression-member": "off",
 			"unicorn/no-null": "off",
 			"unicorn/prefer-export-from": "off",
 			"unicorn/text-encoding-identifier-case": "off",
@@ -65,6 +66,10 @@ const config: Linter.Config[] = [
 		rules: {
 			"@typescript-eslint/no-unused-vars": ["off"],
 			"@typescript-eslint/explicit-function-return-type": "off",
+			// Test files commonly define helper functions inside describe blocks for better readability
+			"unicorn/consistent-function-scoping": "off",
+			// Test files frequently use `as any` casts to access internal/hidden properties for testing
+			"@typescript-eslint/no-unsafe-member-access": "off",
 		},
 	},
 ];

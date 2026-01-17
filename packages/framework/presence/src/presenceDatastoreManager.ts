@@ -97,7 +97,7 @@ function isPresenceMessage(
  * @param obj - The object to check
  * @returns True if the object is a {@link ValidatableValueDirectory}
  */
-export function isValueDirectory<T>(
+function isValueDirectory<T>(
 	obj: ValidatableValueDirectory<T> | ValidatableOptionalState<T>,
 ): obj is ValidatableValueDirectory<T> {
 	return "items" in obj;
@@ -234,7 +234,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	public constructor(
 		private readonly attendeeId: AttendeeId,
 		private readonly runtime: IEphemeralRuntime,
-		private readonly logger: ITelemetryLoggerExt | undefined,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly events: IEmitter<PresenceEvents>,
 		private readonly presence: Presence,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
@@ -345,7 +345,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				updateProviders,
 			},
 		});
-		this.logger?.sendTelemetryEvent({
+		this.logger.sendTelemetryEvent({
 			eventName: "JoinRequested",
 			details: {
 				attendeeId: this.attendeeId,
@@ -372,12 +372,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			return existing.internal.ensureContent(requestedContent, controls);
 		}
 
-		let workspaceDatastore: ValueElementMap<StatesWorkspaceSchema> | undefined =
-			this.datastore[internalWorkspaceAddress];
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
-		if (workspaceDatastore === undefined) {
-			workspaceDatastore = this.datastore[internalWorkspaceAddress] = {};
-		}
+		const workspaceDatastore = (this.datastore[internalWorkspaceAddress] ??= {});
 
 		const localUpdate = (
 			states: { [key: string]: ClientUpdateEntry },
@@ -606,16 +601,16 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		const secondaryRequestors: [ClientConnectionId, number][] = [];
 		if (this.broadcastRequests.size > 0) {
 			content.joinResponseFor = [...this.broadcastRequests.keys()];
-			if (this.logger) {
-				// Build telemetry data
-				for (const [requestor, { responseOrder }] of this.broadcastRequests.entries()) {
-					if (responseOrder === undefined) {
-						primaryRequestors.push(requestor);
-					} else {
-						secondaryRequestors.push([requestor, responseOrder]);
-					}
+
+			// Build telemetry data
+			for (const [requestor, { responseOrder }] of this.broadcastRequests.entries()) {
+				if (responseOrder === undefined) {
+					primaryRequestors.push(requestor);
+				} else {
+					secondaryRequestors.push([requestor, responseOrder]);
 				}
 			}
+
 			this.broadcastRequests.clear();
 		}
 
@@ -628,7 +623,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			content,
 		});
 		if (content.joinResponseFor) {
-			this.logger?.sendTelemetryEvent({
+			this.logger.sendTelemetryEvent({
 				eventName: "JoinResponse",
 				details: {
 					type: "broadcastAll",
@@ -697,7 +692,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 							// No response was expected. This might happen when
 							// either cautionary ClientJoin signal is received
 							// by audience member that was unknown.
-							this.logger?.sendTelemetryEvent({
+							this.logger.sendTelemetryEvent({
 								eventName: "JoinResponseWhenAlone",
 								details: {
 									attendeeId: this.attendeeId,

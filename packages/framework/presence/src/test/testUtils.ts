@@ -147,6 +147,7 @@ function createProcessSignal(
 		// the network and Presence can safely mutate it.
 		presence.processSignal(
 			addressChain,
+			// eslint-disable-next-line unicorn/prefer-structured-clone -- not structural clone, but filters to JSON-serializable data
 			JSON.parse(JSON.stringify(signalMessage)) as InboundExtensionMessage<SignalMessages>,
 			local,
 		);
@@ -262,12 +263,12 @@ const localAvgLatency = 10;
 function createPresence(
 	runtime: MockEphemeralRuntime,
 	attendeeId: string,
-	logger?: EventAndErrorTrackingLogger,
+	logger: EventAndErrorTrackingLogger,
 ): {
 	presence: ReturnType<typeof createPresenceManager>;
 	processSignal: ProcessSignalFunction;
 } {
-	logger?.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
+	logger.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
 
 	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
 	const processSignal = createProcessSignal(presence);
@@ -289,14 +290,14 @@ function createPresence(
  * @param attendeeId - the client session id given to presence
  * @param clientConnectionId - the client connection id
  * @param clock - the fake timer.
- * @param logger - optional logger to track telemetry events
+ * @param logger - logger to track telemetry events
  */
 export function prepareConnectedPresence(
 	runtime: MockEphemeralRuntime,
 	attendeeId: string,
 	clientConnectionId: ClientConnectionId,
 	clock: Omit<SinonFakeTimers, "restore">,
-	logger?: EventAndErrorTrackingLogger,
+	logger: EventAndErrorTrackingLogger,
 ): {
 	presence: PresenceWithNotifications;
 	processSignal: ProcessSignalFunction;
@@ -343,14 +344,14 @@ export function prepareConnectedPresence(
  * @param attendeeId - the client session id given to presence
  * @param clientConnectionId - the client connection id to use when connecting
  * @param clock - the fake timer
- * @param logger - optional logger to track telemetry events
+ * @param logger - logger to track telemetry events
  */
 export function prepareDisconnectedPresence(
 	runtime: MockEphemeralRuntime,
 	attendeeId: string,
 	clientConnectionId: ClientConnectionId,
 	clock: Omit<SinonFakeTimers, "restore">,
-	logger?: EventAndErrorTrackingLogger,
+	logger: EventAndErrorTrackingLogger,
 ): {
 	presence: PresenceWithNotifications;
 	processSignal: ProcessSignalFunction;
@@ -411,7 +412,7 @@ export function prepareDisconnectedPresence(
  */
 export function assertFinalExpectations(
 	runtime: MockEphemeralRuntime,
-	logger?: EventAndErrorTrackingLogger,
+	logger: EventAndErrorTrackingLogger,
 ): void {
 	// Make sure all expected events were logged and there are no unexpected errors.
 	const logErrors = getUnexpectedLogErrorException(logger);
