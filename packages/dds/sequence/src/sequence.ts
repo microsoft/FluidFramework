@@ -402,6 +402,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 						props[key] = r.segment.properties?.[key] ?? null;
 					}
 					if (
+						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- current check is falsy
 						lastAnnotate &&
 						lastAnnotate.pos2 === r.position &&
 						matchProperties(lastAnnotate.props, props)
