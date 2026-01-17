@@ -147,6 +147,7 @@ function createProcessSignal(
 		// the network and Presence can safely mutate it.
 		presence.processSignal(
 			addressChain,
+			// eslint-disable-next-line unicorn/prefer-structured-clone -- not structural clone, but filters to JSON-serializable data
 			JSON.parse(JSON.stringify(signalMessage)) as InboundExtensionMessage<SignalMessages>,
 			local,
 		);
