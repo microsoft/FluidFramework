@@ -20,12 +20,12 @@ import type {
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
 
-import type { ExtensionHost, ExtensionRuntimeProperties } from "./internalRuntimeTypes.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { Presence, PresenceWithNotifications } from "./presence.js";
 import type { PresenceExtensionInterface } from "./presenceManager.js";
 import { createPresenceManager } from "./presenceManager.js";
 import type { SignalMessages } from "./protocol.js";
+import type { ExtensionHost, ExtensionRuntimeProperties } from "./runtimeTypes.js";
 
 const presenceCompatibility = {
 	generation: 1,

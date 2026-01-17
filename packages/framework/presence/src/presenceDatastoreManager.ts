@@ -11,7 +11,6 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControlsTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { IEphemeralRuntime } from "./internalRuntimeTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
 	AttendeeId,
@@ -44,6 +43,7 @@ import {
 	datastoreUpdateMessageType,
 	joinMessageType,
 } from "./protocol.js";
+import type { IEphemeralRuntime } from "./runtimeTypes.js";
 import type { PostUpdateAction } from "./statesManagerTypes.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";

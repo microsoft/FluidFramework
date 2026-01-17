@@ -19,7 +19,6 @@ import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/in
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControlsTypes.js";
-import type { ExtensionRuntimeProperties, IEphemeralRuntime } from "./internalRuntimeTypes.js";
 import type {
 	AttendeesEvents,
 	AttendeeId,
@@ -29,6 +28,7 @@ import type {
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
 import type { SignalMessages } from "./protocol.js";
+import type { ExtensionRuntimeProperties, IEphemeralRuntime } from "./runtimeTypes.js";
 import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { createSystemWorkspace } from "./systemWorkspace.js";
 import type {
