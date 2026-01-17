@@ -3,77 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { ExtensionHost as ContainerExtensionHost } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	InternalUtilityTypes,
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { AttendeeId, Attendee } from "./presence.js";
-import type { OutboundPresenceMessage, SignalMessages } from "./protocol.js";
-
-/**
- * Presence {@link ContainerExtension} version of {@link @fluidframework/container-runtime-definitions#ExtensionRuntimeProperties}
- */
-export interface ExtensionRuntimeProperties {
-	SignalMessages: SignalMessages;
-}
-/**
- * Presence specific ExtensionHost
- */
-export type ExtensionHost = ContainerExtensionHost<ExtensionRuntimeProperties>;
-
-/**
- * Basic structure of set of {@link Attendee} records within Presence datastore
- *
- * @remarks
- * This is commonly exists per named state in State Managers.
- */
-export interface ClientRecord<TValue extends ValidatableValueDirectoryOrState<unknown>> {
-	// Caution: any particular item may or may not exist
-	// Typescript does not support absent keys without forcing type to also be undefined.
-	// See https://github.com/microsoft/TypeScript/issues/42810.
-	[AttendeeId: AttendeeId]: TValue;
-}
-
-/**
- * This interface is a subset of ExtensionHost that is needed by the Presence States.
- */
-export type IEphemeralRuntime = Omit<ExtensionHost, "submitAddressedSignal"> & {
-	/**
-	 * Submits the signal to be sent to other clients.
-	 */
-	submitSignal: (message: OutboundPresenceMessage) => void;
-};
-
-/**
- * Contract for State Managers as used by a States Workspace (`PresenceStatesImpl`)
- *
- * @remarks
- * See uses of `unbrandIVM`.
- */
-export interface ValueManager<
-	TValue,
-	TValueState extends
-		InternalTypes.ValueDirectoryOrState<TValue> = InternalTypes.ValueDirectoryOrState<TValue>,
-> {
-	// State objects should provide value - implement Required<ValueManager<...>>
-	readonly value?: TValueState;
-
-	/**
-	 * Process an update of `value` for remote attendee.
-	 * @param attendee - The attendee whose `value` is being updated
-	 * @param received - The revision number received
-	 * @param value - The new `value` state
-	 */
-	update(attendee: Attendee, received: number, value: TValueState): PostUpdateAction[];
-}
-
-/**
- * A function to be called at the end of an update frame
- */
-export type PostUpdateAction = () => void;
 
 /**
  * Metadata for a value that may have been validated by a {@link StateSchemaValidator} function.

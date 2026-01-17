@@ -18,8 +18,8 @@ import type {
 import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { BroadcastControlSettings } from "./broadcastControls.js";
-import type { ExtensionRuntimeProperties, IEphemeralRuntime } from "./internalTypes.js";
+import type { BroadcastControlSettings } from "./broadcastControlsTypes.js";
+import type { ExtensionRuntimeProperties, IEphemeralRuntime } from "./internalRuntimeTypes.js";
 import type {
 	AttendeesEvents,
 	AttendeeId,

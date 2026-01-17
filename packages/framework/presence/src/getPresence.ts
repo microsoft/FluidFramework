@@ -20,7 +20,7 @@ import type {
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
 
-import type { ExtensionHost, ExtensionRuntimeProperties } from "./internalTypes.js";
+import type { ExtensionHost, ExtensionRuntimeProperties } from "./internalRuntimeTypes.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { Presence, PresenceWithNotifications } from "./presence.js";
 import type { PresenceExtensionInterface } from "./presenceManager.js";

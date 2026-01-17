@@ -11,7 +11,7 @@ import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-ut
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 
 import type { ClientConnectionId } from "../baseTypes.js";
-import type { IEphemeralRuntime } from "../internalTypes.js";
+import type { IEphemeralRuntime } from "../internalRuntimeTypes.js";
 
 /**
  * Mock {@link ClientConnectionId} for the local client in tests.
