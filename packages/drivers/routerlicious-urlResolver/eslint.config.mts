@@ -14,11 +14,11 @@ const config: Linter.Config[] = [
 			"unicorn/filename-case": [
 				"error",
 				{
+					ignore: [".*routerlicious-urlResolver\\.spec\\.ts"],
 					cases: {
 						camelCase: true,
 						pascalCase: true,
 					},
-					ignore: [{}],
 				},
 			],
 
