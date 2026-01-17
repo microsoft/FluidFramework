@@ -11,12 +11,7 @@ import type {
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { AttendeeId, Attendee } from "./presence.js";
-import type {
-	OutboundAcknowledgementMessage,
-	OutboundClientJoinMessage,
-	OutboundDatastoreUpdateMessage,
-	SignalMessages,
-} from "./protocol.js";
+import type { OutboundPresenceMessage, SignalMessages } from "./protocol.js";
 
 /**
  * Presence {@link ContainerExtension} version of {@link @fluidframework/container-runtime-definitions#ExtensionRuntimeProperties}
@@ -43,28 +38,14 @@ export interface ClientRecord<TValue extends ValidatableValueDirectoryOrState<un
 }
 
 /**
- * This interface is a subset of ExtensionHost (and mostly of
- * FluidDataStoreRuntime) that is needed by the Presence States.
- *
- * @privateRemarks
- * Replace with non-DataStore based interface.
+ * This interface is a subset of ExtensionHost that is needed by the Presence States.
  */
-export type IEphemeralRuntime = Omit<ExtensionHost, "logger" | "submitAddressedSignal"> &
-	// Apart from tests, there is always a logger. So this could be promoted to required.
-	Partial<Pick<ExtensionHost, "logger">> & {
-		/**
-		 * Submits the signal to be sent to other clients.
-		 * @param type - Type of the signal.
-		 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
-		 * @param targetClientId - When specified, the signal is only sent to the provided client id.
-		 */
-		submitSignal: (
-			message:
-				| OutboundAcknowledgementMessage
-				| OutboundClientJoinMessage
-				| OutboundDatastoreUpdateMessage,
-		) => void;
-	};
+export type IEphemeralRuntime = Omit<ExtensionHost, "submitAddressedSignal"> & {
+	/**
+	 * Submits the signal to be sent to other clients.
+	 */
+	submitSignal: (message: OutboundPresenceMessage) => void;
+};
 
 /**
  * Contract for State Managers as used by a States Workspace (`PresenceStatesImpl`)

@@ -18,6 +18,7 @@ import type {
 	Commit,
 	EncodedCommit,
 	EncodedSharedBranch,
+	SequenceId,
 	SequencedCommit,
 } from "./editManagerFormatCommons.js";
 import type { SharedBranchSummaryData } from "./editManager.js";
@@ -174,9 +175,8 @@ export function decodeSharedBranch<TChangeset>(
 	context: EditManagerEncodingContext,
 	originatorId: SessionId | undefined,
 ): SharedBranchSummaryData<TChangeset> {
-	// TODO: sort out EncodedCommit vs Commit, and make this type check without `any`.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const trunk: readonly any[] = json.trunk;
+	// TODO: sort out EncodedCommit vs Commit, and make this type check without type assertion.
+	const trunk = json.trunk as readonly (EncodedCommit<JsonCompatibleReadOnly> & SequenceId)[];
 	const data: Mutable<SharedBranchSummaryData<TChangeset>> = {
 		trunk: trunk.map(
 			(commit): SequencedCommit<TChangeset> =>

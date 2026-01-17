@@ -9,6 +9,7 @@ import type { ObjectNodeSchema, TreeNodeSchema } from "@fluidframework/tree/alph
 import type {
 	TypeFactoryType,
 	TypeFactoryArray,
+	TypeFactoryPromise,
 	TypeFactoryObject,
 	TypeFactoryTuple,
 	TypeFactoryRecord,
@@ -17,6 +18,8 @@ import type {
 	TypeFactoryOptional,
 	TypeFactoryReadonly,
 	TypeFactoryUnion,
+	TypeFactoryIntersection,
+	TypeFactoryFunction,
 } from "./treeAgentTypes.js";
 
 export { instanceOfsTypeFactory } from "./treeAgentTypes.js";
@@ -29,10 +32,11 @@ export function renderTypeFactoryTypeScript(
 	typeFactoryType: TypeFactoryType,
 	getFriendlyName: (schema: TreeNodeSchema) => string,
 	instanceOfLookup: WeakMap<TypeFactoryType, ObjectNodeSchema>,
+	initialIndent: number = 0,
 ): string {
 	let result = "";
-	let startOfLine = true;
-	let indent = 0;
+	let startOfLine = false;
+	let indent = initialIndent;
 
 	appendType(typeFactoryType, TypePrecedence.Union);
 	return result;
@@ -75,6 +79,10 @@ export function renderTypeFactoryTypeScript(
 				append("boolean");
 				return;
 			}
+			case "date": {
+				append("Date");
+				return;
+			}
 			case "void": {
 				append("void");
 				return;
@@ -95,12 +103,23 @@ export function renderTypeFactoryTypeScript(
 				appendArrayType(type as TypeFactoryArray);
 				return;
 			}
+			case "promise": {
+				appendPromiseType(type as TypeFactoryPromise);
+				return;
+			}
 			case "object": {
 				appendObjectType(type as TypeFactoryObject);
 				return;
 			}
 			case "union": {
 				appendUnionTypes((type as TypeFactoryUnion).options, TypePrecedence.Union);
+				return;
+			}
+			case "intersection": {
+				appendIntersectionTypes(
+					(type as TypeFactoryIntersection).types,
+					TypePrecedence.Intersection,
+				);
 				return;
 			}
 			case "tuple": {
@@ -130,6 +149,10 @@ export function renderTypeFactoryTypeScript(
 				appendReadonlyType(type as TypeFactoryReadonly);
 				return;
 			}
+			case "function": {
+				appendFunctionType(type as TypeFactoryFunction);
+				return;
+			}
 			case "instanceof": {
 				const schema = instanceOfLookup.get(type);
 				if (schema === undefined) {
@@ -151,6 +174,12 @@ export function renderTypeFactoryTypeScript(
 	function appendArrayType(arrayType: TypeFactoryArray): void {
 		appendType(arrayType.element, TypePrecedence.Object);
 		append("[]");
+	}
+
+	function appendPromiseType(promiseType: TypeFactoryPromise): void {
+		append("Promise<");
+		appendType(promiseType.innerType, TypePrecedence.Union);
+		append(">");
 	}
 
 	function appendObjectType(objectType: TypeFactoryObject): void {
@@ -182,6 +211,20 @@ export function renderTypeFactoryTypeScript(
 		for (const innerType of types) {
 			if (!first) {
 				append(" | ");
+			}
+			appendType(innerType, minPrecedence);
+			first = false;
+		}
+	}
+
+	function appendIntersectionTypes(
+		types: readonly TypeFactoryType[],
+		minPrecedence: TypePrecedence,
+	): void {
+		let first = true;
+		for (const innerType of types) {
+			if (!first) {
+				append(" & ");
 			}
 			appendType(innerType, minPrecedence);
 			first = false;
@@ -239,6 +282,40 @@ export function renderTypeFactoryTypeScript(
 		appendType(readonlyType.innerType);
 		append(">");
 	}
+
+	function appendFunctionType(functionType: TypeFactoryFunction): void {
+		append("(");
+		let first = true;
+		for (const param of functionType.parameters) {
+			if (!first) {
+				append(", ");
+			}
+			const [name, type] = param;
+			append(name);
+			if (type._kind === "optional") {
+				append("?");
+				append(": ");
+				appendType((type as TypeFactoryOptional).innerType, TypePrecedence.Union);
+			} else {
+				append(": ");
+				appendType(type, TypePrecedence.Union);
+			}
+			first = false;
+		}
+		if (functionType.restParameter !== undefined) {
+			if (!first) {
+				append(", ");
+			}
+			const [name, type] = functionType.restParameter;
+			append("...");
+			append(name);
+			append(": ");
+			appendType(type, TypePrecedence.Object);
+			append("[]");
+		}
+		append(") => ");
+		appendType(functionType.returnType, TypePrecedence.Union);
+	}
 }
 
 const enum TypePrecedence {
@@ -251,6 +328,9 @@ function getTypePrecedence(type: TypeFactoryType): TypePrecedence {
 	switch (type._kind) {
 		case "union": {
 			return TypePrecedence.Union;
+		}
+		case "intersection": {
+			return TypePrecedence.Intersection;
 		}
 		default: {
 			return TypePrecedence.Object;
