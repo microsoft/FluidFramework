@@ -477,11 +477,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 		let editingResult: EditingResult;
 		let cached;
 		let reconciliationPath: ReconciliationPath = [];
-		if (
-			this.cachedEditResult !== undefined &&
-			this.cachedEditResult.editId === edit.id &&
-			this.cachedEditResult.result.before === prevView
-		) {
+		if (this.cachedEditResult?.editId === edit.id && this.cachedEditResult.result.before === prevView) {
 			editingResult = this.cachedEditResult.result;
 			cached = true;
 		} else {
