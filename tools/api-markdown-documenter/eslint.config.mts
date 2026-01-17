@@ -3,56 +3,67 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
-	parserOptions: {
-		project: ["./tsconfig.json"],
-	},
-	rules: {
-		// Too many false positives with array access
-		"@fluid-internal/fluid/no-unchecked-record-access": "off",
+import type { Linter } from "eslint";
 
-		// Rule is reported in a lot of places where it would be invalid to follow the suggested pattern
-		"@typescript-eslint/class-literal-property-style": "off",
+import chaiExpect from "eslint-plugin-chai-expect";
+import chaiFriendly from "eslint-plugin-chai-friendly";
 
-		// Comparing general input strings against system-known values (via enums) is used commonly to support
-		// extensibility.
-		"@typescript-eslint/no-unsafe-enum-comparison": "off",
+import { strict } from "../../common/build/eslint-config-fluid/flat.mts";
 
-		// Useful for developer accessibility
-		"unicorn/prevent-abbreviations": [
-			"error",
-			{
-				allowList: {
-					// Industry-standard index variable name.
-					i: true,
-				},
-			},
-		],
+const config: Linter.Config[] = [
+	...strict,
+	{
+		rules: {
+			// Too many false positives with array access
+			"@fluid-internal/fluid/no-unchecked-record-access": "off",
 
-		"unicorn/prefer-module": "off",
-		"unicorn/prefer-negative-index": "off",
+			// Rule is reported in a lot of places where it would be invalid to follow the suggested pattern
+			"@typescript-eslint/class-literal-property-style": "off",
 
-		// This package is exclusively used in a Node.js context
-		"import/no-nodejs-modules": "off",
-	},
-	overrides: [
-		{
-			// Overrides for test files
-			files: ["src/**/test/**"],
-			plugins: ["chai-expect", "chai-friendly"],
-			extends: ["plugin:chai-expect/recommended", "plugin:chai-friendly/recommended"],
-			rules: {
-				"import/no-extraneous-dependencies": [
-					"error",
-					{
-						devDependencies: true,
+			// Comparing general input strings against system-known values (via enums) is used commonly to support
+			// extensibility.
+			"@typescript-eslint/no-unsafe-enum-comparison": "off",
+
+			// Useful for developer accessibility
+			"unicorn/prevent-abbreviations": [
+				"error",
+				{
+					allowList: {
+						// Industry-standard index variable name.
+						i: true,
 					},
-				],
+				},
+			],
 
-				// Handled by chai-friendly instead.
-				"@typescript-eslint/no-unused-expressions": "off",
-			},
+			"unicorn/prefer-module": "off",
+			"unicorn/prefer-negative-index": "off",
+
+			// This package is exclusively used in a Node.js context
+			"import/no-nodejs-modules": "off",
 		},
-	],
-};
+	},
+
+	// Overrides for test files
+	{
+		files: ["src/**/test/**"],
+		plugins: {
+			"chai-expect": chaiExpect,
+			"chai-friendly": chaiFriendly,
+		},
+		rules: {
+			...chaiExpect.configs.recommended.rules,
+			...chaiFriendly.configs.recommended.rules,
+			"import/no-extraneous-dependencies": [
+				"error",
+				{
+					devDependencies: true,
+				},
+			],
+
+			// Handled by chai-friendly instead.
+			"@typescript-eslint/no-unused-expressions": "off",
+		},
+	},
+];
+
+export default config;

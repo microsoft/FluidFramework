@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
-	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+import type { Linter } from "eslint";
+import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+
+const config: Linter.Config[] = [
+	...recommended,
+	{
+		ignores: ["test-d"],
 	},
-	extends: ["@fluidframework/eslint-config-fluid", "prettier"],
-};
+];
+
+export default config;

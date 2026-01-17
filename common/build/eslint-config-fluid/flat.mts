@@ -98,10 +98,14 @@ minimalDeprecated.push(dependConfig);
 // Note: tsconfigRootDir is not set here to allow the parser to discover the correct project root
 // from the location of the file being linted. This also allows the tsdoc plugin to find tsdoc.json
 // files in the correct location.
+// Note: project is explicitly set to null to override the project setting from the base eslintrc
+// config (via FlatCompat). Newer @typescript-eslint/parser versions error if both project and
+// projectService are enabled.
 const useProjectService = {
 	files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 	languageOptions: {
 		parserOptions: {
+			project: null,
 			projectService: true,
 		},
 	},

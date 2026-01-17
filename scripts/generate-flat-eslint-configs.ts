@@ -54,7 +54,79 @@ interface PackageTarget {
 	sharedConfigNamedImports?: string[];
 	/** Original source code of the legacy config */
 	legacyConfigSource?: string;
+	/** Comment data including rule comments and trailing comments from the legacy config */
+	commentData?: CommentData;
+	/** Map of override indices to their block-level comments */
+	overrideCommentMap?: OverrideCommentMap;
 }
+
+/** Information about comments associated with a rule */
+interface CommentInfo {
+	/** Comments appearing on lines immediately before the rule */
+	leadingComments: string[];
+	/** Comment appearing on the same line after the rule value */
+	inlineComment?: string;
+}
+
+/** Map of rule identifiers to their comment info */
+type CommentMap = Map<string, CommentInfo>;
+
+/** Trailing comments that appear at the end of a rules block (like #endregion) */
+interface TrailingComments {
+	/** Key format: "rules" for top-level, "overrides[N].rules" for override blocks */
+	[context: string]: string[];
+}
+
+/** Combined comment data including both rule comments and trailing comments */
+interface CommentData {
+	/** Comments associated with specific rules */
+	ruleComments: CommentMap;
+	/** Comments at the end of rules blocks */
+	trailingComments: TrailingComments;
+	/** Comments that don't fit into rules/overrides contexts (from settings, extends, etc.) */
+	orphanedComments: string[];
+}
+
+/** A comment extracted from source code with position info */
+interface SourceComment {
+	text: string;
+	line: number; // 0-based line number
+	endLine: number;
+	isMultiLine: boolean;
+}
+
+/** Location of a rule definition in source code */
+interface RuleLocation {
+	/** The rule name (e.g., "@typescript-eslint/no-shadow") */
+	ruleName: string;
+	/** 0-based line number where the rule is defined */
+	line: number;
+	/** Context: top-level rules or within an override */
+	context: "rules" | "overrides";
+	/** If in overrides, which override index (0-based) */
+	overrideIndex?: number;
+}
+
+/** Location of an override block start in source code */
+interface OverrideBlockLocation {
+	/** 0-based line number where the override block starts (opening brace) */
+	line: number;
+	/** The override index (0-based) */
+	overrideIndex: number;
+}
+
+/** Location of a rules block in source code */
+interface RulesBlockLocation {
+	/** 0-based line number where the rules block starts */
+	startLine: number;
+	/** 0-based line number where the rules block ends (closing brace) */
+	endLine: number;
+	/** Context: "rules" for top-level, "overrides[N].rules" for override blocks */
+	context: string;
+}
+
+/** Map of override indices to their block-level comments */
+type OverrideCommentMap = Map<number, string[]>;
 
 interface SharedConfigTarget {
 	configPath: string;
@@ -63,6 +135,548 @@ interface SharedConfigTarget {
 	legacyConfig: unknown;
 	/** The raw loaded module exports, including any named exports like lists */
 	rawModuleExports: unknown;
+}
+
+/**
+ * Extract all comments from JavaScript/TypeScript source code.
+ * Uses regex-based parsing to find single-line and multi-line comments.
+ */
+function extractComments(sourceCode: string): SourceComment[] {
+	const comments: SourceComment[] = [];
+	const lines = sourceCode.split("\n");
+
+	// Track multi-line comment state
+	let inMultiLineComment = false;
+	let multiLineStart = -1;
+	let multiLineText = "";
+
+	for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+		const line = lines[lineNum];
+
+		if (inMultiLineComment) {
+			// Continue multi-line comment
+			const endIndex = line.indexOf("*/");
+			if (endIndex !== -1) {
+				// End of multi-line comment
+				multiLineText += "\n" + line.substring(0, endIndex + 2);
+				comments.push({
+					text: multiLineText,
+					line: multiLineStart,
+					endLine: lineNum,
+					isMultiLine: true,
+				});
+				inMultiLineComment = false;
+				multiLineText = "";
+				multiLineStart = -1;
+
+				// Check for comments after the multi-line end on same line
+				const restOfLine = line.substring(endIndex + 2);
+				const singleLineMatch = restOfLine.match(/\/\/(.*)$/);
+				if (singleLineMatch) {
+					comments.push({
+						text: "//" + singleLineMatch[1],
+						line: lineNum,
+						endLine: lineNum,
+						isMultiLine: false,
+					});
+				}
+			} else {
+				multiLineText += "\n" + line;
+			}
+		} else {
+			// Look for single-line comments and multi-line comment starts
+			// Skip comments inside string literals (simplified check)
+			let pos = 0;
+			while (pos < line.length) {
+				// Skip string literals (including template literals)
+				if (line[pos] === '"' || line[pos] === "'" || line[pos] === "`") {
+					const quote = line[pos];
+					pos++;
+					while (pos < line.length && line[pos] !== quote) {
+						if (line[pos] === "\\" && pos + 1 < line.length) {
+							pos++; // Skip escaped chars
+						}
+						pos++;
+					}
+					pos++;
+					continue;
+				}
+
+				// Check for single-line comment (with bounds check)
+				if (line[pos] === "/" && pos + 1 < line.length && line[pos + 1] === "/") {
+					const commentText = line.substring(pos);
+					comments.push({
+						text: commentText,
+						line: lineNum,
+						endLine: lineNum,
+						isMultiLine: false,
+					});
+					break; // Rest of line is comment
+				}
+
+				// Check for multi-line comment start (with bounds check)
+				if (line[pos] === "/" && pos + 1 < line.length && line[pos + 1] === "*") {
+					const endIndex = line.indexOf("*/", pos + 2);
+					if (endIndex !== -1) {
+						// Single-line multi-line comment (e.g., /* comment */)
+						const commentText = line.substring(pos, endIndex + 2);
+						comments.push({
+							text: commentText,
+							line: lineNum,
+							endLine: lineNum,
+							isMultiLine: true,
+						});
+						pos = endIndex + 2;
+						continue;
+					} else {
+						// Start of multi-line comment spanning multiple lines
+						inMultiLineComment = true;
+						multiLineStart = lineNum;
+						multiLineText = line.substring(pos);
+						break;
+					}
+				}
+
+				pos++;
+			}
+		}
+	}
+
+	return comments;
+}
+
+/**
+ * Find the line numbers where ESLint rules are defined in the source code.
+ * Handles both top-level rules and rules within overrides.
+ * Also returns the locations of override block starts and rules block boundaries.
+ */
+function findRuleLocations(sourceCode: string): {
+	rules: RuleLocation[];
+	overrideBlocks: OverrideBlockLocation[];
+	rulesBlocks: RulesBlockLocation[];
+} {
+	const locations: RuleLocation[] = [];
+	const overrideBlocks: OverrideBlockLocation[] = [];
+	const rulesBlocks: RulesBlockLocation[] = [];
+	const lines = sourceCode.split("\n");
+
+	// Track whether we're inside an overrides array and which override index
+	let inOverrides = false;
+	let overrideIndex = -1;
+	let overrideBraceDepth = 0;
+	let inRulesBlock = false;
+	let rulesBraceDepth = 0;
+	let currentRulesBlockStart = -1;
+	let currentRulesBlockContext = "";
+
+	// Pattern to match rule definitions: "rule-name": value or 'rule-name': value
+	const rulePattern = /^\s*["']([^"']+)["']\s*:/;
+
+	for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+		const line = lines[lineNum];
+
+		// Count braces on this line (excluding those in strings)
+		let openBraces = 0;
+		let closeBraces = 0;
+		let inString = false;
+		let stringChar = "";
+		for (let i = 0; i < line.length; i++) {
+			const ch = line[i];
+			if (inString) {
+				if (ch === "\\" && i + 1 < line.length) {
+					i++; // Skip escaped character
+				} else if (ch === stringChar) {
+					inString = false;
+				}
+			} else {
+				if (ch === '"' || ch === "'" || ch === "`") {
+					inString = true;
+					stringChar = ch;
+				} else if (ch === "{") {
+					openBraces++;
+				} else if (ch === "}") {
+					closeBraces++;
+				}
+			}
+		}
+
+		// Track overrides array entry/exit
+		if (line.includes("overrides:") && line.includes("[")) {
+			inOverrides = true;
+			overrideIndex = -1;
+		}
+
+		// Track individual override objects within the overrides array
+		if (inOverrides) {
+			if (openBraces > 0 && overrideBraceDepth === 0) {
+				overrideIndex++;
+				// Record the start of this override block
+				overrideBlocks.push({
+					line: lineNum,
+					overrideIndex,
+				});
+			}
+			overrideBraceDepth += openBraces - closeBraces;
+
+			if (overrideBraceDepth === 0 && line.includes("]")) {
+				inOverrides = false;
+				overrideIndex = -1;
+			}
+		}
+
+		// Track rules block entry/exit using brace depth
+		if (line.match(/\brules\s*:\s*{/)) {
+			inRulesBlock = true;
+			rulesBraceDepth = 1; // We just entered the rules block
+			currentRulesBlockStart = lineNum;
+			currentRulesBlockContext = inOverrides ? `overrides[${overrideIndex}].rules` : "rules";
+			// Adjust for any closing braces on the same line
+			rulesBraceDepth += openBraces - 1; // -1 because we already counted the opening brace
+			rulesBraceDepth -= closeBraces;
+		} else if (inRulesBlock) {
+			rulesBraceDepth += openBraces - closeBraces;
+			if (rulesBraceDepth <= 0) {
+				// Record the end of this rules block
+				rulesBlocks.push({
+					startLine: currentRulesBlockStart,
+					endLine: lineNum,
+					context: currentRulesBlockContext,
+				});
+				inRulesBlock = false;
+				rulesBraceDepth = 0;
+				currentRulesBlockStart = -1;
+				currentRulesBlockContext = "";
+			}
+		}
+
+		// Check if this line defines a rule (must be at depth 1 in rules block)
+		if (inRulesBlock && rulesBraceDepth === 1) {
+			const match = line.match(rulePattern);
+			if (match) {
+				const ruleName = match[1];
+				locations.push({
+					ruleName,
+					line: lineNum,
+					context: inOverrides ? "overrides" : "rules",
+					overrideIndex: inOverrides ? overrideIndex : undefined,
+				});
+			}
+		}
+	}
+
+	return { rules: locations, overrideBlocks, rulesBlocks };
+}
+
+/**
+ * Associate comments with override blocks.
+ * Comments appearing before or at the start of an override block are captured.
+ * This handles both:
+ * - Comments before the opening brace: `// comment\n{`
+ * - Comments inside the block before files: `{\n// comment\nfiles: [...]`
+ */
+function associateCommentsWithOverrides(
+	comments: SourceComment[],
+	overrideBlocks: OverrideBlockLocation[],
+	sourceCode: string,
+): OverrideCommentMap {
+	const overrideCommentMap: OverrideCommentMap = new Map();
+	const lines = sourceCode.split("\n");
+
+	// Build a set of lines that are override block starts
+	const overrideLines = new Set(overrideBlocks.map((o) => o.line));
+
+	for (const override of overrideBlocks) {
+		const blockComments: string[] = [];
+
+		// Look back up to 5 lines for comments before this override block
+		// Stop when we hit another override block or the overrides: [ line
+		for (let lookback = 1; lookback <= 5; lookback++) {
+			const checkLine = override.line - lookback;
+			if (checkLine < 0) break;
+
+			const lineContent = lines[checkLine];
+
+			// Stop if we hit another override block or the overrides array declaration
+			if (overrideLines.has(checkLine) || lineContent.includes("overrides:")) {
+				break;
+			}
+
+			// Find comments on this line
+			const commentsOnLine = comments.filter(
+				(c) => c.line === checkLine || c.endLine === checkLine,
+			);
+
+			if (commentsOnLine.length > 0) {
+				for (const comment of commentsOnLine) {
+					blockComments.unshift(comment.text);
+				}
+			} else if (lineContent.trim() === "") {
+				// Allow blank lines
+				continue;
+			} else if (lineContent.trim() === "{") {
+				// Skip the opening brace line
+				continue;
+			} else {
+				// Non-comment, non-blank line - stop looking
+				break;
+			}
+		}
+
+		// Also look forward inside the block for comments between { and files:
+		// This is for the pattern: { \n // comment \n files: [...] }
+		for (let lookahead = 1; lookahead <= 5; lookahead++) {
+			const checkLine = override.line + lookahead;
+			if (checkLine >= lines.length) break;
+
+			const lineContent = lines[checkLine];
+
+			// Stop if we hit the files: property or rules: property
+			if (lineContent.match(/^\s*(files|rules|excludedFiles)\s*:/)) {
+				break;
+			}
+
+			// Find comments on this line
+			const commentsOnLine = comments.filter(
+				(c) => c.line === checkLine || c.endLine === checkLine,
+			);
+
+			if (commentsOnLine.length > 0) {
+				for (const comment of commentsOnLine) {
+					blockComments.push(comment.text);
+				}
+			} else if (lineContent.trim() === "" || lineContent.trim() === "{") {
+				// Allow blank lines and opening braces
+				continue;
+			} else {
+				// Non-comment, non-blank line - stop looking
+				break;
+			}
+		}
+
+		if (blockComments.length > 0) {
+			overrideCommentMap.set(override.overrideIndex, blockComments);
+		}
+	}
+
+	return overrideCommentMap;
+}
+
+/**
+ * Associate comments with the rules they document.
+ * Comments on the lines immediately before a rule (allowing blank lines) are considered leading comments.
+ * Comments on the same line after the rule definition are inline comments.
+ * Also extracts trailing comments (like #endregion) that appear at the end of rules blocks.
+ * Returns orphaned comments that don't fit into any rules context (e.g., in settings, extends).
+ */
+function associateCommentsWithRules(
+	comments: SourceComment[],
+	ruleLocations: RuleLocation[],
+	rulesBlocks: RulesBlockLocation[],
+	overrideBlocks: OverrideBlockLocation[],
+	sourceCode: string,
+): CommentData {
+	const ruleComments: CommentMap = new Map();
+	const trailingComments: TrailingComments = {};
+	const lines = sourceCode.split("\n");
+
+	// Track which comments have been used
+	const usedComments = new Set<SourceComment>();
+
+	// Sort rules by line number
+	const sortedRules = [...ruleLocations].sort((a, b) => a.line - b.line);
+
+	// Build a set of lines that are rule definition lines
+	const ruleLines = new Set(sortedRules.map((r) => r.line));
+
+	for (const rule of sortedRules) {
+		const leadingComments: string[] = [];
+		let inlineComment: string | undefined;
+
+		// Find leading comments (comments on lines immediately before the rule)
+		// Look back up to 15 lines to handle multi-line comment blocks
+		// Stop when we hit another rule definition
+		let blankLineCount = 0;
+		for (let lookback = 1; lookback <= 15; lookback++) {
+			const checkLine = rule.line - lookback;
+			if (checkLine < 0) break;
+
+			// Stop if we hit another rule definition
+			if (ruleLines.has(checkLine)) {
+				break;
+			}
+
+			// Find comments that start or end on this line
+			const commentsOnLine = comments.filter(
+				(c) => c.line === checkLine || c.endLine === checkLine,
+			);
+
+			if (commentsOnLine.length > 0) {
+				// Reset blank line count when we find a comment
+				blankLineCount = 0;
+				for (const comment of commentsOnLine) {
+					usedComments.add(comment);
+					// Clean up comment text - remove // or /* */ markers
+					let text = comment.text;
+					if (text.startsWith("//")) {
+						text = text.substring(2).trim();
+					} else if (text.startsWith("/*") && text.endsWith("*/")) {
+						text = text.substring(2, text.length - 2).trim();
+					}
+
+					// Skip empty comments
+					if (text.length > 0) {
+						leadingComments.unshift(text);
+					}
+				}
+			} else {
+				// Check if the line is blank or contains only whitespace/punctuation
+				const lineContent = lines[checkLine]?.trim() ?? "";
+				if (lineContent === "" || lineContent === "{" || lineContent === "},") {
+					blankLineCount++;
+					// Allow up to 2 blank/structural lines between comment and rule
+					if (blankLineCount <= 2) {
+						continue;
+					}
+				}
+				// Non-comment, non-blank line (likely another rule or code) - stop looking
+				break;
+			}
+		}
+
+		// Find inline comment (comment on the same line as the rule, after the value)
+		const inlineComments = comments.filter((c) => c.line === rule.line);
+		if (inlineComments.length > 0) {
+			// Take the last comment on the line (after the rule value)
+			const lastComment = inlineComments[inlineComments.length - 1];
+			usedComments.add(lastComment);
+			let text = lastComment.text;
+			if (text.startsWith("//")) {
+				text = text.substring(2).trim();
+			} else if (text.startsWith("/*") && text.endsWith("*/")) {
+				text = text.substring(2, text.length - 2).trim();
+			}
+			if (text.length > 0) {
+				inlineComment = text;
+			}
+		}
+
+		// Only add to map if there are comments
+		if (leadingComments.length > 0 || inlineComment) {
+			// Create a unique key for the rule based on its context
+			const key =
+				rule.context === "overrides"
+					? `overrides[${rule.overrideIndex}].rules.${rule.ruleName}`
+					: `rules.${rule.ruleName}`;
+
+			ruleComments.set(key, {
+				leadingComments,
+				inlineComment,
+			});
+		}
+	}
+
+	// Extract trailing comments (comments between the last rule and the closing brace)
+	// These are typically #endregion markers
+	for (const block of rulesBlocks) {
+		// Find the last rule in this block
+		const rulesInBlock = sortedRules.filter((r) => {
+			if (block.context === "rules") {
+				return r.context === "rules";
+			}
+			// Extract override index from context like "overrides[0].rules"
+			const match = block.context.match(/overrides\[(\d+)\]/);
+			if (!match) return false;
+			return r.context === "overrides" && r.overrideIndex === parseInt(match[1], 10);
+		});
+
+		if (rulesInBlock.length === 0) continue;
+
+		const lastRule = rulesInBlock[rulesInBlock.length - 1];
+		const trailing: string[] = [];
+
+		// Look for comments between the last rule and the end of the rules block
+		for (let lineNum = lastRule.line + 1; lineNum < block.endLine; lineNum++) {
+			const commentsOnLine = comments.filter(
+				(c) => c.line === lineNum || c.endLine === lineNum,
+			);
+
+			for (const comment of commentsOnLine) {
+				usedComments.add(comment);
+				// Clean up comment text - remove // or /* */ markers
+				let text = comment.text;
+				if (text.startsWith("//")) {
+					text = text.substring(2).trim();
+				} else if (text.startsWith("/*") && text.endsWith("*/")) {
+					text = text.substring(2, text.length - 2).trim();
+				}
+
+				// Keep the comment (including empty region markers)
+				if (text.length > 0) {
+					trailing.push(text);
+				}
+			}
+		}
+
+		if (trailing.length > 0) {
+			trailingComments[block.context] = trailing;
+		}
+	}
+
+	// Mark override block comments as used (they're handled separately)
+	for (const override of overrideBlocks) {
+		// Comments before override blocks
+		for (let lookback = 1; lookback <= 5; lookback++) {
+			const checkLine = override.line - lookback;
+			if (checkLine < 0) break;
+			const commentsOnLine = comments.filter(
+				(c) => c.line === checkLine || c.endLine === checkLine,
+			);
+			for (const comment of commentsOnLine) {
+				usedComments.add(comment);
+			}
+		}
+		// Comments inside override blocks (after { before files:)
+		for (let lookahead = 1; lookahead <= 5; lookahead++) {
+			const checkLine = override.line + lookahead;
+			if (checkLine >= lines.length) break;
+			const lineContent = lines[checkLine];
+			if (lineContent.match(/^\s*(files|rules|excludedFiles)\s*:/)) break;
+			const commentsOnLine = comments.filter(
+				(c) => c.line === checkLine || c.endLine === checkLine,
+			);
+			for (const comment of commentsOnLine) {
+				usedComments.add(comment);
+			}
+		}
+	}
+
+	// Collect orphaned comments (not used by rules, trailing, or override blocks)
+	// Skip the copyright header (first comment that starts with /*!)
+	const orphanedComments: string[] = [];
+	for (const comment of comments) {
+		if (usedComments.has(comment)) continue;
+		// Skip copyright header
+		if (comment.text.startsWith("/*!")) continue;
+		// Skip eslint-disable comments
+		if (comment.text.includes("eslint-disable")) continue;
+
+		// Clean up comment text
+		let text = comment.text;
+		if (text.startsWith("//")) {
+			text = text.substring(2).trim();
+		} else if (text.startsWith("/*") && text.endsWith("*/")) {
+			text = text.substring(2, text.length - 2).trim();
+		} else if (text.startsWith("/*")) {
+			// Multi-line comment - keep as is but format
+			text = text.substring(2).trim();
+		}
+
+		if (text.length > 0) {
+			orphanedComments.push(text);
+		}
+	}
+
+	return { ruleComments, trailingComments, orphanedComments };
 }
 
 /**
@@ -232,7 +846,28 @@ async function findLegacyConfigs(
 						eslintIgnorePatterns = undefined;
 					}
 				} catch {
-					// No .eslintignore file - that's fine
+					// No .eslintignore file - check if existing flat config has ignores to preserve
+					const existingFlatConfigPath = path.join(full, "eslint.config.mts");
+					try {
+						const existingContent = await fs.readFile(existingFlatConfigPath, "utf8");
+						// Look for ignores blocks that were migrated from .eslintignore
+						const ignoresMatch = existingContent.match(
+							/\/\/\s*Migrated from \.eslintignore\s*\n\s*{\s*\n\s*ignores:\s*\[([^\]]+)\]/,
+						);
+						if (ignoresMatch) {
+							// Extract the patterns from the existing config
+							const patternsStr = ignoresMatch[1];
+							const patterns = Array.from(patternsStr.matchAll(/"([^"]+)"/g)).map((m) => m[1]);
+							if (patterns.length > 0) {
+								eslintIgnorePatterns = patterns;
+								console.log(
+									`  Preserving ${patterns.length} ignore patterns from existing flat config in ${full}`,
+								);
+							}
+						}
+					} catch {
+						// No existing flat config - that's fine
+					}
 				}
 
 				if (legacyConfig !== undefined) {
@@ -327,6 +962,26 @@ async function findLegacyConfigs(
 						}
 					}
 
+					// Extract comments from the legacy config source
+					const sourceComments = extractComments(content);
+					const {
+						rules: ruleLocations,
+						overrideBlocks,
+						rulesBlocks,
+					} = findRuleLocations(content);
+					const commentData = associateCommentsWithRules(
+						sourceComments,
+						ruleLocations,
+						rulesBlocks,
+						overrideBlocks,
+						content,
+					);
+					const overrideCommentMap = associateCommentsWithOverrides(
+						sourceComments,
+						overrideBlocks,
+						content,
+					);
+
 					results.push({
 						packageDir: full,
 						legacyConfigPath: legacyPath,
@@ -338,7 +993,8 @@ async function findLegacyConfigs(
 						sharedConfigNamedImports:
 							sharedConfigNamedImports.length > 0 ? sharedConfigNamedImports : undefined,
 						legacyConfigSource: content,
-						sharedFlatConfigImport,
+						commentData,
+						overrideCommentMap,
 					});
 				} else {
 					console.error(`Skipping package at ${full} due to failed legacy config load.`);
@@ -357,6 +1013,74 @@ async function findLegacyConfigs(
 		await walk(path.join(repoRoot, top));
 	}
 	return results;
+}
+
+/**
+ * Serialize a rules object with comments preserved from the legacy config.
+ * Each rule can have leading comments (above) and/or inline comments (same line).
+ * Also supports trailing comments at the end of the rules block (like #endregion).
+ */
+function serializeRulesWithComments(
+	rules: Record<string, unknown>,
+	indent: string,
+	commentData?: CommentData,
+	contextPrefix: string = "rules",
+): string {
+	const entries = Object.entries(rules);
+	if (entries.length === 0) return "{}";
+
+	const lines: string[] = [];
+	for (const [ruleName, ruleValue] of entries) {
+		const commentKey = `${contextPrefix}.${ruleName}`;
+		const commentInfo = commentData?.ruleComments?.get(commentKey);
+
+		// Add leading comments
+		if (commentInfo?.leadingComments && commentInfo.leadingComments.length > 0) {
+			for (const comment of commentInfo.leadingComments) {
+				// Check if this is a multi-line comment (contains newlines)
+				if (comment.includes("\n")) {
+					// Format as a multi-line /* */ comment
+					const commentLines = comment.split("\n");
+					lines.push(`${indent}\t/*`);
+					for (const commentLine of commentLines) {
+						// Preserve the * prefix pattern, or add one if missing
+						const trimmed = commentLine.trim();
+						if (trimmed.startsWith("*")) {
+							lines.push(`${indent}\t ${trimmed}`);
+						} else if (trimmed.length > 0) {
+							lines.push(`${indent}\t * ${trimmed}`);
+						}
+					}
+					lines.push(`${indent}\t */`);
+				} else {
+					lines.push(`${indent}\t// ${comment}`);
+				}
+			}
+		}
+
+		// Serialize the rule value
+		const valueStr = serializeValue(ruleValue, indent + "\t");
+		const keyStr = JSON.stringify(ruleName);
+
+		// Add inline comment if present
+		if (commentInfo?.inlineComment) {
+			lines.push(`${indent}\t${keyStr}: ${valueStr}, // ${commentInfo.inlineComment}`);
+		} else {
+			lines.push(`${indent}\t${keyStr}: ${valueStr},`);
+		}
+	}
+
+	// Add trailing comments (like #endregion)
+	const trailingComments = commentData?.trailingComments?.[contextPrefix];
+	if (trailingComments && trailingComments.length > 0) {
+		// Add a blank line before trailing comments for readability
+		lines.push("");
+		for (const comment of trailingComments) {
+			lines.push(`${indent}\t// ${comment}`);
+		}
+	}
+
+	return `{\n${lines.join("\n")}\n${indent}}`;
 }
 
 /**
@@ -729,6 +1453,8 @@ function buildFlatConfigContent(
 	sharedFlatConfigImport?: string,
 	sharedConfigNamedImports?: string[],
 	legacyConfigSource?: string,
+	commentData?: CommentData,
+	overrideCommentMap?: OverrideCommentMap,
 ): string {
 	const flatSource = path
 		.relative(
@@ -825,16 +1551,27 @@ ${imports}
 	const hasEslintIgnore = eslintIgnorePatterns && eslintIgnorePatterns.length > 0;
 
 	// Check if there's a non-standard project configuration
+	// projectService: true (from the shared flat config) handles automatic tsconfig discovery,
+	// so most legacy parserOptions.project patterns are now unnecessary.
+	// We only need to preserve truly non-standard patterns that projectService can't handle.
 	let hasNonStandardProject = false;
 	if (
 		legacyConfig?.parserOptions?.project &&
 		Array.isArray(legacyConfig.parserOptions.project)
 	) {
 		const projectPaths = legacyConfig.parserOptions.project;
+		// Standard patterns that projectService handles automatically:
+		// - ["./tsconfig.json", "./src/test/tsconfig.json"] - common dual-config pattern
+		// - ["./tsconfig.json"] - single main config
+		// - ["./tsconfig.eslint.json"] or similar single config variants
+		// - ["./src/test/tsconfig.json"] - test-only config
 		const isStandardPattern =
-			projectPaths.length === 2 &&
-			projectPaths.includes("./tsconfig.json") &&
-			projectPaths.includes("./src/test/tsconfig.json");
+			// Two-config pattern: main + test
+			(projectPaths.length === 2 &&
+				projectPaths.includes("./tsconfig.json") &&
+				projectPaths.includes("./src/test/tsconfig.json")) ||
+			// Single config pattern (any single tsconfig file)
+			projectPaths.length === 1;
 		hasNonStandardProject = !isStandardPattern;
 	}
 
@@ -843,9 +1580,35 @@ ${imports}
 		const baseConfig = sharedFlatConfigImport
 			? `...${variant}, ...sharedConfig`
 			: `...${variant}`;
-		configContent += `${jsdocType}const config${configType} = [${baseConfig}];\n\nexport default config;\n`;
+		configContent += `${jsdocType}const config${configType} = [${baseConfig}];\n`;
+
+		// Add orphaned comments even in simple case
+		const orphanedComments = commentData?.orphanedComments ?? [];
+		if (orphanedComments.length > 0) {
+			configContent += `\n/*\n * Comments from legacy config that couldn't be automatically migrated:\n`;
+			for (const comment of orphanedComments) {
+				if (comment.includes("\n")) {
+					const lines = comment.split("\n");
+					for (const line of lines) {
+						configContent += ` * ${line}\n`;
+					}
+				} else {
+					configContent += ` * ${comment}\n`;
+				}
+			}
+			configContent += ` */\n`;
+		}
+
+		configContent += `\nexport default config;\n`;
 	} else {
 		// Complex case: include local rules/overrides/custom project config
+		const reasons: string[] = [];
+		if (hasLocalRules) reasons.push("local rules");
+		if (hasOverrides) reasons.push("overrides");
+		if (hasNonStandardProject) reasons.push("non-standard parserOptions.project");
+		if (hasEslintIgnore) reasons.push("eslintignore patterns");
+		console.log(`    Complex config: ${reasons.join(", ")}`);
+
 		const baseConfig = sharedFlatConfigImport
 			? `...${variant},\n\t...sharedConfig,\n`
 			: `...${variant},\n`;
@@ -882,18 +1645,18 @@ ${imports}
 
 			// Add non-type-aware rules to all files
 			if (Object.keys(otherRules).length > 0) {
-				configContent += `\t{\n\t\trules: ${serializeValue(otherRules, "\t\t")},\n\t},\n`;
+				configContent += `\t{\n\t\trules: ${serializeRulesWithComments(otherRules, "\t\t", commentData, "rules")},\n\t},\n`;
 			}
 
 			// Add type-aware rules only to non-test files
 			if (Object.keys(typeAwareRules).length > 0) {
-				configContent += `\t{\n\t\tfiles: ["**/*.{ts,tsx}"],\n\t\tignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],\n\t\trules: ${serializeValue(typeAwareRules, "\t\t")},\n\t},\n`;
+				configContent += `\t{\n\t\tfiles: ["**/*.{ts,tsx}"],\n\t\tignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],\n\t\trules: ${serializeRulesWithComments(typeAwareRules, "\t\t", commentData, "rules")},\n\t},\n`;
 			}
 
 			// Add react/react-hooks rules scoped to jsx/tsx files where the plugin is loaded
 			// The base config (minimal-deprecated.js) loads react and react-hooks plugins for *.jsx and *.tsx files
 			if (Object.keys(reactRules).length > 0) {
-				configContent += `\t{\n\t\tfiles: ["**/*.jsx", "**/*.tsx"],\n\t\trules: ${serializeValue(reactRules, "\t\t")},\n\t},\n`;
+				configContent += `\t{\n\t\tfiles: ["**/*.jsx", "**/*.tsx"],\n\t\trules: ${serializeRulesWithComments(reactRules, "\t\t", commentData, "rules")},\n\t},\n`;
 			}
 		}
 
@@ -901,12 +1664,20 @@ ${imports}
 		let overrideHandlesTestParserOptions = false;
 
 		if (hasOverrides) {
+			let overrideIndex = 0;
 			for (const override of mergedOverrides as Array<{
 				files?: string | string[];
 				excludedFiles?: string | string[];
 				parserOptions?: { project?: string[] };
 				rules?: Record<string, unknown>;
 			}>) {
+				// Add override block comments if present
+				const blockComments = overrideCommentMap?.get(overrideIndex);
+				if (blockComments && blockComments.length > 0) {
+					for (const comment of blockComments) {
+						configContent += `\t${comment}\n`;
+					}
+				}
 				configContent += `\t{\n`;
 				if (override.files) {
 					configContent += `\t\tfiles: ${serializeValue(override.files, "\t\t")},\n`;
@@ -914,14 +1685,32 @@ ${imports}
 				if (override.excludedFiles) {
 					configContent += `\t\tignores: ${serializeValue(override.excludedFiles, "\t\t")},\n`;
 				}
-				// Handle parserOptions.project in overrides
+				// Handle parserOptions.project in overrides - only for non-standard patterns
+				// projectService: true handles most tsconfig discovery automatically
 				if (override.parserOptions?.project) {
-					configContent += `\t\tlanguageOptions: {\n`;
-					configContent += `\t\t\tparserOptions: {\n`;
-					configContent += `\t\t\t\tprojectService: false,\n`;
-					configContent += `\t\t\t\tproject: ${serializeValue(override.parserOptions.project, "\t\t\t\t")},\n`;
-					configContent += `\t\t\t},\n`;
-					configContent += `\t\t},\n`;
+					const overrideProjectPaths = Array.isArray(override.parserOptions.project)
+						? override.parserOptions.project
+						: [override.parserOptions.project];
+					// Standard patterns that projectService handles automatically
+					const isStandardOverridePattern =
+						// Two-config pattern: main + test
+						(overrideProjectPaths.length === 2 &&
+							overrideProjectPaths.includes("./tsconfig.json") &&
+							overrideProjectPaths.includes("./src/test/tsconfig.json")) ||
+						// Single config pattern (any single tsconfig file)
+						overrideProjectPaths.length === 1;
+
+					if (!isStandardOverridePattern) {
+						console.log(
+							`    Override explicit parserOptions.project: ${JSON.stringify(overrideProjectPaths)}`,
+						);
+						configContent += `\t\tlanguageOptions: {\n`;
+						configContent += `\t\t\tparserOptions: {\n`;
+						configContent += `\t\t\t\tprojectService: false,\n`;
+						configContent += `\t\t\t\tproject: ${serializeValue(override.parserOptions.project, "\t\t\t\t")},\n`;
+						configContent += `\t\t\t},\n`;
+						configContent += `\t\t},\n`;
+					}
 					// Check if this override targets test files
 					const files = Array.isArray(override.files) ? override.files : [override.files];
 					if (files.some((f: string) => f.includes("test") || f.includes("spec"))) {
@@ -929,15 +1718,17 @@ ${imports}
 					}
 				}
 				if (override.rules) {
-					configContent += `\t\trules: ${serializeValue(override.rules, "\t\t")},\n`;
+					const overrideContextPrefix = `overrides[${overrideIndex}].rules`;
+					configContent += `\t\trules: ${serializeRulesWithComments(override.rules as Record<string, unknown>, "\t\t", commentData, overrideContextPrefix)},\n`;
 				}
 				configContent += `\t},\n`;
+				overrideIndex++;
 			}
 		}
 
 		// Add parserOptions.project configuration only if it's non-standard
-		// The default shared config already handles the common pattern: ["./tsconfig.json", "./src/test/tsconfig.json"]
-		// Only add custom project config if the package uses a different pattern
+		// projectService: true (from the shared flat config) handles automatic tsconfig discovery,
+		// so most legacy parserOptions.project patterns are now unnecessary.
 		// Skip if an override already handles test file parserOptions
 		if (
 			!overrideHandlesTestParserOptions &&
@@ -945,15 +1736,24 @@ ${imports}
 			Array.isArray(legacyConfig.parserOptions.project)
 		) {
 			const projectPaths = legacyConfig.parserOptions.project;
+			// Standard patterns that projectService handles automatically:
+			// - ["./tsconfig.json", "./src/test/tsconfig.json"] - common dual-config pattern
+			// - ["./tsconfig.json"] - single main config
+			// - ["./tsconfig.eslint.json"] or similar single config variants
+			// - ["./src/test/tsconfig.json"] - test-only config
 			const isStandardPattern =
-				projectPaths.length === 2 &&
-				projectPaths.includes("./tsconfig.json") &&
-				projectPaths.includes("./src/test/tsconfig.json");
+				// Two-config pattern: main + test
+				(projectPaths.length === 2 &&
+					projectPaths.includes("./tsconfig.json") &&
+					projectPaths.includes("./src/test/tsconfig.json")) ||
+				// Single config pattern (any single tsconfig file)
+				projectPaths.length === 1;
 
 			if (!isStandardPattern) {
 				// When parserOptions.project is at the top level in the legacy config,
 				// it applies to ALL files, not just test files. We need to apply it
 				// to all TypeScript files to override the shared config's projectService.
+				console.log(`    Explicit parserOptions.project: ${JSON.stringify(projectPaths)}`);
 				configContent += `\t{\n`;
 				configContent += `\t\tfiles: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],\n`;
 				configContent += `\t\tlanguageOptions: {\n`;
@@ -975,7 +1775,29 @@ ${imports}
 			configContent += `\t},\n`;
 		}
 
-		configContent += `];\n\nexport default config;\n`;
+		configContent += `];\n`;
+
+		// Add orphaned comments as a documentation block at the end
+		// These are comments from the legacy config that don't fit in rules/overrides
+		const orphanedComments = commentData?.orphanedComments ?? [];
+		if (orphanedComments.length > 0) {
+			configContent += `\n/*\n * Comments from legacy config that couldn't be automatically migrated:\n`;
+			for (const comment of orphanedComments) {
+				// Format each comment
+				if (comment.includes("\n")) {
+					// Multi-line comment
+					const lines = comment.split("\n");
+					for (const line of lines) {
+						configContent += ` * ${line}\n`;
+					}
+				} else {
+					configContent += ` * ${comment}\n`;
+				}
+			}
+			configContent += ` */\n`;
+		}
+
+		configContent += `\nexport default config;\n`;
 	}
 	return configContent;
 }
@@ -1024,6 +1846,8 @@ async function writeFlatConfigs(
 			t.sharedFlatConfigImport,
 			t.sharedConfigNamedImports,
 			t.legacyConfigSource,
+			t.commentData,
+			t.overrideCommentMap,
 		);
 		await fs.writeFile(outPath, content, "utf8");
 		console.log(`  Generated: ${path.relative(repoRoot, outPath)} (${t.flatVariant})`);
