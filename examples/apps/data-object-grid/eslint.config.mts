@@ -12,9 +12,9 @@ const config: Linter.Config[] = [
 	...sharedConfig,
 	{
 		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"@typescript-eslint/unbound-method": "off",
-			"import-x/no-unassigned-import": "off",
+			"@typescript-eslint/strict-boolean-expressions": "off", // Doing undefined checks is nice
+			"@typescript-eslint/unbound-method": "off", // Used to do binding for react methods
+			"import-x/no-unassigned-import": "off", // required for dynamically importing css files for react-grid-layout
 		},
 	},
 ];

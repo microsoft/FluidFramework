@@ -10,10 +10,11 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
+			// Allow reaching into FluidFramework package paths that end with alpha, beta, legacy, or internal
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [
+					allow: [
 						"@fluidframework/*/alpha",
 						"@fluidframework/*/beta",
 						"@fluidframework/*/legacy",
@@ -25,17 +26,12 @@ const config: Linter.Config[] = [
 	},
 	{
 		files: ["src/test/**/*"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./src/test/tsconfig.json"],
-			},
-		},
 		rules: {
+			// Test files can import from submodules for testing purposes
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [
+					allow: [
 						"*/index.js",
 						"@fluidframework/*/alpha",
 						"@fluidframework/*/beta",
