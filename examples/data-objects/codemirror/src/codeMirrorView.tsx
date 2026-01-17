@@ -58,7 +58,7 @@ class CodeMirrorView {
 
 	public render(elm: HTMLElement): void {
 		// Create base textarea
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing
 		if (!this.textArea) {
 			this.textArea = document.createElement("textarea");
 		}

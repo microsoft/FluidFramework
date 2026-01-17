@@ -153,7 +153,7 @@ class ProseMirrorView {
 
 	public render(elm: HTMLElement): void {
 		// Create base textarea
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- intentional behavior
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		if (!this.textArea) {
 			this.textArea = document.createElement("div");
 			this.textArea.classList.add("editor");
@@ -170,7 +170,7 @@ class ProseMirrorView {
 			elm.appendChild(this.content!);
 		}
 
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing
 		if (!this.editorView) {
 			this.editorView = this.collabManager.setupEditor(this.textArea);
 		}
