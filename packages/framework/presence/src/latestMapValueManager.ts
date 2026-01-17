@@ -1,4 +1,3 @@
-/* eslint-disable import-x/order */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -16,7 +15,6 @@ import type {
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControlsTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { ValidatableOptionalState } from "./validatableTypes.js";
 import {
 	asDeeplyReadonly,
 	asDeeplyReadonlyDeserializedJson,
@@ -38,6 +36,7 @@ import type {
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import type { PostUpdateAction, ValueManager } from "./statesManagerTypes.js";
+import type { ValidatableOptionalState } from "./validatableTypes.js";
 import { brandIVM } from "./valueManager.js";
 
 /**
