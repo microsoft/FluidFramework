@@ -397,12 +397,10 @@ export function encodeRevisionInfos(
 	if (context.revision !== undefined) {
 		assert(
 			revisions.length === 1 &&
-				revisions[0] !== undefined &&
-				revisions[0].revision === context.revision &&
-				revisions[0].rollbackOf === undefined,
+				revisions[0]?.revision === context.revision &&
+				revisions[0]?.rollbackOf === undefined,
 			0x964 /* A tagged change should only contain the tagged revision */,
 		);
-
 		return undefined;
 	}
 
