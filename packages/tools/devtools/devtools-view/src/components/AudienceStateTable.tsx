@@ -119,9 +119,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 			</TableHeader>
 			<TableBody>
 				{audienceStateItems.map((item, itemIndex) => {
-					const isCurrentUser =
-						item.myClientConnection !== undefined &&
-						item.myClientConnection.user.id === item.userId;
+					const isCurrentUser = item.myClientConnection?.user.id === item.userId;
 
 					return (
 						<TableRow
