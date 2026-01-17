@@ -6,7 +6,7 @@
     "plugins": [
         "@",
         "@eslint-community/eslint-comments",
-        "@typescript-eslint:@typescript-eslint/eslint-plugin@8.18.2",
+        "@typescript-eslint:@typescript-eslint/eslint-plugin@8.53.0",
         "import-x:eslint-plugin-import-x@4.16.1",
         "unicorn:eslint-plugin-unicorn@54.0.0",
         "@rushstack",
@@ -1753,7 +1753,7 @@
             "off"
         ],
         "no-with": [
-            "error"
+            "off"
         ],
         "no-wrap-func": [
             "off"
