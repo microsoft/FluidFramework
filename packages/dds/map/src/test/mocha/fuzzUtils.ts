@@ -303,10 +303,7 @@ export function makeDirOperationGenerator(
 				subDirectories.push(b);
 			}
 			// If this dir already has max number of child, then choose one and continue.
-			if (
-				dir.countSubDirectory !== undefined &&
-				dir.countSubDirectory() === options.maxSubDirectoryChild
-			) {
+			if (dir.countSubDirectory?.() === options.maxSubDirectoryChild) {
 				dir = random.pick<IDirectory>(subDirectories);
 				continue;
 			}

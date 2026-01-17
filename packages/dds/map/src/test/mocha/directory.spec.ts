@@ -410,11 +410,7 @@ describe("Directory", () => {
 					2,
 					"Should have 2 sub directories",
 				);
-				assert(
-					subDirectory.countSubDirectory !== undefined &&
-						subDirectory.countSubDirectory() === 1,
-					"Should have 1 sub directory",
-				);
+				assert(subDirectory.countSubDirectory?.() === 1, "Should have 1 sub directory");
 				assert(
 					childSubDirectory.countSubDirectory !== undefined &&
 						subDirectory.countSubDirectory() === 1,
