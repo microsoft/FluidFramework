@@ -84,7 +84,10 @@ describe("DDS Handle Encoding", () => {
 		const name = nameOverride ?? factory.type.split("/").pop()!;
 
 		const dataStoreRuntime = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor("173cb232-53a2-4327-b690-afa954397989" as SessionId, SerializationVersion.V3),
+			idCompressor: createIdCompressor(
+				"173cb232-53a2-4327-b690-afa954397989" as SessionId,
+				SerializationVersion.V3,
+			),
 		});
 		const deltaConnection = new MockDeltaConnection(
 			/* submitFn: */ (message) => {

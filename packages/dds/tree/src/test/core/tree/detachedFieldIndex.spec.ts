@@ -52,7 +52,7 @@ const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);
 
 const unfinalizedIdCompressor = createIdCompressor(
 	assertIsSessionId("00000000-0000-4000-b000-000000000000"),
-	SerializationVersion.V3
+	SerializationVersion.V3,
 );
 
 const malformedData: readonly [string, JsonCompatibleReadOnly][] = [

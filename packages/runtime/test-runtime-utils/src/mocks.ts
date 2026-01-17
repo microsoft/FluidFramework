@@ -48,7 +48,12 @@ import {
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { IIdCompressorCore, IdCreationRange, SerializationVersion, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	IIdCompressorCore,
+	IdCreationRange,
+	SerializationVersion,
+	createIdCompressor,
+} from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
@@ -252,7 +257,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
 		);
 		// Cast to access internal API
-		(this.dataStoreRuntime.idCompressor as unknown as IIdCompressorCore).finalizeCreationRange(range);
+		(this.dataStoreRuntime.idCompressor as unknown as IIdCompressorCore).finalizeCreationRange(
+			range,
+		);
 	}
 
 	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
@@ -450,7 +457,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 	private generateIdAllocationOp(): IInternalMockRuntimeMessage | undefined {
 		// Cast to access internal API
-		const idRange = (this.dataStoreRuntime.idCompressor as unknown as IIdCompressorCore)?.takeNextCreationRange();
+		const idRange = (
+			this.dataStoreRuntime.idCompressor as unknown as IIdCompressorCore
+		)?.takeNextCreationRange();
 		if (idRange?.ids !== undefined) {
 			const allocationOp: IMockContainerRuntimeIdAllocationMessage = {
 				type: "idAllocation",

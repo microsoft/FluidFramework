@@ -48,10 +48,7 @@ function createConnectedTree(
 
 function createLocalTree(id: string): ISharedTree {
 	const factory = DefaultTestSharedTreeKind.getFactory();
-	return factory.create(
-		new MockFluidDataStoreRuntime(),
-		id,
-	);
+	return factory.create(new MockFluidDataStoreRuntime(), id);
 }
 
 describe("Garbage Collection", () => {

@@ -396,10 +396,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
 
-		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime(),
-			"test",
-		);
+		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		const view = sharedTree.viewWith(
@@ -445,10 +442,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
 
-		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime(),
-			"test",
-		);
+		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		class RootNodeSchema extends builder.object("root-item", {
@@ -564,10 +558,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
 
-		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime(),
-			"test",
-		);
+		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		class RootNodeSchema extends builder.object("root-item", {
@@ -686,10 +677,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
 
-		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime(),
-			"test",
-		);
+		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		class RootNodeSchema extends builder.object("root-item", {
@@ -819,10 +807,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const builder = new SchemaFactory("shared-tree-test");
 		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedString.getFactory()] });
 
-		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime(),
-			"test",
-		);
+		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		const sharedString = SharedString.create(runtime, "test-string");
@@ -868,10 +853,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const builder = new SchemaFactory("shared-tree-test");
 		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedString.getFactory()] });
 
-		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime(),
-			"test",
-		);
+		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		const sharedString = SharedString.create(runtime, "test-string");
@@ -978,10 +960,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
 
-		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime(),
-			"test",
-		);
+		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		const shareedTreeId = getKeyForFluidObject(sharedTree);
 
 		class WorkItem extends builder.object("work-item", {
@@ -1401,10 +1380,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
 
-		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime(),
-			"test",
-		);
+		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		const sharedTreeId = getKeyForFluidObject(sharedTree);
 
 		const view = sharedTree.viewWith(
