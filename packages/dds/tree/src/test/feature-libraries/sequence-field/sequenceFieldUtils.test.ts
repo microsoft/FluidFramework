@@ -23,7 +23,7 @@ const vestigialEndpoint: ChangeAtomId = {
 	localId: brand(42),
 };
 
-export function testUtils() {
+export function testUtils(): void {
 	describe("Utils", () => {
 		describe("round-trip splitMark and tryMergeMarks", () => {
 			const marks = generatePopulatedMarks(testIdCompressor);
