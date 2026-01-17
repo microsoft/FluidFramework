@@ -2872,8 +2872,7 @@ export class ContainerRuntime
 			}
 			case ConnectionState.CatchingUp: {
 				assert(
-					this.getConnectionState !== undefined &&
-						this.getConnectionState() === ConnectionState.CatchingUp,
+					this.getConnectionState?.() === ConnectionState.CatchingUp,
 					0xc8d /* connection state mismatch between getConnectionState and setConnectionStatus notification */,
 				);
 

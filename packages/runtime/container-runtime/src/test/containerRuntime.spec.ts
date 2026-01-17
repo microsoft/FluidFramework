@@ -485,8 +485,7 @@ describe("Runtime", () => {
 
 					function batchIdMatchesUnsentFormat(batchId?: string): boolean {
 						return (
-							batchId !== undefined &&
-							batchId.length === "00000000-0000-0000-0000-000000000000_[-1]".length &&
+							batchId?.length === "00000000-0000-0000-0000-000000000000_[-1]".length &&
 							batchId.endsWith("_[-1]")
 						);
 					}
