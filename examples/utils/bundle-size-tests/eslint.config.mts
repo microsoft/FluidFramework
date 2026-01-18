@@ -8,15 +8,6 @@ import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/fla
 
 const config: Linter.Config[] = [
 	...minimalDeprecated,
-	{
-		files: ["src/test/**/*"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./src/test/tsconfig.json"],
-			},
-		},
-	},
 ];
 
 export default config;

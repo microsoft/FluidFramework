@@ -13,15 +13,6 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": "off",
 		},
 	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./src/tsconfig.json"],
-			},
-		},
-	},
 ];
 
 export default config;

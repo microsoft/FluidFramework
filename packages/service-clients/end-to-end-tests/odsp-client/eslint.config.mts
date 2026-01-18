@@ -34,15 +34,6 @@ const config: Linter.Config[] = [
 			],
 		},
 	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./src/test/tsconfig.json"],
-			},
-		},
-	},
 ];
 
 export default config;

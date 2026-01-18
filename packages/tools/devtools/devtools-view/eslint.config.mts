@@ -49,15 +49,6 @@ const config: Linter.Config[] = [
 			"import-x/no-extraneous-dependencies": "off",
 		},
 	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.esm.json", "./src/test/tsconfig.esm.json"],
-			},
-		},
-	},
 ];
 
 export default config;

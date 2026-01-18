@@ -102,15 +102,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-restricted-imports": "off",
 		},
 	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./src/test/tsconfig.json"],
-			},
-		},
-	},
 ];
 
 export default config;
