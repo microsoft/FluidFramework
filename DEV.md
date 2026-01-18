@@ -46,7 +46,7 @@ Some packages cannot use projectService due to non-standard tsconfig structures:
 
 - **Test-only packages without root tsconfig.json** - projectService looks for `./tsconfig.json` first and fails
 - **Non-standard test directory paths** (e.g., `src/test/mocha/` instead of `src/test/`)
-- **Special tsconfigs excluded from main** (e.g., for testing compiler options like `exactOptionalPropertyTypes`)
+- **Files needing separate tsconfigs for different compiler settings** (e.g., test files that require a separate tsconfig to disable `exactOptionalPropertyTypes` for testing purposes, which are excluded from the main test tsconfig)
 - **Non-standard tsconfig naming** (e.g., `tsconfig.jest.json` instead of `tsconfig.json`)
 
 These packages have comments in their `eslint.config.mts` explaining why explicit project arrays are needed.
