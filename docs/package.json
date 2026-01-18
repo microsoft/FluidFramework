@@ -116,6 +116,7 @@
 			"core-js",
 			"core-js-pure",
 			"keytar",
+			"linkcheck-bin",
 			"typesense-instantsearch-adapter",
 			"unrs-resolver"
 		]
