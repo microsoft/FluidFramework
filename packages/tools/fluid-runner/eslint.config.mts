@@ -45,6 +45,23 @@ const config: Linter.Config[] = [
 			],
 		},
 	},
+	{
+		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
+		// This package has special .cjs.ts test files excluded from the main test tsconfig that
+		// require a separate tsconfig.cjs.lint.json for linting. typescript-eslint's projectService
+		// can't auto-discover this non-standard configuration.
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: [
+					"./tsconfig.json",
+					"./src/test/tsconfig.json",
+					"./src/test/tsconfig.cjs.lint.json",
+				],
+			},
+		},
+	},
 ];
 
 export default config;

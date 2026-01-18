@@ -102,6 +102,18 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-restricted-imports": "off",
 		},
 	},
+	{
+		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
+		// This is a test-only package without a root tsconfig.json, so typescript-eslint's
+		// projectService can't auto-discover the project configuration.
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: ["./src/test/tsconfig.json"],
+			},
+		},
+	},
 ];
 
 export default config;

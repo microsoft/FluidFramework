@@ -49,6 +49,18 @@ const config: Linter.Config[] = [
 			"import-x/no-extraneous-dependencies": "off",
 		},
 	},
+	{
+		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
+		// Tests use tsconfig.jest.json instead of the standard src/test/tsconfig.json naming,
+		// so typescript-eslint's projectService can't auto-discover the test configuration.
+		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: ["./tsconfig.json", "./src/test/tsconfig.jest.json"],
+			},
+		},
+	},
 ];
 
 export default config;
