@@ -57,7 +57,7 @@ const config: Linter.Config[] = [
 		languageOptions: {
 			parserOptions: {
 				projectService: false,
-				project: ["./tsconfig.json", "./src/test/tsconfig.jest.json"],
+				project: ["./tsconfig.esm.json", "./src/test/tsconfig.esm.json"],
 			},
 		},
 	},

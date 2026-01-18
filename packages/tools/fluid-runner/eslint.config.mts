@@ -56,6 +56,7 @@ const config: Linter.Config[] = [
 				projectService: false,
 				project: [
 					"./tsconfig.json",
+					"./tsconfig.bin.lint.json",
 					"./src/test/tsconfig.json",
 					"./src/test/tsconfig.cjs.lint.json",
 				],
