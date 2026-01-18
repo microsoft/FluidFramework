@@ -6,8 +6,6 @@
 import type { Linter } from "eslint";
 import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-const config: Linter.Config[] = [
-	...strict,
-];
+const config: Linter.Config[] = [...strict];
 
 export default config;
