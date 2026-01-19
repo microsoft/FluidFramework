@@ -141,6 +141,20 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped by label.
 	 */
 	versionGroups: [
+		// Workaround for compatibility issues.
+		// Ideally this section would be empty (and removed).
+		// Items should be removed from here when possible.
+		{
+			label:
+				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
+			dependencies: [
+				// TODO: Remove @biomejs/biome once all packages are updated to the latest version
+				"@biomejs/biome",
+			],
+			packages: ["**"],
+			isIgnored: true,
+		},
+
 		{
 			label: "chalk >2 is ESM only but build-tools and version-tools are still CJS only.",
 			dependencies: ["chalk"],
