@@ -38,9 +38,9 @@
 	],
 	"scripts": {
 		"build": "fluid-build --task build",
+		"build:commonjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json",
 		"build:compile": "fluid-build --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:commonjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:manifest": "oclif manifest",
 		"build:readme": "oclif readme --version 0.0.0 --no-aliases --readme-path src/docs/cli.md",
