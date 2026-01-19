@@ -8,8 +8,8 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
@@ -347,13 +347,15 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 			container2 as unknown as {
 				// See SerializedStateManager class in container-loader package
 				serializedStateManager: {
-					refreshLatestSnapshot: (supportGetSnapshotApi: boolean) => Promise<void>;
+					snapshotRefresher: {
+						refreshLatestSnapshot: (supportGetSnapshotApi: boolean) => Promise<void>;
+					};
 				};
 			}
 		).serializedStateManager;
 		clearCacheIfOdsp(provider, persistedCache);
 
-		await serializedStateManager.refreshLatestSnapshot(true);
+		await serializedStateManager.snapshotRefresher.refreshLatestSnapshot(true);
 
 		// Update the latestSequenceNumber so that the reference sequence number is beyond the snapshot
 		await provider.ensureSynchronized();

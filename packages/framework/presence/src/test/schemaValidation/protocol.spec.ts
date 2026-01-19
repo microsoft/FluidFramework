@@ -20,9 +20,9 @@ import type { ProcessSignalFunction } from "../testUtils.js";
 import {
 	assertFinalExpectations,
 	attendeeId1,
-	attendeeId2,
+	localAttendeeId,
 	connectionId1,
-	connectionId2,
+	initialLocalClientConnectionId,
 	createSpecificAttendeeId,
 	createSpiedValidator,
 	generateBasicClientJoin,
@@ -61,12 +61,11 @@ describe("Presence", () => {
 			runtime = new MockEphemeralRuntime(logger);
 			clock.setSystemTime(initialTime);
 
-			// Create Presence joining session as attendeeId-2.
 			let localAvgLatency: number;
 			({ presence, processSignal, localAvgLatency } = prepareConnectedPresence(
 				runtime,
-				attendeeId2,
-				connectionId2,
+				localAttendeeId,
+				initialLocalClientConnectionId,
 				clock,
 				logger,
 			));
@@ -170,7 +169,7 @@ describe("Presence", () => {
 					averageLatency: 50,
 					attendeeId: attendeeId4,
 					clientConnectionId: connectionId4,
-					updateProviders: ["client2"],
+					updateProviders: [initialLocalClientConnectionId],
 				});
 				const expectedSetupJoinResponse = {
 					type: "Pres:DatastoreUpdate",
@@ -179,10 +178,10 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: {
+									[initialLocalClientConnectionId]: {
 										"rev": 0,
 										"timestamp": initialTime,
-										"value": attendeeId2,
+										"value": localAttendeeId,
 									},
 									[connectionId1]: {
 										"rev": 0,
@@ -273,7 +272,7 @@ describe("Presence", () => {
 							"s:name:testWorkspace": {
 								"latest": {
 									...originalJoinResponseData["s:name:testWorkspace"].latest,
-									[attendeeId2]: {
+									[localAttendeeId]: {
 										"rev": 0,
 										"timestamp": workspaceSetupTime,
 										"value": toOpaqueJson({ x: 0, y: 0, z: 0 }),

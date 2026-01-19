@@ -191,6 +191,7 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<SF.MoveOut> = { ...effect };
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (normalized.idOverride === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
 					normalized.idOverride = effectId;
@@ -207,6 +208,7 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<SF.Remove> = { ...effect };
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (normalized.idOverride === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
 					normalized.idOverride = effectId;
@@ -242,15 +244,18 @@ export function composeDeep(
 ): WrappedChange {
 	const metadata = revisionMetadata ?? defaultRevisionMetadataFromChanges(changes);
 
-	return changes.length === 0
-		? ChangesetWrapper.create([])
-		: changes.reduce((change1, change2) =>
-				makeAnonChange(
-					ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
-						composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
-					),
-				),
-			).change;
+	if (changes.length === 0) {
+		return ChangesetWrapper.create([]);
+	}
+	let result = changes[0];
+	for (let i = 1; i < changes.length; i++) {
+		result = makeAnonChange(
+			ChangesetWrapper.compose(result, changes[i], (c1, c2, composeChild) =>
+				composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
+			),
+		);
+	}
+	return result.change;
 }
 
 export function composeNoVerify(
@@ -492,7 +497,7 @@ export function invert(
 	return inverted;
 }
 
-export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset) {
+export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset): void {
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
@@ -501,7 +506,7 @@ export function toDelta(change: SF.Changeset): FieldChangeDelta {
 	return SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
 }
 
-export function toDeltaWrapped(change: WrappedChange) {
+export function toDeltaWrapped(change: WrappedChange): FieldChangeDelta {
 	return ChangesetWrapper.toDelta(change, (c, deltaFromChild) =>
 		SF.sequenceFieldToDelta(c, deltaFromChild),
 	);

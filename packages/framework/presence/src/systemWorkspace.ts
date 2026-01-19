@@ -188,7 +188,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		const selfInAudience = this.audience.getMember(clientConnectionId) !== undefined;
 		assert(
 			selfInAudience || audienceOutOfDate,
-			"Local client must be in audience for presence to handle added connection.",
+			0xcc0 /* Local client must be in audience for presence to handle added connection. */,
 		);
 
 		if (!(clientConnectionId in this.datastore.clientToSessionId)) {
@@ -223,8 +223,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			this.staleConnectionTimer.setTimeout(this.resolveStaleConnections.bind(this), 30_000);
 
 			this.selfAttendee.setConnected();
-			// TODO: AB#56686: self-Attendee never announced as Connected - Emit this event once there are tests in place
-			// this.events.emit("attendeeConnected", this.selfAttendee);
+			this.events.emit("attendeeConnected", this.selfAttendee);
 		}
 	}
 

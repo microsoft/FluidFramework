@@ -54,6 +54,8 @@ import {
 	type ChangeMetadata,
 	type ChangeEncodingContext,
 	type ReadOnlyDetachedFieldIndex,
+	makeAnonChange,
+	type TaggedChange,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -78,6 +80,7 @@ import {
 	Breakable,
 	disposeSymbol,
 	getOrCreate,
+	hasSome,
 	type JsonCompatibleReadOnly,
 	type WithBreakable,
 } from "../util/index.js";
@@ -102,6 +105,7 @@ import {
 } from "../simple-tree/index.js";
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { isStableId } from "@fluidframework/id-compressor/internal";
+import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -132,8 +136,6 @@ export interface CheckoutEvents {
 	 * can use to filter on changes they care about e.g. local vs remote changes.
 	 *
 	 * @param data - information about the change
-	 * @param getRevertible - a function provided that allows users to get a revertible for the change. If not provided,
-	 * this change is not revertible.
 	 */
 	changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 
@@ -566,6 +568,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							change: encodedChange,
 						} satisfies SerializedChange;
 					},
+					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);
@@ -1136,6 +1139,90 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	// #endregion Commit Validation
+
+	// #region Enrichment
+
+	/**
+	 * Statistics about enrichment operations performed by this checkout.
+	 * Used for testing. May be used for telemetry in the future.
+	 * The performance cost of maintaining this information is negligible.
+	 */
+	private readonly enrichmentStats: {
+		batches: number;
+		diffs: number;
+		commitsEnriched: number;
+		refreshers: number;
+		forks: number;
+		applied: number;
+	} = { batches: 0, diffs: 0, commitsEnriched: 0, refreshers: 0, forks: 0, applied: 0 };
+
+	public resetEnrichmentStats(): void {
+		this.enrichmentStats.batches = 0;
+		this.enrichmentStats.diffs = 0;
+		this.enrichmentStats.commitsEnriched = 0;
+		this.enrichmentStats.refreshers = 0;
+		this.enrichmentStats.forks = 0;
+		this.enrichmentStats.applied = 0;
+	}
+
+	public getEnrichmentStats(): {
+		batches: number;
+		diffs: number;
+		commitsEnriched: number;
+		refreshers: number;
+		forks: number;
+		applied: number;
+	} {
+		return { ...this.enrichmentStats };
+	}
+
+	public enrich(
+		context: GraphCommit<SharedTreeChange>,
+		changes: readonly TaggedChange<SharedTreeChange>[],
+	): SharedTreeChange[] {
+		if (!hasSome(changes)) {
+			return [];
+		}
+		this.enrichmentStats.batches += 1;
+		const enricher = new SharedTreeChangeEnricher(
+			this.forest,
+			this._removedRoots,
+			this.storedSchema,
+			this.idCompressor,
+			() => (this.enrichmentStats.commitsEnriched += 1),
+			() => (this.enrichmentStats.refreshers += 1),
+			() => (this.enrichmentStats.forks += 1),
+			() => (this.enrichmentStats.applied += 1),
+		);
+		// This `lastCommitApplied` may be on the main branch or on a transaction branch.
+		// In either case, it is crucial that the state of the forest & detached field index reflects all changes up to and including this commit.
+		const lastCommitApplied = this.#transaction.activeBranch.getHead();
+		if (context !== lastCommitApplied) {
+			enricher.enqueueChange(() => {
+				this.enrichmentStats.diffs += 1;
+				const diff = diffHistories(
+					this.changeFamily.rebaser,
+					lastCommitApplied,
+					context,
+					this.mintRevisionTag,
+				);
+				return makeAnonChange(diff);
+			});
+		}
+		const enriched: SharedTreeChange[] = [];
+		for (const change of changes) {
+			enriched.push(enricher.enrich(change.change));
+			enricher.enqueueChange(change);
+		}
+		enricher[disposeSymbol]();
+		return enriched;
+	}
+
+	public get mainBranch(): SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange> {
+		return this.#transaction.branch;
+	}
+
+	// #endregion Enrichment
 }
 
 /**

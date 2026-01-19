@@ -34,7 +34,7 @@ const testChangesets: { name: string; change: GenericChangeset }[] = [
 	},
 ];
 
-export function testSnapshots() {
+export function testSnapshots(): void {
 	describe("Snapshots", () => {
 		useSnapshotDirectory("generic-field");
 		const family = makeGenericChangeCodec();
