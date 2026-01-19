@@ -18,7 +18,7 @@
 			// Biome 1.x test data - these configs use Biome 1.x syntax that Biome 2.x can't parse
 			"!**/packages/build-tools/src/test/data/biome/**",
 			// Test fixture that must use space indentation (not tabs) for indentation detection tests
-			"!**/packages/build-tools/src/test/data/spaces/_package.json"
+			"!**/test/data/spaces/**"
 		]
 	}
 }
