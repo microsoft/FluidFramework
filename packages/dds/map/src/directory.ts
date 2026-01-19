@@ -4,7 +4,6 @@
  */
 
 // TODO: Fix prefer-nullish-coalescing and prefer-optional-chain lint violations
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/prefer-optional-chain */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";

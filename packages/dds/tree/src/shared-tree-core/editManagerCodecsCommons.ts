@@ -181,7 +181,7 @@ export function decodeSharedBranch<TChangeset>(
 		trunk: trunk.map(
 			(commit): SequencedCommit<TChangeset> =>
 				// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
 				decodeCommit(changeCodec, revisionTagCodec, commit, {
 					originatorId: commit.sessionId,
 					idCompressor: context.idCompressor,

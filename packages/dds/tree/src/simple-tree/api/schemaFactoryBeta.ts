@@ -47,7 +47,7 @@ import type {
 } from "./typesUnsafe.js";
 
 // These imports prevent a large number of type references in the API reports from showing up as *_2.
-/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
+/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 import type {
 	FieldProps,
 	FieldSchemaAlpha,
@@ -58,7 +58,7 @@ import type {
 import type { LeafSchema } from "../leafNodeSchema.js";
 import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
-/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
+/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 
 /**
  * Stateless APIs exposed via {@link SchemaFactoryBeta} as both instance properties and as statics.

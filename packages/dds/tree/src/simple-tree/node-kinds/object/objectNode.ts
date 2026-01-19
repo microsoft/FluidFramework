@@ -99,8 +99,7 @@ import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
 	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-			{}
+		? {}
 		: {
 				-readonly [Property in keyof T]: Property extends string
 					? TreeFieldFromImplicitField<T[Property]>

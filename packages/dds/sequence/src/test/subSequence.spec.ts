@@ -46,7 +46,6 @@ class SubSequenceTestClient extends TestClient {
 		this.walkSegments(
 			(s) => {
 				if (SubSequence.is(s)) {
-					// eslint-disable-next-line @typescript-eslint/no-base-to-string -- known limitation
 					items += s.items.toString();
 				}
 				return true;

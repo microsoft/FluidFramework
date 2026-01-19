@@ -564,7 +564,7 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendTelemetryEvent(
 					{
 						eventName: "ConnectionReceived",
-						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
+
 						connected: connection !== undefined && connection.disposed === false,
 					},
 					undefined,
@@ -574,7 +574,7 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendTelemetryEvent(
 					{
 						eventName: "ConnectToDeltaStreamException",
-						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
+
 						connected: connection !== undefined && connection.disposed === false,
 					},
 					undefined,

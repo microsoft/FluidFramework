@@ -77,7 +77,6 @@ import { EmptyKey } from "../../../core/index.js";
 	class NodeMap extends schema.map("Notes", Note) {}
 	class NodeList extends schema.array("Notes", Note) {}
 
-	// eslint-disable-next-line no-inner-declarations
 	function f(n: NodeMap): void {
 		const item = n.get("x");
 	}

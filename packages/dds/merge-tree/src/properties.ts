@@ -118,7 +118,6 @@ export function extendIfUndefined<T>(
 ): MapLike<T> {
 	if (extension !== undefined) {
 		for (const [key, value] of Object.entries(extension)) {
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 			if (base[key] === undefined) {
 				base[key] = value;
 			}

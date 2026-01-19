@@ -171,7 +171,6 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 		this.walkSegments(
 			(segment: ISegment) => {
 				if (SubSequence.is(segment)) {
-					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (firstSegment === undefined) {
 						firstSegment = segment;
 					}
