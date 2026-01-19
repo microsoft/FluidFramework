@@ -10,7 +10,9 @@
 	"files": {
 		"ignore": [
 			"packages/build-tools/src/test/data/biome/empty.jsonc",
-			"packages/build-tools/src/test/data/biome2/**"
+			"packages/build-tools/src/test/data/biome2/**",
+			// Test fixtures for space-indented JSON detection - Biome would convert spaces to tabs
+			"**/test/data/spaces/_package.json"
 		]
 	}
 }
