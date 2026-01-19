@@ -32,7 +32,7 @@ export class BundleBuddyConfigWebpackPlugin {
 		this.config = config;
 	}
 
-	public apply(compiler: Compiler) {
+	public apply(compiler: Compiler): void {
 		compiler.hooks.emit.tapAsync(
 			pluginName,
 			(compilation: Compilation, callback: () => void) => {

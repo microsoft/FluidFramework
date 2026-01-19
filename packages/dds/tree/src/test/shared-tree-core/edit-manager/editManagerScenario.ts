@@ -292,6 +292,7 @@ export function runUnitTestScenario(
 				switch (type) {
 					case "Push": {
 						let seq = step.seq;
+						// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 						if (seq === undefined) {
 							seq =
 								iNextAck < acks.length

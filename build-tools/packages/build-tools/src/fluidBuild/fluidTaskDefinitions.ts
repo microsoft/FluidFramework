@@ -285,7 +285,7 @@ const detectInvalid = (
 	name: string,
 	kind: string,
 	isGlobal: boolean,
-) => {
+): void => {
 	const invalid = config.filter((value) => isInvalid(value));
 	if (invalid.length !== 0) {
 		throw new Error(
@@ -367,7 +367,7 @@ export function normalizeGlobalTaskDefinitions(
 	return taskDefinitions;
 }
 
-function expandDotDotDot(config: readonly string[], inherited?: readonly string[]) {
+function expandDotDotDot(config: readonly string[], inherited?: readonly string[]): string[] {
 	const expanded = config.filter((value) => value !== "...");
 	if (inherited !== undefined && expanded.length !== config.length) {
 		return expanded.concat(inherited);
@@ -431,11 +431,12 @@ export function getTaskDefinitions(
 	const packageTaskDefinitions = json.fluidBuild?.tasks;
 	const taskDefinitions: MutableTaskDefinitions = {};
 
-	const globalAllow = (value) =>
+	const globalAllow = (value: string): boolean =>
 		value.startsWith("^") ||
 		(globalTaskDefinitions[value] !== undefined && !globalTaskDefinitions[value].script) ||
 		packageScripts[value] !== undefined;
-	const globalAllowExpansionsStar = (value) => value === "*" || globalAllow(value);
+	const globalAllowExpansionsStar = (value: string): boolean =>
+		value === "*" || globalAllow(value);
 
 	// Initialize from global TaskDefinition, and filter out script tasks if the package doesn't have the script
 	for (const name in globalTaskDefinitions) {
@@ -512,13 +513,13 @@ export function getTaskDefinitions(
 	// For release group root, the default for any task is to run all the tasks in the group
 	// even if there is not task definition or script for it.
 	if (!isReleaseGroupRoot) {
-		const invalidDependOn = (value) =>
+		const invalidDependOn = (value: string): boolean =>
 			!value.includes("#") &&
 			!value.startsWith("^") &&
 			taskDefinitions[value] === undefined &&
 			json.scripts?.[value] === undefined;
-		const invalidBefore = (value) => value !== "*" && invalidDependOn(value);
-		const invalidAfter = (value) => value !== "^*" && invalidBefore(value);
+		const invalidBefore = (value: string): boolean => value !== "*" && invalidDependOn(value);
+		const invalidAfter = (value: string): boolean => value !== "^*" && invalidBefore(value);
 		for (const name in taskDefinitions) {
 			const taskDefinition = taskDefinitions[name];
 			// Find any non-existent tasks or scripts in the dependencies

@@ -25,7 +25,7 @@ export interface TestTree {
 }
 
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
-export function generateTestTrees(options: SharedTreeOptions) {
+export function generateTestTrees(options: SharedTreeOptions): TestTree[] {
 	const factoryOptions: SharedTreeOptions = {
 		jsonValidator: FormatValidatorBasic,
 		...options,
