@@ -1,5 +1,6 @@
 ---
 "@fluid-example/text-editor": minor
+"__section": tree
 ---
 
 New text-editor example demonstrating SharedTree with Quill
