@@ -173,7 +173,7 @@
 				"build:esnext"
 			],
 			"eslint": [
-				"api-extractor:esnext",
+				"build:esnext",
 				"^build:test:esm"
 			],
 			"tsc:experimental": [
