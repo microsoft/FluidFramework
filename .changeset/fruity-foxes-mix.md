@@ -1,6 +1,6 @@
 ---
 "@fluidframework/presence": minor
-"__section": feature
+"__section": fix
 ---
 Self attendee is announced via "attendeeConnected"
 
