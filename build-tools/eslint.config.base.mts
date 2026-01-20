@@ -33,9 +33,6 @@ const linterOptions = {
 const buildToolsOverrides = {
 	rules: {
 		// Build-tools packages are internal tooling, not public packages.
-		// The no-internal-modules rule is designed for the Fluid Framework package structure.
-		"import-x/no-internal-modules": "off",
-
 		// Build-tools uses @deprecated internally for deprecation warnings.
 		// Keep as warning to track usage, but don't fail the build.
 		"import-x/no-deprecated": "warn",
@@ -48,13 +45,25 @@ const buildToolsOverrides = {
 
 		// oclif commands require default exports.
 		"import-x/no-default-export": "off",
+		"no-restricted-exports": "off",
 
-		// Build-tools uses globby, execa, and other packages that have newer alternatives.
-		// TODO: Consider migrating to alternatives over time.
-		"depend/ban-dependencies": "off",
+		// Build-tools uses some packages that have newer alternatives.
+		// Allow the specific packages we use rather than disabling the rule entirely.
+		"depend/ban-dependencies": [
+			"error",
+			{
+				allowed: [
+					// fs-extra is well-maintained and provides useful readJson/writeJson API
+					"fs-extra",
+					// globby is used extensively in build-tools for file patterns
+					"globby",
+					// execa is used for running child processes
+					"execa",
+				],
+			},
+		],
 
-		// This rule is too strict for build-tools internal code.
-		// TODO: Consider enabling and fixing violations.
+		// This rule requires too many code changes to enable at the moment.
 		"@typescript-eslint/strict-boolean-expressions": "off",
 
 		// This rule requires explicit handling of undefined for index signatures.
@@ -65,6 +74,7 @@ const buildToolsOverrides = {
 		"unicorn/filename-case": "off",
 
 		// Prefer-regexp-exec is a style preference, not a correctness issue.
+		// Consider enabling in the future.
 		"@typescript-eslint/prefer-regexp-exec": "off",
 
 		// These rules are useful but require code changes to fix.
@@ -117,6 +127,9 @@ const buildToolsOverrides = {
 
 /**
  * The base ESLint flat config from eslint-config-fluid with build-tools overrides.
+ *
+ * @remarks
+ * TODO: Consider updating to recommended or strict config from eslint-config-fluid if possible.
  */
 export const baseConfig = [...minimalDeprecated, linterOptions, buildToolsOverrides];
 
@@ -135,4 +148,4 @@ export const chaiFriendlyConfig = {
 	},
 };
 
-export { chaiFriendly };
+export { baseConfig as default, chaiFriendly, minimalDeprecated };

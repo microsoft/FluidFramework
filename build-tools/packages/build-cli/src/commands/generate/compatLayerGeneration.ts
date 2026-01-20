@@ -14,7 +14,7 @@ import {
 	checkPackageCompatLayerGeneration,
 	deleteCompatLayerGenerationFile,
 	writePackageCompatLayerGeneration,
-	// eslint-disable-next-line import-x/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules -- necessary for internal library import
 } from "../../library/compatLayerGeneration.js";
 
 /**
