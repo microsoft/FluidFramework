@@ -10,7 +10,7 @@ import type { NodeId } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { NestedChangesIndices } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { sequenceFieldChangeHandler } from "../../../feature-libraries/sequence-field/index.js";
+import { sequenceFieldChangeHandler } from "../../../feature-libraries/sequence-field/sequenceFieldChangeHandler.js";
 import { brand } from "../../../util/index.js";
 import { mintRevisionTag } from "../../utils.js";
 

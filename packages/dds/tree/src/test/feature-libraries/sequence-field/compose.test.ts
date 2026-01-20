@@ -13,6 +13,8 @@ import {
 	makeAnonChange,
 } from "../../../core/index.js";
 import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
@@ -22,7 +24,7 @@ import { cases, ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js"
 import {
 	areComposable,
 	assertChangesetsEqual,
-	compose,
+	testCompose as compose,
 	composeNoVerify,
 	shallowCompose,
 	tagChangeInline,
@@ -484,7 +486,7 @@ export function testCompose(): void {
 				tagChangeInline(revive, tag2),
 				tagChangeInline(deletion, tag3),
 			]);
-			const expected: SF.Changeset = [
+			const expected: Changeset = [
 				Mark.remove(
 					1,
 					{ localId: brand(0), revision: tag3 },

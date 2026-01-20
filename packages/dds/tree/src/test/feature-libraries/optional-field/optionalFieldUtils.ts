@@ -22,16 +22,16 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
-	type Move,
-	type OptionalChangeset,
-	type RegisterId,
-	RegisterMap,
 	optionalChangeRebaser,
+	RegisterMap,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/optional-field/index.js";
+} from "../../../feature-libraries/optional-field/optionalField.js";
 import type {
 	ChildChange,
 	Replace,
+	Move,
+	OptionalChangeset,
+	RegisterId,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { type Mutable, brand } from "../../../util/index.js";

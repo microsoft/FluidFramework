@@ -7,11 +7,17 @@ import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
 import {
-	type OptionalChangeset,
-	makeOptionalFieldCodecFamily,
 	optionalFieldEditor,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/optional-field/index.js";
+} from "../../../feature-libraries/optional-field/optionalField.js";
+import type {
+	OptionalChangeset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
+import {
+	makeOptionalFieldCodecFamily,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/optional-field/optionalFieldCodecs.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";

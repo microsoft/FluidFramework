@@ -9,14 +9,18 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
-	type OptionalChangeset,
 	optionalChangeRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/optional-field/index.js";
+} from "../../../feature-libraries/optional-field/optionalField.js";
+import type {
+	OptionalChangeset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { type Mutable, brand } from "../../../util/index.js";
 import { mintRevisionTag } from "../../utils.js";
 
 import { Change, assertEqual } from "./optionalFieldUtils.js";
+
 
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();

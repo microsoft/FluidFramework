@@ -68,7 +68,7 @@ export function makeModularChangeCodecFamily(
 					];
 				}
 				default: {
-					fail(`Unsupported modular change codec version`);
+					fail(0xcc5 /* Unsupported modular change codec version */);
 				}
 			}
 		}),
