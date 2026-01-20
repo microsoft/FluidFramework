@@ -1420,9 +1420,9 @@ export interface ArrayNodeAnchor {
  * @param node - The array node to anchor into.
  * @param currentIndex - The index to track.
  * @remarks
- * This anchor will track the item currently at the provided index (or possible the end of the array if the index is after the last item).
+ * This anchor will track the item currently at the provided index (or possibly the end of the array if the index is after the last item).
  * How exactly it behaves when that child is removed from the array is subject to change,
- * but a this will always report a valid index to insert content at (which can be the index after the last item in the array).
+ * but this will always report a valid index to insert content at (which can be the index after the last item in the array).
  *
  * This is intended to track a location like might be used for an insertion point in a text editor: future changes to its details should
  * make it behave better for such uses.
