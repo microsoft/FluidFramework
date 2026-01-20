@@ -3,11 +3,35 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert, fail } from "node:assert";
+
+import type {
+	IFluidHandle,
+	IFluidLoadable,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import type {
 	IChannelAttributes,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
+import {
+	createIdCompressor,
+	type IIdCompressor,
+} from "@fluidframework/id-compressor/internal";
+import type {
+	ISummaryTreeWithStats,
+	IExperimentalIncrementalSummaryContext,
+	ITelemetryContext,
+	IRuntimeMessageCollection,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	SharedObject,
+	type IChannelView,
+	type IFluidSerializer,
+	type ISharedObject,
+	type ISharedObjectHandle,
+} from "@fluidframework/shared-object-base/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockHandle,
@@ -37,6 +61,13 @@ import {
 	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
 import {
+	changeFormatVersionForEditManager,
+	changeFormatVersionForMessage,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree/sharedTree.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { dependenciesForChangeFormat } from "../../shared-tree/sharedTreeChangeCodecs.js";
+import {
 	SquashingTransactionStack,
 	type SharedTreeBranch,
 	SharedTreeCore,
@@ -48,39 +79,9 @@ import {
 	type EnrichmentConfig,
 	type ChangeEnricher,
 } from "../../shared-tree-core/index.js";
-import { testIdCompressor } from "../utils.js";
-import { strict as assert, fail } from "node:assert";
-import {
-	SharedObject,
-	type IChannelView,
-	type IFluidSerializer,
-	type ISharedObject,
-	type ISharedObjectHandle,
-} from "@fluidframework/shared-object-base/internal";
-import type {
-	ISummaryTreeWithStats,
-	IExperimentalIncrementalSummaryContext,
-	ITelemetryContext,
-	IRuntimeMessageCollection,
-} from "@fluidframework/runtime-definitions/internal";
-import {
-	createIdCompressor,
-	type IIdCompressor,
-} from "@fluidframework/id-compressor/internal";
-import type {
-	IFluidHandle,
-	IFluidLoadable,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
 import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { dependenciesForChangeFormat } from "../../shared-tree/sharedTreeChangeCodecs.js";
-import {
-	changeFormatVersionForEditManager,
-	changeFormatVersionForMessage,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../shared-tree/sharedTree.js";
+import { testIdCompressor } from "../utils.js";
 
 export const testCodecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,

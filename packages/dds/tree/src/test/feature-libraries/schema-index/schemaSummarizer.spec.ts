@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	SummaryType,
 	type ISummaryBlob,
@@ -13,35 +14,35 @@ import {
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
 	SchemaFormatVersion,
 	storedEmptyFieldSchema,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { CollabWindow } from "../../../feature-libraries/incrementalSummarizationUtils.js";
+import { makeSchemaCodec } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Format as SchemaFormatV1 } from "../../../feature-libraries/schema-index/formatV1.js";
 import {
 	SchemaSummarizer,
 	SchemaSummaryFormatVersion,
 	schemaStringKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/schema-index/schemaSummarizer.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { Format as SchemaFormatV1 } from "../../../feature-libraries/schema-index/formatV1.js";
-import { toInitialSchema } from "../../../simple-tree/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { CollabWindow } from "../../../feature-libraries/incrementalSummarizationUtils.js";
-import { makeSchemaCodec } from "../../../feature-libraries/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../../shared-tree-core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
+import { toInitialSchema } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
