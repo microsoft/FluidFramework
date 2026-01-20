@@ -190,8 +190,6 @@ export type FlattenUnionWithOptionals<T> = InternalUtilityTypes.FlattenIntersect
  *
  * @param state - The state to check
  * @returns True if the state has a value and is therefore a {@link ValidatableRequiredState}
- *
- * @system
  */
 export function isValueRequiredState<T>(
 	state: ValidatableRequiredState<T> | ValidatableOptionalState<T>,

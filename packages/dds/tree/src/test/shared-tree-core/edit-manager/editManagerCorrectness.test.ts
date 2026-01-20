@@ -25,7 +25,7 @@ const localSessionId: SessionId = "0" as SessionId;
 const peer1: SessionId = "1" as SessionId;
 const peer2: SessionId = "2" as SessionId;
 
-export function testCorrectness() {
+export function testCorrectness(): void {
 	describe("Correctness", () => {
 		describe("Unit Tests", () => {
 			runUnitTestScenario(
