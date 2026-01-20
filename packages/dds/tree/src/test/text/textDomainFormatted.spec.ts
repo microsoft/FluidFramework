@@ -32,7 +32,10 @@ describe("textDomainFormatted", () => {
 		text.formatRange(1, 3, { bold: true });
 		assert.equal(text.fullString(), "hello");
 		assert.deepEqual(
-			[...text.charactersFormatted()].map((atom) => [atom.content.content, atom.format.bold]),
+			[...text.charactersWithFormatting()].map((atom) => [
+				atom.content.content,
+				atom.format.bold,
+			]),
 			[
 				["h", false],
 				["e", true],
@@ -43,14 +46,14 @@ describe("textDomainFormatted", () => {
 		);
 	});
 
-	it("insertFormattedAt", () => {
+	it("insertWithFormattingAt", () => {
 		const text = FormattedTextAsTree.Tree.fromString("ab");
-		text.insertFormattedAt(1, [
+		text.insertWithFormattingAt(1, [
 			{ content: { content: "c" }, format: { ...text.defaultFormat, italic: true } },
 		]);
 		assert.equal(text.fullString(), "acb");
 		assert.deepEqual(
-			[...text.charactersFormatted()].map((atom) => [
+			[...text.charactersWithFormatting()].map((atom) => [
 				atom.content.content,
 				atom.format.italic,
 			]),
@@ -67,7 +70,7 @@ describe("textDomainFormatted", () => {
 		text.defaultFormat.underline = true;
 		text.insertAt(2, "cd");
 		assert.deepEqual(
-			[...text.charactersFormatted()].map((atom) => [
+			[...text.charactersWithFormatting()].map((atom) => [
 				atom.content.content,
 				atom.format.underline,
 			]),

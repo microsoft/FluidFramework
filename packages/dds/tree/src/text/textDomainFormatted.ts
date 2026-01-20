@@ -67,10 +67,10 @@ class TextNode
 		});
 	}
 
-	public charactersFormatted(): Iterable<FormattedTextAsTree.StringAtom> {
+	public charactersWithFormatting(): Iterable<FormattedTextAsTree.StringAtom> {
 		return this.content;
 	}
-	public insertFormattedAt(
+	public insertWithFormattingAt(
 		index: number,
 		additionalCharacters: Iterable<InsertableTypedNode<typeof FormattedTextAsTree.StringAtom>>,
 	): void {
@@ -266,7 +266,7 @@ export namespace FormattedTextAsTree {
 		 * @remarks
 		 * This iterator matches the behavior of {@link (TreeArrayNode:interface)} with respect to edits during iteration.
 		 */
-		charactersFormatted(): Iterable<StringAtom>;
+		charactersWithFormatting(): Iterable<StringAtom>;
 
 		/**
 		 * Insert a range of characters into the string based on character index.
@@ -281,7 +281,7 @@ export namespace FormattedTextAsTree {
 		 * Another option would be to take an approach like Table,
 		 * where the user of the API uses a factory function to generate the schema, and can inject custom logic, like a string character iterator.
 		 */
-		insertFormattedAt(
+		insertWithFormattingAt(
 			index: number,
 			additionalCharacters: Iterable<InsertableTypedNode<typeof StringAtom>>,
 		): void;
