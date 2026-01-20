@@ -75,8 +75,8 @@ export function describeHydration(
 		hydrated: boolean,
 	) => void,
 	runOnce?: () => void,
-) {
-	return describe(title, () => {
+): void {
+	describe(title, () => {
 		describe("🐪 Unhydrated", () =>
 			runBoth((schema, tree) => initNode(schema, tree, false), false));
 

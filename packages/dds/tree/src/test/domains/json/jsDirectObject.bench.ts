@@ -23,7 +23,7 @@ export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 		getJson: () => T;
 		dataConsumer: (directObj: T, calculate: (x: number) => void) => unknown;
 	}[],
-) {
+): void {
 	for (const { name, getJson, dataConsumer } of data) {
 		const json = getJson();
 

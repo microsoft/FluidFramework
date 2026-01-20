@@ -311,7 +311,7 @@ export const testTrees: readonly TestTree[] = [
 	{
 		name: "node-with-identifier-field",
 		schemaData: toStoredSchema(HasIdentifierField, restrictiveStoredSchemaGenerationOptions),
-		treeFactory: (idCompressor?: IIdCompressor) => {
+		treeFactory: (idCompressor?: IIdCompressor): JsonableTree[] => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
 			return jsonableTreeFromFieldCursor(
@@ -323,7 +323,7 @@ export const testTrees: readonly TestTree[] = [
 	{
 		name: "identifier-field",
 		schemaData: toStoredSchema(factory.identifier, restrictiveStoredSchemaGenerationOptions),
-		treeFactory: (idCompressor?: IIdCompressor) => {
+		treeFactory: (idCompressor?: IIdCompressor): JsonableTree[] => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
 			return [{ type: brand(stringSchema.identifier), value: id }];

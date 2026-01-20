@@ -316,14 +316,17 @@ export class MappedDependentFormatVersion<
 }
 
 export const DependentFormatVersion = {
-	fromUnique: <TChildVersion extends FormatVersion>(child: TChildVersion) =>
-		new UniqueDependentFormatVersion(child),
+	fromUnique: <TChildVersion extends FormatVersion>(
+		child: TChildVersion,
+	): UniqueDependentFormatVersion<TChildVersion> => new UniqueDependentFormatVersion(child),
 	fromMap: <TParentVersion extends FormatVersion, TChildVersion extends FormatVersion>(
 		map: ReadonlyMap<TParentVersion, TChildVersion>,
-	) => new MappedDependentFormatVersion(map),
+	): MappedDependentFormatVersion<TParentVersion, TChildVersion> =>
+		new MappedDependentFormatVersion(map),
 	fromPairs: <TParentVersion extends FormatVersion, TChildVersion extends FormatVersion>(
 		pairs: Iterable<[TParentVersion, TChildVersion]>,
-	) => new MappedDependentFormatVersion(new Map(pairs)),
+	): MappedDependentFormatVersion<TParentVersion, TChildVersion> =>
+		new MappedDependentFormatVersion(new Map(pairs)),
 };
 
 /**

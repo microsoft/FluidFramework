@@ -253,7 +253,7 @@ export function generateTwitterJsonByByteSize(
  * @param includeUnicode - true to include unicode in any strings within the json
  * @returns TwitterJson
  */
-export function generateTwitterJsonByNumStatuses(numStatuses: number, seed = 1) {
+export function generateTwitterJsonByNumStatuses(numStatuses: number, seed = 1): Twitter {
 	const random = makeRandom(seed);
 	const textFieldMarkovChain = new SpaceEfficientWordMarkovChain(
 		random,
@@ -571,7 +571,7 @@ function getRandomDateString(random = makeRandom(), start: Date, end: Date) {
 // unicode-range-for-japanese#:~:text=To%20summarize%20the%20ranges%3A,Katakana%20(%2030a0%20%2D%2030ff)
 // or more direct source:
 // http://www.localizingjapan.com/blog/2012/01/20/regular-expressions-for-japanese-text/
-export function isJapanese(ch: string) {
+export function isJapanese(ch: string): boolean {
 	// Japanese Hiragana
 	return (
 		(ch >= "\u3041" && ch <= "\u3096") ||
@@ -592,7 +592,7 @@ export function isJapanese(ch: string) {
 	);
 }
 
-export function isAlphaLatin(ch: string) {
+export function isAlphaLatin(ch: string): boolean {
 	// range 1: ABCDEFGHIJKLMNOPQRSTUVWXYZ
 	return (
 		(ch >= "\u0041" && ch <= "\u005A") ||
@@ -601,7 +601,7 @@ export function isAlphaLatin(ch: string) {
 	);
 }
 
-export function isSymbol(ch: string) {
+export function isSymbol(ch: string): boolean {
 	// range 1: !"#$%&'()*+,-./
 	return (
 		(ch >= "\u0021" && ch <= "\u002F") ||
@@ -610,11 +610,11 @@ export function isSymbol(ch: string) {
 	);
 }
 
-export function isEscapeChar(ch: string) {
+export function isEscapeChar(ch: string): boolean {
 	return (ch >= "\u0080" && ch <= "\u00A0") || (ch >= "\u0000" && ch <= "\u0010");
 }
 
-export function isJapaneseSymbolOrPunctuation(ch: string) {
+export function isJapaneseSymbolOrPunctuation(ch: string): boolean {
 	return ch >= "\u3000" && ch <= "\u303F";
 }
 
@@ -634,7 +634,7 @@ export function isJapaneseSymbolOrPunctuation(ch: string) {
  * 2b. If the characters are alpha latin, escapes or line breaks we will count it as part of a word,
  * adding each next chars until we get to either a Japanese character or a space.
  */
-export function parseSentencesIntoWords(inputSentences: string[]) {
+export function parseSentencesIntoWords(inputSentences: string[]): string[][] {
 	const outputSentences: string[][] = [];
 	for (const inputSentence of inputSentences) {
 		const sentenceWords: string[] = [];

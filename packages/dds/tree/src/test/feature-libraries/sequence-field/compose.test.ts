@@ -45,7 +45,7 @@ const revInfos: RevisionInfo[] = [
 
 const defaultInsertId: ChangesetLocalId = brand(0);
 
-export function testCompose() {
+export function testCompose(): void {
 	describe("Compose", () => {
 		describe("associativity of triplets", () => {
 			const entries = Object.entries(cases);

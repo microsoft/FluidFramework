@@ -237,7 +237,7 @@ class LatestValueManagerImpl<T, Key extends string>
  * @param value - The object to clone
  * @returns A shallow clone of the input value
  */
-export function shallowCloneNullableObject<T extends object | null>(value: T): T {
+function shallowCloneNullableObject<T extends object | null>(value: T): T {
 	return value === null ? value : shallowCloneObject(value);
 }
 

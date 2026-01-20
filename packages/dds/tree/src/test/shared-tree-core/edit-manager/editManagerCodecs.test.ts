@@ -201,7 +201,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 	},
 };
 
-export function testCodec() {
+export function testCodec(): void {
 	describe("Codec", () => {
 		const family = makeEditManagerCodecs(
 			TestChange.codecs,

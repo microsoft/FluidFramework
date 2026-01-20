@@ -20,7 +20,7 @@ const tag1: RevisionTag = mintRevisionTag();
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 
-export function testGetNestedChanges() {
+export function testGetNestedChanges(): void {
 	describe("getNestedChanges", () => {
 		it("is empty for an empty change", () => {
 			const change = sequenceFieldChangeHandler.createEmpty();

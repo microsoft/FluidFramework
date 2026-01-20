@@ -302,7 +302,7 @@ export interface EditGeneratorOptions {
 	maxRemoveCount: number;
 }
 
-export function getAllowableNodeTypes(state: FuzzTestState) {
+export function getAllowableNodeTypes(state: FuzzTestState): string[] {
 	const fuzzView = viewFromState(state, state.client);
 	const nodeSchema = fuzzView.currentSchema;
 	const nodeTypes = [];

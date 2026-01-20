@@ -154,7 +154,7 @@ export function makeTestDefaultChangeFamily(options?: {
 	idCompressor?: IIdCompressor;
 	chunkCompressionStrategy?: TreeCompressionStrategy;
 	codecOptions?: CodecWriteOptions;
-}) {
+}): DefaultChangeFamily {
 	const codecOptions = options?.codecOptions ?? testCodecOptions;
 	return new DefaultChangeFamily(
 		makeModularChangeCodecFamily(

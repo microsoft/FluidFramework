@@ -13,7 +13,7 @@ import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
 
 import { generatePopulatedMarks } from "./populatedMarks.js";
 
-export function testSnapshots() {
+export function testSnapshots(): void {
 	describe("Snapshots", () => {
 		const compressor = createSnapshotCompressor();
 		const baseContext = {

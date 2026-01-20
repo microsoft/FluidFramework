@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { takeAsync } from "@fluid-private/stochastic-test-utils";
+import { takeAsync, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
 import { pkgVersion } from "../../../packageVersion.js";
 import { ForestTypeOptimized, ForestTypeReference } from "../../../shared-tree/index.js";
+import type { ISharedTree } from "../../../treeFactory.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
 import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
@@ -34,7 +36,10 @@ const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	fork: 1,
 	merge: 1,
 };
-const generatorFactory = () => takeAsync(100, makeOpGenerator(editGeneratorOpWeights));
+const generatorFactory = (): AsyncGenerator<
+	Operation,
+	DDSFuzzTestState<IChannelFactory<ISharedTree>>
+> => takeAsync(100, makeOpGenerator(editGeneratorOpWeights));
 
 export const baseTreeModel: DDSFuzzModel<
 	SharedTreeFuzzTestFactory,
