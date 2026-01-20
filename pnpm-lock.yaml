@@ -27206,6 +27206,7 @@ packages:
   tar@6.2.1:
     resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exhorbitant rates) by contacting i@izs.me
 
   temp@0.9.4:
     resolution: {integrity: sha512-yYrrsWnrXMcdsnu/7YMYAofM1ktpL5By7vZhf15CrXijWWrEYZks5AXBudalfSWJLlnen/QUJUB5aoB0kqZUGA==}
@@ -44523,64 +44524,4 @@ snapshots:
 
   zwitch@2.0.4: {}
 
-time:
-  '@fluid-internal/client-utils@2.80.0': '2026-01-06T21:31:15.873Z'
-  '@fluid-tools/fetch-tool@2.80.0': '2026-01-06T21:27:46.550Z'
-  '@fluidframework/agent-scheduler@2.80.0': '2026-01-06T21:29:38.128Z'
-  '@fluidframework/app-insights-logger@2.80.0': '2026-01-06T21:29:29.739Z'
-  '@fluidframework/aqueduct@2.80.0': '2026-01-06T21:29:34.775Z'
-  '@fluidframework/azure-client@1.2.0': '2024-04-11T17:25:27.397Z'
-  '@fluidframework/azure-client@2.80.0': '2026-01-06T21:28:15.528Z'
-  '@fluidframework/azure-service-utils@2.80.0': '2026-01-06T21:31:50.024Z'
-  '@fluidframework/cell@2.80.0': '2026-01-06T21:31:01.422Z'
-  '@fluidframework/container-definitions@2.80.0': '2026-01-06T21:31:12.966Z'
-  '@fluidframework/container-loader@2.80.0': '2026-01-06T21:28:45.635Z'
-  '@fluidframework/container-runtime-definitions@2.80.0': '2026-01-06T21:28:34.944Z'
-  '@fluidframework/container-runtime@2.80.0': '2026-01-06T21:28:38.984Z'
-  '@fluidframework/core-interfaces@2.80.0': '2026-01-06T21:31:10.327Z'
-  '@fluidframework/core-utils@2.80.0': '2026-01-06T21:31:07.191Z'
-  '@fluidframework/counter@2.80.0': '2026-01-06T21:30:58.339Z'
-  '@fluidframework/datastore-definitions@2.80.0': '2026-01-06T21:28:29.876Z'
-  '@fluidframework/datastore@2.80.0': '2026-01-06T21:28:32.614Z'
-  '@fluidframework/debugger@2.80.0': '2026-01-06T21:30:13.550Z'
-  '@fluidframework/devtools-core@2.80.0': '2026-01-06T21:27:49.975Z'
-  '@fluidframework/devtools@2.80.0': '2026-01-06T21:27:52.621Z'
-  '@fluidframework/driver-base@2.80.0': '2026-01-06T21:30:09.866Z'
-  '@fluidframework/driver-definitions@2.80.0': '2026-01-06T21:31:04.453Z'
-  '@fluidframework/driver-utils@2.80.0': '2026-01-06T21:28:42.393Z'
-  '@fluidframework/driver-web-cache@2.80.0': '2026-01-06T21:30:07.303Z'
-  '@fluidframework/file-driver@2.80.0': '2026-01-06T21:30:04.299Z'
-  '@fluidframework/fluid-runner@2.80.0': '2026-01-06T21:27:43.845Z'
-  '@fluidframework/fluid-static@2.80.0': '2026-01-06T21:29:12.210Z'
-  '@fluidframework/id-compressor@2.80.0': '2026-01-06T21:28:27.416Z'
-  '@fluidframework/local-driver@2.80.0': '2026-01-06T21:30:01.133Z'
-  '@fluidframework/map@1.4.0': '2024-04-09T21:13:04.305Z'
-  '@fluidframework/map@2.80.0': '2026-01-06T21:30:50.366Z'
-  '@fluidframework/matrix@2.80.0': '2026-01-06T21:30:47.172Z'
-  '@fluidframework/merge-tree@2.80.0': '2026-01-06T21:30:44.419Z'
-  '@fluidframework/odsp-doclib-utils@2.80.0': '2026-01-06T21:27:40.964Z'
-  '@fluidframework/odsp-driver-definitions@2.80.0': '2026-01-06T21:29:54.852Z'
-  '@fluidframework/odsp-driver@2.80.0': '2026-01-06T21:29:58.283Z'
-  '@fluidframework/odsp-urlresolver@2.80.0': '2026-01-06T21:29:51.953Z'
-  '@fluidframework/ordered-collection@2.80.0': '2026-01-06T21:30:40.077Z'
-  '@fluidframework/register-collection@2.80.0': '2026-01-06T21:30:33.725Z'
-  '@fluidframework/replay-driver@2.80.0': '2026-01-06T21:29:49.309Z'
-  '@fluidframework/request-handler@2.80.0': '2026-01-06T21:29:01.620Z'
-  '@fluidframework/routerlicious-driver@2.80.0': '2026-01-06T21:29:46.346Z'
-  '@fluidframework/routerlicious-urlresolver@2.80.0': '2026-01-06T21:29:43.477Z'
-  '@fluidframework/runtime-definitions@2.80.0': '2026-01-06T21:28:24.819Z'
-  '@fluidframework/runtime-utils@2.80.0': '2026-01-06T21:28:22.018Z'
-  '@fluidframework/sequence@2.80.0': '2026-01-06T21:30:30.908Z'
-  '@fluidframework/shared-object-base@2.80.0': '2026-01-06T21:30:27.851Z'
-  '@fluidframework/shared-summary-block@2.80.0': '2026-01-06T21:30:24.997Z'
-  '@fluidframework/synthesize@2.80.0': '2026-01-06T21:28:59.058Z'
-  '@fluidframework/task-manager@2.80.0': '2026-01-06T21:30:22.344Z'
-  '@fluidframework/telemetry-utils@2.80.0': '2026-01-06T21:27:38.070Z'
-  '@fluidframework/test-runtime-utils@2.80.0': '2026-01-06T21:28:18.691Z'
-  '@fluidframework/test-utils@2.80.0': '2026-01-06T21:27:55.666Z'
-  '@fluidframework/tinylicious-client@2.80.0': '2026-01-06T21:28:04.142Z'
-  '@fluidframework/tinylicious-driver@2.80.0': '2026-01-06T21:29:40.845Z'
-  '@fluidframework/tool-utils@2.80.0': '2026-01-06T21:27:34.553Z'
-  '@fluidframework/tree@2.80.0': '2026-01-06T21:30:19.722Z'
-  '@fluidframework/undo-redo@2.80.0': '2026-01-06T21:28:48.388Z'
-  '@types/events@3.0.3': '2023-11-07T02:27:13.483Z'
+time: {}
