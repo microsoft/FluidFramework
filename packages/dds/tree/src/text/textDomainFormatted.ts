@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { EmptyKey } from "../core/index.js";
 import {
@@ -89,9 +90,9 @@ class TextNode
 				keyof FormattedTextAsTree.CharacterFormat,
 				unknown,
 			][]) {
-				if (typeof key !== "string") {
-					throw new UsageError(`Invalid format key: ${key.toString()}`);
-				}
+				// Object.entries should only return string keyed enumerable own properties.
+				// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
+				assert(typeof key === "string", "Object.entries returned a non-string key.");
 				const f = FormattedTextAsTree.CharacterFormat.fields.get(key);
 				if (f === undefined) {
 					throw new UsageError(`Unknown format key: ${key}`);
@@ -155,11 +156,22 @@ export namespace FormattedTextAsTree {
 	 * @internal
 	 */
 	export class StringTextAtom extends sf.object("StringTextAtom", {
+		/**
+		 * The underlying text content of this atom.
+		 * @remarks
+		 * This is typically a single unicode codepoint, and thus may contain multiple utf-16 surrogate pair code units.
+		 * Using longer strings is still valid, for example so users might store whole grapheme clusters here, or even longer sections of text.
+		 * Anything combined into a single atom will be treated atomically, and can not be partially selected or formatted.
+		 * Using larger atoms and splitting them as needed is NOT a recommended approach, since this will result in poor merge behavior for concurrent edits.
+		 * Instead atoms should always be the smallest unit of text which will be independently selected, moved or formatted.
+		 * @privateRemarks
+		 * This content is the logically represents the whole atom's content so using {@link EmptyKey} makes sense to help indicate that.
+		 */
 		content: SchemaFactory.required([SchemaFactory.string], { key: EmptyKey }),
 	}) {}
 
 	/**
-	 * Tag with with a line in text can be formatted from HTML.
+	 * Tag with which a line in text can be formatted from HTML.
 	 * @internal
 	 */
 	export const LineTag = enumFromStrings(sf.scopedFactory("lineTag"), [
