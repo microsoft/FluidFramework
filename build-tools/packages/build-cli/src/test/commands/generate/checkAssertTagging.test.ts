@@ -27,5 +27,46 @@ describe("checkAssertTagging", () => {
 		assert.deepStrictEqual(result.filePaths, []);
 		assert.deepStrictEqual(result.errors, []);
 	});
+});
 
+describe("checkAssertTagging integration", () => {
+	const fixturesDir = path.join(__dirname, "fixtures", "checkAssertTagging");
+
+	it("detects untagged asserts in a package", async () => {
+		const result = await checkAssertTagging({
+			repoRoot: fixturesDir,
+			packagePaths: ["untagged-package"],
+		});
+
+		assert.strictEqual(result.hasUntaggedAsserts, true, "Should detect untagged asserts");
+		assert.strictEqual(result.fileCount, 1, "Should find one file with untagged asserts");
+		assert(result.filePaths.length > 0, "Should have at least one file path");
+		assert(
+			result.filePaths[0]?.includes("index.ts"),
+			"Should identify the correct file",
+		);
+		assert.deepStrictEqual(result.errors, [], "Should have no errors");
+	});
+
+	it("returns false for fully tagged packages", async () => {
+		const result = await checkAssertTagging({
+			repoRoot: fixturesDir,
+			packagePaths: ["tagged-package"],
+		});
+
+		assert.strictEqual(result.hasUntaggedAsserts, false, "Should not detect untagged asserts");
+		assert.strictEqual(result.fileCount, 0, "Should find no files with untagged asserts");
+		assert.deepStrictEqual(result.filePaths, [], "Should have no file paths");
+		assert.deepStrictEqual(result.errors, [], "Should have no errors");
+	});
+
+	it("handles multiple packages", async () => {
+		const result = await checkAssertTagging({
+			repoRoot: fixturesDir,
+			packagePaths: ["untagged-package", "tagged-package"],
+		});
+
+		assert.strictEqual(result.hasUntaggedAsserts, true, "Should detect untagged asserts");
+		assert.strictEqual(result.fileCount, 1, "Should find one file total");
+	});
 });
