@@ -4,4 +4,4 @@
 ---
 Self attendee is announced via "attendeeConnected"
 
-We now announce the connection of the local attendee via "attendeeConnected" presence event.
+Local attendee connection is now announced via "attendeeConnected" presence event.
