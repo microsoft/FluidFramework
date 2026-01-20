@@ -101,7 +101,7 @@ export function handleFromDatastore<
  */
 export function datastoreFromHandle<
 	TKey extends string,
-	TValue extends InternalTypes.ValueDirectoryOrState<any>,
+	TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
 >(handle: InternalTypes.StateDatastoreHandle<TKey, TValue>): StateDatastore<TKey, TValue> {
 	return handle as unknown as StateDatastore<TKey, TValue>;
 }
