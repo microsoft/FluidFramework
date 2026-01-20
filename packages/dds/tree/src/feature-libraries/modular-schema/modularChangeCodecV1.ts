@@ -52,6 +52,8 @@ import {
 	getFirstAttachField,
 	getFirstDetachField,
 	newRootTable,
+	normalizeFieldId,
+	validateChangeset,
 	type FieldIdKey,
 } from "./modularChangeFamily.js";
 import {
@@ -79,6 +81,7 @@ import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChan
 import { genericFieldKind } from "./genericFieldKind.js";
 import type { TAnySchema } from "@sinclair/typebox";
 import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import type { FlexFieldKind } from "./fieldKind.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -528,7 +531,7 @@ export function encodeChange(
 	fieldsCodec: FieldBatchCodec,
 	chunkCompressionStrategy: TreeCompressionStrategy,
 ): EncodedModularChangesetV1 {
-	const fieldToRoots = getFieldToRoots(change.rootNodes);
+	const fieldToRoots = getFieldToRoots(change.rootNodes, change.nodeAliases);
 	const isAttachId = (id: ChangeAtomId, count: number): RangeQueryResult<boolean> => {
 		const attachEntry = getFirstAttachField(change.crossFieldKeys, id, count);
 		return { ...attachEntry, value: attachEntry.value !== undefined };
@@ -732,7 +735,10 @@ function encodeRevisionOpt(
 	return revision === context.revision ? undefined : revisionCodec.encode(revision, context);
 }
 
-function getFieldToRoots(rootTable: RootNodeTable): FieldRootMap {
+function getFieldToRoots(
+	rootTable: RootNodeTable,
+	aliases: ChangeAtomIdBTree<NodeId>,
+): FieldRootMap {
 	const fieldToRoots: FieldRootMap = newTupleBTree();
 	for (const [[revision, localId], nodeId] of rootTable.nodeChanges.entries()) {
 		const detachId: ChangeAtomId = { revision, localId };
@@ -741,7 +747,7 @@ function getFieldToRoots(rootTable: RootNodeTable): FieldRootMap {
 			fail("Untracked root change");
 		} else {
 			setInChangeAtomIdMap(
-				getOrAddInFieldRootMap(fieldToRoots, fieldId).nodeChanges,
+				getOrAddInFieldRootMap(fieldToRoots, normalizeFieldId(fieldId, aliases)).nodeChanges,
 				detachId,
 				nodeId,
 			);
@@ -889,5 +895,18 @@ export function decodeChange(
 	if (encodedChange.maxId !== undefined) {
 		decoded.maxId = encodedChange.maxId;
 	}
+
+	// XXX: This is an expensive assert which should be removed before merging.
+	validateChangeset(decoded, fieldKindsFromConfiguration(fieldKinds));
 	return decoded;
+}
+
+function fieldKindsFromConfiguration(
+	configuration: FieldKindConfiguration,
+): ReadonlyMap<FieldKindIdentifier, FlexFieldKind> {
+	const map = new Map();
+	for (const [id, entry] of configuration.entries()) {
+		map.set(id, entry.kind);
+	}
+	return map;
 }

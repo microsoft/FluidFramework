@@ -41,6 +41,7 @@ import {
 import {
 	ModularChangeFamily,
 	intoDelta,
+	validateChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { brand } from "../../util/index.js";
@@ -1452,7 +1453,7 @@ describe("ModularChangeFamily integration", () => {
 			const remove = tagChangeInline(removeD, tagForCompare);
 
 			const composed = family.compose([moves, remove]);
-			family.validateChangeset(composed);
+			validateChangeset(composed, family.fieldKinds);
 			const composedDelta = normalizeDelta(intoDelta(makeAnonChange(composed), fieldKinds));
 
 			const nodeAChanges: DeltaFieldMap = new Map([
@@ -1523,7 +1524,7 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			family.validateChangeset(composed);
+			validateChangeset(composed, family.fieldKinds);
 			const delta = intoDelta(taggedComposed, family.fieldKinds);
 			assertDeltaEqual(delta, expected);
 		});
@@ -1557,7 +1558,7 @@ describe("ModularChangeFamily integration", () => {
 
 			const moveAndInsert = family.compose([tagChangeInline(insert, tag2), moveTagged]);
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
-			family.validateChangeset(composed);
+			validateChangeset(composed, family.fieldKinds);
 
 			const actual = intoDelta(makeAnonChange(composed), family.fieldKinds);
 			const expected: DeltaRoot = {

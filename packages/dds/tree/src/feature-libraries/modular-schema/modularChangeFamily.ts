@@ -250,7 +250,7 @@ export class ModularChangeFamily
 		});
 
 		// XXX: This is an expensive assert which should be disabled before merging.
-		this.validateChangeset(composed);
+		validateChangeset(composed, this.fieldKinds);
 		return composed;
 	}
 
@@ -1119,7 +1119,7 @@ export class ModularChangeFamily
 		});
 
 		// XXX: This is an expensive assert which should be disabled before merging.
-		this.validateChangeset(rebased);
+		validateChangeset(rebased, this.fieldKinds);
 		return rebased;
 	}
 
@@ -2018,105 +2018,6 @@ export class ModularChangeFamily
 	private createEmptyFieldChange(fieldKind: FieldKindIdentifier): FieldChange {
 		const emptyChange = getChangeHandler(this.fieldKinds, fieldKind).createEmpty();
 		return { fieldKind, change: brand(emptyChange) };
-	}
-
-	public validateChangeset(change: ModularChangeset): void {
-		const unreachableNodes: ChangeAtomIdBTree<NodeLocation> = brand(
-			change.nodeToParent.clone(),
-		);
-
-		const unreachableCFKs = change.crossFieldKeys.clone();
-
-		this.validateFieldChanges(
-			change,
-			change.fieldChanges,
-			undefined,
-			unreachableNodes,
-			unreachableCFKs,
-		);
-
-		for (const [[revision, localId], node] of change.nodeChanges.entries()) {
-			if (node.fieldChanges === undefined) {
-				continue;
-			}
-
-			const nodeId = normalizeNodeId({ revision, localId }, change.nodeAliases);
-			this.validateFieldChanges(
-				change,
-				node.fieldChanges,
-				nodeId,
-				unreachableNodes,
-				unreachableCFKs,
-			);
-		}
-
-		for (const [detachIdKey, nodeId] of change.rootNodes.nodeChanges.entries()) {
-			const detachId: ChangeAtomId = { revision: detachIdKey[0], localId: detachIdKey[1] };
-			const location = getNodeParent(change, nodeId);
-			assert(areEqualChangeAtomIdOpts(location.root, detachId), "Inconsistent node location");
-
-			const normalizedNodeId = normalizeNodeId(nodeId, change.nodeAliases);
-			unreachableNodes.delete([normalizedNodeId.revision, normalizedNodeId.localId]);
-
-			const fieldChanges = nodeChangeFromId(
-				change.nodeChanges,
-				change.nodeAliases,
-				nodeId,
-			).fieldChanges;
-
-			if (fieldChanges !== undefined) {
-				this.validateFieldChanges(
-					change,
-					fieldChanges,
-					normalizedNodeId,
-					unreachableNodes,
-					unreachableCFKs,
-				);
-			}
-		}
-
-		assert(unreachableNodes.size === 0, "Unreachable nodes found");
-		assert(unreachableCFKs.entries().length === 0, "Unreachable cross-field keys found");
-	}
-
-	/**
-	 * Asserts that each node has a correct entry in `change.nodeToParent`,
-	 * and each cross field key has a correct entry in `change.crossFieldKeys`.
-	 * @returns the number of children found.
-	 */
-	private validateFieldChanges(
-		change: ModularChangeset,
-		fieldChanges: FieldChangeMap,
-		nodeParent: NodeId | undefined,
-		unreachableNodes: ChangeAtomIdBTree<NodeLocation>,
-		unreachableCFKs: CrossFieldRangeTable<FieldId>,
-	): void {
-		for (const [field, fieldChange] of fieldChanges.entries()) {
-			const fieldId = { nodeId: nodeParent, field };
-			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
-			for (const [child, _index] of handler.getNestedChanges(fieldChange.change)) {
-				const parentFieldId = getNodeParent(change, child);
-				assert(
-					parentFieldId.field !== undefined && areEqualFieldIds(parentFieldId.field, fieldId),
-					0xa4e /* Inconsistent node parentage */,
-				);
-
-				unreachableNodes.delete([child.revision, child.localId]);
-			}
-
-			for (const keyRange of handler.getCrossFieldKeys(fieldChange.change)) {
-				const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
-				assert(fields.length > 0, "Unregistered cross-field key");
-				for (const fieldFromLookup of fields) {
-					assert(
-						areEqualFieldIds(fieldFromLookup, fieldId),
-						0xa4f /* Inconsistent cross field keys */,
-					);
-				}
-
-				unreachableCFKs.delete(keyRange.key, keyRange.count);
-			}
-		}
 	}
 
 	private getEffectiveChange(change: ModularChangeset): ModularChangeset {
@@ -4991,4 +4892,108 @@ function muteRootChanges(roots: RootNodeTable): RootNodeTable {
 		detachLocations: roots.detachLocations.clone(),
 		outputDetachLocations: newChangeAtomIdRangeMap(),
 	};
+}
+
+export function validateChangeset(
+	change: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): void {
+	const unreachableNodes: ChangeAtomIdBTree<NodeLocation> = brand(change.nodeToParent.clone());
+
+	const unreachableCFKs = change.crossFieldKeys.clone();
+
+	validateFieldChanges(
+		fieldKinds,
+		change,
+		change.fieldChanges,
+		undefined,
+		unreachableNodes,
+		unreachableCFKs,
+	);
+
+	for (const [[revision, localId], node] of change.nodeChanges.entries()) {
+		if (node.fieldChanges === undefined) {
+			continue;
+		}
+
+		const nodeId = normalizeNodeId({ revision, localId }, change.nodeAliases);
+		validateFieldChanges(
+			fieldKinds,
+			change,
+			node.fieldChanges,
+			nodeId,
+			unreachableNodes,
+			unreachableCFKs,
+		);
+	}
+
+	for (const [detachIdKey, nodeId] of change.rootNodes.nodeChanges.entries()) {
+		const detachId: ChangeAtomId = { revision: detachIdKey[0], localId: detachIdKey[1] };
+		const location = getNodeParent(change, nodeId);
+		assert(areEqualChangeAtomIdOpts(location.root, detachId), "Inconsistent node location");
+
+		const normalizedNodeId = normalizeNodeId(nodeId, change.nodeAliases);
+		unreachableNodes.delete([normalizedNodeId.revision, normalizedNodeId.localId]);
+
+		const fieldChanges = nodeChangeFromId(
+			change.nodeChanges,
+			change.nodeAliases,
+			nodeId,
+		).fieldChanges;
+
+		if (fieldChanges !== undefined) {
+			validateFieldChanges(
+				fieldKinds,
+				change,
+				fieldChanges,
+				normalizedNodeId,
+				unreachableNodes,
+				unreachableCFKs,
+			);
+		}
+	}
+
+	assert(unreachableNodes.size === 0, "Unreachable nodes found");
+	assert(unreachableCFKs.entries().length === 0, "Unreachable cross-field keys found");
+}
+
+/**
+ * Asserts that each node has a correct entry in `change.nodeToParent`,
+ * and each cross field key has a correct entry in `change.crossFieldKeys`.
+ * @returns the number of children found.
+ */
+function validateFieldChanges(
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	change: ModularChangeset,
+	fieldChanges: FieldChangeMap,
+	nodeParent: NodeId | undefined,
+	unreachableNodes: ChangeAtomIdBTree<NodeLocation>,
+	unreachableCFKs: CrossFieldRangeTable<FieldId>,
+): void {
+	for (const [field, fieldChange] of fieldChanges.entries()) {
+		const fieldId = { nodeId: nodeParent, field };
+		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
+		for (const [child, _index] of handler.getNestedChanges(fieldChange.change)) {
+			const parentFieldId = getNodeParent(change, child);
+			assert(
+				parentFieldId.field !== undefined && areEqualFieldIds(parentFieldId.field, fieldId),
+				0xa4e /* Inconsistent node parentage */,
+			);
+
+			unreachableNodes.delete([child.revision, child.localId]);
+		}
+
+		for (const keyRange of handler.getCrossFieldKeys(fieldChange.change)) {
+			const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
+			assert(fields.length > 0, "Unregistered cross-field key");
+			for (const fieldFromLookup of fields) {
+				assert(
+					areEqualFieldIds(fieldFromLookup, fieldId),
+					0xa4f /* Inconsistent cross field keys */,
+				);
+			}
+
+			unreachableCFKs.delete(keyRange.key, keyRange.count);
+		}
+	}
 }
