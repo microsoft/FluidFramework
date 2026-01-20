@@ -530,6 +530,91 @@ export interface CheckAssertTaggingResult {
  * @param options - Configuration options for the check
  * @returns Result indicating whether changes would be made
  */
+
+/**
+ * Scans a single package for untagged asserts without modifying any files.
+ *
+ * @internal
+ */
+function scanPackageForUntaggedAsserts(
+	packageDir: string,
+	tsconfigPath: string,
+	assertionFunctions: AssertionFunctions,
+): { untaggedFiles: string[]; errors: string[] } {
+	const errors: string[] = [];
+	const templateErrors: Node[] = [];
+	const otherErrors: Node[] = [];
+	const untaggedFiles: string[] = [];
+
+	const project = new Project({
+		skipFileDependencyResolution: false,
+		tsConfigFilePath: tsconfigPath,
+	});
+
+	const sourceFiles = project
+		.getSourceFiles(`${packageDir.replaceAll("\\", "/")}/**`)
+		.filter((source) => source.getExtension() !== ".d.ts");
+
+	for (const sourceFile of sourceFiles) {
+		let hasUntaggedAssert = false;
+
+		for (const msg of getAssertMessageParams(sourceFile, assertionFunctions)) {
+			const nodeKind = msg.getKind();
+			switch (nodeKind) {
+				case SyntaxKind.NumericLiteral: {
+					// Already tagged - validate format
+					const numLit = msg as NumericLiteral;
+					if (!numLit.getText().startsWith("0x")) {
+						errors.push(
+							`Shortcodes must be provided by automation and be in hex format: ${numLit.getText()}\n\t${getCallsiteString(numLit)}`,
+						);
+					}
+					break;
+				}
+				case SyntaxKind.StringLiteral:
+				case SyntaxKind.NoSubstitutionTemplateLiteral: {
+					hasUntaggedAssert = true;
+					break;
+				}
+				case SyntaxKind.TemplateExpression: {
+					templateErrors.push(msg);
+					break;
+				}
+				case SyntaxKind.BinaryExpression:
+				case SyntaxKind.CallExpression: {
+					// Silently allowed (matching existing behavior)
+					break;
+				}
+				default: {
+					otherErrors.push(msg);
+					break;
+				}
+			}
+		}
+
+		if (hasUntaggedAssert) {
+			untaggedFiles.push(sourceFile.getFilePath());
+		}
+	}
+
+	// Build error messages (matching existing format)
+	if (templateErrors.length > 0) {
+		errors.push(
+			`Template expressions are not supported in assertions (they'll be replaced by a short code anyway). ` +
+				`Use a string literal instead.\n${templateErrors.map(getCallsiteString).join("\n")}`,
+		);
+	}
+	if (otherErrors.length > 0) {
+		errors.push(
+			`Unsupported argument kind:\n${otherErrors
+				.map((msg) => `${SyntaxKind[msg.getKind()]}: ${getCallsiteString(msg)}`)
+				.join("\n")}`,
+		);
+	}
+
+	return { untaggedFiles, errors };
+}
+
 export async function checkAssertTagging(options: {
 	/**
 	 * Root directory of the repository
@@ -544,6 +629,53 @@ export async function checkAssertTagging(options: {
 	 */
 	disableConfig?: boolean;
 }): Promise<CheckAssertTaggingResult> {
-	// Stub implementation
-	throw new Error("Not implemented");
+	const { repoRoot, packagePaths, disableConfig = false } = options;
+	const allUntaggedFiles: string[] = [];
+	const allErrors: string[] = [];
+
+	const config = lilconfig(configName, { searchPlaces });
+
+	for (const packagePath of packagePaths) {
+		const packageDir = path.isAbsolute(packagePath)
+			? packagePath
+			: path.join(repoRoot, packagePath);
+
+		const tsconfigPath = path.join(packageDir, "tsconfig.json");
+		if (!fs.existsSync(tsconfigPath)) {
+			continue; // Skip packages without tsconfig
+		}
+
+		// Load package configuration
+		let assertionFunctions: AssertionFunctions;
+		// eslint-disable-next-line no-await-in-loop
+		const packageConfig = await config.search(packageDir);
+		if (packageConfig === null || disableConfig) {
+			assertionFunctions = defaultAssertionFunctions;
+		} else {
+			const innerConfig = packageConfig.config as AssertTaggingPackageConfig;
+			if (typeof innerConfig.assertionFunctions !== "object") {
+				allErrors.push(`Assert tagging config in ${packageConfig.filepath} is not valid.`);
+				continue;
+			}
+			assertionFunctions = new Map<string, number>(
+				Object.entries(innerConfig.assertionFunctions),
+			);
+		}
+
+		const { untaggedFiles, errors } = scanPackageForUntaggedAsserts(
+			packageDir,
+			tsconfigPath,
+			assertionFunctions,
+		);
+
+		allUntaggedFiles.push(...untaggedFiles);
+		allErrors.push(...errors);
+	}
+
+	return {
+		hasUntaggedAsserts: allUntaggedFiles.length > 0,
+		fileCount: allUntaggedFiles.length,
+		filePaths: allUntaggedFiles,
+		errors: allErrors,
+	};
 }
