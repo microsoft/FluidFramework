@@ -8,7 +8,7 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
 	SerializationVersion,
-} from "@fluidframework/id-compressor/legacy";
+} from "@fluidframework/id-compressor/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 
 import {
