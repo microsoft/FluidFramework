@@ -227,21 +227,20 @@ export class SchematizingSimpleTreeView<
 				},
 			);
 
-			this.checkout.transaction.start();
-
-			initialize(
-				this.checkout,
-				schema,
-				initializerFromChunk(this.checkout, () => {
-					// This must be done after initial schema is set!
-					return combineChunks(
-						this.checkout.forest.chunkField(
-							cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
-						),
-					);
-				}),
-			);
-			this.checkout.transaction.commit();
+			this.runTransaction(() => {
+				initialize(
+					this.checkout,
+					schema,
+					initializerFromChunk(this.checkout, () => {
+						// This must be done after initial schema is set!
+						return combineChunks(
+							this.checkout.forest.chunkField(
+								cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+							),
+						);
+					}),
+				);
+			});
 		});
 	}
 
@@ -294,9 +293,43 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		this.mountTransaction(params, false);
+		const transactionCallbackStatus = transaction();
+		return this.unmountTransaction(transactionCallbackStatus);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runAsyncTransaction}
+	 */
+	public runAsyncTransaction<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runAsyncTransaction}
+	 */
+	public runAsyncTransaction(
+		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResult>;
+	public async runAsyncTransaction<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void
+		>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
+		this.mountTransaction(params, true);
+		const transactionCallbackStatus = await transaction();
+		return this.unmountTransaction(transactionCallbackStatus);
+	}
+
+	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
+		this.ensureUndisposed();
 		const { checkout } = this;
 
-		checkout.transaction.start();
+		checkout.transaction.start(isAsync);
 
 		// Validate preconditions before running the transaction callback.
 		addConstraintsToTransaction(
@@ -304,7 +337,16 @@ export class SchematizingSimpleTreeView<
 			false /* constraintsOnRevert */,
 			params?.preconditions,
 		);
-		const transactionCallbackStatus = transaction();
+	}
+
+	private unmountTransaction<TSuccessValue, TFailureValue>(
+		transactionCallbackStatus:
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void,
+	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		this.ensureUndisposed();
+		const { checkout } = this;
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
 			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>

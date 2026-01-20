@@ -98,7 +98,7 @@ describe("Fuzz - anchor stability", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
 			const tree = viewFromState(initialState, initialState.clients[0]).checkout;
-			tree.transaction.start();
+			tree.transaction.start(false);
 			const initialJsonableTree = jsonableTreeFromForest(tree.forest);
 			initialState.initialJsonableTree = initialJsonableTree;
 			// These tests are hard coded to a single client, so this is fine.

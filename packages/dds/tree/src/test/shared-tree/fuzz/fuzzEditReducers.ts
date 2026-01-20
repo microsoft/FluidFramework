@@ -401,7 +401,7 @@ export function applyTransactionBoundary(
 	const { checkout } = view;
 	switch (boundary) {
 		case "start": {
-			checkout.transaction.start();
+			checkout.transaction.start(false);
 			break;
 		}
 		case "commit": {
