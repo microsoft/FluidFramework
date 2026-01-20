@@ -30,6 +30,11 @@ import {
 } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import {
+	optionalIdentifier,
+	identifierFieldIdentifier,
+	requiredIdentifier,
+} from "../fieldKindIdentifiers.js";
+import {
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
 	type FieldEditor,
@@ -53,11 +58,6 @@ import type {
 	Replace,
 } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
-import {
-	optionalIdentifier,
-	identifierFieldIdentifier,
-	requiredIdentifier,
-} from "../fieldKindIdentifiers.js";
 
 export interface IRegisterMap<T> {
 	set(id: RegisterId, childChange: T): void;

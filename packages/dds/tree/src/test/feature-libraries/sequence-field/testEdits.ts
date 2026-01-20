@@ -112,7 +112,7 @@ function createRedundantRemoveChangeset(
 	revision: RevisionTag,
 ): SF.Changeset {
 	const changeset = createRemoveChangeset(index, size, revision, detachEvent.localId);
-	changeset.at(-1).cellId = detachEvent;
+	changeset[changeset.length - 1].cellId = detachEvent;
 	return changeset;
 }
 
@@ -123,7 +123,7 @@ function createPinChangeset(
 	revision: RevisionTag | undefined,
 ): SF.Changeset {
 	const markList = sequenceFieldEditor.revive(startIndex, count, detachEvent, revision);
-	const mark = markList.at(-1);
+	const mark = markList[markList.length - 1];
 	delete mark.cellId;
 	return markList;
 }

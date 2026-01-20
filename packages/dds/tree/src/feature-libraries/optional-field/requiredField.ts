@@ -10,6 +10,7 @@ import {
 	type FieldChangeHandler,
 	FlexFieldKind,
 } from "../modular-schema/index.js";
+
 import { optionalChangeHandler, optionalFieldEditor } from "./optionalField.js";
 import type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
 

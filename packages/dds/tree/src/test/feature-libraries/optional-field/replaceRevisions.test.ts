@@ -21,7 +21,6 @@ import { mintRevisionTag } from "../../utils.js";
 
 import { Change, assertEqual } from "./optionalFieldUtils.js";
 
-
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();

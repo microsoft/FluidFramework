@@ -64,7 +64,6 @@ import { assertEqual, Change, removeAliases } from "./modular-schema/modularChan
 // eslint-disable-next-line import-x/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 
-
 const sequenceIdentifier = defaultFieldKinds.sequence.identifier;
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map([
