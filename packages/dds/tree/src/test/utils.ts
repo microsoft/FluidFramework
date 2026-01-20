@@ -30,7 +30,7 @@ import type {
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	assertIsStableId,
-	createIdCompressorInternal,
+	createIdCompressor,
 	type IIdCompressorCore,
 	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
@@ -471,7 +471,7 @@ export class TestTreeProviderLite {
 			const runtime = new MockFluidDataStoreRuntime({
 				clientId: `test-client-${i}`,
 				id: "test",
-				idCompressor: createIdCompressorInternal(sessionId, SerializationVersion.V3),
+				idCompressor: createIdCompressor(sessionId, SerializationVersion.V3),
 				logger: this.logger,
 			});
 			const tree = this.factory.create(runtime, `tree-${i}`);

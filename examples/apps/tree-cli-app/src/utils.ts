@@ -11,7 +11,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-	createIdCompressorInternal,
+	createIdCompressor,
 	deserializeIdCompressor,
 	type SerializedIdCompressorWithOngoingSession,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -166,7 +166,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 		}
 		case "snapshot": {
 			// TODO: This should be made better. See privateRemarks on TreeAlpha.exportCompressed.
-			const idCompressor = createIdCompressorInternal(SerializationVersion.V3);
+			const idCompressor = createIdCompressor(SerializationVersion.V3);
 			const file: File = {
 				tree: TreeAlpha.exportCompressed(tree, {
 					minVersionForCollab: compatVersion,

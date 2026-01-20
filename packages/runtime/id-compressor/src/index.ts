@@ -9,7 +9,6 @@
 
 export {
 	createIdCompressor,
-	createIdCompressorInternal,
 	deserializeIdCompressor,
 } from "./idCompressor.js";
 export {

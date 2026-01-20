@@ -69,7 +69,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import {
-	createIdCompressorInternal,
+	createIdCompressor,
 	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 import {
@@ -451,7 +451,7 @@ describe("schemaBasedEncoding", () => {
 			// TODO: test non size 1 batches
 			for (const { name, treeFactory, schemaData } of testTrees) {
 				it(name, () => {
-					const idCompressor = createIdCompressorInternal(
+					const idCompressor = createIdCompressor(
 						assertIsSessionId("00000000-0000-4000-b000-000000000000"),
 						SerializationVersion.V3,
 					);

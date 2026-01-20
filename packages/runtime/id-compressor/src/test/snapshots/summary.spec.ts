@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { type SessionId, createIdCompressorInternal } from "../../index.js";
+import { type SessionId, createIdCompressor } from "../../index.js";
 import { SerializationVersion } from "../../types/index.js";
 import { modifyClusterSize } from "../idCompressorTestUtilities.js";
 
@@ -91,15 +91,15 @@ describe("snapshot tests", () => {
 			useSnapshotDirectory(`v${version}`);
 
 			it("empty compressor summary", () => {
-				const compressor = createIdCompressorInternal(client1, version);
+				const compressor = createIdCompressor(client1, version);
 				const summary = compressor.serialize(false);
 
 				takeSnapshot(summary);
 			});
 
 			it("compressor with finalized range from one client", () => {
-				const compressor = createIdCompressorInternal(client1, version);
-				const compressor2 = createIdCompressorInternal(client2, version);
+				const compressor = createIdCompressor(client1, version);
+				const compressor2 = createIdCompressor(client2, version);
 				for (let i = 0; i < 10; i++) {
 					compressor.generateCompressedId();
 				}
@@ -113,8 +113,8 @@ describe("snapshot tests", () => {
 			});
 
 			it("compressors with finalized ranges from two clients", () => {
-				const compressor = createIdCompressorInternal(client1, version);
-				const compressor2 = createIdCompressorInternal(client2, version);
+				const compressor = createIdCompressor(client1, version);
+				const compressor2 = createIdCompressor(client2, version);
 
 				for (let i = 0; i < 10; i++) {
 					compressor.generateCompressedId();
@@ -136,8 +136,8 @@ describe("snapshot tests", () => {
 			});
 
 			it("expansion semantics", () => {
-				const compressor = createIdCompressorInternal(client1, version);
-				const compressor2 = createIdCompressorInternal(client2, version);
+				const compressor = createIdCompressor(client1, version);
+				const compressor2 = createIdCompressor(client2, version);
 				modifyClusterSize(compressor, 2);
 				compressor.generateCompressedId();
 				const idRange = compressor.takeNextCreationRange();

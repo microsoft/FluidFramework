@@ -10,7 +10,7 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 import {
-	createIdCompressorInternal,
+	createIdCompressor,
 	deserializeIdCompressor,
 	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
@@ -255,7 +255,7 @@ export const createOrDeserializeCompressor = (
 	summary?: FuzzSerializedIdCompressor,
 ) => {
 	return summary === undefined
-		? createIdCompressorInternal(SerializationVersion.V3)
+		? createIdCompressor(SerializationVersion.V3)
 		: summary.withSession
 			? deserializeIdCompressor(summary.serializedCompressor, SerializationVersion.V3)
 			: deserializeIdCompressor(
@@ -267,14 +267,15 @@ export const createOrDeserializeCompressor = (
 
 export const deterministicIdCompressorFactory: (
 	seed: number,
-) => (summary?: FuzzSerializedIdCompressor) => ReturnType<typeof createIdCompressorInternal> =
-	(seed) => {
-		const random = makeRandom(seed);
-		return (summary?: FuzzSerializedIdCompressor) => {
-			const sessionId = random.uuid4() as SessionId;
-			return createOrDeserializeCompressor(sessionId, summary);
-		};
+) => (summary?: FuzzSerializedIdCompressor) => ReturnType<typeof createIdCompressor> = (
+	seed,
+) => {
+	const random = makeRandom(seed);
+	return (summary?: FuzzSerializedIdCompressor) => {
+		const sessionId = random.uuid4() as SessionId;
+		return createOrDeserializeCompressor(sessionId, summary);
 	};
+};
 
 export const populatedInitialState: NodeBuilderData<typeof FuzzNode> = {
 	arrayChildren: [

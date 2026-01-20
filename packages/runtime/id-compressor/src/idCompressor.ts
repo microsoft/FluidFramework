@@ -1090,7 +1090,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
  * @param logger - Optional telemetry logger.
  * @internal
  */
-export function createIdCompressorInternal(
+export function createIdCompressor(
 	writeVersion: SerializationVersion,
 	logger?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore;
@@ -1101,12 +1101,12 @@ export function createIdCompressorInternal(
  * @param logger - Optional telemetry logger.
  * @internal
  */
-export function createIdCompressorInternal(
+export function createIdCompressor(
 	sessionId: SessionId,
 	writeVersion: SerializationVersion,
 	logger?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore;
-export function createIdCompressorInternal(
+export function createIdCompressor(
 	sessionIdOrDocumentVersion: SessionId | SerializationVersion,
 	writeVersionOrLogger?: SerializationVersion | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
@@ -1133,47 +1133,6 @@ export function createIdCompressorInternal(
 		writeVersion,
 	);
 	return compressor;
-}
-
-/**
- * Create a new {@link IIdCompressor}.
- * @param writeVersion - The version the compressor will write when serializing. Use SerializationVersion.V2 for base format, or SerializationVersion.V3 for sharding support.
- * @param logger - Optional telemetry logger.
- * @legacy
- * @beta
- */
-export function createIdCompressor(
-	writeVersion: SerializationVersion,
-	logger?: ITelemetryBaseLogger,
-): IIdCompressor;
-/**
- * Create a new {@link IIdCompressor}.
- * @param sessionId - The seed ID for the compressor.
- * @param writeVersion - The version the compressor will write when serializing. Use SerializationVersion.V2 for base format, or SerializationVersion.V3 for sharding support.
- * @param logger - Optional telemetry logger.
- * @legacy
- * @beta
- */
-export function createIdCompressor(
-	sessionId: SessionId,
-	writeVersion: SerializationVersion,
-	logger?: ITelemetryBaseLogger,
-): IIdCompressor;
-export function createIdCompressor(
-	sessionIdOrDocumentVersion: SessionId | SerializationVersion,
-	writeVersionOrLogger?: SerializationVersion | ITelemetryBaseLogger,
-	loggerOrUndefined?: ITelemetryBaseLogger,
-): IIdCompressor {
-	return typeof sessionIdOrDocumentVersion === "string"
-		? createIdCompressorInternal(
-				sessionIdOrDocumentVersion,
-				writeVersionOrLogger as SerializationVersion,
-				loggerOrUndefined,
-			)
-		: createIdCompressorInternal(
-				sessionIdOrDocumentVersion,
-				writeVersionOrLogger as ITelemetryBaseLogger | undefined,
-			);
 }
 
 /**

@@ -101,7 +101,7 @@ import type {
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
 import {
-	createIdCompressorInternal,
+	createIdCompressor,
 	createSessionId,
 	deserializeIdCompressor,
 	SerializationVersion,
@@ -1156,7 +1156,7 @@ export class ContainerRuntime
 					compressorLogger,
 				);
 			} else if (serializedIdCompressor === undefined) {
-				return createIdCompressorInternal(SerializationVersion.V2, compressorLogger);
+				return createIdCompressor(SerializationVersion.V2, compressorLogger);
 			} else {
 				return deserializeIdCompressor(
 					serializedIdCompressor,

@@ -4,12 +4,6 @@
 
 ```ts
 
-// @beta @legacy
-export function createIdCompressor(writeVersion: SerializationVersion, logger?: ITelemetryBaseLogger): IIdCompressor;
-
-// @beta @legacy
-export function createIdCompressor(sessionId: SessionId, writeVersion: SerializationVersion, logger?: ITelemetryBaseLogger): IIdCompressor;
-
 // @public
 export interface IIdCompressor {
     decompress(id: SessionSpaceCompressedId): StableId;
