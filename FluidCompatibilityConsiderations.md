@@ -11,7 +11,7 @@ Fluid Framework is a distributed system where multiple clients collaborate on sh
 
 This document defines and explains each compatibility type, describing what it means, why it matters, and the scenarios it enables. Understanding these distinctions helps both Fluid Framework maintainers and application developers reason about version compatibility and upgrade strategies.
 
-> **Note:** This document does not specify the policies around what version compatibility matrix and guarantees we provide—it focuses on defining the compatibility types themselves.
+> **Note:** This document does not specify the policies around what version compatibility matrix and guarantees we provide — it focuses on defining the compatibility types themselves.
 
 ## Data-at-rest compatibility
 

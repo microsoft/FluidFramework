@@ -135,53 +135,40 @@ The compatibility system enforces validation at specific **layer boundaries**:
 
 ## Architecture Diagram
 
+```mermaid
+graph TD
+    subgraph Application
+        UX[User Experience]
+
+        Driver[Driver - version A]
+        subgraph Loader[Loader - version B]
+            subgraph Runtime[Runtime - version C]
+                subgraph Datastores[Datastores - version D]
+                    DDSes[DDSes]
+                end
+            end
+        end
+    end
+    FFS[Fluid Service]
+
+    Loader --> UX
+    Driver --> Loader
+    Driver --> FFS
+
+    style UX fill:#bf8f00,stroke:#997300,color:#fff
+    style Driver fill:#4472c4,stroke:#2f5496,color:#fff
+    style Loader fill:#548235,stroke:#3d5c28,color:#fff
+    style Runtime fill:#c55a11,stroke:#a04a0e,color:#fff
+    style Datastores fill:#5b9bd5,stroke:#4a8bc4,color:#fff
+    style DDSes fill:#5b9bd5,stroke:#2f5496,color:#fff,stroke-width:1px
+    style FFS fill:#7f7f7f,stroke:#666666,color:#fff
 ```
-┌───────────────────────────────────────────────────────────────────────────────────────────┐
-│ Application                                                                               │
-│                                                                                           │
-│  Legend:  (FF) = Fluid Framework    (Author) = Container Authors                          │
-│           (Consumer) = Container Consumers                                                │
-│                                                                                           │
-│  ┌──────────────────┐    ┌────────────────────────────────────────────────────────────┐   │
-│  │ Experience       │    │ Loader (N-2) (FF)                                          │   │
-│  │ (Consumer)       │    │                                                            │   │
-│  └────────▲─────────┘    │  ┌──────────────────────────────────────────────────────┐  │   │
-│           └──────────────│──│ Host API (FF)                                        │  │   │
-│                          │  └────────────────────────▲─────────────────────────────┘  │   │
-│  ┌──────────────┐        │                           │                                │   │
-│  │ Driver (N-3) │        │  ┌────────────────────────│─────────────────────────────┐  │   │
-│  │ (FF)         │────────┤  │ Runtime (N-1) (FF)     │                             │  │   │
-│  └──────┬───────┘        │  │                        │                             │  │   │
-│         │                │  │  ┌──────────────────┐  │  ┌───────────────────────┐  │  │   │
-│         │                │  │  │ Entrypoint       │  │  │  Datastores (N)       │  │  │   │
-│         │                │  │  │ (Author)         │  │  │                       │  │  │   │
-│         │                │  │  ├──────────────────┤  │  │  ┌─────────────────┐  │  │  │   │
-│         │                │  │  │ API │ Rendering  │  │  │  │ Entrypoint      │  │  │  │   │
-│         │                │  │  │ (Author)         │  │  │  │ (Author)        │  │  │  │   │
-│         │                │  │  ├──────────────────┤  │  │  ├─────────────────┤  │  │  │   │
-│         │                │  │  │ Business Logic   │◄─┤──│──│ API │ Rendering │  │  │  │   │
-│         │                │  │  │ (Author)         │  │  │  │ (Author)        │  │  │  │   │
-│         │                │  │  └────────▲─────────┘  │  │  ├─────────────────┤  │  │  │   │
-│         │                │  │           │            │  │  │ Business Logic  │  │  │  │   │
-│         │                │  │           │            │  │  │ (Author)        │  │  │  │   │
-│         │                │  │           │            │  │  └───────▲─────────┘  │  │  │   │
-│         │                │  │           │            │  │          │            │  │  │   │
-│         │                │  │           │            │  │  ┌─────────────────┐  │  │  │   │
-│         │                │  │           │            │  │  │ DDSes (FF)      │  │  │  │   │
-│         │                │  │           │            │  │  └─────────────────┘  │  │  │   │
-│         │                │  │           │            │  └──────────▲────────────┘  │  │   │
-│         │                │  └───────────│────────────│─────────────│───────────────┘  │   │
-│         │                └──────────────│────────────│─────────────│──────────────────┘   │
-│         │                               │            │             │                      │
-│         │                  ┌────────────┴────────────┴─────────────┴─────────────────┐    │
-│         └─────────────────►│ Fluid Framework Services (FF)                           │    │
-│                            └─────────────────────────────────────────────────────────┘    │
-└───────────────────────────────────────────────────────────────────────────────────────────┘
-```
-- **Driver layer**: Fluid package version N-3.
-- **Loader layer**: Fluid package version N-2.
-- **Runtime layer**: Fluid package version N-1.
-- **Datastore layer**: Fluid package version N.
+
+This diagram shows different Fluid layers with different versions in a client:
+- **Driver layer**: Fluid package version A.
+- **Loader layer**: Fluid package version B.
+- **Runtime layer**: Fluid package version C.
+- **Datastore layer**: Fluid package version D.
 
 ## Compatibility Mechanics
 
