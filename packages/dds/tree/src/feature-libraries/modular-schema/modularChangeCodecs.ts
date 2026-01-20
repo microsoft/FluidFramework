@@ -67,7 +67,7 @@ export function makeModularChangeCodecFamily(
 						),
 					];
 				}
-				case 101:
+				case 101: {
 					return [
 						version,
 						makeModularChangeCodecV3(
@@ -78,6 +78,7 @@ export function makeModularChangeCodecFamily(
 							chunkCompressionStrategy,
 						),
 					];
+				}
 				default: {
 					fail(`Unsupported modular change codec version`);
 				}

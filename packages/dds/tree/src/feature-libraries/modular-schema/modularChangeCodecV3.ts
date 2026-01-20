@@ -5,7 +5,6 @@
 
 import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 import {
-	extractJsonValidator,
 	withSchemaValidation,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -43,10 +42,7 @@ import {
 	type TreeChunk,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import type {
-	FieldKindConfiguration,
-	FieldKindConfigurationEntry,
-} from "./fieldKindConfiguration.js";
+import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import {
 	addNodeRename,
 	getFirstAttachField,
@@ -365,7 +361,7 @@ export function makeModularChangeCodecV3(
 					buildsArray.push(buildsForRevision);
 				}
 
-				buildsForRevision = encodedRevision !== undefined ? [[], encodedRevision] : [[]];
+				buildsForRevision = encodedRevision === undefined ? [[]] : [[], encodedRevision];
 			}
 
 			treesToEncode.push(chunk.cursor());
@@ -412,7 +408,7 @@ export function makeModularChangeCodecV3(
 		};
 
 		const map: ModularChangeset["builds"] = newTupleBTree();
-		encoded.builds.forEach((build) => {
+		for (const build of encoded.builds) {
 			// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
 			const revision =
 				build[1] === undefined ? context.revision : revisionTagCodec.decode(build[1], context);
@@ -425,7 +421,7 @@ export function makeModularChangeCodecV3(
 			for (const [id, chunk] of decodedChunks) {
 				map.set([revision, id], chunk);
 			}
-		});
+		}
 
 		return map;
 	}
@@ -476,7 +472,7 @@ export function makeModularChangeCodecV3(
 		context: ChangeEncodingContext,
 	): RevisionInfo[] | undefined {
 		if (revisions === undefined) {
-			return context.revision !== undefined ? [{ revision: context.revision }] : undefined;
+			return context.revision === undefined ? undefined : [{ revision: context.revision }];
 		}
 
 		const decodedRevisions = [];

@@ -264,14 +264,16 @@ function handleNodeChanges(
 	composeChild: NodeChangeComposer,
 	moveEffects: ComposeNodeManager,
 ): NodeId | undefined {
-	if (newMark.changes !== undefined) {
-		if (baseMark.type === "Insert" && baseMark.cellId !== undefined) {
-			moveEffects.sendNewChangesToBaseSourceLocation(
-				getAttachedRootId(baseMark),
-				newMark.changes,
-			);
-			return undefined;
-		}
+	if (
+		newMark.changes !== undefined &&
+		baseMark.type === "Insert" &&
+		baseMark.cellId !== undefined
+	) {
+		moveEffects.sendNewChangesToBaseSourceLocation(
+			getAttachedRootId(baseMark),
+			newMark.changes,
+		);
+		return undefined;
 	}
 
 	// TODO: Make sure composeChild is not called twice on the node changes.

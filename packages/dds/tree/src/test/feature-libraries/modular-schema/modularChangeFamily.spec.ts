@@ -141,7 +141,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild): DeltaFieldChanges => [
-		{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined },
+		{ count: 1, fields: change === undefined ? undefined : deltaFromChild(change) },
 	],
 
 	// We create changesets by composing an empty single node field with a change to the child.

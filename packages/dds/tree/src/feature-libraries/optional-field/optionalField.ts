@@ -80,10 +80,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			// TODO: Use nodeDetach instead of valueReplace if not supporting older client versions.
 			// inverted.nodeDetach = detachIdForInverse;
-			if (inverted.valueReplace !== undefined) {
-				(inverted.valueReplace as Mutable<Replace>).dst = detachIdForInverse;
-			} else {
+			if (inverted.valueReplace === undefined) {
 				inverted.valueReplace = { isEmpty: false, dst: detachIdForInverse };
+			} else {
+				(inverted.valueReplace as Mutable<Replace>).dst = detachIdForInverse;
 			}
 		} else if (detachId === undefined && change.childChange !== undefined) {
 			// This change does not affect which node is in the field, so its child change should remain here.
@@ -271,7 +271,7 @@ function composeReplaces(
 		return undefined;
 	}
 
-	const isEmpty = change1.nodeDetach !== undefined ? false : firstReplace.isEmpty;
+	const isEmpty = change1.nodeDetach === undefined ? firstReplace.isEmpty : false;
 	const replace: Mutable<Replace> = { isEmpty, dst: firstReplace.dst };
 	if (change2.valueReplace?.src !== undefined) {
 		replace.src = change2.valueReplace.src;
@@ -327,11 +327,11 @@ function getComposedChildChanges(
 	const childChangesFromChange2: NodeId | undefined =
 		// If such a node did exist, the changes for it in change2 would come from wherever change1 sends that node.
 		// Note: in both branches of this ternary, we are leveraging the fact querying for changes of a non-existent node safely yields undefined
-		detachId1 !== undefined
-			? nodeManager.getNewChangesForBaseDetach(detachId1, 1).value?.nodeChange
-			: change1.valueReplace?.src !== undefined
-				? undefined
-				: change2.childChange;
+		detachId1 === undefined
+			? change1.valueReplace?.src === undefined
+				? change2.childChange
+				: undefined
+			: nodeManager.getNewChangesForBaseDetach(detachId1, 1).value?.nodeChange;
 
 	let composedChildChange: NodeId | undefined;
 	if (change1.childChange !== undefined || childChangesFromChange2 !== undefined) {
@@ -450,7 +450,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		);
 
 		const childChange = childChanges[0];
-		return childChange !== undefined ? { childChange } : {};
+		return childChange === undefined ? {} : { childChange };
 	},
 };
 
@@ -477,7 +477,7 @@ export function optionalFieldIntoDelta(
 		markIsANoop = false;
 	}
 
-	return !markIsANoop ? [mark] : [];
+	return markIsANoop ? [] : [mark];
 }
 
 export const optionalChangeHandler: FieldChangeHandler<

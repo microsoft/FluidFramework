@@ -120,16 +120,21 @@ export function getInputCellId(mark: Mark): CellId | undefined {
 export function getOutputCellId(mark: Mark): CellId | undefined {
 	const type = mark.type;
 	switch (type) {
-		case NoopMarkType:
+		case NoopMarkType: {
 			return getInputCellId(mark);
-		case "Insert":
+		}
+		case "Insert": {
 			return undefined;
-		case "Remove":
+		}
+		case "Remove": {
 			return getDetachOutputCellId(mark);
-		case "Rename":
+		}
+		case "Rename": {
 			return mark.idOverride;
-		default:
+		}
+		default: {
 			unreachableCase(type);
+		}
 	}
 }
 
@@ -380,10 +385,15 @@ export function areOutputCellsEmpty(mark: Mark): boolean {
 			return mark.cellId !== undefined;
 		}
 		case "Remove":
-		case "Rename":
+		case "Rename": {
 			return true;
-		case "Insert":
+		}
+		case "Insert": {
 			return false;
+		}
+		default: {
+			unreachableCase(type);
+		}
 	}
 }
 
@@ -412,9 +422,13 @@ export function isImpactful(mark: Mark): boolean {
 			assert(outputId !== undefined, 0x824 /* Remove marks must have an output cell ID */);
 			return !areEqualChangeAtomIds(inputId, outputId);
 		}
-		case "Insert":
+		case "Insert": {
 			// A Revive has no impact if the nodes are already in the document.
 			return mark.cellId !== undefined;
+		}
+		default: {
+			unreachableCase(type);
+		}
 	}
 }
 
@@ -657,8 +671,9 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			}
 			return [effect1, effect2];
 		}
-		default:
+		default: {
 			unreachableCase(type);
+		}
 	}
 }
 
@@ -765,7 +780,7 @@ function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange
 
 			return keys;
 		}
-		case "Remove":
+		case "Remove": {
 			return [
 				{
 					key: {
@@ -776,7 +791,9 @@ function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange
 					count,
 				},
 			];
-		default:
+		}
+		default: {
 			return [];
+		}
 	}
 }

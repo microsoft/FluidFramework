@@ -15,10 +15,12 @@ export function isMoveMark(effect: MarkEffect): effect is MoveMarkEffect {
 
 export function getAttach(effect: MarkEffect): Attach | undefined {
 	switch (effect.type) {
-		case "Insert":
+		case "Insert": {
 			return effect;
-		default:
+		}
+		default: {
 			return undefined;
+		}
 	}
 }
 

@@ -165,7 +165,7 @@ function normalizeNodeIds(
 
 	const remapNodeLocation = (location: NodeLocation): NodeLocation => {
 		const remapped: NodeLocation =
-			location.field !== undefined ? { field: remapFieldId(location.field) } : location;
+			location.field === undefined ? location : { field: remapFieldId(location.field) };
 
 		return remapped;
 	};
@@ -322,7 +322,9 @@ function normalizeRangeMap<K, V>(
 	let prevEntry: RangeQueryEntry<K, V> | undefined;
 
 	for (const entry of map.entries()) {
-		if (prevEntry !== undefined) {
+		if (prevEntry === undefined) {
+			prevEntry = entry;
+		} else {
 			if (
 				areEqualKeys(map.offsetKey(prevEntry.start, prevEntry.length), entry.start) &&
 				areEqualValues(map.offsetValue(prevEntry.value, prevEntry.length), entry.value)
@@ -332,8 +334,6 @@ function normalizeRangeMap<K, V>(
 				normalized.set(prevEntry.start, prevEntry.length, prevEntry.value);
 				prevEntry = entry;
 			}
-		} else {
-			prevEntry = entry;
 		}
 	}
 

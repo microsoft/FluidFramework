@@ -2840,8 +2840,9 @@ describe("Editing", () => {
 								viewA.root.object.optChild = undefined;
 								break;
 							}
-							default:
+							default: {
 								fail(`Unexpected source container: ${src}`);
+							}
 						}
 
 						provider.synchronizeMessages();
@@ -2862,8 +2863,9 @@ describe("Editing", () => {
 								viewA.root.object.optChild = hydratedChildOnA;
 								break;
 							}
-							default:
+							default: {
 								fail(`Unexpected destination container: ${dst}`);
+							}
 						}
 
 						provider.synchronizeMessages();
@@ -2918,8 +2920,9 @@ describe("Editing", () => {
 							view.root.object.optChild = undefined;
 							break;
 						}
-						default:
+						default: {
 							fail(`Unexpected source container: ${src}`);
+						}
 					}
 					assert.equal(Tree.status(hydratedChild), TreeStatus.Removed);
 					assert.throws(() => (view.root.object.reqChild = hydratedChild));

@@ -382,10 +382,10 @@ export function revisionMetadataSourceFromInfo(
 		const index2 = getIndex(revision2);
 
 		if (index1 !== undefined) {
-			return index2 !== undefined ? index2 - index1 : -1;
+			return index2 === undefined ? -1 : index2 - index1;
 		}
 
-		return index2 !== undefined ? 1 : 0;
+		return index2 === undefined ? 0 : 1;
 	};
 
 	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {

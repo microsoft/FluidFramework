@@ -12,9 +12,9 @@ import {
 	rootFieldKey,
 	tagChange,
 } from "../../../core/index.js";
-import {
-	type ModularChangeset,
-	type NodeId,
+import type {
+	ModularChangeset,
+	NodeId,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -234,7 +234,31 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 			};
 		};
 		const edits = getSequentialEdits(state);
-		if (state.content !== undefined) {
+		if (state.content === undefined) {
+			// Clear Empty Field
+			// Even if there is no content, optional field supports an explicit clear operation with LWW semantics,
+			// as a concurrent set operation may populate the field.
+			const intention = mintIntention();
+			const revision = tagFromIntention(intention);
+			const detach = mintId(revision);
+			const fieldEdit: FieldEditDescription = {
+				type: "field",
+				field: { parent: undefined, field: rootFieldKey },
+				fieldKind: optional.identifier,
+				change: brand(OptionalChange.clear(true, detach)),
+				revision,
+			};
+			const modularEdit = editor.buildChanges([fieldEdit]);
+			yield {
+				content: undefined,
+				mostRecentEdit: {
+					changeset: tagChange(modularEdit, revision),
+					intention,
+					description: "RemoveE",
+				},
+				parent: state,
+			};
+		} else {
 			// Nested Change
 			{
 				const intention = mintIntention();
@@ -325,30 +349,6 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 					parent: state,
 				};
 			}
-		} else {
-			// Clear Empty Field
-			// Even if there is no content, optional field supports an explicit clear operation with LWW semantics,
-			// as a concurrent set operation may populate the field.
-			const intention = mintIntention();
-			const revision = tagFromIntention(intention);
-			const detach = mintId(revision);
-			const fieldEdit: FieldEditDescription = {
-				type: "field",
-				field: { parent: undefined, field: rootFieldKey },
-				fieldKind: optional.identifier,
-				change: brand(OptionalChange.clear(true, detach)),
-				revision,
-			};
-			const modularEdit = editor.buildChanges([fieldEdit]);
-			yield {
-				content: undefined,
-				mostRecentEdit: {
-					changeset: tagChange(modularEdit, revision),
-					intention,
-					description: "RemoveE",
-				},
-				parent: state,
-			};
 		}
 
 		for (const value of ["A", "B"]) {

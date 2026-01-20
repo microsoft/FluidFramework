@@ -160,13 +160,13 @@ export function makeOptionalFieldCodec(
 
 			if (encoded.c !== undefined) {
 				for (const [encodedDetachId, nodeChange] of encoded.c) {
-					if (encodedDetachId !== null) {
+					if (encodedDetachId === null) {
+						decoded.childChange = context.decodeNode(nodeChange);
+					} else {
 						context.decodeRootNodeChange(
 							changeAtomIdCodec.decode(encodedDetachId, context.baseContext),
 							nodeChange,
 						);
-					} else {
-						decoded.childChange = context.decodeNode(nodeChange);
 					}
 				}
 			}
