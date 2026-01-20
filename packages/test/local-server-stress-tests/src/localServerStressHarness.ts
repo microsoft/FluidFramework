@@ -730,17 +730,16 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 			const channelsByType = new Map<string, IChannel[]>();
 			for (const channel of channels) {
 				const channelType = channel.attributes.type;
-				const channelsOfType = channelsByType.get(channelType) ?? [];
-				channelsOfType.push(channel);
-				channelsByType.set(channelType, channelsOfType);
+				if (!channelsByType.has(channelType)) {
+					channelsByType.set(channelType, []);
+				}
+				channelsByType.get(channelType)!.push(channel);
 			}
 			
 			// First pick a channel type, then pick a channel of that type
 			const channelTypes = Array.from(channelsByType.keys());
 			const selectedType = state.random.pick(channelTypes);
-			assert(selectedType !== undefined, "channel type must exist");
-			const channelsOfSelectedType = channelsByType.get(selectedType);
-			assert(channelsOfSelectedType !== undefined, "channels of selected type must exist");
+			const channelsOfSelectedType = channelsByType.get(selectedType)!;
 			const channel = state.random.pick(channelsOfSelectedType);
 			assert(channel !== undefined, "channel must exist");
 			const baseOp = await runInStateWithClient(state, client, datastore, channel, async () =>
