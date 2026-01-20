@@ -58,6 +58,8 @@ const buildToolsOverrides = {
 				allowed: [
 					// fs-extra is well-maintained and provides useful readJson/writeJson API
 					"fs-extra",
+
+					// TODO: All dependencies below should be replaced when possible.
 					// globby is used extensively in build-tools for file patterns
 					"globby",
 					// execa is used for running child processes
@@ -87,7 +89,7 @@ const buildToolsOverrides = {
 		"unicorn/filename-case": "off",
 
 		// Prefer-regexp-exec is a style preference, not a correctness issue.
-		// Consider enabling in the future.
+		// TODO: Consider enabling in the future.
 		"@typescript-eslint/prefer-regexp-exec": "off",
 
 		// These rules are useful but require code changes to fix.
@@ -130,9 +132,11 @@ const buildToolsOverrides = {
 		// JSDoc/TSDoc tag hyphen rule.
 		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "off",
 
+		// TODO: Re-enable and fix violations.
 		// Import namespace errors may be false positives with some libraries.
 		"import-x/namespace": "off",
 
+		// TODO: Re-enable and fix violations.
 		// Allow importing eslint in policy check code.
 		"import-x/no-extraneous-dependencies": "off",
 	},
@@ -161,4 +165,4 @@ export const chaiFriendlyConfig = {
 	},
 };
 
-export { baseConfig as default, chaiFriendly, minimalDeprecated };
+export { baseConfig as default, chaiFriendly };
