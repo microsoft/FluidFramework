@@ -92,5 +92,7 @@ async function run(): Promise<boolean> {
 }
 
 run()
+
 	.then((success) => process.exit(success ? 0 : 1))
+
 	.catch(() => process.exit(2));

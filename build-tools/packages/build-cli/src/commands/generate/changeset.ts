@@ -128,7 +128,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 				monorepo.directory ?? context.root,
 				new Map(),
 			);
-			// eslint-disable-next-line @typescript-eslint/no-shadow
+
 			const changesetPath = path.relative(context.root, emptyFile);
 			this.logHr();
 			this.log(`Created empty changeset: ${chalk.green(changesetPath)}`);
@@ -150,18 +150,14 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		this.log(`Remote for ${repo.upstreamRemotePartialUrl} is: ${chalk.bold(remote)}`);
 
 		ux.action.start(`Comparing local changes to remote for branch ${branch}`);
-		const {
-			packages: initialBranchChangedPackages,
-			files: initialChangedFiles,
-			releaseGroups: initialChangedReleaseGroups,
-		} = await repo.getChangedSinceRef(branch, remote, context);
+		const changes = await repo.getChangedSinceRef(branch, remote, context);
+		const initialBranchChangedPackages = changes.packages;
+		let { files: changedFiles, releaseGroups: changedReleaseGroups } = changes;
 		ux.action.stop();
 
-		// Separate definitions to address no-atomic-updates lint rule
+		// Separate definition to address no-atomic-updates lint rule
 		// https://eslint.org/docs/latest/rules/require-atomic-updates
 		let changedPackages = initialBranchChangedPackages;
-		let changedFiles = initialChangedFiles;
-		let changedReleaseGroups = initialChangedReleaseGroups;
 
 		// If the branch flag was passed explicitly, we don't want to prompt the user to select one. We can't check for
 		// undefined because there's a default value for the flag.

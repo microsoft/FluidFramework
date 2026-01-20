@@ -5,7 +5,7 @@
 
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { Command, Flags, type Interfaces } from "@oclif/core";
-// eslint-disable-next-line import-x/no-internal-modules
+
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
 
@@ -196,7 +196,6 @@ export abstract class BaseCommand<T extends typeof Command>
 		return this.suppressLogging ? "" : this.warning(message);
 	}
 
-	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated Use {@link BaseCommand.warning} or {@link BaseCommand.warningWithDebugTrace} instead.
 	 */
@@ -254,13 +253,13 @@ export abstract class BaseCommand<T extends typeof Command>
 			if (typeof input === "string") {
 				// Ignoring lint error because the typings here come from oclif and the options type oclif has is complex. It's
 				// not worth replicating in this call.
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+
 				super.error(chalk.red(input), options as any);
 			}
 
 			// Ignoring lint error because the typings here come from oclif and the options type oclif has is complex. It's
 			// not worth replicating in this call.
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+
 			return super.error(input as Error, options as any);
 		}
 	}

@@ -79,7 +79,6 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 		const context = await this.getContext();
 		const { defaultMode, flags } = this;
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const releaseGroup = flags.releaseGroup ?? flags.package!;
 		this.releaseGroupName = findPackageOrReleaseGroup(releaseGroup, context)?.name;
 		if (this.releaseGroupName === undefined) {

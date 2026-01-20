@@ -63,7 +63,6 @@ export async function getBaselineBuildMetrics(
 			`codeCoverageAnalysisArtifactName: ${azureDevopsBuildCoverageConstants.artifactName}`,
 		);
 
-		// eslint-disable-next-line no-await-in-loop
 		baselineArtifactZip = await getZipObjectFromArtifact(
 			adoConnection,
 			azureDevopsBuildCoverageConstants.projectName,

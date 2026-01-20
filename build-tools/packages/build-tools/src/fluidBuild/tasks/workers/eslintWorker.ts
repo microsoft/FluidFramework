@@ -11,7 +11,7 @@ export async function lint(message: WorkerMessage): Promise<WorkerExecResult> {
 	try {
 		// Load the eslint version that is in the cwd scope
 		const eslintPath = require.resolve("eslint", { paths: [message.cwd] });
-		// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 		const eslint = require(eslintPath);
 
 		// TODO: better parsing, assume split delimited for now.
