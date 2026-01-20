@@ -5,11 +5,6 @@
 
 export {
 	FieldKinds,
-	type Required,
-	type Optional,
-	type Sequence,
-	type Identifier,
-	type Forbidden,
 	fieldKinds,
 	fieldKindConfigurations,
 	getCodecTreeForModularChangeFormat,
