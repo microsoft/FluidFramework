@@ -12,9 +12,12 @@ const config: Linter.Config[] = [
 		rules: {
 			"@rushstack/no-new-null": "off",
 			"import-x/no-nodejs-modules": "off",
-			"promise/catch-or-return": ["error", {
-				"allowFinally": true,
-			}],
+			"promise/catch-or-return": [
+				"error",
+				{
+					allowFinally: true,
+				},
+			],
 			"unicorn/no-null": "off",
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
