@@ -58,9 +58,9 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type JsonDeserializedParameters<T extends (...args: any[]) => any> = T extends (
+	export type JsonDeserializedParameters<T extends (...args: any[]) => unknown> = T extends (
 		...args: infer P
-	) => any
+	) => unknown
 		? JsonDeserialized<P>
 		: never;
 
@@ -69,9 +69,9 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type JsonSerializableParameters<T extends (...args: any[]) => any> = T extends (
+	export type JsonSerializableParameters<T extends (...args: any[]) => unknown> = T extends (
 		...args: infer P
-	) => any
+	) => unknown
 		? JsonSerializable<P>
 		: never;
 }
