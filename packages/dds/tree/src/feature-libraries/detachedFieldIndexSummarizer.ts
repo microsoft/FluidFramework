@@ -10,7 +10,13 @@ import type {
 	ITelemetryContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
-import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import {
+	getConfigForMinVersionForCollab,
+	lowestMinVersionForCollab,
+	type SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
+
+import { FluidClientVersion } from "../codec/index.js";
 
 import type { DetachedFieldIndex } from "../core/index.js";
 import {
@@ -20,11 +26,8 @@ import {
 	VersionedSummarizer,
 } from "../shared-tree-core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
-
-/**
- * The storage key for the blob in the summary containing schema data
- */
-export const detachedFieldIndexBlobKey = "DetachedFieldIndexBlob";
+import { summaryContentBlobKey as summaryContentBlobKeyV1ToV2 } from "./detachedFieldIndexSummaryFormatV1ToV2.js";
+import { summaryContentBlobKey as summaryContentBlobKeyV3 } from "./detachedFieldIndexSummaryFormatV3.js";
 
 /**
  * The versions for the detached field index summary format.
@@ -39,14 +42,20 @@ export const enum DetachedFieldIndexSummaryFormatVersion {
 	 */
 	v2 = 2,
 	/**
+	 * This version changes the key where the summary content is stored.
+	 * This is not backward compatible with version 1 or 2.
+	 */
+	v3 = 3,
+	/**
 	 * The latest version of the summary. Must be updated when a new version is added.
 	 */
-	vLatest = v2,
+	vLatest = v3,
 }
 
 const supportedVersions = new Set<DetachedFieldIndexSummaryFormatVersion>([
 	DetachedFieldIndexSummaryFormatVersion.v1,
 	DetachedFieldIndexSummaryFormatVersion.v2,
+	DetachedFieldIndexSummaryFormatVersion.v3,
 ]);
 
 /**
@@ -55,8 +64,24 @@ const supportedVersions = new Set<DetachedFieldIndexSummaryFormatVersion>([
 function minVersionToDetachedFieldIndexSummaryFormatVersion(
 	version: MinimumVersionForCollab,
 ): DetachedFieldIndexSummaryFormatVersion {
-	// Currently, version 2 is written which adds metadata blob to the summary.
-	return DetachedFieldIndexSummaryFormatVersion.v2;
+	return getConfigForMinVersionForCollab(version, {
+		[lowestMinVersionForCollab]: DetachedFieldIndexSummaryFormatVersion.v2,
+		[FluidClientVersion.v2_81]: DetachedFieldIndexSummaryFormatVersion.v3,
+	});
+}
+
+/**
+ * Gets the key for the blob containing the detached field index summary content based on the summary format version.
+ * @param summaryFormatVersion - The version of the detached field index summary format.
+ * @returns The key for the detached field index summary content blob.
+ */
+function getDetachedFieldIndexSummaryContentKey(
+	summaryFormatVersion: DetachedFieldIndexSummaryFormatVersion | undefined,
+): string {
+	return summaryFormatVersion === undefined ||
+		summaryFormatVersion < DetachedFieldIndexSummaryFormatVersion.v3
+		? summaryContentBlobKeyV1ToV2
+		: summaryContentBlobKeyV3;
 }
 
 /**
@@ -66,15 +91,17 @@ export class DetachedFieldIndexSummarizer
 	extends VersionedSummarizer<DetachedFieldIndexSummaryFormatVersion>
 	implements Summarizable
 {
+	private readonly writeSummaryContentBlobKey: string;
+
 	public constructor(
 		private readonly detachedFieldIndex: DetachedFieldIndex,
 		minVersionForCollab: MinimumVersionForCollab,
 	) {
-		super(
-			"DetachedFieldIndex",
-			minVersionToDetachedFieldIndexSummaryFormatVersion(minVersionForCollab),
-			supportedVersions,
-			true,
+		const summaryFormatWriteVersion =
+			minVersionToDetachedFieldIndexSummaryFormatVersion(minVersionForCollab);
+		super("DetachedFieldIndex", summaryFormatWriteVersion, supportedVersions, true);
+		this.writeSummaryContentBlobKey = getDetachedFieldIndexSummaryContentKey(
+			summaryFormatWriteVersion,
 		);
 	}
 
@@ -88,15 +115,17 @@ export class DetachedFieldIndexSummarizer
 	}): void {
 		const { stringify, builder } = props;
 		const data = this.detachedFieldIndex.encode();
-		builder.addBlob(detachedFieldIndexBlobKey, stringify(data));
+		builder.addBlob(this.writeSummaryContentBlobKey, stringify(data));
 	}
 
 	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
+		version: DetachedFieldIndexSummaryFormatVersion | undefined,
 	): Promise<void> {
-		if (await services.contains(detachedFieldIndexBlobKey)) {
-			const detachedFieldIndexBuffer = await services.readBlob(detachedFieldIndexBlobKey);
+		const summaryContentBlobKey = getDetachedFieldIndexSummaryContentKey(version);
+		if (await services.contains(summaryContentBlobKey)) {
+			const detachedFieldIndexBuffer = await services.readBlob(summaryContentBlobKey);
 			const treeBufferString = bufferToString(detachedFieldIndexBuffer, "utf8");
 			const parsed = parse(treeBufferString) as JsonCompatibleReadOnly;
 			this.detachedFieldIndex.loadData(parsed);
