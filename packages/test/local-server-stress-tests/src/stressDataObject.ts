@@ -289,14 +289,41 @@ export class DefaultStressDataObject extends StressDataObject {
 		)) as any as ISharedMap;
 	}
 
+	/**
+	 * Objects created during staging mode that need to be registered in containerObjectMap
+	 * after staging mode exits. We defer the write to avoid it being rolled back on discard.
+	 */
+	private readonly _pendingContainerObjectRegistrations: ContainerObjects[] = [];
+
 	public registerLocallyCreatedObject(obj: ContainerObjects): void {
 		if (obj.handle !== undefined) {
 			const handle = toFluidHandleInternal(obj.handle);
-			if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
+			if (this.inStagingMode()) {
+				// Defer registration until staging mode exits to avoid rollback on discard
+				this._pendingContainerObjectRegistrations.push(obj);
+			} else if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
 				this.containerObjectMap.set(handle.absolutePath, { tag: obj.tag, type: obj.type });
 			}
 		}
 		this._locallyCreatedObjects.push(obj);
+	}
+
+	/**
+	 * Flushes pending containerObjectMap registrations that were deferred during staging mode.
+	 */
+	private flushPendingContainerObjectRegistrations(): void {
+		for (const obj of this._pendingContainerObjectRegistrations) {
+			if (obj.handle !== undefined) {
+				const handle = toFluidHandleInternal(obj.handle);
+				if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
+					this.containerObjectMap.set(handle.absolutePath, {
+						tag: obj.tag,
+						type: obj.type,
+					});
+				}
+			}
+		}
+		this._pendingContainerObjectRegistrations.length = 0;
 	}
 
 	private stageControls: StageControlsAlpha | undefined;
@@ -325,6 +352,10 @@ export class DefaultStressDataObject extends StressDataObject {
 			this.stageControls.discardChanges();
 		}
 		this.stageControls = undefined;
+
+		// Flush any pending containerObjectMap registrations that were deferred during staging mode.
+		// This happens after staging mode exits so the writes won't be rolled back.
+		this.flushPendingContainerObjectRegistrations();
 	}
 }
 
