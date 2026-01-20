@@ -4,21 +4,10 @@
  */
 
 import type { Linter } from "eslint";
-import { recommended } from "../../../../common/build/eslint-config-fluid/flat.mts";
+import { recommendedConfig } from "../../eslint.config.base.mts";
 
 const config: Linter.Config[] = [
-	...recommended,
-	{
-		rules: {
-			"promise/catch-or-return": [
-				"error",
-				{
-					allowFinally: true,
-				},
-			],
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
-		},
-	},
+	...recommendedConfig,
 	{
 		ignores: ["*.spec.ts"],
 	},

@@ -4,27 +4,15 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/flat.mts";
+import { baseConfig } from "../../eslint.config.base.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
-	{
-		rules: {
-			"import-x/no-nodejs-modules": "off",
-			"promise/catch-or-return": [
-				"error",
-				{
-					allowFinally: true,
-				},
-			],
-			"import-x/no-deprecated": "warn",
-			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-		},
-	},
+	...baseConfig,
 	{
 		files: ["**/*.{ts,tsx}"],
 		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
 		rules: {
+			// TODO: services-utils was close to compliance, consider re-enabling
 			"@typescript-eslint/strict-boolean-expressions": "warn",
 		},
 	},

@@ -4,23 +4,10 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/flat.mts";
+import { baseConfig } from "../../eslint.config.base.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
-	{
-		rules: {
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"import-x/no-nodejs-modules": "off",
-			"promise/catch-or-return": [
-				"error",
-				{
-					allowFinally: true,
-				},
-			],
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
-		},
-	},
+	...baseConfig,
 	{
 		ignores: ["*.spec.ts"],
 	},

@@ -4,10 +4,10 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/flat.mts";
+import { baseConfig } from "../../eslint.config.base.mts";
 
 const config: Linter.Config[] = [
-	...minimalDeprecated,
+	...baseConfig,
 	{
 		files: ["src/test/**/*.ts"],
 		rules: {
