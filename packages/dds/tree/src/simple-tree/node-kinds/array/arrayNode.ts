@@ -1415,6 +1415,7 @@ export interface ArrayNodeAnchor {
  * @privateRemarks
  * When stabilized, this should probably become a method on {@link (TreeArrayNode:interface)}.
  * Future versions of this should use rebaser / changeset logic to do a better job of tracking a location across removals or reinsertion.
+ * How this would work, especially for unhydrated nodes is not yet clear.
  * @alpha
  */
 export function createArrayInsertionAnchor(
