@@ -615,13 +615,13 @@ extends:
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
                   packageManager: '${{ parameters.packageManager }}'
-                  buildDirectory: '${{ parameters.buildDirectory }}'
+                  buildDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
               # We need it in order to run flub where the code coverage comparison logic calls for it
               - template: /tools/pipelines/templates/include-install-build-tools.yml@self
                 parameters:
-                  buildDirectory: ${{ parameters.buildDirectory }}
+                  buildDirectory: ${{ parameters.buildDirectory }}/FluidFramework
                   buildToolsVersionToInstall: repo
                   pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
 
