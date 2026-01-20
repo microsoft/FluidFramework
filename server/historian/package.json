@@ -18,6 +18,7 @@
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"format": "npm run prettier:fix",
 		"preinstall": "node scripts/only-pnpm.cjs",
+		"postinstall": "cd ../../common/build/eslint-config-fluid && pnpm install",
 		"lint": "npm run prettier && npm run ci:eslint",
 		"lint:fix": "npm run prettier:fix && pnpm run -r --stream --no-sort lint:fix",
 		"policy-check": "cd ../.. && npm run policy-check",
@@ -46,7 +47,7 @@
 		"@fluid-tools/build-cli": "^0.61.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.61.0",
-		"@fluidframework/eslint-config-fluid": "^6.1.0",
+		"@fluidframework/eslint-config-fluid": "link:../../common/build/eslint-config-fluid",
 		"@types/compression": "0.0.36",
 		"@types/cors": "^2.8.4",
 		"@types/debug": "^4.1.5",
@@ -55,8 +56,8 @@
 		"@types/redis": "^2.8.10",
 		"@types/supertest": "^2.0.7",
 		"async": "^3.2.2",
-		"eslint": "~8.57.0",
-		"eslint-config-prettier": "~10.1.8",
+		"eslint": "~9.39.2",
+		"jiti": "^2.6.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^5.0.0",
 		"run-script-os": "^1.1.5",
@@ -67,10 +68,12 @@
 	"pnpm": {
 		"commentsOverrides": [
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
-			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently."
+			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
+			"eslint is overridden to v9 for flat config support across all packages"
 		],
 		"overrides": {
 			"@types/node": "^18.17.1",
+			"eslint": "~9.39.2",
 			"nanoid": "^3.3.9",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",

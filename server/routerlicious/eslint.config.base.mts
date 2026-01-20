@@ -209,6 +209,10 @@ const routerliciousOverrides = {
 		// TODO: Fix to use ===.
 		"eqeqeq": "off",
 
+		// Return-await style - server code uses various patterns.
+		// TODO: Standardize on in-try-catch style.
+		"@typescript-eslint/return-await": "off",
+
 		// #endregion
 	},
 };
