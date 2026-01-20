@@ -383,7 +383,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private editLock: EditLock;
 
-	// User-defined label associated with the transaction whose commit is currently being produced for this checkout.
+	/**
+	 * User-defined label associated with the transaction whose commit is currently being produced for this checkout.
+	 *
+	 * @remarks
+	 * This label is used to implement {@link TreeCheckout.runWithTransactionLabel}.
+	 */
 	private transactionLabel?: unknown;
 
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
@@ -437,11 +442,23 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.registerForBranchEvents();
 	}
 
+	/**
+	 * Helper method for {@link SchematizingSimpleTreeView.runTransaction} to properly clear transaction labels once the function completes..
+	 *
+	 * @remarks
+	 * The label is stored during the execution of the function and will be included in the {@link ChangeMetadata} of the transaction.
+	 *
+	 * If there is a nested transaction, only the outermost transaction label will be used.
+	 *
+	 * @param fn - The function to execute. It receives the user provided transaction label as an optional parameter.
+	 * @param label - The label to associate with the outermost transaction.
+	 * @returns The result of executing `fn`.
+	 */
 	public runWithTransactionLabel<TLabel, TResult>(
 		fn: (label?: TLabel) => TResult,
-		label?: TLabel,
+		label: TLabel | undefined,
 	): TResult {
-		// If a transaction label is already set, nesting is occurring, so we should not override it
+		// If a transaction label is already set, nesting is occurring, so we should not override it.
 		if (this.transactionLabel !== undefined) {
 			return fn(this.transactionLabel as TLabel);
 		}
@@ -592,11 +609,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
-			const metaData: ChangeMetadata = {
+			this.#events.emit("changed", {
 				isLocal: false,
 				kind: CommitKind.Default,
-			};
-			this.#events.emit("changed", metaData);
+			});
 		}
 	};
 

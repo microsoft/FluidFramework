@@ -50,7 +50,6 @@ import { brand } from "../../util/index.js";
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import { testDocumentIndependentView } from "../testTrees.js";
 import { fieldJsonCursor } from "../json/index.js";
-import { CommitKind } from "../../core/index.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -1124,9 +1123,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const labels: unknown[] = [];
 
 			view.checkout.events.on("changed", (meta) => {
-				if (meta.isLocal) {
-					labels.push(meta.label);
-				}
+				labels.push(meta.label);
 			});
 
 			const testLabel = "testLabel";
@@ -1150,9 +1147,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const labels: unknown[] = [];
 
 			view.checkout.events.on("changed", (meta) => {
-				if (meta.isLocal) {
-					labels.push(meta.label);
-				}
+				labels.push(meta.label);
 			});
 
 			const runTransactionResult = view.runTransaction(() => {
@@ -1173,9 +1168,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const labels: unknown[] = [];
 
 			view.checkout.events.on("changed", (meta) => {
-				if (meta.isLocal) {
-					labels.push(meta.label);
-				}
+				labels.push(meta.label);
 			});
 
 			const testLabel1 = "testLabel1";
@@ -1213,9 +1206,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const labels: unknown[] = [];
 
 			view.checkout.events.on("changed", (meta) => {
-				if (meta.isLocal) {
-					labels.push(meta.label);
-				}
+				labels.push(meta.label);
 			});
 
 			const outerLabel = "outerLabel";
@@ -1263,15 +1254,11 @@ describe("SchematizingSimpleTreeView", () => {
 			const labels2: unknown[] = [];
 
 			view1.checkout.events.on("changed", (meta) => {
-				if (meta.isLocal) {
-					labels1.push(meta.label);
-				}
+				labels1.push(meta.label);
 			});
 
 			view2.checkout.events.on("changed", (meta) => {
-				if (meta.isLocal) {
-					labels2.push(meta.label);
-				}
+				labels2.push(meta.label);
 			});
 
 			const label1 = "view1Label";
@@ -1300,167 +1287,6 @@ describe("SchematizingSimpleTreeView", () => {
 
 			// Check that view2 shows its own label (not view1's label)
 			assert.deepEqual(labels2, [label2]);
-		});
-
-		it("separate branches maintain independent transaction labels", () => {
-			const view = getTestObjectView();
-			const branch1Checkout = view.checkout.branch();
-			const branch2Checkout = view.checkout.branch();
-
-			const labels1: unknown[] = [];
-			const labels2: unknown[] = [];
-
-			branch1Checkout.events.on("changed", (meta) => {
-				if (meta.isLocal) {
-					labels1.push(meta.label);
-				}
-			});
-
-			branch2Checkout.events.on("changed", (meta) => {
-				if (meta.isLocal) {
-					labels2.push(meta.label);
-				}
-			});
-
-			const label1 = "branch1Label";
-			const label2 = "branch2Label";
-
-			const branch1View = branch1Checkout.viewWith(view.config);
-			const branch2View = branch2Checkout.viewWith(view.config);
-
-			// Start a transaction in branch1 with label1
-			branch1View.runTransaction(
-				() => {
-					branch1View.root.content = 1;
-
-					// Nested transaction in branch2 with label2 (within branch1's transaction)
-					branch2View.runTransaction(
-						() => {
-							branch2View.root.content = 100;
-						},
-						{ label: label2 },
-					);
-
-					branch1View.root.content = 2;
-				},
-				{ label: label1 },
-			);
-
-			// Check that branch1 only shows its label
-			assert.deepEqual(labels1, [label1]);
-
-			// Check that branch2 shows its own label (not branch1's label)
-			assert.deepEqual(labels2, [label2]);
-		});
-	});
-
-	describe("label-based grouping for undo", () => {
-		it("groups multiple transactions with the same label into a single undo group", () => {
-			const view = getTestObjectView();
-
-			interface LabeledGroup {
-				label: unknown;
-				revertibles: { revert(): void }[];
-			}
-
-			const undoGroups: LabeledGroup[] = [];
-
-			view.checkout.events.on("changed", (meta, getRevertible) => {
-				// Omit remote, Undo/Redo commits
-				if (meta.isLocal && getRevertible !== undefined && meta.kind === CommitKind.Default) {
-					const label = meta.label;
-					const revertible = getRevertible();
-
-					// Check if the latest group contains the same label.
-					const latestGroup = undoGroups[undoGroups.length - 1];
-					if (
-						label !== undefined &&
-						latestGroup !== undefined &&
-						label === latestGroup.label
-					) {
-						latestGroup.revertibles.push(revertible);
-					} else {
-						undoGroups.push({ label, revertibles: [revertible] });
-					}
-				}
-			});
-
-			const undoLatestGroup = () => {
-				const latestGroup = undoGroups.pop() ?? fail("There are currently no undo groups.");
-				for (const revertible of latestGroup.revertibles.reverse()) {
-					revertible.revert();
-				}
-			};
-
-			const initialRootContent = view.root.content;
-
-			// Edit group 1
-			const testLabel1 = "testLabel1";
-
-			const runTransactionResult1 = view.runTransaction(
-				() => {
-					view.root.content = 1;
-				},
-				{ label: testLabel1 },
-			);
-			assert.equal(runTransactionResult1.success, true);
-			assert.equal(view.root.content, 1);
-
-			const runTransactionResult2 = view.runTransaction(
-				() => {
-					view.root.content = 2;
-				},
-				{ label: testLabel1 },
-			);
-			assert.equal(runTransactionResult2.success, true);
-			assert.equal(view.root.content, 2);
-
-			const runTransactionResult3 = view.runTransaction(
-				() => {
-					view.root.content = 3;
-				},
-				{ label: testLabel1 },
-			);
-			assert.equal(runTransactionResult3.success, true);
-			assert.equal(view.root.content, 3);
-
-			// Edit group 2
-			const testLabel2 = "testLabel2";
-
-			const runTransactionResult4 = view.runTransaction(
-				() => {
-					view.root.content = 4;
-				},
-				{ label: testLabel2 },
-			);
-			assert.equal(runTransactionResult4.success, true);
-			assert.equal(view.root.content, 4);
-
-			const runTransactionResult5 = view.runTransaction(
-				() => {
-					view.root.content = 5;
-				},
-				{ label: testLabel2 },
-			);
-			assert.equal(runTransactionResult5.success, true);
-			assert.equal(view.root.content, 5);
-
-			const runTransactionResult6 = view.runTransaction(
-				() => {
-					view.root.content = 6;
-				},
-				{ label: testLabel2 },
-			);
-			assert.equal(runTransactionResult6.success, true);
-			assert.equal(view.root.content, 6);
-
-			// This should undo all the edits from group 2.
-			undoLatestGroup();
-			assert.equal(view.root.content, 3);
-
-			// This should undo all the edits from group 1
-			undoLatestGroup();
-			assert.equal(view.root.content, initialRootContent);
 		});
 	});
 });

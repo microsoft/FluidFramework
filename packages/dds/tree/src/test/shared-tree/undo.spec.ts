@@ -4,6 +4,7 @@
  */
 
 import {
+	CommitKind,
 	type NormalizedFieldUpPath,
 	type NormalizedUpPath,
 	type Revertible,
@@ -30,7 +31,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
@@ -693,6 +694,120 @@ describe("Undo and redo", () => {
 			() => clonedUndoOriginalPropertyOne?.revert(),
 			"Error: Unable to revert a revertible that has been disposed.",
 		);
+	});
+
+	describe("label-based grouping for undo", () => {
+		it("groups multiple transactions with the same label into a single undo group", () => {
+			const view = createInitializedView();
+			interface LabeledGroup {
+				label: unknown;
+				revertibles: { revert(): void }[];
+			}
+
+			const undoGroups: LabeledGroup[] = [];
+
+			view.events.on("changed", (meta, getRevertible) => {
+				// Omit remote, Undo/Redo commits
+				if (meta.isLocal && getRevertible !== undefined && meta.kind === CommitKind.Default) {
+					const label = meta.label;
+					const revertible = getRevertible();
+
+					// Check if the latest group contains the same label.
+					const latestGroup = undoGroups[undoGroups.length - 1];
+					if (
+						label !== undefined &&
+						latestGroup !== undefined &&
+						label === latestGroup.label
+					) {
+						latestGroup.revertibles.push(revertible);
+					} else {
+						undoGroups.push({ label, revertibles: [revertible] });
+					}
+				}
+			});
+
+			const undoLatestGroup = () => {
+				const latestGroup = undoGroups.pop() ?? fail("There are currently no undo groups.");
+				for (const revertible of latestGroup.revertibles.reverse()) {
+					revertible.revert();
+				}
+			};
+
+			const initialPropertyOneValue = view.root.child?.propertyOne;
+
+			// Edit group 1
+			const testLabel1 = "testLabel1";
+
+			const runTransactionResult1 = view.runTransaction(
+				() => {
+					assert(view.root.child !== undefined);
+					view.root.child.propertyOne = 1;
+				},
+				{ label: testLabel1 },
+			);
+			assert.equal(runTransactionResult1.success, true);
+			assert.equal(view.root.child?.propertyOne, 1);
+
+			const runTransactionResult2 = view.runTransaction(
+				() => {
+					assert(view.root.child !== undefined);
+					view.root.child.propertyOne = 2;
+				},
+				{ label: testLabel1 },
+			);
+			assert.equal(runTransactionResult2.success, true);
+			assert.equal(view.root.child?.propertyOne, 2);
+
+			const runTransactionResult3 = view.runTransaction(
+				() => {
+					assert(view.root.child !== undefined);
+					view.root.child.propertyOne = 3;
+				},
+				{ label: testLabel1 },
+			);
+			assert.equal(runTransactionResult3.success, true);
+			assert.equal(view.root.child?.propertyOne, 3);
+
+			// Edit group 2
+			const testLabel2 = "testLabel2";
+
+			const runTransactionResult4 = view.runTransaction(
+				() => {
+					assert(view.root.child !== undefined);
+					view.root.child.propertyOne = 4;
+				},
+				{ label: testLabel2 },
+			);
+			assert.equal(runTransactionResult4.success, true);
+			assert.equal(view.root.child?.propertyOne, 4);
+
+			const runTransactionResult5 = view.runTransaction(
+				() => {
+					assert(view.root.child !== undefined);
+					view.root.child.propertyOne = 5;
+				},
+				{ label: testLabel2 },
+			);
+			assert.equal(runTransactionResult5.success, true);
+			assert.equal(view.root.child?.propertyOne, 5);
+
+			const runTransactionResult6 = view.runTransaction(
+				() => {
+					assert(view.root.child !== undefined);
+					view.root.child.propertyOne = 6;
+				},
+				{ label: testLabel2 },
+			);
+			assert.equal(runTransactionResult6.success, true);
+			assert.equal(view.root.child?.propertyOne, 6);
+
+			// This should undo all the edits from group 2.
+			undoLatestGroup();
+			assert.equal(view.root.child?.propertyOne, 3);
+			// This should undo all the edits from group 1
+			undoLatestGroup();
+			assert.equal(view.root.child?.propertyOne, initialPropertyOneValue);
+		});
 	});
 });
 

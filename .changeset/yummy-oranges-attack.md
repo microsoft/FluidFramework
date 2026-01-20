@@ -20,7 +20,7 @@ const undoGroups: LabeledGroup[] = [];
 // The callback on the "changed" event can be used to group the commits.
 view.checkout.events.on("changed", (meta, getRevertible) => {
 	// Only process local edits, not remote changes or Undo/Redo operations
-	if (meta.isLocal && getRevertible !== undefined && meta.kind === CommitKind.Default) {
+	if (getRevertible !== undefined && meta.kind === CommitKind.Default) {
 		const label = meta.label;
 		const revertible = getRevertible();
 

@@ -231,6 +231,11 @@ export interface RemoteChangeMetadata extends CommitMetadata {
 	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
 	 */
 	readonly getRevertible?: undefined;
+	/**
+	 * Optional label provided by the user when commit was created.
+	 * This can be used by undo/redo to group or classify edits.
+	 */
+	readonly label?: undefined;
 }
 
 /**
