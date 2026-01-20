@@ -54,7 +54,7 @@ class TextNode
 		value: string,
 		format?: FormattedTextAsTree.CharacterFormat,
 	): TextNode {
-		// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like its not necessary here,
+		// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like it's not necessary here,
 		// but to reduce the risk of incorrect data interpretation, we actually ban this in the special case where the iterable is a string directly, which is the case here.
 		// Thus the array construction here is necessary to avoid a runtime error.
 		return new TextNode({
@@ -132,7 +132,7 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
  * @privateRemarks
- * This has hard coded assumptions about what kind of embedded content and what kind of formatting is supported.
+ * This has hard-coded assumptions about what kind of embedded content and what kind of formatting is supported.
  * We will want to generalize this with a more generic schema factory function like with table.
  * Then either that and/or the output from it can be package exported.
  * This version is just an initial prototype.
@@ -160,12 +160,12 @@ export namespace FormattedTextAsTree {
 		 * The underlying text content of this atom.
 		 * @remarks
 		 * This is typically a single unicode codepoint, and thus may contain multiple utf-16 surrogate pair code units.
-		 * Using longer strings is still valid, for example so users might store whole grapheme clusters here, or even longer sections of text.
+		 * Using longer strings is still valid. For example, so users might store whole grapheme clusters here, or even longer sections of text.
 		 * Anything combined into a single atom will be treated atomically, and can not be partially selected or formatted.
 		 * Using larger atoms and splitting them as needed is NOT a recommended approach, since this will result in poor merge behavior for concurrent edits.
 		 * Instead atoms should always be the smallest unit of text which will be independently selected, moved or formatted.
 		 * @privateRemarks
-		 * This content is the logically represents the whole atom's content so using {@link EmptyKey} makes sense to help indicate that.
+		 * This content logically represents the whole atom's content, so using {@link EmptyKey} makes sense to help indicate that.
 		 */
 		content: SchemaFactory.required([SchemaFactory.string], { key: EmptyKey }),
 	}) {}
@@ -229,7 +229,7 @@ export namespace FormattedTextAsTree {
 	export interface Statics {
 		/**
 		 * Construct a {@link FormattedTextAsTree.(Tree:type)} from a string, where each character (as defined by iterating over the string) becomes a single character in the text node.
-		 * This combines pairs of utf-16 surrogate code units into single characters as appropriate.
+		 * @remarks This combines pairs of utf-16 surrogate code units into single characters as appropriate.
 		 */
 		fromString(value: string): Tree;
 	}
