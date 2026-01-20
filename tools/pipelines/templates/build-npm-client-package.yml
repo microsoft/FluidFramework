@@ -460,15 +460,13 @@ extends:
                             echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
                             ls -la $BUNDLE_SIZE_TESTS_DIR;
 
-                      - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
-                        parameters:
-                          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
+                      - checkout: ff_pipeline_host
 
                       - task: Bash@3
                         displayName: Write bundle sizes measurements to Aria/Kusto
                         inputs:
                           targetType: inline
-                          workingDirectory: $(pathToTelemetryGenerator)
+                          workingDirectory: $(Build.SourcesDirectory)/ff_pipeline_host
                           script: |
                             set -eu -o pipefail
                             echo "Writing the following performance tests results to Aria/Kusto"
