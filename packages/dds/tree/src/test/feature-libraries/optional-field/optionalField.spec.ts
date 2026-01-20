@@ -26,10 +26,6 @@ import type {
 } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import type {
-	OptionalChangeset,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import {
 	optionalChangeHandler,
 	optionalChangeRebaser,
@@ -37,6 +33,10 @@ import {
 	optionalFieldIntoDelta,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalField.js";
+import type {
+	OptionalChangeset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";

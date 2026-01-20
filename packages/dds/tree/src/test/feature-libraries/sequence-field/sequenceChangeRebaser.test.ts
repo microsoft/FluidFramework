@@ -19,8 +19,6 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type * as SF from "../../../feature-libraries/sequence-field/types.js";
 import type {
 	NodeId,
 	RebaseRevisionMetadata,
@@ -28,6 +26,8 @@ import type {
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type * as SF from "../../../feature-libraries/sequence-field/types.js";
 import {
 	type IdAllocator,
 	brand,

@@ -7,14 +7,14 @@ import { strict as assert } from "node:assert";
 
 import type { ChangeAtomId, DeltaDetachedNodeId } from "../../../core/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
-import { brand } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { mintRevisionTag } from "../../utils.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { relevantRemovedRoots } from "../../../feature-libraries/sequence-field/relevantRemovedRoots.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { mintRevisionTag } from "../../utils.js";
 
 import { MarkMaker as Mark } from "./testEdits.js";
 
