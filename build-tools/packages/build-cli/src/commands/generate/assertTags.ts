@@ -495,3 +495,55 @@ export const shortCodeMap = ${JSON.stringify(mapContents, undefined, "\t")};
 		encoding: "utf8",
 	});
 }
+
+/**
+ * Result of checking whether assert tagging would make changes.
+ */
+export interface CheckAssertTaggingResult {
+	/**
+	 * True if there are untagged asserts that would be modified.
+	 */
+	readonly hasUntaggedAsserts: boolean;
+
+	/**
+	 * Count of files that contain untagged asserts.
+	 */
+	readonly fileCount: number;
+
+	/**
+	 * Paths of files that contain untagged asserts.
+	 */
+	readonly filePaths: readonly string[];
+
+	/**
+	 * Any errors encountered during checking.
+	 */
+	readonly errors: readonly string[];
+}
+
+/**
+ * Checks whether running assert tagging would make any changes.
+ *
+ * This is a "dry-run" check that does not modify any files. It returns
+ * information about which files contain untagged asserts.
+ *
+ * @param options - Configuration options for the check
+ * @returns Result indicating whether changes would be made
+ */
+export async function checkAssertTagging(options: {
+	/**
+	 * Root directory of the repository
+	 */
+	repoRoot: string;
+	/**
+	 * Paths to packages to check (relative to repoRoot or absolute)
+	 */
+	packagePaths: string[];
+	/**
+	 * Optional: disable config-based filtering
+	 */
+	disableConfig?: boolean;
+}): Promise<CheckAssertTaggingResult> {
+	// Stub implementation
+	throw new Error("Not implemented");
+}
