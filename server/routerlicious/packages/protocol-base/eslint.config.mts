@@ -1,8 +1,8 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
 import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/flat.mts";
 
@@ -13,19 +13,15 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-floating-promises": "off",
 			"@typescript-eslint/no-use-before-define": "off",
 			"no-case-declarations": "off",
-			"promise/catch-or-return": [
-				"error",
-				{
-					allowFinally: true,
-				},
-			],
+			"promise/catch-or-return": ["error", {
+				"allowFinally": true,
+			}],
 			"@typescript-eslint/prefer-nullish-coalescing": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"import-x/no-deprecated": "warn",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
 	},
-	// Migrated from .eslintignore
 	{
 		ignores: ["*.spec.ts", "*.generated.ts"],
 	},

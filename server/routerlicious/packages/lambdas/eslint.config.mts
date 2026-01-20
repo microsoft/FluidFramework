@@ -1,8 +1,8 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
 import { recommended } from "../../../../common/build/eslint-config-fluid/flat.mts";
 
@@ -12,12 +12,9 @@ const config: Linter.Config[] = [
 		rules: {
 			"@rushstack/no-new-null": "off",
 			"import-x/no-nodejs-modules": "off",
-			"promise/catch-or-return": [
-				"error",
-				{
-					allowFinally: true,
-				},
-			],
+			"promise/catch-or-return": ["error", {
+				"allowFinally": true,
+			}],
 			"unicorn/no-null": "off",
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
@@ -34,7 +31,6 @@ const config: Linter.Config[] = [
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
 	},
-	// Migrated from .eslintignore
 	{
 		ignores: ["*.generated.ts", "*.spec.ts"],
 	},
