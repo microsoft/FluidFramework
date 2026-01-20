@@ -11,7 +11,6 @@ const config: Linter.Config[] = [
 	{
 		rules: {
 			"@typescript-eslint/consistent-indexed-object-style": "off",
-			"@typescript-eslint/no-explicit-any": "off",
 			"import-x/no-internal-modules": [
 				"error",
 				{
@@ -28,7 +27,6 @@ const config: Linter.Config[] = [
 	{
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {
-			"@typescript-eslint/no-explicit-any": "error",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"import-x/no-nodejs-modules": [
 				"error",

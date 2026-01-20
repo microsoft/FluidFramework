@@ -16,7 +16,7 @@ import { MarkListFactory } from "../../../feature-libraries/sequence-field/markL
 const dummyMark = Mark.remove(1, brand(0));
 const detachedBy: RevisionTag = mintRevisionTag();
 
-export function testMarkListFactory() {
+export function testMarkListFactory(): void {
 	describe("MarkListFactory", () => {
 		it("Inserts an offset when there is content after the offset", () => {
 			const factory = new MarkListFactory();

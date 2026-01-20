@@ -72,7 +72,7 @@ const clearEmpty = inlineRevision(Change.reserve("self", brand(3)), tag1);
 
 const pin = inlineRevision(Change.pin(brand(4)), tag1);
 
-export function testCodecs() {
+export function testCodecs(): void {
 	describe("Codecs", () => {
 		const baseContext = {
 			originatorId: "session1" as SessionId,

@@ -47,7 +47,7 @@ function rebase(
 	return rebaseI(makeAnonChange(change), tagChangeInline(base, baseRev ?? tag1), config);
 }
 
-export function testRebase() {
+export function testRebase(): void {
 	describe("Rebase", () => {
 		describe("no changes ↷ *", () => {
 			for (const [name, testCase] of Object.entries(cases)) {

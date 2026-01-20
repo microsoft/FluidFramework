@@ -30,7 +30,7 @@ const noTreeDelegate = (child: NodeId) => {
 	return [];
 };
 
-export function testRelevantRemovedRoots() {
+export function testRelevantRemovedRoots(): void {
 	describe("relevantRemovedRoots", () => {
 		describe("does not include", () => {
 			it("a tree that remains in-doc", () => {

@@ -13,7 +13,7 @@ import { generatePopulatedMarks } from "./populatedMarks.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
 
-export function testSnapshots() {
+export function testSnapshots(): void {
 	describe("Snapshots", () => {
 		const compressor = createSnapshotCompressor();
 		const baseContext = {

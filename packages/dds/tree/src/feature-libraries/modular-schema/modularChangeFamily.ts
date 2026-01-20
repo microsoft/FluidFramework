@@ -1040,15 +1040,6 @@ export class ModularChangeFamily
 
 			// This field has no changes in the new changeset, otherwise it would have been added to
 			// `crossFieldTable.baseFieldToContext` when processing fields with both base and new changes.
-			const rebaseChild = (
-				child: NodeId | undefined,
-				baseChild: NodeId | undefined,
-				stateChange: NodeAttachState | undefined,
-			): NodeId | undefined => {
-				assert(child === undefined, 0x9c3 /* There should be no new changes in this field */);
-				return undefined;
-			};
-
 			const handler = getChangeHandler(this.fieldKinds, baseFieldChange.fieldKind);
 			const fieldChange: FieldChange = {
 				...baseFieldChange,
@@ -1064,7 +1055,7 @@ export class ModularChangeFamily
 			const rebasedField: unknown = handler.rebaser.rebase(
 				fieldChange.change,
 				baseFieldChange.change,
-				rebaseChild,
+				noNewChangesRebaseChild,
 				genId,
 				new RebaseManager(crossFieldTable, baseFieldChange, fieldId),
 				metadata,
@@ -1910,23 +1901,26 @@ export function* relevantRemovedRoots(
 	yield* relevantRemovedRootsFromFields(change.fieldChanges, change.nodeChanges, fieldKinds);
 }
 
+function* relevantRemovedRootsFromNode(
+	node: NodeId,
+	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): Iterable<DeltaDetachedNodeId> {
+	const nodeChangeset = nodeChangeFromId(nodeChanges, node);
+	if (nodeChangeset.fieldChanges !== undefined) {
+		yield* relevantRemovedRootsFromFields(nodeChangeset.fieldChanges, nodeChanges, fieldKinds);
+	}
+}
+
 function* relevantRemovedRootsFromFields(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Iterable<DeltaDetachedNodeId> {
+	const delegate = (node: NodeId): Iterable<DeltaDetachedNodeId> =>
+		relevantRemovedRootsFromNode(node, nodeChanges, fieldKinds);
 	for (const [_, fieldChange] of change) {
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
-		const delegate = function* (node: NodeId): Iterable<DeltaDetachedNodeId> {
-			const nodeChangeset = nodeChangeFromId(nodeChanges, node);
-			if (nodeChangeset.fieldChanges !== undefined) {
-				yield* relevantRemovedRootsFromFields(
-					nodeChangeset.fieldChanges,
-					nodeChanges,
-					fieldKinds,
-				);
-			}
-		};
 		yield* handler.relevantRemovedRoots(fieldChange.change, delegate);
 	}
 }
@@ -3177,6 +3171,19 @@ function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>)
 
 function hasConflicts(change: ModularChangeset): boolean {
 	return (change.constraintViolationCount ?? 0) > 0;
+}
+
+/**
+ * A rebaseChild callback for fields with no new changes.
+ * Asserts that there are no new changes and returns undefined.
+ */
+function noNewChangesRebaseChild(
+	child: NodeId | undefined,
+	_baseChild: NodeId | undefined,
+	_stateChange: NodeAttachState | undefined,
+): NodeId | undefined {
+	assert(child === undefined, 0x9c3 /* There should be no new changes in this field */);
+	return undefined;
 }
 
 interface ModularChangesetContent {

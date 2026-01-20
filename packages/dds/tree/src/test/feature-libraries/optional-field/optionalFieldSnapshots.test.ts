@@ -61,7 +61,7 @@ function generateTestChangesets(
 	];
 }
 
-export function testSnapshots() {
+export function testSnapshots(): void {
 	describe("Snapshots", () => {
 		const snapshotCompressor = createSnapshotCompressor();
 		const changesets = generateTestChangesets(snapshotCompressor);

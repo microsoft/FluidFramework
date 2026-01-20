@@ -66,7 +66,7 @@ const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncoding
 	],
 };
 
-export function testCodecs() {
+export function testCodecs(): void {
 	describe("Codecs", () => {
 		const sequenceFieldCodec = sequenceFieldChangeCodecFactory(testRevisionTagCodec);
 		makeEncodingTestSuite(sequenceFieldCodec, encodingTestData);

@@ -17,7 +17,7 @@ import { sequenceFieldEditor } from "../../../feature-libraries/sequence-field/s
 
 const id: ChangesetLocalId = brand(0);
 
-export function testEditor() {
+export function testEditor(): void {
 	describe("Editor", () => {
 		it("empty child changes", () => {
 			assert.deepEqual(sequenceFieldEditor.buildChildChanges([]), []);

@@ -31,7 +31,7 @@ const atom3: ChangeAtomId = { localId: brand(100) };
 
 const inputRevs = new Set([tag1, tag2, undefined]);
 
-export function testReplaceRevisions() {
+export function testReplaceRevisions(): void {
 	describe(`replaceRevisions {${[...inputRevs.keys()].join(",")}} -> ${tagOut}`, () => {
 		runCases(tagOut);
 	});

@@ -507,7 +507,7 @@ export function testInvert(
 	return inverted;
 }
 
-export function checkDeltaEquality(actual: Changeset, expected: Changeset) {
+export function checkDeltaEquality(actual: Changeset, expected: Changeset): void {
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
@@ -516,7 +516,7 @@ export function toDelta(change: Changeset): FieldChangeDelta {
 	return sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
 }
 
-export function toDeltaWrapped(change: WrappedChange) {
+export function toDeltaWrapped(change: WrappedChange): FieldChangeDelta {
 	return ChangesetWrapper.toDelta(change, (c, deltaFromChild) =>
 		sequenceFieldToDelta(c, deltaFromChild),
 	);

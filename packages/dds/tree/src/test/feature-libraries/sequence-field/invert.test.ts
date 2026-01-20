@@ -38,7 +38,7 @@ function invert(change: Changeset, tag: RevisionTag = tag1): Changeset {
 	return invertChange(tagChangeInline(change, tag), tagForInvert);
 }
 
-export function testInvert() {
+export function testInvert(): void {
 	describe("Invert", () => {
 		it("no changes", () => {
 			const input: Changeset = [];

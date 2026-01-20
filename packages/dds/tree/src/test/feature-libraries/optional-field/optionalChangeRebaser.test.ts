@@ -555,7 +555,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	});
 }
 
-export function testRebaserAxioms() {
+export function testRebaserAxioms(): void {
 	describe("Rebaser Axioms", () => {
 		describe("Using valid edits from an undefined field", () => {
 			runSingleEditRebaseAxiomSuite({ content: undefined });
