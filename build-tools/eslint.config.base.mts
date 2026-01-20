@@ -33,6 +33,9 @@ const linterOptions = {
 const buildToolsOverrides = {
 	rules: {
 		// Build-tools packages are internal tooling, not public packages.
+		// Internal module imports are common and expected in build-tools.
+		"import-x/no-internal-modules": "off",
+
 		// Build-tools uses @deprecated internally for deprecation warnings.
 		// Keep as warning to track usage, but don't fail the build.
 		"import-x/no-deprecated": "warn",
@@ -59,6 +62,16 @@ const buildToolsOverrides = {
 					"globby",
 					// execa is used for running child processes
 					"execa",
+					// find-up is used for finding files in parent directories
+					"find-up",
+					// read-pkg-up is used to find and read package.json files
+					"read-pkg-up",
+					// glob is used for file pattern matching
+					"glob",
+					// lodash.isequal is used for deep equality checks
+					"lodash.isequal",
+					// strip-ansi is used to remove ANSI escape codes from strings
+					"strip-ansi",
 				],
 			},
 		],
