@@ -144,7 +144,7 @@
 	},
 	"pnpm": {
 		"ignoredBuiltDependencies": ["core-js"],
-		"onlyBuiltDependencies": ["puppeteer"],
+		"onlyBuiltDependencies": ["puppeteer", "unrs-resolver"],
 		"overridesComments": [
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
 		],

@@ -16,16 +16,12 @@ import { uncompressedEncodeV1 } from "../../feature-libraries/chunked-forest/cod
 // eslint-disable-next-line import-x/no-internal-modules
 import type { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
 import {
-	fieldKindConfigurations,
-	sequence,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../feature-libraries/default-schema/defaultFieldKinds.js";
-import {
 	type FieldBatch,
 	type FieldBatchEncodingContext,
+	FieldKinds,
 	type ModularChangeset,
-	type SequenceField,
 	defaultSchemaPolicy,
+	fieldKindConfigurations,
 	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -35,6 +31,8 @@ import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import { brand, newTupleBTree } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
@@ -74,11 +72,11 @@ describe("sharedTreeChangeCodec", () => {
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		};
-		const changeA: SequenceField.Changeset = [];
+		const changeA: Changeset = [];
 		const dummyModularChangeSet: ModularChangeset = {
 			nodeChanges: newTupleBTree(),
 			fieldChanges: new Map([
-				[brand("fA"), { fieldKind: sequence.identifier, change: brand(changeA) }],
+				[brand("fA"), { fieldKind: FieldKinds.sequence.identifier, change: brand(changeA) }],
 			]),
 			nodeToParent: newTupleBTree(),
 			nodeAliases: newTupleBTree(),
