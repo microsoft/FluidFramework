@@ -398,7 +398,7 @@ export function checkSchemaCompatibilitySnapshots(
 	const compatibilityErrors: string[] = [];
 
 	function updatableError(message: string): void {
-		assert(mode === "test", "updatableError should only be called in test mode");
+		assert(mode === "test", 0xcc6 /* updatableError should only be called in test mode */);
 		compatibilityErrors.push(
 			`${message} If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.`,
 		);
@@ -512,7 +512,7 @@ export function checkSchemaCompatibilitySnapshots(
 			if (selectedMinVersionForCollaborationSnapshot === undefined) {
 				assert(
 					compatibilityErrors.length > 0,
-					"expected compatibility errors for missing min collab version snapshot",
+					0xcc7 /* expected compatibility errors for missing min collab version snapshot */,
 				);
 			} else {
 				// Collaboration with this version is expected to work.
