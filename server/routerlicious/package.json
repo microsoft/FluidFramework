@@ -40,6 +40,7 @@
 		"generate:packageList:internal-test": "flub list server --no-private --feed internal-test --outFile feeds/internal-test.txt",
 		"generate:packageList:public": "flub list server --no-private --feed public --outFile feeds/public.txt",
 		"preinstall": "node scripts/only-pnpm.cjs",
+		"postinstall": "cd ../../common/build/eslint-config-fluid && pnpm install",
 		"layer-check": "flub check layers --info ../../layerInfo.json",
 		"lint": "npm run prettier && npm run ci:eslint",
 		"lint:fix": "npm run prettier:fix && pnpm run -r --no-sort --stream lint:fix",
