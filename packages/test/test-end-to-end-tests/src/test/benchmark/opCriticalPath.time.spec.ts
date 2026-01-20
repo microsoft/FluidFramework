@@ -44,6 +44,23 @@ const testContainerConfig: ITestContainerConfig = {
 	},
 };
 
+/**
+ * Same as testContainerConfig but with batch ID tracking enabled
+ */
+const testContainerConfigWithBatchIdTracking: ITestContainerConfig = {
+	...testContainerConfig,
+	loaderProps: {
+		configProvider: {
+			getRawConfig: (name: string) => {
+				if (name === "Fluid.ContainerRuntime.enableBatchIdTracking") {
+					return true;
+				}
+				return undefined;
+			},
+		},
+	},
+};
+
 type Patch<T, U> = Omit<T, keyof U> & U;
 
 type ContainerRuntime_WithPrivates = Patch<ContainerRuntime, { flush: () => void }>;
@@ -59,10 +76,10 @@ describeCompat(
 
 		let testId = 0;
 
-		const setup = async (): Promise<void> => {
+		const setup = async (config: ITestContainerConfig): Promise<void> => {
 			testId++;
 			provider = getTestObjectProvider();
-			const loader = provider.makeTestLoader(testContainerConfig);
+			const loader = provider.makeTestLoader(config);
 			mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 			await mainContainer.attach(provider.driver.createCreateNewRequest(`test-${testId}`));
@@ -87,11 +104,12 @@ describeCompat(
 			containerRuntime.flush();
 		}
 
+		// Benchmark without batch ID tracking
 		benchmark({
 			title: `Submit+Flush a single batch of ${batchSize} ops`,
 			...executionOptions, // We could use the defaults for this one, but this way the measurement is symmetrical with the "Process" benchmark below.
 			before: async () => {
-				await setup();
+				await setup(testContainerConfig);
 			},
 			benchmarkFnAsync: async () => {
 				sendOps("A");
@@ -114,7 +132,7 @@ describeCompat(
 				let running = true;
 				let batchId = 0;
 				do {
-					await setup();
+					await setup(testContainerConfig);
 
 					// (This is about benchmark's "batch", not the batch of ops we are measuring)
 					assert(state.iterationsPerBatch === 1, "Expecting only one iteration per batch");
@@ -136,6 +154,52 @@ describeCompat(
 					running = state.recordBatch(duration);
 
 					// Tear down this container, we start fresh for each measurement
+					mainContainer.dispose();
+				} while (running);
+			},
+		});
+
+		// Benchmark WITH batch ID tracking enabled
+		benchmark({
+			title: `Submit+Flush a single batch of ${batchSize} ops (with batch ID tracking)`,
+			...executionOptions,
+			before: async () => {
+				await setup(testContainerConfigWithBatchIdTracking);
+			},
+			benchmarkFnAsync: async () => {
+				sendOps("B");
+				const opsSent = await timeoutPromise<number>(
+					(resolve) => {
+						toIDeltaManagerFull(containerRuntime.deltaManager).outbound.once("idle", resolve);
+					},
+					{ errorMsg: "container's outbound queue never reached idle state" },
+				);
+				assert(opsSent === 1, "Expecting the single grouped batch op to be sent.");
+			},
+		});
+
+		benchmark({
+			title: `Process a single batch of ${batchSize} Inbound ops (local, with batch ID tracking)`,
+			...executionOptions,
+			async benchmarkFnCustom(state): Promise<void> {
+				let running = true;
+				let batchId = 0;
+				do {
+					await setup(testContainerConfigWithBatchIdTracking);
+
+					assert(state.iterationsPerBatch === 1, "Expecting only one iteration per batch");
+
+					await provider.opProcessingController.pauseProcessing();
+					sendOps(`[Batch-${batchId++}]`);
+					await provider.opProcessingController.processOutgoing();
+
+					const start = state.timer.now();
+					await provider.opProcessingController.processIncoming();
+					const end = state.timer.now();
+
+					const duration = state.timer.toSeconds(start, end);
+					running = state.recordBatch(duration);
+
 					mainContainer.dispose();
 				} while (running);
 			},
