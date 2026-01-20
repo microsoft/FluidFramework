@@ -1394,9 +1394,23 @@ function shallowCompatibilityTest(
  * @remarks
  * Tracks a location even as the array is mutated.
  * How this is adjusted for edits depends on the specific anchor being used.
+ * See {@link createArrayInsertionAnchor} for one way to create such an anchor.
+ * @privateRemarks
+ * This being sealed is not important for its current behaviors as nothing downcasts this,
+ * however it is possible we might want to add additional members in the future:
+ * sealing this ensures that such additions are a non-breaking change.
+ * Things we might want to add include status (for example if its deleted) or events (for example to notify when its index changes).
+ * Some specific anchors might even want to add additional method members for things like confidence
+ * (so we can indicate when the anchor goes from being truly robust to a heuristic guess due to an edit).
  * @alpha
+ * @sealed
  */
 export interface ArrayNodeAnchor {
+	/**
+	 * The current index within the array that this anchor refers to.
+	 * @remarks
+	 * This value is updated as the array is edited in a way that depends on the specific anchor implementation.
+	 */
 	get index(): number;
 }
 

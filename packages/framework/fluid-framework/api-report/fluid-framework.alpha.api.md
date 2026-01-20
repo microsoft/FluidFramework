@@ -92,9 +92,8 @@ type ApplyKindInput<T, Kind extends FieldKind, DefaultsAreOptional extends boole
 Kind
 ] extends [FieldKind.Required] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
 
-// @alpha
+// @alpha @sealed
 export interface ArrayNodeAnchor {
-    // (undocumented)
     get index(): number;
 }
 
