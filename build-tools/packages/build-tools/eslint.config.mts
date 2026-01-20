@@ -13,7 +13,7 @@ export default [
 	},
 	{
 		rules: {
-			// TODO: Enable these type-safety rules ASAP and fix violations
+			// TODO: AB#58049 Enable these type-safety rules ASAP and fix violations
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
@@ -28,7 +28,7 @@ export default [
 			// Allow require imports for dynamic loading
 			"@typescript-eslint/no-require-imports": "off",
 
-			// TODO: These rules require code changes - enable and fix violations
+			// TODO: AB#58050 These rules require code changes - enable and fix violations
 			"@typescript-eslint/class-literal-property-style": "off",
 			"@typescript-eslint/return-await": "off",
 			"@typescript-eslint/dot-notation": "off",
@@ -48,7 +48,7 @@ export default [
 			"@eslint-community/eslint-comments/no-unused-disable": "off",
 			"@eslint-community/eslint-comments/no-unlimited-disable": "off",
 
-			// TODO: Base ESLint rules that require code changes - enable and fix violations
+			// TODO: AB#58051 Base ESLint rules that require code changes - enable and fix violations
 			"guard-for-in": "off",
 			"no-restricted-syntax": "off",
 			"eqeqeq": "off",

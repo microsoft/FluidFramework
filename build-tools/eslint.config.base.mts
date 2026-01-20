@@ -59,7 +59,7 @@ const buildToolsOverrides = {
 					// fs-extra is well-maintained and provides useful readJson/writeJson API
 					"fs-extra",
 
-					// TODO: All dependencies below should be replaced when possible.
+					// TODO: AB#58048 All dependencies below should be replaced when possible.
 					// globby is used extensively in build-tools for file patterns
 					"globby",
 					// execa is used for running child processes
@@ -82,18 +82,18 @@ const buildToolsOverrides = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 
 		// This rule requires explicit handling of undefined for index signatures.
-		// TODO: Consider enabling and fixing violations.
+		// TODO: AB#58053 Consider enabling and fixing violations.
 		"@fluid-internal/fluid/no-unchecked-record-access": "off",
 
 		// Build-tools has some files that don't follow strict naming conventions.
 		"unicorn/filename-case": "off",
 
 		// Prefer-regexp-exec is a style preference, not a correctness issue.
-		// TODO: Consider enabling in the future.
+		// TODO: AB#58056 Consider enabling in the future.
 		"@typescript-eslint/prefer-regexp-exec": "off",
 
 		// These rules are useful but require code changes to fix.
-		// TODO: Enable and fix violations.
+		// TODO: AB#58050 Enable and fix violations.
 		"@typescript-eslint/prefer-readonly": "off",
 		"@typescript-eslint/promise-function-async": "off",
 		"@typescript-eslint/no-shadow": "off",
@@ -132,11 +132,11 @@ const buildToolsOverrides = {
 		// JSDoc/TSDoc tag hyphen rule.
 		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "off",
 
-		// TODO: Re-enable and fix violations.
+		// TODO: AB#58052 Re-enable and fix violations.
 		// Import namespace errors may be false positives with some libraries.
 		"import-x/namespace": "off",
 
-		// TODO: Re-enable and fix violations.
+		// TODO: AB#58052 Re-enable and fix violations.
 		// Allow importing eslint in policy check code.
 		"import-x/no-extraneous-dependencies": "off",
 	},
@@ -146,7 +146,7 @@ const buildToolsOverrides = {
  * The base ESLint flat config from eslint-config-fluid with build-tools overrides.
  *
  * @remarks
- * TODO: Consider updating to recommended or strict config from eslint-config-fluid if possible.
+ * TODO: AB#58054 Consider updating to recommended or strict config from eslint-config-fluid if possible.
  */
 export const baseConfig = [...minimalDeprecated, linterOptions, buildToolsOverrides];
 

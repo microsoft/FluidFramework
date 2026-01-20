@@ -17,7 +17,7 @@ export default [
 			"object-shorthand": "off",
 
 			// The default for this rule is 4, but 5 is better.
-			// TODO: Consider lowering this limit and simplifying build-tools code accordingly.
+			// TODO: AB#58055 Consider lowering this limit and simplifying build-tools code accordingly.
 			"max-params": ["warn", 5],
 		},
 	},
