@@ -170,5 +170,3 @@ export const chaiFriendlyConfig = {
 		"chai-friendly/no-unused-expressions": "error",
 	},
 };
-
-export { chaiFriendly };
