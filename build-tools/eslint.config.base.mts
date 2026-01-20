@@ -88,6 +88,12 @@ const buildToolsOverrides = {
 		// Build-tools has some files that don't follow strict naming conventions.
 		"unicorn/filename-case": "off",
 
+		// Prevent direct process.exit() calls - prefer throwing errors or returning exit codes.
+		"unicorn/no-process-exit": "error",
+
+		// Prefer top-level await over .then()/.catch() chains at module level.
+		"unicorn/prefer-top-level-await": "error",
+
 		// Prefer-regexp-exec is a style preference, not a correctness issue.
 		// TODO: AB#58056 Consider enabling in the future.
 		"@typescript-eslint/prefer-regexp-exec": "off",
@@ -165,4 +171,4 @@ export const chaiFriendlyConfig = {
 	},
 };
 
-export { baseConfig as default, chaiFriendly };
+export { chaiFriendly };
