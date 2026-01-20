@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { createCompatFuzzSuite } from "@fluidframework/tree/internal/test";
-
 import { describeInstallVersions, getDataRuntimeApi } from "@fluid-private/test-version-utils";
+import { createCompatFuzzSuite } from "@fluidframework/tree/internal/test";
 
 const versionForCompat = "2.74.0";
 
