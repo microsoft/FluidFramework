@@ -351,7 +351,7 @@ extends:
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
                   packageManager: '${{ parameters.packageManager }}'
-                  buildDirectory: '${{ parameters.buildDirectory }}'
+                  buildDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
               # This check is a workaround. We don't want to set versions for the build-bundle-size-and-code-coverage-artifacts
@@ -361,7 +361,7 @@ extends:
               - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
                   - template: /tools/pipelines/templates/include-set-package-version.yml@self
                     parameters:
-                      buildDirectory: '${{ parameters.buildDirectory }}'
+                      buildDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                       buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
                       buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
                       tagName: '${{ parameters.tagName }}'
@@ -374,28 +374,28 @@ extends:
                   taskBuild: '${{ parameters.taskBuild }}'
                   taskLint: '${{ parameters.taskLint }}'
                   taskLintName: '${{ parameters.taskLintName }}'
-                  buildDirectory: '${{ parameters.buildDirectory }}'
+                  buildDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
 
               - task: Npm@1
                 displayName: 'npm run webpack'
                 inputs:
                   command: custom
-                  workingDir: '${{ parameters.buildDirectory }}'
+                  workingDir: '${{ parameters.buildDirectory }}/FluidFramework'
                   customCommand: 'run webpack'
 
               - task: Bash@3
                 displayName: Archive Build Output Content
                 env:
-                  WORKING_DIRECTORY: '${{ parameters.buildDirectory }}'
+                  WORKING_DIRECTORY: '${{ parameters.buildDirectory }}/FluidFramework'
                 inputs:
                   targetType: filePath
-                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  workingDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                   filePath: $(Build.SourcesDirectory)/scripts/pack-build-output.sh
 
               - task: CopyFiles@2
                 displayName: Copy build_output_archive to artifact staging directory
                 inputs:
-                  sourceFolder: ${{ parameters.buildDirectory }}/build_output_archive
+                  sourceFolder: ${{ parameters.buildDirectory }}/FluidFramework/build_output_archive
                   targetFolder: $(Build.ArtifactStagingDirectory)/build_output_archive
 
               # Pack
@@ -408,7 +408,7 @@ extends:
                       STAGING_PATH: $(Build.ArtifactStagingDirectory)
                     inputs:
                       targetType: filePath
-                      workingDirectory: '${{ parameters.buildDirectory }}'
+                      workingDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                       filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
 
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
@@ -420,7 +420,7 @@ extends:
                     displayName: 'Calculate bundle sizes'
                     inputs:
                       command: custom
-                      workingDir: '${{ parameters.buildDirectory }}'
+                      workingDir: '${{ parameters.buildDirectory }}/FluidFramework'
                       customCommand: 'run bundle-analysis:collect'
 
                   # Copy files so all artifacts we publish end up under the same parent folder.
@@ -428,7 +428,7 @@ extends:
                   - task: CopyFiles@2
                     displayName: Copy bundle size files to artifact staging directory
                     inputs:
-                      sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+                      sourceFolder: '${{ parameters.buildDirectory }}/FluidFramework/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
                   # At this point we want to publish the artifact with the bundle size analysis,
@@ -444,7 +444,7 @@ extends:
                       TARGET_BRANCH_NAME: '$(targetBranchName)'
                     inputs:
                       command: custom
-                      workingDir: '${{ parameters.buildDirectory }}'
+                      workingDir: '${{ parameters.buildDirectory }}/FluidFramework'
                       customCommand: 'run bundle-analysis:run'
 
                   # - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
@@ -452,10 +452,10 @@ extends:
                     displayName: List report.json
                     inputs:
                       targetType: inline
-                      workingDirectory: '${{ parameters.buildDirectory }}'
+                      workingDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                       script: |
                         set -eu -o pipefail
-                        echo "Build Directory is ${{ parameters.buildDirectory }}";
+                        echo "Build Directory is ${{ parameters.buildDirectory }}/FluidFramework";
                         BUNDLE_SIZE_TESTS_DIR="$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests";
                         echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
                         ls -la $BUNDLE_SIZE_TESTS_DIR;
@@ -482,7 +482,7 @@ extends:
                     displayName: 'npm run ci:build:docs'
                     inputs:
                       command: custom
-                      workingDir: '${{ parameters.buildDirectory }}'
+                      workingDir: '${{ parameters.buildDirectory }}/FluidFramework'
                       customCommand: 'run ci:build:docs'
 
                   # Copy files so all artifacts we publish end up under the same parent folder.
@@ -490,7 +490,7 @@ extends:
                   - task: CopyFiles@2
                     displayName: Copy _api-extractor-temp files to artifact staging directory
                     inputs:
-                      sourceFolder: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+                      sourceFolder: '${{ parameters.buildDirectory }}/FluidFramework/_api-extractor-temp'
                       targetFolder: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
 
                   # At this point we want to publish the artifact with the _api-extractor-temp folder,
@@ -505,7 +505,7 @@ extends:
                   displayName: Reset lockfile
                   inputs:
                     targetType: inline
-                    workingDirectory: '${{ parameters.buildDirectory }}'
+                    workingDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                     script: |
                       set -eu -o pipefail
                       git checkout HEAD -- pnpm-lock.yaml
@@ -515,7 +515,7 @@ extends:
                   displayName: Prune pnpm store
                   inputs:
                     targetType: inline
-                    workingDirectory: '${{ parameters.buildDirectory }}'
+                    workingDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                     script: |
                       set -eu -o pipefail
                       pnpm store prune
@@ -645,7 +645,7 @@ extends:
                 - template: /tools/pipelines/templates/include-test-task.yml@self
                   parameters:
                     taskTestStep: '${{ test.name }}'
-                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    buildDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                     testCoverage: '${{ parameters.testCoverage }}'
 
               - task: Npm@1
@@ -653,7 +653,7 @@ extends:
                 condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                 inputs:
                   command: custom
-                  workingDir: '${{ parameters.buildDirectory }}'
+                  workingDir: '${{ parameters.buildDirectory }}/FluidFramework'
                   customCommand: 'run test:copyresults'
 
               # Test - Upload coverage results
@@ -665,7 +665,7 @@ extends:
                 condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                 inputs:
                   targetType: 'inline'
-                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  workingDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                   script: |
                     set -eu -o pipefail
                     test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
@@ -675,7 +675,7 @@ extends:
                 condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                 inputs:
                   targetType: 'inline'
-                  workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
+                  workingDirectory: '${{ parameters.buildDirectory }}/FluidFramework/nyc/report'
                   script: |
                     set -eu -o pipefail
                     sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
@@ -684,13 +684,13 @@ extends:
                 displayName: Publish Code Coverage
                 condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                 inputs:
-                  summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
+                  summaryFileLocation: ${{ parameters.buildDirectory }}/FluidFramework/nyc/report/cobertura-coverage-patched.xml
                   failIfCoverageEmpty: true
               - task: CopyFiles@2
                 displayName: Copy code coverage report to artifact staging directory
                 condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                 inputs:
-                  sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
+                  sourceFolder: '${{ parameters.buildDirectory }}/FluidFramework/nyc/report'
                   targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
               - task: Bash@3
                 displayName: Report Code Coverage Comparison
@@ -707,7 +707,7 @@ extends:
                   ADO_CI_BUILD_DEFINITION_ID_PR: 11
                 inputs:
                   targetType: inline
-                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  workingDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                   script: |
                     set -eu -o pipefail
                     echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
@@ -722,7 +722,7 @@ extends:
             # Process test result, include publishing and logging
               - template: /tools/pipelines/templates/include-process-test-results.yml@self
                 parameters:
-                  buildDirectory: '${{ parameters.buildDirectory }}'
+                  buildDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                   testResultDirs: '${{ parameters.testResultDirs }}'
 
             templateContext:
@@ -774,7 +774,7 @@ extends:
                 - template: /tools/pipelines/templates/include-install.yml@self
                   parameters:
                     packageManager: '${{ parameters.packageManager }}'
-                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    buildDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                     packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
                 - task: DownloadPipelineArtifact@2
@@ -798,14 +798,14 @@ extends:
                 - template: /tools/pipelines/templates/include-test-task.yml@self
                   parameters:
                     taskTestStep: '${{ test.name }}'
-                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    buildDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                     testCoverage: 'false'
 
                 - task: Npm@1
                   displayName: 'npm run test:copyresults'
                   inputs:
                     command: custom
-                    workingDir: '${{ parameters.buildDirectory }}'
+                    workingDir: '${{ parameters.buildDirectory }}/FluidFramework'
                     customCommand: 'run test:copyresults'
 
                 - ${{ if contains(test.name, 'tinylicious') }}:
@@ -828,7 +828,7 @@ extends:
                 # Process test result, include publishing and logging
                 - template: /tools/pipelines/templates/include-process-test-results.yml@self
                   parameters:
-                    buildDirectory: '${{ parameters.buildDirectory }}'
+                    buildDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
                     testResultDirs: '${{ parameters.testResultDirs }}'
 
       # Publish stage
@@ -837,7 +837,7 @@ extends:
           parameters:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}
-            buildDirectory: ${{ parameters.buildDirectory }}
+            buildDirectory: ${{ parameters.buildDirectory }}/FluidFramework
             buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
       # Capture pipeline stage results
