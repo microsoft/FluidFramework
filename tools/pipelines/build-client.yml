@@ -178,6 +178,9 @@ variables:
     parameters:
       publishOverride: '${{ parameters.publishOverride }}'
       releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+  # Enable random test order to help catch order-dependent expectations in fluid-build
+  - name: FLUID_BUILD_TEST_RANDOM_ORDER
+    value: 'true'
 
 extends:
   template: /tools/pipelines/templates/build-npm-client-package.yml@self

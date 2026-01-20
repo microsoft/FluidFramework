@@ -6,7 +6,9 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 
-import globby from "globby";
+import { globSync } from "tinyglobby";
+
+import { filterByGitignoreSync } from "./gitignore.js";
 
 import type {
 	// eslint-disable-next-line import-x/no-deprecated -- back-compat code
@@ -99,20 +101,21 @@ function loadWorkspacesFromLegacyConfigEntry(
 		];
 	}
 
-	const packageJsonPaths = globby
-		.sync(["**/package.json"], {
-			cwd: path.dirname(packagePath),
-			gitignore: true,
-			onlyFiles: true,
-			absolute: true,
-			// BACK-COMPAT HACK - only search two levels below entries for package.jsons. This avoids finding some test
-			// files and treating them as packages. This is only needed when loading old configs.
-			deep: 2,
-		})
-		.map(
-			// Make the paths relative to the repo root
-			(filePath) => path.relative(buildProject.root, filePath),
-		);
+	const cwd = path.dirname(packagePath);
+	const allFiles = globSync(["**/package.json"], {
+		cwd,
+		onlyFiles: true,
+		absolute: true,
+		// BACK-COMPAT HACK - only search two levels below entries for package.jsons. This avoids finding some test
+		// files and treating them as packages. This is only needed when loading old configs.
+		deep: 2,
+	});
+
+	// Apply gitignore filtering
+	const packageJsonPaths = filterByGitignoreSync(allFiles, cwd).map(
+		// Make the paths relative to the buildProject root
+		(filePath) => path.relative(buildProject.root, filePath),
+	);
 	const workspaces = packageJsonPaths.flatMap((pkgPath) => {
 		const dir = path.dirname(pkgPath);
 		return loadWorkspacesFromLegacyConfigEntry(dir, buildProject);
