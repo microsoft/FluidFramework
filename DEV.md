@@ -18,23 +18,23 @@ The following dependencies are pinned to older major versions because newer vers
 
 ## pnpm Supply Chain Security Settings
 
-All workspace `.npmrc` files include security-hardening settings to protect against supply chain attacks. This section documents these settings and their rationale.
+All workspace `pnpm-workspace.yaml` files include security-hardening settings to protect against supply chain attacks. This section documents these settings and their rationale.
 
 ### Settings Overview
 
 | Setting | Value | Purpose |
 |---------|-------|---------|
-| `minimum-release-age` | 1440 | Block packages published less than 24 hours ago |
-| `resolution-mode` | highest | Use highest matching version (see explanation below) |
-| `block-exotic-subdeps` | true | Block transitive deps from using git/tarball sources |
-| `trust-policy` | no-downgrade | Fail if package trust/verification level decreases |
-| `strict-dep-builds` | true | Require explicit approval for dependency build scripts |
+| `minimumReleaseAge` | 1440 | Block packages published less than 24 hours ago |
+| `resolutionMode` | highest | Use highest matching version (see explanation below) |
+| `blockExoticSubdeps` | true | Block transitive deps from using git/tarball sources |
+| `trustPolicy` | no-downgrade | Fail if package trust/verification level decreases |
+| `strictDepBuilds` | true | Require explicit approval for dependency build scripts |
 
-### Why `resolution-mode=highest` instead of `time-based`
+### Why `resolutionMode: highest` instead of `time-based`
 
-We would prefer to use `resolution-mode=time-based` to avoid pulling in the newest packages from npm. This delays ingestion of newly published packages, which helps avoid supply chain attacks.
+We would prefer to use `resolutionMode: time-based` to avoid pulling in the newest packages from npm. This delays ingestion of newly published packages, which helps avoid supply chain attacks.
 
-However, with `resolution-mode=time-based`, the "anchor" time for a transitive dependency is the time at which the depending package was released. For example:
+However, with `resolutionMode: time-based`, the "anchor" time for a transitive dependency is the time at which the depending package was released. For example:
 
 1. We depend on PackageA, which depends on `PackageB@^1.0.0`
 2. At the time PackageA was published (t0), PackageB was at 1.0.0
@@ -43,11 +43,11 @@ However, with `resolution-mode=time-based`, the "anchor" time for a transitive d
 
 This behavior is desired. However, pnpm does NOT attempt downward resolution to find a version that works (e.g., 1.0.0). Instead, it throws an error with no automatic fallback.
 
-With `resolution-mode=highest`, we still get protection from `minimum-release-age=1440`, which blocks any package published within the last 24 hours. This provides supply chain protection without the transitive dependency resolution issues.
+With `resolutionMode: highest`, we still get protection from `minimumReleaseAge: 1440`, which blocks any package published within the last 24 hours. This provides supply chain protection without the transitive dependency resolution issues.
 
-### Build Script Approval (`strict-dep-builds`)
+### Build Script Approval (`strictDepBuilds`)
 
-When `strict-dep-builds=true`, pnpm requires explicit approval before running build scripts from dependencies. Approved packages are listed in:
+When `strictDepBuilds: true`, pnpm requires explicit approval before running build scripts from dependencies. Approved packages are listed in:
 
 - **Root workspace**: `pnpm.onlyBuiltDependencies` in `/package.json`
 - **Sub-workspaces with own lockfiles**: Both `pnpm.onlyBuiltDependencies` in the workspace's `package.json` AND `onlyBuiltDependencies` in the workspace's `pnpm-workspace.yaml` (due to [pnpm bug #9082](https://github.com/pnpm/pnpm/issues/9082))
