@@ -278,7 +278,7 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		log?.verbose(`Loading changeset: ${file}`);
 
 		// Get the date the changeset file was added to git.
-		// eslint-disable-next-line no-await-in-loop
+
 		const results = await repo.log({ file, strictDate: true });
 		// git log returns commits ordered newest -> oldest, so we want the last item, which is the earliest commit
 		const rawCommit = results.all?.at(-1);
@@ -293,7 +293,7 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		};
 
 		// Read the changeset file into content and metadata (front-matter)
-		// eslint-disable-next-line no-await-in-loop
+
 		const rawFileContent = await readFile(file, { encoding: "utf8" });
 
 		// Parse the front matter
@@ -306,7 +306,7 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		for (const [key, value] of Object.entries(metadata)) {
 			if (key.startsWith("__")) {
 				// Remove __ prefix and add to additional metadata
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
 				additionalMetadata[key.slice(2) as keyof FluidCustomChangesetMetadata] = value;
 			} else {
 				packageBumpTypeMetadata[key] = value as VersionBumpType;

@@ -145,7 +145,6 @@ export async function npmCheckUpdates(
 	for (const glob of searchGlobs) {
 		log?.verbose(`Checking packages in ${path.join(repoPath, glob)}`);
 
-		// eslint-disable-next-line no-await-in-loop
 		const result = (await ncu.run({
 			filter: depsToUpdate,
 			cwd: repoPath,
@@ -167,7 +166,7 @@ export async function npmCheckUpdates(
 		if (glob.endsWith("*")) {
 			for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
 				const jsonPath = path.join(repoPath, pkgJsonPath);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
 				const { name } = readJsonSync(jsonPath);
 				const pkg = context.fullPackageMap.get(name as string);
 				if (pkg === undefined) {
@@ -186,7 +185,7 @@ export async function npmCheckUpdates(
 			}
 		} else {
 			const jsonPath = path.join(repoPath, glob, "package.json");
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
 			const { name } = readJsonSync(jsonPath);
 			const pkg = context.fullPackageMap.get(name as string);
 			if (pkg === undefined) {
@@ -345,7 +344,7 @@ export async function isReleased(
 
 	const tagName = generateReleaseGitTagName(releaseGroupOrPackage, version);
 	if (typeof releaseGroupOrPackage === "string" && isReleaseGroup(releaseGroupOrPackage)) {
-		// eslint-disable-next-line no-param-reassign, @typescript-eslint/no-non-null-assertion
+		// eslint-disable-next-line no-param-reassign
 		releaseGroupOrPackage = context.repo.releaseGroups.get(releaseGroupOrPackage)!;
 	}
 
@@ -555,7 +554,7 @@ export async function setVersion(
 		log?.verbose(`Running command: ${cmd} ${args} in ${opts?.cwd}`);
 		try {
 			// TODO: The shell option should not need to be true. AB#4067
-			// eslint-disable-next-line no-await-in-loop
+
 			const results = await execa(cmd, args, options);
 			if (results.all !== undefined) {
 				log?.verbose(results.all);
@@ -616,7 +615,6 @@ export async function setVersion(
 	}
 
 	for (const pkg of packagesToCheckAndUpdate) {
-		// eslint-disable-next-line no-await-in-loop
 		await setPackageDependencies(
 			pkg,
 			dependencyVersionMap,
@@ -732,7 +730,6 @@ async function findDepUpdates(
 		let dev: string;
 
 		try {
-			// eslint-disable-next-line no-await-in-loop
 			[latest, dev] = await Promise.all([
 				latestVersion(pkgName, {
 					version: "latest",

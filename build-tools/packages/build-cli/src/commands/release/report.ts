@@ -174,7 +174,7 @@ export abstract class ReleaseReportBaseCommand<
 		const gitRepo = await context.getGitRepository();
 		for (const rg of rgs) {
 			ux.action.status = `${rg} (release group)`;
-			// eslint-disable-next-line no-await-in-loop
+
 			const data = await this.collectRawReleaseData(
 				gitRepo,
 				rg,
@@ -191,7 +191,7 @@ export abstract class ReleaseReportBaseCommand<
 			assert(repoVersion !== undefined, `version of ${pkg} is undefined.`);
 
 			ux.action.status = `${pkg} (package)`;
-			// eslint-disable-next-line no-await-in-loop
+
 			const data = await this.collectRawReleaseData(gitRepo, pkg, repoVersion, mode);
 			if (data !== undefined) {
 				versionData[pkg] = data;

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable prefer-object-has-own */
-
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
@@ -429,7 +427,7 @@ function quoteAndEscapeArgsForUniversalCommandLine(
 	// Unix shells also use single quotes for grouping. Rather than escape those,
 	// which Windows command shell would not unescape, those args must be grouped.
 	const escapedArg = resolvedArg.replace(/(["\\])/g, "\\$1");
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 	const canBeUnquoted = notAGlob && !forceQuote && !/[\s']/.test(resolvedArg);
 	return canBeUnquoted ? escapedArg : `"${escapedArg}"`;
 }
@@ -489,12 +487,10 @@ function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg):
  * @returns preferred command line
  */
 function getPreferredScriptLine(scriptLine: string): string {
-	return (
-		parseArgs(scriptLine, { onlyDoubleQuotes: false })
-			// eslint-disable-next-line unicorn/no-array-callback-reference
-			.map(quoteAndEscapeArgsForUniversalScriptLine)
-			.join(" ")
-	);
+	return parseArgs(scriptLine, { onlyDoubleQuotes: false })
+
+		.map(quoteAndEscapeArgsForUniversalScriptLine)
+		.join(" ");
 }
 
 /**
@@ -636,7 +632,7 @@ async function getApiLintElementsMissing(
 			if (exports.some((e) => e.exportPath === ".")) {
 				// Only one file needs to be checked for this. Prefer export that
 				// is not 'require' restricted.
-				// eslint-disable-next-line unicorn/no-lonely-if
+
 				if (rootLintTarget === undefined || !onlyRequire) {
 					rootLintTarget = relPath;
 				}
@@ -645,7 +641,7 @@ async function getApiLintElementsMissing(
 			// ./internal export should be checked for cross group consistency.
 			// Only one file needs to be checked for this. Prefer export that
 			// is not 'require' restricted.
-			// eslint-disable-next-line unicorn/no-lonely-if
+
 			if (internalLintTarget === undefined || !onlyRequire) {
 				internalLintTarget = relPath;
 			}
@@ -794,7 +790,6 @@ export const handlers: Handler[] = [
 				ret.push(`license: "${json.license}" !== "${licenseId}"`);
 			}
 
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (!json.repository) {
 				ret.push(`repository field missing`);
 			} else if (typeof json.repository === "string") {
@@ -818,7 +813,6 @@ export const handlers: Handler[] = [
 				}
 			}
 
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (!json.private && !json.description) {
 				ret.push("description: must not be empty");
 			}
@@ -901,7 +895,6 @@ export const handlers: Handler[] = [
 			const privatePackages = await ensurePrivatePackagesComputed();
 			const errors: string[] = [];
 
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (json.private && packageMustNotBePrivate(json.name, root)) {
 				errors.push(`Package ${json.name} must not be marked private`);
 			}
@@ -1036,7 +1029,6 @@ export const handlers: Handler[] = [
 				return `Error parsing JSON file: ${file}`;
 			}
 
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (json.private) {
 				return;
 			}
@@ -1098,7 +1090,6 @@ export const handlers: Handler[] = [
 				const hasFormatScript = Object.prototype.hasOwnProperty.call(json.scripts, "format");
 				const isLernaFormat = json.scripts.format?.includes("lerna");
 
-				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 				if (!isLernaFormat && (hasPrettierScript || hasPrettierFixScript || hasFormatScript)) {
 					if (!hasPrettierScript) {
 						missingScripts.push(`prettier`);
@@ -1147,14 +1138,14 @@ export const handlers: Handler[] = [
 						const prettierScript = json.scripts?.prettier?.includes("--ignore-path");
 						const prettierFixScript =
 							json.scripts?.["prettier:fix"]?.includes("--ignore-path");
-						// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 						if (json.scripts !== undefined && !formatScript) {
 							json.scripts.format = "npm run prettier:fix";
-							// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 							if (!prettierScript) {
 								json.scripts.prettier = "prettier --check .";
 							}
-							// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 							if (!prettierFixScript) {
 								json.scripts["prettier:fix"] = "prettier --write .";
 							}
@@ -1234,17 +1225,13 @@ export const handlers: Handler[] = [
 				);
 				const commands = new Set(
 					Object.values(json.scripts)
-						// eslint-disable-next-line unicorn/no-array-callback-reference
+
 						.filter(isDefined)
 						.map((s) => s.split(" ")[0]),
 				);
 				for (const command of commands.values()) {
 					const dep = commandDep.get(command);
-					if (
-						// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-						dep &&
-						!deps.has(dep)
-					) {
+					if (dep && !deps.has(dep)) {
 						missingDeps.push(`Package '${dep}' missing needed by command '${command}'`);
 					}
 				}
@@ -1292,7 +1279,6 @@ export const handlers: Handler[] = [
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				for (const [scriptName, scriptContent] of Object.entries(json.scripts)) {
-					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 					if (scriptContent) {
 						json.scripts[scriptName] = getPreferredScriptLine(scriptContent);
 					}
@@ -1342,7 +1328,6 @@ export const handlers: Handler[] = [
 			const dep = ["mocha", "@types/mocha", "jest", "@types/jest"];
 			if (
 				(json.dependencies &&
-					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 					Object.keys(json.dependencies).some((name) => dep.includes(name))) ||
 				(json.devDependencies &&
 					Object.keys(json.devDependencies).some((name) => dep.includes(name)))
@@ -1418,7 +1403,6 @@ export const handlers: Handler[] = [
 			const mochaScriptName = scripts["test:mocha"] === undefined ? "test" : "test:mocha";
 			const mochaScript = scripts[mochaScriptName];
 
-			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Existing logic is easier to read
 			if (mochaScript === undefined || !mochaScript.startsWith("mocha")) {
 				// skip irregular test script for now
 				return undefined;
@@ -1456,7 +1440,6 @@ export const handlers: Handler[] = [
 			const jestScriptName = scripts["test:jest"] === undefined ? "test" : "test:jest";
 			const jestScript = scripts[jestScriptName];
 
-			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Existing logic is easier to read
 			if (jestScript === undefined || !jestScript.startsWith("jest")) {
 				// skip irregular test script for now
 				return undefined;
@@ -1492,7 +1475,6 @@ export const handlers: Handler[] = [
 				return `Unexpected reporters in '${jestConfigFile}'`;
 			}
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			if ((json as any)["jest-junit"] !== undefined) {
 				return `Extraneous jest-unit config in ${file}`;
 			}
@@ -1556,7 +1538,7 @@ export const handlers: Handler[] = [
 			}
 
 			const cleanScript = scripts.clean;
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 			if (cleanScript) {
 				// Ignore clean scripts that are root of the release group
 				if (cleanScript.startsWith("pnpm") || cleanScript.startsWith("fluid-build")) {
@@ -1577,7 +1559,6 @@ export const handlers: Handler[] = [
 					.join("")}`;
 			}
 
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (cleanScript && cleanScript !== getPreferredScriptLine(cleanScript)) {
 				return "'clean' script should double quote the globs and only the globs";
 			}
@@ -1655,7 +1636,6 @@ export const handlers: Handler[] = [
 				return "Missing 'exports' field in package.json.";
 			}
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			const exportsRoot = (exportsField as any)?.["."];
 			if (exportsRoot === undefined) {
 				return "Missing '.' entry in 'exports' field in package.json.";
@@ -1670,11 +1650,9 @@ export const handlers: Handler[] = [
 
 			// CJS- and ESM-only packages should use default, not import or require.
 			const defaultField =
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				exportsRoot?.default?.default === undefined
 					? undefined
-					: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-						normalizePathField(exportsRoot?.default?.default);
+					: normalizePathField(exportsRoot?.default?.default);
 
 			// CJS-only packages should use default, not import or require.
 			if (isCJSOnly) {
@@ -1695,12 +1673,10 @@ export const handlers: Handler[] = [
 			if (!isESMOnly && !isCJSOnly) {
 				// ESM exports in import field
 				const importField =
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					exportsRoot?.import?.default === undefined
 						? undefined
-						: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-							normalizePathField(exportsRoot?.import?.default);
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						: normalizePathField(exportsRoot?.import?.default);
+
 				const moduleField = normalizePathField(json.module!);
 				if (importField !== moduleField) {
 					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'import' entry in 'exports' field in package.json. Expected '${moduleField}', got '${importField}'`;
@@ -1708,11 +1684,9 @@ export const handlers: Handler[] = [
 
 				// CJS exports in require field
 				const requireField =
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					exportsRoot?.require?.default === undefined
 						? undefined
-						: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-							normalizePathField(exportsRoot?.require?.default);
+						: normalizePathField(exportsRoot?.require?.default);
 				const mainField = normalizePathField(json.main);
 				if (requireField !== mainField) {
 					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
@@ -1861,7 +1835,6 @@ export const handlers: Handler[] = [
 				return `Error parsing JSON file: ${packageJsonFilePath}`;
 			}
 
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (packageJson.private) {
 				// If the package is private, we have nothing to validate.
 				return;
@@ -1951,7 +1924,7 @@ export const handlers: Handler[] = [
 					}
 
 					// Applies script corrections as needed for all script requirements
-					// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
+
 					requirements.requiredScripts.forEach(applyScriptCorrection);
 				}
 
@@ -1990,7 +1963,6 @@ function missingCleanDirectories(scripts: { [key: string]: string | undefined })
 		expectedClean.push("lib");
 	}
 
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (scripts.build?.startsWith("fluid-build")) {
 		expectedClean.push("*.tsbuildinfo", "*.build.log");
 	}
@@ -2002,7 +1974,7 @@ function missingCleanDirectories(scripts: { [key: string]: string | undefined })
 	if (scripts.test !== undefined && !scripts.test.startsWith("echo")) {
 		expectedClean.push("nyc");
 	}
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 	return expectedClean.filter((name) => !scripts.clean?.includes(name));
 }
 
@@ -2022,7 +1994,7 @@ function generateExportsField(json: PackageJson) {
 	}
 
 	// One of the values is guaranteed to be defined because of earlier checks
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
 	const cjsTypes = normalizePathField((json.types ?? json.typings)!);
 
 	const isCJSOnly = json.module === undefined || json.type === "commonjs";
@@ -2056,7 +2028,7 @@ function generateExportsField(json: PackageJson) {
 	// Package has both CJS and ESM
 
 	// Assume esm types are the same name as cjs, but in a different path.
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- an earlier check guarantees module is defined
+
 	const esmDir = path.dirname(json.module!);
 	const typesFile = path.basename(cjsTypes.toString());
 	const esmTypes = normalizePathField(path.join(esmDir, typesFile));

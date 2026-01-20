@@ -203,9 +203,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			packageOrReleaseGroup = releasePackage;
 		}
 
-		const newVersion =
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			exactVersion ?? bumpVersionScheme(repoVersion, bumpType!, scheme);
+		const newVersion = exactVersion ?? bumpVersionScheme(repoVersion, bumpType!, scheme);
 
 		let bumpArg: VersionChangeType;
 		if (bumpType === undefined) {

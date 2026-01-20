@@ -7,9 +7,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
 // Blocks are used in this file intentionally for scoping.
-/* eslint-disable no-lone-blocks */
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 /**
  * The types defined here cannot be in build-cli because it is an ESM-only package, and these types are imported in
@@ -199,7 +196,6 @@ namespace Test7 {
 	export class Baz {
 		protected x!: number;
 
-		// eslint-disable-next-line @typescript-eslint/no-empty-function
 		public method(): void {}
 	}
 }
@@ -292,7 +288,7 @@ namespace Test_TypeOnly_Symbols {
 
 	// Custom symbols are skipped, since they are likely from the package in question,
 	// and thus will not be considered equal to the version from the other copy of the package.
-	// eslint-disable-next-line symbol-description
+
 	const X: unique symbol = Symbol();
 	interface B {
 		[X]: number;

@@ -130,3 +130,23 @@ The following dependencies are pinned to older major versions because newer vers
     - Issue: Version 17+ changed internal module structure and removed exported types
     - Error: `Cannot find module 'npm-check-updates/build/src/types/IndexType.js'` and type errors
     - Used in: `build-cli`
+
+### Workaround: ESLint Config Linked Dependency
+
+The `@fluidframework/eslint-config-fluid` package is referenced using `link:../common/build/eslint-config-fluid` because the package exists in the root workspace but build-tools is a separate pnpm workspace. When using `link:` protocol, transitive dependencies are **not** automatically installed.
+
+As a workaround, the following dependencies from `eslint-config-fluid` are duplicated in the build-tools root `package.json`:
+
+- `@eslint-community/eslint-plugin-eslint-comments`
+- `@eslint/eslintrc`
+- `@fluid-internal/eslint-plugin-fluid`
+- `@typescript-eslint/eslint-plugin`
+- `@typescript-eslint/parser`
+- `eslint-config-biome`
+- `eslint-plugin-depend`
+- `eslint-plugin-promise`
+- `eslint-plugin-react`
+- `eslint-plugin-react-hooks`
+- `eslint-plugin-unused-imports`
+
+**These dependencies can be removed** once `eslint-config-fluid` is published to npm and consumed via a normal version specifier instead of `link:`. At that point, pnpm will properly resolve and install all transitive dependencies automatically.
