@@ -10,7 +10,7 @@ import { SessionId } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
 	SerializationVersion,
-} from "@fluidframework/id-compressor/internal"; // eslint-disable-line import-x/no-internal-modules -- Intentional use of internal API in test utilities
+} from "@fluidframework/id-compressor/internal"; // eslint-disable-line import-x/no-internal-modules
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
