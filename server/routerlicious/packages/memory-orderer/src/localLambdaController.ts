@@ -44,11 +44,11 @@ export class LocalLambdaController<T = ILocalOrdererSetup>
 		this.kafaka.subscribe(this);
 	}
 
-	public get state() {
+	public get state(): LocalLambdaControllerState {
 		return this._state;
 	}
 
-	public async start() {
+	public async start(): Promise<void> {
 		if (this._state === "closed") {
 			return;
 		}
@@ -76,7 +76,7 @@ export class LocalLambdaController<T = ILocalOrdererSetup>
 		}
 	}
 
-	public close() {
+	public close(): void {
 		this._state = "closed";
 
 		if (this.lambda) {
@@ -92,7 +92,7 @@ export class LocalLambdaController<T = ILocalOrdererSetup>
 		this.removeAllListeners();
 	}
 
-	// eslint-disable-next-line @typescript-eslint/promise-function-async
+
 	public process(message: IQueuedMessage): Promise<void> | undefined {
 		if (!this.lambda) {
 			throw new Error("The lambda has not started yet");

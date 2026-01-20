@@ -4,6 +4,8 @@
  */
 
 // import { IGitManager } from "@fluidframework/server-services-client";
+import { strict as assert } from "assert";
+
 import { ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitresources";
 import { GitManager } from "@fluidframework/server-services-client";
 import {
@@ -26,9 +28,8 @@ import {
 	TestNotImplementedCheckpointRepository,
 	TestNotImplementedCheckpointService,
 } from "@fluidframework/server-test-utils";
-import { strict as assert } from "assert";
-import _ from "lodash";
 import Sinon from "sinon";
+
 import { ScribeLambda } from "../../scribe/lambda";
 import { ScribeLambdaFactory } from "../../scribe/lambdaFactory";
 
@@ -91,13 +92,13 @@ describe("Routerlicious", () => {
 						logOffset: undefined,
 					},
 				];
-				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
+				const dbFactory = new TestDbFactory(structuredClone({ documents: testData }));
 				testMongoManager = new MongoManager(dbFactory);
 				testDocumentRepository = new TestNotImplementedDocumentRepository();
 				Sinon.replace(
 					testDocumentRepository,
 					"readOne",
-					Sinon.fake.resolves(_.cloneDeep(testData[0])),
+					Sinon.fake.resolves(structuredClone(testData[0])),
 				);
 				Sinon.replace(testDocumentRepository, "updateOne", Sinon.fake.resolves(undefined));
 
@@ -105,7 +106,7 @@ describe("Routerlicious", () => {
 				Sinon.replace(
 					testCheckpointRepository,
 					"getCheckpoint",
-					Sinon.fake.resolves(_.cloneDeep(testData[0])),
+					Sinon.fake.resolves(structuredClone(testData[0])),
 				);
 
 				Sinon.replace(
@@ -143,7 +144,7 @@ describe("Routerlicious", () => {
 				testGitManager.addTree(tree);
 				const testDeltaManager = new TestDeltaManager();
 
-				let factory = new ScribeLambdaFactory(
+				const factory = new ScribeLambdaFactory(
 					testMongoManager,
 					testDocumentRepository,
 					testMessageCollection,

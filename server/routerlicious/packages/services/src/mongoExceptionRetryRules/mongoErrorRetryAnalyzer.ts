@@ -22,7 +22,7 @@ export class MongoErrorRetryAnalyzer {
 		retryRuleOverride: Map<string, boolean>,
 		connectionNotAvailableMode: ConnectionNotAvailableMode,
 	): MongoErrorRetryAnalyzer {
-		if (!this.instance) {
+		if (this.instance === undefined || this.instance === null) {
 			this.instance = new MongoErrorRetryAnalyzer(
 				retryRuleOverride,
 				connectionNotAvailableMode,
@@ -45,7 +45,7 @@ export class MongoErrorRetryAnalyzer {
 
 	public shouldRetry(error: Error): boolean {
 		const rule = this.getRetryRule(error);
-		if (!rule) {
+		if (rule === undefined || rule === null) {
 			// This should not happen.
 			Lumberjack.error(
 				"MongoErrorRetryAnalyzer.shouldRetry() didn't get a rule",

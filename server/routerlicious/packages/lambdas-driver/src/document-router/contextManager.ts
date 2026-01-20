@@ -117,7 +117,7 @@ export class DocumentContextManager extends EventEmitter {
 		this.contexts.delete(context);
 	}
 
-	public getHeadOffset() {
+	public getHeadOffset(): number {
 		return this.head.offset;
 	}
 
@@ -125,7 +125,7 @@ export class DocumentContextManager extends EventEmitter {
 	 * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards, unless headPaused is true.
 	 * @returns True if the head was updated, false if it was not.
 	 */
-	public setHead(head: IQueuedMessage) {
+	public setHead(head: IQueuedMessage): boolean {
 		if (head.offset > this.head.offset || this.headPaused) {
 			// If head is moving backwards
 			if (head.offset <= this.head.offset) {
@@ -170,7 +170,7 @@ export class DocumentContextManager extends EventEmitter {
 		return false;
 	}
 
-	public setTail(tail: IQueuedMessage) {
+	public setTail(tail: IQueuedMessage): void {
 		assert(
 			(tail.offset > this.tail.offset || this.tailPaused) && tail.offset <= this.head.offset,
 			`Tail offset ${tail.offset} must be greater than the current tail offset ${this.tail.offset} or tailPaused should be true (${this.tailPaused}), and less than or equal to the head offset ${this.head.offset}.`,
@@ -201,7 +201,7 @@ export class DocumentContextManager extends EventEmitter {
 		this.updateCheckpoint();
 	}
 
-	public close() {
+	public close(): void {
 		this.closed = true;
 
 		for (const context of this.contexts) {
@@ -213,7 +213,7 @@ export class DocumentContextManager extends EventEmitter {
 		this.removeAllListeners();
 	}
 
-	private updateCheckpoint(restartOnCheckpointFailure?: boolean) {
+	private updateCheckpoint(restartOnCheckpointFailure?: boolean): void {
 		if (this.closed) {
 			return;
 		}

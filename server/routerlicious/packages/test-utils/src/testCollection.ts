@@ -6,7 +6,6 @@
 import { EventEmitter } from "events";
 
 import type { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
-import * as _ from "lodash";
 
 /**
  * @internal
@@ -14,7 +13,7 @@ import * as _ from "lodash";
 export class TestCollection implements ICollection<any> {
 	constructor(public collection: any[]) {}
 
-	public async aggregate(pipeline: any, options?: any) {
+	public async aggregate(pipeline: any, options?: any): Promise<any> {
 		throw new Error("Method not implemented.");
 	}
 
@@ -35,8 +34,7 @@ export class TestCollection implements ICollection<any> {
 		if (!value) {
 			throw new Error("Not found");
 		}
-		// eslint-disable-next-line import-x/namespace
-		_.extend(value, set);
+		Object.assign(value, set);
 	}
 
 	public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
@@ -45,8 +43,7 @@ export class TestCollection implements ICollection<any> {
 			if (!value) {
 				throw new Error("Not found");
 			}
-			// eslint-disable-next-line import-x/namespace
-			_.extend(value, set);
+			Object.assign(value, set);
 		});
 	}
 
@@ -56,8 +53,7 @@ export class TestCollection implements ICollection<any> {
 			this.collection.push(set);
 		}
 
-		// eslint-disable-next-line import-x/namespace
-		_.extend(value, set);
+		Object.assign(value, set);
 	}
 
 	public async insertOne(value: any): Promise<any> {
@@ -139,7 +135,7 @@ export class TestCollection implements ICollection<any> {
 	}
 
 	private findInternal(query: any, sort?: any): any[] {
-		function getValueByKey(propertyBag, key: string) {
+		function getValueByKey(propertyBag, key: string): any {
 			const keys = key.split(".");
 			let value = propertyBag;
 			keys.forEach((splitKey) => {
@@ -178,8 +174,8 @@ export class TestCollection implements ICollection<any> {
 		});
 
 		if (sort && Object.keys(sort).length === 1) {
-			// eslint-disable-next-line no-inner-declarations
-			function compare(a, b) {
+
+			function compare(a, b): number {
 				const sortKey = Object.keys(sort)[0];
 				return sort[sortKey] === 1
 					? getValueByKey(a, sortKey) - getValueByKey(b, sortKey)
@@ -202,7 +198,7 @@ export class TestDb implements IDb {
 
 	public async close(): Promise<void> {}
 
-	public on(event: string, listener: (...args: any[]) => void) {
+	public on(event: string, listener: (...args: any[]) => void): void {
 		this.emitter.on(event, listener);
 	}
 

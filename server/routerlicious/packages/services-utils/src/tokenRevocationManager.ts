@@ -28,7 +28,7 @@ export class DummyRevokedTokenChecker implements IRevokedTokenChecker {
  * @internal
  */
 export class DummyTokenRevocationManager implements ITokenRevocationManager {
-	public async start() {
+	public async start(): Promise<void> {
 		// Lumberjack.debug(`DummyTokenRevocationManager started`);
 	}
 

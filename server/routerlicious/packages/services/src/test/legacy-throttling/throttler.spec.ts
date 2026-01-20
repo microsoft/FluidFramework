@@ -4,11 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { TestThrottlerHelper } from "@fluidframework/server-test-utils";
-import { Throttler } from "../../legacy-throttling";
-import { IThrottler, ThrottlingError } from "@fluidframework/server-services-core";
+
+import type { IThrottler } from "@fluidframework/server-services-core";
+import { ThrottlingError } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { TestThrottlerHelper } from "@fluidframework/server-test-utils";
 import Sinon from "sinon";
+
+import { Throttler } from "../../legacy-throttling";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
@@ -32,7 +35,7 @@ describe("Throttler", () => {
 		minThrottleCheckInterval: number,
 		numIntervalsToBeThrottledFor: number = 1,
 		weight: number = 1,
-	) => {
+	): Promise<void> => {
 		const numOperationsToExceedIntervalLimit = Math.ceil(minThrottleCheckInterval / rate);
 		// open enough operations to throttle for duration of numIntervalsToBeThrottledFor
 		const numOperations = numIntervalsToBeThrottledFor * numOperationsToExceedIntervalLimit;
@@ -337,9 +340,9 @@ describe("Throttler", () => {
 		const id = "testCache";
 
 		// setup a cached throttled operation
-		await throttler.incrementCount(id);
+		throttler.incrementCount(id);
 		Sinon.clock.tick(minThrottleCheckInterval + 1);
-		await throttler.incrementCount(id);
+		throttler.incrementCount(id);
 		await Sinon.clock.nextAsync();
 		assert.throws(() => {
 			throttler.incrementCount(id);

@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import sinon from "sinon";
-import { StageTrace } from "../trace";
+
 import { performance } from "@fluidframework/common-utils";
+import sinon from "sinon";
+
+import { StageTrace } from "../trace";
 
 describe("StageTrace", () => {
 	let clock: sinon.SinonFakeTimers;

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { IAlfredTenant, NetworkError } from "@fluidframework/server-services-client";
 import {
@@ -26,12 +28,12 @@ import {
 	TestTenantManager,
 	TestThrottler,
 } from "@fluidframework/server-test-utils";
-import { strict as assert } from "assert";
+import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import express from "express";
 import nconf from "nconf";
 import Sinon from "sinon";
 import request from "supertest";
-import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
+
 import * as alfredApp from "../../alfred/app";
 import { DeltaService, DocumentDeleteService } from "../../alfred/services";
 import { Constants } from "../../utils";

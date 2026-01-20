@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { TestHistorian } from "../testHistorian";
-import { GitManager } from "@fluidframework/server-services-client";
-import { ICreateBlobParams, ICreateCommitParams } from "@fluidframework/gitresources";
+
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { ICreateBlobParams, ICreateCommitParams } from "@fluidframework/gitresources";
+import { GitManager } from "@fluidframework/server-services-client";
+
+import { TestHistorian } from "../testHistorian";
 
 describe("Test for Historian", () => {
 	let gitManager: GitManager;
@@ -37,7 +39,7 @@ describe("Test for Historian", () => {
 
 	it("Blob Test for insertion of duplicate blobs", async () => {
 		const historian = new TestHistorian();
-		const gitManager = new GitManager(historian);
+		const localGitManager = new GitManager(historian);
 		const blob1: ICreateBlobParams = {
 			content: "content",
 			encoding: "utf-8",
@@ -46,8 +48,8 @@ describe("Test for Historian", () => {
 			content: fromUtf8ToBase64(blob1.content),
 			encoding: "base64",
 		};
-		const createBlobResponse1 = await gitManager.createBlob(blob1.content, blob1.encoding);
-		const createBlobResponse2 = await gitManager.createBlob(blob2.content, blob2.encoding);
+		const createBlobResponse1 = await localGitManager.createBlob(blob1.content, blob1.encoding);
+		const createBlobResponse2 = await localGitManager.createBlob(blob2.content, blob2.encoding);
 		assert.strictEqual(
 			createBlobResponse1.sha,
 			createBlobResponse2.sha,

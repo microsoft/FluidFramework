@@ -91,7 +91,7 @@
 		"@types/split": "^0.3.28",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.57.0",
+		"eslint": "~9.39.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"pm2": "^5.4.2",

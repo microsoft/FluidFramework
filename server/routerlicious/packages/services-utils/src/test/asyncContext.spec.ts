@@ -3,38 +3,40 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { ITelemetryContextProperties } from "@fluidframework/server-services-telemetry";
 import { v4 as uuid } from "uuid";
-import { strict as assert } from "assert";
+
 import {
 	AsyncLocalStorageAbortControllerContext,
 	AsyncLocalStorageContextProvider,
 	AsyncLocalStorageTelemetryContext,
 } from "../asyncContext";
 
-describe("AsyncContext", function () {
-	describe("AsyncLocalStorageContextProvider", function () {
+describe("AsyncContext", () => {
+	describe("AsyncLocalStorageContextProvider", () => {
 		class MockContextProviderLogger<T> {
 			private _events: (T | undefined)[] = [];
 
-			public get events() {
+			public get events(): (T | undefined)[] {
 				return this._events;
 			}
 
 			constructor(private readonly contextProvider: AsyncLocalStorageContextProvider<T>) {}
 
-			public log() {
+			public log(): void {
 				this._events.push(this.contextProvider.getContext());
 			}
 
-			public clear() {
+			public clear(): void {
 				this._events = [];
 			}
 		}
 		it("returns undefined context when unbound", () => {
 			const contextProvider = new AsyncLocalStorageContextProvider<string>();
 			const logger = new MockContextProviderLogger(contextProvider);
-			const helper = () => {
+			const helper = (): void => {
 				logger.log();
 			};
 			helper(); // 0
@@ -44,10 +46,10 @@ describe("AsyncContext", function () {
 		it("binds properties to sync function context", () => {
 			const contextProvider = new AsyncLocalStorageContextProvider<string>();
 			const logger = new MockContextProviderLogger(contextProvider);
-			const helper = () => {
+			const helper = (): void => {
 				logger.log();
 			};
-			const main = (id: string) => {
+			const main = (id: string): void => {
 				contextProvider.bindContext(id, () => helper());
 			};
 			const id1 = uuid();
@@ -65,12 +67,12 @@ describe("AsyncContext", function () {
 		it("binds properties to async function context", async () => {
 			const contextProvider = new AsyncLocalStorageContextProvider<string>();
 			const logger = new MockContextProviderLogger(contextProvider);
-			const helper = async () => {
+			const helper = async (): Promise<void> => {
 				logger.log();
 			};
-			const main = async (id: string) => {
+			const main = async (id: string): Promise<void> => {
 				return new Promise<void>((resolve) => {
-					contextProvider.bindContext(id, () => helper().then(resolve));
+					contextProvider.bindContext(id, async () => helper().then(resolve));
 				});
 			};
 			const id1 = uuid();
@@ -93,10 +95,10 @@ describe("AsyncContext", function () {
 		it("overwrites bound primitive properties when nested", () => {
 			const contextProvider = new AsyncLocalStorageContextProvider<string>();
 			const logger = new MockContextProviderLogger(contextProvider);
-			const helper = () => {
+			const helper = (): void => {
 				logger.log();
 			};
-			const main = (outerId: string, innerId: string) => {
+			const main = (outerId: string, innerId: string): void => {
 				contextProvider.bindContext(outerId, () => {
 					helper();
 					contextProvider.bindContext(innerId, () => helper());
@@ -112,13 +114,13 @@ describe("AsyncContext", function () {
 		it("overwrites/appends bound object properties when nested", () => {
 			const contextProvider = new AsyncLocalStorageContextProvider<Record<string, string>>();
 			const logger = new MockContextProviderLogger(contextProvider);
-			const helper = () => {
+			const helper = (): void => {
 				logger.log();
 			};
 			const main = (
 				outerProps: Record<string, string>,
 				innerProps: Record<string, string>,
-			) => {
+			): void => {
 				contextProvider.bindContext(outerProps, () => {
 					helper();
 					contextProvider.bindContext(innerProps, () => helper());
@@ -144,28 +146,28 @@ describe("AsyncContext", function () {
 		});
 	});
 
-	describe("AsyncLocalStorageTelemetryContext", function () {
+	describe("AsyncLocalStorageTelemetryContext", () => {
 		class MockTelemetryContextLogger {
 			private _events: Partial<ITelemetryContextProperties>[] = [];
 
-			public get events() {
+			public get events(): Partial<ITelemetryContextProperties>[] {
 				return this._events;
 			}
 
 			constructor(private readonly telemetryContext: AsyncLocalStorageTelemetryContext) {}
 
-			public log() {
+			public log(): void {
 				this._events.push(this.telemetryContext.getProperties());
 			}
 
-			public clear() {
+			public clear(): void {
 				this._events = [];
 			}
 		}
 		it("returns empty context when unbound", () => {
 			const telemetryContext = new AsyncLocalStorageTelemetryContext();
 			const logger = new MockTelemetryContextLogger(telemetryContext);
-			const helper = () => {
+			const helper = (): void => {
 				logger.log();
 			};
 			helper(); // 0
@@ -175,10 +177,10 @@ describe("AsyncContext", function () {
 		it("binds properties to sync function context", () => {
 			const telemetryContext = new AsyncLocalStorageTelemetryContext();
 			const logger = new MockTelemetryContextLogger(telemetryContext);
-			const helper = () => {
+			const helper = (): void => {
 				logger.log();
 			};
-			const main = (correlationId: string) => {
+			const main = (correlationId: string): void => {
 				telemetryContext.bindProperties({ correlationId }, () => helper());
 			};
 			const id1 = uuid();
@@ -196,12 +198,12 @@ describe("AsyncContext", function () {
 		it("binds properties to async function context", async () => {
 			const telemetryContext = new AsyncLocalStorageTelemetryContext();
 			const logger = new MockTelemetryContextLogger(telemetryContext);
-			const helper = async () => {
+			const helper = async (): Promise<void> => {
 				logger.log();
 			};
-			const main = async (correlationId: string) => {
+			const main = async (correlationId: string): Promise<void> => {
 				return new Promise<void>((resolve) => {
-					telemetryContext.bindProperties({ correlationId }, () =>
+					telemetryContext.bindProperties({ correlationId }, async () =>
 						helper().then(resolve),
 					);
 				});
@@ -227,13 +229,13 @@ describe("AsyncContext", function () {
 		it("overwrites/appends bound properties when nested", () => {
 			const telemetryContext = new AsyncLocalStorageTelemetryContext();
 			const logger = new MockTelemetryContextLogger(telemetryContext);
-			const helper = () => {
+			const helper = (): void => {
 				logger.log();
 			};
 			const main = (
 				outerProps: Partial<ITelemetryContextProperties>,
 				innerProps: Partial<ITelemetryContextProperties>,
-			) => {
+			): void => {
 				telemetryContext.bindProperties(outerProps, () => {
 					helper();
 					telemetryContext.bindProperties(innerProps, () => helper());
@@ -260,11 +262,11 @@ describe("AsyncContext", function () {
 		});
 	});
 
-	describe("AsyncLocalStorageAbortControllerContext", function () {
+	describe("AsyncLocalStorageAbortControllerContext", () => {
 		class MockAbortControllerContextLogger {
 			private _events: Partial<AbortController>[] = [];
 
-			public get events() {
+			public get events(): Partial<AbortController>[] {
 				return this._events;
 			}
 
@@ -272,21 +274,21 @@ describe("AsyncContext", function () {
 				private readonly abortControllerContext: AsyncLocalStorageAbortControllerContext,
 			) {}
 
-			public log() {
+			public log(): void {
 				const abortController = this.abortControllerContext.getAbortController();
 				if (abortController !== undefined) {
 					this._events.push(abortController);
 				}
 			}
 
-			public clear() {
+			public clear(): void {
 				this._events = [];
 			}
 		}
 		it("returns undefined context when unbound", () => {
 			const abortControllerContext = new AsyncLocalStorageAbortControllerContext();
 			const logger = new MockAbortControllerContextLogger(abortControllerContext);
-			const helper = () => {
+			const helper = (): void => {
 				logger.log();
 			};
 			helper(); // 0
@@ -296,10 +298,10 @@ describe("AsyncContext", function () {
 		it("binds properties to sync function context", () => {
 			const abortControllerContext = new AsyncLocalStorageAbortControllerContext();
 			const logger = new MockAbortControllerContextLogger(abortControllerContext);
-			const helper = () => {
+			const helper = (): void => {
 				logger.log();
 			};
-			const main = (abortController: AbortController) => {
+			const main = (abortController: AbortController): void => {
 				abortControllerContext.bindAbortController(abortController, () => helper());
 			};
 			const abortController1 = new AbortController();
@@ -317,12 +319,12 @@ describe("AsyncContext", function () {
 		it("binds properties to async function context", async () => {
 			const abortControllerContext = new AsyncLocalStorageAbortControllerContext();
 			const logger = new MockAbortControllerContextLogger(abortControllerContext);
-			const helper = async () => {
+			const helper = async (): Promise<void> => {
 				logger.log();
 			};
-			const main = async (abortController: AbortController) => {
+			const main = async (abortController: AbortController): Promise<void> => {
 				return new Promise<void>((resolve) => {
-					abortControllerContext.bindAbortController(abortController, () =>
+					abortControllerContext.bindAbortController(abortController, async () =>
 						helper().then(resolve),
 					);
 				});

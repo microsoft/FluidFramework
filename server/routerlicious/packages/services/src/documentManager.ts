@@ -45,7 +45,7 @@ export class DocumentManager implements IDocumentManager {
 		const document: IDocument = await restWrapper.get<IDocument>(
 			`/documents/${tenantId}/${documentId}`,
 		);
-		if (!document) {
+		if (document === undefined || document === null) {
 			return null;
 		}
 
@@ -81,7 +81,7 @@ export class DocumentManager implements IDocumentManager {
 			(await this.documentStaticDataCache.get(staticPropsKey)) ?? undefined;
 
 		// If there are no cached static document props, fetch the document from the database
-		if (!staticPropsStr) {
+		if (staticPropsStr === undefined || staticPropsStr === null || staticPropsStr === "") {
 			Lumberjack.verbose(
 				"Falling back to database after attempting to read cached static document data.",
 				getLumberBaseProperties(documentId, tenantId),
@@ -123,10 +123,13 @@ export class DocumentManager implements IDocumentManager {
 		await this.documentStaticDataCache.delete(staticPropsKey);
 	}
 
-	private async getBasicRestWrapper(tenantId: string, documentId: string) {
+	private async getBasicRestWrapper(
+		tenantId: string,
+		documentId: string,
+	): Promise<BasicRestWrapper> {
 		const scopes = [ScopeType.DocRead];
 		const accessToken = await this.tenantManager.signToken(tenantId, documentId, scopes);
-		const getDefaultHeaders = () => {
+		const getDefaultHeaders = (): Record<string, string> => {
 			return {
 				Authorization: `Basic ${accessToken}`,
 			};
@@ -162,7 +165,7 @@ export class DocumentManager implements IDocumentManager {
 	 * Creates a cache key to retreive static data from a document
 	 *
 	 * @param documentId - ID of the document to create an access key for
-	 * @returns - A cache key to access static data for [documentId]
+	 * @returns A cache key to access static data for [documentId]
 	 */
 	private static getDocumentStaticKey(documentId: string): string {
 		return `staticData:${documentId}`;
@@ -172,7 +175,7 @@ export class DocumentManager implements IDocumentManager {
 	 * Extracts the static properties from an IDocument
 	 *
 	 * @param document - Document to get properties from
-	 * @returns - The static properties of [document]
+	 * @returns The static properties of [document]
 	 */
 	private static getStaticPropsFromDoc(document: IDocument): IDocumentStaticProperties {
 		return {

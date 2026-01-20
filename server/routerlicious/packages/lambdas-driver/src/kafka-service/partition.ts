@@ -104,7 +104,7 @@ export class Partition extends EventEmitter {
 		});
 	}
 
-	public process(rawMessage: IQueuedMessage) {
+	public process(rawMessage: IQueuedMessage): void {
 		if (this.closed) {
 			return;
 		}

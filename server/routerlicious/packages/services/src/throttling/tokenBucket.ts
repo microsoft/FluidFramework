@@ -313,8 +313,8 @@ export class DistributedTokenBucket implements ITokenBucket {
 	private async setThrottlingMetricAndUsageData(
 		throttlingMetric: IThrottlingMetrics,
 		usageData?: IUsageData,
-	) {
-		await (this.usageStorageId && usageData
+	): Promise<void> {
+		await (this.usageStorageId !== undefined && this.usageStorageId !== null && this.usageStorageId !== "" && usageData !== undefined && usageData !== null
 			? this.throttleAndUsageStorageManager.setThrottlingMetricAndUsageData(
 					this.remoteId,
 					throttlingMetric,
@@ -361,7 +361,7 @@ export class DistributedTokenBucket implements ITokenBucket {
 	public tryConsume(tokens: number, usageData?: IUsageData): number {
 		this.tokensConsumedSinceLastSync += tokens;
 		if (
-			!this.lastSyncTimestamp ||
+			this.lastSyncTimestamp === undefined || this.lastSyncTimestamp === null || this.lastSyncTimestamp === 0 ||
 			Date.now() - this.lastSyncTimestamp >= this.config.distributedSyncIntervalInMs
 		) {
 			if (this.config.enableEnhancedTelemetry) {
@@ -371,7 +371,7 @@ export class DistributedTokenBucket implements ITokenBucket {
 					tokensRequested: tokens,
 					tokensConsumedSinceLastSync: this.tokensConsumedSinceLastSync,
 					lastSyncTimestamp: this.lastSyncTimestamp,
-					timeSinceLastSync: this.lastSyncTimestamp
+					timeSinceLastSync: this.lastSyncTimestamp !== undefined && this.lastSyncTimestamp !== null && this.lastSyncTimestamp !== 0
 						? Date.now() - this.lastSyncTimestamp
 						: undefined,
 				});

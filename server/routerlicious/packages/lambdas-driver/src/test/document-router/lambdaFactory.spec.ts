@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import {
 	DefaultServiceConfiguration,
 	IPartitionLambdaFactory,
 	LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import { TestContext } from "@fluidframework/server-test-utils";
-import { strict as assert } from "assert";
+
 import { DocumentLambdaFactory } from "../../document-router/lambdaFactory";
+
 import { create, TestLambdaFactory } from "./testDocumentLambda";
 
 describe("document-router", () => {

@@ -5,7 +5,7 @@
 
 import type { IDocument, IDocumentRepository } from "@fluidframework/server-services-core";
 
-const getDefaultErrorMsg = (methodName: string) =>
+const getDefaultErrorMsg = (methodName: string): string =>
 	`TestNotImplementedDocumentRepository.${methodName}: Method not implemented. Provide your own mock.`;
 /**
  * @internal

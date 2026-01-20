@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { TenantManager, type ITenantDocument } from "../../riddler/tenantManager";
-import { ITenantRepository } from "../../riddler/mongoTenantRepository";
+import { strict as assert } from "assert";
+
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { NetworkError } from "@fluidframework/server-services-client";
 import {
 	ISecretManager,
 	ICache,
@@ -13,16 +15,16 @@ import {
 	type ITenantKeys,
 	type ITenantConfig,
 } from "@fluidframework/server-services-core";
-import { TestCache } from "@fluidframework/server-test-utils";
-import sinon from "sinon";
 import {
 	type ITenantKeyGenerator,
 	TenantKeyGenerator,
 	generateToken,
 } from "@fluidframework/server-services-utils";
-import { strict as assert } from "assert";
-import { NetworkError } from "@fluidframework/server-services-client";
-import { ScopeType } from "@fluidframework/protocol-definitions";
+import { TestCache } from "@fluidframework/server-test-utils";
+import sinon from "sinon";
+
+import { ITenantRepository } from "../../riddler/mongoTenantRepository";
+import { TenantManager, type ITenantDocument } from "../../riddler/tenantManager";
 
 class TestSecretManager implements ISecretManager {
 	constructor() {}
@@ -41,19 +43,20 @@ class TestSecretManager implements ISecretManager {
 }
 
 class TestTenantRepository implements ITenantRepository {
-	find(query: any, sort: any, limit?: number, skip?: number): Promise<ITenantDocument[]> {
+	async find(query: any, sort: any, limit?: number, skip?: number): Promise<ITenantDocument[]> {
 		throw new Error("Method not implemented.");
 	}
-	findOne(query: any, options?: any): Promise<ITenantDocument | null> {
+	// eslint-disable-next-line @rushstack/no-new-null
+	async findOne(query: any, options?: any): Promise<ITenantDocument | null> {
 		throw new Error("Method not implemented.");
 	}
-	update(filter: any, set: any, addToSet: any, options?: any): Promise<void> {
+	async update(filter: any, set: any, addToSet: any, options?: any): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
-	insertOne(value: ITenantDocument): Promise<any> {
+	async insertOne(value: ITenantDocument): Promise<any> {
 		throw new Error("Method not implemented.");
 	}
-	deleteOne(filter: any): Promise<any> {
+	async deleteOne(filter: any): Promise<any> {
 		throw new Error("Method not implemented.");
 	}
 }
@@ -219,6 +222,7 @@ describe("TenantManager", () => {
 			};
 			const expectedKeys = { key1: "efgh", key2: "abcd" };
 			sandbox.stub(cache, "get").resolves("primary");
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			const orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -237,6 +241,7 @@ describe("TenantManager", () => {
 			};
 			const expectedKeys = { key1: "abcd", key2: "efgh" };
 			sandbox.stub(cache, "get").resolves("secondary");
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			const orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -255,6 +260,7 @@ describe("TenantManager", () => {
 			};
 			const expectedKeys = { key1: "abcd", key2: "efgh" };
 			sandbox.stub(cache, "get").resolves(null);
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			const orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -273,6 +279,7 @@ describe("TenantManager", () => {
 			};
 			let expectedKeys = { key1: "abcd", key2: "efgh" };
 			const cacheStub = sandbox.stub(cache, "get").resolves("primary");
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			let orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -285,6 +292,7 @@ describe("TenantManager", () => {
 			cacheStub.restore();
 			expectedKeys = { key1: "efgh", key2: "abcd" };
 			sandbox.stub(cache, "get").resolves("secondary");
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			orderedKeys = await tenantManager["returnPrivateKeysInOrder"](
 				"1234",
 				privateTenantKeys,
@@ -298,6 +306,7 @@ describe("TenantManager", () => {
 	describe("decryptCachedKeys", () => {
 		it("Should decrypt ITenantKeys when decryptPrivateKeys is false", () => {
 			const keys: ITenantKeys = { key1: "abcd", key2: "efgh" };
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			const decryptedKeys = tenantManager["decryptCachedKeys"](JSON.stringify(keys), false);
 			assert(isITenantKeys(decryptedKeys));
 			assert.strictEqual(decryptedKeys.key1, keys.key1);
@@ -311,6 +320,7 @@ describe("TenantManager", () => {
 				keyNextRotationTime: Math.round(new Date().getTime() / 1000) + 86400,
 				secondaryKeyNextRotationTime: Math.round(new Date().getTime() / 1000),
 			};
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			const decryptedKeys = tenantManager["decryptCachedKeys"](JSON.stringify(keys), true);
 			assert(isITenantPrivateKeys(decryptedKeys));
 			assert.strictEqual(decryptedKeys.key, keys.key);

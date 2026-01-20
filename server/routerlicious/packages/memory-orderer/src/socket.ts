@@ -14,7 +14,7 @@ export class Socket<T> extends EventEmitter {
 	public static async connect<T>(address: string, path: string): Promise<Socket<T>> {
 		const socket = new ws(`ws://${address}/${path}`);
 		await new Promise<void>((resolve, reject) => {
-			const errorListener = (error) => reject(error);
+			const errorListener: (error: unknown) => void = (error) => reject(error instanceof Error ? error : new Error(String(error)));
 			socket.on("error", errorListener);
 			socket.on("open", () => {
 				socket.removeListener("error", errorListener);
@@ -52,7 +52,7 @@ export class Socket<T> extends EventEmitter {
 	/**
 	 * Sends the given value on the socket
 	 */
-	public send(value: T) {
+	public send(value: T): void {
 		this.pending.push(value);
 
 		if (this.sendScheduled) {
@@ -78,7 +78,7 @@ export class Socket<T> extends EventEmitter {
 		return this;
 	}
 
-	private sendBuffers(buffers: T[]) {
+	private sendBuffers(buffers: T[]): void {
 		this.socket.send(JSON.stringify(buffers));
 	}
 }

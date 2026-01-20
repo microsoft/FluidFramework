@@ -82,7 +82,7 @@ const defaultLumberjackConfig: ILumberjackConfig = {
 		enableSanitization: false,
 	},
 };
-function configureLumberjackLogging(config: ILumberjackConfig) {
+function configureLumberjackLogging(config: ILumberjackConfig): void {
 	if (config.options?.enableGlobalTelemetryContext) {
 		configureGlobalTelemetryContext();
 	}
@@ -93,7 +93,7 @@ function configureLumberjackLogging(config: ILumberjackConfig) {
  * Configures the default behavior of the Winston logger and Lumberjack based on the provided config
  * @internal
  */
-export function configureLogging(configOrPath: nconf.Provider | string) {
+export function configureLogging(configOrPath: nconf.Provider | string): void {
 	const config =
 		typeof configOrPath === "string"
 			? nconf

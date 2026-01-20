@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { strict as assert } from "assert";
+
+import { ISequencedClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
 import { Quorum } from "../quorum";
 
 describe("Quorum", () => {
@@ -454,7 +456,7 @@ describe("Quorum", () => {
 			});
 		});
 
-		describe("Snapshot", async () => {
+		describe("Snapshot", () => {
 			it("Produces the expected stable snapshot", async () => {
 				const proposal1 = {
 					key: "one",
@@ -664,7 +666,7 @@ describe("Quorum", () => {
 		});
 	});
 
-	describe("Snapshot", async () => {
+	describe("Snapshot", () => {
 		it("Produces the expected stable snapshot", () => {
 			// Casting details because the contents don't really matter for this test.
 			const client1Info = {

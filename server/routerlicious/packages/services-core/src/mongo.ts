@@ -100,7 +100,7 @@ export class MongoManager {
 	/**
 	 * Reconnects to DB
 	 */
-	private reconnect(delay) {
+	private reconnect(delay: number): void {
 		if (!this.shouldReconnect) {
 			debug("Should not reconnect to Db");
 			Lumberjack.info("Should not reconnect to Db");

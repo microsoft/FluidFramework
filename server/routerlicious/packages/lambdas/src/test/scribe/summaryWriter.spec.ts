@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { MessageType } from "@fluidframework/protocol-definitions";
-import { SummaryWriter } from "../..";
-import { TestDeltaManager, TestTenantManager } from "@fluidframework/server-test-utils";
-import Sinon from "sinon";
 import { strict as assert } from "assert";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
+import { MessageType } from "@fluidframework/protocol-definitions";
 import {
 	ISequencedOperationMessage,
 	SequencedOperationType,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { TestDeltaManager, TestTenantManager } from "@fluidframework/server-test-utils";
+import Sinon from "sinon";
+
+import { SummaryWriter } from "../..";
 
 describe("Routerlicious", () => {
 	describe("Scribe", () => {
@@ -54,6 +56,7 @@ describe("Routerlicious", () => {
 					);
 					const lumberJackSpy = sandbox.spy(Lumberjack, "info");
 					const deltaServiceSpy = sandbox.spy(testDeltaManager, "getDeltas");
+					// eslint-disable-next-line @typescript-eslint/dot-notation
 					const result = await testingSummaryWriter["getLogTail"](0, 11, []);
 					assert.strictEqual(
 						JSON.stringify(result.map((op) => op.sequenceNumber)),
@@ -93,7 +96,8 @@ describe("Routerlicious", () => {
 					);
 					const lumberJackSpy = sandbox.spy(Lumberjack, "info");
 					const deltaServiceSpy = sandbox.spy(testDeltaManager, "getDeltas");
-					const result = await testingSummaryWriter["getLogTail"](0, 11, pendingOps);
+					// eslint-disable-next-line @typescript-eslint/dot-notation
+				const result = await testingSummaryWriter["getLogTail"](0, 11, pendingOps);
 					assert.strictEqual(
 						JSON.stringify(result.map((op) => op.sequenceNumber)),
 						JSON.stringify([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
@@ -129,7 +133,8 @@ describe("Routerlicious", () => {
 					);
 					const lumberJackSpy = sandbox.spy(Lumberjack, "info");
 					const deltaServiceSpy = sandbox.spy(testDeltaManager, "getDeltas");
-					const result = await testingSummaryWriter["getLogTail"](0, 11, pendingOps);
+					// eslint-disable-next-line @typescript-eslint/dot-notation
+				const result = await testingSummaryWriter["getLogTail"](0, 11, pendingOps);
 					assert.strictEqual(
 						JSON.stringify(result.map((op) => op.sequenceNumber)),
 						JSON.stringify([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
@@ -168,7 +173,8 @@ describe("Routerlicious", () => {
 					const deltaManagerStub = sandbox
 						.stub(testDeltaManager, "getDeltas")
 						.resolves(mockDeltas.map((op) => op.operation));
-					const result = await testingSummaryWriter["getLogTail"](0, 11, pendingOps);
+					// eslint-disable-next-line @typescript-eslint/dot-notation
+				const result = await testingSummaryWriter["getLogTail"](0, 11, pendingOps);
 					assert.strictEqual(
 						JSON.stringify(result.map((op) => op.sequenceNumber)),
 						JSON.stringify([1, 2, 3, 4, 6, 7, 8, 9, 10]),
@@ -220,7 +226,8 @@ describe("Routerlicious", () => {
 					const deltaManagerStub = sandbox
 						.stub(testDeltaManager, "getDeltas")
 						.resolves(mockDeltas.map((op) => op.operation));
-					const result = await testingSummaryWriter["getLogTail"](0, 11, pendingOps);
+					// eslint-disable-next-line @typescript-eslint/dot-notation
+				const result = await testingSummaryWriter["getLogTail"](0, 11, pendingOps);
 					assert.strictEqual(
 						JSON.stringify(result.map((op) => op.sequenceNumber)),
 						JSON.stringify([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
@@ -271,7 +278,7 @@ function generateOps(
 					clientId: "Some client ID",
 					clientSequenceNumber: sequenceNumber,
 					minimumSequenceNumber: 0,
-					sequenceNumber: sequenceNumber,
+					sequenceNumber,
 					type: MessageType.Operation,
 				},
 			}) as ISequencedOperationMessage,
@@ -288,21 +295,21 @@ function verifyLogResult(
 	expectedLogtailGaps: number[][],
 	expectedRetrievedGapsRange: number[][][],
 	expectedFinalLogtailRange: number[][],
-) {
+): void {
 	assert.strictEqual(actualLogMessage, expectedLogMessage);
 	assert.deepStrictEqual(
-		actualLogProperties["logtailRangeFromLastSummary"],
+		actualLogProperties.logtailRangeFromLastSummary,
 		expectedLogtailRangeFromLastSummary,
 	);
 	assert.deepStrictEqual(
-		actualLogProperties["logtailRangeFromPending"],
+		actualLogProperties.logtailRangeFromPending,
 		expectedLogtailRangeFromPending,
 	);
 	assert.deepStrictEqual(
-		actualLogProperties["logtailRangeFromMemory"],
+		actualLogProperties.logtailRangeFromMemory,
 		expectedLogtailRangeFromMemory,
 	);
-	assert.deepStrictEqual(actualLogProperties["logtailGaps"], expectedLogtailGaps);
-	assert.deepStrictEqual(actualLogProperties["retrievedGapsRange"], expectedRetrievedGapsRange);
-	assert.deepStrictEqual(actualLogProperties["finalLogtailRange"], expectedFinalLogtailRange);
+	assert.deepStrictEqual(actualLogProperties.logtailGaps, expectedLogtailGaps);
+	assert.deepStrictEqual(actualLogProperties.retrievedGapsRange, expectedRetrievedGapsRange);
+	assert.deepStrictEqual(actualLogProperties.finalLogtailRange, expectedFinalLogtailRange);
 }

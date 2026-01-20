@@ -3,16 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { IContextErrorData, LambdaCloseType } from "@fluidframework/server-services-core";
 import { KafkaMessageFactory, TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
-import { strict as assert } from "assert";
+
 import { Partition } from "../../kafka-service/partition";
+
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
 
 /**
  * Helper function to wrap partition close testing
  */
-function verifyClose(
+async function verifyClose(
 	partition: Partition,
 	expectedError: string | boolean = true,
 	expectedRestart: boolean = true,

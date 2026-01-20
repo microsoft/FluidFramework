@@ -6,7 +6,7 @@
 import type { IncomingMessage, ServerResponse } from "http";
 
 import { NetworkError, RestLessFieldNames } from "@fluidframework/server-services-client";
-import { urlencoded } from "body-parser";
+import { urlencoded } from "express";
 
 /**
  * @internal
@@ -64,11 +64,13 @@ export class RestLessServer {
 		// If not, we must parse it ourselves.
 		if (!request.complete) {
 			await new Promise<void>((resolve, reject) =>
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				urlencoded({
 					limit: this.options.requestSizeLimit,
 					extended: true,
 					// urlencoded does not recognize content-type: application/x-www-form-urlencoded;restless
 					type: (req) =>
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 						req.headers["content-type"]?.startsWith(
 							"application/x-www-form-urlencoded",
 						),
@@ -94,7 +96,7 @@ export class RestLessServer {
 		// Parse and add HTTP Headers
 		const headerField: RequestField = fields[RestLessFieldNames.Header];
 		let definedNewContentType: boolean = false;
-		const parseAndSetHeader = (header: string) => {
+		const parseAndSetHeader = (header: string): void => {
 			const { name, value } = decodeHeader(header);
 			if (!name || value === undefined) {
 				return;
@@ -147,7 +149,7 @@ export class RestLessServer {
 		}
 	}
 
-	private static isRestLess(request: IncomingMessageEx) {
+	private static isRestLess(request: IncomingMessageEx): boolean {
 		const isPost = request.method?.toLowerCase() === "post";
 		const contentTypeContents: string[] | undefined = request.headers["content-type"]
 			?.toLowerCase()
@@ -155,6 +157,6 @@ export class RestLessServer {
 		// TODO: maybe add multipart/form-data support in future if needed for blob uploads
 		const isForm = contentTypeContents?.includes("application/x-www-form-urlencoded");
 		const isRestLess = contentTypeContents?.includes("restless");
-		return isPost && isForm && isRestLess;
+		return isPost && !!isForm && !!isRestLess;
 	}
 }

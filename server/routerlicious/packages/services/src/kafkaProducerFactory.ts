@@ -82,7 +82,7 @@ export function createProducer(
 			maxKafkaMessageSize,
 		);
 		producer.on("error", (error) => {
-			winston.error(error);
+			winston.error(inspect(error));
 			Lumberjack.error(error);
 		});
 	}

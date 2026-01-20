@@ -4,11 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { AxiosRequestConfig } from "axios";
-import { json, urlencoded } from "body-parser";
-import express from "express";
-import request from "supertest";
+
 import { RestLessClient } from "@fluidframework/server-services-client";
+import { AxiosRequestConfig } from "axios";
+import express, { json, urlencoded } from "express";
+import request from "supertest";
+
 import { RestLessServer } from "../restLessServer";
 
 describe("RestLess", () => {
@@ -19,7 +20,7 @@ describe("RestLess", () => {
 	};
 	let supertest: request.SuperTest<request.Test>;
 	let database: Map<string, any>;
-	const setupApp = (restLessBeforeBodyParser: boolean = false) => {
+	const setupApp = (restLessBeforeBodyParser: boolean = false): void => {
 		/**
 		 * Set up example (simple) express server with "authentication"
 		 */
@@ -101,7 +102,7 @@ describe("RestLess", () => {
 		});
 		supertest = request(app);
 	};
-	const superRequest = (requestConfig: AxiosRequestConfig, translate = false) => {
+	const superRequest = (requestConfig: AxiosRequestConfig, translate = false): request.Test => {
 		const reqConf = translate ? new RestLessClient().translate(requestConfig) : requestConfig;
 		const req: request.Test = supertest[reqConf.method?.toLowerCase() ?? "get"](
 			reqConf.url ?? "",

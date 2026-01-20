@@ -7,7 +7,6 @@
 
 import type { ICollection } from "@fluidframework/server-services-core";
 import * as charwise from "charwise";
-import * as _ from "lodash";
 
 export interface ICollectionProperty {
 	indexes: string[]; // Index structure for the collection.
@@ -29,8 +28,8 @@ async function readStream<T>(stream): Promise<T[]> {
 			resolve(entries);
 		});
 
-		stream.on("error", (error) => {
-			reject(error);
+		stream.on("error", (error)=> {
+			reject(error instanceof Error ? error : new Error(String(error)));
 		});
 	});
 }
@@ -68,8 +67,7 @@ export class Collection<T> implements ICollection<T> {
 	public async update(filter: any, set: any, addToSet: any): Promise<void> {
 		const value = await this.findOneInternal(filter);
 		if (value) {
-			// eslint-disable-next-line import-x/namespace
-			_.extend(value, set);
+			Object.assign(value, set);
 			return this.insertOne(value);
 		} else {
 			throw new Error("Not found");
@@ -83,8 +81,7 @@ export class Collection<T> implements ICollection<T> {
 	public async upsert(filter: any, set: any, addToSet: any): Promise<void> {
 		const value = await this.findOneInternal(filter);
 		if (value) {
-			// eslint-disable-next-line import-x/namespace
-			_.extend(value, set);
+			Object.assign(value, set);
 			return this.insertOne(value);
 		} else {
 			return this.insertOne(set);
@@ -134,7 +131,7 @@ export class Collection<T> implements ICollection<T> {
 		await new Promise<void>((resolve, reject) => {
 			this.db.put(this.getKey(value), value, (error) => {
 				if (error) {
-					reject(error);
+					reject(error instanceof Error ? error : new Error(String(error)));
 				} else {
 					resolve();
 				}
@@ -153,8 +150,8 @@ export class Collection<T> implements ICollection<T> {
 	}
 
 	// Generate an insertion key for a value based on index structure.
-	private getKey(value: any) {
-		function getValueByKey(propertyBag, key: string) {
+	private getKey(value: any): string {
+		function getValueByKey(propertyBag: any, key: string): any {
 			const keys = key.split(".");
 			let v = propertyBag;
 			for (const splitKey of keys) {
@@ -213,7 +210,7 @@ export class Collection<T> implements ICollection<T> {
 						if (err.notFound) {
 							resolve([]);
 						} else {
-							reject(err);
+							reject(err instanceof Error ? err : new Error(String(err)));
 						}
 					} else {
 						resolve([val]);

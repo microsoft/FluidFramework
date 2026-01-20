@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { IContextErrorData } from "@fluidframework/server-services-core";
 import { DebugLogger, TestConsumer, TestKafka } from "@fluidframework/server-test-utils";
-import { strict as assert } from "assert";
+
 import { CheckpointManager } from "../../kafka-service/checkpointManager";
 import { Context } from "../../kafka-service/context";
 

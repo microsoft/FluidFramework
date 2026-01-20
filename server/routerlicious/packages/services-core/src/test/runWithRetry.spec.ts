@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import sinon from "sinon";
-import { runWithRetry, requestWithRetry } from "../runWithRetry";
+
 import { NetworkError } from "@fluidframework/server-services-client";
+import sinon from "sinon";
+
+import { runWithRetry, requestWithRetry } from "../runWithRetry";
 
 describe("runWithRetry", () => {
 	let apiStub: sinon.SinonStub;
@@ -76,7 +78,7 @@ describe("runWithRetry", () => {
 		const maxRetries = 3;
 		const retryAfterMs = 1000;
 		const startTime = Date.now();
-		const calculateIntervalMs = (error, numRetries, retryAfterInterval) =>
+		const calculateIntervalMs: (error: any, numRetries: number, retryAfterInterval: number) => number = (error, numRetries, retryAfterInterval) =>
 			retryAfterInterval * 2 ** numRetries;
 
 		const promise = runWithRetry(
@@ -224,7 +226,7 @@ describe("requestWithRetry", () => {
 		const maxRetries = 3;
 		const retryAfterMs = 1000;
 		const startTime = Date.now();
-		const calculateIntervalMs = (error, numRetries, retryAfterInterval) =>
+		const calculateIntervalMs: (error: any, numRetries: number, retryAfterInterval: number) => number = (error, numRetries, retryAfterInterval) =>
 			retryAfterInterval * 2 ** numRetries;
 
 		const promise = requestWithRetry(

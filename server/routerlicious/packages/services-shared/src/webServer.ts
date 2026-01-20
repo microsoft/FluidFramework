@@ -13,8 +13,8 @@ import * as util from "util";
 import type * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import { Server } from "socket.io";
 import { setupMaster, setupWorker } from "@socket.io/sticky";
+import { Server } from "socket.io";
 
 import * as socketIo from "./socketIoServer";
 
@@ -36,11 +36,11 @@ export class HttpServer implements core.IHttpServer {
 		await util.promisify(((callback) => this.server.close(callback)) as any)();
 	}
 
-	public listen(port: any) {
+	public listen(port: any): void {
 		this.server.listen(port);
 	}
 
-	public on(event: string, listener: (...args: any[]) => void) {
+	public on(event: string, listener: (...args: any[]) => void): void {
 		this.server.on(event, listener);
 	}
 
@@ -175,11 +175,11 @@ class NullHttpServer implements core.IHttpServer {
 		// Do nothing
 	}
 
-	public listen(port: any) {
+	public listen(port: any): void {
 		// Do nothing
 	}
 
-	public on(event: string, listener: (...args: any[]) => void) {
+	public on(event: string, listener: (...args: any[]) => void): void {
 		// Do nothing
 	}
 
@@ -240,7 +240,7 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 		const heartbeatTimeoutMs =
 			this.clusterConfig.workerTimeoutNumMissedHeartbeats *
 			this.clusterConfig.workerHeartbeatIntervalMs;
-		setInterval(() => {
+		setInterval((): void => {
 			for (const [workerId, lastHeartbeat] of this.lastHeartbeatMap.entries()) {
 				const msSinceLastHeartbeat = Date.now() - lastHeartbeat;
 				if (msSinceLastHeartbeat > heartbeatTimeoutMs) {
@@ -266,7 +266,7 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 
 		// Kill workers when they take too long to spawn.
 		cluster.on("fork", (worker) => {
-			const timeout = setTimeout(() => {
+			const timeout = setTimeout((): void => {
 				Lumberjack.error("Timed out waiting for worker to spawn.", {
 					id: worker.id,
 					pid: worker.process.pid,
@@ -324,7 +324,7 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 		Lumberjack.info(`Worker process is running.`, { pid: process.pid });
 
 		// Send a heartbeat message on an interval
-		setInterval(() => {
+		setInterval((): void => {
 			const heartbeatMsg: IWorkerHeartbeatMessage = { type: "heartbeat" };
 			process.send?.(heartbeatMsg);
 		}, this.clusterConfig.workerHeartbeatIntervalMs);

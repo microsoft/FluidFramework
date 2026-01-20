@@ -4,14 +4,15 @@
  */
 
 import { strict as assert } from "assert";
+
 import { Lumber } from "../lumber";
 import { LumberEventName } from "../lumberEventNames";
-import * as resources from "../resources";
 import {
 	TestEngine1,
 	TestSensitiveException,
 	TestRegularException,
 } from "../lumberjackCommonTestUtils";
+import * as resources from "../resources";
 import { SanitizationLumberFormatter } from "../sanitizationLumberFormatter";
 
 describe("SanitizationLumberFormatter", () => {

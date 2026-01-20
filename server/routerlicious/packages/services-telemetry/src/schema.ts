@@ -35,15 +35,15 @@ export abstract class BaseLumberjackSchemaValidator implements ILumberjackSchema
 	}
 
 	// Validators
-	protected readonly stringValidation = (propValue: any) => {
+	protected readonly stringValidation: (propValue: any) => boolean = (propValue: any) => {
 		return this.isUndefined(propValue) || (this.isString(propValue) && propValue.length > 0);
 	};
 
-	protected readonly numberValidation = (propValue: any) => {
+	protected readonly numberValidation: (propValue: any) => boolean = (propValue: any) => {
 		return this.isUndefined(propValue) || this.isNumber(propValue);
 	};
 
-	protected readonly positiveNumberValidation = (propValue: any) => {
+	protected readonly positiveNumberValidation: (propValue: any) => boolean = (propValue: any) => {
 		return this.isUndefined(propValue) || (this.isNumber(propValue) && propValue >= -1);
 	};
 

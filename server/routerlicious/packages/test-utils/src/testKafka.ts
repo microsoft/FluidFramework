@@ -31,11 +31,11 @@ export class TestConsumer implements IConsumer {
 		public topic: string,
 	) {}
 
-	public setFailOnCommit(value: boolean) {
+	public setFailOnCommit(value: boolean): void {
 		this.failOnCommit = value;
 	}
 
-	public isConnected() {
+	public isConnected(): boolean {
 		return true;
 	}
 
@@ -81,13 +81,13 @@ export class TestConsumer implements IConsumer {
 
 	public async close(): Promise<void> {}
 
-	public async pause() {
+	public async pause(): Promise<void> {
 		if (!this.pausedQueue) {
 			this.pausedQueue = [];
 		}
 	}
 
-	public async resume() {
+	public async resume(): Promise<void> {
 		if (!this.pausedQueue) {
 			return;
 		}
@@ -103,11 +103,11 @@ export class TestConsumer implements IConsumer {
 	/**
 	 * Manually signal an error
 	 */
-	public emitError(error: any) {
+	public emitError(error: any): void {
 		this.emitter.emit("error", error);
 	}
 
-	public emit(message: any) {
+	public emit(message: any): void {
 		if (this.pausedQueue) {
 			this.pausedQueue.push(message);
 		} else {
@@ -115,7 +115,7 @@ export class TestConsumer implements IConsumer {
 		}
 	}
 
-	public rebalance() {
+	public rebalance(): void {
 		this.emitter.emit("rebalancing");
 		this.emitter.emit("rebalanced", [{ topic: this.topic, offset: 0, partition: 0 }]);
 	}
@@ -127,7 +127,7 @@ export class TestConsumer implements IConsumer {
 export class TestProducer implements IProducer {
 	constructor(private readonly kafka: TestKafka) {}
 
-	public isConnected() {
+	public isConnected(): boolean {
 		return true;
 	}
 
@@ -185,7 +185,7 @@ export class TestKafka {
 		return this.messages;
 	}
 
-	public addMessage(message: any, topic: string) {
+	public addMessage(message: any, topic: string): void {
 		const offset = this.offset++;
 
 		const queuedMessage = TestKafka.createdQueuedMessage(offset);

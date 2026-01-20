@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import Sinon from "sinon";
+
 import { TestContext } from "@fluidframework/server-test-utils";
+import Sinon from "sinon";
+
 import { LambdaCircuitBreaker, circuitBreakerOptions } from "../../utils/circuitBreaker";
 
 describe("Lambda CircuitBreaker", () => {
@@ -13,7 +15,7 @@ describe("Lambda CircuitBreaker", () => {
 	const resetTimeout = 1000;
 	const options: circuitBreakerOptions = {
 		errorThresholdPercentage: 0.001,
-		resetTimeout: resetTimeout,
+		resetTimeout,
 		timeout: false,
 		rollingCountTimeout: 1000,
 		rollingCountBuckets: 1000,
@@ -25,7 +27,7 @@ describe("Lambda CircuitBreaker", () => {
 	const errorResponse = "Dummy action failed";
 	const healthCheckSuccessResponse = "Health check successful";
 	const healthCheckFailedResponse = "Health check failed";
-	const dummyFunction = async (success = true, timeoutMs = 0) => {
+	const dummyFunction = async (success = true, timeoutMs = 0): Promise<string> => {
 		if (timeoutMs > 0) {
 			await new Promise((resolve) => setTimeout(resolve, timeoutMs));
 		}
@@ -33,7 +35,7 @@ describe("Lambda CircuitBreaker", () => {
 			? Promise.resolve(successfulResponse)
 			: Promise.reject(new Error(errorResponse));
 	};
-	const dummyHealthCheck = async (success = true) => {
+	const dummyHealthCheck = async (success = true): Promise<string> => {
 		await new Promise((resolve) => setTimeout(resolve, 100));
 		return success
 			? Promise.resolve(healthCheckSuccessResponse)
@@ -41,6 +43,7 @@ describe("Lambda CircuitBreaker", () => {
 	};
 
 	afterEach(() => {
+		// eslint-disable-next-line @typescript-eslint/dot-notation
 		circuitBreaker["circuitBreaker"].close();
 		circuitBreaker.shutdown();
 	});
@@ -98,7 +101,9 @@ describe("Lambda CircuitBreaker", () => {
 		try {
 			await circuitBreaker.execute([false]);
 		} catch (error) {
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			assert.strictEqual(error["message"], errorResponse);
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			assert.strictEqual(error["circuitBreakerOpen"], undefined);
 		}
 		assert.strictEqual(circuitBreaker.getCurrentState(), "closed");
@@ -190,7 +195,7 @@ describe("Lambda CircuitBreaker", () => {
 		);
 
 		// circuit should remain opened even when the successful case resolved
-		Promise.all(promises).then((_) => {
+		await Promise.all(promises).then((_) => {
 			assert.strictEqual(circuitBreaker.getCurrentState(), "opened");
 		});
 	});

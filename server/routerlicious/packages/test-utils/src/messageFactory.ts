@@ -63,7 +63,7 @@ export class KafkaMessageFactory {
 		return message;
 	}
 
-	public getHeadOffset(key: string) {
+	public getHeadOffset(key: string): number {
 		return this.offsets[this.getPartition(key)] - 1;
 	}
 
@@ -110,7 +110,7 @@ export class MessageFactory {
 		return this.createRawOperation(operation, timestamp, this.clientId);
 	}
 
-	public createJoin(timestamp = Date.now(), serverMetadata: any = undefined) {
+	public createJoin(timestamp = Date.now(), serverMetadata: any = undefined): IRawOperationMessage {
 		const joinMessage: IClientJoin = {
 			clientId: this.clientId,
 			detail: {
@@ -138,7 +138,7 @@ export class MessageFactory {
 		return this.createRawOperation(operation, timestamp, null);
 	}
 
-	public createLeave(timestamp = Date.now()) {
+	public createLeave(timestamp = Date.now()): IRawOperationMessage {
 		const operation: IDocumentSystemMessage = {
 			clientSequenceNumber: -1,
 			contents: null,
@@ -151,7 +151,7 @@ export class MessageFactory {
 		return this.createRawOperation(operation, timestamp, null);
 	}
 
-	public createRawOperation(operation: IDocumentMessage, timestamp, clientId) {
+	public createRawOperation(operation: IDocumentMessage, timestamp, clientId): IRawOperationMessage {
 		const objectMessage: IRawOperationMessage = {
 			clientId,
 			documentId: this.documentId,

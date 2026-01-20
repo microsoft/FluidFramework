@@ -17,7 +17,7 @@ export function handleResponse<T>(
 	cache = true,
 	status: number = 200,
 	handler: (value: T) => void = (value) => value,
-) {
+): void {
 	resultP.then(handler).then(
 		(result) => {
 			if (cache) {
@@ -32,7 +32,7 @@ export function handleResponse<T>(
 	);
 }
 
-export function getGitDir(store: nconf.Provider, tenantId: string) {
+export function getGitDir(store: nconf.Provider, tenantId: string): string {
 	const directory = store.get("storage");
 	return path.join(directory, `./${tenantId}`);
 }

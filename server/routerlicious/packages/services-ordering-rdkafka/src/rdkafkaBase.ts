@@ -121,7 +121,7 @@ export abstract class RdkafkaBase extends EventEmitter {
 
 	protected abstract connect(): Promise<void>;
 
-	protected async setOauthBearerTokenIfNeeded(client: kafkaTypes.Client<any>) {
+	protected async setOauthBearerTokenIfNeeded(client: kafkaTypes.Client<any>): Promise<void> {
 		if (!this.options.oauthBearerConfig?.tokenProvider) {
 			return;
 		}
@@ -149,7 +149,7 @@ export abstract class RdkafkaBase extends EventEmitter {
 		}, tokenResponse.refreshInMs).unref();
 	}
 
-	private async initialize() {
+	private async initialize(): Promise<void> {
 		try {
 			if (!this.options.disableTopicCreation) {
 				await this.ensureTopics();
@@ -170,7 +170,7 @@ export abstract class RdkafkaBase extends EventEmitter {
 		}
 	}
 
-	protected async ensureTopics() {
+	protected async ensureTopics(): Promise<void> {
 		const options: kafkaTypes.GlobalConfig = {
 			"client.id": `${this.clientId}-admin`,
 			"metadata.broker.list": this.endpoints.kafka.join(","),
@@ -196,7 +196,7 @@ export abstract class RdkafkaBase extends EventEmitter {
 				adminClient.disconnect();
 
 				if (err && err.code !== this.kafka.CODES.ERRORS.ERR_TOPIC_ALREADY_EXISTS) {
-					reject(err);
+					reject(err instanceof Error ? err : new Error(JSON.stringify(err)));
 				} else {
 					resolve();
 				}
@@ -204,7 +204,7 @@ export abstract class RdkafkaBase extends EventEmitter {
 		});
 	}
 
-	protected error(error: any, errorData: IContextErrorData = { restart: false }) {
+	protected error(error: any, errorData: IContextErrorData = { restart: false }): void {
 		const errorCodesToCauseRestart =
 			this.options.restartOnKafkaErrorCodes ?? this.defaultRestartOnKafkaErrorCodes;
 

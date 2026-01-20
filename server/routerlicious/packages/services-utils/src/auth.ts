@@ -27,7 +27,6 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import type { RequestHandler, Request, Response } from "express";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
-// eslint-disable-next-line import-x/no-unresolved
 import type { Params } from "express-serve-static-core";
 import { decode, sign } from "jsonwebtoken";
 import type { Provider } from "nconf";
@@ -93,7 +92,7 @@ export async function getCreationToken(
 	token: string,
 	documentId: string,
 	lifetime = 5 * 60,
-) {
+): Promise<string> {
 	const tokenClaims = decode(token) as ITokenClaims;
 	const { tenantId, user, jti, ver } = tokenClaims;
 	const accessToken = await tenantManager.signToken(
@@ -480,7 +479,7 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 /**
  * @internal
  */
-export function getParam(params: Params, key: string) {
+export function getParam(params: Params, key: string): string | undefined {
 	return Array.isArray(params) ? undefined : params[key];
 }
 

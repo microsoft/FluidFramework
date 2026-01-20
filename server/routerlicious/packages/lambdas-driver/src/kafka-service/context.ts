@@ -28,7 +28,7 @@ export class Context extends EventEmitter implements IContext {
 	/**
 	 * Updates the checkpoint for the partition
 	 */
-	public checkpoint(queuedMessage: IQueuedMessage, restartFlag?: boolean) {
+	public checkpoint(queuedMessage: IQueuedMessage, restartFlag?: boolean): void {
 		if (this.closed) {
 			return;
 		}
@@ -50,7 +50,7 @@ export class Context extends EventEmitter implements IContext {
 	 * @param error - The error object or string
 	 * @param errorData - Additional information about the error
 	 */
-	public error(error: any, errorData: IContextErrorData) {
+	public error(error: any, errorData: IContextErrorData): void {
 		if (this.closed) {
 			Lumberjack.info("Context already closed, not emitting error");
 			return;

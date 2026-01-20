@@ -43,7 +43,7 @@ export class TestLambda implements IPartitionLambda {
 		return;
 	}
 
-	public error(error: string, errorData: IContextErrorData) {
+	public error(error: string, errorData: IContextErrorData): void {
 		this.context.error(error, errorData);
 	}
 }
@@ -72,18 +72,18 @@ export class TestPartitionLambdaFactory extends EventEmitter implements IPartiti
 		return;
 	}
 
-	public setFailCreate(value: boolean) {
+	public setFailCreate(value: boolean): void {
 		this.failCreate = value;
 	}
 
-	public setThrowHandler(value: boolean) {
+	public setThrowHandler(value: boolean): void {
 		this.throwHandler = value;
 	}
 
 	/**
 	 * Closes all created lambdas
 	 */
-	public closeLambdas(error: string, errorData: IContextErrorData) {
+	public closeLambdas(error: string, errorData: IContextErrorData): void {
 		for (const lambda of this.lambdas) {
 			lambda.error(error, errorData);
 		}

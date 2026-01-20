@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import request from "supertest";
+import { TestReadinessCheck, TestCheck } from "@fluidframework/server-test-utils";
 import express from "express";
+import request from "supertest";
+
 import { createHealthCheckEndpoints } from "../healthCheckEndpoints";
 import { StartupCheck } from "../startupChecker";
-import { TestReadinessCheck, TestCheck } from "@fluidframework/server-test-utils";
+
 
 describe("Health Check Endpoints", () => {
 	let app: express.Express;
@@ -17,7 +19,7 @@ describe("Health Check Endpoints", () => {
 	let testCheckWithException: TestCheck;
 	let startupCheck: StartupCheck;
 
-	const setupApp = (useReadinessCheck = false) => {
+	const setupApp = (useReadinessCheck = false): void => {
 		app = express();
 		testCheck = new TestCheck();
 		testCheckWithException = new TestCheck();

@@ -30,7 +30,7 @@ export class LocalKafkaSubscription extends EventEmitter {
 		super();
 	}
 
-	public close() {
+	public close(): void {
 		this.closed = true;
 
 		if (this.retryTimer) {
@@ -41,7 +41,7 @@ export class LocalKafkaSubscription extends EventEmitter {
 		this.removeAllListeners();
 	}
 
-	public async process() {
+	public async process(): Promise<void> {
 		if (
 			this.queue.length <= this.queueOffset ||
 			this.processing ||
@@ -84,7 +84,7 @@ export class LocalKafkaSubscription extends EventEmitter {
 		this.process().catch((e) => this.handleProcessError(e));
 	}
 
-	private handleProcessError(error: unknown) {
+	private handleProcessError(error: unknown): void {
 		Lumberjack.error("Error in LocalKafkaSubscription.process()", undefined, error);
 	}
 }

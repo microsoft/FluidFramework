@@ -16,7 +16,7 @@ export class CombinedLambda implements IPartitionLambda {
 	/**
 	 * {@inheritDoc IPartitionLambda.handler}
 	 */
-	public handler(message: IQueuedMessage) {
+	public handler(message: IQueuedMessage): Promise<void> | undefined {
 		const promises: Promise<void>[] = [];
 
 		for (const lambda of this.lambdas) {

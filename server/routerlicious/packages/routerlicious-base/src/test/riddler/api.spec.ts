@@ -5,19 +5,21 @@
 
 import { strict as assert } from "assert";
 import * as crypto from "crypto";
-import express from "express";
-import request from "supertest";
-import { TestDbFactory } from "@fluidframework/server-test-utils";
+
 import {
 	EncryptionKeyVersion,
 	MongoManager,
 	ISecretManager,
 } from "@fluidframework/server-services-core";
-import * as riddlerApp from "../../riddler/app";
-import Sinon from "sinon";
-import { ITenantDocument } from "../../riddler";
-import { TenantKeyGenerator } from "@fluidframework/server-services-utils";
 import { StartupCheck } from "@fluidframework/server-services-shared";
+import { TenantKeyGenerator } from "@fluidframework/server-services-utils";
+import { TestDbFactory } from "@fluidframework/server-test-utils";
+import express from "express";
+import Sinon from "sinon";
+import request from "supertest";
+
+import { ITenantDocument } from "../../riddler";
+import * as riddlerApp from "../../riddler/app";
 
 const documentsCollectionName = "testDocuments";
 const deltasCollectionName = "testDeltas";

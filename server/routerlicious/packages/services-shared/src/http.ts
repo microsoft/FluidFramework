@@ -186,7 +186,7 @@ export function handleResponse<T>(
 	successStatus: number = 200,
 	onSuccess: (value: T) => void = () => {},
 	onError: (error: any) => void = () => {},
-) {
+): void {
 	resultP
 		.then((result) => {
 			if (allowClientCache === true) {

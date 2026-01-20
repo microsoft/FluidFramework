@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	IClientJoin,
@@ -21,11 +22,16 @@ import {
 	type ISentSignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
-import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { LocalOrderManager, PubSub } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
-import { generateToken } from "@fluidframework/server-services-utils";
+import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
+import {
+	isNetworkError,
+	type NetworkError,
+	InternalErrorCode,
+} from "@fluidframework/server-services-client";
 import {
 	clientConnectivityStorageId,
 	DefaultMetricClient,
@@ -39,7 +45,9 @@ import {
 	type IClusterDrainingChecker,
 	clusterDrainingRetryTimeInMs,
 } from "@fluidframework/server-services-core";
+import { type IRevokedTokenChecker } from "@fluidframework/server-services-core/dist/tokenRevocationManager";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { generateToken } from "@fluidframework/server-services-utils";
 import {
 	MessageFactory,
 	TestClientManager,
@@ -51,15 +59,9 @@ import {
 	TestThrottleAndUsageStorageManager,
 	TestNotImplementedDocumentRepository,
 } from "@fluidframework/server-test-utils";
-import { OrdererManager } from "../../nexus";
-import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
 import Sinon from "sinon";
-import {
-	isNetworkError,
-	type NetworkError,
-	InternalErrorCode,
-} from "@fluidframework/server-services-client";
-import { type IRevokedTokenChecker } from "@fluidframework/server-services-core/dist/tokenRevocationManager";
+
+import { OrdererManager } from "../../nexus";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
@@ -198,7 +200,7 @@ describe("Routerlicious", () => {
 					);
 				});
 
-				function connectToServer(
+				async function connectToServer(
 					id: string,
 					tenantId: string,
 					secret: string,
@@ -445,7 +447,7 @@ describe("Routerlicious", () => {
 							testTenantId,
 							testSecret,
 							socket,
-							version == 2 ? true : false,
+							version === 2 ? true : false,
 						);
 						const clientId = connectMessage.clientId;
 						const client: TestSignalClient = {
@@ -599,7 +601,7 @@ describe("Routerlicious", () => {
 
 							beforeEach(async () => {
 								clients = await Promise.all(
-									clientVersion.map((version) =>
+									clientVersion.map(async (version) =>
 										createClient(testId, testTenantId, testSecret, version),
 									),
 								);
@@ -988,7 +990,7 @@ describe("Routerlicious", () => {
 						socket.send("submitOp", connectMessage.clientId, [blockedMessage]);
 						const nackMessages = await deferredNack.promise;
 
-						const nackContent = nackMessages[0]?.content as INackContent;
+						const nackContent = nackMessages[0]?.content;
 						assert.strictEqual(nackContent.code, 429);
 						assert.strictEqual(nackContent.type, NackErrorType.ThrottlingError);
 						assert.strictEqual(nackContent.retryAfter, 1);
@@ -1057,7 +1059,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						socket.send("submitOp", connectMessage.clientId, blockedMessageBatch);
 						const nackMessages = await deferredNack.promise;
 
-						const nackContent = nackMessages[0]?.content as INackContent;
+						const nackContent = nackMessages[0]?.content;
 						assert.strictEqual(nackMessages.length, 1, "Expected only 1 Nack Message");
 						assert.strictEqual(nackContent.code, 429);
 						assert.strictEqual(nackContent.type, NackErrorType.ThrottlingError);
@@ -1171,7 +1173,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 					Sinon.restore();
 				});
 
-				function connectToServer(
+				async function connectToServer(
 					id: string,
 					tenantId: string,
 					clientType: string,
@@ -1190,7 +1192,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						},
 					};
 					const connectMessage: IConnect = {
-						client: client,
+						client,
 						id,
 						mode: "write",
 						tenantId,

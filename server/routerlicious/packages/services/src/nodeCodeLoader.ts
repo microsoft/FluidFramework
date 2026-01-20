@@ -39,7 +39,7 @@ export class NodeCodeLoader {
 	) {}
 
 	public async load<T>(pkg: any): Promise<T> {
-		if (await this.allowList.testSource(pkg)) {
+		if ((await this.allowList.testSource(pkg)) === true) {
 			let packageName = "";
 			packageName =
 				typeof pkg.package === "string"
@@ -55,7 +55,7 @@ export class NodeCodeLoader {
 	}
 
 	private async installOrWaitForPackages(pkg: string): Promise<string> {
-		const dataStores = pkg.match(/(.*)\/(.*)@(.*)/);
+		const dataStores = /(.*)\/(.*)@(.*)/.exec(pkg);
 		if (!dataStores) {
 			throw new Error("Invalid package");
 		}

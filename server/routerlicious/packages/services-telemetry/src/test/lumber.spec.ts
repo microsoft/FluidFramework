@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import Sinon from "sinon";
+
 import { Lumber } from "../lumber";
 import { LumberEventName } from "../lumberEventNames";
-import * as resources from "../resources";
 import { TestEngine1, TestFormatter, TestSchemaValidator } from "../lumberjackCommonTestUtils";
+import * as resources from "../resources";
 
 describe("Lumber", () => {
 	beforeEach(() => {

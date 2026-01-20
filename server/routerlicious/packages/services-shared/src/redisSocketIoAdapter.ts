@@ -102,7 +102,7 @@ export class RedisSocketIoAdapter extends Adapter {
 	/**
 	 * Set the Redis connections to use
 	 */
-	public static setup(options: ISocketIoRedisOptions, shouldDisableDefaultNamespace?: boolean) {
+	public static setup(options: ISocketIoRedisOptions, shouldDisableDefaultNamespace?: boolean): void {
 		this.options = options;
 		this.shouldDisableDefaultNamespace = shouldDisableDefaultNamespace ?? false;
 	}
@@ -119,14 +119,14 @@ export class RedisSocketIoAdapter extends Adapter {
 	/**
 	 * Check if this instance is connected to the default socket io namespace
 	 */
-	public get isDefaultNamespaceAndDisable() {
+	public get isDefaultNamespaceAndDisable(): boolean {
 		return RedisSocketIoAdapter.shouldDisableDefaultNamespace && this.nsp.name === "/";
 	}
 
 	/**
 	 * Returns the number of unique rooms (not including built in user rooms)
 	 */
-	public get uniqueRoomCount() {
+	public get uniqueRoomCount(): number {
 		return this._uniqueRoomCount;
 	}
 
@@ -228,6 +228,7 @@ export class RedisSocketIoAdapter extends Adapter {
 	/**
 	 * Removes a socket
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	public async delAll(socketId: SocketId): Promise<void> {
 		if (!this.isDefaultNamespaceAndDisable) {
 			const rooms = this.sids.get(socketId);
@@ -278,7 +279,7 @@ export class RedisSocketIoAdapter extends Adapter {
 	/**
 	 * Publishes the packet to Redis
 	 */
-	private publish(packet: any, opts: BroadcastOptions) {
+	private publish(packet: any, opts: BroadcastOptions): void {
 		// include the room in the channel name
 		const channel = `${this.channel}${opts.rooms.values().next().value}#`;
 		// don't provide any "opts"
@@ -296,7 +297,7 @@ export class RedisSocketIoAdapter extends Adapter {
 	/**
 	 * Handles messages from the Redis subscription
 	 */
-	private onRoomMessage(channel: string, messageBuffer: Buffer) {
+	private onRoomMessage(channel: string, messageBuffer: Buffer): void {
 		if (!channel.startsWith(this.channel)) {
 			// sent to different channel
 			return;
@@ -383,7 +384,7 @@ export class RedisSocketIoAdapter extends Adapter {
 			}
 		}
 
-		function logMessageTrace(element) {
+		function logMessageTrace(element: any): void {
 			if (element?.traces && element.traces.length > 0) {
 				element.traces.push({
 					action: "start",
@@ -413,7 +414,7 @@ export class RedisSocketIoAdapter extends Adapter {
 	/**
 	 * Removes a socket from the room
 	 */
-	private removeFromRoom(socketId: string, roomId: string) {
+	private removeFromRoom(socketId: string, roomId: string): boolean {
 		const roomSocketIds = this.rooms.get(roomId);
 		if (roomSocketIds) {
 			roomSocketIds.delete(socketId);
@@ -435,7 +436,7 @@ export class RedisSocketIoAdapter extends Adapter {
 	/**
 	 * Subscribes to the rooms and starts the health checkers
 	 */
-	private async subscribeToRooms(rooms: string[]) {
+	private async subscribeToRooms(rooms: string[]): Promise<void> {
 		await RedisSocketIoAdapter.options.subConnection.subscribe(
 			this.getChannelNames(rooms),
 			this.onRoomMessage.bind(this),
@@ -450,7 +451,7 @@ export class RedisSocketIoAdapter extends Adapter {
 	/**
 	 * Unsubscribes to the rooms and clears the health checkers
 	 */
-	private async unsubscribeFromRooms(rooms: string[]) {
+	private async unsubscribeFromRooms(rooms: string[]): Promise<void> {
 		await RedisSocketIoAdapter.options.subConnection.unsubscribe(this.getChannelNames(rooms));
 
 		for (const room of rooms) {
@@ -458,14 +459,14 @@ export class RedisSocketIoAdapter extends Adapter {
 		}
 	}
 
-	private getChannelNames(rooms: string[]) {
+	private getChannelNames(rooms: string[]): string[] {
 		return rooms.map((room) => `${this.channel}${room}#`);
 	}
 
 	/**
 	 * Queues a future health check
 	 */
-	private queueRoomHealthCheck(room: string) {
+	private queueRoomHealthCheck(room: string): void {
 		this.clearRoomHealthCheckTimeout(room);
 
 		if (
@@ -489,7 +490,7 @@ export class RedisSocketIoAdapter extends Adapter {
 	 * Runs a health check
 	 * It will publish a message over the pub connection and wait until it receives it
 	 */
-	private async runRoomHealthCheck(room: string) {
+	private async runRoomHealthCheck(room: string): Promise<void> {
 		if (!RedisSocketIoAdapter.options.healthChecks) {
 			return;
 		}
@@ -546,7 +547,7 @@ export class RedisSocketIoAdapter extends Adapter {
 	/**
 	 * Clears the health check timeout
 	 */
-	private clearRoomHealthCheckTimeout(room: string) {
+	private clearRoomHealthCheckTimeout(room: string): void {
 		const timeoutId = this.roomHealthCheckTimeoutIds.get(room);
 		if (timeoutId !== undefined) {
 			clearTimeout(timeoutId);

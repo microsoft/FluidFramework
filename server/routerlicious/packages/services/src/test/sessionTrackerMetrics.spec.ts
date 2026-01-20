@@ -4,13 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { stub } from "sinon";
+
 import {
 	IClientManager,
 	ICollaborationSession,
 	ICollaborationSessionManager,
 	ICollaborationSessionClient,
 } from "@fluidframework/server-services-core";
+import { stub } from "sinon";
+
 import { CollaborationSessionTracker } from "../sessionTracker";
 
 describe("Routerlicious", () => {
@@ -76,7 +78,10 @@ describe("Routerlicious", () => {
 
 				// Verify that addOrUpdateSession was called with accumulated counts
 				const updateCall = (mockSessionManager.addOrUpdateSession as any).getCall(0);
-				assert.ok(updateCall, "addOrUpdateSession should have been called");
+				assert.ok(
+					updateCall !== undefined && updateCall !== null,
+					"addOrUpdateSession should have been called",
+				);
 
 				const updatedSession = updateCall.args[0];
 				assert.equal(updatedSession.telemetryProperties.sessionOpCount, 25);

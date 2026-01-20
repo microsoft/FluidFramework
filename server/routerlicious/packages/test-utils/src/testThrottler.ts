@@ -31,7 +31,6 @@ export class TestThrottler implements IThrottler {
 
 	private checkThrottled(count: number): void {
 		if (this.limit && count > this.limit) {
-			// eslint-disable-next-line @typescript-eslint/no-throw-literal
 			throw new ThrottlingError("throttled", count - this.limit);
 		}
 	}

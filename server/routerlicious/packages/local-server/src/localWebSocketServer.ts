@@ -23,7 +23,7 @@ export class LocalWebSocket implements IWebSocket {
 	private readonly subscriber: ISubscriber;
 
 	private _connected = true;
-	public get connected() {
+	public get connected(): boolean {
 		return this._connected;
 	}
 
@@ -38,7 +38,7 @@ export class LocalWebSocket implements IWebSocket {
 		return undefined;
 	}
 
-	public on(event: string, listener: (...args: any[]) => void) {
+	public on(event: string, listener: (...args: any[]) => void): void {
 		this.events.on(event, listener);
 	}
 
@@ -48,31 +48,31 @@ export class LocalWebSocket implements IWebSocket {
 		return;
 	}
 
-	public send(event: string, ...args: any[]) {
+	public send(event: string, ...args: any[]): void {
 		this.events.emit(event, ...args);
 	}
 
-	public emit(event: string, ...args: any[]) {
+	public emit(event: string, ...args: any[]): void {
 		this.events.emit(event, ...args);
 	}
 
-	public emitToRoom(roomId: string, event: string, ...args: any[]) {
+	public emitToRoom(roomId: string, event: string, ...args: any[]): void {
 		this.server.pubsub.publish(roomId, event, ...args);
 	}
 
-	public removeListener(event: string, listener: (...args: any[]) => void) {
+	public removeListener(event: string, listener: (...args: any[]) => void): void {
 		this.events.removeListener(event, listener);
 	}
 
 	// Add `off` method the socket which is called by the base class `DocumentDeltaConnection` to remove
 	// event listeners.
 	// We may have to add more methods from SocketIOClient.Socket if they start getting used.
-	public off(event: string, listener: (...args: any[]) => void) {
+	public off(event: string, listener: (...args: any[]) => void): this {
 		this.removeListener(event, listener);
 		return this;
 	}
 
-	public disconnect(close?: boolean) {
+	public disconnect(close?: boolean): void {
 		for (const roomId of this.rooms) {
 			this.server.pubsub.unsubscribe(roomId, this.subscriber);
 		}
@@ -93,7 +93,7 @@ export class LocalWebSocketServer implements IWebSocketServer {
 		return undefined;
 	}
 
-	public on(event: string, listener: (...args: any[]) => void) {
+	public on(event: string, listener: (...args: any[]) => void): void {
 		this.events.on(event, listener);
 	}
 

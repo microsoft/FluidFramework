@@ -49,7 +49,7 @@ export async function ensureTopics(
 			}),
 			(createTopicError, result) => {
 				if (createTopicError) {
-					reject(createTopicError);
+					reject(createTopicError instanceof Error ? createTopicError : new Error(String(createTopicError)));
 				} else {
 					const topicError = result.find((value) => value.error);
 					if (topicError) {

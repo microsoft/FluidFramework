@@ -52,7 +52,10 @@ function disconnectOrdererConnections(
 				// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
 				// for the same clientId if retrying when connectDocument completes after disconnectDocument.
 				disconnectedOrdererConnections.add(clientId);
-				ordererManager.removeOrderer(connection.tenantId, connection.documentId);
+				ordererManager.removeOrderer(connection.tenantId, connection.documentId).catch((error) => {
+					const errorMsg = `Failed to remove orderer for client ${clientId}.`;
+					Lumberjack.error(errorMsg, lumberjackProperties, error);
+				});
 			})
 			.catch((error) => {
 				const errorMsg = `Failed to disconnect client ${clientId} from orderer connection.`;

@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import {
 	DebugLogger,
 	TestConsumer,
 	TestKafka,
 	TestProducer,
 } from "@fluidframework/server-test-utils";
-import { strict as assert } from "assert";
+
 import { KafkaRunner } from "../../kafka-service/runner";
+
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
 
 describe("kafka-service", () => {

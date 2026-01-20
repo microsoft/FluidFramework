@@ -64,14 +64,14 @@ export class WebSocketTracker implements IWebSocketTracker {
 		return socketResult;
 	}
 
-	public addSocket(webSocket: IWebSocket) {
+	public addSocket(webSocket: IWebSocket): void {
 		if (this.useSocketIoRoomFeature) {
 			throw new Error("Method not supported when socket room feature is enabled.");
 		}
 		this.socketIdToSocketMap.set(webSocket.id, webSocket);
 	}
 
-	public removeSocket(socketId: string) {
+	public removeSocket(socketId: string): boolean {
 		if (this.useSocketIoRoomFeature) {
 			// No need to manually remove socket when socket room feature is enabled
 			return false;

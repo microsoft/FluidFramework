@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ThrottlingError } from "@fluidframework/server-services-core";
 import { strict as assert } from "assert";
+
+import { ThrottlingError } from "@fluidframework/server-services-core";
+
 import { TestThrottler } from "../testThrottler";
 
 describe("Test for Test Utils", () => {

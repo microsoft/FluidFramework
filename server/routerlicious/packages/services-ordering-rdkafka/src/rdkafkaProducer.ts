@@ -101,14 +101,14 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	/**
 	 * Returns true if the producer is connected
 	 */
-	public isConnected() {
+	public isConnected(): boolean {
 		return this.connectedProducer !== undefined;
 	}
 
 	/**
 	 * Creates a connection to Kafka. Will reconnect on failure.
 	 */
-	protected async connect() {
+	protected async connect(): Promise<void> {
 		// Exit out if we are already connected, are in the process of connecting, or closed
 		if (this.connectedProducer || this.connectingProducer || this.closed) {
 			return;
@@ -287,7 +287,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	/**
 	 * Notifies of the need to send pending messages
 	 */
-	private requestSend() {
+	private requestSend(): void {
 		// If we aren't connected yet defer sending until connected
 		if (!this.connectedProducer) {
 			return;
@@ -308,7 +308,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	/**
 	 * Sends all pending messages
 	 */
-	private sendPendingMessages() {
+	private sendPendingMessages(): void {
 		const messages = this.pendingMessages;
 
 		// clear messages now because sendBoxcars may insert some
@@ -437,7 +437,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		producer: kafkaTypes.Producer,
 		error: any,
 		errorData?: IContextErrorData,
-	) {
+	): Promise<void> {
 		this.error(error, errorData);
 
 		if (!this.producerOptions.reconnectOnNonFatalErrors) {
@@ -481,7 +481,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	/**
 	 * Creates a standard code 413 "Message size too large" NetworkError
 	 */
-	private createMessageSizeTooLargeError(boxcar: IPendingBoxcar, message: Buffer) {
+	private createMessageSizeTooLargeError(boxcar: IPendingBoxcar, message: Buffer): NetworkError {
 		return new NetworkError(
 			413,
 			`Message size too large. Boxcar message count: ${boxcar.messages.length}, size: ${message.byteLength}, max message size: ${this.producerOptions.maxMessageSize}.`,

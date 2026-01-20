@@ -8,7 +8,7 @@ import { serializeError } from "serialize-error";
 import { Lumber } from "./lumber";
 import type { LumberEventName } from "./lumberEventNames";
 
-// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+
 const isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
 const isNode =
 	// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
@@ -205,7 +205,7 @@ export function handleError(
 	eventName: LumberEventName,
 	errMsg: string,
 	engineList: ILumberjackEngine[],
-) {
+): void {
 	// We only want to log Lumberjack errors if running on a Fluid server instance.
 	if (!isBrowser && isNode && process?.env?.IS_FLUID_SERVER) {
 		const err = new Error(errMsg);
@@ -226,7 +226,7 @@ export function handleError(
 /**
  * @internal
  */
-export const getLumberBaseProperties = (documentId: string, tenantId: string) => ({
+export const getLumberBaseProperties: (documentId: string, tenantId: string) => {tenantId: string; documentId: string} = (documentId: string, tenantId: string) => ({
 	[BaseTelemetryProperties.tenantId]: tenantId,
 	[BaseTelemetryProperties.documentId]: documentId,
 });

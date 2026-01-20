@@ -150,7 +150,7 @@ export class PartitionManager extends EventEmitter {
 		}
 	}
 
-	private process(message: IQueuedMessage) {
+	private process(message: IQueuedMessage): void {
 		if (this.stopped) {
 			return;
 		}
@@ -182,7 +182,7 @@ export class PartitionManager extends EventEmitter {
 	 * Note: The consumer may decide to only emit "rebalanced" if it wants to skip closing existing partitions
 	 * @param partitions - Assigned partitions before the rebalance
 	 */
-	private rebalancing(partitions: IPartition[]) {
+	private rebalancing(partitions: IPartition[]): void {
 		this.logger?.info(`Rebalancing partitions: ${JSON.stringify(partitions)}`);
 		Lumberjack.info(`Rebalancing partitions: ${JSON.stringify(partitions)}`);
 
@@ -202,7 +202,7 @@ export class PartitionManager extends EventEmitter {
 	 * @param partitions - Assigned partitions after the rebalance.
 	 * May contain partitions that have been previously assigned to this consumer
 	 */
-	private rebalanced(partitions: IPartition[]) {
+	private rebalanced(partitions: IPartition[]): void {
 		if (this.stopped) {
 			return;
 		}
@@ -276,11 +276,11 @@ export class PartitionManager extends EventEmitter {
 		return this.getRandomInt(numberOfMessagesPerTrace) === 0;
 	}
 
-	private getRandomInt(range: number) {
+	private getRandomInt(range: number): number {
 		return Math.floor(Math.random() * range);
 	}
 
-	private cooperativeRebalancingAssign(partitions: IPartition[]) {
+	private cooperativeRebalancingAssign(partitions: IPartition[]): void {
 		if (this.stopped) {
 			return;
 		}
@@ -332,7 +332,7 @@ export class PartitionManager extends EventEmitter {
 		});
 	}
 
-	private cooperativeRebalancingRevoke(partitions: IPartition[]) {
+	private cooperativeRebalancingRevoke(partitions: IPartition[]): void {
 		if (this.stopped) {
 			return;
 		}

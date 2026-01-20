@@ -15,8 +15,7 @@ import {
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
-import * as bodyParser from "body-parser";
-import express from "express";
+import express, { json, urlencoded } from "express";
 import type { Provider } from "nconf";
 
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
@@ -49,10 +48,8 @@ export function create(
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
 	}
-	// eslint-disable-next-line import-x/namespace
-	app.use(bodyParser.json());
-	// eslint-disable-next-line import-x/namespace
-	app.use(bodyParser.urlencoded({ extended: false }));
+	app.use(json());
+	app.use(urlencoded({ extended: false }));
 
 	const healthEndpoints = createHealthCheckEndpoints("nexus", startupCheck, readinessCheck);
 

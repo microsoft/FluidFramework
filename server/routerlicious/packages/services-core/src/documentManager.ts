@@ -14,7 +14,7 @@ export interface IDocumentManager {
 	 *
 	 * @param tenantId - The tenant ID for the tenant that owns the document
 	 * @param documentId - The document ID for the document to be read
-	 * @returns - An IDocument object containing properties with the document's data
+	 * @returns An IDocument object containing properties with the document's data
 	 */
 	// eslint-disable-next-line @rushstack/no-new-null
 	readDocument(tenantId: string, documentId: string): Promise<IDocument | null>;
@@ -25,7 +25,7 @@ export interface IDocumentManager {
 	 *
 	 * @param tenantId - The tenant ID for the tenant that owns the document
 	 * @param documentId - The document ID for the document to be read
-	 * @returns - The static properties of the document
+	 * @returns The static properties of the document
 	 */
 	readStaticProperties(
 		tenantId: string,

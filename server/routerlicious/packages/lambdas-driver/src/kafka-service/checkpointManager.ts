@@ -25,7 +25,7 @@ export class CheckpointManager {
 	/**
 	 * Requests a checkpoint at the given offset
 	 */
-	public async checkpoint(queuedMessage: IQueuedMessage) {
+	public async checkpoint(queuedMessage: IQueuedMessage): Promise<void> {
 		// Checkpoint calls should always be of increasing or equal value
 		// Exit early if already requested checkpoint for a higher offset
 		if (this.lastCheckpoint && queuedMessage.offset < this.lastCheckpoint.offset) {

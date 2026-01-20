@@ -18,7 +18,7 @@ import type {
  * @internal
  */
 export class TestLumberjack extends Lumberjack {
-	public static reset() {
+	public static reset(): void {
 		this._instance = undefined;
 	}
 }
@@ -40,21 +40,21 @@ export class TestSchemaValidator implements ILumberjackSchemaValidator {
  * @internal
  */
 export class TestEngine1 implements ILumberjackEngine {
-	public emit(lumber: Lumber) {}
+	public emit(lumber: Lumber): void {}
 }
 
 /**
  * @internal
  */
 export class TestEngine2 implements ILumberjackEngine {
-	public emit(lumber: Lumber) {}
+	public emit(lumber: Lumber): void {}
 }
 
 /**
  * @internal
  */
 export class TestFormatter implements ILumberFormatter {
-	public transform(lumber: Lumber) {}
+	public transform(lumber: Lumber): void {}
 }
 
 /**

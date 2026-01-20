@@ -12,7 +12,6 @@ import {
 	LumberEventName,
 } from "@fluidframework/server-services-telemetry";
 import { InMemoryApiCounters } from "@fluidframework/server-services-utils";
-import { cloneDeep } from "lodash";
 import {
 	type AggregationCursor,
 	type Collection,
@@ -94,7 +93,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 	}
 
 	public async aggregate(pipeline: any, options?: any): Promise<AggregationCursor<T>> {
-		const req = async () =>
+		const req = async (): Promise<AggregationCursor<T>> =>
 			new Promise<AggregationCursor<T>>((resolve) =>
 				resolve(this.collection.aggregate(pipeline, options)),
 			);
@@ -138,7 +137,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		options: any = undefined,
 	): Promise<void> {
 		const mongoOptions = { ...options, upsert: false };
-		const req = async () => {
+		const req = async (): Promise<void> => {
 			try {
 				await this.updateCore(filter, set, addToSet, mongoOptions);
 			} catch (sdkError) {
@@ -161,7 +160,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		options: any = undefined,
 	): Promise<void> {
 		const mongoOptions = { ...options, upsert: false }; // This is a backward compatible change when passing in options to give more flexibility
-		const req = async () => {
+		const req = async (): Promise<void> => {
 			try {
 				await this.updateManyCore(filter, set, addToSet, mongoOptions);
 			} catch (sdkError) {
@@ -184,7 +183,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		options: any = undefined,
 	): Promise<void> {
 		const mongoOptions = { ...options, upsert: true };
-		const req = async () => {
+		const req = async (): Promise<void> => {
 			try {
 				await this.updateCore(filter, set, addToSet, mongoOptions);
 			} catch (sdkError) {
@@ -201,7 +200,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 	}
 
 	public async distinct(key: any, query: any): Promise<any> {
-		const req = async () => this.collection.distinct(key, query);
+		const req = async (): Promise<any> => this.collection.distinct(key, query);
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.distinct", // callerName
@@ -210,7 +209,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 	}
 
 	public async deleteOne(filter: any): Promise<any> {
-		const req = async () => this.collection.deleteOne(filter);
+		const req = async (): Promise<any> => this.collection.deleteOne(filter);
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.deleteOne", // callerName
@@ -219,7 +218,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 	}
 
 	public async deleteMany(filter: any): Promise<any> {
-		const req = async () => this.collection.deleteMany(filter);
+		const req = async (): Promise<any> => this.collection.deleteMany(filter);
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.deleteMany", // callerName
@@ -228,7 +227,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 	}
 
 	public async insertOne(value: T): Promise<any> {
-		const req = async () => {
+		const req = async (): Promise<any> => {
 			try {
 				const result = await this.collection.insertOne(
 					value as OptionalUnlessRequiredId<T>,
@@ -249,7 +248,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 	}
 
 	public async insertMany(values: T[], ordered: boolean): Promise<void> {
-		const req = async () => {
+		const req = async (): Promise<void> => {
 			try {
 				await this.collection.insertMany(values as OptionalUnlessRequiredId<T>[], {
 					ordered: false,
@@ -273,7 +272,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 	// Also create index mostly happened at service bootstrap time. If we bubble up at that time,
 	// service will failed to start. So instead we need catch the exception and log it without bubbling up.
 	public async createIndex(index: any, unique: boolean): Promise<void> {
-		const req = async () => this.collection.createIndex(index, { unique });
+		const req = async (): Promise<string> => this.collection.createIndex(index, { unique });
 		try {
 			const indexName = await this.requestWithRetry(
 				req, // request
@@ -288,7 +287,8 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 	// Create index mostly happened at service bootstrap time. If we bubble up at that time,
 	// service will failed to start. So instead we need catch the exception and log it without bubbling up.
 	public async createTTLIndex(index: any, expireAfterSeconds?: number): Promise<void> {
-		const req = async () => this.collection.createIndex(index, { expireAfterSeconds });
+		const req = async (): Promise<string> =>
+			this.collection.createIndex(index, { expireAfterSeconds });
 		try {
 			const indexName = await this.requestWithRetry(
 				req, // request
@@ -308,7 +308,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 			upsert: true,
 		},
 	): Promise<{ value: T; existing: boolean }> {
-		const req = async () => {
+		const req = async (): Promise<{ value: T; existing: boolean }> => {
 			try {
 				const result = await this.collection.findOneAndUpdate(
 					query,
@@ -317,7 +317,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 				);
 
 				return result.value
-					? { value: result.value, existing: true }
+					? { value: result.value as T, existing: true }
 					: { value, existing: false };
 			} catch (sdkError) {
 				const error = this.cloneError(sdkError);
@@ -337,7 +337,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		value: any,
 		options: FindOneAndUpdateOptions = { returnDocument: "before" },
 	): Promise<{ value: T; existing: boolean }> {
-		const req = async () => {
+		const req = async (): Promise<{ value: T; existing: boolean }> => {
 			try {
 				const result = await this.collection.findOneAndUpdate(
 					query,
@@ -346,7 +346,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 				);
 
 				return result.value
-					? { value: result.value, existing: true }
+					? { value: result.value as T, existing: true }
 					: { value, existing: false };
 			} catch (sdkError) {
 				const error = this.cloneError(sdkError);
@@ -363,11 +363,11 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 
 	private async updateCore(filter: any, set: any, addToSet: any, options: any): Promise<any> {
 		const update: any = {};
-		if (set) {
+		if (set !== undefined && set !== null) {
 			update.$set = set;
 		}
 
-		if (addToSet) {
+		if (addToSet !== undefined && addToSet !== null) {
 			update.$addToSet = addToSet;
 		}
 
@@ -376,11 +376,11 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 
 	private async updateManyCore(filter: any, set: any, addToSet: any, options: any): Promise<any> {
 		const update: any = {};
-		if (set) {
+		if (set !== undefined && set !== null) {
 			update.$set = set;
 		}
 
-		if (addToSet) {
+		if (addToSet !== undefined && addToSet !== null) {
 			update.$addToSet = addToSet;
 		}
 
@@ -423,7 +423,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		queryOrFilter?: any,
 	): Map<string, any> | Record<string, any> {
 		const properties: Map<string, any> = new Map();
-		if (!queryOrFilter) {
+		if (queryOrFilter === undefined || queryOrFilter === null) {
 			return properties;
 		}
 
@@ -442,8 +442,8 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		return properties;
 	}
 
-	private sanitizeError(error: any) {
-		if (error) {
+	private sanitizeError(error: any): void {
+		if (error !== undefined && error !== null) {
 			try {
 				Object.keys(error).forEach((key) => {
 					if (key === "_id" || /^\d+$/.test(key)) {
@@ -474,10 +474,10 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		}
 
 		try {
-			return cloneDeep(error);
+			return structuredClone(error);
 		} catch (errCloning) {
 			Lumberjack.warning(
-				`Error cloning error object using cloneDeep.`,
+				`Error cloning error object using structuredClone.`,
 				undefined,
 				errCloning,
 			);
@@ -564,7 +564,7 @@ export class MongoDb implements core.IDb {
 		return this.client.close();
 	}
 
-	public on(event: core.IDbEvents, listener: (...args: any[]) => void) {
+	public on(event: core.IDbEvents, listener: (...args: any[]) => void): void {
 		this.client.on(event, listener);
 	}
 
@@ -716,15 +716,25 @@ export class MongoDbFactory implements core.IDbFactory {
 			serverSelectionTimeoutMS,
 			consecutiveFailedThresholdForLowerTotalRequests,
 		} = config;
-		if (globalDbEnabled) {
-			this.globalDbEndpoint = mongoAmiEnabled ? globalDbEndpointAmi : globalDbEndpoint;
+		if (globalDbEnabled === true) {
+			this.globalDbEndpoint =
+				mongoAmiEnabled === true ? globalDbEndpointAmi : globalDbEndpoint;
 		}
 		assert(
-			mongoAmiEnabled ? !!operationsDbEndpointAmi : !!operationsDbEndpoint,
+			mongoAmiEnabled === true
+				? operationsDbEndpointAmi !== undefined &&
+						operationsDbEndpointAmi !== null &&
+						operationsDbEndpointAmi !== ""
+				: operationsDbEndpoint !== undefined &&
+						operationsDbEndpoint !== null &&
+						operationsDbEndpoint !== "",
 			`No endpoint provided`,
 		);
 		this.operationsDbEndpoint =
-			mongoAmiEnabled && operationsDbEndpointAmi
+			mongoAmiEnabled === true &&
+			operationsDbEndpointAmi !== undefined &&
+			operationsDbEndpointAmi !== null &&
+			operationsDbEndpointAmi !== ""
 				? operationsDbEndpointAmi
 				: operationsDbEndpoint;
 		this.connectionPoolMinSize = connectionPoolMinSize;
@@ -733,9 +743,11 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.directConnection = directConnection ?? false;
 		this.retryEnabled = config.facadeLevelRetry ?? false;
 		this.telemetryEnabled = config.facadeLevelTelemetry ?? false;
-		this.retryRuleOverride = config.facadeLevelRetryRuleOverride
-			? new Map(Object.entries(config.facadeLevelRetryRuleOverride))
-			: new Map();
+		this.retryRuleOverride =
+			config.facadeLevelRetryRuleOverride !== undefined &&
+			config.facadeLevelRetryRuleOverride !== null
+				? new Map(Object.entries(config.facadeLevelRetryRuleOverride))
+				: new Map();
 		this.dbMonitoringEventsList = dbMonitoringEventsList ?? DefaultMongoDbMonitoringEvents;
 		this.heartbeatFrequencyMS = heartbeatFrequencyMS ?? DefaultHeartbeatFrequencyMS;
 		this.keepAliveInitialDelay = keepAliveInitialDelay ?? DefaultKeepAliveInitialDelay;
@@ -755,7 +767,10 @@ export class MongoDbFactory implements core.IDbFactory {
 
 	public async connect(global = false): Promise<core.IDb> {
 		assert(
-			!global || !!this.globalDbEndpoint,
+			!global ||
+				(this.globalDbEndpoint !== undefined &&
+					this.globalDbEndpoint !== null &&
+					this.globalDbEndpoint !== ""),
 			`No global endpoint provided
                  when trying to connect to global db.`,
 		);
@@ -770,16 +785,29 @@ export class MongoDbFactory implements core.IDbFactory {
 			minHeartbeatFrequencyMS: this.minHeartbeatFrequencyMS,
 			serverSelectionTimeoutMS: this.serverSelectionTimeoutMS,
 		};
-		if (this.connectionPoolMinSize) {
+		if (
+			this.connectionPoolMinSize !== undefined &&
+			this.connectionPoolMinSize !== null &&
+			this.connectionPoolMinSize !== 0
+		) {
 			options.minPoolSize = this.connectionPoolMinSize;
 		}
 
-		if (this.connectionPoolMaxSize) {
+		if (
+			this.connectionPoolMaxSize !== undefined &&
+			this.connectionPoolMaxSize !== null &&
+			this.connectionPoolMaxSize !== 0
+		) {
 			options.maxPoolSize = this.connectionPoolMaxSize;
 		}
 
 		const connection = await MongoClient.connect(
-			global && this.globalDbEndpoint ? this.globalDbEndpoint : this.operationsDbEndpoint,
+			global &&
+				this.globalDbEndpoint !== undefined &&
+				this.globalDbEndpoint !== null &&
+				this.globalDbEndpoint !== ""
+				? this.globalDbEndpoint
+				: this.operationsDbEndpoint,
 			options,
 		);
 		for (const monitoringEvent of this.dbMonitoringEventsList) {

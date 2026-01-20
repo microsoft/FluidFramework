@@ -42,7 +42,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
 		this.maxMessageSize = serviceConfiguration.maxMessageSize;
 	}
 
-	public async connect(clientJoinMessageServerMetadata?: any) {
+	public async connect(clientJoinMessageServerMetadata?: any): Promise<void> {
 		// Send the connect message
 		const clientDetail: IClientJoin = {
 			clientId: this.clientId,
@@ -72,7 +72,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
 		this.submitRawOperation([message]);
 	}
 
-	public async order(messages: IDocumentMessage[]) {
+	public async order(messages: IDocumentMessage[]): Promise<void> {
 		const rawMessages = messages.map((message) => {
 			const rawMessage: IRawOperationMessage = {
 				clientId: this.clientId,
@@ -89,7 +89,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
 		this.submitRawOperation(rawMessages);
 	}
 
-	public async disconnect() {
+	public async disconnect(): Promise<void> {
 		const operation: IDocumentSystemMessage = {
 			clientSequenceNumber: -1,
 			contents: null,
@@ -109,15 +109,15 @@ export class LocalOrdererConnection implements IOrdererConnection {
 		this.submitRawOperation([message]);
 	}
 
-	public once(event: "error", listener: (...args: any[]) => void) {
+	public once(event: "error", listener: (...args: any[]) => void): void {
 		this.producer.once(event, listener);
 	}
 
-	public off(event: "error", listener: (...args: any[]) => void) {
+	public off(event: "error", listener: (...args: any[]) => void): void {
 		this.producer.off(event, listener);
 	}
 
-	private submitRawOperation(messages: IRawOperationMessage[]) {
+	private submitRawOperation(messages: IRawOperationMessage[]): void {
 		if (this.serviceConfiguration.enableTraces) {
 			// Add trace
 			messages.forEach((message) => {

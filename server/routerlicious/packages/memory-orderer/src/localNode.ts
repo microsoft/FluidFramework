@@ -21,7 +21,6 @@ import {
 	type CheckpointService,
 } from "@fluidframework/server-services-core";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
-import * as _ from "lodash";
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 
@@ -79,7 +78,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		webSocketServerFactory: () => IWebSocketServer,
 		maxMessageSize: number,
 		logger: ILogger,
-	) {
+	): Promise<LocalNode> {
 		// Look up any existing information for the node or create a new one
 		const node = await LocalNode.create(id, address, databaseManager, timeoutLength);
 
@@ -138,9 +137,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			null,
 		);
 
-		// eslint-disable-next-line import-x/namespace
-		const result = _.clone(existing);
-		result.expiration = newExpiration;
+		const result = { ...existing, expiration: newExpiration };
 
 		return result;
 	}
@@ -285,7 +282,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		return orderer;
 	}
 
-	private scheduleHeartbeat() {
+	private scheduleHeartbeat(): void {
 		const now = Date.now();
 
 		// Check to see if we can even renew at this point

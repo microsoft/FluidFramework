@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import sinon from "sinon";
 import { strict as assert } from "node:assert";
-import { CollaborationSessionTracker } from "../sessionTracker";
+
 import {
 	ICollaborationSessionClient,
 	ICollaborationSessionManager,
 	IClientManager,
 	ICollaborationSession,
 } from "@fluidframework/server-services-core";
+import sinon from "sinon";
+
+import { CollaborationSessionTracker } from "../sessionTracker";
 
 describe("CollaborationSessionTracker", () => {
 	let clientManager: sinon.SinonStubbedInstance<IClientManager>;

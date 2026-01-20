@@ -8,7 +8,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Router, type RequestHandler, type Request, type Response } from "express";
 
 function runProbe(probeType: string, probeCheck: IReadinessCheck, probeProps): RequestHandler {
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
+	 
 	return async (request: Request, response: Response) => {
 		const probeStatus: IReadinessStatus = await probeCheck.isReady().catch((error) => {
 			return { ready: false, exception: error };
@@ -46,7 +46,7 @@ export function createHealthCheckEndpoints(
 	if (createLivenessEndpoint) {
 		router.get(
 			"/ping",
-			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			 
 			async (request, response) => {
 				response.sendStatus(200);
 			},

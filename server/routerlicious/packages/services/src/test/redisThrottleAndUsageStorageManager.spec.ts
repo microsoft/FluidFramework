@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IThrottlingMetrics, IUsageData } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { RedisThrottleAndUsageStorageManager } from "../redisThrottleAndUsageStorageManager";
 import { TestRedisClientConnectionManager } from "@fluidframework/server-test-utils";
 import Sinon from "sinon";
+
+import { RedisThrottleAndUsageStorageManager } from "../redisThrottleAndUsageStorageManager";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
@@ -23,8 +25,14 @@ describe("RedisThrottleAndUsageStorageManager", () => {
 		testRedisClientConnectionManager = new TestRedisClientConnectionManager();
 	});
 	afterEach(() => {
-		testRedisClientConnectionManager.getRedisClient().flushall();
-		testRedisClientConnectionManager.getRedisClient().quit();
+		testRedisClientConnectionManager
+			.getRedisClient()
+			.flushall()
+			.catch(() => {});
+		testRedisClientConnectionManager
+			.getRedisClient()
+			.quit()
+			.catch(() => {});
 		Sinon.restore();
 	});
 	it("Creates and retrieves throttlingMetric", async () => {

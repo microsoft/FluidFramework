@@ -52,7 +52,7 @@ export class KafkaNodeProducer implements IProducer {
 		this.connect();
 	}
 
-	public isConnected() {
+	public isConnected(): boolean {
 		return this.connected;
 	}
 
@@ -125,7 +125,7 @@ export class KafkaNodeProducer implements IProducer {
 	 * Notifies of the need to send pending messages. We defer sending messages to batch together messages
 	 * to the same partition.
 	 */
-	private requestSend() {
+	private requestSend(): void {
 		// If we aren't connected yet defer sending until connected
 		if (!this.connected) {
 			return;
@@ -146,7 +146,7 @@ export class KafkaNodeProducer implements IProducer {
 	/**
 	 * Sends all pending messages
 	 */
-	private sendPendingMessages() {
+	private sendPendingMessages(): void {
 		for (const [, value] of this.messages) {
 			this.sendBoxcars(value);
 		}
@@ -154,7 +154,7 @@ export class KafkaNodeProducer implements IProducer {
 		this.messages.clear();
 	}
 
-	private sendBoxcars(boxcars: IPendingBoxcar[]) {
+	private sendBoxcars(boxcars: IPendingBoxcar[]): void {
 		for (const boxcar of boxcars) {
 			const boxcarMessage: IBoxcarMessage = {
 				contents: boxcar.messages,
@@ -190,7 +190,7 @@ export class KafkaNodeProducer implements IProducer {
 	/**
 	 * Creates a connection to Kafka. Will reconnect on failure.
 	 */
-	private connect() {
+	private connect(): void {
 		// Exit out if we are already connected or are in the process of connecting
 		if (this.connected || this.connecting) {
 			return;
@@ -233,7 +233,7 @@ export class KafkaNodeProducer implements IProducer {
 	/**
 	 * Handles an error that requires a reconnect to Kafka
 	 */
-	private handleError(error: any) {
+	private handleError(error: any): void {
 		// Close the client if it exists
 		if (this.client) {
 			this.client.close();

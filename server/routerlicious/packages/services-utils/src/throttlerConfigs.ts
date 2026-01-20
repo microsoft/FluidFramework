@@ -274,7 +274,11 @@ export const getThrottleConfigType = (
 	return "unknown";
 };
 
-export const getThrottleConfig = (configValue: unknown) => {
+export const getThrottleConfig = (
+	configValue: unknown,
+):
+	| Partial<ILegacyThrottleConfig>
+	| (Partial<IHybridThrottleConfig> & Required<Pick<IHybridThrottleConfig, "type">>) => {
 	const configType = getThrottleConfigType(configValue);
 	switch (configType) {
 		case "hybrid":

@@ -82,13 +82,17 @@ export class DeltaManager implements IDeltaService {
 		return tokenP;
 	}
 
-	private async getBasicRestWrapper(tenantId: string, documentId: string, baseUrl: string) {
+	private async getBasicRestWrapper(
+		tenantId: string,
+		documentId: string,
+		baseUrl: string,
+	): Promise<BasicRestWrapper> {
 		const scopes = [ScopeType.DocRead];
 		const accessToken = await this.getAccessToken(tenantId, documentId, scopes);
 
 		const defaultQueryString = {};
 
-		const getDefaultHeaders = () => {
+		const getDefaultHeaders = (): Record<string, string> => {
 			const token = { jwt: accessToken };
 			return {
 				Authorization: `Basic ${token.jwt}`,

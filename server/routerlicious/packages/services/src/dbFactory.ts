@@ -31,7 +31,11 @@ const creator = (dbFactoryConfig: IDBFactoryConfig) => async (): Promise<IDbFact
 export async function getDbFactory(config: Provider): Promise<IDbFactory> {
 	const dbFactoryConfig = config.get("db") as IDBFactoryConfig;
 	// Default handling is Mongo
-	if (!dbFactoryConfig || dbFactoryConfig.name === "mongo") {
+	if (
+		dbFactoryConfig === undefined ||
+		dbFactoryConfig === null ||
+		dbFactoryConfig.name === "mongo"
+	) {
 		const mongoFactory = new services.MongoDbFactory(config.get("mongo"));
 		return mongoFactory;
 	}
@@ -41,7 +45,7 @@ export async function getDbFactory(config: Provider): Promise<IDbFactory> {
 	// @TODO: in the initial proposal it was part of the config file, but perhaps it should be an
 	// environment variable instead ?
 	if (config.get("loadExtensions") === true) {
-		const dbExtensions = (config.get("extensions:db") as IDBFactoryConfig[]) || [];
+		const dbExtensions = (config.get("extensions:db") as IDBFactoryConfig[]) ?? [];
 		const extension = dbExtensions.find((ext) => ext.name === dbFactoryConfig.name);
 
 		if (extension === undefined) {

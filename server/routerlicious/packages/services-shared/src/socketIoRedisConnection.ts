@@ -22,7 +22,7 @@ export class SocketIORedisConnection implements ISocketIoRedisConnection {
 		);
 	}
 
-	public async publish(channel: string, message: string) {
+	public async publish(channel: string, message: string): Promise<void> {
 		await this.redisClientConnectionManager.getRedisClient().publish(channel, message);
 	}
 }
@@ -62,7 +62,7 @@ export class SocketIoRedisSubscriptionConnection
 		channels: string | string[],
 		callback: (channel: string, messageBuffer: Buffer) => void,
 		forceSubscribe?: boolean,
-	) {
+	): Promise<void> {
 		let channelsArray = Array.isArray(channels) ? channels : [channels];
 		const subscriptionsMap = this.subscriptions;
 
@@ -80,7 +80,7 @@ export class SocketIoRedisSubscriptionConnection
 		}
 	}
 
-	public async unsubscribe(channels: string | string[]) {
+	public async unsubscribe(channels: string | string[]): Promise<void> {
 		let channelsArray = Array.isArray(channels) ? channels : [channels];
 		const subscriptionsMap = this.subscriptions;
 

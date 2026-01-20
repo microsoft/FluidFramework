@@ -49,15 +49,15 @@ export class TestLambda implements IPartitionLambda {
 		return undefined;
 	}
 
-	public close() {
+	public close(): void {
 		return;
 	}
 
-	public setThrowExceptionInHandler(value: boolean) {
+	public setThrowExceptionInHandler(value: boolean): void {
 		this.throwHandler = value;
 	}
 
-	public setFailHandlers(value: boolean) {
+	public setFailHandlers(value: boolean): void {
 		this.failHandler = value;
 	}
 }
@@ -89,17 +89,17 @@ export class TestLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		return;
 	}
 
-	public setFailCreateLambda(value: boolean) {
+	public setFailCreateLambda(value: boolean): void {
 		this.failCreatelambda = value;
 	}
 
-	public setThrowExceptionInHandler(value: boolean) {
+	public setThrowExceptionInHandler(value: boolean): void {
 		for (const lambda of this.lambdas) {
 			lambda.setThrowExceptionInHandler(value);
 		}
 	}
 
-	public setFailHandlers(value: boolean) {
+	public setFailHandlers(value: boolean): void {
 		for (const lambda of this.lambdas) {
 			lambda.setFailHandlers(value);
 		}

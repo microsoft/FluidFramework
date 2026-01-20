@@ -759,7 +759,7 @@ export class SummaryWriter implements ISummaryWriter {
 
 		// Fetching ops from the local db
 		// False positive: `this.opStorage` is not a plain array, the second argument to `find()` is not "thisArg".
-		// eslint-disable-next-line unicorn/no-array-method-this-argument
+		 
 		const logTailOpMessage = await this.opStorage.find(query, {
 			"operation.sequenceNumber": 1,
 		});

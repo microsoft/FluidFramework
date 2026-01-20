@@ -97,7 +97,7 @@ export class ThrottlerHelper implements IThrottlerHelper {
 		throttlingMetric: IThrottlingMetrics,
 		usageStorageId?: string,
 		usageData?: IUsageData,
-	) {
+	): Promise<void> {
 		await (usageStorageId !== undefined && usageData !== undefined
 			? this.throttleAndUsageStorageManager.setThrottlingMetricAndUsageData(
 					id,

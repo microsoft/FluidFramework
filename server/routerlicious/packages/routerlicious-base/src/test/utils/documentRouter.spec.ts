@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { IPartitionLambdaFactory, LambdaCloseType } from "@fluidframework/server-services-core";
 import { TestContext } from "@fluidframework/server-test-utils";
-import { strict as assert } from "assert";
 import nconf from "nconf";
+
 import { createDocumentRouter } from "../../utils/documentRouter";
 
-type LambdaConfig = { foobar: number };
+interface LambdaConfig {
+	foobar: number;
+}
 
 describe("document-router", () => {
 	describe("Plugin", () => {

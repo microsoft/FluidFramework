@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
-import { strict as assert } from "assert";
 import Axios, { AxiosRequestConfig } from "axios";
 import AxiosMockAdapter from "axios-mock-adapter";
+
 import { Historian, ICredentials, getAuthorizationTokenFromCredentials } from "../historian";
 import { BasicRestWrapper, RestWrapper } from "../restWrapper";
 import { IWholeSummaryPayload, IWriteSummaryResponse } from "../storageContracts";
@@ -97,13 +99,13 @@ describe("Historian", () => {
 		if (!authHeader) {
 			return undefined;
 		}
-		const base64TokenMatch = authHeader.match(/Basic (.+)/);
+		const base64TokenMatch = /Basic (.+)/.exec(authHeader);
 		if (!base64TokenMatch) {
 			throw new Error("Malformed authorization token");
 		}
 		const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
 
-		const tokenMatch = encoded.match(/(.+):(.+)/);
+		const tokenMatch = /(.+):(.+)/.exec(encoded);
 		if (!tokenMatch) {
 			throw new Error("Malformed authorization token");
 		}

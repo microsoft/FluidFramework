@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import sinon from "sinon";
+
 import { ExpirationTimer } from "../../nexus/utils";
 
 describe("Routerlicious", () => {

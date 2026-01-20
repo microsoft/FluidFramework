@@ -59,7 +59,7 @@ export class Heap<T> {
 
 	private bubbleDown(index: number): void {
 		let currentIndex = index;
-		// eslint-disable-next-line no-constant-condition
+		 
 		while (true) {
 			const left = currentIndex * 2 + 1;
 			const right = currentIndex * 2 + 2;

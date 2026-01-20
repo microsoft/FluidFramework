@@ -79,7 +79,7 @@ export class DocumentLambda implements IPartitionLambda {
 		return undefined;
 	}
 
-	public close(closeType: LambdaCloseType) {
+	public close(closeType: LambdaCloseType): void {
 		if (this.activityCheckTimer !== undefined) {
 			clearInterval(this.activityCheckTimer);
 			this.activityCheckTimer = undefined;
@@ -106,7 +106,7 @@ export class DocumentLambda implements IPartitionLambda {
 		}
 	}
 
-	private handlerCore(message: IQueuedMessage): void {
+	private handlerCore(message: IQueuedMessage): void | undefined {
 		const boxcar = extractBoxcar(message);
 		if (!isCompleteBoxcarMessage(boxcar)) {
 			// If the boxcar is not complete, it cannot be routed correctly.
@@ -151,7 +151,7 @@ export class DocumentLambda implements IPartitionLambda {
 		message: IQueuedMessage,
 		documentId: string,
 		tenantId: string,
-	) {
+	): void {
 		if (boxcar.contents?.length > 0) {
 			const msgOffset = message.offset;
 			const msgPartition = message.partition;
@@ -217,7 +217,7 @@ export class DocumentLambda implements IPartitionLambda {
 	/**
 	 * Closes inactive documents
 	 */
-	private inactivityCheck() {
+	private inactivityCheck(): void {
 		const now = Date.now();
 
 		const documentPartitions = Array.from(this.documents);

@@ -16,7 +16,7 @@ import {
 	type ILumberFormatter,
 } from "./resources";
 
-const performanceNow = () => globalThis.performance.now();
+const performanceNow: () => number = () => globalThis.performance.now();
 
 // Lumber represents the telemetry data being captured, and it uses a list of
 // ILumberjackEngine to emit the data according to the engine implementation.
@@ -118,11 +118,11 @@ export class Lumber<T extends string = LumberEventName> {
 		this._timestamp = msSinceEpoch;
 	}
 
-	public success(message: string, logLevel: LogLevel = LogLevel.Info) {
+	public success(message: string, logLevel: LogLevel = LogLevel.Info): void {
 		this.emit(message, logLevel, true, undefined);
 	}
 
-	public error(message: string, exception?: any, logLevel: LogLevel = LogLevel.Error) {
+	public error(message: string, exception?: any, logLevel: LogLevel = LogLevel.Error): void {
 		this.emit(message, logLevel, false, exception);
 	}
 
@@ -135,7 +135,7 @@ export class Lumber<T extends string = LumberEventName> {
 		logLevel: LogLevel,
 		successful: boolean,
 		exception: any | undefined,
-	) {
+	): void {
 		if (this._completed) {
 			handleError(
 				LumberEventName.LumberjackError,

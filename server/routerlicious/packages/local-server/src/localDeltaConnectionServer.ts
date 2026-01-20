@@ -143,7 +143,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 		private readonly logger: ILogger,
 	) {}
 
-	public async close() {
+	public async close(): Promise<void> {
 		await this.webSocketServer.close();
 		await this.ordererManager.close();
 	}
@@ -178,14 +178,14 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 			const queuedMessages: ISequencedDocumentMessage[] = [];
 			const queuedSignals: ISignalMessage[] = [];
 
-			const earlyOpHandler = (docId: string, msgs: ISequencedDocumentMessage[]) => {
+			const earlyOpHandler = (docId: string, msgs: ISequencedDocumentMessage[]): void => {
 				this.logger.info(`Queued early ops: ${msgs.length}`);
 				Lumberjack.info(`Queued early ops: ${msgs.length}`);
 				queuedMessages.push(...msgs);
 			};
 			socket.on("op", earlyOpHandler);
 
-			const earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]) => {
+			const earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]): void => {
 				this.logger.info("Queued early signals");
 				Lumberjack.info("Queued early signals");
 				if (Array.isArray(msg)) {
@@ -198,7 +198,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
 			// Listen for connection issues
 			socket.on("connect_error", (error) => {
-				reject(error);
+				reject(error instanceof Error ? error : new Error(String(error)));
 			});
 
 			socket.on("connect_document_success", (response: IConnected) => {

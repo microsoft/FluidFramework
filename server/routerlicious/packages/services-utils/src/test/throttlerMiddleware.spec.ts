@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import express from "express";
-import request from "supertest";
+
 import { IThrottler } from "@fluidframework/server-services-core";
 import { TestThrottler } from "@fluidframework/server-test-utils";
+import express from "express";
+import request from "supertest";
+
 import { throttle, IThrottleMiddlewareOptions } from "../throttlerMiddleware";
 
 describe("Throttler Middleware", () => {

@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 
-export const logHttpMetrics = (requestProps: IBasicRestWrapperMetricProps) => {
+export const logHttpMetrics = (requestProps: IBasicRestWrapperMetricProps): void => {
 	const { axiosError, ...sanitizedRequestProps } = requestProps;
 	const httpMetric = Lumberjack.newLumberMetric(
 		LumberEventName.RestWrapper,

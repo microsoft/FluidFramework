@@ -6,7 +6,7 @@
 import { v4 as uuid } from "uuid";
 
 // TODO: documentation
-// eslint-disable-next-line jsdoc/require-description
+ 
 /**
  * @internal
  */

@@ -4,7 +4,6 @@
  */
 
 import type { ICollection } from "@fluidframework/server-services-core";
-import * as _ from "lodash";
 
 // TODO consider https://github.com/kofrasa/mingo for handling queries
 
@@ -38,7 +37,6 @@ export class Collection<T> implements ICollection<T> {
 	}
 
 	public findOne(query: any): Promise<T> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return Promise.resolve(this.findOneInternal(query));
 	}
 
@@ -47,8 +45,7 @@ export class Collection<T> implements ICollection<T> {
 		if (!value) {
 			throw new Error("Not found");
 		}
-		// eslint-disable-next-line import-x/namespace
-		_.extend(value, set);
+		Object.assign(value, set);
 	}
 
 	public async upsert(filter: any, set: any, addToSet: any): Promise<void> {
@@ -57,8 +54,7 @@ export class Collection<T> implements ICollection<T> {
 			this.collection.push(set);
 		}
 
-		// eslint-disable-next-line import-x/namespace
-		_.extend(value, set);
+		Object.assign(value, set);
 	}
 
 	public async insertOne(value: any): Promise<any> {
@@ -66,7 +62,6 @@ export class Collection<T> implements ICollection<T> {
 			return "existing object";
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.insertOneInternal(value);
 	}
 
@@ -95,7 +90,6 @@ export class Collection<T> implements ICollection<T> {
 	public async deleteOne(filter: any): Promise<any> {
 		const value = this.findOneInternal(filter);
 		this.removeOneInternal(value);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return value;
 	}
 
@@ -128,13 +122,12 @@ export class Collection<T> implements ICollection<T> {
 	}
 
 	private findInternal(query: any, sort?: any): T[] {
-		function getValueByKey(propertyBag, key: string) {
+		function getValueByKey(propertyBag: any, key: string): any {
 			const keys = key.split(".");
 			let value = propertyBag;
 			for (const splitKey of keys) {
 				value = value[splitKey];
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return value;
 		}
 
@@ -163,8 +156,7 @@ export class Collection<T> implements ICollection<T> {
 		}
 
 		if (sort && Object.keys(sort).length === 1) {
-			// eslint-disable-next-line no-inner-declarations
-			function compare(a, b) {
+			function compare(a: any, b: any): number {
 				const sortKey = Object.keys(sort)[0];
 				return sort[sortKey] === 1
 					? getValueByKey(a, sortKey) - getValueByKey(b, sortKey)

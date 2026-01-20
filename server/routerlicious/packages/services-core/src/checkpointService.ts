@@ -31,14 +31,14 @@ export class CheckpointService implements ICheckpointService {
 	) {}
 	private readonly localCheckpointEnabled: boolean = this.isLocalCheckpointEnabled;
 	private globalCheckpointFailed: boolean = false;
-	async writeCheckpoint(
+	public async writeCheckpoint(
 		documentId: string,
 		tenantId: string,
 		service: DocumentLambda,
 		checkpoint: IScribe | IDeliState,
 		isLocal: boolean = false,
 		markAsCorrupt: boolean = false,
-	) {
+	): Promise<void> {
 		// services may not be able to process documents in corrupted state
 		// so we write to local and global databases when marking document as corrupt
 		if (markAsCorrupt) {
@@ -89,7 +89,7 @@ export class CheckpointService implements ICheckpointService {
 		documentId: string,
 		tenantId: string,
 		checkpoint: IScribe | IDeliState,
-	) {
+	): Promise<void> {
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 		try {
 			await this.checkpointRepository.writeCheckpoint(documentId, tenantId, checkpoint);
@@ -106,7 +106,7 @@ export class CheckpointService implements ICheckpointService {
 		checkpoint: IScribe | IDeliState,
 		localCheckpointEnabled: boolean,
 		writeToLocalOnFailure: boolean = false,
-	) {
+	): Promise<void> {
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 		let deleteLocalCheckpoint = true;
 
@@ -178,7 +178,7 @@ export class CheckpointService implements ICheckpointService {
 		tenantId: string,
 		service: DocumentLambda,
 		isLocal: boolean = false,
-	) {
+	): Promise<void> {
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 		const checkpointFilter = {
 			documentId,
@@ -344,11 +344,11 @@ export class CheckpointService implements ICheckpointService {
 		return checkpoint ? checkpoint : this.documentRepository.readOne({ documentId, tenantId });
 	}
 
-	public getLocalCheckpointEnabled() {
+	public getLocalCheckpointEnabled(): boolean {
 		return this.localCheckpointEnabled;
 	}
 
-	public getGlobalCheckpointFailed() {
+	public getGlobalCheckpointFailed(): boolean {
 		return this.globalCheckpointFailed;
 	}
 }

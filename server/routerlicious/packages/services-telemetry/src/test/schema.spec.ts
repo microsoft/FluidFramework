@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import { BaseTelemetryProperties, QueuedMessageProperties } from "../resources";
 import { LambdaSchemaValidator, BasePropertiesValidator } from "../schema";
-import { strict as assert } from "assert";
 
 describe("LumberjackSchemaValidator", () => {
 	it("Makes sure BasePropertiesValidator can use BaseLumberjackSchemaValidator's base functionality and validation passes.", async () => {
