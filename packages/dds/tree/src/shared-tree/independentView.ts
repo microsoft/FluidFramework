@@ -61,6 +61,45 @@ import { initialize, initializerFromChunk } from "./schematizeTree.js";
 import { combineChunks } from "../feature-libraries/index.js";
 
 /**
+ * {@link independentView} options.
+ * @alpha @input
+ */
+export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
+	/**
+	 * Optional ID compressor for generating and compressing identifiers.
+	 * If not provided, a new one will be created.
+	 */
+	idCompressor?: IIdCompressor | undefined;
+}
+
+/**
+ * {@link createIndependentTreeAlpha} options.
+ * @alpha
+ */
+export type CreateIndependentTreeAlphaOptions = ForestOptions &
+	(
+		| (IndependentViewOptions & {
+				/**
+				 * Optional content for initializing the tree.
+				 * If not provided, the tree will be uninitialized.
+				 */
+				content?: undefined;
+		  })
+		| (ICodecOptions & {
+				/**
+				 * Content for initializing the tree.
+				 * The content includes the idCompressor, so idCompressor should not be provided at the top level.
+				 */
+				content: ViewContent;
+				/**
+				 * Should not be provided when content is specified.
+				 * The idCompressor will be obtained from the content.
+				 */
+				idCompressor?: undefined;
+		  })
+	);
+
+/**
  * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
  *
  * @remarks
@@ -71,7 +110,7 @@ import { combineChunks } from "../feature-libraries/index.js";
  */
 export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options?: ForestOptions & { idCompressor?: IIdCompressor | undefined },
+	options?: IndependentViewOptions,
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
 }
@@ -169,11 +208,7 @@ export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSch
  * @alpha
  */
 export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
-	options?: ForestOptions &
-		(
-			| ({ idCompressor?: IIdCompressor | undefined } & { content?: undefined })
-			| (ICodecOptions & { content: ViewContent } & { idCompressor?: undefined })
-		),
+	options?: CreateIndependentTreeAlphaOptions,
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
 	const breaker = new Breakable("independentView");
 	const idCompressor: IIdCompressor =
@@ -192,10 +227,18 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		defaultIncrementalEncodingPolicy,
 	);
 
+	const codecOptions: Partial<CodecWriteOptions> | undefined =
+		options !== undefined &&
+		"minVersionForCollab" in options &&
+		options.minVersionForCollab !== undefined
+			? { minVersionForCollab: options.minVersionForCollab }
+			: undefined;
+
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
 		schema: schemaRepository,
 		breaker,
+		codecOptions,
 	});
 
 	if (options?.content !== undefined) {

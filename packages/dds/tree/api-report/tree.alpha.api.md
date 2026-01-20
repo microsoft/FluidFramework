@@ -193,15 +193,15 @@ export const contentSchemaSymbol: unique symbol;
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
 // @alpha
-export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions & (({
-    idCompressor?: IIdCompressor | undefined;
-} & {
+export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: CreateIndependentTreeAlphaOptions): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+
+// @alpha
+export type CreateIndependentTreeAlphaOptions = ForestOptions & ((IndependentViewOptions & {
     content?: undefined;
 }) | (ICodecOptions & {
     content: ViewContent;
-} & {
     idCompressor?: undefined;
-}))): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+}));
 
 // @beta
 export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
@@ -465,9 +465,12 @@ export const incrementalSummaryHint: unique symbol;
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeViewAlpha<TSchema>;
 
 // @alpha
-export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: ForestOptions & {
+export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: IndependentViewOptions): TreeViewAlpha<TSchema>;
+
+// @alpha @input
+export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
     idCompressor?: IIdCompressor | undefined;
-}): TreeViewAlpha<TSchema>;
+}
 
 // @public @system
 type _InlineTrick = 0;
