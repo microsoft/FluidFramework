@@ -725,7 +725,23 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 			assert(entry?.type === "stressDataObject");
 			const datastore = entry.stressDataObject;
 			const channels = await datastore.StressDataObject.getChannels();
-			const channel = state.random.pick(channels);
+			
+			// Group channels by type to ensure uniform coverage across channel types
+			const channelsByType = new Map<string, IChannel[]>();
+			for (const channel of channels) {
+				const channelType = channel.attributes.type;
+				const channelsOfType = channelsByType.get(channelType) ?? [];
+				channelsOfType.push(channel);
+				channelsByType.set(channelType, channelsOfType);
+			}
+			
+			// First pick a channel type, then pick a channel of that type
+			const channelTypes = Array.from(channelsByType.keys());
+			const selectedType = state.random.pick(channelTypes);
+			assert(selectedType !== undefined, "channel type must exist");
+			const channelsOfSelectedType = channelsByType.get(selectedType);
+			assert(channelsOfSelectedType !== undefined, "channels of selected type must exist");
+			const channel = state.random.pick(channelsOfSelectedType);
 			assert(channel !== undefined, "channel must exist");
 			const baseOp = await runInStateWithClient(state, client, datastore, channel, async () =>
 				baseGenerator(state),
