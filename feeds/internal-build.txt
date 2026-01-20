@@ -32,6 +32,11 @@
 @fluidframework/synthesize
 @fluidframework/request-handler
 @fluidframework/react
+@fluid-internal/presence-workspace
+@fluid-internal/presence-utils
+@fluid-internal/presence-states
+@fluid-internal/presence-runtime
+@fluid-internal/presence-definitions
 @fluidframework/quill-react
 @fluidframework/presence
 @fluid-experimental/oldest-client-observer

@@ -322,7 +322,7 @@ module.exports = {
 			"common/build/build-common/src/cjs/package.json",
 			"common/build/build-common/src/esm/package.json",
 			"packages/common/core-interfaces/src/cjs/package.json",
-			"packages/framework/presence/src/cjs/package.json",
+			"packages/framework/presence-definitions/src/cjs/package.json",
 			"examples/utils/import-testing/src/cjs/package.json",
 		],
 		// Exclusion per handler
@@ -455,6 +455,11 @@ module.exports = {
 				"^experimental/PropertyDDS/",
 				"^packages/framework/quill-react/",
 				"^tools/api-markdown-documenter/",
+
+				// @fluid-internal packages that don't have external-facing APIs
+				"^packages/framework/presence-runtime/",
+				"^packages/framework/presence-utils/",
+				"^packages/framework/presence-workspace/",
 			],
 			"npm-package-exports-field": [
 				// This policy is no longer correct or applicable to our packages, so all files are excluded.
@@ -519,6 +524,11 @@ module.exports = {
 					"fluid-framework",
 					"@fluid-internal/client-utils",
 					"@fluid-internal/mocha-test-setup",
+					"@fluid-internal/presence-definitions",
+					"@fluid-internal/presence-runtime",
+					"@fluid-internal/presence-states",
+					"@fluid-internal/presence-utils",
+					"@fluid-internal/presence-workspace",
 					"@fluid-internal/test-driver-definitions",
 					"tinylicious",
 				],

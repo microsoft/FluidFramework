@@ -61,13 +61,10 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "npm run build:esnext:main && npm run build:esnext:experimental",
-		"build:esnext:experimental": "tsc --project ./tsconfig.json",
-		"build:esnext:main": "tsc --project ./tsconfig.main.json",
-		"build:genver": "gen-version",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs",
-		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
-		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test-disabled-while-no-tests": "echo disabled: npm run build:test:esm && echo disabled: npm run build:test:cjs",
+		"build:test:cjs-disabled-while-no-tests": "echo disabled: fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm-disabled-while-no-tests": "echo disabled: tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --profile node16",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
@@ -87,16 +84,13 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"test": "npm run test:mocha",
-		"test:coverage": "c8 npm test",
-		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
-		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
-		"test:mocha:esm": "mocha",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "npm run tsc:main && npm run tsc:experimental",
-		"tsc:experimental": "fluid-tsc commonjs --project ./tsconfig.cjs.json",
-		"tsc:main": "fluid-tsc commonjs --project ./tsconfig.main.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v"
+		"test-disabled-while-no-tests": "npm run test:mocha-disabled-while-no-tests",
+		"test:coverage-disabled-while-no-tests": "c8 npm test",
+		"test:mocha-disabled-while-no-tests": "npm run test:mocha:esm-disabled-while-no-tests && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
+		"test:mocha:cjs-disabled-while-no-tests": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
+		"test:mocha:esm-disabled-while-no-tests": "mocha",
+		"test:mocha:verbose-disabled-while-no-tests": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"c8": {
 		"all": true,
@@ -121,15 +115,12 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/container-runtime-definitions": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluid-internal/presence-definitions": "workspace:~",
+		"@fluid-internal/presence-runtime": "workspace:~",
+		"@fluid-internal/presence-states": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
-		"@fluidframework/id-compressor": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~"
+		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
@@ -138,14 +129,10 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~20.19.30",
-		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
@@ -155,30 +142,21 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
-		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:esnext:experimental": [
-				"build:esnext:main"
-			],
-			"build:esnext:main": [
+			"build:esnext": [
 				"^api",
-				"^build:esnext",
-				"build:genver"
+				"^build:esnext"
 			],
 			"eslint": [
 				"api-extractor:esnext",
 				"^build:test:esm"
 			],
-			"tsc:experimental": [
-				"tsc:main"
-			],
-			"tsc:main": [
+			"tsc": [
 				"^api",
-				"^tsc",
-				"build:genver"
+				"^tsc"
 			]
 		}
 	},
