@@ -22,3 +22,9 @@ export type { knownReleaseGroups, ReleaseGroup, ReleasePackage } from "./release
 
 // Exported for use in config files.
 export type { AssertTaggingPackageConfig } from "./commands/generate/assertTags.js";
+
+// Exported for programmatic assert tagging checks.
+export {
+	checkAssertTagging,
+	type CheckAssertTaggingResult,
+} from "./commands/generate/assertTags.js";
