@@ -1,5 +1,6 @@
 ---
 "@fluidframework/tree-agent": minor
+"__section": tree
 ---
 
 tree-agent: New type factory system for method and property bindings
@@ -8,14 +9,14 @@ The `@fluidframework/tree-agent` package now includes a custom type system (Type
 defining method and property types. This new system is available in the `/alpha` entry point and provides a familiar
 API for type definitions.
 
-## Key features
+#### Key features
 
 - **Familiar API**: Use `tf.string()`, `tf.object()`, etc. - similar to Zod's syntax (where `tf` is aliased from
   `typeFactory`)
 - **Same API surface**: The existing `expose`, `exposeProperty`, and `buildFunc` methods work with both Zod and Type
   Factory types
 
-## Usage
+#### Usage
 
 Import from the alpha entry point to use Type Factory types:
 
@@ -42,7 +43,7 @@ class TodoList extends sf.object("TodoList", {
 }
 ```
 
-## Available types
+#### Available types
 
 All common types are supported:
 
@@ -53,7 +54,7 @@ All common types are supported:
 - **Utilities**: `tf.union([types])`, `tf.literal(value)`, `tf.optional(type)`, `tf.readonly(type)`
 - **Schema references**: `tf.instanceOf(SchemaClass)`
 
-## Migration from Zod
+#### Migration from Zod
 
 You can migrate gradually - both Zod and Type Factory types work in the same codebase:
 
@@ -82,7 +83,7 @@ methods.expose(
 );
 ```
 
-## Note on type safety
+#### Note on type safety
 
 The Type Factory type system does not currently provide compile-time type checking, though this may be added in the
 future. For applications requiring strict compile-time validation, Zod types remain fully supported.

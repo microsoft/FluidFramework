@@ -7,16 +7,16 @@
 The `getRevertible` factory provided by the `changed` event is now exposed on the `ChangeMetadata` object instead of as
 the second callback parameter. The second parameter is deprecated and will be removed in a future release.
 
-## Why this change?
+#### Why this change?
 
 Keeping all per-change data on `ChangeMetadata` makes the API:
 
-1. Easier to discover
-1. Easier to ignore
-1. Require less parameter churn to use
+1. Easier to discover.
+1. Easier to ignore.
+1. Require less parameter churn to use.
 1. Consistent with the `getChange` API, which is also only available on local commits.
 
-## Migration
+#### Migration
 
 **Before (deprecated):**
 
