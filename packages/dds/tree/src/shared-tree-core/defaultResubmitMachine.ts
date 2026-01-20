@@ -90,7 +90,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		);
 
 		const startingState = staleChanges[0].newCommit.parent;
-		assert(startingState !== undefined, "New commits must have a parent.");
+		assert(startingState !== undefined, 0xcbc /* New commits must have a parent. */);
 		// Some in-flight commits have stale enrichments, so we recompute them.
 		const enriched = this.enricher.enrich(
 			startingState,
@@ -98,7 +98,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		);
 		for (const [index, { pending, newCommit }] of staleChanges.entries()) {
 			const enrichedChange = enriched[index];
-			assert(enrichedChange !== undefined, "Missing enriched commit.");
+			assert(enrichedChange !== undefined, 0xcbd /* Missing enriched commit. */);
 			const enrichedCommit = { ...newCommit, change: enrichedChange };
 			pending.commit = enrichedCommit;
 			pending.lastEnrichment = this.currentEnrichment;
