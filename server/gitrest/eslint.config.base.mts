@@ -6,9 +6,7 @@
 /**
  * Shared ESLint configuration for server/gitrest packages.
  *
- * This module re-exports the base config from routerlicious to avoid duplication.
- * Gitrest packages are server-side Node.js services with similar requirements.
+ * Re-exports the server config from @fluidframework/eslint-config-fluid.
  */
 
-// Re-export the routerlicious base config since gitrest has similar requirements
-export { baseConfig, recommendedConfig } from "../routerlicious/eslint.config.base.mts";
+export { server as baseConfig } from "@fluidframework/eslint-config-fluid/server.mts";

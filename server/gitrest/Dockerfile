@@ -31,10 +31,8 @@ FROM runnerbase AS base
 
 # Copy the shared ESLint config package. Gitrest has a link dependency on this package
 # (link:../../common/build/eslint-config-fluid) for ESLint flat config support.
-# Also copy routerlicious's eslint.config.base.mts which gitrest imports.
 WORKDIR $BUILD_ROOT
 COPY --from=root common/build/eslint-config-fluid common/build/eslint-config-fluid/
-COPY --from=root server/routerlicious/eslint.config.base.mts server/routerlicious/
 
 # Copy over and build the server. We use the same directory structure as outside of the docker container to ensure flub works smoothly.
 WORKDIR $GITREST_ROOT
@@ -84,7 +82,7 @@ else\
     echo "Skipping package version for dev build.";\
 fi
 
-RUN pnpm run build
+RUN pnpm run ci:build
 
 # Build that actually runs
 FROM runnerbase AS runner

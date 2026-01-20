@@ -14,6 +14,7 @@
 		"build": "npm run build:compile && npm run lint",
 		"build:compile": "pnpm run -r --stream build:compile",
 		"build:docker": "docker build . --build-context root=../..",
+		"ci:build": "pnpm run -r --stream build:compile",
 		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"format": "npm run prettier:fix",
