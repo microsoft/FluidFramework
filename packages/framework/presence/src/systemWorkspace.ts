@@ -9,11 +9,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { PostUpdateAction } from "./internalTypes.js";
 import { revealOpaqueJson } from "./internalUtils.js";
 import type { Attendee, AttendeesEvents, AttendeeId, Presence } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
+import type { PostUpdateAction } from "./statesManagerTypes.js";
 import { TimerManager } from "./timerManager.js";
 import type { AnyWorkspace, StatesWorkspaceSchema } from "./types.js";
 

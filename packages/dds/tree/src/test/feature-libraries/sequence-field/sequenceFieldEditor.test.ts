@@ -6,18 +6,21 @@
 import { strict as assert } from "node:assert";
 
 import type { ChangesetLocalId } from "../../../core/index.js";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { MarkMaker as Mark } from "./testEdits.js";
 import { mintRevisionTag } from "../../utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldEditor } from "../../../feature-libraries/sequence-field/sequenceFieldEditor.js";
 
 const id: ChangesetLocalId = brand(0);
 
 export function testEditor(): void {
 	describe("Editor", () => {
 		it("empty child changes", () => {
-			assert.deepEqual(SF.sequenceFieldEditor.buildChildChanges([]), []);
+			assert.deepEqual(sequenceFieldEditor.buildChildChanges([]), []);
 		});
 
 		it("child changes", () => {
@@ -36,12 +39,12 @@ export function testEditor(): void {
 			deepFreeze(childChange1);
 			deepFreeze(childChange2);
 			deepFreeze(childChange3);
-			const actual = SF.sequenceFieldEditor.buildChildChanges([
+			const actual = sequenceFieldEditor.buildChildChanges([
 				[1, childChange1],
 				[4, childChange2],
 				[10, childChange3],
 			]);
-			const expected: SF.Changeset = [
+			const expected: Changeset = [
 				{ count: 1 },
 				Mark.modify(childChange1),
 				{ count: 2 },
@@ -54,8 +57,8 @@ export function testEditor(): void {
 
 		it("insert one node", () => {
 			const revision = mintRevisionTag();
-			const actual = SF.sequenceFieldEditor.insert(42, 1, { localId: id, revision }, revision);
-			const expected: SF.Changeset = [
+			const actual = sequenceFieldEditor.insert(42, 1, { localId: id, revision }, revision);
+			const expected: Changeset = [
 				{ count: 42 },
 				Mark.revive(1, { localId: id, revision }, { revision }),
 			];
@@ -64,8 +67,8 @@ export function testEditor(): void {
 
 		it("insert multiple nodes", () => {
 			const revision = mintRevisionTag();
-			const actual = SF.sequenceFieldEditor.insert(42, 2, { localId: id, revision }, revision);
-			const expected: SF.Changeset = [
+			const actual = sequenceFieldEditor.insert(42, 2, { localId: id, revision }, revision);
+			const expected: Changeset = [
 				{ count: 42 },
 				Mark.insert(2, { localId: id, revision }, { revision }),
 			];
@@ -74,8 +77,8 @@ export function testEditor(): void {
 
 		it("remove", () => {
 			const revision = mintRevisionTag();
-			const actual = SF.sequenceFieldEditor.remove(42, 3, id, revision);
-			const expected: SF.Changeset = [{ count: 42 }, Mark.remove(3, id, { revision })];
+			const actual = sequenceFieldEditor.remove(42, 3, id, revision);
+			const expected: Changeset = [{ count: 42 }, Mark.remove(3, id, { revision })];
 			assert.deepEqual(actual, expected);
 		});
 	});
