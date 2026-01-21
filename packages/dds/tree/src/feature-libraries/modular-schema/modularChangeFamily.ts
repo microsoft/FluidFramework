@@ -1522,8 +1522,11 @@ export class ModularChangeFamily
 	}
 
 	public getRevisions(change: ModularChangeset): Set<RevisionTag | undefined> {
+		if (change.revisions === undefined || change.revisions.length === 0) {
+			return new Set([undefined]);
+		}
 		const aggregated: Set<RevisionTag | undefined> = new Set();
-		for (const revInfo of change.revisions ?? [{ revision: undefined }]) {
+		for (const revInfo of change.revisions) {
 			aggregated.add(revInfo.revision);
 		}
 		return aggregated;

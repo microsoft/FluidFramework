@@ -1053,7 +1053,7 @@ const testedFamilies = new WeakSet<ICodecFamily<unknown, unknown>>();
  */
 function registerValidationHook<TDecoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
-	versions: Iterable<FormatVersion>,
+	versions: readonly FormatVersion[],
 ): void {
 	let tested = testedVersionsByFamily.get(family);
 	if (tested === undefined) {
@@ -1104,7 +1104,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 	supportedVersions?: FormatVersion[],
 ): void {
-	const supportedVersionsToTest = supportedVersions ?? family.getSupportedFormats();
+	const supportedVersionsToTest = supportedVersions ?? [...family.getSupportedFormats()];
 	registerValidationHook(family, supportedVersionsToTest);
 
 	for (const version of supportedVersionsToTest) {
