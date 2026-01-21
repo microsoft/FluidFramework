@@ -79,6 +79,11 @@ Configuration is searched by walking from each package's directory up to its par
 The format of the configuration is specified by the "AssertTaggingPackageConfig" type.`;
 
 	static readonly flags = {
+		check: Flags.boolean({
+			default: false,
+			description:
+				"Check for untagged asserts without making changes. Exits with code 1 if untagged asserts are found.",
+		}),
 		disableConfig: Flags.boolean({
 			default: false,
 			description:
@@ -174,6 +179,31 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 	}
 
 	protected override async processPackages(packages: PackageWithKind[]): Promise<string[]> {
+		// If check mode, use the standalone check function
+		if (this.flags.check) {
+			const { repo } = await this.getContext();
+			const result = await checkAssertTagging({
+				repoRoot: repo.resolvedRoot,
+				packagePaths: packages.map((pkg) => pkg.directory),
+				disableConfig: this.flags.disableConfig,
+			});
+
+			if (result.errors.length > 0) {
+				return [...result.errors];
+			}
+
+			if (result.hasUntaggedAsserts) {
+				this.info(`Found ${result.fileCount} file(s) with untagged asserts:`);
+				for (const filePath of result.filePaths) {
+					this.info(`  ${repo.relativeToRepo(filePath)}`);
+				}
+				return ["Untagged asserts found. Run without --check to tag them."];
+			}
+
+			this.info("No untagged asserts found.");
+			return [];
+		}
+
 		const errors: string[] = [];
 
 		const collected: CollectedData = {
