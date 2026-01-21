@@ -9,6 +9,7 @@ import path from "node:path";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
+import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
 	DetachedFieldIndex,
 	type ForestRootId,
@@ -20,13 +21,13 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../core/tree/detachedFieldIndexCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { DetachedFieldIndexFormatVersion } from "../../../core/tree/detachedFieldIndexFormatCommon.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV1 } from "../../../core/tree/detachedFieldIndexFormatV1.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { DetachedFieldIndexFormatVersion } from "../../../core/tree/detachedFieldIndexFormatCommon.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	type IdAllocator,
@@ -42,7 +43,6 @@ import {
 	assertIsSessionId,
 	mintRevisionTag,
 } from "../../utils.js";
-import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();
 const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);

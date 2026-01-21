@@ -7,14 +7,8 @@ import { strict as assert, fail } from "node:assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { testSpecializedCursor, type TestTree } from "../../cursorTestSuite.js";
-
-import {
-	KeyEncodingOptions,
-	SchemaFactory,
-	type TreeEncodingOptions,
-} from "../../../simple-tree/index.js";
-
+import type { ITreeCursor } from "../../../core/index.js";
+import { cursorForJsonableTreeNode } from "../../../feature-libraries/index.js";
 import {
 	applySchemaToParserOptions,
 	cursorFromVerbose,
@@ -23,11 +17,15 @@ import {
 	type VerboseTree,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/verboseTree.js";
-import type { ITreeCursor } from "../../../core/index.js";
-import { cursorForJsonableTreeNode } from "../../../feature-libraries/index.js";
-import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
+import {
+	KeyEncodingOptions,
+	SchemaFactory,
+	type TreeEncodingOptions,
+} from "../../../simple-tree/index.js";
+import { brand } from "../../../util/index.js";
+import { testSpecializedCursor, type TestTree } from "../../cursorTestSuite.js";
 
 const schema = new SchemaFactory("Test");
 

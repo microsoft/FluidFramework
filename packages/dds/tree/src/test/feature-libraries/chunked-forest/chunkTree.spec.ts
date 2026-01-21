@@ -52,10 +52,7 @@ import {
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
-import { brand } from "../../../util/index.js";
-
-import { assertChunkCursorEquals, numberSequenceField } from "./fieldCursorTestUtilities.js";
-import { polygonTree, testData } from "./uniformChunkTestData.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
@@ -67,9 +64,12 @@ import {
 	toInitialSchema,
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
+import { brand } from "../../../util/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
+
+import { assertChunkCursorEquals, numberSequenceField } from "./fieldCursorTestUtilities.js";
+import { polygonTree, testData } from "./uniformChunkTestData.js";
 
 const builder = new SchemaFactory("chunkTree");
 const empty = builder.object("empty", {});

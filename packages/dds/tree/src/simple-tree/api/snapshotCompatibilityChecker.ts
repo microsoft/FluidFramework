@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as semver from "semver-ts";
 import { assert, transformMapValues } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { selectVersionRoundedDown } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import * as semver from "semver-ts";
+
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { toInitialSchema } from "../toStoredSchema.js";
-import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { createTreeSchema } from "../treeSchema.js";
+
+import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {

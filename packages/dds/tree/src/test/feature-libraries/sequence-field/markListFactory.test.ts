@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import type { ChangesetLocalId, RevisionTag } from "../../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { MarkListFactory } from "../../../feature-libraries/sequence-field/markListFactory.js";
 import { brand } from "../../../util/index.js";
 import { mintRevisionTag } from "../../utils.js";
 
 import { MarkMaker as Mark } from "./testEdits.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { MarkListFactory } from "../../../feature-libraries/sequence-field/markListFactory.js";
 
 const dummyMark = Mark.remove(1, brand(0));
 const detachedBy: RevisionTag = mintRevisionTag();

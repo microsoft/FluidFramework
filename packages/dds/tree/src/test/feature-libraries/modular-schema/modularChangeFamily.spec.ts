@@ -6,6 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
+import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import {
 	type CodecWriteOptions,
@@ -13,6 +15,25 @@ import {
 	type IJsonCodec,
 	makeCodecFamily,
 } from "../../../codec/index.js";
+import {
+	makeAnonChange,
+	makeDetachedNodeId,
+	type RevisionTag,
+	tagChange,
+	type TaggedChange,
+	type FieldKindIdentifier,
+	type FieldKey,
+	type UpPath,
+	revisionMetadataSourceFromInfo,
+	type DeltaFieldChanges,
+	type DeltaRoot,
+	type DeltaDetachedNodeId,
+	type ChangeEncodingContext,
+	type ChangeAtomIdMap,
+	Multiplicity,
+	type FieldUpPath,
+	type RevisionInfo,
+} from "../../../core/index.js";
 import {
 	type FieldChangeHandler,
 	genericFieldKind,
@@ -37,25 +58,27 @@ import {
 	DefaultRevisionReplacer,
 	type ChangeAtomIdBTree,
 } from "../../../feature-libraries/index.js";
+import type {
+	EncodedNodeChangeset,
+	FieldChangeDelta,
+	FieldChangeEncodingContext,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 import {
-	makeAnonChange,
-	makeDetachedNodeId,
-	type RevisionTag,
-	tagChange,
-	type TaggedChange,
-	type FieldKindIdentifier,
-	type FieldKey,
-	type UpPath,
-	revisionMetadataSourceFromInfo,
-	type DeltaFieldChanges,
-	type DeltaRoot,
-	type DeltaDetachedNodeId,
-	type ChangeEncodingContext,
-	type ChangeAtomIdMap,
-	Multiplicity,
-	type FieldUpPath,
-	type RevisionInfo,
-} from "../../../core/index.js";
+	getFieldKind,
+	intoDelta,
+	updateRefreshers,
+	relevantRemovedRoots as relevantDetachedTreesImplementation,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	newCrossFieldKeyTable,
+	type CrossFieldKeyTable,
+	type FieldChangeMap,
+	type FieldId,
+	type NodeChangeset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	type Mutable,
 	brand,
@@ -66,6 +89,8 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
+import { ajvValidator } from "../../codec/index.js";
+import { fieldJsonCursor } from "../../json/index.js";
 import {
 	type EncodingTestData,
 	assertDeltaEqual,
@@ -79,31 +104,6 @@ import {
 } from "../../utils.js";
 
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
-import { ajvValidator } from "../../codec/index.js";
-import { fieldJsonCursor } from "../../json/index.js";
-import {
-	newCrossFieldKeyTable,
-	type CrossFieldKeyTable,
-	type FieldChangeMap,
-	type FieldId,
-	type NodeChangeset,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
-import {
-	getFieldKind,
-	intoDelta,
-	updateRefreshers,
-	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import type {
-	EncodedNodeChangeset,
-	FieldChangeDelta,
-	FieldChangeEncodingContext,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
-import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import { assertEqual, Change, removeAliases } from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
