@@ -725,7 +725,7 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 			assert(entry?.type === "stressDataObject");
 			const datastore = entry.stressDataObject;
 			const channels = await datastore.StressDataObject.getChannels();
-			
+
 			// Group channels by type to ensure uniform coverage across channel types
 			const channelsByType = new Map<string, IChannel[]>();
 			for (const channel of channels) {
@@ -735,7 +735,7 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 				}
 				channelsByType.get(channelType)!.push(channel);
 			}
-			
+
 			// First pick a channel type, then pick a channel of that type
 			const channelTypes = Array.from(channelsByType.keys());
 			const selectedType = state.random.pick(channelTypes);
