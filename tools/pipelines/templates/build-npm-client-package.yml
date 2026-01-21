@@ -472,7 +472,7 @@ extends:
                         set -eu -o pipefail
                         echo "Writing the following performance tests results to Aria/Kusto"
                         echo "Report Size:"
-                        ls -la '${Build.SourcesDirectory)/FluidFramework/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                        ls -la '$(Build.SourcesDirectory)/FluidFramework/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
 
                         echo "pnpm exec telemetry-generator --handlerModule \"$(pathToTelemetryGeneratorHandlersNew)/bundleSizeHandler.js\" --dir \"$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests\""
                         pnpm exec telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/bundleSizeHandler.js" --dir "$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests"
