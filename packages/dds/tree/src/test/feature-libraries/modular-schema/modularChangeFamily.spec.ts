@@ -59,6 +59,7 @@ import {
 	type ChangeAtomIdBTree,
 } from "../../../feature-libraries/index.js";
 import type {
+	EncodedModularChangesetV1,
 	EncodedNodeChangeset,
 	FieldChangeDelta,
 	FieldChangeEncodingContext,
@@ -187,7 +188,14 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const codec = makeModularChangeCodecFamily(
-	new Map([[5, fieldKindConfiguration]]),
+	new Map([
+		[1, fieldKindConfiguration],
+		[2, fieldKindConfiguration],
+		[3, fieldKindConfiguration],
+		[4, fieldKindConfiguration],
+		[5, fieldKindConfiguration],
+		[6, fieldKindConfiguration],
+	]),
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
@@ -1408,9 +1416,9 @@ describe("ModularChangeFamily", () => {
 			revision: tag1,
 			idCompressor: testIdCompressor,
 		};
-		const encodingTestData: EncodingTestData<
+		const encodingTestDataForAllVersions: EncodingTestData<
 			ModularChangeset,
-			EncodedModularChangesetV2,
+			EncodedModularChangesetV1,
 			ChangeEncodingContext
 		> = {
 			successes: [
@@ -1427,8 +1435,8 @@ describe("ModularChangeFamily", () => {
 						{
 							...buildChangeset([]),
 							builds: newTupleBTree([
-								[[undefined, brand(1)], node1Chunk],
-								[[tag2, brand(2)], nodesChunk],
+								[[tag1 as RevisionTag | undefined, brand(1)], node1Chunk],
+								[[tag1, brand(2)], nodesChunk],
 							]),
 						},
 						tag1,
@@ -1441,7 +1449,7 @@ describe("ModularChangeFamily", () => {
 						{
 							...buildChangeset([]),
 							refreshers: newTupleBTree([
-								[[undefined, brand(1)], node1Chunk],
+								[[tag3 as RevisionTag | undefined, brand(1)], node1Chunk],
 								[[tag2, brand(2)], nodesChunk],
 							]),
 						},
@@ -1455,6 +1463,16 @@ describe("ModularChangeFamily", () => {
 					inlineRevision(rootChangeWithoutNodeFieldChanges, tag1),
 					context,
 				],
+			],
+		};
+
+		const encodingTestDataV5Only: EncodingTestData<
+			ModularChangeset,
+			EncodedModularChangesetV2,
+			ChangeEncodingContext
+		> = {
+			successes: [
+				...encodingTestDataForAllVersions.successes,
 				[
 					"with no change constraint",
 					inlineRevision(
@@ -1480,7 +1498,13 @@ describe("ModularChangeFamily", () => {
 			],
 		};
 
-		makeEncodingTestSuite(family.codecs, encodingTestData, assertEquivalent);
+		makeEncodingTestSuite(
+			family.codecs,
+			encodingTestDataForAllVersions,
+			assertEquivalent,
+			[1, 2, 3, 4, 6],
+		);
+		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [5]);
 	});
 
 	it("build child change", () => {

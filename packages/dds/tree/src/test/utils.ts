@@ -1104,7 +1104,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 	supportedVersions?: FormatVersion[],
 ): void {
-	const supportedVersionsToTest = supportedVersions ?? family.getSupportedFormats();
+	const supportedVersionsToTest = supportedVersions ?? [...family.getSupportedFormats()];
 	registerValidationHook(family, supportedVersionsToTest);
 
 	for (const version of supportedVersionsToTest) {
