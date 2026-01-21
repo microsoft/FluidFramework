@@ -25,6 +25,21 @@ export interface BumpConfig {
     defaultInterdependencyRange?: Record<ReleaseGroup, InterdependencyRange>;
 }
 
+// @public (undocumented)
+export function checkAssertTagging(options: {
+    repoRoot: string;
+    packagePaths: string[];
+    disableConfig?: boolean;
+}): Promise<CheckAssertTaggingResult>;
+
+// @public
+export interface CheckAssertTaggingResult {
+    readonly errors: readonly string[];
+    readonly fileCount: number;
+    readonly filePaths: readonly string[];
+    readonly hasUntaggedAsserts: boolean;
+}
+
 // @public
 export interface FlubConfig {
     assertTagging?: AssertTaggingConfig;

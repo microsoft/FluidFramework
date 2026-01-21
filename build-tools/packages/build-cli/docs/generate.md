@@ -22,13 +22,14 @@ Tags asserts by replacing their message with a unique numerical value.
 
 ```
 USAGE
-  $ flub generate assertTags [-v | --quiet] [--check] [--disableConfig] [--concurrency <value>] [--branch <value> [--changed |
-    [--all | --dir <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
+  $ flub generate assertTags [-v | --quiet] [--check] [--disableConfig] [--concurrency <value>] [--branch <value>
+    [--changed | [--all | --dir <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
     --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... |
     --skipScope <value>...]
 
 FLAGS
-  --check            Check for untagged asserts without making changes. Exits with code 1 if untagged asserts are found.
+  --check                Check for untagged asserts without making changes. Exits with code 1 if untagged asserts are
+                         found.
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
 
 PACKAGE SELECTION FLAGS
@@ -73,25 +74,6 @@ DESCRIPTION
   Configuration is searched by walking from each package's directory up to its parents recursively looking for the first
   file matching one of ["assertTagging.config.mjs"].
   The format of the configuration is specified by the "AssertTaggingPackageConfig" type.
-
-EXAMPLES
-  Check if any asserts are untagged without making changes:
-
-    $ flub generate assertTags --all --check
-
-PROGRAMMATIC API
-  The checkAssertTagging function can be used programmatically:
-
-    import { checkAssertTagging } from "@fluidframework/build-cli";
-
-    const result = await checkAssertTagging({
-      repoRoot: "/path/to/repo",
-      packagePaths: ["packages/my-package"],
-    });
-
-    if (result.hasUntaggedAsserts) {
-      console.log(`Found ${result.fileCount} files with untagged asserts`);
-    }
 ```
 
 _See code: [src/commands/generate/assertTags.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/assertTags.ts)_
