@@ -1,7 +1,7 @@
 {
-	"name": "@fluid-internal/version-compat-tests",
+	"name": "@fluid-private/version-compat-tests",
 	"version": "2.81.0",
-	"description": "Cross version tests",
+	"description": "Version compat tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
@@ -15,7 +15,9 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:genver": "gen-version",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -25,23 +27,44 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"test": "npm run test:mocha",
-		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha \"lib/test/**/*.spec.*js\"",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
+		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
+		"test": "npm run test:realsvc",
+		"test:benchmark:report": "mocha --config src/test/benchmark/.mocharc.time.cjs -- --driver=local --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
+		"test:benchmark:report:frs": "mocha --config src/test/benchmark/.mocharc.time.cjs -- --driver=r11s --r11sEndpointName=frs --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
+		"test:benchmark:report:odsp": "mocha --config src/test/benchmark/.mocharc.time.cjs -- --driver=odsp --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
+		"test:memory-profiling:report": "mocha --config src/test/benchmark/.mocharc.memory.cjs -- --driver=local --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
+		"test:memory-profiling:report:frs": "mocha --config src/test/benchmark/.mocharc.memory.cjs  -- --driver=r11s --r11sEndpointName=frs --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
+		"test:memory-profiling:report:odsp": "mocha --config src/test/benchmark/.mocharc.memory.cjs  -- --driver=odsp --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
+		"test:realsvc": "npm run test:realsvc:local && npm run test:realsvc:tinylicious",
+		"test:realsvc:frs": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=frs --timeout=20s",
+		"test:realsvc:frs:report": "npm run test:realsvc:frs --",
+		"test:realsvc:local": "npm run test:realsvc:run -- --driver=local --timeout=2s",
+		"test:realsvc:local:report": "npm run test:realsvc:local --",
+		"test:realsvc:local:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:local --",
+		"test:realsvc:odsp": "npm run test:realsvc:run -- --driver=odsp --timeout=20s",
+		"test:realsvc:odsp-df": "npm run test:realsvc:run -- --driver=odsp --odspEndpointName=odsp-df --timeout=20s",
+		"test:realsvc:odsp:report": "npm run test:realsvc:odsp --",
+		"test:realsvc:r11s": "npm run test:realsvc:run -- --driver=r11s --timeout=20s",
+		"test:realsvc:r11s:docker": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker --timeout=20s",
+		"test:realsvc:routerlicious": "npm run test:realsvc:r11s",
+		"test:realsvc:routerlicious:report": "npm run test:realsvc:r11s --",
+		"test:realsvc:run": "mocha lib/test --config src/test/.mocharc.cjs --exclude \"lib/test/benchmark/**/*\" --verbose",
+		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
+		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
+		"test:realsvc:tinylicious:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:tinylicious",
+		"test:realsvc:tinylicious:run": "npm run test:realsvc:run -- --driver=t9s --timeout=5s",
+		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
 	},
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js",
 			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js",
 			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
@@ -129,9 +152,11 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": [
+			"build:test:esm": [
+				"^build:esnext",
+				"build:genver",
 				"^tsc",
-				"^api-extractor:commonjs"
+				"@fluidframework/tree#build:test"
 			]
 		}
 	},
