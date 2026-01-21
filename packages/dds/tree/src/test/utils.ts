@@ -1053,7 +1053,7 @@ const testedFamilies = new WeakSet<ICodecFamily<unknown, unknown>>();
  */
 function registerValidationHook<TDecoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
-	versions: Iterable<FormatVersion>,
+	versions: readonly FormatVersion[],
 ): void {
 	let tested = testedVersionsByFamily.get(family);
 	if (tested === undefined) {
