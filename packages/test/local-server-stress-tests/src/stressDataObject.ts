@@ -295,14 +295,25 @@ export class DefaultStressDataObject extends StressDataObject {
 	 */
 	private readonly _pendingContainerObjectRegistrations: ContainerObjects[] = [];
 
-	public registerLocallyCreatedObject(obj: ContainerObjects): void {
+	/**
+	 * Registers an object to the containerObjectMap if not already present.
+	 */
+	private registerToContainerObjectMap(obj: ContainerObjects): void {
 		if (obj.handle !== undefined) {
 			const handle = toFluidHandleInternal(obj.handle);
+			if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
+				this.containerObjectMap.set(handle.absolutePath, { tag: obj.tag, type: obj.type });
+			}
+		}
+	}
+
+	public registerLocallyCreatedObject(obj: ContainerObjects): void {
+		if (obj.handle !== undefined) {
 			if (this.inStagingMode()) {
 				// Defer registration until staging mode exits to avoid rollback on discard
 				this._pendingContainerObjectRegistrations.push(obj);
-			} else if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
-				this.containerObjectMap.set(handle.absolutePath, { tag: obj.tag, type: obj.type });
+			} else {
+				this.registerToContainerObjectMap(obj);
 			}
 		}
 		this._locallyCreatedObjects.push(obj);
@@ -313,15 +324,7 @@ export class DefaultStressDataObject extends StressDataObject {
 	 */
 	private flushPendingContainerObjectRegistrations(): void {
 		for (const obj of this._pendingContainerObjectRegistrations) {
-			if (obj.handle !== undefined) {
-				const handle = toFluidHandleInternal(obj.handle);
-				if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
-					this.containerObjectMap.set(handle.absolutePath, {
-						tag: obj.tag,
-						type: obj.type,
-					});
-				}
-			}
+			this.registerToContainerObjectMap(obj);
 		}
 		this._pendingContainerObjectRegistrations.length = 0;
 	}
