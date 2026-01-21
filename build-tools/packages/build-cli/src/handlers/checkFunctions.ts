@@ -13,6 +13,8 @@ import type { Machine } from "jssm";
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo } from "@fluidframework/build-tools";
 
+import { checkAssertTagging as checkAssertTaggingImpl } from "../commands/generate/assertTags.js";
+
 import {
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
@@ -466,21 +468,30 @@ export const checkAssertTagging: StateHandlerFunction = async (
 			);
 		}
 
-		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
-		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
-		// like we do in CI.
-		const result = await execa.command(`npm run policy-check:asserts`, {
-			cwd: context.root,
-		});
-		log.verbose(result.stdout);
+		// Get packages to check based on release group or individual package
+		const packagesToCheck = isReleaseGroup(releaseGroup)
+			? context.packagesInReleaseGroup(releaseGroup)
+			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				[context.fullPackageMap.get(releaseGroup)!];
 
-		// check for policy check violation
-		const afterPolicyCheckStatus = await gitRepo.gitClient.status();
-		const isClean = afterPolicyCheckStatus.isClean();
-		if (!isClean) {
+		const packagePaths = packagesToCheck.map((pkg) => pkg.directory);
+
+		const result = await checkAssertTaggingImpl({
+			repoRoot: context.root,
+			packagePaths,
+		});
+
+		if (result.errors.length > 0) {
+			log.logHr();
+			log.errorLog(`Error checking assert tags: ${result.errors.join(", ")}`);
+			BaseStateHandler.signalFailure(machine, state);
+			return false;
+		}
+
+		if (result.hasUntaggedAsserts) {
 			log.logHr();
 			log.errorLog(
-				`Asserts were tagged. Please create a PR for the changes and merge before retrying.\n${afterPolicyCheckStatus.files.map((fileStatus) => `${fileStatus.index} ${fileStatus.path}`).join("\n")}`,
+				`Found ${result.fileCount} file(s) with untagged asserts. Please tag them and create a PR for the changes before retrying.\n${result.filePaths.join("\n")}`,
 			);
 			BaseStateHandler.signalFailure(machine, state);
 			return false;
