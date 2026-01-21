@@ -759,7 +759,7 @@ function getFieldToRoots(
 		if (fieldId === undefined) {
 			fail("Untracked root change");
 		} else {
-			getOrAddInFieldRootMap(fieldToRoots, fieldId).renames.set(
+			getOrAddInFieldRootMap(fieldToRoots, normalizeFieldId(fieldId, aliases)).renames.set(
 				entry.start,
 				entry.length,
 				entry.value,
