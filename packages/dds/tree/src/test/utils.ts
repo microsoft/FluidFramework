@@ -4,23 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
-import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
+
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import type { Client } from "@fluid-private/test-dds-utils";
+import { LocalServerTestDriver } from "@fluid-private/test-drivers";
+import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import type { ISummarizer } from "@fluidframework/container-runtime/internal";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type {
 	HasListeners,
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import {
-	createMockLoggerExt,
-	type IMockLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
-
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
-import type { ISummarizer } from "@fluidframework/container-runtime/internal";
-import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -35,6 +33,15 @@ import {
 } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	createMockLoggerExt,
+	type IMockLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
@@ -136,6 +143,16 @@ import {
 	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
+import {
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	type CheckoutEvents,
 	type ITreePrivate,
@@ -153,6 +170,7 @@ import {
 	ForestTypeReference,
 	type SharedTreeOptionsInternal,
 } from "../shared-tree/index.js";
+import type { Transactor } from "../shared-tree-core/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
@@ -170,6 +188,11 @@ import {
 	toStoredSchema,
 } from "../simple-tree/index.js";
 import {
+	configuredSharedTree,
+	configuredSharedTreeInternal,
+	type ISharedTree,
+} from "../treeFactory.js";
+import {
 	Breakable,
 	type JsonCompatible,
 	type Mutable,
@@ -179,37 +202,15 @@ import {
 	isReadonlyArray,
 	brand,
 } from "../util/index.js";
-import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
-import type { Client } from "@fluid-private/test-dds-utils";
-import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
+
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
-import type { Transactor } from "../shared-tree-core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
-import {
-	configuredSharedTree,
-	configuredSharedTreeInternal,
-	type ISharedTree,
-} from "../treeFactory.js";
-import { JsonAsTree } from "../jsonDomainSchema.js";
+import { initializeForest } from "./feature-libraries/index.js";
+import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
 import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
-import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import type {
-	ISharedObjectKind,
-	SharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
-// eslint-disable-next-line import-x/no-internal-modules
-import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
-import {
-	allowsFieldSuperset,
-	allowsTreeSuperset,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../feature-libraries/modular-schema/index.js";
-import { initializeForest } from "./feature-libraries/index.js";
 
 // Testing utilities
 

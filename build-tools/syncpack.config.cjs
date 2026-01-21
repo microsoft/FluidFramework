@@ -90,14 +90,6 @@ module.exports = {
 		},
 
 		{
-			label: "Deps in pnpm overrides should use caret dependency ranges",
-			dependencyTypes: ["pnpmOverrides"],
-			dependencies: ["**"],
-			packages: ["**"],
-			range: "^",
-		},
-
-		{
 			label: "Must use exact dependency ranges",
 			dependencies: ["sort-package-json"],
 			packages: ["**"],
@@ -121,6 +113,14 @@ module.exports = {
 			],
 			packages: ["**"],
 			range: "~",
+		},
+
+		{
+			label: "Deps in pnpm overrides should use caret dependency ranges",
+			dependencyTypes: ["pnpmOverrides"],
+			dependencies: ["**"],
+			packages: ["**"],
+			range: "^",
 		},
 
 		{

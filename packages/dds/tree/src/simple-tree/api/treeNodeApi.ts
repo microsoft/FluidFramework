@@ -3,22 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { Off } from "@fluidframework/core-interfaces";
 import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
-import { type ImplicitFieldSchema, FieldSchema } from "../fieldSchema.js";
-import {
-	booleanSchema,
-	handleSchema,
-	nullSchema,
-	numberSchema,
-	stringSchema,
-} from "../leafNodeSchema.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { Off } from "@fluidframework/core-interfaces";
 import {
 	getKernel,
 	isTreeNode,
@@ -34,9 +26,18 @@ import {
 	type TreeNodeFromImplicitAllowedTypes,
 	normalizeAllowedTypes,
 } from "../core/index.js";
-import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+import { type ImplicitFieldSchema, FieldSchema } from "../fieldSchema.js";
 import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
+import {
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
+} from "../leafNodeSchema.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+
+import type { TreeChangeEvents } from "./treeChangeEvents.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.

@@ -92,7 +92,7 @@ async function run(): Promise<boolean> {
 }
 
 run()
-
+	// eslint-disable-next-line unicorn/no-process-exit
 	.then((success) => process.exit(success ? 0 : 1))
-
+	// eslint-disable-next-line unicorn/no-process-exit, unicorn/prefer-top-level-await
 	.catch(() => process.exit(2));

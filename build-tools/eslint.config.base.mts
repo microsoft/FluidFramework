@@ -33,7 +33,7 @@ const linterOptions = {
 const buildToolsOverrides = {
 	rules: {
 		// Build-tools packages are internal tooling, not public packages.
-		// The no-internal-modules rule is designed for the Fluid Framework package structure.
+		// Internal module imports are common and expected in build-tools.
 		"import-x/no-internal-modules": "off",
 
 		// Build-tools uses @deprecated internally for deprecation warnings.
@@ -48,27 +48,58 @@ const buildToolsOverrides = {
 
 		// oclif commands require default exports.
 		"import-x/no-default-export": "off",
+		"no-restricted-exports": "off",
 
-		// Build-tools uses globby, execa, and other packages that have newer alternatives.
-		// TODO: Consider migrating to alternatives over time.
-		"depend/ban-dependencies": "off",
+		// Build-tools uses some packages that have newer alternatives.
+		// Allow the specific packages we use rather than disabling the rule entirely.
+		"depend/ban-dependencies": [
+			"error",
+			{
+				allowed: [
+					// fs-extra is well-maintained and provides useful readJson/writeJson API
+					"fs-extra",
 
-		// This rule is too strict for build-tools internal code.
-		// TODO: Consider enabling and fixing violations.
+					// TODO: AB#58048 All dependencies below should be replaced when possible.
+					// globby is used extensively in build-tools for file patterns
+					"globby",
+					// execa is used for running child processes
+					"execa",
+					// find-up is used for finding files in parent directories
+					"find-up",
+					// read-pkg-up is used to find and read package.json files
+					"read-pkg-up",
+					// glob is used for file pattern matching
+					"glob",
+					// lodash.isequal is used for deep equality checks
+					"lodash.isequal",
+					// strip-ansi is used to remove ANSI escape codes from strings
+					"strip-ansi",
+				],
+			},
+		],
+
+		// This rule requires too many code changes to enable at the moment.
 		"@typescript-eslint/strict-boolean-expressions": "off",
 
 		// This rule requires explicit handling of undefined for index signatures.
-		// TODO: Consider enabling and fixing violations.
+		// TODO: AB#58053 Consider enabling and fixing violations.
 		"@fluid-internal/fluid/no-unchecked-record-access": "off",
 
 		// Build-tools has some files that don't follow strict naming conventions.
 		"unicorn/filename-case": "off",
 
+		// Prevent direct process.exit() calls - prefer throwing errors or returning exit codes.
+		"unicorn/no-process-exit": "error",
+
+		// Prefer top-level await over .then()/.catch() chains at module level.
+		"unicorn/prefer-top-level-await": "error",
+
 		// Prefer-regexp-exec is a style preference, not a correctness issue.
+		// TODO: AB#58056 Consider enabling in the future.
 		"@typescript-eslint/prefer-regexp-exec": "off",
 
 		// These rules are useful but require code changes to fix.
-		// TODO: Enable and fix violations.
+		// TODO: AB#58050 Enable and fix violations.
 		"@typescript-eslint/prefer-readonly": "off",
 		"@typescript-eslint/promise-function-async": "off",
 		"@typescript-eslint/no-shadow": "off",
@@ -107,9 +138,11 @@ const buildToolsOverrides = {
 		// JSDoc/TSDoc tag hyphen rule.
 		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "off",
 
+		// TODO: AB#58052 Re-enable and fix violations.
 		// Import namespace errors may be false positives with some libraries.
 		"import-x/namespace": "off",
 
+		// TODO: AB#58052 Re-enable and fix violations.
 		// Allow importing eslint in policy check code.
 		"import-x/no-extraneous-dependencies": "off",
 	},
@@ -117,6 +150,9 @@ const buildToolsOverrides = {
 
 /**
  * The base ESLint flat config from eslint-config-fluid with build-tools overrides.
+ *
+ * @remarks
+ * TODO: AB#58054 Consider updating to recommended or strict config from eslint-config-fluid if possible.
  */
 export const baseConfig = [...minimalDeprecated, linterOptions, buildToolsOverrides];
 
@@ -134,5 +170,3 @@ export const chaiFriendlyConfig = {
 		"chai-friendly/no-unused-expressions": "error",
 	},
 };
-
-export { chaiFriendly };

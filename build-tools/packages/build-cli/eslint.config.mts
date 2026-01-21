@@ -16,10 +16,8 @@ export default [
 			// This rule is often triggered when using custom Flags, so disabling.
 			"object-shorthand": "off",
 
-			// oclif uses default exports for commands
-			"no-restricted-exports": "off",
-
-			// The default for this rule is 4, but 5 is better
+			// The default for this rule is 4, but 5 is better.
+			// TODO: AB#58055 Consider lowering this limit and simplifying build-tools code accordingly.
 			"max-params": ["warn", 5],
 		},
 	},

@@ -53,9 +53,9 @@ import {
 	currentObserver,
 } from "../../feature-libraries/index.js";
 import { brand, filterIterable, getOrCreate, mapIterable } from "../../util/index.js";
+import type { ContextualFieldProvider } from "../fieldSchema.js";
 
 import type { Context } from "./context.js";
-import type { ContextualFieldProvider } from "../fieldSchema.js";
 import type { TreeNode } from "./treeNode.js";
 
 interface UnhydratedTreeSequenceFieldEditBuilder
