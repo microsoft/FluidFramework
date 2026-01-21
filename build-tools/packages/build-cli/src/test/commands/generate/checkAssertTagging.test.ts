@@ -9,15 +9,18 @@ import { fileURLToPath } from "node:url";
 import { describe, it } from "mocha";
 import { checkAssertTagging } from "../../../commands/generate/assertTags.js";
 import {
-	checkAssertTagging as checkAssertTaggingFromIndex,
 	type CheckAssertTaggingResult,
+	checkAssertTagging as checkAssertTaggingFromIndex,
 } from "../../../index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe("checkAssertTagging", () => {
 	it("should be exported and callable", () => {
-		assert(typeof checkAssertTagging === "function", "checkAssertTagging should be a function");
+		assert(
+			typeof checkAssertTagging === "function",
+			"checkAssertTagging should be a function",
+		);
 	});
 
 	it("returns hasUntaggedAsserts: false when no source files exist", async () => {
@@ -45,10 +48,7 @@ describe("checkAssertTagging integration", () => {
 		assert.strictEqual(result.hasUntaggedAsserts, true, "Should detect untagged asserts");
 		assert.strictEqual(result.fileCount, 1, "Should find one file with untagged asserts");
 		assert(result.filePaths.length > 0, "Should have at least one file path");
-		assert(
-			result.filePaths[0]?.includes("index.ts"),
-			"Should identify the correct file",
-		);
+		assert(result.filePaths[0]?.includes("index.ts"), "Should identify the correct file");
 		assert.deepStrictEqual(result.errors, [], "Should have no errors");
 	});
 

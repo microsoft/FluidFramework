@@ -3,7 +3,7 @@
 		"target": "ES2020",
 		"module": "commonjs",
 		"strict": true,
-		"outDir": "./dist"
+		"outDir": "./dist",
 	},
-	"include": ["src/**/*"]
+	"include": ["src/**/*"],
 }

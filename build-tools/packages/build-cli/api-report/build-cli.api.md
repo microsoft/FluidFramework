@@ -25,7 +25,7 @@ export interface BumpConfig {
     defaultInterdependencyRange?: Record<ReleaseGroup, InterdependencyRange>;
 }
 
-// @public (undocumented)
+// @public
 export function checkAssertTagging(options: {
     repoRoot: string;
     packagePaths: string[];
