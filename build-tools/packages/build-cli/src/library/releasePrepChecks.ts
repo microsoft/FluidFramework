@@ -5,7 +5,7 @@
 
 import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
-import { ResetMode } from "simple-git";
+import { checkAssertTagging } from "../commands/generate/assertTags.js";
 import {
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
@@ -226,21 +226,25 @@ export const CheckNoPolicyViolations: CheckFunction = async (
  */
 export const CheckNoUntaggedAsserts: CheckFunction = async (
 	context: Context,
+	releaseGroupOrPackage: MonoRepo | Package,
 ): Promise<CheckResult> => {
-	// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
-	// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
-	// like we do in CI.
-	await execa("npm", ["run", "policy-check:asserts"], {
-		cwd: context.root,
+	const packagesToCheck = getPackagesToCheck(releaseGroupOrPackage);
+	const packagePaths = packagesToCheck.map((pkg) => pkg.directory);
+
+	const result = await checkAssertTagging({
+		repoRoot: context.root,
+		packagePaths,
 	});
 
-	// check for policy check violation
-	const gitRepo = await context.getGitRepository();
-	const afterPolicyCheckStatus = await gitRepo.gitClient.status();
-	if (!afterPolicyCheckStatus.isClean()) {
-		await gitRepo.gitClient.reset(ResetMode.HARD);
+	if (result.errors.length > 0) {
 		return {
-			message: "Found some untagged asserts. These should be tagged before release.",
+			message: `Error checking assert tags: ${result.errors.join(", ")}`,
+		};
+	}
+
+	if (result.hasUntaggedAsserts) {
+		return {
+			message: `Found ${result.fileCount} file(s) with untagged asserts. These should be tagged before release.`,
 			fixCommand: "pnpm run policy-check:asserts",
 		};
 	}
