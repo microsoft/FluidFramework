@@ -12,9 +12,11 @@ import {
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeId,
 	type DeltaMark,
+	Multiplicity,
 	type RevisionReplacer,
 	type RevisionTag,
 	areEqualChangeAtomIds,
+	forbiddenFieldKindIdentifier,
 	makeChangeAtomId,
 	taggedAtomId,
 } from "../../core/index.js";
@@ -28,6 +30,11 @@ import {
 } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import {
+	optionalIdentifier,
+	identifierFieldIdentifier,
+	requiredIdentifier,
+} from "../fieldKindIdentifiers.js";
+import {
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
 	type FieldEditor,
@@ -40,6 +47,7 @@ import {
 	type ToDelta,
 	type NestedChangesIndices,
 	type FieldChangeDelta,
+	FlexFieldKind,
 } from "../modular-schema/index.js";
 
 import type {
@@ -783,3 +791,26 @@ function* relevantRemovedRoots(
 		yield nodeIdFromChangeAtom(selfSrc);
 	}
 }
+
+interface Optional
+	extends FlexFieldKind<
+		OptionalFieldEditor,
+		typeof optionalIdentifier,
+		Multiplicity.Optional
+	> {}
+
+/**
+ * 0 or 1 items.
+ */
+export const optional: Optional = new FlexFieldKind(
+	optionalIdentifier,
+	Multiplicity.Optional,
+	{
+		changeHandler: optionalChangeHandler,
+		allowMonotonicUpgradeFrom: new Set([
+			identifierFieldIdentifier,
+			requiredIdentifier,
+			forbiddenFieldKindIdentifier,
+		]),
+	},
+);

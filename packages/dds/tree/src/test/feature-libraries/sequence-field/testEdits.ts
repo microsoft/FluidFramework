@@ -4,11 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
-import { type Mutable, brand } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
-import { mintRevisionTag } from "../../utils.js";
-import { TestNodeId } from "../../testNodeId.js";
+
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
@@ -16,6 +12,17 @@ import {
 	asChangeAtomId,
 	offsetChangeAtomId,
 } from "../../../core/index.js";
+import type { NodeId } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldEditor } from "../../../feature-libraries/sequence-field/sequenceFieldEditor.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import * as SF from "../../../feature-libraries/sequence-field/types.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { extractMarkEffect } from "../../../feature-libraries/sequence-field/utils.js";
+import { type Mutable, brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { mintRevisionTag } from "../../utils.js";
 
 const tag: RevisionTag = mintRevisionTag();
 
@@ -38,7 +45,7 @@ export const cases: {
 } = {
 	no_change: [],
 	insert: createInsertChangeset(1, 2, undefined /* revision */, { localId: brand(1) }),
-	modify: SF.sequenceFieldEditor.buildChildChanges([
+	modify: sequenceFieldEditor.buildChildChanges([
 		[0, TestNodeId.create(nodeId1, TestChange.mint([], 1))],
 	]),
 	modify_insert: [
@@ -81,7 +88,7 @@ function createInsertChangeset(
 	revision: RevisionTag | undefined,
 	firstId?: ChangeAtomId,
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.insert(
+	return sequenceFieldEditor.insert(
 		index,
 		count,
 		firstId ?? { localId: brand(0), revision },
@@ -95,7 +102,7 @@ function createRemoveChangeset(
 	revision: RevisionTag | undefined,
 	id?: ChangesetLocalId,
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.remove(startIndex, size, id ?? brand(0), revision);
+	return sequenceFieldEditor.remove(startIndex, size, id ?? brand(0), revision);
 }
 
 function createRedundantRemoveChangeset(
@@ -115,7 +122,7 @@ function createPinChangeset(
 	detachEvent: SF.CellId,
 	revision: RevisionTag | undefined,
 ): SF.Changeset {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, revision);
+	const markList = sequenceFieldEditor.revive(startIndex, count, detachEvent, revision);
 	const mark = markList[markList.length - 1];
 	delete mark.cellId;
 	return markList;
@@ -127,7 +134,7 @@ function createReviveChangeset(
 	detachEvent: SF.CellId,
 	revision: RevisionTag | undefined,
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, revision);
+	return sequenceFieldEditor.revive(startIndex, count, detachEvent, revision);
 }
 
 function createMoveChangeset(
@@ -137,7 +144,7 @@ function createMoveChangeset(
 	revision: RevisionTag | undefined,
 	id: ChangesetLocalId = brand(0),
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.move(
+	return sequenceFieldEditor.move(
 		sourceIndex,
 		count,
 		destIndex,
@@ -155,7 +162,7 @@ function createReturnChangeset(
 	attachCellId: SF.CellId,
 	revision: RevisionTag | undefined,
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.return(
+	return sequenceFieldEditor.return(
 		sourceIndex,
 		count,
 		destIndex,
@@ -166,7 +173,7 @@ function createReturnChangeset(
 }
 
 function createModifyChangeset(index: number, change: NodeId): SF.Changeset {
-	return SF.sequenceFieldEditor.buildChildChanges([[index, change]]);
+	return sequenceFieldEditor.buildChildChanges([[index, change]]);
 }
 
 function createModifyDetachedChangeset(
@@ -175,7 +182,7 @@ function createModifyDetachedChangeset(
 	detachEvent: SF.CellId,
 ): SF.Changeset {
 	const changeset = createModifyChangeset(index, change);
-	const modify = changeset[changeset.length - 1] as SF.CellMark<SF.NoopMark>;
+	const modify = changeset.at(-1) as SF.CellMark<SF.NoopMark>;
 	modify.cellId = detachEvent;
 	return changeset;
 }
@@ -437,8 +444,8 @@ function createAttachAndDetachMark(
 		type: "AttachAndDetach",
 		count: attach.count,
 		cellId: attach.cellId,
-		attach: SF.extractMarkEffect(attach),
-		detach: SF.extractMarkEffect(detach),
+		attach: extractMarkEffect(attach),
+		detach: extractMarkEffect(detach),
 		...overrides,
 	};
 	return mark;
