@@ -4,13 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { NodeId } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import * as SF from "../../../feature-libraries/sequence-field/types.js";
-import { type Mutable, brand } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
-import { mintRevisionTag } from "../../utils.js";
-import { TestNodeId } from "../../testNodeId.js";
+
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
@@ -18,10 +12,17 @@ import {
 	asChangeAtomId,
 	offsetChangeAtomId,
 } from "../../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { extractMarkEffect } from "../../../feature-libraries/sequence-field/utils.js";
+import type { NodeId } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldEditor } from "../../../feature-libraries/sequence-field/sequenceFieldEditor.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import * as SF from "../../../feature-libraries/sequence-field/types.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { extractMarkEffect } from "../../../feature-libraries/sequence-field/utils.js";
+import { type Mutable, brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { mintRevisionTag } from "../../utils.js";
 
 const tag: RevisionTag = mintRevisionTag();
 
@@ -181,7 +182,7 @@ function createModifyDetachedChangeset(
 	detachEvent: SF.CellId,
 ): SF.Changeset {
 	const changeset = createModifyChangeset(index, change);
-	const modify = changeset[changeset.length - 1] as SF.CellMark<SF.NoopMark>;
+	const modify = changeset.at(-1) as SF.CellMark<SF.NoopMark>;
 	modify.cellId = detachEvent;
 	return changeset;
 }

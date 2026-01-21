@@ -6,6 +6,10 @@
 import { strict as assert, fail } from "node:assert";
 
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+
+import { SchemaFactory, SchemaFactoryAlpha } from "../../simple-tree/index.js";
+import { configureBenchmarkHooks } from "../utils.js";
+
 import {
 	type DeepTreeNode,
 	generateDeepSimpleTree,
@@ -16,9 +20,7 @@ import {
 	writeWideSimpleTreeNewValue,
 	type WideTreeNode,
 } from "./benchmarkUtilities.js";
-import { SchemaFactory, SchemaFactoryAlpha } from "../../simple-tree/index.js";
 import { hydrate, hydrateUnsafe } from "./utils.js";
-import { configureBenchmarkHooks } from "../utils.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [

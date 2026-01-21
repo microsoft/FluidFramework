@@ -4,6 +4,8 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+
 import {
 	AnchorSet,
 	type DeltaDetachedNodeId,
@@ -25,9 +27,9 @@ import {
 	updateRefreshers as updateDataChangeRefreshers,
 } from "../feature-libraries/index.js";
 import { disposeSymbol } from "../util/index.js";
+
 import { updateRefreshers } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 interface BorrowedState {
 	readonly forest: IForestSubscription;
