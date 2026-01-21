@@ -390,7 +390,7 @@ extends:
                 inputs:
                   targetType: filePath
                   workingDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
-                  filePath: $(Build.SourcesDirectory)/scripts/pack-build-output.sh
+                  filePath: ${{ parameters.buildDirectory }}/FluidFramework/scripts/pack-build-output.sh
 
               - task: CopyFiles@2
                 displayName: Copy build_output_archive to artifact staging directory
@@ -409,7 +409,7 @@ extends:
                     inputs:
                       targetType: filePath
                       workingDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
-                      filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
+                      filePath: ${{ parameters.buildDirectory }}/FluidFramework/scripts/pack-packages.sh
 
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
@@ -471,7 +471,7 @@ extends:
                         set -eu -o pipefail
                         echo "Writing the following performance tests results to Aria/Kusto"
                         echo "Report Size:"
-                        ls -la '$(Build.SourcesDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                        ls -la '${{ parameters.buildDirectory }}/FluidFramework/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
 
                         echo "pnpm exec telemetry-generator --handlerModule \"$(pathToTelemetryGeneratorHandlersNew)/bundleSizeHandler.js\" --dir \"$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests\""
                         pnpm exec telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/bundleSizeHandler.js" --dir "$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests"
@@ -588,7 +588,7 @@ extends:
               # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
               # used in a few places in the pipeline to push custom telemetry to Kusto.
               - name: absolutePathToTelemetryGenerator
-                value: $(Build.SourcesDirectory)/tools/telemetry-generator
+                value: ${{ parameters.buildDirectory }}/FluidFramework/tools/telemetry-generator
                 readonly: true
               # We already run CodeQL in the main build job, so we don't need to run it again here.
               # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
@@ -632,7 +632,7 @@ extends:
 
               - script: |
                   echo "Extracting build output archive contents..."
-                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
+                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory ${{ parameters.buildDirectory }}/FluidFramework
                 displayName: Extract Build Output Contents
 
               # Set variable startTest if everything is good so far and we'll start running tests,
@@ -784,7 +784,7 @@ extends:
 
                 - script: |
                     echo "Extracting build output archive contents..."
-                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory ${{ parameters.buildDirectory }}/FluidFramework
                   displayName: Extract Build Output Contents
 
                 # Test
@@ -817,7 +817,7 @@ extends:
                       targetType: inline
                       script: |
                         set -eu -o pipefail
-                        PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
+                        PATH_TO_TINYLICIOUS_LOG=${{ parameters.buildDirectory }}/FluidFramework/packages/test/test-end-to-end-tests/tinylicious.log;
                         if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
                           echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
                           echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
