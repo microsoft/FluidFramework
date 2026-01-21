@@ -552,16 +552,6 @@ export interface CheckAssertTaggingResult {
 }
 
 /**
- * Checks whether running assert tagging would make any changes.
- *
- * This is a "dry-run" check that does not modify any files. It returns
- * information about which files contain untagged asserts.
- *
- * @param options - Configuration options for the check
- * @returns Result indicating whether changes would be made
- */
-
-/**
  * Scans a single package for untagged asserts without modifying any files.
  *
  * @internal
