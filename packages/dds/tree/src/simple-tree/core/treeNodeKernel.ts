@@ -348,9 +348,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	/**
 	 * Listen to {@link flushEventsEmitter} to know when to flush buffered events.
 	 */
-	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", () => {
-		this.flush();
-	});
+	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", this.flush.bind(this));
 
 	readonly #events = createEmitter<KernelEvents>();
 

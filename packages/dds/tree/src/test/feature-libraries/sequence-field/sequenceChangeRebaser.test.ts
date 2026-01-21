@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { strict } from "node:assert";
+
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { strict } from "node:assert";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ChangesetLocalId,
@@ -17,7 +19,22 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-import type { SequenceField as SF } from "../../../feature-libraries/index.js";
+import type {
+	NodeId,
+	RebaseRevisionMetadata,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type * as SF from "../../../feature-libraries/sequence-field/types.js";
+import {
+	type IdAllocator,
+	brand,
+	idAllocatorFromMaxId,
+	makeArray,
+} from "../../../util/index.js";
+import { ChangesetWrapper } from "../../changesetWrapper.js";
 import type {
 	BoundFieldChangeRebaser,
 	ChildStateGenerator,
@@ -26,25 +43,13 @@ import type {
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
-import {
-	type IdAllocator,
-	brand,
-	idAllocatorFromMaxId,
-	makeArray,
-} from "../../../util/index.js";
-import type {
-	NodeId,
-	RebaseRevisionMetadata,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { ChangesetWrapper } from "../../changesetWrapper.js";
+
+import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
 	areRebasable,
 	assertChangesetsEqual,
-	compose,
-	invert,
+	testCompose,
+	testInvert,
 	prune,
 	rebaseOverChanges,
 	rebaseTagged,
@@ -61,8 +66,6 @@ import {
 	inlineRevision,
 	toDeltaWrapped,
 } from "./utils.js";
-import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag0: RevisionTag = mintRevisionTag();
@@ -244,7 +247,7 @@ const testChanges: [
 ];
 deepFreeze(testChanges);
 
-export function testRebaserAxioms() {
+export function testRebaserAxioms(): void {
 	describe("Rebaser Axioms", () => {
 		/**
 		 * This test simulates rebasing over an do-inverse pair.
@@ -295,9 +298,9 @@ export function testRebaserAxioms() {
 		// Hand-crafted version of the above tests to add coverage for returns
 		it("Return ↷ [Return, Return⁻¹] === Return", () => {
 			const move: SF.Changeset = Mark.move(1, { revision: tag0, localId: brand(0) });
-			const r: SF.Changeset = invert(tagChange(move, tag0), tag3, false);
+			const r: SF.Changeset = testInvert(tagChange(move, tag0), tag3, false);
 			const base1 = tagChange(r, tag1);
-			const base2 = tagChange(invert(base1, tag2, true), tag2);
+			const base2 = tagChange(testInvert(base1, tag2, true), tag2);
 			const actual = rebaseOverChanges(tagChange(r, tag3), [base1, base2]);
 			assertChangesetsEqual(actual.change, r);
 		});
@@ -725,7 +728,7 @@ const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
 	},
 };
 
-export function testStateBasedRebaserAxioms() {
+export function testStateBasedRebaserAxioms(): void {
 	describeStress("State-based Rebaser Axioms", function ({ stressMode }) {
 		this.timeout(stressMode === StressMode.Short ? 5000 : 80_000);
 		const allocator = idAllocatorFromMaxId();
@@ -754,13 +757,13 @@ export function testStateBasedRebaserAxioms() {
 	});
 }
 
-export function testSandwichRebasing() {
+export function testSandwichRebasing(): void {
 	describe("Sandwich Rebasing", () => {
 		it("Nested inserts rebasing", () => {
 			const insertA = tagChangeInline(Change.insert(0, 2, tag1), tag1);
 			const insertB = tagChangeInline(Change.insert(1, 1, tag2), tag2);
 			const inverseA = tagChangeInline(
-				invert(insertA, undefined /* revision */),
+				testInvert(insertA, undefined /* revision */),
 				tag3,
 				insertA.revision,
 			);
@@ -775,7 +778,7 @@ export function testSandwichRebasing() {
 			const removeB = tagChangeInline(Change.remove(0, 1, tag3), tag3);
 			const insertA2 = rebaseTagged(insertA, insertT);
 			const inverseA = tagChangeInline(
-				invert(insertA, undefined /* revision */),
+				testInvert(insertA, undefined /* revision */),
 				tag4,
 				insertA.revision,
 			);
@@ -787,17 +790,17 @@ export function testSandwichRebasing() {
 			const insertA = tagChangeInline(Change.insert(0, 2, tag1), tag1);
 			const insertB = tagChangeInline(Change.insert(1, 1, tag2), tag2);
 			const inverseA = tagChangeInline(
-				invert(insertA, undefined /* revision */),
+				testInvert(insertA, undefined /* revision */),
 				tag3,
 				insertA.revision,
 			);
 			const inverseB = tagChangeInline(
-				invert(insertB, undefined /* revision */),
+				testInvert(insertB, undefined /* revision */),
 				tag4,
 				insertB.revision,
 			);
 
-			const composed = compose([inverseB, inverseA, insertA, insertB]);
+			const composed = testCompose([inverseB, inverseA, insertA, insertB]);
 			assertChangesetsEqual(composed, []);
 		});
 
@@ -806,7 +809,7 @@ export function testSandwichRebasing() {
 			const insertA = tagChangeInline(Change.insert(1, 2, tag2), tag2);
 			const insertB = tagChangeInline(Change.insert(2, 1, tag4), tag4);
 			const inverseA = tagChangeInline(
-				invert(insertA, undefined /* revision */),
+				testInvert(insertA, undefined /* revision */),
 				tag3,
 				insertA.revision,
 			);
@@ -828,19 +831,19 @@ export function testSandwichRebasing() {
 				tag4,
 			);
 			const delAC2 = rebaseTagged(delAC, addB);
-			const invDelAC = invert(delAC, tag3);
+			const invDelAC = testInvert(delAC, tag3);
 			const revAC2 = rebaseTagged(revAC, tagChangeInline(invDelAC, tag3, delAC2.revision));
 			const revAC3 = rebaseTagged(revAC2, addB);
 			const revAC4 = rebaseTagged(revAC3, delAC2);
 			// The rebased versions of the local edits should still cancel-out
-			const actual = compose([delAC2, revAC4]);
+			const actual = testCompose([delAC2, revAC4]);
 			assertChangesetsEqual(actual, []);
 		});
 
 		it("sandwich rebase [move, undo]", () => {
 			const move = tagChangeInline(Change.move(1, 1, 0, tag1), tag1);
-			const undo = tagChangeInline(invert(move, tag2, false), tag2);
-			const moveRollback = tagChangeInline(invert(move, tag3, true), tag3, tag1);
+			const undo = tagChangeInline(testInvert(move, tag2, false), tag2);
+			const moveRollback = tagChangeInline(testInvert(move, tag3, true), tag3, tag1);
 			const rebasedUndo = rebaseOverChanges(undo, [moveRollback, move]);
 			assertChangesetsEqual(rebasedUndo.change, undo.change);
 		});
@@ -856,11 +859,11 @@ export function testSandwichRebasing() {
 
 			const rollbackTag2 = mintRevisionTag();
 			const changeB = tagChangeInline([Mark.insert(1, brand(0))], tag2);
-			const inverseB = tagChangeInline(invert(changeB, rollbackTag2), rollbackTag2, tag2);
+			const inverseB = tagChangeInline(testInvert(changeB, rollbackTag2), rollbackTag2, tag2);
 
 			const rollbackTag1 = mintRevisionTag();
 			const changeA = tagChangeInline([Mark.insert(1, brand(0))], tag1);
-			const inverseA = tagChangeInline(invert(changeA, rollbackTag1), rollbackTag1, tag1);
+			const inverseA = tagChangeInline(testInvert(changeA, rollbackTag1), rollbackTag1, tag1);
 
 			const revInfos: RevisionInfo[] = [
 				{ revision: rollbackTag2, rollbackOf: tag2 },
@@ -884,7 +887,7 @@ export function testSandwichRebasing() {
 			const insertT = tagChangeInline([Mark.insert(1, brand(0))], tag1);
 			const insertA = tagChangeInline([Mark.insert(1, brand(0))], tag2);
 			const insertA2 = rebaseOverChanges(insertA, [insertT]);
-			const inverseA = tagChangeInline(invert(insertA, tag4), tag4, tag2);
+			const inverseA = tagChangeInline(testInvert(insertA, tag4), tag4, tag2);
 			const insertB = tagChangeInline([{ count: 1 }, Mark.insert(1, brand(0))], tag3);
 			const insertB2 = rebaseOverChanges(insertB, [inverseA, insertT, insertA2]);
 			const expected = [{ count: 1 }, Mark.insert(1, { revision: tag3, localId: brand(0) })];
@@ -897,7 +900,7 @@ export function testSandwichRebasing() {
 				tag2,
 			);
 			const insertB = tagChangeInline([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
-			const inverseA = tagChangeInline(invert(reviveA, tag4), tag4, tag2);
+			const inverseA = tagChangeInline(testInvert(reviveA, tag4), tag4, tag2);
 			const insertB2 = rebaseOverChanges(insertB, [inverseA, reviveA]);
 			const expected = [Mark.skip(1), Mark.insert(1, { revision: tag3, localId: brand(0) })];
 
@@ -906,17 +909,17 @@ export function testSandwichRebasing() {
 	});
 }
 
-export function testSandwichComposing() {
+export function testSandwichComposing(): void {
 	describe("Sandwich composing", () => {
 		it("insert ↷ redundant remove", () => {
 			const insertA = tagChangeInline([Mark.insert(1, { localId: brand(0) })], tag3);
-			const uninsertA = tagChangeInline(invert(insertA, tag4), tag4, tag3);
+			const uninsertA = tagChangeInline(testInvert(insertA, tag4), tag4, tag3);
 			const redundantRemoveT = tagChangeInline(
 				[Mark.remove(1, brand(0), { cellId: { revision: tag1, localId: brand(0) } })],
 				tag2,
 			);
 
-			const composed = compose([uninsertA, redundantRemoveT, insertA]);
+			const composed = testCompose([uninsertA, redundantRemoveT, insertA]);
 			const expected = [
 				Mark.skip(1),
 				Mark.remove(
@@ -933,11 +936,11 @@ export function testSandwichComposing() {
 			const removeT = tagChangeInline([Mark.remove(1, brand(0))], tag1);
 			const insertA = tagChangeInline([Mark.skip(1), Mark.insert(1, brand(0))], tag2);
 			const insertA2 = rebaseTagged(insertA, removeT);
-			const inverseA = tagChangeInline(invert(insertA, tag4), tag4, tag2);
+			const inverseA = tagChangeInline(testInvert(insertA, tag4), tag4, tag2);
 			const insertB = tagChangeInline([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
 			const insertB2 = rebaseOverChanges(insertB, [inverseA, removeT, insertA2]);
-			const TAB = compose([removeT, insertA2, insertB2]);
-			const AiTAB = compose(
+			const TAB = testCompose([removeT, insertA2, insertB2]);
+			const AiTAB = testCompose(
 				[inverseA, makeAnonChange(TAB)],
 				[
 					{ revision: tag4, rollbackOf: tag2 },
@@ -966,15 +969,33 @@ export function testSandwichComposing() {
 				[Mark.revive(1, { revision: tag1, localId: brand(0) })],
 				tag4,
 			);
-			const inverseRemoveB = tagChangeInline(invert(removeB, tag5), tag5, removeB.revision);
-			const inverseReviveB = tagChangeInline(invert(reviveB, tag6), tag6, reviveB.revision);
-			const inverseReviveA = tagChangeInline(invert(reviveA, tag7), tag7, reviveA.revision);
+			const inverseRemoveB = tagChangeInline(
+				testInvert(removeB, tag5),
+				tag5,
+				removeB.revision,
+			);
+			const inverseReviveB = tagChangeInline(
+				testInvert(reviveB, tag6),
+				tag6,
+				reviveB.revision,
+			);
+			const inverseReviveA = tagChangeInline(
+				testInvert(reviveA, tag7),
+				tag7,
+				reviveA.revision,
+			);
 
 			// The composition computation is broken up is steps that force us down more challenging code paths.
 			// Specifically, the composition of reviveB with the composition of parts 3 to 6.
-			const sandwichParts3to6 = compose([inverseRemoveB, removeB, reviveB, reviveA]);
-			const sandwichParts2to6 = compose([inverseReviveB, makeAnonChange(sandwichParts3to6)]);
-			const sandwichParts1to6 = compose([inverseReviveA, makeAnonChange(sandwichParts2to6)]);
+			const sandwichParts3to6 = testCompose([inverseRemoveB, removeB, reviveB, reviveA]);
+			const sandwichParts2to6 = testCompose([
+				inverseReviveB,
+				makeAnonChange(sandwichParts3to6),
+			]);
+			const sandwichParts1to6 = testCompose([
+				inverseReviveA,
+				makeAnonChange(sandwichParts2to6),
+			]);
 			assertChangesetsEqual(sandwichParts1to6, []);
 		});
 
@@ -988,10 +1009,10 @@ export function testSandwichComposing() {
 			const [mo3, mi3] = Mark.move(1, brand(3));
 			const move3 = tagChangeInline([mi3, mo3], tag4);
 			const del = tagChangeInline([Mark.remove(1, brand(0))], tag0);
-			const return1 = tagChangeInline(invert(move1, tag5), tag5, move1.revision);
-			const return2 = tagChangeInline(invert(move2, tag6), tag6, move2.revision);
-			const unMod = tagChangeInline(invert(mod, tag7), tag7, mod.revision);
-			const return3 = tagChangeInline(invert(move3, tag8), tag8, move3.revision);
+			const return1 = tagChangeInline(testInvert(move1, tag5), tag5, move1.revision);
+			const return2 = tagChangeInline(testInvert(move2, tag6), tag6, move2.revision);
+			const unMod = tagChangeInline(testInvert(mod, tag7), tag7, mod.revision);
+			const return3 = tagChangeInline(testInvert(move3, tag8), tag8, move3.revision);
 			const move1Rebased = rebaseTagged(move1, del);
 			const changes = [return3, unMod, return2, return1, del, move1Rebased, move2, mod, move3];
 
@@ -1003,20 +1024,20 @@ export function testSandwichComposing() {
 	});
 }
 
-export function testComposedSandwichRebasing() {
+export function testComposedSandwichRebasing(): void {
 	describe("Composed sandwich rebasing", () => {
 		it("Nested inserts ↷ []", () => {
 			const insertA = tagChangeInline(Change.insert(0, 2, tag1), tag1);
 			const insertB = tagChangeInline(Change.insert(1, 1, tag2), tag2);
-			const inverseA = tagChangeInline(invert(insertA, tag3), tag3, insertA.revision);
-			const sandwich = compose([inverseA, insertA]);
+			const inverseA = tagChangeInline(testInvert(insertA, tag3), tag3, insertA.revision);
+			const sandwich = testCompose([inverseA, insertA]);
 			const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich));
 			assertChangesetsEqual(insertB2.change, insertB.change);
 		});
 	});
 }
 
-export function testExamples() {
+export function testExamples(): void {
 	describe("Examples", () => {
 		it("a detach can end up with neighboring tombstones", () => {
 			const revive = tagChangeInline(
@@ -1025,7 +1046,7 @@ export function testExamples() {
 			);
 			const concurrentRemove = tagChangeInline([Mark.remove(1, brand(42))], tag2);
 			const rebasedRevive = rebaseTagged(revive, concurrentRemove);
-			const redetach = invert(rebasedRevive, tag4);
+			const redetach = testInvert(rebasedRevive, tag4);
 			const expected = [
 				Mark.remove(1, brand(0), {
 					idOverride: { revision: tag1, localId: brand(0) },

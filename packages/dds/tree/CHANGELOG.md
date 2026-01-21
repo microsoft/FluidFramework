@@ -1,5 +1,62 @@
 # @fluidframework/tree
 
+## 2.81.0
+
+### Minor Changes
+
+- `getRevertible` has moved onto `ChangeMetadata` ([#26215](https://github.com/microsoft/FluidFramework/pull/26215)) [922f579381](https://github.com/microsoft/FluidFramework/commit/922f5793816586c18594e0880ccc0f37b22dc895)
+
+  The `getRevertible` factory provided by the `changed` event is now exposed on the `ChangeMetadata` object instead of as
+  the second callback parameter. The second parameter is deprecated and will be removed in a future release.
+
+  #### Why this change?
+
+  Keeping all per-change data on `ChangeMetadata` makes the API:
+  1. Easier to discover.
+  1. Easier to ignore.
+  1. Require less parameter churn to use.
+  1. Consistent with the `getChange` API, which is also only available on local commits.
+
+  #### Migration
+
+  **Before (deprecated):**
+
+  The `getRevertible` argument passed to the event had the following shape:
+
+  |               | Data change        | Schema change |
+  | ------------- | ------------------ | ------------- |
+  | Local change  | `() => Revertible` | `undefined`   |
+  | Remote change | `undefined`        | `undefined`   |
+
+  ```typescript
+  checkout.events.on("changed", (_data, getRevertible) => {
+    if (getRevertible !== undefined) {
+      const revertible = getRevertible();
+      // ...
+    }
+  });
+  ```
+
+  **After:**
+
+  The new `getRevertible` property has the following shape:
+
+  |               | Data change        | Schema change     |
+  | ------------- | ------------------ | ----------------- |
+  | Local change  | `() => Revertible` | `() => undefined` |
+  | Remote change | `undefined`        | `undefined`       |
+
+  ```typescript
+  checkout.events.on("changed", ({ getRevertible }) => {
+    const revertible = getRevertible?.();
+    if (revertible !== undefined) {
+      // ...
+    }
+  });
+  ```
+
+  This applies potentially anywhere you listen to `changed` (for example on `TreeViewAlpha.events`/`TreeBranchEvents`).
+
 ## 2.80.0
 
 ### Minor Changes

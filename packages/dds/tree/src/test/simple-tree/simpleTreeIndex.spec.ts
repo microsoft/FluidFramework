@@ -4,7 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import { brand } from "../../util/index.js";
+
+import { rootFieldKey, type FieldKey, type UpPath } from "../../core/index.js";
+import {
+	flexTreeSlot,
+	type TreeIndexKey,
+	type TreeIndexNodes,
+} from "../../feature-libraries/index.js";
 import {
 	type InsertableTypedNode,
 	SchemaFactory,
@@ -13,13 +19,8 @@ import {
 	TreeViewConfiguration,
 	createSimpleTreeIndex,
 } from "../../simple-tree/index.js";
-import {
-	flexTreeSlot,
-	type TreeIndexKey,
-	type TreeIndexNodes,
-} from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
 import { getView } from "../utils.js";
-import { rootFieldKey, type FieldKey, type UpPath } from "../../core/index.js";
 
 /** The field key under which the parentId node puts its identifier */
 const parentKey: FieldKey = brand("parentKey");

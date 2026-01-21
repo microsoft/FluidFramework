@@ -29,9 +29,9 @@ import { getOrCreate } from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
+import type { IncrementalEncodingPolicy } from "./codec/index.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
-import type { IncrementalEncodingPolicy } from "./codec/index.js";
 
 export interface Disposable {
 	/**

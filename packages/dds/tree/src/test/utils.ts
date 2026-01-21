@@ -4,23 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
-import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
+
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import type { Client } from "@fluid-private/test-dds-utils";
+import { LocalServerTestDriver } from "@fluid-private/test-drivers";
+import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import type { ISummarizer } from "@fluidframework/container-runtime/internal";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type {
 	HasListeners,
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import {
-	createMockLoggerExt,
-	type IMockLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
-
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
-import type { ISummarizer } from "@fluidframework/container-runtime/internal";
-import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -28,9 +26,22 @@ import type {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	assertIsStableId,
+	createIdCompressor,
+	type IIdCompressorCore,
+} from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	createMockLoggerExt,
+	type IMockLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
@@ -132,6 +143,16 @@ import {
 	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
+import {
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	type CheckoutEvents,
 	type ITreePrivate,
@@ -149,6 +170,7 @@ import {
 	ForestTypeReference,
 	type SharedTreeOptionsInternal,
 } from "../shared-tree/index.js";
+import type { Transactor } from "../shared-tree-core/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
@@ -166,6 +188,11 @@ import {
 	toStoredSchema,
 } from "../simple-tree/index.js";
 import {
+	configuredSharedTree,
+	configuredSharedTreeInternal,
+	type ISharedTree,
+} from "../treeFactory.js";
+import {
 	Breakable,
 	type JsonCompatible,
 	type Mutable,
@@ -175,37 +202,15 @@ import {
 	isReadonlyArray,
 	brand,
 } from "../util/index.js";
-import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
-import type { Client } from "@fluid-private/test-dds-utils";
-import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
+
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
-import type { Transactor } from "../shared-tree-core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
-import {
-	configuredSharedTree,
-	configuredSharedTreeInternal,
-	type ISharedTree,
-} from "../treeFactory.js";
-import { JsonAsTree } from "../jsonDomainSchema.js";
+import { initializeForest } from "./feature-libraries/index.js";
+import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
 import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
-import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import type {
-	ISharedObjectKind,
-	SharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
-// eslint-disable-next-line import-x/no-internal-modules
-import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
-import {
-	allowsFieldSuperset,
-	allowsTreeSuperset,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../feature-libraries/modular-schema/index.js";
-import { initializeForest } from "./feature-libraries/index.js";
 
 // Testing utilities
 
@@ -538,13 +543,16 @@ export function spyOnMethod(
 	methodName: string,
 	spy: () => void,
 ): () => void {
-	const { prototype } = methodClass;
+	const prototype = methodClass.prototype as Record<
+		string,
+		(this: unknown, ...args: unknown[]) => unknown
+	>;
 	const method = prototype[methodName];
 	assert(typeof method === "function", `Method does not exist: ${methodName}`);
 
 	const methodSpy = function (this: unknown, ...args: unknown[]): unknown {
 		spy();
-		return method.call(this, ...args);
+		return (method as (...args: unknown[]) => unknown).call(this, ...args);
 	};
 	prototype[methodName] = methodSpy;
 
@@ -1398,7 +1406,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
  */
 export const snapshotSessionId = assertIsSessionId("beefbeef-beef-4000-8000-000000000001");
 
-export function createSnapshotCompressor(seed?: number) {
+export function createSnapshotCompressor(seed?: number): IIdCompressor & IIdCompressorCore {
 	return createAlwaysFinalizedIdCompressor(snapshotSessionId, undefined, seed);
 }
 
@@ -1504,7 +1512,7 @@ export function moveWithin(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
-) {
+): void {
 	editor.move(field, sourceIndex, count, field, destIndex);
 }
 

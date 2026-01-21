@@ -5,6 +5,8 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
 import { type IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import {
 	AnchorSet,
@@ -21,7 +23,6 @@ import {
 	emptyDelta,
 } from "../core/index.js";
 import { type JsonCompatibleReadOnly, type RecursiveReadonly, brand } from "../util/index.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 export interface NonEmptyTestChange {
 	/**
