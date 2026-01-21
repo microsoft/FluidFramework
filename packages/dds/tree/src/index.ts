@@ -366,4 +366,4 @@ export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
-export { TextAsTree } from "./text/index.js";
+export { TextAsTree, FormattedTextAsTree } from "./text/index.js";

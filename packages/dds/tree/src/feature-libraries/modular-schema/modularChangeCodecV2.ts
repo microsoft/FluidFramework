@@ -17,13 +17,13 @@ import type { FieldBatchCodec } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
-import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
-import type { ModularChangeset } from "./modularChangeTypes.js";
 import {
 	encodeChange,
 	decodeChange,
 	getFieldChangesetCodecs,
 } from "./modularChangeCodecV1.js";
+import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
+import type { ModularChangeset } from "./modularChangeTypes.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
