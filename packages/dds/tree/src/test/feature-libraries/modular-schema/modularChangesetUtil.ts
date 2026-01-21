@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
+import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import type {
 	FieldKey,
 	FieldKindIdentifier,
@@ -19,6 +23,12 @@ import type {
 	NodeId,
 } from "../../../feature-libraries/index.js";
 import {
+	getChangeHandler,
+	getParentFieldId,
+	normalizeFieldId,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
 	newCrossFieldKeyTable,
 	type CrossFieldKeyTable,
 	type FieldChange,
@@ -33,15 +43,7 @@ import {
 	idAllocatorFromMaxId,
 	newTupleBTree,
 } from "../../../util/index.js";
-import {
-	getChangeHandler,
-	getParentFieldId,
-	normalizeFieldId,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 
 export const Change = {
 	build,

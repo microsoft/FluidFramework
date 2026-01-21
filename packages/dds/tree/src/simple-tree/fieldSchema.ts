@@ -30,14 +30,13 @@ import type {
 	AllowedTypesFull,
 } from "./core/index.js";
 import { AnnotatedAllowedTypesInternal, normalizeAllowedTypes } from "./core/index.js";
-
 import type {
 	SchemaType,
 	SimpleAllowedTypeAttributes,
 	SimpleFieldSchema,
 } from "./simpleSchema.js";
-import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
 import type { InsertableContent } from "./unhydratedFlexTreeFromInsertable.js";
+import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
 
 /**
  * Kind of a field on an {@link TreeObjectNode}.

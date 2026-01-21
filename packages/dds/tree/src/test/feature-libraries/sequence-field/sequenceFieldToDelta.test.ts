@@ -5,6 +5,8 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	type ChangesetLocalId,
 	type DeltaDetachedNodeId,
@@ -15,19 +17,19 @@ import {
 	tagChange,
 } from "../../../core/index.js";
 import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
-import { brand } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
-import { assertFieldChangesEqual, mintRevisionTag } from "../../utils.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
-import { inlineRevision, toDelta } from "./utils.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FieldChangeDelta } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { assertFieldChangesEqual, mintRevisionTag } from "../../utils.js";
+
+import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
+import { inlineRevision, toDelta } from "./utils.js";
 
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);

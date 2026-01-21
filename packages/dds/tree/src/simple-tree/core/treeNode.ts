@@ -6,11 +6,11 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { markEager } from "./flexList.js";
 import { tryGetTreeNodeSchema } from "./treeNodeKernel.js";
 import { NodeKind, type TreeNodeSchemaClass } from "./treeNodeSchema.js";
 // eslint-disable-next-line import-x/no-deprecated
 import { type WithType, typeNameSymbol, type typeSchemaSymbol } from "./withType.js";
-import { markEager } from "./flexList.js";
 
 /**
  * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, arrays, and maps.
