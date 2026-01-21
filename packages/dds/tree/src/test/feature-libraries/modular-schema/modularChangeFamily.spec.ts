@@ -1435,8 +1435,8 @@ describe("ModularChangeFamily", () => {
 						{
 							...buildChangeset([]),
 							builds: newTupleBTree([
-								[[tag1 as RevisionTag | undefined, brand(1)], node1Chunk],
-								[[tag1, brand(2)], nodesChunk],
+								[[undefined, brand(1)], node1Chunk],
+								[[tag2, brand(2)], nodesChunk],
 							]),
 						},
 						tag1,
@@ -1449,7 +1449,7 @@ describe("ModularChangeFamily", () => {
 						{
 							...buildChangeset([]),
 							refreshers: newTupleBTree([
-								[[tag3 as RevisionTag | undefined, brand(1)], node1Chunk],
+								[[undefined, brand(1)], node1Chunk],
 								[[tag2, brand(2)], nodesChunk],
 							]),
 						},
