@@ -386,7 +386,8 @@ extends:
               - task: Bash@3
                 displayName: Archive Build Output Content
                 env:
-                  WORKING_DIRECTORY: '${{ parameters.buildDirectory }}/FluidFramework'
+                  # Not a long-term fix, this should prob be based on the buildDirectory.
+                  WORKING_DIRECTORY: '$(Build.SourcesDirectory)/FluidFramework'
                 inputs:
                   targetType: filePath
                   workingDirectory: '${{ parameters.buildDirectory }}/FluidFramework'
