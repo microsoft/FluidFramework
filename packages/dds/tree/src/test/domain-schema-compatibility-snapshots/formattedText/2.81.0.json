@@ -1,0 +1,231 @@
+{
+  "version": 1,
+  "root": {
+    "kind": 1,
+    "simpleAllowedTypes": {
+      "com.fluidframework.text.formatted.Text": {
+        "isStaged": false
+      }
+    }
+  },
+  "definitions": {
+    "com.fluidframework.leaf.string": {
+      "leaf": {
+        "kind": 3,
+        "leafKind": 1
+      }
+    },
+    "com.fluidframework.text.formatted.StringTextAtom": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "content": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.string": {
+                "isStaged": false
+              }
+            },
+            "storedKey": ""
+          }
+        },
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.text.formatted.lineTag.h1": {
+      "object": {
+        "kind": 2,
+        "fields": {},
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.text.formatted.lineTag.h2": {
+      "object": {
+        "kind": 2,
+        "fields": {},
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.text.formatted.lineTag.h3": {
+      "object": {
+        "kind": 2,
+        "fields": {},
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.text.formatted.lineTag.h4": {
+      "object": {
+        "kind": 2,
+        "fields": {},
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.text.formatted.lineTag.h5": {
+      "object": {
+        "kind": 2,
+        "fields": {},
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.text.formatted.lineTag.li": {
+      "object": {
+        "kind": 2,
+        "fields": {},
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.text.formatted.StringLineAtom": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "tag": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.text.formatted.lineTag.h1": {
+                "isStaged": false
+              },
+              "com.fluidframework.text.formatted.lineTag.h2": {
+                "isStaged": false
+              },
+              "com.fluidframework.text.formatted.lineTag.h3": {
+                "isStaged": false
+              },
+              "com.fluidframework.text.formatted.lineTag.h4": {
+                "isStaged": false
+              },
+              "com.fluidframework.text.formatted.lineTag.h5": {
+                "isStaged": false
+              },
+              "com.fluidframework.text.formatted.lineTag.li": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "tag"
+          }
+        },
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.leaf.boolean": {
+      "leaf": {
+        "kind": 3,
+        "leafKind": 2
+      }
+    },
+    "com.fluidframework.leaf.number": {
+      "leaf": {
+        "kind": 3,
+        "leafKind": 0
+      }
+    },
+    "com.fluidframework.text.formatted.CharacterFormat": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "bold": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.boolean": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "bold"
+          },
+          "italic": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.boolean": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "italic"
+          },
+          "underline": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.boolean": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "underline"
+          },
+          "size": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.number": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "size"
+          },
+          "font": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.string": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "font"
+          }
+        },
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.text.formatted.StringAtom": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "content": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.text.formatted.StringTextAtom": {
+                "isStaged": false
+              },
+              "com.fluidframework.text.formatted.StringLineAtom": {
+                "isStaged": false
+              }
+            },
+            "storedKey": ""
+          },
+          "format": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.text.formatted.CharacterFormat": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "format"
+          }
+        },
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.text.formatted.StringArray": {
+      "array": {
+        "kind": 1,
+        "simpleAllowedTypes": {
+          "com.fluidframework.text.formatted.StringAtom": {
+            "isStaged": false
+          }
+        }
+      }
+    },
+    "com.fluidframework.text.formatted.Text": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "content": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.text.formatted.StringArray": {
+                "isStaged": false
+              }
+            },
+            "storedKey": ""
+          }
+        },
+        "allowUnknownOptionalFields": false
+      }
+    }
+  }
+}

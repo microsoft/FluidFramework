@@ -12,7 +12,10 @@ import type {
 	OpaqueJsonSerializable,
 } from "@fluidframework/core-interfaces/internal";
 
-import type { ValidatableOptionalState, ValidatableRequiredState } from "./internalTypes.js";
+import type {
+	ValidatableOptionalState,
+	ValidatableRequiredState,
+} from "./validatableTypes.js";
 
 /**
  * Returns union of types of values in a record.

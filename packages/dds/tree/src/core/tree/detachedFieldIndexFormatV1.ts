@@ -5,9 +5,10 @@
 
 import type { Static } from "@sinclair/typebox";
 
-import { DetachedFieldIndexFormatVersion, Format } from "./detachedFieldIndexFormatCommon.js";
-import { RevisionTagSchema } from "../rebase/index.js";
 import { brand } from "../../util/index.js";
+import { RevisionTagSchema } from "../rebase/index.js";
+
+import { DetachedFieldIndexFormatVersion, Format } from "./detachedFieldIndexFormatCommon.js";
 
 export const FormatV1 = Format(
 	brand<DetachedFieldIndexFormatVersion>(DetachedFieldIndexFormatVersion.v1),
