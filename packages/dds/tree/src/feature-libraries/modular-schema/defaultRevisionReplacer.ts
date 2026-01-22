@@ -3,28 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ChangeAtomId,
-	ChangesetLocalId,
-	RevisionReplacer,
-	RevisionTag,
-} from "../../core/index.js";
-import { brand, brandConst, newTupleBTree, type Mutable } from "../../util/index.js";
+import { assert, fail } from "@fluidframework/core-utils/internal";
+
 import {
-	getFromChangeAtomIdMap,
-	setInChangeAtomIdMap,
-	type ChangeAtomIdBTree,
-} from "../changeAtomIdBTree.js";
+	newChangeAtomIdRangeMap,
+	type ChangeAtomId,
+	type ChangeAtomIdRangeMap,
+	type ChangesetLocalId,
+	type RevisionReplacer,
+	type RevisionTag,
+} from "../../core/index.js";
+import {
+	brand,
+	brandConst,
+	newIntegerRangeMap,
+	type RangeMap,
+	type Mutable,
+	hasSingle,
+} from "../../util/index.js";
 
 export class DefaultRevisionReplacer implements RevisionReplacer {
 	/**
 	 * Mapping from (obsolete revision tag, original local id) to the updated local id.
 	 */
-	private readonly updatedLocalIds: ChangeAtomIdBTree<ChangesetLocalId> = newTupleBTree();
+	private readonly updatedLocalIds: ChangeAtomIdRangeMap<ChangesetLocalId> =
+		newChangeAtomIdRangeMap();
 	/**
 	 * The set of local IDs already used in the scope of the updated revision.
 	 */
-	private readonly localIds: Set<ChangesetLocalId> = new Set();
+	private readonly localIds: RangeMap<ChangesetLocalId, true> = newIntegerRangeMap();
 	/**
 	 * The maximum local ID seen so far in the scope of the updated revision.
 	 */
@@ -39,29 +46,33 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 		return this.obsoleteRevisions.has(revision);
 	}
 
-	public getUpdatedAtomId<T extends ChangeAtomId>(id: T): T {
+	public getUpdatedAtomId<T extends ChangeAtomId>(id: T, count: number = 1): T {
+		assert(count >= 1, "Count must be at least 1");
 		if (this.isObsolete(id.revision)) {
 			const updated: Mutable<T> = { ...id, revision: this.updatedRevision };
-			const prior: ChangesetLocalId | undefined = getFromChangeAtomIdMap(
-				this.updatedLocalIds,
-				id,
-			);
-			if (prior === undefined) {
+			const priors = this.updatedLocalIds.getAll(id, count);
+			// const lastId = offsetChangeAtomId(id, count - 1);
+			//  const upperBound = getPairOrNextLowerFromChangeAtomIdMap(this.updatedLocalIds, lastId);
+			if (priors.length === 0) {
 				let localId: ChangesetLocalId;
-				if (this.localIds.has(id.localId)) {
-					this.maxSeen = brand(this.maxSeen + 1);
-					localId = this.maxSeen;
+				if (this.localIds.getAll(id.localId, count).length > 0) {
+					localId = brand(this.maxSeen + 1);
+					this.maxSeen = brand(localId + count - 1);
 				} else {
 					// This change atom ID uses a local ID that has not yet been used in the scope of the updated revision.
 					// We reuse it as is to minimize the number of IDs that need to be updated.
 					localId = id.localId;
-					this.maxSeen = brand(Math.max(this.maxSeen, localId));
-					this.localIds.add(id.localId);
+					this.maxSeen = brand(Math.max(this.maxSeen, localId + count - 1));
+					this.localIds.set(id.localId, count, true);
 				}
-				setInChangeAtomIdMap(this.updatedLocalIds, id, localId);
+				this.updatedLocalIds.set(id, count, localId);
 				updated.localId = localId;
 			} else {
-				updated.localId = prior;
+				if (hasSingle(priors) && priors[0].length === count) {
+					updated.localId = priors[0].value;
+				} else {
+					fail("TODO: support ranges that have partially been updated");
+				}
 			}
 			return updated;
 		}

@@ -23,6 +23,18 @@ export function getFromChangeAtomIdMap<T>(
 	return map.get([id.revision, id.localId]);
 }
 
+export function getPairOrNextLowerFromChangeAtomIdMap<T>(
+	map: ChangeAtomIdBTree<T>,
+	id: ChangeAtomId,
+): [ChangeAtomId, T] | undefined {
+	const found = map.getPairOrNextLower([id.revision, id.localId]);
+	if (found === undefined) {
+		return undefined;
+	}
+	const [[revision, localId], value] = found;
+	return [{ revision, localId }, value];
+}
+
 export function setInChangeAtomIdMap<T>(
 	map: ChangeAtomIdBTree<T>,
 	id: ChangeAtomId,
