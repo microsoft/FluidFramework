@@ -5,14 +5,12 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import type { TSchema } from "@sinclair/typebox";
 
 import {
 	ClientVersionDispatchingCodecBuilder,
 	type CodecAndSchema,
-	type CodecTree,
 	FluidClientVersion,
 	type IJsonCodec,
 	type VersionedJson,
@@ -234,9 +232,3 @@ export const fieldBatchCodecBuilder = ClientVersionDispatchingCodecBuilder.build
 		},
 	},
 );
-
-export function getCodecTreeForFieldBatchFormat(
-	clientVersion: MinimumVersionForCollab,
-): CodecTree {
-	return fieldBatchCodecBuilder.getCodecTree(clientVersion);
-}

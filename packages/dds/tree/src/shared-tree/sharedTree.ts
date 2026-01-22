@@ -57,7 +57,6 @@ import {
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
 	forestCodecBuilder,
-	getCodecTreeForFieldBatchFormat,
 	jsonableTreeFromFieldCursor,
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
@@ -619,7 +618,7 @@ export function getCodecTreeForSharedTreeFormat(
 	children.push(detachedFieldIndexCodecBuilder.getCodecTree(clientVersion));
 	children.push(getCodecTreeForEditManagerFormat(clientVersion));
 	children.push(getCodecTreeForMessageFormat(clientVersion));
-	children.push(getCodecTreeForFieldBatchFormat(clientVersion));
+	children.push(fieldBatchCodecBuilder.getCodecTree(clientVersion));
 	return {
 		name: "SharedTree",
 		version: undefined, // SharedTree does not have a version of its own.

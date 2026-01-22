@@ -103,7 +103,6 @@ export {
 	type FieldBatch,
 	type FieldBatchCodec,
 	FieldBatchFormatVersion,
-	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
 	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
