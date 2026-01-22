@@ -45,8 +45,8 @@ import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import {
 	clientVersionToForestFormatVersion,
+	forestCodecBuilder,
 	type ForestCodec,
-	makeForestSummarizerCodec,
 } from "./codec.js";
 import { ForestFormatVersion } from "./formatCommon.js";
 import {
@@ -95,7 +95,7 @@ export class ForestSummarizer
 			true /* supportPreVersioningFormat */,
 		);
 
-		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
+		this.codec = forestCodecBuilder.build({ ...options, fieldBatchCodec });
 
 		const forestFormatWriteVersion = clientVersionToForestFormatVersion(
 			options.minVersionForCollab,

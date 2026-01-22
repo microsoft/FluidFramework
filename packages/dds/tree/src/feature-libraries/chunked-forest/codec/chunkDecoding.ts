@@ -10,7 +10,7 @@ import type {
 	SessionId,
 } from "@fluidframework/id-compressor";
 
-import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
+import { DiscriminatedUnionDispatcher, type VersionedJson } from "../../../codec/index.js";
 import type {
 	FieldKey,
 	TreeNodeSchemaIdentifier,
@@ -42,6 +42,7 @@ import {
 	type EncodedAnyShape,
 	type EncodedChunkShape,
 	type EncodedFieldBatch,
+	type EncodedFieldBatchV2,
 	type EncodedIncrementalChunkShape,
 	type EncodedInlineArrayShape,
 	type EncodedNestedArrayShape,
@@ -249,9 +250,11 @@ export class IncrementalChunkDecoder implements ChunkDecoder {
 			0xc27 /* incremental decoder not available for incremental field decoding */,
 		);
 
-		const chunkDecoder = (batch: EncodedFieldBatch): TreeChunk => {
+		const chunkDecoder = (batchX: VersionedJson): TreeChunk => {
+			// TODO: better down cast approach.
+			const batch = batchX as EncodedFieldBatchV2;
 			assert(
-				batch.version >= FieldBatchFormatVersion.v2,
+				batch.version === FieldBatchFormatVersion.v2,
 				0xc9f /* Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher */,
 			);
 			const context = new DecoderContext(

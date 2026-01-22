@@ -6,38 +6,32 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import {
-	getConfigForMinVersionForCollab,
-	lowestMinVersionForCollab,
-} from "@fluidframework/runtime-utils/internal";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
+import type { TSchema } from "@sinclair/typebox";
 
 import {
+	ClientVersionDispatchingCodecBuilder,
+	type CodecAndSchema,
 	type CodecTree,
-	type CodecWriteOptions,
 	FluidClientVersion,
 	type IJsonCodec,
-	makeVersionedValidatedCodec,
+	type VersionedJson,
 } from "../../../codec/index.js";
 import {
 	CursorLocationType,
 	type ITreeCursorSynchronous,
 	type SchemaAndPolicy,
+	type SchemaPolicy,
+	type StoredSchemaCollection,
 	type TreeChunk,
 } from "../../../core/index.js";
-import {
-	brand,
-	brandedNumberType,
-	type Brand,
-	type JsonCompatibleReadOnly,
-	unbrand,
-} from "../../../util/index.js";
+import { brandedNumberType, type Brand } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedFieldBatch,
-	validVersions,
 	FieldBatchFormatVersion,
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV2,
@@ -122,69 +116,35 @@ export interface FieldBatchEncodingContext {
  */
 export type FieldBatchCodec = IJsonCodec<
 	FieldBatch,
-	EncodedFieldBatch,
-	JsonCompatibleReadOnly,
+	VersionedJson,
+	VersionedJson,
 	FieldBatchEncodingContext
 >;
 
 /**
- * Convert a MinimumVersionForCollab to write version for {@link FieldBatchCodec}.
- * @param clientVersion - The MinimumVersionForCollab to convert.
+ * Creates the encode/decode functions for a specific FieldBatch format version.
  */
-function clientVersionToFieldBatchVersion(
-	clientVersion: MinimumVersionForCollab,
-): FieldBatchFormatVersion {
-	return brand(
-		getConfigForMinVersionForCollab(clientVersion, {
-			[lowestMinVersionForCollab]: FieldBatchFormatVersion.v1,
-			[FluidClientVersion.v2_73]: FieldBatchFormatVersion.v2,
-		}),
-	);
-}
-
-export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec {
-	const writeVersion = clientVersionToFieldBatchVersion(options.minVersionForCollab);
-	// Note: it's important that the decode function is schema-agnostic for this strategy/layering to work, since
-	// the schema that an op was encoded in doesn't necessarily match the current schema for the document (e.g. if
-	// decode is being run on a client that just submitted a schema change, but the op is from another client who has
-	// yet to receive that change).
-	assert(
-		validVersions.has(writeVersion),
-		0x935 /* Invalid write version for FieldBatch codec */,
-	);
-
-	let uncompressedEncodeFn: typeof uncompressedEncodeV1 | typeof uncompressedEncodeV2;
-	let schemaCompressedEncodeFn:
-		| typeof schemaCompressedEncodeV1
-		| typeof schemaCompressedEncodeV2;
-	let encodedFieldBatchType: typeof EncodedFieldBatchV1 | typeof EncodedFieldBatchV2;
-	switch (writeVersion) {
-		case unbrand(FieldBatchFormatVersion.v1): {
-			uncompressedEncodeFn = uncompressedEncodeV1;
-			schemaCompressedEncodeFn = schemaCompressedEncodeV1;
-			encodedFieldBatchType = EncodedFieldBatchV1;
-			break;
-		}
-		case unbrand(FieldBatchFormatVersion.v2): {
-			uncompressedEncodeFn = uncompressedEncodeV2;
-			schemaCompressedEncodeFn = schemaCompressedEncodeV2;
-			encodedFieldBatchType = EncodedFieldBatchV2;
-			break;
-		}
-		default: {
-			unreachableCase(writeVersion);
-		}
-	}
-
-	return makeVersionedValidatedCodec(options, validVersions, encodedFieldBatchType, {
-		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
+function makeFieldBatchCodecForVersion(
+	writeVersion: FieldBatchFormatVersion,
+	uncompressedEncodeFn: (batch: FieldBatch) => VersionedJson,
+	schemaCompressedEncodeFn: (
+		schema: StoredSchemaCollection,
+		policy: SchemaPolicy,
+		fieldBatch: FieldBatch,
+		idCompressor: IIdCompressor,
+		incrementalEncoder: IncrementalEncoder | undefined,
+	) => VersionedJson,
+	encodedFieldBatchType: TSchema,
+): CodecAndSchema<FieldBatch, FieldBatchEncodingContext> {
+	return {
+		encode: (data: FieldBatch, context: FieldBatchEncodingContext): VersionedJson => {
 			for (const cursor of data) {
 				assert(
 					cursor.mode === CursorLocationType.Fields,
 					0x8a3 /* FieldBatch expects fields cursors */,
 				);
 			}
-			let encoded: EncodedFieldBatch;
+			let encoded: VersionedJson;
 			let incrementalEncoder: IncrementalEncoder | undefined;
 			switch (context.encodeType) {
 				case TreeCompressionStrategy.Uncompressed: {
@@ -225,7 +185,10 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 			// TODO: consider checking input data was in schema.
 			return encoded;
 		},
-		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
+		decode: (
+			data: EncodedFieldBatchV1 | EncodedFieldBatchV2,
+			context: FieldBatchEncodingContext,
+		): FieldBatch => {
 			// TODO: consider checking data is in schema.
 			return decode(
 				data,
@@ -236,11 +199,40 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 				context.incrementalEncoderDecoder,
 			).map((chunk) => chunk.cursor());
 		},
-	});
+		schema: encodedFieldBatchType,
+	};
 }
+
+/**
+ * Codec builder for field batch codecs.
+ * Uses ClientVersionDispatchingCodecBuilder to dispatch to the appropriate version based on minVersionForCollab.
+ */
+export const fieldBatchCodecBuilder = ClientVersionDispatchingCodecBuilder.build(
+	"FieldBatch",
+	{
+		[lowestMinVersionForCollab]: {
+			formatVersion: FieldBatchFormatVersion.v1,
+			codec: makeFieldBatchCodecForVersion(
+				FieldBatchFormatVersion.v1,
+				uncompressedEncodeV1,
+				schemaCompressedEncodeV1,
+				EncodedFieldBatchV1,
+			),
+		},
+		[FluidClientVersion.v2_73]: {
+			formatVersion: FieldBatchFormatVersion.v2,
+			codec: makeFieldBatchCodecForVersion(
+				FieldBatchFormatVersion.v2,
+				uncompressedEncodeV2,
+				schemaCompressedEncodeV2,
+				EncodedFieldBatchV2,
+			),
+		},
+	},
+);
 
 export function getCodecTreeForFieldBatchFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
-	return { name: "FieldBatch", version: clientVersionToFieldBatchVersion(clientVersion) };
+	return fieldBatchCodecBuilder.getCodecTree(clientVersion);
 }

@@ -5,9 +5,9 @@
 
 import { type Static, Type } from "@sinclair/typebox";
 
+import { Versioned } from "../../codec/index.js";
 import { schemaFormatV1 } from "../../core/index.js";
 import { strictEnum, type Values } from "../../util/index.js";
-import { EncodedFieldBatch } from "../chunked-forest/index.js";
 
 /**
  * The format version for the forest.
@@ -30,7 +30,7 @@ export const FormatCommon = (
 		{
 			version: Type.Literal(version),
 			keys: Type.Array(schemaFormatV1.FieldKeySchema),
-			fields: EncodedFieldBatch,
+			fields: Versioned, // Uses field batch codec
 		},
 		{ additionalProperties: false },
 	);

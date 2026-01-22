@@ -21,7 +21,7 @@ export {
 	getCodecTreeForFieldBatchFormat,
 	type FieldBatch,
 	type FieldBatchCodec,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
 	type IncrementalEncoderDecoder,
 	type ChunkReferenceId,

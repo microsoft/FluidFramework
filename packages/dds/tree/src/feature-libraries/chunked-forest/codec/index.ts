@@ -7,7 +7,7 @@ export { EncodedFieldBatch, FieldBatchFormatVersion } from "./format.js";
 export type { FieldBatch } from "./fieldBatch.js";
 export {
 	type FieldBatchCodec,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
 	type IncrementalEncoderDecoder,
 	type IncrementalEncoder,

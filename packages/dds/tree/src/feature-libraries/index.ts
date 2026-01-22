@@ -105,7 +105,7 @@ export {
 	FieldBatchFormatVersion,
 	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
 	emptyChunk,
 	combineChunks,
