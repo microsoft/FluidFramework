@@ -785,14 +785,18 @@ export class ModularChangeFamily
 
 		const genId: IdAllocator = idAllocatorFromMaxId(change.change.maxId ?? -1);
 
+		const invertedNodeToParent: ChangeAtomIdBTree<NodeLocation> = brand(
+			change.change.nodeToParent.clone(),
+		);
+
 		const crossFieldTable: InvertTable = {
 			change: change.change,
 			entries: newChangeAtomIdRangeMap(),
 			originalFieldToContext: new Map(),
 			invertRevision: revisionForInvert,
-			invertedNodeToParent: brand(change.change.nodeToParent.clone()),
+			invertedNodeToParent,
 			invalidatedFields: new Set(),
-			invertedRoots: invertRootTable(change.change, isRollback),
+			invertedRoots: invertRootTable(change.change, invertedNodeToParent, isRollback),
 			attachToDetachId: newChangeAtomIdTransform(),
 		};
 		const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
@@ -3048,7 +3052,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 
 function assignRootChange(
 	table: RootNodeTable,
-	nodeToParent: ChangeAtomIdBTree<NodeLocation> | undefined,
+	nodeToParent: ChangeAtomIdBTree<NodeLocation>,
 	detachId: ChangeAtomId,
 	nodeId: NodeId,
 	detachLocation: FieldId | undefined,
@@ -3060,10 +3064,7 @@ function assignRootChange(
 	);
 
 	setInChangeAtomIdMap(table.nodeChanges, detachId, nodeId);
-
-	if (nodeToParent !== undefined) {
-		setInChangeAtomIdMap(nodeToParent, nodeId, { root: detachId });
-	}
+	setInChangeAtomIdMap(nodeToParent, nodeId, { root: detachId });
 
 	table.detachLocations.set(detachId, 1, detachLocation);
 }
@@ -4529,8 +4530,26 @@ export function cloneRootTable(table: RootNodeTable): RootNodeTable {
 	};
 }
 
-function invertRootTable(change: ModularChangeset, isRollback: boolean): RootNodeTable {
+function invertRootTable(
+	change: ModularChangeset,
+	invertedNodeToParent: ChangeAtomIdBTree<NodeLocation>,
+	isRollback: boolean,
+): RootNodeTable {
 	const invertedRoots: RootNodeTable = newRootTable();
+
+	if (isRollback) {
+		// We only invert renames of nodes which are not attached or detached by this changeset.
+		// When we invert an attach we will create a detach which incorporates the rename.
+		// XXX: Do we need to update detachLocations and outputDetachLocations?
+		for (const {
+			start: oldId,
+			value: newId,
+			length,
+		} of change.rootNodes.oldToNewId.entries()) {
+			invertRename(change, invertedRoots, oldId, newId, length);
+		}
+	}
+
 	for (const [[revision, localId], nodeId] of change.rootNodes.nodeChanges.entries()) {
 		const detachId: ChangeAtomId = { revision, localId };
 		const renamedId = firstAttachIdFromDetachId(change.rootNodes, detachId, 1).value;
@@ -4543,24 +4562,12 @@ function invertRootTable(change: ModularChangeset, isRollback: boolean): RootNod
 		) {
 			assignRootChange(
 				invertedRoots,
-				undefined,
+				invertedNodeToParent,
 				renamedId,
 				nodeId,
 				change.rootNodes.detachLocations.getFirst(detachId, 1).value,
 				change.rebaseVersion,
 			);
-		}
-	}
-
-	if (isRollback) {
-		// We only invert renames of nodes which are not attached or detached by this changeset.
-		// When we invert an attach we will create a detach which incorporates the rename.
-		for (const {
-			start: oldId,
-			value: newId,
-			length,
-		} of change.rootNodes.oldToNewId.entries()) {
-			invertRename(change, invertedRoots, oldId, newId, length);
 		}
 	}
 
