@@ -2106,7 +2106,7 @@ function intoDeltaImpl(
 				return deltaFromNodeChange(nodeChange, nodeChanges, fieldKinds, global, rename);
 			},
 		);
-		if (fieldChanges !== undefined && fieldChanges.length > 0) {
+		if (fieldChanges !== undefined && fieldChanges.marks.length > 0) {
 			delta.set(field, fieldChanges);
 		}
 		for (const c of fieldGlobal ?? []) {

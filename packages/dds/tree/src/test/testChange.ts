@@ -194,7 +194,7 @@ function toDelta({ change }: TaggedChange<TestChange>): DeltaFieldMap {
 				// We represent the intentions as a list if node offsets in some imaginary field "testIntentions".
 				// This is purely for the sake of testing.
 				brand("testIntentions"),
-				change.intentions.map((i) => ({ count: i })),
+				{ marks: change.intentions.map((i) => ({ count: i })) },
 			],
 		]);
 	}
@@ -334,7 +334,7 @@ export function asDelta(intentions: number[]): DeltaRoot {
 	return intentions.length === 0
 		? emptyDelta
 		: {
-				fields: new Map([[rootKey, intentions.map((i) => ({ count: i }))]]),
+				fields: new Map([[rootKey, { marks: intentions.map((i) => ({ count: i })) }]]),
 			};
 }
 

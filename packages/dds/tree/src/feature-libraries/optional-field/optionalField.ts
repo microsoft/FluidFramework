@@ -710,7 +710,7 @@ export function optionalFieldIntoDelta(
 	}
 
 	if (!markIsANoop) {
-		delta.local = [mark];
+		delta.local = { marks: [mark] };
 	}
 
 	return delta;

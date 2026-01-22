@@ -99,7 +99,7 @@ export const valueHandler = {
 			// These would have no real meaning to a delta consumer, but these delta are only used for testing.
 			const detach = makeDetachedNodeId(undefined, change.old);
 			const attach = makeDetachedNodeId(undefined, change.new);
-			delta.local = [{ count: 1, attach, detach }];
+			delta.local = { marks: [{ count: 1, attach, detach }] };
 		}
 		return delta;
 	},

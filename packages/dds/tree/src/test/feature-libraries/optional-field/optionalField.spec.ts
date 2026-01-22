@@ -687,7 +687,7 @@ describe("optionalField", () => {
 						fields: TestNodeId.deltaFromChild(nodeChange1),
 					},
 				],
-				local: [{ count: 1, attach: outerNodeId }],
+				local: { marks: [{ count: 1, attach: outerNodeId }] },
 			};
 
 			const actual = optionalFieldIntoDelta(change1.change, TestNodeId.deltaFromChild);
@@ -696,13 +696,15 @@ describe("optionalField", () => {
 
 		it("can be converted to a delta when restoring content", () => {
 			const expected: FieldChangeDelta = {
-				local: [
-					{
-						count: 1,
-						attach: { major: revertChange2.revision, minor: 2 },
-						detach: { major: revertChange2.revision, minor: 42 },
-					},
-				],
+				local: {
+					marks: [
+						{
+							count: 1,
+							attach: { major: revertChange2.revision, minor: 2 },
+							detach: { major: revertChange2.revision, minor: 42 },
+						},
+					],
+				},
 			};
 
 			const actual = optionalFieldIntoDelta(revertChange2.change, TestNodeId.deltaFromChild);
@@ -711,12 +713,14 @@ describe("optionalField", () => {
 
 		it("can be converted to a delta with only child changes", () => {
 			const expected: FieldChangeDelta = {
-				local: [
-					{
-						count: 1,
-						fields: TestNodeId.deltaFromChild(nodeChange2),
-					},
-				],
+				local: {
+					marks: [
+						{
+							count: 1,
+							fields: TestNodeId.deltaFromChild(nodeChange2),
+						},
+					],
+				},
 			};
 			assertFieldChangesEqual(
 				optionalFieldIntoDelta(change4.change, TestNodeId.deltaFromChild),
