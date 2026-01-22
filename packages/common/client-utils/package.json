@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.81.0",
+	"version": "2.82.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -261,9 +261,9 @@
 		}
 	},
 	"fluidCompatMetadata": {
-		"generation": 3,
-		"releaseDate": "2025-12-15",
-		"releasePkgVersion": "2.74.0"
+		"generation": 4,
+		"releaseDate": "2026-01-20",
+		"releasePkgVersion": "2.81.0"
 	},
 	"typeValidation": {
 		"broken": {},

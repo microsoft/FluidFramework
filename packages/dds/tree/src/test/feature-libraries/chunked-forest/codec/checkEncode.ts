@@ -5,6 +5,9 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+
 import type { JsonableTree } from "../../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
@@ -30,10 +33,8 @@ import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 } from "../../../../feature-libraries/index.js";
-import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { testIdCompressor } from "../../../utils.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
 
 export function checkNodeEncode(
 	nodeEncoder: NodeEncoder,
