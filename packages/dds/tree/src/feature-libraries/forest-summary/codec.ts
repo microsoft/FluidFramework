@@ -12,7 +12,6 @@ import {
 
 import {
 	ClientVersionDispatchingCodecBuilder,
-	type CodecTree,
 	type CodecWriteOptions,
 	FluidClientVersion,
 	type IJsonCodec,
@@ -128,9 +127,3 @@ export const forestCodecBuilder = ClientVersionDispatchingCodecBuilder.build("Fo
 		},
 	},
 });
-
-export function getCodecTreeForForestFormat(
-	clientVersion: MinimumVersionForCollab,
-): CodecTree {
-	return forestCodecBuilder.getCodecTree(clientVersion);
-}

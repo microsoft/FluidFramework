@@ -11,7 +11,7 @@ export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.j
 
 export {
 	ForestSummarizer,
-	getCodecTreeForForestFormat,
+	forestCodecBuilder,
 	ForestFormatVersion,
 } from "./forest-summary/index.js";
 export {

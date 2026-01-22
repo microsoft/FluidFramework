@@ -55,10 +55,10 @@ import {
 	buildForest,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
-	getCodecTreeForFieldBatchFormat,
-	getCodecTreeForForestFormat,
-	jsonableTreeFromFieldCursor,
 	fieldBatchCodecBuilder,
+	forestCodecBuilder,
+	getCodecTreeForFieldBatchFormat,
+	jsonableTreeFromFieldCursor,
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
@@ -614,7 +614,7 @@ export function getCodecTreeForSharedTreeFormat(
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
 	const children: CodecTree[] = [];
-	children.push(getCodecTreeForForestFormat(clientVersion));
+	children.push(forestCodecBuilder.getCodecTree(clientVersion));
 	children.push(schemaCodecBuilder.getCodecTree(clientVersion));
 	children.push(detachedFieldIndexCodecBuilder.getCodecTree(clientVersion));
 	children.push(getCodecTreeForEditManagerFormat(clientVersion));
