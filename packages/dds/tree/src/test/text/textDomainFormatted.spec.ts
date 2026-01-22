@@ -5,10 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
+import { TreeViewConfiguration } from "../../simple-tree/index.js";
 // Allow importing file being tested
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree } from "../../text/textDomainFormatted.js";
-import { TreeViewConfiguration } from "../../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 
 describe("textDomainFormatted", () => {

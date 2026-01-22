@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "node:assert";
+
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { Tree, TreeAlpha } from "../shared-tree/index.js";
@@ -24,9 +25,10 @@ import type {
 	requireFalse,
 	requireTrue,
 } from "../util/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
+
 // eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 

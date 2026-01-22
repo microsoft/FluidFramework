@@ -28,6 +28,7 @@ import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
+import { detachedFieldIndexCodecBuilder } from "./detachedFieldIndexCodecs.js";
 import type {
 	DetachedField,
 	DetachedFieldSummaryData,
@@ -35,7 +36,6 @@ import type {
 	Major,
 	Minor,
 } from "./detachedFieldIndexTypes.js";
-import { detachedFieldIndexCodecBuilder } from "./detachedFieldIndexCodecs.js";
 
 /**
  * Readonly interface for {@link DetachedFieldIndex}.

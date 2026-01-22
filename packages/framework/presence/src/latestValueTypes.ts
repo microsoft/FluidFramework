@@ -9,9 +9,9 @@ import type {
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { ValidatableRequiredState } from "./internalTypes.js";
 import { asDeeplyReadonlyDeserializedJson } from "./internalUtils.js";
 import type { Attendee } from "./presence.js";
+import type { ValidatableRequiredState } from "./validatableTypes.js";
 
 /**
  * Metadata for the value state.

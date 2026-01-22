@@ -4,10 +4,14 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { SummaryType } from "@fluidframework/driver-definitions";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
+import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
 	type ChangesetLocalId,
 	type FieldKey,
@@ -29,12 +33,20 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+import type {
+	FieldBatchEncodingContext,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/index.js";
 import {
 	TreeShape,
 	UniformChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
 import {
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -51,12 +63,23 @@ import {
 	cursorForJsonableTreeNode,
 	defaultIncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
 	type ISharedTreeEditor,
 	Tree,
 	ForestTypeOptimized,
 	type ITreePrivate,
 } from "../../../shared-tree/index.js";
+import {
+	numberSchema,
+	SchemaFactory,
+	stringSchema,
+	TreeViewConfiguration,
+	toInitialSchema,
+} from "../../../simple-tree/index.js";
+import { configuredSharedTree } from "../../../treeFactory.js";
+import { brand } from "../../../util/index.js";
+import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
@@ -65,28 +88,6 @@ import {
 	mintRevisionTag,
 	testIdCompressor,
 } from "../../utils.js";
-import {
-	numberSchema,
-	SchemaFactory,
-	stringSchema,
-	TreeViewConfiguration,
-	toInitialSchema,
-} from "../../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
-import type {
-	FieldBatchEncodingContext,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/index.js";
-import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { brand } from "../../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { configuredSharedTree } from "../../../treeFactory.js";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 
 const options: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,

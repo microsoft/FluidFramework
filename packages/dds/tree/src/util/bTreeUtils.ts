@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { debugAssert } from "@fluidframework/core-utils/internal";
 import { BTree, defaultComparator, type DefaultComparable } from "@tylerbu/sorted-btree-es6";
 
 import { brand, type Brand } from "./brand.js";
-import { debugAssert } from "@fluidframework/core-utils/internal";
 
 /**
  * A BTree which uses tuples (arrays) as the key.
