@@ -95,13 +95,7 @@ function rebaseComposedModular(
 	change: TaggedChange<ModularChangeset>,
 	...baseChanges: TaggedChange<ModularChangeset>[]
 ): ModularChangeset {
-	const composed =
-		baseChanges.length === 0
-			? makeAnonChange(empty())
-			: baseChanges.reduce((change1, change2) =>
-					makeAnonChange(composeModular(change1, change2)),
-				);
-
+	const composed = makeAnonChange(defaultFamily.compose(baseChanges));
 	return rebaseModular(change, composed, metadata);
 }
 
