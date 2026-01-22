@@ -58,7 +58,7 @@ import {
 	getCodecTreeForFieldBatchFormat,
 	getCodecTreeForForestFormat,
 	jsonableTreeFromFieldCursor,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
@@ -241,7 +241,7 @@ export class SharedTreeKernel
 			schemaCodec,
 			options.minVersionForCollab,
 		);
-		const fieldBatchCodec = makeFieldBatchCodec(options);
+		const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 
 		const encoderContext = {
 			schema: {

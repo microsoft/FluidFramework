@@ -9,7 +9,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import { FluidClientVersion } from "../../../../codec/index.js";
 import {
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
@@ -25,13 +25,13 @@ import { ajvValidator } from "../../../codec/index.js";
 import { testTrees } from "../../../cursorTestSuite.js";
 import { testIdCompressor } from "../../../utils.js";
 
-describe("makeFieldBatchCodec", () => {
+describe("fieldBatchCodecBuilder", () => {
 	// Use the first simple test tree from the test suite
 	const [, simpleTestData] = testTrees[0];
 
 	describe("version mapping", () => {
 		it("uses v1 format for FluidClientVersion.v2_0", () => {
-			const codec = makeFieldBatchCodec({
+			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_0,
 			});
@@ -44,11 +44,12 @@ describe("makeFieldBatchCodec", () => {
 			};
 
 			const encoded = codec.encode([input], context);
+			assert(encoded !== null && typeof encoded === "object" && "version" in encoded);
 			assert.equal(encoded.version, FieldBatchFormatVersion.v1);
 		});
 
 		it("uses v2 format for FluidClientVersion.v2_74", () => {
-			const codec = makeFieldBatchCodec({
+			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_74,
 			});
@@ -61,13 +62,14 @@ describe("makeFieldBatchCodec", () => {
 			};
 
 			const encoded = codec.encode([input], context);
+			assert(encoded !== null && typeof encoded === "object" && "version" in encoded);
 			assert.equal(encoded.version, FieldBatchFormatVersion.v2);
 		});
 	});
 
 	describe("TreeCompressionStrategy.CompressedIncremental", () => {
 		it("succeeds for minVersionForCollab FluidClientVersion.v2_74", () => {
-			const codec = makeFieldBatchCodec({
+			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_74,
 			});
@@ -83,7 +85,7 @@ describe("makeFieldBatchCodec", () => {
 		});
 
 		it("fails for unsupported minVersionForCollab", () => {
-			const codec = makeFieldBatchCodec({
+			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_0,
 			});
@@ -104,7 +106,7 @@ describe("makeFieldBatchCodec", () => {
 
 	describe("round-trip encoding", () => {
 		it("v1 codec encodes and decodes correctly", () => {
-			const codec = makeFieldBatchCodec({
+			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_0,
 			});
@@ -123,7 +125,7 @@ describe("makeFieldBatchCodec", () => {
 		});
 
 		it("v2 codec encodes and decodes correctly", () => {
-			const codec = makeFieldBatchCodec({
+			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_74,
 			});

@@ -56,7 +56,7 @@ import {
 	buildChunkedForest,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	makeModularChangeCodecFamily,
 	MockNodeIdentifierManager,
 	jsonableTreeFromCursor,
@@ -94,7 +94,7 @@ const options: CodecWriteOptions = {
 	minVersionForCollab: FluidClientVersion.v2_0,
 };
 
-const fieldBatchCodec = makeFieldBatchCodec(options);
+const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);

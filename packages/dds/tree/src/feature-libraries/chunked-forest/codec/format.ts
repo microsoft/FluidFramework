@@ -227,4 +227,5 @@ export const EncodedFieldBatchV2 = EncodedFieldBatchGeneric(
 );
 export type EncodedFieldBatchV2 = Static<typeof EncodedFieldBatchV2>;
 
+export const EncodedFieldBatch = Type.Union([EncodedFieldBatchV1, EncodedFieldBatchV2]);
 export type EncodedFieldBatch = EncodedFieldBatchV1 | EncodedFieldBatchV2;

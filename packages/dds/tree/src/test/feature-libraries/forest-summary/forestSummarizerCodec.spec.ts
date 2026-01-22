@@ -26,7 +26,7 @@ import {
 import type { TreeChunk } from "../../../feature-libraries/chunked-forest/index.js";
 import {
 	type FieldSet,
-	makeForestSummarizerCodec,
+	forestCodecBuilder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/codec.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -37,7 +37,7 @@ import {
 	FieldBatchFormatVersion,
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";
@@ -53,16 +53,22 @@ const codecOptionsCurrent: CodecWriteOptions = {
 	minVersionForCollab: currentVersion,
 };
 
-const fieldBatchCodecOld = makeFieldBatchCodec(codecOptionsOld);
-const fieldBatchCodecCurrent = makeFieldBatchCodec(codecOptionsCurrent);
+const fieldBatchCodecOld = fieldBatchCodecBuilder.build(codecOptionsOld);
+const fieldBatchCodecCurrent = fieldBatchCodecBuilder.build(codecOptionsCurrent);
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
 	originatorId: testIdCompressor.localSessionId,
 	idCompressor: testIdCompressor,
 };
 
-const codecOld = makeForestSummarizerCodec(codecOptionsOld, fieldBatchCodecOld);
-const codecCurrent = makeForestSummarizerCodec(codecOptionsCurrent, fieldBatchCodecCurrent);
+const codecOld = forestCodecBuilder.build({
+	...codecOptionsOld,
+	fieldBatchCodec: fieldBatchCodecOld,
+});
+const codecCurrent = forestCodecBuilder.build({
+	...codecOptionsCurrent,
+	fieldBatchCodec: fieldBatchCodecCurrent,
+});
 
 const testFieldChunks: TreeChunk[] = chunkField(
 	cursorForJsonableTreeField([{ type: brand(EmptyObject.identifier) }]),
@@ -179,13 +185,8 @@ describe("ForestSummarizerCodec", () => {
 				() =>
 					codecCurrent.decode(
 						{
-							version: 2.5 as ForestFormatVersion,
-							fields: {
-								version: brand(FieldBatchFormatVersion.v1),
-								identifiers: [],
-								shapes: [],
-								data: [],
-							},
+							version: 2.5,
+							fields: fieldBatchCodecOld.encode([], context),
 							keys: [],
 						},
 						context,
@@ -195,17 +196,18 @@ describe("ForestSummarizerCodec", () => {
 		});
 
 		it("invalid nested version", () => {
+			// Create a properly encoded forest, then modify the nested version to be invalid
+			const encoded = fieldBatchCodecOld.encode([], context);
+			const invalidFields =
+				typeof encoded === "object" && encoded !== null
+					? { ...encoded, version: 2.5 }
+					: { version: 2.5, identifiers: [], shapes: [], data: [] };
 			assert.throws(
 				() =>
 					codecCurrent.decode(
 						{
-							version: brand(ForestFormatVersion.v1),
-							fields: {
-								version: 2.5 as FieldBatchFormatVersion,
-								identifiers: [],
-								shapes: [],
-								data: [],
-							},
+							version: 1,
+							fields: invalidFields,
 							keys: [],
 						},
 						context,

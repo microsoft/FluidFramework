@@ -25,7 +25,11 @@ import {
 	type StoredSchemaCollection,
 	type TreeChunk,
 } from "../../../core/index.js";
-import { brandedNumberType, type Brand } from "../../../util/index.js";
+import {
+	brandedNumberType,
+	type Brand,
+	type JsonCompatibleReadOnly,
+} from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
@@ -116,8 +120,8 @@ export interface FieldBatchEncodingContext {
  */
 export type FieldBatchCodec = IJsonCodec<
 	FieldBatch,
-	VersionedJson,
-	VersionedJson,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
 	FieldBatchEncodingContext
 >;
 
