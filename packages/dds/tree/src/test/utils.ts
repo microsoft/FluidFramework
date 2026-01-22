@@ -565,7 +565,7 @@ export function spyOnMethod(
  * Determines whether or not the given delta has a visible impact on the document tree.
  */
 export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boolean {
-	for (const mark of fieldChanges ?? []) {
+	for (const mark of fieldChanges?.marks ?? []) {
 		if (mark.attach !== undefined || mark.detach !== undefined) {
 			return true;
 		}
