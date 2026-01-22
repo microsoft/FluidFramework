@@ -10,6 +10,7 @@ import {
 	MockHandle,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
+import type { TSchema } from "@sinclair/typebox";
 
 import {
 	type ICodecOptions,
@@ -54,6 +55,8 @@ import {
 import {
 	type EncodedChunkShape,
 	EncodedFieldBatch,
+	EncodedFieldBatchV1,
+	EncodedFieldBatchV2,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
 	validVersions,
@@ -96,13 +99,14 @@ const constantFooShape = new NodeShapeBasedEncoder(brand("foo"), false, [], unde
 function makeFieldBatchCodec(
 	options: ICodecOptions,
 	encoderContext: EncoderContext,
+	format: TSchema,
 ): IJsonCodec<
 	FieldBatch,
 	EncodedFieldBatch,
 	JsonCompatibleReadOnly,
 	FieldBatchEncodingContext
 > {
-	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
+	return makeVersionedValidatedCodec(options, validVersions, format, {
 		encode: (
 			data: FieldBatch,
 			fieldBatchContext: FieldBatchEncodingContext,
@@ -145,7 +149,11 @@ describe("compressedEncode", () => {
 						undefined /* incrementalEncoder */,
 						brand(version),
 					);
-					const codec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, context);
+					const codec = makeFieldBatchCodec(
+						{ jsonValidator: FormatValidatorBasic },
+						context,
+						[EncodedFieldBatchV1, EncodedFieldBatchV2][version - 1],
+					);
 					const result = codec.encode(input, {
 						encodeType: TreeCompressionStrategy.Compressed,
 						idCompressor: testIdCompressor,

@@ -36,7 +36,6 @@ import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import {
 	type FieldBatchCodec,
 	type TreeChunk,
-	type EncodedFieldBatch,
 	chunkFieldSingle,
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
@@ -332,7 +331,7 @@ export function encodeDetachedNodes(
 					schema: context.schema,
 					originatorId: context.originatorId,
 					idCompressor: context.idCompressor,
-				}) as EncodedFieldBatch,
+				}),
 			};
 }
 

@@ -16,7 +16,7 @@ export {
 } from "./chunkTree.js";
 export { buildChunkedForest } from "./chunkedForest.js";
 export {
-	EncodedFieldBatch,
+	type EncodedFieldBatch,
 	FieldBatchFormatVersion,
 	getCodecTreeForFieldBatchFormat,
 	type FieldBatch,
