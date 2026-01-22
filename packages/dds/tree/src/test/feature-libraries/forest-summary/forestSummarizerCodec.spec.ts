@@ -191,7 +191,7 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 2.5 encountered while decoding data/),
+				validateUsageError(/Unsupported version 2.5 encountered while decoding Forest data/),
 			);
 		});
 
@@ -212,7 +212,9 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateAssertionError("Encoded schema should validate"),
+				validateUsageError(
+					/Unsupported version 2.5 encountered while decoding FieldBatch data/,
+				),
 			);
 		});
 
