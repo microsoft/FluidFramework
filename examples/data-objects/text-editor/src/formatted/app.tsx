@@ -123,7 +123,7 @@ const App: React.FC<{ views: DualUserViews }> = ({ views }) => {
 				style={{
 					display: "flex",
 					gap: "20px",
-					height: "calc(100% - 80px)",
+					alignItems: "flex-start",
 				}}
 			>
 				<div
