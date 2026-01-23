@@ -463,6 +463,11 @@ extends:
 
                   - checkout: ff_pipeline_host
 
+                  - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+                    parameters:
+                      buildDirectory: '${{ parameters.buildDirectory }}/ff_pipeline_host'
+                      primaryRegistry: $(ado-feeds-ff-download-only)
+
                   - task: Bash@3
                     displayName: 'Install dependencies'
                     inputs:
