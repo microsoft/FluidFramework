@@ -2,14 +2,38 @@
 
 ## Overview
 
-Fluid Framework is a distributed system where multiple clients collaborate on shared documents in real-time. This architecture creates several dimensions of compatibility that must be carefully managed:
+Fluid Framework is a distributed system where multiple clients collaborate on shared documents in real-time. To understand why we need different types of compatibility, we must first recognize the two fundamental parts of the Fluid software:
 
-- **Persistence**: Documents may be stored for extended periods and reopened by newer client versions
-- **Multi-client collaboration**: Different clients running different versions must interoperate seamlessly
-- **Layered architecture**: Fluid's modular design (Driver, Loader, Runtime, Datastore layers) allows code layers to be versioned independently
-- **API stability**: Applications built on Fluid depend on stable interfaces across versions
+1. **Code**: APIs (public and internal) and Behavior (or logic)
+2. **Data**: Ops and Summaries (or snapshots)
 
-This document defines and explains each compatibility type, describing what it means, why it matters, and the scenarios it enables. Understanding these distinctions helps both Fluid Framework maintainers and application developers reason about version compatibility and upgrade strategies.
+The interaction between code and data, combined with Fluid's distributed architecture, creates four distinct dimensions of compatibility that must be carefully managed:
+
+```mermaid
+flowchart TD
+    A[Code] --APIs--> B[Public APIs]
+        B --API stability--> C[API compatibility]
+    A --API/Behavior--> D[Layered architecture]
+        D --Interactions between layers--> E[Layer compatibility]
+
+    F[Data] --Snapshots--> G[Persistence]
+        G --Read saved files--> H[Data-at-rest compatibility]
+    F --Ops--> I[Multi-client collaboration]
+        I --Collaboration via ops--> J[Cross-client compatibility]
+```
+
+### How Code and Data Create Compatibility Dimensions
+
+**From Code:**
+- **API compatibility** arises because applications depend on public APIs that are released across versions (including alpha and beta APIs). Applications need a stable, predictable upgrade path as Fluid evolves and APIs change.
+- **Layer compatibility** arises because Fluid's modular design consists of four distinct layers (Driver, Loader, Runtime, and Datastore), each of which can be versioned independently. These layers must interoperate at runtime even when they're at different versions. They interact by calling APIs (mostly internal) on other layers but the behavior of these APIs must be compatible.
+
+
+**From Data:**
+- **Data-at-rest compatibility** arises because documents (stored as summaries/snapshots) may be dormant for extended periods and then reopened by clients running newer versions of Fluid.
+- **Cross-client compatibility** arises because multiple clients collaborating on the same document in real-time by exchanging ops may be running different versions of Fluid during rolling upgrades or version transitions.
+
+This document defines and explains each compatibility type in detail, describing what it means, why it matters, and the scenarios it enables. Understanding these distinctions helps both Fluid Framework maintainers and application developers reason about version compatibility and upgrade strategies.
 
 > **Note:** This document does not specify the policies around what version compatibility matrix and guarantees we provide — it focuses on defining the compatibility types themselves.
 
