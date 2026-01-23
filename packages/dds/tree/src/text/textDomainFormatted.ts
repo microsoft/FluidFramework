@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { EmptyKey } from "../core/index.js";
 import {
 	enumFromStrings,
@@ -53,7 +55,7 @@ class TextNode
 		value: string,
 		format?: FormattedTextAsTree.CharacterFormat,
 	): TextNode {
-		// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like its not necessary here,
+		// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like it's not necessary here,
 		// but to reduce the risk of incorrect data interpretation, we actually ban this in the special case where the iterable is a string directly, which is the case here.
 		// Thus the array construction here is necessary to avoid a runtime error.
 		return new TextNode({
@@ -66,10 +68,10 @@ class TextNode
 		});
 	}
 
-	public charactersFormatted(): Iterable<FormattedTextAsTree.StringAtom> {
+	public charactersWithFormatting(): Iterable<FormattedTextAsTree.StringAtom> {
 		return this.content;
 	}
-	public insertFormattedAt(
+	public insertWithFormattingAt(
 		index: number,
 		additionalCharacters: Iterable<InsertableTypedNode<typeof FormattedTextAsTree.StringAtom>>,
 	): void {
@@ -89,9 +91,9 @@ class TextNode
 				keyof FormattedTextAsTree.CharacterFormat,
 				unknown,
 			][]) {
-				if (typeof key !== "string") {
-					throw new UsageError(`Invalid format key: ${key.toString()}`);
-				}
+				// Object.entries should only return string keyed enumerable own properties.
+				// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
+				assert(typeof key === "string", "Object.entries returned a non-string key.");
 				const f = FormattedTextAsTree.CharacterFormat.fields.get(key);
 				if (f === undefined) {
 					throw new UsageError(`Unknown format key: ${key}`);
@@ -131,7 +133,7 @@ class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.Str
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
  * @privateRemarks
- * This has hard coded assumptions about what kind of embedded content and what kind of formatting is supported.
+ * This has hard-coded assumptions about what kind of embedded content and what kind of formatting is supported.
  * We will want to generalize this with a more generic schema factory function like with table.
  * Then either that and/or the output from it can be package exported.
  * This version is just an initial prototype.
@@ -155,11 +157,22 @@ export namespace FormattedTextAsTree {
 	 * @internal
 	 */
 	export class StringTextAtom extends sf.object("StringTextAtom", {
+		/**
+		 * The underlying text content of this atom.
+		 * @remarks
+		 * This is typically a single unicode codepoint, and thus may contain multiple utf-16 surrogate pair code units.
+		 * Using longer strings is still valid. For example, so users might store whole grapheme clusters here, or even longer sections of text.
+		 * Anything combined into a single atom will be treated atomically, and can not be partially selected or formatted.
+		 * Using larger atoms and splitting them as needed is NOT a recommended approach, since this will result in poor merge behavior for concurrent edits.
+		 * Instead atoms should always be the smallest unit of text which will be independently selected, moved or formatted.
+		 * @privateRemarks
+		 * This content logically represents the whole atom's content, so using {@link EmptyKey} makes sense to help indicate that.
+		 */
 		content: SchemaFactory.required([SchemaFactory.string], { key: EmptyKey }),
 	}) {}
 
 	/**
-	 * Tag with with a line in text can be formatted from HTML.
+	 * Tag with which a line in text can be formatted from HTML.
 	 * @internal
 	 */
 	export const LineTag = enumFromStrings(sf.scopedFactory("lineTag"), [
@@ -217,7 +230,7 @@ export namespace FormattedTextAsTree {
 	export interface Statics {
 		/**
 		 * Construct a {@link FormattedTextAsTree.(Tree:type)} from a string, where each character (as defined by iterating over the string) becomes a single character in the text node.
-		 * This combines pairs of utf-16 surrogate code units into single characters as appropriate.
+		 * @remarks This combines pairs of utf-16 surrogate code units into single characters as appropriate.
 		 */
 		fromString(value: string): Tree;
 	}
@@ -254,7 +267,7 @@ export namespace FormattedTextAsTree {
 		 * @remarks
 		 * This iterator matches the behavior of {@link (TreeArrayNode:interface)} with respect to edits during iteration.
 		 */
-		charactersFormatted(): Iterable<StringAtom>;
+		charactersWithFormatting(): Iterable<StringAtom>;
 
 		/**
 		 * Insert a range of characters into the string based on character index.
@@ -269,7 +282,7 @@ export namespace FormattedTextAsTree {
 		 * Another option would be to take an approach like Table,
 		 * where the user of the API uses a factory function to generate the schema, and can inject custom logic, like a string character iterator.
 		 */
-		insertFormattedAt(
+		insertWithFormattingAt(
 			index: number,
 			additionalCharacters: Iterable<InsertableTypedNode<typeof StringAtom>>,
 		): void;

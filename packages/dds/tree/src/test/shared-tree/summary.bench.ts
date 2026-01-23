@@ -13,8 +13,8 @@ import {
 	type IMeasurementReporter,
 } from "@fluid-tools/benchmark";
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
-import type { ITree } from "@fluidframework/driver-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ITree } from "@fluidframework/driver-definitions/internal";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockDeltaConnection,
@@ -22,8 +22,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { TestTreeProviderLite, configureBenchmarkHooks, testIdCompressor } from "../utils.js";
 import { TreeViewConfiguration, type ImplicitFieldSchema } from "../../simple-tree/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContentTyped } from "../feature-libraries/flex-tree/utils.js";
 import {
@@ -32,7 +32,7 @@ import {
 	makeJsWideTreeWithEndValue,
 	WideRoot,
 } from "../scalableTestTrees.js";
-import { configuredSharedTree } from "../../treeFactory.js";
+import { TestTreeProviderLite, configureBenchmarkHooks, testIdCompressor } from "../utils.js";
 
 // TODO: these tests currently only cover tree content.
 // It might make sense to extend them to cover complex collaboration windows.
