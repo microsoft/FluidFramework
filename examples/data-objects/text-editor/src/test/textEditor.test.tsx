@@ -12,13 +12,11 @@ import { independentView } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import * as React from "react";
 
-/* eslint-disable import-x/no-internal-modules */
 import { FormattedTextAsTree } from "../formatted/formattedSchema.js";
 import { FormattedMainView } from "../formatted/quillFormattedView.js";
 import { MainView as PlainTextMainView } from "../plain/plainTextView.js";
 import { MainView as QuillMainView, type MainViewProps } from "../plain/quillView.js";
 import { TextAsTree } from "../plain/schema.js";
-/* eslint-enable import-x/no-internal-modules */
 
 // Configuration for creating formatted text views
 const formattedTreeConfig = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });

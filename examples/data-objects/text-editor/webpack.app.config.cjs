@@ -11,7 +11,7 @@ module.exports = (env = {}) => {
 
 	return {
 		entry: {
-			app: "./src/formatted/app.tsx",
+			app: "./src/app.tsx",
 		},
 		resolve: {
 			extensions: [".ts", ".tsx", ".js"],
