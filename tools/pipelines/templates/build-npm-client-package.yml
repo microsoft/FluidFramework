@@ -464,6 +464,15 @@ extends:
                   - checkout: ff_pipeline_host
 
                   - task: Bash@3
+                    displayName: 'Install dependencies'
+                    inputs:
+                      targetType: 'inline'
+                      workingDirectory: '${{ parameters.buildDirectory }}/ff_pipeline_host'
+                      script: |
+                        set -eu -o pipefail
+                        pnpm install
+
+                  - task: Bash@3
                     displayName: Write bundle sizes measurements to Aria/Kusto
                     inputs:
                       targetType: inline
