@@ -22,12 +22,15 @@ import {
 	hasSingle,
 } from "../../util/index.js";
 
+const offsetChangesetLocalId = (value: ChangesetLocalId, offset: number): ChangesetLocalId =>
+	brand(value + offset);
+
 export class DefaultRevisionReplacer implements RevisionReplacer {
 	/**
 	 * Mapping from (obsolete revision tag, original local id) to the updated local id.
 	 */
 	private readonly updatedLocalIds: ChangeAtomIdRangeMap<ChangesetLocalId> =
-		newChangeAtomIdRangeMap();
+		newChangeAtomIdRangeMap(offsetChangesetLocalId);
 	/**
 	 * The set of local IDs already used in the scope of the updated revision.
 	 */

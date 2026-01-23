@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
-import { makeChangeAtomId } from "../../../core/index.js";
+import { makeChangeAtomId, offsetChangeAtomId } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { DefaultRevisionReplacer } from "../../../feature-libraries/modular-schema/defaultRevisionReplacer.js";
 import { brandConst } from "../../../util/index.js";
@@ -110,6 +110,35 @@ describe("DefaultRevisionReplacer", () => {
 			assert.notEqual(result, id);
 			assert.equal(result.extra, "test");
 			assert.equal(result.revision, updatedRev);
+		});
+
+		it("handles count > 1 when no IDs in the range were previously updated", () => {
+			const replacer = new DefaultRevisionReplacer(updatedRev, new Set([obsoleteRev1]));
+			const id = makeChangeAtomId(localId1, obsoleteRev1);
+			const expected = makeChangeAtomId(localId1, updatedRev);
+			const actual = replacer.getUpdatedAtomId(id, 3);
+			assert.deepEqual(actual, expected);
+		});
+
+		it("handles count > 1 when all IDs in the range were previously updated", () => {
+			const replacer = new DefaultRevisionReplacer(updatedRev, new Set([obsoleteRev1]));
+			const id = makeChangeAtomId(localId1, obsoleteRev1);
+			const expected = makeChangeAtomId(localId1, updatedRev);
+			const actual123 = replacer.getUpdatedAtomId(id, 3);
+			assert.deepEqual(actual123, expected);
+			const actual12 = replacer.getUpdatedAtomId(id, 2);
+			assert.deepEqual(actual12, expected);
+			const actual23 = replacer.getUpdatedAtomId(offsetChangeAtomId(id, 1), 2);
+			assert.deepEqual(actual23, offsetChangeAtomId(expected, 1));
+		});
+
+		it("throws when some but not all IDs in the range were previously updated", () => {
+			const id = makeChangeAtomId(localId1, obsoleteRev1);
+			for (let i = 0; i < 3; i++) {
+				const replacer = new DefaultRevisionReplacer(updatedRev, new Set([obsoleteRev1]));
+				replacer.getUpdatedAtomId(offsetChangeAtomId(id, i), 1);
+				assert.throws(() => replacer.getUpdatedAtomId(id, 3));
+			}
 		});
 	});
 });
