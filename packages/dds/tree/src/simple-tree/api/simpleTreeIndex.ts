@@ -147,7 +147,7 @@ export function createSimpleTreeIndex<
 	isKeyValid: (key: TreeIndexKey) => key is TKey,
 	indexableSchema?: readonly TreeNodeSchema[],
 ): SimpleTreeIndex<TKey, TValue> {
-	const indexableSchemaMap = new Map();
+	const indexableSchemaMap = new Map<string, TreeNodeSchema>();
 	if (indexableSchema === undefined) {
 		walkFieldSchema(view.schema, {
 			node: (schemus) => indexableSchemaMap.set(schemus.identifier, schemus),

@@ -2424,6 +2424,11 @@ describe("SharedTree", () => {
 		});
 
 		it("properly encodes ops using specified compression strategy", async () => {
+			/** Shape of serialized edit manager summary for this test */
+			interface ChangesSummaryFormat {
+				trunk: { change: [unknown, { data: { builds: { trees: { data: unknown[][] } } } }] }[];
+			}
+
 			// Check that ops are using uncompressed encoding with "Uncompressed" treeEncodeType
 			const factory = configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
@@ -2443,7 +2448,9 @@ describe("SharedTree", () => {
 			assert(editManagerSummary.type === SummaryType.Tree);
 			const editManagerSummaryBlob = editManagerSummary.tree.String;
 			assert(editManagerSummaryBlob.type === SummaryType.Blob);
-			const changesSummary = JSON.parse(editManagerSummaryBlob.content as string);
+			const changesSummary = JSON.parse(
+				editManagerSummaryBlob.content as string,
+			) as ChangesSummaryFormat;
 			const encodedTreeData = changesSummary.trunk[0].change[1].data.builds.trees;
 			const expectedUncompressedTreeData = [
 				"com.fluidframework.json.array",
@@ -2493,7 +2500,9 @@ describe("SharedTree", () => {
 			assert(editManagerSummary2.type === SummaryType.Tree);
 			const editManagerSummaryBlob2 = editManagerSummary2.tree.String;
 			assert(editManagerSummaryBlob2.type === SummaryType.Blob);
-			const changesSummary2 = JSON.parse(editManagerSummaryBlob2.content as string);
+			const changesSummary2 = JSON.parse(
+				editManagerSummaryBlob2.content as string,
+			) as ChangesSummaryFormat;
 			const encodedTreeData2 = changesSummary2.trunk[0].change[1].data.builds.trees;
 			const expectedCompressedTreeData = ["A", "B", "C"];
 			assert.deepEqual(encodedTreeData2.data[0][1], expectedCompressedTreeData);

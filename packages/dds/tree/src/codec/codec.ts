@@ -381,7 +381,7 @@ class DefaultBinaryCodec<TDecoded, TContext> implements IBinaryCodec<TDecoded, T
 
 	public decode(change: IsoBuffer, context: TContext): TDecoded {
 		const json = bufferToString(change, "utf8");
-		const jsonable = JSON.parse(json);
+		const jsonable = JSON.parse(json) as JsonCompatibleReadOnly;
 		return this.jsonCodec.decode(jsonable, context);
 	}
 }

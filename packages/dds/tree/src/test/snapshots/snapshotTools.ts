@@ -28,8 +28,8 @@ export function takeJsonSnapshot(data: JsonCompatibleReadOnly, suffix: string = 
 }
 
 function jsonCompare(actual: string, expected: string, message: string): void {
-	const parsedA = JSON.parse(actual);
-	const parsedB = JSON.parse(expected);
+	const parsedA = JSON.parse(actual) as JsonCompatibleReadOnly;
+	const parsedB = JSON.parse(expected) as JsonCompatibleReadOnly;
 	assert.deepEqual(parsedA, parsedB, message);
 }
 

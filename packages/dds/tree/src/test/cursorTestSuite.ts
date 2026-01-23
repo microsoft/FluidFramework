@@ -26,7 +26,7 @@ import {
 	prefixFieldPath,
 	prefixPath,
 } from "../feature-libraries/index.js";
-import { brand } from "../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
 import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
 import {
 	booleanSchema,
@@ -465,7 +465,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 								const jsonableClone = jsonableTreeFromCursor(cursor);
 								// Check jsonable objects are actually json compatible
 								const text = JSON.stringify(jsonableClone);
-								const parsed = JSON.parse(text);
+								const parsed = JSON.parse(text) as JsonCompatibleReadOnly;
 								assert.deepEqual(parsed, jsonableClone);
 							});
 
