@@ -55,43 +55,41 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 		assert(count >= 1, "Count must be at least 1");
 		if (this.isObsolete(id.revision)) {
 			const updated: Mutable<T> = { ...id, revision: this.updatedRevision };
-			const priors = this.updatedLocalIds.getAll(id, count);
-			// const lastId = offsetChangeAtomId(id, count - 1);
-			//  const upperBound = getPairOrNextLowerFromChangeAtomIdMap(this.updatedLocalIds, lastId);
-			if (hasSome(priors)) {
-				const consolidated = { ...priors[0] };
-				for (const entry of priors.slice(1)) {
-					if (
-						areEqualChangeAtomIds(
-							entry.start,
-							offsetChangeAtomId(consolidated.start, consolidated.length),
-						) &&
-						entry.value === consolidated.value + consolidated.length
-					) {
-						consolidated.length += entry.length;
-					} else {
-						break;
+			let continuingOutputId: ChangesetLocalId | undefined;
+			let remainderCount = count;
+			let remainderStart = id;
+			while (remainderCount > 0) {
+				const prior = this.updatedLocalIds.getFirst(remainderStart, remainderCount);
+				if (prior.value === undefined) {
+					const defaultOutputId = continuingOutputId ?? remainderStart.localId;
+					const newLocalId =
+						this.localIds.getAll(defaultOutputId, prior.length).length > 0
+							? // Some of the IDs in this range have already been used in the scope of the updated revision.
+								// We need to allocate new local IDs.
+								brand<ChangesetLocalId>(this.maxSeen + 1)
+							: // This change atom ID uses a local ID that has not yet been used in the scope of the updated revision.
+								// We reuse it as is to minimize the number of IDs that need to be updated.
+								defaultOutputId;
+
+					this.maxSeen = brand(Math.max(this.maxSeen, newLocalId + prior.length - 1));
+					this.localIds.set(newLocalId, prior.length, true);
+					this.updatedLocalIds.set(remainderStart, prior.length, newLocalId);
+					if (continuingOutputId === undefined) {
+						updated.localId = newLocalId;
+					} else if (newLocalId !== continuingOutputId) {
+						fail("TODO: Handle non-contiguous ranges");
 					}
-				}
-				if (consolidated.length === count) {
-					updated.localId = consolidated.value;
+					continuingOutputId = offsetChangesetLocalId(newLocalId, prior.length);
 				} else {
-					fail("TODO: handle partially updated range");
+					if (continuingOutputId === undefined) {
+						updated.localId = prior.value;
+					} else if (prior.value !== continuingOutputId) {
+						fail("TODO: Handle non-contiguous ranges");
+					}
+					continuingOutputId = offsetChangesetLocalId(prior.value, prior.length);
 				}
-			} else {
-				let localId: ChangesetLocalId;
-				if (this.localIds.getAll(id.localId, count).length > 0) {
-					localId = brand(this.maxSeen + 1);
-					this.maxSeen = brand(localId + count - 1);
-				} else {
-					// This change atom ID uses a local ID that has not yet been used in the scope of the updated revision.
-					// We reuse it as is to minimize the number of IDs that need to be updated.
-					localId = id.localId;
-					this.maxSeen = brand(Math.max(this.maxSeen, localId + count - 1));
-					this.localIds.set(id.localId, count, true);
-				}
-				this.updatedLocalIds.set(id, count, localId);
-				updated.localId = localId;
+				remainderStart = offsetChangeAtomId(remainderStart, prior.length);
+				remainderCount -= prior.length;
 			}
 			return updated;
 		}
