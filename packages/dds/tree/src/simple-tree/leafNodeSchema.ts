@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type FieldKey, type TreeValue, ValueSchema } from "../core/index.js";
 import {
@@ -14,6 +14,7 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
+import { brand, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import {
 	NodeKind,
@@ -29,9 +30,8 @@ import {
 	type FlexContent,
 	type UnhydratedFlexTreeField,
 } from "./core/index.js";
-import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
-import { brand, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 import { getTreeNodeSchemaInitializedData } from "./createContext.js";
+import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
 import type { FactoryContent } from "./unhydratedFlexTreeFromInsertable.js";
 
 /**

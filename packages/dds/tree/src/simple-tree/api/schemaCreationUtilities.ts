@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
+import type { UnionToTuple } from "../../util/index.js";
 import type {
 	NodeFromSchema,
 	InternalTreeNode,
@@ -15,7 +15,8 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 } from "../core/index.js";
-import type { UnionToTuple } from "../../util/index.js";
+
+import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
 
 /*
  * This file does two things:

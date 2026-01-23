@@ -8,6 +8,7 @@
 import { fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { EmptyKey } from "./core/index.js";
 import { TreeAlpha } from "./shared-tree/index.js";
 import {
 	type FieldHasDefault,
@@ -37,7 +38,6 @@ import {
 	TreeNodeSchemaCore,
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";
-import { EmptyKey } from "./core/index.js";
 
 // Future improvement TODOs:
 // - Omit `cells` property from Row insertion type.
