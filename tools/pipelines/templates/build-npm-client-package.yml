@@ -488,8 +488,8 @@ extends:
                         echo "Report Size:"
                         ls -la '$(Build.SourcesDirectory)/FluidFramework/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
 
-                        echo "pnpm exec telemetry-generator --handlerModule \"$(pathToTelemetryGeneratorHandlersNew)/bundleSizeHandler.js\" --dir \"$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests\""
-                        pnpm exec telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/bundleSizeHandler.js" --dir "$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests"
+                        echo "pnpm exec telemetry-generator --handlerModule \"$(Build.SourcesDirectory)/ff_pipeline_host/node_modules/@ff-internal/telemetry-generator/dist/handlers/bundleSizeHandler.js\" --dir \"$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests\""
+                        pnpm exec telemetry-generator --handlerModule "$(Build.SourcesDirectory)/ff_pipeline_host/node_modules/@ff-internal/telemetry-generator/dist/handlers/bundleSizeHandler.js" --dir "$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests"
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
