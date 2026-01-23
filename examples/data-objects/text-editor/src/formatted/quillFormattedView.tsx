@@ -231,31 +231,52 @@ const FormattedTextEditorView: React.FC<{
 
 		// Listen to local Quill changes and apply them to the tree.
 		// We process delta operations to make targeted edits, preserving collaboration integrity.
+		// Note: Quill uses UTF-16 code units for positions, but the tree uses Unicode codepoints.
+		// We must convert between them to handle emoji and other non-BMP characters correctly.
 		quill.on("text-change", (delta, _oldDelta, source) => {
 			if (source !== "user" || isUpdating.current) return;
 			isUpdating.current = true;
 
-			// Process each delta operation sequentially, tracking current position
-			let index = 0;
+			// Helper to count Unicode codepoints in a string
+			const codepointCount = (s: string): number => [...s].length;
+
+			// Get current content for UTF-16 to codepoint position mapping
+			// We update this as we process operations to keep positions accurate
+			let content = root.fullString();
+			let utf16Pos = 0; // Position in UTF-16 code units (Quill's view)
+			let cpPos = 0; // Position in codepoints (tree's view)
+
 			for (const op of (delta as QuillDelta).ops ?? []) {
 				if (op.retain !== undefined) {
-					// Retain: keep characters, optionally apply formatting changes
+					// Convert UTF-16 retain count to codepoint count
+					const retainedStr = content.slice(utf16Pos, utf16Pos + op.retain);
+					const cpCount = codepointCount(retainedStr);
+
 					if (op.attributes) {
-						root.formatRange(index, op.retain, quillAttrsToPartial(op.attributes));
+						root.formatRange(cpPos, cpCount, quillAttrsToPartial(op.attributes));
 					}
-					index += op.retain;
+					utf16Pos += op.retain;
+					cpPos += cpCount;
 				} else if (op.delete !== undefined) {
-					// Delete: remove characters at current position
-					root.removeRange(index, index + op.delete);
-					// Don't advance index - next op starts at same position
+					// Convert UTF-16 delete count to codepoint count
+					const deletedStr = content.slice(utf16Pos, utf16Pos + op.delete);
+					const cpCount = codepointCount(deletedStr);
+
+					root.removeRange(cpPos, cpPos + cpCount);
+					// Update content to reflect deletion for future position calculations
+					content = content.slice(0, utf16Pos) + content.slice(utf16Pos + op.delete);
+					// Don't advance positions - next op starts at same position
 				} else if (typeof op.insert === "string") {
 					// Insert: add new text with formatting at current position
 					root.defaultFormat = new FormattedTextAsTree.CharacterFormat(
 						quillAttrsToFormat(op.attributes),
 					);
-					root.insertAt(index, op.insert);
-					// Advance index by number of characters inserted (not UTF-16 length)
-					index += [...op.insert].length;
+					root.insertAt(cpPos, op.insert);
+					// Update content to reflect insertion
+					content = content.slice(0, utf16Pos) + op.insert + content.slice(utf16Pos);
+					// Advance by inserted content length
+					utf16Pos += op.insert.length;
+					cpPos += codepointCount(op.insert);
 				}
 			}
 
