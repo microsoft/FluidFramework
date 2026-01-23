@@ -22,6 +22,7 @@ import type {
 	WithType,
 } from "../simple-tree/index.js";
 import { mapIterable } from "../util/index.js";
+
 import { charactersFromString, type TextAsTree } from "./textDomain.js";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.text.formatted");

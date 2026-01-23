@@ -150,7 +150,7 @@ function buildDeltaFromTree(root: FormattedTextAsTree.Tree): QuillDelta {
 	};
 
 	// Iterate through each formatted character in the tree
-	for (const atom of root.charactersFormatted()) {
+	for (const atom of root.charactersWithFormatting()) {
 		const a = formatToQuillAttrs(atom.format);
 		const k = JSON.stringify(a);
 		if (k === key) {
