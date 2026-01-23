@@ -5,8 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
 import type { ChangeAtomId } from "../../../core/index.js";
-import type { SequenceField as SF } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Mark } from "../../../feature-libraries/sequence-field/types.js";
 import {
 	areInputCellsEmpty,
 	splitMark,
@@ -15,8 +18,8 @@ import {
 } from "../../../feature-libraries/sequence-field/utils.js";
 import { brand } from "../../../util/index.js";
 import { testIdCompressor } from "../../utils.js";
+
 import { generatePopulatedMarks } from "./populatedMarks.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 const vestigialEndpoint: ChangeAtomId = {
 	revision: testIdCompressor.generateCompressedId(),
@@ -35,7 +38,7 @@ export function testUtils(): void {
 			];
 			for (const [index, mark] of allMarks.entries()) {
 				it(`${index}: ${"type" in mark ? mark.type : "NoOp"}`, () => {
-					const splitable: SF.Mark = { ...mark, count: 3 };
+					const splitable: Mark = { ...mark, count: 3 };
 					delete splitable.changes;
 					deepFreeze(splitable);
 					const [part1, part2] = splitMark(splitable, 2);

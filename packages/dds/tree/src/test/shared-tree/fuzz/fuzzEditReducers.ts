@@ -7,12 +7,24 @@ import { strict as assert } from "node:assert";
 
 import { type Reducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import type { DDSFuzzTestState, Client } from "@fluid-private/test-dds-utils";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
 import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
 import { Tree } from "../../../shared-tree/index.js";
+import { getInnerNode } from "../../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeArrayNode,
+	TreeViewConfiguration,
+	type TreeNode,
+	type TreeNodeSchema,
+} from "../../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
+import type { ISharedTree } from "../../../treeFactory.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
@@ -31,7 +43,6 @@ import {
 	type GUIDNode,
 	convertToFuzzView,
 } from "./fuzzUtils.js";
-
 import {
 	type FieldEdit,
 	type ClearField,
@@ -51,19 +62,6 @@ import {
 	type GUIDNodeValue,
 	type ForkMergeOperation,
 } from "./operationTypes.js";
-
-import { getInnerNode } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
-import {
-	SchemaFactory,
-	TreeArrayNode,
-	TreeViewConfiguration,
-	type TreeNode,
-	type TreeNodeSchema,
-} from "../../../simple-tree/index.js";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { ISharedTree } from "../../../treeFactory.js";
 
 const syncFuzzReducer = combineReducers<
 	Operation,

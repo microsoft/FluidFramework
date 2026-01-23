@@ -4,11 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
-import { describeHydration, hydrate } from "../utils.js";
+
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -21,6 +22,8 @@ import {
 	type TreeNodeFromImplicitAllowedTypes,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { asIndex, createArrayInsertionAnchor } from "../../../simple-tree/node-kinds/index.js";
 import type {
 	areSafelyAssignable,
 	Mutable,
@@ -28,9 +31,8 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { asIndex, createArrayInsertionAnchor } from "../../../simple-tree/node-kinds/index.js";
 import { TestTreeProviderLite } from "../../utils.js";
+import { describeHydration, hydrate } from "../utils.js";
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);

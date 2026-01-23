@@ -12,6 +12,8 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
+
 import { takeJsonSnapshot } from "./snapshotTools.js";
 
 function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {
@@ -57,7 +59,7 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 					typeof summaryObject.content === "string"
 						? {
 								type: "blob",
-								content: JSON.parse(summaryObject.content),
+								content: JSON.parse(summaryObject.content) as JsonCompatibleReadOnly,
 								encoding: "utf-8",
 							}
 						: {
