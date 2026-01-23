@@ -234,6 +234,7 @@ export class ModularChangeFamily
 			change1.noChangeConstraintOnRevert ?? change2.noChangeConstraintOnRevert;
 
 		const composed = makeModularChangeset({
+			rebaseVersion: Math.max(change1.rebaseVersion, change2.rebaseVersion) as RebaseVersion,
 			fieldChanges,
 			nodeChanges,
 			nodeToParent,
@@ -777,6 +778,7 @@ export class ModularChangeFamily
 
 		if (hasConflicts(change.change)) {
 			return makeModularChangeset({
+				rebaseVersion: change.change.rebaseVersion,
 				maxId: change.change.maxId as number,
 				revisions: revInfos,
 				destroys,
@@ -860,6 +862,7 @@ export class ModularChangeFamily
 		this.processInvertRenames(crossFieldTable);
 
 		return makeModularChangeset({
+			rebaseVersion: change.change.rebaseVersion,
 			fieldChanges: invertedFields,
 			nodeChanges: invertedNodes,
 			nodeToParent: crossFieldTable.invertedNodeToParent,
@@ -2333,6 +2336,7 @@ export function updateRefreshers(
 	}
 
 	const {
+		rebaseVersion,
 		fieldChanges,
 		nodeChanges,
 		nodeToParent,
@@ -2348,6 +2352,7 @@ export function updateRefreshers(
 	} = change;
 
 	return makeModularChangeset({
+		rebaseVersion,
 		fieldChanges,
 		nodeChanges,
 		nodeToParent,
@@ -3395,7 +3400,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 }
 
 function makeModularChangeset(props?: {
-	rebaseVersion?: RebaseVersion;
+	rebaseVersion: RebaseVersion;
 	fieldChanges?: FieldChangeMap;
 	nodeChanges?: ChangeAtomIdBTree<NodeChangeset>;
 	rootNodes?: RootNodeTable;
@@ -3412,9 +3417,9 @@ function makeModularChangeset(props?: {
 	destroys?: ChangeAtomIdBTree<number>;
 	refreshers?: ChangeAtomIdBTree<TreeChunk>;
 }): ModularChangeset {
-	const p = props ?? { maxId: -1 };
+	const p = props ?? { maxId: -1, rebaseVersion: 1 };
 	const changeset: Mutable<ModularChangeset> = {
-		rebaseVersion: p.rebaseVersion ?? 1,
+		rebaseVersion: p.rebaseVersion,
 		fieldChanges: p.fieldChanges ?? new Map(),
 		nodeChanges: p.nodeChanges ?? newTupleBTree(),
 		rootNodes: p.rootNodes ?? newRootTable(),
@@ -3503,7 +3508,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		revision: RevisionTag,
 	): GlobalEditDescription {
 		if (content.topLevelLength === 0) {
-			return { type: "global", revision };
+			return { type: "global", revision, rebaseVersion: 1 };
 		}
 
 		// This content will be added to a GlobalEditDescription whose lifetime exceeds the scope of this function.
@@ -3516,6 +3521,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			type: "global",
 			builds,
 			revision,
+			rebaseVersion: 1,
 		};
 	}
 
@@ -3531,12 +3537,14 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		fieldKind: FieldKindIdentifier,
 		change: FieldChangeset,
 		revision: RevisionTag,
+		rebaseVersion: RebaseVersion,
 	): void {
 		const localCrossFieldKeys = getChangeHandler(this.fieldKinds, fieldKind).getCrossFieldKeys(
 			change,
 		);
 
 		const modularChange = buildModularChangesetFromField({
+			rebaseVersion,
 			path: field,
 			fieldChange: { fieldKind, change },
 			nodeChanges: newTupleBTree(),
@@ -3562,12 +3570,14 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			return makeAnonChange(
 				change.type === "global"
 					? makeModularChangeset({
+							rebaseVersion: change.rebaseVersion,
 							maxId: this.idAllocator.getMaxId(),
 							builds: change.builds,
 							rootNodes: renameTableFromRenameDescriptions(change.renames ?? []),
 							revisions: [{ revision: change.revision }],
 						})
 					: buildModularChangesetFromField({
+							rebaseVersion: change.rebaseVersion,
 							path: change.field,
 							fieldChange: {
 								fieldKind: change.fieldKind,
@@ -3611,6 +3621,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		this.applyChange(
 			tagChange(
 				buildModularChangesetFromNode({
+					rebaseVersion: 1,
 					path,
 					nodeChange,
 					nodeChanges: newTupleBTree(),
@@ -3633,6 +3644,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		this.applyChange(
 			tagChange(
 				buildModularChangesetFromNode({
+					rebaseVersion: 1,
 					path,
 					nodeChange,
 					nodeChanges: newTupleBTree(),
@@ -3655,6 +3667,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		}
 
 		const changeset = makeModularChangeset({
+			rebaseVersion: 1,
 			maxId: -1,
 			noChangeConstraint: { violated: false },
 		});
@@ -3670,6 +3683,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		}
 
 		const changeset = makeModularChangeset({
+			rebaseVersion: 1,
 			maxId: -1,
 			noChangeConstraintOnRevert: { violated: false },
 		});
@@ -3679,6 +3693,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 }
 
 export function buildModularChangesetFromField(props: {
+	rebaseVersion: RebaseVersion;
 	path: NormalizedFieldUpPath;
 	fieldChange: FieldChange;
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
@@ -3691,6 +3706,7 @@ export function buildModularChangesetFromField(props: {
 	childId?: NodeId;
 }): ModularChangeset {
 	const {
+		rebaseVersion,
 		path,
 		fieldChange,
 		nodeChanges,
@@ -3720,6 +3736,7 @@ export function buildModularChangesetFromField(props: {
 		}
 
 		return makeModularChangeset({
+			rebaseVersion,
 			fieldChanges,
 			nodeChanges,
 			nodeToParent,
@@ -3748,6 +3765,7 @@ export function buildModularChangesetFromField(props: {
 	}
 
 	return buildModularChangesetFromNode({
+		rebaseVersion,
 		path: path.parent,
 		nodeChange: nodeChangeset,
 		nodeChanges,
@@ -3761,6 +3779,7 @@ export function buildModularChangesetFromField(props: {
 }
 
 function buildModularChangesetFromNode(props: {
+	rebaseVersion: RebaseVersion;
 	path: NormalizedUpPath;
 	nodeChange: NodeChangeset;
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
@@ -3787,6 +3806,7 @@ function buildModularChangesetFromNode(props: {
 			nodeId,
 		);
 		return makeModularChangeset({
+			rebaseVersion: props.rebaseVersion,
 			rootNodes: props.rootNodes,
 			nodeChanges: props.nodeChanges,
 			nodeToParent: props.nodeToParent,
@@ -3815,6 +3835,7 @@ function buildModularChangesetFromNode(props: {
 }
 
 export interface FieldEditDescription {
+	rebaseVersion: RebaseVersion;
 	type: "field";
 	field: NormalizedFieldUpPath;
 	fieldKind: FieldKindIdentifier;
@@ -3823,6 +3844,7 @@ export interface FieldEditDescription {
 }
 
 export interface GlobalEditDescription {
+	rebaseVersion: RebaseVersion;
 	type: "global";
 	revision: RevisionTag;
 	builds?: ChangeAtomIdBTree<TreeChunk>;
