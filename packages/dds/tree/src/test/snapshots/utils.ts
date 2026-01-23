@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/driver-definitions";
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
+
 import { takeJsonSnapshot } from "./snapshotTools.js";
 
 function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {

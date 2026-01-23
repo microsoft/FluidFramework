@@ -34,7 +34,7 @@ import {
 	SchemaFactory,
 	stringSchema,
 } from "../simple-tree/index.js";
-import { brand } from "../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
 
