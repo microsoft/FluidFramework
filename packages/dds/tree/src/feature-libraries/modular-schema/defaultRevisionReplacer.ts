@@ -6,7 +6,6 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
-	areEqualChangeAtomIds,
 	newChangeAtomIdRangeMap,
 	offsetChangeAtomId,
 	type ChangeAtomId,
@@ -21,7 +20,6 @@ import {
 	newIntegerRangeMap,
 	type RangeMap,
 	type Mutable,
-	hasSome,
 } from "../../util/index.js";
 
 const offsetChangesetLocalId = (value: ChangesetLocalId, offset: number): ChangesetLocalId =>
