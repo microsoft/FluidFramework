@@ -298,11 +298,11 @@ function _enumFromStrings2<TScope extends string, const Members extends readonly
 	factory: SchemaFactory<TScope>,
 	members: Members,
 ) {
-	const enumObject: {
+	const enumObject = Object.create(null) as {
 		[key in keyof Members as Members[key] extends string
 			? Members[key]
 			: string]: Members[key] extends string ? Members[key] : string;
-	} = Object.create(null);
+	};
 	for (const name of members) {
 		Object.defineProperty(enumObject, name, {
 			enumerable: true,

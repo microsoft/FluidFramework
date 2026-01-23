@@ -1130,7 +1130,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 									let encoded = jsonCodec.encode(data, context!);
 									if (includeStringification) {
-										encoded = JSON.parse(JSON.stringify(encoded));
+										encoded = JSON.parse(JSON.stringify(encoded)) as typeof encoded;
 									}
 									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 									const decoded = jsonCodec.decode(encoded, context!);

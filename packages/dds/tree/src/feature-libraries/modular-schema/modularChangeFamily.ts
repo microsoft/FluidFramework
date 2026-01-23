@@ -1365,7 +1365,7 @@ export class ModularChangeFamily
 		const change = nodeChangeFromId(crossFieldTable.newChange.nodeChanges, newId);
 		const over = nodeChangeFromId(crossFieldTable.baseChange.nodeChanges, baseId);
 
-		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map();
+		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map<FieldKey, FieldChange>();
 
 		const fieldChanges =
 			change.fieldChanges !== undefined && over.fieldChanges !== undefined
@@ -2628,7 +2628,7 @@ function makeModularChangeset(props?: {
 }): ModularChangeset {
 	const p = props ?? { maxId: -1 };
 	const changeset: Mutable<ModularChangeset> = {
-		fieldChanges: p.fieldChanges ?? new Map(),
+		fieldChanges: p.fieldChanges ?? new Map<FieldKey, FieldChange>(),
 		nodeChanges: p.nodeChanges ?? newTupleBTree(),
 		nodeToParent: p.nodeToParent ?? newTupleBTree(),
 		nodeAliases: p.nodeAliases ?? newTupleBTree(),
