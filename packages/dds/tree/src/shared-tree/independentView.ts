@@ -227,18 +227,11 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		defaultIncrementalEncodingPolicy,
 	);
 
-	const codecOptions: Partial<CodecWriteOptions> | undefined =
-		options !== undefined &&
-		"minVersionForCollab" in options &&
-		options.minVersionForCollab !== undefined
-			? { minVersionForCollab: options.minVersionForCollab }
-			: undefined;
-
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
 		schema: schemaRepository,
 		breaker,
-		codecOptions,
+		codecOptions: options,
 	});
 
 	if (options?.content !== undefined) {

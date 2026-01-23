@@ -2028,7 +2028,7 @@ describe("TableFactory unit tests", () => {
 	});
 
 	describe("Table Constraints", () => {
-		it("removeColumns adds a constraint to prevent concurrent row additions", () => {
+		it("removeColumns is rebased out when concurrent row addition would create orphaned cells", () => {
 			// Create a provider with minimum version support for noChange constraints
 			const provider = new TestTreeProviderLite(
 				2,
@@ -2058,26 +2058,29 @@ describe("TableFactory unit tests", () => {
 			const tree2 = provider.trees[1];
 			const view2 = asAlpha(tree2.viewWith(config));
 
-			// Remove a column on the branch to add a constraint
+			// Remove a column on the branch - this adds a constraint to detect concurrent row additions
 			branchTable.removeColumns(["column-0"]);
 			assert.equal(branchTable.columns.length, 0);
 
-			// Make a concurrent edit on the other tree by adding a row to violate the constraint
+			// Concurrently add a row with a cell under the column being removed.
+			// Without the constraint, this would create an orphaned cell (a cell under a non-existent column).
 			view2.root.insertRows({
-				rows: [{ id: "row-0", cells: {} }],
+				rows: [{ id: "row-0", cells: { "column-0": { value: "Hello" } } }],
 			});
 			provider.synchronizeMessages();
 			assert.equal(table.rows.length, 1);
+			assert.equal(table.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
-			// The column should still exist in the branch because the constraint was violated
+			// The column removal is rebased out because it would orphan the newly added cell
 			fork.rebaseOnto(view);
 			assert.equal(branchTable.columns.length, 1);
 			assert.equal(branchTable.columns[0].id, "column-0");
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 		});
 
-		it("insertColumns adds a revert constraint to prevent row additions on undo", () => {
+		it("undo of insertColumns is dropped when it would orphan cells in subsequently added rows", () => {
 			const provider = new TestTreeProviderLite(
-				2,
+				1,
 				configuredSharedTree({
 					jsonValidator: FormatValidatorBasic,
 					minVersionForCollab: FluidClientVersion.v2_80,
@@ -2088,46 +2091,37 @@ describe("TableFactory unit tests", () => {
 				schema: Table,
 				enableSchemaValidation: true,
 			});
-			const tree1 = provider.trees[0];
-			const view = asAlpha(tree1.viewWith(config));
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 			view.initialize(Table.create({ columns: [], rows: [] }));
-			provider.synchronizeMessages();
-
-			const table = view.root;
-			const fork = view.fork();
-			const branchTable = fork.root;
-			const tree2 = provider.trees[1];
-			const view2 = asAlpha(tree2.viewWith(config));
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
-
-			// Insert a column on the branch to add a revert constraint
-			branchTable.insertColumns({
+			// Insert a column - this adds a revert constraint to detect row additions before undo
+			view.root.insertColumns({
 				columns: [{ id: "column-0", props: {} }],
 			});
-			assert.equal(branchTable.columns.length, 1);
-
 			const revertible = undoStack.pop();
 			assert(revertible !== undefined, "Missing revertible");
-			revertible.revert();
-			assert.equal(branchTable.columns.length, 0);
+			assert.equal(view.root.columns.length, 1);
 
-			// Make a concurrent edit on the other tree by adding a row
-			view2.root.insertRows({
-				rows: [{ id: "row-0", cells: {} }],
+			// Add a row with a cell in the new column.
+			// Without the constraint, undoing the column insertion would orphan this cell.
+			view.root.insertRows({
+				rows: [{ id: "row-0", cells: { "column-0": { value: "Hello" } } }],
 			});
-			provider.synchronizeMessages();
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
-			assert.equal(table.rows.length, 1);
+			revertible.revert();
 
-			// The revert will be dropped, so the column will still exist in the branch
-			fork.rebaseOnto(view);
-			assert.equal(branchTable.columns.length, 1);
-			assert.equal(branchTable.columns[0].id, "column-0");
+			// The revert is dropped because it would orphan the cell - column and cell remain
+			assert.equal(view.root.columns.length, 1);
+			assert.equal(view.root.rows.length, 1);
+			assert.equal(view.root.columns[0].id, "column-0");
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
 			unsubscribe();
 		});
 
-		it("removeColumns adds noChange constraint when removing multiple columns", () => {
+		it("removing multiple columns is rebased out when concurrent rows would have orphaned cells", () => {
 			const provider = new TestTreeProviderLite(
 				2,
 				configuredSharedTree({
@@ -2160,29 +2154,35 @@ describe("TableFactory unit tests", () => {
 			const tree2 = provider.trees[1];
 			const view2 = asAlpha(tree2.viewWith(config));
 
-			// Remove multiple columns on the branch - this will add a constraint to prevent concurrent edits
+			// Remove multiple columns on the branch - this adds constraints for each column
 			branchTable.removeColumns(["column-0", "column-2"]);
 			assert.equal(branchTable.columns.length, 1);
 			assert.equal(branchTable.columns[0].id, "column-1");
 
-			// Make a concurrent edit on the other tree by adding multiple rows to violate the constraint
+			// Concurrently add rows with cells in the columns being removed.
+			// Without constraints, these cells would be orphaned.
 			view2.root.insertRows({
 				rows: [
-					{ id: "row-0", cells: {} },
-					{ id: "row-1", cells: {} },
+					{ id: "row-0", cells: { "column-0": { value: "A" } } },
+					{ id: "row-1", cells: { "column-2": { value: "B" } } },
 				],
 			});
 			provider.synchronizeMessages();
 			assert.equal(table.rows.length, 2);
+			assert.equal(table.getCell({ row: "row-0", column: "column-0" })?.value, "A");
+			assert.equal(table.getCell({ row: "row-1", column: "column-2" })?.value, "B");
 
+			// Column removals are rebased out to prevent orphaning the cells
 			fork.rebaseOnto(view);
 			assert.equal(branchTable.columns.length, 3);
 			assert.equal(branchTable.columns[0].id, "column-0");
 			assert.equal(branchTable.columns[1].id, "column-1");
 			assert.equal(branchTable.columns[2].id, "column-2");
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "A");
+			assert.equal(branchTable.getCell({ row: "row-1", column: "column-2" })?.value, "B");
 		});
 
-		it("insertRows adds constraint to prevent concurrent column removals", () => {
+		it("insertRows is rebased out when concurrent column removal would orphan its cells", () => {
 			const provider = new TestTreeProviderLite(
 				2,
 				configuredSharedTree({
@@ -2211,22 +2211,24 @@ describe("TableFactory unit tests", () => {
 			const tree2 = provider.trees[1];
 			const view2 = asAlpha(tree2.viewWith(config));
 
-			// Insert a row on the branch - this will add a nodeInDocument constraint to prevent concurrent column removals
+			// Insert a row with a cell on the branch - this adds a constraint on the column
 			branchTable.insertRows({
-				rows: [{ id: "row-0", cells: {} }],
+				rows: [{ id: "row-0", cells: { "column-0": { value: "Hello" } } }],
 			});
 			assert.equal(branchTable.rows.length, 1);
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
-			// Make a concurrent edit on the other tree by removing a column to violate the nodeInDocument constraint
+			// Concurrently remove the column. Without the constraint, the row's cell would be orphaned.
 			view2.root.removeColumns(["column-0"]);
 			provider.synchronizeMessages();
 			assert.equal(table.columns.length, 0);
 
+			// Row insertion is rebased out because its cell would be orphaned
 			fork.rebaseOnto(view);
 			assert.equal(branchTable.rows.length, 0);
 		});
 
-		it("removeRows adds revert constraint to prevent column removals on undo", () => {
+		it("undo of removeRows is dropped when column removal would orphan the restored row's cells", () => {
 			const provider = new TestTreeProviderLite(
 				2,
 				configuredSharedTree({
@@ -2244,7 +2246,12 @@ describe("TableFactory unit tests", () => {
 			view.initialize(
 				Table.create({
 					columns: [new Column({ id: "column-0", props: {} })],
-					rows: [new Row({ id: "row-0", cells: {} })],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: { "column-0": new Cell({ value: "Hello" }) },
+						}),
+					],
 				}),
 			);
 			provider.synchronizeMessages();
@@ -2257,7 +2264,7 @@ describe("TableFactory unit tests", () => {
 
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
 
-			// Remove a row on the branch - this will add a revert noChange constraint
+			// Remove the row (which has a cell) - this adds a revert constraint on the column
 			branchTable.removeRows(["row-0"]);
 			assert.equal(branchTable.rows.length, 0);
 			const revertible = undoStack.pop();
@@ -2266,20 +2273,21 @@ describe("TableFactory unit tests", () => {
 
 			// Row should be restored on the branch
 			assert.equal(branchTable.rows.length, 1);
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
-			// Make a concurrent edit on the other tree by removing a column
+			// Concurrently remove the column. Without the constraint, undoing row removal would orphan its cell.
 			view2.root.removeColumns(["column-0"]);
 			provider.synchronizeMessages();
 			assert.equal(table.columns.length, 0);
 
-			// The constraint on revert per column causes the revert to be dropped, so the row remains deleted
+			// The undo is dropped because restoring the row would create an orphaned cell
 			fork.rebaseOnto(view);
 			assert.equal(branchTable.rows.length, 0);
 
 			unsubscribe();
 		});
 
-		it("setCell adds constraint to prevent concurrent column removal", () => {
+		it("setCell is rebased out when concurrent column removal would orphan the cell", () => {
 			const provider = new TestTreeProviderLite(
 				2,
 				configuredSharedTree({
@@ -2308,25 +2316,25 @@ describe("TableFactory unit tests", () => {
 			const tree2 = provider.trees[1];
 			const view2 = asAlpha(tree2.viewWith(config));
 
-			// Set a cell on the branch to add a constraint on the column
+			// Set a cell on the branch - this adds a constraint on the column
 			branchTable.setCell({
 				key: { row: "row-0", column: "column-0" },
 				cell: new Cell({ value: "test" }),
 			});
 			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "test");
 
-			// Make a concurrent edit on the other tree by removing the column to violate the constraint
+			// Concurrently remove the column. Without the constraint, the cell would be orphaned.
 			view2.root.removeColumns(["column-0"]);
 			provider.synchronizeMessages();
 			assert.equal(table.columns.length, 0);
 
-			// Constraint will be violated, so the cell will be removed in the branch
+			// setCell is rebased out because the cell would be orphaned under the removed column
 			fork.rebaseOnto(view);
 			assert.equal(branchTable.columns.length, 0);
 			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" }), undefined);
 		});
 
-		it("removeCell adds revert constraint to prevent column removal on undo", () => {
+		it("undo of removeCell is dropped when column removal would orphan the restored cell", () => {
 			const provider = new TestTreeProviderLite(
 				2,
 				configuredSharedTree({
@@ -2361,7 +2369,7 @@ describe("TableFactory unit tests", () => {
 			const view2 = asAlpha(tree2.viewWith(config));
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
 
-			// Remove a cell on the branch to add a revert constraint
+			// Remove a cell on the branch - this adds a revert constraint on the column
 			branchTable.removeCell({ row: "row-0", column: "column-0" });
 			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" }), undefined);
 			const revertible = undoStack.pop();
@@ -2374,12 +2382,12 @@ describe("TableFactory unit tests", () => {
 				"initial",
 			);
 
-			// Make a concurrent edit on the other tree by removing the column
+			// Concurrently remove the column. Without the constraint, undoing cell removal would orphan the cell.
 			view2.root.removeColumns(["column-0"]);
 			provider.synchronizeMessages();
 			assert.equal(table.columns.length, 0);
 
-			// The constraint causes the revert to be dropped so the cell remains removed
+			// The undo is dropped because restoring the cell would orphan it under the removed column
 			fork.rebaseOnto(view);
 			assert.equal(branchTable.columns.length, 0);
 			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" }), undefined);

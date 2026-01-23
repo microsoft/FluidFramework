@@ -642,37 +642,32 @@ export namespace System_TableSchema {
 
 				// #endregion
 
-				const branch = TreeAlpha.branch(this);
-
-				const insertOp = (): void => {
-					// TypeScript is unable to narrow the column type correctly here, hence the casts below.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					if (index === undefined) {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
-					} else {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
-					}
-				};
-
-				// Ensure events are paused until all of the edits are applied.
-				withBufferedTreeEvents(() => {
-					if (branch === undefined) {
-						insertOp();
-					} else {
-						branch.runTransaction(() => {
-							insertOp();
-							return {
-								// Prevents cell leaks from concurrently added rows in earlier-sequenced edits when this column insertion is reverted.
-								// Example scenario: Client A inserts a column, then Client B adds a row with a cell for that column (sequenced before A's edit).
-								// If A's column insertion is later reverted, B's cell would become orphaned (cell exists but column doesn't).
-								// This constraint ensures no rows were added, preventing orphaned cells on revert.
-								// TODO: Replace with "no attach on revert" constraint on the row array when available.
-								preconditionsOnRevert: [{ type: "noChange" }],
-							};
-						});
-					}
+				this.#applyEditsInBatch({
+					applyEdits: () => {
+						// TypeScript is unable to narrow the column type correctly here, hence the casts below.
+						// See: https://github.com/microsoft/TypeScript/issues/52144
+						if (index === undefined) {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
+						} else {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
+						}
+					},
+					// Relevant invariant: no orphan cells
+					// Scenarios that this constraint is intended to prevent:
+					//  * Client A inserts a column, then client B adds row with a cell for that column, then client A reverts the column insertion.
+					//  * Client A inserts a column, then client B populates a cell for that column within an existing row, then client A reverts the column insertion.
+					//  Notes:
+					//  * In either scenario, A and B may be the same client.
+					//  * In either scenario, B's edit and the revert may or may not be concurrent.
+					// Collateral scenarios that this constraint also prevents:
+					//  * Any other scenario where client A inserts a column, then client B edits _any_ part of the tree, then client A reverts the column insertion.
+					// Future improvements:
+					// Use both...
+					//  * A "no attach on revert" constraint on the row array
+					//  * A "no shallow change" constraint on every cell that corresponds to the new column in every existing row
+					preconditionsOnRevert: [{ type: "noChange" }],
 				});
 
 				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
@@ -695,42 +690,31 @@ export namespace System_TableSchema {
 
 				// #endregion
 
-				const branch = TreeAlpha.branch(this);
+				// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits.
+				// Example scenario: Client A removes a column, then Client B adds a row with cells for existing columns (including the one A removed, sequenced before A's edit).
+				// If both edits are applied, B's row would have orphaned cells for the removed column.
+				// This constraint ensures all columns that existed when creating the row still exist when the row insertion is applied.
+				// TODO: Replace with "no detach" constraint on the column array when available.
+				const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
+					(column) => ({
+						type: "nodeInDocument",
+						node: column as ColumnValueType,
+					}),
+				);
 
-				const insertOp = (): void => {
-					// TypeScript is unable to narrow the row type correctly here, hence the casts below.
-					// See: https://github.com/microsoft/TypeScript/issues/52144
-					if (index === undefined) {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						this.table.rows.insertAtEnd(TreeArrayNode.spread(rows) as any);
-					} else {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						this.table.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
-					}
-				};
-
-				// Ensure events are paused until all of the edits are applied.
-				withBufferedTreeEvents(() => {
-					if (branch === undefined) {
-						insertOp();
-					} else {
-						// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits.
-						// Example scenario: Client A removes a column, then Client B adds a row with cells for existing columns (including the one A removed, sequenced before A's edit).
-						// If both edits are applied, B's row would have orphaned cells for the removed column.
-						// This constraint ensures all columns that existed when creating the row still exist when the row insertion is applied.
-						// TODO: Replace with "no detach" constraint on the column array when available.
-						const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
-							(column) => ({
-								type: "nodeInDocument",
-								node: column as ColumnValueType,
-							}),
-						);
-
-						branch.runTransaction(
-							insertOp,
-							columnConstraints.length > 0 ? { preconditions: columnConstraints } : undefined,
-						);
-					}
+				this.#applyEditsInBatch({
+					applyEdits: () => {
+						// TypeScript is unable to narrow the row type correctly here, hence the casts below.
+						// See: https://github.com/microsoft/TypeScript/issues/52144
+						if (index === undefined) {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							this.table.rows.insertAtEnd(TreeArrayNode.spread(rows) as any);
+						} else {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							this.table.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
+						}
+					},
+					preconditions: columnConstraints.length > 0 ? columnConstraints : undefined,
 				});
 
 				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
@@ -746,27 +730,34 @@ export namespace System_TableSchema {
 				const row = this.#getRow(rowOrId);
 				const column = this.#getColumn(columnOrId);
 
-				const branch = TreeAlpha.branch(this);
-				const setOp = (): void => {
-					(row as RowValueInternalType).cells[column.id] = cell as CellValueType;
-				};
-
-				if (branch === undefined) {
-					setOp();
-				} else {
+				this.#applyEditsInBatch({
+					applyEdits: () => {
+						(row as RowValueInternalType).cells[column.id] = cell as CellValueType;
+					},
 					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits.
 					// Example scenario: Client A removes a column, then Client B sets a cell in that column (sequenced before A's edit).
 					// If both edits are applied, B's cell would be orphaned (cell exists but column doesn't).
 					// This constraint ensures the column still exists when the cell is set.
-					branch.runTransaction(setOp, {
-						preconditions: [
-							{
-								type: "nodeInDocument",
-								node: column,
-							},
-						],
-					});
-				}
+					preconditions: [
+						{
+							type: "nodeInDocument",
+							node: column,
+						},
+					],
+					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this cell set is reverted.
+					// Example scenario: Client A sets a cell (overwriting an existing value), then Client B removes the column (sequenced before A's edit).
+					// If A's cell set is later reverted, the old cell value would be restored but B's column removal means there's no column for it.
+					// This constraint on revert ensures the column still exists when restoring the old cell value, preventing orphaned cells.
+					preconditionsOnRevert:
+						(row as RowValueInternalType).cells[column.id] === undefined
+							? undefined
+							: [
+									{
+										type: "nodeInDocument",
+										node: column,
+									},
+								],
+				});
 			}
 
 			public removeColumns(
@@ -953,32 +944,22 @@ export namespace System_TableSchema {
 					return undefined;
 				}
 
-				const branch = TreeAlpha.branch(this);
-				const removeOp = (): void => {
-					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-					delete row.cells[column.id];
-				};
-
-				if (branch === undefined) {
-					removeOp();
-				} else {
-					branch.runTransaction(() => {
-						removeOp();
-
-						return {
-							// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this cell removal is reverted.
-							// Example scenario: Client A removes a cell, then Client B removes the column for that cell (sequenced before A's edit).
-							// If A's cell removal is later reverted, the cell would be restored but B's column removal means there's no column for it.
-							// This constraint on revert ensures the column still exists, preventing the restoration of orphaned cells.
-							preconditionsOnRevert: [
-								{
-									type: "nodeInDocument",
-									node: column,
-								},
-							],
-						};
-					});
-				}
+				this.#applyEditsInBatch({
+					applyEdits: () => {
+						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+						delete row.cells[column.id];
+					},
+					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this cell removal is reverted.
+					// Example scenario: Client A removes a cell, then Client B removes the column for that cell (sequenced before A's edit).
+					// If A's cell removal is later reverted, the cell would be restored but B's column removal means there's no column for it.
+					// This constraint on revert ensures the column still exists, preventing the restoration of orphaned cells.
+					preconditionsOnRevert: [
+						{
+							type: "nodeInDocument",
+							node: column,
+						},
+					],
+				});
 
 				return cell;
 			}
