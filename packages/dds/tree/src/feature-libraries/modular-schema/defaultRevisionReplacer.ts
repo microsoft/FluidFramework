@@ -6,7 +6,9 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
+	areEqualChangeAtomIds,
 	newChangeAtomIdRangeMap,
+	offsetChangeAtomId,
 	type ChangeAtomId,
 	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
@@ -19,7 +21,7 @@ import {
 	newIntegerRangeMap,
 	type RangeMap,
 	type Mutable,
-	hasSingle,
+	hasSome,
 } from "../../util/index.js";
 
 const offsetChangesetLocalId = (value: ChangesetLocalId, offset: number): ChangesetLocalId =>
@@ -56,7 +58,27 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 			const priors = this.updatedLocalIds.getAll(id, count);
 			// const lastId = offsetChangeAtomId(id, count - 1);
 			//  const upperBound = getPairOrNextLowerFromChangeAtomIdMap(this.updatedLocalIds, lastId);
-			if (priors.length === 0) {
+			if (hasSome(priors)) {
+				const consolidated = { ...priors[0] };
+				for (const entry of priors.slice(1)) {
+					if (
+						areEqualChangeAtomIds(
+							entry.start,
+							offsetChangeAtomId(consolidated.start, consolidated.length),
+						) &&
+						entry.value === consolidated.value + consolidated.length
+					) {
+						consolidated.length += entry.length;
+					} else {
+						break;
+					}
+				}
+				if (consolidated.length === count) {
+					updated.localId = consolidated.value;
+				} else {
+					fail("TODO: handle partially updated range");
+				}
+			} else {
 				let localId: ChangesetLocalId;
 				if (this.localIds.getAll(id.localId, count).length > 0) {
 					localId = brand(this.maxSeen + 1);
@@ -70,12 +92,6 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 				}
 				this.updatedLocalIds.set(id, count, localId);
 				updated.localId = localId;
-			} else {
-				if (hasSingle(priors) && priors[0].length === count) {
-					updated.localId = priors[0].value;
-				} else {
-					fail("TODO: support ranges that have partially been updated");
-				}
 			}
 			return updated;
 		}
