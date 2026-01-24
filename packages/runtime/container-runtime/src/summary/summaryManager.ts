@@ -481,6 +481,9 @@ export class SummaryManager
 		this.connectedState.off("connected", this.handleConnected);
 		this.connectedState.off("disconnected", this.handleDisconnected);
 		this.cleanupForwardedEvents();
+		if (this.summarizerStopTimeout !== undefined) {
+			clearTimeout(this.summarizerStopTimeout);
+		}
 		this._disposed = true;
 	}
 
