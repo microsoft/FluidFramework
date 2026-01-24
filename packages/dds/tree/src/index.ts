@@ -301,7 +301,7 @@ export {
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
 	type SchemaCompatibilitySnapshotsOptions,
-	type ArrayNodeAnchor,
+	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
 } from "./simple-tree/index.js";
 export {

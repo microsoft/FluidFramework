@@ -9,7 +9,7 @@ export {
 	IterableTreeArrayContent,
 	TreeArrayNode,
 	type ReadonlyArrayNode,
-	type ArrayNodeAnchor,
+	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
 } from "./arrayNode.js";
 export {

@@ -266,7 +266,7 @@ export {
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
 	type TreeRecordNode,
-	type ArrayNodeAnchor,
+	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
 } from "./node-kinds/index.js";
 export {

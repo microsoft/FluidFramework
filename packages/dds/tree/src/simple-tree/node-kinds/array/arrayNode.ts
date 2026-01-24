@@ -1406,27 +1406,35 @@ function shallowCompatibilityTest(
  * @alpha
  * @sealed
  */
-export interface ArrayNodeAnchor {
+export interface ArrayPlaceAnchor {
 	/**
 	 * The current index within the array that this anchor refers to.
 	 * @remarks
 	 * This value is updated as the array is edited in a way that depends on the specific anchor implementation.
+	 * This index may take on a value from 0 to the length of the array (inclusive).
+	 * If used as the index to insert content into the array, this means it can point to any location in the array,
+	 * including just after the last child.
 	 */
 	get index(): number;
 }
 
 /**
- * Create an {@link ArrayNodeAnchor} tracking any future index of the child current at the provided index.
+ * Create an {@link ArrayPlaceAnchor} tracking an insertion point in the array which is currently at the provided index.
  *
  * @param node - The array node to anchor into.
- * @param currentIndex - The index to track.
+ * @param currentIndex - The current index of the place to track.
  * @remarks
- * This anchor will track the item currently at the provided index (or possibly the end of the array if the index is after the last item).
- * How exactly it behaves when that child is removed from the array is subject to change,
+ * This anchor will track the logical position in the array across changes.
+ * As long as the subsection of the array surrounding the anchor point is not edited,
+ * this anchor will move with them, keeping its relative position to those children fixed.
+ * How exactly it behaves when the adjacent portion of the array is modified is subject to change,
  * but this will always report a valid index to insert content at (which can be the index after the last item in the array).
  *
- * This is intended to track a location like might be used for an insertion point in a text editor: future changes to its details should
+ * This is intended to track a location that might be used for an insertion point (for example in a text editor): future changes to its details should
  * make it behave better for such uses.
+ *
+ * The current implementation is known to behave particularly poorly if the child which was at the original anchor point's index is removed
+ * (jumps to the end of the array): this behavior is subject to change.
  * @privateRemarks
  * When stabilized, this should probably become a method on {@link (TreeArrayNode:interface)}.
  * Future versions of this should use rebaser / changeset logic to do a better job of tracking a location across removals or reinsertion.
@@ -1436,7 +1444,7 @@ export interface ArrayNodeAnchor {
 export function createArrayInsertionAnchor(
 	node: TreeArrayNode,
 	currentIndex: number,
-): ArrayNodeAnchor {
+): ArrayPlaceAnchor {
 	const field = getInnerNode(node).getBoxed(EmptyKey);
 	const child = field.boxedAt(currentIndex);
 	return {
