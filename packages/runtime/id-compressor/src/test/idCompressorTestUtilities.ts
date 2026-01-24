@@ -737,7 +737,7 @@ export function roundtrip(
 		const serialized = compressor.serialize(withSession);
 		const roundtripped = IdCompressor.deserialize({
 			serialized,
-			writeVersion: SerializationVersion.V3,
+			requestedWriteVersion: SerializationVersion.V3,
 		});
 		modifyClusterSize(roundtripped, capacity);
 		return [serialized, roundtripped];
@@ -746,7 +746,7 @@ export function roundtrip(
 		const roundtripped = IdCompressor.deserialize({
 			serialized: nonLocalSerialized,
 			newSessionId: createSessionId(),
-			writeVersion: SerializationVersion.V3,
+			requestedWriteVersion: SerializationVersion.V3,
 		});
 		modifyClusterSize(roundtripped, capacity);
 		return [nonLocalSerialized, roundtripped];

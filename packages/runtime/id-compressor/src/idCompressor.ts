@@ -923,26 +923,29 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		params:
 			| {
 					serialized: SerializedIdCompressorWithOngoingSession;
-					writeVersion: SerializationVersion;
+					requestedWriteVersion: SerializationVersion;
 					logger?: ITelemetryLoggerExt | undefined;
 					newSessionId?: never;
 			  }
 			| {
 					serialized: SerializedIdCompressorWithNoSession;
 					newSessionId: SessionId;
-					writeVersion: SerializationVersion;
+					requestedWriteVersion: SerializationVersion;
 					logger?: ITelemetryLoggerExt | undefined;
 			  },
 	): IdCompressor {
-		const { serialized, newSessionId, logger, writeVersion } = params;
+		const { serialized, newSessionId, logger, requestedWriteVersion } = params;
 		const buffer = stringToBuffer(serialized, "base64");
 		const index: Index = {
 			index: 0,
 			bufferFloat: new Float64Array(buffer),
 			bufferUint: new BigUint64Array(buffer),
 		};
-		const version = readNumber(index);
-		switch (version) {
+		const serializedVersion = readNumber(index);
+		// If requested version is < the serialized version, we must write the version serialized
+		// to avoid losing data.
+		const writeVersion = Math.max(requestedWriteVersion, serializedVersion) as SerializationVersion;
+		switch (serializedVersion) {
 			case 1: {
 				throw new Error("IdCompressor version 1.0 is no longer supported.");
 			}
@@ -1173,7 +1176,7 @@ export function deserializeIdCompressor(
 			serialized: serialized as SerializedIdCompressorWithNoSession,
 			logger: loggerOrUndefined,
 			newSessionId: sessionIdOrDocumentVersion,
-			writeVersion: writeVersionOrLogger as SerializationVersion,
+			requestedWriteVersion: writeVersionOrLogger as SerializationVersion,
 		});
 	}
 
@@ -1185,6 +1188,6 @@ export function deserializeIdCompressor(
 	return IdCompressor.deserialize({
 		serialized: serialized as SerializedIdCompressorWithOngoingSession,
 		logger: writeVersionOrLogger as ITelemetryLoggerExt | undefined,
-		writeVersion: sessionIdOrDocumentVersion,
+		requestedWriteVersion: sessionIdOrDocumentVersion,
 	});
 }

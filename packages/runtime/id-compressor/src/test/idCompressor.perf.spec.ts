@@ -381,7 +381,7 @@ describe("IdCompressor Perf", () => {
 				IdCompressor.deserialize({
 					serialized,
 					newSessionId: overrideRemoteSessionId,
-					writeVersion: SerializationVersion.V3,
+					requestedWriteVersion: SerializationVersion.V3,
 				});
 			},
 		});
