@@ -38,16 +38,16 @@ const schema = new SchemaFactoryBeta("test");
 describe("schemaCreationUtilities", () => {
 	it("enumFromStrings compatibility", () => {
 		// There is not a single fixed enum schema, but instead a collection of utilities that generate enum schemas.
-		// Therefor we can not directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of enumFromStrings
+		// Therefore we cannot directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of enumFromStrings
 		// which is what this test does.
 		const Mode = enumFromStrings(schema.scopedFactory("Mode"), ["Fun", "Cool"]);
 		const currentViewSchema = new TreeViewConfiguration({ schema: Mode.schema });
 		testSchemaCompatibilitySnapshots(currentViewSchema, "2.82.0", "enumFromStrings-example");
 	});
 
-	it("enumFromStrings compatibility", () => {
+	it("adaptEnum compatibility", () => {
 		// There is not a single fixed enum schema, but instead a collection of utilities that generate enum schemas.
-		// Therefor we can not directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of adaptEnum
+		// Therefore, we cannot directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of adaptEnum
 		// which is what this test does.
 		enum Mode {
 			a = "A",
