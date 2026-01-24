@@ -253,7 +253,10 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	private encodeFieldsObject(
 		encodeFieldSchema: (storedFieldSchema: TreeFieldStoredSchema) => FieldSchemaFormat,
 	): Record<string, FieldSchemaFormat> {
-		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
+		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null) as Record<
+			string,
+			FieldSchemaFormat
+		>;
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
 		for (const key of [...this.objectNodeFields.keys()].sort()) {

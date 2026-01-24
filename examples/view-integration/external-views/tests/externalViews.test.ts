@@ -5,10 +5,9 @@
 
 import puppeteer, { Browser, Page } from "puppeteer";
 import { globals } from "../jest.config.cjs";
-import type { IDiceRoller } from "../src/container/main.js";
-import type { IFluidMountableViewEntryPoint } from "@fluid-example/example-utils";
+import type { IDiceRoller } from "../src/container/index.js";
 
-describe("diceroller", () => {
+describe("app-integration-external-views", () => {
 	let browser: Browser;
 	let page: Page;
 
@@ -31,7 +30,7 @@ describe("diceroller", () => {
 		await page.waitForFunction(() => typeof globalThis.loadAdditionalContainer === "function");
 	});
 
-	it("The page loads and there's a button with Roll", async () => {
+	it("loads and there's a button with Roll", async () => {
 		// Validate there is a button that can be clicked
 		await expect(page).toClick("button", { text: "Roll" });
 	});
@@ -40,11 +39,9 @@ describe("diceroller", () => {
 		const diceValueP = page.evaluate(async () => {
 			// Load an additional container, and use it to watch for an expected roll
 			const container = await globalThis.loadAdditionalContainer();
-			const { getDefaultDataObject } =
-				(await container.getEntryPoint()) as IFluidMountableViewEntryPoint;
-			const diceRoller = (await getDefaultDataObject()) as IDiceRoller;
+			const diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 			return new Promise<number>((resolve) => {
-				diceRoller.on("diceRolled", () => resolve(diceRoller.value));
+				diceRoller.events.on("diceRolled", () => resolve(diceRoller.value));
 			});
 		});
 		// Click the button, triggering a roll from the main container

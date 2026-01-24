@@ -471,8 +471,11 @@ export function transformObjectMap<
 >(
 	objectMap: Record<MapKey, MapValue>,
 	transformer: (value: MapValue, key: MapKey) => NewMapValue,
-): Record<MapKey, MapValue> {
-	const output: Record<MapKey, MapValue> = Object.create(null);
+): Record<MapKey, NewMapValue> {
+	const output: Record<MapKey, NewMapValue> = Object.create(null) as Record<
+		MapKey,
+		NewMapValue
+	>;
 	// This function must only be used with objects specifically intended to encode map like information.
 	for (const key of Object.keys(objectMap)) {
 		const element = objectMap[key as MapKey];
