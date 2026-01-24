@@ -127,15 +127,28 @@ export namespace InternalTypes {
 // @alpha @system
 export namespace InternalUtilityTypes {
     // @system
-    export type IfNotificationListener<Event, IfListener, Else> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P>, IfListener, Else> : Else;
+    export type IfNotificationParametersSignature<Event, IfParametersValid, Else> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P>, IfParametersValid, Else> : Else;
+    // @system
+    export type IfNotificationSubscriberSignature<Event, IfSubscriber, Else> = Event extends (sender: Attendee, ...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P>, IfSubscriber, Else> : Else;
     // @system
     export type JsonDeserializedParameters<T extends (...args: any[]) => unknown> = T extends (...args: infer P) => unknown ? JsonDeserialized<P> : never;
     // @system
     export type JsonSerializableParameters<T extends (...args: any[]) => unknown> = T extends (...args: infer P) => unknown ? JsonSerializable<P> : never;
     // @system
     export type NotificationListeners<E> = {
-        [P in keyof E as IfNotificationListener<E[P], P, never>]: E[P];
+        [P in keyof E as IfNotificationParametersSignature<E[P], P, never>]: E[P];
     };
+    // @system
+    export type NotificationListenersFromSubscriberSignatures<E extends NotificationListenersWithSubscriberSignatures<E>> = {
+        [K in keyof NotificationListenersWithSubscriberSignatures<E>]: NotificationParametersSignatureFromSubscriberSignature<E[K]>;
+    } extends infer TListeners ? NotificationListeners<TListeners> : never;
+    // @system
+    export type NotificationListenersWithSubscriberSignatures<E> = {
+        [P in keyof E as IfNotificationSubscriberSignature<E[P], P, never>]: E[P];
+    };
+    // @system
+    export type NotificationParametersSignatureFromSubscriberSignature<Event> = Event extends (sender: Attendee, ...args: infer P) => void ? (...args: P) => void : never;
+        {};
 }
 
 // @beta
@@ -290,7 +303,10 @@ export interface NotificationListenable<TListeners extends InternalUtilityTypes.
 }
 
 // @alpha
-export function Notifications<T extends InternalUtilityTypes.NotificationListeners<T>, Key extends string = string>(initialSubscriptions: Partial<NotificationSubscriptions<T>>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<T>>;
+export function Notifications<T extends InternalUtilityTypes.NotificationListeners<T>, Key extends string = string>(initialSubscriptions: Partial<NotificationSubscriberSignatures<T>>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<T>>;
+
+// @alpha
+export function Notifications<TSubscriptions extends InternalUtilityTypes.NotificationListenersWithSubscriberSignatures<TSubscriptions>, Key extends string = string>(initialSubscriptions: Partial<TSubscriptions>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<InternalUtilityTypes.NotificationListenersFromSubscriberSignatures<TSubscriptions>>>;
 
 // @alpha @sealed
 export interface NotificationsManager<T extends InternalUtilityTypes.NotificationListeners<T>> {
@@ -307,8 +323,8 @@ export interface NotificationsManagerEvents {
 }
 
 // @alpha @sealed
-export type NotificationSubscriptions<E extends InternalUtilityTypes.NotificationListeners<E>> = {
-    [K in string & keyof InternalUtilityTypes.NotificationListeners<E>]: (sender: Attendee, ...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>) => void;
+export type NotificationSubscriberSignatures<E extends InternalUtilityTypes.NotificationListeners<E>> = {
+    [K in keyof InternalUtilityTypes.NotificationListeners<E>]: (sender: Attendee, ...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>) => void;
 };
 
 // @alpha @sealed
