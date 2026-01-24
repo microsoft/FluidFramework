@@ -155,7 +155,7 @@
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "~20.19.0",
+		"@types/node": "~20.19.30",
 		"@types/rewire": "^2.5.30",
 		"@types/sha.js": "^2.4.4",
 		"@types/sinon": "^17.0.3",

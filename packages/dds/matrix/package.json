@@ -167,7 +167,7 @@
 		"@tiny-calc/micro": "0.0.0-alpha.5",
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "~20.19.0",
+		"@types/node": "~20.19.30",
 		"best-random": "^1.0.0",
 		"c8": "^10.1.3",
 		"concurrently": "^9.2.1",
