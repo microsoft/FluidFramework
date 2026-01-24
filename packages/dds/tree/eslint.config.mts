@@ -26,7 +26,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
-			"import-x/order": "off",
 			"jsdoc/require-description": "warn",
 			"unicorn/no-await-expression-member": "off",
 			"unicorn/no-null": "off",

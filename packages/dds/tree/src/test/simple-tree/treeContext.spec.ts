@@ -5,17 +5,17 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
+import { TreeAlpha } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeView,
 	type TreeViewAlpha,
 } from "../../simple-tree/index.js";
-
-import { getView } from "../utils.js";
-import { TreeAlpha } from "../../shared-tree/index.js";
 import type { requireAssignableTo } from "../../util/index.js";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { getView } from "../utils.js";
 
 describe("TreeBranch", () => {
 	const schemaFactory = new SchemaFactory(undefined);

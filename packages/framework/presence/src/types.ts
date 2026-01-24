@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { BroadcastControls } from "./broadcastControls.js";
+import type { BroadcastControls } from "./broadcastControlsTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { NotificationsManager } from "./notificationsManager.js";
+import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
+import type { NotificationsManager } from "./notificationsManagerTypes.js";
 import type { Presence, PresenceWithNotifications } from "./presence.js";
 
 /**
@@ -50,7 +51,10 @@ export interface StatesWorkspaceSchema {
 	/**
 	 * Key-value pairs of State objects registered with the {@link StatesWorkspace}.
 	 */
-	[key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
+	[key: string]: StatesWorkspaceEntry<
+		typeof key,
+		InternalTypes.ValueDirectoryOrState<unknown>
+	>;
 }
 
 /**
@@ -91,7 +95,7 @@ export interface StatesWorkspace<
 	 */
 	add<
 		TKey extends string,
-		TValue extends InternalTypes.ValueDirectoryOrState<any>,
+		TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
 		TManager extends TManagerConstraints,
 	>(
 		key: TKey,
@@ -132,7 +136,7 @@ export interface NotificationsWorkspaceSchema {
 	[key: string]: InternalTypes.ManagerFactory<
 		typeof key,
 		InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
-		NotificationsManager<any>
+		NotificationsManager<InternalUtilityTypes.NotificationListeners<unknown>>
 	>;
 }
 
@@ -157,8 +161,8 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 	 */
 	add<
 		TKey extends string,
-		TValue extends InternalTypes.ValueDirectoryOrState<any>,
-		TManager extends NotificationsManager<any>,
+		TValue extends InternalTypes.ValueDirectoryOrState<unknown>,
+		TManager extends NotificationsManager<InternalUtilityTypes.NotificationListeners<unknown>>,
 	>(
 		key: TKey,
 		manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>,

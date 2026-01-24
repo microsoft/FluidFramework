@@ -5,8 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import type { BroadcastControls, BroadcastControlSettings } from "../broadcastControls.js";
-import type { Presence } from "../presence.js";
+import type {
+	BroadcastControls,
+	BroadcastControlSettings,
+	Presence,
+} from "@fluidframework/presence/beta";
+
 import { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";

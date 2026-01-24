@@ -4,6 +4,14 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import { ValueSchema } from "../../../core/index.js";
+import { TreeAlpha } from "../../../shared-tree/index.js";
+import {
+	convertObjectNodeSchema,
+	toJsonSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/simpleSchemaToJsonSchema.js";
 import {
 	FieldKind,
 	generateSchemaFromSimpleSchema,
@@ -19,22 +27,15 @@ import {
 	type JsonTreeSchema,
 	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
-import { getJsonValidator } from "./jsonSchemaUtilities.js";
 import type {
 	SimpleAllowedTypeAttributes,
 	SimpleNodeSchema,
 	SimpleTreeSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/simpleSchema.js";
-
-import {
-	convertObjectNodeSchema,
-	toJsonSchema,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/simpleSchemaToJsonSchema.js";
-import { ValueSchema } from "../../../core/index.js";
 import { testSimpleTrees } from "../../testTrees.js";
-import { TreeAlpha } from "../../../shared-tree/index.js";
+
+import { getJsonValidator } from "./jsonSchemaUtilities.js";
 
 function simpleToJsonSchema(simpleSchema: SimpleTreeSchema): JsonTreeSchema {
 	const schema = generateSchemaFromSimpleSchema(simpleSchema);

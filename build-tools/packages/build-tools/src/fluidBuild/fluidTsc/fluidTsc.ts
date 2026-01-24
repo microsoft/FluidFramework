@@ -29,6 +29,7 @@ async function main(): Promise<void> {
 
 	if (firstArg === "-?" || firstArg === "--help") {
 		printUsage();
+		// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
 		process.exit(0);
 	}
 
@@ -45,12 +46,15 @@ async function main(): Promise<void> {
 	);
 	// In watch mode, there is no result code and the process must be left to continue running.
 	if (result !== undefined) {
+		// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
 		process.exit(result);
 	}
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await -- This is a CLI entry point
 main().catch((e): void => {
 	error(`Unexpected error. ${e.message}`);
 	error(e.stack);
+	// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
 	process.exit(1);
 });
