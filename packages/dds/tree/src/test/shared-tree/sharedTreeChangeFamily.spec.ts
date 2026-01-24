@@ -455,7 +455,7 @@ describe("SharedTreeChangeFamily", () => {
 				assert.equal(change3.type, "data");
 				const delta1 = intoDelta(tagChange(change1.innerChange, undefined));
 				const delta3 = intoDelta(tagChange(change3.innerChange, undefined));
-				const detachedNodeId = delta1.fields?.get(rootFieldKey)?.[0]?.detach;
+				const detachedNodeId = delta1.fields?.get(rootFieldKey)?.marks[0]?.detach;
 				const reference = delta3.rename?.[0]?.oldId;
 				assert.notEqual(reference, undefined);
 				assert.deepEqual(reference, detachedNodeId);

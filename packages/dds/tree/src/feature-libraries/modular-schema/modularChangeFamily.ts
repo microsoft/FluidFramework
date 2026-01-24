@@ -1365,7 +1365,7 @@ export class ModularChangeFamily
 		const change = nodeChangeFromId(crossFieldTable.newChange.nodeChanges, newId);
 		const over = nodeChangeFromId(crossFieldTable.baseChange.nodeChanges, baseId);
 
-		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map();
+		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map<FieldKey, FieldChange>();
 
 		const fieldChanges =
 			change.fieldChanges !== undefined && over.fieldChanges !== undefined
@@ -1522,8 +1522,11 @@ export class ModularChangeFamily
 	}
 
 	public getRevisions(change: ModularChangeset): Set<RevisionTag | undefined> {
+		if (change.revisions === undefined || change.revisions.length === 0) {
+			return new Set([undefined]);
+		}
 		const aggregated: Set<RevisionTag | undefined> = new Set();
-		for (const revInfo of change.revisions ?? [{ revision: undefined }]) {
+		for (const revInfo of change.revisions) {
 			aggregated.add(revInfo.revision);
 		}
 		return aggregated;
@@ -2103,7 +2106,7 @@ function intoDeltaImpl(
 				return deltaFromNodeChange(nodeChange, nodeChanges, fieldKinds, global, rename);
 			},
 		);
-		if (fieldChanges !== undefined && fieldChanges.length > 0) {
+		if (fieldChanges !== undefined && fieldChanges.marks.length > 0) {
 			delta.set(field, fieldChanges);
 		}
 		for (const c of fieldGlobal ?? []) {
@@ -2625,7 +2628,7 @@ function makeModularChangeset(props?: {
 }): ModularChangeset {
 	const p = props ?? { maxId: -1 };
 	const changeset: Mutable<ModularChangeset> = {
-		fieldChanges: p.fieldChanges ?? new Map(),
+		fieldChanges: p.fieldChanges ?? new Map<FieldKey, FieldChange>(),
 		nodeChanges: p.nodeChanges ?? newTupleBTree(),
 		nodeToParent: p.nodeToParent ?? newTupleBTree(),
 		nodeAliases: p.nodeAliases ?? newTupleBTree(),

@@ -5,10 +5,9 @@
 
 import puppeteer, { Browser, Page } from "puppeteer";
 import { globals } from "../jest.config.cjs";
-import type { IDiceRoller } from "../src/container/main.js";
-import type { IFluidMountableViewEntryPoint } from "@fluid-example/example-utils";
+import type { IBlobCollection } from "../src/container/index.js";
 
-describe("diceroller", () => {
+describe("blobs", () => {
 	let browser: Browser;
 	let page: Page;
 
@@ -31,27 +30,29 @@ describe("diceroller", () => {
 		await page.waitForFunction(() => typeof globalThis.loadAdditionalContainer === "function");
 	});
 
-	it("The page loads and there's a button with Roll", async () => {
+	it("loads and there's a button with Add blob", async () => {
 		// Validate there is a button that can be clicked
-		await expect(page).toClick("button", { text: "Roll" });
+		await expect(page).toClick("button", { text: "Add blob" });
 	});
 
-	it("raises an event in other connected containers", async () => {
-		const diceValueP = page.evaluate(async () => {
-			// Load an additional container, and use it to watch for an expected roll
+	it("can attach and be loaded in a second container", async () => {
+		// Validate there is a button that can be clicked
+		await expect(page).toClick("button", { text: "Attach container" });
+		// The url will update to include the id in the hash once the attach completes. We need to
+		// wait for this because the attach proceeds async after clicking the attach button, otherwise
+		// we'll try to load the additional container before the attach completes.
+		await page.waitForFunction(() => window.location.hash.length > 0);
+		const blobsCountP = page.evaluate(async () => {
+			// Load an additional container, and use it to watch for an expected blob addition
 			const container = await globalThis.loadAdditionalContainer();
-			const { getDefaultDataObject } =
-				(await container.getEntryPoint()) as IFluidMountableViewEntryPoint;
-			const diceRoller = (await getDefaultDataObject()) as IDiceRoller;
+			const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
 			return new Promise<number>((resolve) => {
-				diceRoller.on("diceRolled", () => resolve(diceRoller.value));
+				blobCollection.events.on("blobAdded", () => resolve(blobCollection.getBlobs().length));
 			});
 		});
-		// Click the button, triggering a roll from the main container
-		await expect(page).toClick("button", { text: "Roll" });
-		const diceValue = await diceValueP;
-		expect(diceValue).toBeGreaterThanOrEqual(1);
-		expect(diceValue).toBeLessThanOrEqual(6);
+		await expect(page).toClick("button", { text: "Add blob" });
+		const blobsCount = await blobsCountP;
+		expect(blobsCount).toBe(1);
 	});
 
 	afterEach(async () => {
