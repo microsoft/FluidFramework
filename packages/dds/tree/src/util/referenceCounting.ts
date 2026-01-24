@@ -39,6 +39,7 @@ export interface ReferenceCounted {
  * Base class to assist with implementing ReferenceCounted.
  */
 export abstract class ReferenceCountedBase implements ReferenceCounted {
+	// eslint-disable-next-line @typescript-eslint/prefer-readonly -- false positive; modified in multiple places
 	protected constructor(private refCount: number = 1) {}
 
 	public referenceAdded(count = 1): void {

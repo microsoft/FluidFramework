@@ -651,6 +651,7 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 				let iterations = 0;
 				const start = Date.now();
 
+				// eslint-disable-next-line no-constant-condition
 				while (true) {
 					await stress(
 						/* numClients: */ 3,

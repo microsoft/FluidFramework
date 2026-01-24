@@ -668,6 +668,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			throw new Error("Delta manager is not attached");
 		}
 
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.deltaStorage === undefined) {
 			this.deltaStorage = await docService.connectToDeltaStorage();
 		}
@@ -736,6 +737,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				fetchReason,
 			);
 
+			// eslint-disable-next-line no-constant-condition
 			while (true) {
 				const result = await stream.read();
 				if (result.done) {
@@ -963,7 +965,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					duplicate++;
 				} else if (message.sequenceNumber !== prev + 1) {
 					gap++;
-
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (firstMissing === undefined) {
 						firstMissing = prev + 1;
 					}

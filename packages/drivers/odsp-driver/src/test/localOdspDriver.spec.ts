@@ -103,7 +103,7 @@ describe("Local Odsp driver", () => {
 			stream: IStream<ISequencedDocumentMessage[]>,
 		): Promise<ISequencedDocumentMessage[]> {
 			const ops: ISequencedDocumentMessage[] = [];
-
+			// eslint-disable-next-line no-constant-condition
 			while (true) {
 				const result = await stream.read();
 				if (result.done) {

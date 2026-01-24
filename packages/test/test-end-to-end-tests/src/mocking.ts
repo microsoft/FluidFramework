@@ -27,6 +27,7 @@ export function wrapObjectAndOverride<T extends Record<string, any>>(
 				// check if the override is a function, which means it is factory
 				// in which case we called the factory to generate the property
 				if (typeof override === "function") {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 					return override(target);
 				}
 
@@ -47,6 +48,7 @@ export function wrapObjectAndOverride<T extends Record<string, any>>(
 							return res.then((v: any) => wrapObjectAndOverride(v, override));
 						}
 
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 						return wrapObjectAndOverride(res, override);
 					};
 				}

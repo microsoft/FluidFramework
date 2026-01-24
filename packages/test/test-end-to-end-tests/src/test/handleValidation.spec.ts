@@ -298,6 +298,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 						string.annotateRange(0, 1, { B: handle });
 					},
 					async readHandle(): Promise<unknown> {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 						return string.getPropertiesAtPosition(0)?.B;
 					},
 					handle: string.handle,

@@ -1089,7 +1089,7 @@ export function setupClientContext(
 	random.handle = () => new DDSFuzzHandle(random.pick(handles), client.dataStoreRuntime);
 	return () => {
 		state.client = oldClient;
-
+		// eslint-disable-next-line unicorn/consistent-destructuring
 		state.random.handle = oldHandle;
 	};
 }

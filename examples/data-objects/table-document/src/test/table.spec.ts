@@ -160,11 +160,12 @@ describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 				2,
 				2,
 			);
-
+			/* eslint-disable @typescript-eslint/no-unsafe-return */
 			assert.throws(() => slice.getCellValue(-1, 0));
 			assert.throws(() => slice.getCellValue(3, 0));
 			assert.throws(() => slice.getCellValue(0, -1));
 			assert.throws(() => slice.getCellValue(0, 3));
+			/* eslint-enable @typescript-eslint/no-unsafe-return */
 		});
 
 		it("Annotations work when proxied through table slice", async () => {

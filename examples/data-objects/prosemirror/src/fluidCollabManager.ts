@@ -8,6 +8,7 @@
 import { EventEmitter } from "@fluid-example/example-utils";
 import { assert } from "@fluidframework/core-utils/legacy";
 import {
+	// eslint-disable-next-line import-x/no-deprecated
 	createGroupOp,
 	createRemoveRangeOp,
 	// eslint-disable-next-line import-x/no-internal-modules -- #26905: `merge-tree` internals used in examples
@@ -280,6 +281,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
+					// eslint-disable-next-line import-x/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
 
@@ -344,6 +346,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
+					// eslint-disable-next-line import-x/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
 
@@ -351,6 +354,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 				}
 
 				case "addMark": {
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ?? could change behavior if attrs is falsy but defined
 					const attrs = stepAsJson.mark.attrs || true;
 
 					this.text.annotateRange(stepAsJson.from, stepAsJson.to, {

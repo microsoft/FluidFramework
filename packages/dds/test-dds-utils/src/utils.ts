@@ -6,6 +6,7 @@
 import type {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/test-runtime-utils/legacy";
 
 export function makeUnreachableCodePathProxy<T extends object>(name: string): T {

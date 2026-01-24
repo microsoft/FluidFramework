@@ -31,7 +31,7 @@ function getLastEditDetailsFromMessage(
 	quorum: IQuorumClients,
 ): ILastEditDetails | undefined {
 	// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 	const sequencedClient = quorum.getMember(message.clientId as string);
 	const user = sequencedClient?.client.user;
 	if (user !== undefined) {

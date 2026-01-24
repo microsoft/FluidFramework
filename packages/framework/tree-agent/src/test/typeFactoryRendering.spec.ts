@@ -513,7 +513,7 @@ describe("renderTypeFactoryTypeScript", () => {
 			// Create an empty lookup that doesn't have the type
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-arguments
 			const emptyLookup = new WeakMap<any, any>();
-
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			assert.throws(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				() => renderTypeFactoryTypeScript(instanceOfType, () => "", emptyLookup),
@@ -524,7 +524,7 @@ describe("renderTypeFactoryTypeScript", () => {
 		it("throws UsageError for unsupported type kind", () => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 			const invalidType = { _kind: "invalid" } as any;
-
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			assert.throws(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				() => renderTypeFactoryTypeScript(invalidType, () => "", instanceOfsTypeFactory),
@@ -539,7 +539,7 @@ describe("renderTypeFactoryTypeScript", () => {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				renderTypeFactoryTypeScript(invalidType, () => "", instanceOfsTypeFactory);
 				assert.fail("Expected error to be thrown");
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			} catch (error: any) {
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 				assert(error.message.includes("Expected one of:"));

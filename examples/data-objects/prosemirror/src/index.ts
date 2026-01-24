@@ -56,7 +56,7 @@ class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
 						collabManager: proseMirror.collabManager,
 					}),
 				) as any;
-
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				let getMountableDefaultView = async (): Promise<any> => view;
 				if (MountableView.canMount(view)) {
 					getMountableDefaultView = async (): Promise<MountableView> =>

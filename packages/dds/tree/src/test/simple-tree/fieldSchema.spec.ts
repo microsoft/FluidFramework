@@ -83,6 +83,7 @@ describe("fieldSchema", () => {
 			type _check7 = requireTrue<areSafelyAssignable<I9, never>>;
 			type _check8 = requireTrue<areSafelyAssignable<I10, never>>;
 
+			// eslint-disable-next-line no-inner-declarations
 			function _generic<T extends ImplicitAllowedTypes>() {
 				type I14 = InsertableTreeFieldFromImplicitField<T>;
 				type IOptional = InsertableTreeFieldFromImplicitField<
@@ -119,6 +120,7 @@ describe("fieldSchema", () => {
 			type I13 = InsertableField<typeof booleanSchema>;
 			type _check13 = requireTrue<areSafelyAssignable<I13, boolean>>;
 
+			// eslint-disable-next-line no-inner-declarations
 			function _generic<T extends ImplicitAllowedTypes>() {
 				type I14 = InsertableField<T>;
 				type IOptional = InsertableField<FieldSchema<FieldKind.Optional, T>>;

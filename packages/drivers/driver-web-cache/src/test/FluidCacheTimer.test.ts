@@ -75,7 +75,7 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 describe("FluidCacheTimer tests", () => {
 	beforeEach(() => {
 		// Reset the indexed db before each test so that it starts off in an empty state
-		// eslint-disable-next-line import-x/no-internal-modules, @typescript-eslint/no-require-imports
+		// eslint-disable-next-line import-x/no-internal-modules, @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 		const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
 		(window.indexedDB as any) = new FDBFactory();
 	});

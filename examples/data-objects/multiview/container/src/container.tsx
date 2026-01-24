@@ -72,7 +72,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 					containerRuntime,
 					constellationComponentName,
 				);
-				/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
+				/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/explicit-function-return-type */
 				const view = (
 					<DefaultView
 						simpleCoordinate={simpleCoordinate}
@@ -93,7 +93,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 					getDefaultDataObject: async (): Promise<FluidObject> => ({}),
 					getMountableDefaultView,
 				};
-				/* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
+				/* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/explicit-function-return-type */
 			},
 		});
 	}

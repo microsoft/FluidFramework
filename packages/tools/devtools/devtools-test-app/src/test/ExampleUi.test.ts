@@ -5,9 +5,7 @@
 
 import { retryWithEventualValue } from "@fluidframework/test-utils/internal";
 
-import { globals as untypedGlobals } from "../../jest.config.cjs";
-
-const globals = untypedGlobals as { PATH: string };
+import { globals } from "../../jest.config.cjs";
 
 describe("End to end tests", () => {
 	/**
@@ -34,13 +32,14 @@ describe("End to end tests", () => {
 	beforeAll(async () => {
 		// Wait for the page to load first before running any tests
 		// so this time isn't attributed to the first test
-
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
 		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		await page.waitForFunction(() => globalThis.fluidStarted);
 	}, 45_000);
 
 	beforeEach(async () => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
 		await page.goto(globals.PATH, { waitUntil: "load" });
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		await page.waitForFunction(() => globalThis.fluidStarted);

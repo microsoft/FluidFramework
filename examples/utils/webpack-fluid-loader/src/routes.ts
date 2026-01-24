@@ -380,7 +380,7 @@ const fluid = (
 	options: RouteOptions,
 ): void => {
 	const documentId = req.params.id;
-	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
 	const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;
 
 	const umd = packageJson.fluid.browser?.umd;

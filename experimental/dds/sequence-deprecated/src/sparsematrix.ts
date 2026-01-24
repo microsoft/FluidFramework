@@ -153,6 +153,7 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 	}
 
 	public getTag(pos: number): any {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.tags[pos];
 	}
 
@@ -285,6 +286,7 @@ export class SparseMatrixClass extends SharedSegmentSequence<MatrixSegment> {
 	public getTag(row: number, col: number): any {
 		const { segment, offset } = this.getSegment(row, col);
 		if (segment && RunSegment.is(segment)) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return segment.getTag(offset ?? 0);
 		}
 		return undefined;

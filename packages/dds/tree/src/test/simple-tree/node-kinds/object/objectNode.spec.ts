@@ -94,6 +94,7 @@ const schemaFactory = new SchemaFactory("Test");
 
 	// Empty case
 	{
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type result = InsertableObjectFromSchemaRecord<{}>;
 		type _check = requireAssignableTo<result, Record<string, never>>;
 	}
@@ -174,7 +175,7 @@ const schemaFactory = new SchemaFactory("Test");
 	// Generic case
 	{
 		type result = ObjectFromSchemaRecord<RestrictiveStringRecord<ImplicitFieldSchema>>;
-
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 
 		type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
@@ -182,8 +183,9 @@ const schemaFactory = new SchemaFactory("Test");
 
 	// Empty case
 	{
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type result = ObjectFromSchemaRecord<{}>;
-
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 		type _check2 = requireFalse<isAssignableTo<result, { x: unknown }>>;
 
@@ -641,9 +643,9 @@ describeHydration(
 				type Create<T extends RecordX> = (data: RecordX extends T ? never : T) => unknown;
 
 				// Two identical interfaces
-
+				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				interface X1<T extends RecordX = RecordX> extends Create<T> {}
-
+				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				interface X2<T extends RecordX = RecordX> extends Create<T> {}
 
 				// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -696,7 +698,7 @@ describeHydration(
 				}) {
 					// Since fields are own properties, we expect inherited properties (like this) to be shadowed by fields.
 					// However in TypeScript they work like inherited properties, so the types don't make the runtime behavior.
-
+					// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 					public override get foo(): 5 {
 						return 5;
 					}

@@ -95,7 +95,7 @@ type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableT
 	allowUnused<requireAssignableTo<typeof TestA.a, 1>>();
 
 	// Switch using the actual constants works fine
-
+	// eslint-disable-next-line no-inner-declarations
 	function switchLiterals(x: TestA) {
 		switch (x) {
 			case 1: {
@@ -111,7 +111,7 @@ type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableT
 	}
 
 	// Switch using the enum members does not narrow without unbrand
-
+	// eslint-disable-next-line no-inner-declarations
 	function switchConstants(x: TestA) {
 		switch (x) {
 			case TestA.a: {
@@ -128,7 +128,7 @@ type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableT
 	}
 
 	// Switch using the enum members does narrow with unbrand
-
+	// eslint-disable-next-line no-inner-declarations
 	function switchUnbrand(x: TestA) {
 		switch (x) {
 			case unbrand(TestA.a): {
