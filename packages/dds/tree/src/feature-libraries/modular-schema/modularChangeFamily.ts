@@ -2018,8 +2018,15 @@ export class ModularChangeFamily
 	public buildEditor(
 		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
+		rebaseVersion: RebaseVersion = 1,
 	): ModularEditBuilder {
-		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver, this.codecOptions);
+		return new ModularEditBuilder(
+			this,
+			this.fieldKinds,
+			changeReceiver,
+			this.codecOptions,
+			rebaseVersion,
+		);
 	}
 
 	private createEmptyFieldChange(fieldKind: FieldKindIdentifier): FieldChange {
@@ -3466,16 +3473,20 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	private transactionDepth: number = 0;
 	private idAllocator: IdAllocator;
 	private readonly codecOptions: CodecWriteOptions;
+	public readonly rebaseVersion: RebaseVersion;
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 		codecOptions: CodecWriteOptions,
+		rebaseVersionOverride?: RebaseVersion,
 	) {
 		super(family, changeReceiver);
 		this.idAllocator = idAllocatorFromMaxId();
 		this.codecOptions = codecOptions;
+		// TODO: make this dependent on the CodecWriteOptions
+		this.rebaseVersion = rebaseVersionOverride ?? 1;
 	}
 
 	public override enterTransaction(): void {
@@ -3508,7 +3519,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		revision: RevisionTag,
 	): GlobalEditDescription {
 		if (content.topLevelLength === 0) {
-			return { type: "global", revision, rebaseVersion: 1 };
+			return { type: "global", revision };
 		}
 
 		// This content will be added to a GlobalEditDescription whose lifetime exceeds the scope of this function.
@@ -3521,7 +3532,6 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			type: "global",
 			builds,
 			revision,
-			rebaseVersion: 1,
 		};
 	}
 
@@ -3537,14 +3547,13 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		fieldKind: FieldKindIdentifier,
 		change: FieldChangeset,
 		revision: RevisionTag,
-		rebaseVersion: RebaseVersion,
 	): void {
 		const localCrossFieldKeys = getChangeHandler(this.fieldKinds, fieldKind).getCrossFieldKeys(
 			change,
 		);
 
 		const modularChange = buildModularChangesetFromField({
-			rebaseVersion,
+			rebaseVersion: this.rebaseVersion,
 			path: field,
 			fieldChange: { fieldKind, change },
 			nodeChanges: newTupleBTree(),
@@ -3570,14 +3579,14 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			return makeAnonChange(
 				change.type === "global"
 					? makeModularChangeset({
-							rebaseVersion: change.rebaseVersion,
+							rebaseVersion: this.rebaseVersion,
 							maxId: this.idAllocator.getMaxId(),
 							builds: change.builds,
 							rootNodes: renameTableFromRenameDescriptions(change.renames ?? []),
 							revisions: [{ revision: change.revision }],
 						})
 					: buildModularChangesetFromField({
-							rebaseVersion: change.rebaseVersion,
+							rebaseVersion: this.rebaseVersion,
 							path: change.field,
 							fieldChange: {
 								fieldKind: change.fieldKind,
@@ -3621,7 +3630,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		this.applyChange(
 			tagChange(
 				buildModularChangesetFromNode({
-					rebaseVersion: 1,
+					rebaseVersion: this.rebaseVersion,
 					path,
 					nodeChange,
 					nodeChanges: newTupleBTree(),
@@ -3644,7 +3653,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		this.applyChange(
 			tagChange(
 				buildModularChangesetFromNode({
-					rebaseVersion: 1,
+					rebaseVersion: this.rebaseVersion,
 					path,
 					nodeChange,
 					nodeChanges: newTupleBTree(),
@@ -3667,7 +3676,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		}
 
 		const changeset = makeModularChangeset({
-			rebaseVersion: 1,
+			rebaseVersion: this.rebaseVersion,
 			maxId: -1,
 			noChangeConstraint: { violated: false },
 		});
@@ -3683,7 +3692,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		}
 
 		const changeset = makeModularChangeset({
-			rebaseVersion: 1,
+			rebaseVersion: this.rebaseVersion,
 			maxId: -1,
 			noChangeConstraintOnRevert: { violated: false },
 		});
@@ -3835,7 +3844,6 @@ function buildModularChangesetFromNode(props: {
 }
 
 export interface FieldEditDescription {
-	rebaseVersion: RebaseVersion;
 	type: "field";
 	field: NormalizedFieldUpPath;
 	fieldKind: FieldKindIdentifier;
@@ -3844,7 +3852,6 @@ export interface FieldEditDescription {
 }
 
 export interface GlobalEditDescription {
-	rebaseVersion: RebaseVersion;
 	type: "global";
 	revision: RevisionTag;
 	builds?: ChangeAtomIdBTree<TreeChunk>;

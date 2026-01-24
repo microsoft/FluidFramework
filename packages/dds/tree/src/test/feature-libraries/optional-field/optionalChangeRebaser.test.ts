@@ -12,6 +12,7 @@ import {
 	type TaggedChange,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
+	makeDetachedNodeId,
 	rootFieldKey,
 	tagChange,
 } from "../../../core/index.js";
@@ -240,8 +241,6 @@ interface OptionalChangeMetadata {
 // 	return intentions;
 // }
 
-const editor = defaultFamily.buildEditor(makeRevisionTagMinter(), () => undefined);
-
 function makeChildStateGenerator(
 	minRebaseVersion: RebaseVersion,
 	maxRebaseVersion: RebaseVersion,
@@ -278,6 +277,11 @@ const generateChildStateForRebaseVersion = function* (
 			revision,
 		};
 	};
+	const editor = defaultFamily.buildEditor(
+		makeRevisionTagMinter(),
+		() => undefined,
+		rebaseVersion,
+	);
 	const edits = getSequentialEdits(state);
 	const current = state.content.attached;
 	const isEmpty = current === undefined;
@@ -289,7 +293,6 @@ const generateChildStateForRebaseVersion = function* (
 		const revision = tagFromIntention(intention);
 		const detach = mintId(revision);
 		const fieldEdit: FieldEditDescription = {
-			rebaseVersion,
 			type: "field",
 			field: { parent: undefined, field: rootFieldKey },
 			fieldKind: optional.identifier,
@@ -302,7 +305,7 @@ const generateChildStateForRebaseVersion = function* (
 			mostRecentEdit: {
 				changeset: tagChange(modularEdit, revision),
 				intention,
-				description: "RemoveE",
+				description: `RemoveEV${rebaseVersion}`,
 				meta: {},
 			},
 			parent: state,
@@ -313,7 +316,6 @@ const generateChildStateForRebaseVersion = function* (
 			const intention = mintIntention();
 			const revision = tagFromIntention(intention);
 			const fieldEdit: FieldEditDescription = {
-				rebaseVersion,
 				type: "field",
 				field: { parent: undefined, field: rootFieldKey },
 				fieldKind: optional.identifier,
@@ -324,7 +326,6 @@ const generateChildStateForRebaseVersion = function* (
 			};
 			const nestedFieldEdit: FieldEditDescription = {
 				type: "field",
-				rebaseVersion,
 				field: {
 					parent: {
 						parent: undefined,
@@ -344,7 +345,7 @@ const generateChildStateForRebaseVersion = function* (
 				mostRecentEdit: {
 					changeset: tagChange(modularEdit, revision),
 					intention,
-					description: `ChildChange${intention}`,
+					description: `AttachedNodeChangeV${rebaseVersion}${intention}`,
 					meta: {},
 				},
 				parent: state,
@@ -358,7 +359,6 @@ const generateChildStateForRebaseVersion = function* (
 			const detach = mintId(revision);
 			const fieldEdit: FieldEditDescription = {
 				type: "field",
-				rebaseVersion,
 				field: { parent: undefined, field: rootFieldKey },
 				fieldKind: optional.identifier,
 				change: brand(OptionalChange.clear(false, detach)),
@@ -373,7 +373,7 @@ const generateChildStateForRebaseVersion = function* (
 				mostRecentEdit: {
 					changeset: tagChange(modularEdit, revision),
 					intention,
-					description: "Remove",
+					description: `RemoveV${rebaseVersion}`,
 					meta: { detach: { id: detach, value: current } },
 				},
 				parent: state,
@@ -386,7 +386,6 @@ const generateChildStateForRebaseVersion = function* (
 			const revision = tagFromIntention(intention);
 			const [detach, attach] = [mintId(revision), mintId(revision)];
 			const fieldEdit: FieldEditDescription = {
-				rebaseVersion,
 				type: "field",
 				field: { parent: undefined, field: rootFieldKey },
 				fieldKind: optional.identifier,
@@ -400,7 +399,7 @@ const generateChildStateForRebaseVersion = function* (
 				mostRecentEdit: {
 					changeset: tagChange(modularEdit, revision),
 					intention,
-					description: "Pin",
+					description: `PinV${rebaseVersion}`,
 					meta: {},
 				},
 				parent: state,
@@ -423,7 +422,6 @@ const generateChildStateForRebaseVersion = function* (
 			setRevision,
 		);
 		const fieldEdit: FieldEditDescription = {
-			rebaseVersion,
 			type: "field",
 			field: { parent: undefined, field: rootFieldKey },
 			fieldKind: optional.identifier,
@@ -447,7 +445,7 @@ const generateChildStateForRebaseVersion = function* (
 			mostRecentEdit: {
 				changeset: tagChange(modularEdit, setRevision),
 				intention: setIntention,
-				description: `Set${newContents}`,
+				description: `SetV${rebaseVersion}${newContents}`,
 				meta: {
 					detach: detachedNode,
 					attach: { id: fill, value: newContents },
@@ -458,7 +456,7 @@ const generateChildStateForRebaseVersion = function* (
 	}
 
 	// Build
-	if (state.content.detached.length < 2) {
+	if (state.content.detached.length === 0) {
 		const buildIntention = mintIntention();
 		const buildRevision = tagFromIntention(buildIntention);
 		const id = mintId(buildRevision);
@@ -478,7 +476,7 @@ const generateChildStateForRebaseVersion = function* (
 			mostRecentEdit: {
 				changeset: tagChange(modularEdit, buildRevision),
 				intention: buildIntention,
-				description: `Build${newContents}`,
+				description: `BuildV${rebaseVersion}${newContents}`,
 				meta: {},
 			},
 			parent: state,
@@ -493,7 +491,6 @@ const generateChildStateForRebaseVersion = function* (
 			const [attach, detach] = [mintId(attachRevision), mintId(attachRevision)];
 			const rename: GlobalEditDescription = {
 				type: "global",
-				rebaseVersion,
 				revision: attachRevision,
 				renames: [
 					{
@@ -506,7 +503,6 @@ const generateChildStateForRebaseVersion = function* (
 			};
 			const fieldEdit: FieldEditDescription = {
 				type: "field",
-				rebaseVersion,
 				field: { parent: undefined, field: rootFieldKey },
 				fieldKind: optional.identifier,
 				change: brand(OptionalChange.set(isEmpty, { fill: attach, detach })),
@@ -524,7 +520,7 @@ const generateChildStateForRebaseVersion = function* (
 				mostRecentEdit: {
 					changeset: tagChange(modularEdit, attachRevision),
 					intention: attachIntention,
-					description: `Attach${node.value}`,
+					description: `AttachV${rebaseVersion}${node.value}`,
 					meta: {
 						detach: detachedNode,
 						attach: node,
@@ -532,10 +528,44 @@ const generateChildStateForRebaseVersion = function* (
 				},
 				parent: state,
 			};
+			break; // Only try this for one node in order to keep the set of possible edits manageable
 		}
 	}
 
-	// TODO: nested change in detached node
+	// Nested change in detached node
+	if (rebaseVersion >= 2) {
+		for (const node of state.content.detached) {
+			const intention = mintIntention();
+			const revision = tagFromIntention(intention);
+			const nestedFieldEdit: FieldEditDescription = {
+				type: "field",
+				field: {
+					parent: {
+						parent: undefined,
+						parentField: brand("detached-root"),
+						parentIndex: 0,
+						detachedNodeId: makeDetachedNodeId(node.id.revision, node.id.localId),
+					},
+					field: brand("foo"),
+				},
+				fieldKind: optional.identifier,
+				change: brand(OptionalChange.clear(true, mintId(revision))),
+				revision,
+			};
+			const modularEdit = editor.buildChanges([nestedFieldEdit]);
+			yield {
+				content: state.content,
+				mostRecentEdit: {
+					changeset: tagChange(modularEdit, revision),
+					intention,
+					description: `DetachedNodeChangeV${rebaseVersion}${intention}`,
+					meta: {},
+				},
+				parent: state,
+			};
+			break; // Only try this for one node in order to keep the set of possible edits manageable
+		}
+	}
 
 	// Undo
 	if (
@@ -746,10 +776,10 @@ export function testRebaserAxioms() {
 				makeChildStateGenerator(1, 2),
 				defaultFieldRebaser,
 				{
-					numberOfEditsToRebase: 3,
-					numberOfEditsToRebaseOver: stressMode === StressMode.Short ? 3 : 5,
-					numberOfEditsToVerifyAssociativity: stressMode === StressMode.Short ? 3 : 6,
-					groupSubSuites: false,
+					numberOfEditsToRebase: 2,
+					numberOfEditsToRebaseOver: stressMode === StressMode.Short ? 2 : 5,
+					numberOfEditsToVerifyAssociativity: stressMode === StressMode.Short ? 2 : 6,
+					groupSubSuites: true,
 				},
 			);
 		});

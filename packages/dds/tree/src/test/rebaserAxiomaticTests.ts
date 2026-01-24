@@ -427,7 +427,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset, TMeta = un
 		}
 	});
 
-	describe.only("Compose associativity", () => {
+	describe("Compose associativity", () => {
 		for (const initialState of initialStates) {
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				for (const namedSourceEdits of generatePossibleSequenceOfEdits(
