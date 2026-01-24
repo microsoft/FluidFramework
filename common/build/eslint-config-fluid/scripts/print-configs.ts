@@ -20,7 +20,7 @@ import { ESLint } from "eslint";
 import type { Linter } from "eslint";
 import sortJson from "sort-json";
 
-// Import flat configs directly from flat.mts
+// Import flat configs directly from flat.mjs
 import { recommended, strict, minimalDeprecated } from "../flat.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
