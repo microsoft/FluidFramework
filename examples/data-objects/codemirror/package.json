@@ -70,7 +70,7 @@
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@types/codemirror": "5.60.7",
-		"@types/node": "^18.19.0",
+		"@types/node": "~20.19.0",
 		"@types/react": "^18.3.11",
 		"copyfiles": "^2.4.1",
 		"css-loader": "^7.1.2",

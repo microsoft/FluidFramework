@@ -162,6 +162,14 @@ module.exports = {
 			range: "~",
 		},
 
+		// @types packages should often use often use ~ to avoid pulling in types with more features than the code they are the types for
+		{
+			label: "Must use tilde dependency ranges",
+			dependencies: ["@types/node"],
+			packages: ["**"],
+			range: "~",
+		},
+
 		// All deps should use caret ranges unless previously overridden
 		{
 			label: "Dependencies should use caret dependency ranges",

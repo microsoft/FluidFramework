@@ -96,7 +96,7 @@
 		"@fluidframework/build-tools": "^0.63.0",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^18.19.0",
+		"@types/node": "~20.19.0",
 		"@types/semver": "^7.7.0",
 		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",

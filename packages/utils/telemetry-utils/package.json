@@ -134,7 +134,7 @@
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/debug": "^4.1.5",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^18.19.0",
+		"@types/node": "~20.19.0",
 		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",
 		"concurrently": "^9.2.1",
