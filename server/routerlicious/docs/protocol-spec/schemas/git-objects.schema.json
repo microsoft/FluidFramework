@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluidframework.com/schemas/git-objects.schema.json",
+  "title": "Git Storage Objects",
+  "description": "Schemas for Git-like storage API objects",
+  "$defs": {
+    "ICreateBlobParams": {
+      "type": "object",
+      "description": "Parameters for creating a blob",
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "Base64-encoded blob content"
+        },
+        "encoding": {
+          "type": "string",
+          "enum": ["base64", "utf-8"],
+          "description": "Content encoding"
+        }
+      },
+      "required": ["content", "encoding"]
+    },
+    "ICreateBlobResponse": {
+      "type": "object",
+      "description": "Response from blob creation",
+      "properties": {
+        "sha": {
+          "type": "string",
+          "description": "SHA hash of the blob"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL to retrieve the blob"
+        }
+      },
+      "required": ["sha", "url"]
+    },
+    "IBlob": {
+      "type": "object",
+      "description": "A git blob object",
+      "properties": {
+        "sha": {
+          "type": "string",
+          "description": "SHA hash"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Blob size in bytes"
+        },
+        "content": {
+          "type": "string",
+          "description": "Blob content (encoded)"
+        },
+        "encoding": {
+          "type": "string",
+          "enum": ["base64", "utf-8"],
+          "description": "Content encoding"
+        },
+        "url": {
+          "type": "string",
+          "description": "Blob URL"
+        }
+      },
+      "required": ["sha", "size", "content", "encoding", "url"]
+    },
+    "ICreateTreeEntry": {
+      "type": "object",
+      "description": "Entry for tree creation",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Entry path/name"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["100644", "100755", "040000", "120000"],
+          "description": "File mode (file, executable, directory, symlink)"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["blob", "tree"],
+          "description": "Entry type"
+        },
+        "sha": {
+          "type": "string",
+          "description": "SHA of referenced object"
+        }
+      },
+      "required": ["path", "mode", "type", "sha"]
+    },
+    "ICreateTreeParams": {
+      "type": "object",
+      "description": "Parameters for creating a tree",
+      "properties": {
+        "tree": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ICreateTreeEntry" },
+          "description": "Tree entries"
+        }
+      },
+      "required": ["tree"]
+    },
+    "ITreeEntry": {
+      "type": "object",
+      "description": "A tree entry in response",
+      "properties": {
+        "path": { "type": "string" },
+        "mode": { "type": "string" },
+        "sha": { "type": "string" },
+        "size": { "type": "integer" },
+        "type": { "type": "string" },
+        "url": { "type": "string" }
+      },
+      "required": ["path", "mode", "sha", "type", "url"]
+    },
+    "ITree": {
+      "type": "object",
+      "description": "A git tree object",
+      "properties": {
+        "sha": { "type": "string" },
+        "url": { "type": "string" },
+        "tree": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ITreeEntry" }
+        }
+      },
+      "required": ["sha", "url", "tree"]
+    },
+    "IAuthor": {
+      "type": "object",
+      "description": "Commit author information",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 date"
+        }
+      },
+      "required": ["name", "email", "date"]
+    },
+    "ICreateCommitParams": {
+      "type": "object",
+      "description": "Parameters for creating a commit",
+      "properties": {
+        "tree": {
+          "type": "string",
+          "description": "Tree SHA"
+        },
+        "parents": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Parent commit SHAs"
+        },
+        "message": {
+          "type": "string",
+          "description": "Commit message"
+        },
+        "author": {
+          "$ref": "#/$defs/IAuthor",
+          "description": "Author information"
+        }
+      },
+      "required": ["tree", "parents", "message", "author"]
+    },
+    "ICommit": {
+      "type": "object",
+      "description": "A git commit object",
+      "properties": {
+        "sha": { "type": "string" },
+        "tree": {
+          "type": "object",
+          "properties": {
+            "sha": { "type": "string" },
+            "url": { "type": "string" }
+          }
+        },
+        "parents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sha": { "type": "string" },
+              "url": { "type": "string" }
+            }
+          }
+        },
+        "message": { "type": "string" },
+        "author": { "$ref": "#/$defs/IAuthor" },
+        "committer": { "$ref": "#/$defs/IAuthor" },
+        "url": { "type": "string" }
+      },
+      "required": ["sha", "tree", "parents", "message", "author", "committer", "url"]
+    },
+    "IRef": {
+      "type": "object",
+      "description": "A git reference",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "description": "Reference name (e.g., refs/heads/main)"
+        },
+        "object": {
+          "type": "object",
+          "properties": {
+            "sha": { "type": "string" },
+            "type": { "type": "string" },
+            "url": { "type": "string" }
+          },
+          "required": ["sha", "type", "url"]
+        },
+        "url": { "type": "string" }
+      },
+      "required": ["ref", "object", "url"]
+    },
+    "ICreateRefParams": {
+      "type": "object",
+      "description": "Parameters for creating a reference",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "description": "Reference name"
+        },
+        "sha": {
+          "type": "string",
+          "description": "Commit SHA to point to"
+        }
+      },
+      "required": ["ref", "sha"]
+    },
+    "IPatchRefParams": {
+      "type": "object",
+      "description": "Parameters for updating a reference",
+      "properties": {
+        "sha": {
+          "type": "string",
+          "description": "New commit SHA"
+        }
+      },
+      "required": ["sha"]
+    }
+  }
+}
