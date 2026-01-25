@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluidframework.com/schemas/document-message.schema.json",
+  "title": "IDocumentMessage",
+  "description": "A document operation submitted by a client",
+  "type": "object",
+  "properties": {
+    "clientSequenceNumber": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Client-assigned sequence number (monotonically increasing per client)"
+    },
+    "referenceSequenceNumber": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Sequence number client had received when creating this op"
+    },
+    "type": {
+      "type": "string",
+      "description": "Operation type",
+      "enum": [
+        "noop",
+        "join",
+        "leave",
+        "propose",
+        "reject",
+        "accept",
+        "summarize",
+        "summaryAck",
+        "summaryNack",
+        "op",
+        "noClient",
+        "tripComplete",
+        "control"
+      ]
+    },
+    "contents": {
+      "description": "Operation payload (type depends on operation type)"
+    },
+    "metadata": {
+      "description": "Application-provided metadata"
+    },
+    "serverMetadata": {
+      "description": "Server-provided metadata"
+    },
+    "traces": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ITrace"
+      },
+      "description": "Latency trace points"
+    },
+    "compression": {
+      "type": "string",
+      "description": "Compression algorithm used on contents"
+    }
+  },
+  "required": ["clientSequenceNumber", "referenceSequenceNumber", "type", "contents"],
+  "$defs": {
+    "ITrace": {
+      "type": "object",
+      "properties": {
+        "service": {
+          "type": "string",
+          "description": "Service generating the trace"
+        },
+        "action": {
+          "type": "string",
+          "description": "Action being traced (e.g., 'start', 'end')"
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Timestamp in milliseconds with nanosecond precision"
+        }
+      },
+      "required": ["service", "action", "timestamp"]
+    }
+  }
+}

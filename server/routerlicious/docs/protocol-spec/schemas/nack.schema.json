@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluidframework.com/schemas/nack.schema.json",
+  "title": "INack",
+  "description": "A negative acknowledgment indicating operation rejection",
+  "type": "object",
+  "properties": {
+    "operation": {
+      "oneOf": [
+        { "$ref": "document-message.schema.json" },
+        { "type": "null" }
+      ],
+      "description": "The rejected operation (may be undefined)"
+    },
+    "sequenceNumber": {
+      "type": "integer",
+      "description": "Sequence number to catch up to (-1 for non-op nacks)"
+    },
+    "content": {
+      "$ref": "#/$defs/INackContent",
+      "description": "Error details"
+    }
+  },
+  "required": ["sequenceNumber", "content"],
+  "$defs": {
+    "INackContent": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "HTTP-style error code (400, 403, 413, 429, etc.)"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "ThrottlingError",
+            "InvalidScopeError",
+            "BadRequestError",
+            "LimitExceededError"
+          ],
+          "description": "Error type classification"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error message"
+        },
+        "retryAfter": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Seconds to wait before retry (throttling only)"
+        }
+      },
+      "required": ["code", "type", "message"]
+    }
+  }
+}
