@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-Add checkSchemaCompatibilitySnapshots utility
+Promote checkSchemaCompatibilitySnapshots to beta
 
 [`checkSchemaCompatibilitySnapshots`](https://fluidframework.com/docs/api/fluid-framework#checkschemacompatibilitysnapshots-function) has been promoted to `@beta`.
 It is recommended that all SharedTree applications use this API to write a schema compatibility test.
