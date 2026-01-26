@@ -272,9 +272,6 @@ importers:
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
-      cross-env:
-        specifier: ^10.1.0
-        version: 10.1.0
       eslint:
         specifier: ~9.39.1
         version: 9.39.1(jiti@2.6.1)
