@@ -15,6 +15,7 @@ import ps from "ps-node";
 import type { TestUsers } from "./getTestUsers.js";
 import type { TestConfiguration } from "./testConfigFile.js";
 import { initialize } from "./utils.js";
+import { processAttachMessageGCData } from "@fluidframework/runtime-utils";
 
 const createLoginEnv = (userName: string, password: string): string =>
 	`{"${userName}": "${password}"}`;
@@ -76,6 +77,7 @@ export async function stressTest(
 	// Get legacy package directory from environment variable if available
 	const legacyPackageDir = process.env.LEGACY_PACKAGE_DIR;
 	process.stdout.write(`Legacy package dir: ${legacyPackageDir}\n`);
+	process.stdout.write(`Current output directory: ${outputDir}\n`);
 	const hasLegacyVersion = legacyPackageDir !== undefined && legacyPackageDir !== "";
 
 	// Calculate how many runners should use each version
