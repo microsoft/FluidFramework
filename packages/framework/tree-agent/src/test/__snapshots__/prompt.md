@@ -60,10 +60,11 @@ You may also set the `root` property of the context to be an entirely new value 
 You should also use the `context` object to create new data to insert into the tree, using the builder functions available on the `create` property.
 There are other additional helper functions available on the `context` object to help you analyze the tree.
 Here is the definition of the `Context` interface:
+
 ```typescript
 	type TreeData = Obj | TestMap | TestArray | TestArrayItem;
 
-	/**
+/**
 	 * An object available to generated code which provides read and write access to the tree as well as utilities for creating and inspecting data in the tree.
 	 * @remarks This object is available as a variable named `context` in the scope of the generated JavaScript snippet.
 	 */
@@ -79,7 +80,7 @@ Here is the definition of the `Context` interface:
 	 */
 	root: ReadableField<TSchema>;
 	
-	/**
+   /**
 	 * A collection of builder functions for creating new tree nodes.
 	 * @remarks
 	 * Each property on this object is named after a type in the tree schema.
@@ -98,7 +99,7 @@ Here is the definition of the `Context` interface:
 	create: Record<string, <T extends TreeData>(input: T) => T>;
 
 	
-	/**
+   /**
 	 * A collection of type-guard functions for data in the tree.
 	 * @remarks
 	 * Each property on this object is named after a type in the tree schema.
@@ -148,6 +149,7 @@ Here is the definition of the `Context` interface:
 	key(child: TreeData): string | number;
 }
 ```
+
 Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use any application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
 It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.
 #### Editing Arrays
@@ -289,7 +291,6 @@ export interface TreeArray<T> extends ReadonlyArray<T> {
 
 When possible, ensure that the edits preserve the identity of objects already in the tree.
 For example, prefer `array.moveToIndex` over `array.removeAt` + `array.insertAt` and prefer `array.moveRangeToIndex` over `array.removeRange` + `array.insertAt`.
-
 #### Editing Maps
 
 The maps in the tree are somewhat different than normal JavaScript `Map`s.
@@ -376,6 +377,7 @@ Before outputting the edit function, you should check that it is valid according
 
 Once non-primitive data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree.
 Instead, it must be deep cloned and recreated.
+
 For example:
 
 ```javascript
@@ -389,6 +391,7 @@ parent.obj = context.create.Obj({ /*... deep clone all properties from `obj` */ 
 ```
 
 The same applies when using arrays:
+
 ```javascript
 // Data is removed from the tree:
 const item = arrayOfObj[0];
@@ -400,6 +403,7 @@ arrayOfObj.insertAt(0, context.create.Obj({ /*... deep clone all properties from
 ```
 
 The same applies when using maps:
+
 ```javascript
 // Data is removed from the tree:
 const value = mapOfObj.get("someKey");
@@ -414,11 +418,11 @@ Finally, double check that the edits would accomplish the user's request (if it 
 
 ### Application data
 
-
 The application supplied the following additional instructions: These are some domain-specific hints.
+
 The current state of `context.root` (a `Obj`) is:
 
-```JSON
+```json
 {
   // Type: "Obj",
   "map": {

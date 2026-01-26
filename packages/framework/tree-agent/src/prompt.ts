@@ -10,6 +10,7 @@ import type { ReadableField } from "@fluidframework/tree/alpha";
 import { getSimpleSchema } from "@fluidframework/tree/alpha";
 import { normalizeFieldSchema } from "@fluidframework/tree/internal";
 
+import { PromptBuilder } from "./promptBuilder.js";
 import type { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
 import { getFriendlyName, communize, findSchemas } from "./utils.js";
@@ -70,11 +71,13 @@ export function getPrompt(args: {
 					.split("|")
 					.map((part) => part.trim())
 					.find((part) => part.length > 0);
+	const communizedExampleObjectName =
+		exampleObjectName === undefined ? undefined : communize(exampleObjectName);
 
 	const createDocs =
 		exampleObjectName === undefined
 			? ""
-			: `\n	/**
+			: `\n   /**
 	 * A collection of builder functions for creating new tree nodes.
 	 * @remarks
 	 * Each property on this object is named after a type in the tree schema.
@@ -85,9 +88,9 @@ export function getPrompt(args: {
 	 *
 	 * \`\`\`javascript
 	 * // This creates a new ${exampleObjectName} object:
-	 * const ${communize(exampleObjectName)} = context.create.${exampleObjectName}({ ...properties });
+	 * const ${communizedExampleObjectName} = context.create.${exampleObjectName}({ ...properties });
 	 * // Don't do this:
-	 * // const ${communize(exampleObjectName)} = { ...properties };
+	 * // const ${communizedExampleObjectName} = { ...properties };
 	 * \`\`\`
 	 */
 	create: Record<string, <T extends TreeData>(input: T) => T>;\n`;
@@ -95,7 +98,7 @@ export function getPrompt(args: {
 	const isDocs =
 		exampleTypeName === undefined
 			? ""
-			: `\n	/**
+			: `\n   /**
 	 * A collection of type-guard functions for data in the tree.
 	 * @remarks
 	 * Each property on this object is named after a type in the tree schema.
@@ -129,7 +132,7 @@ export function getPrompt(args: {
 	isMap(data: any): boolean;\n`;
 
 	const context = `\`\`\`typescript
-	${nodeTypeUnion === undefined ? "" : `type TreeData = ${nodeTypeUnion};\n\n`}	/**
+	${nodeTypeUnion === undefined ? "" : `type TreeData = ${nodeTypeUnion};\n\n`}/**
 	 * An object available to generated code which provides read and write access to the tree as well as utilities for creating and inspecting data in the tree.
 	 * @remarks This object is available as a variable named \`context\` in the scope of the generated JavaScript snippet.
 	 */
@@ -163,136 +166,206 @@ export function getPrompt(args: {
 }
 \`\`\``;
 
-	const helperMethodExplanation = hasHelperMethods
-		? `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use any application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
-It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.`
-		: "";
+	// Build helper method explanation
+	const helperMethodExplanationBuilder = new PromptBuilder();
+	if (hasHelperMethods) {
+		helperMethodExplanationBuilder.addParagraphs(
+			"Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use any application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.",
+			"It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.",
+		);
+	}
+	const helperMethodExplanation = helperMethodExplanationBuilder.build();
 
-	const reinsertionExplanation = `Once non-primitive data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree.
-Instead, it must be deep cloned and recreated.
-${
-	exampleObjectName === undefined
-		? ""
-		: `For example:
+	// Build reinsertion explanation
+	const reinsertionExplanationBuilder = new PromptBuilder();
+	reinsertionExplanationBuilder.addParagraphs(
+		"Once non-primitive data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree.",
+		"Instead, it must be deep cloned and recreated.",
+	);
 
-\`\`\`javascript
-// Data is removed from the tree:
-const ${communize(exampleObjectName)} = parent.${communize(exampleObjectName)};
-parent.${communize(exampleObjectName)} = undefined;
-// \`${communize(exampleObjectName)}\` cannot be directly re-inserted into the tree - this will throw an error:
-// parent.${communize(exampleObjectName)} = ${communize(exampleObjectName)}; // ❌ A node may not be inserted into the tree more than once
+	if (exampleObjectName !== undefined) {
+		reinsertionExplanationBuilder
+			.addBlank()
+			.addParagraphs("For example:")
+			.addBlank()
+			.addCodeBlock(
+				"javascript",
+				`// Data is removed from the tree:
+const ${communizedExampleObjectName} = parent.${communizedExampleObjectName};
+parent.${communizedExampleObjectName} = undefined;
+// \`${communizedExampleObjectName}\` cannot be directly re-inserted into the tree - this will throw an error:
+// parent.${communizedExampleObjectName} = ${communizedExampleObjectName}; // ❌ A node may not be inserted into the tree more than once
 // Instead, it must be deep cloned and recreated before insertion:
-parent.${communize(exampleObjectName)} = context.create.${exampleObjectName}({ /*... deep clone all properties from \`${communize(exampleObjectName)}\` */ });
-\`\`\`${
-				hasArrays
-					? `\n\nThe same applies when using arrays:\n\`\`\`javascript
-// Data is removed from the tree:
+parent.${communizedExampleObjectName} = context.create.${exampleObjectName}({ /*... deep clone all properties from \`${communizedExampleObjectName}\` */ });`,
+			);
+
+		if (hasArrays) {
+			reinsertionExplanationBuilder
+				.addBlank()
+				.addParagraphs("The same applies when using arrays:")
+				.addBlank()
+				.addCodeBlock(
+					"javascript",
+					`// Data is removed from the tree:
 const item = arrayOf${exampleObjectName}[0];
 arrayOf${exampleObjectName}.removeAt(0);
 // \`item\` cannot be directly re-inserted into the tree - this will throw an error:
 arrayOf${exampleObjectName}.insertAt(0, item); // ❌ A node may not be inserted into the tree more than once
 // Instead, it must be deep cloned and recreated before insertion:
-arrayOf${exampleObjectName}.insertAt(0, context.create.${exampleObjectName}({ /*... deep clone all properties from \`item\` */ }));
-\`\`\``
-					: ""
-			}${
-				hasMaps
-					? `\n\nThe same applies when using maps:
-\`\`\`javascript
-// Data is removed from the tree:
+arrayOf${exampleObjectName}.insertAt(0, context.create.${exampleObjectName}({ /*... deep clone all properties from \`item\` */ }));`,
+				);
+		}
+
+		if (hasMaps) {
+			reinsertionExplanationBuilder
+				.addBlank()
+				.addParagraphs("The same applies when using maps:")
+				.addBlank()
+				.addCodeBlock(
+					"javascript",
+					`// Data is removed from the tree:
 const value = mapOf${exampleObjectName}.get("someKey");
 mapOf${exampleObjectName}.delete("someKey");
 // \`value\` cannot be directly re-inserted into the tree - this will throw an error:
 mapOf${exampleObjectName}.set("someKey", value); // ❌ A node may not be inserted into the tree more than once
 // Instead, it must be deep cloned and recreated before insertion:
-mapOf${exampleObjectName}.set("someKey", context.create.${exampleObjectName}({ /*... deep clone all properties from \`value\` */ }));
-\`\`\``
-					: ""
-			}`
-}`;
+mapOf${exampleObjectName}.set("someKey", context.create.${exampleObjectName}({ /*... deep clone all properties from \`value\` */ }));`,
+				);
+		}
+	}
+	const reinsertionExplanation = reinsertionExplanationBuilder.build();
 
-	const arrayEditing = `#### Editing Arrays
+	// Build array editing section
+	const arrayEditingBuilder = new PromptBuilder();
+	arrayEditingBuilder
+		.addHeading(4, "Editing Arrays")
+		.addBlank()
+		.addParagraphs(
+			"The arrays in the tree are somewhat different than normal JavaScript `Array`s.",
+			"Read-only operations are generally the same - you can create them, read via index, and call non-mutating methods like `concat`, `map`, `filter`, `find`, `forEach`, `indexOf`, `slice`, `join`, etc.",
+			"However, write operations (e.g. index assignment, `push`, `pop`, `splice`, etc.) are not supported.",
+			"Instead, you must use the methods on the following interface to mutate the array:",
+		)
+		.addBlank()
+		.addCodeBlock("typescript", getTreeArrayNodeDocumentation(arrayInterfaceName))
+		.addBlank()
+		.addParagraphs(
+			"When possible, ensure that the edits preserve the identity of objects already in the tree.",
+			"For example, prefer `array.moveToIndex` over `array.removeAt` + `array.insertAt` and prefer `array.moveRangeToIndex` over `array.removeRange` + `array.insertAt`.",
+		);
+	const arrayEditing = arrayEditingBuilder.build();
 
-The arrays in the tree are somewhat different than normal JavaScript \`Array\`s.
-Read-only operations are generally the same - you can create them, read via index, and call non-mutating methods like \`concat\`, \`map\`, \`filter\`, \`find\`, \`forEach\`, \`indexOf\`, \`slice\`, \`join\`, etc.
-However, write operations (e.g. index assignment, \`push\`, \`pop\`, \`splice\`, etc.) are not supported.
-Instead, you must use the methods on the following interface to mutate the array:
+	// Build map editing section
+	const mapEditingBuilder = new PromptBuilder();
+	mapEditingBuilder
+		.addHeading(4, "Editing Maps")
+		.addBlank()
+		.addParagraphs(
+			"The maps in the tree are somewhat different than normal JavaScript `Map`s.",
+			"Map keys are always strings.",
+			"Read-only operations are generally the same - you can create them, read via `get`, and call non-mutating methods like `has`, `forEach`, `entries`, `keys`, `values`, etc. (note the subtle differences around return values and iteration order).",
+			"However, write operations (e.g. `set`, `delete`, etc.) are not supported.",
+			"Instead, you must use the methods on the following interface to mutate the map:",
+		)
+		.addBlank()
+		.addCodeBlock("typescript", getTreeMapNodeDocumentation(mapInterfaceName));
+	const mapEditing = mapEditingBuilder.build();
 
-\`\`\`typescript
-${getTreeArrayNodeDocumentation(arrayInterfaceName)}
-\`\`\`
+	// Build the editing instructions
+	const editingBuilder = new PromptBuilder();
+	editingBuilder
+		.addParagraphs(
+			"If the user asks you to edit the tree, you should author a snippet of JavaScript code to accomplish the user-specified goal, following the instructions for editing detailed below.",
+			`You must use the "${editToolName}" tool to run the generated code.`,
+			"After editing the tree, review the latest state of the tree to see if it satisfies the user's request.",
+			"If it does not, or if you receive an error, you may try again with a different approach.",
+			"Once the tree is in the desired state, you should inform the user that the request has been completed.",
+		)
+		.addBlank()
+		.addHeading(3, "Editing")
+		.addBlank()
+		.addParagraphs(
+			"If the user asks you to edit the document, you will write a snippet of JavaScript code that mutates the data in-place to achieve the user's goal.",
+			"The snippet may be synchronous or asynchronous (i.e. it may `await` functions if necessary).",
+			"The snippet has a `context` variable in its scope.",
+			"This `context` variable holds the current state of the tree in the `root` property.",
+			`You may mutate any part of this tree as necessary, taking into account the caveats around${hasArrays ? ` arrays${hasMaps ? " and" : ""}` : ""}${hasMaps ? " maps" : ""} detailed below.`,
+			`You may also set the \`root\` property of the context to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${rootTypeUnion}\`).`,
+			"You should also use the `context` object to create new data to insert into the tree, using the builder functions available on the `create` property.",
+			"There are other additional helper functions available on the `context` object to help you analyze the tree.",
+			"Here is the definition of the `Context` interface:",
+		)
+		.addBlank()
+		.addRaw(context);
 
-When possible, ensure that the edits preserve the identity of objects already in the tree.
-For example, prefer \`array.moveToIndex\` over \`array.removeAt\` + \`array.insertAt\` and prefer \`array.moveRangeToIndex\` over \`array.removeRange\` + \`array.insertAt\`.
+	if (helperMethodExplanation) {
+		editingBuilder.addBlank().addRaw(helperMethodExplanation);
+	}
 
-`;
+	if (hasArrays) {
+		editingBuilder.addRaw(arrayEditing);
+	}
 
-	const mapEditing = `#### Editing Maps
+	if (hasMaps) {
+		editingBuilder.addRaw(mapEditing);
+	}
 
-The maps in the tree are somewhat different than normal JavaScript \`Map\`s.
-Map keys are always strings.
-Read-only operations are generally the same - you can create them, read via \`get\`, and call non-mutating methods like \`has\`, \`forEach\`, \`entries\`, \`keys\`, \`values\`, etc. (note the subtle differences around return values and iteration order).
-However, write operations (e.g. \`set\`, \`delete\`, etc.) are not supported.
-Instead, you must use the methods on the following interface to mutate the map:
+	editingBuilder
+		.addBlank()
+		.addHeading(4, "Additional Notes")
+		.addBlank()
+		.addParagraphs(
+			"Before outputting the edit function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.",
+		)
+		.addBlank()
+		.addRaw(reinsertionExplanation)
+		.addBlank()
+		.addParagraphs(
+			"Finally, double check that the edits would accomplish the user's request (if it is possible).",
+		);
 
-\`\`\`typescript
-${getTreeMapNodeDocumentation(mapInterfaceName)}
-\`\`\`
+	const editing = editingBuilder.build();
 
-`;
+	const builder = new PromptBuilder();
 
-	const editing = `If the user asks you to edit the tree, you should author a snippet of JavaScript code to accomplish the user-specified goal, following the instructions for editing detailed below.
-You must use the "${editToolName}" tool to run the generated code.
-After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
-If it does not, or if you receive an error, you may try again with a different approach.
-Once the tree is in the desired state, you should inform the user that the request has been completed.
+	builder
+		.addParagraphs(
+			"You are a helpful assistant collaborating with the user on a document. The document state is a JSON tree, and you are able to analyze and edit it.",
+			"The JSON tree adheres to the following Typescript schema:",
+		)
+		.addBlank()
+		.addCodeBlock("typescript", typescriptSchemaTypes);
 
-### Editing
+	builder
+		.addBlank()
+		.addParagraphs(
+			"If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.",
+			"When answering such a question, DO NOT answer with information that is not part of the document unless requested to do so.",
+		);
 
-If the user asks you to edit the document, you will write a snippet of JavaScript code that mutates the data in-place to achieve the user's goal.
-The snippet may be synchronous or asynchronous (i.e. it may \`await\` functions if necessary).
-The snippet has a \`context\` variable in its scope.
-This \`context\` variable holds the current state of the tree in the \`root\` property.
-You may mutate any part of this tree as necessary, taking into account the caveats around${hasArrays ? ` arrays${hasMaps ? " and" : ""}` : ""}${hasMaps ? " maps" : ""} detailed below.
-You may also set the \`root\` property of the context to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${rootTypeUnion}\`).
-You should also use the \`context\` object to create new data to insert into the tree, using the builder functions available on the \`create\` property.
-There are other additional helper functions available on the \`context\` object to help you analyze the tree.
-Here is the definition of the \`Context\` interface:
-${context}
-${helperMethodExplanation}
-${hasArrays ? arrayEditing : ""}${hasMaps ? mapEditing : ""}#### Additional Notes
+	if (editToolName !== undefined) {
+		builder.addBlank().addRaw(editing);
+	}
 
-Before outputting the edit function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
+	builder.addBlank().addHeading(3, "Application data");
 
-${reinsertionExplanation}
+	if (domainHints !== undefined) {
+		builder
+			.addBlank()
+			.addParagraphs(
+				`The application supplied the following additional instructions: ${domainHints}`,
+			);
+	}
 
-Finally, double check that the edits would accomplish the user's request (if it is possible).
+	builder
+		.addBlank()
+		.addParagraphs(
+			`The current state of \`context.root\` (a \`${field === undefined ? "undefined" : getFriendlyName(Tree.schema(field))}\`) is:`,
+		)
+		.addBlank()
+		.addCodeBlock("json", stringified);
 
-`;
-
-	const prompt = `You are a helpful assistant collaborating with the user on a document. The document state is a JSON tree, and you are able to analyze and edit it.
-The JSON tree adheres to the following Typescript schema:
-
-\`\`\`typescript
-${typescriptSchemaTypes}
-\`\`\`
-
-If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
-When answering such a question, DO NOT answer with information that is not part of the document unless requested to do so.
-
-${editToolName === undefined ? "" : editing}### Application data
-
-${
-	domainHints === undefined
-		? ""
-		: `\nThe application supplied the following additional instructions: ${domainHints}`
-}
-The current state of \`context.root\` (a \`${field === undefined ? "undefined" : getFriendlyName(Tree.schema(field))}\`) is:
-
-\`\`\`JSON
-${stringified}
-\`\`\``;
-	return prompt;
+	return builder.build();
 }
 
 /**
