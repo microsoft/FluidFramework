@@ -167,7 +167,7 @@ export function importCompatibilitySchemaSnapshot(
  * allowing for greater portability and easier testing.
  *
  * @input
- * @alpha
+ * @beta
  */
 export interface SnapshotFileSystem {
 	/**
@@ -232,7 +232,7 @@ export interface CombinedSchemaCompatibilityStatus {
 /**
  * The options for {@link checkSchemaCompatibilitySnapshots}.
  * @input
- * @alpha
+ * @beta
  */
 export interface SchemaCompatibilitySnapshotsOptions {
 	/**
@@ -356,7 +356,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * That code should probably be migrated to a proper versioned codec with a schema and validation.
  * This utility can directly depend on the typebox-validator and inject that as this code should not be bundle size sensitive.
  * This should be addressed before this reached beta stability.
- * @alpha
+ * @beta
  */
 export function checkSchemaCompatibilitySnapshots(
 	options: SchemaCompatibilitySnapshotsOptions,

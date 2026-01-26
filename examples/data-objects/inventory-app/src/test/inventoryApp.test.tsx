@@ -9,7 +9,7 @@ import path from "node:path";
 
 import { toPropTreeNode } from "@fluidframework/react/alpha";
 import { render } from "@testing-library/react";
-import { checkSchemaCompatibilitySnapshots } from "fluid-framework/alpha";
+import { checkSchemaCompatibilitySnapshots } from "fluid-framework/beta";
 import globalJsdom from "global-jsdom";
 import * as React from "react";
 

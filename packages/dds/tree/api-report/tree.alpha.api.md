@@ -145,7 +145,7 @@ export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 // @alpha
 export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
-// @alpha
+// @beta
 export function checkSchemaCompatibilitySnapshots(options: SchemaCompatibilitySnapshotsOptions): void;
 
 // @alpha
@@ -955,7 +955,7 @@ export interface RunTransactionParams {
     readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
-// @alpha @input
+// @beta @input
 export interface SchemaCompatibilitySnapshotsOptions {
     readonly fileSystem: SnapshotFileSystem;
     readonly minVersionForCollaboration: string;
@@ -1189,7 +1189,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
-// @alpha @input
+// @beta @input
 export interface SnapshotFileSystem {
     join(parentPath: string, childPath: string): string;
     mkdirSync(dir: string, options: {
