@@ -55,10 +55,12 @@ export interface OdspConnectionConfig {
     tokenProvider: IOdspTokenProvider;
 }
 
-// @beta (undocumented)
+// @beta @input
 export interface OdspContainerAttachProps {
-    fileName: string | undefined;
-    filePath: string | undefined;
+    readonly eTag?: string | undefined;
+    readonly fileName: string | undefined;
+    readonly filePath: string | undefined;
+    readonly itemId?: string | undefined;
 }
 
 // @beta @sealed
