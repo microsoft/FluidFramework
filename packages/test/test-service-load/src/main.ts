@@ -102,7 +102,9 @@ const main = async (): Promise<void> => {
 	);
 
 	const startTime = Date.now();
-	const outputDir = `${__dirname}/output/${startTime}`;
+	// Use process.cwd() to ensure we use the current version's directory for output
+	// This ensures all runners (current and legacy) write to the same output location
+	const outputDir = `${process.cwd()}/dist/output/${startTime}`;
 	const { logger, flush } = await createLogger(outputDir, "orchestrator", {
 		driverType: testDriver.type,
 		driverEndpointName: testDriver.endpointName,

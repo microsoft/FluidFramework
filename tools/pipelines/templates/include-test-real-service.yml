@@ -119,7 +119,12 @@ parameters:
   type: boolean
   default: false
 
-# Tags for docker environment setup
+# If true, enable compatibility testing where half the clients use the previous major version
+- name: enableCompatibilityMode
+  type: boolean
+  default: false
+
+  # Tags for docker environment setup
 - name: alfredImageTag
   type: string
   default: 'latest'
@@ -332,52 +337,43 @@ stages:
             workingDirectory: ${{ variables.pipelineHostPath }}
             script: 'pnpm install $(Initialize.testPackageTgz)'
 
-        # Calculate N-1 version for stress test compatibility
-        - task: Bash@3
-          name: CalculateLegacyVersion
-          displayName: 'Calculate N-1 version'
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.pipelineHostPath }}
-            script: |
-              set -eu -o pipefail
-
-              # Extract current version from the installed package
-              CURRENT_VERSION=$(node -e "console.log(require('${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}/package.json').version)")
-              echo "Current version (N): $CURRENT_VERSION"
-
-              # TEMPORARY: Hardcoded version for testing purposes
-              LEGACY_VERSION="2.70.0"
-              echo "Legacy version (N-1): $LEGACY_VERSION (hardcoded for testing)"
-              echo "##vso[task.setvariable variable=legacyVersion;isOutput=true]$LEGACY_VERSION"
-              echo "##vso[task.setvariable variable=hasLegacyVersion;isOutput=true]true"
-
-        # Install N-1 test package to legacy directory
-        - task: Bash@3
-          name: InstallLegacyPackage
-          displayName: 'Install N-1 test package to legacy directory'
-          condition: eq(variables['CalculateLegacyVersion.hasLegacyVersion'], 'true')
-          retryCountOnTaskFailure: 10
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.pipelineHostPath }}
-            script: |
-              set -eu -o pipefail
-
-              LEGACY_VERSION=$(CalculateLegacyVersion.legacyVersion)
-              LEGACY_DIR="${{ variables.pipelineHostPath }}/node_modules/.legacy/$LEGACY_VERSION"
-
-              echo "Installing ${{ parameters.testPackage }}@$LEGACY_VERSION to $LEGACY_DIR"
-
-              # Create legacy directory
-              mkdir -p "$LEGACY_DIR"
-
-              # Install the legacy version of the test package
-              cd "$LEGACY_DIR"
-              pnpm install ${{ parameters.testPackage }}@$LEGACY_VERSION
-
-              echo "Legacy package installed successfully at $LEGACY_DIR"
-              echo "##vso[task.setvariable variable=legacyPackageDir;isOutput=true]$LEGACY_DIR/node_modules/${{ parameters.testPackage }}"
+        # Calculate N-1 version for stress test compatibility (only when enableCompatibilityMode is true)
+        - ${{ if eq(parameters.enableCompatibilityMode, true) }}:
+          - task: Bash@3
+            name: CalculateLegacyVersion
+            displayName: 'Calculate N-1 version'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ variables.pipelineHostPath }}
+              script: |
+                set -eu -o pipefail
+                # Extract current version from the installed package
+                CURRENT_VERSION=$(node -e "console.log(require('${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}/package.json').version)")
+                echo "Current version (N): $CURRENT_VERSION"
+                # TEMPORARY: Hardcoded version for testing purposes
+                LEGACY_VERSION="2.70.0"
+                echo "Legacy version (N-1): $LEGACY_VERSION (hardcoded for testing)"
+                echo "##vso[task.setvariable variable=legacyVersion;isOutput=true]$LEGACY_VERSION"
+          # Install N-1 test package to legacy directory
+          - task: Bash@3
+            name: InstallLegacyPackage
+            displayName: 'Install N-1 test package to legacy directory'
+            retryCountOnTaskFailure: 10
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ variables.pipelineHostPath }}
+              script: |
+                set -eu -o pipefail
+                LEGACY_VERSION=$(CalculateLegacyVersion.legacyVersion)
+                LEGACY_DIR="${{ variables.pipelineHostPath }}/node_modules/.legacy/$LEGACY_VERSION"
+                echo "Installing ${{ parameters.testPackage }}@$LEGACY_VERSION to $LEGACY_DIR"
+                # Create legacy directory
+                mkdir -p "$LEGACY_DIR"
+                # Install the legacy version of the test package
+                cd "$LEGACY_DIR"
+                pnpm install ${{ parameters.testPackage }}@$LEGACY_VERSION
+                echo "Legacy package installed successfully at $LEGACY_DIR"
+                echo "##vso[task.setvariable variable=legacyPackageDir;isOutput=true]$LEGACY_DIR/node_modules/${{ parameters.testPackage }}"
 
         # Download Test Files & Install Extra Dependencies
         # These steps are intended to include extra dependencies that are not available as
@@ -507,12 +503,24 @@ stages:
             ${{ elseif eq(parameters.odspTenantType, 'prod') }}:
               login__microsoft__clientId: $(appClientId)
               login__odsp__test__tenants: $(tenantCreds)
-            # Set legacy package directory for N-1 compatibility testing if available
-            LEGACY_PACKAGE_DIR: $(InstallLegacyPackage.legacyPackageDir)
+            # Set environment variables for compatibility mode (used by start-server-and-test commands)
+            ${{ if eq(parameters.enableCompatibilityMode, true) }}:
+              LEGACY_PACKAGE_DIR: $(InstallLegacyPackage.legacyPackageDir)
           inputs:
             command: 'custom'
             workingDir: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
-            customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
+            ${{ if eq(parameters.enableCompatibilityMode, true) }}:
+              # For start-server-and-test commands (like start:t9s), pass via env var (set above) not CLI args
+              # For other commands, pass via CLI args as normal
+              ${{ if ne(variant.flags, '') }}:
+                customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
+              ${{ else }}:
+                customCommand: 'run ${{ parameters.testCommand }}'
+            ${{ else }}:
+              ${{ if ne(variant.flags, '') }}:
+                customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
+              ${{ else }}:
+                customCommand: 'run ${{ parameters.testCommand }}'
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
           # filter report

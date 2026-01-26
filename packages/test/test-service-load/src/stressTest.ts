@@ -75,8 +75,8 @@ export async function stressTest(
 
 	// Get legacy package directory from environment variable if available
 	const legacyPackageDir = process.env.LEGACY_PACKAGE_DIR;
-	process.stdout.write(`Legacy package dir: ${legacyPackageDir}\n`);
-	process.stdout.write(`Current output directory: ${outputDir}\n`);
+	console.log(`Legacy package dir: ${legacyPackageDir}\n`);
+	console.log(`Current output directory: ${outputDir}\n`);
 	const hasLegacyVersion = legacyPackageDir !== undefined && legacyPackageDir !== "";
 
 	// Calculate how many runners should use each version
@@ -104,6 +104,9 @@ export async function stressTest(
 		// For the second half, use legacy version if available
 		const useLegacy = hasLegacyVersion && i >= numCurrentRunners;
 		const runnerScript = useLegacy ? `${legacyPackageDir}/dist/runner.js` : "./dist/runner.js";
+		const versionLabel = useLegacy ? "N-1 (legacy)" : "N (current)";
+
+		console.log(`Runner ${i}: Using ${versionLabel} version - ${runnerScript}`);
 
 		const childArgs: string[] = [
 			runnerScript,
@@ -137,7 +140,9 @@ export async function stressTest(
 
 		runnerArgs.push(childArgs);
 	}
+	console.log("\n=== All Runner Commands ===");
 	console.log(runnerArgs.map((a) => a.join(" ")).join("\n"));
+	console.log("===========================\n");
 
 	if (enableMetrics) {
 		setInterval(() => {
