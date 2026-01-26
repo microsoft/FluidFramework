@@ -6,7 +6,7 @@
 Promote checkSchemaCompatibilitySnapshots to beta
 
 [`checkSchemaCompatibilitySnapshots`](https://fluidframework.com/docs/api/fluid-framework#checkschemacompatibilitysnapshots-function) has been promoted to `@beta`.
-It is recommended that all SharedTree applications use this API to write a schema compatibility test.
+It is recommended that all SharedTree applications use this API to write schema compatibility tests.
 
 Usage should look something like:
 
