@@ -255,7 +255,7 @@ export const createOrDeserializeCompressor = (
 	summary?: FuzzSerializedIdCompressor,
 ) => {
 	return summary === undefined
-		? createIdCompressor(SerializationVersion.V3)
+		? createIdCompressor(sessionId, SerializationVersion.V3)
 		: summary.withSession
 			? deserializeIdCompressor(summary.serializedCompressor, SerializationVersion.V3)
 			: deserializeIdCompressor(
