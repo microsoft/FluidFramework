@@ -37,8 +37,8 @@ export { Multiplicity } from "./multiplicity.js";
 export type { TreeNodeSchemaIdentifier, FieldKey, FieldKindIdentifier } from "./formatV1.js";
 
 import * as schemaFormatV1 from "./formatV1.js";
-// eslint-disable-next-line unicorn/prefer-export-from -- namespace re-export requires `export * as` which is blocked by no-restricted-syntax
+// eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor) or named exports (changes public API)
 export { schemaFormatV1 };
 import * as schemaFormatV2 from "./formatV2.js";
-// eslint-disable-next-line unicorn/prefer-export-from -- namespace re-export requires `export * as` which is blocked by no-restricted-syntax
+// eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor) or named exports (changes public API)
 export { schemaFormatV2 };

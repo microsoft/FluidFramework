@@ -354,7 +354,7 @@ import * as InternalTypes from "./internalTypes.js";
  * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
  * They are used internally to implement API aspects, but are not intended for use by external consumers.
  */
-// eslint-disable-next-line unicorn/prefer-export-from -- namespace re-export requires `export * as` which is blocked by no-restricted-syntax
+// eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor)
 export { InternalTypes };
 
 // Internal/System types:
