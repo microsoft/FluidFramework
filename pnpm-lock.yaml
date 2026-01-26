@@ -262,6 +262,9 @@ importers:
       eslint-plugin-unused-imports:
         specifier: ~4.3.0
         version: 4.3.0(@typescript-eslint/eslint-plugin@8.18.2(@typescript-eslint/parser@8.18.2(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
     devDependencies:
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -275,9 +278,6 @@ importers:
       eslint:
         specifier: ~9.39.1
         version: 9.39.1(jiti@2.6.1)
-      jiti:
-        specifier: ^2.6.1
-        version: 2.6.1
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.8.2)
