@@ -350,12 +350,9 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * @privateRemarks
  * Use of this function within this package (for schema libraries released as part of this package) should use {@link testSchemaCompatibilitySnapshots} instead.
  *
- * TODO: this uses the format defined in simpleSchemaCodec.ts.
- * Currently this does not include any versioning information in the snapshot format itself.
- * This would make it hard to do things like upgrade to a new format (perhaps for better diffs, or to support new features) in the future.
- * That code should probably be migrated to a proper versioned codec with a schema and validation.
- * This utility can directly depend on the typebox-validator and inject that as this code should not be bundle size sensitive.
- * This should be addressed before this reached beta stability.
+ * This uses the format defined in simpleSchemaCodec.ts.
+ * This does include versioning information in the snapshot format,
+ * but it would be nice to better unify how we do that versioning and format validation with our codecs.
  * @beta
  */
 export function checkSchemaCompatibilitySnapshots(
