@@ -181,6 +181,8 @@ module.exports = {
 		 */
 		"@typescript-eslint/no-unsafe-return": "error",
 
+		// #region `@typescript-eslint` rule overrides
+
 		/**
 		 * Require the description (summary) component in JSDoc/TSDoc comments
 		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
