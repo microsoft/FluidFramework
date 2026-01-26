@@ -31,7 +31,7 @@ export class BannedModulesPlugin {
 		}
 	}
 
-	apply(compiler: Webpack.Compiler) {
+	apply(compiler: Webpack.Compiler): void {
 		// The banned modules that have been found. Maps the banned module name to an array of module paths that import the banned module
 		const foundBannedModules = new Map<BannedModule, Set<string>>();
 

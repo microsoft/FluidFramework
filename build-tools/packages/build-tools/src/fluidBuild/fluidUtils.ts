@@ -25,7 +25,7 @@ const findUp = import("find-up");
 
 const traceInit = registerDebug("fluid-build:init");
 
-async function isFluidRootPackage(dir: string) {
+async function isFluidRootPackage(dir: string): Promise<boolean> {
 	const filename = path.join(dir, "package.json");
 	if (!existsSync(filename)) {
 		traceInit(`InferRoot: package.json not found`);
@@ -40,7 +40,7 @@ async function isFluidRootPackage(dir: string) {
 	return false;
 }
 
-async function inferRoot(buildRoot: boolean) {
+async function inferRoot(buildRoot: boolean): Promise<string | undefined> {
 	const config = await (await findUp).findUp("fluidBuild.config.cjs", {
 		cwd: process.cwd(),
 		type: "file",
@@ -89,7 +89,7 @@ async function inferRoot(buildRoot: boolean) {
 	return undefined;
 }
 
-async function inferFluidRoot(buildRoot: boolean) {
+async function inferFluidRoot(buildRoot: boolean): Promise<string | undefined> {
 	const rootDir = await inferRoot(buildRoot);
 	if (rootDir === undefined) {
 		return undefined;
@@ -99,7 +99,7 @@ async function inferFluidRoot(buildRoot: boolean) {
 	return buildRoot || (await isFluidRootPackage(rootDir)) ? rootDir : undefined;
 }
 
-export async function getResolvedFluidRoot(buildRoot = false) {
+export async function getResolvedFluidRoot(buildRoot = false): Promise<string> {
 	let checkFluidRoot = true;
 	let root = commonOptions.root;
 	if (root) {

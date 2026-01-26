@@ -5,9 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
+import { AttachState } from "@fluidframework/container-definitions";
 import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -18,8 +24,9 @@ import {
 	type TestFluidObjectInternal,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 
+import { asAlpha } from "../../api.js";
+import { FluidClientVersion } from "../../codec/index.js";
 import {
 	CommitKind,
 	type Revertible,
@@ -47,6 +54,7 @@ import {
 	ObjectForest,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
+import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
 	ForestTypeExpensiveDebug,
 	ForestTypeOptimized,
@@ -62,6 +70,12 @@ import {
 } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
+	TreeBeta,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/api/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
+import {
 	SchemaFactory,
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
@@ -75,7 +89,17 @@ import {
 	FieldKind,
 	type SimpleLeafNodeSchema,
 } from "../../simple-tree/index.js";
+import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
+import {
+	configuredSharedTree,
+	resolveOptions,
+	SharedTree as SharedTreeKind,
+	type ISharedTree,
+} from "../../treeFactory.js";
 import { brand } from "../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
+import { TestAnchor } from "../testAnchor.js";
 import {
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
@@ -97,30 +121,6 @@ import {
 	getView,
 	createSnapshotCompressor,
 } from "../utils.js";
-import {
-	configuredSharedTree,
-	resolveOptions,
-	SharedTree as SharedTreeKind,
-	type ISharedTree,
-} from "../../treeFactory.js";
-import type {
-	ISharedObjectKind,
-	SharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
-import { TestAnchor } from "../testAnchor.js";
-import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
-import { AttachState } from "@fluidframework/container-definitions";
-import { JsonAsTree } from "../../jsonDomainSchema.js";
-import {
-	TreeBeta,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/api/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
-import { FluidClientVersion } from "../../codec/index.js";
-import { asAlpha } from "../../api.js";
 
 const enableSchemaValidation = true;
 
@@ -514,12 +514,13 @@ describe("SharedTree", () => {
 				view.root = new node({ child: undefined });
 				containerRuntimeFactory.processAllMessages();
 
+				const tree1SummarizeResult = await tree1.summarize();
 				const tree2 = await factory.load(
 					dataStoreRuntime2,
 					"B",
 					{
 						deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-						objectStorage: MockStorage.createFromSummary((await tree1.summarize()).summary),
+						objectStorage: MockStorage.createFromSummary(tree1SummarizeResult.summary),
 					},
 					factory.attributes,
 				);
@@ -624,7 +625,8 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 
 		// Load the last summary
-		const view2 = (await provider.createTree()).viewWith(
+		const loadedTree = await provider.createTree();
+		const view2 = loadedTree.viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
@@ -685,7 +687,8 @@ describe("SharedTree", () => {
 		await provider.ensureSynchronized();
 
 		// Load the last summary (state: "AC") and process the deletion of Z and insertion of B
-		const view4 = (await provider.createTree()).viewWith(
+		const loadedTree = await provider.createTree();
+		const view4 = loadedTree.viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
@@ -757,12 +760,13 @@ describe("SharedTree", () => {
 		getBranch(tree).branch();
 		view.root.insertAtEnd("b");
 
+		const treeSummarizeResult = await tree.summarize();
 		const tree2 = await sharedTreeFactory.load(
 			runtime,
 			"tree2",
 			{
 				deltaConnection: runtime.createDeltaConnection(),
-				objectStorage: MockStorage.createFromSummary((await tree.summarize()).summary),
+				objectStorage: MockStorage.createFromSummary(treeSummarizeResult.summary),
 			},
 			sharedTreeFactory.attributes,
 		);
@@ -1442,9 +1446,12 @@ describe("SharedTree", () => {
 
 			function makeUndoableEdit(peer: Peer, edit: () => void): Revertible {
 				const undos: Revertible[] = [];
-				const unsubscribe = peer.view.events.on("changed", ({ kind }, getRevertible) => {
-					if (kind !== CommitKind.Undo && getRevertible !== undefined) {
-						undos.push(getRevertible());
+				const unsubscribe = peer.view.events.on("changed", ({ kind, getRevertible }) => {
+					if (kind !== CommitKind.Undo) {
+						const revertible = getRevertible?.();
+						if (revertible !== undefined) {
+							undos.push(revertible);
+						}
 					}
 				});
 
@@ -2417,6 +2424,11 @@ describe("SharedTree", () => {
 		});
 
 		it("properly encodes ops using specified compression strategy", async () => {
+			/** Shape of serialized edit manager summary for this test */
+			interface ChangesSummaryFormat {
+				trunk: { change: [unknown, { data: { builds: { trees: { data: unknown[][] } } } }] }[];
+			}
+
 			// Check that ops are using uncompressed encoding with "Uncompressed" treeEncodeType
 			const factory = configuredSharedTree({
 				jsonValidator: FormatValidatorBasic,
@@ -2428,14 +2440,17 @@ describe("SharedTree", () => {
 				.initialize(["A", "B", "C"]);
 
 			await provider.ensureSynchronized();
-			const summary = (await provider.trees[0].summarize()).summary;
+			const summarizeResult = await provider.trees[0].summarize();
+			const summary = summarizeResult.summary;
 			const indexesSummary = summary.tree.indexes;
 			assert(indexesSummary.type === SummaryType.Tree);
 			const editManagerSummary = indexesSummary.tree.EditManager;
 			assert(editManagerSummary.type === SummaryType.Tree);
 			const editManagerSummaryBlob = editManagerSummary.tree.String;
 			assert(editManagerSummaryBlob.type === SummaryType.Blob);
-			const changesSummary = JSON.parse(editManagerSummaryBlob.content as string);
+			const changesSummary = JSON.parse(
+				editManagerSummaryBlob.content as string,
+			) as ChangesSummaryFormat;
 			const encodedTreeData = changesSummary.trunk[0].change[1].data.builds.trees;
 			const expectedUncompressedTreeData = [
 				"com.fluidframework.json.array",
@@ -2477,14 +2492,17 @@ describe("SharedTree", () => {
 				.initialize(["A", "B", "C"]);
 
 			await provider2.ensureSynchronized();
-			const summary2 = (await provider2.trees[0].summarize()).summary;
+			const summarizeResult2 = await provider2.trees[0].summarize();
+			const summary2 = summarizeResult2.summary;
 			const indexesSummary2 = summary2.tree.indexes;
 			assert(indexesSummary2.type === SummaryType.Tree);
 			const editManagerSummary2 = indexesSummary2.tree.EditManager;
 			assert(editManagerSummary2.type === SummaryType.Tree);
 			const editManagerSummaryBlob2 = editManagerSummary2.tree.String;
 			assert(editManagerSummaryBlob2.type === SummaryType.Blob);
-			const changesSummary2 = JSON.parse(editManagerSummaryBlob2.content as string);
+			const changesSummary2 = JSON.parse(
+				editManagerSummaryBlob2.content as string,
+			) as ChangesSummaryFormat;
 			const encodedTreeData2 = changesSummary2.trunk[0].change[1].data.builds.trees;
 			const expectedCompressedTreeData = ["A", "B", "C"];
 			assert.deepEqual(encodedTreeData2.data[0][1], expectedCompressedTreeData);

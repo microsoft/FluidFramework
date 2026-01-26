@@ -378,6 +378,7 @@ export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens
 	},
 	async save(key: IOdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
 		const rc = await loadAndPatchRC();
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (!rc.tokens) {
 			rc.tokens = {
 				version: 1,

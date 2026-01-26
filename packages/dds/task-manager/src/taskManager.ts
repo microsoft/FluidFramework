@@ -494,6 +494,7 @@ export class TaskManagerClass
 			}
 			removeListeners();
 			this.subscribedTasks.delete(taskId);
+			abandoned = true;
 		};
 
 		const checkIfRolledBack = (eventTaskId: string): void => {
@@ -503,6 +504,7 @@ export class TaskManagerClass
 
 			removeListeners();
 			this.subscribedTasks.delete(taskId);
+			abandoned = true;
 		};
 
 		setupListeners();
@@ -904,6 +906,7 @@ export class TaskManagerClass
 		assert(latestPendingOps !== undefined, 0xc46 /* No pending ops when trying to rollback */);
 		const pendingOpToRollback = latestPendingOps.pop();
 		assert(
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 			pendingOpToRollback !== undefined && pendingOpToRollback.messageId === localOpMetadata,
 			0xc47 /* pending op mismatch */,
 		);

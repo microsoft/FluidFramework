@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "2.81.0",
+	"version": "2.82.0",
 	"private": true,
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -19,7 +19,7 @@
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"print-configs": "cross-env ESLINT_USE_FLAT_CONFIG=true tsx scripts/print-configs.ts printed-configs",
+		"print-configs": "tsx scripts/print-configs.ts printed-configs",
 		"test": "echo TODO: add tests"
 	},
 	"dependencies": {
@@ -47,7 +47,6 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@types/sort-json": "^2.0.3",
 		"concurrently": "^9.2.1",
-		"cross-env": "^10.1.0",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"mocha-multi-reporters": "^1.5.1",
