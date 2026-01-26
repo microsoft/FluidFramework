@@ -607,6 +607,44 @@ describe("IdCompressor Sharding", () => {
 		});
 	});
 
+	describe("Error Conditions", () => {
+		it("throws when attempting to start a ghost session while sharded", () => {
+			const sessionId = createSessionId();
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+
+			// Create shards to enter sharding mode
+			parent.shard(1);
+
+			// Verify parent is in sharding mode
+			assert(parent.shardId() !== undefined);
+
+			// Attempt to start a ghost session should throw
+			const ghostSessionId = createSessionId();
+			assert.throws(() => {
+				parent.beginGhostSession(ghostSessionId, () => {
+					// This callback should never be reached
+					parent.generateCompressedId();
+				});
+			}, /Cannot start a ghost session while sharded/);
+		});
+
+		it("throws when attempting to shard during a ghost session", () => {
+			const sessionId = createSessionId();
+			const compressor = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+
+			// Start a ghost session
+			const ghostSessionId = createSessionId();
+
+			// Attempt to shard during ghost session should throw
+			assert.throws(() => {
+				compressor.beginGhostSession(ghostSessionId, () => {
+					// Attempt to shard while ghost session is active
+					compressor.shard(1);
+				});
+			}, /Cannot shard during ghost session/);
+		});
+	});
+
 	describe("Serialization", () => {
 		it("serializes and deserializes sharding state", () => {
 			const sessionId = createSessionId();
