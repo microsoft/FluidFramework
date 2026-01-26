@@ -50,6 +50,7 @@ export {
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field/index.js";
+// eslint-disable-next-line unicorn/prefer-export-from -- namespace re-export requires `export * as` which is blocked by no-restricted-syntax
 export { SequenceField };
 
 export {
