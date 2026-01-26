@@ -433,8 +433,12 @@ export class ConsensusOrderedCollection<T = any>
 		return serializer.parse(content);
 	}
 
-	protected applyStashedOp(): void {
-		// empty implementation
+	protected applyStashedOp(content: unknown): void {
+		const op = content as IConsensusOrderedCollectionOperation<T>;
+		// Submit the original op so we can match the ACK when it arrives during remote op processing.
+		// Use a no-op resolve function since we don't need to wait for the result.
+		const resolve: PendingResolve<T> = () => {};
+		this.submitLocalMessage(op, resolve);
 	}
 
 	/**

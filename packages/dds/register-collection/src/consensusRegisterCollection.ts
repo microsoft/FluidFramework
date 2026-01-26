@@ -432,7 +432,13 @@ export class ConsensusRegisterCollection<T>
 		this.internalEvents.emit("pendingMessageRollback", localOpMetadata);
 	}
 
-	protected applyStashedOp(): void {
-		// empty implementation
+	protected applyStashedOp(content: unknown): void {
+		const op = content as IIncomingRegisterOperation<T>;
+		if (op.type === "write") {
+			// Submit the original op (preserving its refSeq) so we can match the ACK
+			// when it arrives during remote op processing.
+			const pendingMessageId = this.nextPendingMessageId++;
+			this.submitLocalMessage(op, pendingMessageId);
+		}
 	}
 }
