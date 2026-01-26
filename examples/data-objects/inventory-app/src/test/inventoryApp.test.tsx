@@ -4,13 +4,16 @@
  */
 
 import { strict as assert } from "node:assert";
+import fs from "node:fs";
+import path from "node:path";
 
 import { toPropTreeNode } from "@fluidframework/react/alpha";
 import { render } from "@testing-library/react";
+import { checkSchemaCompatibilitySnapshots } from "fluid-framework/alpha";
 import globalJsdom from "global-jsdom";
 import * as React from "react";
 
-import { Inventory, Part } from "../schema.js";
+import { Inventory, Part, treeConfiguration } from "../schema.js";
 import {
 	InventoryViewMonolithic,
 	InventoryViewWithHook,
@@ -23,7 +26,27 @@ const views = [
 	{ name: "InventoryViewWithHook", component: InventoryViewWithHook },
 ];
 
+const regenerateSnapshots = process.argv.includes("--snapshot");
+
 describe("inventoryApp", () => {
+	it("schema compatibility", () => {
+		const snapshotDirectory = path.join(
+			import.meta.dirname,
+			"../../src/test/schema-snapshots",
+		);
+		// This app does not actually support a stable document format, so the versions used here are arbitrary.
+		// Despite this, testing the schema for compatibility issues is a useful example of how apps should do this,
+		// and testing the checkSchemaCompatibilitySnapshots API.
+		checkSchemaCompatibilitySnapshots({
+			snapshotDirectory,
+			fileSystem: { ...fs, ...path },
+			version: "1.0.0",
+			schema: treeConfiguration,
+			minVersionForCollaboration: "1.0.0",
+			mode: regenerateSnapshots ? "update" : "test",
+		});
+	});
+
 	describe("schema", () => {
 		it("can create and edit inventory", () => {
 			const inventory = new Inventory({

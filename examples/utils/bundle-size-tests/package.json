@@ -61,7 +61,7 @@
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@mixer/webpack-bundle-compare": "^0.1.0",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^18.19.0",
+		"@types/node": "~20.19.30",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
