@@ -16,12 +16,16 @@ import path from "node:path";
 
 import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/beta";
 
+// The TreeViewConfiguration the application uses.
 import { config } from "../schema.js";
 
+// Provide some way to run the check in "update" mode when updating snapshots is intended.
 const regenerateSnapshots = process.argv.includes("--snapshot");
-
+// Setup the actual test. In this case using Mocha syntax.
 describe("schema", () => {
 	it("schema compatibility", () => {
+		// Select a path to save the snapshots in.
+		// This will depend on how your application organizes its test data.
 		const snapshotDirectory = path.join(
 			import.meta.dirname,
 			"../../src/test/schema-snapshots",
