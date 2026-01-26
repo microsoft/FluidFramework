@@ -15,7 +15,6 @@ import ps from "ps-node";
 import type { TestUsers } from "./getTestUsers.js";
 import type { TestConfiguration } from "./testConfigFile.js";
 import { initialize } from "./utils.js";
-import { processAttachMessageGCData } from "@fluidframework/runtime-utils";
 
 const createLoginEnv = (userName: string, password: string): string =>
 	`{"${userName}": "${password}"}`;
