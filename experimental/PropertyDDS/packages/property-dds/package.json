@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-dds",
-	"version": "2.81.0",
+	"version": "2.82.0",
 	"description": "definition of the property distributed data store",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -91,7 +91,7 @@
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^18.19.0",
+		"@types/node": "~20.19.30",
 		"chai": "^4.2.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",

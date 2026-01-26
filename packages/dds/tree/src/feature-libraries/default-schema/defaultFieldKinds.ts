@@ -5,12 +5,15 @@
 
 import { fail } from "@fluidframework/core-utils/internal";
 
+import type { CodecTree } from "../../codec/index.js";
 import {
 	type DeltaDetachedNodeId,
 	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
 } from "../../core/index.js";
+import { brand, type Brand } from "../../util/index.js";
+import { identifierFieldIdentifier } from "../fieldKindIdentifiers.js";
 import {
 	type FieldChangeDelta,
 	type FieldChangeHandler,
@@ -23,12 +26,9 @@ import {
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
 import { optional, required } from "../optional-field/index.js";
+import { sequence } from "../sequence-field/index.js";
 
 import { noChangeCodecFamily } from "./noChangeCodecs.js";
-import type { CodecTree } from "../../codec/index.js";
-import { brand, type Brand } from "../../util/index.js";
-import { identifierFieldIdentifier } from "../fieldKindIdentifiers.js";
-import { sequence } from "../sequence-field/index.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	SummaryType,
 	type ISummaryBlob,
@@ -13,31 +14,34 @@ import {
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+// eslint-disable-next-line import-x/no-internal-modules
+import { DependentFormatVersion, FluidClientVersion } from "../../codec/index.js";
+import { RevisionTagCodec } from "../../core/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import {
+	EditManagerFormatVersion,
+	editManagerFormatVersions,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/editManagerFormatCommons.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { EncodedEditManager } from "../../shared-tree-core/editManagerFormatV1toV4.js";
+import {
+	EditManagerSummaryFormatVersion,
+	stringKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/editManagerSummarizer.js";
 import {
 	EditManagerSummarizer,
 	makeEditManagerCodec,
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../shared-tree-core/index.js";
-import {
-	EditManagerSummaryFormatVersion,
-	stringKey,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../shared-tree-core/editManagerSummarizer.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { EncodedEditManager } from "../../shared-tree-core/editManagerFormatV1toV4.js";
-import {
-	EditManagerFormatVersion,
-	editManagerFormatVersions,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../shared-tree-core/editManagerFormatCommons.js";
-import { DependentFormatVersion, FluidClientVersion } from "../../codec/index.js";
+import { testChangeFamilyFactory } from "../testChange.js";
 import { testIdCompressor } from "../utils.js";
-import { RevisionTagCodec } from "../../core/index.js";
-import { FormatValidatorBasic } from "../../external-utilities/index.js";
+
 // eslint-disable-next-line import-x/no-internal-modules
 import { editManagerFactory } from "./edit-manager/editManagerTestUtils.js";
-import { testChangeFamilyFactory } from "../testChange.js";
 
 function createEditManagerSummarizer(options?: {
 	minVersionForCollab?: MinimumVersionForCollab;

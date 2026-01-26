@@ -4,11 +4,22 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { isStableId } from "@fluidframework/id-compressor/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
+import { FieldKinds } from "../../../../feature-libraries/index.js";
+import { Tree } from "../../../../shared-tree/index.js";
+import {
+	createField,
+	UnhydratedFlexTreeNode,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../simple-tree/core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { createTreeNodeFromInner } from "../../../../simple-tree/core/treeNodeKernel.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
 import {
 	type FieldKind,
 	SchemaFactory,
@@ -37,7 +48,6 @@ import type {
 	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/node-kinds/object/objectNode.js";
-import { describeHydration, hydrate, pretty } from "../../utils.js";
 import { brand } from "../../../../util/index.js";
 import type {
 	areSafelyAssignable,
@@ -48,18 +58,7 @@ import type {
 	RestrictiveStringRecord,
 } from "../../../../util/index.js";
 import { getView } from "../../../utils.js";
-import { Tree } from "../../../../shared-tree/index.js";
-import { FieldKinds } from "../../../../feature-libraries/index.js";
-
-import {
-	createField,
-	UnhydratedFlexTreeNode,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../simple-tree/core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { createTreeNodeFromInner } from "../../../../simple-tree/core/treeNodeKernel.js";
+import { describeHydration, hydrate, pretty } from "../../utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
 

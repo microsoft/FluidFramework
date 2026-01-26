@@ -5,6 +5,7 @@
 
 import { fail } from "@fluidframework/core-utils/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	type CodecTree,
 	type CodecWriteOptions,

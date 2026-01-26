@@ -114,6 +114,11 @@ export const ArrayNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is ArrayNodeSchema;
 };
 
+// @alpha @sealed
+export interface ArrayPlaceAnchor {
+    get index(): number;
+}
+
 // @alpha
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
@@ -188,6 +193,9 @@ export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): Shared
 
 // @alpha
 export const contentSchemaSymbol: unique symbol;
+
+// @alpha
+export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: number): ArrayPlaceAnchor;
 
 // @alpha
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;

@@ -5,10 +5,11 @@
 
 const fluidRoute = require("@fluid-example/webpack-fluid-loader");
 const path = require("path");
+const webpack = require("webpack");
 const { merge } = require("webpack-merge");
 
 module.exports = (env) => {
-	const { production } = env;
+	const { production, view = "quill" } = env;
 
 	return merge(
 		{
@@ -40,6 +41,11 @@ module.exports = (env) => {
 				path: path.resolve(__dirname, "dist"),
 				library: { name: "[name]", type: "umd" },
 			},
+			plugins: [
+				new webpack.DefinePlugin({
+					__FLUID_VIEW__: JSON.stringify(view),
+				}),
+			],
 			watchOptions: {
 				ignored: "**/node_modules/**",
 			},

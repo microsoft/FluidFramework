@@ -5,17 +5,18 @@
 
 import { strict as assert } from "node:assert";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import path from "node:path";
 import fs from "node:fs";
+import path from "node:path";
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
-import { testSrcPath } from "../testSrcPath.cjs";
+
 import {
 	checkSchemaCompatibilitySnapshots,
 	type TreeViewConfiguration,
 } from "../../simple-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
+import { testSrcPath } from "../testSrcPath.cjs";
 
 /**
  * Use `pnpm run test:snapshots:regen` to set this flag.
@@ -28,8 +29,8 @@ export function takeJsonSnapshot(data: JsonCompatibleReadOnly, suffix: string = 
 }
 
 function jsonCompare(actual: string, expected: string, message: string): void {
-	const parsedA = JSON.parse(actual);
-	const parsedB = JSON.parse(expected);
+	const parsedA = JSON.parse(actual) as JsonCompatibleReadOnly;
+	const parsedB = JSON.parse(expected) as JsonCompatibleReadOnly;
 	assert.deepEqual(parsedA, parsedB, message);
 }
 

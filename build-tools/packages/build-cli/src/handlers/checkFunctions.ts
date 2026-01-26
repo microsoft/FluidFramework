@@ -19,7 +19,7 @@ import {
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 	checkPackagesCompatLayerGeneration,
 	formatCompatLayerGenerationError,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../library/compatLayerGeneration.js";
 import {
 	generateBumpDepsBranchName,

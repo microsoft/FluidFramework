@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import path from "node:path";
+import { strict as assert } from "node:assert";
 import fs from "node:fs";
+import path from "node:path";
 
 import type { requireAssignableTo } from "@fluidframework/build-tools";
 import {
@@ -12,6 +13,7 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { pkgVersion } from "../../../packageVersion.js";
 import {
 	checkCompatibility,
 	importCompatibilitySchemaSnapshot,
@@ -22,7 +24,6 @@ import {
 	// Allow importing file which is being tested.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/snapshotCompatibilityChecker.js";
-
 import {
 	normalizeFieldSchema,
 	SchemaFactory,
@@ -32,9 +33,7 @@ import {
 	numberSchema,
 	allowUnused,
 } from "../../../simple-tree/index.js";
-import { strict as assert } from "node:assert";
 import { testSrcPath } from "../../testSrcPath.cjs";
-import { pkgVersion } from "../../../packageVersion.js";
 
 const nodeFileSystem = {
 	...fs,
