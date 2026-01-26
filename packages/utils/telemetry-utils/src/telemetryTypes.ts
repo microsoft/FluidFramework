@@ -141,6 +141,6 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
+		logLevel?: LogLevel,
 	): void;
 }

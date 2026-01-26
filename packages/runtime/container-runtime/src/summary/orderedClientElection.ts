@@ -12,6 +12,7 @@ import type {
 	IEventProvider,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IClient,
@@ -546,6 +547,7 @@ export class OrderedClientElection
 				sequenceNumber,
 				true /* forceSend */,
 				reason,
+				LogLevel.essential,
 			);
 			this._electedParent = client;
 			this.emit("election", this._electedClient, sequenceNumber, this._electedClient);
@@ -688,18 +690,24 @@ export class OrderedClientElection
 		sequenceNumber: number,
 		forceSend: boolean = false,
 		reason?: string,
+		// add log level here with `info` level
+		logLevel: LogLevel = LogLevel.info,
 	): void {
 		if (this.recordPerformanceEvents || forceSend) {
-			this.logger.sendPerformanceEvent({
-				eventName,
-				clientId: client?.clientId,
-				sequenceNumber,
-				electedClientId: this.electedClient?.clientId,
-				electedParentId: this.electedParent?.clientId,
-				isEligible: client === undefined ? false : this.isEligibleFn(client),
-				isSummarizerClient: client?.client.details.type === summarizerClientType,
-				reason,
-			});
+			this.logger.sendPerformanceEvent(
+				{
+					eventName,
+					clientId: client?.clientId,
+					sequenceNumber,
+					electedClientId: this.electedClient?.clientId,
+					electedParentId: this.electedParent?.clientId,
+					isEligible: client === undefined ? false : this.isEligibleFn(client),
+					isSummarizerClient: client?.client.details.type === summarizerClientType,
+					reason,
+				},
+				undefined,
+				logLevel,
+			);
 		}
 	}
 }

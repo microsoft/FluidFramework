@@ -53,10 +53,16 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 /**
  * Specify levels of the logs.
  * @public
+ * @deprecated I want to test if this updates the
  */
 export const LogLevel = {
 	verbose: 10, // To log any verbose event for example when you are debugging something.
+	/**
+	 * @deprecated Will be replaced by the 'info' log level.
+	 */
 	default: 20, // Default log level
+	info: 20, // Information about the session. These logs could be ommitted in some sessions if needed
+	essential: 25, // Essential information about the operation of Fluid that should always be transmitted for diagnostic purposes
 	error: 30, // To log errors.
 } as const;
 
