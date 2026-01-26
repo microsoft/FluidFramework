@@ -12,7 +12,7 @@ import {
 	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { Type, type TSchema } from "@sinclair/typebox";
+import { Type, type Static, type TSchema } from "@sinclair/typebox";
 import { gt } from "semver-ts";
 
 import { pkgVersion } from "../../packageVersion.js";
@@ -40,65 +40,76 @@ import { Versioned } from "./format.js";
  */
 export type VersionedJson = JsonCompatibleReadOnlyObject & Versioned;
 
-function makeVersionedCodec<
-	TDecoded,
-	TEncoded extends Versioned = VersionedJson,
-	TValidate = TEncoded,
-	TContext = void,
->(
+/**
+ * Validate that the version is one of the supported values.
+ * @remarks
+ * If supportedVersions contains undefined, data with no version field is also accepted despite the return type indicating otherwise.
+ * This is for legacy compatibility where older data may not have a version field.
+ */
+function makeVersionedCodec<TDecoded, TContext, TEncoded>(
 	supportedVersions: Set<FormatVersion>,
 	{ jsonValidator: validator }: ICodecOptions,
-	inner: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
-): IJsonCodec<TDecoded, TEncoded, TValidate, TContext> {
-	const codec = {
-		encode: (data: TDecoded, context: TContext): TEncoded => {
-			const encoded = inner.encode(data, context);
+	inner: IJsonCodec<TDecoded, TEncoded, JsonCompatibleReadOnly, TContext>,
+): IJsonCodec<TDecoded, TEncoded & VersionedJson, JsonCompatibleReadOnly, TContext> {
+	const codec: IJsonCodec<
+		TDecoded,
+		TEncoded & VersionedJson,
+		TEncoded & VersionedJson,
+		TContext
+	> = {
+		encode: (data: TDecoded, context: TContext): TEncoded & Versioned => {
+			const encoded = inner.encode(data, context) as TEncoded & Versioned;
 			assert(
 				supportedVersions.has(encoded.version),
 				0x88b /* version being encoded should be supported */,
 			);
 			return encoded;
 		},
-		decode: (data: TValidate, context: TContext): TDecoded => {
-			const versioned = data as Versioned; // Validated by withSchemaValidation
+		decode: (versioned: VersionedJson, context: TContext): TDecoded => {
 			if (!supportedVersions.has(versioned.version)) {
 				throw new UsageError(
 					`Unsupported version ${versioned.version} encountered while decoding data. Supported versions for this data are: ${[...supportedVersions].join(", ")}.
 The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 				);
 			}
-			const decoded = inner.decode(data, context);
+			const decoded = inner.decode(versioned, context);
 			return decoded;
 		},
 	};
-
-	return supportedVersions.has(undefined)
-		? codec
-		: withSchemaValidation(Versioned, codec, validator);
+	// If undefined is a supported version, skip using withSchemaValidation to enforce there is a version field.
+	// Codec will still assert the content of the field is in supportedVersions, so it is still somewhat validated, just in a different way.
+	if (supportedVersions.has(undefined)) {
+		return codec;
+	}
+	const validated: IJsonCodec<TDecoded, Versioned, JsonCompatibleReadOnly, TContext> =
+		withSchemaValidation(Versioned, codec, validator);
+	// Narrow the coded output type to preserve TEncoded which was lost by withSchemaValidation when run with just the Versioned schema.
+	return validated as IJsonCodec<
+		TDecoded,
+		TEncoded & VersionedJson,
+		JsonCompatibleReadOnly,
+		TContext
+	>;
 }
 
 /**
- * @deprecated Use {@link ClientVersionDispatchingCodecBuilder} instead.
- * This function is maintained for backward compatibility and test purposes only.
- * Production code should migrate to ClientVersionDispatchingCodecBuilder for better version management and type safety.
+ * Wrap a codec with version checking and schema validation.
+ * @remarks
+ * The passed in codec should not perform its own schema validation.
+ * The schema validation gets added here.
  */
-export function makeVersionedValidatedCodec<
-	EncodedSchema extends TSchema,
-	TDecoded,
-	TEncoded extends Versioned = VersionedJson,
-	TValidate = TEncoded,
-	TContext = void,
->(
+function makeVersionedValidatedCodec<EncodedSchema extends TSchema, TDecoded, TContext = void>(
 	options: ICodecOptions,
 	supportedVersions: Set<FormatVersion>,
 	schema: EncodedSchema,
-	codec: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
-): IJsonCodec<TDecoded, TEncoded, TValidate, TContext> {
-	return makeVersionedCodec(
+	codec: IJsonCodec<TDecoded, Static<EncodedSchema>, Static<EncodedSchema>, TContext>,
+): IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext> {
+	const codecOut = makeVersionedCodec(
 		supportedVersions,
 		options,
 		withSchemaValidation(schema, codec, options.jsonValidator),
 	);
+	return codecOut;
 }
 
 /**
@@ -115,7 +126,7 @@ export function makeDiscontinuedCodecVersion<
 	options: ICodecOptions,
 	discontinuedVersion: FormatVersion,
 	discontinuedSince: SemanticVersion,
-): IJsonCodec<TDecoded, TEncoded, TEncoded, TContext> {
+): IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext> {
 	const schema = Type.Object(
 		{
 			version:
@@ -173,6 +184,19 @@ export function makeVersionDispatchingCodec<TDecoded, TContext>(
  * The schema validation gets added when normalizing to {@link NormalizedCodecVersion}.
  */
 export type CodecAndSchema<TDecoded, TContext = void> = { readonly schema: TSchema } & (
+	| IMultiFormatCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>
+	| IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>
+);
+
+/**
+ * A friendly format for codec authors use to define their codec and schema for use in {@link CodecVersion}.
+ * @remarks
+ * The codec should not perform its own schema validation.
+ * The schema validation gets added when normalizing to {@link NormalizedCodecVersion}.
+ */
+export type CodecAndSchemaInput<TDecoded, TFormat extends TSchema, TContext = void> = {
+	readonly schema: TFormat;
+} & (
 	| IMultiFormatCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>
 	| IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>
 );

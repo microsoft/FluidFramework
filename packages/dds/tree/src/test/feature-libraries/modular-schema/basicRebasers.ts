@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { type TUnsafe, Type } from "@sinclair/typebox";
 
-import { makeCodecFamily } from "../../../codec/index.js";
+import { eraseEncodedType, makeCodecFamily } from "../../../codec/index.js";
 import {
 	makeDetachedNodeId,
 	Multiplicity,
@@ -86,10 +86,12 @@ export type ValueChangeset = ReplaceOp<number>;
 
 export const valueHandler = {
 	rebaser: replaceRebaser(),
-	codecsFactory: () =>
-		makeCodecFamily([
-			[1, makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(Type.Any())],
-		]),
+	codecsFactory: () => {
+		const inner = makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(
+			Type.Any(),
+		);
+		return makeCodecFamily([[1, eraseEncodedType(inner)]]);
+	},
 	editor: { buildChildChanges: () => assert.fail("Child changes not supported") },
 
 	intoDelta: (change): FieldChangeDelta => {

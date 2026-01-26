@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { Type } from "@sinclair/typebox";
+import { Type, type TUnsafe } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
 
 /**
@@ -377,7 +377,8 @@ export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompat
  * expressed using composition of schemas for runtime validation, even if we don't think making the types
  * generic is worth the maintenance cost.
  */
-export const JsonCompatibleReadOnlySchema = Type.Any();
+export const JsonCompatibleReadOnlySchema =
+	Type.Any() as unknown as TUnsafe<JsonCompatibleReadOnly>;
 
 /**
  * Returns if a particular json compatible value is an object.

@@ -6,6 +6,7 @@
 import { strict as assert, fail } from "node:assert";
 
 import { compareArrays } from "@fluidframework/core-utils/internal";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	MockHandle,
 	validateAssertionError,
@@ -13,9 +14,9 @@ import {
 import type { TSchema } from "@sinclair/typebox";
 
 import {
+	ClientVersionDispatchingCodecBuilder,
 	type ICodecOptions,
 	type IJsonCodec,
-	makeVersionedValidatedCodec,
 } from "../../../../codec/index.js";
 import type {
 	TreeFieldStoredSchema,
@@ -100,30 +101,35 @@ function makeFieldBatchCodec(
 	options: ICodecOptions,
 	encoderContext: EncoderContext,
 	format: TSchema,
+	version: FieldBatchFormatVersion,
 ): IJsonCodec<
 	FieldBatch,
-	EncodedFieldBatch,
+	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
 	FieldBatchEncodingContext
 > {
-	return makeVersionedValidatedCodec(options, validVersions, format, {
-		encode: (
-			data: FieldBatch,
-			fieldBatchContext: FieldBatchEncodingContext,
-		): EncodedFieldBatch => {
-			return compressedEncode(data, encoderContext);
-		},
-		decode: (
-			data: EncodedFieldBatch,
-			fieldBatchContext: FieldBatchEncodingContext,
-		): FieldBatch => {
-			// TODO: consider checking data is in schema.
-			return decode(data, {
-				idCompressor: fieldBatchContext.idCompressor,
-				originatorId: fieldBatchContext.originatorId,
-			}).map((chunk) => chunk.cursor());
+	const builder = ClientVersionDispatchingCodecBuilder.build("TestCompressedFieldBatch", {
+		[lowestMinVersionForCollab]: {
+			formatVersion: version,
+			codec: {
+				encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
+					return compressedEncode(data, encoderContext);
+				},
+				decode: (
+					data: EncodedFieldBatchV1 | EncodedFieldBatchV2,
+					fieldBatchContext: FieldBatchEncodingContext,
+				): FieldBatch => {
+					// TODO: consider checking data is in schema.
+					return decode(data, {
+						idCompressor: fieldBatchContext.idCompressor,
+						originatorId: fieldBatchContext.originatorId,
+					}).map((chunk) => chunk.cursor());
+				},
+				schema: format,
+			},
 		},
 	});
+	return builder.build({ ...options, minVersionForCollab: lowestMinVersionForCollab });
 }
 
 const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2);
@@ -153,6 +159,7 @@ describe("compressedEncode", () => {
 						{ jsonValidator: FormatValidatorBasic },
 						context,
 						[EncodedFieldBatchV1, EncodedFieldBatchV2][version - 1],
+						version,
 					);
 					const result = codec.encode(input, {
 						encodeType: TreeCompressionStrategy.Compressed,
