@@ -118,7 +118,6 @@ module.exports = {
 
 		// #endregion
 
-
 		/**
 		 * Disallows the `any` type.
 		 * Using the `any` type defeats the purpose of using TypeScript.
