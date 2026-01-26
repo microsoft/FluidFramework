@@ -1362,8 +1362,9 @@ export function assertIsSessionId(sessionId: string): SessionId {
 	return sessionId as SessionId;
 }
 
-export const testIdCompressor: IIdCompressor & IIdCompressorCore =
-	createAlwaysFinalizedIdCompressor(assertIsSessionId("00000000-0000-4000-b000-000000000000"));
+export const testIdCompressor = createAlwaysFinalizedIdCompressor(
+	assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+);
 export function mintRevisionTag(): RevisionTag {
 	return testIdCompressor.generateCompressedId();
 }
