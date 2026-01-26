@@ -118,7 +118,6 @@ module.exports = {
 
 		// #endregion
 
-		// #region `@typescript-eslint` rule overrides
 
 		/**
 		 * Disallows the `any` type.
