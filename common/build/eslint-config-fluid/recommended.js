@@ -188,6 +188,7 @@ module.exports = {
 		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
 		 */
 		"jsdoc/require-description": ["error", { checkConstructors: false }],
+
 		/**
 		 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
 		 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
