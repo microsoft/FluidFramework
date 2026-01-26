@@ -345,7 +345,7 @@ const generateChildStateForRebaseVersion = function* (
 				mostRecentEdit: {
 					changeset: tagChange(modularEdit, revision),
 					intention,
-					description: `AttachedNodeChangeV${rebaseVersion}${intention}`,
+					description: `AttachedNodeChangeV${rebaseVersion}`,
 					meta: {},
 				},
 				parent: state,
@@ -445,7 +445,7 @@ const generateChildStateForRebaseVersion = function* (
 			mostRecentEdit: {
 				changeset: tagChange(modularEdit, setRevision),
 				intention: setIntention,
-				description: `SetV${rebaseVersion}${newContents}`,
+				description: `SetV${rebaseVersion}:${newContents}`,
 				meta: {
 					detach: detachedNode,
 					attach: { id: fill, value: newContents },
@@ -476,7 +476,7 @@ const generateChildStateForRebaseVersion = function* (
 			mostRecentEdit: {
 				changeset: tagChange(modularEdit, buildRevision),
 				intention: buildIntention,
-				description: `BuildV${rebaseVersion}${newContents}`,
+				description: `BuildV${rebaseVersion}:${newContents}`,
 				meta: {},
 			},
 			parent: state,
@@ -520,7 +520,7 @@ const generateChildStateForRebaseVersion = function* (
 				mostRecentEdit: {
 					changeset: tagChange(modularEdit, attachRevision),
 					intention: attachIntention,
-					description: `AttachV${rebaseVersion}${node.value}`,
+					description: `AttachV${rebaseVersion}:${node.value}`,
 					meta: {
 						detach: detachedNode,
 						attach: node,
@@ -558,7 +558,7 @@ const generateChildStateForRebaseVersion = function* (
 				mostRecentEdit: {
 					changeset: tagChange(modularEdit, revision),
 					intention,
-					description: `DetachedNodeChangeV${rebaseVersion}${intention}`,
+					description: `DetachedNodeChangeV${rebaseVersion}`,
 					meta: {},
 				},
 				parent: state,
@@ -779,7 +779,7 @@ export function testRebaserAxioms() {
 					numberOfEditsToRebase: 2,
 					numberOfEditsToRebaseOver: stressMode === StressMode.Short ? 2 : 5,
 					numberOfEditsToVerifyAssociativity: stressMode === StressMode.Short ? 2 : 6,
-					groupSubSuites: true,
+					groupSubSuites: false,
 				},
 			);
 		});
