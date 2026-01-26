@@ -60,6 +60,7 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 						? {
 								type: "blob",
 								content: JSON.parse(summaryObject.content) as JsonCompatibleReadOnly,
+								// eslint-disable-next-line unicorn/text-encoding-identifier-case -- snapshot output format, not an encoding parameter
 								encoding: "utf-8",
 							}
 						: {
