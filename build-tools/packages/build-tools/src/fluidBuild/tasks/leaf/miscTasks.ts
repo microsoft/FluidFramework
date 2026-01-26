@@ -65,6 +65,15 @@ export class LesscTask extends LeafTask {
 }
 
 export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
+	/**
+	 * Use content hashes instead of file timestamps for incremental build detection.
+	 * Timestamps are unreliable as they change with git operations, file copies, and other
+	 * processes that don't modify content.
+	 */
+	protected override get useHashes(): boolean {
+		return true;
+	}
+
 	private parsed: boolean = false;
 	private readonly up: number = 0;
 	private readonly copySrcArg: string[] = [];
@@ -241,6 +250,15 @@ export class GenVerTask extends LeafTask {
 }
 
 export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
+	/**
+	 * Use content hashes instead of file timestamps for incremental build detection.
+	 * Timestamps are unreliable as they change with git operations, file copies, and other
+	 * processes that don't modify content.
+	 */
+	protected override get useHashes(): boolean {
+		return true;
+	}
+
 	private inputFiles: string[] | undefined;
 	private outputFiles: string[] | undefined;
 
@@ -283,6 +301,15 @@ export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 }
 
 export class GoodFence extends LeafWithFileStatDoneFileTask {
+	/**
+	 * Use content hashes instead of file timestamps for incremental build detection.
+	 * Timestamps are unreliable as they change with git operations, file copies, and other
+	 * processes that don't modify content.
+	 */
+	protected override get useHashes(): boolean {
+		return true;
+	}
+
 	protected get taskWeight(): number {
 		return 0; // generally cheap relative to other tasks
 	}
@@ -313,6 +340,15 @@ export class GoodFence extends LeafWithFileStatDoneFileTask {
 }
 
 export class DepCruiseTask extends LeafWithFileStatDoneFileTask {
+	/**
+	 * Use content hashes instead of file timestamps for incremental build detection.
+	 * Timestamps are unreliable as they change with git operations, file copies, and other
+	 * processes that don't modify content.
+	 */
+	protected override get useHashes(): boolean {
+		return true;
+	}
+
 	private inputFiles: string[] | undefined;
 	protected async getInputFiles(): Promise<string[]> {
 		if (this.inputFiles === undefined) {
