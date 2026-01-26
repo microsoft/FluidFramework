@@ -75,6 +75,7 @@ export async function stressTest(
 
 	// Get legacy package directory from environment variable if available
 	const legacyPackageDir = process.env.LEGACY_PACKAGE_DIR;
+	process.stdout.write(`Legacy package dir: ${legacyPackageDir}\n`);
 	const hasLegacyVersion = legacyPackageDir !== undefined && legacyPackageDir !== "";
 
 	// Calculate how many runners should use each version
