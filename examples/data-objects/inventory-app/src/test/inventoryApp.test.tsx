@@ -15,7 +15,7 @@ import {
 	InventoryViewMonolithic,
 	InventoryViewWithHook,
 	MainView,
-} from "../view/inventoryList.js";
+} from "../view/inventoryView.js";
 
 const views = [
 	{ name: "MainView", component: MainView },

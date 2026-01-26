@@ -16,6 +16,7 @@ import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	TreeAlpha,
 } from "../../shared-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -24,8 +25,8 @@ import type {
 	ReadSchema,
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
-import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
+import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
 import type {
@@ -36,7 +37,6 @@ import type {
 	VoidTransactionCallbackStatus,
 } from "./transactionTypes.js";
 import type { VerboseTree } from "./verboseTree.js";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
 
 /**
  * A tree from which a {@link TreeView} can be created.
@@ -340,8 +340,10 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 	/**
 	 * Description of the current compatibility status between the view schema and stored schema.
-	 *
+	 * @remarks
 	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status changes.
+	 * See {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution} for more guidance on how to change schema while maintaining compatibility.
+	 * Use {@link checkSchemaCompatibilitySnapshots} to write tests to validate that this compatibility behaves as desired across schema changes.
 	 */
 	readonly compatibility: SchemaCompatibilityStatus;
 

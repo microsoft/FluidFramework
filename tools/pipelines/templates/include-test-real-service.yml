@@ -40,9 +40,6 @@ parameters:
   type: string
   default: "@fluid-private/test-end-to-end-tests"
 
-- name: testWorkspace
-  type: string
-
 - name: timeoutInMinutes
   type: number
   default: 60
@@ -84,10 +81,6 @@ parameters:
 - name: condition
   type: string
   default: true
-
-- name: loggerPackage
-  type: string
-  default: '@ff-internal/aria-logger'
 
 - name: tenantSetupPackage
   type: string
@@ -141,7 +134,7 @@ parameters:
   default: 'latest'
 
 stages:
-- stage: ${{ parameters.stageId}}
+- stage: ${{ parameters.stageId }}
   ${{ if ne(parameters.lockBehavior, 'none') }}:
     lockBehavior: ${{ parameters.lockBehavior }}
   condition: ${{ parameters.condition }}
@@ -233,7 +226,6 @@ stages:
 
               Pipeline Variables:
                 isTestBranch=${{ variables.isTestBranch }}
-                testWorkspace=${{ parameters.testWorkspace }}
                 testPackageFilePattern=${{ variables.testPackageFilePattern }}
                 testCommand=${{ parameters.testCommand }}
                 continueOnError=${{ parameters.continueOnError }}
@@ -614,9 +606,16 @@ stages:
 
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
-- template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
+- template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
   parameters:
-    stageId: ${{ parameters.stageId }}
-    uploadTestPassRateTelemetry: ${{ parameters.uploadTestPassRateTelemetry }}
-    pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
-    testWorkspace: $(Build.SourcesDirectory)
+    stageIdFilter: ${{ parameters.stageId }}
+    telemetry_upload_steps:
+      - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
+        parameters:
+          stageIdFilter: ${{ parameters.stageId }}
+          pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
+      - ${{ if parameters.uploadTestPassRateTelemetry }}:
+        - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-test-pass-rate.yml@self
+          parameters:
+            stageIdFilter: ${{ parameters.stageId }}
+            pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}

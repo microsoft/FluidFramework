@@ -26,8 +26,6 @@ resources:
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
-- name: testWorkspace
-  value: $(Pipeline.Workspace)/test
 - name: testPackage
   value: "@fluid-internal/test-service-load"
   readonly: true
@@ -48,7 +46,6 @@ stages:
   #     odspTenantType: prod
   #     poolBuild: Large-eastus2
   #     testPackage: ${{ variables.testPackage }}
-  #     testWorkspace: ${{ variables.testWorkspace }}
   #     artifactBuildId: $(resources.pipeline.client.runID)
   #     timeoutInMinutes: 120
   #     testCommand: start:odsp
@@ -66,7 +63,6 @@ stages:
   #     odspTenantType: dogfood
   #     poolBuild: Large-eastus2
   #     testPackage: ${{ variables.testPackage }}
-  #     testWorkspace: ${{ variables.testWorkspace }}
   #     artifactBuildId: $(resources.pipeline.client.runID)
   #     timeoutInMinutes: 120
   #     testCommand: start:odspdf
@@ -83,7 +79,6 @@ stages:
       stageDisplayName: Stress tests - tinylicious
       poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 120
       testCommand: start:t9s
@@ -103,7 +98,6 @@ stages:
   #     stageDisplayName: Stress tests - AFR
   #     poolBuild: Large-eastus2
   #     testPackage: ${{ variables.testPackage }}
-  #     testWorkspace: ${{ variables.testWorkspace }}
   #     artifactBuildId: $(resources.pipeline.client.runID)
   #     timeoutInMinutes: 120
   #     testCommand: start:frs
@@ -124,7 +118,6 @@ stages:
   #     stageDisplayName: Stress tests - AFR canary
   #     poolBuild: Large-eastus2
   #     testPackage: ${{ variables.testPackage }}
-  #     testWorkspace: ${{ variables.testWorkspace }}
   #     artifactBuildId: $(resources.pipeline.client.runID)
   #     timeoutInMinutes: 120
   #     testCommand: start:frs:canary

@@ -4,8 +4,9 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { BTree } from "@tylerbu/sorted-btree-es6";
+import { lt } from "semver-ts";
 
 import {
 	FluidClientVersion,
@@ -61,6 +62,11 @@ import {
 	RangeMap,
 	balancedReduce,
 } from "../../util/index.js";
+import {
+	getFromChangeAtomIdMap,
+	setInChangeAtomIdMap,
+	type ChangeAtomIdBTree,
+} from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
 import {
@@ -75,6 +81,7 @@ import {
 	NodeAttachState,
 	type RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
+import type { FlexFieldKind } from "./fieldKind.js";
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import type { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
@@ -91,13 +98,6 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import type { FlexFieldKind } from "./fieldKind.js";
-import {
-	getFromChangeAtomIdMap,
-	setInChangeAtomIdMap,
-	type ChangeAtomIdBTree,
-} from "../changeAtomIdBTree.js";
-import { lt } from "semver-ts";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -481,6 +481,7 @@ export class ModularChangeFamily
 				setInChangeAtomIdMap(composedNodes, nodeId, nodeChangeset);
 			}
 
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 			if (nodeChangeset.fieldChanges === undefined) {
 				nodeChangeset.fieldChanges = new Map();
 			}
@@ -1039,15 +1040,6 @@ export class ModularChangeFamily
 
 			// This field has no changes in the new changeset, otherwise it would have been added to
 			// `crossFieldTable.baseFieldToContext` when processing fields with both base and new changes.
-			const rebaseChild = (
-				child: NodeId | undefined,
-				baseChild: NodeId | undefined,
-				stateChange: NodeAttachState | undefined,
-			): NodeId | undefined => {
-				assert(child === undefined, 0x9c3 /* There should be no new changes in this field */);
-				return undefined;
-			};
-
 			const handler = getChangeHandler(this.fieldKinds, baseFieldChange.fieldKind);
 			const fieldChange: FieldChange = {
 				...baseFieldChange,
@@ -1063,7 +1055,7 @@ export class ModularChangeFamily
 			const rebasedField: unknown = handler.rebaser.rebase(
 				fieldChange.change,
 				baseFieldChange.change,
-				rebaseChild,
+				noNewChangesRebaseChild,
 				genId,
 				new RebaseManager(crossFieldTable, baseFieldChange, fieldId),
 				metadata,
@@ -1373,7 +1365,7 @@ export class ModularChangeFamily
 		const change = nodeChangeFromId(crossFieldTable.newChange.nodeChanges, newId);
 		const over = nodeChangeFromId(crossFieldTable.baseChange.nodeChanges, baseId);
 
-		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map();
+		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map<FieldKey, FieldChange>();
 
 		const fieldChanges =
 			change.fieldChanges !== undefined && over.fieldChanges !== undefined
@@ -1530,8 +1522,11 @@ export class ModularChangeFamily
 	}
 
 	public getRevisions(change: ModularChangeset): Set<RevisionTag | undefined> {
+		if (change.revisions === undefined || change.revisions.length === 0) {
+			return new Set([undefined]);
+		}
 		const aggregated: Set<RevisionTag | undefined> = new Set();
-		for (const revInfo of change.revisions ?? [{ revision: undefined }]) {
+		for (const revInfo of change.revisions) {
 			aggregated.add(revInfo.revision);
 		}
 		return aggregated;
@@ -1909,23 +1904,26 @@ export function* relevantRemovedRoots(
 	yield* relevantRemovedRootsFromFields(change.fieldChanges, change.nodeChanges, fieldKinds);
 }
 
+function* relevantRemovedRootsFromNode(
+	node: NodeId,
+	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): Iterable<DeltaDetachedNodeId> {
+	const nodeChangeset = nodeChangeFromId(nodeChanges, node);
+	if (nodeChangeset.fieldChanges !== undefined) {
+		yield* relevantRemovedRootsFromFields(nodeChangeset.fieldChanges, nodeChanges, fieldKinds);
+	}
+}
+
 function* relevantRemovedRootsFromFields(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Iterable<DeltaDetachedNodeId> {
+	const delegate = (node: NodeId): Iterable<DeltaDetachedNodeId> =>
+		relevantRemovedRootsFromNode(node, nodeChanges, fieldKinds);
 	for (const [_, fieldChange] of change) {
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
-		const delegate = function* (node: NodeId): Iterable<DeltaDetachedNodeId> {
-			const nodeChangeset = nodeChangeFromId(nodeChanges, node);
-			if (nodeChangeset.fieldChanges !== undefined) {
-				yield* relevantRemovedRootsFromFields(
-					nodeChangeset.fieldChanges,
-					nodeChanges,
-					fieldKinds,
-				);
-			}
-		};
 		yield* handler.relevantRemovedRoots(fieldChange.change, delegate);
 	}
 }
@@ -2108,7 +2106,7 @@ function intoDeltaImpl(
 				return deltaFromNodeChange(nodeChange, nodeChanges, fieldKinds, global, rename);
 			},
 		);
-		if (fieldChanges !== undefined && fieldChanges.length > 0) {
+		if (fieldChanges !== undefined && fieldChanges.marks.length > 0) {
 			delta.set(field, fieldChanges);
 		}
 		for (const c of fieldGlobal ?? []) {
@@ -2630,7 +2628,7 @@ function makeModularChangeset(props?: {
 }): ModularChangeset {
 	const p = props ?? { maxId: -1 };
 	const changeset: Mutable<ModularChangeset> = {
-		fieldChanges: p.fieldChanges ?? new Map(),
+		fieldChanges: p.fieldChanges ?? new Map<FieldKey, FieldChange>(),
 		nodeChanges: p.nodeChanges ?? newTupleBTree(),
 		nodeToParent: p.nodeToParent ?? newTupleBTree(),
 		nodeAliases: p.nodeAliases ?? newTupleBTree(),
@@ -3176,6 +3174,19 @@ function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>)
 
 function hasConflicts(change: ModularChangeset): boolean {
 	return (change.constraintViolationCount ?? 0) > 0;
+}
+
+/**
+ * A rebaseChild callback for fields with no new changes.
+ * Asserts that there are no new changes and returns undefined.
+ */
+function noNewChangesRebaseChild(
+	child: NodeId | undefined,
+	_baseChild: NodeId | undefined,
+	_stateChange: NodeAttachState | undefined,
+): NodeId | undefined {
+	assert(child === undefined, 0x9c3 /* There should be no new changes in this field */);
+	return undefined;
 }
 
 interface ModularChangesetContent {

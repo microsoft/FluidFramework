@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	FlushMode,
 	type IRuntimeMessageCollection,
@@ -15,7 +16,6 @@ import {
 	MockContainerRuntimeForReconnection,
 	type MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Returns whether the two messages are from the same batch for the purposes of op bunching.
@@ -58,7 +58,7 @@ export class MockContainerRuntimeFactoryWithOpBunching extends MockContainerRunt
 	 * mode, it sends them all together in an array to the runtimes for processing.
 	 * @param count - The number of messages to process.
 	 */
-	public override processSomeMessages(count: number) {
+	public override processSomeMessages(count: number): void {
 		if (count > this.messages.length) {
 			throw new Error("Tried to process more messages than exist");
 		}
@@ -78,7 +78,7 @@ export class MockContainerRuntimeFactoryWithOpBunching extends MockContainerRunt
 		this.lastProcessedMessage = undefined;
 	}
 
-	public override processAllMessages() {
+	public override processAllMessages(): void {
 		this.processSomeMessages(this.messages.length);
 	}
 }
@@ -88,7 +88,9 @@ export class MockContainerRuntimeFactoryWithOpBunching extends MockContainerRunt
  * @internal
  */
 export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForReconnection {
-	protected override processPendingMessages(pendingMessages: ISequencedDocumentMessage[]) {
+	protected override processPendingMessages(
+		pendingMessages: ISequencedDocumentMessage[],
+	): void {
 		this.processMessages(pendingMessages);
 	}
 
@@ -111,7 +113,7 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 	 * 5. Client 1 resubmits its message which will now have ref seq# 2 instead of 1. This is an unintended consequence
 	 * of using connected state which may be fine for some tests but not for others.
 	 */
-	public pauseInboundProcessing() {
+	public pauseInboundProcessing(): void {
 		this.paused = true;
 	}
 
@@ -120,7 +122,7 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 	 * data store runtime and DDSes.
 	 * @remarks See pauseInboundProcessing for more details.
 	 */
-	public resumeInboundProcessing() {
+	public resumeInboundProcessing(): void {
 		if (!this.paused) {
 			return;
 		}

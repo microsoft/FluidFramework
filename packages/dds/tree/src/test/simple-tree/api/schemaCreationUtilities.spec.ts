@@ -4,10 +4,16 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import {
+	adaptEnum,
+	enumEntries,
+	enumFromStrings,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/schemaCreationUtilities.js";
 import {
 	type NodeFromSchema,
 	SchemaFactory,
@@ -18,23 +24,40 @@ import {
 	SchemaFactoryBeta,
 } from "../../../simple-tree/index.js";
 import {
-	adaptEnum,
-	enumEntries,
-	enumFromStrings,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/schemaCreationUtilities.js";
-import { getView } from "../../utils.js";
-import {
 	unsafeArrayToTuple,
 	type areSafelyAssignable,
 	type isAssignableTo,
 	type requireFalse,
 	type requireTrue,
 } from "../../../util/index.js";
+import { testSchemaCompatibilitySnapshots } from "../../snapshots/index.js";
+import { getView } from "../../utils.js";
 
-const schema = new SchemaFactory("test");
+const schema = new SchemaFactoryBeta("test");
 
 describe("schemaCreationUtilities", () => {
+	it("enumFromStrings compatibility", () => {
+		// There is not a single fixed enum schema, but instead a collection of utilities that generate enum schemas.
+		// Therefore we cannot directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of enumFromStrings
+		// which is what this test does.
+		const Mode = enumFromStrings(schema.scopedFactory("Mode"), ["Fun", "Cool"]);
+		const currentViewSchema = new TreeViewConfiguration({ schema: Mode.schema });
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.82.0", "enumFromStrings-example");
+	});
+
+	it("adaptEnum compatibility", () => {
+		// There is not a single fixed enum schema, but instead a collection of utilities that generate enum schemas.
+		// Therefore, we cannot directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of adaptEnum
+		// which is what this test does.
+		enum Mode {
+			a = "A",
+			b = "B",
+		}
+		const ModeNodes = adaptEnum(schema.scopedFactory("Mode"), Mode);
+		const currentViewSchema = new TreeViewConfiguration({ schema: ModeNodes.schema });
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.82.0", "adaptEnum-example");
+	});
+
 	it("enum type switch", () => {
 		const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
 		class Parent extends schema.object("Parent", { mode: Mode.schema }) {}

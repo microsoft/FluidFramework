@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
 import { makeChangeAtomId } from "../../../core/index.js";
-import { brandConst } from "../../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { DefaultRevisionReplacer } from "../../../feature-libraries/modular-schema/defaultRevisionReplacer.js";
+import { brandConst } from "../../../util/index.js";
 
 describe("DefaultRevisionReplacer", () => {
 	const obsoleteRev1: RevisionTag = "obsoleteRev1" as RevisionTag;
