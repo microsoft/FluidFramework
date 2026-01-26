@@ -58,7 +58,7 @@ export function takeSnapshot(
 		writeFileSync(fullFile, data);
 	} else {
 		assert(exists, `test snapshot file does not exist: "${fullFile}"`);
-		const pastData = readFileSync(fullFile, "utf-8");
+		const pastData = readFileSync(fullFile, "utf8");
 		const message = `snapshot different for "${currentTestName}"`;
 		compare?.(data, pastData, message);
 		assert.equal(data, pastData, message);
