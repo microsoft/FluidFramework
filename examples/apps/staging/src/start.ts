@@ -79,4 +79,8 @@ async function start(): Promise<void> {
 	updateTabForId(id);
 }
 
-await start();
+try {
+	await start();
+} catch (error) {
+	console.error(error);
+}

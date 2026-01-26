@@ -56,4 +56,8 @@ async function start(): Promise<void> {
 	updateTabForId(id);
 }
 
-await start();
+try {
+	await start();
+} catch (error) {
+	console.error("Error starting tree comparison app:", error);
+}
