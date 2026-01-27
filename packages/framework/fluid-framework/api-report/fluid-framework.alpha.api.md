@@ -1067,6 +1067,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
     getChange(): JsonCompatibleReadOnly;
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
     readonly isLocal: true;
+    readonly label?: unknown;
 }
 
 // @public @sealed
@@ -1247,6 +1248,7 @@ export interface RemoteChangeMetadata extends CommitMetadata {
     readonly getChange?: undefined;
     readonly getRevertible?: undefined;
     readonly isLocal: false;
+    readonly label?: undefined;
 }
 
 // @alpha
