@@ -200,7 +200,14 @@ export class TestDb implements IDb {
 
 	constructor(private collections: { [key: string]: any[] }) {}
 
-	public async close(): Promise<void> {}
+	public async close(): Promise<void> {
+		// Clear all collections to release memory
+		for (const key of Object.keys(this.collections)) {
+			this.collections[key] = [];
+		}
+		// Remove all event listeners
+		this.emitter.removeAllListeners();
+	}
 
 	public on(event: string, listener: (...args: any[]) => void) {
 		this.emitter.on(event, listener);

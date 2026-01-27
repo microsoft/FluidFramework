@@ -150,7 +150,13 @@ export class LocalOrdererManager implements IOrdererManager {
 	}
 
 	public async removeOrderer(tenantId: string, documentId: string): Promise<void> {
-		// No-op for local orderer. Orderer connections are managed separately.
+		const key = this.getOrdererMapKey(tenantId, documentId);
+		const ordererPromise = this.ordererMap.get(key);
+		if (ordererPromise !== undefined) {
+			this.ordererMap.delete(key);
+			const orderer = await ordererPromise;
+			await orderer.close();
+		}
 	}
 
 	private getOrdererMapKey(tenantId: string, documentId: string) {

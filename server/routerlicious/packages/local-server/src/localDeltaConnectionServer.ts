@@ -197,13 +197,26 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 			socket.on("signal", earlySignalHandler);
 
 			// Listen for connection issues
-			socket.on("connect_error", (error) => {
+			const connectErrorHandler = (error: unknown) => {
 				reject(error);
-			});
+			};
+			socket.on("connect_error", connectErrorHandler);
 
-			socket.on("connect_document_success", (response: IConnected) => {
+			const connectDocumentErrorHandler = (error: unknown) => {
+				reject(error);
+			};
+			socket.on("connect_document_error", connectDocumentErrorHandler);
+
+			// Helper to remove all temporary handlers
+			const removeAllTempHandlers = () => {
 				socket.removeListener("op", earlyOpHandler);
 				socket.removeListener("signal", earlySignalHandler);
+				socket.removeListener("connect_error", connectErrorHandler);
+				socket.removeListener("connect_document_error", connectDocumentErrorHandler);
+			};
+
+			socket.on("connect_document_success", (response: IConnected) => {
+				removeAllTempHandlers();
 
 				if (queuedMessages.length > 0) {
 					// Some messages were queued.
@@ -220,8 +233,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
 				resolve(response);
 			});
-
-			socket.on("connect_document_error", reject);
 
 			socket.emit("connect_document", connectMessage);
 		});

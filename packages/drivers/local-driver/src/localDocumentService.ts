@@ -52,7 +52,24 @@ export class LocalDocumentService
 		super();
 	}
 
-	public dispose(): void {}
+	private _disposed = false;
+
+	public get disposed(): boolean {
+		return this._disposed;
+	}
+
+	public dispose(): void {
+		if (this._disposed) {
+			return;
+		}
+		this._disposed = true;
+
+		// Dispose inner document service if it exists
+		this.innerDocumentService?.dispose();
+
+		// Remove all event listeners
+		this.removeAllListeners();
+	}
 
 	/**
 	 * Creates and returns a document storage service for local use.

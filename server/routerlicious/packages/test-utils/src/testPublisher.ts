@@ -53,5 +53,8 @@ export class TestPublisher implements IPublisher {
 		return this.topics[topic];
 	}
 
-	public async close() {}
+	public async close() {
+		this.events.removeAllListeners();
+		this.topics = {};
+	}
 }

@@ -73,11 +73,17 @@ export class LocalWebSocket implements IWebSocket {
 	}
 
 	public disconnect(close?: boolean) {
+		if (!this._connected) {
+			return; // Already disconnected
+		}
 		for (const roomId of this.rooms) {
 			this.server.pubsub.unsubscribe(roomId, this.subscriber);
 		}
+		this.rooms.clear();
 		this._connected = false;
 		this.emit("disconnect");
+		this.events.removeAllListeners();
+		this.server.removeConnection(this);
 	}
 }
 
@@ -86,6 +92,7 @@ export class LocalWebSocket implements IWebSocket {
  */
 export class LocalWebSocketServer implements IWebSocketServer {
 	private readonly events = new EventEmitter();
+	private readonly connections = new Set<LocalWebSocket>();
 
 	constructor(public readonly pubsub: IPubSub) {}
 
@@ -98,13 +105,27 @@ export class LocalWebSocketServer implements IWebSocketServer {
 	}
 
 	public async close(): Promise<void> {
+		// Disconnect all active connections to release resources
+		for (const socket of this.connections) {
+			socket.disconnect();
+		}
+		this.connections.clear();
 		this.events.removeAllListeners();
 	}
 
 	public createConnection(): LocalWebSocket {
 		const socket = new LocalWebSocket(uuid(), this);
+		this.connections.add(socket);
 		const mockRequest = { url: "TestWebSocket" };
 		this.events.emit("connection", socket, mockRequest);
 		return socket;
+	}
+
+	/**
+	 * Remove a connection from tracking (called when socket disconnects)
+	 * @internal
+	 */
+	public removeConnection(socket: LocalWebSocket): void {
+		this.connections.delete(socket);
 	}
 }
