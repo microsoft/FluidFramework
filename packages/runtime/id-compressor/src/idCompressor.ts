@@ -277,8 +277,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const currentOffset = this.shardingState?.shardOffset ?? 0;
 		const currentActiveCount = this.shardingState?.activeChildCount ?? 0;
 
-		// Calculate new stride: parent and all children share this stride
-		const newTotalShards = currentStride * (newShardCount + 1);
+		const newStride = currentStride * (newShardCount + 1);
 
 		// Store parent's localGenCount before creating shards
 		const parentLocalGenCountBeforeShard = this.localGenCount;
@@ -287,7 +286,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const previousHighestBackfilled =
 			this.shardingState?.highestBackfilledGenCount ?? parentLocalGenCountBeforeShard;
 		this.shardingState = {
-			stride: newTotalShards,
+			stride: newStride,
 			shardOffset: currentOffset, // Parent keeps its offset
 			activeChildCount: currentActiveCount + newShardCount,
 			// Preserve the highest backfilled genCount from previous sharding, or use current localGenCount if first shard
@@ -304,7 +303,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			// Create a child shard with the correct sharding state
 			// Pass the original parent localGenCount so child can calculate correctly
 			const childShard = this.createChildShard(
-				newTotalShards,
+				newStride,
 				childOffset,
 				parentLocalGenCountBeforeShard,
 			);
@@ -313,8 +312,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		// Update parent's localGenCount to reflect the stride-based view
 		// Parent now only "owns" its stride's genCounts, so recalculate how many of those it has generated
-		const completedCycles = Math.floor(parentLocalGenCountBeforeShard / newTotalShards);
-		const idsInIncompleteCycle = parentLocalGenCountBeforeShard % newTotalShards;
+		const completedCycles = Math.floor(parentLocalGenCountBeforeShard / newStride);
+		const idsInIncompleteCycle = parentLocalGenCountBeforeShard % newStride;
 		this.localGenCount = completedCycles + (currentOffset < idsInIncompleteCycle ? 1 : 0);
 
 		return shards;
