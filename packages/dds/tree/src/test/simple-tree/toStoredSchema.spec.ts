@@ -56,7 +56,7 @@ describe("toStoredSchema", () => {
 			const storedNodeSchema = stored.nodeSchema.get(brand(A.identifier));
 			assert(storedNodeSchema !== undefined);
 			assert.deepEqual(storedNodeSchema.encodeV1(), {
-				object: Object.create(null),
+				object: Object.create(null) as Record<string, never>,
 			});
 		});
 		it("name collision", () => {
