@@ -132,7 +132,7 @@ export interface TreeArrayNode<
 	 * Inserts new item(s) at the end of the array.
 	 *
 	 * @remarks
-	 * This method has the same behavior as `insertAtEnd`.
+	 * This method has the same behavior as `{@link insertAtEnd}`.
 	 * The merge semantics for concurrent inserts or moves to the same position are unspecified.
 	 * @param value - The content to insert.
 	 */
