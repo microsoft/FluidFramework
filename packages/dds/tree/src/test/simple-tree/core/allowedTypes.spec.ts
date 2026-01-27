@@ -4,10 +4,31 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
+import {
+	AnnotatedAllowedTypesInternal,
+	isAnnotatedAllowedType,
+	normalizeAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
+	normalizeToAnnotatedAllowedType,
+	type AllowedTypes,
+	type AllowedTypesFull,
+	type AllowedTypesFullEvaluated,
+	type AllowedTypesFullFromMixed,
+	type AnnotateAllowedTypesList,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
+	type ImplicitAllowedTypes,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NumberKeys,
+	type TreeNodeFromImplicitAllowedTypes,
+	type UnannotateAllowedTypesList,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/core/allowedTypes.js";
 import {
 	allowUnused,
 	numberSchema,
@@ -35,28 +56,6 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../../util/index.js";
-
-import {
-	AnnotatedAllowedTypesInternal,
-	isAnnotatedAllowedType,
-	normalizeAllowedTypes,
-	normalizeAndEvaluateAnnotatedAllowedTypes,
-	normalizeToAnnotatedAllowedType,
-	type AllowedTypes,
-	type AllowedTypesFull,
-	type AllowedTypesFullEvaluated,
-	type AllowedTypesFullFromMixed,
-	type AnnotateAllowedTypesList,
-	type AnnotatedAllowedType,
-	type AnnotatedAllowedTypes,
-	type ImplicitAllowedTypes,
-	type InsertableTreeNodeFromAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type NumberKeys,
-	type TreeNodeFromImplicitAllowedTypes,
-	type UnannotateAllowedTypesList,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/core/allowedTypes.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -834,8 +833,8 @@ describe("allowedTypes", () => {
 			const result = AnnotatedAllowedTypesInternal.create(input);
 			assert(Object.isFrozen(input));
 			assert.throws(() => {
-				// @ts-expect-error Array should be readonly, so this error is good.
-				result.push(stringSchema);
+				// Array should be readonly, so this error is good.
+				(result as unknown as unknown[]).push(stringSchema);
 			}, "TypeError: result.push is not a function");
 		});
 

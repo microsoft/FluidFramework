@@ -41,27 +41,27 @@ import {
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import {
 	clientVersionToForestFormatVersion,
 	type ForestCodec,
 	makeForestSummarizerCodec,
 } from "./codec.js";
+import { ForestFormatVersion } from "./formatCommon.js";
 import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
 } from "./incrementalSummaryBuilder.js";
 import {
-	minVersionToForestSummaryFormatVersion,
-	getForestRootSummaryContentKey,
-} from "./summaryTypes.js";
-import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import { ForestFormatVersion } from "./formatCommon.js";
-import {
 	ForestSummaryFormatVersion,
 	forestSummaryKey,
 	supportedForestSummaryFormatVersions,
 } from "./summaryFormatCommon.js";
+import {
+	minVersionToForestSummaryFormatVersion,
+	getForestRootSummaryContentKey,
+} from "./summaryTypes.js";
 
 /**
  * Provides methods for summarizing and loading a forest.
@@ -230,7 +230,10 @@ export class ForestSummarizer
 				id: buildId,
 				trees: chunked,
 			});
-			fieldChanges.push([fieldKey, [{ count: chunked.topLevelLength, attach: buildId }]]);
+			fieldChanges.push([
+				fieldKey,
+				{ marks: [{ count: chunked.topLevelLength, attach: buildId }] },
+			]);
 		}
 
 		assert(this.forest.isEmpty, 0x797 /* forest must be empty */);

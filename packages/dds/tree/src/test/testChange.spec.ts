@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ChangeEncodingContext,
@@ -22,7 +23,6 @@ import type { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUti
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { TestChange } from "./testChange.js";
 import { mintRevisionTag, testIdCompressor } from "./utils.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
@@ -74,7 +74,7 @@ describe("TestChange", () => {
 		const tag = mintRevisionTag();
 		const delta = TestChange.toDelta(tagChange(change1, tag));
 		const field: FieldKey = brand("testIntentions");
-		const expected = new Map([[field, [{ count: 2 }, { count: 3 }]]]);
+		const expected = new Map([[field, { marks: [{ count: 2 }, { count: 3 }] }]]);
 
 		assert.deepEqual(delta, expected);
 		assert.deepEqual(
