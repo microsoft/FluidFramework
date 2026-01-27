@@ -204,19 +204,23 @@ export const typeFactory: {
     string(): TypeFactoryString;
     number(): TypeFactoryNumber;
     boolean(): TypeFactoryBoolean;
+    date(): TypeFactoryDate;
     void(): TypeFactoryVoid;
     undefined(): TypeFactoryUndefined;
     null(): TypeFactoryNull;
     unknown(): TypeFactoryUnknown;
     array(element: TypeFactoryType): TypeFactoryArray;
+    promise(innerType: TypeFactoryType): TypeFactoryPromise;
     object(shape: Record<string, TypeFactoryType>): TypeFactoryObject;
     record(keyType: TypeFactoryType, valueType: TypeFactoryType): TypeFactoryRecord;
     map(keyType: TypeFactoryType, valueType: TypeFactoryType): TypeFactoryMap;
     tuple(items: readonly TypeFactoryType[], rest?: TypeFactoryType): TypeFactoryTuple;
     union(options: readonly TypeFactoryType[]): TypeFactoryUnion;
+    intersection(types: readonly TypeFactoryType[]): TypeFactoryIntersection;
     literal(value: string | number | boolean): TypeFactoryLiteral;
     optional(innerType: TypeFactoryType): TypeFactoryOptional;
     readonly(innerType: TypeFactoryType): TypeFactoryReadonly;
+    function(parameters: readonly TypeFactoryFunctionParameter[], returnType: TypeFactoryType, restParameter?: TypeFactoryFunctionParameter): TypeFactoryFunction;
     instanceOf<T extends TreeNodeSchemaClass_2>(schema: T): TypeFactoryInstanceOf;
 };
 
@@ -232,9 +236,31 @@ export interface TypeFactoryBoolean extends TypeFactoryType {
 }
 
 // @alpha
+export interface TypeFactoryDate extends TypeFactoryType {
+    readonly _kind: "date";
+}
+
+// @alpha
+export interface TypeFactoryFunction extends TypeFactoryType {
+    readonly _kind: "function";
+    readonly parameters: readonly TypeFactoryFunctionParameter[];
+    readonly restParameter?: TypeFactoryFunctionParameter;
+    readonly returnType: TypeFactoryType;
+}
+
+// @alpha
+export type TypeFactoryFunctionParameter = readonly [name: string, type: TypeFactoryType];
+
+// @alpha
 export interface TypeFactoryInstanceOf extends TypeFactoryType {
     readonly _kind: "instanceof";
     readonly schema: ObjectNodeSchema;
+}
+
+// @alpha
+export interface TypeFactoryIntersection extends TypeFactoryType {
+    readonly _kind: "intersection";
+    readonly types: readonly TypeFactoryType[];
 }
 
 // @alpha
@@ -273,6 +299,12 @@ export interface TypeFactoryOptional extends TypeFactoryType {
 }
 
 // @alpha
+export interface TypeFactoryPromise extends TypeFactoryType {
+    readonly innerType: TypeFactoryType;
+    readonly _kind: "promise";
+}
+
+// @alpha
 export interface TypeFactoryReadonly extends TypeFactoryType {
     readonly innerType: TypeFactoryType;
     readonly _kind: "readonly";
@@ -303,7 +335,7 @@ export interface TypeFactoryType {
 }
 
 // @alpha
-export type TypeFactoryTypeKind = "string" | "number" | "boolean" | "void" | "undefined" | "null" | "unknown" | "array" | "object" | "record" | "map" | "tuple" | "union" | "literal" | "optional" | "readonly" | "instanceof";
+export type TypeFactoryTypeKind = "string" | "number" | "boolean" | "void" | "undefined" | "null" | "unknown" | "date" | "promise" | "array" | "object" | "record" | "map" | "tuple" | "union" | "intersection" | "literal" | "optional" | "readonly" | "function" | "instanceof";
 
 // @alpha
 export interface TypeFactoryUndefined extends TypeFactoryType {

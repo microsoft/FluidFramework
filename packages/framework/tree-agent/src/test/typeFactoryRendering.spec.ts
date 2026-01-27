@@ -224,6 +224,231 @@ describe("renderTypeFactoryTypeScript", () => {
 		});
 	});
 
+	describe("date type", () => {
+		it("renders date type", () => {
+			const result = renderTypeFactoryTypeScript(tf.date(), () => "", instanceOfsTypeFactory);
+			assert.equal(result, "Date");
+		});
+	});
+
+	describe("promise types", () => {
+		it("renders simple promise", () => {
+			const promiseType = tf.promise(tf.string());
+			const result = renderTypeFactoryTypeScript(
+				promiseType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(result, "Promise<string>");
+		});
+
+		it("renders nested promise", () => {
+			const promiseType = tf.promise(tf.promise(tf.number()));
+			const result = renderTypeFactoryTypeScript(
+				promiseType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(result, "Promise<Promise<number>>");
+		});
+
+		it("renders promise with complex inner type", () => {
+			const promiseType = tf.promise(
+				tf.object({
+					id: tf.number(),
+					name: tf.string(),
+				}),
+			);
+			const result = renderTypeFactoryTypeScript(
+				promiseType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(
+				result,
+				`Promise<{
+    id: number;
+    name: string;
+}>`,
+			);
+		});
+
+		it("renders promise with union inner type", () => {
+			const promiseType = tf.promise(tf.union([tf.string(), tf.number()]));
+			const result = renderTypeFactoryTypeScript(
+				promiseType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(result, "Promise<string | number>");
+		});
+	});
+
+	describe("intersection types", () => {
+		it("renders simple intersection", () => {
+			const intersectionType = tf.intersection([
+				tf.object({ name: tf.string() }),
+				tf.object({ age: tf.number() }),
+			]);
+			const result = renderTypeFactoryTypeScript(
+				intersectionType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(
+				result,
+				`{
+    name: string;
+} & {
+    age: number;
+}`,
+			);
+		});
+
+		it("renders intersection with multiple types", () => {
+			const intersectionType = tf.intersection([
+				tf.object({ a: tf.string() }),
+				tf.object({ b: tf.number() }),
+				tf.object({ c: tf.boolean() }),
+			]);
+			const result = renderTypeFactoryTypeScript(
+				intersectionType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(
+				result,
+				`{
+    a: string;
+} & {
+    b: number;
+} & {
+    c: boolean;
+}`,
+			);
+		});
+
+		it("renders intersection with union (checks precedence)", () => {
+			const intersectionType = tf.intersection([
+				tf.union([tf.string(), tf.number()]),
+				tf.object({ optional: tf.optional(tf.boolean()) }),
+			]);
+			const result = renderTypeFactoryTypeScript(
+				intersectionType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(
+				result,
+				`(string | number) & {
+    optional?: boolean;
+}`,
+			);
+		});
+
+		it("renders union with intersection (checks precedence)", () => {
+			const unionType = tf.union([
+				tf.intersection([tf.object({ a: tf.string() }), tf.object({ b: tf.number() })]),
+				tf.string(),
+			]);
+			const result = renderTypeFactoryTypeScript(unionType, () => "", instanceOfsTypeFactory);
+			// Note: Parentheses not required since & binds tighter than |
+			assert.equal(
+				result,
+				`{
+    a: string;
+} & {
+    b: number;
+} | string`,
+			);
+		});
+	});
+
+	describe("function types", () => {
+		it("renders simple function", () => {
+			const functionType = tf.function([["arg", tf.string()]], tf.number());
+			const result = renderTypeFactoryTypeScript(
+				functionType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(result, "(arg: string) => number");
+		});
+
+		it("renders function with multiple arguments", () => {
+			const functionType = tf.function(
+				[
+					["x", tf.number()],
+					["y", tf.number()],
+				],
+				tf.number(),
+			);
+			const result = renderTypeFactoryTypeScript(
+				functionType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(result, "(x: number, y: number) => number");
+		});
+
+		it("renders function with optional parameter", () => {
+			const functionType = tf.function(
+				[
+					["required", tf.string()],
+					["optional", tf.optional(tf.number())],
+				],
+				tf.void(),
+			);
+			const result = renderTypeFactoryTypeScript(
+				functionType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(result, "(required: string, optional?: number) => void");
+		});
+
+		it("renders function with rest parameter", () => {
+			const functionType = tf.function([["first", tf.string()]], tf.void(), [
+				"rest",
+				tf.number(),
+			]);
+			const result = renderTypeFactoryTypeScript(
+				functionType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(result, "(first: string, ...rest: number[]) => void");
+		});
+
+		it("renders function with no parameters", () => {
+			const functionType = tf.function([], tf.string());
+			const result = renderTypeFactoryTypeScript(
+				functionType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(result, "() => string");
+		});
+
+		it("renders function returning complex type", () => {
+			const functionType = tf.function(
+				[["id", tf.number()]],
+				tf.promise(tf.object({ name: tf.string() })),
+			);
+			const result = renderTypeFactoryTypeScript(
+				functionType,
+				() => "",
+				instanceOfsTypeFactory,
+			);
+			assert.equal(
+				result,
+				`(id: number) => Promise<{
+    name: string;
+}>`,
+			);
+		});
+	});
+
 	describe("readonly types", () => {
 		it("renders readonly type", () => {
 			const readonlyType = tf.readonly(tf.string());

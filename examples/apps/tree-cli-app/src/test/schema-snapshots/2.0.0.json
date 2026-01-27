@@ -1,0 +1,90 @@
+{
+	"version": 1,
+	"root": {
+		"kind": 1,
+		"simpleAllowedTypes": {
+			"com.fluidframework.example.cli.List": {
+				"isStaged": false
+			}
+		}
+	},
+	"definitions": {
+		"com.fluidframework.leaf.string": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 1
+			}
+		},
+		"com.fluidframework.leaf.number": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 0
+			}
+		},
+		"com.fluidframework.example.cli.Point": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"x": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.number": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "x"
+					},
+					"y": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.number": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "y"
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.fluidframework.example.cli.Item": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"position": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.example.cli.Point": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "location"
+					},
+					"name": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.string": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "name"
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.fluidframework.example.cli.List": {
+			"array": {
+				"kind": 1,
+				"simpleAllowedTypes": {
+					"com.fluidframework.leaf.string": {
+						"isStaged": false
+					},
+					"com.fluidframework.example.cli.Item": {
+						"isStaged": false
+					}
+				}
+			}
+		}
+	}
+}

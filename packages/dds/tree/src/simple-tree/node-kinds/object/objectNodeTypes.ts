@@ -3,25 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import type { FieldKey } from "../../../core/index.js";
 import type { RestrictiveStringRecord } from "../../../util/index.js";
-import type {
-	TreeObjectNode,
-	SimpleKeyMap,
-	InsertableObjectFromSchemaRecord,
-} from "./objectNode.js";
-import type { FieldSchemaAlpha, ImplicitFieldSchema } from "../../fieldSchema.js";
 import {
 	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchema,
 	type TreeNodeSchemaCorePrivate,
 } from "../../core/index.js";
-import type { FieldKey } from "../../../core/index.js";
+import type { FieldSchemaAlpha, ImplicitFieldSchema } from "../../fieldSchema.js";
 import type {
 	SchemaType,
 	SimpleObjectFieldSchema,
 	SimpleObjectNodeSchema,
 } from "../../simpleSchema.js";
+
+import type {
+	TreeObjectNode,
+	SimpleKeyMap,
+	InsertableObjectFromSchemaRecord,
+} from "./objectNode.js";
 
 /**
  * A schema for {@link TreeObjectNode}s.
