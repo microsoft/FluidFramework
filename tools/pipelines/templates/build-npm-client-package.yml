@@ -252,6 +252,12 @@ extends:
                 submodules: '${{ parameters.checkoutSubmodules }}'
 
               - script: |
+                  echo "Pipeline.Workspace"
+                  ls -la $(Pipeline.Workspace)
+                  echo "Build.SourcesDirectory"
+                  ls -la $(Build.SourcesDirectory)
+                  echo "Build.Repository.LocalPath"
+                  ls -la $(Build.Repository.LocalPath)
                   echo "commit sha: $(Build.SourceVersion)"
                   echo "##vso[task.setvariable variable=COMMIT_SHA;isOutput=true]$(Build.SourceVersion)"
                 displayName: "Capture Commit SHA"
