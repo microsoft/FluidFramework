@@ -682,6 +682,7 @@ export function streamFromMessages(
 				return { done: true };
 			}
 			const value = await messages;
+			// eslint-disable-next-line require-atomic-updates
 			messages = undefined;
 			return value.length === 0 ? { done: true } : { done: false, value };
 		},

@@ -11,13 +11,14 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { runWithRetry } from "../runWithRetry.js";
 
 const _setTimeout = global.setTimeout;
-const fastSetTimeout: any = (
-	callback: (...cbArgs: any[]) => void,
+const fastSetTimeout = (
+	callback: (...cbArgs: unknown[]) => void,
 	ms: number,
-	...args: any[]
-) => _setTimeout(callback, ms / 1000, ...args);
+	...args: unknown[]
+): ReturnType<typeof setTimeout> =>
+	_setTimeout(callback, ms / 1000, ...args) as unknown as ReturnType<typeof setTimeout>;
 async function runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> {
-	global.setTimeout = fastSetTimeout;
+	global.setTimeout = fastSetTimeout as typeof setTimeout;
 	return callback().finally(() => {
 		global.setTimeout = _setTimeout;
 	});

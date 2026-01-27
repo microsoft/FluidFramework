@@ -99,7 +99,7 @@ describe("Parallel Requests", () => {
 		from: number,
 		to: number | undefined,
 		cancelAt: number,
-		payloadSize,
+		payloadSize: number,
 		expectedRequests: number,
 	): Promise<void> {
 		let nextElement = from;
@@ -226,9 +226,9 @@ describe("Parallel Requests", () => {
 		let success = true;
 		try {
 			await manager.run(10);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			success = false;
-			assert(error.message === "request");
+			assert((error as Error).message === "request");
 		}
 		assert(!success);
 		logger.assertMatchNone([{ category: "error" }]);
@@ -253,9 +253,9 @@ describe("Parallel Requests", () => {
 		let success = true;
 		try {
 			await manager.run(10);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			success = false;
-			assert(error.message === "response");
+			assert((error as Error).message === "response");
 		}
 		assert(!success);
 		logger.assertMatchNone([{ category: "error" }]);

@@ -63,6 +63,7 @@ class MockStorageService implements Partial<IDocumentStorageService> {
 		return new Uint8Array([1, 2, 3]).buffer;
 	}
 
+	// eslint-disable-next-line @rushstack/no-new-null
 	public async getSnapshotTree(): Promise<ISnapshotTree | null> {
 		if (this.shouldGetSnapshotTreeFail) {
 			throw this.getSnapshotTreeError;

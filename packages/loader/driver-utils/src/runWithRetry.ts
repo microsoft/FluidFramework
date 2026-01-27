@@ -44,7 +44,7 @@ export interface IProgress {
 	 * as well as information provided by service (like 429 error asking to wait for some time before retry)
 	 * @param error - error object returned from the call.
 	 */
-	onRetry?(delayInMs: number, error: any): void;
+	onRetry?(delayInMs: number, error: unknown): void;
 }
 
 /**
@@ -64,7 +64,7 @@ export async function runWithRetry<T>(
 	let retryAfterMs = 500; // has to be positive!
 	let numRetries = 0;
 	const startTime = performanceNow();
-	let lastError: any;
+	let lastError: unknown;
 	do {
 		try {
 			result = await api(progress.cancel);
@@ -85,13 +85,14 @@ export async function runWithRetry<T>(
 			}
 
 			if (progress.cancel?.aborted === true) {
+				const abortReason = progress.cancel.reason as string;
 				logger.sendTelemetryEvent(
 					{
 						eventName: `${fetchCallName}_runWithRetryAborted`,
 						retry: numRetries,
 						duration: performanceNow() - startTime,
 						fetchCallName,
-						reason: progress.cancel.reason,
+						reason: abortReason,
 					},
 					error,
 				);
@@ -101,7 +102,7 @@ export async function runWithRetry<T>(
 					{
 						driverVersion: pkgVersion,
 						fetchCallName,
-						reason: progress.cancel.reason,
+						reason: abortReason,
 					},
 				);
 			}

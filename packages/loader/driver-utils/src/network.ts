@@ -258,18 +258,28 @@ export function createGenericNetworkError(
  * @param error - The error to inspect for ability to retry
  * @internal
  */
-export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
+export const canRetryOnError = (error: unknown): boolean =>
+	typeof error === "object" &&
+	error !== null &&
+	(error as { canRetry?: boolean }).canRetry === true;
 
 /**
  * Check retryAfterSeconds property on error
  * @internal
  */
-export const getRetryDelaySecondsFromError = (error: any): number | undefined =>
-	error?.retryAfterSeconds as number | undefined;
+export const getRetryDelaySecondsFromError = (error: unknown): number | undefined => {
+	if (typeof error === "object" && error !== null) {
+		const retryAfterSeconds = (error as { retryAfterSeconds?: unknown }).retryAfterSeconds;
+		return typeof retryAfterSeconds === "number" ? retryAfterSeconds : undefined;
+	}
+	return undefined;
+};
 
 /**
  * Check retryAfterSeconds property on error and convert to ms
  * @internal
  */
-export const getRetryDelayFromError = (error: any): number | undefined =>
-	error?.retryAfterSeconds === undefined ? undefined : error.retryAfterSeconds * 1000;
+export const getRetryDelayFromError = (error: unknown): number | undefined => {
+	const retryAfterSeconds = getRetryDelaySecondsFromError(error);
+	return retryAfterSeconds === undefined ? undefined : retryAfterSeconds * 1000;
+};

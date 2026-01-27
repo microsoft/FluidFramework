@@ -119,10 +119,12 @@ class InternalTestStorage implements IDocumentStorageService {
 	async getSnapshotTree(
 		version?: IVersion | undefined,
 		scenarioName?: string | undefined,
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<ISnapshotTree | null> {
 		return JSON.parse(JSON.stringify(snapshotTree));
 	}
 	async getVersions(
+		// eslint-disable-next-line @rushstack/no-new-null
 		versionId: string | null,
 		count: number,
 		scenarioName?: string | undefined,
@@ -171,7 +173,7 @@ class InternalTestDocumentService
 	constructor() {
 		super();
 	}
-	resolvedUrl: IResolvedUrl = {} as any;
+	resolvedUrl = {} as unknown as IResolvedUrl;
 	policies?: IDocumentServicePolicies | undefined;
 	storage: IDocumentStorageService = new InternalTestStorage();
 	async connectToStorage(): Promise<IDocumentStorageService> {
@@ -183,7 +185,7 @@ class InternalTestDocumentService
 	async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		throw new Error("Method not implemented.");
 	}
-	dispose(error?: any): void {
+	dispose(error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 }
@@ -219,7 +221,7 @@ async function buildCompressionStorage(
 			new InternalTestDocumentServiceFactory(),
 			config,
 		);
-		const documentService = await factory.createContainer(undefined, {} as any);
+		const documentService = await factory.createContainer(undefined, {} as unknown as IResolvedUrl);
 		const storage = await documentService.connectToStorage();
 		return storage;
 	}
@@ -242,13 +244,13 @@ describe("Summary Compression Test", () => {
 	});
 	it("Verify Config False", async () => {
 		const storage = await buildCompressionStorage(false);
-		const config = (storage as any)._config;
+		const config = (storage as { _config?: ICompressionStorageConfig })._config;
 		assert(config === undefined, "The storage has compression");
 		assert(isOriginalStorage(storage), "The storage is not the original storage");
 	});
 	it("Verify Config Empty", async () => {
 		const storage = await buildCompressionStorage();
-		const config = (storage as any)._config;
+		const config = (storage as { _config?: ICompressionStorageConfig })._config;
 		assert(config === undefined, "The storage has compression");
 		assert(isOriginalStorage(storage), "The storage is not the original storage");
 	});
@@ -273,7 +275,8 @@ describe("Summary Compression Test", () => {
 			proposalHandle: "test",
 			ackHandle: "test",
 		});
-		const uploadedSummary = ((storage as any).service as InternalTestStorage).uploadedSummary;
+		const uploadedSummary = (storage as unknown as { service: InternalTestStorage }).service
+			.uploadedSummary;
 		assert(
 			uploadedSummary?.tree[blobHeadersBlobName] !== undefined,
 			"The summary-blob markup is not added",
@@ -501,7 +504,8 @@ async function uploadSummaryWithBinaryContent(
 		proposalHandle: "test",
 		ackHandle: "test",
 	});
-	const uploadedSummary = ((storage as any).service as InternalTestStorage).uploadedSummary;
+	const uploadedSummary = (storage as unknown as { service: InternalTestStorage }).service
+		.uploadedSummary;
 	const uploadedContent: ArrayBufferLike = getHeaderContent(uploadedSummary!);
 	return uploadedContent;
 }
@@ -611,18 +615,19 @@ function checkCompressionConfig(
 	expectedMinSizeToCompress: number,
 	expectedAlgorithm: SummaryCompressionAlgorithm,
 ): void {
-	const config = (storage as any)._config;
+	const config = (storage as { _config?: ICompressionStorageConfig })._config;
 	assert(config !== undefined, "The storage has no compression");
 	assert(
-		(config.minSizeToCompress === expectedMinSizeToCompress,
-		`Unexpected minSizeToCompress config ${config.minSizeToCompress}`),
+		config.minSizeToCompress === expectedMinSizeToCompress,
+		`Unexpected minSizeToCompress config ${config.minSizeToCompress}`,
 	);
 	assert(
-		(config.algorithmm === expectedAlgorithm,
-		`Unexpected minSizeToCompress config ${config.algorithmm}`),
+		config.algorithm === expectedAlgorithm,
+		`Unexpected algorithm config ${config.algorithm}`,
 	);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Use a real type
 function getHeaderContent(summary: ISummaryTree): any {
 	return getHeader(summary)["content"];
 }
