@@ -6,7 +6,9 @@
 // eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObject,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
 
@@ -19,12 +21,14 @@ import {
  * @deprecated Use `IChannelFactory<IConsensusRegisterCollection>`.
  */
 export type IConsensusRegisterCollectionFactory =
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory<IConsensusRegisterCollection>;
 
 /**
  * Events emitted by {@link IConsensusRegisterCollection}.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
 	(
 		event: "atomicChanged" | "versionChanged",
@@ -51,6 +55,7 @@ export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents 
  * @legacy @beta
  */
 export interface IConsensusRegisterCollection<T = any>
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	extends ISharedObject<IConsensusRegisterCollectionEvents> {
 	/**
 	 * Attempts to write a register with a value. Returns a promise to indicate the roundtrip completion.

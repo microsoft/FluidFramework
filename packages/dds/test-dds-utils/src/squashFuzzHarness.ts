@@ -62,6 +62,7 @@ export interface SquashRandom extends DDSRandom {
 /**
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface SquashClient<TChannelFactory extends IChannelFactory>
 	extends Client<TChannelFactory> {
 	/**
@@ -77,6 +78,7 @@ export interface SquashClient<TChannelFactory extends IChannelFactory>
  * @internal
  */
 export interface SquashFuzzModel<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends SquashFuzzTestState<TChannelFactory> = SquashFuzzTestState<TChannelFactory>,
@@ -116,6 +118,7 @@ export interface SquashFuzzModel<
  * @internal
  */
 export interface SquashFuzzHarnessModel<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends SquashFuzzTestState<TChannelFactory> = SquashFuzzTestState<TChannelFactory>,
@@ -141,6 +144,7 @@ export interface SquashFuzzSuiteOptions extends DDSFuzzSuiteOptions {
 /**
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface SquashFuzzTestState<TChannelFactory extends IChannelFactory>
 	extends DDSFuzzTestState<TChannelFactory> {
 	random: SquashRandom;
@@ -156,6 +160,7 @@ export interface ChangeStagingMode {
 export type SquashHarnessOperation = HarnessOperation | ChangeStagingMode;
 
 export function mixinStagingMode<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends SquashFuzzTestState<TChannelFactory>,
@@ -237,6 +242,7 @@ export function mixinStagingMode<
 	};
 }
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 function setupClientState<TChannelFactory extends IChannelFactory>(
 	state: SquashFuzzTestState<TChannelFactory>,
 	client: SquashClient<TChannelFactory>,
@@ -268,6 +274,7 @@ function setupClientState<TChannelFactory extends IChannelFactory>(
 }
 
 const getFullModel = <
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 >(
@@ -342,6 +349,7 @@ const defaultSquashFuzzOptions: SquashFuzzSuiteOptions = {
  * @internal
  */
 export function createSquashFuzzSuite<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 >(
@@ -380,6 +388,7 @@ export namespace createSquashFuzzSuite {
 	 */
 	export const only =
 		(...seeds: number[]) =>
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
 			ddsModel: SquashFuzzModel<TChannelFactory, TOperation>,
 			providedOptions?: Partial<SquashFuzzSuiteOptions>,
@@ -402,6 +411,7 @@ export namespace createSquashFuzzSuite {
 	 */
 	export const skip =
 		(...seeds: number[]) =>
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
 			ddsModel: SquashFuzzModel<TChannelFactory, TOperation>,
 			providedOptions?: Partial<SquashFuzzSuiteOptions>,

@@ -6,7 +6,9 @@
 import type { IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObjectEvents,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
 
@@ -26,6 +28,7 @@ export type SerializableTypeForSharedArray = boolean | number | string | object 
  *
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedArrayEvents extends ISharedObjectEvents {
 	/**
 	 *
@@ -63,6 +66,7 @@ export interface ISharedArrayEvents extends ISharedObjectEvents {
  * @legacy @beta
  */
 export interface ISharedArray<T extends SerializableTypeForSharedArray>
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	extends ISharedObject<ISharedArrayEvents> {
 	get(): readonly T[];
 	insert<TWrite>(index: number, value: Serializable<TWrite> & T): void;
@@ -77,6 +81,7 @@ export interface ISharedArray<T extends SerializableTypeForSharedArray>
  *
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedArrayRevertible extends ISharedObject<ISharedArrayEvents> {
 	toggle(entryId: string): void;
 	toggleMove(oldEntryId: string, newEntryId: string): void;

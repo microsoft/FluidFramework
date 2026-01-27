@@ -31,6 +31,7 @@ import {
 	IDeltaHandler,
 	IChannel,
 	IFluidDataStoreRuntime,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	type IDeltaManagerErased,
 } from "@fluidframework/datastore-definitions/internal";
@@ -868,6 +869,7 @@ export class MockFluidDataStoreRuntime
 		logger?: ITelemetryBaseLogger;
 		idCompressor?: IIdCompressor & IIdCompressorCore;
 		attachState?: AttachState;
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		registry?: readonly IChannelFactory[];
 		minVersionForCollab?: MinimumVersionForCollab;
 	}) {
@@ -937,6 +939,7 @@ export class MockFluidDataStoreRuntime
 	public containerRuntime?: MockContainerRuntime;
 	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
 
 	public createDeltaConnection(): MockDeltaConnection {

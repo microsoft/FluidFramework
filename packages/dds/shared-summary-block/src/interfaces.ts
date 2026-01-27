@@ -14,6 +14,7 @@ import type { ISharedObject } from "@fluidframework/shared-object-base/internal"
  * generate ops of its own, but relies on the above principle to maintain eventual consistency and to summarize.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedSummaryBlock extends ISharedObject {
 	/**
 	 * Retrieves the given key from the map.

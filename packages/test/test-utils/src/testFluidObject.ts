@@ -16,6 +16,7 @@ import {
 	mixinRequestHandler,
 } from "@fluidframework/datastore/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
@@ -68,6 +69,7 @@ export class TestFluidObject implements ITestFluidObject {
 		public readonly context: IFluidDataStoreContext,
 		private readonly initialSharedObjectsFactories: ReadonlyMap<
 			string,
+			// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 			IChannelFactory<ISharedObject>
 		>,
 	) {
@@ -108,6 +110,7 @@ export class TestFluidObject implements ITestFluidObject {
 				this.root = SharedMap.create(this.runtime, "root");
 
 				this.initialSharedObjectsFactories.forEach(
+					// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 					(sharedObjectFactory: IChannelFactory, key: string) => {
 						const sharedObject = this.runtime.createChannel(key, sharedObjectFactory.type);
 						this.root.set(key, sharedObject.handle);
@@ -129,6 +132,7 @@ export class TestFluidObject implements ITestFluidObject {
  * Iterable\<[ChannelId, IChannelFactory]\>.
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
 
 /**
@@ -139,6 +143,7 @@ export type TestDataObjectKind = new (
 	runtime: IFluidDataStoreRuntime,
 	channel: IFluidDataStoreChannel,
 	context: IFluidDataStoreContext,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	initialSharedObjectsFactories: ReadonlyMap<string, IChannelFactory<ISharedObject>>,
 ) => IFluidLoadable & {
 	request(request: IRequest): Promise<IResponse>;
@@ -197,6 +202,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<FluidDataStoreRuntime> {
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		const dataTypes = new Map<string, IChannelFactory>();
 
 		// Add SharedMap's factory which will be used to create the root map.
@@ -210,10 +216,12 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 		// Create a map from the factory entries with entries that don't have the id as undefined. This will be
 		// passed to the Fluid object.
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		const factoryEntriesMapForObject = new Map<string, IChannelFactory<ISharedObject>>();
 		for (const [id, factory] of this.initialSharedObjectsFactories) {
 			if (id !== undefined) {
 				// Here we assume the factory produces an ISharedObject.
+				// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 				factoryEntriesMapForObject.set(id, factory as IChannelFactory<ISharedObject>);
 			}
 		}

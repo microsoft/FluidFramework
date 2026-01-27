@@ -44,6 +44,7 @@ export class DataObjectFactory<
 	public constructor(
 		type: string,
 		ctor: new (props: IDataObjectProps<I>) => TObj,
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		sharedObjects?: readonly IChannelFactory[],
 		optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>,
 		registryEntries?: NamedFluidDataStoreRegistryEntries,
@@ -53,6 +54,7 @@ export class DataObjectFactory<
 	public constructor(
 		propsOrType: DataObjectFactoryProps<TObj, I> | string,
 		maybeCtor?: new (doProps: IDataObjectProps<I>) => TObj,
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		maybeSharedObjects?: readonly IChannelFactory[],
 		maybeOptionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>,
 		maybeRegistryEntries?: NamedFluidDataStoreRegistryEntries,

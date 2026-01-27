@@ -6,6 +6,7 @@
 import type {
 	IChannel,
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
@@ -21,6 +22,7 @@ import { pkgVersion } from "./packageVersion.js";
  * @legacy @beta
  * @deprecated Use `SharedMatrix.getFactory` instead.
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 	public static Type = "https://graph.microsoft.com/types/sharedmatrix";
 
@@ -63,6 +65,7 @@ export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
  * Entrypoint for {@link ISharedMatrix} creation.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const SharedMatrix = createSharedObjectKind<ISharedMatrix>(SharedMatrixFactory);
 
 /**

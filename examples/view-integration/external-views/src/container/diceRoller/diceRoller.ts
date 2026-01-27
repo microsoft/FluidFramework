@@ -8,6 +8,7 @@ import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/legacy";
@@ -54,6 +55,7 @@ class DiceRoller implements IDiceRoller {
 
 const mapId = "dice-map";
 const mapFactory = new MapFactory();
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 const diceRollerSharedObjectRegistry = new Map<string, IChannelFactory>([
 	[mapFactory.type, mapFactory],
 ]);

@@ -17,6 +17,7 @@ export interface IGCTestProvider {
 	/**
 	 * The DDS whose GC data is to be verified.
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	readonly sharedObject: ISharedObject;
 
 	/**

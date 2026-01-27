@@ -40,6 +40,7 @@ const snapshotFileName = "header";
 /**
  * {@inheritDoc ISharedMap}
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**
 	 * String representation for the class.

@@ -5,6 +5,7 @@
 
 import type {
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
@@ -21,6 +22,7 @@ import { pkgVersion } from "./packageVersion.js";
  *
  * @sealed
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class CounterFactory implements IChannelFactory<ISharedCounter> {
 	/**
 	 * Static value for {@link CounterFactory."type"}.
@@ -78,6 +80,7 @@ export class CounterFactory implements IChannelFactory<ISharedCounter> {
  * Entrypoint for {@link ISharedCounter} creation.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const SharedCounter = createSharedObjectKind<ISharedCounter>(CounterFactory);
 
 /**

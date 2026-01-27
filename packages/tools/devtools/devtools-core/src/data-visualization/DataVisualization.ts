@@ -68,6 +68,7 @@ export type SharedObjectType = string;
  * @internal
  */
 export type VisualizeSharedObject = (
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ) => Promise<FluidObjectNode>;
@@ -93,6 +94,7 @@ export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 /**
  * Utility type for a union of things that can be visualized.
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export type VisualizableFluidObject = ISharedObject | DataObject | TreeDataObject;
 
 /**
@@ -247,6 +249,7 @@ export class DataVisualizerGraph
 		const isTreeDataObj = isTreeDataObject(visualizableObject);
 
 		let visualizationFunction: VisualizeSharedObject;
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		let rootSharedObject: ISharedObject;
 		let objectId: FluidObjectId;
 
@@ -256,6 +259,7 @@ export class DataVisualizerGraph
 			objectId = getKeyForFluidObject(rootSharedObject);
 			visualizationFunction = visualizeDataObject;
 		} else if (isTreeDataObj) {
+			// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 			rootSharedObject = (visualizableObject as unknown as { readonly tree: ISharedObject })
 				.tree;
 			objectId = getKeyForFluidObject(rootSharedObject);
@@ -306,6 +310,7 @@ export class DataVisualizerGraph
 		}
 
 		// TODO: is this the right type check for this?
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		const sharedObject = resolvedObject as Partial<ISharedObject>;
 		if (isSharedObject(sharedObject)) {
 			return this.registerVisualizerForVisualizableObject(sharedObject);
@@ -380,6 +385,7 @@ export class VisualizerNode
 		/**
 		 * The Fluid object whose data will be emitted in visualized form when requested / whenever its data is updated.
 		 */
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		public readonly sharedObject: ISharedObject,
 
 		/**
@@ -528,10 +534,14 @@ export async function visualizeChildData(
  * Determines whether or not the provided value is an {@link ISharedObject}, for the purposes of this library.
  * @remarks Implemented by checking for the particular properties / methods we use in this module.
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 function isSharedObject(value: unknown): value is ISharedObject {
 	return (
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		(value as SharedObject).id !== undefined &&
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		(value as SharedObject).attributes?.type !== undefined &&
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		(value as SharedObject).on !== undefined
 	);
 }
@@ -577,6 +587,7 @@ function isTreeDataObject(value: unknown): value is TreeDataObject {
 		(typeof (value as TreeDataObject).initializeInternal === "function" &&
 			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value), "tree")?.get !== undefined)
 	) {
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		const tree = (value as { readonly tree?: ISharedObject }).tree;
 		if (tree === undefined) {
 			throw new Error("TreeDataObject must have a `tree` property, but it was undefined.");

@@ -5,6 +5,7 @@
 
 import type {
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
@@ -23,6 +24,7 @@ import { pkgVersion } from "./packageVersion.js";
  * @sealed
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class MapFactory implements IChannelFactory<ISharedMap> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
@@ -82,6 +84,7 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
  * Entrypoint for {@link ISharedMap} creation.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const SharedMap = createSharedObjectKind<ISharedMap>(MapFactory);
 
 /**

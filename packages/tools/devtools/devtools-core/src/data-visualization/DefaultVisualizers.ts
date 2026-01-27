@@ -49,6 +49,7 @@ import {
  * Default {@link VisualizeSharedObject} for {@link SharedCell}.
  */
 export const visualizeSharedCell: VisualizeSharedObject = async (
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectNode> => {
@@ -110,6 +111,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
  * Default {@link VisualizeSharedObject} for {@link DataObject}.
  */
 export const visualizeDataObject: VisualizeSharedObject = async (
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	dataObjectRoot: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
@@ -131,6 +133,7 @@ export const visualizeDataObject: VisualizeSharedObject = async (
  * Default {@link VisualizeSharedObject} for {@link TreeDataObject}.
  */
 export const visualizeTreeDataObject: VisualizeSharedObject = async (
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	rootTree: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
@@ -152,6 +155,7 @@ export const visualizeTreeDataObject: VisualizeSharedObject = async (
  * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
  */
 export const visualizeSharedCounter: VisualizeSharedObject = async (
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	sharedObject: ISharedObject,
 ): Promise<FluidObjectValueNode> => {
 	const sharedCounter = sharedObject as SharedCounter;
@@ -168,6 +172,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
  * Default {@link VisualizeSharedObject} for {@link SharedDirectory}.
  */
 export const visualizeSharedDirectory: VisualizeSharedObject = async (
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
@@ -222,6 +227,7 @@ async function visualizeDirectory(
  * Default {@link VisualizeSharedObject} for {@link SharedMap}.
  */
 export const visualizeSharedMap: VisualizeSharedObject = async (
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
@@ -248,6 +254,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
  * Default {@link VisualizeSharedObject} for {@link SharedMap}.
  */
 export const visualizeSharedMatrix: VisualizeSharedObject = async (
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
@@ -282,6 +289,7 @@ export const visualizeSharedMatrix: VisualizeSharedObject = async (
  * Default {@link VisualizeSharedObject} for {@link SharedString}.
  */
 export const visualizeSharedString: VisualizeSharedObject = async (
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	sharedObject: ISharedObject,
 ): Promise<FluidObjectValueNode> => {
 	const sharedString = sharedObject as SharedString;
@@ -302,6 +310,7 @@ export const visualizeSharedString: VisualizeSharedObject = async (
  * TODO: [ADO 31468] Refactor the SharedTreeVisualizer to conform to SharedTree API
  */
 export const visualizeSharedTree: VisualizeSharedObject = async (
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectNode> => {
@@ -372,6 +381,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
  * {@link VisualizeSharedObject} for unrecognized {@link ISharedObject}s.
  */
 export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	sharedObject: ISharedObject,
 ): Promise<FluidUnknownObjectNode> => {
 	return {

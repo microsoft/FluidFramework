@@ -4,7 +4,9 @@
  */
 
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObject,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
 
@@ -20,6 +22,7 @@ export type TaskEventListener = (taskId: string) => void;
  * Events emitted by {@link ITaskManager}.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ITaskManagerEvents extends ISharedObjectEvents {
 	/**
 	 * Fires when a task has been exclusively assigned to the client.
@@ -138,6 +141,7 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
  * See {@link ITaskManagerEvents} for more details.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 	/**
 	 * Volunteer for the task. Returns a promise that resolves `true` if the task is assigned to the local client and

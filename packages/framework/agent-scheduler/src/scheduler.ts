@@ -19,6 +19,7 @@ import {
 	type ISharedObjectRegistry,
 } from "@fluidframework/datastore/internal";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
@@ -508,6 +509,7 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 	): Promise<FluidDataStoreRuntime> {
 		const mapFactory = SharedMap.getFactory();
 		const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		const dataTypes = new Map<string, IChannelFactory>();
 		dataTypes.set(mapFactory.type, mapFactory);
 		dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);

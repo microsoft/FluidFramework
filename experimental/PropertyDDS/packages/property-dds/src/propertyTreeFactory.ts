@@ -5,6 +5,7 @@
 
 import {
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
@@ -22,6 +23,7 @@ import { SharedPropertyTree, SharedPropertyTreeOptions } from "./propertyTree.js
  * For now its being kept exported for compatibility, which is helpful since its actual users are not internal despite how it's tagged.
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class PropertyTreeFactory implements IChannelFactory<SharedPropertyTree> {
 	public static readonly Type = "PropertyTree:01EP5J4Y6C284JR6ATVPPHRJ4E";
 
@@ -83,4 +85,5 @@ export class PropertyTreeFactory implements IChannelFactory<SharedPropertyTree> 
  * TODO: as PropertyDDS is published for use outside the Fluid Framework repo, it should not be `@internal`.
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const SharedPropertyTreeKind = createSharedObjectKind(PropertyTreeFactory);

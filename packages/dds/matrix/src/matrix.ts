@@ -38,7 +38,9 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidSerializer,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	type ISharedObjectEvents,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -249,6 +251,7 @@ interface PendingCellChanges<T> {
 // TODO: if possible, transition SharedMatrix to not use `any`.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class SharedMatrix<T = any>
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	extends SharedObject<ISharedMatrixEvents<T> & ISharedObjectEvents>
 	implements ISharedMatrix<T>
 {

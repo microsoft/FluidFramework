@@ -25,6 +25,7 @@ import {
 } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
@@ -154,6 +155,7 @@ export type LocalFluidDataStoreRuntimeMessage =
 export interface ISharedObjectRegistry {
 	// TODO consider making this async. A consequence is that either the creation of a distributed data type
 	// is async or we need a new API to split the synchronous vs. asynchronous creation.
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	get(name: string): IChannelFactory | undefined;
 }
 

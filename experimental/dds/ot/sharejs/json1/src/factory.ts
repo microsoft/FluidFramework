@@ -6,6 +6,7 @@
 import {
 	IChannel,
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
@@ -17,6 +18,7 @@ import { pkgVersion } from "./packageVersion.js";
 /**
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class Json1Factory implements IChannelFactory {
 	public static Type = "https://graph.microsoft.com/types/sharedjson1";
 

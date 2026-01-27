@@ -7,6 +7,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEventProvider, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/legacy";
@@ -91,6 +92,7 @@ class BlobCollection implements IBlobCollection {
 
 const mapId = "blob-map";
 const mapFactory = new MapFactory();
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
 
 export class BlobCollectionFactory implements IFluidDataStoreFactory {

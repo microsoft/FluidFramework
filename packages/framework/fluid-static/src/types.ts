@@ -12,6 +12,7 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObjectKind,
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
@@ -50,8 +51,8 @@ export type LoadableObjectKindRecord = Record<string, SharedObjectKind>;
  * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
 export type LoadableObjectKind<T extends IFluidLoadable = IFluidLoadable> =
-	| ISharedObjectKind<T>
-	| DataObjectKind<T>;
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
+	ISharedObjectKind<T> | DataObjectKind<T>;
 
 /**
  * Represents properties that can be attached to a container.

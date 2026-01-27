@@ -6,6 +6,7 @@
 import type {
 	IChannel,
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
@@ -143,6 +144,7 @@ export async function loadChannelFactoryAndAttributes(
 	channelId: string,
 	registry: ISharedObjectRegistry,
 	attachMessageType?: string,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 ): Promise<{ factory: IChannelFactory; attributes: IChannelAttributes }> {
 	let attributes: IChannelAttributes | undefined;
 	if (await services.objectStorage.contains(attributesBlobKey)) {
@@ -189,6 +191,7 @@ export async function loadChannelFactoryAndAttributes(
 export async function loadChannel(
 	dataStoreRuntime: IFluidDataStoreRuntime,
 	attributes: IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	factory: IChannelFactory,
 	services: ChannelServiceEndpoints,
 	logger: ITelemetryLoggerExt,

@@ -6,6 +6,7 @@
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	type IChannelFactory,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
@@ -21,6 +22,7 @@ import { pkgVersion } from "./packageVersion.js";
  * @legacy @beta
  */
 export class ConsensusRegisterCollectionFactory
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	implements IChannelFactory<IConsensusRegisterCollection>
 {
 	public static Type = "https://graph.microsoft.com/types/consensus-register-collection";
@@ -68,6 +70,7 @@ export class ConsensusRegisterCollectionFactory
  * {@inheritDoc IConsensusRegisterCollection}
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const ConsensusRegisterCollection = createSharedObjectKind(
 	ConsensusRegisterCollectionFactory,
 );

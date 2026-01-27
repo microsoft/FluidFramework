@@ -100,6 +100,7 @@ export abstract class TreeDataObject<
 				treeChannelId,
 				SharedTree.getFactory().type,
 			) as unknown as ITree;
+			// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 			(sharedTree as unknown as ISharedObject).bindToContext();
 
 			this.#tree = sharedTree;

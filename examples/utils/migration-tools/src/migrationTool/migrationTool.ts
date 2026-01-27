@@ -13,6 +13,7 @@ import type {
 import { assert } from "@fluidframework/core-utils/legacy";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/legacy";
@@ -170,6 +171,7 @@ class MigrationTool implements IMigrationTool {
 const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
 const pactMapFactory = PactMap.getFactory();
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 const migrationToolSharedObjectRegistry = new Map<string, IChannelFactory>([
 	[consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory],
 	[pactMapFactory.type, pactMapFactory],

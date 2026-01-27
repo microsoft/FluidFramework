@@ -310,6 +310,7 @@ class RootDataObjectFactory extends DataObjectFactory<
 	{ InitialState: RootDataObjectProps }
 > {
 	public constructor(
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		sharedObjects: readonly IChannelFactory[] = [],
 		private readonly dataStoreRegistry: IFluidDataStoreRegistry,
 	) {

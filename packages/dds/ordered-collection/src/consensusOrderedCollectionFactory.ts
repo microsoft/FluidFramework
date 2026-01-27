@@ -65,6 +65,7 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
  * {@inheritDoc ConsensusQueueClass}
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
 
 /**

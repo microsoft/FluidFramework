@@ -23,7 +23,7 @@ export interface IChannelAttributes {
     readonly type: string;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface IChannelFactory<out TChannel = unknown> {
     readonly attributes: IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): TChannel & IChannel;
