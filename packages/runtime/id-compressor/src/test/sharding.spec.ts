@@ -11,7 +11,7 @@ import type { SessionSpaceCompressedId } from "../index.js";
 import { SerializationVersion } from "../types/index.js";
 import { createSessionId } from "../utilities.js";
 
-import { isLocalId } from "./testCommon.js";
+import { fail, isLocalId } from "./testCommon.js";
 
 describe("IdCompressor Sharding", () => {
 	describe("Basic Sharding", () => {
@@ -36,7 +36,8 @@ describe("IdCompressor Sharding", () => {
 			const parentShardId = parent.shardId();
 			assert(parentShardId !== undefined);
 			assert.equal(parentShardId.shardId, 0);
-			assert.equal(parentShardId.strideFillCount, 1); // Parent now only "owns" genCount 1 in stride pattern
+			// localGenCount = 3 (generated genCounts 1,2,3 before sharding)
+			assert.equal(parentShardId.strideFillCount, 3);
 		});
 
 		it("children recognize parent's pre-shard IDs", () => {
@@ -150,9 +151,10 @@ describe("IdCompressor Sharding", () => {
 			assert(child1ShardId !== undefined);
 			assert(child2ShardId !== undefined);
 
-			assert.equal(parentShardId.strideFillCount, 1); // Has generated 1 from its stride
-			assert.equal(child1ShardId.strideFillCount, 1); // Has generated 1 from its stride
-			assert.equal(child2ShardId.strideFillCount, 1); // Has generated 1 from its stride
+			// All inherit the same localGenCount = 3 from pre-shard generation
+			assert.equal(parentShardId.strideFillCount, 3);
+			assert.equal(child1ShardId.strideFillCount, 3);
+			assert.equal(child2ShardId.strideFillCount, 3);
 
 			// Now generate next IDs - should follow stride pattern from genCount 4 onward
 			const parentNext = parent.generateCompressedId();
@@ -202,18 +204,19 @@ describe("IdCompressor Sharding", () => {
 			assert(child1ShardId !== undefined);
 			assert(child2ShardId !== undefined);
 
-			assert.equal(parentShardId.strideFillCount, 2); // Completed 1 cycle + 1 in partial
-			assert.equal(child1ShardId.strideFillCount, 2); // Completed 1 cycle + 1 in partial
-			assert.equal(child2ShardId.strideFillCount, 1); // Completed 1 cycle + 0 in partial
+			// All inherit localGenCount = 5 from pre-shard generation
+			assert.equal(parentShardId.strideFillCount, 5);
+			assert.equal(child1ShardId.strideFillCount, 5);
+			assert.equal(child2ShardId.strideFillCount, 5);
 
-			// Generate next IDs
+			// Generate next IDs - each jumps to next in its stride after localGenCount=5
 			const parentNext = parent.generateCompressedId();
 			const child1Next = child1.generateCompressedId();
 			const child2Next = child2.generateCompressedId();
 
-			assert.equal(parentNext, -7); // genCount 7
-			assert.equal(child1Next, -8); // genCount 8
-			assert.equal(child2Next, -6); // genCount 6 (filling the empty slot)
+			assert.equal(parentNext, -7); // Next in {1,4,7,...} after 5
+			assert.equal(child1Next, -8); // Next in {2,5,8,...} after 5
+			assert.equal(child2Next, -6); // Next in {3,6,9,...} after 5
 		});
 
 		it("generates IDs with stride pattern", () => {
@@ -332,13 +335,14 @@ describe("IdCompressor Sharding", () => {
 				requestedWriteVersion: SerializationVersion.V3,
 			});
 
-			// Generate IDs in child
+			// Generate IDs in child (-2 = genCount 2, -4 = genCount 4)
 			child.generateCompressedId(); // -2
 			child.generateCompressedId(); // -4
 
 			const childShardId = child.shardId();
 			assert(childShardId !== undefined);
-			assert.equal(childShardId.strideFillCount, 2);
+			// Child's localGenCount = 4 (last genCount generated)
+			assert.equal(childShardId.strideFillCount, 4);
 
 			// Unshard
 			parent.unshard(childShardId);
@@ -588,9 +592,9 @@ describe("IdCompressor Sharding", () => {
 			);
 
 			// Child1 now generates sequentially from where it left off
-			// After unsharding, it continues from highest genCount across all shards
+			// After unsharding, it continues from highest genCount across all shards (8) + 1
 			const child1Id2 = child1.generateCompressedId();
-			assert.equal(child1Id2, -10);
+			assert.equal(child1Id2, -9);
 
 			// Child2 is still in sharding mode from root
 			const child2ShardId = child2.shardId();
@@ -670,11 +674,12 @@ describe("IdCompressor Sharding", () => {
 			const restoredShardId = restored.shardId();
 			assert(restoredShardId !== undefined);
 			assert.equal(restoredShardId.shardId, 0);
-			assert.equal(restoredShardId.strideFillCount, 2);
+			// Parent generated genCounts 1,4, so localGenCount = 4
+			assert.equal(restoredShardId.strideFillCount, 4);
 
 			// Verify can continue generating with correct stride
 			const nextId = restored.generateCompressedId();
-			assert.equal(nextId, -7); // stride=3, third ID for offset=0
+			assert.equal(nextId, -7); // Next in sequence {1,4,7,...}
 		});
 
 		it("handles version 2 documents without sharding state", () => {
@@ -768,6 +773,217 @@ describe("IdCompressor Sharding", () => {
 			assert.equal(rootNext, -4); // Next in stride for root
 			assert.equal(child1Next, -11); // Next in stride for child1
 			assert.equal(grandchild1Next, -14); // Next in stride for grandchild1
+		});
+	});
+
+	describe("LocalGenCount Semantics", () => {
+		it("localGenCount is not decremented during sharding", () => {
+			const sessionId = createSessionId();
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+
+			// Generate 5 IDs
+			for (let i = 0; i < 5; i++) {
+				parent.generateCompressedId();
+			}
+
+			// Shard into 3 (parent owns {1,4,7,...}, child1 owns {2,5,8,...}, child2 owns {3,6,9,...})
+			parent.shard(2);
+
+			// Can still decompress ID -5 (genCount 5) - proves localGenCount wasn't decremented
+			assert.doesNotThrow(() => parent.decompress(-5 as SessionSpaceCompressedId));
+
+			// takeNextCreationRange should include all 5 generated IDs
+			const range = parent.takeNextCreationRange();
+			assert(range.ids !== undefined);
+			assert.equal(range.ids.count, 5, "Range should include all 5 generated IDs");
+
+			// Next ID should jump to next in stride (genCount 7, ID -7)
+			const nextId = parent.generateCompressedId();
+			assert.equal(nextId, -7, "Should jump to next genCount in stride sequence");
+
+			// Verify strideFillCount reflects actual genCount (7, not a cycle counter)
+			const shardId = parent.shardId();
+			assert(shardId !== undefined);
+			assert.equal(shardId.strideFillCount, 7, "strideFillCount should be absolute genCount");
+		});
+
+		it("localGenCount increments by stride in sharded mode", () => {
+			const sessionId = createSessionId();
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+
+			// Shard immediately (stride=2, parent owns {1,3,5,...})
+			parent.shard(1);
+
+			// Generate first ID
+			const id1 = parent.generateCompressedId(); // genCount 1, ID -1
+			assert.equal(id1, -1);
+
+			// strideFillCount should be 1 (absolute genCount, not cycle counter)
+			let shardId = parent.shardId();
+			assert(shardId !== undefined);
+			assert.equal(shardId.strideFillCount, 1);
+
+			// Generate second ID - should jump by stride to genCount 3
+			const id2 = parent.generateCompressedId(); // genCount 3, ID -3
+			assert.equal(id2, -3);
+
+			shardId = parent.shardId();
+			assert(shardId !== undefined);
+			assert.equal(shardId.strideFillCount, 3, "Should increment by stride (2)");
+
+			// Generate third ID
+			const id3 = parent.generateCompressedId(); // genCount 5, ID -5
+			assert.equal(id3, -5);
+
+			shardId = parent.shardId();
+			assert(shardId !== undefined);
+			assert.equal(shardId.strideFillCount, 5);
+		});
+	});
+
+	describe("Creation Ranges", () => {
+		it("takeNextCreationRange works correctly during sharding", () => {
+			const sessionId = createSessionId();
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+
+			// Generate some IDs before sharding
+			parent.generateCompressedId(); // -1
+			parent.generateCompressedId(); // -2
+			parent.generateCompressedId(); // -3
+
+			// Shard into 3 (stride=3)
+			const [child1Ser, child2Ser] = parent.shard(2);
+			const child1 = IdCompressor.deserialize({
+				serialized: child1Ser,
+				requestedWriteVersion: SerializationVersion.V3,
+			});
+			const child2 = IdCompressor.deserialize({
+				serialized: child2Ser,
+				requestedWriteVersion: SerializationVersion.V3,
+			});
+
+			// Generate more IDs in each shard
+			parent.generateCompressedId(); // -4 (genCount 4)
+			parent.generateCompressedId(); // -7 (genCount 7)
+			child1.generateCompressedId(); // -5 (genCount 5)
+			child1.generateCompressedId(); // -8 (genCount 8)
+			child2.generateCompressedId(); // -6 (genCount 6)
+
+			// Take ranges
+			const parentRange = parent.takeNextCreationRange();
+			const child1Range = child1.takeNextCreationRange();
+			const child2Range = child2.takeNextCreationRange();
+
+			// Verify parent range (genCounts 1-7, but only owns 1,4,7 in stride)
+			assert(parentRange.ids !== undefined);
+			assert.equal(parentRange.ids.firstGenCount, 1);
+			assert.equal(parentRange.ids.count, 7); // Total genCounts generated: 1,2,3,4,5,6,7
+
+			// Verify child1 range (genCounts 1-8, owns 2,5,8 in stride)
+			assert(child1Range.ids !== undefined);
+			assert.equal(child1Range.ids.firstGenCount, 1);
+			assert.equal(child1Range.ids.count, 8); // Inherited pre-shard IDs plus own generated
+
+			// Verify child2 range (genCounts 1-6, owns 3,6 in stride)
+			assert(child2Range.ids !== undefined);
+			assert.equal(child2Range.ids.firstGenCount, 1);
+			assert.equal(child2Range.ids.count, 6); // Inherited pre-shard IDs plus own generated
+
+			// Verify local ID ranges are correct (all IDs should be in normalizer)
+			assert(parentRange.ids.localIdRanges.length > 0);
+			assert(child1Range.ids.localIdRanges.length > 0);
+			assert(child2Range.ids.localIdRanges.length > 0);
+		});
+
+		it("takeNextCreationRange after unsharding", () => {
+			const sessionId = createSessionId();
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+
+			// Create shards
+			const [serializedChild] = parent.shard(1);
+			const child = IdCompressor.deserialize({
+				serialized: serializedChild,
+				requestedWriteVersion: SerializationVersion.V3,
+			});
+
+			// Generate IDs
+			parent.generateCompressedId(); // -1
+			child.generateCompressedId(); // -2
+			parent.generateCompressedId(); // -3
+			child.generateCompressedId(); // -4
+
+			// Unshard
+			parent.unshard(child.shardId() ?? fail("null shard ID"));
+
+			// Take range after unsharding
+			const range = parent.takeNextCreationRange();
+
+			assert(range.ids !== undefined);
+			assert.equal(range.ids.firstGenCount, 1);
+			assert.equal(range.ids.count, 4); // All genCounts 1-4
+
+			// Generate more IDs and take another range (should continue sequentially)
+			parent.generateCompressedId(); // -5
+			parent.generateCompressedId(); // -6
+
+			const range2 = parent.takeNextCreationRange();
+			assert(range2.ids !== undefined);
+			assert.equal(range2.ids.firstGenCount, 5);
+			assert.equal(range2.ids.count, 2);
+		});
+
+		it("multiple takeNextCreationRange calls during sharding", () => {
+			const sessionId = createSessionId();
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+
+			// Shard (don't need to use the child for this test)
+			parent.shard(1);
+
+			// Generate and take first range
+			parent.generateCompressedId(); // -1
+			parent.generateCompressedId(); // -3
+			const range1 = parent.takeNextCreationRange();
+
+			assert(range1.ids !== undefined);
+			assert.equal(range1.ids.firstGenCount, 1);
+			assert.equal(range1.ids.count, 3); // genCounts 1,2,3 (stride backfill)
+
+			// Generate and take second range
+			parent.generateCompressedId(); // -5
+			const range2 = parent.takeNextCreationRange();
+
+			assert(range2.ids !== undefined);
+			assert.equal(range2.ids.firstGenCount, 4);
+			assert.equal(range2.ids.count, 2); // genCounts 4,5 (parent owns 1,3,5 in stride=2)
+
+			// Verify ranges are consecutive and non-overlapping
+			assert.equal(range1.ids.firstGenCount + range1.ids.count, range2.ids.firstGenCount);
+		});
+
+		it("ranges can be finalized correctly during sharding", () => {
+			const sessionId = createSessionId();
+			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+
+			// Shard
+			parent.shard(1);
+
+			// Generate IDs
+			parent.generateCompressedId(); // -1
+			parent.generateCompressedId(); // -3
+
+			// Take and finalize range
+			const range = parent.takeNextCreationRange();
+			assert(range.ids !== undefined);
+
+			// Should not throw
+			parent.finalizeCreationRange(range);
+
+			// After finalization, parent should still be in sharding mode (no eager finals)
+			const nextId = parent.generateCompressedId(); // -5
+			assert(
+				isLocalId(nextId),
+				"Should still generate local IDs after finalization during sharding",
+			);
 		});
 	});
 });
