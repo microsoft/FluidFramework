@@ -1121,34 +1121,30 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
-					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
-					describe(
-						includeStringification ? "with stringification" : "without stringification",
-						() => {
-							for (const [name, data, context] of encodingTestData.successes) {
-								it(name, () => {
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									let encoded = jsonCodec.encode(data, context!);
-									if (includeStringification) {
-										encoded = JSON.parse(JSON.stringify(encoded)) as typeof encoded;
-									}
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									const decoded = jsonCodec.decode(encoded, context!);
-									assertEquivalent(decoded, data);
-								});
-							}
-						},
-					);
+					describe(includeStringification
+						? "with stringification"
+						: "without stringification", () => {
+						for (const [name, data, context] of encodingTestData.successes) {
+							it(name, () => {
+								assert(context !== undefined);
+								let encoded = jsonCodec.encode(data, context);
+								if (includeStringification) {
+									encoded = JSON.parse(JSON.stringify(encoded));
+								}
+								const decoded = jsonCodec.decode(encoded, context);
+								assertEquivalent(decoded, data);
+							});
+						}
+					});
 				}
 			});
 
 			describe("can binary roundtrip", () => {
 				for (const [name, data, context] of encodingTestData.successes) {
 					it(name, () => {
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						const encoded = codec.binary.encode(data, context!);
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						const decoded = codec.binary.decode(encoded, context!);
+						assert(context !== undefined);
+						const encoded = codec.binary.encode(data, context);
+						const decoded = codec.binary.decode(encoded, context);
 						assertEquivalent(decoded, data);
 					});
 				}
@@ -1159,10 +1155,8 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				describe("rejects malformed data", () => {
 					for (const [name, encodedData, context] of failureCases) {
 						it(name, () => {
-							assert.throws(() =>
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								jsonCodec.decode(encodedData as JsonCompatible, context!),
-							);
+							assert(context !== undefined);
+							assert.throws(() => jsonCodec.decode(encodedData as JsonCompatible, context));
 						});
 					}
 				});
