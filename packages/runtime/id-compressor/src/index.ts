@@ -11,10 +11,7 @@ export {
 	createIdCompressor,
 	deserializeIdCompressor,
 } from "./idCompressor.js";
-export {
-	SerializationVersion,
-	type SerializationVersion as SerializationVersionType,
-} from "./types/index.js";
+export { SerializationVersion } from "./types/index.js";
 export {
 	createSessionId,
 	assertIsStableId,

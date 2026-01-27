@@ -22,15 +22,13 @@ export type OpSpaceCompressedId = number & {
 };
 
 // @beta @legacy
-const SerializationVersion: {
+export const SerializationVersion: {
     readonly V2: 2;
     readonly V3: 3;
 };
 
 // @beta @legacy
-type SerializationVersion = (typeof SerializationVersion)[keyof typeof SerializationVersion];
-export { SerializationVersion }
-export { SerializationVersion as SerializationVersionType }
+export type SerializationVersion = (typeof SerializationVersion)[keyof typeof SerializationVersion];
 
 // @public
 export type SessionId = StableId & {
