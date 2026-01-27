@@ -3,25 +3,30 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
 	type RevisionTag,
 	type TaggedChange,
+	areEqualChangeAtomIds,
+	makeChangeAtomId,
+	makeDetachedNodeId,
 	rootFieldKey,
 	tagChange,
 } from "../../../core/index.js";
 import type {
 	ModularChangeset,
 	NodeId,
+	RebaseVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	optionalFieldEditor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, brandConst } from "../../../util/index.js";
 import {
 	type ChildStateGenerator,
 	type FieldStateTree,
@@ -36,6 +41,7 @@ import { chunkFromJsonTrees } from "../../utils.js";
 import { intoDelta, type DefaultChangeset } from "../../../feature-libraries/index.js";
 import type {
 	FieldEditDescription,
+	GlobalEditDescription,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
@@ -183,7 +189,26 @@ const OptionalChange = {
 // 	);
 // }
 
-type OptionalFieldTestState = FieldStateTree<string | undefined, DefaultChangeset>;
+type OptionalFieldTestState = FieldStateTree<
+	OptionalFieldTestContent,
+	DefaultChangeset,
+	OptionalChangeMetadata
+>;
+
+interface RootNode {
+	readonly id: ChangeAtomId;
+	readonly value: string;
+}
+
+interface OptionalFieldTestContent {
+	readonly attached: string | undefined;
+	readonly detached: readonly RootNode[];
+}
+
+interface OptionalChangeMetadata {
+	readonly detach?: RootNode;
+	readonly attach?: RootNode;
+}
 
 // function computeChildChangeInputContext(inputState: OptionalFieldTestState): number[] {
 // 	// This is effectively a filter of the intentions from all edits such that it only includes
@@ -216,28 +241,119 @@ type OptionalFieldTestState = FieldStateTree<string | undefined, DefaultChangese
 // 	return intentions;
 // }
 
-const editor = defaultFamily.buildEditor(makeRevisionTagMinter(), () => undefined);
-
-/**
- * See {@link ChildStateGenerator}
- */
-const generateChildStates: ChildStateGenerator<string | undefined, DefaultChangeset> =
-	function* (
+function makeChildStateGenerator(
+	minRebaseVersion: RebaseVersion,
+	maxRebaseVersion: RebaseVersion,
+): ChildStateGenerator<OptionalFieldTestContent, DefaultChangeset, OptionalChangeMetadata> {
+	return function* forEachRebaseVersions(
 		state: OptionalFieldTestState,
 		tagFromIntention: (intention: number) => RevisionTag,
 		mintIntention: () => number,
 	): Iterable<OptionalFieldTestState> {
-		const mintId = (revision: RevisionTag): ChangeAtomId => {
-			return {
-				localId: mintIntention() as ChangesetLocalId,
+		for (
+			let rebaseVersion: RebaseVersion = minRebaseVersion;
+			rebaseVersion <= maxRebaseVersion;
+			rebaseVersion++
+		) {
+			yield* generateChildStateForRebaseVersion(
+				rebaseVersion,
+				state,
+				tagFromIntention,
+				mintIntention,
+			);
+		}
+	};
+}
+
+const generateChildStateForRebaseVersion = function* (
+	rebaseVersion: RebaseVersion,
+	state: OptionalFieldTestState,
+	tagFromIntention: (intention: number) => RevisionTag,
+	mintIntention: () => number,
+): Iterable<OptionalFieldTestState> {
+	const mintId = (revision: RevisionTag): ChangeAtomId => {
+		return {
+			localId: mintIntention() as ChangesetLocalId,
+			revision,
+		};
+	};
+	const editor = defaultFamily.buildEditor(
+		makeRevisionTagMinter(),
+		() => undefined,
+		rebaseVersion,
+	);
+	const edits = getSequentialEdits(state);
+	const current = state.content.attached;
+	const isEmpty = current === undefined;
+	if (current === undefined) {
+		// Clear Empty Field
+		// Even if there is no content, optional field supports an explicit clear operation with LWW semantics,
+		// as a concurrent set operation may populate the field.
+		const intention = mintIntention();
+		const revision = tagFromIntention(intention);
+		const detach = mintId(revision);
+		const fieldEdit: FieldEditDescription = {
+			type: "field",
+			field: { parent: undefined, field: rootFieldKey },
+			fieldKind: optional.identifier,
+			change: brand(OptionalChange.clear(true, detach)),
+			revision,
+		};
+		const modularEdit = editor.buildChanges([fieldEdit]);
+		yield {
+			content: state.content,
+			mostRecentEdit: {
+				changeset: tagChange(modularEdit, revision),
+				intention,
+				description: `RemoveEV${rebaseVersion}`,
+				meta: {},
+			},
+			parent: state,
+		};
+	} else {
+		// Nested Change in Populated Field
+		{
+			const intention = mintIntention();
+			const revision = tagFromIntention(intention);
+			const fieldEdit: FieldEditDescription = {
+				type: "field",
+				field: { parent: undefined, field: rootFieldKey },
+				fieldKind: optional.identifier,
+				// This no-op change is used to force ModularChangeFamily to generate a shallow optional changeset with a child change.
+				// Otherwise, it would generate a generic changeset.
+				change: brand(optional.changeHandler.createEmpty()),
 				revision,
 			};
-		};
-		const edits = getSequentialEdits(state);
-		if (state.content === undefined) {
-			// Clear Empty Field
-			// Even if there is no content, optional field supports an explicit clear operation with LWW semantics,
-			// as a concurrent set operation may populate the field.
+			const nestedFieldEdit: FieldEditDescription = {
+				type: "field",
+				field: {
+					parent: {
+						parent: undefined,
+						parentField: rootFieldKey,
+						parentIndex: 0,
+						detachedNodeId: undefined,
+					},
+					field: brand("foo"),
+				},
+				fieldKind: optional.identifier,
+				change: brand(OptionalChange.clear(true, mintId(revision))),
+				revision,
+			};
+			const modularEdit = editor.buildChanges([fieldEdit, nestedFieldEdit]);
+			yield {
+				content: state.content,
+				mostRecentEdit: {
+					changeset: tagChange(modularEdit, revision),
+					intention,
+					description: `AttachedNodeChangeV${rebaseVersion}`,
+					meta: {},
+				},
+				parent: state,
+			};
+		}
+
+		// Clear Populated Field
+		{
 			const intention = mintIntention();
 			const revision = tagFromIntention(intention);
 			const detach = mintId(revision);
@@ -245,169 +361,282 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 				type: "field",
 				field: { parent: undefined, field: rootFieldKey },
 				fieldKind: optional.identifier,
-				change: brand(OptionalChange.clear(true, detach)),
+				change: brand(OptionalChange.clear(false, detach)),
 				revision,
 			};
 			const modularEdit = editor.buildChanges([fieldEdit]);
 			yield {
-				content: undefined,
+				content: {
+					attached: undefined,
+					detached: [...state.content.detached, { id: detach, value: current }],
+				},
 				mostRecentEdit: {
 					changeset: tagChange(modularEdit, revision),
 					intention,
-					description: "RemoveE",
+					description: `RemoveV${rebaseVersion}`,
+					meta: { detach: { id: detach, value: current } },
 				},
 				parent: state,
 			};
-		} else {
-			// Nested Change
-			{
-				const intention = mintIntention();
-				const revision = tagFromIntention(intention);
-				const fieldEdit: FieldEditDescription = {
-					type: "field",
-					field: { parent: undefined, field: rootFieldKey },
-					fieldKind: optional.identifier,
-					// This no-op change is used to force ModularChangeFamily to generate a shallow optional changeset with a child change.
-					// Otherwise, it would generate a generic changeset.
-					change: brand(optional.changeHandler.createEmpty()),
-					revision,
-				};
-				const nestedFieldEdit: FieldEditDescription = {
-					type: "field",
-					field: {
-						parent: {
-							parent: undefined,
-							parentField: rootFieldKey,
-							parentIndex: 0,
-							detachedNodeId: undefined,
-						},
-						field: brand("foo"),
-					},
-					fieldKind: optional.identifier,
-					change: brand(OptionalChange.clear(true, mintId(revision))),
-					revision,
-				};
-				const modularEdit = editor.buildChanges([fieldEdit, nestedFieldEdit]);
-				yield {
-					content: state.content,
-					mostRecentEdit: {
-						changeset: tagChange(modularEdit, revision),
-						intention,
-						description: `ChildChange${intention}`,
-					},
-					parent: state,
-				};
-			}
-
-			// Clear Populated Field
-			{
-				const intention = mintIntention();
-				const revision = tagFromIntention(intention);
-				const detach = mintId(revision);
-				const fieldEdit: FieldEditDescription = {
-					type: "field",
-					field: { parent: undefined, field: rootFieldKey },
-					fieldKind: optional.identifier,
-					change: brand(OptionalChange.clear(false, detach)),
-					revision,
-				};
-				const modularEdit = editor.buildChanges([fieldEdit]);
-				yield {
-					content: undefined,
-					mostRecentEdit: {
-						changeset: tagChange(modularEdit, revision),
-						intention,
-						description: "RemoveF",
-					},
-					parent: state,
-				};
-			}
-
-			// Pin node
-			{
-				const intention = mintIntention();
-				const revision = tagFromIntention(intention);
-				const [detach, attach] = [mintId(revision), mintId(revision)];
-				const fieldEdit: FieldEditDescription = {
-					type: "field",
-					field: { parent: undefined, field: rootFieldKey },
-					fieldKind: optional.identifier,
-					change: brand(
-						OptionalChange.set(false, { detach, fill: attach, detachNode: attach }),
-					),
-					revision,
-				};
-
-				const modularEdit = editor.buildChanges([fieldEdit]);
-				yield {
-					content: state.content,
-					mostRecentEdit: {
-						changeset: tagChange(modularEdit, revision),
-						intention,
-						description: "Pin",
-					},
-					parent: state,
-				};
-			}
 		}
 
-		for (const value of ["A", "B"]) {
-			const setIntention = mintIntention();
-			const setRevision = tagFromIntention(setIntention);
-			const [fill, detach] = [mintId(setRevision), mintId(setRevision)];
-			// Using length of the input context guarantees set operations generated at different times also have different
-			// values, which should tend to be easier to debug.
-			// This also makes the logic to determine intentions simpler.
-			const newContents = `${value},${edits.length}`;
-			const build = editor.buildTrees(
-				fill.localId,
-				chunkFromJsonTrees([newContents]),
-				setRevision,
-			);
+		// Pin node
+		{
+			const intention = mintIntention();
+			const revision = tagFromIntention(intention);
+			const [detach, attach] = [mintId(revision), mintId(revision)];
 			const fieldEdit: FieldEditDescription = {
 				type: "field",
 				field: { parent: undefined, field: rootFieldKey },
 				fieldKind: optional.identifier,
-				change: brand(
-					OptionalChange.set(state.content === undefined, {
-						fill,
-						detach,
-					}),
-				),
-				revision: setRevision,
+				change: brand(OptionalChange.set(false, { detach, fill: attach, detachNode: attach })),
+				revision,
 			};
-			const modularEdit = editor.buildChanges([build, fieldEdit]);
+
+			const modularEdit = editor.buildChanges([fieldEdit]);
 			yield {
-				content: newContents,
+				content: state.content,
 				mostRecentEdit: {
-					changeset: tagChange(modularEdit, setRevision),
-					intention: setIntention,
-					description: `Set${newContents}`,
+					changeset: tagChange(modularEdit, revision),
+					intention,
+					description: `PinV${rebaseVersion}`,
+					meta: {},
 				},
 				parent: state,
 			};
 		}
+	}
 
-		if (state.mostRecentEdit !== undefined) {
-			const undoIntention = mintIntention();
-			const undoRevision = tagFromIntention(undoIntention);
-			const modularEdit = defaultFamily.invert(
-				state.mostRecentEdit.changeset,
-				false,
-				undoRevision,
+	// Set
+	{
+		const setIntention = mintIntention();
+		const setRevision = tagFromIntention(setIntention);
+		const [fill, detach] = [mintId(setRevision), mintId(setRevision)];
+		// Using length of the input context guarantees set operations generated at different times also have different
+		// values, which should tend to be easier to debug.
+		// This also makes the logic to determine intentions simpler.
+		const newContents = `N${edits.length}`;
+		const build = editor.buildTrees(
+			fill.localId,
+			chunkFromJsonTrees([newContents]),
+			setRevision,
+		);
+		const fieldEdit: FieldEditDescription = {
+			type: "field",
+			field: { parent: undefined, field: rootFieldKey },
+			fieldKind: optional.identifier,
+			change: brand(
+				OptionalChange.set(isEmpty, {
+					fill,
+					detach,
+				}),
+			),
+			revision: setRevision,
+		};
+		const detached = [...state.content.detached];
+		let detachedNode: RootNode | undefined;
+		if (!isEmpty) {
+			detachedNode = { id: detach, value: current };
+			detached.push(detachedNode);
+		}
+		const modularEdit = editor.buildChanges([build, fieldEdit]);
+		yield {
+			content: { attached: newContents, detached },
+			mostRecentEdit: {
+				changeset: tagChange(modularEdit, setRevision),
+				intention: setIntention,
+				description: `SetV${rebaseVersion}:${newContents}`,
+				meta: {
+					detach: detachedNode,
+					attach: { id: fill, value: newContents },
+				},
+			},
+			parent: state,
+		};
+	}
+
+	// Build
+	if (state.content.detached.length === 0) {
+		const buildIntention = mintIntention();
+		const buildRevision = tagFromIntention(buildIntention);
+		const id = mintId(buildRevision);
+		// Using length of the input context guarantees set operations generated at different times also have different
+		// values, which should tend to be easier to debug.
+		// This also makes the logic to determine intentions simpler.
+		const newContents = `N${edits.length}`;
+		const build = editor.buildTrees(
+			id.localId,
+			chunkFromJsonTrees([newContents]),
+			buildRevision,
+		);
+		const detached = [...state.content.detached, { id, value: newContents }];
+		const modularEdit = editor.buildChanges([build]);
+		yield {
+			content: { attached: current, detached },
+			mostRecentEdit: {
+				changeset: tagChange(modularEdit, buildRevision),
+				intention: buildIntention,
+				description: `BuildV${rebaseVersion}:${newContents}`,
+				meta: {},
+			},
+			parent: state,
+		};
+	}
+
+	// Attach
+	if (rebaseVersion >= 2) {
+		for (const node of state.content.detached) {
+			const attachIntention = mintIntention();
+			const attachRevision = tagFromIntention(attachIntention);
+			const [attach, detach] = [mintId(attachRevision), mintId(attachRevision)];
+			const rename: GlobalEditDescription = {
+				type: "global",
+				revision: attachRevision,
+				renames: [
+					{
+						count: 1,
+						oldId: node.id,
+						newId: attach,
+						detachLocation: undefined,
+					},
+				],
+			};
+			const fieldEdit: FieldEditDescription = {
+				type: "field",
+				field: { parent: undefined, field: rootFieldKey },
+				fieldKind: optional.identifier,
+				change: brand(OptionalChange.set(isEmpty, { fill: attach, detach })),
+				revision: attachRevision,
+			};
+			const modularEdit = editor.buildChanges([rename, fieldEdit]);
+			const detached = state.content.detached.filter((n) => n !== node);
+			let detachedNode: RootNode | undefined;
+			if (!isEmpty) {
+				detachedNode = { id: detach, value: current };
+				detached.push(detachedNode);
+			}
+			yield {
+				content: { attached: node.value, detached },
+				mostRecentEdit: {
+					changeset: tagChange(modularEdit, attachRevision),
+					intention: attachIntention,
+					description: `AttachV${rebaseVersion}:${node.value}`,
+					meta: {
+						detach: detachedNode,
+						attach: node,
+					},
+				},
+				parent: state,
+			};
+			break; // Only try this for one node in order to keep the set of possible edits manageable
+		}
+	}
+
+	// Nested change in detached node
+	if (rebaseVersion >= 2) {
+		for (const node of state.content.detached) {
+			const intention = mintIntention();
+			const revision = tagFromIntention(intention);
+			const nestedFieldEdit: FieldEditDescription = {
+				type: "field",
+				field: {
+					parent: {
+						parent: undefined,
+						parentField: brand("detached-root"),
+						parentIndex: 0,
+						detachedNodeId: makeDetachedNodeId(node.id.revision, node.id.localId),
+					},
+					field: brand("foo"),
+				},
+				fieldKind: optional.identifier,
+				change: brand(OptionalChange.clear(true, mintId(revision))),
+				revision,
+			};
+			const modularEdit = editor.buildChanges([nestedFieldEdit]);
+			yield {
+				content: state.content,
+				mostRecentEdit: {
+					changeset: tagChange(modularEdit, revision),
+					intention,
+					description: `DetachedNodeChangeV${rebaseVersion}`,
+					meta: {},
+				},
+				parent: state,
+			};
+			break; // Only try this for one node in order to keep the set of possible edits manageable
+		}
+	}
+
+	// Undo
+	if (
+		state.mostRecentEdit !== undefined &&
+		!state.mostRecentEdit.description.startsWith("Rollback")
+	) {
+		const { detach: priorDetach, attach: priorAttach } =
+			state.mostRecentEdit.meta ?? assert.fail();
+		const undoIntention = mintIntention();
+		const undoRevision = tagFromIntention(undoIntention);
+		const modularEdit = defaultFamily.invert(
+			state.mostRecentEdit.changeset,
+			false,
+			undoRevision,
+		);
+		const changeset = tagChange(modularEdit, undoRevision);
+		let attached: string | undefined;
+		const detached = [...state.content.detached];
+		let newAttach: RootNode | undefined;
+		let newDetach: RootNode | undefined;
+		if (priorDetach !== undefined) {
+			const entryIndex = detached.findIndex((node) =>
+				areEqualChangeAtomIds(node.id, priorDetach.id),
 			);
-
-			yield {
-				content: state.parent?.content,
-				mostRecentEdit: {
-					changeset: tagChange(modularEdit, undoRevision),
-					intention: undoIntention,
-					description: `Undo:${state.mostRecentEdit.description}`,
-				},
-				parent: state,
-			};
+			assert(entryIndex >= 0, "Expected detached node to be present");
+			attached = priorDetach.value;
+			detached.splice(entryIndex, 1);
+			newAttach = priorDetach;
 		}
-	};
+		if (priorAttach !== undefined) {
+			const undoMark = intoDelta(changeset).fields?.get(rootFieldKey)?.at(0) ?? assert.fail();
+			const detachId = undoMark.detach ?? assert.fail("Expected detach");
+			const id = makeChangeAtomId(brand(detachId.minor), detachId.major);
+			newDetach = { id, value: priorAttach.value };
+			detached.push(newDetach);
+		}
+		yield {
+			content: { attached, detached },
+			mostRecentEdit: {
+				changeset,
+				intention: undoIntention,
+				description: `Undo:${state.mostRecentEdit.description}`,
+				meta: {
+					attach: newAttach,
+					detach: newDetach,
+				},
+			},
+			parent: state,
+		};
+	}
+
+	// Rollback
+	if (
+		state.mostRecentEdit !== undefined &&
+		!state.mostRecentEdit.description.startsWith("Rollback")
+	) {
+		const intention = mintIntention();
+		const revision = tagFromIntention(intention);
+		const modularEdit = defaultFamily.invert(state.mostRecentEdit.changeset, true, revision);
+
+		yield {
+			content: (state.parent ?? assert.fail()).content,
+			mostRecentEdit: {
+				changeset: tagChange(modularEdit, revision),
+				intention,
+				description: `Rollback:${state.mostRecentEdit.description}`,
+			},
+			parent: state,
+		};
+	}
+};
 
 // /**
 //  * Runs a suite of axiomatic tests which use combinations of single edits that are valid to apply from an initial state.
@@ -522,14 +751,35 @@ export function testRebaserAxioms() {
 		// });
 
 		describeStress("Exhaustive", ({ stressMode }) => {
-			runExhaustiveComposeRebaseSuite(
-				[{ content: undefined }, { content: "A" }],
-				generateChildStates,
+			runExhaustiveComposeRebaseSuite<
+				OptionalFieldTestContent,
+				DefaultChangeset,
+				OptionalChangeMetadata
+			>(
+				[
+					{
+						content: {
+							attached: undefined,
+							detached: [
+								{
+									id: {
+										revision: mintRevisionTag(),
+										localId: brandConst(0)<ChangesetLocalId>(),
+									},
+									value: "A",
+								},
+							],
+						},
+					},
+					{ content: { attached: "A", detached: [] } },
+				],
+				makeChildStateGenerator(1, 2),
 				defaultFieldRebaser,
 				{
-					numberOfEditsToRebase: 3,
-					numberOfEditsToRebaseOver: stressMode === StressMode.Short ? 3 : 5,
-					numberOfEditsToVerifyAssociativity: stressMode === StressMode.Short ? 3 : 6,
+					numberOfEditsToRebase: 2,
+					numberOfEditsToRebaseOver: stressMode === StressMode.Short ? 2 : 5,
+					numberOfEditsToVerifyAssociativity: stressMode === StressMode.Short ? 2 : 6,
+					groupSubSuites: false,
 				},
 			);
 		});
