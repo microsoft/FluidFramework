@@ -202,7 +202,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		} else if (algorithm === SummaryCompressionAlgorithm.None) {
 			maybeCompressed = file;
 		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
-			const compressed = compress(file) as ArrayBufferLike;
+			const compressed = compress(file as Uint8Array) as ArrayBufferLike;
 			maybeCompressed = compressed;
 		} else {
 			throw new Error(`Unknown Algorithm ${config.algorithm}`);
