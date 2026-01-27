@@ -186,6 +186,8 @@ export interface ICodeMirrorReactViewProps {
 }
 
 /**
+ * React component that renders a CodeMirror editor with collaborative features.
+ *
  * @internal
  */
 export const CodeMirrorReactView: React.FC<ICodeMirrorReactViewProps> = (
