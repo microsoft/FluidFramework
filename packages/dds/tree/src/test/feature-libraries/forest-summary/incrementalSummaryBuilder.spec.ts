@@ -6,18 +6,14 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	ForestIncrementalSummaryBehavior,
-	ForestIncrementalSummaryBuilder,
-	ForestSummaryTrackingState,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
+import type { ITreeCursorSynchronous } from "../../../core/index.js";
 import {
 	type EncodedFieldBatch,
 	type ChunkReferenceId,
@@ -25,9 +21,21 @@ import {
 	defaultIncrementalEncodingPolicy,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
-import type { ITreeCursorSynchronous } from "../../../core/index.js";
+import {
+	ForestIncrementalSummaryBehavior,
+	ForestIncrementalSummaryBuilder,
+	ForestSummaryTrackingState,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
+import {
+	summaryContentBlobKey as summaryContentBlobKeyV1ToV2,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatV1ToV2.js";
+import {
+	summaryContentBlobKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
 import { brand, type JsonCompatible } from "../../../util/index.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
  * Creates a mock incremental summary context for testing.
@@ -89,7 +97,7 @@ function getMockChunk(): TreeChunk {
 const testCursor = { getFieldLength: () => 1 } as unknown as ITreeCursorSynchronous;
 
 const stringify = JSON.stringify;
-const mockForestSummaryContent = "test-summary-content";
+const mockForestSummaryRootContent = "test-summary-content";
 const mockEncodedChunk = {} as unknown as EncodedFieldBatch;
 const initialSequenceNumber = 0;
 
@@ -178,7 +186,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const summaryTreeBuilder = new SummaryTreeBuilder();
 			builder.completeSummary({
 				incrementalSummaryContext: undefined,
-				forestSummaryContent: mockForestSummaryContent,
+				forestSummaryRootContent: mockForestSummaryRootContent,
+				forestSummaryRootContentKey: summaryContentBlobKeyV1ToV2,
 				builder: summaryTreeBuilder,
 			});
 			const summary = summaryTreeBuilder.getSummaryTree();
@@ -201,7 +210,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			builder.encodeIncrementalField(testCursor, () => mockEncodedChunk);
 			builder.completeSummary({
 				incrementalSummaryContext,
-				forestSummaryContent: mockForestSummaryContent,
+				forestSummaryRootContent: mockForestSummaryRootContent,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder,
 			});
 			const summary = summaryTreeBuilder.getSummaryTree();
@@ -225,7 +235,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 
 			builder.completeSummary({
 				incrementalSummaryContext: localIncrementalSummaryContext,
-				forestSummaryContent: mockForestSummaryContent,
+				forestSummaryRootContent: mockForestSummaryRootContent,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder,
 			});
 			assert.equal(builder.forestSummaryState, ForestSummaryTrackingState.ReadyToTrack);
@@ -239,7 +250,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				() =>
 					builder.completeSummary({
 						incrementalSummaryContext: localIncrementalSummaryContext,
-						forestSummaryContent: mockForestSummaryContent,
+						forestSummaryRootContent: mockForestSummaryRootContent,
+						forestSummaryRootContentKey: summaryContentBlobKey,
 						builder: new SummaryTreeBuilder(),
 					}),
 				validateAssertionError(/Not tracking/),
@@ -414,7 +426,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			// Complete first summary
 			builder.completeSummary({
 				incrementalSummaryContext,
-				forestSummaryContent: mockForestSummaryContent,
+				forestSummaryRootContent: mockForestSummaryRootContent,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder1,
 			});
 
@@ -451,7 +464,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const referenceIds1 = builder.encodeIncrementalField(testCursor, () => mockEncodedChunk);
 			builder.completeSummary({
 				incrementalSummaryContext: incrementalSummaryContext1,
-				forestSummaryContent: mockForestSummaryContent,
+				forestSummaryRootContent: mockForestSummaryRootContent,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder1,
 			});
 
@@ -477,7 +491,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const referenceId1 = referenceIds1[0];
 			builder.completeSummary({
 				incrementalSummaryContext: incrementalSummaryContext2,
-				forestSummaryContent: mockForestSummaryContent,
+				forestSummaryRootContent: mockForestSummaryRootContent,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder2,
 			});
 			const summary = summaryTreeBuilder2.getSummaryTree();
@@ -500,7 +515,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const referenceIds1 = builder.encodeIncrementalField(testCursor, () => mockEncodedChunk);
 			builder.completeSummary({
 				incrementalSummaryContext,
-				forestSummaryContent: mockForestSummaryContent,
+				forestSummaryRootContent: mockForestSummaryRootContent,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder1,
 			});
 
@@ -515,7 +531,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			});
 			builder.completeSummary({
 				incrementalSummaryContext: incrementalSummaryContext2,
-				forestSummaryContent: mockForestSummaryContent,
+				forestSummaryRootContent: mockForestSummaryRootContent,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder2,
 			});
 
@@ -539,7 +556,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const referenceId1 = referenceIds1[0];
 			builder.completeSummary({
 				incrementalSummaryContext: incrementalSummaryContext3,
-				forestSummaryContent: mockForestSummaryContent,
+				forestSummaryRootContent: mockForestSummaryRootContent,
+				forestSummaryRootContentKey: summaryContentBlobKey,
 				builder: summaryTreeBuilder3,
 			});
 			const summary = summaryTreeBuilder3.getSummaryTree();

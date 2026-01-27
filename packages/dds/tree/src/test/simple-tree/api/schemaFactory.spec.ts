@@ -8,7 +8,31 @@ import { strict as assert } from "node:assert";
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { EmptyKey } from "../../../core/index.js";
 import { TreeStatus } from "../../../feature-libraries/index.js";
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
+import {
+	SchemaFactory,
+	schemaFromValue,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/schemaFactory.js";
+import {
+	schemaStaticsStable,
+	type SchemaStatics,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/schemaStatics.js";
+import {
+	// Import directly to get the non-type import to allow testing of the package only instanceof
+	TreeNode,
+	type AllowedTypes,
+	type AllowedTypesFull,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type UnannotateAllowedTypesList,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/core/index.js";
 import {
 	type ObjectNodeSchema,
 	SchemaFactoryAlpha,
@@ -31,28 +55,6 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 } from "../../../simple-tree/index.js";
 import {
-	// Import directly to get the non-type import to allow testing of the package only instanceof
-	TreeNode,
-	type AllowedTypes,
-	type AllowedTypesFull,
-	type AnnotatedAllowedType,
-	type AnnotatedAllowedTypes,
-	type InsertableTreeNodeFromAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type UnannotateAllowedTypesList,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/core/index.js";
-import {
-	SchemaFactory,
-	schemaFromValue,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/schemaFactory.js";
-import {
-	schemaStaticsStable,
-	type SchemaStatics,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/schemaStatics.js";
-import {
 	brand,
 	type areSafelyAssignable,
 	type IsUnion,
@@ -60,11 +62,8 @@ import {
 	type requireFalse,
 	type requireTrue,
 } from "../../../util/index.js";
-
-import { hydrate } from "../utils.js";
 import { getView, TestTreeProviderLite } from "../../utils.js";
-import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
-import { EmptyKey } from "../../../core/index.js";
+import { hydrate } from "../utils.js";
 
 // Tests for the non-recursive API subset of SchemaFactory and SchemaFactoryAlpha.
 // Recursive APIs are tested in schemaFactoryRecursive.spec.ts
@@ -982,13 +981,15 @@ describe("schemaFactory", () => {
 				const childB = createComboChild();
 				let parent: ComboParent;
 				switch (layout.parentType) {
-					case "object":
+					case "object": {
 						parent = new ComboParentObject({ childA, childB });
 						break;
-					case "list":
+					}
+					case "list": {
 						parent = new ComboParentList([childA, childB]);
 						break;
-					case "map":
+					}
+					case "map": {
 						parent = new ComboParentMap(
 							new Map([
 								["childA", childA],
@@ -996,8 +997,10 @@ describe("schemaFactory", () => {
 							]),
 						);
 						break;
-					default:
+					}
+					default: {
 						unreachableCase(layout.parentType);
+					}
 				}
 				nodes.push(parent);
 				assert.equal(Tree.status(parent), TreeStatus.New);
@@ -1007,17 +1010,21 @@ describe("schemaFactory", () => {
 			function createComboChild(): ComboChild {
 				let child: ComboChild;
 				switch (layout.childType) {
-					case "object":
+					case "object": {
 						child = new ComboChildObject({});
 						break;
-					case "list":
+					}
+					case "list": {
 						child = new ComboChildList([]);
 						break;
-					case "map":
+					}
+					case "map": {
 						child = new ComboChildMap(new Map());
 						break;
-					default:
+					}
+					default: {
 						unreachableCase(layout.childType);
+					}
 				}
 				nodes.push(child);
 				assert.equal(Tree.status(child), TreeStatus.New);
@@ -1700,9 +1707,9 @@ describe("schemaFactory", () => {
 			it("are permitted when unhydrated", () => {
 				const testArray = new TestArray(["test"]);
 				testArray.insertAtEnd("test");
-				assert.deepEqual(Array.from(testArray.values()), ["test", "test"]);
+				assert.deepEqual([...testArray.values()], ["test", "test"]);
 				testArray.insertAtEnd(5);
-				assert.deepEqual(Array.from(testArray.values()), ["test", "test", 5]);
+				assert.deepEqual([...testArray.values()], ["test", "test", 5]);
 			});
 
 			it("can't be hydrated", () => {
@@ -1842,11 +1849,14 @@ function getKeys(node: TreeNode): string[] | number[] {
 			}
 			return keys;
 		}
-		case NodeKind.Map:
+		case NodeKind.Map: {
 			return [...(node as TreeMapNode).keys()];
-		case NodeKind.Object:
+		}
+		case NodeKind.Object: {
 			return Object.keys(node);
-		default:
+		}
+		default: {
 			throw new Error("Unsupported Kind");
+		}
 	}
 }

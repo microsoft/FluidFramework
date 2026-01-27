@@ -24,11 +24,11 @@ import {
 	type Mutable,
 } from "../util/index.js";
 
+import type { BranchId } from "./branch.js";
 import type { SharedBranchSummaryData, SummaryData } from "./editManager.js";
-import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
 import { decodeSharedBranch, encodeSharedBranch } from "./editManagerCodecsCommons.js";
 import type { EncodedSharedBranch } from "./editManagerFormatCommons.js";
-import type { BranchId } from "./branch.js";
+import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
@@ -78,7 +78,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				);
 				assert(
 					data.originator !== undefined,
-					"Cannot encode vSharedBranches summary without originator",
+					0xca5 /* Cannot encode vSharedBranches summary without originator */,
 				);
 				const json: Mutable<EncodedEditManager<TChangeset>> = {
 					main: mainBranch,

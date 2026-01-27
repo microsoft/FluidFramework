@@ -9,6 +9,9 @@ export {
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	type LocalChangeMetadata,
+	type RemoteChangeMetadata,
+	type ChangeMetadata,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
@@ -248,7 +251,9 @@ export {
 	type SchemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	type NodeInDocumentConstraint,
+	type NoChangeConstraint,
 	type RunTransactionParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -289,8 +294,15 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
+	checkSchemaCompatibilitySnapshots,
+	type SnapshotFileSystem,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
+	eraseSchemaDetails,
+	eraseSchemaDetailsSubclassable,
+	type SchemaCompatibilitySnapshotsOptions,
+	type ArrayPlaceAnchor,
+	createArrayInsertionAnchor,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -308,6 +320,8 @@ export {
 	FluidClientVersion,
 	type FormatValidator,
 	FormatValidatorNoOp,
+	type CodecName,
+	type FormatVersion,
 } from "./codec/index.js";
 export { FormatValidatorBasic } from "./external-utilities/index.js";
 
@@ -336,13 +350,12 @@ export type {
 export { cloneWithReplacements } from "./util/index.js";
 
 import * as InternalTypes from "./internalTypes.js";
-export {
-	/**
-	 * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
-	 * They are used internally to implement API aspects, but are not intended for use by external consumers.
-	 */
-	InternalTypes,
-};
+/**
+ * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
+ * They are used internally to implement API aspects, but are not intended for use by external consumers.
+ */
+// eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor)
+export { InternalTypes };
 
 // Internal/System types:
 // These would be put in `internalTypes` except doing so tents to cause errors like:
@@ -353,3 +366,5 @@ export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
+
+export { TextAsTree, FormattedTextAsTree } from "./text/index.js";

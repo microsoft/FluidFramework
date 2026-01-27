@@ -18,8 +18,14 @@ import { z } from "zod";
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
 import { getExposedProperties, type PropertyDef } from "./propertyBinding.js";
-import { getFriendlyName, isNamedSchema, llmDefault, unqualifySchema } from "./utils.js";
+import {
+	instanceOfsTypeFactory,
+	renderTypeFactoryTypeScript,
+} from "./renderTypeFactoryTypeScript.js";
 import { instanceOfs, renderZodTypeScript } from "./renderZodTypeScript.js";
+import type { TypeFactoryOptional, TypeFactoryType } from "./treeAgentTypes.js";
+import { isTypeFactoryType } from "./treeAgentTypes.js";
+import { getFriendlyName, isNamedSchema, llmDefault, unqualifySchema } from "./utils.js";
 
 interface BoundMembers {
 	methods: Record<string, FunctionWrapper>;
@@ -284,7 +290,9 @@ export function renderSchemaTypeScript(
 					lines.push(`// ${note}`);
 				}
 			}
-			lines.push(formatMethod(name, method));
+			const methodString = formatMethod(name, method);
+			const methodLines = methodString.split("\n");
+			lines.push(...methodLines);
 		}
 		if (lines.length > 0) {
 			hasHelperMethods = true;
@@ -434,7 +442,11 @@ function renderPropertyLines(properties: Record<string, PropertyDef>): string[] 
 			}
 		}
 		const modifier = property.readOnly ? "readonly " : "";
-		lines.push(`${modifier}${name}: ${renderZodType(property.schema)};`);
+		const typeString = renderType(property.schema, 0);
+		const propertyLine = `${modifier}${name}: ${typeString};`;
+		// Split multi-line type strings and add to lines array
+		const propertyLines = propertyLine.split("\n");
+		lines.push(...propertyLines);
 	}
 	return lines;
 }
@@ -443,13 +455,13 @@ function formatMethod(name: string, method: FunctionWrapper): string {
 	const args: string[] = [];
 	for (const [argName, argType] of method.args) {
 		const { innerType, optional } = unwrapOptional(argType);
-		const renderedType = renderZodType(innerType);
+		const renderedType = renderType(innerType, 0);
 		args.push(`${argName}${optional ? "?" : ""}: ${renderedType}`);
 	}
 	if (method.rest !== null) {
-		args.push(`...rest: ${renderZodType(method.rest)}[]`);
+		args.push(`...rest: ${renderType(method.rest, 0)}[]`);
 	}
-	return `${name}(${args.join(", ")}): ${renderZodType(method.returns)};`;
+	return `${name}(${args.join(", ")}): ${renderType(method.returns, 0)};`;
 }
 
 function renderLeaf(leafKind: ValueSchema): string {
@@ -482,7 +494,15 @@ function formatExpression(
 /**
  * Detects optional zod wrappers so argument lists can keep TypeScript optional markers in sync.
  */
-function unwrapOptional(type: z.ZodTypeAny): { innerType: z.ZodTypeAny; optional: boolean } {
+function unwrapOptional(type: z.ZodTypeAny | TypeFactoryType): {
+	innerType: z.ZodTypeAny | TypeFactoryType;
+	optional: boolean;
+} {
+	// Handle type factory optional type
+	if (isTypeFactoryType(type) && type._kind === "optional") {
+		return { innerType: (type as TypeFactoryOptional).innerType, optional: true };
+	}
+	// Handle Zod optional type
 	if (type instanceof z.ZodOptional) {
 		const inner = type.unwrap() as z.ZodTypeAny;
 		return { innerType: inner, optional: true };
@@ -516,8 +536,10 @@ function ensureNoMemberConflicts(
 }
 
 /**
- * Converts schema metadata into TypeScript declarations suitable for prompt inclusion.
+ * Dispatches to the correct renderer based on whether the type is Zod or type factory.
  */
-function renderZodType(type: z.ZodTypeAny): string {
-	return renderZodTypeScript(type, getFriendlyName, instanceOfs);
+function renderType(type: z.ZodTypeAny | TypeFactoryType, indentLevel: number = 0): string {
+	return isTypeFactoryType(type)
+		? renderTypeFactoryTypeScript(type, getFriendlyName, instanceOfsTypeFactory, indentLevel)
+		: renderZodTypeScript(type, getFriendlyName, instanceOfs);
 }

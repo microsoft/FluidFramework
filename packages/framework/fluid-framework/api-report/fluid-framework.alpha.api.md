@@ -114,6 +114,11 @@ export const ArrayNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is ArrayNodeSchema;
 };
 
+// @alpha @sealed
+export interface ArrayPlaceAnchor {
+    get index(): number;
+}
+
 // @alpha
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
@@ -141,8 +146,14 @@ export interface BranchableTree extends ViewableTree {
     rebase(branch: TreeBranchFork): void;
 }
 
+// @alpha @sealed
+export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
+
 // @alpha
 export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
+
+// @alpha
+export function checkSchemaCompatibilitySnapshots(options: SchemaCompatibilitySnapshotsOptions): void;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
@@ -150,9 +161,14 @@ export function cloneWithReplacements(root: unknown, rootKey: string, replacer: 
     value: unknown;
 }): unknown;
 
+// @alpha
+export type CodecName = string;
+
 // @alpha @input
 export interface CodecWriteOptions extends ICodecOptions {
+    readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
     readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
 }
 
 // @public
@@ -219,6 +235,9 @@ export interface ContainerSchema {
 
 // @alpha
 export const contentSchemaSymbol: unique symbol;
+
+// @alpha
+export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: number): ArrayPlaceAnchor;
 
 // @alpha
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
@@ -292,6 +311,12 @@ export abstract class ErasedType<out Name = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
     protected abstract brand(dummy: never): Name;
 }
+
+// @alpha
+export function eraseSchemaDetails<TNode, ExtraSchemaProperties = unknown>(): <T extends ExtraSchemaProperties & TreeNodeSchema<string, NodeKind, TNode & TreeNode>>(schema: T) => ExtraSchemaProperties & TreeNodeSchema<T["identifier"], NodeKind, TNode & TreeNode & WithType<T["identifier"]>, never, false>;
+
+// @alpha
+export function eraseSchemaDetailsSubclassable<TNode, ExtraSchemaProperties = unknown>(): <T extends ExtraSchemaProperties & TreeNodeSchemaClass<string, NodeKind, TNode & TreeNode>>(schema: T) => ExtraSchemaProperties & TreeNodeSchemaClass<T["identifier"], NodeKind, TNode & TreeNode & WithType<T["identifier"]>, never, false>;
 
 // @alpha
 export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
@@ -396,6 +421,7 @@ export const FluidClientVersion: {
     readonly v2_52: "2.52.0";
     readonly v2_73: "2.73.0";
     readonly v2_74: "2.74.0";
+    readonly v2_80: "2.80.0";
 };
 
 // @public
@@ -457,6 +483,9 @@ export const FormatValidatorBasic: FormatValidator_2;
 
 // @alpha
 export const FormatValidatorNoOp: FormatValidator;
+
+// @alpha
+export type FormatVersion = number | string | undefined;
 
 // @alpha
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema;
@@ -1033,6 +1062,13 @@ export type Listeners<T extends object> = {
     [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
 };
 
+// @alpha @sealed
+export interface LocalChangeMetadata extends CommitMetadata {
+    getChange(): JsonCompatibleReadOnly;
+    getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
+    readonly isLocal: true;
+}
+
 // @public @sealed
 export interface MakeNominal {
 }
@@ -1074,6 +1110,12 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
 };
+
+// @alpha
+export interface NoChangeConstraint {
+    // (undocumented)
+    readonly type: "noChange";
+}
 
 // @public @system
 type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild> ? TBuild : never;
@@ -1200,6 +1242,13 @@ export const RecordNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is RecordNodeSchema<string, ImplicitAllowedTypes, true, unknown>;
 };
 
+// @alpha @sealed
+export interface RemoteChangeMetadata extends CommitMetadata {
+    readonly getChange?: undefined;
+    readonly getRevertible?: undefined;
+    readonly isLocal: false;
+}
+
 // @alpha
 export function replaceConciseTreeHandles<T>(tree: ConciseTree, replacer: HandleConverter<T>): ConciseTree<T>;
 
@@ -1273,7 +1322,18 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParams {
-    readonly preconditions?: readonly TransactionConstraint[];
+    readonly preconditions?: readonly TransactionConstraintAlpha[];
+}
+
+// @alpha @input
+export interface SchemaCompatibilitySnapshotsOptions {
+    readonly fileSystem: SnapshotFileSystem;
+    readonly minVersionForCollaboration: string;
+    readonly mode: "test" | "update";
+    readonly schema: TreeViewConfiguration;
+    readonly snapshotDirectory: string;
+    readonly snapshotUnchangedVersions?: true;
+    readonly version: string;
 }
 
 // @public @sealed
@@ -1507,6 +1567,19 @@ export function singletonSchema<TScope extends string, TName extends string | nu
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
+// @alpha @input
+export interface SnapshotFileSystem {
+    join(parentPath: string, childPath: string): string;
+    mkdirSync(dir: string, options: {
+        recursive: true;
+    }): void;
+    readdirSync(dir: string): readonly string[];
+    readFileSync(file: string, encoding: "utf8"): string;
+    writeFileSync(file: string, data: string, options: {
+        encoding: "utf8";
+    }): void;
+}
+
 // @alpha @system
 export namespace System_TableSchema {
     // @sealed @system
@@ -1540,20 +1613,9 @@ export namespace System_TableSchema {
         readonly cells: FieldSchema_2<FieldKind_2.Required, TreeNodeSchemaClass<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Row.cells">, NodeKind.Record, TreeRecordNode<TCellSchema> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Row.cells">, NodeKind.Record, unknown>, RecordNodeInsertableData_2<TCellSchema>, true, TCellSchema, undefined, unknown>, unknown>;
     }>;
     // @system
-    export function createTableSchema<const TUserScope extends string, const TCellSchema extends ImplicitAllowedTypes, const TColumnSchema extends ColumnSchemaBase<TUserScope, TCellSchema>, const TRowSchema extends RowSchemaBase<TUserScope, TCellSchema>>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, _cellSchema: TCellSchema, columnSchema: TColumnSchema, rowSchema: TRowSchema): TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "TableRoot">, NodeKind.Object, false, {
-    readonly table: FieldSchema_2<FieldKind_2.Required, TreeNodeSchemaClass<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table">, NodeKind.Object, TreeObjectNode_2<    {
-    readonly rows: TreeNodeSchemaClass<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, TreeArrayNode<TRowSchema, [TRowSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TRowSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TRowSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, unknown>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>, true, TRowSchema, undefined>;
-    readonly columns: TreeNodeSchemaClass<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, TreeArrayNode<TColumnSchema, [TColumnSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TColumnSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TColumnSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, unknown>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>>, true, TColumnSchema, undefined>;
-    }, ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table">>, object & {
-    readonly rows: (InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, true, TRowSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>> | undefined) => TreeArrayNode<TRowSchema, [TRowSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TRowSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TRowSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, unknown>)> | undefined) & InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, true, TRowSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>> | undefined) => TreeArrayNode<TRowSchema, [TRowSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TRowSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TRowSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, unknown>)>;
-    readonly columns: (InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, true, TColumnSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>> | undefined) => TreeArrayNode<TColumnSchema, [TColumnSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TColumnSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TColumnSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, unknown>)> | undefined) & InsertableTypedNode_2<TreeNodeSchemaCore_2<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, true, TColumnSchema, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>>, unknown> & (new (data?: InternalTreeNode | Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>> | undefined) => TreeArrayNode<TColumnSchema, [TColumnSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TColumnSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TColumnSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, unknown>)>;
-    }, true, {
-    readonly rows: TreeNodeSchemaClass<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, TreeArrayNode<TRowSchema, [TRowSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TRowSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TRowSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.rows">, NodeKind.Array, unknown>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRowSchema>>, true, TRowSchema, undefined>;
-    readonly columns: TreeNodeSchemaClass<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, TreeArrayNode<TColumnSchema, [TColumnSchema] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TColumnSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, [TColumnSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema> : never, ReadonlyArrayNode_2<TreeNode | TreeLeafValue_2>> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "Table.columns">, NodeKind.Array, unknown>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumnSchema>>, true, TColumnSchema, undefined>;
-    }, never, unknown>, unknown>;
-    }, never, unknown> & (new (data?: InternalTreeNode | undefined) => TreeNode & TableSchema.Table<TUserScope, TCellSchema, TColumnSchema, TRowSchema> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "TableRoot">, NodeKind, unknown>) & {
+    export function createTableSchema<const TUserScope extends string, const TCellSchema extends ImplicitAllowedTypes, const TColumnSchema extends ColumnSchemaBase<TUserScope, TCellSchema>, const TRowSchema extends RowSchemaBase<TUserScope, TCellSchema>>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, _cellSchema: TCellSchema, columnSchema: TColumnSchema, rowSchema: TRowSchema): {
         create<TThis extends new (data?: InternalTreeNode | undefined) => TreeNode & TableSchema.Table<TUserScope, TCellSchema, TColumnSchema, TRowSchema> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "TableRoot">, NodeKind, unknown>>(this: TThis, initialContents?: TableSchema.TableFactoryMethodParameters<TUserScope, TCellSchema, TColumnSchema, TRowSchema> | undefined): InstanceType<TThis>;
-    };
+    } & (new (data?: InternalTreeNode | undefined) => TreeNode & TableSchema.Table<TUserScope, TCellSchema, TColumnSchema, TRowSchema> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "TableRoot">, NodeKind, unknown>) & TreeNodeSchemaCore<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "TableRoot"> & string, NodeKind, false, unknown, never, unknown> & (new (data: InternalTreeNode) => TreeNode & TableSchema.Table<TUserScope, TCellSchema, TColumnSchema, TRowSchema> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "TableRoot">, NodeKind, unknown> & WithType<ScopedSchemaName<`com.fluidframework.table<${TUserScope}>`, "TableRoot"> & string, NodeKind, unknown>);
     // @system
     export type DefaultPropsType = ReturnType<typeof SchemaFactory.optional<[]>>;
     // @system
@@ -1766,11 +1828,14 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ({
     rollback: true;
     value: TFailureValue;
 }) & {
-    preconditionsOnRevert?: readonly TransactionConstraint[];
+    preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 };
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @alpha @sealed
+export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
 
 // @alpha
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
@@ -1879,6 +1944,7 @@ export interface TreeBranch extends IDisposable {
 
 // @alpha @sealed
 export interface TreeBranchAlpha extends TreeBranch {
+    applyChange(change: JsonCompatibleReadOnly): void;
     readonly events: Listenable<TreeBranchEvents>;
     // (undocumented)
     fork(): TreeBranchAlpha;
@@ -1889,7 +1955,7 @@ export interface TreeBranchAlpha extends TreeBranch {
 
 // @alpha @sealed
 export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> {
-    changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+    changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 

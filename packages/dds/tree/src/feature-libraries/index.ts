@@ -29,11 +29,8 @@ export {
 export { buildForest } from "./object-forest/index.js";
 export {
 	SchemaSummarizer,
-	encodeTreeSchema,
 	makeSchemaCodec,
-	makeSchemaCodecs,
-	getCodecTreeForSchemaFormat,
-	clientVersionToSchemaVersion,
+	schemaCodecBuilder,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -51,8 +48,8 @@ export {
 	jsonableTreeFromForest,
 } from "./treeTextCursor.js";
 
-// Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field/index.js";
+// eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor) or named exports (changes public API)
 export { SequenceField };
 
 export {
@@ -83,13 +80,15 @@ export {
 	type NodeExistsConstraint,
 	ModularChangeFamily,
 	type RelevantRemovedRootsFromChild,
-	EncodedModularChangeset,
+	EncodedModularChangesetV1,
+	EncodedModularChangesetV2,
 	updateRefreshers,
 	type NodeId,
 	type FieldChangeEncodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,
+	DefaultRevisionReplacer,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -127,11 +126,6 @@ export {
 
 export {
 	FieldKinds,
-	type Required,
-	type Optional,
-	type Sequence,
-	type Identifier,
-	type Forbidden,
 	type DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -213,3 +207,9 @@ export {
 	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
+
+export {
+	type ChangeAtomIdBTree,
+	getFromChangeAtomIdMap,
+	setInChangeAtomIdMap,
+} from "./changeAtomIdBTree.js";

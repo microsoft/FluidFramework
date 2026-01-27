@@ -12,14 +12,9 @@ import type {
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
+import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControlsTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type {
-	PostUpdateAction,
-	ValidatableOptionalState,
-	ValueManager,
-} from "./internalTypes.js";
 import {
 	asDeeplyReadonly,
 	asDeeplyReadonlyDeserializedJson,
@@ -40,7 +35,23 @@ import type {
 } from "./latestValueTypes.js";
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
+import type { PostUpdateAction, ValueManager } from "./statesManagerTypes.js";
+import type { ValidatableOptionalState } from "./validatableTypes.js";
 import { brandIVM } from "./valueManager.js";
+
+/**
+ * A validator function that can optionally be provided to do runtime validation
+ * of the custom key listed in a {@link LatestMap}.
+ *
+ * @param unvalidatedKey - The unknown key that should be validated.
+ *
+ * @returns True if the key is valid.
+ *
+ * @beta
+ */
+export type KeySchemaValidator<Keys extends string> = (
+	unvalidatedKey: string,
+) => unvalidatedKey is Keys;
 
 /**
  * Collection of validatable optional values in a "map" structure.
@@ -48,13 +59,13 @@ import { brandIVM } from "./valueManager.js";
  * @remarks
  * Validatable equivalent of {@link InternalTypes.MapValueState}.
  */
-interface ValidatableMapValueState<T, Keys extends string | number> {
+interface ValidatableMapValueState<T> {
 	rev: number;
 	items: {
 		// Caution: any particular item may or may not exist
 		// Typescript does not support absent keys without forcing type to also be undefined.
 		// See https://github.com/microsoft/TypeScript/issues/42810.
-		[name in Keys]: ValidatableOptionalState<T>;
+		[name in string]: ValidatableOptionalState<T>;
 	};
 }
 
@@ -66,7 +77,7 @@ interface ValidatableMapValueState<T, Keys extends string | number> {
  */
 export interface LatestMapClientData<
 	T,
-	Keys extends string | number,
+	Keys extends string,
 	TValueAccessor extends ValueAccessor<T>,
 	SpecificAttendeeId extends AttendeeId = AttendeeId,
 > {
@@ -92,7 +103,7 @@ export interface LatestMapClientData<
  */
 export interface LatestMapItemUpdatedClientData<
 	T,
-	K extends string | number,
+	K extends string,
 	TValueAccessor extends ValueAccessor<T>,
 > extends LatestClientData<T, TValueAccessor> {
 	/**
@@ -107,7 +118,7 @@ export interface LatestMapItemUpdatedClientData<
  * @sealed
  * @beta
  */
-export interface LatestMapItemRemovedClientData<K extends string | number> {
+export interface LatestMapItemRemovedClientData<K extends string> {
 	/**
 	 * Associated {@link Attendee}.
 	 */
@@ -130,7 +141,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
  */
 export interface LatestMapEvents<
 	T,
-	K extends string | number,
+	K extends string,
 	TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
 > {
 	/**
@@ -189,7 +200,7 @@ export interface LatestMapEvents<
  * @sealed
  * @beta
  */
-export type LatestMapRawEvents<T, K extends string | number> = LatestMapEvents<
+export type LatestMapRawEvents<T, K extends string> = LatestMapEvents<
 	T,
 	K,
 	RawValueAccessor<T>
@@ -201,7 +212,7 @@ export type LatestMapRawEvents<T, K extends string | number> = LatestMapEvents<
  * @sealed
  * @beta
  */
-export interface StateMap<K extends string | number, V> {
+export interface StateMap<K extends string, V> {
 	/**
 	 * ${@link StateMap.delete}s all elements in the StateMap.
 	 * @remarks This is not yet implemented.
@@ -282,7 +293,7 @@ export interface StateMap<K extends string | number, V> {
 	// values(): IterableIterator<DeepReadonly<JsonDeserialized<V>>>;
 }
 
-class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
+class ValueMapImpl<T, K extends string> implements StateMap<K, T> {
 	private countDefined: number;
 	public constructor(
 		private readonly value: InternalTypes.MapValueState<T, K>,
@@ -293,7 +304,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 			updates: InternalTypes.MapValueState<
 				T,
 				// This should be `K`, but will only work if properties are optional.
-				string | number
+				string
 			>,
 		) => void,
 	) {
@@ -343,7 +354,8 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	): void {
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				callbackfn(asDeeplyReadonlyDeserializedJson(item.value), key, this);
+				// TODO: AB#55932: try fixing typing of objectEntries to avoid this cast
+				callbackfn(asDeeplyReadonlyDeserializedJson(item.value), key as unknown as K, this);
 			}
 		}
 	}
@@ -370,7 +382,8 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		const keys: K[] = [];
 		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				keys.push(key);
+				// TODO: AB#55932: try fixing typing of objectEntries to avoid this cast
+				keys.push(key as unknown as K);
 			}
 		}
 		return keys[Symbol.iterator]();
@@ -390,7 +403,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
  */
 export interface LatestMap<
 	T,
-	Keys extends string | number = string | number,
+	Keys extends string = string,
 	TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
 > {
 	/**
@@ -437,16 +450,23 @@ export interface LatestMap<
  * @sealed
  * @beta
  */
-export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<
+export type LatestMapRaw<T, Keys extends string = string> = LatestMap<
 	T,
 	Keys,
 	RawValueAccessor<T>
 >;
 
+/**
+ * Simply returns true for all given string keys.
+ */
+function anyKeyIsValid<Keys extends string>(unvalidatedKey: string): unvalidatedKey is Keys {
+	return true;
+}
+
 class LatestMapValueManagerImpl<
 	T,
 	RegistrationKey extends string,
-	Keys extends string | number = string | number,
+	Keys extends string = string,
 > implements
 		LatestMapRaw<T, Keys>,
 		LatestMap<T, Keys>,
@@ -460,11 +480,12 @@ class LatestMapValueManagerImpl<
 		private readonly datastore: StateDatastore<
 			RegistrationKey,
 			InternalTypes.MapValueState<T, Keys>,
-			ValidatableMapValueState<T, Keys>
+			ValidatableMapValueState<T>
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
 		private readonly validator: StateSchemaValidator<T> | undefined,
+		private readonly isValidKey: KeySchemaValidator<Keys>,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
 
@@ -513,7 +534,7 @@ class LatestMapValueManagerImpl<
 		}
 		const items = new Map<Keys, LatestData<T, ValueAccessor<T>>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
-			if (isValueRequiredState(item)) {
+			if (this.isValidKey(key) && isValueRequiredState(item)) {
 				items.set(key, {
 					value: createValidatedGetter(item, validator),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
@@ -526,7 +547,7 @@ class LatestMapValueManagerImpl<
 	public update<SpecificAttendeeId extends AttendeeId>(
 		attendee: SpecificAttendee<SpecificAttendeeId>,
 		_received: number,
-		value: InternalTypes.MapValueState<T, string | number>,
+		value: InternalTypes.MapValueState<T, string>,
 	): PostUpdateAction[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const attendeeId: SpecificAttendeeId = attendee.attendeeId;
@@ -534,20 +555,18 @@ class LatestMapValueManagerImpl<
 			// New attendee - prepare new attendee state directory
 			{
 				rev: value.rev,
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- items entries can't be optional per https://github.com/microsoft/TypeScript/issues/42810; so forced cast
-				items: {} as ValidatableMapValueState<T, Keys>["items"],
+				items: {},
 			});
 		// Accumulate individual update keys
-		const updatedItemKeys: Keys[] = [];
+		const updatedKeyItemPairs: [string, InternalTypes.ValueOptionalState<T>][] = [];
 		for (const [key, item] of objectEntries(value.items)) {
-			// TODO: Key validation needs to be added here.
-			const validKey = key as Keys;
-			if (!(key in currentState.items) || currentState.items[validKey].rev < item.rev) {
-				updatedItemKeys.push(validKey);
+			const currentItem = currentState.items[key];
+			if (currentItem === undefined || currentItem.rev < item.rev) {
+				updatedKeyItemPairs.push([key, item]);
 			}
 		}
 
-		if (updatedItemKeys.length === 0) {
+		if (updatedKeyItemPairs.length === 0) {
 			return [];
 		}
 
@@ -560,10 +579,14 @@ class LatestMapValueManagerImpl<
 			items: new Map<Keys, LatestData<T, ValueAccessor<T>>>(),
 		};
 		const postUpdateActions: PostUpdateAction[] = [];
-		for (const key of updatedItemKeys) {
-			const item = value.items[key];
+		for (const [key, item] of updatedKeyItemPairs) {
 			const hadPriorValue = currentState.items[key]?.value;
 			currentState.items[key] = item;
+
+			// Prepare update events, but only for valid keys.
+			if (!this.isValidKey(key)) {
+				continue;
+			}
 			const metadata = {
 				revision: item.rev,
 				timestamp: item.timestamp,
@@ -591,7 +614,11 @@ class LatestMapValueManagerImpl<
 			}
 		}
 		this.datastore.update(this.key, attendeeId, currentState);
-		postUpdateActions.push(() => this.events.emit("remoteUpdated", allUpdates));
+		// Only emit remoteUpdated if there are any individual updates, which
+		// accounts for the case where all updates were for invalid keys.
+		if (postUpdateActions.length > 0) {
+			postUpdateActions.push(() => this.events.emit("remoteUpdated", allUpdates));
+		}
 		return postUpdateActions;
 	}
 }
@@ -602,7 +629,7 @@ class LatestMapValueManagerImpl<
  * @input
  * @beta
  */
-export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
+export interface LatestMapArgumentsRaw<T, Keys extends string = string> {
 	/**
 	 * The initial value of the local state.
 	 */
@@ -622,13 +649,21 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
  * @input
  * @beta
  */
-export interface LatestMapArguments<T, Keys extends string | number = string | number>
+export interface LatestMapArguments<T, Keys extends string = string>
 	extends LatestMapArgumentsRaw<T, Keys> {
 	/**
-	 * An optional function that will be called at runtime to validate the presence data. A runtime validator is strongly
-	 * recommended. See {@link StateSchemaValidator}.
+	 * An optional function that will be called at runtime to validate data value
+	 * under a key. A runtime validator is strongly recommended.
+	 * @see {@link StateSchemaValidator}.
 	 */
 	validator: StateSchemaValidator<T>;
+	/**
+	 * An optional function that will be called at runtime to validate the presence
+	 * data key. A runtime validator is strongly recommended when key type is not
+	 * simply `string`.
+	 * @see {@link KeySchemaValidator}.
+	 */
+	keyValidator?: KeySchemaValidator<Keys>;
 }
 
 // #region factory function overloads
@@ -648,7 +683,7 @@ export interface LatestMapFactory {
 	 * This overload is used when called with {@link LatestMapArguments}.
 	 * That is, if a validator function is provided.
 	 */
-	<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(
+	<T, Keys extends string = string, RegistrationKey extends string = string>(
 		args: LatestMapArguments<T, Keys>,
 	): InternalTypes.ManagerFactory<
 		RegistrationKey,
@@ -663,7 +698,7 @@ export interface LatestMapFactory {
 	 * This overload is used when called with {@link LatestMapArgumentsRaw}.
 	 * That is, if a validator function is _not_ provided.
 	 */
-	<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(
+	<T, Keys extends string = string, RegistrationKey extends string = string>(
 		args?: LatestMapArgumentsRaw<T, Keys>,
 	): InternalTypes.ManagerFactory<
 		RegistrationKey,
@@ -679,7 +714,7 @@ export interface LatestMapFactory {
  */
 export const latestMap: LatestMapFactory = <
 	T,
-	Keys extends string | number = string | number,
+	Keys extends string = string,
 	RegistrationKey extends string = string,
 >(
 	args?: Partial<LatestMapArguments<T, Keys>>,
@@ -691,20 +726,23 @@ export const latestMap: LatestMapFactory = <
 	const settings = args?.settings;
 	const initialValues = args?.local;
 	const validator = args?.validator;
+	const isKeyValid = args?.keyValidator ?? anyKeyIsValid;
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
 		T,
 		// This should be `Keys`, but will only work if properties are optional.
-		string | number
+		string
 	> = { rev: 0, items: {} };
 	// LatestMapRaw takes ownership of values within initialValues.
 	if (initialValues !== undefined) {
-		for (const key of objectKeys(initialValues)) {
-			value.items[key] = {
+		for (const [key, item] of objectEntries(initialValues)) {
+			// TODO: AB#55932: try fixing typing of objectEntries to avoid this cast
+			const assumedValidKey = key as unknown as Keys;
+			value.items[assumedValidKey] = {
 				rev: 0,
 				timestamp,
-				value: toOpaqueJson(initialValues[key]),
+				value: toOpaqueJson(item),
 			};
 		}
 	}
@@ -730,6 +768,7 @@ export const latestMap: LatestMapFactory = <
 				value,
 				settings,
 				validator,
+				isKeyValid,
 			),
 		),
 	});

@@ -37,7 +37,6 @@ interface VersionInfo {
 /**
  * The root `version` command.
  */
-// eslint-disable-next-line import-x/no-default-export
 export default class VersionCommand extends Command {
 	static readonly description =
 		"Convert version strings between regular semver and the Fluid internal version scheme.";

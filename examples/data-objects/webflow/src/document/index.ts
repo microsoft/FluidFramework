@@ -109,7 +109,7 @@ const accumAsLeafAction = (
 	startOffset: number,
 	endOffset: number,
 	accum?: LeafAction,
-) => accum(position, segment, startOffset, endOffset);
+): boolean => accum(position, segment, startOffset, endOffset);
 
 // TODO: We need the ability to create LocalReferences to the end of the document. Our
 //       workaround creates a ReferencePosition with an 'undefined' segment that is never
@@ -147,11 +147,11 @@ export class FlowDocument extends DataObject {
 		sharedObjects: [SharedString.getFactory()],
 	});
 
-	public static getFactory() {
+	public static getFactory(): DataObjectFactory<FlowDocument> {
 		return FlowDocument.factory;
 	}
 
-	public get length() {
+	public get length(): number {
 		return this.sharedString.getLength();
 	}
 
@@ -323,6 +323,7 @@ export class FlowDocument extends DataObject {
 
 		// Perform removals in descending order, otherwise earlier deletions will shift the positions
 		// of later ops.  Because each effected interval is non-overlapping, a simple sort suffices.
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- intentional comparison
 		ops.sort((left, right) => right.pos1 - left.pos1);
 
 		this.sharedString.groupOperation({
@@ -454,7 +455,7 @@ export class FlowDocument extends DataObject {
 		return this.sharedString.getText(start, end);
 	}
 
-	public toString() {
+	public toString(): string {
 		const s: string[] = [];
 		this.visitRange((position, segment) => {
 			let _segment = segment;

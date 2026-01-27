@@ -36,7 +36,7 @@ export {
 export type {
 	BroadcastControls,
 	BroadcastControlSettings,
-} from "./broadcastControls.js";
+} from "./broadcastControlsTypes.js";
 
 export {
 	getPresence,
@@ -45,6 +45,7 @@ export {
 } from "./getPresence.js";
 
 export type {
+	KeySchemaValidator,
 	LatestMap,
 	LatestMapArguments,
 	LatestMapArgumentsRaw,
@@ -77,14 +78,14 @@ export type {
 	ValueAccessor,
 } from "./latestValueTypes.js";
 
-export {
-	type NotificationEmitter,
-	type NotificationListenable,
-	type NotificationSubscriptions,
-	Notifications,
-	type NotificationsManager,
-	type NotificationsManagerEvents,
-} from "./notificationsManager.js";
+export { Notifications } from "./notificationsManager.js";
+export type {
+	NotificationEmitter,
+	NotificationListenable,
+	NotificationSubscriptions,
+	NotificationsManager,
+	NotificationsManagerEvents,
+} from "./notificationsManagerTypes.js";
 
 export { StateFactory } from "./stateFactory.js";
 

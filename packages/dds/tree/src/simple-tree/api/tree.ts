@@ -7,6 +7,7 @@ import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/co
 
 import type {
 	CommitMetadata,
+	ChangeMetadata,
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 } from "../../core/index.js";
@@ -15,6 +16,7 @@ import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	TreeAlpha,
 } from "../../shared-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -23,8 +25,8 @@ import type {
 	ReadSchema,
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
-import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
+import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
 import type {
@@ -282,6 +284,19 @@ export interface TreeBranchAlpha extends TreeBranch {
 		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
 	): TransactionResult;
+
+	/**
+	 * Apply a serialized change to this branch.
+	 * @param change - the change to apply.
+	 * Changes are acquired via `getChange` in a branch's {@link TreeBranchEvents.changed | "changed"} event.
+	 * @remarks Changes may only be applied to a SharedTree with the same IdCompressor instance and branch state from which they were generated.
+	 * They may be created by one branch and applied to another, but only if both branches share the same history at the time of creation and application.
+	 *
+	 * @privateRemarks
+	 * TODO: This method will support applying changes from different IdCompressor instances as long as they have the same local session ID.
+	 * Update the tests and docs to match when that is done.
+	 */
+	applyChange(change: JsonCompatibleReadOnly): void;
 }
 
 /**
@@ -325,8 +340,10 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 	/**
 	 * Description of the current compatibility status between the view schema and stored schema.
-	 *
+	 * @remarks
 	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status changes.
+	 * See {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution} for more guidance on how to change schema while maintaining compatibility.
+	 * Use {@link checkSchemaCompatibilitySnapshots} to write tests to validate that this compatibility behaves as desired across schema changes.
 	 */
 	readonly compatibility: SchemaCompatibilityStatus;
 
@@ -508,7 +525,7 @@ export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> 
 	 * @param getRevertible - a function that allows users to get a revertible for the change. If not provided,
 	 * this change is not revertible.
 	 */
-	changed(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+	changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 
 	/**
 	 * Fired when:

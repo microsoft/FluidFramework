@@ -30,6 +30,7 @@ import {
 	TreeCompressionStrategy,
 	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
+import { combineChunks } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
@@ -48,8 +49,10 @@ import {
 	type JsonCompatible,
 	Breakable,
 	oneFromIterable,
-	brand,
 } from "../util/index.js";
+
+import { initialize, initializerFromChunk } from "./schematizeTree.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
@@ -57,9 +60,6 @@ import {
 	type ForestOptions,
 } from "./sharedTree.js";
 import { createTreeCheckout } from "./treeCheckout.js";
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { initialize, initializerFromChunk } from "./schematizeTree.js";
-import { combineChunks } from "../feature-libraries/index.js";
 
 /**
  * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
@@ -206,7 +206,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 			...options,
 			minVersionForCollab: FluidClientVersion.v2_0,
 		};
-		const schemaCodec = makeSchemaCodec(writeOptions, brand(SchemaFormatVersion.v1));
+		const schemaCodec = makeSchemaCodec(writeOptions, SchemaFormatVersion.v1);
 		const fieldBatchCodec = makeFieldBatchCodec(writeOptions);
 		const newSchema = schemaCodec.decode(options.content.schema as Format);
 

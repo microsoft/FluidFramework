@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access -- This file uses intentional `as any` casts to access hidden internal properties (cells, tableSchemaSymbol) */
+
 import { fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { EmptyKey } from "./core/index.js";
 import { TreeAlpha } from "./shared-tree/index.js";
 import {
 	type FieldHasDefault,
@@ -30,9 +33,11 @@ import {
 	withBufferedTreeEvents,
 	type TreeRecordNode,
 	objectSchema,
+	eraseSchemaDetailsSubclassable,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This makes the API report slightly cleaner.
+	TreeNodeSchemaCore,
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";
-import { EmptyKey } from "./core/index.js";
 
 // Future improvement TODOs:
 // - Omit `cells` property from Row insertion type.
@@ -515,9 +520,6 @@ export namespace System_TableSchema {
 		type TableValueType = TreeNode &
 			TableSchema.Table<TUserScope, TCellSchema, TColumnSchema, TRowSchema> &
 			WithType<ScopedSchemaName<Scope, "TableRoot">>;
-		// Prevent users from calling the table node constructor directly.
-		// They should use the static `create` factory method instead.
-		type TableInsertableType = never;
 		type TableConstructorType = new (data?: InternalTreeNode | undefined) => TableValueType;
 
 		/**
@@ -1120,20 +1122,8 @@ export namespace System_TableSchema {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(Table as any)[tableSchemaSymbol] = true;
 
-		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
-		// for the private brand field of TreeNode.
-		// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
-		// This is avoided by doing this type conversion.
-		// The conversion is done via assignment instead of `as` to get stronger type safety.
-		const TableSchemaType: TreeNodeSchemaClass<
-			/* Name */ ScopedSchemaName<Scope, "TableRoot">,
-			/* Kind */ NodeKind.Object,
-			/* TNode */ TableValueType,
-			/* TInsertable */ TableInsertableType,
-			/* ImplicitlyConstructable */ false,
-			/* Info */ typeof tableFields,
-			/* TConstructorExtra */ undefined
-		> & {
+		// Named interfaces here do not compile.
+		type Statics = {
 			/**
 			 * Create a table with initial contents.
 			 * @param initialContents - The initial contents of the table.
@@ -1153,7 +1143,14 @@ export namespace System_TableSchema {
 					  >
 					| undefined,
 			): InstanceType<TThis>;
-		} = Table;
+		} & TableConstructorType;
+
+		// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
+		// for the private brand field of TreeNode.
+		// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
+		// This is avoided by doing this type conversion.
+		// The conversion is done via eraseSubclassableSchemaDetails to erase internal details.
+		const TableSchemaType = eraseSchemaDetailsSubclassable<TableValueType, Statics>()(Table);
 
 		// Return the table schema
 		return TableSchemaType;

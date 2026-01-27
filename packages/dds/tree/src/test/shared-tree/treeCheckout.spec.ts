@@ -9,18 +9,15 @@ import {
 	type IMockLoggerExt,
 	createMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import {
-	validateAssertionError,
-	validateUsageError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { asAlpha } from "../../api.js";
 import {
 	type Revertible,
 	rootFieldKey,
 	RevertibleStatus,
 	CommitKind,
 	EmptyKey,
-	type RevertibleFactory,
 	type NormalizedFieldUpPath,
 	TreeStoredSchemaRepository,
 } from "../../core/index.js";
@@ -33,20 +30,8 @@ import {
 	type ITreeCheckoutFork,
 	type BranchableTree,
 	createTreeCheckout,
+	type SharedTreeChange,
 } from "../../shared-tree/index.js";
-import {
-	TestTreeProviderLite,
-	buildTestForest,
-	chunkFromJsonableTrees,
-	createTestUndoRedoStacks,
-	expectSchemaEqual,
-	getView,
-	mintRevisionTag,
-	testIdCompressor,
-	testRevisionTagCodec,
-	viewCheckout,
-} from "../utils.js";
-import { brand } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
@@ -61,7 +46,19 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
-import { asAlpha } from "../../api.js";
+import { brand } from "../../util/index.js";
+import {
+	TestTreeProviderLite,
+	buildTestForest,
+	chunkFromJsonableTrees,
+	createTestUndoRedoStacks,
+	expectSchemaEqual,
+	getView,
+	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
+	viewCheckout,
+} from "../utils.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -203,8 +200,8 @@ describe("sharedTreeView", () => {
 				const checkout = provider.trees[0].kernel.checkout;
 
 				const log: string[] = [];
-				const unsubscribe = checkout.events.on("changed", (data, getRevertible) =>
-					log.push(getRevertible === undefined ? "not-revertible" : "revertible"),
+				const unsubscribe = checkout.events.on("changed", ({ getRevertible }) =>
+					log.push(getRevertible?.() === undefined ? "not-revertible" : "revertible"),
 				);
 
 				assert.deepEqual(log, []);
@@ -657,61 +654,92 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(view.root, ["A", "B"]);
 		});
 
-		itView("rejects merges while a transaction is in progress", ({ view, tree }) => {
-			const treeBranch = tree.branch();
-			const viewBranch = treeBranch.viewWith(view.config);
-			viewBranch.root.insertAtEnd("42");
-
-			assert.throws(() => {
-				Tree.runTransaction(view, () => {
-					view.root.insertAtEnd("43");
-					tree.merge(treeBranch, true);
-				});
-			}, validateAssertionError(
-				"Views cannot be merged into a view while it has a pending transaction",
-			));
-		});
-
-		itView("rejects rebases while a transaction is in progress", ({ view, tree }) => {
-			const treeBranch = tree.branch();
-			const viewBranch = treeBranch.viewWith(view.config);
-			view.root.insertAtEnd("42");
-
-			Tree.runTransaction(viewBranch, () => {
-				viewBranch.root.insertAtEnd("43");
+		itView("rejects forks while a transaction is in progress", ({ view, tree }) => {
+			Tree.runTransaction(view, () => {
+				view.root.insertAtEnd("42");
 				assert.throws(
-					() => treeBranch.rebaseOnto(tree),
-					validateAssertionError(
-						"A view cannot be rebased while it has a pending transaction",
-					),
+					() => tree.branch(),
+					validateUsageError("A view cannot be forked while it has a pending transaction."),
 				);
 			});
-			assert.equal(viewBranch.root[0], "43");
+			tree.branch();
 		});
 
-		itView("automatically commit if in progress when view merges", ({ view, tree }) => {
-			const treeBranch = tree.branch();
-			const viewBranch = treeBranch.viewWith(view.config);
-			assert(viewBranch instanceof SchematizingSimpleTreeView);
-			viewBranch.checkout.transaction.start();
-			viewBranch.root.insertAtEnd("42");
-			viewBranch.root.insertAtEnd("43");
-			tree.merge(treeBranch, false);
-			assert.deepEqual(viewBranch.root, ["42", "43"]);
-			assert.equal(viewBranch.checkout.transaction.isInProgress(), false);
-		});
+		itView(
+			"rejects merges while a transaction is in progress on the target view",
+			({ view, tree }) => {
+				const treeBranch = tree.branch();
+				const viewBranch = treeBranch.viewWith(view.config);
+				viewBranch.root.insertAtEnd("42");
 
-		itView("do not close across forks", ({ view, tree }) => {
-			view.checkout.transaction.start();
-			const treeBranch = tree.branch();
-			const viewBranch = treeBranch.viewWith(view.config);
-			assert(viewBranch instanceof SchematizingSimpleTreeView);
-			view.root.insertAtEnd("A");
-			assert.throws(
-				() => viewBranch.checkout.transaction.commit(),
-				validateAssertionError("No transaction to commit"),
-			);
-		});
+				assert.throws(() => {
+					Tree.runTransaction(view, () => {
+						view.root.insertAtEnd("43");
+						tree.merge(treeBranch, true);
+					});
+				}, validateUsageError(
+					"Views cannot be merged into a view while it has a pending transaction.",
+				));
+			},
+		);
+
+		itView(
+			"rejects merges while a transaction is in progress on the source view",
+			({ view, tree }) => {
+				const treeBranch = tree.branch();
+				const viewBranch = treeBranch.viewWith(view.config);
+				view.root.insertAtEnd("42");
+				viewBranch.root.insertAtEnd("43");
+
+				Tree.runTransaction(viewBranch, () => {
+					assert.throws(
+						() => tree.merge(treeBranch, true),
+						validateUsageError(
+							"Views with an open transaction cannot be merged into another view.",
+						),
+					);
+				});
+				assert.equal(view.root[0], "42");
+			},
+		);
+
+		itView(
+			"rejects rebases while a transaction is in progress on the source view",
+			({ view, tree }) => {
+				const treeBranch = tree.branch();
+				const viewBranch = treeBranch.viewWith(view.config);
+				view.root.insertAtEnd("42");
+
+				Tree.runTransaction(viewBranch, () => {
+					viewBranch.root.insertAtEnd("43");
+					assert.throws(
+						() => treeBranch.rebaseOnto(tree),
+						validateUsageError("A view cannot be rebased while it has a pending transaction."),
+					);
+				});
+				assert.equal(viewBranch.root[0], "43");
+			},
+		);
+
+		itView(
+			"rejects rebases while a transaction is in progress on the target view",
+			({ view, tree }) => {
+				const treeBranch = tree.branch();
+				const viewBranch = treeBranch.viewWith(view.config);
+				view.root.insertAtEnd("42");
+				viewBranch.root.insertAtEnd("43");
+
+				Tree.runTransaction(view, () => {
+					assert.throws(
+						() => treeBranch.rebaseOnto(tree),
+						validateUsageError(
+							"Views cannot be rebased onto a view that has a pending transaction.",
+						),
+					);
+				});
+				assert.equal(viewBranch.root[0], "43");
+			},
+		);
 
 		itView("do not affect pre-existing forks", ({ view, tree }) => {
 			const treeBranch = tree.branch();
@@ -725,23 +753,6 @@ describe("sharedTreeView", () => {
 			tree.merge(treeBranch);
 			assert.deepEqual(view.root, ["A", "B", "C"]);
 		});
-
-		// Disabled because rebases are not supported while a transaction is in progress
-		// TODO: enable once ADO#8603 is complete.
-		itView(
-			"can handle a pull while in progress",
-			({ view, tree }) => {
-				const treeBranch = tree.branch();
-				const viewBranch = treeBranch.viewWith(view.config);
-				Tree.runTransaction(viewBranch, () => {
-					view.root.insertAtStart("42");
-					treeBranch.rebaseOnto(tree);
-					assert.equal(viewBranch.root[0], "42");
-				});
-				assert.equal(viewBranch.root[0], "42");
-			},
-			{ skip: true },
-		);
 
 		itView("update anchors correctly", ({ view }) => {
 			view.root.insertAtStart("A");
@@ -758,71 +769,6 @@ describe("sharedTreeView", () => {
 			view.checkout.forest.tryMoveCursorToNode(anchor, cursor);
 			assert.equal(cursor.value, "A");
 			cursor.clear();
-		});
-
-		// Disabled because merges are not supported while a transaction is in progress
-		// TODO: enable once ADO#8602 is complete.
-		itView(
-			"can handle a complicated scenario",
-			({ view, tree }) => {
-				view.root.insertAtEnd("A");
-				Tree.runTransaction(view, () => {
-					view.root.insertAtEnd("B");
-					view.root.insertAtEnd("C");
-					Tree.runTransaction(view, () => {
-						view.root.insertAtEnd("D");
-					});
-					const treeBranch = tree.branch();
-					const viewBranch = treeBranch.viewWith(view.config);
-					viewBranch.root.insertAtEnd("E");
-					Tree.runTransaction(viewBranch, () => {
-						viewBranch.root.insertAtEnd("F");
-					});
-					view.root.insertAtEnd("G");
-					viewBranch.root.insertAtEnd("H");
-					Tree.runTransaction(viewBranch, () => {
-						viewBranch.root.insertAtEnd("I");
-						return Tree.runTransaction.rollback;
-					});
-					tree.merge(treeBranch);
-					view.root.insertAtEnd("J");
-					Tree.runTransaction(view, () => {
-						const treeFork2 = tree.branch();
-						const viewFork2 = treeFork2.viewWith(view.config);
-						viewFork2.root.insertAtEnd("K");
-						viewFork2.root.insertAtEnd("L");
-						tree.merge(treeFork2);
-						return Tree.runTransaction.rollback;
-					});
-					view.root.insertAtEnd("M");
-				});
-				view.root.insertAtEnd("N");
-				view.root.insertAtEnd("O");
-				assert.deepEqual(
-					[...view.root],
-					["A", "B", "C", "D", "G", "E", "F", "H", "J", "M", "N", "O"],
-				);
-			},
-			{ skip: true },
-		);
-
-		itView("dispose branches created during the transaction", ({ view, tree }) => {
-			const branchA = tree.branch();
-			view.checkout.transaction.start();
-			const branchB = tree.branch();
-			view.checkout.transaction.start();
-			const branchC = tree.branch();
-			assert.equal(branchA.disposed, false);
-			assert.equal(branchB.disposed, false);
-			assert.equal(branchC.disposed, false);
-			view.checkout.transaction.abort();
-			assert.equal(branchA.disposed, false);
-			assert.equal(branchB.disposed, false);
-			assert.equal(branchC.disposed, true);
-			view.checkout.transaction.commit();
-			assert.equal(branchA.disposed, false);
-			assert.equal(branchB.disposed, true);
-			assert.equal(branchC.disposed, true);
 		});
 
 		itView("statuses are reported correctly", ({ view }) => {
@@ -1047,9 +993,9 @@ describe("sharedTreeView", () => {
 	describe("revertibles", () => {
 		itView("can be generated for changes made to the local branch", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
+			const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
+				const revertible = getRevertible?.();
+				assert(revertible !== undefined, "commit should be revertible");
 				assert.equal(revertible.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(revertible);
 			});
@@ -1075,9 +1021,9 @@ describe("sharedTreeView", () => {
 			({ view }) => {
 				const revertiblesCreated: Revertible[] = [];
 
-				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
-					assert(getRevertible !== undefined, "commit should be revertible");
-					const revertible = getRevertible(onRevertibleDisposed);
+				const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
+					const revertible = getRevertible?.(onRevertibleDisposed);
+					assert(revertible !== undefined, "commit should be revertible");
 					assert.equal(revertible.status, RevertibleStatus.Valid);
 					revertiblesCreated.push(revertible);
 				});
@@ -1113,8 +1059,8 @@ describe("sharedTreeView", () => {
 		itView(
 			"revertibles cannot be acquired outside of the changed event callback",
 			({ view }) => {
-				let acquireRevertible: RevertibleFactory | undefined;
-				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+				let acquireRevertible: (() => void) | undefined;
+				const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
 					assert(getRevertible !== undefined, "commit should be revertible");
 					acquireRevertible = getRevertible;
 				});
@@ -1128,15 +1074,13 @@ describe("sharedTreeView", () => {
 
 		itView("revertibles cannot be acquired more than once", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
-				assert.equal(revertible.status, RevertibleStatus.Valid);
+			const unsubscribe1 = view.events.on("changed", ({ getRevertible }) => {
+				const revertible = getRevertible?.();
+				assert.equal(revertible?.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(revertible);
 			});
-			const unsubscribe2 = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				assert.throws(() => getRevertible());
+			const unsubscribe2 = view.events.on("changed", ({ getRevertible }) => {
+				assert.throws(() => getRevertible?.());
 			});
 
 			view.root.insertAtStart("A");
@@ -1146,9 +1090,9 @@ describe("sharedTreeView", () => {
 
 		itView("disposed revertibles cannot be released or reverted", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = view.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const r = getRevertible();
+			const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
+				const r = getRevertible?.();
+				assert(r !== undefined, "commit should be revertible");
 				assert.equal(r.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(r);
 			});
@@ -1171,10 +1115,9 @@ describe("sharedTreeView", () => {
 		itView("changed events have the correct commit kinds", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
 			const commitKinds: CommitKind[] = [];
-			const unsubscribe = view.events.on("changed", ({ kind }, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
-				assert.equal(revertible.status, RevertibleStatus.Valid);
+			const unsubscribe = view.events.on("changed", ({ kind, getRevertible }) => {
+				const revertible = getRevertible?.();
+				assert(revertible !== undefined, "commit should be revertible");
 				revertiblesCreated.push(revertible);
 				commitKinds.push(kind);
 			});
@@ -1192,9 +1135,9 @@ describe("sharedTreeView", () => {
 			const treeBranch = tree.branch();
 			const viewBranch = asAlpha(treeBranch.viewWith(view.config));
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = viewBranch.events.on("changed", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const r = getRevertible(onRevertibleDisposed);
+			const unsubscribe = viewBranch.events.on("changed", ({ getRevertible }) => {
+				const r = getRevertible?.(onRevertibleDisposed);
+				assert(r !== undefined, "commit should be revertible");
 				assert.equal(r.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(r);
 			});
@@ -1246,9 +1189,10 @@ describe("sharedTreeView", () => {
 		for (const ageToTest of [0, 1, 5]) {
 			itView(`Telemetry logs track reversion age (${ageToTest})`, ({ view, logger }) => {
 				let revertible: Revertible | undefined;
-				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+				const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
 					assert(getRevertible !== undefined, "Expected commit to be revertible.");
 					// Only save off the first revertible, as it's the only one we'll use.
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (revertible === undefined) {
 						revertible = getRevertible();
 					}
@@ -1338,14 +1282,14 @@ describe("sharedTreeView", () => {
 			let revertible: Revertible | undefined;
 			expectErrorDuringEdit({
 				setup: (view) => {
-					const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+					const unsubscribe = view.events.on("changed", ({ getRevertible }) => {
 						revertible = getRevertible?.();
 					});
 					view.root.number = 4;
 					unsubscribe();
 					assert(revertible !== undefined, "Expected revertible to be created.");
 				},
-				duringEdit: (view) => revertible?.revert(),
+				duringEdit: () => revertible?.revert(),
 				error: "Reverting a commit is forbidden during a nodeChanged or treeChanged event",
 			});
 		});
@@ -1356,6 +1300,295 @@ describe("sharedTreeView", () => {
 				setup: (view) => (branch = view.fork()), // Create a fork of the view because the main view can't be disposed
 				duringEdit: (view) => view.dispose(),
 				error: "Disposing a view is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+	});
+
+	describe("Enrichment", () => {
+		const sf = new SchemaFactory("Enrichment Schema");
+		class Node extends sf.object("Node", { id: sf.string }) {}
+		const NodeArray = sf.array(Node);
+
+		function setup(initialContent: InsertableField<typeof NodeArray>) {
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({ schema: NodeArray, enableSchemaValidation });
+			const view1 = provider.trees[0].kernel.viewWith(config);
+			const view2 = provider.trees[1].kernel.viewWith(config);
+			view1.initialize(initialContent);
+			provider.synchronizeMessages();
+			const view1Revertibles: Revertible[] = [];
+			view1.events.on("changed", (_, getRevertible) => {
+				if (getRevertible !== undefined) {
+					view1Revertibles.push(getRevertible());
+				}
+			});
+			return { provider, view1, view1Revertibles, view2 };
+		}
+
+		function assertEnrichmentCount(enriched: SharedTreeChange, expectedCount: number) {
+			assert.equal(enriched.changes[0].type, "data");
+			assert.equal(enriched.changes[0].innerChange.refreshers?.size ?? 0, expectedCount);
+		}
+
+		it("can provide an enricher for a transaction-less edit that is about to be applied", () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("beforeChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 1);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 1,
+					forks: 0,
+					applied: 0,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			view1Revertibles[0].revert();
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for a transaction-less edit that has just been applied", () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("afterChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 1);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 1,
+					commitsEnriched: 1,
+					refreshers: 1,
+					forks: 1,
+					applied: 1,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			view1Revertibles[0].revert();
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for merged edits that are about to be applied", () => {
+			const { view1 } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
+			const branch = view1.fork();
+
+			view1.root.removeAt(2);
+			view1.root.removeAt(0);
+
+			branch.root[0].id = "a"; // Will require a refresher
+			branch.root[1].id = "b";
+			branch.root[2].id = "c"; // Will require a refresher
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("beforeChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 3);
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(
+					change.newCommits[0].parent ?? assert.fail(),
+					change.newCommits,
+				);
+				assertEnrichmentCount(enriched[0], 1);
+				assertEnrichmentCount(enriched[1], 0);
+				assertEnrichmentCount(enriched[2], 1);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 3,
+					refreshers: 2,
+					forks: 1,
+					applied: 2,
+				});
+			});
+
+			view1.merge(branch);
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for merged edits that have just been applied", () => {
+			const { view1 } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
+			const branch = view1.fork();
+
+			view1.root.removeAt(2);
+			view1.root.removeAt(0);
+
+			branch.root[0].id = "a"; // Will require a refresher
+			branch.root[1].id = "b";
+			branch.root[2].id = "c"; // Will require a refresher
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("afterChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 3);
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(
+					change.newCommits[0].parent ?? assert.fail(),
+					change.newCommits,
+				);
+				assertEnrichmentCount(enriched[0], 1);
+				assertEnrichmentCount(enriched[1], 0);
+				assertEnrichmentCount(enriched[2], 1);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 1,
+					commitsEnriched: 3,
+					refreshers: 2,
+					forks: 1,
+					applied: 3,
+				});
+			});
+
+			view1.merge(branch);
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for a fast transaction that is about to be applied", () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("beforeChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 0);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 0,
+					forks: 0,
+					applied: 0,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			view1.runTransaction(() => {
+				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
+				// TODO AD#57584: Use such an operation here when one is available
+				view1.root.insertAtEnd({ id: "B" });
+				view1.root.insertAtEnd({ id: "C" });
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher a for fast transaction that has just been applied", () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("afterChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 0);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 0,
+					forks: 0,
+					applied: 0,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			view1.runTransaction(() => {
+				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
+				// TODO AD#57584: Use such an operation here when one is available
+				view1.root.insertAtEnd({ id: "B" });
+				view1.root.insertAtEnd({ id: "C" });
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for an edit applied long ago", () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+			view1Revertibles[0].revert();
+			const revertCommit = view1.checkout.mainBranch.getHead();
+			view1.root.insertAtEnd({ id: "B" });
+			view1.root.insertAtEnd({ id: "C" });
+
+			view1.checkout.resetEnrichmentStats();
+			const enriched = view1.checkout.enrich(revertCommit.parent ?? assert.fail(), [
+				revertCommit,
+			]);
+			assertEnrichmentCount(enriched[0], 1);
+			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+				batches: 1,
+				diffs: 1,
+				commitsEnriched: 1,
+				refreshers: 1,
+				forks: 1,
+				applied: 1,
+			});
+		});
+
+		it("delays diff computation if no refresher is needed", () => {
+			const { view1 } = setup([]);
+			view1.root.insertAtEnd({ id: "A" });
+			const commit = view1.checkout.mainBranch.getHead();
+			view1.root.insertAtEnd({ id: "B" });
+			view1.root.insertAtEnd({ id: "C" });
+
+			view1.checkout.resetEnrichmentStats();
+			view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+				batches: 1,
+				diffs: 0,
+				commitsEnriched: 1,
+				refreshers: 0,
+				forks: 0,
+				applied: 0,
+			});
+		});
+
+		it("delays apply changes if no refresher is needed", () => {
+			const { view1 } = setup([]);
+			const start = view1.checkout.mainBranch.getHead();
+			view1.root.insertAtEnd({ id: "A" });
+			const commit1 = view1.checkout.mainBranch.getHead();
+			view1.root.insertAtEnd({ id: "B" });
+			const commit2 = view1.checkout.mainBranch.getHead();
+			view1.root.insertAtEnd({ id: "C" });
+			const commit3 = view1.checkout.mainBranch.getHead();
+
+			view1.checkout.resetEnrichmentStats();
+			view1.checkout.enrich(start, [commit1, commit2, commit3]);
+			assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+				batches: 1,
+				diffs: 0,
+				commitsEnriched: 3,
+				refreshers: 0,
+				forks: 0,
+				applied: 0,
 			});
 		});
 	});

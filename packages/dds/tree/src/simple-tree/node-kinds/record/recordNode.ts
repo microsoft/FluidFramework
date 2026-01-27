@@ -6,8 +6,14 @@
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { MapNodeStoredSchema } from "../../../core/index.js";
+import {
+	isTreeValue,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+} from "../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnlyObject, brand } from "../../../util/index.js";
-
+import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 import {
 	type TreeNodeSchema,
 	NodeKind,
@@ -34,13 +40,17 @@ import {
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
-import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import { prepareForInsertion } from "../../prepareForInsertion.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 import {
 	unhydratedFlexTreeFromInsertable,
 	type FactoryContent,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
+import { recordLikeDataToFlexContent } from "../common.js";
+
 import type {
 	RecordNodeCustomizableSchema,
 	RecordNodeInsertableData,
@@ -48,16 +58,6 @@ import type {
 	RecordNodeSchema,
 	TreeRecordNode,
 } from "./recordNodeTypes.js";
-import {
-	isTreeValue,
-	type FlexTreeNode,
-	type FlexTreeOptionalField,
-} from "../../../feature-libraries/index.js";
-import { prepareForInsertion } from "../../prepareForInsertion.js";
-import { recordLikeDataToFlexContent } from "../common.js";
-import { MapNodeStoredSchema } from "../../../core/index.js";
-import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
-import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -99,9 +99,8 @@ function createRecordNodeProxy(
 						}
 						break;
 					}
-					default: {
-						// No-op
-					}
+					default:
+					// No-op
 				}
 			}
 

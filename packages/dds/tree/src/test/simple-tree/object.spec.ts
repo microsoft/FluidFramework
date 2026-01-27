@@ -41,7 +41,7 @@ function unsafeMapErased<E, R>(data: readonly E[], f: <T>(t: never) => R): R[] {
 	return data.map((item) => f(item as never));
 }
 
-export function testObjectPrototype(proxy: object, prototype: object) {
+export function testObjectPrototype(proxy: object, prototype: object): void {
 	describe("inherits from Object.prototype", () => {
 		it(`${pretty(proxy)} instanceof Object`, () => {
 			assert(prototype instanceof Object, "object must be instanceof Object");
@@ -211,6 +211,7 @@ function testObjectLike(testCases: TestCaseErased[]) {
 			test1((subject) => {
 				const all = Object.getOwnPropertyDescriptors(subject);
 				return Object.fromEntries(
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- intentional behavior
 					Object.entries(all).filter(([key, descriptor]) => descriptor.enumerable),
 				);
 			});

@@ -12,11 +12,16 @@ import {
 	ISummarizer,
 	type ContainerRuntime,
 	type ISubmitSummaryOptions,
+	type SubmitSummaryResult,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import type { ISharedMap } from "@fluidframework/map/internal";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
+import type {
+	IFluidDataStoreFactory,
+	IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
@@ -47,42 +52,45 @@ describeCompat(
 
 		function createDataStoreRuntime(
 			factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
-		) {
-			return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
-				await DataObject.getDataObject(runtime);
-				return undefined;
-			}, factory);
+		): typeof FluidDataStoreRuntime {
+			return mixinSummaryHandler(
+				async (runtime: FluidDataStoreRuntime): Promise<undefined> => {
+					await DataObject.getDataObject(runtime);
+					return undefined;
+				},
+				factory,
+			);
 		}
 
 		class TestDataObject2 extends DataObject {
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
-			public get _context() {
+			public get _context(): IFluidDataStoreContext {
 				return this.context;
 			}
 
-			public get _runtime() {
+			public get _runtime(): IFluidDataStoreRuntime {
 				return this.runtime;
 			}
 		}
 
 		class TestDataObject1 extends DataObject {
-			public get _root() {
+			public get _root(): ISharedDirectory {
 				return this.root;
 			}
 
-			public get _context() {
+			public get _context(): IFluidDataStoreContext {
 				return this.context;
 			}
 
-			protected async initializingFirstTime() {
+			protected async initializingFirstTime(): Promise<void> {
 				const dataStore2 =
 					await this._context.containerRuntime.createDataStore(TestDataObjectType2);
 				this.root.set("ds2", dataStore2.entryPoint);
 			}
 
-			protected async hasInitialized() {
+			protected async hasInitialized(): Promise<void> {
 				const dataStore2Handle = this.root.get<IFluidHandle<TestDataObject2>>("ds2");
 				await dataStore2Handle?.get();
 			}
@@ -222,7 +230,7 @@ describeCompat(
 			// Override the submit summary function to realize a datastore before receiving an ack
 			const summarizerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
 			const submitSummaryFunc = summarizerRuntime.submitSummary;
-			const func = async (options: ISubmitSummaryOptions) => {
+			const func = async (options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> => {
 				const submitSummaryFuncBound = submitSummaryFunc.bind(summarizerRuntime);
 				const result = await submitSummaryFuncBound(options);
 

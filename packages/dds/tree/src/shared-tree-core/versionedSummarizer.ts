@@ -12,6 +12,9 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { readAndParseSnapshotBlob } from "../util/index.js";
+
 import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
@@ -19,7 +22,6 @@ import {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 } from "./summaryTypes.js";
-import { readAndParseSnapshotBlob } from "../util/index.js";
 
 /**
  * Utility for implementing {@link Summarizable}s classes with versioning.
@@ -44,7 +46,8 @@ export abstract class VersionedSummarizer<TVersion extends number> implements Su
 	) {
 		assert(
 			this.supportedVersions.has(this.writeVersion),
-			`Write version ${this.writeVersion} must be supported.`,
+			0xca6 /* Unsupported write version requested. */,
+			() => `Write version ${this.writeVersion} requested but not supported with key ${key}.`,
 		);
 	}
 
@@ -67,6 +70,11 @@ export abstract class VersionedSummarizer<TVersion extends number> implements Su
 	protected abstract loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
+		/**
+		 * The format version of the summary being loaded, or undefined if this is pre-versioning format,
+		 * i.e., the summary has no version metadata.
+		 */
+		version: TVersion | undefined,
 	): Promise<void>;
 
 	public summarize(props: {
@@ -89,19 +97,20 @@ export abstract class VersionedSummarizer<TVersion extends number> implements Su
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
+		let version: TVersion | undefined;
 		if (await services.contains(summarizablesMetadataKey)) {
 			const metadata = await readAndParseSnapshotBlob<SharedTreeSummarizableMetadata>(
 				summarizablesMetadataKey,
 				services,
 				(contents) => parse(contents),
 			);
-			const version = metadata.version as TVersion;
+			version = metadata.version as TVersion;
 			if (!this.supportedVersions.has(version)) {
 				throw new UsageError(`Cannot read version ${version} of shared tree summary.`);
 			}
 		} else if (!this.supportPreVersioningFormat) {
 			throw new UsageError(`Cannot read summary without versioning for shared tree summary.`);
 		}
-		await this.loadInternal(services, parse);
+		await this.loadInternal(services, parse, version);
 	}
 }

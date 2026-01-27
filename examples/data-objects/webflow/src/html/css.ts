@@ -9,7 +9,7 @@ import { getCss } from "../document/index.js";
 import { areStringsEquivalent } from "../util/index.js";
 
 // Note: Similar to TokenList.set(..), but elides the search for duplicate tokens.
-const concat = (leftTokens: string, rightTokens: string) =>
+const concat = (leftTokens: string, rightTokens: string): string =>
 	!rightTokens
 		? leftTokens // If right is undefined/empty, just return left
 		: !leftTokens

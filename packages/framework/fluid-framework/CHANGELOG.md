@@ -1,5 +1,60 @@
 # fluid-framework
 
+## 2.81.0
+
+### Minor Changes
+
+- directory: Path parameter added to `cleared` event ([#26112](https://github.com/microsoft/FluidFramework/pull/26112)) [1ded6bf755](https://github.com/microsoft/FluidFramework/commit/1ded6bf75526eefd4d4565f4f9f6c795b8a77acf)
+
+  The `clear` event for SharedDirectory did not include a `path` parameter indicating which directory was cleared. Therefore, the `clear` event is deprecated and will be removed in a future release. Instead use the `cleared` event.
+
+  **Before:**
+
+  ```typescript
+  sharedDirectory.on("clear", (local, target) => {
+    // No way to know which subdirectory was cleared
+  });
+  ```
+
+  **After:**
+
+  ```typescript
+  sharedDirectory.on("cleared", (path, local, target) => {
+    // path tells you which directory was cleared (e.g., "/", "/subdir1", "/subdir2")
+  });
+  ```
+
+  This change provides better observability by allowing listeners to distinguish between clear operations on different subdirectories within the SharedDirectory hierarchy.
+
+## 2.80.0
+
+### Minor Changes
+
+- TreeBranch operations throw when called during transactions ([#26097](https://github.com/microsoft/FluidFramework/pull/26097)) [33b1ec0827c](https://github.com/microsoft/FluidFramework/commit/33b1ec0827c433ce9afc126f26457a9245bd43eb)
+
+  This breaking change only affects the behavior of `TreeBranch` methods (currently released as beta).
+  - Invoking `TreeBranch.fork()` now throws an error if a transaction is ongoing on the branch.
+  - Invoking `TreeBranch.merge(sourceBranch)` now throws an error if a transaction is ongoing on the source branch.
+    As before, it also throws an error if a transaction is ongoing on the target (i.e., `this`) branch.
+  - Invoking `TreeBranch.rebaseOnto(targetBranch)` now throws an error if a transaction is ongoing on the target branch.
+    As before, it also throws an error if a transaction is ongoing on the source (i.e., `this`) branch.
+
+  These new restrictions insulate branches and their dependents from experiencing incomplete transaction changes.
+  This is important because incomplete transaction changes may not uphold application invariants.
+
+  In scenarios that experience the new errors, application authors should consider whether the ongoing transaction can safely be closed before invoking these methods.
+
+## 2.74.0
+
+### Minor Changes
+
+- Fixed bug in sending of revert edits after an aborted transaction ([#25978](https://github.com/microsoft/FluidFramework/pull/25978)) [93ec6c77dab](https://github.com/microsoft/FluidFramework/commit/93ec6c77dab27bd65c2b04862f578ac3876b2cbe)
+
+  Aborting a transaction used to put the tree in a state that would trigger an assert when sending some undo/redo edits to peers.
+  This would prevent some undo/redo edits from being sent and would put the tree in a broken state that prevented any further edits.
+  This issue could not have caused document corruption, so reopening the document was a possible remedy.
+  Aborting a transaction no longer puts the tree in such a state, so it is safe to perform undo/redo edits after that.
+
 ## 2.73.0
 
 ### Minor Changes

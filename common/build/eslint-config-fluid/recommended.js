@@ -23,28 +23,13 @@ module.exports = {
 	rules: {
 		// RECOMMENDED RULES
 		"@rushstack/no-new-null": "error",
-		"no-empty": "error",
 		"no-void": "error",
 		"require-atomic-updates": "error",
 
-		// This rule ensures that our Intellisense looks good by verifying the TSDoc syntax.
-		"tsdoc/syntax": "error",
-
-		// In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
-		// API documentation. For example, type inference might decide a function returns a concrete type
-		// instead of an interface. This has no runtime impact, but would cause compilation problems.
-		"@typescript-eslint/explicit-function-return-type": [
-			"error",
-			{
-				allowExpressions: true,
-				allowTypedFunctionExpressions: true,
-				allowHigherOrderFunctions: true,
-				allowDirectConstAssertionInArrowFunctions: true,
-				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
-			},
-		],
-
 		// #region `unicorn` rule overrides
+
+		// TODO: Enable this rule and fix violations once eslint9 upgrade is done
+		"unicorn/consistent-function-scoping": "warn",
 
 		/**
 		 * TODO: Consider enabling in the future.
@@ -53,6 +38,9 @@ module.exports = {
 
 		// False positives on non-array `push` methods.
 		"unicorn/no-array-push-push": "off",
+
+		// False positives on non-array methods.
+		"unicorn/no-array-callback-reference": "off",
 
 		"unicorn/empty-brace-spaces": "off",
 
@@ -194,12 +182,6 @@ module.exports = {
 		// #region eslint-plugin-jsdoc rules
 
 		/**
-		 * Ensures all JSDoc/TSDoc comments use the multi-line format for consistency.
-		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-multiline-blocks>
-		 */
-		"jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
-
-		/**
 		 * Require the description (summary) component in JSDoc/TSDoc comments
 		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
 		 */
@@ -229,13 +211,6 @@ module.exports = {
 			"error",
 			{ fixStyle: "separate-type-imports" },
 		],
-
-		/**
-		 * Ensures that type-only import statements do not result in runtime side-effects.
-		 *
-		 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
-		 */
-		"@typescript-eslint/no-import-type-side-effects": "error",
 
 		// #endregion
 	},

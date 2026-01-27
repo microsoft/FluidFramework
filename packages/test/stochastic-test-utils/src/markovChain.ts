@@ -82,6 +82,7 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 
 	constructor(random: IRandom = makeRandom(1), chain?: Record<string, [string, number][]>) {
 		super();
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ?? could change behavior for falsy values
 		this.chain = chain ? chain : {};
 
 		this.random = random;
@@ -91,12 +92,13 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 	 * Initializes a markovChain given a 2d array of sentences.
 	 * @param sentences - A sentence is an array of string words, sentences is an array of sentences.
 	 */
-	public initialize(sentences: string[][]) {
+	public initialize(sentences: string[][]): void {
 		const initialChain: Record<string, Record<string, number>> = {};
 		sentences.forEach((sentence) => {
 			let prevWord: string | null = null;
 			for (let i = 0; i < sentence.length; i++) {
 				const word = sentence[i];
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (initialChain[word] === undefined) {
 					initialChain[word] = {};
 				}
@@ -152,7 +154,7 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 	 * Runtime per word added to the generated sentence: O(totalNumberOfWordChoices) + O(wordLength)
 	 * @returns A sentence generated using the given class instances markov chain.
 	 */
-	public generateData(maxLength: number) {
+	public generateData(maxLength: number): string {
 		const markovChain = this.chain;
 		if (
 			Object.keys(markovChain).length === 0 ||
@@ -205,7 +207,7 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 		return sentence;
 	}
 
-	private randomlySelectWord(wordOccuranceMap: [string, number][]) {
+	private randomlySelectWord(wordOccuranceMap: [string, number][]): string {
 		const weightGenerator = createWeightedGenerator(wordOccuranceMap);
 		return weightGenerator({ random: this.random }) as string;
 	}
@@ -220,6 +222,7 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 
 	constructor(random: IRandom = makeRandom(1), chain?: Record<string, string[]>) {
 		super();
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ?? could change behavior for falsy values
 		this.chain = chain ? chain : {};
 		this.random = random;
 	}
@@ -228,11 +231,12 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 	 * Initializes a markovChain given a 2d array of sentences.
 	 * @param sentences - A sentence is an array of string words, sentences is an array of sentences.
 	 */
-	public initialize(sentences: string[][]) {
+	public initialize(sentences: string[][]): Record<string, string[]> {
 		sentences.forEach((sentence) => {
 			let prevWord: string | null = null;
 			for (let i = 0; i < sentence.length; i++) {
 				const word = sentence[i];
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 				if (this.chain[word] === undefined) {
 					this.chain[word] = [];
 				}
@@ -268,7 +272,7 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 	 * Runtime per word added to the generated sentence: O(1) + O(wordLength).
 	 * @returns A sentence generated using the given class instances markov chain.
 	 */
-	public generateData(maxLength: number) {
+	public generateData(maxLength: number): string {
 		if (
 			Object.keys(this.chain).length === 0 ||
 			this.chain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] === undefined

@@ -47,6 +47,10 @@ FROM runnerbase AS base
 WORKDIR $BUILD_ROOT
 COPY --from=root packages/tools/changelog-generator-wrapper/package.json packages/tools/changelog-generator-wrapper/
 
+# Copy the shared ESLint config package. Routerlicious has a link dependency on this package
+# (link:../../common/build/eslint-config-fluid) for ESLint flat config support.
+COPY --from=root common/build/eslint-config-fluid common/build/eslint-config-fluid/
+
 # Copy over and build the server. We use the same directory structure as outside of the docker container to ensure flub works smoothly.
 WORKDIR $ROUTERLICIOUS_ROOT
 

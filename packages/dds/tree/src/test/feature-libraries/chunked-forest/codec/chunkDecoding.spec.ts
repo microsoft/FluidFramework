@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { compareArrays } from "@fluidframework/core-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
+import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
@@ -30,6 +31,11 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
+import type {
+	ChunkReferenceId,
+	IncrementalDecoder,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	type EncodedChunkShape,
 	SpecialField,
@@ -39,11 +45,6 @@ import {
 	validVersions,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
-import type {
-	ChunkReferenceId,
-	IncrementalDecoder,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	emptyChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -52,24 +53,27 @@ import {
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import type { TreeChunk } from "../../../../feature-libraries/index.js";
 import { type ReferenceCountedBase, brand } from "../../../../util/index.js";
-import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
 import { testIdCompressor } from "../../../utils.js";
-import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index.js";
+import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
 
 function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): void {
 	switch (count) {
-		case 0:
+		case 0: {
 			assert(item.isUnreferenced());
 			break;
-		case 1:
+		}
+		case 1: {
 			assert(!item.isUnreferenced());
 			assert(!item.isShared());
 			break;
-		case "shared":
+		}
+		case "shared": {
 			assert(item.isShared());
 			break;
-		default:
+		}
+		default: {
 			break;
+		}
 	}
 }
 

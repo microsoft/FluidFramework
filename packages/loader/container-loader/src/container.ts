@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/consistent-function-scoping */
+/* eslint-disable unicorn/consistent-function-scoping, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/prefer-optional-chain */
 
 import {
 	TypedEventEmitter,
@@ -751,7 +751,7 @@ export class Container
 		validateDriverCompatibility(
 			maybeDriverCompatDetails.ILayerCompatDetails,
 			(error) => {} /* disposeFn */, // There is nothing to dispose here, so just ignore the error.
-			subLogger,
+			createChildMonitoringContext({ logger: subLogger, namespace: "Container" }),
 		);
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
@@ -2440,10 +2440,7 @@ export class Container
 
 			// Validate that the Runtime is compatible with this Loader.
 			const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
-			validateRuntimeCompatibility(
-				maybeRuntimeCompatDetails.ILayerCompatDetails,
-				this.mc.logger,
-			);
+			validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, this.mc);
 
 			this._runtime = runtime;
 			this._lifecycleEvents.emit("runtimeInstantiated");

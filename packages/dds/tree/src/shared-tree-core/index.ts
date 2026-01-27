@@ -25,6 +25,7 @@ export {
 	SharedTreeCore,
 	type ClonableSchemaAndPolicy,
 	type SharedTreeCoreOptionsInternal,
+	type EnrichmentConfig,
 } from "./sharedTreeCore.js";
 export {
 	SharedTreeSummaryFormatVersion,
@@ -39,11 +40,7 @@ export { VersionedSummarizer } from "./versionedSummarizer.js";
 export type { ResubmitMachine } from "./resubmitMachine.js";
 export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 
-export {
-	type ChangeEnricherReadonlyCheckout,
-	type ChangeEnricherMutableCheckout,
-	NoOpChangeEnricher,
-} from "./changeEnricher.js";
+export { type ChangeEnricher } from "./changeEnricher.js";
 
 export {
 	makeEditManagerCodec,
@@ -71,10 +68,13 @@ export type {
 	EncodedCommit,
 } from "./editManagerFormatCommons.js";
 
+export type { DecodedMessage } from "./messageTypes.js";
 export {
 	getCodecTreeForMessageFormatWithChange,
 	clientVersionToMessageFormatVersion,
 	messageFormatVersionSelectorForSharedBranches,
+	makeMessageCodec,
+	type MessageEncodingContext,
 } from "./messageCodecs.js";
 export {
 	MessageFormatVersion,

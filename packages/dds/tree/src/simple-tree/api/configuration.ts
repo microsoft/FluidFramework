@@ -6,17 +6,14 @@
 import { assert, fail, oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
+import { getOrCreate } from "../../util/index.js";
+import type { MakeNominal } from "../../util/index.js";
 import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
 	type TreeNodeSchema,
 } from "../core/index.js";
-import {
-	toInitialSchema,
-	toUnhydratedSchema,
-	transformSimpleSchema,
-} from "../toStoredSchema.js";
+import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
 import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
@@ -27,11 +24,14 @@ import {
 	type ObjectNodeSchema,
 	type RecordNodeSchema,
 } from "../node-kinds/index.js";
-import { getOrCreate } from "../../util/index.js";
-import type { MakeNominal } from "../../util/index.js";
-import { walkFieldSchema } from "../walkFieldSchema.js";
 import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
+import {
+	toInitialSchema,
+	toUnhydratedSchema,
+	transformSimpleSchema,
+} from "../toStoredSchema.js";
 import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
+import { walkFieldSchema } from "../walkFieldSchema.js";
 
 /**
  * Options when constructing a tree view.
@@ -222,7 +222,7 @@ export class TreeViewConfiguration<
 			},
 		});
 
-		if (ambiguityErrors.length !== 0) {
+		if (ambiguityErrors.length > 0) {
 			// Duplicate errors are common since when two types conflict, both orders error:
 			const deduplicated = new Set(ambiguityErrors);
 			throw new UsageError(`Ambiguous schema found:\n${[...deduplicated].join("\n")}`);

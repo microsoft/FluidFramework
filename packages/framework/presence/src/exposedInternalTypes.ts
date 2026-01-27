@@ -93,7 +93,7 @@ export namespace InternalTypes {
 	 *
 	 * @system
 	 */
-	export interface MapValueState<T, Keys extends string | number> {
+	export interface MapValueState<T, Keys extends string> {
 		rev: number;
 		items: {
 			// Caution: any particular item may or may not exist
@@ -108,7 +108,10 @@ export namespace InternalTypes {
 	 *
 	 * @system
 	 */
-	export declare class StateDatastoreHandle<TKey, TValue extends ValueDirectoryOrState<any>> {
+	export declare class StateDatastoreHandle<
+		TKey,
+		TValue extends ValueDirectoryOrState<unknown>,
+	> {
 		private readonly StateDatastoreHandle: StateDatastoreHandle<TKey, TValue>;
 	}
 
@@ -141,9 +144,9 @@ export namespace InternalTypes {
 	 */
 	export type ManagerFactory<
 		TKey extends string,
-		TValue extends ValueDirectoryOrState<any>,
+		TValue extends ValueDirectoryOrState<unknown>,
 		TManager,
-	> = { instanceBase: new (...args: any[]) => any } & ((
+	> = { instanceBase: new (...args: any[]) => unknown } & ((
 		key: TKey,
 		datastoreHandle: StateDatastoreHandle<TKey, TValue>,
 	) => {

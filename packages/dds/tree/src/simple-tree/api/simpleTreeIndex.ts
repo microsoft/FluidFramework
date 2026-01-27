@@ -4,6 +4,7 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
+
 import type {
 	AnchorNode,
 	FieldKey,
@@ -19,18 +20,19 @@ import {
 	type TreeIndexKey,
 	type KeyFinder,
 } from "../../feature-libraries/index.js";
+import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import { brand } from "../../util/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import {
 	treeNodeFromAnchor,
 	type TreeNode,
 	type TreeNodeSchema,
 	type NodeFromSchema,
 } from "../core/index.js";
-import { treeNodeApi } from "./treeNodeApi.js";
-import type { TreeView } from "./tree.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
+
+import type { TreeView } from "./tree.js";
+import { treeNodeApi } from "./treeNodeApi.js";
 
 /**
  * A {@link TreeIndex} that returns tree nodes given their associated keys.
@@ -147,15 +149,15 @@ export function createSimpleTreeIndex<
 	isKeyValid: (key: TreeIndexKey) => key is TKey,
 	indexableSchema?: readonly TreeNodeSchema[],
 ): SimpleTreeIndex<TKey, TValue> {
-	const indexableSchemaMap = new Map();
-	if (indexableSchema !== undefined) {
-		for (const schemus of indexableSchema) {
-			indexableSchemaMap.set(schemus.identifier, schemus);
-		}
-	} else {
+	const indexableSchemaMap = new Map<string, TreeNodeSchema>();
+	if (indexableSchema === undefined) {
 		walkFieldSchema(view.schema, {
 			node: (schemus) => indexableSchemaMap.set(schemus.identifier, schemus),
 		});
+	} else {
+		for (const schemus of indexableSchema) {
+			indexableSchemaMap.set(schemus.identifier, schemus);
+		}
 	}
 
 	const schemaIndexer =
@@ -163,14 +165,14 @@ export function createSimpleTreeIndex<
 			? (schemaIdentifier: TreeNodeSchemaIdentifier) => {
 					// if indexable schema isn't provided, we check if the node is in schema
 					const schemus = indexableSchemaMap.get(schemaIdentifier);
-					if (schemus !== undefined) {
+					if (schemus === undefined) {
+						fail(0xb32 /* node is out of schema */);
+					} else {
 						const keyLocation =
 							typeof indexer === "function" ? indexer(schemus) : indexer.get(schemus);
 						if (keyLocation !== undefined) {
 							return makeGenericKeyFinder<TKey>(brand(keyLocation), isKeyValid);
 						}
-					} else {
-						fail(0xb32 /* node is out of schema */);
 					}
 				}
 			: (schemaIdentifier: TreeNodeSchemaIdentifier) => {

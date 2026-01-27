@@ -1,6 +1,6 @@
 {
 	"name": "build-tools-release-group-root",
-	"version": "0.62.0",
+	"version": "0.64.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -35,6 +35,7 @@
 		"generate:packageList:internal-test": "flub list build-tools --no-private --feed internal-test --outFile feeds/internal-test.txt",
 		"generate:packageList:public": "flub list build-tools --no-private --feed public --outFile feeds/public.txt",
 		"preinstall": "node ../scripts/only-pnpm.cjs",
+		"postinstall": "cd ../common/build/eslint-config-fluid && pnpm install",
 		"install:commitlint": "npm install --global @commitlint/config-conventional",
 		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run check:format && npm run ci:eslint",
 		"lint:fix": "npm run syncpack:deps:fix && npm run syncpack:versions:fix && npm run format && pnpm run -r --no-sort --stream lint:fix",
@@ -78,6 +79,7 @@
 		"@fluid-tools/build-cli": "~0.60.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "~0.60.0",
+		"@fluidframework/eslint-config-fluid": "link:../common/build/eslint-config-fluid",
 		"@microsoft/api-extractor": "^7.55.1",
 		"c8": "^10.1.3",
 		"commitizen": "^4.3.1",
@@ -87,8 +89,9 @@
 		"copyfiles": "^2.4.1",
 		"cz-conventional-changelog": "^3.3.0",
 		"cz-customizable": "^7.5.1",
-		"eslint": "~8.57.0",
+		"eslint": "~9.39.2",
 		"inquirer": "^9.3.7",
+		"jiti": "^2.6.1",
 		"rimraf": "^6.1.2",
 		"run-script-os": "^1.1.6",
 		"syncpack": "^13.0.4",
@@ -96,7 +99,7 @@
 	},
 	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
 	"engines": {
-		"node": ">=20.15.1"
+		"node": ">=20.19.0"
 	},
 	"dependenciesComments": {
 		"@fluidframework/build-tools": "Provides fluid-build which is used by the `build:fast` script. To allow this to work when the workspace version of build-tools has not been built yet, a prepackaged version is depended on. If this self-dependency becomes problematic, the `build` script can be used which does not require it."
@@ -137,22 +140,20 @@
 			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies."
 		],
 		"peerDependencyRules": {
-			"allowedVersions": {
-				"eslint": "8.51.0",
-				"@typescript-eslint/parser": "6.21.0"
-			},
 			"ignoreMissing": [
 				"@types/node",
 				"@aws-sdk/*"
 			]
 		},
 		"overrideComments": [
+			"eslint: jssm-viz-cli brings in ESLint 8.x as a transitive dependency. Force ESLint 9.x to ensure consistent version across the workspace.",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
 			"@types/node: To avoid duplicating the oclif package and adding a bunch of dependencies, force @types/node to a single version. For some reason version 22.8.0 can't be overridden, so use that to ensure a single version",
 			"@types/minimatch: @types/glob@7.x uses minimatch.IOptions and minimatch.IMinimatch interfaces. Force @types/minimatch@5 which includes these legacy type definitions.",
 			"mdast-util-gfm-footnote: mdast-util-gfm@3.1.0 has a type definition bug where it imports ToMarkdownOptions from mdast-util-gfm-footnote, but version 2.0.0 doesn't export it. Override to 2.1.0 which includes the missing export."
 		],
 		"overrides": {
+			"eslint": "~9.39.2",
 			"@types/glob>@types/minimatch": "~5.1.2",
 			"@types/node": "^22.19.1",
 			"json5@<1.0.2": "^1.0.2",

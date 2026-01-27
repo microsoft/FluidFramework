@@ -580,6 +580,7 @@ export abstract class FluidDataStoreContext
 			!this.detachedRuntimeCreation,
 			0x13d /* "Detached runtime creation on realize()" */,
 		);
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (!this.channelP) {
 			this.channelP = this.realizeCore(this.existing).catch((error) => {
 				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
@@ -1003,7 +1004,7 @@ export abstract class FluidDataStoreContext
 		validateDatastoreCompatibility(
 			maybeDataStoreCompatDetails.ILayerCompatDetails,
 			this.dispose.bind(this),
-			this.mc.logger,
+			this.mc,
 		);
 
 		// And now mark the runtime active
@@ -1096,7 +1097,7 @@ export abstract class FluidDataStoreContext
 	public reSubmit(
 		message: FluidDataStoreMessage,
 		localOpMetadata: unknown,
-		squash?: boolean,
+		squash: boolean,
 	): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
 		this.channel.reSubmit(message.type, message.content, localOpMetadata, squash);

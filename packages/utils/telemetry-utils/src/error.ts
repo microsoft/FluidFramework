@@ -6,7 +6,6 @@
 import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	FluidErrorTypes,
-	FluidErrorTypesAlpha,
 	type IGenericError,
 	type ILayerIncompatibilityError,
 	type IUsageError,
@@ -125,7 +124,17 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 	public static create(
 		errorMessage: string,
 		dataProcessingCodepath: string,
-		sequencedMessage?: ISequencedDocumentMessage,
+		messageLike?: Partial<
+			Pick<
+				ISequencedDocumentMessage,
+				| "clientId"
+				| "sequenceNumber"
+				| "clientSequenceNumber"
+				| "referenceSequenceNumber"
+				| "minimumSequenceNumber"
+				| "timestamp"
+			>
+		>,
 		props: ITelemetryPropertiesExt = {},
 		stackTraceLimit?: number,
 	): IFluidErrorBase {
@@ -139,7 +148,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 			const dataProcessingError = DataProcessingError.wrapIfUnrecognized(
 				errorMessage,
 				dataProcessingCodepath,
-				sequencedMessage,
+				messageLike,
 			);
 			dataProcessingError.addTelemetryProperties(props);
 
@@ -225,7 +234,7 @@ export class LayerIncompatibilityError
 	extends LoggingError
 	implements ILayerIncompatibilityError
 {
-	public readonly errorType = FluidErrorTypesAlpha.layerIncompatibilityError;
+	public readonly errorType = FluidErrorTypes.layerIncompatibilityError;
 	public readonly layer: string;
 	public readonly layerVersion: string;
 	public readonly incompatibleLayer: string;

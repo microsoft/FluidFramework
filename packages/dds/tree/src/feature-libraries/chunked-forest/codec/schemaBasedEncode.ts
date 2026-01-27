@@ -18,7 +18,9 @@ import {
 	identifierFieldKindIdentifier,
 	type SchemaPolicy,
 } from "../../../core/index.js";
+import { brand, oneFromIterable } from "../../../util/index.js";
 
+import type { IncrementalEncoder } from "./codecs.js";
 import {
 	EncoderContext,
 	type FieldEncoder,
@@ -39,10 +41,8 @@ import {
 	FieldBatchFormatVersion,
 	SpecialField,
 } from "./format.js";
-import type { IncrementalEncoder } from "./codecs.js";
-import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
-import { brand, oneFromIterable } from "../../../util/index.js";
+import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.v1}.
@@ -143,7 +143,7 @@ export function getFieldEncoder(
 	const kind = context.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
 	const type = oneFromIterable(field.types);
 	const nodeEncoder =
-		type !== undefined ? nodeBuilder.nodeEncoderFromSchema(type) : anyNodeEncoder;
+		type === undefined ? anyNodeEncoder : nodeBuilder.nodeEncoderFromSchema(type);
 	if (kind.multiplicity === Multiplicity.Single) {
 		if (field.kind === identifierFieldKindIdentifier) {
 			assert(type !== undefined, 0x999 /* field type must be defined in identifier field */);
@@ -227,16 +227,20 @@ export function getNodeEncoder(
 
 function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | EncodedValueShape {
 	switch (schema) {
-		case undefined:
+		case undefined: {
 			return false;
+		}
 		case ValueSchema.Number:
 		case ValueSchema.String:
 		case ValueSchema.Boolean:
-		case ValueSchema.FluidHandle:
+		case ValueSchema.FluidHandle: {
 			return true;
-		case ValueSchema.Null:
+		}
+		case ValueSchema.Null: {
 			return [null];
-		default:
+		}
+		default: {
 			unreachableCase(schema);
+		}
 	}
 }

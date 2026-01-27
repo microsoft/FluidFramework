@@ -109,10 +109,10 @@ const makeEditGenerator = (
 	const insertConfig = { ...defaultInsertConfig, ...config.insertConfig };
 	const poolRand = makeRandom(0);
 	const traitLabelPool = Array.from({ length: config.traitLabelPoolSize }, () => poolRand.uuid4() as TraitLabel);
-	const traitLabelGenerator = ({ random }: FuzzTestState) => random.pick(traitLabelPool);
+	const traitLabelGenerator = ({ random }: FuzzTestState): TraitLabel => random.pick(traitLabelPool);
 
 	const definitionPool = Array.from({ length: insertConfig.definitionPoolSize }, () => poolRand.uuid4() as Definition);
-	const definitionGenerator = ({ random }: FuzzTestState) => random.pick(definitionPool);
+	const definitionGenerator = ({ random }: FuzzTestState): Definition => random.pick(definitionPool);
 	type EditState = FuzzTestState & TreeContext;
 
 	function traitGenerator(state: EditState): TraitLocation {
