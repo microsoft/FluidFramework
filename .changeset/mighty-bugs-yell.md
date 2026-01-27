@@ -1,0 +1,29 @@
+---
+"fluid-framework": minor
+"@fluidframework/tree": minor
+"__section": feature
+---
+Add push as alias for insertAtEnd on TreeArrayNode
+
+#### Why this change?
+
+LLMs working with SharedTree arrays (e.g., in Copilot Boards) frequently call push on tree arrays out of habit from working with regular JavaScript arrays. Even when system prompts instruct them to use insertAt instead, they still make this mistake because push is such a common pattern.
+
+Since insertAtEnd already provides the equivalent functionality, adding push as an alias makes the API more intuitive and reduces friction for both LLM-generated code and developers familiar with JavaScript array semantics.
+
+#### Usage
+
+```typescript
+import { TreeArrayNode } from "@fluidframework/tree";
+
+// `inventory` is a TreeArrayNode from your schema.
+inventory.push({ name: "Apples", quantity: 3 });
+
+// Insert multiple items in one call.
+inventory.push(
+  TreeArrayNode.spread([
+    { name: "Oranges", quantity: 2 },
+    { name: "Bananas", quantity: 5 },
+  ]),
+);
+```
