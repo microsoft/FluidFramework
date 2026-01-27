@@ -16,6 +16,7 @@ import {
 import { z } from "zod";
 
 import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
+import { fluidHandleTypeName } from "../prompt.js";
 import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { generateEditTypesForPrompt } from "../typeGeneration.js";
 
@@ -76,14 +77,8 @@ describe("Type generation", () => {
 		const handleSchemaString = getDomainSchemaString(ObjWithHandle, { handle: undefined });
 		assert.deepEqual(
 			handleSchemaString,
-			`/**
- * Opaque handle type representing a reference to a Fluid object.
- * This type should not be constructed by generated code.
- */
-type IFluidHandle = unknown;
-
-interface ObjWithHandle {
-    handle?: IFluidHandle;
+			`interface ObjWithHandle {
+    handle?: ${fluidHandleTypeName};
 }
 `,
 		);

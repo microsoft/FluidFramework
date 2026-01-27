@@ -17,6 +17,7 @@ import { z } from "zod";
 
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
+import { fluidHandleTypeName } from "./prompt.js";
 import { getExposedProperties, type PropertyDef } from "./propertyBinding.js";
 import {
 	instanceOfsTypeFactory,
@@ -71,10 +72,6 @@ export function renderSchemaTypeScript(
 ): SchemaTypeScriptRenderResult {
 	const friendlyNames = new Map<string, string>();
 	let hasHelperMethods = false;
-	let hasFluidHandles = false;
-	const markFluidHandle = (): void => {
-		hasFluidHandles = true;
-	};
 
 	for (const identifier of definitions.keys()) {
 		if (isNamedSchema(identifier)) {
@@ -104,17 +101,8 @@ export function renderSchemaTypeScript(
 	}
 
 	const schemaText = declarations.join("\n\n");
-	const fluidHandleType = hasFluidHandles
-		? `/**
- * Opaque handle type representing a reference to a Fluid object.
- * This type should not be constructed by generated code.
- */
-type IFluidHandle = unknown;
-
-`
-		: "";
 	return {
-		schemaText: schemaText === "" ? "" : `${fluidHandleType}${schemaText}\n`,
+		schemaText: schemaText === "" ? "" : `${schemaText}\n`,
 		hasHelperMethods,
 	};
 
@@ -138,7 +126,7 @@ type IFluidHandle = unknown;
 			}
 			case NodeKind.Leaf: {
 				return {
-					declaration: `type ${friendlyName} = ${renderLeaf(schema.leafKind, markFluidHandle)};`,
+					declaration: `type ${friendlyName} = ${renderLeaf(schema.leafKind)};`,
 					description: schema.metadata?.description,
 				};
 			}
@@ -377,7 +365,7 @@ type IFluidHandle = unknown;
 			case NodeKind.Leaf: {
 				return {
 					precedence: TypePrecedence.Object,
-					text: renderLeaf(schema.leafKind, markFluidHandle),
+					text: renderLeaf(schema.leafKind),
 				};
 			}
 			default: {
@@ -480,7 +468,7 @@ function formatMethod(name: string, method: FunctionWrapper): string {
 	return `${name}(${args.join(", ")}): ${renderType(method.returns, 0)};`;
 }
 
-function renderLeaf(leafKind: ValueSchema, onFluidHandle?: () => void): string {
+function renderLeaf(leafKind: ValueSchema): string {
 	switch (leafKind) {
 		case ValueSchema.Boolean: {
 			return "boolean";
@@ -495,8 +483,7 @@ function renderLeaf(leafKind: ValueSchema, onFluidHandle?: () => void): string {
 			return "null";
 		}
 		case ValueSchema.FluidHandle: {
-			onFluidHandle?.();
-			return "IFluidHandle";
+			return fluidHandleTypeName;
 		}
 		default: {
 			throw new Error(`Unsupported leaf kind.`);

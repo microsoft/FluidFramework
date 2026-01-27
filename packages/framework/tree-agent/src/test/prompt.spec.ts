@@ -17,7 +17,7 @@ import {
 
 import type { TreeView } from "../api.js";
 import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
-import { getPrompt } from "../prompt.js";
+import { fluidHandleTypeName, getPrompt } from "../prompt.js";
 import { exposePropertiesSymbol, type ExposedProperties } from "../propertyBinding.js";
 import { Subtree } from "../subtree.js";
 import { typeFactory as tf } from "../treeAgentTypes.js";
@@ -198,6 +198,33 @@ describe("Prompt generation", () => {
 				editToolName: "EditTreeTool",
 			});
 			assert.ok(prompt.includes("# Editing Maps"));
+		}
+	});
+
+	it("includes handle type declaration when handles are present in the schema", () => {
+		// If no handles, then the prompt shouldn't include the handle type declaration
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editToolName: "EditTreeTool",
+			});
+			assert.ok(!prompt.includes(`type ${fluidHandleTypeName} = unknown`));
+		}
+		// If there are handles, then the prompt should include the handle type declaration
+		{
+			const view = getView(
+				sf.object("ObjectWithHandle", {
+					handle: sf.optional(sf.handle),
+				}),
+				{ handle: undefined },
+			);
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editToolName: "EditTreeTool",
+			});
+			assert.ok(prompt.includes(`type ${fluidHandleTypeName} = unknown`));
+			assert.ok(prompt.includes(`handle?: ${fluidHandleTypeName}`));
 		}
 	});
 
