@@ -1766,7 +1766,7 @@ function replaceCrossFieldKeyTableRevisions(
 	const updated: CrossFieldKeyTable = newCrossFieldKeyTable();
 	for (const entry of table.entries()) {
 		const key = entry.start;
-		const updatedKey: CrossFieldKey = replacer.getUpdatedAtomId(key);
+		const updatedKey: CrossFieldKey = replacer.getUpdatedAtomId(key, entry.length);
 
 		const field = entry.value;
 		const normalizedFieldId = normalizeFieldId(field, nodeAliases);
