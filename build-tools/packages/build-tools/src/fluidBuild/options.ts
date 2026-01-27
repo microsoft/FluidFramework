@@ -139,7 +139,7 @@ export function parseOptions(argv: string[]): void {
 
 		if (arg === "-?" || arg === "--help") {
 			printUsage();
-			// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
+			// eslint-disable-next-line unicorn/no-process-exit -- exit after displaying help text
 			process.exit(0);
 		}
 
@@ -285,7 +285,7 @@ export function parseOptions(argv: string[]): void {
 
 	if (error) {
 		printUsage();
-		// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
+		// eslint-disable-next-line unicorn/no-process-exit -- exit with error code when argument parsing fails
 		process.exit(-1);
 	}
 
