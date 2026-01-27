@@ -10,6 +10,7 @@ import type {
 	IChannelStorageService,
 	IChannel,
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
@@ -27,11 +28,15 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 
 import type { IFluidSerializer } from "./serializer.js";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	createSharedObjectKind,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	SharedObject,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	type ISharedObjectKind,
 	type SharedObjectKind,
 } from "./sharedObject.js";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { ISharedObjectEvents, ISharedObject } from "./types.js";
 import type { IChannelView } from "./utils.js";
 
@@ -112,7 +117,9 @@ export interface SharedKernel {
  */
 class SharedObjectFromKernel<
 	TOut extends object,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TEvent extends ISharedObjectEvents,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 > extends SharedObject<TEvent> {
 	/**
 	 * Lazy init here so kernel can be constructed in loadCore when loading from existing data.
@@ -283,6 +290,7 @@ export interface KernelArgs {
 	 * This is needed since the separate kernel and view from {@link FactoryOut} currently have to be recombined,
 	 * and having this as its own thing helps accomplish that.
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	readonly eventEmitter: TypedEventEmitter<ISharedObjectEvents>;
 	/**
 	 * {@inheritdoc SharedObjectCore.logger}
@@ -398,6 +406,7 @@ export interface SharedObjectOptions<T extends object> {
 	 * The view produced by this factory will be grafted onto the {@link SharedObject} using {@link mergeAPIs}.
 	 * See {@link mergeAPIs} for more information on limitations that apply.
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	readonly factory: SharedKernelFactory<Omit<T, keyof ISharedObject>>;
 
 	/**
@@ -414,6 +423,7 @@ export interface SharedObjectOptions<T extends object> {
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	class ChannelFactory implements IChannelFactory<T> {
 		/**
 		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
@@ -489,6 +499,8 @@ function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
  */
 export function makeSharedObjectKind<T extends object>(
 	options: SharedObjectOptions<T>,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 ): ISharedObjectKind<T> & SharedObjectKind<T> {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	return createSharedObjectKind<T>(makeChannelFactory(options));
 }

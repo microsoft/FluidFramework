@@ -42,6 +42,7 @@ import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";

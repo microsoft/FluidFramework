@@ -9,6 +9,7 @@ import { type Reducer, combineReducers } from "@fluid-private/stochastic-test-ut
 import type { DDSFuzzTestState, Client } from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
 import type { Revertible } from "../../../core/index.js";

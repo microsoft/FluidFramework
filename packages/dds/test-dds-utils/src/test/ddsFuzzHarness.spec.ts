@@ -12,6 +12,7 @@ import type { AsyncGenerator, BaseOperation } from "@fluid-private/stochastic-te
 import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import-x/no-internal-modules
 import { Counter } from "@fluid-private/stochastic-test-utils/internal/test/utils";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,

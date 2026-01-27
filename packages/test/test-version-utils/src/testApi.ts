@@ -33,6 +33,7 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import * as sequence from "@fluidframework/sequence/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 // TypeScript generates incorrect imports in the d.ts file if this is not included.
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
 import * as treeCurrent from "@fluidframework/tree/internal";

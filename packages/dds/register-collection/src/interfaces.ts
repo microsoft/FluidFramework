@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	ISharedObject,

@@ -12,12 +12,12 @@ export interface IFluidSerializer {
     stringify(value: unknown, bind: IFluidHandle): string;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface ISharedObjectEvents extends IErrorEvent {
     // @eventProperty
     (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -25,7 +25,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
     (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface ISharedObjectKind<TSharedObject> {
     create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
     getFactory(): IChannelFactory<TSharedObject>;
@@ -37,7 +37,7 @@ export function makeHandlesSerializable(value: unknown, serializer: IFluidSerial
 // @beta @legacy
 export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes,
     telemetryContextPrefix: string);
@@ -50,7 +50,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext, fullTree?: boolean): ISummaryTreeWithStats;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(
     id: string,

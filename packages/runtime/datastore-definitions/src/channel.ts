@@ -289,6 +289,10 @@ export interface IChannelServices {
  * This approach (not requiring TChannel to extend IChannel) also makes it possible for SharedObject's public interfaces to not include IChannel if desired
  * (while still requiring the implementation to implement it).
  *
+ * @deprecated This interface will be removed in version 2.100.0. It is intended for internal Fluid Framework use only.
+ * External implementations of custom DDSes are not supported.
+ * Applications should use SharedTree or another existing DDS type (SharedDirectory, SharedMap, etc.) instead.
+ *
  * @legacy @beta
  */
 export interface IChannelFactory<out TChannel = unknown> {

@@ -10,6 +10,7 @@ import {
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { Marker, TextSegment } from "@fluidframework/merge-tree/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";

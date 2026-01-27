@@ -14,6 +14,7 @@ import type {
 	IFluidDataStoreContext,
 	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 import { createSandbox } from "sinon";
