@@ -356,7 +356,7 @@ export class Queue<T> implements IStream<T> {
 		this.pushCore(Promise.resolve({ done: false, value }));
 	}
 
-	public pushError(error: any): void {
+	public pushError(error: unknown): void {
 		// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 		this.pushCore(Promise.reject(error));
 		this.done = true;

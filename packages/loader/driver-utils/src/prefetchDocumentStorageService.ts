@@ -28,6 +28,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		}
 	}
 
+	// eslint-disable-next-line @rushstack/no-new-null -- TODO: use `undefined` instead
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		const p = this.internalStorageService.getSnapshotTree(version);
 		if (this.prefetchEnabled) {

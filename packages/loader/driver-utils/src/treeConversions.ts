@@ -31,6 +31,7 @@ export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): IT
 		switch (value.type) {
 			case SummaryType.Blob: {
 				let parsedContent: string;
+				// eslint-disable-next-line unicorn/text-encoding-identifier-case
 				let encoding: "utf-8" | "base64" = "utf-8";
 				if (typeof value.content === "string") {
 					parsedContent = value.content;

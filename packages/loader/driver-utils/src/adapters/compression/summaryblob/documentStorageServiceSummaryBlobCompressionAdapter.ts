@@ -75,9 +75,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	private static readAlgorithmFromBlob(blob: ArrayBufferLike): number {
 		return this.hasPrefix(blob)
+			// eslint-disable-next-line no-bitwise
 			? IsoBuffer.from(blob)[0] & 0x0f
-			: // eslint-disable-next-line no-bitwise
-				SummaryCompressionAlgorithm.None;
+			: SummaryCompressionAlgorithm.None;
 	}
 
 	/**
