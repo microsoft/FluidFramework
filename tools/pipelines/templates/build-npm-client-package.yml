@@ -246,6 +246,7 @@ extends:
             steps:
               # Setup
               - checkout: self
+                path: FluidFramework
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
@@ -600,6 +601,7 @@ extends:
             steps:
               # Setup
               - checkout: self
+                path: FluidFramework
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
@@ -759,6 +761,7 @@ extends:
               steps:
                 # Setup
                 - checkout: self
+                  path: FluidFramework
                   clean: true
                   lfs: '${{ parameters.checkoutSubmodules }}'
                   submodules: '${{ parameters.checkoutSubmodules }}'
