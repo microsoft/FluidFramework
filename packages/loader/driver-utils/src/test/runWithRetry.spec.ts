@@ -56,7 +56,11 @@ describe("runWithRetry Tests", () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("Throw error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
+				(error as any).errorType = DriverErrorTypes.throttlingError;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).retryAfterSeconds = 10;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).canRetry = true;
 				throw error;
 			}
@@ -83,8 +87,11 @@ describe("runWithRetry Tests", () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("Throttle Error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).errorType = DriverErrorTypes.throttlingError;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).retryAfterSeconds = 400;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).canRetry = true;
 				throw error;
 			}
@@ -102,6 +109,7 @@ describe("runWithRetry Tests", () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const err = new Error("error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(err as any).canRetry = true;
 				throw err;
 			}
@@ -123,6 +131,7 @@ describe("runWithRetry Tests", () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).canRetry = false;
 				throw error;
 			}
@@ -166,6 +175,7 @@ describe("runWithRetry Tests", () => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("error");
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 				(error as any).canRetry = true;
 				throw error;
 			}
@@ -193,6 +203,7 @@ describe("runWithRetry Tests", () => {
 		const api = (): never => {
 			abortController.abort("Sample abort reason");
 			const error = new Error("aborted");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 			(error as any).canRetry = true;
 			throw error;
 		};
@@ -204,7 +215,9 @@ describe("runWithRetry Tests", () => {
 			);
 			assert.fail("Should not succeed");
 		} catch (error) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 			assert.strictEqual((error as any).message, "runWithRetry was Aborted");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: use a real type
 			assert.strictEqual((error as any).reason, "Sample abort reason");
 		}
 	});

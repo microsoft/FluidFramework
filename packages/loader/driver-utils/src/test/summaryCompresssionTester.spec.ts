@@ -221,7 +221,10 @@ async function buildCompressionStorage(
 			new InternalTestDocumentServiceFactory(),
 			config,
 		);
-		const documentService = await factory.createContainer(undefined, {} as unknown as IResolvedUrl);
+		const documentService = await factory.createContainer(
+			undefined,
+			{} as unknown as IResolvedUrl,
+		);
 		const storage = await documentService.connectToStorage();
 		return storage;
 	}
@@ -232,9 +235,12 @@ const prefixForLZ4 = 0xb1;
 describe("Summary Compression Test", () => {
 	it("Verify Proper Summary Generation", async () => {
 		const summary = generateSummaryWithContent(1000000);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const content = getHeaderContent(summary);
 		assert(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			content.length === 1000000 + 11,
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			`The content size is ${content.length} and should be 1000011`,
 		);
 	});
@@ -327,6 +333,7 @@ describe("Summary Compression Test", () => {
 			proposalHandle: "test",
 			ackHandle: "test",
 		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const originalContent = getHeaderContent(summary);
 		const content = new TextDecoder().decode(await storage.readBlob("1234"));
 		assert(
@@ -347,7 +354,9 @@ describe("Summary Compression Test", () => {
 			contentSize,
 			config,
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const firstByte = uploadedContent[0];
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const secondByte = uploadedContent[1];
 		assert(
 			firstByte === prefixForUncompressed,
@@ -371,6 +380,7 @@ describe("Summary Compression Test", () => {
 			contentSize,
 			config,
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const firstByte = uploadedContent[0];
 		assert(
 			firstByte === prefixForLZ4,
@@ -465,6 +475,7 @@ async function testNoPrefix(
 			contentSize,
 			config,
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const firstByte = uploadedContent[0];
 		assert(
 			firstByte === firstOriginalByte,
@@ -487,6 +498,7 @@ async function testPrefix(
 			contentSize,
 			config,
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const firstByte = uploadedContent[0];
 		assert(firstByte === prefix, `The first byte should be ${prefix} but is  ${firstByte}`);
 	}
@@ -506,6 +518,7 @@ async function uploadSummaryWithBinaryContent(
 	});
 	const uploadedSummary = (storage as unknown as { service: InternalTestStorage }).service
 		.uploadedSummary;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const uploadedContent: ArrayBufferLike = getHeaderContent(uploadedSummary!);
 	return uploadedContent;
 }
@@ -515,6 +528,7 @@ async function checkUploadDownloadSummary(
 ): Promise<ISummaryTree> {
 	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
 	const summary = generateSummaryWithContent(1000);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const originBlobContent = getHeaderContent(summary);
 	await storage.uploadSummaryWithContext(summary, {
 		referenceSequenceNumber: 0,
@@ -528,8 +542,9 @@ async function checkUploadDownloadSummary(
 		handle: "test",
 	};
 	const downloadedSummary: ISummaryTree = await storage.downloadSummary(summaryHandle);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const downloadedBlobContentBin = getHeaderContent(downloadedSummary);
-	// const blobStr = new TextDecoder().decode(blob);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	const downloadedBlobContent = new TextDecoder().decode(downloadedBlobContentBin);
 	assert(
 		originBlobContent === downloadedBlobContent,

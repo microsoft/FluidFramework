@@ -221,7 +221,8 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	private static decodeBlob(file: ArrayBufferLike): ArrayBufferLike {
 		let decompressed: ArrayBufferLike;
-		let originalBlob;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use a real type
+		let originalBlob: any;
 		let algorithm: SummaryCompressionAlgorithm;
 		if (this.hasPrefix(file)) {
 			algorithm = DocumentStorageServiceCompressionAdapter.readAlgorithmFromBlob(file);
@@ -231,6 +232,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			originalBlob = file;
 		}
 		if (algorithm === SummaryCompressionAlgorithm.None) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			decompressed = originalBlob;
 		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
 			decompressed = decompress(originalBlob) as ArrayBufferLike;
