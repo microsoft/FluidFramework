@@ -26,6 +26,20 @@ module.exports = {
 	 * `syncpack lint-semver-ranges`, the output is grouped by label.
 	 */
 	semverGroups: [
+		// Ignore eslint-config-fluid - the package is maintained in the parent workspace and uses link: protocol
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["@fluidframework/eslint-config-fluid"],
+			dependencies: ["**"],
+		},
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["**"],
+			dependencies: ["@fluidframework/eslint-config-fluid"],
+		},
+
 		{
 			label: "engines.node should always use >= ranges",
 			dependencyTypes: ["engines"],
@@ -76,14 +90,6 @@ module.exports = {
 		},
 
 		{
-			label: "Deps in pnpm overrides should use caret dependency ranges",
-			dependencyTypes: ["pnpmOverrides"],
-			dependencies: ["**"],
-			packages: ["**"],
-			range: "^",
-		},
-
-		{
 			label: "Must use exact dependency ranges",
 			dependencies: ["sort-package-json"],
 			packages: ["**"],
@@ -107,6 +113,14 @@ module.exports = {
 			],
 			packages: ["**"],
 			range: "~",
+		},
+
+		{
+			label: "Deps in pnpm overrides should use caret dependency ranges",
+			dependencyTypes: ["pnpmOverrides"],
+			dependencies: ["**"],
+			packages: ["**"],
+			range: "^",
 		},
 
 		{
@@ -141,18 +155,18 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped by label.
 	 */
 	versionGroups: [
-		// Workaround for compatibility issues.
-		// Ideally this section would be empty (and removed).
-		// Items should be removed from here when possible.
+		// Ignore eslint-config-fluid - the package is maintained in the parent workspace and uses link: protocol
 		{
-			label:
-				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
-			dependencies: [
-				// TODO: Remove @biomejs/biome once all packages are updated to the latest version
-				"@biomejs/biome",
-			],
-			packages: ["**"],
+			label: "Ignore eslint-config-fluid package and dependency",
 			isIgnored: true,
+			packages: ["@fluidframework/eslint-config-fluid"],
+			dependencies: ["**"],
+		},
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["**"],
+			dependencies: ["@fluidframework/eslint-config-fluid"],
 		},
 
 		{
@@ -163,11 +177,7 @@ module.exports = {
 
 		{
 			label: "Versions of common Fluid packages should all match",
-			dependencies: [
-				"@fluidframework/build-common",
-				"@fluidframework/common-utils",
-				"@fluidframework/eslint-config-fluid",
-			],
+			dependencies: ["@fluidframework/build-common", "@fluidframework/common-utils"],
 			packages: ["**"],
 		},
 

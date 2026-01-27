@@ -123,5 +123,11 @@
 				"^tsc"
 			]
 		}
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@biomejs/biome",
+			"unrs-resolver"
+		]
 	}
 }

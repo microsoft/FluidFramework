@@ -44,6 +44,7 @@ async function main(): Promise<void> {
 	const matched = repo.setMatched(options);
 	if (!matched) {
 		error("No package matched");
+		// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
 		process.exit(-4);
 	}
 
@@ -51,6 +52,7 @@ async function main(): Promise<void> {
 	if (options.uninstall) {
 		if (!(await repo.uninstall())) {
 			error(`uninstall failed`);
+			// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
 			process.exit(-8);
 		}
 		timer.time("Uninstall completed", true);
@@ -65,6 +67,7 @@ async function main(): Promise<void> {
 			if (errorStep) {
 				warn(`Skipping ${errorStep} after uninstall`);
 			}
+			// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
 			process.exit(0);
 		}
 	}
@@ -74,6 +77,7 @@ async function main(): Promise<void> {
 		log("Installing packages");
 		if (!(await repo.install())) {
 			error(`Install failed`);
+			// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
 			process.exit(-5);
 		}
 		timer.time("Install completed", true);
@@ -94,6 +98,7 @@ async function main(): Promise<void> {
 		} catch (e: unknown) {
 			spinner.stop();
 			error((e as Error).message);
+			// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
 			process.exit(-11);
 		}
 		spinner.succeed("Build graph created.");
@@ -102,6 +107,7 @@ async function main(): Promise<void> {
 		// Check install
 		if (!(await buildGraph.checkInstall())) {
 			error("Dependency not installed. Use --install to fix.");
+			// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
 			process.exit(-10);
 		}
 		timer.time("Check install completed");
@@ -141,6 +147,7 @@ async function main(): Promise<void> {
 	if (failureSummary !== "") {
 		log(`\n${failureSummary}`);
 	}
+	// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
 	process.exit(exitCode);
 }
 
@@ -155,6 +162,7 @@ function buildResultString(buildResult: BuildResult): string {
 	}
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await -- This is a CLI entry point
 main().catch((e) => {
 	error(`Unexpected error. ${e.message}`);
 	error(e.stack);

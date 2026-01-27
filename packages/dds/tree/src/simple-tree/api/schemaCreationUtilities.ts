@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
+import type { UnionToTuple } from "../../util/index.js";
 import type {
 	NodeFromSchema,
 	InternalTreeNode,
@@ -15,7 +15,8 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 } from "../core/index.js";
-import type { UnionToTuple } from "../../util/index.js";
+
+import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
 
 /*
  * This file does two things:
@@ -296,11 +297,11 @@ function _enumFromStrings2<TScope extends string, const Members extends readonly
 	factory: SchemaFactory<TScope>,
 	members: Members,
 ) {
-	const enumObject: {
+	const enumObject = Object.create(null) as {
 		[key in keyof Members as Members[key] extends string
 			? Members[key]
 			: string]: Members[key] extends string ? Members[key] : string;
-	} = Object.create(null);
+	};
 	for (const name of members) {
 		Object.defineProperty(enumObject, name, {
 			enumerable: true,

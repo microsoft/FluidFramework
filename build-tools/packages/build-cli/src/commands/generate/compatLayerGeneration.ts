@@ -14,7 +14,6 @@ import {
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 	deleteCompatLayerGenerationFile,
 	writePackageCompatLayerGeneration,
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/compatLayerGeneration.js";
 
 /**

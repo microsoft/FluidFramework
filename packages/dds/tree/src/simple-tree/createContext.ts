@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+
 import { defaultSchemaPolicy } from "../feature-libraries/index.js";
 import { getOrCreate } from "../util/index.js";
 
