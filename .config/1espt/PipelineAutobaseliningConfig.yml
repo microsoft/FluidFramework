@@ -578,3 +578,10 @@ pipelines:
           lastModifiedDate: 2025-01-13
         binskim:
           lastModifiedDate: 2025-01-13
+  190:
+    retail:
+      source:
+        eslint:
+          lastModifiedDate: 2026-01-27
+        armory:
+          lastModifiedDate: 2026-01-27
