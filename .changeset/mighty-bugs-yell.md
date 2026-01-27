@@ -5,11 +5,11 @@
 ---
 Add push as alias for insertAtEnd on TreeArrayNode
 
-#### Why this change?
+#### Why this change
 
-LLMs working with SharedTree arrays (e.g., in Copilot Boards) frequently call push on tree arrays out of habit from working with regular JavaScript arrays. Even when system prompts instruct them to use insertAt instead, they still make this mistake because push is such a common pattern.
+`LLMs` working with SharedTree arrays (example, in Copilot Boards) frequently call push on tree arrays out of habit from working with regular JavaScript arrays. Even when system prompts instruct them to use `insertAt` instead, they still make this mistake because push is such a common pattern.
 
-Since insertAtEnd already provides the equivalent functionality, adding push as an alias makes the API more intuitive and reduces friction for both LLM-generated code and developers familiar with JavaScript array semantics.
+Adding push as an alias makes the API more intuitive and reduces friction for both `LLM` generated code and developers familiar with JavaScript array semantics.
 
 #### Usage
 
