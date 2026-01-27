@@ -11,7 +11,6 @@ import {
 	type FormattedTextAsTree,
 	FormattedTextEditorFactory,
 	FormattedMainView,
-	type FormattedMainViewProps,
 } from "./formatted/index.js";
 import {
 	type TextAsTree,
@@ -39,13 +38,6 @@ function getViewComponent(): React.FC<MainViewProps> {
 }
 
 /**
- * Get the formatted view component.
- */
-function getFormattedViewComponent(): React.FC<FormattedMainViewProps> {
-	return FormattedMainView;
-}
-
-/**
  * Create the appropriate Fluid export based on view type.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -54,8 +46,9 @@ function createFluidExport() {
 		return new ContainerViewRuntimeFactory(
 			FormattedTextEditorFactory,
 			(tree: IReactTreeDataObject<typeof FormattedTextAsTree.Tree>) => {
-				const ViewComponent = getFormattedViewComponent();
-				return React.createElement(tree.TreeViewComponent, { viewComponent: ViewComponent });
+				return React.createElement(tree.TreeViewComponent, {
+					viewComponent: FormattedMainView,
+				});
 			},
 		);
 	}

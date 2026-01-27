@@ -5,12 +5,18 @@
 
 import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
 import { toPropTreeNode } from "@fluidframework/react/alpha";
+/**
+ * InsecureTokenProvider is used here for local development and demo purposes only.
+ * Do not use in production - implement proper authentication for production scenarios.
+ */
 // eslint-disable-next-line import-x/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/legacy";
+// eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
+import "quill/dist/quill.snow.css";
 import * as React from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
@@ -90,7 +96,17 @@ async function initFluid(): Promise<DualUserViews> {
 
 	if (location.hash) {
 		// Load existing document for both users
-		containerId = location.hash.slice(1);
+		const rawContainerId = location.hash.slice(1);
+		// Basic validation for container ID from URL hash before making network requests
+		const isValidContainerId =
+			rawContainerId.length > 0 && /^[\dA-Za-z-]{3,64}$/.test(rawContainerId);
+		if (!isValidContainerId) {
+			console.error(`Invalid container ID in URL hash: "${rawContainerId}"`);
+			throw new Error(
+				"Invalid container ID in URL hash. Expected 3-64 alphanumeric or '-' characters.",
+			);
+		}
+		containerId = rawContainerId;
 		console.log(`Loading document for both users: ${containerId}`);
 
 		const { container: container1 } = await client1.getContainer(

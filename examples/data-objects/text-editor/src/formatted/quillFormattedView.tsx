@@ -319,7 +319,6 @@ const FormattedTextEditorView: React.FC<{
 
 	return (
 		<div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-			<link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet" />
 			<style>{`
 				.ql-container { height: 100%; font-size: 14px; }
 				.ql-editor { height: 100%; outline: none; }

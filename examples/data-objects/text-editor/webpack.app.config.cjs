@@ -32,6 +32,10 @@ module.exports = (env = {}) => {
 					use: [require.resolve("source-map-loader")],
 					enforce: "pre",
 				},
+				{
+					test: /\.css$/,
+					use: ["style-loader", "css-loader"],
+				},
 			],
 		},
 		output: {
@@ -40,10 +44,10 @@ module.exports = (env = {}) => {
 		},
 		plugins: [
 			new HtmlWebpackPlugin({
-				title: "Formatted Text Editor",
+				title: "Multi-View Text Editor",
 				templateContent: `
 					<!DOCTYPE html>
-					<html><head><meta charset="utf-8"><title>Formatted Text Editor</title>
+					<html><head><meta charset="utf-8"><title>Multi-View Text Editor</title>
 					<style>*{box-sizing:border-box}body{margin:0;font-family:sans-serif}#content{height:100vh}</style>
 					</head><body><div id="content">Loading...</div></body></html>
 				`,
