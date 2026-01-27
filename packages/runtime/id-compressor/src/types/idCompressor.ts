@@ -204,18 +204,14 @@ export interface CompressorShardId {
 	 * The session ID of the shard. All shards from the same parent share the same session ID.
 	 */
 	sessionId: SessionId;
-	/**
-	 * The shard's offset in the stride pattern (0 to totalShards-1).
-	 * This uniquely identifies the shard among its siblings.
-	 */
-	shardId: number;
+
 	/**
 	 * The number of positions filled in this shard's stride pattern.
 	 * This tracks progress through the stride cycle, not the count of IDs actually generated.
 	 * For example, when a shard is created, it backfills entries for positions in its stride,
 	 * so this value may be non-zero even if the shard hasn't generated any IDs yet.
 	 */
-	strideFillCount: number;
+	localGenCount: number;
 }
 
 /**

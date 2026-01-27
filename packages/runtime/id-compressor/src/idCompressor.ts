@@ -380,8 +380,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			throw new Error("No active shards to unshard");
 		}
 
-		// The child's strideFillCount is its localGenCount, which is now the absolute genCount value
-		const childHighestGenCount = shardId.strideFillCount;
+		const childHighestGenCount = shardId.localGenCount;
 
 		// Backfill normalizer for any genCounts not yet covered
 		this.backfillNormalizerToGenCount(childHighestGenCount);
@@ -414,8 +413,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		return {
 			sessionId: this.localSessionId,
-			shardId: this.shardingState.shardOffset,
-			strideFillCount: this.localGenCount,
+			localGenCount: this.localGenCount,
 		};
 	}
 
