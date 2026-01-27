@@ -59,6 +59,7 @@ import {
 	type ChangeAtomIdBTree,
 } from "../../../feature-libraries/index.js";
 import type {
+	EncodedModularChangesetV1,
 	EncodedNodeChangeset,
 	FieldChangeDelta,
 	FieldChangeEncodingContext,
@@ -150,7 +151,9 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
-		local: [{ count: 1, fields: change === undefined ? undefined : deltaFromChild(change) }],
+		local: {
+			marks: [{ count: 1, fields: change === undefined ? undefined : deltaFromChild(change) }],
+		},
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
 		change === undefined ? [] : relevantRemovedRootsFromChild(change),
@@ -187,7 +190,14 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const codec = makeModularChangeCodecFamily(
-	new Map([[5, fieldKindConfiguration]]),
+	new Map([
+		[1, fieldKindConfiguration],
+		[2, fieldKindConfiguration],
+		[3, fieldKindConfiguration],
+		[4, fieldKindConfiguration],
+		[5, fieldKindConfiguration],
+		[6, fieldKindConfiguration],
+	]),
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
@@ -1047,19 +1057,21 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const nodeDelta: DeltaFieldChanges = [
-				{
-					count: 1,
-					fields: new Map([
-						[fieldA, [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }]],
-					]),
-				},
-			];
+			const nodeDelta: DeltaFieldChanges = {
+				marks: [
+					{
+						count: 1,
+						fields: new Map([
+							[fieldA, { marks: [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }] }],
+						]),
+					},
+				],
+			};
 
 			const expectedDelta: DeltaRoot = {
 				fields: new Map([
 					[fieldA, nodeDelta],
-					[fieldB, [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }]],
+					[fieldB, { marks: [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }] }],
 				]),
 			};
 
@@ -1408,9 +1420,9 @@ describe("ModularChangeFamily", () => {
 			revision: tag1,
 			idCompressor: testIdCompressor,
 		};
-		const encodingTestData: EncodingTestData<
+		const encodingTestDataForAllVersions: EncodingTestData<
 			ModularChangeset,
-			EncodedModularChangesetV2,
+			EncodedModularChangesetV1,
 			ChangeEncodingContext
 		> = {
 			successes: [
@@ -1455,6 +1467,16 @@ describe("ModularChangeFamily", () => {
 					inlineRevision(rootChangeWithoutNodeFieldChanges, tag1),
 					context,
 				],
+			],
+		};
+
+		const encodingTestDataV5Only: EncodingTestData<
+			ModularChangeset,
+			EncodedModularChangesetV2,
+			ChangeEncodingContext
+		> = {
+			successes: [
+				...encodingTestDataForAllVersions.successes,
 				[
 					"with no change constraint",
 					inlineRevision(
@@ -1480,7 +1502,13 @@ describe("ModularChangeFamily", () => {
 			],
 		};
 
-		makeEncodingTestSuite(family.codecs, encodingTestData, assertEquivalent);
+		makeEncodingTestSuite(
+			family.codecs,
+			encodingTestDataForAllVersions,
+			assertEquivalent,
+			[1, 2, 3, 4, 6],
+		);
+		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [5]);
 	});
 
 	it("build child change", () => {

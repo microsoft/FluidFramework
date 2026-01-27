@@ -402,7 +402,7 @@ function detachPass(
 	config: PassConfig,
 ): void {
 	let index = 0;
-	for (const mark of fieldChanges) {
+	for (const mark of fieldChanges.marks) {
 		if (mark.fields !== undefined) {
 			assert(
 				mark.attach === undefined || mark.detach !== undefined,
@@ -512,7 +512,7 @@ function attachPass(
 	config: PassConfig,
 ): void {
 	let index = 0;
-	for (const mark of fieldChanges) {
+	for (const mark of fieldChanges.marks) {
 		if (mark.attach !== undefined) {
 			for (let i = 0; i < mark.count; i += 1) {
 				const offsetAttachId = offsetDetachId(mark.attach, i);
