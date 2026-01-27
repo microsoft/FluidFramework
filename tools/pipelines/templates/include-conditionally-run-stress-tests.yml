@@ -72,7 +72,6 @@ stages:
         pipelineIdentifierForTelemetry: 'DdsStressService'
         condition: eq(dependencies.CheckAffectedPaths.outputs['Job.Check${{ replace(package.testFileTarName, '-', '') }}.AffectedFilesModified'],'true')
         poolBuild: ${{ parameters.pool }}
-        loggerPackage: ''
         artifactBuildId: ${{ parameters.artifactBuildId }}
         testPackage: ${{ package.name }}
         timeoutInMinutes: 120
