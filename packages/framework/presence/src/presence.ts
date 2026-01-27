@@ -7,7 +7,7 @@ import type { Listenable } from "@fluidframework/core-interfaces";
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { ClientConnectionId } from "./baseTypes.js";
-import type { BroadcastControlSettings } from "./broadcastControls.js";
+import type { BroadcastControlSettings } from "./broadcastControlsTypes.js";
 import type {
 	NotificationsWorkspace,
 	NotificationsWorkspaceSchema,

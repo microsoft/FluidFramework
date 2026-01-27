@@ -26,6 +26,20 @@ module.exports = {
 	 * `syncpack lint-semver-ranges`, the output is grouped by label.
 	 */
 	semverGroups: [
+		// Ignore eslint-config-fluid - the package is maintained in the parent workspace and uses link: protocol
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["@fluidframework/eslint-config-fluid"],
+			dependencies: ["**"],
+		},
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["**"],
+			dependencies: ["@fluidframework/eslint-config-fluid"],
+		},
+
 		{
 			label: "engines.node should always use >= ranges",
 			dependencyTypes: ["engines"],
@@ -76,14 +90,6 @@ module.exports = {
 		},
 
 		{
-			label: "Deps in pnpm overrides should use caret dependency ranges",
-			dependencyTypes: ["pnpmOverrides"],
-			dependencies: ["**"],
-			packages: ["**"],
-			range: "^",
-		},
-
-		{
 			label: "Must use exact dependency ranges",
 			dependencies: ["sort-package-json"],
 			packages: ["**"],
@@ -107,6 +113,14 @@ module.exports = {
 			],
 			packages: ["**"],
 			range: "~",
+		},
+
+		{
+			label: "Deps in pnpm overrides should use caret dependency ranges",
+			dependencyTypes: ["pnpmOverrides"],
+			dependencies: ["**"],
+			packages: ["**"],
+			range: "^",
 		},
 
 		{
@@ -141,6 +155,20 @@ module.exports = {
 	 * `syncpack list-mismatches`, the output is grouped by label.
 	 */
 	versionGroups: [
+		// Ignore eslint-config-fluid - the package is maintained in the parent workspace and uses link: protocol
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["@fluidframework/eslint-config-fluid"],
+			dependencies: ["**"],
+		},
+		{
+			label: "Ignore eslint-config-fluid package and dependency",
+			isIgnored: true,
+			packages: ["**"],
+			dependencies: ["@fluidframework/eslint-config-fluid"],
+		},
+
 		{
 			label: "chalk >2 is ESM only but build-tools and version-tools are still CJS only.",
 			dependencies: ["chalk"],
@@ -149,11 +177,7 @@ module.exports = {
 
 		{
 			label: "Versions of common Fluid packages should all match",
-			dependencies: [
-				"@fluidframework/build-common",
-				"@fluidframework/common-utils",
-				"@fluidframework/eslint-config-fluid",
-			],
+			dependencies: ["@fluidframework/build-common", "@fluidframework/common-utils"],
 			packages: ["**"],
 		},
 

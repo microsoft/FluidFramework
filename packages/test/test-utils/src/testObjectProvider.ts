@@ -505,6 +505,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 * {@inheritDoc ITestObjectProvider.documentServiceFactory}
 	 */
 	public get documentServiceFactory(): IDocumentServiceFactory {
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this._documentServiceFactory) {
 			this._documentServiceFactory = this.driver.createDocumentServiceFactory();
 		}
@@ -515,6 +516,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 * {@inheritDoc ITestObjectProvider.urlResolver}
 	 */
 	public get urlResolver(): IUrlResolver {
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this._urlResolver) {
 			this._urlResolver = this.driver.createUrlResolver();
 		}
@@ -821,6 +823,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 * {@inheritDoc ITestObjectProvider.documentServiceFactory}
 	 */
 	public get documentServiceFactory(): IDocumentServiceFactory {
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this._documentServiceFactory) {
 			this._documentServiceFactory = this.driverForCreating.createDocumentServiceFactory();
 		}
@@ -831,6 +834,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 * {@inheritDoc ITestObjectProvider.urlResolver}
 	 */
 	public get urlResolver(): IUrlResolver {
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this._urlResolver) {
 			this._urlResolver = this.driverForCreating.createUrlResolver();
 		}

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { AxiosRequestConfig, AxiosRequestHeaders } from "./axios.cjs";
 import type { QueryStringType } from "./queryStringUtils.js";
+import type { RequestConfig, RequestHeaders } from "./request.cjs";
 import { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {
@@ -26,15 +26,15 @@ export abstract class RestWrapper {
 	public async get<T>(
 		url: string,
 		queryString?: QueryStringType,
-		headers?: AxiosRequestHeaders,
+		headers?: RequestHeaders,
 		additionalOptions?: Partial<
 			Omit<
-				AxiosRequestConfig,
+				RequestConfig,
 				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
-		const options: AxiosRequestConfig = {
+		const options: RequestConfig = {
 			...additionalOptions,
 			baseURL: this.baseurl,
 			headers,
@@ -60,15 +60,15 @@ export abstract class RestWrapper {
 		url: string,
 		requestBody: any,
 		queryString?: QueryStringType,
-		headers?: AxiosRequestHeaders,
+		headers?: RequestHeaders,
 		additionalOptions?: Partial<
 			Omit<
-				AxiosRequestConfig,
+				RequestConfig,
 				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
-		const options: AxiosRequestConfig = {
+		const options: RequestConfig = {
 			...additionalOptions,
 			baseURL: this.baseurl,
 			data: requestBody,
@@ -93,15 +93,15 @@ export abstract class RestWrapper {
 	public async delete<T>(
 		url: string,
 		queryString?: QueryStringType,
-		headers?: AxiosRequestHeaders,
+		headers?: RequestHeaders,
 		additionalOptions?: Partial<
 			Omit<
-				AxiosRequestConfig,
+				RequestConfig,
 				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
-		const options: AxiosRequestConfig = {
+		const options: RequestConfig = {
 			...additionalOptions,
 			baseURL: this.baseurl,
 			headers,
@@ -127,15 +127,15 @@ export abstract class RestWrapper {
 		url: string,
 		requestBody: any,
 		queryString?: QueryStringType,
-		headers?: AxiosRequestHeaders,
+		headers?: RequestHeaders,
 		additionalOptions?: Partial<
 			Omit<
-				AxiosRequestConfig,
+				RequestConfig,
 				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
-		const options: AxiosRequestConfig = {
+		const options: RequestConfig = {
 			...additionalOptions,
 			baseURL: this.baseurl,
 			data: requestBody,
@@ -150,7 +150,7 @@ export abstract class RestWrapper {
 	}
 
 	protected abstract request<T>(
-		options: AxiosRequestConfig,
+		options: RequestConfig,
 		statusCode: number,
 		addNetworkCallProps?: boolean,
 	): Promise<IR11sResponse<T>>;

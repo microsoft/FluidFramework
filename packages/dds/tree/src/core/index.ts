@@ -175,6 +175,8 @@ export {
 	type GraphCommit,
 	CommitKind,
 	type CommitMetadata,
+	type LocalChangeMetadata,
+	type RemoteChangeMetadata,
 	type ChangeMetadata,
 	type RevisionTag,
 	RevisionTagSchema,
