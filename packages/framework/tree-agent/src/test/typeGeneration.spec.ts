@@ -69,6 +69,20 @@ const initialAppState = {
 };
 
 describe("Type generation", () => {
+	it("for handle nodes", () => {
+		class ObjWithHandle extends sf.object("ObjWithHandle", {
+			handle: sf.optional(sf.handle),
+		}) {}
+		const handleSchemaString = getDomainSchemaString(ObjWithHandle, { handle: undefined });
+		assert.deepEqual(
+			handleSchemaString,
+			`interface ObjWithHandle {
+handle?: IFluidHandle;
+}
+`,
+		);
+	});
+
 	describe("for schemas with methods", () => {
 		it("works on object nodes", () => {
 			class ObjWithMethod extends sf.object("ObjWithMethod", {}) {

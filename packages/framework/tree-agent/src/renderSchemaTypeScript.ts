@@ -478,6 +478,9 @@ function renderLeaf(leafKind: ValueSchema): string {
 		case ValueSchema.Null: {
 			return "null";
 		}
+		case ValueSchema.FluidHandle: {
+			return "IFluidHandle";
+		}
 		default: {
 			throw new Error(`Unsupported leaf kind ${NodeKind[leafKind]}.`);
 		}
