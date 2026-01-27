@@ -237,6 +237,11 @@ export interface CombinedSchemaCompatibilityStatus {
 export interface SchemaCompatibilitySnapshotsOptions {
 	/**
 	 * Directory where historical schema snapshots are stored.
+	 * @remarks
+	 * As the contents of this directory (specifically historical snapshots) cannot be regenerated,
+	 * a directory appropriate for test data should be used.
+	 * Generally this means that this directory should be versioned like code,
+	 * and not erased when regenerated snapshots.
 	 */
 	readonly snapshotDirectory: string;
 	/**
@@ -319,6 +324,14 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * This is a known limitation that will be improved in future releases.
  * These improvements, as well as other changes, may change the exact messages produced by this function in the error cases: no stability of these messages should be assumed.
  *
+ * Unlike some other snapshot based testing tools, this stores more than just the current snapshot: historical snapshots are retained as well.
+ * Retention of these additional historical snapshots, whose content can't be regenerated from the current schema, is necessary to properly test compatibility across versions.
+ * Since there is content in the snapshots which cannot be regenerated, tools which assume all snapshotted content can be regenerated cannot be used here.
+ * This means that tools like Jest's built in snapshot testing are not suitable for this purpose.
+ * These snapshots behave partly like test data, and partly like snapshots.
+ * Typically the easiest way to manage this is to place {@link SchemaCompatibilitySnapshotsOptions.snapshotDirectory} inside a directory appropriate for test data,
+ * and use node to provide the filesystem access via {@link SchemaCompatibilitySnapshotsOptions.fileSystem}.
+ *
  * For now, locating what change broke compatibility is likely best discovered by making small schema changes one at a time and updating the snapshot and reviewing the diffs.
  * Details for what kinds of changes are breaking and in which ways can be found in the documentation for {@link TreeView.compatibility} and
  * {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution}.
@@ -344,6 +357,38 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * 		minVersionForCollaboration: "2.0.0",
  * 		mode: process.argv.includes("--snapshot") ? "update" : "test",
  * 		snapshotDirectory,
+ * 	});
+ * });
+ * ```
+ * @example Complete Mocha test file
+ * ```typescript
+ * import fs from "node:fs";
+ * import path from "node:path";
+ *
+ * import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/beta";
+ *
+ * // The TreeViewConfiguration the application uses, which contains the application's schema.
+ * import { treeViewConfiguration } from "../schema.js";
+ *
+ * // Provide some way to run the check in "update" mode when updating snapshots is intended.
+ * const regenerateSnapshots = process.argv.includes("--snapshot");
+ * // Setup the actual test. In this case using Mocha syntax.
+ * describe("schema", () => {
+ * 	it("schema compatibility", () => {
+ * 		// Select a path to save the snapshots in.
+ * 		// This will depend on how your application organizes its test data.
+ * 		const snapshotDirectory = path.join(
+ * 			import.meta.dirname,
+ * 			"../../src/test/schema-snapshots",
+ * 		);
+ * 		checkSchemaCompatibilitySnapshots({
+ * 			snapshotDirectory,
+ * 			fileSystem: { ...fs, ...path },
+ * 			version: "2.0.0",
+ * 			schema: treeViewConfiguration,
+ * 			minVersionForCollaboration: "2.0.0",
+ * 			mode: regenerateSnapshots ? "update" : "test",
+ * 		});
  * 	});
  * });
  * ```

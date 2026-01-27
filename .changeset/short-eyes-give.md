@@ -16,8 +16,8 @@ import path from "node:path";
 
 import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/beta";
 
-// The TreeViewConfiguration the application uses.
-import { config } from "../schema.js";
+// The TreeViewConfiguration the application uses, which contains the application's schema.
+import { treeViewConfiguration } from "../schema.js";
 
 // Provide some way to run the check in "update" mode when updating snapshots is intended.
 const regenerateSnapshots = process.argv.includes("--snapshot");
@@ -34,7 +34,7 @@ describe("schema", () => {
 			snapshotDirectory,
 			fileSystem: { ...fs, ...path },
 			version: "2.0.0",
-			schema: config,
+			schema: treeViewConfiguration,
 			minVersionForCollaboration: "2.0.0",
 			mode: regenerateSnapshots ? "update" : "test",
 		});
