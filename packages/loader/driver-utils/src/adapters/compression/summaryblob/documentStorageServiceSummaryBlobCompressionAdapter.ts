@@ -222,7 +222,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static decodeBlob(file: ArrayBufferLike): ArrayBufferLike {
 		let decompressed: ArrayBufferLike;
 		let originalBlob;
-		let algorithm;
+		let algorithm: SummaryCompressionAlgorithm;
 		if (this.hasPrefix(file)) {
 			algorithm = DocumentStorageServiceCompressionAdapter.readAlgorithmFromBlob(file);
 			originalBlob = this.removePrefixFromBlobIfPresent(file);
