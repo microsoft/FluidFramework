@@ -76,6 +76,13 @@ describeCompat(
 
 		let testId = 0;
 
+		beforeEach("check driver compatibility", function () {
+			provider = getTestObjectProvider();
+			if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
+				this.skip(); // This test triggers 504 errors on AFR occasionally. The test intentionally ignores server interactions anyway.
+			}
+		});
+
 		const setup = async (config: ITestContainerConfig): Promise<void> => {
 			testId++;
 			provider = getTestObjectProvider();

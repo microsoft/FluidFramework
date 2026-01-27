@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { cleanedPackageVersion as runtimeUtilsCleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
-import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
+import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import { cleanedPackageVersion as runtimeUtilsCleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
 import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Translates decoded data to encoded data.
@@ -381,7 +381,7 @@ class DefaultBinaryCodec<TDecoded, TContext> implements IBinaryCodec<TDecoded, T
 
 	public decode(change: IsoBuffer, context: TContext): TDecoded {
 		const json = bufferToString(change, "utf8");
-		const jsonable = JSON.parse(json);
+		const jsonable = JSON.parse(json) as JsonCompatibleReadOnly;
 		return this.jsonCodec.decode(jsonable, context);
 	}
 }

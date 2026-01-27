@@ -5,6 +5,9 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+
 import type { JsonableTree } from "../../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
@@ -30,10 +33,8 @@ import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 } from "../../../../feature-libraries/index.js";
-import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { testIdCompressor } from "../../../utils.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
 
 export function checkNodeEncode(
 	nodeEncoder: NodeEncoder,
@@ -137,7 +138,7 @@ function testDecode(
 	{
 		assertJsonish(chunk, new Set());
 		const json = JSON.stringify(chunk);
-		const parsed = JSON.parse(json);
+		const parsed = JSON.parse(json) as typeof chunk;
 		// can't check this due to undefined fields
 		// assert.deepEqual(parsed, chunk);
 		// Instead check that it works properly:
@@ -197,7 +198,7 @@ function assertJsonish(data: unknown, stack: Set<unknown>): void {
 
 				for (const key of Reflect.ownKeys(data)) {
 					assert(typeof key === "string");
-					const value = Reflect.get(data, key);
+					const value: unknown = Reflect.get(data, key);
 					if (value !== undefined) {
 						// TODO: could check for feature detection pattern, used for IFluidHandle
 						assertJsonish(value, stack);

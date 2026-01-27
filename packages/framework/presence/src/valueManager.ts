@@ -4,7 +4,7 @@
  */
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { ValueManager } from "./internalTypes.js";
+import type { ValueManager } from "./statesManagerTypes.js";
 
 /**
  * Given a value manager, return opaque InternalTypes.StateValue.
