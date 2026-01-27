@@ -134,16 +134,13 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
     // (undocumented)
     applyEdit(...changes: readonly Change[]): EditId;
     closeEdit(): EditId;
-    // (undocumented)
     get currentView(): TreeView;
     dispose(error?: Error): void;
     // (undocumented)
     disposed: boolean;
     protected emitChange(): void;
-    // (undocumented)
     getEditStatus(): EditStatus;
     protected handleNewEdit(id: EditId, result: ValidEditingResult): void;
-    // (undocumented)
     hasOpenEdit(): boolean;
     protected hintKnownEditingResult(edit: Edit<ChangeInternal>, result: ValidEditingResult): void;
     protected abstract get latestCommittedView(): RevisionView;

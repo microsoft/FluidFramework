@@ -48,6 +48,8 @@ export interface IProgress {
 }
 
 /**
+ * Runs the provided API call with automatic retry logic.
+ *
  * @internal
  */
 export async function runWithRetry<T>(

@@ -20,7 +20,8 @@ export function isRuntimeMessage(message: { type: string }): boolean {
 }
 
 /**
- * Checks if a message can be coalesced by the service.
+ * Whether the message can be coalesced by the relay service.
+ *
  * @privateRemarks ADO #1385: To be moved to packages/protocol-base/src/protocol.ts
  * @internal
  */
