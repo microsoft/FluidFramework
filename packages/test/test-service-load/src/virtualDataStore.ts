@@ -30,6 +30,7 @@ export class VirtualDataObjectFactory extends DataObjectFactory<VirtualDataStore
 	}
 
 	/**
+	 * Creates a new instance of the virtual data store.
 	 *
 	 * @param runtime - the container runtime
 	 * @param _initialState - any state
