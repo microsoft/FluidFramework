@@ -69,9 +69,12 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	 * Use content hashes instead of file timestamps for incremental build detection.
 	 * Timestamps are unreliable as they change with git operations, file copies, and other
 	 * processes that don't modify content.
+	 *
+	 * Set the FLUID_BUILD_DISABLE_COPYFILES_HASH environment variable to disable hashing and
+	 * fall back to timestamp-based incremental detection.
 	 */
 	protected override get useHashes(): boolean {
-		return true;
+		return process.env.FLUID_BUILD_DISABLE_COPYFILES_HASH === undefined;
 	}
 
 	private parsed: boolean = false;
@@ -254,9 +257,12 @@ export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 	 * Use content hashes instead of file timestamps for incremental build detection.
 	 * Timestamps are unreliable as they change with git operations, file copies, and other
 	 * processes that don't modify content.
+	 *
+	 * Set the FLUID_BUILD_DISABLE_TYPEVALIDATION_HASH environment variable to disable hashing and
+	 * fall back to timestamp-based incremental detection.
 	 */
 	protected override get useHashes(): boolean {
-		return true;
+		return process.env.FLUID_BUILD_DISABLE_TYPEVALIDATION_HASH === undefined;
 	}
 
 	private inputFiles: string[] | undefined;
@@ -305,9 +311,12 @@ export class GoodFence extends LeafWithFileStatDoneFileTask {
 	 * Use content hashes instead of file timestamps for incremental build detection.
 	 * Timestamps are unreliable as they change with git operations, file copies, and other
 	 * processes that don't modify content.
+	 *
+	 * Set the FLUID_BUILD_DISABLE_GOODFENCE_HASH environment variable to disable hashing and
+	 * fall back to timestamp-based incremental detection.
 	 */
 	protected override get useHashes(): boolean {
-		return true;
+		return process.env.FLUID_BUILD_DISABLE_GOODFENCE_HASH === undefined;
 	}
 
 	protected get taskWeight(): number {
@@ -344,9 +353,12 @@ export class DepCruiseTask extends LeafWithFileStatDoneFileTask {
 	 * Use content hashes instead of file timestamps for incremental build detection.
 	 * Timestamps are unreliable as they change with git operations, file copies, and other
 	 * processes that don't modify content.
+	 *
+	 * Set the FLUID_BUILD_DISABLE_DEPCRUISE_HASH environment variable to disable hashing and
+	 * fall back to timestamp-based incremental detection.
 	 */
 	protected override get useHashes(): boolean {
-		return true;
+		return process.env.FLUID_BUILD_DISABLE_DEPCRUISE_HASH === undefined;
 	}
 
 	private inputFiles: string[] | undefined;
