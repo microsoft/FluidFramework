@@ -256,7 +256,7 @@ extends:
               - checkout: FluidFramework
                 # Specifying the path explicitly guarantees consistent location regardless of whether we check out
                 # a single repository or multiple.
-                path: $(Pipeline.Workspace)/s/FluidFramework
+                path: s/FluidFramework
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
@@ -619,7 +619,7 @@ extends:
               - checkout: FluidFramework
                 # Specifying the path explicitly guarantees consistent location regardless of whether we check out
                 # a single repository or multiple.
-                path: $(Pipeline.Workspace)/s/FluidFramework
+                path: s/FluidFramework
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
@@ -781,7 +781,7 @@ extends:
                 - checkout: FluidFramework
                   # Specifying the path explicitly guarantees consistent location regardless of whether we check out
                   # a single repository or multiple.
-                  path: $(Pipeline.Workspace)/s/FluidFramework
+                  path: s/FluidFramework
                   clean: true
                   lfs: '${{ parameters.checkoutSubmodules }}'
                   submodules: '${{ parameters.checkoutSubmodules }}'
