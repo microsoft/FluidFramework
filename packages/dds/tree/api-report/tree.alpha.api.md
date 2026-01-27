@@ -883,6 +883,7 @@ export interface RemoteChangeMetadata extends CommitMetadata {
     readonly getChange?: undefined;
     readonly getRevertible?: undefined;
     readonly isLocal: false;
+    readonly label?: undefined;
 }
 
 // @alpha

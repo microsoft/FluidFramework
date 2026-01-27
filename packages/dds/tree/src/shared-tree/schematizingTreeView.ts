@@ -299,37 +299,36 @@ export class SchematizingSimpleTreeView<
 		return this.checkout.runWithTransactionLabel(() => {
 			this.checkout.transaction.start();
 
-		// Validate preconditions before running the transaction callback.
-		addConstraintsToTransaction(
-			checkout,
-			false /* constraintsOnRevert */,
-			params?.preconditions,
-		);
-		const transactionCallbackStatus = transaction();
-		const rollback = transactionCallbackStatus?.rollback;
-		const value = (
-			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
-		)?.value;
+			// Validate preconditions before running the transaction callback.
+			addConstraintsToTransaction(
+				checkout,
+				false /* constraintsOnRevert */,
+				params?.preconditions,
+			);
+			const transactionCallbackStatus = transaction();
+			const rollback = transactionCallbackStatus?.rollback;
+			const value = (
+				transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			)?.value;
 
-		if (rollback === true) {
-			checkout.transaction.abort();
+			if (rollback === true) {
+				checkout.transaction.abort();
+				return value === undefined
+					? { success: false }
+					: { success: false, value: value as TFailureValue };
+			}
+
+			// Validate preconditions on revert after running the transaction callback and was successful.
+			addConstraintsToTransaction(
+				checkout,
+				true /* constraintsOnRevert */,
+				transactionCallbackStatus?.preconditionsOnRevert,
+			);
+
+			checkout.transaction.commit();
 			return value === undefined
-				? { success: false }
-				: { success: false, value: value as TFailureValue };
-		}
-
-		// Validate preconditions on revert after running the transaction callback and was successful.
-		addConstraintsToTransaction(
-			checkout,
-			true /* constraintsOnRevert */,
-			transactionCallbackStatus?.preconditionsOnRevert,
-		);
-
-		checkout.transaction.commit();
-		return value === undefined
-			? { success: true }
-			: { success: true, value: value as TSuccessValue };
-
+				? { success: true }
+				: { success: true, value: value as TSuccessValue };
 		}, params?.label);
 	}
 
