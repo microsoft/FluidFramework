@@ -565,7 +565,7 @@ export function spyOnMethod(
  * Determines whether or not the given delta has a visible impact on the document tree.
  */
 export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boolean {
-	for (const mark of fieldChanges ?? []) {
+	for (const mark of fieldChanges?.marks ?? []) {
 		if (mark.attach !== undefined || mark.detach !== undefined) {
 			return true;
 		}
@@ -1053,7 +1053,7 @@ const testedFamilies = new WeakSet<ICodecFamily<unknown, unknown>>();
  */
 function registerValidationHook<TDecoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
-	versions: Iterable<FormatVersion>,
+	versions: readonly FormatVersion[],
 ): void {
 	let tested = testedVersionsByFamily.get(family);
 	if (tested === undefined) {
@@ -1104,7 +1104,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 	supportedVersions?: FormatVersion[],
 ): void {
-	const supportedVersionsToTest = supportedVersions ?? family.getSupportedFormats();
+	const supportedVersionsToTest = supportedVersions ?? [...family.getSupportedFormats()];
 	registerValidationHook(family, supportedVersionsToTest);
 
 	for (const version of supportedVersionsToTest) {

@@ -255,6 +255,11 @@ describe("End to end chunked encoding", () => {
 	});
 
 	describe("identifier field encoding", () => {
+		/** Shape of serialized tree content for these tests */
+		interface TreeContentFormat {
+			fields: { data: unknown[][] };
+		}
+
 		it("is encoded as compressed id when the identifier is a valid stable id.", () => {
 			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
@@ -273,7 +278,7 @@ describe("End to end chunked encoding", () => {
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
 			const tree = summary.tree.ForestTree;
 			assert(tree.type === SummaryType.Blob);
-			const treeContent = JSON.parse(tree.content as string);
+			const treeContent = JSON.parse(tree.content as string) as TreeContentFormat;
 			const identifierValue = treeContent.fields.data[0][1];
 			// Check that the identifierValue is compressed.
 			assert.equal(identifierValue, testIdCompressor.recompress(id));
@@ -301,7 +306,7 @@ describe("End to end chunked encoding", () => {
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
 			const tree = summary.tree.ForestTree;
 			assert(tree.type === SummaryType.Blob);
-			const treeContent = JSON.parse(tree.content as string);
+			const treeContent = JSON.parse(tree.content as string) as TreeContentFormat;
 			const identifierValue = treeContent.fields.data[0][1];
 			// Check that the identifierValue is the original uncompressed id.
 			assert.equal(identifierValue, id);
@@ -324,7 +329,7 @@ describe("End to end chunked encoding", () => {
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
 			const tree = summary.tree.ForestTree;
 			assert(tree.type === SummaryType.Blob);
-			const treeContent = JSON.parse(tree.content as string);
+			const treeContent = JSON.parse(tree.content as string) as TreeContentFormat;
 			const identifierValue = treeContent.fields.data[0][1];
 			// Check that the identifierValue is the original uncompressed id.
 			assert.equal(identifierValue, id);

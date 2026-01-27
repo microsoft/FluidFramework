@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/oldest-client-observer",
-	"version": "2.81.0",
+	"version": "2.82.0",
 	"description": "Data object to determine if the local client is the oldest amongst connected clients",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -120,7 +120,7 @@
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
-		"@types/node": "^18.19.0",
+		"@types/node": "~20.19.30",
 		"concurrently": "^9.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",

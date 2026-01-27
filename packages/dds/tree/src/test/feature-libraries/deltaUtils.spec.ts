@@ -28,13 +28,15 @@ describe("DeltaUtils", () => {
 			const nestedCursorInsert = new Map<FieldKey, DeltaFieldChanges>([
 				[
 					fooField,
-					[
-						{ count: 42 },
-						{
-							count: 1,
-							attach: detachId,
-						},
-					],
+					{
+						marks: [
+							{ count: 42 },
+							{
+								count: 1,
+								attach: detachId,
+							},
+						],
+					},
 				],
 			]);
 			const input: DeltaRoot = {
@@ -42,12 +44,14 @@ describe("DeltaUtils", () => {
 				fields: new Map<FieldKey, DeltaFieldChanges>([
 					[
 						fooField,
-						[
-							{
-								count: 1,
-								fields: nestedCursorInsert,
-							},
-						],
+						{
+							marks: [
+								{
+									count: 1,
+									fields: nestedCursorInsert,
+								},
+							],
+						},
 					],
 				]),
 				global: [{ id: detachId, fields: nestedCursorInsert }],
@@ -57,13 +61,15 @@ describe("DeltaUtils", () => {
 			const nestedMapTreeInsert = new Map<FieldKey, DeltaFieldChanges>([
 				[
 					fooField,
-					[
-						{ count: 42 },
-						{
-							count: 1,
-							attach: detachId,
-						},
-					],
+					{
+						marks: [
+							{ count: 42 },
+							{
+								count: 1,
+								attach: detachId,
+							},
+						],
+					},
 				],
 			]);
 			const expected: DeltaRoot<MapTree[]> = {
@@ -71,12 +77,14 @@ describe("DeltaUtils", () => {
 				fields: new Map<FieldKey, DeltaFieldChanges>([
 					[
 						fooField,
-						[
-							{
-								count: 1,
-								fields: nestedMapTreeInsert,
-							},
-						],
+						{
+							marks: [
+								{
+									count: 1,
+									fields: nestedMapTreeInsert,
+								},
+							],
+						},
 					],
 				]),
 				global: [{ id: detachId, fields: nestedMapTreeInsert }],
