@@ -12641,7 +12641,7 @@ importers:
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
       '@types/lz4js':
-        specifier: ^0.2.2
+        specifier: ^0.2.0
         version: 0.2.2
       '@types/mocha':
         specifier: ^10.0.10
