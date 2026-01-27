@@ -50,6 +50,7 @@
 		"@fluidframework/tree": "workspace:~",
 		"fluid-framework": "workspace:~",
 		"quill": "^2.0.2",
+		"quill-delta": "^4.2.2",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
 	},

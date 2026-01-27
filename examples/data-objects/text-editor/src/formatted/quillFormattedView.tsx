@@ -6,6 +6,7 @@
 import { type PropTreeNode, unwrapPropTreeNode } from "@fluidframework/react/alpha";
 import { Tree } from "@fluidframework/tree";
 import Quill from "quill";
+import Delta from "quill-delta";
 import * as React from "react";
 
 import { FormattedTextAsTree } from "./formattedSchema.js";
@@ -299,18 +300,15 @@ const FormattedTextEditorView: React.FC<{
 			const treeDelta = buildDeltaFromTree(root);
 			const quillDelta = quillRef.current.getContents() as QuillDelta;
 
-			// Only update if content actually differs (avoids cursor jump on local edits)
-			if (JSON.stringify(quillDelta.ops) !== JSON.stringify(treeDelta.ops)) {
+			// Compute diff between current Quill state and tree state
+			const diff = new Delta(quillDelta.ops).diff(new Delta(treeDelta.ops)) as QuillDelta;
+
+			// Only update if there are actual differences
+			if (diff.ops && diff.ops.length > 0) {
 				isUpdating.current = true;
 
-				// Preserve cursor position across content update
-				const sel = quillRef.current.getSelection();
-				quillRef.current.setContents(treeDelta);
-				if (sel) {
-					// Clamp cursor to valid range in case content is shorter
-					const pos = Math.min(sel.index, quillRef.current.getLength() - 1);
-					quillRef.current.setSelection(pos, 0);
-				}
+				// Apply only the diff for surgical updates (better cursor preservation)
+				quillRef.current.updateContents(diff);
 
 				isUpdating.current = false;
 			}
