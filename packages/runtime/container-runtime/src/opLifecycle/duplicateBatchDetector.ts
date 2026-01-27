@@ -84,14 +84,11 @@ export class DuplicateBatchDetector {
 	 * since the batch start has been processed by all clients, and local batches are deduped and the forked client would close.
 	 */
 	private clearOldBatchIds(msn: number): void {
-		// Map iteration order is insertion order, and seqNums are added in order
-		// So we can break early once we hit a seqNum >= msn
 		for (const [sequenceNumber, batchId] of this.batchIdsBySeqNum) {
-			if (sequenceNumber >= msn) {
-				break; // All remaining entries have seqNum >= msn
+			if (sequenceNumber < msn) {
+				this.batchIdsBySeqNum.delete(sequenceNumber);
+				this.seqNumByBatchId.delete(batchId);
 			}
-			this.batchIdsBySeqNum.delete(sequenceNumber);
-			this.seqNumByBatchId.delete(batchId);
 		}
 	}
 
