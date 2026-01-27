@@ -12,7 +12,6 @@ const config: Linter.Config[] = [
 		rules: {
 			"@typescript-eslint/explicit-function-return-type": "warn",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-			"jsdoc/require-description": "off",
 			"prefer-arrow-callback": "off",
 			"tsdoc/syntax": "off",
 			"depend/ban-dependencies": [
