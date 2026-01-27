@@ -222,7 +222,6 @@ export class Layout extends EventEmitter {
 			doc.visitRange((position, segment, startOffset, endOffset) => {
 				this.beginSegment(position, segment, startOffset, endOffset);
 
-				// eslint-disable-next-line no-constant-condition
 				while (true) {
 					const index = this.formatStack.length - 1;
 					const formatInfo = this.format;
@@ -321,9 +320,9 @@ export class Layout extends EventEmitter {
 		const candidate = stack?.[this.formatStack.length];
 
 		// If we find the same kind of formatter at the expected depth, pass the previous output state.
-		const prevOut =
-			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
-			(candidate && candidate.formatter === formatter ? candidate.state : undefined) as TState;
+		const prevOut = (
+			candidate && candidate.formatter === formatter ? candidate.state : undefined
+		) as TState;
 
 		const state = formatter.begin(this, init, prevOut);
 

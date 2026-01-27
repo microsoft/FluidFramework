@@ -26,7 +26,6 @@ module.exports.pitch = function pitch(remainingRequest) {
 
 	const { filename, options = {} } = getOutputFilename(output, { target });
 
-	// eslint-disable-next-line no-underscore-dangle
 	const currentCompilation = this._compilation;
 
 	const outputFilename = loaderUtils.interpolateName(this, filename, {

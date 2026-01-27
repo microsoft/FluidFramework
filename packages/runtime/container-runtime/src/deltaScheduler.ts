@@ -69,7 +69,6 @@ export class DeltaScheduler {
 	}
 
 	private readonly batchBegin = (message: ISequencedDocumentMessage): void => {
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.processingStartTime === undefined) {
 			this.processingStartTime = performanceNow();
 		}

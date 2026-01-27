@@ -573,7 +573,7 @@ export class ReplayTool {
 			? this.mainDocument.originalSummarySequenceNumbers.filter((s) => s >= this.args.from)
 			: [];
 		let nextSnapPoint = -1;
-		// eslint-disable-next-line no-constant-condition
+
 		while (true) {
 			const currentOp = this.mainDocument.currentOp;
 			if (nextSnapPoint <= currentOp) {

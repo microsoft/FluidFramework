@@ -227,7 +227,6 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 			if (i >= 2 && i < 5) {
 				assert.equal(props?.foo, "old");
 			} else {
-				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 				assert(props === undefined || props.foo === undefined);
 			}
 		}

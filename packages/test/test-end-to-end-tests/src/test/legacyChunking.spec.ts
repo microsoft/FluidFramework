@@ -11,8 +11,6 @@ import {
 	getDataRuntimeApi,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-// TODO:AB#6558: This should be provided based on the compatibility configuration.
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {

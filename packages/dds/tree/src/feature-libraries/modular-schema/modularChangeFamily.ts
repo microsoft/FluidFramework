@@ -481,7 +481,6 @@ export class ModularChangeFamily
 				setInChangeAtomIdMap(composedNodes, nodeId, nodeChangeset);
 			}
 
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 			if (nodeChangeset.fieldChanges === undefined) {
 				nodeChangeset.fieldChanges = new Map();
 			}
@@ -3161,7 +3160,6 @@ export function normalizeFieldId(
 function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>): NodeId {
 	let currentId = nodeId;
 
-	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
 		if (dealiased === undefined) {

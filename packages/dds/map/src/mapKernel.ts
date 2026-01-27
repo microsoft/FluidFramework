@@ -641,7 +641,6 @@ export class MapKernel {
 			// A pending clear will be last in the list, since it terminates all prior lifetimes.
 			const pendingClear = this.pendingData.pop();
 			assert(
-				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 				pendingClear !== undefined &&
 					pendingClear.type === "clear" &&
 					pendingClear === typedLocalOpMetadata,
@@ -715,7 +714,6 @@ export class MapKernel {
 					this.sequencedData.clear();
 					const pendingClear = this.pendingData.shift();
 					assert(
-						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 						pendingClear !== undefined &&
 							pendingClear.type === "clear" &&
 							pendingClear === localOpMetadata,
@@ -772,7 +770,6 @@ export class MapKernel {
 					);
 					const pendingEntry = this.pendingData[pendingEntryIndex];
 					assert(
-						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 						pendingEntry !== undefined &&
 							pendingEntry.type === "delete" &&
 							pendingEntry === localOpMetadata,
@@ -813,7 +810,6 @@ export class MapKernel {
 					);
 					const pendingEntry = this.pendingData[pendingEntryIndex];
 					assert(
-						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 						pendingEntry !== undefined && pendingEntry.type === "lifetime",
 						0xbf8 /* Couldn't match local set message to pending lifetime */,
 					);

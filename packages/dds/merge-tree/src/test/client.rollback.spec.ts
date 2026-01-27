@@ -5,7 +5,6 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 // TODO: Fix prefer-optional-chain lint violations
-/* eslint-disable @typescript-eslint/prefer-optional-chain */
 
 import { strict as assert } from "node:assert";
 

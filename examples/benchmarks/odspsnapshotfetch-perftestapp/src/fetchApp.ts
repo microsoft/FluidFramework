@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
 import { FluidAppOdspUrlResolver } from "@fluidframework/odsp-urlresolver/internal";
-// eslint-disable-next-line import-x/no-deprecated
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspSampleCache } from "./odspPersistantCache.js";
@@ -55,7 +54,7 @@ export function start(div: HTMLDivElement, odspAccessToken: string): void {
 	fetchButton1.onclick = async () => {
 		const resolvedUrl = await urlResolver.resolve({ url: text1.value });
 		assert(resolvedUrl !== undefined, "resolvedUrl should be defined");
-		// eslint-disable-next-line import-x/no-deprecated
+
 		const mockLogger = new MockLogger();
 		for (let i = 0; i < 5; ++i) {
 			await prefetchLatestSnapshot(
@@ -73,7 +72,7 @@ export function start(div: HTMLDivElement, odspAccessToken: string): void {
 	fetchButton2.onclick = async () => {
 		const resolvedUrl = await urlResolver.resolve({ url: text2.value });
 		assert(resolvedUrl !== undefined, 0x31a /* resolvedUrl is undefined */);
-		// eslint-disable-next-line import-x/no-deprecated
+
 		const mockLogger = new MockLogger();
 		for (let i = 0; i < 5; ++i) {
 			await prefetchLatestSnapshot(
@@ -89,7 +88,6 @@ export function start(div: HTMLDivElement, odspAccessToken: string): void {
 	};
 }
 
-// eslint-disable-next-line import-x/no-deprecated
 function fetchButtonClick(mockLogger: MockLogger, div: HTMLDivElement): void {
 	const fields = new Set([
 		"eventName",
