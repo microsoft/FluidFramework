@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { BroadcastControls } from "./broadcastControls.js";
+import type { BroadcastControls } from "./broadcastControlsTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
-import type { NotificationsManager } from "./notificationsManager.js";
+import type { NotificationsManager } from "./notificationsManagerTypes.js";
 import type { Presence, PresenceWithNotifications } from "./presence.js";
 
 /**

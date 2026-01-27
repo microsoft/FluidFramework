@@ -4,13 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { NodeId } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import * as SF from "../../../feature-libraries/sequence-field/types.js";
-import { type Mutable, brand } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
-import { mintRevisionTag } from "../../utils.js";
-import { TestNodeId } from "../../testNodeId.js";
+
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
@@ -18,10 +12,17 @@ import {
 	asChangeAtomId,
 	offsetChangeAtomId,
 } from "../../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { extractMarkEffect } from "../../../feature-libraries/sequence-field/utils.js";
+import type { NodeId } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldEditor } from "../../../feature-libraries/sequence-field/sequenceFieldEditor.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import * as SF from "../../../feature-libraries/sequence-field/types.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { extractMarkEffect } from "../../../feature-libraries/sequence-field/utils.js";
+import { type Mutable, brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { mintRevisionTag } from "../../utils.js";
 
 const tag: RevisionTag = mintRevisionTag();
 
@@ -61,7 +62,7 @@ export const cases: {
 		undefined /* revision */,
 	),
 	pin: [createPinMark(4, brand(0))],
-	rename: [createRenameMark(3, brand(2), brand(3))],
+	rename: [createRenameMark(3, brand(2), brand(20))],
 	move: createMoveChangeset(1, 2, 4, undefined /* revision */),
 	moveAndRemove: [
 		createMoveOutMark(1, brand(0)),
@@ -77,7 +78,7 @@ export const cases: {
 	),
 	transient_insert: [
 		{ count: 1 },
-		createRemoveMark(2, brand(2), { cellId: { localId: brand(1) } }),
+		createRemoveMark(2, brand(4), { cellId: { localId: brand(1) } }),
 	],
 };
 
@@ -181,7 +182,7 @@ function createModifyDetachedChangeset(
 	detachEvent: SF.CellId,
 ): SF.Changeset {
 	const changeset = createModifyChangeset(index, change);
-	const modify = changeset[changeset.length - 1] as SF.CellMark<SF.NoopMark>;
+	const modify = changeset.at(-1) as SF.CellMark<SF.NoopMark>;
 	modify.cellId = detachEvent;
 	return changeset;
 }

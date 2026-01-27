@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ChangeAtomId,
@@ -23,8 +24,6 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { isMoveMark } from "../../../feature-libraries/sequence-field/moveEffectTable.js";
 import {
 	addCrossFieldQuery,
 	type CrossFieldManager,
@@ -42,7 +41,34 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { compose } from "../../../feature-libraries/sequence-field/compose.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { invert } from "../../../feature-libraries/sequence-field/invert.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { MarkListFactory } from "../../../feature-libraries/sequence-field/markListFactory.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { isMoveMark } from "../../../feature-libraries/sequence-field/moveEffectTable.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { rebase } from "../../../feature-libraries/sequence-field/rebase.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldChangeRebaser } from "../../../feature-libraries/sequence-field/sequenceFieldChangeRebaser.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
+import {
+	type MarkEffect,
+	NoopMarkType,
+	CellId,
+	Changeset,
+	HasMarkFields,
+	MoveId,
+	type Remove,
+	type Mark,
+	type MoveOut,
+	type MoveIn,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/sequence-field/types.js";
 import {
 	areInputCellsEmpty,
 	cloneMark,
@@ -67,41 +93,14 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
+import { ChangesetWrapper } from "../../changesetWrapper.js";
+import { TestNodeId } from "../../testNodeId.js";
 import {
 	assertFieldChangesEqual,
 	assertIsSessionId,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils.js";
-
-import { ChangesetWrapper } from "../../changesetWrapper.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import {
-	type MarkEffect,
-	NoopMarkType,
-	CellId,
-	Changeset,
-	HasMarkFields,
-	MoveId,
-	type Remove,
-	type Mark,
-	type MoveOut,
-	type MoveIn,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/sequence-field/types.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { compose } from "../../../feature-libraries/sequence-field/compose.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { rebase } from "../../../feature-libraries/sequence-field/rebase.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { invert } from "../../../feature-libraries/sequence-field/invert.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { MarkListFactory } from "../../../feature-libraries/sequence-field/markListFactory.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { sequenceFieldChangeRebaser } from "../../../feature-libraries/sequence-field/sequenceFieldChangeRebaser.js";
 
 export function assertWrappedChangesetsEqual(
 	actual: WrappedChange,
@@ -204,7 +203,7 @@ function normalizeMoveIds(change: Changeset): Changeset {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<MoveOut> = { ...effect };
-				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
+
 				if (normalized.idOverride === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
 					normalized.idOverride = effectId;
@@ -221,7 +220,7 @@ function normalizeMoveIds(change: Changeset): Changeset {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<Remove> = { ...effect };
-				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
+
 				if (normalized.idOverride === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
 					normalized.idOverride = effectId;

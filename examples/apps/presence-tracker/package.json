@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/presence-tracker",
-	"version": "2.81.0",
+	"version": "2.82.0",
 	"private": true,
 	"description": "Example application that tracks page focus and mouse position using the Fluid Framework presence features.",
 	"homepage": "https://fluidframework.com",
@@ -66,7 +66,7 @@
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
-		"@types/node": "^18.19.0",
+		"@types/node": "~20.19.30",
 		"cross-env": "^10.1.0",
 		"eslint": "~9.39.1",
 		"expect-puppeteer": "^9.0.2",
