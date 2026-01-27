@@ -670,6 +670,8 @@ export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
 };
 
 /**
+ * Creates a stream from the provided promise of messages.
+ *
  * @internal
  */
 export function streamFromMessages(
@@ -689,6 +691,8 @@ export function streamFromMessages(
 }
 
 /**
+ * Wraps the provided stream to observe values as they are read.
+ *
  * @internal
  */
 export function streamObserver<T>(

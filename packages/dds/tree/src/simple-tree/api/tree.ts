@@ -16,6 +16,7 @@ import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	TreeAlpha,
 } from "../../shared-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -24,8 +25,8 @@ import type {
 	ReadSchema,
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
-import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
+import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
 import type {
@@ -36,7 +37,6 @@ import type {
 	VoidTransactionCallbackStatus,
 } from "./transactionTypes.js";
 import type { VerboseTree } from "./verboseTree.js";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
 
 /**
  * A tree from which a {@link TreeView} can be created.

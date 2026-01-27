@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/clicker",
-	"version": "2.81.0",
+	"version": "2.82.0",
 	"private": true,
 	"description": "Minimal Fluid component sample to implement a collaborative counter.",
 	"homepage": "https://fluidframework.com",
@@ -67,7 +67,7 @@
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
-		"@types/node": "^18.19.0",
+		"@types/node": "~20.19.30",
 		"@types/react": "^18.3.11",
 		"cross-env": "^10.1.0",
 		"eslint": "~9.39.1",

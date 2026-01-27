@@ -294,42 +294,42 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		const addConstraints = (
-			constraintsOnRevert: boolean,
-			constraints: readonly TransactionConstraintAlpha[] = [],
-		): void => {
-			addConstraintsToTransaction(this.checkout, constraintsOnRevert, constraints);
-		};
+		const { checkout } = this;
 
 		return this.checkout.runWithTransactionLabel(() => {
 			this.checkout.transaction.start();
 
-			// Validate preconditions before running the transaction callback.
-			addConstraints(false /* constraintsOnRevert */, params?.preconditions);
-			const transactionCallbackStatus = transaction();
-			const rollback = transactionCallbackStatus?.rollback;
-			const value = (
-				transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			)?.value;
+		// Validate preconditions before running the transaction callback.
+		addConstraintsToTransaction(
+			checkout,
+			false /* constraintsOnRevert */,
+			params?.preconditions,
+		);
+		const transactionCallbackStatus = transaction();
+		const rollback = transactionCallbackStatus?.rollback;
+		const value = (
+			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+		)?.value;
 
-			if (rollback === true) {
-				this.checkout.transaction.abort();
-				return value === undefined
-					? { success: false }
-					: { success: false, value: value as TFailureValue };
-			}
-
-			// Validate preconditions on revert after running the transaction callback and was successful.
-			addConstraints(
-				true /* constraintsOnRevert */,
-				transactionCallbackStatus?.preconditionsOnRevert,
-			);
-
-			this.checkout.transaction.commit();
-
+		if (rollback === true) {
+			checkout.transaction.abort();
 			return value === undefined
-				? { success: true }
-				: { success: true, value: value as TSuccessValue };
+				? { success: false }
+				: { success: false, value: value as TFailureValue };
+		}
+
+		// Validate preconditions on revert after running the transaction callback and was successful.
+		addConstraintsToTransaction(
+			checkout,
+			true /* constraintsOnRevert */,
+			transactionCallbackStatus?.preconditionsOnRevert,
+		);
+
+		checkout.transaction.commit();
+		return value === undefined
+			? { success: true }
+			: { success: true, value: value as TSuccessValue };
+
 		}, params?.label);
 	}
 

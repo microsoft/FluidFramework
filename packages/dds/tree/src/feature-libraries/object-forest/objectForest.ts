@@ -50,10 +50,10 @@ import {
 	type WithBreakable,
 } from "../../util/index.js";
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/index.js";
-import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
-import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
+import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { isFieldInSchema, throwOutOfSchema } from "../schemaChecker.js";
+import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 
 /** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {

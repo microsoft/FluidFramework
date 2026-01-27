@@ -37,6 +37,8 @@ const loop = (
 		.then((result) => (result === null ? result : loop(makePromise(result), fn, makePromise)));
 
 /**
+ * Rebases local changes against remote changes.
+ *
  * @internal
  */
 export function rebaseToRemoteChanges(

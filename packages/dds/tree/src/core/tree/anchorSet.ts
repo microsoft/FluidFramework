@@ -1005,7 +1005,7 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 	/**
 	 * Event emitter for this anchor.
 	 */
-	public readonly events = createEmitter<AnchorEvents>(() => this.considerDispose());
+	public readonly events = createEmitter<AnchorEvents>(this.considerDispose.bind(this));
 
 	/**
 	 * PathNode arrays are kept sorted the PathNode's parentIndex for efficient search.

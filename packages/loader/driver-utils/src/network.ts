@@ -226,6 +226,8 @@ export class ThrottlingError
 }
 
 /**
+ * Creates a non-retryable write error.
+ *
  * @internal
  */
 export const createWriteError = (
@@ -235,6 +237,8 @@ export const createWriteError = (
 	new NonRetryableError(message, DriverErrorTypes.writeError, props);
 
 /**
+ * Creates a generic network error, either throttling or non-throttling based on the provided retry information.
+ *
  * @internal
  */
 export function createGenericNetworkError(

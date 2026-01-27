@@ -4,18 +4,22 @@
  */
 
 import type { ChangeAtomId, RevisionTag } from "../../../core/index.js";
-import { mintRevisionTag } from "../../utils.js";
-import { type Mutable, brand } from "../../../util/index.js";
-import {
-	type OptionalChangeset,
-	optionalChangeRebaser,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/optional-field/index.js";
-import { Change, assertEqual } from "./optionalFieldUtils.js";
 import {
 	DefaultRevisionReplacer,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
+import {
+	optionalChangeRebaser,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/optional-field/optionalField.js";
+import type {
+	OptionalChangeset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
+import { type Mutable, brand } from "../../../util/index.js";
+import { mintRevisionTag } from "../../utils.js";
+
+import { Change, assertEqual } from "./optionalFieldUtils.js";
 
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
@@ -29,7 +33,7 @@ const atom3: ChangeAtomId = { localId: brand(100) };
 
 const inputRevs = new Set([tag1, tag2, undefined]);
 
-export function testReplaceRevisions() {
+export function testReplaceRevisions(): void {
 	describe(`replaceRevisions {${[...inputRevs.keys()].join(",")}} -> ${tagOut}`, () => {
 		runCases(tagOut);
 	});
