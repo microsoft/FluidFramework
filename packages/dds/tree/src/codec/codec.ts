@@ -10,7 +10,6 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 import { cleanedPackageVersion as runtimeUtilsCleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
-import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
@@ -196,6 +195,20 @@ export interface IJsonCodec<
 > extends IEncoder<TDecoded, TEncoded, TContext>,
 		IDecoder<TDecoded, TValidate, TContext> {
 	encodedSchema?: TAnySchema;
+}
+
+/**
+ * Type erase the more detailed encoded type from a codec.
+ */
+export function eraseEncodedType<
+	TDecoded,
+	TEncoded = JsonCompatibleReadOnly,
+	TValidate = TEncoded,
+	TContext = void,
+>(
+	codec: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
+): IJsonCodec<TDecoded, TValidate, TValidate, TContext> {
+	return codec as unknown as IJsonCodec<TDecoded, TValidate, TValidate, TContext>;
 }
 
 /**
@@ -453,9 +466,9 @@ export const unitCodec: IMultiFormatCodec<
 export function withSchemaValidation<
 	TInMemoryFormat,
 	EncodedSchema extends TSchema,
-	TEncodedFormat = JsonCompatibleReadOnly,
-	TValidate = TEncodedFormat,
-	TContext = ChangeEncodingContext,
+	TEncodedFormat,
+	TValidate,
+	TContext,
 >(
 	schema: EncodedSchema,
 	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext>,
