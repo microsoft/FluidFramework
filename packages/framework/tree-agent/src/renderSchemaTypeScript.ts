@@ -478,6 +478,7 @@ function renderLeaf(leafKind: ValueSchema): string {
 		case ValueSchema.Null: {
 			return "null";
 		}
+		// TODO: what is the correct way to represent handles?
 		case ValueSchema.FluidHandle: {
 			return "IFluidHandle";
 		}
