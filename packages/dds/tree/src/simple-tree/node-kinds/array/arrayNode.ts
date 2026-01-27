@@ -134,9 +134,9 @@ export interface TreeArrayNode<
 	 * @remarks
 	 * This method has the same behavior as `insertAtEnd`.
 	 * The merge semantics for concurrent inserts or moves to the same position are unspecified.
+	 * Use `insertAtEnd` if you need more control over merge semantics.
 	 *
 	 * Unlike JavaScript's `Array.prototype.push`, this method does not return the new length of the array.
-	 *
 	 * @param value - The content to insert.
 	 */
 	push(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
