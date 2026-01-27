@@ -585,17 +585,9 @@ export class UnknownLeafTask extends LeafTask {
  * @remarks
  * Despite its name, this class supports both timestamp-based and hash-based donefiles via the `useHashes` property.
  *
- * **New subclasses should always override `useHashes` to return `true`.**
- *
- * @deprecated The default timestamp-based behavior is deprecated. File timestamps (mtime) are unreliable for
- * incremental build detection because they change when:
- * - Git operations touch files (checkout, pull, rebase, merge)
- * - Files are copied or restored from caches
- * - Build processes regenerate files with identical content
- * - Any process writes to a file even without changing content
- *
- * This leads to "always dirty" builds where tasks are unnecessarily re-executed. All new subclasses should
- * override `useHashes` to return `true` for reliable incremental builds.
+ * Subclasses can override `useHashes` to return `true` to use content hashes instead of timestamps. Hashing avoids
+ * false positives from timestamp changes that don't reflect actual content changes (e.g., git operations, file
+ * copies), but has a small performance cost.
  */
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
 	/**
@@ -613,16 +605,10 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 	 * and other file stats.
 	 *
 	 * @remarks
-	 * **All subclasses should override this to return `true`.**
+	 * Hashing avoids false positives from timestamp changes that don't reflect actual content changes (e.g., git
+	 * operations, file copies), but has a small performance cost.
 	 *
-	 * While hashing is roughly 20% slower than the stats-based approach, it is much more reliable because file
-	 * timestamps change frequently due to git operations, file copies, and other processes that don't actually
-	 * modify file contents. Using timestamps leads to "always dirty" builds where tasks are unnecessarily re-executed.
-	 *
-	 * @deprecated The default value of `false` (timestamp-based) is deprecated. Override this property to return
-	 * `true` in all subclasses for reliable incremental builds.
-	 *
-	 * @returns `true` to use content hashes (recommended), `false` to use file timestamps (deprecated).
+	 * @returns `true` to use content hashes, `false` to use file timestamps (default).
 	 */
 	protected get useHashes(): boolean {
 		return false;
@@ -633,10 +619,9 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			return this.getHashDoneFileContent();
 		}
 
-		// DEPRECATED: Timestamp-based done file content.
-		// This approach is unreliable because file timestamps change with git operations,
-		// file copies, and other processes that don't modify content.
-		// Override useHashes to return true in subclasses for reliable incremental builds.
+		// Timestamp-based done file content.
+		// Note: timestamps may signal change without meaningful content modification (e.g., git
+		// operations, file copies). Override useHashes to return true to use content hashes instead.
 		try {
 			const srcFiles = await this.getInputFiles();
 			const dstFiles = await this.getOutputFiles();

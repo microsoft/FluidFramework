@@ -67,14 +67,14 @@ export class LesscTask extends LeafTask {
 export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	/**
 	 * Use content hashes instead of file timestamps for incremental build detection.
-	 * Timestamps are unreliable as they change with git operations, file copies, and other
-	 * processes that don't modify content.
+	 * Timestamps may signal change without meaningful content modification (e.g., git operations,
+	 * file copies).
 	 *
-	 * Set the FLUID_BUILD_ENABLE_COPYFILES_HASH environment variable to enable hashing.
+	 * Set the FLUID_BUILD_ENABLE_COPYFILES_HASH environment variable to "1" to enable hashing.
 	 * By default, timestamps are used.
 	 */
 	protected override get useHashes(): boolean {
-		return process.env.FLUID_BUILD_ENABLE_COPYFILES_HASH !== undefined;
+		return process.env.FLUID_BUILD_ENABLE_COPYFILES_HASH === "1";
 	}
 
 	private parsed: boolean = false;
@@ -255,14 +255,14 @@ export class GenVerTask extends LeafTask {
 export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 	/**
 	 * Use content hashes instead of file timestamps for incremental build detection.
-	 * Timestamps are unreliable as they change with git operations, file copies, and other
-	 * processes that don't modify content.
+	 * Timestamps may signal change without meaningful content modification (e.g., git operations,
+	 * file copies).
 	 *
-	 * Set the FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH environment variable to enable hashing.
+	 * Set the FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH environment variable to "1" to enable hashing.
 	 * By default, timestamps are used.
 	 */
 	protected override get useHashes(): boolean {
-		return process.env.FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH !== undefined;
+		return process.env.FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH === "1";
 	}
 
 	private inputFiles: string[] | undefined;
@@ -309,14 +309,14 @@ export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 export class GoodFence extends LeafWithFileStatDoneFileTask {
 	/**
 	 * Use content hashes instead of file timestamps for incremental build detection.
-	 * Timestamps are unreliable as they change with git operations, file copies, and other
-	 * processes that don't modify content.
+	 * Timestamps may signal change without meaningful content modification (e.g., git operations,
+	 * file copies).
 	 *
-	 * Set the FLUID_BUILD_ENABLE_GOODFENCE_HASH environment variable to enable hashing.
+	 * Set the FLUID_BUILD_ENABLE_GOODFENCE_HASH environment variable to "1" to enable hashing.
 	 * By default, timestamps are used.
 	 */
 	protected override get useHashes(): boolean {
-		return process.env.FLUID_BUILD_ENABLE_GOODFENCE_HASH !== undefined;
+		return process.env.FLUID_BUILD_ENABLE_GOODFENCE_HASH === "1";
 	}
 
 	protected get taskWeight(): number {
@@ -351,14 +351,14 @@ export class GoodFence extends LeafWithFileStatDoneFileTask {
 export class DepCruiseTask extends LeafWithFileStatDoneFileTask {
 	/**
 	 * Use content hashes instead of file timestamps for incremental build detection.
-	 * Timestamps are unreliable as they change with git operations, file copies, and other
-	 * processes that don't modify content.
+	 * Timestamps may signal change without meaningful content modification (e.g., git operations,
+	 * file copies).
 	 *
-	 * Set the FLUID_BUILD_ENABLE_DEPCRUISE_HASH environment variable to enable hashing.
+	 * Set the FLUID_BUILD_ENABLE_DEPCRUISE_HASH environment variable to "1" to enable hashing.
 	 * By default, timestamps are used.
 	 */
 	protected override get useHashes(): boolean {
-		return process.env.FLUID_BUILD_ENABLE_DEPCRUISE_HASH !== undefined;
+		return process.env.FLUID_BUILD_ENABLE_DEPCRUISE_HASH === "1";
 	}
 
 	private inputFiles: string[] | undefined;
