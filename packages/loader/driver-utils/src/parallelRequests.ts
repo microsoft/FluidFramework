@@ -4,16 +4,16 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IDeltasFetchResult,
 	IStream,
 	IStreamResult,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -164,10 +164,8 @@ export class ParallelRequests<T> {
 		}
 
 		const from = this.latestRequested;
-		if (this.to !== undefined) {
-			if (this.to <= from) {
-				return undefined;
-			}
+		if (this.to !== undefined && this.to <= from) {
+			return undefined;
 		}
 
 		// this.latestRequested
@@ -237,7 +235,7 @@ export class ParallelRequests<T> {
 				// If it pops into our view a lot, we would need to reconsider how we approach it.
 				// Note that this is not visible to user other than potentially not hitting 100% of
 				// what we can in perf domain.
-				if (payload.length !== 0) {
+				if (payload.length > 0) {
 					this.logger.sendErrorEvent({
 						eventName: "ParallelRequests_GotExtra",
 						from,
@@ -255,7 +253,25 @@ export class ParallelRequests<T> {
 				const length = payload.length;
 				let fullChunk = requestedLength <= length; // we can possible get more than we asked.
 
-				if (length !== 0) {
+				if (length === 0) {
+					// 1. empty (partial) chunks should not be returned by various caching / adapter layers -
+					//    they should fall back to next layer. This might be important invariant to hold to ensure
+					//    that we are less likely have bugs where such layer would keep returning empty partial
+					//    result on each call.
+					// 2. Current invariant is that callback does retries until it gets something,
+					//    with the goal of failing if zero data is retrieved in given amount of time.
+					//    This is very specific property of storage / ops, so this logic is not here, but given only
+					//    one user of this class, we assert that to catch issues earlier.
+					// These invariant can be relaxed if needed.
+					assert(
+						!partial,
+						0x10f /* "empty/partial chunks should not be returned by caching" */,
+					);
+					assert(
+						!this.knewTo,
+						0x110 /* "callback should retry until valid fetch before it learns new boundary" */,
+					);
+				} else {
 					// We can get more than we asked for!
 					// This can screw up logic in dispatch!
 					// So push only batch size, and keep the rest for later - if conditions are favorable, we
@@ -274,24 +290,6 @@ export class ParallelRequests<T> {
 					const data = payload.splice(0, requestedLength);
 					this.results.set(from, data);
 					from += data.length;
-				} else {
-					// 1. empty (partial) chunks should not be returned by various caching / adapter layers -
-					//    they should fall back to next layer. This might be important invariant to hold to ensure
-					//    that we are less likely have bugs where such layer would keep returning empty partial
-					//    result on each call.
-					// 2. Current invariant is that callback does retries until it gets something,
-					//    with the goal of failing if zero data is retrieved in given amount of time.
-					//    This is very specific property of storage / ops, so this logic is not here, but given only
-					//    one user of this class, we assert that to catch issues earlier.
-					// These invariant can be relaxed if needed.
-					assert(
-						!partial,
-						0x10f /* "empty/partial chunks should not be returned by caching" */,
-					);
-					assert(
-						!this.knewTo,
-						0x110 /* "callback should retry until valid fetch before it learns new boundary" */,
-					);
 				}
 
 				if (!partial && !fullChunk) {
@@ -319,7 +317,7 @@ export class ParallelRequests<T> {
 				if (to === this.latestRequested) {
 					// we can go after full chunk at the end if we received partial chunk, or more than asked
 					// Also if we got more than we asked to, we can actually use those ops!
-					while (payload.length !== 0) {
+					while (payload.length > 0) {
 						const data = payload.splice(0, requestedLength);
 						this.results.set(from, data);
 						from += data.length;
@@ -445,7 +443,7 @@ async function getSingleOpBatch(
 
 			// If we got messages back, return them.  Return regardless of whether we got messages back if we didn't
 			// specify a "to", since we don't have an expectation of how many to receive.
-			if (messages.length !== 0 || !strongTo) {
+			if (messages.length > 0 || !strongTo) {
 				// Report this event if we waited to fetch ops due to being offline or throttling.
 				telemetryEvent?.end({
 					duration: totalRetryAfterTime,

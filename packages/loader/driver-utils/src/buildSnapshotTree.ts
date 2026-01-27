@@ -7,10 +7,10 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FileMode,
-	IGitTree,
-	IGitTreeEntry,
-	ISnapshotTree,
-	ITreeEntry,
+	type IGitTree,
+	type IGitTreeEntry,
+	type ISnapshotTree,
+	type ITreeEntry,
 	TreeEntry,
 } from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";

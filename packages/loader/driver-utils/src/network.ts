@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
-	IAuthorizationError,
-	ILocationRedirectionError,
-	IResolvedUrl,
-	IThrottlingWarning,
 	DriverErrorTypes,
-	IDriverErrorBase,
+	type IAuthorizationError,
+	type ILocationRedirectionError,
+	type IResolvedUrl,
+	type IThrottlingWarning,
+	type IDriverErrorBase,
 } from "@fluidframework/driver-definitions/internal";
-import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
+import { type IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * @internal
@@ -268,4 +268,4 @@ export const getRetryDelaySecondsFromError = (error: any): number | undefined =>
  * @internal
  */
 export const getRetryDelayFromError = (error: any): number | undefined =>
-	error?.retryAfterSeconds !== undefined ? error.retryAfterSeconds * 1000 : undefined;
+	error?.retryAfterSeconds === undefined ? undefined : error.retryAfterSeconds * 1000;

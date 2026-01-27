@@ -6,7 +6,10 @@
 import { performanceNow } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
-import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import {
+	isFluidError,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { NonRetryableError, canRetryOnError, getRetryDelayFromError } from "./network.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -64,9 +67,9 @@ export async function runWithRetry<T>(
 		try {
 			result = await api(progress.cancel);
 			success = true;
-		} catch (err) {
+		} catch (error) {
 			// If it is not retriable, then just throw the error.
-			if (!canRetryOnError(err)) {
+			if (!canRetryOnError(error)) {
 				logger.sendTelemetryEvent(
 					{
 						eventName: `${fetchCallName}_cancel`,
@@ -74,9 +77,9 @@ export async function runWithRetry<T>(
 						duration: performanceNow() - startTime,
 						fetchCallName,
 					},
-					err,
+					error,
 				);
-				throw err;
+				throw error;
 			}
 
 			if (progress.cancel?.aborted === true) {
@@ -88,7 +91,7 @@ export async function runWithRetry<T>(
 						fetchCallName,
 						reason: progress.cancel.reason,
 					},
-					err,
+					error,
 				);
 				throw new NonRetryableError(
 					"runWithRetry was Aborted",
@@ -111,16 +114,16 @@ export async function runWithRetry<T>(
 						duration: performanceNow() - startTime,
 						fetchCallName,
 					},
-					err,
+					error,
 				);
 			}
 
 			numRetries++;
-			lastError = err;
+			lastError = error;
 			// Wait for the calculated time before retrying.
-			retryAfterMs = calculateMaxWaitTime(retryAfterMs, err);
+			retryAfterMs = calculateMaxWaitTime(retryAfterMs, error);
 			if (progress.onRetry) {
-				progress.onRetry(retryAfterMs, err);
+				progress.onRetry(retryAfterMs, error);
 			}
 			await delay(retryAfterMs);
 		}

@@ -4,12 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 
 import {
 	DefaultCompressionStorageConfig,
 	DocumentServiceFactoryCompressionAdapter,
-	ICompressionStorageConfig,
+	type ICompressionStorageConfig,
 } from "./compression/index.js";
 
 /**

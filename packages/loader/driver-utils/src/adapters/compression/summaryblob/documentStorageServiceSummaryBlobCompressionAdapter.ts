@@ -6,13 +6,13 @@
 import { type Buffer, IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	ISummaryBlob,
-	ISummaryHandle,
-	ISummaryTree,
-	SummaryObject,
+	type ISummaryBlob,
+	type ISummaryHandle,
+	type ISummaryTree,
+	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
-import {
+import type {
 	IDocumentStorageService,
 	ISummaryContext,
 	ISnapshotTree,
@@ -74,10 +74,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param blob - The maybe compressed blob.
 	 */
 	private static readAlgorithmFromBlob(blob: ArrayBufferLike): number {
-		return !this.hasPrefix(blob)
-			? SummaryCompressionAlgorithm.None
+		return this.hasPrefix(blob)
+			? IsoBuffer.from(blob)[0] & 0x0f
 			: // eslint-disable-next-line no-bitwise
-				IsoBuffer.from(blob)[0] & 0x0f;
+				SummaryCompressionAlgorithm.None;
 	}
 
 	/**
@@ -396,13 +396,13 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	public override async readBlob(id: string): Promise<ArrayBufferLike> {
 		const originalBlob = await super.readBlob(id);
-		if (!this._isCompressionEnabled) {
-			return originalBlob;
-		} else {
+		if (this._isCompressionEnabled) {
 			const decompressedBlob =
 				DocumentStorageServiceCompressionAdapter.decodeBlob(originalBlob);
 			//			console.log(`Miso summary-blob Blob read END : ${id} ${decompressedBlob.byteLength}`);
 			return decompressedBlob;
+		} else {
+			return originalBlob;
 		}
 	}
 
@@ -451,14 +451,14 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	public override async downloadSummary(id: ISummaryHandle): Promise<ISummaryTree> {
 		const summary = await super.downloadSummary(id);
-		return !this._isCompressionEnabled
-			? summary
-			: (DocumentStorageServiceCompressionAdapter.recursivelyReplace(
+		return this._isCompressionEnabled
+			? (DocumentStorageServiceCompressionAdapter.recursivelyReplace(
 					false,
 					summary,
 					DocumentStorageServiceCompressionAdapter.blobEncoder,
 					DocumentStorageServiceCompressionAdapter.blobDecoder,
 					this._config,
-				) as ISummaryTree);
+				) as ISummaryTree)
+			: summary;
 	}
 }

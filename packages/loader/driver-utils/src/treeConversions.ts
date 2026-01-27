@@ -5,8 +5,8 @@
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
-import { ITree, ITreeEntry } from "@fluidframework/driver-definitions/internal";
+import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import type { ITree, ITreeEntry } from "@fluidframework/driver-definitions/internal";
 
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "./blob.js";
 import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew.js";
@@ -56,8 +56,9 @@ export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): IT
 				throw new Error("Should not have Handle type in summary tree");
 			}
 
-			default:
+			default: {
 				unreachableCase(value, "Unexpected summary tree type");
+			}
 		}
 	}
 	return {
