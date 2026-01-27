@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { PubSub } from "@fluidframework/server-memory-orderer";
 
-import { LocalWebSocket, LocalWebSocketServer } from "../localWebSocketServer";
+import { LocalWebSocketServer } from "../localWebSocketServer";
 
 describe("LocalWebSocketServer", () => {
 	let pubsub: PubSub;

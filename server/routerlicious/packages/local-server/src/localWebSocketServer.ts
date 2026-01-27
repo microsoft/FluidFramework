@@ -123,7 +123,6 @@ export class LocalWebSocketServer implements IWebSocketServer {
 
 	/**
 	 * Remove a connection from tracking (called when socket disconnects)
-	 * @internal
 	 */
 	public removeConnection(socket: LocalWebSocket): void {
 		this.connections.delete(socket);

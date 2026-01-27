@@ -133,4 +133,11 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		}
 		documentDeltaConnection.nackClient(code, type, message);
 	}
+
+	/**
+	 * Disposes the factory and cleans up all tracked connections.
+	 */
+	public dispose(): void {
+		this.documentDeltaConnectionsMap.clear();
+	}
 }

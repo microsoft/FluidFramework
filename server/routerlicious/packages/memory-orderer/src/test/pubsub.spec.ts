@@ -12,8 +12,8 @@ describe("PubSub", () => {
 
 	function createSubscriber(
 		id: string,
-	): ISubscriber & { messages: Array<{ topic: string; event: string; args: any[] }> } {
-		const messages: Array<{ topic: string; event: string; args: any[] }> = [];
+	): ISubscriber & { messages: { topic: string; event: string; args: any[] }[] } {
+		const messages: { topic: string; event: string; args: any[] }[] = [];
 		return {
 			id,
 			messages,
