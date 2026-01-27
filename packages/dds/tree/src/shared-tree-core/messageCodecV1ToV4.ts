@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { Type } from "@sinclair/typebox";
 
 import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import type {
@@ -13,7 +12,8 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema } from "../util/index.js";
+import { JsonCompatibleReadOnlySchema } from "../util/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { MessageEncodingContext } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
@@ -46,7 +46,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		typeof JsonCompatibleReadOnlySchema,
 		MessageEncodingContext
 	>(
-		Message(changeCodec.encodedSchema ?? Type.Any()),
+		Message(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema),
 		{
 			encode: (decoded: DecodedMessage<TChangeset>, context: MessageEncodingContext) => {
 				assert(decoded.type === "commit", 0xc68 /* Only commit messages are supported */);

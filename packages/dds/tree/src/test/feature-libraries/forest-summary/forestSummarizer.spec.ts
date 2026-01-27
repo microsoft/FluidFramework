@@ -64,7 +64,6 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
@@ -887,7 +886,7 @@ describe("ForestSummarizer", () => {
 			};
 			// Create data in v1 summary format.
 			const forestDataV1: FormatV1 = {
-				version: brand(ForestFormatVersion.v1),
+				version: ForestFormatVersion.v1,
 				keys: [],
 				fields: testFieldBatchCodec.encode([], testContext),
 			};

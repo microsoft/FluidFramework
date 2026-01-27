@@ -1104,6 +1104,12 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 	supportedVersions?: FormatVersion[],
 ): void {
+	// Type cast away the conditional type: if TContext is void, indexing off the end of this will get undefined which works, making this safe.
+	const successes = encodingTestData.successes as [
+		name: string,
+		data: TDecoded,
+		context: TContext,
+	][];
 	const supportedVersionsToTest = supportedVersions ?? [...family.getSupportedFormats()];
 	registerValidationHook(family, supportedVersionsToTest);
 
@@ -1124,9 +1130,8 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					describe(includeStringification
 						? "with stringification"
 						: "without stringification", () => {
-						for (const [name, data, context] of encodingTestData.successes) {
+						for (const [name, data, context] of successes) {
 							it(name, () => {
-								assert(context !== undefined);
 								let encoded = jsonCodec.encode(data, context);
 								if (includeStringification) {
 									encoded = JSON.parse(JSON.stringify(encoded));
@@ -1140,9 +1145,8 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			});
 
 			describe("can binary roundtrip", () => {
-				for (const [name, data, context] of encodingTestData.successes) {
+				for (const [name, data, context] of successes) {
 					it(name, () => {
-						assert(context !== undefined);
 						const encoded = codec.binary.encode(data, context);
 						const decoded = codec.binary.decode(encoded, context);
 						assertEquivalent(decoded, data);
@@ -1155,8 +1159,10 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				describe("rejects malformed data", () => {
 					for (const [name, encodedData, context] of failureCases) {
 						it(name, () => {
-							assert(context !== undefined);
-							assert.throws(() => jsonCodec.decode(encodedData as JsonCompatible, context));
+							assert.throws(() =>
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								jsonCodec.decode(encodedData as JsonCompatible, context!),
+							);
 						});
 					}
 				});

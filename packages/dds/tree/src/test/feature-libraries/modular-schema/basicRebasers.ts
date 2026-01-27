@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { type TUnsafe, Type } from "@sinclair/typebox";
+import type { TUnsafe } from "@sinclair/typebox";
 
 import { eraseEncodedType, makeCodecFamily } from "../../../codec/index.js";
 import {
@@ -22,7 +22,11 @@ import {
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { brandConst, type Mutable } from "../../../util/index.js";
+import {
+	brandConst,
+	JsonCompatibleReadOnlySchema,
+	type Mutable,
+} from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -88,7 +92,8 @@ export const valueHandler = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () => {
 		const inner = makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(
-			Type.Any(),
+			// TODO: use the proper schema here
+			JsonCompatibleReadOnlySchema as TUnsafe<ValueChangeset>,
 		);
 		return makeCodecFamily([[1, eraseEncodedType(inner)]]);
 	},
