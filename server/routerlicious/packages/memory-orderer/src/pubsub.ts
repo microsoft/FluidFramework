@@ -41,6 +41,9 @@ export interface IPubSub {
 
 	// Publishes a message to the given topic
 	publish(topic: string, event: string, ...args: any[]): void;
+
+	// Closes the pubsub and clears all subscriptions
+	close(): void;
 }
 
 /**
@@ -98,5 +101,9 @@ export class PubSub implements IPubSub {
 		if (subscriptions.size === 0) {
 			this.topics.delete(topic);
 		}
+	}
+
+	public close(): void {
+		this.topics.clear();
 	}
 }

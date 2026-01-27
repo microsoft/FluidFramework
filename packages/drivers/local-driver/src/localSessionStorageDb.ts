@@ -295,7 +295,10 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
  */
 class LocalSessionStorageDb extends EventEmitter implements IDb {
 	private readonly collections = new Map<string, LocalSessionStorageCollection<any>>();
-	public async close(): Promise<void> {}
+	public async close(): Promise<void> {
+		this.collections.clear();
+		this.removeAllListeners();
+	}
 	public collection<T>(name: string): ICollection<T> {
 		if (!this.collections.has(name)) {
 			this.collections.set(name, new LocalSessionStorageCollection<T>(name));

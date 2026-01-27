@@ -99,7 +99,13 @@
 			"Class_LocalOrderer": {
 				"forwardCompat": false
 			},
+			"Class_PubSub": {
+				"forwardCompat": false
+			},
 			"Class_WebSocketSubscriber": {
+				"forwardCompat": false
+			},
+			"Interface_IPubSub": {
 				"forwardCompat": false
 			},
 			"Interface_ISubscriber": {
