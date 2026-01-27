@@ -251,14 +251,14 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return deltaConnection;
 	}
 
-	public finalizeIdRange(range: any): void {
+	public finalizeIdRange(range: unknown): void {
 		assert(
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
 		);
 		// Cast to access internal API
 		(this.dataStoreRuntime.idCompressor as unknown as IIdCompressorCore).finalizeCreationRange(
-			range,
+			range as IdCreationRange,
 		);
 	}
 

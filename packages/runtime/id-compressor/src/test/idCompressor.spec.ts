@@ -1008,7 +1008,9 @@ describe("IdCompressor", () => {
 			// Create and serialize a compressor
 			const compressor = CompressorFactory.createCompressor(Client.Client1);
 			compressor.generateCompressedId();
-			const serialized = withSession ? compressor.serialize(true) : compressor.serialize(false);
+			const serialized = withSession
+				? compressor.serialize(true)
+				: compressor.serialize(false);
 
 			// Modify the serialized data to use the specified version
 			const buffer = stringToBuffer(serialized, "base64");

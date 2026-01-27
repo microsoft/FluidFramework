@@ -940,7 +940,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const serializedVersion = readNumber(index);
 		// If requested version is < the serialized version, we must write the version serialized
 		// to avoid losing data.
-		const writeVersion = Math.max(requestedWriteVersion, serializedVersion) as SerializationVersion;
+		const writeVersion = Math.max(
+			requestedWriteVersion,
+			serializedVersion,
+		) as SerializationVersion;
 		switch (serializedVersion) {
 			case 1: {
 				throw new Error("IdCompressor version 1.0 is no longer supported.");
