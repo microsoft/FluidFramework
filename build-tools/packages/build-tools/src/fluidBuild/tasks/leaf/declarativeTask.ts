@@ -25,12 +25,9 @@ export class DeclarativeLeafTask extends LeafWithGlobInputOutputDoneFileTask {
 
 	/**
 	 * Use hashes instead of modified times in donefile.
-	 *
-	 * Set the FLUID_BUILD_DISABLE_DECLARATIVE_HASH environment variable to disable hashing and
-	 * fall back to timestamp-based incremental detection.
 	 */
 	protected override get useHashes(): boolean {
-		return process.env.FLUID_BUILD_DISABLE_DECLARATIVE_HASH === undefined;
+		return true;
 	}
 
 	protected override get gitIgnore(): GitIgnoreSetting {

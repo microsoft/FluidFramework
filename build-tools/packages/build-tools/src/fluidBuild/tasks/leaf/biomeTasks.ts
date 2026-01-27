@@ -24,12 +24,9 @@ import { LeafWithFileStatDoneFileTask } from "./leafTask";
 export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	/**
 	 * Use hashes instead of modified times in donefile.
-	 *
-	 * Set the FLUID_BUILD_DISABLE_BIOME_HASH environment variable to disable hashing and
-	 * fall back to timestamp-based incremental detection.
 	 */
 	protected get useHashes(): boolean {
-		return process.env.FLUID_BUILD_DISABLE_BIOME_HASH === undefined;
+		return true;
 	}
 
 	private _configReader: BiomeConfigReader | undefined;
