@@ -71,6 +71,10 @@ export function renderSchemaTypeScript(
 ): SchemaTypeScriptRenderResult {
 	const friendlyNames = new Map<string, string>();
 	let hasHelperMethods = false;
+	let hasFluidHandles = false;
+	const markFluidHandle = (): void => {
+		hasFluidHandles = true;
+	};
 
 	for (const identifier of definitions.keys()) {
 		if (isNamedSchema(identifier)) {
@@ -100,8 +104,17 @@ export function renderSchemaTypeScript(
 	}
 
 	const schemaText = declarations.join("\n\n");
+	const fluidHandleType = hasFluidHandles
+		? `/**
+ * Opaque handle type representing a reference to a Fluid object.
+ * This type should not be constructed by generated code.
+ */
+type IFluidHandle = unknown;
+
+`
+		: "";
 	return {
-		schemaText: schemaText === "" ? "" : `${schemaText}\n`,
+		schemaText: schemaText === "" ? "" : `${fluidHandleType}${schemaText}\n`,
 		hasHelperMethods,
 	};
 
@@ -125,7 +138,7 @@ export function renderSchemaTypeScript(
 			}
 			case NodeKind.Leaf: {
 				return {
-					declaration: `type ${friendlyName} = ${renderLeaf(schema.leafKind)};`,
+					declaration: `type ${friendlyName} = ${renderLeaf(schema.leafKind, markFluidHandle)};`,
 					description: schema.metadata?.description,
 				};
 			}
@@ -362,7 +375,10 @@ export function renderSchemaTypeScript(
 				return renderInlineRecord(schema);
 			}
 			case NodeKind.Leaf: {
-				return { precedence: TypePrecedence.Object, text: renderLeaf(schema.leafKind) };
+				return {
+					precedence: TypePrecedence.Object,
+					text: renderLeaf(schema.leafKind, markFluidHandle),
+				};
 			}
 			default: {
 				return { precedence: TypePrecedence.Object, text: "unknown" };
@@ -464,7 +480,7 @@ function formatMethod(name: string, method: FunctionWrapper): string {
 	return `${name}(${args.join(", ")}): ${renderType(method.returns, 0)};`;
 }
 
-function renderLeaf(leafKind: ValueSchema): string {
+function renderLeaf(leafKind: ValueSchema, onFluidHandle?: () => void): string {
 	switch (leafKind) {
 		case ValueSchema.Boolean: {
 			return "boolean";
@@ -478,12 +494,12 @@ function renderLeaf(leafKind: ValueSchema): string {
 		case ValueSchema.Null: {
 			return "null";
 		}
-		// TODO: what is the correct way to represent handles?
 		case ValueSchema.FluidHandle: {
+			onFluidHandle?.();
 			return "IFluidHandle";
 		}
 		default: {
-			throw new Error(`Unsupported leaf kind ${NodeKind[leafKind]}.`);
+			throw new Error(`Unsupported leaf kind.`);
 		}
 	}
 }

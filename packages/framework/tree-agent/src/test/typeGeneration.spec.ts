@@ -76,8 +76,14 @@ describe("Type generation", () => {
 		const handleSchemaString = getDomainSchemaString(ObjWithHandle, { handle: undefined });
 		assert.deepEqual(
 			handleSchemaString,
-			`interface ObjWithHandle {
-handle?: IFluidHandle;
+			`/**
+ * Opaque handle type representing a reference to a Fluid object.
+ * This type should not be constructed by generated code.
+ */
+type IFluidHandle = unknown;
+
+interface ObjWithHandle {
+    handle?: IFluidHandle;
 }
 `,
 		);
