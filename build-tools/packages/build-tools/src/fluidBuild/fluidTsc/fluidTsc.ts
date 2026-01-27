@@ -50,7 +50,7 @@ async function main(): Promise<void> {
 	}
 }
 
-// eslint-disable-next-line unicorn/prefer-top-level-await -- CLI entrypoint file requires explicit error handling
+// eslint-disable-next-line unicorn/prefer-top-level-await -- top-level await requires ESM; this package emits CommonJS
 main().catch((e): void => {
 	error(`Unexpected error. ${e.message}`);
 	error(e.stack);

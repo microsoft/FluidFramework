@@ -67,8 +67,7 @@ async function main(): Promise<void> {
 			if (errorStep) {
 				warn(`Skipping ${errorStep} after uninstall`);
 			}
-			// eslint-disable-next-line unicorn/no-process-exit -- exit successfully after completing uninstall-only operation
-			process.exit(0);
+			return;
 		}
 	}
 
@@ -162,8 +161,10 @@ function buildResultString(buildResult: BuildResult): string {
 	}
 }
 
-// eslint-disable-next-line unicorn/prefer-top-level-await -- CLI entrypoint file requires explicit error handling
+// eslint-disable-next-line unicorn/prefer-top-level-await -- top-level await requires ESM; this package emits CommonJS
 main().catch((e) => {
 	error(`Unexpected error. ${e.message}`);
 	error(e.stack);
+	// eslint-disable-next-line unicorn/no-process-exit -- exit with error code on unhandled exception
+	process.exit(1);
 });
