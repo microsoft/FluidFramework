@@ -92,7 +92,7 @@ export const valueHandler = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () => {
 		const inner = makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(
-			// TODO: use the proper schema here
+			// As this is just a test rebaser, it is acceptable to not use a proper schema, and thus not detect invalid data here.
 			JsonCompatibleReadOnlySchema as TUnsafe<ValueChangeset>,
 		);
 		return makeCodecFamily([[1, eraseEncodedType(inner)]]);

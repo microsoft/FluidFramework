@@ -1160,8 +1160,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					for (const [name, encodedData, context] of failureCases) {
 						it(name, () => {
 							assert.throws(() =>
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								jsonCodec.decode(encodedData as JsonCompatible, context!),
+								jsonCodec.decode(encodedData as JsonCompatible, context as TContext),
 							);
 						});
 					}
