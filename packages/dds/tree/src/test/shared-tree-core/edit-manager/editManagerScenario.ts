@@ -292,7 +292,6 @@ export function runUnitTestScenario(
 				switch (type) {
 					case "Push": {
 						let seq = step.seq;
-
 						if (seq === undefined) {
 							seq =
 								iNextAck < acks.length

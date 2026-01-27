@@ -44,7 +44,6 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 		let finalDocumentId: string = documentIdFromRequest;
 
 		// Special handling if the request is to create a new container
-
 		if (request.headers && request.headers[DriverHeader.createNew] === true) {
 			// Use the document ID passed by the application via the create request;
 			// if none was passed, use the reserved keyword to let the driver generate the ID.

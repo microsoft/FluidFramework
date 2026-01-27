@@ -103,7 +103,6 @@ describe("Local Odsp driver", () => {
 			stream: IStream<ISequencedDocumentMessage[]>,
 		): Promise<ISequencedDocumentMessage[]> {
 			const ops: ISequencedDocumentMessage[] = [];
-
 			while (true) {
 				const result = await stream.read();
 				if (result.done) {

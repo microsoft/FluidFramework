@@ -251,7 +251,6 @@ export function unpackChildNodesGCDetails(
 		}
 
 		let childGCDetails = childGCDetailsMap.get(childId);
-
 		if (childGCDetails === undefined) {
 			childGCDetails = { gcData: { gcNodes: {} }, usedRoutes: [] };
 		}

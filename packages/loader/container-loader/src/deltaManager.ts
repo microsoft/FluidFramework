@@ -963,7 +963,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					duplicate++;
 				} else if (message.sequenceNumber !== prev + 1) {
 					gap++;
-
 					if (firstMissing === undefined) {
 						firstMissing = prev + 1;
 					}

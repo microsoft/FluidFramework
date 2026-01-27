@@ -724,7 +724,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		this.checkSnapshotUrl();
 
 		// Set the module promise right away, so as to not call it twice.
-
 		if (this.summaryModuleP === undefined) {
 			this.summaryModuleP = this.getDelayLoadedSummaryManager();
 		}

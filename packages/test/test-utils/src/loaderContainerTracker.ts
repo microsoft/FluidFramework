@@ -228,7 +228,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		const resumed = this.resumeProcessing(...containers);
 
 		let waitingSequenceNumberSynchronized: string | undefined;
-
 		while (true) {
 			// yield a turn to allow side effect of resuming or the ops we just processed execute before we check
 			await new Promise<void>((resolve) => {

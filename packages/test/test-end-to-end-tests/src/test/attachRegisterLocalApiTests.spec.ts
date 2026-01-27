@@ -195,7 +195,6 @@ describeCompat(
 			);
 
 			// Channel should get attached as it was registered to its dataStore
-
 			assert.strictEqual(
 				channel.handle.isAttached,
 				true,
@@ -226,7 +225,6 @@ describeCompat(
 			toFluidHandleInternal(channel.handle).attachGraph();
 
 			// Channel should get attached as it was registered to its dataStore
-
 			assert.strictEqual(
 				channel.handle.isAttached,
 				true,

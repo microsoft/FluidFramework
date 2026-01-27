@@ -59,7 +59,6 @@ describe("useTree", () => {
 			 *
 			 * When in StrictMode, React may double render, so that case is not checked for an exact match.
 			 */
-
 			function checkRenderLog(log: string[], expected: readonly string[]): void {
 				if (reactStrictMode) {
 					assert.deepEqual(new Set(log), new Set(expected));

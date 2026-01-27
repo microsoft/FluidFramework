@@ -72,7 +72,6 @@ export abstract class TreeNode implements WithType {
 	 * someone could manually (or via Intellisense auto-implement completion, or in response to a type error)
 	 * make an object literal with the [type] field and pass it off as a node: this private brand prevents that.
 	 */
-
 	readonly #brand!: unknown;
 
 	/**

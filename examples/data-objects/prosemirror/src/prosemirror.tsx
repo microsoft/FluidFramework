@@ -153,7 +153,6 @@ class ProseMirrorView {
 
 	public render(elm: HTMLElement): void {
 		// Create base textarea
-
 		if (!this.textArea) {
 			this.textArea = document.createElement("div");
 			this.textArea.classList.add("editor");

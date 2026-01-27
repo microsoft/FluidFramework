@@ -1046,7 +1046,6 @@ describe("SchemaFactory Recursive methods", () => {
 				// Check constructor
 				type TBuild = NodeBuilderData<typeof RecordRecursive>;
 				type _check2 = requireAssignableTo<RecordRecursive, TBuild>;
-
 				type _check3 = requireAssignableTo<{}, TBuild>;
 				type _check4 = requireAssignableTo<{ a: RecordRecursive }, TBuild>;
 				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;

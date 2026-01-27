@@ -280,7 +280,6 @@ export class FluidCache implements IPersistedCache {
 		});
 
 		// Value will contain metadata like the expiry time, we just want to return the object we were asked to cache
-
 		return cachedItem?.cachedObject;
 	}
 

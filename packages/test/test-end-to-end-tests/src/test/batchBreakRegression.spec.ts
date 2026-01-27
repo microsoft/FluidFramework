@@ -209,7 +209,6 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 											...newMessages[batchStartIndex],
 											metadata: {
 												// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to undefined.
-
 												...(newMessages[batchStartIndex].metadata as any),
 												batch: undefined,
 											},
@@ -251,7 +250,6 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 										...newMessages[batchEndIndex],
 										metadata: {
 											// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to undefined.
-
 											...(newMessages[batchEndIndex].metadata as any),
 											batch: undefined,
 										},

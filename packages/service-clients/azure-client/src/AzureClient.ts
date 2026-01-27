@@ -176,7 +176,6 @@ export class AzureClient {
 	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns Existing container instance along with associated services.
 	 */
-
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,

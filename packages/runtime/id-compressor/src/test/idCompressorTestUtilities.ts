@@ -538,7 +538,6 @@ export class IdCompressorTestNetwork {
 				assert(range.sessionId === compressor.localSessionId);
 				if (range.ids !== undefined) {
 					// initialize firstGenCount if not set
-
 					if (firstGenCount === undefined) {
 						firstGenCount = range.ids.firstGenCount;
 					}

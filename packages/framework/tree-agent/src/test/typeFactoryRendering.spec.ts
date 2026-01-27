@@ -513,7 +513,6 @@ describe("renderTypeFactoryTypeScript", () => {
 			// Create an empty lookup that doesn't have the type
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-arguments
 			const emptyLookup = new WeakMap<any, any>();
-
 			assert.throws(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				() => renderTypeFactoryTypeScript(instanceOfType, () => "", emptyLookup),
@@ -524,7 +523,6 @@ describe("renderTypeFactoryTypeScript", () => {
 		it("throws UsageError for unsupported type kind", () => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 			const invalidType = { _kind: "invalid" } as any;
-
 			assert.throws(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				() => renderTypeFactoryTypeScript(invalidType, () => "", instanceOfsTypeFactory),

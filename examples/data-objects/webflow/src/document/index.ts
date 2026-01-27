@@ -322,7 +322,6 @@ export class FlowDocument extends DataObject {
 
 		// Perform removals in descending order, otherwise earlier deletions will shift the positions
 		// of later ops.  Because each effected interval is non-overlapping, a simple sort suffices.
-
 		ops.sort((left, right) => right.pos1 - left.pos1);
 
 		this.sharedString.groupOperation({

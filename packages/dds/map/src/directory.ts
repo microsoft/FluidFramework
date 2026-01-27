@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// TODO: Fix prefer-nullish-coalescing and prefer-optional-chain lint violations
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
