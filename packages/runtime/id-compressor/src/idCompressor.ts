@@ -399,9 +399,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	/**
-	 * {@inheritdoc IIdCompressorCore.shardId}
+	 * {@inheritdoc IIdCompressorCore.disposeShard}
 	 */
-	public shardId(): CompressorShardId | undefined {
+	public disposeShard(): CompressorShardId | undefined {
 		if (this.writeVersion < SerializationVersion.V3) {
 			throw new Error(
 				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.writeVersion}`,
@@ -411,10 +411,16 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			return undefined;
 		}
 
-		return {
+		const shardId: CompressorShardId = {
 			sessionId: this.localSessionId,
 			localGenCount: this.localGenCount,
 		};
+
+		// Make this compressor unusable by replacing all methods with throwing stubs
+		// This is a one-time mutation that avoids runtime checks in every method
+		makeCompressorUnusable(this);
+
+		return shardId;
 	}
 
 	private generateNextLocalId(): LocalCompressedId {
@@ -1187,4 +1193,42 @@ export function deserializeIdCompressor(
 		logger: writeVersionOrLogger as ITelemetryLoggerExt | undefined,
 		requestedWriteVersion: sessionIdOrDocumentVersion,
 	});
+}
+
+/**
+ * Throws an error indicating the compressor has been disposed.
+ */
+const throwDisposed = (): never => {
+	throw new Error(
+		"This compressor has been disposed via disposeShard() and can no longer be used.",
+	);
+};
+
+/**
+ * Makes an IdCompressor instance unusable by replacing all its methods with functions that throw.
+ * This is called once when disposeShard() is invoked to make the compressor permanently unusable.
+ * Uses prototype mutation to avoid runtime checks in every method.
+ * @param compressor - The compressor instance to make unusable
+ */
+function makeCompressorUnusable(compressor: IdCompressor): void {
+	// Enumerate all properties on the instance and its prototype, replacing any functions
+	// This automatically handles all methods without needing to maintain a manual list
+	/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+	const obj = compressor as any;
+
+	// Replace methods on the instance itself
+	for (const key of Object.keys(obj)) {
+		if (typeof obj[key] === "function") {
+			obj[key] = throwDisposed;
+		}
+	}
+
+	// Replace methods on the prototype (this is where class methods live)
+	const proto = Object.getPrototypeOf(obj);
+	for (const key of Object.getOwnPropertyNames(proto)) {
+		if (key !== "constructor" && typeof proto[key] === "function") {
+			obj[key] = throwDisposed;
+		}
+	}
+	/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 }
