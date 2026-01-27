@@ -145,7 +145,6 @@ export namespace InternalUtilityTypes {
     };
     // @system
     export type NotificationParametersSignatureFromSubscriberSignature<Event> = Event extends (sender: Attendee, ...args: infer P) => void ? (...args: P) => void : never;
-        {};
 }
 
 // @beta

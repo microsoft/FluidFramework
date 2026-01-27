@@ -26,11 +26,10 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	type IfNotificationParametersSignature<Event, IfParametersValid, Else> = Event extends (
-		...args: infer P
-	) => void
-		? CoreInternalUtilityTypes.IfSameType<P, JsonSerializable<P>, IfParametersValid, Else>
-		: Else;
+	export type IfNotificationParametersSignature<Event, IfParametersValid, Else> =
+		Event extends (...args: infer P) => void
+			? CoreInternalUtilityTypes.IfSameType<P, JsonSerializable<P>, IfParametersValid, Else>
+			: Else;
 
 	/**
 	 * Yields `IfSubscriber` when the given type is an acceptable shape for a notification
@@ -38,7 +37,7 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	type IfNotificationSubscriberSignature<Event, IfSubscriber, Else> = Event extends (
+	export type IfNotificationSubscriberSignature<Event, IfSubscriber, Else> = Event extends (
 		sender: Attendee,
 		...args: infer P
 	) => void
@@ -79,7 +78,7 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	type NotificationParametersSignatureFromSubscriberSignature<Event> = Event extends (
+	export type NotificationParametersSignatureFromSubscriberSignature<Event> = Event extends (
 		sender: Attendee,
 		...args: infer P
 	) => void
