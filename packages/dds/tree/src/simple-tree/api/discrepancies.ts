@@ -21,6 +21,7 @@ import {
 	type TreeTypeSet,
 	type ValueSchema,
 } from "../../core/index.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
 	NodeKind,
@@ -29,6 +30,13 @@ import {
 	type TreeNodeSchema,
 } from "../core/index.js";
 import {
+	createFieldSchema,
+	FieldKind,
+	FieldSchemaAlpha,
+	type FieldSchema,
+} from "../fieldSchema.js";
+import { LeafNodeSchema } from "../leafNodeSchema.js";
+import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
 	isObjectNodeSchema,
@@ -36,16 +44,9 @@ import {
 	type ObjectNodeSchemaPrivate,
 } from "../node-kinds/index.js";
 import { convertFieldKind } from "../toStoredSchema.js";
-import {
-	createFieldSchema,
-	FieldKind,
-	FieldSchemaAlpha,
-	type FieldSchema,
-} from "../fieldSchema.js";
-import { LeafNodeSchema } from "../leafNodeSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
+
 import { tryStoredSchemaAsArray } from "./customTree.js";
-import { FieldKinds } from "../../feature-libraries/index.js";
 
 /**
  * Discriminated union (keyed on `mismatch`) of discrepancies between a view and stored schema which

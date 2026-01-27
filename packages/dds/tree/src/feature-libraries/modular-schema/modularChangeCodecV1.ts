@@ -32,6 +32,7 @@ import {
 	idAllocatorFromMaxId,
 	newTupleBTree,
 } from "../../util/index.js";
+import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import {
 	type FieldBatchCodec,
 	type TreeChunk,
@@ -64,7 +65,6 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,

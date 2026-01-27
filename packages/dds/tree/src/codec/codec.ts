@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { cleanedPackageVersion as runtimeUtilsCleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
-import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
+import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import { cleanedPackageVersion as runtimeUtilsCleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
-import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Translates decoded data to encoded data.
@@ -199,6 +198,20 @@ export interface IJsonCodec<
 }
 
 /**
+ * Type erase the more detailed encoded type from a codec.
+ */
+export function eraseEncodedType<
+	TDecoded,
+	TEncoded = JsonCompatibleReadOnly,
+	TValidate = TEncoded,
+	TContext = void,
+>(
+	codec: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
+): IJsonCodec<TDecoded, TValidate, TValidate, TContext> {
+	return codec as unknown as IJsonCodec<TDecoded, TValidate, TValidate, TContext>;
+}
+
+/**
  * @remarks TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
  */
 export interface IBinaryCodec<TDecoded, TContext = void>
@@ -381,7 +394,7 @@ class DefaultBinaryCodec<TDecoded, TContext> implements IBinaryCodec<TDecoded, T
 
 	public decode(change: IsoBuffer, context: TContext): TDecoded {
 		const json = bufferToString(change, "utf8");
-		const jsonable = JSON.parse(json);
+		const jsonable = JSON.parse(json) as JsonCompatibleReadOnly;
 		return this.jsonCodec.decode(jsonable, context);
 	}
 }
@@ -453,9 +466,9 @@ export const unitCodec: IMultiFormatCodec<
 export function withSchemaValidation<
 	TInMemoryFormat,
 	EncodedSchema extends TSchema,
-	TEncodedFormat = JsonCompatibleReadOnly,
-	TValidate = TEncodedFormat,
-	TContext = ChangeEncodingContext,
+	TEncodedFormat,
+	TValidate,
+	TContext,
 >(
 	schema: EncodedSchema,
 	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext>,

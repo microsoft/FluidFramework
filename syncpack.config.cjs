@@ -120,17 +120,18 @@ module.exports = {
 			dependencies: [
 				"@biomejs/biome",
 				"@eslint-community/*",
+				"@eslint/*",
 				"@rushstack/eslint-*",
 				"@typescript-eslint/*",
 				"eslint-config-*",
 				"eslint-config-prettier",
 				"eslint-import-resolver-typescript",
 				"eslint-plugin-*",
-				"eslint-config-prettier",
 				"eslint",
 				"less",
 				"prettier",
 				"typescript",
+				"typescript-eslint",
 				"vue",
 				"webpack-dev-server",
 
@@ -159,6 +160,14 @@ module.exports = {
 			dependencies: ["typescript-*"],
 			dependencyTypes: ["dev"],
 			packages: ["@fluid-example/import-testing"],
+			range: "~",
+		},
+
+		// `@types` packages should often use `~` to avoid pulling in newer types with more features than the code they are the types for.
+		{
+			label: "Must use tilde dependency ranges",
+			dependencies: ["@types/node"],
+			packages: ["**"],
 			range: "~",
 		},
 

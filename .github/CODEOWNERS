@@ -16,7 +16,7 @@
 # ORDER MATTERS! The last matching pattern has the most precedence.
 # Be careful not to break existing ownership patterns.
 #
-# Do not assign ownership to indviduals. Use a Team: https://github.com/orgs/microsoft/teams/fluid-cr/teams .
+# Do not assign ownership to individuals. Use a Team: https://github.com/orgs/microsoft/teams/fluid-cr/teams .
 # Using individuals can break processing of this file if they are not contributors, or lose contributors status
 # which can and does happen. Use "function/area-based" teams rather than "organization-based" teams and add
 # individuals to each one; we use fluid-cr and its child teams (by convention named fluid-cr-<some-specifier>)
@@ -51,6 +51,9 @@
 # shared tree and tree related dds source
 /packages/dds/tree/src                         @microsoft/fluid-cr-tree
 /experimental/dds/tree/src                     @microsoft/fluid-cr-tree
+
+# presence source
+/packages/framework/presence/src               @microsoft/fluid-cr-presence
 
 # Fluid Devtools source
 /packages/tools/devtools/**/src                @microsoft/fluid-cr-devtools
