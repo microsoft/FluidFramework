@@ -220,6 +220,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		dirtyFn: (address: string) => void,
 		private readonly snapshotTree: ISnapshotTree,
 		extraBlob?: Map<string, ArrayBufferLike>,
+		private readonly loadingFromPendingState?: boolean,
 	) {
 		super(
 			id,
@@ -244,6 +245,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 					logger,
 					clonedSnapshotTree,
 					blobMap,
+					this.loadingFromPendingState,
 				);
 			}),
 			new LazyPromise<IChannel>(async () => {

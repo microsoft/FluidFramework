@@ -23,7 +23,6 @@ import {
 	type ISnapshotTree,
 	type ISequencedDocumentMessage,
 	SummaryType,
-	type ISummaryTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,
@@ -1074,7 +1073,7 @@ export class ChannelCollection
 		const context =
 			this.contexts.get(id) ?? (await this.contexts.getBoundOrRemoted(id, headerData.wait));
 		if (context === undefined) {
-			// The requested data store does not exits. Throw a 404 response exception.
+			// The requested data store does not exist. Throw a 404 response exception.
 			const request: IRequest = { url: id };
 			throw responseToException(create404Response(request), request);
 		}
@@ -1769,14 +1768,7 @@ export class ChannelCollection
 
 				// Realize the datastore runtime and load the pending channels into it
 				const channel = await existingContext.realize();
-				// Cast to access the loadPendingChannels method (from FluidDataStoreRuntime)
-				if ("loadPendingChannels" in channel) {
-					(
-						channel as {
-							loadPendingChannels: (channels: ISummaryTree) => void;
-						}
-					).loadPendingChannels(channelsTree);
-				}
+				channel.loadPendingChannels?.(channelsTree);
 			}
 		}
 	}
