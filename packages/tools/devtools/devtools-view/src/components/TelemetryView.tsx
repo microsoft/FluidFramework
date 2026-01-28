@@ -41,6 +41,7 @@ import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
 
 import { SplitPane } from "./SplitPane.cjs";
 import { Waiting } from "./Waiting.js";
+import { ScreenReaderAnnouncement } from "./utility-components/index.js";
 
 /**
  * Set the default displayed size to 100.
@@ -200,24 +201,7 @@ export function TelemetryView(): React.ReactElement {
 						Refresh
 					</Button>
 				</div>
-				<div
-					role="status"
-					aria-live="polite"
-					aria-atomic="true"
-					style={{
-						position: "absolute",
-						width: "1px",
-						height: "1px",
-						padding: "0",
-						margin: "-1px",
-						overflow: "hidden",
-						clip: "rect(0, 0, 0, 0)",
-						whiteSpace: "nowrap",
-						border: "0",
-					}}
-				>
-					{refreshStatusMessage}
-				</div>
+				<ScreenReaderAnnouncement message={refreshStatusMessage} />
 			</div>
 			{telemetryEvents === undefined ? (
 				<Waiting label={"Waiting for Telemetry events"} />

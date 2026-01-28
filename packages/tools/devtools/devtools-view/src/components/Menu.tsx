@@ -46,6 +46,7 @@ import React from "react";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 
+import { ScreenReaderAnnouncement } from "./utility-components/index.js";
 import { Waiting } from "./Waiting.js";
 
 const useMenuStyles = makeStyles({
@@ -204,24 +205,7 @@ function RefreshButton(): React.ReactElement {
 					aria-label="Refresh Containers list"
 				></Button>
 			</Tooltip>
-			<div
-				role="status"
-				aria-live="polite"
-				aria-atomic="true"
-				style={{
-					position: "absolute",
-					width: "1px",
-					height: "1px",
-					padding: "0",
-					margin: "-1px",
-					overflow: "hidden",
-					clip: "rect(0, 0, 0, 0)",
-					whiteSpace: "nowrap",
-					border: "0",
-				}}
-			>
-				{statusMessage}
-			</div>
+			<ScreenReaderAnnouncement message={statusMessage} />
 		</>
 	);
 }
