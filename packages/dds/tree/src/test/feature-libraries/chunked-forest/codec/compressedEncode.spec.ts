@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	eraseEncodedType,
 	type ICodecOptions,
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
@@ -98,28 +99,30 @@ function makeFieldBatchCodec(
 	encoderContext: EncoderContext,
 ): IJsonCodec<
 	FieldBatch,
-	EncodedFieldBatch,
+	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
 	FieldBatchEncodingContext
 > {
-	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
-		encode: (
-			data: FieldBatch,
-			fieldBatchContext: FieldBatchEncodingContext,
-		): EncodedFieldBatch => {
-			return compressedEncode(data, encoderContext);
-		},
-		decode: (
-			data: EncodedFieldBatch,
-			fieldBatchContext: FieldBatchEncodingContext,
-		): FieldBatch => {
-			// TODO: consider checking data is in schema.
-			return decode(data, {
-				idCompressor: fieldBatchContext.idCompressor,
-				originatorId: fieldBatchContext.originatorId,
-			}).map((chunk) => chunk.cursor());
-		},
-	});
+	return eraseEncodedType(
+		makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
+			encode: (
+				data: FieldBatch,
+				fieldBatchContext: FieldBatchEncodingContext,
+			): EncodedFieldBatch => {
+				return compressedEncode(data, encoderContext);
+			},
+			decode: (
+				data: EncodedFieldBatch,
+				fieldBatchContext: FieldBatchEncodingContext,
+			): FieldBatch => {
+				// TODO: consider checking data is in schema.
+				return decode(data, {
+					idCompressor: fieldBatchContext.idCompressor,
+					originatorId: fieldBatchContext.originatorId,
+				}).map((chunk) => chunk.cursor());
+			},
+		}),
+	);
 }
 
 const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2);

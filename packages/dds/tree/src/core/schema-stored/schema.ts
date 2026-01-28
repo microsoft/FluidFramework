@@ -7,7 +7,7 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
-	type JsonCompatibleReadOnlyObject,
+	type JsonCompatibleReadOnly,
 	type MakeNominal,
 	type Values,
 	brandConst,
@@ -156,7 +156,7 @@ export interface TreeFieldStoredSchema {
 	 * @privateRemarks
 	 * This field corresponds to the `metadata` field in the persisted schema format.
 	 */
-	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
+	readonly persistedMetadata: JsonCompatibleReadOnly | undefined;
 }
 
 /**
