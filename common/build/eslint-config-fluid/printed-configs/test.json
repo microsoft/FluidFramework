@@ -1202,7 +1202,10 @@
             "error",
             {
                 "allow": [
-                    "@fluid*/**"
+                    "@fluid*/**",
+                    "@fluidframework/*/internal{,/**}",
+                    "@fluid-experimental/**",
+                    "*/index.js"
                 ]
             }
         ],

@@ -90,7 +90,7 @@ export const testProjectConfig = {
 				// Preferably, external (alpha/beta/public) entrypoints are used
 				// for clarity where testing is somewhat whitebox versus validating
 				// customer experience.
-				allow: ["@fluid*/**"],
+				allow: ["@fluid*/**", ...permittedImports],
 			},
 		],
 		"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
