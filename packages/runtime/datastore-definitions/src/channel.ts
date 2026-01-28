@@ -289,7 +289,7 @@ export interface IChannelServices {
  * This approach (not requiring TChannel to extend IChannel) also makes it possible for SharedObject's public interfaces to not include IChannel if desired
  * (while still requiring the implementation to implement it).
  *
- * @legacy @beta
+ * @internal
  */
 export interface IChannelFactory<out TChannel = unknown> {
 	/**
