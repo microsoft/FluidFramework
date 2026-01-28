@@ -19,9 +19,10 @@ import type { Linter } from "eslint";
 /**
  * Shared list of permitted imports for configuring the `import-x/no-internal-modules` rule.
  *
- * @fluid- scopes could probably allow `/**` as entrypoint structuring rules do NOT apply.
- * Currently there are no known uses of structured imports from these scopes; so no
- * allowances are stated.
+ * @remarks
+ * All `@fluid-` scopes could probably allow `/**` as entrypoint structuring rules do
+ * NOT apply. Currently there are no known uses of structured imports from these scopes;
+ * so, no broad allowances are stated.
  */
 export const permittedImports = [
 	// Within Fluid Framework allow import of '/internal' from other FF packages.
