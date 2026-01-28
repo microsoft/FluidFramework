@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail, oob } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
-import type { GraphCommit, RevisionTag, TaggedChange } from "../core/index.js";
-import { disposeSymbol } from "../util/index.js";
+import type { GraphCommit, RevisionTag } from "../core/index.js";
+import { hasSome } from "../util/index.js";
 
-import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
+import type { ChangeEnricher } from "./changeEnricher.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
 
 interface PendingChange<TChange> {
@@ -33,14 +33,10 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 
 	public constructor(
 		/**
-		 * A function that can create a rollback for a given change.
-		 */
-		private readonly makeRollback: (change: TaggedChange<TChange>) => TChange,
-		/**
 		 * Change enricher that represent the tip of the top-level local branch (i.e., the branch on which in-flight
 		 * commits are applied and automatically rebased).
 		 */
-		private readonly tip: ChangeEnricherReadonlyCheckout<TChange>,
+		private readonly enricher: ChangeEnricher<TChange>,
 	) {}
 
 	public onCommitSubmitted(commit: GraphCommit<TChange>): void {
@@ -67,54 +63,46 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			return;
 		}
 
-		const localCommits = getLocalCommits();
+		const newCommits = getLocalCommits();
+
+		const staleChanges: {
+			readonly pending: PendingChange<TChange>;
+			readonly newCommit: GraphCommit<TChange>;
+		}[] = [];
+		for (const newCommit of newCommits) {
+			const pending = this.getPendingChange(newCommit.revision);
+			assert(
+				pending !== undefined,
+				0xbda /* there must be an inflight commit for each resubmit commit */,
+			);
+			const isStale = pending.lastEnrichment < this.currentEnrichment;
+			if (isStale) {
+				staleChanges.push({ pending, newCommit });
+			} else {
+				// We have reached a commit with a valid enrichment. Later commits must also be valid.
+				break;
+			}
+		}
+
 		assert(
-			localCommits[0]?.revision === revision,
+			hasSome(staleChanges) && staleChanges[0].newCommit.revision === revision,
 			0xc79 /* Expected local commits to start with specified revision */,
 		);
 
+		const startingState = staleChanges[0].newCommit.parent;
+		assert(startingState !== undefined, "New commits must have a parent.");
 		// Some in-flight commits have stale enrichments, so we recompute them.
-		const checkout = this.tip.fork();
-
-		// Roll back the checkout to the state before the oldest commit
-		for (let iCommit = localCommits.length - 1; iCommit >= 0; iCommit -= 1) {
-			const commit = localCommits[iCommit] ?? oob();
-			const rollback = this.makeRollback(commit);
-			// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
-			// Either we have to make it possible to do so, or this logic will have to change to work
-			// forwards from an earlier fork instead of backwards.
-			checkout.applyTipChange(rollback);
+		const enriched = this.enricher.enrich(
+			startingState,
+			newCommits.slice(0, staleChanges.length),
+		);
+		for (const [index, { pending, newCommit }] of staleChanges.entries()) {
+			const enrichedChange = enriched[index];
+			assert(enrichedChange !== undefined, "Missing enriched commit.");
+			const enrichedCommit = { ...newCommit, change: enrichedChange };
+			pending.commit = enrichedCommit;
+			pending.lastEnrichment = this.currentEnrichment;
 		}
-
-		// Update the enrichments of the stale commits.
-		for (const [iCommit, commit] of localCommits.entries()) {
-			const current = this.getPendingChange(commit.revision);
-			assert(
-				current !== undefined,
-				0xbda /* there must be an inflight commit for each resubmit commit */,
-			);
-
-			if (current.lastEnrichment < this.currentEnrichment) {
-				const enrichedChange = checkout.updateChangeEnrichments(
-					commit.change,
-					commit.revision,
-				);
-				const enrichedCommit = { ...commit, change: enrichedChange };
-
-				// Optimization: only apply the enriched change if the next commit also needs enrichment.
-				const nextCommit = localCommits[iCommit + 1];
-				if (
-					nextCommit !== undefined &&
-					this.getPendingChange(nextCommit.revision).lastEnrichment < this.currentEnrichment
-				) {
-					checkout.applyTipChange(enrichedChange, commit.revision);
-				}
-
-				current.commit = enrichedCommit;
-				current.lastEnrichment = this.currentEnrichment;
-			}
-		}
-		checkout[disposeSymbol]();
 	}
 
 	public getEnrichedCommit(
