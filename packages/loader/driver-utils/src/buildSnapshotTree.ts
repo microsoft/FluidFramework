@@ -33,7 +33,7 @@ function flattenCore(
 			blobMap.set(id, buffer);
 
 			const entry: IGitTreeEntry = {
-				mode: FileMode[treeEntry.mode],
+				mode: FileMode[treeEntry.mode] as string,
 				path: subPath,
 				sha: id,
 				size: 0,
@@ -48,7 +48,7 @@ function flattenCore(
 			);
 			const t = treeEntry.value;
 			const entry: IGitTreeEntry = {
-				mode: FileMode[treeEntry.mode],
+				mode: FileMode[treeEntry.mode] as string,
 				path: subPath,
 				sha: "",
 				size: -1,

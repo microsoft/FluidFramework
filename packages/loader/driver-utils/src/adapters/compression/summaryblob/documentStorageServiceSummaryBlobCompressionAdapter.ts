@@ -235,6 +235,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			decompressed = originalBlob;
 		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment
 			decompressed = decompress(originalBlob) as ArrayBufferLike;
 		} else {
 			throw new Error(`Unknown Algorithm ${algorithm}`);
@@ -269,12 +270,13 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		}
 		let clone: object | undefined;
 		for (const key of Object.keys(input)) {
-			const value = input[key];
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const value: SummaryObject = input[key];
 
 			if (Boolean(value) && typeof value === "object") {
 				const replaced = this.recursivelyReplace(
 					isEncode,
-					value as SummaryObject,
+					value,
 					encoder,
 					decoder,
 					config,
