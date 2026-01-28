@@ -393,7 +393,8 @@ extends:
               FETCH_URL="https://$ASWA_HOSTNAME/data/$OTHER_FILE"
               FETCH_OUTPUT="$DEPLOY_DIR/data/$OTHER_FILE"
 
-              HTTP_CODE=$(curl -sL -w "%{http_code}" -o "$FETCH_OUTPUT" "$FETCH_URL" 2>&1) || true
+              echo "Fetching from: $FETCH_URL"
+              HTTP_CODE=$(curl -vL -w "%{http_code}" -o "$FETCH_OUTPUT" "$FETCH_URL" 2>&1) || true
               if [ "$HTTP_CODE" = "200" ] && [ -s "$FETCH_OUTPUT" ]; then
                 echo "Successfully fetched $OTHER_FILE (HTTP $HTTP_CODE, $(wc -c < "$FETCH_OUTPUT") bytes)"
               else
