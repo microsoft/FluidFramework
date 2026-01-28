@@ -64,12 +64,7 @@ export function ScreenReaderAnnouncement({
 	message,
 }: ScreenReaderAnnouncementProps): React.ReactElement {
 	return (
-		<div
-			role="status"
-			aria-live="polite"
-			aria-atomic="true"
-			style={visuallyHiddenStyles}
-		>
+		<div role="status" aria-live="polite" aria-atomic="true" style={visuallyHiddenStyles}>
 			{message}
 		</div>
 	);
