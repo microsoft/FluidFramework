@@ -654,7 +654,7 @@ export namespace System_TableSchema {
 							this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
 						}
 					},
-					// Relevant invariant: no orphan cells
+					// Relevant invariant: each cell corresponds to an existing row and column
 					// Scenarios that this constraint is intended to prevent:
 					//  * Client A inserts a column, then client B adds row with a cell for that column, then client A reverts the column insertion.
 					//  * Client A inserts a column, then client B populates a cell for that column within an existing row, then client A reverts the column insertion.
@@ -690,9 +690,9 @@ export namespace System_TableSchema {
 
 				// #endregion
 
-				// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits.
-				// Example scenario: Client A removes a column, then Client B adds a row with cells for existing columns (including the one A removed, sequenced before A's edit).
-				// If both edits are applied, B's row would have orphaned cells for the removed column.
+				// Prevents cell leaks from concurrently removed columns.
+				// Example scenario: Client A removes a column while concurrently Client B adds a row with cells for those columns (including the one A removed).
+				// If client B is sequenced after A, then B's row could have cells that do not correspond to existing columns.
 				// This constraint ensures all columns that existed when creating the row still exist when the row insertion is applied.
 				// TODO: Replace with "no detach" constraint on the column array when available.
 				const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
@@ -735,19 +735,18 @@ export namespace System_TableSchema {
 						(row as RowValueInternalType).cells[column.id] = cell as CellValueType;
 					},
 					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits.
-					// Example scenario: Client A removes a column, then Client B sets a cell in that column (sequenced before A's edit).
-					// If both edits are applied, B's cell would be orphaned (cell exists but column doesn't).
-					// This constraint ensures the column still exists when the cell is set.
+					// Example scenario: Client A removes a column, then Client B sets a cell in that column (sequenced after A's edit).
+					// If both edits are applied, B's cell would not correspond to an existing column.
 					preconditions: [
 						{
 							type: "nodeInDocument",
 							node: column,
 						},
 					],
-					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this cell set is reverted.
-					// Example scenario: Client A sets a cell (overwriting an existing value), then Client B removes the column (sequenced before A's edit).
-					// If A's cell set is later reverted, the old cell value would be restored but B's column removal means there's no column for it.
-					// This constraint on revert ensures the column still exists when restoring the old cell value, preventing orphaned cells.
+					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this cell set is processed.
+					// Example scenario: Client A removes a column, while concurrently Client B sets a cell in that column.
+					// If B reverts its change after after A is sequenced, then B's cell would not correspond to an existing column.
+					// This constraint ensures that the column still exists when this edit is reverted.
 					preconditionsOnRevert:
 						(row as RowValueInternalType).cells[column.id] === undefined
 							? undefined
@@ -764,6 +763,13 @@ export namespace System_TableSchema {
 				indexOrColumns: number | undefined | readonly string[] | readonly ColumnValueType[],
 				count: number | undefined = undefined,
 			): ColumnValueType[] {
+				// Prevents cell leaks from concurrently added rows in earlier-sequenced edits.
+				// Example scenario: Client A adds a row, Client B concurrently removes a column that is populated in A's row.
+				// If Client A's edit is sequenced before Client B's edit, then B's removal would orphan the cell in A's row.
+				// This constraint ensures no rows were added.
+				// TODO: Replace with "no attach" constraint on the row array when available.
+				const preconditions: TransactionConstraintAlpha[] = [{ type: "noChange" }];
+
 				if (typeof indexOrColumns === "number" || indexOrColumns === undefined) {
 					let removedColumns: ColumnValueType[] | undefined;
 					const startIndex = indexOrColumns ?? 0;
@@ -798,12 +804,13 @@ export namespace System_TableSchema {
 							);
 							removedColumns = columnsToRemove;
 						},
+						
 						// Prevents cell leaks from concurrently added rows in earlier-sequenced edits.
-						// Example scenario: Client A removes a column, then Client B adds a row with a cell in that column (sequenced before A's edit).
-						// When A's removal is processed, it removes all cells for that column from existing rows, but B's concurrently added row would retain its cell.
-						// This constraint ensures no rows were added, preventing orphaned cells from appearing in newly added rows.
+						// Example scenario: Client A adds a row, Client B concurrently removes a column that is populated in A's row.
+						// If Client A's edit is sequenced before Client B's edit, then B's removal would orphan the cell in A's row.
+						// This constraint ensures no rows were added.
 						// TODO: Replace with "no attach" constraint on the row array when available.
-						preconditions: [{ type: "noChange" }],
+						preconditions,
 					});
 					return removedColumns ?? fail(0xc1f /* Transaction did not complete. */);
 				} else {
@@ -840,11 +847,11 @@ export namespace System_TableSchema {
 							}
 						},
 						// Prevents cell leaks from concurrently added rows in earlier-sequenced edits.
-						// Example scenario: Client A removes a column, then Client B adds a row with a cell in that column (sequenced before A's edit).
-						// When A's removal is processed, it removes all cells for that column from existing rows, but B's concurrently added row would retain its cell.
-						// This constraint ensures no rows were added, preventing orphaned cells from appearing in newly added rows.
+						// Example scenario: Client A adds a row, Client B concurrently removes a column that is populated in A's row.
+						// If Client A's edit is sequenced before Client B's edit, then B's removal would orphan the cell in A's row.
+						// This constraint ensures no rows were added.
 						// TODO: Replace with "no attach" constraint on the row array when available.
-						preconditions: [{ type: "noChange" }],
+						preconditions,
 					});
 					return columnsToRemove;
 				}
@@ -854,6 +861,13 @@ export namespace System_TableSchema {
 				indexOrRows: number | undefined | readonly string[] | readonly RowValueType[],
 				count?: number | undefined,
 			): RowValueType[] {
+				const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
+					(column) => ({
+						type: "nodeInDocument",
+						node: column as ColumnValueType,
+					}),
+				);
+
 				if (typeof indexOrRows === "number" || indexOrRows === undefined) {
 					let removedRows: RowValueType[] | undefined;
 					const startIndex = indexOrRows ?? 0;
@@ -865,18 +879,6 @@ export namespace System_TableSchema {
 					}
 
 					validateIndexRange(startIndex, endIndex, this.table.rows, "Table.removeRows");
-
-					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this row removal is reverted.
-					// Example scenario: Client A removes rows, then Client B removes a column (sequenced before A's edit).
-					// If A's row removal is later reverted, the rows would be restored but B's column removal would have already removed cells from those rows.
-					// This constraint on revert ensures no columns were removed, preventing the restoration of rows with missing cells.
-					// TODO: Replace with "no detach on revert" constraint on the column array when available.
-					const columnConstraintsOnRevert: TransactionConstraintAlpha[] =
-						this.table.columns.map((column) => ({
-							type: "nodeInDocument",
-							node: column as ColumnValueType,
-						}));
-
 					this.#applyEditsInBatch({
 						applyEdits: () => {
 							removedRows = removeRangeFromArray(
@@ -886,8 +888,13 @@ export namespace System_TableSchema {
 								"Table.removeRows",
 							);
 						},
+					// Adding a constraint on columns here to prevent cells being orphaned.  The relevant scenario is:
+					// Client A removes rows
+					// Client B (either concurrently or not, so long as B's edit is sequenced after A's edit) removes a column,
+					// Client A reverts the removal of the rows
+					// TODO: Replace with "no detach on revert" constraint on the column array when available.
 						preconditionsOnRevert:
-							columnConstraintsOnRevert.length > 0 ? columnConstraintsOnRevert : undefined,
+							columnConstraints.length > 0 ? columnConstraints : undefined,
 					});
 					return removedRows ?? fail("Transaction did not complete");
 				}
@@ -904,19 +911,6 @@ export namespace System_TableSchema {
 				for (const rowToRemove of indexOrRows) {
 					rowsToRemove.push(this.#getRow(rowToRemove));
 				}
-
-				// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this row removal is reverted.
-				// Example scenario: Client A removes rows, then Client B removes a column (sequenced before A's edit).
-				// If A's row removal is later reverted, the rows would be restored but B's column removal would have already removed cells from those rows.
-				// This constraint on revert ensures no columns were removed, preventing the restoration of rows with missing cells.
-				// TODO: Replace with "no detach on revert" constraint on the column array when available.
-				const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
-					(column) => ({
-						type: "nodeInDocument",
-						node: column as ColumnValueType,
-					}),
-				);
-
 				this.#applyEditsInBatch({
 					applyEdits: () => {
 						// Note, throwing an error within a transaction will abort the entire transaction.
@@ -927,7 +921,13 @@ export namespace System_TableSchema {
 							this.table.rows.removeAt(index);
 						}
 					},
-					preconditionsOnRevert: columnConstraints.length > 0 ? columnConstraints : undefined,
+					// Adding a constraint on columns here to prevent cells being orphaned.  The relevant scenario is:
+					// Client A removes rows
+					// Client B (either concurrently or not, so long as B's edit is sequenced after A's edit) removes a column,
+					// Client A reverts the removal of the rows
+					// TODO: Replace with "no detach on revert" constraint on the column array when available.
+					preconditionsOnRevert:
+						columnConstraints.length > 0 ? columnConstraints : undefined,
 				});
 				return rowsToRemove;
 			}
@@ -952,7 +952,7 @@ export namespace System_TableSchema {
 					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this cell removal is reverted.
 					// Example scenario: Client A removes a cell, then Client B removes the column for that cell (sequenced before A's edit).
 					// If A's cell removal is later reverted, the cell would be restored but B's column removal means there's no column for it.
-					// This constraint on revert ensures the column still exists, preventing the restoration of orphaned cells.
+					// This constraint on revert ensures the column still exists, ensuring restored cells correspond to existing columns.
 					preconditionsOnRevert: [
 						{
 							type: "nodeInDocument",
@@ -1372,6 +1372,11 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  * Column and Row schema created using these APIs are extensible via the `props` field.
  * This allows association of additional properties with column and row nodes.
  *
+ * There is a concept of cells in the table becoming "orphaned.". An orphaned cell is a cell that does not correspond to a valid row and column.
+ * In order to preserve the invariant that all cells must have a valid row and column, table operations 
+ * (eg, inserting/removing rows/columns, or setting/removing a cell) will automatically include constraints that
+ * guards transactions from producing orphaned cells.  
+ * 
  * @example Defining a Table schema
  *
  * ```typescript
