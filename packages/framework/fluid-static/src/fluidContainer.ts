@@ -276,9 +276,17 @@ export interface IFluidContainerInternal extends ContainerExtensionStore {
 	 * This method can only be called on detached containers. If the container is attached,
 	 * closed, or disposed, this method will throw an error.
 	 *
-	 * **Compatibility:** The serialized container format is only guaranteed to be compatible
-	 * with the same version of Fluid Framework that produced it. Storing serialized containers
-	 * for long-term persistence is not recommended without additional versioning considerations.
+	 * **Compatibility:** The serialized format is intended for short-term, transient storage
+	 * scenarios (e.g., persisting state across a page reload or brief user session interruption).
+	 * The format is only guaranteed to be compatible with:
+	 *
+	 * - The same version of Fluid Framework that produced it
+	 *
+	 * - The same container schema used when the container was serialized
+	 *
+	 * Long-term storage of serialized containers is not recommended. The serialized format
+	 * may change between Fluid Framework versions without notice, and there is no guaranteed
+	 * migration path for stored serialized data.
 	 *
 	 * @throws Will throw an error if the container is not in a detached state.
 	 */

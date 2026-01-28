@@ -139,12 +139,26 @@ export class OdspClient {
 	}
 
 	/**
-	 * Create a new container from the serialized state of a detached container.
+	 * Create a new detached container from the serialized state of a previously serialized detached container.
 	 *
-	 * @param serializedContainer - Serialized string representation of the container.
-	 * @param containerSchema - The schema of the container to rehydrate.
+	 * @param serializedContainer - Serialized string representation of the container, produced by
+	 * {@link IOdspFluidContainer.serializeDetachedContainer}.
+	 * @param containerSchema - The schema of the container to rehydrate. This must match the schema
+	 * used when the container was serialized.
 	 * @returns A promise resolving to an object containing the rehydrated container and associated services.
-	 * @returns A promise resolving to an object containing the rehydrated container and associated services.
+	 *
+	 * @remarks
+	 * **Compatibility:** The serialized format is intended for short-term, transient storage
+	 * scenarios (e.g., persisting state across a page reload or brief user session interruption).
+	 * The format is only guaranteed to be compatible with:
+	 *
+	 * - The same version of Fluid Framework that produced it
+	 *
+	 * - The same container schema used when the container was serialized
+	 *
+	 * Long-term storage of serialized containers is not recommended. The serialized format
+	 * may change between Fluid Framework versions without notice, and there is no guaranteed
+	 * migration path for stored serialized data.
 	 */
 	public async rehydrateContainer<T extends ContainerSchema>(
 		serializedContainer: string,
