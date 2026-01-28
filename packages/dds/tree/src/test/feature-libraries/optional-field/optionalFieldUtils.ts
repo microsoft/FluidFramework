@@ -17,12 +17,12 @@ import {
 	taggedAtomId,
 } from "../../../core/index.js";
 import {
-	type OptionalChangeset,
 	optionalChangeRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/optional-field/index.js";
+} from "../../../feature-libraries/optional-field/optionalField.js";
 import type {
 	Replace,
+	OptionalChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { SizedNestedMap, type Mutable } from "../../../util/index.js";

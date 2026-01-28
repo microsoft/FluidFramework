@@ -25,7 +25,7 @@ import type {
 import {
 	optionalFieldEditor,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/optional-field/index.js";
+} from "../../../feature-libraries/optional-field/optionalField.js";
 import { brand, brandConst } from "../../../util/index.js";
 import {
 	type ChildStateGenerator,
@@ -38,16 +38,16 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 // since OptionalChangeset is not generic over the child changeset type.
 // Search this file for "as any" and "as NodeChangeset"
 import { chunkFromJsonTrees } from "../../utils.js";
-import { intoDelta, type DefaultChangeset } from "../../../feature-libraries/index.js";
+import {
+	intoDelta,
+	type DefaultChangeset,
+	FieldKinds as defaultFieldKinds,
+} from "../../../feature-libraries/index.js";
 import type {
 	FieldEditDescription,
 	GlobalEditDescription,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import {
-	optional,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	assertEqual,
 	normalizeDelta,
@@ -58,6 +58,8 @@ import {
 	defaultFieldRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../default-field-kinds/defaultChangesetUtil.js";
+
+const optional = defaultFieldKinds.optional;
 
 type RevisionTagMinter = () => RevisionTag;
 

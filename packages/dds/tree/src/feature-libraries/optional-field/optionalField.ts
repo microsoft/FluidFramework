@@ -10,9 +10,11 @@ import {
 	type ChangesetLocalId,
 	type DeltaFieldChanges,
 	type DeltaMark,
+	Multiplicity,
 	type RevisionReplacer,
 	type RevisionTag,
 	areEqualChangeAtomIdOpts,
+	forbiddenFieldKindIdentifier,
 	makeChangeAtomId,
 } from "../../core/index.js";
 import type { IdAllocator, Mutable } from "../../util/index.js";
@@ -34,10 +36,16 @@ import {
 	CrossFieldTarget,
 	type RebaseVersion,
 	type RebaseRevisionMetadata,
+	FlexFieldKind,
 } from "../modular-schema/index.js";
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
+import {
+	optionalIdentifier,
+	identifierFieldIdentifier,
+	requiredIdentifier,
+} from "../fieldKindIdentifiers.js";
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose,
@@ -539,3 +547,26 @@ function invertAttachId(
 
 	return detachId ?? attachId;
 }
+
+interface Optional
+	extends FlexFieldKind<
+		OptionalFieldEditor,
+		typeof optionalIdentifier,
+		Multiplicity.Optional
+	> {}
+
+/**
+ * 0 or 1 items.
+ */
+export const optional: Optional = new FlexFieldKind(
+	optionalIdentifier,
+	Multiplicity.Optional,
+	{
+		changeHandler: optionalChangeHandler,
+		allowMonotonicUpgradeFrom: new Set([
+			identifierFieldIdentifier,
+			requiredIdentifier,
+			forbiddenFieldKindIdentifier,
+		]),
+	},
+);

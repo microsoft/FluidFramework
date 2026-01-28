@@ -6,11 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import type { ChangesetLocalId, RevisionTag } from "../../../core/index.js";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { mintRevisionTag } from "../../utils.js";
 
 import { MarkMaker as Mark } from "./testEdits.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { MarkListFactory } from "../../../feature-libraries/sequence-field/markListFactory.js";
 
 const dummyMark = Mark.remove(1, brand(0));
 const detachedBy: RevisionTag = mintRevisionTag();
@@ -18,21 +19,21 @@ const detachedBy: RevisionTag = mintRevisionTag();
 export function testMarkListFactory(): void {
 	describe("MarkListFactory", () => {
 		it("Inserts an offset when there is content after the offset", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			factory.pushOffset(42);
 			factory.pushContent(dummyMark);
 			assert.deepStrictEqual(factory.list, [{ count: 42 }, dummyMark]);
 		});
 
 		it("Does not insert 0-length offsets", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			factory.pushOffset(0);
 			factory.pushContent(dummyMark);
 			assert.deepStrictEqual(factory.list, [dummyMark]);
 		});
 
 		it("Merges runs of no-op marks over populated cells", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			factory.pushOffset(42);
 			factory.pushOffset(42);
 			factory.pushContent(dummyMark);
@@ -40,7 +41,7 @@ export function testMarkListFactory(): void {
 		});
 
 		it("Keeps tombstones", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			factory.push({ cellId: { localId: brand(0) }, count: 42 });
 			factory.pushContent(dummyMark);
 			const expected = [{ cellId: { localId: 0 }, count: 42 }, dummyMark];
@@ -48,7 +49,7 @@ export function testMarkListFactory(): void {
 		});
 
 		it("Does not insert an offset when there is no content after the offset", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			factory.pushContent(dummyMark);
 			factory.pushOffset(42);
 			factory.pushOffset(42);
@@ -58,7 +59,7 @@ export function testMarkListFactory(): void {
 		it("Can merge consecutive inserts", () => {
 			const id1: ChangesetLocalId = brand(1);
 			const id2: ChangesetLocalId = brand(2);
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			const insert1 = Mark.insert(1, id1);
 			const insert2 = Mark.insert(1, id2);
 			factory.pushContent(insert1);
@@ -67,7 +68,7 @@ export function testMarkListFactory(): void {
 		});
 
 		it("Can merge consecutive removes", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			const remove1 = Mark.remove(1, brand(0), {
 				cellRename: { revision: detachedBy, localId: brand(10) },
 			});
@@ -84,7 +85,7 @@ export function testMarkListFactory(): void {
 		});
 
 		it("Does not merge consecutive removes with discontinuous detach overrides", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			const remove1 = Mark.remove(1, brand(0), {
 				cellRename: { revision: detachedBy, localId: brand(10) },
 			});
@@ -97,7 +98,7 @@ export function testMarkListFactory(): void {
 		});
 
 		it("Can merge adjacent moves", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			const moveOut1 = Mark.moveOut(1, brand(0));
 			const moveOut2 = Mark.moveOut(1, brand(1));
 			const moveIn1 = Mark.moveIn(1, brand(0), { cellId: { localId: brand(2) } });
@@ -116,7 +117,7 @@ export function testMarkListFactory(): void {
 		});
 
 		it("Can merge three adjacent moves", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			const moveOut1 = Mark.moveOut(1, brand(0));
 			const moveOut2 = Mark.moveOut(1, brand(1));
 			const moveOut3 = Mark.moveOut(1, brand(2));
@@ -139,7 +140,7 @@ export function testMarkListFactory(): void {
 		});
 
 		it("Can merge consecutive revives", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			const revive1 = Mark.revive(1, {
 				revision: detachedBy,
 				localId: brand(0),
@@ -158,7 +159,7 @@ export function testMarkListFactory(): void {
 		});
 
 		it("Can merge consecutive return-tos", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			const return1 = Mark.returnTo(1, brand(0), {
 				revision: detachedBy,
 				localId: brand(1),
@@ -177,7 +178,7 @@ export function testMarkListFactory(): void {
 		});
 
 		it("Can merge consecutive move-out", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			const return1 = Mark.moveOut(1, brand(0), {
 				cellRename: { revision: detachedBy, localId: brand(10) },
 			});
@@ -193,7 +194,7 @@ export function testMarkListFactory(): void {
 		});
 
 		it("Does not merge consecutive move-out with discontinuous detach overrides", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			const return1 = Mark.moveOut(1, brand(0), {
 				cellRename: { revision: detachedBy, localId: brand(10) },
 			});
@@ -206,7 +207,7 @@ export function testMarkListFactory(): void {
 		});
 
 		it("Does not merge revives with gaps", () => {
-			const factory = new SF.MarkListFactory();
+			const factory = new MarkListFactory();
 			const revive1 = Mark.revive(1, {
 				revision: detachedBy,
 				localId: brand(0),

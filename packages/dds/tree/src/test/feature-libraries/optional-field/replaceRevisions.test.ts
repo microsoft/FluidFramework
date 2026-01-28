@@ -10,10 +10,13 @@ describe("Optional field - replaceRevisions", () => {});
 // import { mintRevisionTag } from "../../utils.js";
 // import { type Mutable, brand } from "../../../util/index.js";
 // import {
-// 	type OptionalChangeset,
 // 	optionalChangeRebaser,
 // 	// eslint-disable-next-line import-x/no-internal-modules
-// } from "../../../feature-libraries/optional-field/index.js";
+// } from "../../../feature-libraries/optional-field/optionalField.js";
+// import type {
+// 	OptionalChangeset,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 // import { Change, assertEqual } from "./optionalFieldUtils.js";
 // import {
 // 	DefaultRevisionReplacer,

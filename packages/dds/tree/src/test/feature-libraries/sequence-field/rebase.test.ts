@@ -14,7 +14,7 @@ import {
 	type RebaseConfig,
 	assertChangesetsEqual,
 	checkDeltaEquality,
-	rebase as rebaseI,
+	testRebase as rebaseI,
 	rebaseOverChanges,
 	rebaseOverComposition,
 	rebaseTagged,
@@ -25,6 +25,10 @@ import {
 import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
+import type {
+	Changeset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/sequence-field/types.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -32,11 +36,11 @@ const tag3: RevisionTag = mintRevisionTag();
 const tag4: RevisionTag = mintRevisionTag();
 
 function rebase(
-	change: SF.Changeset,
-	base: SF.Changeset,
+	change: Changeset,
+	base: Changeset,
 	baseRev?: RevisionTag,
 	config?: RebaseConfig,
-): SF.Changeset {
+): Changeset {
 	return rebaseI(makeAnonChange(change), tagChangeInline(base, baseRev ?? tag1), config);
 }
 
@@ -832,8 +836,8 @@ export function testRebase(): void {
 		// 	const [mo1, mi1] = Mark.move(1, brand(1));
 		// 	const [mo2, mi2] = Mark.move(1, brand(10));
 		// 	const [mo3, mi3] = Mark.move(1, brand(20));
-		// 	const src: SF.CellMark<SF.MoveOut> = { ...mo1, finalEndpoint: { localId: brand(20) } };
-		// 	const dst: SF.CellMark<SF.MoveIn> = { ...mi3, finalEndpoint: { localId: brand(1) } };
+		// 	const src: CellMark<MoveOut> = { ...mo1, finalEndpoint: { localId: brand(20) } };
+		// 	const dst: CellMark<MoveIn> = { ...mi3, finalEndpoint: { localId: brand(1) } };
 		// 	const move = [
 		// 		src,
 		// 		Mark.skip(1),
@@ -1172,7 +1176,7 @@ export function testRebase(): void {
 
 		describe("Over composition", () => {
 			it("insert ↷ [remove, remove]", () => {
-				const removes: SF.Changeset = shallowCompose([
+				const removes: Changeset = shallowCompose([
 					tagChangeInline(Change.remove(1, 2, tag1), tag1),
 					tagChangeInline(Change.remove(0, 2, tag2), tag2),
 				]);
@@ -1197,7 +1201,7 @@ export function testRebase(): void {
 			});
 
 			it("modify ↷ [remove, remove]", () => {
-				const removes: SF.Changeset = shallowCompose([
+				const removes: Changeset = shallowCompose([
 					tagChangeInline(Change.remove(1, 3, tag1), tag1),
 					tagChangeInline(Change.remove(0, 2, tag2), tag2),
 				]);

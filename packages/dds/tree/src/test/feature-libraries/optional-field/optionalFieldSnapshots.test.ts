@@ -9,11 +9,14 @@
 // import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 // import { type ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js";
+// import type {
+// 	OptionalChangeset,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 // import {
-// 	type OptionalChangeset,
 // 	makeOptionalFieldCodecFamily,
 // 	// eslint-disable-next-line import-x/no-internal-modules
-// } from "../../../feature-libraries/optional-field/index.js";
+// } from "../../../feature-libraries/optional-field/optionalFieldCodecs.js";
 // import { brand } from "../../../util/index.js";
 // import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // import { TestNodeId } from "../../testNodeId.js";

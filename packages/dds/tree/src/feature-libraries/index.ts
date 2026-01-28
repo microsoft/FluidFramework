@@ -127,11 +127,6 @@ export {
 
 export {
 	FieldKinds,
-	type Required,
-	type Optional,
-	type Sequence,
-	type Identifier,
-	type Forbidden,
 	type DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,

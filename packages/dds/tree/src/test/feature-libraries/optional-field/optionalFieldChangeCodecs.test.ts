@@ -6,8 +6,6 @@
 // XXX
 describe("optionalFieldChangeCodecs", () => {});
 
-// import type { SessionId } from "@fluidframework/id-compressor";
-
 // import { brand } from "../../../util/index.js";
 // import {
 // 	type EncodingTestData,
@@ -17,11 +15,17 @@ describe("optionalFieldChangeCodecs", () => {});
 // 	testRevisionTagCodec,
 // } from "../../utils.js";
 // import {
-// 	type OptionalChangeset,
-// 	makeOptionalFieldCodecFamily,
 // 	optionalFieldEditor,
 // 	// eslint-disable-next-line import-x/no-internal-modules
-// } from "../../../feature-libraries/optional-field/index.js";
+// } from "../../../feature-libraries/optional-field/optionalField.js";
+// import {
+// 	makeOptionalFieldCodecFamily,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalFieldCodecs.js";
+// import type {
+// 	OptionalChangeset,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 // import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
 // import { TestNodeId } from "../../testNodeId.js";
 // import { TestChange } from "../../testChange.js";

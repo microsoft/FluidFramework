@@ -6,9 +6,8 @@
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { ChangeAtomId } from "../../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { CellMark } from "../../../feature-libraries/sequence-field/index.js";
 import type {
+	CellMark,
 	Attach,
 	Detach,
 	MarkEffect,
