@@ -18,7 +18,7 @@ import {
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
-import { brand } from "../../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../../util/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import {
@@ -32,7 +32,20 @@ import {
  * Uses field cursors
  */
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
-export type ForestCodec = IJsonCodec<FieldSet, Format, Format, FieldBatchEncodingContext>;
+export type ForestCodec = IJsonCodec<
+	FieldSet,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	FieldBatchEncodingContext
+>;
+
+/**
+ * Options for building the forest summarizer codec.
+ * Extends CodecWriteOptions with the required fieldBatchCodec dependency.
+ */
+export interface ForestCodecOptions extends CodecWriteOptions {
+	readonly fieldBatchCodec: FieldBatchCodec;
+}
 
 /**
  * Convert a MinimumVersionForCollab to a ForestFormatVersion.
