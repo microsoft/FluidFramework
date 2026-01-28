@@ -4,10 +4,10 @@
  */
 
 import type { Linter } from "eslint";
-import { recommendedConfig } from "../../eslint.config.base.mts";
+import { baseConfig } from "../../eslint.config.base.mts";
 
 const config: Linter.Config[] = [
-	...recommendedConfig,
+	...baseConfig,
 	{
 		rules: {
 			// Additional lambdas-specific rules
