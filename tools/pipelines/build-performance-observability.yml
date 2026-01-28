@@ -548,7 +548,7 @@ extends:
                       };
                       const itemsPerPage = 5;
                       const colors = {
-                          pr: { primary: 'rgba(139, 92, 246, 1)', background: 'rgba(139, 92, 246, 0.1)', tasks: ['rgba(139, 92, 246, 0.8)', 'rgba(168, 85, 247, 0.8)', 'rgba(192, 132, 252, 0.8)', 'rgba(216, 180, 254, 0.8)', 'rgba(107, 33, 168, 0.8)', 'rgba(126, 34, 206, 0.8)'] },
+                          pr: { primary: 'rgba(0, 120, 212, 1)', background: 'rgba(0, 120, 212, 0.1)', tasks: ['rgba(16, 124, 16, 0.8)', 'rgba(0, 120, 212, 0.8)', 'rgba(138, 43, 226, 0.8)', 'rgba(255, 140, 0, 0.8)', 'rgba(209, 52, 56, 0.8)', 'rgba(0, 183, 195, 0.8)'] },
                           internal: { primary: 'rgba(0, 120, 212, 1)', background: 'rgba(0, 120, 212, 0.1)', tasks: ['rgba(16, 124, 16, 0.8)', 'rgba(0, 120, 212, 0.8)', 'rgba(138, 43, 226, 0.8)', 'rgba(255, 140, 0, 0.8)', 'rgba(209, 52, 56, 0.8)', 'rgba(0, 183, 195, 0.8)'] }
                       };
                       function switchTab(mode) {
