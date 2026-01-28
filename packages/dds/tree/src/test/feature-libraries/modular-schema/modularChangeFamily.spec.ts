@@ -53,6 +53,7 @@ import {
 	jsonableTreeFromFieldCursor,
 	cursorForJsonableTreeField,
 	DefaultRevisionReplacer,
+	fieldKindConfigurations,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,
@@ -93,6 +94,7 @@ import {
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import {
 	assertEqual,
+	assertModularChangesetsEqualIgnoreRebaseVersion,
 	Change,
 	normalizeChangeset,
 	removeAliases,
@@ -177,14 +179,9 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const codec = makeModularChangeCodecFamily(
-	new Map([
-		[1, fieldKindConfiguration],
-		[2, fieldKindConfiguration],
-		[3, fieldKindConfiguration],
-		[4, fieldKindConfiguration],
-		[5, fieldKindConfiguration],
-		[6, fieldKindConfiguration],
-	]),
+	new Map(
+		[...fieldKindConfigurations.keys()].map((version) => [version, fieldKindConfiguration]),
+	),
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
@@ -1466,7 +1463,7 @@ describe("ModularChangeFamily", () => {
 			],
 		};
 
-		const encodingTestDataV5Only: EncodingTestData<
+		const encodingTestDataV5AndUp: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangesetV2,
 			ChangeEncodingContext
@@ -1502,9 +1499,15 @@ describe("ModularChangeFamily", () => {
 			family.codecs,
 			encodingTestDataForAllVersions,
 			assertEquivalent,
-			[1, 2, 3, 4, 6],
+			[3, 4],
 		);
-		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [5]);
+		makeEncodingTestSuite(family.codecs, encodingTestDataV5AndUp, assertEquivalent, [5]);
+		makeEncodingTestSuite(
+			family.codecs,
+			encodingTestDataV5AndUp,
+			(a, b) => assertModularChangesetsEqualIgnoreRebaseVersion(a, b, fieldKinds),
+			[101],
+		);
 	});
 
 	it("build child change", () => {

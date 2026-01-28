@@ -107,7 +107,11 @@ export function assertEqual<T>(actual: T, expected: T): void {
 	);
 }
 
-export function assertModularChangesetsEqual(a: ModularChangeset, b: ModularChangeset): void {
+export function assertModularChangesetsEqual(
+	a: ModularChangeset,
+	b: ModularChangeset,
+	fieldKinds?: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): void {
 	// Some changesets end up with different maxID values after rebase despite being otherwise equal.
 	const aMaxId = a.maxId;
 	const bMaxId = b.maxId;
@@ -119,8 +123,8 @@ export function assertModularChangesetsEqual(a: ModularChangeset, b: ModularChan
 
 	// Removing aliases ensures that we don't consider the changesets different if they only differ in their aliases.
 	// It also means that we risk treating some changesets that are the same (once you consider aliases) as different.
-	const aNormalized = { ...normalizeChangeset(a), maxId };
-	const bNormalized = { ...normalizeChangeset(b), maxId };
+	const aNormalized = { ...normalizeChangeset(a, fieldKinds), maxId };
+	const bNormalized = { ...normalizeChangeset(b, fieldKinds), maxId };
 
 	assertEqual(aNormalized, bNormalized);
 }
@@ -128,10 +132,12 @@ export function assertModularChangesetsEqual(a: ModularChangeset, b: ModularChan
 export function assertModularChangesetsEqualIgnoreRebaseVersion(
 	actual: ModularChangeset,
 	expected: ModularChangeset,
+	fieldKinds?: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): void {
 	assertModularChangesetsEqual(
 		upgradeToRebaseVersionV2(actual),
 		upgradeToRebaseVersionV2(expected),
+		fieldKinds,
 	);
 }
 
