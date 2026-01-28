@@ -1,5 +1,16 @@
 {
     "language": "@/js",
+    "languageOptions": {
+        "ecmaVersion": 2026,
+        "parser": "typescript-eslint/parser@8.18.2",
+        "parserOptions": {
+            "projectService": true,
+            "ecmaFeatures": {
+                "jsx": true
+            }
+        },
+        "sourceType": "module"
+    },
     "linterOptions": {
         "reportUnusedDisableDirectives": 1
     },
