@@ -55,14 +55,6 @@ parameters:
   type: object
   default: Small-eastus2
 
-- name: preCG
-  type: stepList
-  default: []
-
-- name: cgSubDirectory
-  type: string
-  default:
-
 - name: checkoutSubmodules
   type: boolean
   default: false
@@ -81,10 +73,6 @@ parameters:
   type: string
 
 - name: isReleaseGroup
-  type: boolean
-  default: false
-
-- name: includeInternalVersions
   type: boolean
   default: false
 
