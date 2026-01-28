@@ -28,7 +28,7 @@ import {
 
 describe("Summary Utils", () => {
 	function assertSummaryTree(obj: SummaryObject): ISummaryTree {
-		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain, @typescript-eslint/strict-boolean-expressions -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain, @typescript-eslint/strict-boolean-expressions -- TODO: ADO#58524 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 		if (obj && obj.type === SummaryType.Tree) {
 			return obj;
 		} else {
@@ -36,7 +36,7 @@ describe("Summary Utils", () => {
 		}
 	}
 	function assertSummaryBlob(obj: SummaryObject): ISummaryBlob {
-		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain, @typescript-eslint/strict-boolean-expressions -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain, @typescript-eslint/strict-boolean-expressions -- TODO: ADO#58524 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 		if (obj && obj.type === SummaryType.Blob) {
 			return obj;
 		} else {
@@ -44,7 +44,7 @@ describe("Summary Utils", () => {
 		}
 	}
 	function assertSummaryHandle(obj: SummaryObject): ISummaryHandle {
-		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain, @typescript-eslint/strict-boolean-expressions -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain, @typescript-eslint/strict-boolean-expressions -- TODO: ADO#58524 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 		if (obj && obj.type === SummaryType.Handle) {
 			return obj;
 		} else {

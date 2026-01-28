@@ -153,7 +153,7 @@ export class TrackingGroupCollection {
 
 	public matches(trackingCollection: TrackingGroupCollection): boolean {
 		if (
-			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58520 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 			!trackingCollection ||
 			this._trackingGroups.size !== trackingCollection._trackingGroups.size
 		) {

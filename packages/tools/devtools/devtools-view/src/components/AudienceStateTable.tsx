@@ -120,7 +120,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 			<TableBody>
 				{audienceStateItems.map((item, itemIndex) => {
 					const isCurrentUser =
-						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58525 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 						item.myClientConnection !== undefined &&
 						item.myClientConnection.user.id === item.userId;
 

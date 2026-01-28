@@ -478,7 +478,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 		let cached;
 		let reconciliationPath: ReconciliationPath = [];
 		if (
-			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58517 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 			this.cachedEditResult !== undefined &&
 			this.cachedEditResult.editId === edit.id &&
 			this.cachedEditResult.result.before === prevView
