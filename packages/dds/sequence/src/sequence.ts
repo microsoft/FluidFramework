@@ -962,6 +962,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
+	 * Processes a merge tree message for the sequence.
 	 *
 	 * @param message - Message with decoded and hydrated handles
 	 */

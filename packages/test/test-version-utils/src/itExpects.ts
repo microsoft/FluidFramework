@@ -23,6 +23,8 @@ export type ExpectedEvents =
 	| Partial<Record<TestDriverTypes, ITelemetryGenericEventExt[]>>;
 
 /**
+ * Creates a test wrapper that validates expected telemetry events.
+ *
  * @internal
  */
 export function createExpectsTest(
