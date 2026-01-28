@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
-import { assert } from "@fluidframework/core-utils/internal";
 import { strict } from "node:assert";
 
+import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
+import { currentVersion } from "../../../codec/index.js";
 import {
 	type ChangesetLocalId,
 	type RevisionInfo,
@@ -18,18 +21,17 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type * as SF from "../../../feature-libraries/sequence-field/types.js";
-import type { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtils.js";
-import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
-import { TestChange } from "../../testChange.js";
-import { chunkFromJsonTrees, mintRevisionTag, testRevisionTagCodec } from "../../utils.js";
 import {
-	type IdAllocator,
-	brand,
-	idAllocatorFromMaxId,
-	makeArray,
-} from "../../../util/index.js";
+	fieldKindConfigurations,
+	fieldKinds,
+	type ModularChangeFormatVersion,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
+import {
+	makeFieldBatchCodec,
+	type DefaultChangeset,
+	FieldKinds as defaultFieldKinds,
+} from "../../../feature-libraries/index.js";
 import {
 	makeModularChangeCodecFamily,
 	type FieldEditDescription,
@@ -42,7 +44,25 @@ import {
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type * as SF from "../../../feature-libraries/sequence-field/types.js";
+import type { CodecWriteOptions } from "../../../index.js";
+import {
+	type IdAllocator,
+	brand,
+	idAllocatorFromMaxId,
+	makeArray,
+} from "../../../util/index.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
+import { ajvValidator } from "../../codec/index.js";
+import type { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtils.js";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
+import { TestChange } from "../../testChange.js";
+import { chunkFromJsonTrees, mintRevisionTag, testRevisionTagCodec } from "../../utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { defaultFieldRebaser } from "../default-field-kinds/defaultChangesetUtil.js";
+
+import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
 	areRebasable,
 	assertChangesetsEqual,
@@ -63,24 +83,6 @@ import {
 	inlineRevision,
 	toDeltaWrapped,
 } from "./utils.js";
-import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import type { CodecWriteOptions } from "../../../index.js";
-import { ajvValidator } from "../../codec/index.js";
-import {
-	fieldKindConfigurations,
-	fieldKinds,
-	type ModularChangeFormatVersion,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { defaultFieldRebaser } from "../default-field-kinds/defaultChangesetUtil.js";
-import { currentVersion } from "../../../codec/index.js";
-import {
-	makeFieldBatchCodec,
-	type DefaultChangeset,
-	FieldKinds as defaultFieldKinds,
-} from "../../../feature-libraries/index.js";
 
 const sequence = defaultFieldKinds.sequence;
 

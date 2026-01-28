@@ -16,6 +16,11 @@ import {
 	tagRollbackInverse,
 	taggedAtomId,
 } from "../../../core/index.js";
+import type { NodeId } from "../../../feature-libraries/index.js";
+import {
+	DefaultRevisionReplacer,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 import {
 	optionalChangeRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -26,11 +31,6 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { SizedNestedMap, type Mutable } from "../../../util/index.js";
-import type { NodeId } from "../../../feature-libraries/index.js";
-import {
-	DefaultRevisionReplacer,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
 
 export const Change = {
 	/**

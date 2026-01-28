@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	type ChangeAtomIdMap,
 	type DeltaFieldChanges,
@@ -28,6 +29,7 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../util/index.js";
+
 import { TestChange } from "./testChange.js";
 
 export interface ChangesetWrapper<T> {

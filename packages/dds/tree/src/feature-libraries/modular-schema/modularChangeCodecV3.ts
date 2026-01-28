@@ -4,6 +4,8 @@
  */
 
 import { assert, fail, oob } from "@fluidframework/core-utils/internal";
+import type { TAnySchema } from "@sinclair/typebox";
+
 import {
 	withSchemaValidation,
 	type ICodecOptions,
@@ -35,6 +37,8 @@ import {
 	type RangeQueryResult,
 	type TupleBTree,
 } from "../../util/index.js";
+import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	chunkFieldSingle,
 	defaultChunkPolicy,
@@ -42,7 +46,11 @@ import {
 	type TreeChunk,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
+
+import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
+import { genericFieldKind } from "./genericFieldKind.js";
+import { getFieldChangesetCodecs } from "./modularChangeCodecV1.js";
 import {
 	addNodeRename,
 	getFirstAttachField,
@@ -50,6 +58,19 @@ import {
 	newRootTable,
 	type FieldIdKey,
 } from "./modularChangeFamily.js";
+import type {
+	EncodedBuilds,
+	EncodedBuildsArray,
+	EncodedFieldChange,
+	EncodedFieldChangeMap,
+	EncodedNodeChangeset,
+	EncodedRevisionInfo,
+} from "./modularChangeFormatV1.js";
+import {
+	EncodedModularChangeset,
+	type EncodedRenames,
+	type EncodedRootNodes,
+} from "./modularChangeFormatV3.js";
 import {
 	newCrossFieldRangeTable,
 	type CrossFieldKeyTable,
@@ -62,25 +83,6 @@ import {
 	type NodeLocation,
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
-import type {
-	EncodedBuilds,
-	EncodedBuildsArray,
-	EncodedFieldChange,
-	EncodedFieldChangeMap,
-	EncodedNodeChangeset,
-	EncodedRevisionInfo,
-} from "./modularChangeFormatV1.js";
-import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
-import { genericFieldKind } from "./genericFieldKind.js";
-import type { TAnySchema } from "@sinclair/typebox";
-import {
-	EncodedModularChangeset,
-	type EncodedRenames,
-	type EncodedRootNodes,
-} from "./modularChangeFormatV3.js";
-import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
-import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
-import { getFieldChangesetCodecs } from "./modularChangeCodecV1.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,

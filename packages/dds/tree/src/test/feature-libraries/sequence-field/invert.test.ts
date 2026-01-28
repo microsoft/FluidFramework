@@ -5,18 +5,19 @@
 
 import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
-import { TestChange } from "../../testChange.js";
-import { mintRevisionTag } from "../../utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Changeset, CellId } from "../../../feature-libraries/sequence-field/types.js";
 import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
+import { mintRevisionTag } from "../../utils.js";
+
+import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
 	testInvert as invertChange,
 	assertChangesetsEqual,
 	tagChangeInline,
 } from "./utils.js";
-import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { Changeset, CellId } from "../../../feature-libraries/sequence-field/types.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();

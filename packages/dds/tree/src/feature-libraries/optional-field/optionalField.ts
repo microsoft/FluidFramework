@@ -20,6 +20,11 @@ import {
 import type { IdAllocator, Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import {
+	optionalIdentifier,
+	identifierFieldIdentifier,
+	requiredIdentifier,
+} from "../fieldKindIdentifiers.js";
+import {
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
 	type FieldEditor,
@@ -41,11 +46,6 @@ import {
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
-import {
-	optionalIdentifier,
-	identifierFieldIdentifier,
-	requiredIdentifier,
-} from "../fieldKindIdentifiers.js";
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose,

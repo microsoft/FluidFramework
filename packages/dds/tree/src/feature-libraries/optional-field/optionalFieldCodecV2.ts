@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import type { IJsonCodec } from "../../codec/index.js";
@@ -23,7 +24,6 @@ import {
 
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV2.js";
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
-import { assert } from "@fluidframework/core-utils/internal";
 
 type RegisterId = ChangeAtomId | "self";
 

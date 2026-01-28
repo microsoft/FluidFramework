@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
+
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
@@ -16,12 +18,22 @@ import {
 	rootFieldKey,
 	tagChange,
 } from "../../../core/index.js";
+import {
+	intoDelta,
+	type DefaultChangeset,
+	FieldKinds as defaultFieldKinds,
+} from "../../../feature-libraries/index.js";
 import type {
 	ModularChangeset,
 	NodeId,
 	RebaseVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
+import type {
+	FieldEditDescription,
+	GlobalEditDescription,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	optionalFieldEditor,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -39,25 +51,15 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 // Search this file for "as any" and "as NodeChangeset"
 import { chunkFromJsonTrees } from "../../utils.js";
 import {
-	intoDelta,
-	type DefaultChangeset,
-	FieldKinds as defaultFieldKinds,
-} from "../../../feature-libraries/index.js";
-import type {
-	FieldEditDescription,
-	GlobalEditDescription,
+	defaultFamily,
+	defaultFieldRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+} from "../default-field-kinds/defaultChangesetUtil.js";
 import {
 	assertEqual,
 	normalizeDelta,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../modular-schema/modularChangesetUtil.js";
-import {
-	defaultFamily,
-	defaultFieldRebaser,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../default-field-kinds/defaultChangesetUtil.js";
 
 const optional = defaultFieldKinds.optional;
 

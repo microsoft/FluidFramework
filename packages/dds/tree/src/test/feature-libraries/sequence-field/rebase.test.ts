@@ -4,12 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
-import { mintRevisionTag } from "../../utils.js";
-import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+
 import { type ChangeAtomId, type RevisionTag, makeAnonChange } from "../../../core/index.js";
+import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import type {
+	Changeset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/sequence-field/types.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
+import { mintRevisionTag } from "../../utils.js";
+
+import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
 import {
 	type RebaseConfig,
 	assertChangesetsEqual,
@@ -22,13 +31,6 @@ import {
 	tagChangeInline,
 	withoutTombstones,
 } from "./utils.js";
-import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
-import { brand } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
-import type {
-	Changeset,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/sequence-field/types.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();

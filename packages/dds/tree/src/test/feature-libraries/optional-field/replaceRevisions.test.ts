@@ -7,8 +7,10 @@
 describe("Optional field - replaceRevisions", () => {});
 
 // import type { ChangeAtomId, RevisionTag } from "../../../core/index.js";
-// import { mintRevisionTag } from "../../utils.js";
-// import { type Mutable, brand } from "../../../util/index.js";
+// import {
+// 	DefaultRevisionReplacer,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/modular-schema/index.js";
 // import {
 // 	optionalChangeRebaser,
 // 	// eslint-disable-next-line import-x/no-internal-modules
@@ -17,11 +19,10 @@ describe("Optional field - replaceRevisions", () => {});
 // 	OptionalChangeset,
 // 	// eslint-disable-next-line import-x/no-internal-modules
 // } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
+// import { type Mutable, brand } from "../../../util/index.js";
+// import { mintRevisionTag } from "../../utils.js";
+
 // import { Change, assertEqual } from "./optionalFieldUtils.js";
-// import {
-// 	DefaultRevisionReplacer,
-// 	// eslint-disable-next-line import-x/no-internal-modules
-// } from "../../../feature-libraries/modular-schema/index.js";
 
 // const tag0: RevisionTag = mintRevisionTag();
 // const tag1: RevisionTag = mintRevisionTag();

@@ -4,10 +4,11 @@
  */
 
 import { strict as assert, fail } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { FluidClientVersion } from "../../codec/index.js";
 import {
 	EmptyKey,
 	TreeNavigationResult,
@@ -17,9 +18,20 @@ import {
 	type NormalizedUpPath,
 	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import { TreeStatus } from "../../feature-libraries/index.js";
+import { JsonAsTree } from "../../jsonDomainSchema.js";
 import { Tree, type ITreeCheckout } from "../../shared-tree/index.js";
+import {
+	numberSchema,
+	SchemaFactory,
+	toInitialSchema,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
 import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
-import { FluidClientVersion } from "../../codec/index.js";
+import { fieldJsonCursor } from "../json/index.js";
+import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
 import {
 	checkoutWithContent,
 	chunkFromJsonableTrees,
@@ -32,18 +44,6 @@ import {
 	TestTreeProviderLite,
 	type TreeStoredContentStrict,
 } from "../utils.js";
-import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
-import {
-	numberSchema,
-	SchemaFactory,
-	toInitialSchema,
-	TreeViewConfiguration,
-} from "../../simple-tree/index.js";
-import { JsonAsTree } from "../../jsonDomainSchema.js";
-import { fieldJsonCursor } from "../json/index.js";
-import { TreeStatus } from "../../feature-libraries/index.js";
-import { configuredSharedTree } from "../../treeFactory.js";
-import { FormatValidatorBasic } from "../../external-utilities/index.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,

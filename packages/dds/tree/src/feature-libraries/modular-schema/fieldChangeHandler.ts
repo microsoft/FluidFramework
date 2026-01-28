@@ -17,6 +17,7 @@ import type {
 } from "../../core/index.js";
 import type { IdAllocator, Invariant, RangeQueryResult } from "../../util/index.js";
 import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+
 import type {
 	ComposeNodeManager,
 	InvertNodeManager,

@@ -4,6 +4,8 @@
  */
 
 import { assert, fail, oob } from "@fluidframework/core-utils/internal";
+import type { TAnySchema } from "@sinclair/typebox";
+
 import {
 	extractJsonValidator,
 	withSchemaValidation,
@@ -36,6 +38,7 @@ import {
 	type RangeQueryResult,
 	type TupleBTree,
 } from "../../util/index.js";
+import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import {
 	chunkFieldSingle,
 	defaultChunkPolicy,
@@ -43,10 +46,14 @@ import {
 	type TreeChunk,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
+
+import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
+import type { FlexFieldKind } from "./fieldKind.js";
 import type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
 } from "./fieldKindConfiguration.js";
+import { genericFieldKind } from "./genericFieldKind.js";
 import {
 	addNodeRename,
 	getFirstAttachField,
@@ -56,6 +63,15 @@ import {
 	validateChangeset,
 	type FieldIdKey,
 } from "./modularChangeFamily.js";
+import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
+import type {
+	EncodedBuilds,
+	EncodedBuildsArray,
+	EncodedFieldChange,
+	EncodedFieldChangeMap,
+	EncodedNodeChangeset,
+	EncodedRevisionInfo,
+} from "./modularChangeFormatV1.js";
 import {
 	newCrossFieldRangeTable,
 	type CrossFieldKeyTable,
@@ -68,20 +84,6 @@ import {
 	type NodeLocation,
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
-import type {
-	EncodedBuilds,
-	EncodedBuildsArray,
-	EncodedFieldChange,
-	EncodedFieldChangeMap,
-	EncodedNodeChangeset,
-	EncodedRevisionInfo,
-} from "./modularChangeFormatV1.js";
-import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
-import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
-import { genericFieldKind } from "./genericFieldKind.js";
-import type { TAnySchema } from "@sinclair/typebox";
-import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
-import type { FlexFieldKind } from "./fieldKind.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,

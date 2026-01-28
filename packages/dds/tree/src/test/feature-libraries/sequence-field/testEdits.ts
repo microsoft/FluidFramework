@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { NodeId } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import * as SF from "../../../feature-libraries/sequence-field/types.js";
-import { type Mutable, brand } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
-import { mintRevisionTag } from "../../utils.js";
-import { TestNodeId } from "../../testNodeId.js";
+import { fail } from "node:assert";
+
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
@@ -17,8 +12,15 @@ import {
 	asChangeAtomId,
 	offsetChangeAtomId,
 } from "../../../core/index.js";
+import type { NodeId } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldEditor } from "../../../feature-libraries/sequence-field/sequenceFieldEditor.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import * as SF from "../../../feature-libraries/sequence-field/types.js";
+import { type Mutable, brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { mintRevisionTag } from "../../utils.js";
 
 const tag: RevisionTag = mintRevisionTag();
 
@@ -99,7 +101,7 @@ function createRedundantRemoveChangeset(
 	revision: RevisionTag,
 ): SF.Changeset {
 	const changeset = createRemoveChangeset(index, size, revision, detachEvent.localId);
-	changeset[changeset.length - 1].cellId = detachEvent;
+	(changeset.at(-1) ?? fail("")).cellId = detachEvent;
 	return changeset;
 }
 
@@ -110,7 +112,7 @@ function createPinChangeset(
 	revision: RevisionTag | undefined,
 ): SF.Changeset {
 	const markList = sequenceFieldEditor.revive(startIndex, count, detachEvent, revision);
-	const mark = markList[markList.length - 1];
+	const mark = markList.at(-1) ?? fail("No marks in markList");
 	delete mark.cellId;
 	return markList;
 }
@@ -169,7 +171,7 @@ function createModifyDetachedChangeset(
 	detachEvent: SF.CellId,
 ): SF.Changeset {
 	const changeset = createModifyChangeset(index, change);
-	const modify = changeset[changeset.length - 1] as SF.CellMark<SF.NoopMark>;
+	const modify = changeset.at(-1) as SF.CellMark<SF.NoopMark>;
 	modify.cellId = detachEvent;
 	return changeset;
 }

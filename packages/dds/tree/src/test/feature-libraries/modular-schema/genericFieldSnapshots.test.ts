@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { newChangeAtomIdTransform } from "../../../core/index.js";
 import type { GenericChangeset } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeGenericChangeCodec } from "../../../feature-libraries/modular-schema/genericFieldKindCodecs.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { brand, newTupleBTree } from "../../../util/index.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { TestChange } from "../../testChange.js";
-import { snapshotSessionId, testIdCompressor } from "../../utils.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
-import { newChangeAtomIdTransform } from "../../../core/index.js";
+import { brand, newTupleBTree } from "../../../util/index.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { snapshotSessionId, testIdCompressor } from "../../utils.js";
 
 const nodeChange = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));
 const testChangesets: { name: string; change: GenericChangeset }[] = [

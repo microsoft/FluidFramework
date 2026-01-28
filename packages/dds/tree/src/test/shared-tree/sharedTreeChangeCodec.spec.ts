@@ -25,16 +25,16 @@ import {
 	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
-import { ajvValidator } from "../codec/index.js";
-import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
-import { brand, newTupleBTree } from "../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { newRootTable } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newCrossFieldRangeTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
+import { brand, newTupleBTree } from "../../util/index.js";
+import { ajvValidator } from "../codec/index.js";
+import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,

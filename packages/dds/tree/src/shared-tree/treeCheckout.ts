@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
+import type { IDisposable } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 import {
 	UsageError,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	FluidClientVersion,
 	FormatValidatorNoOp,
@@ -77,19 +80,6 @@ import {
 	type Transactor,
 } from "../shared-tree-core/index.js";
 import {
-	Breakable,
-	disposeSymbol,
-	getOrCreate,
-	hasSome,
-	type JsonCompatibleReadOnly,
-	type WithBreakable,
-} from "../util/index.js";
-
-import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
-import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import type { IDisposable } from "@fluidframework/core-interfaces";
-import {
 	type ImplicitFieldSchema,
 	type ReadSchema,
 	type TreeView,
@@ -103,9 +93,20 @@ import {
 	type CustomTreeValue,
 	type CustomTreeNode,
 } from "../simple-tree/index.js";
+import {
+	Breakable,
+	disposeSymbol,
+	getOrCreate,
+	hasSome,
+	type JsonCompatibleReadOnly,
+	type WithBreakable,
+} from "../util/index.js";
+
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { isStableId } from "@fluidframework/id-compressor/internal";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
+import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Events for {@link ITreeCheckout}.

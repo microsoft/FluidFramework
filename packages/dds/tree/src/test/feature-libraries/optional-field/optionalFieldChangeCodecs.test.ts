@@ -6,7 +6,22 @@
 // XXX
 describe("optionalFieldChangeCodecs", () => {});
 
+// import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
+// import {
+// 	optionalFieldEditor,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalField.js";
+// import type {
+// 	OptionalChangeset,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
+// import {
+// 	makeOptionalFieldCodecFamily,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalFieldCodecs.js";
 // import { brand } from "../../../util/index.js";
+// import { TestChange } from "../../testChange.js";
+// import { TestNodeId } from "../../testNodeId.js";
 // import {
 // 	type EncodingTestData,
 // 	makeEncodingTestSuite,
@@ -14,21 +29,7 @@ describe("optionalFieldChangeCodecs", () => {});
 // 	testIdCompressor,
 // 	testRevisionTagCodec,
 // } from "../../utils.js";
-// import {
-// 	optionalFieldEditor,
-// 	// eslint-disable-next-line import-x/no-internal-modules
-// } from "../../../feature-libraries/optional-field/optionalField.js";
-// import {
-// 	makeOptionalFieldCodecFamily,
-// 	// eslint-disable-next-line import-x/no-internal-modules
-// } from "../../../feature-libraries/optional-field/optionalFieldCodecs.js";
-// import type {
-// 	OptionalChangeset,
-// 	// eslint-disable-next-line import-x/no-internal-modules
-// } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
-// import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
-// import { TestNodeId } from "../../testNodeId.js";
-// import { TestChange } from "../../testChange.js";
+
 // import { Change, inlineRevision } from "./optionalFieldUtils.js";
 
 // const nodeChange1: TestNodeId = TestNodeId.create(

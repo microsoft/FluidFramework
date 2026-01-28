@@ -14,8 +14,8 @@ import type {
 	EncodedChangeAtomId,
 	FieldChangeEncodingContext,
 } from "../modular-schema/index.js";
-import type { Encoded } from "./formatV2.js";
 
+import type { Encoded } from "./formatV2.js";
 import type {
 	Attach,
 	CellId,

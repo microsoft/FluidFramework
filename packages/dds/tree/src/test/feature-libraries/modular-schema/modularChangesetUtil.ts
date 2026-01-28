@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
+import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import {
 	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
@@ -34,6 +38,20 @@ import {
 	type NodeId,
 	type TreeChunk,
 } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { DetachedNodeEntry } from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
+import {
+	addNodeRename,
+	cloneRootTable,
+	getChangeHandler,
+	getFieldKind,
+	getNodeParent,
+	newRootTable,
+	normalizeFieldId,
+	normalizeNodeId,
+	type RenameDescription,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	newCrossFieldRangeTable,
 	type CrossFieldKey,
@@ -59,24 +77,8 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
-import {
-	addNodeRename,
-	cloneRootTable,
-	getChangeHandler,
-	getFieldKind,
-	getNodeParent,
-	newRootTable,
-	normalizeFieldId,
-	normalizeNodeId,
-	type RenameDescription,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import { testIdCompressor } from "../../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { DetachedNodeEntry } from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
 
 export const Change = {
 	build,

@@ -20,6 +20,7 @@ import {
 	type RevisionTag,
 } from "../../core/index.js";
 import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/index.js";
+import { getFromChangeAtomIdMap, rangeQueryChangeAtomIdMap } from "../changeAtomIdBTree.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	EncodedNodeChangeset,
@@ -40,7 +41,6 @@ import {
 	type Rename,
 } from "./types.js";
 import { getAttachedRootId, getDetachedRootId, isNoopMark, splitMark } from "./utils.js";
-import { getFromChangeAtomIdMap, rangeQueryChangeAtomIdMap } from "../changeAtomIdBTree.js";
 
 export function makeV2CodecHelpers(
 	revisionTagCodec: IJsonCodec<

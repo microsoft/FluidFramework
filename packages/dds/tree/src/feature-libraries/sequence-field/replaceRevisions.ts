@@ -11,6 +11,7 @@ import {
 	type RevisionReplacer,
 	type RevisionTag,
 } from "../../core/index.js";
+import type { Mutable } from "../../util/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
 import {
@@ -23,7 +24,6 @@ import {
 	type MarkEffect,
 	NoopMarkType,
 } from "./types.js";
-import type { Mutable } from "../../util/index.js";
 
 export function replaceRevisions(changeset: Changeset, replacer: RevisionReplacer): Changeset {
 	const updatedMarks = new MarkListFactory();

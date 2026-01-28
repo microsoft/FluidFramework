@@ -11,6 +11,7 @@ import {
 	optionalIdentifier,
 } from "../fieldKindIdentifiers.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
+
 import { sequenceFieldChangeHandler } from "./sequenceFieldChangeHandler.js";
 import type { SequenceFieldEditor } from "./sequenceFieldEditor.js";
 

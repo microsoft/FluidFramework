@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type ChangeAtomId,
@@ -24,8 +25,12 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { isMoveMark } from "../../../feature-libraries/sequence-field/moveEffectTable.js";
+import type {
+	ComposeNodeManager,
+	DetachedNodeEntry,
+	RebaseNodeManager,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
 import {
 	CrossFieldTarget,
 	setInCrossFieldMap,
@@ -40,7 +45,31 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { compose } from "../../../feature-libraries/sequence-field/compose.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { invert } from "../../../feature-libraries/sequence-field/invert.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { MarkListFactory } from "../../../feature-libraries/sequence-field/markListFactory.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { isMoveMark } from "../../../feature-libraries/sequence-field/moveEffectTable.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { rebase } from "../../../feature-libraries/sequence-field/rebase.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldChangeRebaser } from "../../../feature-libraries/sequence-field/sequenceFieldChangeRebaser.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
+import {
+	type MarkEffect,
+	NoopMarkType,
+	CellId,
+	Changeset,
+	HasMarkFields,
+	type Mark,
+	Detach,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/sequence-field/types.js";
 import {
 	areInputCellsEmpty,
 	cloneMark,
@@ -66,44 +95,14 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
+import { ChangesetWrapper } from "../../changesetWrapper.js";
+import { TestNodeId } from "../../testNodeId.js";
 import {
 	assertFieldChangesEqual,
 	assertIsSessionId,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils.js";
-
-import { ChangesetWrapper } from "../../changesetWrapper.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import {
-	type MarkEffect,
-	NoopMarkType,
-	CellId,
-	Changeset,
-	HasMarkFields,
-	Detach,
-	type Mark,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/sequence-field/types.js";
-import type {
-	ComposeNodeManager,
-	DetachedNodeEntry,
-	RebaseNodeManager,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { compose } from "../../../feature-libraries/sequence-field/compose.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { rebase } from "../../../feature-libraries/sequence-field/rebase.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { invert } from "../../../feature-libraries/sequence-field/invert.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { MarkListFactory } from "../../../feature-libraries/sequence-field/markListFactory.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/sequenceFieldToDelta.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { sequenceFieldChangeRebaser } from "../../../feature-libraries/sequence-field/sequenceFieldChangeRebaser.js";
 
 export function assertWrappedChangesetsEqual(
 	actual: WrappedChange,

@@ -35,12 +35,21 @@ import {
 	FieldKinds as defaultFieldKinds,
 	fieldKindConfigurations,
 } from "../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import {
 	ModularChangeFamily,
 	intoDelta,
 	validateChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+import type {
+	NodeId,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../feature-libraries/modular-schema/modularChangeTypes.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 import { brand } from "../../util/index.js";
 import {
 	assertDeltaEqual,
@@ -55,12 +64,6 @@ import {
 	type EncodingTestData,
 } from "../utils.js";
 
-import type {
-	NodeId,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../feature-libraries/modular-schema/modularChangeTypes.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { MarkMaker } from "./sequence-field/testEdits.js";
 import {
 	assertEqual,
 	assertModularChangesetsEqual,
@@ -71,10 +74,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
-import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
+import { MarkMaker } from "./sequence-field/testEdits.js";
 
 const sequenceIdentifier = defaultFieldKinds.sequence.identifier;
 const optionalIdentifier = defaultFieldKinds.optional.identifier;

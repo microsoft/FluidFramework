@@ -6,13 +6,14 @@
 import path from "node:path";
 
 import { newChangeAtomIdTransform, RevisionTagCodec } from "../../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
+import { brand, newTupleBTree } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
+
 import { generatePopulatedMarks } from "./populatedMarks.js";
-import { brand, newTupleBTree } from "../../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
 
 export function testSnapshots(): void {
 	describe("Snapshots", () => {
