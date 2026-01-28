@@ -373,11 +373,6 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 						templateErrors.push(msg);
 						break;
 					}
-					case SyntaxKind.BinaryExpression:
-					case SyntaxKind.CallExpression: {
-						// TODO: why are CallExpression and BinaryExpression silently allowed?
-						break;
-					}
 					default: {
 						otherErrors.push(msg);
 						break;
