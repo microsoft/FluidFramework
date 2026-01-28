@@ -12641,6 +12641,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
+      '@types/lz4js':
+        specifier: ^0.2.0
+        version: 0.2.2
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -20107,6 +20110,9 @@ packages:
 
   '@types/lz4js@0.2.1':
     resolution: {integrity: sha512-aAnbA4uKPNqZqu0XK1QAwKP0Wskb4Oa7ZFqxW5CMIyGgqYQKFgBxTfK3m3KODXoOLv5t14VregzgrEak13uGQA==}
+
+  '@types/lz4js@0.2.2':
+    resolution: {integrity: sha512-pqXfoJ2AwllcLTf1Nia0+HT1KHj8z4wWo3bBP6vn7Aen5ySywBqrh/u1TyBwWxuKDS+mPzVHkPbHivqZEfk6pA==}
 
   '@types/mdast@3.0.15':
     resolution: {integrity: sha512-LnwD+mUEfxWMa1QpDraczIn6k0Ee3SMicuYSSzS6ZYl2gKS09EClnJYGd8Du6rfc5r/GZEk5o1mRb8TaTj03sQ==}
@@ -33697,6 +33703,8 @@ snapshots:
   '@types/lru-cache@5.1.1': {}
 
   '@types/lz4js@0.2.1': {}
+
+  '@types/lz4js@0.2.2': {}
 
   '@types/mdast@3.0.15':
     dependencies:
