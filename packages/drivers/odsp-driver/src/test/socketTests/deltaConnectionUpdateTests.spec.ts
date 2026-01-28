@@ -161,7 +161,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		let eventRaised = false;
 
 		const exampleSensitivityLabelsInfo = `{
-			"timestamp":1716929781000,
+			"timestamp":${testTimestamp},},
 			"labels":[
 				{"sensitivityLabelId":"sensitivityLabelId",
 				"tenantId":"tenantId",
