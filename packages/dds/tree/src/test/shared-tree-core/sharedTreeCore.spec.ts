@@ -14,7 +14,6 @@ import {
 	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,

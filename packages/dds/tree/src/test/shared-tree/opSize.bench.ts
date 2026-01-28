@@ -11,7 +11,6 @@ import {
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
