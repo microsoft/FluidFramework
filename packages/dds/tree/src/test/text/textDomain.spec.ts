@@ -6,13 +6,23 @@
 import { strict as assert } from "node:assert";
 
 import type { requireTrue, areSafelyAssignable } from "../../util/index.js";
-import { allowUnused, type NodeFromSchema } from "../../simple-tree/index.js";
+import {
+	allowUnused,
+	TreeViewConfiguration,
+	type NodeFromSchema,
+} from "../../simple-tree/index.js";
 
 // Allow importing file being tested
 // eslint-disable-next-line import-x/no-internal-modules
 import { TextAsTree } from "../../text/textDomain.js";
+import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 
 describe("textDomain", () => {
+	it("compatibility", () => {
+		const currentViewSchema = new TreeViewConfiguration({ schema: TextAsTree.Tree });
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.81.0", "text");
+	});
+
 	it("validate node type", () => {
 		allowUnused<
 			requireTrue<areSafelyAssignable<NodeFromSchema<typeof TextAsTree.Tree>, TextAsTree.Tree>>
