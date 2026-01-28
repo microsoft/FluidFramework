@@ -303,7 +303,11 @@ export function makeDirOperationGenerator(
 				subDirectories.push(b);
 			}
 			// If this dir already has max number of child, then choose one and continue.
-			if (dir.countSubDirectory?.() === options.maxSubDirectoryChild) {
+			if (
+				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+				dir.countSubDirectory !== undefined &&
+				dir.countSubDirectory() === options.maxSubDirectoryChild
+			) {
 				dir = random.pick<IDirectory>(subDirectories);
 				continue;
 			}

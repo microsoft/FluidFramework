@@ -485,7 +485,9 @@ describe("Runtime", () => {
 
 					function batchIdMatchesUnsentFormat(batchId?: string): boolean {
 						return (
-							batchId?.length === "00000000-0000-0000-0000-000000000000_[-1]".length &&
+							// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+							batchId !== undefined &&
+							batchId.length === "00000000-0000-0000-0000-000000000000_[-1]".length &&
 							batchId.endsWith("_[-1]")
 						);
 					}

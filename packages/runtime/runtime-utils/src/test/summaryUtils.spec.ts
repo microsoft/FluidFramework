@@ -27,24 +27,25 @@ import {
 } from "../summaryUtils.js";
 
 describe("Summary Utils", () => {
-	// In this and the other functions below, optional chaining is safe because obj is a SummaryObject which is a union of
-	// four object types, so the only falsy values we need to protect against are null and undefined.
 	function assertSummaryTree(obj: SummaryObject): ISummaryTree {
-		if (obj?.type === SummaryType.Tree) {
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain, @typescript-eslint/strict-boolean-expressions -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+		if (obj && obj.type === SummaryType.Tree) {
 			return obj;
 		} else {
 			assert.fail("Object should be summary tree");
 		}
 	}
 	function assertSummaryBlob(obj: SummaryObject): ISummaryBlob {
-		if (obj?.type === SummaryType.Blob) {
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain, @typescript-eslint/strict-boolean-expressions -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+		if (obj && obj.type === SummaryType.Blob) {
 			return obj;
 		} else {
 			assert.fail("Object should be summary blob");
 		}
 	}
 	function assertSummaryHandle(obj: SummaryObject): ISummaryHandle {
-		if (obj?.type === SummaryType.Handle) {
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain, @typescript-eslint/strict-boolean-expressions -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+		if (obj && obj.type === SummaryType.Handle) {
 			return obj;
 		} else {
 			assert.fail("Object should be summary handle");

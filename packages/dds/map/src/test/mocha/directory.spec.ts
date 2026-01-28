@@ -406,11 +406,17 @@ describe("Directory", () => {
 				directory.createSubDirectory("rock2");
 				const childSubDirectory = subDirectory.createSubDirectory("rock1Child");
 				assert.strictEqual(
-					directory.countSubDirectory?.(),
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+					directory.countSubDirectory !== undefined && directory.countSubDirectory(),
 					2,
 					"Should have 2 sub directories",
 				);
-				assert(subDirectory.countSubDirectory?.() === 1, "Should have 1 sub directory");
+				assert(
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+					subDirectory.countSubDirectory !== undefined &&
+						subDirectory.countSubDirectory() === 1,
+					"Should have 1 sub directory",
+				);
 				assert(
 					childSubDirectory.countSubDirectory !== undefined &&
 						subDirectory.countSubDirectory() === 1,

@@ -1479,7 +1479,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 		const collabWindow = this.getCollabWindow();
 		if (
-			collabWindow.currentSeq !== this.lastNormalization?.refSeq ||
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+			this.lastNormalization === undefined ||
+			collabWindow.currentSeq !== this.lastNormalization.refSeq ||
 			collabWindow.localSeq !== this.lastNormalization.localRefSeq
 		) {
 			const allPendingSegments = [...this._mergeTree.pendingSegments, ...this.pendingRebase];

@@ -271,7 +271,12 @@ export function fileTest1(): void {
 				// log(`Trying key ${animal}`);
 				if (prop) {
 					// printStringNumProperty(prop);
-					if (prop.key !== linProp?.key || prop.data !== linProp.data) {
+					if (
+						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+						linProp === undefined ||
+						prop.key !== linProp.key ||
+						prop.data !== linProp.data
+					) {
 						log(`Linear BST does not match RB BST at key ${animal}`);
 					}
 				} else {
