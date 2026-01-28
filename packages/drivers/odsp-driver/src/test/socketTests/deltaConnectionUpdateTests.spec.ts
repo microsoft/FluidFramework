@@ -62,6 +62,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		refreshSessionDurationSeconds: 100,
 	};
 	let odspDocumentServiceFactory: OdspDocumentServiceFactory;
+	let testTimestamp: number;
 
 	// Stash the real setTimeout because sinon fake timers will hijack it.
 	const realSetTimeout = setTimeout;
@@ -81,8 +82,10 @@ describe("DeltaConnectionMetadata update tests", () => {
 	}
 
 	function addJoinSessionStub(label: ISensitivityLabel): SinonStub {
+		// Increment timestamp to ensure each call produces a "newer" timestamp
+		testTimestamp += 1000;
 		joinSessionResponse.sensitivityLabelsInfo = {
-			timestamp: Date.now(),
+			timestamp: testTimestamp,
 			labels: [label],
 		};
 		const joinSessionStub = stub(fetchJoinSession, mockify.key).callsFake(
@@ -106,6 +109,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 
 	beforeEach(async () => {
 		clock = useFakeTimers();
+		testTimestamp = 1716929781000;
 		odspDocumentServiceFactory = new OdspDocumentServiceFactory(
 			async (_options) => "token",
 			async (_options) => "token",
@@ -243,7 +247,9 @@ describe("DeltaConnectionMetadata update tests", () => {
 		eventRaised = false;
 		const label2Object = testSensitivityLabelObjectWithId("label2");
 		content = { labels: [label2Object] };
-		const signalContent1 = { labels: [label2Object], timestamp: Date.now() };
+		// Use a timestamp larger than the one from addJoinSessionStub to ensure it's "newer"
+		testTimestamp += 1000;
+		const signalContent1 = { labels: [label2Object], timestamp: testTimestamp };
 		const signalMessage1: ISignalMessage = {
 			clientId: null,
 			content: JSON.stringify({
