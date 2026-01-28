@@ -869,7 +869,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	// Also payload goes to telemetry, so no content or anything else that shouldn't be logged for privacy reasons
 	// Note: It's possible for a duplicate op to be broadcasted and have everything the same except the timestamp.
 	private comparableMessagePayload(m: ISequencedDocumentMessage): string {
-		return `${m.clientId}-${m.type}-${m.sequenceNumber}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
+		return `${m.clientId}-${m.type}-${m.sequenceNumber}-${m.clientSequenceNumber}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
 	}
 
 	/**
