@@ -85,6 +85,11 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 				"Disable filtering based on the fluid-build config in the repo. Useful for testing.",
 			helpGroup: "TESTING",
 		}),
+		check: Flags.boolean({
+			default: false,
+			description:
+				"Check mode: validate assert usage without modifying files. Exits with code 0 if all asserts are valid and tagged, 1 if there are validation errors (invalid usage), or 2 if there are untagged asserts.",
+		}),
 		...PackageCommand.flags,
 	};
 
@@ -241,6 +246,25 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 
 		// If there are errors, avoid making code changes and just report the errors.
 		if (errors.length > 0) {
+			if (this.flags.check) {
+				this.error("Validation errors found (invalid assert usage)", { exit: 1 });
+			}
+			return errors;
+		}
+
+		// Count untagged asserts across all packages
+		let untaggedCount = 0;
+		for (const [, data] of dataMap) {
+			untaggedCount += data.newAssertFiles.size;
+		}
+
+		// In check mode, report results without modifying files
+		if (this.flags.check) {
+			if (untaggedCount > 0) {
+				this.log(`Found ${untaggedCount} file(s) with untagged asserts that need tagging.`);
+				this.error("Untagged asserts found", { exit: 2 });
+			}
+			this.log("All asserts are valid and tagged.");
 			return errors;
 		}
 
