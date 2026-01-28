@@ -363,10 +363,7 @@ export function renderSchemaTypeScript(
 				return renderInlineRecord(schema);
 			}
 			case NodeKind.Leaf: {
-				return {
-					precedence: TypePrecedence.Object,
-					text: renderLeaf(schema.leafKind),
-				};
+				return { precedence: TypePrecedence.Object, text: renderLeaf(schema.leafKind) };
 			}
 			default: {
 				return { precedence: TypePrecedence.Object, text: "unknown" };

@@ -324,6 +324,7 @@ describe("Prompt snapshot", () => {
 		class Obj extends sf.object("Obj", {
 			map: TestMap,
 			array: TestArray,
+			handle: sf.optional(sf.handle),
 		}) {
 			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
 				methods.expose(
@@ -387,6 +388,7 @@ describe("Prompt snapshot", () => {
 				new NumberValue({ value: 2 }),
 				new NumberValue({ value: 3 }),
 			],
+			handle: undefined,
 		});
 
 		const fullPrompt = getPrompt({

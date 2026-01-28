@@ -34,7 +34,6 @@ export function getPrompt(args: {
 	// Inspect the schema to determine what kinds of nodes are possible - this will affect how much information we need to include in the prompt.
 	const rootTypes = [...normalizeFieldSchema(schema).allowedTypeSet];
 	const rootTypeUnion = `${rootTypes.map((t) => getFriendlyName(t)).join(" | ")}`;
-	const simpleSchema = getSimpleSchema(schema);
 	let nodeTypeUnion: string | undefined;
 	let hasArrays = false;
 	let hasMaps = false;
@@ -62,13 +61,7 @@ export function getPrompt(args: {
 				break;
 			}
 			case NodeKind.Leaf: {
-				const simpleLeafSchema = simpleSchema.definitions.get(s.identifier);
-				if (
-					simpleLeafSchema?.kind === NodeKind.Leaf &&
-					simpleLeafSchema.leafKind === ValueSchema.FluidHandle
-				) {
-					hasFluidHandles = true;
-				}
+				hasFluidHandles ||= s.info === ValueSchema.FluidHandle;
 				break;
 			}
 			// No default
@@ -78,7 +71,7 @@ export function getPrompt(args: {
 	const stringified = stringifyTree(field);
 	const { schemaText: typescriptSchemaTypes, hasHelperMethods } = generateEditTypesForPrompt(
 		schema,
-		simpleSchema,
+		getSimpleSchema(schema),
 	);
 	const fluidHandleType = hasFluidHandles
 		? `/**
