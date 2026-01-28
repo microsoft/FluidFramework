@@ -14,7 +14,7 @@ import { mintRevisionTag } from "../../utils.js";
 
 const id: ChangesetLocalId = brand(0);
 
-export function testEditor() {
+export function testEditor(): void {
 	describe("Editor", () => {
 		it("empty child changes", () => {
 			assert.deepEqual(SF.sequenceFieldEditor.buildChildChanges([]), []);

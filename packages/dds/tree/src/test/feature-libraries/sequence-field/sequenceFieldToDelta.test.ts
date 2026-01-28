@@ -45,7 +45,7 @@ const detachId = { major: tag, minor: 42 };
 
 export const emptyFieldChanges: DeltaFieldChanges = [];
 
-export function testToDelta() {
+export function testToDelta(): void {
 	describe("toDelta", () => {
 		it("empty mark list", () => {
 			const actual = toDeltaShallow([]);
