@@ -28,8 +28,8 @@
 	},
 	"dependencies": {
 		"@fluidframework/historian-base": "workspace:~",
-		"@fluidframework/server-services-shared": "6.0.0-340759",
-		"@fluidframework/server-services-utils": "6.0.0-340759",
+		"@fluidframework/server-services-shared": "8.0.0-347501",
+		"@fluidframework/server-services-utils": "8.0.0-347501",
 		"body-parser": "^1.20.3",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",
