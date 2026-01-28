@@ -413,7 +413,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 	/**
 	 * Updates source files, adding new asserts to `collected`.
 	 *
-	 * Returns if any files were modified.
+	 * Returns `true` if any files were modified.
 	 */
 	private tagAsserts(
 		collected: CollectedData,
