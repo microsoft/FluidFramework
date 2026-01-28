@@ -354,6 +354,8 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
 }
 
 /**
+ * Returns an object indicating that iteration should break due to finding a difference.
+ *
  * @example
  *
  * ```typescript
