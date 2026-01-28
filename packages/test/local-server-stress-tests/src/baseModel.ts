@@ -79,9 +79,9 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 
 /**
  * Number of operations in the "creation phase" before attach.
- * During this phase, we prioritize creating datastores and channels.
+ * During this phase, only createDataStore and createChannel operations are generated.
  */
-const creationPhaseOps = 7;
+const creationPhaseOps = 20;
 
 export function makeGenerator<T extends BaseOperation>(
 	additional: DynamicAsyncWeights<T, LocalServerStressState> = [],
@@ -116,8 +116,8 @@ export function makeGenerator<T extends BaseOperation>(
 				asChild: state.random.bool(),
 				tag: state.tag("datastore"),
 			}),
-			// High weight during creation phase, low weight otherwise
-			(state) => (isCreationPhase(state) ? 20 : 1),
+			// Only during creation phase (detached), normal weight when attached
+			(state) => (isDdsOpsPhase(state) ? 0 : isCreationPhase(state) ? 20 : 1),
 		],
 		[
 			async (state) => ({
@@ -134,8 +134,8 @@ export function makeGenerator<T extends BaseOperation>(
 				channelType: state.random.pick([...ddsModelMap.keys()]),
 				tag: state.tag("channel"),
 			}),
-			// High weight during creation phase, low weight otherwise
-			(state) => (isCreationPhase(state) ? 20 : 5),
+			// Only during creation phase (detached), normal weight when attached
+			(state) => (isDdsOpsPhase(state) ? 0 : isCreationPhase(state) ? 20 : 5),
 		],
 		[
 			async () => ({
@@ -158,10 +158,10 @@ export function makeGenerator<T extends BaseOperation>(
 		],
 		[
 			DDSModelOpGenerator,
-			// Low weight during creation phase, high weight during DDS ops phase
+			// No DDS ops during creation phase, high weight during DDS ops phase
 			(state) => {
 				if (isCreationPhase(state)) {
-					return 10;
+					return 0;
 				}
 				if (isDdsOpsPhase(state)) {
 					return 150;

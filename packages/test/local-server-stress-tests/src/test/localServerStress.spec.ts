@@ -22,7 +22,7 @@ import {
 describe("Local Server Stress", () => {
 	const model: LocalServerStressModel<StressOperations> = {
 		workloadName: "default",
-		generatorFactory: () => takeAsync(100, makeGenerator()),
+		generatorFactory: () => takeAsync(200, makeGenerator()),
 		reducer,
 		validateConsistency: async (...clients) => {
 			await validateAllDataStoresSaved(...clients);

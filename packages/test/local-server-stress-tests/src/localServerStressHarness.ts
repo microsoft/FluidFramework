@@ -77,7 +77,7 @@ import { validateConsistencyOfAllDDS } from "./ddsOperations.js";
 import {
 	createRuntimeFactory,
 	StressDataObject,
-	type DefaultStressDataObject,
+	DefaultStressDataObject,
 } from "./stressDataObject.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
@@ -379,7 +379,7 @@ export interface LocalServerStressOptions {
 const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	defaultTestCount: 100,
 	detachedStartOptions: {
-		numOpsBeforeAttach: 20,
+		numOpsBeforeAttach: 100,
 	},
 	numberOfClients: 3,
 	clientJoinOptions: {
@@ -1109,6 +1109,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 
 			finalState.validationClient.container.dispose();
 			await finalState.localDeltaConnectionServer.close();
+			finalState.pendingLocalStateStore.clear();
 		}
 	}
 
