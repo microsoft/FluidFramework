@@ -1260,9 +1260,6 @@ export const shortCodeMap = {
 	"0x97d": "seq#",
 	"0x97e": "received context must have a get function",
 	"0x980": "Unknown commit",
-	"0x985": "No transaction to commit",
-	"0x986": "No transaction to abort",
-	"0x987": "No transaction to add a step to",
 	"0x98a": "expected class based schema",
 	"0x995": "missing visitor cursor while editing",
 	"0x996": "Implicit revision should be provided",
@@ -1439,7 +1436,6 @@ export const shortCodeMap = {
 	"0xa93": "Cannot encode a handle without a bind context",
 	"0xa94": "invalid forbidden field",
 	"0xa95": "Invalid map schema",
-	"0xa97": "Not in transaction",
 	"0xa99": "must have a parent",
 	"0xa9a": "must have a parent",
 	"0xa9b": "attach should happen in a node",
@@ -1916,5 +1912,12 @@ export const shortCodeMap = {
 	"0xcbd": "Received signal without clientId",
 	"0xcbe": "Acknowledgment message was requested while targeted signal capability is not supported",
 	"0xcbf": "Received signal without clientId",
-	"0xcc0": "Local client must be in audience for presence to handle added connection."
+	"0xcc0": "Local client must be in audience for presence to handle added connection.",
+	"0xcc1": "New commits must have a parent.",
+	"0xcc2": "Missing enriched commit.",
+	"0xcc3": "New commits must have a parent.",
+	"0xcc4": "Missing enriched commit.",
+	"0xcc5": "Unsupported modular change codec version",
+	"0xcc6": "updatableError should only be called in test mode",
+	"0xcc7": "expected compatibility errors for missing min collab version snapshot"
 };

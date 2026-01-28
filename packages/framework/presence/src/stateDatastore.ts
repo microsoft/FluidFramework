@@ -5,12 +5,24 @@
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import type { AttendeeId, PresenceWithNotifications as Presence } from "./presence.js";
 import type {
-	ClientRecord,
 	ValidatableValueDirectoryOrState,
 	ValidatableValueStructure,
-} from "./internalTypes.js";
-import type { AttendeeId, PresenceWithNotifications as Presence } from "./presence.js";
+} from "./validatableTypes.js";
+
+/**
+ * Basic structure of set of {@link Attendee} records within Presence datastore
+ *
+ * @remarks
+ * This is commonly exists per named state in State Managers.
+ */
+export interface ClientRecord<TValue extends ValidatableValueDirectoryOrState<unknown>> {
+	// Caution: any particular item may or may not exist
+	// Typescript does not support absent keys without forcing type to also be undefined.
+	// See https://github.com/microsoft/TypeScript/issues/42810.
+	[AttendeeId: AttendeeId]: TValue;
+}
 
 // type StateDatastoreSchemaNode<
 // 	TValue extends InternalTypes.ValueDirectoryOrState<any> = InternalTypes.ValueDirectoryOrState<unknown>,
