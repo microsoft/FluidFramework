@@ -49,6 +49,9 @@ variables:
   # Project to query (same as where pipeline runs)
   - name: targetProject
     value: $(System.TeamProject)
+  # GitHub repository for source links
+  - name: githubRepo
+    value: microsoft/FluidFramework
 
 resources:
   repositories:
@@ -118,25 +121,59 @@ extends:
               echo ""
 
               # Create output directory
-              mkdir -p $(Build.ArtifactStagingDirectory)/metrics
+              mkdir -p "$(Build.ArtifactStagingDirectory)/metrics"
 
               # Save mode for subsequent tasks
-              echo "$MODE" > $(Build.ArtifactStagingDirectory)/metrics/mode.txt
+              echo "$MODE" > "$(Build.ArtifactStagingDirectory)/metrics/mode.txt"
+
+              # Function to fetch with retry
+              fetch_with_retry() {
+                local url="$1"
+                local output="$2"
+                local max_attempts=3
+                local attempt=1
+
+                while [ $attempt -le $max_attempts ]; do
+                  echo "Attempt $attempt of $max_attempts..."
+                  HTTP_CODE=$(curl -sL --max-time 60 -w "%{http_code}" -u ":$ADO_API_TOKEN" "$url" -o "$output")
+
+                  if [ "$HTTP_CODE" = "200" ]; then
+                    # Validate JSON response
+                    if jq empty "$output" 2>/dev/null; then
+                      echo "Successfully fetched data (HTTP $HTTP_CODE)"
+                      return 0
+                    else
+                      echo "Warning: Response is not valid JSON, retrying..."
+                    fi
+                  else
+                    echo "HTTP $HTTP_CODE - request failed"
+                  fi
+
+                  attempt=$((attempt + 1))
+                  if [ $attempt -le $max_attempts ]; then
+                    echo "Waiting 5 seconds before retry..."
+                    sleep 5
+                  fi
+                done
+
+                echo "Error: Failed to fetch data after $max_attempts attempts"
+                return 1
+              }
 
               if [ "$MODE" = "pr" ]; then
                 # Fetch PR builds with reasonFilter and statusFilter
                 echo "Fetching last $BUILD_COUNT PR builds (reason=pullRequest, succeeded/partiallySucceeded, completed)..."
 
-                curl -u ":$ADO_API_TOKEN" \
+                fetch_with_retry \
                   "https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds?definitions=$BUILD_DEF_ID&reasonFilter=pullRequest&resultFilter=succeeded,partiallySucceeded&statusFilter=completed&\$top=$BUILD_COUNT&api-version=7.1" \
-                  -o $(Build.ArtifactStagingDirectory)/metrics/builds-raw.json
+                  "$(Build.ArtifactStagingDirectory)/metrics/builds-raw.json"
               else
                 # Fetch post-merge builds from main branch
                 echo "Fetching last $BUILD_COUNT post-merge builds (branch=main, succeeded/partiallySucceeded, completed)..."
 
-                curl -u ":$ADO_API_TOKEN" \
+                fetch_with_retry \
                   "https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds?definitions=$BUILD_DEF_ID&branchName=refs/heads/main&resultFilter=succeeded,partiallySucceeded&statusFilter=completed&\$top=$BUILD_COUNT&api-version=7.1" \
-                  -o $(Build.ArtifactStagingDirectory)/metrics/builds-raw.json
+                  "$(Build.ArtifactStagingDirectory)/metrics/builds-raw.json"
               fi
 
               echo "Build data fetched successfully!"
@@ -148,7 +185,7 @@ extends:
             script: |
               set -eu -o pipefail
 
-              MODE=$(cat $(Build.ArtifactStagingDirectory)/metrics/mode.txt)
+              MODE=$(cat "$(Build.ArtifactStagingDirectory)/metrics/mode.txt")
 
               if [ "$MODE" = "pr" ]; then
                 echo "=========================================="
@@ -158,14 +195,14 @@ extends:
                 # Filter PR builds to only include those targeting main branch
                 # The target branch is in the parameters field as JSON string: "system.pullRequest.targetBranch"
 
-                cat $(Build.ArtifactStagingDirectory)/metrics/builds-raw.json | jq '
+                jq '
                   .value |= map(select(
                     .parameters != null and
                     (.parameters | fromjson | .["system.pullRequest.targetBranch"] == "main")
                   ))
-                ' > $(Build.ArtifactStagingDirectory)/metrics/builds.json
+                ' "$(Build.ArtifactStagingDirectory)/metrics/builds-raw.json" > "$(Build.ArtifactStagingDirectory)/metrics/builds.json"
 
-                TOTAL_AFTER=$(cat $(Build.ArtifactStagingDirectory)/metrics/builds.json | jq '.value | length')
+                TOTAL_AFTER=$(jq '.value | length' "$(Build.ArtifactStagingDirectory)/metrics/builds.json")
                 echo "Filtered to $TOTAL_AFTER PR builds targeting main branch"
               else
                 echo "=========================================="
@@ -173,9 +210,9 @@ extends:
                 echo "=========================================="
 
                 # Just copy the raw file to builds.json
-                cp $(Build.ArtifactStagingDirectory)/metrics/builds-raw.json $(Build.ArtifactStagingDirectory)/metrics/builds.json
+                cp "$(Build.ArtifactStagingDirectory)/metrics/builds-raw.json" "$(Build.ArtifactStagingDirectory)/metrics/builds.json"
 
-                TOTAL=$(cat $(Build.ArtifactStagingDirectory)/metrics/builds.json | jq '.value | length')
+                TOTAL=$(jq '.value | length' "$(Build.ArtifactStagingDirectory)/metrics/builds.json")
                 echo "Total post-merge builds: $TOTAL"
               fi
 
@@ -190,20 +227,36 @@ extends:
             script: |
               set -eu -o pipefail
 
-              MODE=$(cat $(Build.ArtifactStagingDirectory)/metrics/mode.txt)
+              MODE=$(cat "$(Build.ArtifactStagingDirectory)/metrics/mode.txt")
 
               echo "=========================================="
               echo "Fetching timeline data for builds ($MODE mode)"
               echo "=========================================="
 
               # Extract build IDs from filtered builds
-              BUILD_IDS=$(cat $(Build.ArtifactStagingDirectory)/metrics/builds.json | jq -r '.value[] | .id')
+              BUILD_IDS=$(jq -r '.value[] | .id' "$(Build.ArtifactStagingDirectory)/metrics/builds.json")
 
-              TOTAL_COUNT=$(echo "$BUILD_IDS" | wc -l | tr -d ' ')
+              # Count builds correctly (wc -l returns 1 for empty string due to trailing newline)
+              if [ -z "$BUILD_IDS" ]; then
+                TOTAL_COUNT=0
+              else
+                TOTAL_COUNT=$(echo "$BUILD_IDS" | wc -l | tr -d ' ')
+              fi
+
               echo "Found $TOTAL_COUNT builds to fetch timeline data for"
+
+              # Exit early if no builds to process
+              if [ "$TOTAL_COUNT" -eq 0 ]; then
+                echo "Warning: No builds found to process. Skipping timeline fetch."
+                mkdir -p "$(Build.ArtifactStagingDirectory)/metrics/timelines"
+                exit 0
+              fi
+
               echo ""
 
-              mkdir -p $(Build.ArtifactStagingDirectory)/metrics/timelines
+              mkdir -p "$(Build.ArtifactStagingDirectory)/metrics/timelines"
+              ERRORS_FILE="$(Build.ArtifactStagingDirectory)/metrics/timeline_errors.log"
+              touch "$ERRORS_FILE"
 
               # Fetch in parallel using background jobs (20 at a time to avoid overwhelming the API)
               PARALLEL_JOBS=20
@@ -212,16 +265,27 @@ extends:
               fetch_timeline() {
                 local build_id=$1
                 local output_file=$2
-                curl -s -u ":$ADO_API_TOKEN" \
-                  "https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds/$build_id/timeline?api-version=7.1-preview.2" \
-                  -o "$output_file" 2>/dev/null
+                local errors_file=$3
+                local http_code
+
+                http_code=$(curl -sL --max-time 30 -w "%{http_code}" -u ":$ADO_API_TOKEN" \
+                  "https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds/$build_id/timeline?api-version=7.1" \
+                  -o "$output_file")
+
+                if [ "$http_code" != "200" ]; then
+                  echo "Build $build_id: HTTP $http_code" >> "$errors_file"
+                  rm -f "$output_file"
+                elif ! jq empty "$output_file" 2>/dev/null; then
+                  echo "Build $build_id: Invalid JSON response" >> "$errors_file"
+                  rm -f "$output_file"
+                fi
               }
 
               for BUILD_ID in $BUILD_IDS; do
                 count=$((count + 1))
 
                 # Start background job
-                fetch_timeline "$BUILD_ID" "$(Build.ArtifactStagingDirectory)/metrics/timelines/timeline_$BUILD_ID.json" &
+                fetch_timeline "$BUILD_ID" "$(Build.ArtifactStagingDirectory)/metrics/timelines/timeline_${BUILD_ID}.json" "$ERRORS_FILE" &
 
                 # Limit concurrent jobs
                 if (( count % PARALLEL_JOBS == 0 )); then
@@ -231,13 +295,24 @@ extends:
               done
 
               wait  # Wait for remaining jobs
-              echo "Timeline data fetched for $count builds."
+
+              # Report any errors
+              SUCCESS_COUNT=$(find "$(Build.ArtifactStagingDirectory)/metrics/timelines" -name "*.json" | wc -l | tr -d ' ')
+              ERROR_COUNT=$(wc -l < "$ERRORS_FILE" | tr -d ' ')
+
+              echo "Timeline data fetched: $SUCCESS_COUNT successful, $ERROR_COUNT failed"
+
+              if [ "$ERROR_COUNT" -gt 0 ]; then
+                echo "Warning: Some timeline fetches failed:"
+                cat "$ERRORS_FILE"
+              fi
 
         - task: Bash@3
           displayName: Generate metrics JSON
           env:
             ORG: $(organization)
             PROJECT: $(targetProject)
+            GITHUB_REPO: $(githubRepo)
           inputs:
             targetType: 'inline'
             script: |
@@ -252,15 +327,8 @@ extends:
 
               BUILDS_FILE="$METRICS_PATH/builds.json"
 
-              # Check if jq is available
-              if ! command -v jq &> /dev/null; then
-                echo "Error: jq is required but not installed"
-                exit 1
-              fi
-
-              # Process builds
-              FILTERED_BUILDS=$(cat "$BUILDS_FILE" | jq '.value')
-              TOTAL_BUILDS=$(echo "$FILTERED_BUILDS" | jq 'length')
+              # Process builds - get total count directly from file
+              TOTAL_BUILDS=$(jq '.value | length' "$BUILDS_FILE")
 
               echo "Processing $TOTAL_BUILDS builds..."
 
@@ -272,48 +340,57 @@ extends:
               fi
 
               # Generate chart data JSON with pre-aggregated metrics
-              echo "$FILTERED_BUILDS" | jq --arg org "$ORG" --arg project "$PROJECT" --arg generatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
+              jq --arg org "$ORG" --arg project "$PROJECT" --arg githubRepo "$GITHUB_REPO" --arg generatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
+                .value |
+
+                # Helper function to parse ADO timestamps (strips milliseconds before parsing)
+                def parseTime: sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601;
+                # Helper function to calculate duration in minutes from start/finish times
+                def durationMins: ((.finishTime | parseTime) - (.startTime | parseTime)) / 60;
+                # Helper function to extract source display text
+                def sourceText: if (.sourceBranch // "") | startswith("refs/pull/") then "PR #" + ((.sourceBranch // "") | split("/")[2] // "N/A") elif .sourceVersion then .sourceVersion[0:7] else (.sourceBranch // "N/A" | tostring | .[0:30]) end;
+                # Helper function to build source URL
+                def sourceLink: if (.sourceBranch // "") | startswith("refs/pull/") then "https://github.com/\($githubRepo)/pull/" + ((.sourceBranch // "") | split("/")[2] // "") else "https://github.com/\($githubRepo)/commit/" + (.sourceVersion // "") end;
+                # Helper function to build ADO build URL
+                def buildUrl: "https://dev.azure.com/\($org)/\($project)/_build/results?buildId=\(.id)";
+
                 # Build duration trend (avg per day)
                 (group_by(.startTime | split("T")[0]) | map({
                   date: .[0].startTime | split("T")[0],
-                  avgDuration: (map((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) - (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) | add / length / 60)
+                  avgDuration: (map(durationMins) | add / length)
                 })) as $durationTrend |
 
                 # Recent 20 builds for table (sorted by date descending)
                 ([.[] | select(.startTime and .finishTime) | {
-                  id: .id,
-                  startTime: .startTime,
-                  duration: (((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) - (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) / 60),
-                  result: .result,
-                  source: (if (.sourceBranch // "") | startswith("refs/pull/") then "PR #" + ((.sourceBranch // "") | split("/")[2] // "N/A") elif .sourceVersion then .sourceVersion[0:7] else (.sourceBranch // "N/A" | tostring | .[0:30]) end),
-                  sourceUrl: (if (.sourceBranch // "") | startswith("refs/pull/") then "https://github.com/microsoft/FluidFramework/pull/" + ((.sourceBranch // "") | split("/")[2] // "") else "https://github.com/microsoft/FluidFramework/commit/" + (.sourceVersion // "") end),
-                  url: "https://dev.azure.com/\($org)/\($project)/_build/results?buildId=\(.id)"
+                  id, startTime, result,
+                  duration: durationMins,
+                  source: sourceText,
+                  sourceUrl: sourceLink,
+                  url: buildUrl
                 }] | sort_by(.startTime) | reverse | .[0:20]) as $recentBuilds |
 
                 # Longest 20 builds for table (sorted by duration descending)
                 ([.[] | select(.startTime and .finishTime) | {
-                  id: .id,
-                  startTime: .startTime,
-                  duration: (((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) - (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) / 60),
-                  result: .result,
-                  source: (if (.sourceBranch // "") | startswith("refs/pull/") then "PR #" + ((.sourceBranch // "") | split("/")[2] // "N/A") elif .sourceVersion then .sourceVersion[0:7] else (.sourceBranch // "N/A" | tostring | .[0:30]) end),
-                  sourceUrl: (if (.sourceBranch // "") | startswith("refs/pull/") then "https://github.com/microsoft/FluidFramework/pull/" + ((.sourceBranch // "") | split("/")[2] // "") else "https://github.com/microsoft/FluidFramework/commit/" + (.sourceVersion // "") end),
-                  url: "https://dev.azure.com/\($org)/\($project)/_build/results?buildId=\(.id)"
+                  id, startTime, result,
+                  duration: durationMins,
+                  source: sourceText,
+                  sourceUrl: sourceLink,
+                  url: buildUrl
                 }] | sort_by(.duration) | reverse | .[0:20]) as $longestBuilds |
 
                 {
                   generatedAt: $generatedAt,
                   summary: {
-                    totalBuilds: (. | length),
+                    totalBuilds: length,
                     succeeded: (map(select(.result == "succeeded")) | length),
-                    successRate: ((map(select(.result == "succeeded")) | length) * 100 / (. | length)),
-                    avgDuration: (map((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) - (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) | add / length / 60)
+                    successRate: ((map(select(.result == "succeeded")) | length) * 100 / length),
+                    avgDuration: (map(durationMins) | add / length)
                   },
                   durationTrend: $durationTrend,
                   recentBuilds: $recentBuilds,
                   longestBuilds: $longestBuilds
                 }
-              ' > "$OUTPUT_FILE"
+              ' "$BUILDS_FILE" > "$OUTPUT_FILE"
 
               # Process timeline data to extract stage and task metrics
               STAGE_DATA="{}"
@@ -321,7 +398,11 @@ extends:
 
               for timeline_file in "$METRICS_PATH/timelines"/*.json; do
                 if [ -f "$timeline_file" ]; then
-                  stage_metrics=$(jq -c 'if .records == null then [] else [.records[] | select(.type == "Stage" and .startTime and .finishTime) | {name: .name, duration: (((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) - (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) / 60), id: .id}] end' "$timeline_file" 2>/dev/null || echo "[]")
+                  stage_metrics=$(jq -c '
+                    def parseTime: sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601;
+                    def durationMins: ((.finishTime | parseTime) - (.startTime | parseTime)) / 60;
+                    if .records == null then [] else [.records[] | select(.type == "Stage" and .startTime and .finishTime) | {name: .name, duration: durationMins, id: .id}] end
+                  ' "$timeline_file" 2>/dev/null || echo "[]")
 
                   if [ "$stage_metrics" != "[]" ]; then
                     STAGE_DATA=$(echo "$STAGE_DATA" | jq --argjson stages "$stage_metrics" '
@@ -330,6 +411,8 @@ extends:
                   fi
 
                   stage_task_metrics=$(jq -c '
+                    def parseTime: sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601;
+                    def durationMins: ((.finishTime | parseTime) - (.startTime | parseTime)) / 60;
                     if .records == null then {} else
                     .records as $records |
                     [.records[] | select(.type == "Stage" and .startTime and .finishTime)] as $stages |
@@ -337,7 +420,7 @@ extends:
                       .[$stage.name] = [
                         $records[] | select(.type == "Phase" and .parentId == $stage.id and .startTime and .finishTime) | {
                           name: .name,
-                          duration: (((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) - (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) / 60)
+                          duration: durationMins
                         }
                       ]
                     )
@@ -378,12 +461,18 @@ extends:
             script: |
               set -eu -o pipefail
 
-              MODE=$(cat $(Build.ArtifactStagingDirectory)/metrics/mode.txt)
+              MODE=$(cat "$(Build.ArtifactStagingDirectory)/metrics/mode.txt")
               DEPLOY_DIR="$(Build.ArtifactStagingDirectory)/deploy"
 
               echo "=========================================="
               echo "Preparing deployment package ($MODE mode)"
               echo "=========================================="
+
+              # Validate ASWA_HOSTNAME is set
+              if [ -z "${ASWA_HOSTNAME:-}" ]; then
+                echo "Error: ASWA_HOSTNAME variable is not set"
+                exit 1
+              fi
 
               mkdir -p "$DEPLOY_DIR/data"
 
@@ -398,11 +487,11 @@ extends:
 
               # Try to fetch the other mode's data from the live site (may not exist yet)
               echo "Fetching existing $OTHER_FILE from dashboard..."
-              FETCH_URL="https://$ASWA_HOSTNAME/data/$OTHER_FILE"
+              FETCH_URL="https://${ASWA_HOSTNAME}/data/$OTHER_FILE"
               FETCH_OUTPUT="$DEPLOY_DIR/data/$OTHER_FILE"
 
               echo "Fetching from: $FETCH_URL"
-              HTTP_CODE=$(curl -sL -w "%{http_code}" -o "$FETCH_OUTPUT" "$FETCH_URL") || true
+              HTTP_CODE=$(curl -sL --max-time 30 -w "%{http_code}" -o "$FETCH_OUTPUT" "$FETCH_URL") || true
               if [ "$HTTP_CODE" = "200" ] && [ -s "$FETCH_OUTPUT" ]; then
                 echo "Successfully fetched $OTHER_FILE (HTTP $HTTP_CODE, $(wc -c < "$FETCH_OUTPUT") bytes)"
               else
@@ -412,8 +501,8 @@ extends:
                 echo "      The dashboard will show 'No data available' for that tab until the other pipeline runs."
               fi
 
-              # Write staticwebapp.config.json inline
-              cat > "$DEPLOY_DIR/staticwebapp.config.json" << 'CONFIGEOF'
+              # Write staticwebapp.config.json inline (sed strips leading 14 spaces from heredoc)
+              sed 's/^              //' > "$DEPLOY_DIR/staticwebapp.config.json" << 'CONFIGEOF'
               {
                 "auth": {
                   "identityProviders": {
@@ -446,8 +535,8 @@ extends:
               }
               CONFIGEOF
 
-              # Write index.html inline
-              cat > "$DEPLOY_DIR/index.html" << 'HTMLEOF'
+              # Write index.html inline (sed strips leading 14 spaces from heredoc)
+              sed 's/^              //' > "$DEPLOY_DIR/index.html" << 'HTMLEOF'
               <!DOCTYPE html>
               <html lang="en">
               <head>
@@ -709,7 +798,7 @@ extends:
             targetType: 'inline'
             script: |
               echo "Cleaning up temporary files..."
-              rm -rf $(Build.ArtifactStagingDirectory)/metrics
-              rm -rf $(Build.ArtifactStagingDirectory)/deploy
-              rm -f $(Build.ArtifactStagingDirectory)/*.json
+              rm -rf "$(Build.ArtifactStagingDirectory)/metrics"
+              rm -rf "$(Build.ArtifactStagingDirectory)/deploy"
+              rm -f "$(Build.ArtifactStagingDirectory)"/*.json
               echo "Cleanup complete"
