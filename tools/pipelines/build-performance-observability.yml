@@ -22,6 +22,8 @@ trigger: none
 pr: none
 
 variables:
+  # Contains keys to upload dashboard to ASWA
+  - group: build-dashboard-vars
   # Number of recent builds to fetch
   - name: buildCount
     value: 500
@@ -70,14 +72,10 @@ extends:
       jobs:
       - job: fetch_and_publish
         displayName: Fetch and Publish Build Metrics
-        templateContext:
-          outputs:
-          - output: pipelineArtifact
-            targetPath: $(Build.ArtifactStagingDirectory)
-            artifactName: dashboard
-            displayName: Publish dashboard as artifact
         steps:
-        - checkout: none
+        - checkout: self
+          fetchDepth: 1
+          path: repo
 
         - task: Bash@3
           displayName: Fetch build data
@@ -230,10 +228,8 @@ extends:
               echo "Timeline data fetched for $count builds."
 
         - task: Bash@3
-          displayName: Generate HTML dashboard
+          displayName: Generate metrics JSON
           env:
-            PR_BUILD_DEF_ID: $(publicPRBuildDefinitionId)
-            INTERNAL_BUILD_DEF_ID: $(internalBuildDefinitionId)
             ORG: $(organization)
             PROJECT: $(targetProject)
           inputs:
@@ -245,950 +241,32 @@ extends:
               MODE=$(cat "$METRICS_PATH/mode.txt")
 
               echo "=========================================="
-              echo "Generating Build Dashboard HTML ($MODE mode)"
+              echo "Generating metrics JSON ($MODE mode)"
               echo "=========================================="
 
               BUILDS_FILE="$METRICS_PATH/builds.json"
-              HTML_FILE="$(Build.ArtifactStagingDirectory)/index.html"
 
               # Check if jq is available
               if ! command -v jq &> /dev/null; then
                 echo "Error: jq is required but not installed"
-                echo "Install with: apt-get install jq (Ubuntu) or brew install jq (macOS)"
                 exit 1
               fi
-
-              # Set mode-specific variables
-              if [ "$MODE" = "pr" ]; then
-                BUILD_DEF_ID="$PR_BUILD_DEF_ID"
-                TREND_DAYS=3
-                TREND_LABEL="3-Day Trend"
-                DASHBOARD_TITLE="FluidFramework PR Build Dashboard"
-                SECTION_TITLE="PR Builds"
-                CHART_COLOR="rgba(138, 43, 226, 1)"
-                CHART_BG_COLOR="rgba(138, 43, 226, 0.1)"
-                BUILD_TYPE="Pull Request"
-                REASON_FILTER_LINE="<li>Reason: <code>pullRequest</code></li>"
-                BRANCH_INFO="Target Branch: <code>main</code>"
-              else
-                BUILD_DEF_ID="$INTERNAL_BUILD_DEF_ID"
-                TREND_DAYS=7
-                TREND_LABEL="7-Day Trend"
-                DASHBOARD_TITLE="FluidFramework Internal Build Dashboard"
-                SECTION_TITLE="Internal Builds"
-                CHART_COLOR="rgba(0, 120, 212, 1)"
-                CHART_BG_COLOR="rgba(0, 120, 212, 0.1)"
-                BUILD_TYPE="Internal"
-                REASON_FILTER_LINE=""
-                BRANCH_INFO="Branch: <code>refs/heads/main</code>"
-              fi
-
-              echo "Processing build data..."
 
               # Process builds
               FILTERED_BUILDS=$(cat "$BUILDS_FILE" | jq '.value')
               TOTAL_BUILDS=$(echo "$FILTERED_BUILDS" | jq 'length')
-              SUCCEEDED=$(echo "$FILTERED_BUILDS" | jq '[.[] | select(.result == "succeeded")] | length')
-              PARTIAL=$(echo "$FILTERED_BUILDS" | jq '[.[] | select(.result == "partiallySucceeded")] | length')
 
-              if [ "$TOTAL_BUILDS" -eq 0 ]; then
-                SUCCESS_RATE="0.0"
-                AVG_DURATION="0.0"
+              echo "Processing $TOTAL_BUILDS builds..."
+
+              # Set output filename based on mode
+              if [ "$MODE" = "pr" ]; then
+                OUTPUT_FILE="$(Build.ArtifactStagingDirectory)/pr-data.json"
               else
-                SUCCESS_RATE=$(awk "BEGIN {printf \"%.1f\", $SUCCEEDED * 100 / $TOTAL_BUILDS}")
-                AVG_DURATION=$(echo "$FILTERED_BUILDS" | jq '[.[] | select(.startTime and .finishTime) |
-                  (((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) -
-                    (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) / 60)] |
-                  add / length')
+                OUTPUT_FILE="$(Build.ArtifactStagingDirectory)/internal-data.json"
               fi
 
-              echo "Builds - Total: $TOTAL_BUILDS, Success rate: $SUCCESS_RATE%, Avg duration: $AVG_DURATION minutes"
-
-              # Calculate trend based on mode (3-day for PR, 7-day for post-merge)
-              TREND_DATE=$(date -u -d "$TREND_DAYS days ago" +%Y-%m-%d 2>/dev/null || date -u -v-${TREND_DAYS}d +%Y-%m-%d)
-
-              # Check if we have valid build data before processing
-              if [ -z "$FILTERED_BUILDS" ] || [ "$FILTERED_BUILDS" = "null" ]; then
-                echo "Warning: No valid build data available for trend calculation"
-                DURATION_CHANGE="0.0"
-                DURATION_CHANGE_MINUTES="0.0"
-              else
-                # Recent average (last N days)
-                RECENT_AVG=$(echo "$FILTERED_BUILDS" | jq --arg date "$TREND_DATE" \
-                  '[.[] | select(.startTime >= $date and .startTime and .finishTime) |
-                   (((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) -
-                     (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) / 60)] |
-                   if length > 0 then add / length else 0 end' 2>/dev/null || echo "0")
-
-                # All builds before the trend period
-                PREVIOUS_AVG=$(echo "$FILTERED_BUILDS" | jq --arg date "$TREND_DATE" \
-                  '[.[] | select(.startTime < $date and .startTime and .finishTime) |
-                   (((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) -
-                     (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) / 60)] |
-                   if length > 0 then add / length else 0 end' 2>/dev/null || echo "0")
-
-                if [ "$(awk -v prev="$PREVIOUS_AVG" 'BEGIN {print (prev > 0)}')" -eq 1 ]; then
-                  DURATION_CHANGE=$(awk "BEGIN {printf \"%.1f\", (($RECENT_AVG - $PREVIOUS_AVG) / $PREVIOUS_AVG) * 100}")
-                  DURATION_CHANGE_MINUTES=$(awk "BEGIN {printf \"%.1f\", $RECENT_AVG - $PREVIOUS_AVG}")
-                else
-                  DURATION_CHANGE="0.0"
-                  DURATION_CHANGE_MINUTES="0.0"
-                fi
-              fi
-
-              echo ""
-
-              # Generate HTML dashboard with charts
-              cat > "$HTML_FILE" << 'HTMLEOF'
-              <!DOCTYPE html>
-              <html lang="en">
-              <head>
-                  <meta charset="UTF-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <title>DASHBOARD_TITLE_PLACEHOLDER</title>
-                  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
-
-                  <!-- Load Chart.js -->
-                  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-                  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-
-                  <style>
-                      body {
-                          font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
-                          margin: 0;
-                          padding: 20px;
-                          background: #f5f5f5;
-                      }
-                      .container {
-                          max-width: 1200px;
-                          margin: 0 auto;
-                      }
-                      h1 {
-                          color: #323130;
-                          margin-bottom: 8px;
-                      }
-                      .timestamp {
-                          color: #605e5c;
-                          font-size: 14px;
-                          margin-bottom: 24px;
-                      }
-                      .metrics {
-                          display: grid;
-                          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                          gap: 16px;
-                          margin-bottom: 24px;
-                      }
-                      .metric-card {
-                          background: white;
-                          padding: 20px;
-                          border-radius: 4px;
-                          box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132);
-                      }
-                      .metric-label {
-                          font-size: 12px;
-                          color: #605e5c;
-                          text-transform: uppercase;
-                          letter-spacing: 0.5px;
-                          margin-bottom: 8px;
-                      }
-                      .metric-value {
-                          font-size: 32px;
-                          font-weight: 600;
-                          color: #323130;
-                      }
-                      .metric-card.success .metric-value {
-                          color: #107c10;
-                      }
-                      .metric-card.warning .metric-value {
-                          color: #ff8c00;
-                      }
-                      .metric-card {
-                          position: relative;
-                      }
-                      .metric-label {
-                          position: relative;
-                          display: inline-block;
-                      }
-                      .info-icon {
-                          display: inline;
-                          color: #605e5c;
-                          font-size: 14px;
-                          margin-left: 4px;
-                          position: relative;
-                      }
-                      .info-icon .tooltip {
-                          visibility: hidden;
-                          width: 220px;
-                          background-color: #323130;
-                          color: #fff;
-                          text-align: center;
-                          border-radius: 4px;
-                          padding: 8px;
-                          position: absolute;
-                          z-index: 1;
-                          bottom: 125%;
-                          left: 50%;
-                          margin-left: -110px;
-                          opacity: 0;
-                          transition: opacity 0.3s;
-                          font-size: 11px;
-                          text-transform: none;
-                          letter-spacing: normal;
-                          font-weight: normal;
-                      }
-                      .info-icon .tooltip::after {
-                          content: "";
-                          position: absolute;
-                          top: 100%;
-                          left: 50%;
-                          margin-left: -5px;
-                          border-width: 5px;
-                          border-style: solid;
-                          border-color: #323130 transparent transparent transparent;
-                      }
-                      .info-icon:hover .tooltip {
-                          visibility: visible;
-                          opacity: 1;
-                      }
-                      .metric-subtext {
-                          font-size: 14px;
-                          color: #605e5c;
-                          margin-top: 4px;
-                      }
-                      .metric-percent {
-                          font-size: 18px;
-                          margin-left: 8px;
-                          opacity: 0.8;
-                      }
-                      .info {
-                          background: white;
-                          padding: 16px;
-                          border-radius: 4px;
-                          box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132);
-                          margin-top: 24px;
-                      }
-                      .info h3 {
-                          margin-top: 0;
-                          color: #323130;
-                      }
-                      .info p {
-                          color: #605e5c;
-                          line-height: 1.6;
-                      }
-                      .info ul {
-                          color: #605e5c;
-                          line-height: 1.8;
-                      }
-                      .badge {
-                          display: inline-block;
-                          padding: 4px 12px;
-                          background: #e1f5fe;
-                          color: #0078d4;
-                          border-radius: 12px;
-                          font-size: 12px;
-                          font-weight: 600;
-                          margin-right: 8px;
-                      }
-                      .chart-container {
-                          background: white;
-                          padding: 16px;
-                          border-radius: 4px;
-                          box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132);
-                          margin-bottom: 24px;
-                          position: relative;
-                      }
-                      .chart-container.duration-chart {
-                          height: 320px;
-                      }
-                      .chart-container.stage-chart {
-                          height: 420px;
-                      }
-                      h2 {
-                          color: #323130;
-                          font-size: 18px;
-                          margin-top: 32px;
-                          margin-bottom: 16px;
-                      }
-                      /* Sortable table styles */
-                      .table-container {
-                          background: white;
-                          padding: 16px;
-                          border-radius: 4px;
-                          box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132);
-                          margin-bottom: 24px;
-                          overflow-x: auto;
-                      }
-                      .builds-table {
-                          width: 100%;
-                          border-collapse: collapse;
-                          font-size: 14px;
-                      }
-                      .builds-table th,
-                      .builds-table td {
-                          padding: 12px 16px;
-                          text-align: left;
-                          border-bottom: 1px solid #edebe9;
-                      }
-                      .builds-table th {
-                          background: #faf9f8;
-                          font-weight: 600;
-                          color: #323130;
-                          cursor: pointer;
-                          user-select: none;
-                          white-space: nowrap;
-                      }
-                      .builds-table th:hover {
-                          background: #f3f2f1;
-                      }
-                      .builds-table th .sort-icon {
-                          margin-left: 4px;
-                          opacity: 0.5;
-                      }
-                      .builds-table th.sort-asc .sort-icon,
-                      .builds-table th.sort-desc .sort-icon {
-                          opacity: 1;
-                      }
-                      .builds-table tbody tr:hover {
-                          background: #faf9f8;
-                      }
-                      .builds-table a {
-                          color: #0078d4;
-                          text-decoration: none;
-                      }
-                      .builds-table a:hover {
-                          text-decoration: underline;
-                      }
-                      .result-badge {
-                          display: inline-block;
-                          padding: 2px 8px;
-                          border-radius: 12px;
-                          font-size: 12px;
-                          font-weight: 500;
-                      }
-                      .result-badge.succeeded {
-                          background: #dff6dd;
-                          color: #107c10;
-                      }
-                      .result-badge.partiallySucceeded {
-                          background: #fff4ce;
-                          color: #8a6d3b;
-                      }
-                      /* Pagination styles */
-                      .pagination {
-                          display: flex;
-                          justify-content: space-between;
-                          align-items: center;
-                          margin-top: 16px;
-                          padding-top: 16px;
-                          border-top: 1px solid #edebe9;
-                      }
-                      .pagination-info {
-                          color: #605e5c;
-                          font-size: 14px;
-                      }
-                      .pagination-controls {
-                          display: flex;
-                          gap: 8px;
-                      }
-                      .pagination-btn {
-                          padding: 8px 16px;
-                          border: 1px solid #8a8886;
-                          background: white;
-                          border-radius: 4px;
-                          cursor: pointer;
-                          font-size: 14px;
-                          color: #323130;
-                      }
-                      .pagination-btn:hover:not(:disabled) {
-                          background: #f3f2f1;
-                      }
-                      .pagination-btn:disabled {
-                          opacity: 0.5;
-                          cursor: not-allowed;
-                      }
-                  </style>
-              </head>
-              <body>
-                  <div class="container">
-                      <h1>DASHBOARD_TITLE_PLACEHOLDER</h1>
-                      <div class="timestamp">
-                          Generated on <strong><span id="timestamp">TIMESTAMP_PLACEHOLDER</span></strong>
-                      </div>
-
-                      <h2>SECTION_TITLE_PLACEHOLDER</h2>
-                      <div class="metrics">
-                          <div class="metric-card">
-                              <div class="metric-label">Total Builds</div>
-                              <div class="metric-value" id="totalBuilds">TOTAL_BUILDS_PLACEHOLDER</div>
-                          </div>
-                          <div class="metric-card">
-                              <div class="metric-label">Avg Duration</div>
-                              <div class="metric-value" id="avgDuration">AVG_DURATION_PLACEHOLDERm</div>
-                          </div>
-                          <div class="metric-card">
-                              <div class="metric-label">
-                                  TREND_LABEL_PLACEHOLDER
-                                  <span class="info-icon">ⓘ
-                                      <span class="tooltip">Compares average duration of last TREND_DAYS_PLACEHOLDER days vs the average of all builds before that</span>
-                                  </span>
-                              </div>
-                              <div class="metric-value" id="durationChange" style="color: DURATION_CHANGE_COLOR">
-                                  DURATION_CHANGE_SIGN_PLACEHOLDERDURATION_CHANGE_MINUTES_PLACEHOLDERm
-                                  <span class="metric-percent">(DURATION_CHANGE_SIGN_PLACEHOLDERDURATION_CHANGE_PLACEHOLDER%)</span>
-                              </div>
-                          </div>
-                      </div>
-
-                      <h2>Duration Trend</h2>
-                      <div class="chart-container duration-chart">
-                          <canvas id="durationTrendChart"></canvas>
-                      </div>
-
-                      <h2>Duration by Stage</h2>
-                      <div class="chart-container stage-chart">
-                          <canvas id="stageBreakdownChart"></canvas>
-                      </div>
-
-                      <h2>Individual Task Duration</h2>
-                      <div class="chart-container stage-chart">
-                          <canvas id="buildStageDetailChart"></canvas>
-                      </div>
-
-                      <h2>Recent Builds</h2>
-                      <div class="table-container">
-                          <table class="builds-table" id="recentBuildsTable">
-                              <thead>
-                                  <tr>
-                                      <th data-sort="id" data-table="recent">Build ID <span class="sort-icon">↕</span></th>
-                                      <th data-sort="date" data-table="recent" class="sort-desc">Date <span class="sort-icon">↓</span></th>
-                                      <th data-sort="duration" data-table="recent">Duration <span class="sort-icon">↕</span></th>
-                                      <th data-sort="source" data-table="recent">Source <span class="sort-icon">↕</span></th>
-                                  </tr>
-                              </thead>
-                              <tbody id="recentBuildsBody">
-                              </tbody>
-                          </table>
-                          <div class="pagination">
-                              <div class="pagination-info">
-                                  Showing <span id="recentPageStart">1</span>-<span id="recentPageEnd">5</span> of <span id="recentTotalItems">20</span>
-                              </div>
-                              <div class="pagination-controls">
-                                  <button class="pagination-btn" id="recentPrevBtn" onclick="prevPage('recent')">← Previous</button>
-                                  <button class="pagination-btn" id="recentNextBtn" onclick="nextPage('recent')">Next →</button>
-                              </div>
-                          </div>
-                      </div>
-
-                      <h2>Longest Builds</h2>
-                      <div class="table-container">
-                          <table class="builds-table" id="longestBuildsTable">
-                              <thead>
-                                  <tr>
-                                      <th data-sort="id" data-table="longest">Build ID <span class="sort-icon">↕</span></th>
-                                      <th data-sort="date" data-table="longest">Date <span class="sort-icon">↕</span></th>
-                                      <th data-sort="duration" data-table="longest" class="sort-desc">Duration <span class="sort-icon">↓</span></th>
-                                      <th data-sort="source" data-table="longest">Source <span class="sort-icon">↕</span></th>
-                                  </tr>
-                              </thead>
-                              <tbody id="longestBuildsBody">
-                              </tbody>
-                          </table>
-                          <div class="pagination">
-                              <div class="pagination-info">
-                                  Showing <span id="longestPageStart">1</span>-<span id="longestPageEnd">5</span> of <span id="longestTotalItems">20</span>
-                              </div>
-                              <div class="pagination-controls">
-                                  <button class="pagination-btn" id="longestPrevBtn" onclick="prevPage('longest')">← Previous</button>
-                                  <button class="pagination-btn" id="longestNextBtn" onclick="nextPage('longest')">Next →</button>
-                              </div>
-                          </div>
-                      </div>
-
-                      <div class="info">
-                          <h3>About This Dashboard</h3>
-                          <p>
-                              This dashboard shows metrics for <strong>BUILD_TYPE_PLACEHOLDER builds</strong> from the PROJECT_PLACEHOLDER project.
-                          </p>
-                          <h4>Filters Applied:</h4>
-                          <ul>
-                              REASON_FILTER_LINE_PLACEHOLDER
-                              <li>BRANCH_INFO_PLACEHOLDER</li>
-                              <li>Results: <code>succeeded</code> or <code>partiallySucceeded</code></li>
-                              <li>Status: <code>completed</code></li>
-                          </ul>
-                          <h4>Data Source:</h4>
-                          <ul>
-                              <li>Azure DevOps Build API (v7.1)</li>
-                              <li>Organization: <code>ORG_PLACEHOLDER</code></li>
-                              <li>Project: <code>PROJECT_PLACEHOLDER</code></li>
-                              <li>Pipeline ID: <code>BUILD_DEF_ID_PLACEHOLDER</code></li>
-                          </ul>
-                      </div>
-                  </div>
-
-                  <script>
-                      // chartData will be injected here as: const chartData = {...};
-                      // It contains: summary, durationTrend, stagePerformance, buildStageTasks
-
-                      // Format timestamp nicely
-                      function formatTimestamp() {
-                          const timestampEl = document.getElementById('timestamp');
-                          const isoString = timestampEl.textContent;
-                          const date = new Date(isoString);
-
-                          const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                          const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
-
-                          timestampEl.textContent = dateStr + ' ' + timeStr;
-                      }
-
-                      // Color palette for stacked bar chart segments
-                      const taskColors = [
-                          'rgba(16, 124, 16, 0.8)',    // Green
-                          'rgba(0, 120, 212, 0.8)',    // Blue
-                          'rgba(138, 43, 226, 0.8)',   // Purple
-                          'rgba(255, 140, 0, 0.8)',    // Orange
-                          'rgba(209, 52, 56, 0.8)',    // Red
-                          'rgba(0, 183, 195, 0.8)',    // Teal
-                          'rgba(234, 67, 53, 0.8)',    // Coral
-                          'rgba(52, 168, 83, 0.8)',    // Mint
-                          'rgba(251, 188, 4, 0.8)',    // Yellow
-                          'rgba(103, 58, 183, 0.8)',   // Deep Purple
-                          'rgba(0, 150, 136, 0.8)',    // Dark Teal
-                          'rgba(233, 30, 99, 0.8)',    // Pink
-                      ];
-
-                      function getTaskColor(index) {
-                          return taskColors[index % taskColors.length];
-                      }
-
-                      function getTaskBorderColor(index) {
-                          return getTaskColor(index).replace('0.8', '1');
-                      }
-
-                      // Create all charts once DOM is loaded
-                      document.addEventListener('DOMContentLoaded', function() {
-                          formatTimestamp();
-                          createDurationTrendChart();
-                          createStageBreakdownChart();
-                          createBuildStageDetailChart();
-                          createRecentBuildsTable();
-                      });
-
-                      function createDurationTrendChart() {
-                          if (!chartData.durationTrend || chartData.durationTrend.length === 0) {
-                              document.getElementById('durationTrendChart').parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No build data available</p>';
-                              return;
-                          }
-
-                          const data = chartData.durationTrend.map(d => ({
-                              x: new Date(d.date),
-                              y: d.avgDuration
-                          }));
-
-                          const ctx = document.getElementById('durationTrendChart').getContext('2d');
-                          new Chart(ctx, {
-                              type: 'line',
-                              data: {
-                                  datasets: [{
-                                      label: 'Avg Duration (minutes)',
-                                      data: data,
-                                      borderColor: chartData.chartColor || 'rgba(0, 120, 212, 1)',
-                                      backgroundColor: chartData.chartBgColor || 'rgba(0, 120, 212, 0.1)',
-                                      borderWidth: 2,
-                                      fill: true,
-                                      tension: 0.4
-                                  }]
-                              },
-                              options: {
-                                  responsive: true,
-                                  maintainAspectRatio: false,
-                                  plugins: {
-                                      legend: {
-                                          onClick: null
-                                      },
-                                      title: {
-                                          display: true,
-                                          text: 'Average Build Duration',
-                                          font: { size: 14, weight: 'bold' }
-                                      },
-                                      tooltip: {
-                                          callbacks: {
-                                              title: function(context) {
-                                                  const date = new Date(context[0].parsed.x);
-                                                  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                                              }
-                                          }
-                                      }
-                                  },
-                                  scales: {
-                                      x: {
-                                          type: 'time',
-                                          time: { unit: 'day' },
-                                          title: { display: true, text: 'Date' }
-                                      },
-                                      y: {
-                                          beginAtZero: true,
-                                          title: { display: true, text: 'Duration (minutes)' }
-                                      }
-                                  }
-                              }
-                          });
-                      }
-
-                      function createStageBreakdownChart() {
-                          // Create stacked horizontal bar chart with task breakdown per stage
-                          const stageData = chartData.stageTaskBreakdown || {};
-                          const stagePerf = chartData.stagePerformance || [];
-                          const stages = Object.keys(stageData).sort();
-
-                          if (stages.length === 0) {
-                              document.getElementById('stageBreakdownChart').parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No stage data available</p>';
-                              return;
-                          }
-
-                          // For stages with no tasks, use stage total duration as single segment
-                          const stageAvgDurations = {};
-                          stagePerf.forEach(s => { stageAvgDurations[s.name] = s.avgDuration; });
-
-                          // Collect all unique task names across all stages
-                          const allTasks = new Set();
-                          stages.forEach(stage => {
-                              const tasks = stageData[stage] || [];
-                              if (tasks.length === 0) {
-                                  allTasks.add(stage);
-                              } else {
-                                  tasks.forEach(task => allTasks.add(task.name));
-                              }
-                          });
-                          const taskNames = Array.from(allTasks).sort();
-
-                          // Create datasets - one per task
-                          const datasets = taskNames.map((taskName, index) => ({
-                              label: taskName,
-                              data: stages.map(stage => {
-                                  const tasks = stageData[stage] || [];
-                                  if (tasks.length === 0 && taskName === stage) {
-                                      return stageAvgDurations[stage] || 0;
-                                  }
-                                  const task = tasks.find(t => t.name === taskName);
-                                  return task ? task.avgDuration : 0;
-                              }),
-                              backgroundColor: getTaskColor(index),
-                              borderColor: getTaskBorderColor(index),
-                              borderWidth: 1
-                          }));
-
-                          const ctx = document.getElementById('stageBreakdownChart').getContext('2d');
-                          new Chart(ctx, {
-                              type: 'bar',
-                              data: { labels: stages, datasets },
-                              options: {
-                                  indexAxis: 'y',
-                                  responsive: true,
-                                  maintainAspectRatio: false,
-                                  plugins: {
-                                      legend: {
-                                          onClick: null,
-                                          position: 'bottom',
-                                          labels: { boxWidth: 12, padding: 8 }
-                                      },
-                                      title: {
-                                          display: true,
-                                          text: 'Average Duration by Stage',
-                                          font: { size: 14, weight: 'bold' }
-                                      },
-                                      tooltip: {
-                                          callbacks: {
-                                              label: function(context) {
-                                                  const value = context.parsed.x;
-                                                  if (value === 0) return null;
-                                                  return `${context.dataset.label}: ${value.toFixed(1)}m`;
-                                              }
-                                          }
-                                      }
-                                  },
-                                  scales: {
-                                      x: {
-                                          stacked: true,
-                                          beginAtZero: true,
-                                          title: { display: true, text: 'Duration (minutes)' }
-                                      },
-                                      y: {
-                                          stacked: true,
-                                          title: { display: true, text: 'Stage' }
-                                      }
-                                  }
-                              }
-                          });
-                      }
-
-                      function createBuildStageDetailChart() {
-                          // Create detailed breakdown chart showing all individual tasks from all stages
-                          const stageData = chartData.stageTaskBreakdown || {};
-                          const stagePerf = chartData.stagePerformance || [];
-
-                          if (Object.keys(stageData).length === 0) {
-                              document.getElementById('buildStageDetailChart').parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No task data available</p>';
-                              return;
-                          }
-
-                          // Flatten all tasks with their stage prefix and track which stage each task belongs to
-                          const allTasks = [];
-                          const stageAvgDurations = {};
-                          stagePerf.forEach(s => { stageAvgDurations[s.name] = s.avgDuration; });
-
-                          // Assign a color index to each stage
-                          const stages = Object.keys(stageData).sort();
-                          const stageColorMap = {};
-                          stages.forEach((stage, idx) => {
-                              stageColorMap[stage] = idx;
-                          });
-
-                          Object.keys(stageData).sort().forEach(stage => {
-                              const tasks = stageData[stage] || [];
-                              if (tasks.length === 0) {
-                                  // Stage with no tasks - add the stage itself
-                                  allTasks.push({
-                                      label: stage,
-                                      duration: stageAvgDurations[stage] || 0,
-                                      stageIndex: stageColorMap[stage]
-                                  });
-                              } else {
-                                  // Add each task with stage prefix for context
-                                  tasks.forEach(task => {
-                                      allTasks.push({
-                                          label: `${stage} › ${task.name}`,
-                                          duration: task.avgDuration,
-                                          stageIndex: stageColorMap[stage]
-                                      });
-                                  });
-                              }
-                          });
-
-                          // Sort by duration descending
-                          allTasks.sort((a, b) => b.duration - a.duration);
-
-                          const labels = allTasks.map(t => t.label);
-                          const durations = allTasks.map(t => t.duration);
-                          const backgroundColors = allTasks.map(t => getTaskColor(t.stageIndex));
-                          const borderColors = allTasks.map(t => getTaskBorderColor(t.stageIndex));
-
-                          const ctx = document.getElementById('buildStageDetailChart').getContext('2d');
-                          new Chart(ctx, {
-                              type: 'bar',
-                              data: {
-                                  labels: labels,
-                                  datasets: [{
-                                      label: 'Avg Duration (minutes)',
-                                      data: durations,
-                                      backgroundColor: backgroundColors,
-                                      borderColor: borderColors,
-                                      borderWidth: 1
-                                  }]
-                              },
-                              options: {
-                                  indexAxis: 'y',
-                                  responsive: true,
-                                  maintainAspectRatio: false,
-                                  plugins: {
-                                      legend: {
-                                          display: false
-                                      },
-                                      title: {
-                                          display: true,
-                                          text: 'Longest Average Individual Tasks',
-                                          font: { size: 14, weight: 'bold' }
-                                      },
-                                      tooltip: {
-                                          callbacks: {
-                                              label: function(context) {
-                                                  return context.parsed.x.toFixed(1) + 'm';
-                                              }
-                                          }
-                                      }
-                                  },
-                                  scales: {
-                                      x: {
-                                          beginAtZero: true,
-                                          title: { display: true, text: 'Duration (minutes)' }
-                                      },
-                                      y: {
-                                          title: { display: true, text: 'Task' }
-                                      }
-                                  }
-                              }
-                          });
-                      }
-
-                      // Tables state management
-                      const itemsPerPage = 5;
-                      const tableState = {
-                          recent: { builds: [], sort: { column: 'date', direction: 'desc' }, page: 1 },
-                          longest: { builds: [], sort: { column: 'duration', direction: 'desc' }, page: 1 }
-                      };
-
-                      function createRecentBuildsTable() {
-                          // Initialize recent builds table
-                          tableState.recent.builds = chartData.recentBuilds || [];
-                          if (tableState.recent.builds.length === 0) {
-                              document.getElementById('recentBuildsTable').parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No recent builds available</p>';
-                          } else {
-                              document.getElementById('recentTotalItems').textContent = tableState.recent.builds.length;
-                              renderTable('recent');
-                              setupTableSorting('recent');
-                          }
-
-                          // Initialize longest builds table
-                          tableState.longest.builds = chartData.longestBuilds || [];
-                          if (tableState.longest.builds.length === 0) {
-                              document.getElementById('longestBuildsTable').parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No build data available</p>';
-                          } else {
-                              document.getElementById('longestTotalItems').textContent = tableState.longest.builds.length;
-                              renderTable('longest');
-                              setupTableSorting('longest');
-                          }
-                      }
-
-                      function renderTable(tableId) {
-                          const state = tableState[tableId];
-                          const tbody = document.getElementById(tableId + 'BuildsBody');
-                          const sortedBuilds = sortBuilds(state.builds, state.sort.column, state.sort.direction);
-
-                          // Paginate
-                          const startIdx = (state.page - 1) * itemsPerPage;
-                          const endIdx = Math.min(startIdx + itemsPerPage, sortedBuilds.length);
-                          const pageBuilds = sortedBuilds.slice(startIdx, endIdx);
-
-                          tbody.innerHTML = pageBuilds.map(build => {
-                              const date = new Date(build.startTime);
-                              const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                              const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
-                              const sourceCell = build.sourceUrl ? '<a href="' + build.sourceUrl + '" target="_blank">' + build.source + '</a>' : build.source;
-
-                              return '<tr>' +
-                                  '<td><a href="' + build.url + '" target="_blank">' + build.id + '</a></td>' +
-                                  '<td>' + dateStr + ' ' + timeStr + '</td>' +
-                                  '<td>' + build.duration.toFixed(1) + 'm</td>' +
-                                  '<td>' + sourceCell + '</td>' +
-                              '</tr>';
-                          }).join('');
-
-                          // Update pagination info
-                          document.getElementById(tableId + 'PageStart').textContent = sortedBuilds.length > 0 ? startIdx + 1 : 0;
-                          document.getElementById(tableId + 'PageEnd').textContent = endIdx;
-                          updatePaginationControls(tableId);
-                      }
-
-                      function sortBuilds(builds, column, direction) {
-                          return [...builds].sort((a, b) => {
-                              let aVal, bVal;
-                              switch (column) {
-                                  case 'id': aVal = a.id; bVal = b.id; break;
-                                  case 'date': aVal = new Date(a.startTime); bVal = new Date(b.startTime); break;
-                                  case 'duration': aVal = a.duration; bVal = b.duration; break;
-                                  case 'source': aVal = a.source; bVal = b.source; break;
-                                  default: return 0;
-                              }
-                              if (aVal < bVal) return direction === 'asc' ? -1 : 1;
-                              if (aVal > bVal) return direction === 'asc' ? 1 : -1;
-                              return 0;
-                          });
-                      }
-
-                      function setupTableSorting(tableId) {
-                          const headers = document.querySelectorAll('#' + tableId + 'BuildsTable th[data-sort]');
-                          headers.forEach(header => {
-                              header.addEventListener('click', () => {
-                                  const column = header.dataset.sort;
-                                  const state = tableState[tableId];
-
-                                  // Toggle direction if same column, otherwise default to desc
-                                  if (state.sort.column === column) {
-                                      state.sort.direction = state.sort.direction === 'asc' ? 'desc' : 'asc';
-                                  } else {
-                                      state.sort.column = column;
-                                      state.sort.direction = 'desc';
-                                  }
-
-                                  // Update header styles
-                                  headers.forEach(h => {
-                                      h.classList.remove('sort-asc', 'sort-desc');
-                                      h.querySelector('.sort-icon').textContent = '↕';
-                                  });
-                                  header.classList.add('sort-' + state.sort.direction);
-                                  header.querySelector('.sort-icon').textContent = state.sort.direction === 'asc' ? '↑' : '↓';
-
-                                  state.page = 1; // Reset to first page on sort
-                                  renderTable(tableId);
-                              });
-                          });
-                      }
-
-                      function updatePaginationControls(tableId) {
-                          const state = tableState[tableId];
-                          const totalPages = Math.ceil(state.builds.length / itemsPerPage);
-                          document.getElementById(tableId + 'PrevBtn').disabled = state.page <= 1;
-                          document.getElementById(tableId + 'NextBtn').disabled = state.page >= totalPages;
-                      }
-
-                      function prevPage(tableId) {
-                          const state = tableState[tableId];
-                          if (state.page > 1) {
-                              state.page--;
-                              renderTable(tableId);
-                          }
-                      }
-
-                      function nextPage(tableId) {
-                          const state = tableState[tableId];
-                          const totalPages = Math.ceil(state.builds.length / itemsPerPage);
-                          if (state.page < totalPages) {
-                              state.page++;
-                              renderTable(tableId);
-                          }
-                      }
-                  </script>
-              </body>
-              </html>
-              HTMLEOF
-
-              # Replace placeholders with actual values
-              sed -i "s/TIMESTAMP_PLACEHOLDER/$(date +%Y-%m-%dT%H:%M:%S%z | sed 's/\([0-9][0-9]\)$/:\1/')/g" "$HTML_FILE"
-              sed -i "s/ORG_PLACEHOLDER/$ORG/g" "$HTML_FILE"
-              sed -i "s/PROJECT_PLACEHOLDER/$PROJECT/g" "$HTML_FILE"
-              sed -i "s/BUILD_DEF_ID_PLACEHOLDER/$BUILD_DEF_ID/g" "$HTML_FILE"
-              sed -i "s/AVG_DURATION_PLACEHOLDER/$(printf '%.1f' $AVG_DURATION)/g" "$HTML_FILE"
-              sed -i "s/TOTAL_BUILDS_PLACEHOLDER/$TOTAL_BUILDS/g" "$HTML_FILE"
-              sed -i "s/DASHBOARD_TITLE_PLACEHOLDER/$DASHBOARD_TITLE/g" "$HTML_FILE"
-              sed -i "s/SECTION_TITLE_PLACEHOLDER/$SECTION_TITLE/g" "$HTML_FILE"
-              sed -i "s/BUILD_TYPE_PLACEHOLDER/$BUILD_TYPE/g" "$HTML_FILE"
-              sed -i "s/TREND_LABEL_PLACEHOLDER/$TREND_LABEL/g" "$HTML_FILE"
-              sed -i "s/TREND_DAYS_PLACEHOLDER/$TREND_DAYS/g" "$HTML_FILE"
-              sed -i "s|REASON_FILTER_LINE_PLACEHOLDER|$REASON_FILTER_LINE|g" "$HTML_FILE"
-              sed -i "s|BRANCH_INFO_PLACEHOLDER|$BRANCH_INFO|g" "$HTML_FILE"
-
-              # Replace duration change placeholders with color coding
-              if [ "$(awk -v val="$DURATION_CHANGE" 'BEGIN {print (val < 0)}')" -eq 1 ]; then
-                DURATION_CHANGE_COLOR="#107c10"
-                DURATION_CHANGE_SIGN="-"
-              elif [ "$(awk -v val="$DURATION_CHANGE" 'BEGIN {print (val > 0)}')" -eq 1 ]; then
-                DURATION_CHANGE_COLOR="#d13438"
-                DURATION_CHANGE_SIGN="+"
-              else
-                DURATION_CHANGE_COLOR="#605e5c"
-                DURATION_CHANGE_SIGN=""
-              fi
-              sed -i "s/DURATION_CHANGE_SIGN_PLACEHOLDER/$DURATION_CHANGE_SIGN/g" "$HTML_FILE"
-              sed -i "s/DURATION_CHANGE_MINUTES_PLACEHOLDER/$(echo $DURATION_CHANGE_MINUTES | sed 's/-//')/g" "$HTML_FILE"
-              sed -i "s/DURATION_CHANGE_PLACEHOLDER/$(echo $DURATION_CHANGE | sed 's/-//')/g" "$HTML_FILE"
-              sed -i "s/DURATION_CHANGE_COLOR/$DURATION_CHANGE_COLOR/g" "$HTML_FILE"
-
-              # Generate chart-ready data (aggregated metrics only)
-              echo "Generating chart data..."
-
-              # Create chart data JSON with pre-aggregated metrics
-              echo "$FILTERED_BUILDS" | jq --arg chartColor "$CHART_COLOR" --arg chartBgColor "$CHART_BG_COLOR" --arg org "$ORG" --arg project "$PROJECT" '
+              # Generate chart data JSON with pre-aggregated metrics
+              echo "$FILTERED_BUILDS" | jq --arg org "$ORG" --arg project "$PROJECT" --arg generatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
                 # Build duration trend (avg per day)
                 (group_by(.startTime | split("T")[0]) | map({
                   date: .[0].startTime | split("T")[0],
@@ -1218,6 +296,7 @@ extends:
                 }] | sort_by(.duration) | reverse | .[0:20]) as $longestBuilds |
 
                 {
+                  generatedAt: $generatedAt,
                   summary: {
                     totalBuilds: (. | length),
                     succeeded: (map(select(.result == "succeeded")) | length),
@@ -1226,34 +305,24 @@ extends:
                   },
                   durationTrend: $durationTrend,
                   recentBuilds: $recentBuilds,
-                  longestBuilds: $longestBuilds,
-                  buildIds: (map(.id)),
-                  chartColor: $chartColor,
-                  chartBgColor: $chartBgColor
+                  longestBuilds: $longestBuilds
                 }
-              ' > "$(Build.ArtifactStagingDirectory)/chart-data.json"
+              ' > "$OUTPUT_FILE"
 
               # Process timeline data to extract stage and task metrics
-              # STAGE_DATA: { "StageName": [duration1, duration2, ...] }
-              # STAGE_TASKS_DATA: { "StageName": { "TaskName": [duration1, duration2, ...] } }
               STAGE_DATA="{}"
               STAGE_TASKS_DATA="{}"
 
-              # Process build timelines
               for timeline_file in "$METRICS_PATH/timelines"/*.json; do
                 if [ -f "$timeline_file" ]; then
-                  # Extract stage durations (with null check)
                   stage_metrics=$(jq -c 'if .records == null then [] else [.records[] | select(.type == "Stage" and .startTime and .finishTime) | {name: .name, duration: (((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) - (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) / 60), id: .id}] end' "$timeline_file" 2>/dev/null || echo "[]")
 
-                  # Aggregate stage data
                   if [ "$stage_metrics" != "[]" ]; then
                     STAGE_DATA=$(echo "$STAGE_DATA" | jq --argjson stages "$stage_metrics" '
                       reduce $stages[] as $s (.; .[$s.name] += [$s.duration])
                     ')
                   fi
 
-                  # Extract tasks for ALL stages (grouped by stage name)
-                  # Note: .records must be captured as $records before reduce, since inside reduce `.` is the accumulator
                   stage_task_metrics=$(jq -c '
                     if .records == null then {} else
                     .records as $records |
@@ -1269,7 +338,6 @@ extends:
                     end
                   ' "$timeline_file" 2>/dev/null || echo "{}")
 
-                  # Aggregate stage task data
                   if [ "$stage_task_metrics" != "{}" ]; then
                     STAGE_TASKS_DATA=$(echo "$STAGE_TASKS_DATA" | jq --argjson stageTaskData "$stage_task_metrics" '
                       reduce ($stageTaskData | to_entries[]) as $stage (.;
@@ -1282,41 +350,79 @@ extends:
                 fi
               done
 
-              # Calculate averages and add to chart data
-              # stageTaskBreakdown: { "StageName": [{ "name": "TaskName", "avgDuration": X }, ...] }
+              # Add stage data to output JSON
               jq --argjson stages "$STAGE_DATA" --argjson stageTasks "$STAGE_TASKS_DATA" '
                 .stagePerformance = ($stages | to_entries | map({name: .key, avgDuration: ((.value | add) / (.value | length))})) |
                 .stageTaskBreakdown = ($stageTasks | to_entries | map({
                   key: .key,
                   value: (.value | to_entries | map({name: .key, avgDuration: ((.value | add) / (.value | length))}))
                 }) | from_entries)
-              ' "$(Build.ArtifactStagingDirectory)/chart-data.json" > "$(Build.ArtifactStagingDirectory)/chart-data.tmp.json"
-              mv "$(Build.ArtifactStagingDirectory)/chart-data.tmp.json" "$(Build.ArtifactStagingDirectory)/chart-data.json"
+              ' "$OUTPUT_FILE" > "${OUTPUT_FILE}.tmp"
+              mv "${OUTPUT_FILE}.tmp" "$OUTPUT_FILE"
 
-              # Embed chart data into HTML by injecting it right after the opening <script> tag
-              CHART_DATA=$(cat "$(Build.ArtifactStagingDirectory)/chart-data.json" | jq -c '.')
+              echo "Metrics JSON generated: $OUTPUT_FILE"
+              echo "Data size: $(wc -c < "$OUTPUT_FILE") bytes"
 
-              # Create the data script that will be injected
-              DATA_SCRIPT="const chartData = $CHART_DATA;"
-
-              # Inject the chartData into the HTML after the opening <script> tag
-              sed -i "s|// chartData will be injected here as: const chartData = {...};|$DATA_SCRIPT|" "$HTML_FILE"
-
-              # Remove intermediate chart-data.json file
-              rm "$(Build.ArtifactStagingDirectory)/chart-data.json"
-
-              echo "Dashboard generated successfully."
-              echo "Data size: $(echo "$CHART_DATA" | wc -c) bytes"
-              echo ""
-              echo "📦 Published Artifact:"
-              echo "  • index.html"
-              echo ""
-              echo "View: https://dev.azure.com/$ORG/$PROJECT/_build/results?buildId=$(Build.BuildId)&view=artifacts"
         - task: Bash@3
-          displayName: Clean up extraneous files
+          displayName: Prepare deployment package
+          env:
+            ASWA_HOSTNAME: $(ASWA_HOSTNAME)
           inputs:
             targetType: 'inline'
             script: |
-              echo "Cleaning up extraneous files..."
+              set -eu -o pipefail
+
+              MODE=$(cat $(Build.ArtifactStagingDirectory)/metrics/mode.txt)
+              DEPLOY_DIR="$(Build.ArtifactStagingDirectory)/deploy"
+
+              echo "=========================================="
+              echo "Preparing deployment package ($MODE mode)"
+              echo "=========================================="
+
+              mkdir -p "$DEPLOY_DIR/data"
+
+              # Copy our generated data file
+              if [ "$MODE" = "pr" ]; then
+                cp "$(Build.ArtifactStagingDirectory)/pr-data.json" "$DEPLOY_DIR/data/pr-data.json"
+                OTHER_FILE="internal-data.json"
+              else
+                cp "$(Build.ArtifactStagingDirectory)/internal-data.json" "$DEPLOY_DIR/data/internal-data.json"
+                OTHER_FILE="pr-data.json"
+              fi
+
+              # Try to fetch the other mode's data from the live site (may not exist yet)
+              echo "Fetching existing $OTHER_FILE from dashboard..."
+              if curl -sf "https://$ASWA_HOSTNAME/data/$OTHER_FILE" -o "$DEPLOY_DIR/data/$OTHER_FILE" 2>/dev/null; then
+                echo "Successfully fetched $OTHER_FILE"
+              else
+                echo "Note: $OTHER_FILE not available yet (first deployment or other mode hasn't run)"
+              fi
+
+              # Copy HTML template and config from repo
+              REPO_PATH="$(Pipeline.Workspace)/repo"
+              cp "$REPO_PATH/tools/pipelines/dashboard-template/index.html" "$DEPLOY_DIR/index.html"
+              cp "$REPO_PATH/tools/pipelines/dashboard-template/staticwebapp.config.json" "$DEPLOY_DIR/staticwebapp.config.json"
+
+              echo "Deployment package contents:"
+              find "$DEPLOY_DIR" -type f
+
+        - task: AzureStaticWebApp@0
+          displayName: Deploy to Azure Static Web Apps
+          inputs:
+            skip_app_build: true
+            skip_api_build: true
+            cwd: $(Build.ArtifactStagingDirectory)
+            app_location: 'deploy'
+            output_location: ''
+            azure_static_web_apps_api_token: $(ASWA_DEPLOYMENT_TOKEN)
+
+        - task: Bash@3
+          displayName: Clean up
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "Cleaning up temporary files..."
               rm -rf $(Build.ArtifactStagingDirectory)/metrics
-              echo "Extraneous files cleaned up!"
+              rm -rf $(Build.ArtifactStagingDirectory)/deploy
+              rm -f $(Build.ArtifactStagingDirectory)/*.json
+              echo "Cleanup complete"
