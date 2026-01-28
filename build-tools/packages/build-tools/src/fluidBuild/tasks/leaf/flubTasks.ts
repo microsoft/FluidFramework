@@ -11,7 +11,7 @@ import { sha256 } from "../../hash";
 import { LeafWithDoneFileTask } from "./leafTask";
 
 export class FlubListTask extends LeafWithDoneFileTask {
-	private getReleaseGroup() {
+	private getReleaseGroup(): string | undefined {
 		const split = this.command.split(" ");
 		for (let i = 0; i < split.length; i++) {
 			const arg = split[i];
@@ -40,7 +40,7 @@ export class FlubListTask extends LeafWithDoneFileTask {
 }
 
 export class FlubCheckLayerTask extends LeafWithDoneFileTask {
-	private async getLayerInfoFile() {
+	private async getLayerInfoFile(): Promise<Buffer | undefined> {
 		const split = this.command.split(" ");
 		const index = split.indexOf("--info");
 		if (index < 0) {

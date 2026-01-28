@@ -13,6 +13,15 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	allowUnused,
+	type ValidateRecursiveSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/schemaFactoryRecursive.js";
+import type {
+	System_Unsafe,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/typesUnsafe.js";
+import {
 	type FieldSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeFromSchema,
@@ -32,15 +41,6 @@ import {
 	type AllowedTypes,
 	SchemaFactoryBeta,
 } from "../../../simple-tree/index.js";
-import {
-	allowUnused,
-	type ValidateRecursiveSchema,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/schemaFactoryRecursive.js";
-import type {
-	System_Unsafe,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/typesUnsafe.js";
 import { SharedTree } from "../../../treeFactory.js";
 import type {
 	areSafelyAssignable,
@@ -48,7 +48,6 @@ import type {
 	requireTrue,
 	requireFalse,
 } from "../../../util/index.js";
-
 import { hydrate } from "../utils.js";
 
 // Tests for SchemaFactoryRecursive.ts and the recursive API subset of SchemaFactory and SchemaFactoryAlpha.

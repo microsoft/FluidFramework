@@ -167,10 +167,81 @@ module.exports = {
 			},
 		],
 
-		// ENABLED INTENTIONALLY
+		// #region ENABLED INTENTIONALLY
+
+		// Note: will be promoted to an error in the future.
+		"@typescript-eslint/consistent-type-exports": [
+			"warn",
+			{
+				fixMixedExportsWithInlineTypeSpecifier: true,
+			},
+		],
+
+		/**
+		 * Enforces consistent usage of `import type` for type-only imports.
+		 *
+		 * This helps clearly separate types from runtime values, which can improve readability,
+		 * support for tree-shaking and bundling, and aligns with modern TypeScript best practices.
+		 *
+		 * @remarks
+		 * Note: this will be promoted to "error" in a future release.
+		 *
+		 * Docs: {@link https://typescript-eslint.io/rules/consistent-type-imports/}
+		 */
+		"@typescript-eslint/consistent-type-imports": ["warn", { fixStyle: "inline-type-imports" }],
+
 		"@typescript-eslint/dot-notation": "error",
+
+		/**
+		 * Requires explicit typing for anything exported from a module.
+		 * @remarks Note: this will be promoted to "error" in a future release.
+		 */
+		"@typescript-eslint/explicit-module-boundary-types": "warn",
+
+		/**
+		 * Disallows the explicit use of the `any` type.
+		 * @remarks Note: this will be promoted to "error" in a future release.
+		 */
+		"@typescript-eslint/no-explicit-any": [
+			"warn",
+			{
+				ignoreRestArgs: true,
+			},
+		],
+
 		"@typescript-eslint/no-non-null-assertion": "error",
+
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
+
+		/**
+		 * Disallows calling a function with a value with type `any`.
+		 * @remarks Note: this will be promoted to "error" in a future release.
+		 */
+		"@typescript-eslint/no-unsafe-argument": "warn",
+
+		/**
+		 * Disallows assigning any to a variable.
+		 * @remarks Note: this will be promoted to "error" in a future release.
+		 */
+		"@typescript-eslint/no-unsafe-assignment": "warn",
+
+		/**
+		 * Disallows calling any variable that is typed as any.
+		 * @remarks Note: this will be promoted to "error" in a future release.
+		 */
+		"@typescript-eslint/no-unsafe-call": "warn",
+
+		/**
+		 * Disallows member access on any variable that is typed as any.
+		 * @remarks Note: this will be promoted to "error" in a future release.
+		 */
+		"@typescript-eslint/no-unsafe-member-access": "warn",
+
+		/**
+		 * Disallows returning a value with type any from a function.
+		 * @remarks Note: this will be promoted to "error" in a future release.
+		 */
+		"@typescript-eslint/no-unsafe-return": "warn",
 
 		// In some cases, type inference can be wrong, and this can cause a "flip-flop" of type changes in our
 		// API documentation. For example, type inference might decide a function returns a concrete type
@@ -196,6 +267,7 @@ module.exports = {
 
 		"eqeqeq": ["error", "smart"],
 		"import-x/no-deprecated": "error",
+		"no-empty": "error",
 		"no-multi-spaces": [
 			"error",
 			{
@@ -210,6 +282,8 @@ module.exports = {
 		 */
 		"unused-imports/no-unused-imports": "error",
 
+		"no-void": "warn",
+		"require-atomic-updates": "warn",
 		"valid-typeof": "error",
 
 		/**
@@ -228,9 +302,17 @@ module.exports = {
 			},
 		],
 		"unicorn/no-new-buffer": "error",
+
+		/**
+		 * Warns if separators are inconsistent in number literals that contain separators.
+		 */
+		"unicorn/numeric-separators-style": ["warn", { onlyIfContainsSeparator: true }],
+
 		"unicorn/prefer-switch": "error",
 		"unicorn/prefer-ternary": "error",
 		"unicorn/prefer-type-error": "error",
+
+		// #endregion
 
 		// #region DISABLED INTENTIONALLY
 
@@ -241,7 +323,6 @@ module.exports = {
 		"@typescript-eslint/explicit-member-accessibility": "off",
 
 		"@typescript-eslint/member-ordering": "off",
-		"@typescript-eslint/no-explicit-any": "off",
 		"@typescript-eslint/no-unused-vars": "off",
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/typedef": "off",
@@ -269,14 +350,7 @@ module.exports = {
 		// Requires a lot of changes; enabled in the strict config
 		"@typescript-eslint/consistent-generic-constructors": "off",
 
-		// Off for minimal and recommended; enabled in the strict config
-		"@typescript-eslint/consistent-type-exports": "off",
-		"@typescript-eslint/consistent-type-imports": "off",
-
 		"func-call-spacing": "off", // Off because it conflicts with typescript-formatter
-		"no-empty": "off",
-		"no-void": "off",
-		"require-atomic-updates": "off",
 
 		/**
 		 * Superseded by `@typescript-eslint/dot-notation`.
@@ -352,6 +426,12 @@ module.exports = {
 		"jsdoc/empty-tags": "error",
 
 		/**
+		 * Ensures JSDoc/TSDoc comments to use the consistent formatting.
+		 * See {@link https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/rules/multiline-blocks.md}
+		 */
+		"jsdoc/multiline-blocks": ["error"],
+
+		/**
 		 * Ensures multi-line formatting meets JSDoc/TSDoc requirements.
 		 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-no-bad-blocks>
 		 */
@@ -386,9 +466,20 @@ module.exports = {
 
 		// #endregion
 
+		// #region @typescript-eslint rules
+
+		/**
+		 * Ensures that type-only import statements do not result in runtime side-effects.
+		 *
+		 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
+		 */
+		"@typescript-eslint/no-import-type-side-effects": "error",
+
 		"@typescript-eslint/prefer-includes": "error",
 		"@typescript-eslint/prefer-nullish-coalescing": "error",
 		"@typescript-eslint/prefer-optional-chain": "error",
+
+		// #endregion
 
 		/**
 		 * By default, libraries should not take dependencies on node libraries.

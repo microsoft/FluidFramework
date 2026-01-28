@@ -8,7 +8,7 @@ import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree
 import { SequenceInterval, createTransientInterval } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
-import { type SequenceIntervalIndex } from "./intervalIndex.js";
+import type { SequenceIntervalIndex } from "./intervalIndex.js";
 import {
 	HasComparisonOverride,
 	compareOverrideables,
@@ -89,6 +89,8 @@ export class EndpointInRangeIndex implements IEndpointInRangeIndex {
 }
 
 /**
+ * Creates an endpoint-in-range index for the provided SharedString.
+ *
  * @internal
  */
 export function createEndpointInRangeIndex(

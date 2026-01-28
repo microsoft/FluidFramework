@@ -4,6 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
@@ -15,12 +16,13 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
-import { SchemaFactory, TreeViewConfiguration, type ITree } from "../../simple-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
-import { configuredSharedTree } from "../../treeFactory.js";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+
 import { FluidClientVersion } from "../../codec/index.js";
+import { SchemaFactory, TreeViewConfiguration, type ITree } from "../../simple-tree/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
+
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 
 /**
  * This suite provides some e2e snapshot coverage for how SharedTree ops look.

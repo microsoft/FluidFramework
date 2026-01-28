@@ -1,8 +1,8 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
 import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
@@ -23,42 +23,11 @@ const config: Linter.Config[] = [
 				},
 			],
 			"@typescript-eslint/explicit-member-accessibility": "error",
-			"@typescript-eslint/consistent-type-imports": [
-				"error",
-				{
-					"fixStyle": "inline-type-imports",
-				},
-			],
-			"@typescript-eslint/no-import-type-side-effects": "error",
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
-			"@typescript-eslint/no-unsafe-call": "off",
-			"@typescript-eslint/no-unsafe-member-access": "off",
-			"import-x/order": "off",
-			"jsdoc/multiline-blocks": "off",
 			"jsdoc/require-description": "warn",
-			"unicorn/consistent-function-scoping": "off",
-			"unicorn/no-array-method-this-argument": "off",
-			"unicorn/no-array-reduce": "off",
-			"unicorn/no-await-expression-member": "off",
-			"unicorn/no-new-array": "off",
 			"unicorn/no-null": "off",
-			"unicorn/no-useless-fallback-in-spread": "off",
-			"unicorn/prefer-export-from": "off",
-			"unicorn/text-encoding-identifier-case": "off",
-		},
-	},
-	{
-		files: ["**/*.{ts,tsx}"],
-		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
-		rules: {
-			"@typescript-eslint/consistent-type-exports": [
-				"error",
-				{
-					"fixMixedExportsWithInlineTypeSpecifier": true,
-				},
-			],
 		},
 	},
 	{
@@ -72,6 +41,10 @@ const config: Linter.Config[] = [
 		rules: {
 			"@typescript-eslint/no-unused-vars": ["off"],
 			"@typescript-eslint/explicit-function-return-type": "off",
+			// Test files commonly define helper functions inside describe blocks for better readability
+			"unicorn/consistent-function-scoping": "off",
+			// Test files frequently use `as any` casts to access internal/hidden properties for testing
+			"@typescript-eslint/no-unsafe-member-access": "off",
 		},
 	},
 ];

@@ -31,6 +31,7 @@ import {
 	TreeCompressionStrategy,
 	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
+import { combineChunks } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
@@ -50,6 +51,9 @@ import {
 	Breakable,
 	oneFromIterable,
 } from "../util/index.js";
+
+import { initialize, initializerFromChunk } from "./schematizeTree.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
@@ -57,9 +61,6 @@ import {
 	type ForestOptions,
 } from "./sharedTree.js";
 import { createTreeCheckout } from "./treeCheckout.js";
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { initialize, initializerFromChunk } from "./schematizeTree.js";
-import { combineChunks } from "../feature-libraries/index.js";
 
 /**
  * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.

@@ -243,6 +243,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	/**
+	 * Creates a {@link MockDeltaConnection} for this container runtime.
+	 *
 	 * @deprecated use the associated datastore to create the delta connection
 	 */
 	public createDeltaConnection(): MockDeltaConnection {
@@ -583,7 +585,7 @@ export class MockContainerRuntimeFactory {
 	}
 
 	/**
-	 * @returns a minimum sequence number for all connected clients.
+	 * Gets the minimum sequence number for all connected clients.
 	 */
 	public getMinSeq(): number {
 		let minimumSequenceNumber: number | undefined;
@@ -962,6 +964,8 @@ export class MockFluidDataStoreRuntime
 	}
 
 	/**
+	 * Whether the data store is local (not attached).
+	 *
 	 * @deprecated Use `attachState` instead
 	 *
 	 * @privateRemarks Also remove the setter when this is removed. setters don't get their own doc tags.

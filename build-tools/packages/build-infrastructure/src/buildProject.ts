@@ -136,7 +136,7 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 	 */
 	public relativeToRepo(p: string): string {
 		// Replace \ in result with / in case OS is Windows.
-		return path.relative(this.root, p).replace(/\\/g, "/");
+		return path.relative(this.root, p).replaceAll("\\", "/");
 	}
 
 	/**

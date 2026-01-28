@@ -127,6 +127,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		const tag = input.startsWith(tagRefPrefix) ? input.slice(tagRefPrefix.length) : input;
 		const [rg, ver] = tag.split("_v");
 
+		// eslint-disable-next-line import-x/no-named-as-default-member -- semver.parse is the idiomatic usage
 		const version = semver.parse(ver);
 		if (version === null) {
 			throw new Error(`Invalid version parsed from tag: ${ver}`);

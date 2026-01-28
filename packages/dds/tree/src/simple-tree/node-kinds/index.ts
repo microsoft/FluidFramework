@@ -13,6 +13,8 @@ export {
 	IterableTreeArrayContent,
 	TreeArrayNode,
 	type ReadonlyArrayNode,
+	type ArrayPlaceAnchor,
+	createArrayInsertionAnchor,
 } from "./array/index.js";
 
 export {

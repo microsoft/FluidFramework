@@ -117,7 +117,7 @@ class ChunkedOpProcessor {
 	}
 
 	/**
-	 * @returns The concatenated contents of all the messages parsed as json
+	 * Gets the concatenated contents of all the messages parsed as JSON.
 	 */
 	getConcatenatedContents(): any {
 		const contentsString = this.parsedMessageContents.reduce(
@@ -662,6 +662,8 @@ export class Sanitizer {
 	}
 
 	/**
+	 * Fixes a chunked operation by reassembling and sanitizing the message chunks.
+	 *
 	 * @param message - The top-level chunkedOp message or a top-level op message
 	 * with a chunkedOp inside its contents
 	 */

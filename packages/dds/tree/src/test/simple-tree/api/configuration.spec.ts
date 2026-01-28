@@ -4,26 +4,25 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	createIdCompressor,
 	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	type TreeNodeSchema,
-	SchemaFactory,
-	SchemaFactoryAlpha,
-} from "../../../simple-tree/index.js";
 import { independentView } from "../../../shared-tree/index.js";
-
 import {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	checkUnion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/configuration.js";
+import {
+	type TreeNodeSchema,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+} from "../../../simple-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 

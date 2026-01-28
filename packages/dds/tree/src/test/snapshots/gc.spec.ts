@@ -18,8 +18,8 @@ import {
 	TreeViewConfiguration,
 	type TreeView,
 } from "../../simple-tree/index.js";
-import { DefaultTestSharedTreeKind } from "../utils.js";
 import type { ISharedTree } from "../../treeFactory.js";
+import { DefaultTestSharedTreeKind } from "../utils.js";
 
 const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {

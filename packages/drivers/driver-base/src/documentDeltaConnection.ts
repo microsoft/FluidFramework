@@ -117,6 +117,8 @@ export class DocumentDeltaConnection
 	private readonly mc: MonitoringContext;
 
 	/**
+	 * Gets the logger from the monitoring context.
+	 *
 	 * @deprecated Implementors should manage their own logger or monitoring context
 	 */
 	protected get logger(): ITelemetryLoggerExt {
@@ -557,7 +559,9 @@ export class DocumentDeltaConnection
 						// That's a WebSocket. Clear it as we can't log it.
 						description.target = undefined;
 					}
-				} catch (_e) {}
+				} catch (_e) {
+					// TODO: document why we are ignoring the error here
+				}
 
 				// Handle socket transport downgrading when not offline.
 				if (

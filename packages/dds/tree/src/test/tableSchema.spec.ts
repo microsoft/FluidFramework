@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "node:assert";
+
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { Tree, TreeAlpha } from "../shared-tree/index.js";
@@ -14,6 +15,7 @@ import {
 	SchemaFactoryAlpha,
 	SchemaFactoryBeta,
 	TreeBeta,
+	TreeViewConfiguration,
 	type ConciseTree,
 	type TreeNode,
 } from "../simple-tree/index.js";
@@ -24,9 +26,14 @@ import type {
 	requireFalse,
 	requireTrue,
 } from "../util/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
+
 // eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";
+import {
+	takeJsonSnapshot,
+	testSchemaCompatibilitySnapshots,
+	useSnapshotDirectory,
+} from "./snapshots/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
@@ -67,6 +74,14 @@ class Table extends TableSchema.table({
 }) {}
 
 describe("TableFactory unit tests", () => {
+	it("compatibility", () => {
+		// There is not a single fixed table schema, but instead a collection of utilities that generate table schemas.
+		// Therefore, we cannot directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of TableSchema.table
+		// which is what this test does.
+		const currentViewSchema = new TreeViewConfiguration({ schema: Table });
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.82.0", "example-table");
+	});
+
 	/**
 	 * Compares a tree with an expected "concise" tree representation.
 	 * Fails if they are not equivalent.

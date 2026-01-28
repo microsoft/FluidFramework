@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { asAlpha } from "../../api.js";
 import {
 	type NormalizedFieldUpPath,
 	type NormalizedUpPath,
@@ -11,9 +20,14 @@ import {
 	rootFieldKey,
 	type TreeChunk,
 } from "../../core/index.js";
-import { fieldJsonCursor } from "../json/index.js";
+import { combineChunks, FieldKinds } from "../../feature-libraries/index.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { initialize } from "../../shared-tree/schematizeTree.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
+import { fieldJsonCursor } from "../json/index.js";
+import { insert, jsonSequenceRootSchema, remove } from "../sequenceRootUtils.js";
 import {
 	chunkFromJsonTrees,
 	createTestUndoRedoStacks,
@@ -23,18 +37,6 @@ import {
 	moveWithin,
 	TestTreeProviderLite,
 } from "../utils.js";
-import { insert, jsonSequenceRootSchema, remove } from "../sequenceRootUtils.js";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils/internal";
-import { strict as assert } from "node:assert";
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { initialize } from "../../shared-tree/schematizeTree.js";
-import { combineChunks, FieldKinds } from "../../feature-libraries/index.js";
-import { asAlpha } from "../../api.js";
 
 const rootPath: NormalizedUpPath = {
 	detachedNodeId: undefined,
@@ -493,7 +495,7 @@ describe("Undo and redo", () => {
 		view.initialize({ foo: 1 });
 		assert.equal(tree.isAttached(), false);
 		let revertible: Revertible | undefined;
-		view.events.on("changed", (_, getRevertible) => {
+		view.events.on("changed", ({ getRevertible }) => {
 			revertible = getRevertible?.();
 		});
 		view.root.foo = 2;
@@ -509,7 +511,7 @@ describe("Undo and redo", () => {
 		const view = getView(new TreeViewConfiguration({ schema: Schema }));
 		view.initialize({ foo: 1 });
 		let revertible: Revertible | undefined;
-		view.events.on("changed", (_, getRevertible) => {
+		view.events.on("changed", ({ getRevertible }) => {
 			revertible = getRevertible?.();
 		});
 		view.root.foo = 2;
