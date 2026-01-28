@@ -177,6 +177,7 @@ const getContainerListMessage = GetContainerList.createMessage();
 function RefreshButton(): React.ReactElement {
 	const messageRelay = useMessageRelay();
 	const usageLogger = useLogger();
+	const [statusMessage, setStatusMessage] = React.useState("");
 
 	const transparentButtonStyle = {
 		backgroundColor: "transparent",
@@ -188,17 +189,40 @@ function RefreshButton(): React.ReactElement {
 		// Query for list of Containers
 		messageRelay.postMessage(getContainerListMessage);
 		usageLogger?.sendTelemetryEvent({ eventName: "ContainerRefreshButtonClicked" });
+		setStatusMessage("Containers list refreshed");
+		// Clear the message after a delay so subsequent clicks trigger a new announcement
+		setTimeout(() => setStatusMessage(""), 1000);
 	}
 
 	return (
-		<Tooltip content="Refresh Containers list" relationship="label">
-			<Button
-				icon={<ArrowSync16Regular />}
-				style={transparentButtonStyle}
-				onClick={handleRefreshClick}
-				aria-label="Refresh Containers list"
-			></Button>
-		</Tooltip>
+		<>
+			<Tooltip content="Refresh Containers list" relationship="label">
+				<Button
+					icon={<ArrowSync16Regular />}
+					style={transparentButtonStyle}
+					onClick={handleRefreshClick}
+					aria-label="Refresh Containers list"
+				></Button>
+			</Tooltip>
+			<div
+				role="status"
+				aria-live="polite"
+				aria-atomic="true"
+				style={{
+					position: "absolute",
+					width: "1px",
+					height: "1px",
+					padding: "0",
+					margin: "-1px",
+					overflow: "hidden",
+					clip: "rect(0, 0, 0, 0)",
+					whiteSpace: "nowrap",
+					border: "0",
+				}}
+			>
+				{statusMessage}
+			</div>
+		</>
 	);
 }
 

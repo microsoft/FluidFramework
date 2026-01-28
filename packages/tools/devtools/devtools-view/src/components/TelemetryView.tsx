@@ -89,6 +89,7 @@ export function TelemetryView(): React.ReactElement {
 	const [maxEventsToDisplay, setMaxEventsToDisplay] =
 		React.useState<number>(DEFAULT_PAGE_SIZE);
 	const [selectedIndex, setSelectedIndex] = React.useState<number | undefined>();
+	const [refreshStatusMessage, setRefreshStatusMessage] = React.useState("");
 
 	React.useEffect(() => {
 		/**
@@ -170,6 +171,9 @@ export function TelemetryView(): React.ReactElement {
 		const remainingBuffer = bufferedEvents.slice(newEvents.length);
 		setBufferedEvents(remainingBuffer);
 		usageLogger?.sendTelemetryEvent({ eventName: "RefreshTelemetryButtonClicked" });
+		setRefreshStatusMessage("Telemetry events refreshed");
+		// Clear the message after a delay so subsequent clicks trigger a new announcement
+		setTimeout(() => setRefreshStatusMessage(""), 1000);
 	};
 
 	return (
@@ -195,6 +199,24 @@ export function TelemetryView(): React.ReactElement {
 					<Button aria-label="Refresh Telemetry" onClick={handleLoadMore} size="small">
 						Refresh
 					</Button>
+				</div>
+				<div
+					role="status"
+					aria-live="polite"
+					aria-atomic="true"
+					style={{
+						position: "absolute",
+						width: "1px",
+						height: "1px",
+						padding: "0",
+						margin: "-1px",
+						overflow: "hidden",
+						clip: "rect(0, 0, 0, 0)",
+						whiteSpace: "nowrap",
+						border: "0",
+					}}
+				>
+					{refreshStatusMessage}
 				</div>
 			</div>
 			{telemetryEvents === undefined ? (
