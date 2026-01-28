@@ -3,8 +3,9 @@
 
 # build-performance-observability pipeline
 # This pipeline collects build metrics using ADO REST APIs and generates an HTML dashboard
+# which is uploaded to an Azure Static Web App (ASWA).
 # When run from the "public" project: collects PR build metrics
-# When run from the "internal" project: collects post-merge build metrics
+# When run from the "internal" project: collects internal build metrics
 
 name: $(Build.BuildId)
 
@@ -83,11 +84,12 @@ extends:
     - stage: collect_metrics
       displayName: Collect Build Metrics
       jobs:
-      # First job: determine if we should run based on project/schedule match
-      - job: check_should_run
-        displayName: Check Run Conditions
+      - job: collect_and_publish
+        displayName: Collect and Publish Build Metrics
         steps:
         - checkout: none
+
+        # First step: determine if we should run based on project/schedule match
         - task: Bash@3
           name: detect
           displayName: Detect run mode
@@ -103,46 +105,37 @@ extends:
               # Determine mode: scheduled runs use schedule name, manual runs use project
               if [ "$BUILD_REASON" = "Schedule" ]; then
                 if [[ "$CRON_SCHEDULE_NAME" == *"PR build"* ]]; then
-                  MODE="pr"
+                  MODE="public"
                 else
-                  MODE="postmerge"
+                  MODE="internal"
                 fi
 
                 # Check if project matches schedule mode
-                if [ "$MODE" = "pr" ] && [ "$IS_PUBLIC" != "True" ]; then
-                  echo "Skipping: PR builds schedule running in internal project"
-                  echo "##vso[task.setvariable variable=shouldRun;isOutput=true]false"
+                if [ "$MODE" = "public" ] && [ "$IS_PUBLIC" != "True" ]; then
+                  echo "Skipping: Public builds schedule running in internal project"
+                  echo "##vso[task.setvariable variable=shouldRun]false"
                   exit 0
-                elif [ "$MODE" = "postmerge" ] && [ "$IS_PUBLIC" = "True" ]; then
+                elif [ "$MODE" = "internal" ] && [ "$IS_PUBLIC" = "True" ]; then
                   echo "Skipping: Internal builds schedule running in public project"
-                  echo "##vso[task.setvariable variable=shouldRun;isOutput=true]false"
+                  echo "##vso[task.setvariable variable=shouldRun]false"
                   exit 0
                 fi
               else
                 # Manual run - use project to determine mode
                 if [ "$IS_PUBLIC" = "True" ]; then
-                  MODE="pr"
+                  MODE="public"
                 else
-                  MODE="postmerge"
+                  MODE="internal"
                 fi
               fi
 
               echo "Mode: $MODE"
-              echo "##vso[task.setvariable variable=shouldRun;isOutput=true]true"
-              echo "##vso[task.setvariable variable=runMode;isOutput=true]$MODE"
-
-      # Main job: only runs if check_should_run says we should
-      - job: fetch_and_publish
-        displayName: Fetch and Publish Build Metrics
-        dependsOn: check_should_run
-        condition: eq(dependencies.check_should_run.outputs['detect.shouldRun'], 'true')
-        variables:
-          runMode: $[ dependencies.check_should_run.outputs['detect.runMode'] ]
-        steps:
-        - checkout: none
+              echo "##vso[task.setvariable variable=shouldRun]true"
+              echo "##vso[task.setvariable variable=runMode]$MODE"
 
         - task: Bash@3
           displayName: Fetch build data
+          condition: eq(variables['shouldRun'], 'true')
           env:
             ADO_API_TOKEN: $(System.AccessToken)
             PR_BUILD_DEF_ID: $(publicPRBuildDefinitionId)
@@ -157,7 +150,7 @@ extends:
               set -eu -o pipefail
 
               # Set build definition ID based on mode
-              if [ "$MODE" = "pr" ]; then
+              if [ "$MODE" = "public" ]; then
                 BUILD_DEF_ID="$PR_BUILD_DEF_ID"
               else
                 BUILD_DEF_ID="$INTERNAL_BUILD_DEF_ID"
@@ -213,7 +206,7 @@ extends:
                 return 1
               }
 
-              if [ "$MODE" = "pr" ]; then
+              if [ "$MODE" = "public" ]; then
                 # Fetch PR builds with reasonFilter and statusFilter
                 echo "Fetching last $BUILD_COUNT PR builds (reason=pullRequest, succeeded/partiallySucceeded, completed)..."
 
@@ -233,6 +226,7 @@ extends:
 
         - task: Bash@3
           displayName: Filter builds (PR mode only)
+          condition: eq(variables['shouldRun'], 'true')
           inputs:
             targetType: 'inline'
             script: |
@@ -240,7 +234,7 @@ extends:
 
               MODE=$(cat "$(Build.ArtifactStagingDirectory)/metrics/mode.txt")
 
-              if [ "$MODE" = "pr" ]; then
+              if [ "$MODE" = "public" ]; then
                 echo "=========================================="
                 echo "Filtering PR builds by target branch (main)"
                 echo "=========================================="
@@ -271,6 +265,7 @@ extends:
 
         - task: Bash@3
           displayName: Fetch timeline data for builds
+          condition: eq(variables['shouldRun'], 'true')
           env:
             ADO_API_TOKEN: $(System.AccessToken)
             ORG: $(organization)
@@ -362,6 +357,7 @@ extends:
 
         - task: Bash@3
           displayName: Generate metrics JSON
+          condition: eq(variables['shouldRun'], 'true')
           env:
             ORG: $(organization)
             PROJECT: $(targetProject)
@@ -386,8 +382,8 @@ extends:
               echo "Processing $TOTAL_BUILDS builds..."
 
               # Set output filename based on mode
-              if [ "$MODE" = "pr" ]; then
-                OUTPUT_FILE="$(Build.ArtifactStagingDirectory)/pr-data.json"
+              if [ "$MODE" = "public" ]; then
+                OUTPUT_FILE="$(Build.ArtifactStagingDirectory)/public-data.json"
               else
                 OUTPUT_FILE="$(Build.ArtifactStagingDirectory)/internal-data.json"
               fi
@@ -507,6 +503,7 @@ extends:
 
         - task: Bash@3
           displayName: Prepare deployment package
+          condition: eq(variables['shouldRun'], 'true')
           env:
             ASWA_HOSTNAME: $(ASWA_HOSTNAME)
           inputs:
@@ -530,12 +527,12 @@ extends:
               mkdir -p "$DEPLOY_DIR/data"
 
               # Copy our generated data file
-              if [ "$MODE" = "pr" ]; then
-                cp "$(Build.ArtifactStagingDirectory)/pr-data.json" "$DEPLOY_DIR/data/pr-data.json"
+              if [ "$MODE" = "public" ]; then
+                cp "$(Build.ArtifactStagingDirectory)/public-data.json" "$DEPLOY_DIR/data/public-data.json"
                 OTHER_FILE="internal-data.json"
               else
                 cp "$(Build.ArtifactStagingDirectory)/internal-data.json" "$DEPLOY_DIR/data/internal-data.json"
-                OTHER_FILE="pr-data.json"
+                OTHER_FILE="public-data.json"
               fi
 
               # Try to fetch the other mode's data from the live site (may not exist yet)
@@ -609,7 +606,7 @@ extends:
                       .tab { padding: 10px 24px; border: none; background: transparent; cursor: pointer; font-size: 14px; font-weight: 500; color: #605e5c; border-radius: 6px; transition: all 0.2s; }
                       .tab:hover { background: rgba(255,255,255,0.5); }
                       .tab.active { background: white; color: #323130; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-                      .tab.pr.active { color: #42a5f5; }
+                      .tab.public.active { color: #42a5f5; }
                       .tab.internal.active { color: #1565c0; }
                       .tab-content { display: none; }
                       .tab-content.active { display: block; }
@@ -658,14 +655,14 @@ extends:
                       <div class="header-row">
                           <h1>Fluid Framework Build Performance Dashboard</h1>
                           <div class="tabs">
-                              <button class="tab pr active" onclick="switchTab('pr')">PR Builds</button>
+                              <button class="tab public active" onclick="switchTab('public')">PR Builds</button>
                               <button class="tab internal" onclick="switchTab('internal')">Internal Builds</button>
                           </div>
                       </div>
-                      <div id="pr-content" class="tab-content active">
-                          <div class="loading" id="pr-loading"><div class="loading-spinner"></div><p>Loading PR build data...</p></div>
-                          <div id="pr-dashboard" style="display: none;"></div>
-                          <div class="no-data" id="pr-no-data" style="display: none;"><h3>No PR Build Data Available</h3><p>PR build metrics will appear here once the public pipeline runs.</p></div>
+                      <div id="public-content" class="tab-content active">
+                          <div class="loading" id="public-loading"><div class="loading-spinner"></div><p>Loading PR build data...</p></div>
+                          <div id="public-dashboard" style="display: none;"></div>
+                          <div class="no-data" id="public-no-data" style="display: none;"><h3>No PR Build Data Available</h3><p>PR build metrics will appear here once the public pipeline runs.</p></div>
                       </div>
                       <div id="internal-content" class="tab-content">
                           <div class="loading" id="internal-loading"><div class="loading-spinner"></div><p>Loading internal build data...</p></div>
@@ -674,15 +671,15 @@ extends:
                       </div>
                   </div>
                   <script>
-                      const dashboardData = { pr: null, internal: null };
-                      const chartInstances = { pr: {}, internal: {} };
+                      const dashboardData = { public: null, internal: null };
+                      const chartInstances = { public: {}, internal: {} };
                       const tableState = {
-                          pr: { recent: { sort: { column: 'date', direction: 'desc' }, page: 1 }, longest: { sort: { column: 'duration', direction: 'desc' }, page: 1 } },
+                          public: { recent: { sort: { column: 'date', direction: 'desc' }, page: 1 }, longest: { sort: { column: 'duration', direction: 'desc' }, page: 1 } },
                           internal: { recent: { sort: { column: 'date', direction: 'desc' }, page: 1 }, longest: { sort: { column: 'duration', direction: 'desc' }, page: 1 } }
                       };
                       const itemsPerPage = 5;
                       const colors = {
-                          pr: { primary: 'rgba(66, 165, 245, 1)', background: 'rgba(66, 165, 245, 0.1)', tasks: ['rgba(76, 175, 80, 0.8)', 'rgba(66, 165, 245, 0.8)', 'rgba(255, 167, 38, 0.8)', 'rgba(171, 71, 188, 0.8)', 'rgba(38, 166, 154, 0.8)', 'rgba(236, 64, 122, 0.8)'] },
+                          public: { primary: 'rgba(66, 165, 245, 1)', background: 'rgba(66, 165, 245, 0.1)', tasks: ['rgba(76, 175, 80, 0.8)', 'rgba(66, 165, 245, 0.8)', 'rgba(255, 167, 38, 0.8)', 'rgba(171, 71, 188, 0.8)', 'rgba(38, 166, 154, 0.8)', 'rgba(236, 64, 122, 0.8)'] },
                           internal: { primary: 'rgba(21, 101, 192, 1)', background: 'rgba(21, 101, 192, 0.1)', tasks: ['rgba(27, 94, 32, 0.8)', 'rgba(21, 101, 192, 0.8)', 'rgba(230, 81, 0, 0.8)', 'rgba(106, 27, 154, 0.8)', 'rgba(0, 105, 92, 0.8)', 'rgba(183, 28, 28, 0.8)'] }
                       };
                       function switchTab(mode) {
@@ -694,17 +691,17 @@ extends:
                       }
                       async function loadData() {
                           const [prResult, internalResult] = await Promise.allSettled([
-                              fetch('data/pr-data.json').then(r => r.ok ? r.json() : null),
+                              fetch('data/public-data.json').then(r => r.ok ? r.json() : null),
                               fetch('data/internal-data.json').then(r => r.ok ? r.json() : null)
                           ]);
                           if (prResult.status === 'fulfilled' && prResult.value) {
-                              dashboardData.pr = prResult.value;
-                              document.getElementById('pr-loading').style.display = 'none';
-                              document.getElementById('pr-dashboard').style.display = 'block';
-                              renderDashboard('pr', prResult.value);
+                              dashboardData.public = prResult.value;
+                              document.getElementById('public-loading').style.display = 'none';
+                              document.getElementById('public-dashboard').style.display = 'block';
+                              renderDashboard('public', prResult.value);
                           } else {
-                              document.getElementById('pr-loading').style.display = 'none';
-                              document.getElementById('pr-no-data').style.display = 'block';
+                              document.getElementById('public-loading').style.display = 'none';
+                              document.getElementById('public-no-data').style.display = 'block';
                           }
                           if (internalResult.status === 'fulfilled' && internalResult.value) {
                               dashboardData.internal = internalResult.value;
@@ -719,8 +716,8 @@ extends:
                       function renderDashboard(mode, data) {
                           const container = document.getElementById(mode + '-dashboard');
                           const colorScheme = colors[mode];
-                          const modeLabel = mode === 'pr' ? 'PR' : 'Internal';
-                          const trendDays = mode === 'pr' ? 3 : 7;
+                          const modeLabel = mode === 'public' ? 'PR' : 'Internal';
+                          const trendDays = mode === 'public' ? 3 : 7;
                           const trendDate = new Date(); trendDate.setDate(trendDate.getDate() - trendDays);
                           const trendDateStr = trendDate.toISOString().split('T')[0];
                           let durationChange = 0, durationChangeMinutes = 0;
@@ -747,7 +744,7 @@ extends:
                               '<h2>Individual Task Duration</h2><div class="chart-container stage-chart"><canvas id="' + mode + '-task-chart"></canvas></div>' +
                               '<h2>Recent Builds</h2><div class="table-container"><table class="builds-table" id="' + mode + '-recent-table"><thead><tr><th data-sort="id">Build ID <span class="sort-icon">↕</span></th><th data-sort="date" class="sort-desc">Date <span class="sort-icon">↓</span></th><th data-sort="duration">Duration <span class="sort-icon">↕</span></th><th data-sort="source">Source <span class="sort-icon">↕</span></th></tr></thead><tbody id="' + mode + '-recent-body"></tbody></table><div class="pagination"><div class="pagination-info">Showing <span id="' + mode + '-recent-start">1</span>-<span id="' + mode + '-recent-end">5</span> of <span id="' + mode + '-recent-total">' + (data.recentBuilds || []).length + '</span></div><div class="pagination-controls"><button class="pagination-btn" id="' + mode + '-recent-prev" onclick="prevPage(\'' + mode + '\', \'recent\')">← Previous</button><button class="pagination-btn" id="' + mode + '-recent-next" onclick="nextPage(\'' + mode + '\', \'recent\')">Next →</button></div></div></div>' +
                               '<h2>Longest Builds</h2><div class="table-container"><table class="builds-table" id="' + mode + '-longest-table"><thead><tr><th data-sort="id">Build ID <span class="sort-icon">↕</span></th><th data-sort="date">Date <span class="sort-icon">↕</span></th><th data-sort="duration" class="sort-desc">Duration <span class="sort-icon">↓</span></th><th data-sort="source">Source <span class="sort-icon">↕</span></th></tr></thead><tbody id="' + mode + '-longest-body"></tbody></table><div class="pagination"><div class="pagination-info">Showing <span id="' + mode + '-longest-start">1</span>-<span id="' + mode + '-longest-end">5</span> of <span id="' + mode + '-longest-total">' + (data.longestBuilds || []).length + '</span></div><div class="pagination-controls"><button class="pagination-btn" id="' + mode + '-longest-prev" onclick="prevPage(\'' + mode + '\', \'longest\')">← Previous</button><button class="pagination-btn" id="' + mode + '-longest-next" onclick="nextPage(\'' + mode + '\', \'longest\')">Next →</button></div></div></div>' +
-                              '<div class="info"><h3>About This Data</h3><p>This dashboard shows metrics for <strong>' + modeLabel + ' builds</strong>.</p><ul>' + (mode === 'pr' ? '<li>Target branch: <code>main</code></li>' : '<li>Branch: <code>main</code></li>') + '<li>Results: <code>succeeded</code> or <code>partiallySucceeded</code></li><li>Status: <code>completed</code></li><li>Data source: Azure DevOps Build API (v7.1)</li></ul></div>';
+                              '<div class="info"><h3>About This Data</h3><p>This dashboard shows metrics for <strong>' + modeLabel + ' builds</strong>.</p><ul>' + (mode === 'public' ? '<li>Target branch: <code>main</code></li>' : '<li>Branch: <code>main</code></li>') + '<li>Results: <code>succeeded</code> or <code>partiallySucceeded</code></li><li>Status: <code>completed</code></li><li>Data source: Azure DevOps Build API (v7.1)</li></ul></div>';
                           createDurationChart(mode, data, colorScheme);
                           createStageChart(mode, data, colorScheme);
                           createTaskChart(mode, data, colorScheme);
@@ -837,6 +834,7 @@ extends:
 
         - task: AzureStaticWebApp@0
           displayName: Deploy to Azure Static Web Apps
+          condition: eq(variables['shouldRun'], 'true')
           inputs:
             skip_app_build: true
             skip_api_build: true
@@ -847,6 +845,7 @@ extends:
 
         - task: Bash@3
           displayName: Clean up
+          condition: eq(variables['shouldRun'], 'true')
           inputs:
             targetType: 'inline'
             script: |
