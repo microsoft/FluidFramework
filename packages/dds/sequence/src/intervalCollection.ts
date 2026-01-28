@@ -1712,7 +1712,7 @@ export class IntervalCollection
 	}
 
 	/**
-	 * @returns an iterator over all intervals in this collection.
+	 * Creates an iterator over all intervals in this collection.
 	 */
 	public [Symbol.iterator](): IntervalCollectionIterator {
 		const iterator = new IntervalCollectionIterator(this);

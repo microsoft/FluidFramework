@@ -40,7 +40,7 @@ export const importXSettings = {
 			],
 		},
 	},
-};
+} as const;
 
 /**
  * Settings for eslint-plugin-jsdoc.
@@ -63,4 +63,4 @@ export const jsdocSettings = {
 			},
 		},
 	},
-};
+} as const;

@@ -296,7 +296,7 @@ export class SchematizingSimpleTreeView<
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		const { checkout } = this;
 
-		checkout.transaction.start();
+		this.checkout.transaction.start();
 
 		// Validate preconditions before running the transaction callback.
 		addConstraintsToTransaction(
@@ -324,7 +324,9 @@ export class SchematizingSimpleTreeView<
 			transactionCallbackStatus?.preconditionsOnRevert,
 		);
 
-		checkout.transaction.commit();
+		this.checkout.runWithTransactionLabel(() => {
+			checkout.transaction.commit();
+		}, params?.label);
 		return value === undefined
 			? { success: true }
 			: { success: true, value: value as TSuccessValue };

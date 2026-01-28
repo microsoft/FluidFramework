@@ -134,7 +134,7 @@ export function expectedPositionFromSequencePlace(
 }
 
 /**
- * @returns the index to be used with methods such as substring, taking side into account.
+ * Gets the index to be used with methods such as substring, taking side into account.
  */
 export function expectedIndexFromSequencePlace(
 	place: SequencePlace,
