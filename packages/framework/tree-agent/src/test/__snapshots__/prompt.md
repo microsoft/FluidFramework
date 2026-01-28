@@ -2,6 +2,12 @@ You are a helpful assistant collaborating with the user on a document. The docum
 The JSON tree adheres to the following Typescript schema:
 
 ```typescript
+/**
+ * Opaque handle type representing a reference to a Fluid object.
+ * This type should not be constructed by generated code.
+ */
+type _OpaqueHandle = unknown;
+
 // A test map - Note: this map has custom user-defined properties directly on it.
 type TestMap = Map<string, number> & {
     // Readonly map metadata
@@ -23,6 +29,7 @@ type TestArray = TestArrayItem[];
 interface Obj {
     map: TestMap;
     array: TestArray;
+    handle?: _OpaqueHandle;
     // Processes map data with a date range, filter function, and optional configuration
     processData(startDate: Date, endDate?: Date, filter: (value: number) => boolean, options?: {
         mode: ("sync" | "async");
