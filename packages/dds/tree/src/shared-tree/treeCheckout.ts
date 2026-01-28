@@ -583,20 +583,17 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private readonly onAfterChange = (event: SharedTreeBranchChange<SharedTreeChange>): void => {
 		this.editLock.lock();
-		try {
-			this.#events.emit("beforeBatch", event);
-			if (event.change !== undefined) {
-				const revision =
-					event.type === "rebase"
-						? this.#transaction.activeBranch.getHead().revision
-						: event.change.revision;
+		this.#events.emit("beforeBatch", event);
+		if (event.change !== undefined) {
+			const revision =
+				event.type === "rebase"
+					? this.#transaction.activeBranch.getHead().revision
+					: event.change.revision;
 
-				this.applyChange(event.change.change, revision);
-			}
-			this.#events.emit("afterBatch");
-		} finally {
-			this.editLock.unlock();
+			this.applyChange(event.change.change, revision);
 		}
+		this.#events.emit("afterBatch");
+		this.editLock.unlock();
 		if (event.type === "append") {
 			for (const commit of event.newCommits) {
 				this.validateCommit(commit);

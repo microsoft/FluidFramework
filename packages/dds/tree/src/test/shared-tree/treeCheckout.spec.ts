@@ -9,7 +9,10 @@ import {
 	type IMockLoggerExt,
 	createMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha } from "../../api.js";
 import {
@@ -789,22 +792,18 @@ describe("sharedTreeView", () => {
 				throw new Error("Event handler error");
 			});
 
-			let caughtError: unknown;
-			try {
-				Tree.runTransaction(view, () => {
-					view.root.insertAtStart("A"); // This triggers nodeChanged, which throws
-				});
-			} catch (error) {
-				caughtError = error;
-			}
-
 			// We should get the original error, not the double-lock error (0xaa7)
-			assert(caughtError instanceof Error, "Expected an error to be thrown");
-			assert.equal(
-				caughtError.message,
-				"Event handler error",
-				"Expected the original error message, not a double-lock error",
+			assert.throws(
+				() =>
+					Tree.runTransaction(view, () => {
+						view.root.insertAtStart("A"); // This triggers nodeChanged, which throws
+					}),
+				validateError("Event handler error"),
 			);
+
+			// The checkout should be broken after an exception in a transaction.
+			// Further use should throw a UsageError indicating the checkout is in an invalid state.
+			assert.throws(() => view.root.insertAtStart("B"), validateUsageError(/invalid state/));
 		});
 	});
 
