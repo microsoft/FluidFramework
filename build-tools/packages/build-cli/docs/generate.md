@@ -22,12 +22,15 @@ Tags asserts by replacing their message with a unique numerical value.
 
 ```
 USAGE
-  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--branch <value> [--changed |
-    [--all | --dir <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
+  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--check] [--concurrency <value>] [--branch <value>
+    [--changed | [--all | --dir <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
     --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... |
     --skipScope <value>...]
 
 FLAGS
+  --check                Check mode: validate assert usage without modifying files. Exits with code 0 if all asserts are
+                         valid and tagged, 1 if there are validation errors (invalid usage), or 2 if there are untagged
+                         asserts.
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
 
 PACKAGE SELECTION FLAGS
