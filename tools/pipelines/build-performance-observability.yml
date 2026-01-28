@@ -453,7 +453,7 @@ extends:
               <head>
                   <meta charset="UTF-8">
                   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <title>FluidFramework Build Dashboard</title>
+                  <title>FF Build Dashboard</title>
                   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
                   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
                   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -467,8 +467,8 @@ extends:
                       .tab { padding: 10px 24px; border: none; background: transparent; cursor: pointer; font-size: 14px; font-weight: 500; color: #605e5c; border-radius: 6px; transition: all 0.2s; }
                       .tab:hover { background: rgba(255,255,255,0.5); }
                       .tab.active { background: white; color: #323130; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-                      .tab.pr.active { color: #8b5cf6; }
-                      .tab.internal.active { color: #0078d4; }
+                      .tab.pr.active { color: #42a5f5; }
+                      .tab.internal.active { color: #1565c0; }
                       .tab-content { display: none; }
                       .tab-content.active { display: block; }
                       .loading { text-align: center; padding: 60px 20px; color: #605e5c; }
@@ -514,7 +514,7 @@ extends:
               <body>
                   <div class="container">
                       <div class="header-row">
-                          <h1>FluidFramework Build Dashboard</h1>
+                          <h1>Fluid Framework Build Performance Dashboard</h1>
                           <div class="tabs">
                               <button class="tab pr active" onclick="switchTab('pr')">PR Builds</button>
                               <button class="tab internal" onclick="switchTab('internal')">Internal Builds</button>
@@ -540,8 +540,8 @@ extends:
                       };
                       const itemsPerPage = 5;
                       const colors = {
-                          pr: { primary: 'rgba(0, 120, 212, 1)', background: 'rgba(0, 120, 212, 0.1)', tasks: ['rgba(16, 124, 16, 0.8)', 'rgba(0, 120, 212, 0.8)', 'rgba(138, 43, 226, 0.8)', 'rgba(255, 140, 0, 0.8)', 'rgba(209, 52, 56, 0.8)', 'rgba(0, 183, 195, 0.8)'] },
-                          internal: { primary: 'rgba(0, 120, 212, 1)', background: 'rgba(0, 120, 212, 0.1)', tasks: ['rgba(16, 124, 16, 0.8)', 'rgba(0, 120, 212, 0.8)', 'rgba(138, 43, 226, 0.8)', 'rgba(255, 140, 0, 0.8)', 'rgba(209, 52, 56, 0.8)', 'rgba(0, 183, 195, 0.8)'] }
+                          pr: { primary: 'rgba(66, 165, 245, 1)', background: 'rgba(66, 165, 245, 0.1)', tasks: ['rgba(76, 175, 80, 0.8)', 'rgba(66, 165, 245, 0.8)', 'rgba(255, 167, 38, 0.8)', 'rgba(171, 71, 188, 0.8)', 'rgba(38, 166, 154, 0.8)', 'rgba(236, 64, 122, 0.8)'] },
+                          internal: { primary: 'rgba(21, 101, 192, 1)', background: 'rgba(21, 101, 192, 0.1)', tasks: ['rgba(27, 94, 32, 0.8)', 'rgba(21, 101, 192, 0.8)', 'rgba(230, 81, 0, 0.8)', 'rgba(106, 27, 154, 0.8)', 'rgba(0, 105, 92, 0.8)', 'rgba(183, 28, 28, 0.8)'] }
                       };
                       function switchTab(mode) {
                           document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -594,7 +594,7 @@ extends:
                           }
                           const trendColor = durationChange < 0 ? '#107c10' : durationChange > 0 ? '#d13438' : '#605e5c';
                           const trendSign = durationChange > 0 ? '+' : durationChange < 0 ? '' : '';
-                          const timestamp = data.generatedAt ? new Date(data.generatedAt).toLocaleString() : 'Unknown';
+                          const timestamp = data.generatedAt ? new Date(data.generatedAt).toLocaleString(undefined, { timeZoneName: 'short' }) : 'Unknown';
                           container.innerHTML = '<div class="timestamp">Last updated: <strong>' + timestamp + '</strong></div>' +
                               '<div class="metrics"><div class="metric-card"><div class="metric-label">Total Builds</div><div class="metric-value">' + (data.summary?.totalBuilds || 0) + '</div></div>' +
                               '<div class="metric-card"><div class="metric-label">Avg Duration</div><div class="metric-value">' + (data.summary?.avgDuration || 0).toFixed(1) + 'm</div></div>' +
@@ -605,7 +605,7 @@ extends:
                               '<h2>Individual Task Duration</h2><div class="chart-container stage-chart"><canvas id="' + mode + '-task-chart"></canvas></div>' +
                               '<h2>Recent Builds</h2><div class="table-container"><table class="builds-table" id="' + mode + '-recent-table"><thead><tr><th data-sort="id">Build ID <span class="sort-icon">↕</span></th><th data-sort="date" class="sort-desc">Date <span class="sort-icon">↓</span></th><th data-sort="duration">Duration <span class="sort-icon">↕</span></th><th data-sort="source">Source <span class="sort-icon">↕</span></th></tr></thead><tbody id="' + mode + '-recent-body"></tbody></table><div class="pagination"><div class="pagination-info">Showing <span id="' + mode + '-recent-start">1</span>-<span id="' + mode + '-recent-end">5</span> of <span id="' + mode + '-recent-total">' + (data.recentBuilds || []).length + '</span></div><div class="pagination-controls"><button class="pagination-btn" id="' + mode + '-recent-prev" onclick="prevPage(\'' + mode + '\', \'recent\')">← Previous</button><button class="pagination-btn" id="' + mode + '-recent-next" onclick="nextPage(\'' + mode + '\', \'recent\')">Next →</button></div></div></div>' +
                               '<h2>Longest Builds</h2><div class="table-container"><table class="builds-table" id="' + mode + '-longest-table"><thead><tr><th data-sort="id">Build ID <span class="sort-icon">↕</span></th><th data-sort="date">Date <span class="sort-icon">↕</span></th><th data-sort="duration" class="sort-desc">Duration <span class="sort-icon">↓</span></th><th data-sort="source">Source <span class="sort-icon">↕</span></th></tr></thead><tbody id="' + mode + '-longest-body"></tbody></table><div class="pagination"><div class="pagination-info">Showing <span id="' + mode + '-longest-start">1</span>-<span id="' + mode + '-longest-end">5</span> of <span id="' + mode + '-longest-total">' + (data.longestBuilds || []).length + '</span></div><div class="pagination-controls"><button class="pagination-btn" id="' + mode + '-longest-prev" onclick="prevPage(\'' + mode + '\', \'longest\')">← Previous</button><button class="pagination-btn" id="' + mode + '-longest-next" onclick="nextPage(\'' + mode + '\', \'longest\')">Next →</button></div></div></div>' +
-                              '<div class="info"><h3>About This Data</h3><p>This dashboard shows metrics for <strong>' + modeLabel + ' builds</strong>.</p><ul><li>Results: <code>succeeded</code> or <code>partiallySucceeded</code></li><li>Status: <code>completed</code></li><li>Data source: Azure DevOps Build API (v7.1)</li></ul></div>';
+                              '<div class="info"><h3>About This Data</h3><p>This dashboard shows metrics for <strong>' + modeLabel + ' builds</strong>.</p><ul>' + (mode === 'pr' ? '<li>Target branch: <code>main</code></li>' : '<li>Branch: <code>main</code></li>') + '<li>Results: <code>succeeded</code> or <code>partiallySucceeded</code></li><li>Status: <code>completed</code></li><li>Data source: Azure DevOps Build API (v7.1)</li></ul></div>';
                           createDurationChart(mode, data, colorScheme);
                           createStageChart(mode, data, colorScheme);
                           createTaskChart(mode, data, colorScheme);
@@ -666,7 +666,7 @@ extends:
                           tbody.innerHTML = pageBuilds.map(build => {
                               const date = new Date(build.startTime);
                               const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                              const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                              const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
                               const sourceCell = build.sourceUrl ? '<a href="' + build.sourceUrl + '" target="_blank">' + build.source + '</a>' : build.source;
                               return '<tr><td><a href="' + build.url + '" target="_blank">' + build.id + '</a></td><td>' + dateStr + ' ' + timeStr + '</td><td>' + build.duration.toFixed(1) + 'm</td><td>' + sourceCell + '</td></tr>';
                           }).join('');
