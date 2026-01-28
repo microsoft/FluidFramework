@@ -399,6 +399,15 @@ extends:
               # Write staticwebapp.config.json inline
               cat > "$DEPLOY_DIR/staticwebapp.config.json" << 'CONFIGEOF'
               {
+                "auth": {
+                  "identityProviders": {
+                    "azureActiveDirectory": {
+                      "login": {
+                        "loginParameters": ["scope=openid"]
+                      }
+                    }
+                  }
+                },
                 "routes": [
                   {
                     "route": "/data/*",
