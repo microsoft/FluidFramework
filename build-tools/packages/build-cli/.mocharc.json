@@ -4,5 +4,5 @@
 	"reporter": "mocha-multi-reporters",
 	"reporter-options": "configFile=mocha-multi-reporter-config.json",
 	"timeout": 60000,
-	"spec": "\"lib/test/**/*.test.*js\""
+	"spec": "lib/test/**/*.test.*js"
 }
