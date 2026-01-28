@@ -260,12 +260,20 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 * This uses the {@link https://semver.org/#spec-item-11|ordering defined by semver}.
 	 * It is only compared against the version from previous snapshots (taken from this version when they were created by setting `mode` to "update") and the `minVersionForCollaboration`.
 	 *
-	 * It is recommended that this version be programmatically derived from the application version rather than hard coded inline.
+	 * Typically `minVersionForCollaboration` should be set to the oldest version currently in use, so it's helpful to use a version which can be easily measured to tell if clients are still using it.
+	 * It is also important that this version increases with every new versions of the application or library that is released (and thus might persist content which needs to be supported).
+	 *
+	 * Often the easiest way to ensure this is to simply use the version of the package or application itself, and set the `minVersionForCollaboration` based on telemetry about which versions are still in use.
+	 * To do this, it is recommended that this version be programmatically derived from the application version rather than hard coded inline.
 	 * For example, reading it from the `package.json` or some other source of truth can be done to ensure it is kept up to date and thus snapshots always have the correct version.
 	 * The version used should typically be the next production version (whose formats must be supported long term) that would be released from the branch of the code being worked on.
 	 * This usually means that that the correct version to use is the same version that would be used when releasing the application or library, but with any prerelease version tags removed.
 	 * If an automated way to keep this version up to date is not used, be very careful when reviewing changes to snapshot files to ensure the version is correct.
 	 * If incorrectly versioned snapshots were committed accidentally, rename the snapshot files to have the correct version, and restore the old files from, version control.
+	 *
+	 * It is possible to use a different versioning scheme, for example one specific to the schema in question.
+	 * This can be done robustly as long as care is taken to ensure the version increases such that every released version has a unique snapshot,
+	 * and `minVersionForCollaboration` is set appropriately using the same versioning scheme.
 	 */
 	readonly version: string;
 	/**
@@ -287,7 +295,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 *
 	 * This is the same approach used by {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
-	 * and this corresponds to the version of the application or library defining the schema.
+	 * and this corresponds to whatever versioning scheme is used with {@link SchemaCompatibilitySnapshotsOptions.version}.
 	 */
 	readonly minVersionForCollaboration: string;
 	/**
