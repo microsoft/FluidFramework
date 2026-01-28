@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime-definitions",
-	"version": "2.81.1",
+	"version": "2.81.2",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {

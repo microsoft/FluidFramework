@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/routerlicious-urlresolver",
-	"version": "2.81.1",
+	"version": "2.81.2",
 	"description": "Url Resolver for routerlicious urls.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
