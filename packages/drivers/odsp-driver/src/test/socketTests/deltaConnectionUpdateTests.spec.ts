@@ -82,7 +82,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 
 	function addJoinSessionStub(label: ISensitivityLabel): SinonStub {
 		joinSessionResponse.sensitivityLabelsInfo = {
-			timestamp: new Date().toISOString(),
+			timestamp: Date.now(),
 			labels: [label],
 		};
 		const joinSessionStub = stub(fetchJoinSession, mockify.key).callsFake(
@@ -157,7 +157,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		let eventRaised = false;
 
 		const exampleSensitivityLabelsInfo = `{
-			"timestamp":"2025-05-28T14:56:21-07:00",
+			"timestamp":1716929781000,
 			"labels":[
 				{"sensitivityLabelId":"sensitivityLabelId",
 				"tenantId":"tenantId",
@@ -243,7 +243,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		eventRaised = false;
 		const label2Object = testSensitivityLabelObjectWithId("label2");
 		content = { labels: [label2Object] };
-		const signalContent1 = { labels: [label2Object], timestamp: new Date().toISOString() };
+		const signalContent1 = { labels: [label2Object], timestamp: Date.now() };
 		const signalMessage1: ISignalMessage = {
 			clientId: null,
 			content: JSON.stringify({

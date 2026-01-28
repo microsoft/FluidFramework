@@ -162,7 +162,7 @@ export interface ISensitivityLabel {
 // @beta @legacy
 export interface ISensitivityLabelsInfo {
     labels: ISensitivityLabel[];
-    timestamp: string;
+    timestamp: number;
 }
 
 // @beta @legacy
