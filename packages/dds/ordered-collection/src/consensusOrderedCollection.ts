@@ -436,7 +436,7 @@ export class ConsensusOrderedCollection<T = any>
 	protected applyStashedOp(content: unknown): void {
 		const op = content as IConsensusOrderedCollectionOperation<T>;
 		// Submit the original op so we can match the ACK when it arrives during remote op processing.
-		// Use a no-op resolve function since we don't need to wait for the result.
+		// Use a no-op resolve function since we don't need to wait for the result. Note - this results in `acquire()` promises resolving to `false`.
 		const resolve: PendingResolve<T> = () => {};
 		this.submitLocalMessage(op, resolve);
 	}
