@@ -434,11 +434,10 @@ export class ConsensusRegisterCollection<T>
 
 	protected applyStashedOp(content: unknown): void {
 		const op = content as IIncomingRegisterOperation<T>;
-		if (op.type === "write") {
-			// Submit the original op (preserving its refSeq) so we can match the ACK
-			// when it arrives during remote op processing.
-			const pendingMessageId = this.nextPendingMessageId++;
-			this.submitLocalMessage(op, pendingMessageId);
-		}
+		assert(op.type === "write", 0xc94 /* Only write ops should be stashed */);
+		// Submit the original op (preserving its refSeq) so we can match the ACK
+		// when it arrives during remote op processing.
+		const pendingMessageId = this.nextPendingMessageId++;
+		this.submitLocalMessage(op, pendingMessageId);
 	}
 }
