@@ -49,7 +49,7 @@ export const permittedImports = [
 	// but not from cousin directories. Parent is allowed but only
 	// because there isn't a known way to deny it.
 	"*/index.js",
-];
+] as const;
 
 /**
  * Restricted import paths for all code.
@@ -67,7 +67,7 @@ export const restrictedImportPaths = [
 		importNames: ["default"],
 		message: 'Use `strict` instead. E.g. `import { strict as assert } from "node:assert";`',
 	},
-];
+] as const;
 
 /**
  * Restricted import patterns for production code.
@@ -80,17 +80,17 @@ export const restrictedImportPatternsForProductionCode = [
 		message:
 			"Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
 	},
-];
+] as const;
 
 /**
  * Test file patterns for identifying test files.
  */
-export const testFilePatterns = ["*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"];
+export const testFilePatterns = ["*.spec.ts", "*.test.ts", "**/test/**", "**/tests/**"] as const;
 
 /**
  * Global ignore patterns for ESLint.
  */
-export const globalIgnores: Linter.Config = {
+export const globalIgnores = {
 	ignores: [
 		// Build output directories
 		"**/dist/**",
@@ -113,4 +113,4 @@ export const globalIgnores: Linter.Config = {
 		// Mocha config files (must be CommonJS, not compatible with TS-focused linting)
 		"**/.mocharc*.cjs",
 	],
-};
+} as const satisfies Linter.Config;
