@@ -19,7 +19,6 @@ import {
 	summaryContentBlobKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
-
 import { configureBenchmarkHooks } from "../../utils.js";
 
 import {
@@ -102,7 +101,7 @@ function runSummary(
 // Scale test parameters based on performance testing mode
 const chunkCounts = isInPerformanceTestingMode ? [10, 100, 1000] : [10, 100];
 
-describe.only("Incremental Summary Builder benchmarks", () => {
+describe("Incremental Summary Builder benchmarks", () => {
 	configureBenchmarkHooks();
 
 	describe("Full vs Incremental summarization comparison", () => {
