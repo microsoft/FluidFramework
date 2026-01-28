@@ -5,10 +5,12 @@
 
 import type {
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { Ink } from "./ink.js";
@@ -19,6 +21,7 @@ import { pkgVersion } from "./packageVersion.js";
  * @sealed
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class InkFactory implements IChannelFactory {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
@@ -56,6 +59,7 @@ export class InkFactory implements IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	): Promise<ISharedObject> {
 		const ink = new Ink(runtime, id, attributes);
 		await ink.load(services);
@@ -66,6 +70,7 @@ export class InkFactory implements IChannelFactory {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject {
 		const ink = new Ink(runtime, id, InkFactory.Attributes);
 		ink.initializeLocal();

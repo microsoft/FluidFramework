@@ -12,6 +12,7 @@ import {
 import { fail } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	type IChannel,
@@ -22,6 +23,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObject,
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
@@ -57,6 +59,7 @@ export class TestFluidObjectInternal implements IFluidLoadable {
 		public readonly context: IFluidDataStoreContext,
 		private readonly initialSharedObjectsFactories: ReadonlyMap<
 			string,
+			// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 			IChannelFactory<ISharedObject>
 		>,
 	) {
@@ -99,6 +102,7 @@ export class TestFluidObjectInternal implements IFluidLoadable {
 			if (!existing) {
 				for (const [key, sharedObjectFactory] of this.initialSharedObjectsFactories) {
 					const channel = this.runtime.createChannel(key, sharedObjectFactory.type);
+					// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 					(channel as ISharedObject).bindToContext();
 				}
 			}

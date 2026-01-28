@@ -5,10 +5,12 @@
 
 import type {
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type { ITaskManager } from "./interfaces.js";
@@ -18,6 +20,7 @@ import { TaskManagerClass } from "./taskManager.js";
 /**
  * The factory that defines the task queue
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class TaskManagerFactory implements IChannelFactory<ITaskManager> {
 	public static readonly Type = "https://graph.microsoft.com/types/task-manager";
 
@@ -60,6 +63,7 @@ export class TaskManagerFactory implements IChannelFactory<ITaskManager> {
  * {@inheritDoc ITaskManager}
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const TaskManager = createSharedObjectKind(TaskManagerFactory);
 
 /**

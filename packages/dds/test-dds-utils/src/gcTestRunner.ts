@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 /**
@@ -16,6 +17,7 @@ export interface IGCTestProvider {
 	/**
 	 * The DDS whose GC data is to be verified.
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	readonly sharedObject: ISharedObject;
 
 	/**

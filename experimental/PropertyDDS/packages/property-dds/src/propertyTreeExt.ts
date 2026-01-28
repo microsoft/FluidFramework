@@ -4,6 +4,7 @@
  */
 
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
@@ -24,6 +25,7 @@ export class DeflatedPropertyTree extends SharedPropertyTree {
 		return runtime.createChannel(id, DeflatedPropertyTreeFactory.Type) as DeflatedPropertyTree;
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	public static getFactory(): IChannelFactory {
 		return new DeflatedPropertyTreeFactory();
 	}
@@ -37,6 +39,7 @@ export class LZ4PropertyTree extends SharedPropertyTree {
 		return runtime.createChannel(id, LZ4PropertyTreeFactory.Type) as LZ4PropertyTree;
 	}
 
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	public static getFactory(): IChannelFactory {
 		return new LZ4PropertyTreeFactory();
 	}

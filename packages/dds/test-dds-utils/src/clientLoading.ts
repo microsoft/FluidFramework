@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
@@ -17,6 +18,7 @@ import type {
 /**
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface Client<TChannelFactory extends IChannelFactory> {
 	channel: ReturnType<TChannelFactory["create"]>;
 	dataStoreRuntime: MockFluidDataStoreRuntime;
@@ -51,9 +53,11 @@ export type FuzzSerializedIdCompressor =
 /**
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export type ClientWithStashData<TChannelFactory extends IChannelFactory> =
 	Client<TChannelFactory> & Partial<Record<"stashData", ClientStashData>>;
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const hasStashData = <TChannelFactory extends IChannelFactory>(
 	client?: Client<TChannelFactory>,
 ): client is Required<ClientWithStashData<TChannelFactory>> =>
@@ -67,6 +71,7 @@ export const hasStashData = <TChannelFactory extends IChannelFactory>(
  * @internal
  */
 export function createLoadData(
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	client: Client<IChannelFactory>,
 	withSession: boolean,
 ): ClientLoadData {
@@ -92,6 +97,7 @@ export function createLoadData(
  * @internal
  */
 export function createLoadDataFromStashData(
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	client: Client<IChannelFactory>,
 	stashData: ClientStashData,
 ): ClientLoadData {

@@ -4,7 +4,9 @@
  */
 
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObject,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
 
@@ -63,6 +65,7 @@ export interface IColor {
 /**
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface IInkEvents extends ISharedObjectEvents {
 	(event: "stylus", listener: (operation: IStylusOperation) => void);
 	(event: "clear", listener: () => void);
@@ -72,6 +75,7 @@ export interface IInkEvents extends ISharedObjectEvents {
  * Shared data structure for representing ink.
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface IInk extends ISharedObject<IInkEvents> {
 	/**
 	 * Create a stroke with the given pen information.

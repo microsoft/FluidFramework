@@ -13,6 +13,7 @@ import {
 	mixinRequestHandler,
 } from "@fluidframework/datastore/internal";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
@@ -166,6 +167,7 @@ export interface DataObjectFactoryProps<
 	/**
 	 * The shared objects (DDSes) to be registered with the data object.
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	readonly sharedObjects?: readonly IChannelFactory[];
 
 	/**
@@ -220,6 +222,7 @@ export class PureDataObjectFactory<
 	public constructor(
 		type: string,
 		ctor: new (props: IDataObjectProps<I>) => TObj,
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		sharedObjects?: readonly IChannelFactory[],
 		optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>,
 		registryEntries?: NamedFluidDataStoreRegistryEntries,
@@ -229,6 +232,7 @@ export class PureDataObjectFactory<
 	public constructor(
 		propsOrType: DataObjectFactoryProps<TObj, I> | string,
 		maybeCtor?: new (doProps: IDataObjectProps<I>) => TObj,
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		maybeSharedObjects?: readonly IChannelFactory[],
 		maybeOptionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>,
 		maybeRegistryEntries?: NamedFluidDataStoreRegistryEntries,

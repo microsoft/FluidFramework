@@ -14,6 +14,7 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";

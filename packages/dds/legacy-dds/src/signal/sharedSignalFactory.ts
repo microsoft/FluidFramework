@@ -6,9 +6,11 @@
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "../packageVersion.js";
@@ -19,6 +21,7 @@ import { SharedSignalClass } from "./sharedSignal.js";
 /**
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class SharedSignalFactory implements IChannelFactory<ISharedSignal> {
 	public static readonly Type: string = "https://graph.microsoft.com/types/signal";
 
@@ -58,4 +61,5 @@ export class SharedSignalFactory implements IChannelFactory<ISharedSignal> {
  * Entrypoint for {@link ISharedSignal} creation.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const SharedSignal = createSharedObjectKind<ISharedSignal>(SharedSignalFactory);

@@ -6,7 +6,9 @@
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	type ISharedObject,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	type ISharedObjectKind,
 	makeSharedObjectKind,
 	type KernelArgs,
@@ -38,6 +40,7 @@ import { Breakable, copyProperty } from "./util/index.js";
  * @remarks
  * This is used when integration testing this package with the Fluid runtime as it exposes the APIs the runtime consumes to manipulate the tree.
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedTree extends ISharedObject, ITreePrivate {}
 
 /**
@@ -144,6 +147,7 @@ export function configuredSharedTreeBeta(
  */
 export function configuredSharedTreeBetaLegacy(
 	options: SharedTreeOptionsBeta,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 ): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
 	return configuredSharedTree(options);
 }
@@ -183,6 +187,7 @@ export function configuredSharedTreeAlpha(
  */
 export function configuredSharedTree(
 	options: SharedTreeOptions,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 ): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
 	const internalOptions = resolveOptions(options);
 	return configuredSharedTreeInternal(internalOptions);
@@ -190,6 +195,7 @@ export function configuredSharedTree(
 
 export function configuredSharedTreeInternal(
 	options: SharedTreeOptionsInternal,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 ): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
 	const sharedObjectOptions: SharedObjectOptions<ITree> = {
 		type: SharedTreeFactoryType,

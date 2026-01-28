@@ -20,6 +20,7 @@ import type {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidSerializer,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
@@ -108,6 +109,7 @@ const idForLocalUnattachedClient = undefined;
 // TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class ConsensusOrderedCollection<T = any>
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	extends SharedObject<IConsensusOrderedCollectionEvents<T>>
 	implements IConsensusOrderedCollection<T>
 {

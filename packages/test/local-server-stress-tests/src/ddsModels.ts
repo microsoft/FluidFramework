@@ -7,6 +7,7 @@
 import { done, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import { baseCounterModel } from "@fluidframework/counter/internal/test";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
 import { baseMapModel, baseDirModel } from "@fluidframework/map/internal/test";
@@ -35,24 +36,35 @@ function repeatFactoryAsync<T, TState = void>(
 }
 
 const generateSubModelMap = (
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	...models: Omit<DDSFuzzModel<IChannelFactory, any>, "workloadName">[]
 ): Map<
 	string,
 	{
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		factory: IChannelFactory;
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		generator: AsyncGenerator<any, DDSFuzzTestState<IChannelFactory>>;
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		reducer: DDSFuzzModel<IChannelFactory, any>["reducer"];
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		validateConsistency: DDSFuzzModel<IChannelFactory, any>["validateConsistency"];
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		minimizationTransforms?: DDSFuzzModel<IChannelFactory, any>["minimizationTransforms"];
 	}
 > => {
 	const modelMap = new Map<
 		string,
 		{
+			// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 			factory: IChannelFactory;
+			// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 			generator: AsyncGenerator<any, DDSFuzzTestState<IChannelFactory>>;
+			// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 			reducer: DDSFuzzModel<IChannelFactory, any>["reducer"];
+			// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 			validateConsistency: DDSFuzzModel<IChannelFactory, any>["validateConsistency"];
+			// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 			minimizationTransforms?: DDSFuzzModel<IChannelFactory, any>["minimizationTransforms"];
 		}
 	>();

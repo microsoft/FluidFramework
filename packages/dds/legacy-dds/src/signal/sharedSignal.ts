@@ -9,6 +9,7 @@ import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import { FileMode, MessageType, TreeEntry } from "@fluidframework/driver-definitions/internal";
@@ -21,6 +22,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type {
@@ -39,6 +41,7 @@ const snapshotFileName = "header";
  * @internal
  */
 export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	extends SharedObject<ISharedSignalEvents<T>>
 	implements ISharedSignal<T>
 {
@@ -58,6 +61,7 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	 *
 	 * @returns a factory that creates and load SharedSignal
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	public static getFactory(): IChannelFactory {
 		return new SharedSignalFactory();
 	}

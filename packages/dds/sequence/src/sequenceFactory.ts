@@ -5,16 +5,19 @@
 
 import {
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { Marker, TextSegment } from "@fluidframework/merge-tree/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
 import { SharedStringClass, SharedStringSegment, type ISharedString } from "./sharedString.js";
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class SharedStringFactory implements IChannelFactory<ISharedString> {
 	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
 	// load code (UPDATE: paparazzi is gone... anything to do here?)
@@ -76,6 +79,7 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
  * Entrypoint for {@link ISharedString} creation.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const SharedString = createSharedObjectKind<ISharedString>(SharedStringFactory);
 
 /**

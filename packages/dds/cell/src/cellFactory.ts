@@ -5,10 +5,12 @@
 
 import type {
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { SharedCell as SharedCellClass } from "./cell.js";
@@ -22,6 +24,7 @@ import { pkgVersion } from "./packageVersion.js";
  *
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class CellFactory implements IChannelFactory<ISharedCell> {
 	/**
 	 * {@inheritDoc CellFactory."type"}
@@ -82,4 +85,5 @@ export class CellFactory implements IChannelFactory<ISharedCell> {
  * it is up to the user of this to ensure the cell's content types align.
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const SharedCell = createSharedObjectKind<ISharedCell>(CellFactory);

@@ -6,7 +6,9 @@
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObject,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
 
@@ -14,6 +16,7 @@ import type {
  * Events emitted by {@link ISharedCell}.
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 	/**
 	 * Emitted when the value has changed.
@@ -80,7 +83,7 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
  * @internal
  */
 // TODO: use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, import-x/no-deprecated -- import-x/no-deprecated can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>> {
 	/**
 	 * Retrieves the cell value.

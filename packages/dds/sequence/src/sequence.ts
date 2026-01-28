@@ -59,8 +59,11 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import {
 	IFluidSerializer,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObjectEvents,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	SharedObject,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	type ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import {
@@ -118,6 +121,7 @@ const contentPath = "content";
  * - `target` - The sequence itself.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
 		event: "createIntervalCollection",
@@ -137,6 +141,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
  * @legacy @beta
  */
 export interface ISharedSegmentSequence<T extends ISegment>
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	extends ISharedObject<ISharedSegmentSequenceEvents>,
 		MergeTreeRevertibleDriver {
 	/**
@@ -374,6 +379,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
  * @internal
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	extends SharedObject<ISharedSegmentSequenceEvents>
 	implements ISharedSegmentSequence<T>
 {

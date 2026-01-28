@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTree, type ITree } from "@fluidframework/tree/internal";
@@ -99,6 +100,7 @@ export abstract class TreeDataObject<
 				treeChannelId,
 				SharedTree.getFactory().type,
 			) as unknown as ITree;
+			// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 			(sharedTree as unknown as ISharedObject).bindToContext();
 
 			this.#tree = sharedTree;

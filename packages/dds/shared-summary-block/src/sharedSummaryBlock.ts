@@ -16,6 +16,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	type IFluidSerializer,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
@@ -37,6 +38,7 @@ interface ISharedSummaryBlockDataSerializable {
  * Data should be set in this object in response to a remote op.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class SharedSummaryBlockClass extends SharedObject implements ISharedSummaryBlock {
 	/**
 	 * The data held by this object.
