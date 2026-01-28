@@ -269,7 +269,7 @@ extends:
                 CHART_COLOR="rgba(138, 43, 226, 1)"
                 CHART_BG_COLOR="rgba(138, 43, 226, 0.1)"
                 BUILD_TYPE="Pull Request"
-                REASON_FILTER="pullRequest"
+                REASON_FILTER_LINE="<li>Reason: <code>pullRequest</code></li>"
                 BRANCH_INFO="Target Branch: <code>main</code>"
               else
                 BUILD_DEF_ID="$INTERNAL_BUILD_DEF_ID"
@@ -281,7 +281,7 @@ extends:
                 CHART_COLOR="rgba(0, 120, 212, 1)"
                 CHART_BG_COLOR="rgba(0, 120, 212, 0.1)"
                 BUILD_TYPE="Post-Merge"
-                REASON_FILTER="individualCI, batchedCI"
+                REASON_FILTER_LINE=""
                 BRANCH_INFO="Branch: <code>refs/heads/main</code>"
               fi
 
@@ -511,6 +511,103 @@ extends:
                           margin-top: 32px;
                           margin-bottom: 16px;
                       }
+                      /* Sortable table styles */
+                      .table-container {
+                          background: white;
+                          padding: 16px;
+                          border-radius: 4px;
+                          box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132);
+                          margin-bottom: 24px;
+                          overflow-x: auto;
+                      }
+                      .builds-table {
+                          width: 100%;
+                          border-collapse: collapse;
+                          font-size: 14px;
+                      }
+                      .builds-table th,
+                      .builds-table td {
+                          padding: 12px 16px;
+                          text-align: left;
+                          border-bottom: 1px solid #edebe9;
+                      }
+                      .builds-table th {
+                          background: #faf9f8;
+                          font-weight: 600;
+                          color: #323130;
+                          cursor: pointer;
+                          user-select: none;
+                          white-space: nowrap;
+                      }
+                      .builds-table th:hover {
+                          background: #f3f2f1;
+                      }
+                      .builds-table th .sort-icon {
+                          margin-left: 4px;
+                          opacity: 0.5;
+                      }
+                      .builds-table th.sort-asc .sort-icon,
+                      .builds-table th.sort-desc .sort-icon {
+                          opacity: 1;
+                      }
+                      .builds-table tbody tr:hover {
+                          background: #faf9f8;
+                      }
+                      .builds-table a {
+                          color: #0078d4;
+                          text-decoration: none;
+                      }
+                      .builds-table a:hover {
+                          text-decoration: underline;
+                      }
+                      .result-badge {
+                          display: inline-block;
+                          padding: 2px 8px;
+                          border-radius: 12px;
+                          font-size: 12px;
+                          font-weight: 500;
+                      }
+                      .result-badge.succeeded {
+                          background: #dff6dd;
+                          color: #107c10;
+                      }
+                      .result-badge.partiallySucceeded {
+                          background: #fff4ce;
+                          color: #8a6d3b;
+                      }
+                      /* Pagination styles */
+                      .pagination {
+                          display: flex;
+                          justify-content: space-between;
+                          align-items: center;
+                          margin-top: 16px;
+                          padding-top: 16px;
+                          border-top: 1px solid #edebe9;
+                      }
+                      .pagination-info {
+                          color: #605e5c;
+                          font-size: 14px;
+                      }
+                      .pagination-controls {
+                          display: flex;
+                          gap: 8px;
+                      }
+                      .pagination-btn {
+                          padding: 8px 16px;
+                          border: 1px solid #8a8886;
+                          background: white;
+                          border-radius: 4px;
+                          cursor: pointer;
+                          font-size: 14px;
+                          color: #323130;
+                      }
+                      .pagination-btn:hover:not(:disabled) {
+                          background: #f3f2f1;
+                      }
+                      .pagination-btn:disabled {
+                          opacity: 0.5;
+                          cursor: not-allowed;
+                      }
                   </style>
               </head>
               <body>
@@ -563,6 +660,56 @@ extends:
                           <canvas id="buildStageDetailChart"></canvas>
                       </div>
 
+                      <h2>🕐 Recent Builds (20)</h2>
+                      <div class="table-container">
+                          <table class="builds-table" id="recentBuildsTable">
+                              <thead>
+                                  <tr>
+                                      <th data-sort="id" data-table="recent">Build ID <span class="sort-icon">↕</span></th>
+                                      <th data-sort="date" data-table="recent" class="sort-desc">Date <span class="sort-icon">↓</span></th>
+                                      <th data-sort="duration" data-table="recent">Duration <span class="sort-icon">↕</span></th>
+                                      <th data-sort="source" data-table="recent">Source <span class="sort-icon">↕</span></th>
+                                  </tr>
+                              </thead>
+                              <tbody id="recentBuildsBody">
+                              </tbody>
+                          </table>
+                          <div class="pagination">
+                              <div class="pagination-info">
+                                  Showing <span id="recentPageStart">1</span>-<span id="recentPageEnd">5</span> of <span id="recentTotalItems">20</span>
+                              </div>
+                              <div class="pagination-controls">
+                                  <button class="pagination-btn" id="recentPrevBtn" onclick="prevPage('recent')">← Previous</button>
+                                  <button class="pagination-btn" id="recentNextBtn" onclick="nextPage('recent')">Next →</button>
+                              </div>
+                          </div>
+                      </div>
+
+                      <h2>🐢 Longest Builds (Top 20)</h2>
+                      <div class="table-container">
+                          <table class="builds-table" id="longestBuildsTable">
+                              <thead>
+                                  <tr>
+                                      <th data-sort="id" data-table="longest">Build ID <span class="sort-icon">↕</span></th>
+                                      <th data-sort="date" data-table="longest">Date <span class="sort-icon">↕</span></th>
+                                      <th data-sort="duration" data-table="longest" class="sort-desc">Duration <span class="sort-icon">↓</span></th>
+                                      <th data-sort="source" data-table="longest">Source <span class="sort-icon">↕</span></th>
+                                  </tr>
+                              </thead>
+                              <tbody id="longestBuildsBody">
+                              </tbody>
+                          </table>
+                          <div class="pagination">
+                              <div class="pagination-info">
+                                  Showing <span id="longestPageStart">1</span>-<span id="longestPageEnd">5</span> of <span id="longestTotalItems">20</span>
+                              </div>
+                              <div class="pagination-controls">
+                                  <button class="pagination-btn" id="longestPrevBtn" onclick="prevPage('longest')">← Previous</button>
+                                  <button class="pagination-btn" id="longestNextBtn" onclick="nextPage('longest')">Next →</button>
+                              </div>
+                          </div>
+                      </div>
+
                       <div class="info">
                           <h3>📊 About This View</h3>
                           <p>
@@ -570,7 +717,7 @@ extends:
                           </p>
                           <h4>Filters Applied:</h4>
                           <ul>
-                              <li>Reason: <code>REASON_FILTER_PLACEHOLDER</code></li>
+                              REASON_FILTER_LINE_PLACEHOLDER
                               <li>BRANCH_INFO_PLACEHOLDER</li>
                               <li>Results: <code>succeeded</code> or <code>partiallySucceeded</code></li>
                               <li>Status: <code>completed</code></li>
@@ -640,6 +787,7 @@ extends:
                           createDurationTrendChart();
                           createStageBreakdownChart();
                           createBuildStageDetailChart();
+                          createRecentBuildsTable();
                       });
 
                       function createDurationTrendChart() {
@@ -887,6 +1035,134 @@ extends:
                               }
                           });
                       }
+
+                      // Tables state management
+                      const itemsPerPage = 5;
+                      const tableState = {
+                          recent: { builds: [], sort: { column: 'date', direction: 'desc' }, page: 1 },
+                          longest: { builds: [], sort: { column: 'duration', direction: 'desc' }, page: 1 }
+                      };
+
+                      function createRecentBuildsTable() {
+                          // Initialize recent builds table
+                          tableState.recent.builds = chartData.recentBuilds || [];
+                          if (tableState.recent.builds.length === 0) {
+                              document.getElementById('recentBuildsTable').parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No recent builds available</p>';
+                          } else {
+                              document.getElementById('recentTotalItems').textContent = tableState.recent.builds.length;
+                              renderTable('recent');
+                              setupTableSorting('recent');
+                          }
+
+                          // Initialize longest builds table
+                          tableState.longest.builds = chartData.longestBuilds || [];
+                          if (tableState.longest.builds.length === 0) {
+                              document.getElementById('longestBuildsTable').parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No build data available</p>';
+                          } else {
+                              document.getElementById('longestTotalItems').textContent = tableState.longest.builds.length;
+                              renderTable('longest');
+                              setupTableSorting('longest');
+                          }
+                      }
+
+                      function renderTable(tableId) {
+                          const state = tableState[tableId];
+                          const tbody = document.getElementById(tableId + 'BuildsBody');
+                          const sortedBuilds = sortBuilds(state.builds, state.sort.column, state.sort.direction);
+
+                          // Paginate
+                          const startIdx = (state.page - 1) * itemsPerPage;
+                          const endIdx = Math.min(startIdx + itemsPerPage, sortedBuilds.length);
+                          const pageBuilds = sortedBuilds.slice(startIdx, endIdx);
+
+                          tbody.innerHTML = pageBuilds.map(build => {
+                              const date = new Date(build.startTime);
+                              const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                              const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+                              const sourceCell = build.sourceUrl ? '<a href="' + build.sourceUrl + '" target="_blank">' + build.source + '</a>' : build.source;
+
+                              return '<tr>' +
+                                  '<td><a href="' + build.url + '" target="_blank">#' + build.id + '</a></td>' +
+                                  '<td>' + dateStr + ' ' + timeStr + '</td>' +
+                                  '<td>' + build.duration.toFixed(1) + 'm</td>' +
+                                  '<td>' + sourceCell + '</td>' +
+                              '</tr>';
+                          }).join('');
+
+                          // Update pagination info
+                          document.getElementById(tableId + 'PageStart').textContent = sortedBuilds.length > 0 ? startIdx + 1 : 0;
+                          document.getElementById(tableId + 'PageEnd').textContent = endIdx;
+                          updatePaginationControls(tableId);
+                      }
+
+                      function sortBuilds(builds, column, direction) {
+                          return [...builds].sort((a, b) => {
+                              let aVal, bVal;
+                              switch (column) {
+                                  case 'id': aVal = a.id; bVal = b.id; break;
+                                  case 'date': aVal = new Date(a.startTime); bVal = new Date(b.startTime); break;
+                                  case 'duration': aVal = a.duration; bVal = b.duration; break;
+                                  case 'source': aVal = a.source; bVal = b.source; break;
+                                  default: return 0;
+                              }
+                              if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+                              if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+                              return 0;
+                          });
+                      }
+
+                      function setupTableSorting(tableId) {
+                          const headers = document.querySelectorAll('#' + tableId + 'BuildsTable th[data-sort]');
+                          headers.forEach(header => {
+                              header.addEventListener('click', () => {
+                                  const column = header.dataset.sort;
+                                  const state = tableState[tableId];
+
+                                  // Toggle direction if same column, otherwise default to desc
+                                  if (state.sort.column === column) {
+                                      state.sort.direction = state.sort.direction === 'asc' ? 'desc' : 'asc';
+                                  } else {
+                                      state.sort.column = column;
+                                      state.sort.direction = 'desc';
+                                  }
+
+                                  // Update header styles
+                                  headers.forEach(h => {
+                                      h.classList.remove('sort-asc', 'sort-desc');
+                                      h.querySelector('.sort-icon').textContent = '↕';
+                                  });
+                                  header.classList.add('sort-' + state.sort.direction);
+                                  header.querySelector('.sort-icon').textContent = state.sort.direction === 'asc' ? '↑' : '↓';
+
+                                  state.page = 1; // Reset to first page on sort
+                                  renderTable(tableId);
+                              });
+                          });
+                      }
+
+                      function updatePaginationControls(tableId) {
+                          const state = tableState[tableId];
+                          const totalPages = Math.ceil(state.builds.length / itemsPerPage);
+                          document.getElementById(tableId + 'PrevBtn').disabled = state.page <= 1;
+                          document.getElementById(tableId + 'NextBtn').disabled = state.page >= totalPages;
+                      }
+
+                      function prevPage(tableId) {
+                          const state = tableState[tableId];
+                          if (state.page > 1) {
+                              state.page--;
+                              renderTable(tableId);
+                          }
+                      }
+
+                      function nextPage(tableId) {
+                          const state = tableState[tableId];
+                          const totalPages = Math.ceil(state.builds.length / itemsPerPage);
+                          if (state.page < totalPages) {
+                              state.page++;
+                              renderTable(tableId);
+                          }
+                      }
                   </script>
               </body>
               </html>
@@ -905,7 +1181,7 @@ extends:
               sed -i "s/BUILD_TYPE_PLACEHOLDER/$BUILD_TYPE/g" "$HTML_FILE"
               sed -i "s/TREND_LABEL_PLACEHOLDER/$TREND_LABEL/g" "$HTML_FILE"
               sed -i "s/TREND_DAYS_PLACEHOLDER/$TREND_DAYS/g" "$HTML_FILE"
-              sed -i "s/REASON_FILTER_PLACEHOLDER/$REASON_FILTER/g" "$HTML_FILE"
+              sed -i "s|REASON_FILTER_LINE_PLACEHOLDER|$REASON_FILTER_LINE|g" "$HTML_FILE"
               sed -i "s|BRANCH_INFO_PLACEHOLDER|$BRANCH_INFO|g" "$HTML_FILE"
 
               # Replace duration change placeholders with color coding
@@ -928,12 +1204,34 @@ extends:
               echo "Generating chart data..."
 
               # Create chart data JSON with pre-aggregated metrics
-              echo "$FILTERED_BUILDS" | jq --arg chartColor "$CHART_COLOR" --arg chartBgColor "$CHART_BG_COLOR" '
+              echo "$FILTERED_BUILDS" | jq --arg chartColor "$CHART_COLOR" --arg chartBgColor "$CHART_BG_COLOR" --arg org "$ORG" --arg project "$PROJECT" '
                 # Build duration trend (avg per day)
                 (group_by(.startTime | split("T")[0]) | map({
                   date: .[0].startTime | split("T")[0],
                   avgDuration: (map((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) - (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) | add / length / 60)
                 })) as $durationTrend |
+
+                # Recent 20 builds for table (sorted by date descending)
+                ([.[] | select(.startTime and .finishTime) | {
+                  id: .id,
+                  startTime: .startTime,
+                  duration: (((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) - (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) / 60),
+                  result: .result,
+                  source: (if (.sourceBranch // "") | startswith("refs/pull/") then "PR #" + ((.sourceBranch // "") | split("/")[2] // "N/A") elif .sourceVersion then .sourceVersion[0:7] else (.sourceBranch // "N/A" | tostring | .[0:30]) end),
+                  sourceUrl: (if (.sourceBranch // "") | startswith("refs/pull/") then "https://github.com/microsoft/FluidFramework/pull/" + ((.sourceBranch // "") | split("/")[2] // "") else "https://github.com/microsoft/FluidFramework/commit/" + (.sourceVersion // "") end),
+                  url: "https://dev.azure.com/\($org)/\($project)/_build/results?buildId=\(.id)"
+                }] | sort_by(.startTime) | reverse | .[0:20]) as $recentBuilds |
+
+                # Longest 20 builds for table (sorted by duration descending)
+                ([.[] | select(.startTime and .finishTime) | {
+                  id: .id,
+                  startTime: .startTime,
+                  duration: (((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) - (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) / 60),
+                  result: .result,
+                  source: (if (.sourceBranch // "") | startswith("refs/pull/") then "PR #" + ((.sourceBranch // "") | split("/")[2] // "N/A") elif .sourceVersion then .sourceVersion[0:7] else (.sourceBranch // "N/A" | tostring | .[0:30]) end),
+                  sourceUrl: (if (.sourceBranch // "") | startswith("refs/pull/") then "https://github.com/microsoft/FluidFramework/pull/" + ((.sourceBranch // "") | split("/")[2] // "") else "https://github.com/microsoft/FluidFramework/commit/" + (.sourceVersion // "") end),
+                  url: "https://dev.azure.com/\($org)/\($project)/_build/results?buildId=\(.id)"
+                }] | sort_by(.duration) | reverse | .[0:20]) as $longestBuilds |
 
                 {
                   summary: {
@@ -943,6 +1241,8 @@ extends:
                     avgDuration: (map((.finishTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) - (.startTime | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601)) | add / length / 60)
                   },
                   durationTrend: $durationTrend,
+                  recentBuilds: $recentBuilds,
+                  longestBuilds: $longestBuilds,
                   buildIds: (map(.id)),
                   chartColor: $chartColor,
                   chartBgColor: $chartBgColor
