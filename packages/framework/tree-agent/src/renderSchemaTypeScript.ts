@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal";
 import type {
@@ -26,7 +27,14 @@ import {
 import { instanceOfs, renderZodTypeScript } from "./renderZodTypeScript.js";
 import type { TypeFactoryOptional, TypeFactoryType } from "./treeAgentTypes.js";
 import { isTypeFactoryType } from "./treeAgentTypes.js";
-import { getFriendlyName, isNamedSchema, llmDefault, unqualifySchema } from "./utils.js";
+import {
+	getFriendlyName,
+	isNamedSchema,
+	llmDefault,
+	mapToFriendlyIdentifiers,
+	unqualifySchema,
+	filterIterable,
+} from "./utils.js";
 
 interface BoundMembers {
 	methods: Record<string, FunctionWrapper>;
@@ -73,10 +81,17 @@ export function renderSchemaTypeScript(
 	const friendlyNames = new Map<string, string>();
 	let hasHelperMethods = false;
 
-	for (const identifier of definitions.keys()) {
-		if (isNamedSchema(identifier)) {
-			friendlyNames.set(identifier, unqualifySchema(identifier));
-		}
+	// Resolve short name collisions for all named schemas
+	const namedIdentifiers = [...filterIterable(definitions.keys(), isNamedSchema)];
+	const collisionResolvedNames = mapToFriendlyIdentifiers(namedIdentifiers);
+
+	for (const [i, identifier] of namedIdentifiers.entries()) {
+		const resolvedName = collisionResolvedNames[i];
+		assert(
+			resolvedName !== undefined,
+			"Collision resolved name should exist for each identifier.",
+		);
+		friendlyNames.set(identifier, resolvedName);
 	}
 
 	const declarations: string[] = [];
