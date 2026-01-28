@@ -25,12 +25,6 @@ const config: Linter.Config[] = [
 	},
 	{
 		files: ["src/test/**/*"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./src/test/tsconfig.json"],
-			},
-		},
 		rules: {
 			"import-x/no-internal-modules": [
 				"error",
