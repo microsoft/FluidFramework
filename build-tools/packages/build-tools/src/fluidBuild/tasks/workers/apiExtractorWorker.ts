@@ -18,7 +18,6 @@ export async function apiExtractorWorker(message: WorkerMessage): Promise<Worker
 		paths: [message.cwd],
 	});
 
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const apiExtractorModule = require(apiExtractorPath) as typeof ApiExtractorModule;
 
 	const config = getApiExtractorConfigFilePath(message.command);

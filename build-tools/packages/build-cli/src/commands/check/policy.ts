@@ -207,7 +207,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	): Promise<void> {
 		try {
 			for (const pathToCheck of pathsToCheck) {
-				// eslint-disable-next-line no-await-in-loop
 				await this.checkOrExcludeFile(pathToCheck, commandContext);
 			}
 		} finally {
@@ -263,7 +262,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				if (this.flags.fix && resolver) {
 					output += `${newline}attempting to resolve: ${relPath}`;
 					// Resolvers are expected to be run serially to avoid any conflicts.
-					// eslint-disable-next-line no-await-in-loop
+
 					const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
 						// Pass the resolver the absolute file path and the absolute path to the git root
 						resolver(file, gitRoot),
@@ -367,9 +366,8 @@ async function runFinalHandlers(
 	for (const h of handlers) {
 		const { final } = h;
 		if (final) {
-			// eslint-disable-next-line no-await-in-loop
 			const result = await runWithPerf(h.name, "final", async () => final(gitRoot, fix));
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 			if (result?.error) {
 				throw new Error(result.error);
 			}

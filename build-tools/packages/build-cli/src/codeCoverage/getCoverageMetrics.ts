@@ -65,7 +65,7 @@ export const getCoverageMetricsFromArtifact = async (
 	logger?: CommandLogger,
 ): Promise<Map<string, CoverageMetric>> => {
 	const coverageReportsFiles: string[] = [];
-	// eslint-disable-next-line unicorn/no-array-for-each -- required as JSZip does not implement [Symbol.iterator]() which is required by for...of
+
 	artifactZip.forEach((filePath) => {
 		if (filePath.endsWith("cobertura-coverage-patched.xml"))
 			coverageReportsFiles.push(filePath);
@@ -85,7 +85,6 @@ export const getCoverageMetricsFromArtifact = async (
 				);
 			}
 
-			// eslint-disable-next-line no-await-in-loop -- Since we only need 1 report file, it is easier to run it serially rather than extracting all jsZipObjects and then awaiting promises in parallel
 			const coverageReportXML = await jsZipObject?.async("nodebuffer");
 			if (coverageReportXML !== undefined) {
 				xmlParser.parseString(
