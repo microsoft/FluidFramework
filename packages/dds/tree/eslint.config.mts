@@ -28,7 +28,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"jsdoc/require-description": "warn",
 			"unicorn/no-null": "off",
-			"unicorn/prefer-export-from": "off",
 		},
 	},
 	{

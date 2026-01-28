@@ -321,15 +321,15 @@ export interface RangeQueryEntry<K, V> extends RangeQueryResult<K, V> {
 	readonly value: V;
 }
 
-export function newIntegerRangeMap<V>(): RangeMap<number, V> {
+export function newIntegerRangeMap<V, K extends number = number>(): RangeMap<K, V> {
 	return new RangeMap(offsetInteger, subtractIntegers);
 }
 
-function offsetInteger(key: number, offset: number): number {
-	return key + offset;
+function offsetInteger<K extends number>(key: K, offset: number): K {
+	return (key + offset) as K;
 }
 
-function subtractIntegers(a: number, b: number): number {
+function subtractIntegers<K extends number>(a: K, b: K): number {
 	return a - b;
 }
 

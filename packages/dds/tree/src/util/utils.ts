@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { Type } from "@sinclair/typebox";
-import structuredClone from "@ungap/structured-clone";
 
 /**
  * Subset of Map interface.
@@ -45,7 +44,7 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 	return readonly as Mutable<T>;
 }
 
-export const clone = structuredClone;
+export { default as clone } from "@ungap/structured-clone";
 
 /**
  * Checks whether or not the given object is a `readonly` array.
