@@ -242,6 +242,12 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 * a directory appropriate for test data should be used.
 	 * Generally this means that this directory should be versioned like code,
 	 * and not erased when regenerated snapshots.
+	 *
+	 * This directory will be created if it does not already exist.
+	 * All ".json" files in this directory will be treated as schema snapshots.
+	 * It is recommended to use a dedicated directory for each {@link checkSchemaCompatibilitySnapshots} powered test.
+	 *
+	 * This can use any path syntax supported by the provided {@link SchemaCompatibilitySnapshotsOptions.fileSystem}.
 	 */
 	readonly snapshotDirectory: string;
 	/**
@@ -253,6 +259,13 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 * @remarks
 	 * This uses the {@link https://semver.org/#spec-item-11|ordering defined by semver}.
 	 * It is only compared against the version from previous snapshots (taken from this version when they were created by setting `mode` to "update") and the `minVersionForCollaboration`.
+	 *
+	 * It is recommended that this version be programmatically derived from the application version rather than hard coded inline.
+	 * For example, reading it from the `package.json` or some other source of truth can be done to ensure it is kept up to date and thus snapshots always have the correct version.
+	 * The version used should typically be the next production version (whose formats must be supported long term) that would be released from the branch of the code being worked on.
+	 * This usually means that that the correct version to use is the same version that would be used when releasing the application or library, but with any prerelease version tags removed.
+	 * If an automated way to keep this version up to date is not used, be very careful when reviewing changes to snapshot files to ensure the version is correct.
+	 * If incorrectly versioned snapshots were committed accidentally, rename the snapshot files to have the correct version, and restore the old files from, version control.
 	 */
 	readonly version: string;
 	/**
@@ -368,10 +381,13 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/beta";
  *
  * // The TreeViewConfiguration the application uses, which contains the application's schema.
- * import { treeViewConfiguration } from "../schema.js";
+ * import { treeViewConfiguration } from "./schema.js";
+ * // The next version of the application which will be released.
+ * import { packageVersion } from "./version.js";
  *
  * // Provide some way to run the check in "update" mode when updating snapshots is intended.
  * const regenerateSnapshots = process.argv.includes("--snapshot");
+ *
  * // Setup the actual test. In this case using Mocha syntax.
  * describe("schema", () => {
  * 	it("schema compatibility", () => {
@@ -379,12 +395,12 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * 		// This will depend on how your application organizes its test data.
  * 		const snapshotDirectory = path.join(
  * 			import.meta.dirname,
- * 			"../../src/test/schema-snapshots",
+ * 			"../../../src/test/schema-snapshots",
  * 		);
  * 		checkSchemaCompatibilitySnapshots({
  * 			snapshotDirectory,
  * 			fileSystem: { ...fs, ...path },
- * 			version: "2.0.0",
+ * 			version: packageVersion,
  * 			schema: treeViewConfiguration,
  * 			minVersionForCollaboration: "2.0.0",
  * 			mode: regenerateSnapshots ? "update" : "test",
@@ -398,6 +414,8 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * This uses the format defined in simpleSchemaCodec.ts.
  * This does include versioning information in the snapshot format,
  * but it would be nice to better unify how we do that versioning and format validation with our codecs.
+ *
+ * See src/test/simple-tree/api/snapshotCompatibilityCheckerExample/snapshotCompatibilityChecker.example.mts for the large example included above.
  * @beta
  */
 export function checkSchemaCompatibilitySnapshots(
