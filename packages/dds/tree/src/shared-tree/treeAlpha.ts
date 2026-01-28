@@ -26,7 +26,7 @@ import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
 	isTreeValue,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	mapTreeFromCursor,
 	TreeCompressionStrategy,
 	type FieldBatch,
@@ -852,7 +852,7 @@ export const TreeAlpha: TreeAlpha = {
 		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
-		const codec = makeFieldBatchCodec({
+		const codec = fieldBatchCodecBuilder.build({
 			jsonValidator: FormatValidatorNoOp,
 			minVersionForCollab: options.minVersionForCollab,
 		});
@@ -874,7 +874,7 @@ export const TreeAlpha: TreeAlpha = {
 			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 		};
 		const result = codec.encode(batch, context);
-		return result;
+		return result as JsonCompatible<IFluidHandle>;
 	},
 
 	importCompressed<const TSchema extends ImplicitFieldSchema>(

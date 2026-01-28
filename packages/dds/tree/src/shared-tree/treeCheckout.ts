@@ -67,9 +67,9 @@ import {
 	buildForest,
 	createNodeIdentifierManager,
 	defaultSchemaPolicy,
+	fieldBatchCodecBuilder,
 	intoDelta,
 	jsonableTreeFromCursor,
-	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
 import {
 	SquashingTransactionStack,
@@ -322,7 +322,7 @@ export function createTreeCheckout(
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
 			revisionTagCodec,
-			args?.fieldBatchCodec ?? makeFieldBatchCodec(codecOptions),
+			args?.fieldBatchCodec ?? fieldBatchCodecBuilder.build(codecOptions),
 			codecOptions,
 			args?.chunkCompressionStrategy,
 			idCompressor,

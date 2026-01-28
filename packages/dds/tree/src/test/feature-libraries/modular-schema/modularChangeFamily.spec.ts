@@ -44,7 +44,7 @@ import {
 	type TreeChunk,
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type NodeId,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
@@ -199,7 +199,7 @@ const codec = makeModularChangeCodecFamily(
 		[6, fieldKindConfiguration],
 	]),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions),
+	fieldBatchCodecBuilder.build(codecOptions),
 	codecOptions,
 );
 const family = new ModularChangeFamily(fieldKinds, codec, codecOptions);
