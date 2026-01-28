@@ -82,7 +82,7 @@ export { Notifications } from "./notificationsManager.js";
 export type {
 	NotificationEmitter,
 	NotificationListenable,
-	NotificationSubscriptions,
+	NotificationSubscriberSignatures,
 	NotificationsManager,
 	NotificationsManagerEvents,
 } from "./notificationsManagerTypes.js";

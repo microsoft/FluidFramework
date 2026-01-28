@@ -56,14 +56,6 @@ parameters:
   type: object
   default: Small-eastus2
 
-- name: preCG
-  type: stepList
-  default: []
-
-- name: cgSubDirectory
-  type: string
-  default:
-
 - name: checkoutSubmodules
   type: boolean
   default: false
@@ -85,10 +77,6 @@ parameters:
   type: boolean
   default: false
 
-- name: includeInternalVersions
-  type: boolean
-  default: false
-
 - name: buildToolsVersionToInstall
   type: string
   default: repo
@@ -106,10 +94,6 @@ parameters:
 - name: packageManagerInstallCommand
   type: string
   default: 'npm ci --unsafe-perm'
-
-- name: additionalBuildSteps
-  type: stepList
-  default: []
 
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
@@ -534,9 +518,29 @@ extends:
                       exit -1;
                     fi
 
-              # This additional build step is used to run step not part of the main build. In build client pipeline,
-              # this is used to inject telemetry key file and upload built devtools extension.
-              - ${{ parameters.additionalBuildSteps }}
+              # Devtools
+              - task: Bash@3
+                displayName: Inject devtools telemetry logger token
+                inputs:
+                  targetType: 'inline'
+                  script: |
+                    set -eu -o pipefail
+                    echo Generating .env
+                    echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
+
+              - task: Npm@1
+                displayName: Build devtools
+                inputs:
+                  command: 'custom'
+                  workingDir: ./packages/tools/devtools/devtools-browser-extension/
+                  customCommand: 'run webpack'
+
+              - task: 1ES.PublishPipelineArtifact@1
+                displayName: Publish Artifact - Devtools Browser Extension
+                inputs:
+                  targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
+                  artifactName: 'devtools-extension-bundle_attempt-$(System.JobAttempt)'
+                  publishLocation: 'pipeline'
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)

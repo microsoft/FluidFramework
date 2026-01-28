@@ -5,8 +5,8 @@
 
 import * as child_process from "child_process";
 import * as fs from "fs";
-import * as path from "path";
 import isEqual from "lodash.isequal";
+import * as path from "path";
 
 /**
  *	An array of commands that are known to have subcommands and should be parsed as such. These will be combined with
