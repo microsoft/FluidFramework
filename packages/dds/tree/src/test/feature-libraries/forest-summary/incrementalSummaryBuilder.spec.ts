@@ -105,8 +105,13 @@ export const incrementalSummaryTestConstants = {
 	initialSequenceNumber: 0,
 };
 
-const { testCursor, stringify, mockForestSummaryRootContent, mockEncodedChunk, initialSequenceNumber } =
-	incrementalSummaryTestConstants;
+const {
+	testCursor,
+	stringify,
+	mockForestSummaryRootContent,
+	mockEncodedChunk,
+	initialSequenceNumber,
+} = incrementalSummaryTestConstants;
 
 describe("ForestIncrementalSummaryBuilder", () => {
 	function createIncrementalSummaryBuilder() {

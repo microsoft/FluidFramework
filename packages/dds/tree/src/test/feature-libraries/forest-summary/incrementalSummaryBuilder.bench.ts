@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-	BenchmarkType,
-	benchmark,
-	isInPerformanceTestingMode,
-} from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
+import {
+	type TreeChunk,
+	defaultIncrementalEncodingPolicy,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/index.js";
 import {
 	ForestIncrementalSummaryBuilder,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -18,20 +19,22 @@ import {
 	summaryContentBlobKey,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
-import {
-	type TreeChunk,
-	defaultIncrementalEncodingPolicy,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/index.js";
+
 import { configureBenchmarkHooks } from "../../utils.js";
+
 import {
 	createMockIncrementalSummaryContext,
 	getMockChunk,
 	incrementalSummaryTestConstants,
 } from "./incrementalSummaryBuilder.spec.js";
 
-const { testCursor, stringify, mockForestSummaryRootContent, mockEncodedChunk, initialSequenceNumber } =
-	incrementalSummaryTestConstants;
+const {
+	testCursor,
+	stringify,
+	mockForestSummaryRootContent,
+	mockEncodedChunk,
+	initialSequenceNumber,
+} = incrementalSummaryTestConstants;
 
 /**
  * Creates multiple unique mock chunks for testing scenarios with many chunks.
@@ -99,7 +102,7 @@ function runSummary(
 // Scale test parameters based on performance testing mode
 const chunkCounts = isInPerformanceTestingMode ? [10, 100, 1000] : [10, 100];
 
-describe("Incremental Summary Builder benchmarks", () => {
+describe.only("Incremental Summary Builder benchmarks", () => {
 	configureBenchmarkHooks();
 
 	describe("Full vs Incremental summarization comparison", () => {
@@ -227,13 +230,7 @@ describe("Incremental Summary Builder benchmarks", () => {
 								}
 							}
 						}
-						runSummary(
-							mixedCycleBuilder,
-							chunkCount,
-							false,
-							(cycle + 1) * 10,
-							cycle * 10,
-						);
+						runSummary(mixedCycleBuilder, chunkCount, false, (cycle + 1) * 10, cycle * 10);
 					}
 				},
 			});
