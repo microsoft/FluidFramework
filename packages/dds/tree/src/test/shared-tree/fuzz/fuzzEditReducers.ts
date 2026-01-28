@@ -30,6 +30,7 @@ import {
 	nodeSchemaFromTreeSchema,
 	type GUIDNode,
 	convertToFuzzView,
+	getStaticsForTree,
 } from "./fuzzUtils.js";
 
 import {
@@ -173,7 +174,10 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 	const nodeTypes = getAllowableNodeTypes(state);
 	nodeTypes.push(operation.contents.type);
 	const leafNodeSchemas = generateLeafNodeSchemas(nodeTypes);
-	const newSchema = createTreeViewSchema(leafNodeSchemas);
+	const newSchema = createTreeViewSchema(
+		leafNodeSchemas,
+		getStaticsForTree(state.client.channel).newSchemaFactory,
+	);
 
 	// Because we need the view for a schema change, and we can only have one view at a time,
 	// we must dispose of the client's view early.

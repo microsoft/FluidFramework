@@ -33,6 +33,9 @@ import {
 	type FuzzNodeSchema,
 	type fuzzFieldSchema,
 	nodeSchemaFromTreeSchema,
+	getStaticsForTree,
+	type SchemaFactoryConstructor,
+	type TreePackageStatics,
 } from "./fuzzUtils.js";
 import {
 	type Insert,
@@ -59,12 +62,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
 import { getInnerNode } from "../../../simple-tree/index.js";
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type TreeNode,
-	type TreeNodeSchema,
-} from "../../../simple-tree/index.js";
+import type { TreeNode, TreeNodeSchema } from "../../../simple-tree/index.js";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { asAlpha } from "../../../api.js";
@@ -143,9 +141,13 @@ export function viewFromState(
 	const view =
 		state.transactionViews?.get(client.channel) ??
 		(getOrCreate(state.clientViews, client.channel, (sharedTree) => {
+			const statics = getStaticsForTree(sharedTree);
 			const tree = sharedTree.kernel;
-			const treeSchema = simpleSchemaFromStoredSchema(tree.storedSchema);
-			const config = new TreeViewConfiguration({
+			const treeSchema = simpleSchemaFromStoredSchema(
+				tree.storedSchema,
+				statics.newSchemaFactory,
+			);
+			const config = statics.newTreeViewConfiguration({
 				schema: treeSchema,
 			});
 
@@ -188,8 +190,9 @@ function filterFuzzNodeSchemas(
 }
 export function simpleSchemaFromStoredSchema(
 	storedSchema: TreeStoredSchemaRepository,
+	schemaFactoryConstructor: SchemaFactoryConstructor,
 ): typeof fuzzFieldSchema {
-	const schemaFactory = new SchemaFactory("treeFuzz");
+	const schemaFactory = schemaFactoryConstructor("treeFuzz");
 	const nodeSchemas = filterFuzzNodeSchemas(storedSchema.nodeSchema.keys(), "treeFuzz", [
 		"treeFuzz.FuzzNumberNode",
 		"treeFuzz.FuzzStringNode",
@@ -204,7 +207,7 @@ export function simpleSchemaFromStoredSchema(
 		}) {}
 		fuzzNodeSchemas.push(GUIDNodeSchema);
 	}
-	return createTreeViewSchema(fuzzNodeSchemas);
+	return createTreeViewSchema(fuzzNodeSchemas, schemaFactoryConstructor);
 }
 
 /**
@@ -415,6 +418,7 @@ export const makeTreeEditGenerator = (
 				const srcField = state.fieldInfo.parentFuzzNode.arrayChildren;
 				const dstFieldInfo = selectTreeField(
 					viewFromState(state, state.client, state.branchIndex),
+					getStaticsForTree(state.client.channel),
 					state.random,
 					weights.fieldSelection,
 					(field: FuzzField) =>
@@ -428,6 +432,7 @@ export const makeTreeEditGenerator = (
 					dstParent: maybeDownPathFromNode(
 						dstParent,
 						viewFromState(state, state.client, state.branchIndex).currentSchema,
+						getStaticsForTree(state.client.channel),
 					),
 					dstIndex: state.random.integer(0, dstParent.arrayChildren.length),
 				};
@@ -528,6 +533,7 @@ export const makeTreeEditGenerator = (
 		do {
 			fieldInfo = selectTreeField(
 				viewFromState(state, state.client, selectedForkIndex),
+				getStaticsForTree(state.client.channel),
 				state.random,
 				weights.fieldSelection,
 			);
@@ -546,6 +552,7 @@ export const makeTreeEditGenerator = (
 				parentNodePath: maybeDownPathFromNode(
 					fieldInfo.parentFuzzNode,
 					viewFromState(state, state.client, selectedForkIndex).currentSchema,
+					getStaticsForTree(state.client.channel),
 				),
 				change,
 			},
@@ -684,6 +691,7 @@ export const makeConstraintEditGenerator = (
 			(state): Constraint => {
 				const selectedField = selectTreeField(
 					viewFromState(state),
+					getStaticsForTree(state.client.channel),
 					state.random,
 					opWeights.fieldSelection,
 				);
@@ -695,6 +703,7 @@ export const makeConstraintEditGenerator = (
 						nodePath: maybeDownPathFromNode(
 							selectedField.parentFuzzNode,
 							viewFromState(state).currentSchema,
+							getStaticsForTree(state.client.channel),
 						),
 					},
 				};
@@ -792,6 +801,7 @@ export interface FieldPathWithCount {
 }
 
 function upPathFromNode(node: TreeNode): UpPath {
+	// XXX: Use external API instead.
 	const flexNode = getInnerNode(node);
 	assert(flexNode.isHydrated());
 	const anchorNode = flexNode.anchorNode;
@@ -805,8 +815,9 @@ function downPathFromNode(node: TreeNode): DownPath {
 export function maybeDownPathFromNode(
 	node: TreeNode | undefined,
 	nodeSchema: FuzzNodeSchema,
+	statics: TreePackageStatics,
 ): DownPath | undefined {
-	return Tree.is(node, nodeSchema) ? downPathFromNode(node) : undefined;
+	return statics.nodeApi.is(node, nodeSchema) ? downPathFromNode(node) : undefined;
 }
 
 // Using TreeNode instead of FuzzNode to handle the case where the root node is not a FuzzNode (like a leafNode or undefined)
@@ -892,6 +903,7 @@ function selectField(
 
 function trySelectTreeField(
 	tree: FuzzView,
+	statics: TreePackageStatics,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
@@ -899,10 +911,10 @@ function trySelectTreeField(
 	const editable = tree.root;
 	const nodeSchema = tree.currentSchema;
 
-	if (!Tree.is(editable, nodeSchema)) {
+	if (!statics.nodeApi.is(editable, nodeSchema)) {
 		return { type: "optional", parentFuzzNode: editable as TreeNode } as const;
 	}
-	assert(Tree.is(editable, nodeSchema));
+	assert(statics.nodeApi.is(editable, nodeSchema));
 	const options =
 		weights.optional === 0
 			? ["recurse"]
@@ -944,11 +956,12 @@ function trySelectTreeField(
 
 function selectTreeField(
 	tree: FuzzView,
+	statics: TreePackageStatics,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
 ): FuzzField {
-	const result = trySelectTreeField(tree, random, weights, filter);
+	const result = trySelectTreeField(tree, statics, random, weights, filter);
 	assert(result !== "no-valid-fields", "No valid fields found");
 	if (tree.root !== undefined && result.parentFuzzNode !== undefined) {
 		assert(Tree.contains(tree.root as TreeNode, result.parentFuzzNode));

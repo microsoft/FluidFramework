@@ -38,6 +38,9 @@ import {
 	type ValidateRecursiveSchema,
 	type ViewableTree,
 	type NodeBuilderData,
+	type ITreeViewConfiguration,
+	type TreeNodeApi,
+	treeNodeApi,
 } from "../../../simple-tree/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
@@ -92,7 +95,7 @@ type _checkFuzzNode = ValidateRecursiveSchema<typeof FuzzNode>;
 
 export type FuzzNodeSchema = typeof FuzzNode;
 
-export const initialFuzzSchema = createTreeViewSchema([]);
+export const initialFuzzSchema = createTreeViewSchema([], (scope) => new SchemaFactory(scope));
 export const fuzzFieldSchema = FuzzNode.info.optionalChild;
 
 /**
@@ -140,8 +143,11 @@ function createFuzzNodeSchema(
  * @param allowedTypes - additional allowedTypes outside of the {@link initialAllowedTypes} for the {@link FuzzNode}
  * @returns the tree's schema used for the fuzzView.
  */
-export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuzzFieldSchema {
-	const schemaFactory = new SchemaFactory("treeFuzz");
+export function createTreeViewSchema(
+	allowedTypes: TreeNodeSchema[],
+	schemaFactoryConstructor: SchemaFactoryConstructor,
+): typeof fuzzFieldSchema {
+	const schemaFactory = schemaFactoryConstructor("treeFuzz") as SchemaFactory<"treeFuzz">;
 	const node = createFuzzNodeSchema(allowedTypes, schemaFactory).info.optionalChild;
 	return node as unknown as typeof fuzzFieldSchema;
 }
@@ -294,3 +300,27 @@ export const populatedInitialState: NodeBuilderData<typeof FuzzNode> = {
 	requiredChild: "R",
 	optionalChild: undefined,
 } as unknown as NodeBuilderData<typeof FuzzNode>;
+
+export type SchemaFactoryConstructor = (scope: string) => SchemaFactory;
+
+export interface TreePackageStatics {
+	readonly newSchemaFactory: SchemaFactoryConstructor;
+	readonly newTreeViewConfiguration: (props: ITreeViewConfiguration) => TreeViewConfiguration;
+	readonly nodeApi: TreeNodeApi;
+}
+
+export const treeToPackageStatics = new WeakMap<ISharedTree, TreePackageStatics>();
+
+const defaultSchemaFactoryConstructor = (scope: string) => new SchemaFactory(scope);
+const defaultTreeViewConfigurationConstructor = (props: ITreeViewConfiguration) =>
+	new TreeViewConfiguration(props);
+
+export const defaultTreePackageStatics: TreePackageStatics = {
+	newSchemaFactory: defaultSchemaFactoryConstructor,
+	newTreeViewConfiguration: defaultTreeViewConfigurationConstructor,
+	nodeApi: treeNodeApi,
+};
+
+export function getStaticsForTree(tree: ISharedTree): TreePackageStatics {
+	return treeToPackageStatics.get(tree) ?? defaultTreePackageStatics;
+}
