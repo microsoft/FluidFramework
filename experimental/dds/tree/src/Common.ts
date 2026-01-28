@@ -508,9 +508,8 @@ export type RecursiveMutable<T> = {
 };
 
 /** Type that produces a writeable map from a readonly map. */
-export type MutableMap<T extends ReadonlyMap<unknown, unknown>> = T extends ReadonlyMap<infer K, infer V>
-	? Map<K, V>
-	: never;
+export type MutableMap<T extends ReadonlyMap<unknown, unknown>> =
+	T extends ReadonlyMap<infer K, infer V> ? Map<K, V> : never;
 
 /** Type that includes the property K: V on T */
 export type With<T, K extends keyof never, V> = T & { [key in K]: V };
