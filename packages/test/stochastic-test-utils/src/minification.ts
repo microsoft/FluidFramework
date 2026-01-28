@@ -7,6 +7,13 @@ import { ReducerPreconditionError, type BaseOperation } from "./combineReducers.
 import { makeRandom } from "./random.js";
 import { type SaveInfo, type AsyncGenerator, done } from "./types.js";
 
+// Attempt garbage collection if available (requires --expose-gc flag)
+function tryGC(): void {
+	if (typeof global !== "undefined" && typeof (global as any).gc === "function") {
+		(global as any).gc();
+	}
+}
+
 /**
  * A function which takes in an operation and modifies it by reference to be more
  * minimal.
@@ -42,6 +49,7 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 	private initialError?: { message: string; op: BaseOperation };
 	private readonly transforms: MinimizationTransform<TOperation>[];
 	private readonly random = makeRandom();
+	private replayCount = 0;
 
 	constructor(
 		minimizationTransforms: MinimizationTransform<TOperation>[] | undefined,
@@ -188,6 +196,12 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 	 * to avoid dealing with transforms that would result in invalid ops
 	 */
 	private async assertFails(): Promise<boolean> {
+		this.replayCount++;
+		// Periodically trigger garbage collection to prevent memory buildup during minimization
+		if (this.replayCount % 10 === 0) {
+			tryGC();
+		}
+
 		let lastOp: BaseOperation = { type: "___none___" };
 		const operationsIterator = this.operations[Symbol.iterator]();
 		const generator: AsyncGenerator<TOperation, unknown> = async () => {
