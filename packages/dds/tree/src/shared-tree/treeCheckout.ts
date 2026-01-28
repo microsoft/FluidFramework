@@ -448,12 +448,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	/**
-	 * Helper method for {@link SchematizingSimpleTreeView.runTransaction} to properly clear transaction labels once the function completes..
+	 * Helper method for {@link SchematizingSimpleTreeView.runTransaction} to properly clear transaction labels once the function completes.
 	 *
 	 * @remarks
 	 * The label is stored during the execution of the function and will be included in the {@link ChangeMetadata} of the transaction.
 	 *
-	 * If there is a nested transaction, only the outermost transaction label will be used.
+	 * Labels supplied to nested transactions are ignored - only the outermost transaction label is ever used.
 	 *
 	 * @param fn - The function to execute. It receives the user provided transaction label as an optional parameter.
 	 * @param label - The label to associate with the outermost transaction.
