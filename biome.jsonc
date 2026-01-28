@@ -18,7 +18,6 @@
 			"!**/lib/**/*",
 			"!**/examples/**/build/**/*",
 			"!**/*.done.build.log",
-			"!**/.next", // NextJS
 
 			// Webpack output
 			"**/webpack/**",
@@ -49,6 +48,8 @@
 			"!**/*.hbs",
 
 			// Test json
+			// Note: This ignore must remain in the root config because biome scans for config files
+			// regardless of includes patterns, and the test data contains Biome 1.x configs.
 			"!**/build-tools/packages/build-tools/src/test/data/**",
 			"!**/experimental/dds/tree/src/test/documents/**",
 			"!**/packages/dds/map/src/test/mocha/snapshots/**/*.json",
@@ -104,6 +105,9 @@
 			"!**/.timeTestsOutput/**",
 			"!**/.memoryTestsOutput/**",
 			"!**/.customBenchmarksOutput/**",
+
+			// local-server-stress-tests results
+			"!**/packages/test/local-server-stress-tests/results/**",
 
 			// The paths below are not formatted by Biome. We ignore them explicitly so other tools that read this ignore
 			// list, like fluid-build, know to ignore these files as well.
