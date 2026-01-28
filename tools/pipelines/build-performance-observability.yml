@@ -9,21 +9,21 @@
 name: $(Build.BuildId)
 
 # We run public/internal an hour apart to avoid a race condition if they both try to update the ASWA at the same time
-# schedules:
-# - ${{ if eq(variables['System.TeamProject'], 'public') }}:
-#   - cron: "0 2 * * *"
-#     displayName: Daily PR build metrics collection
-#     branches:
-#       include:
-#       - main
-#     always: true
-# - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-#   - cron: "0 3 * * *"
-#     displayName: Daily internal build metrics collection
-#     branches:
-#       include:
-#       - main
-#     always: true
+schedules:
+- ${{ if eq(variables['System.TeamProject'], 'public') }}:
+  - cron: "0 2 * * *"
+    displayName: Daily PR build metrics collection
+    branches:
+      include:
+      - main
+    always: true
+- ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+  - cron: "0 3 * * *"
+    displayName: Daily internal build metrics collection
+    branches:
+      include:
+      - main
+    always: true
 
 trigger: none
 
