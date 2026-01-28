@@ -11,7 +11,7 @@ import { toPropTreeNode } from "@fluidframework/react/alpha";
  */
 // eslint-disable-next-line import-x/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/legacy";
@@ -46,14 +46,18 @@ function getTinyliciousEndpoint(): string {
 
 const containerSchema = {
 	initialObjects: {
-		plainTextareaTree: SharedTree,
-		plainQuillTree: SharedTree,
-		formattedTree: SharedTree,
+		tree: SharedTree,
 	},
 };
 
-const plainTreeConfig = new TreeViewConfiguration({ schema: TextAsTree.Tree });
-const formattedTreeConfig = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });
+const sf = new SchemaFactory("com.fluidframework.example.text-editor");
+
+class TextEditorRoot extends sf.object("TextEditorRoot", {
+	plainText: TextAsTree.Tree,
+	formattedText: FormattedTextAsTree.Tree,
+}) {}
+
+const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
 
 function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
 	return {
@@ -69,16 +73,8 @@ function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
 type ViewType = "plainTextarea" | "plainQuill" | "formatted";
 
 interface DualUserViews {
-	user1: {
-		plainTextarea: TreeView<typeof TextAsTree.Tree>;
-		plainQuill: TreeView<typeof TextAsTree.Tree>;
-		formatted: TreeView<typeof FormattedTextAsTree.Tree>;
-	};
-	user2: {
-		plainTextarea: TreeView<typeof TextAsTree.Tree>;
-		plainQuill: TreeView<typeof TextAsTree.Tree>;
-		formatted: TreeView<typeof FormattedTextAsTree.Tree>;
-	};
+	user1: TreeView<typeof TextEditorRoot>;
+	user2: TreeView<typeof TextEditorRoot>;
 	containerId: string;
 }
 
@@ -121,32 +117,23 @@ async function initFluid(): Promise<DualUserViews> {
 		);
 
 		return {
-			user1: {
-				plainTextarea: container1.initialObjects.plainTextareaTree.viewWith(plainTreeConfig),
-				plainQuill: container1.initialObjects.plainQuillTree.viewWith(plainTreeConfig),
-				formatted: container1.initialObjects.formattedTree.viewWith(formattedTreeConfig),
-			},
-			user2: {
-				plainTextarea: container2.initialObjects.plainTextareaTree.viewWith(plainTreeConfig),
-				plainQuill: container2.initialObjects.plainQuillTree.viewWith(plainTreeConfig),
-				formatted: container2.initialObjects.formattedTree.viewWith(formattedTreeConfig),
-			},
+			user1: container1.initialObjects.tree.viewWith(treeConfig),
+			user2: container2.initialObjects.tree.viewWith(treeConfig),
 			containerId,
 		};
 	} else {
 		// User 1 creates the document
 		const { container: container1 } = await client1.createContainer(containerSchema, "2");
 
-		const user1PlainTextarea =
-			container1.initialObjects.plainTextareaTree.viewWith(plainTreeConfig);
-		const user1PlainQuill = container1.initialObjects.plainQuillTree.viewWith(plainTreeConfig);
-		const user1Formatted =
-			container1.initialObjects.formattedTree.viewWith(formattedTreeConfig);
+		const user1View = container1.initialObjects.tree.viewWith(treeConfig);
 
-		// Initialize all trees
-		user1PlainTextarea.initialize(TextAsTree.Tree.fromString(""));
-		user1PlainQuill.initialize(TextAsTree.Tree.fromString(""));
-		user1Formatted.initialize(FormattedTextAsTree.Tree.fromString(""));
+		// Initialize tree with root containing both plain and formatted text
+		user1View.initialize(
+			new TextEditorRoot({
+				plainText: TextAsTree.Tree.fromString(""),
+				formattedText: FormattedTextAsTree.Tree.fromString(""),
+			}),
+		);
 
 		containerId = await container1.attach();
 		// eslint-disable-next-line require-atomic-updates
@@ -162,16 +149,8 @@ async function initFluid(): Promise<DualUserViews> {
 		console.log(`User 2 connected to document: ${containerId}`);
 
 		return {
-			user1: {
-				plainTextarea: user1PlainTextarea,
-				plainQuill: user1PlainQuill,
-				formatted: user1Formatted,
-			},
-			user2: {
-				plainTextarea: container2.initialObjects.plainTextareaTree.viewWith(plainTreeConfig),
-				plainQuill: container2.initialObjects.plainQuillTree.viewWith(plainTreeConfig),
-				formatted: container2.initialObjects.formattedTree.viewWith(formattedTreeConfig),
-			},
+			user1: user1View,
+			user2: container2.initialObjects.tree.viewWith(treeConfig),
 			containerId,
 		};
 	}
@@ -187,18 +166,18 @@ const UserPanel: React.FC<{
 	label: string;
 	color: string;
 	viewType: ViewType;
-	views: DualUserViews["user1"];
-}> = ({ label, color, viewType, views }) => {
+	treeView: TreeView<typeof TextEditorRoot>;
+}> = ({ label, color, viewType, treeView }) => {
 	const renderView = (): JSX.Element => {
 		switch (viewType) {
 			case "plainTextarea": {
-				return <PlainTextMainView root={toPropTreeNode(views.plainTextarea.root)} />;
+				return <PlainTextMainView root={toPropTreeNode(treeView.root.plainText)} />;
 			}
 			case "plainQuill": {
-				return <PlainQuillView root={toPropTreeNode(views.plainQuill.root)} />;
+				return <PlainQuillView root={toPropTreeNode(treeView.root.plainText)} />;
 			}
 			default: {
-				return <FormattedMainView root={toPropTreeNode(views.formatted.root)} />;
+				return <FormattedMainView root={toPropTreeNode(treeView.root.formattedText)} />;
 			}
 		}
 	};
@@ -272,8 +251,8 @@ const App: React.FC<{ views: DualUserViews }> = ({ views }) => {
 					alignItems: "stretch",
 				}}
 			>
-				<UserPanel label="User 1" color="#4a90d9" viewType={viewType} views={views.user1} />
-				<UserPanel label="User 2" color="#28a745" viewType={viewType} views={views.user2} />
+				<UserPanel label="User 1" color="#4a90d9" viewType={viewType} treeView={views.user1} />
+				<UserPanel label="User 2" color="#28a745" viewType={viewType} treeView={views.user2} />
 			</div>
 		</div>
 	);
