@@ -159,7 +159,9 @@ describe("Loader", () => {
 				new Promise((resolve) => process.nextTick(resolve));
 
 			before(() => {
-				clock = useFakeTimers();
+				clock = useFakeTimers({
+					toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+				});
 			});
 
 			beforeEach(async () => {

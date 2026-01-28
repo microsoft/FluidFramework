@@ -53,7 +53,9 @@ describe("Presence", () => {
 		let processSignal: ProcessSignalFunction;
 
 		before(async () => {
-			clock = useFakeTimers();
+			clock = useFakeTimers({
+				toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+			});
 		});
 
 		beforeEach(() => {

@@ -18,7 +18,9 @@ describe("Throttler", () => {
 	let throttler: Throttler;
 	let clock: sinon.SinonFakeTimers;
 	before(() => {
-		clock = sinon.useFakeTimers();
+		clock = sinon.useFakeTimers({
+			toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+		});
 	});
 	after(() => clock.restore());
 	afterEach(() => clock.reset());

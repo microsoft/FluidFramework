@@ -216,7 +216,9 @@ describe("Presence", () => {
 		}
 
 		before(() => {
-			clock = useFakeTimers();
+			clock = useFakeTimers({
+				toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+			});
 		});
 
 		beforeEach(() => {
