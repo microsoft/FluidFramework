@@ -32,9 +32,6 @@ import {
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 
-
-
-
 export function createCompatFuzzSuite(factoryForCompat: IChannelFactory<ITree>) {
 	const compatFuzzModel: DDSFuzzModel<
 		SharedTreeFuzzTestFactory,
