@@ -6,26 +6,14 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	ForestIncrementalSummaryBehavior,
-	ForestIncrementalSummaryBuilder,
-	ForestSummaryTrackingState,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
-import {
-	summaryContentBlobKey,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
-import {
-	summaryContentBlobKey as summaryContentBlobKeyV1ToV2,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/forest-summary/summaryFormatV1ToV2.js";
+import type { ITreeCursorSynchronous } from "../../../core/index.js";
 import {
 	type EncodedFieldBatch,
 	type ChunkReferenceId,
@@ -33,9 +21,21 @@ import {
 	defaultIncrementalEncodingPolicy,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
-import type { ITreeCursorSynchronous } from "../../../core/index.js";
+import {
+	ForestIncrementalSummaryBehavior,
+	ForestIncrementalSummaryBuilder,
+	ForestSummaryTrackingState,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
+import {
+	summaryContentBlobKey as summaryContentBlobKeyV1ToV2,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatV1ToV2.js";
+import {
+	summaryContentBlobKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/forest-summary/summaryFormatV3.js";
 import { brand, type JsonCompatible } from "../../../util/index.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
  * Creates a mock incremental summary context for testing.

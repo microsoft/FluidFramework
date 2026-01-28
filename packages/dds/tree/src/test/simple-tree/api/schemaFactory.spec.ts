@@ -8,7 +8,31 @@ import { strict as assert } from "node:assert";
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { EmptyKey } from "../../../core/index.js";
 import { TreeStatus } from "../../../feature-libraries/index.js";
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
+import {
+	SchemaFactory,
+	schemaFromValue,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/schemaFactory.js";
+import {
+	schemaStaticsStable,
+	type SchemaStatics,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/api/schemaStatics.js";
+import {
+	// Import directly to get the non-type import to allow testing of the package only instanceof
+	TreeNode,
+	type AllowedTypes,
+	type AllowedTypesFull,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type UnannotateAllowedTypesList,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/core/index.js";
 import {
 	type ObjectNodeSchema,
 	SchemaFactoryAlpha,
@@ -31,28 +55,6 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 } from "../../../simple-tree/index.js";
 import {
-	// Import directly to get the non-type import to allow testing of the package only instanceof
-	TreeNode,
-	type AllowedTypes,
-	type AllowedTypesFull,
-	type AnnotatedAllowedType,
-	type AnnotatedAllowedTypes,
-	type InsertableTreeNodeFromAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type UnannotateAllowedTypesList,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/core/index.js";
-import {
-	SchemaFactory,
-	schemaFromValue,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/schemaFactory.js";
-import {
-	schemaStaticsStable,
-	type SchemaStatics,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/api/schemaStatics.js";
-import {
 	brand,
 	type areSafelyAssignable,
 	type IsUnion,
@@ -60,11 +62,8 @@ import {
 	type requireFalse,
 	type requireTrue,
 } from "../../../util/index.js";
-
-import { hydrate } from "../utils.js";
 import { getView, TestTreeProviderLite } from "../../utils.js";
-import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
-import { EmptyKey } from "../../../core/index.js";
+import { hydrate } from "../utils.js";
 
 // Tests for the non-recursive API subset of SchemaFactory and SchemaFactoryAlpha.
 // Recursive APIs are tested in schemaFactoryRecursive.spec.ts

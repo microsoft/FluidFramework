@@ -55,8 +55,8 @@ export const getPresence: (fluidContainer: IFluidContainer) => Presence;
 // @beta @system
 export namespace InternalTypes {
     // @system
-    export type ManagerFactory<TKey extends string, TValue extends ValueDirectoryOrState<any>, TManager> = {
-        instanceBase: new (...args: any[]) => any;
+    export type ManagerFactory<TKey extends string, TValue extends ValueDirectoryOrState<unknown>, TManager> = {
+        instanceBase: new (...args: any[]) => unknown;
     } & ((key: TKey, datastoreHandle: StateDatastoreHandle<TKey, TValue>) => {
         initialData?: {
             value: TValue;
@@ -81,7 +81,7 @@ export namespace InternalTypes {
         name: string;
     }
     // @system
-    export class StateDatastoreHandle<TKey, TValue extends ValueDirectoryOrState<any>> {
+    export class StateDatastoreHandle<TKey, TValue extends ValueDirectoryOrState<unknown>> {
     }
     // @system
     export type StateValue<T> = T & StateValueBrand<T>;
@@ -316,7 +316,7 @@ unvalidatedData: unknown) => JsonDeserialized<T> | undefined;
 
 // @beta @sealed
 export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
-    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
+    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<unknown>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
     readonly controls: BroadcastControls;
     readonly presence: Presence;
     readonly states: StatesWorkspaceEntries<TSchema>;
@@ -335,7 +335,7 @@ export type StatesWorkspaceEntry<TKey extends string, TValue extends InternalTyp
 
 // @beta
 export interface StatesWorkspaceSchema {
-    [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
+    [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<unknown>>;
 }
 
 // @beta @system

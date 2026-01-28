@@ -1,5 +1,13 @@
 # @fluid-experimental/presence
 
+## 2.81.0
+
+### Minor Changes
+
+- Self attendee is announced via "attendeeConnected" ([#26247](https://github.com/microsoft/FluidFramework/pull/26247)) [f838524b41](https://github.com/microsoft/FluidFramework/commit/f838524b41dcc71aae58d48955af3f1c9cca9309)
+
+  Local attendee connection is now announced via "attendeeConnected" presence event.
+
 ## 2.80.0
 
 ### Minor Changes
