@@ -8,22 +8,24 @@
 
 name: $(Build.BuildId)
 
-# We run public/internal an hour apart to avoid a race condition if they both try to update the ASWA at the same time
+# Both schedules run in both projects (public and internal), but each schedule
+# only completes in one of the projects (the other project will skip early).
+# - 2 AM UTC: PR build metrics - runs in public, skips in internal
+# - 3 AM UTC: Internal build metrics - runs in internal, skips in public
+# This is done to avoid a race condition if both runs try to update the ASWA at the same time.
 schedules:
-- ${{ if eq(variables['System.TeamProject'], 'public') }}:
-  - cron: "0 2 * * *"
-    displayName: Daily PR build metrics collection
-    branches:
-      include:
-      - main
-    always: true
-- ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-  - cron: "0 3 * * *"
-    displayName: Daily internal build metrics collection
-    branches:
-      include:
-      - main
-    always: true
+- cron: "0 2 * * *"
+  displayName: Daily PR build metrics collection
+  branches:
+    include:
+    - main
+  always: true
+- cron: "0 3 * * *"
+  displayName: Daily internal build metrics collection
+  branches:
+    include:
+    - main
+  always: true
 
 trigger: none
 
@@ -81,8 +83,61 @@ extends:
     - stage: collect_metrics
       displayName: Collect Build Metrics
       jobs:
+      # First job: determine if we should run based on project/schedule match
+      - job: check_should_run
+        displayName: Check Run Conditions
+        steps:
+        - checkout: none
+        - task: Bash@3
+          name: detect
+          displayName: Detect run mode
+          env:
+            IS_PUBLIC: $(isPublicProject)
+            BUILD_REASON: $(Build.Reason)
+            CRON_SCHEDULE_NAME: $(Build.CronSchedule.DisplayName)
+          inputs:
+            targetType: 'inline'
+            script: |
+              set -eu -o pipefail
+
+              # Determine mode: scheduled runs use schedule name, manual runs use project
+              if [ "$BUILD_REASON" = "Schedule" ]; then
+                if [[ "$CRON_SCHEDULE_NAME" == *"PR build"* ]]; then
+                  MODE="pr"
+                else
+                  MODE="postmerge"
+                fi
+
+                # Check if project matches schedule mode
+                if [ "$MODE" = "pr" ] && [ "$IS_PUBLIC" != "True" ]; then
+                  echo "Skipping: PR builds schedule running in internal project"
+                  echo "##vso[task.setvariable variable=shouldRun;isOutput=true]false"
+                  exit 0
+                elif [ "$MODE" = "postmerge" ] && [ "$IS_PUBLIC" = "True" ]; then
+                  echo "Skipping: Internal builds schedule running in public project"
+                  echo "##vso[task.setvariable variable=shouldRun;isOutput=true]false"
+                  exit 0
+                fi
+              else
+                # Manual run - use project to determine mode
+                if [ "$IS_PUBLIC" = "True" ]; then
+                  MODE="pr"
+                else
+                  MODE="postmerge"
+                fi
+              fi
+
+              echo "Mode: $MODE"
+              echo "##vso[task.setvariable variable=shouldRun;isOutput=true]true"
+              echo "##vso[task.setvariable variable=runMode;isOutput=true]$MODE"
+
+      # Main job: only runs if check_should_run says we should
       - job: fetch_and_publish
         displayName: Fetch and Publish Build Metrics
+        dependsOn: check_should_run
+        condition: eq(dependencies.check_should_run.outputs['detect.shouldRun'], 'true')
+        variables:
+          runMode: $[ dependencies.check_should_run.outputs['detect.runMode'] ]
         steps:
         - checkout: none
 
@@ -95,18 +150,16 @@ extends:
             BUILD_COUNT: $(buildCount)
             ORG: $(organization)
             PROJECT: $(targetProject)
-            IS_PUBLIC: $(isPublicProject)
+            MODE: $(runMode)
           inputs:
             targetType: 'inline'
             script: |
               set -eu -o pipefail
 
-              # Determine mode based on project
-              if [ "$IS_PUBLIC" = "True" ]; then
-                MODE="pr"
+              # Set build definition ID based on mode
+              if [ "$MODE" = "pr" ]; then
                 BUILD_DEF_ID="$PR_BUILD_DEF_ID"
               else
-                MODE="postmerge"
                 BUILD_DEF_ID="$INTERNAL_BUILD_DEF_ID"
               fi
 
