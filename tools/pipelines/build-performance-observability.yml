@@ -23,7 +23,7 @@ pr: none
 
 variables:
   # Contains keys to upload dashboard to ASWA
-  - group: build-dashboard-vars
+  - group: build-perf-dashboard-vars
   # Number of recent builds to fetch
   - name: buildCount
     value: 500
