@@ -15,6 +15,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 import type { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
 import type { LocalKafka } from "./localKafka";
+import type { LocalKafkaSubscription } from "./localKafkaSubscription";
 
 /**
  * @internal
@@ -33,6 +34,7 @@ export class LocalLambdaController<T = ILocalOrdererSetup>
 
 	private _state: LocalLambdaControllerState = "created";
 	private startTimer: NodeJS.Timeout | undefined;
+	private readonly subscription: LocalKafkaSubscription;
 
 	constructor(
 		private readonly kafaka: LocalKafka,
@@ -41,7 +43,7 @@ export class LocalLambdaController<T = ILocalOrdererSetup>
 		private readonly starter: (setup: T, context: IContext) => Promise<IPartitionLambda>,
 	) {
 		super();
-		this.kafaka.subscribe(this);
+		this.subscription = this.kafaka.subscribe(this);
 	}
 
 	public get state() {
@@ -88,6 +90,9 @@ export class LocalLambdaController<T = ILocalOrdererSetup>
 			clearTimeout(this.startTimer);
 			this.startTimer = undefined;
 		}
+
+		// Unsubscribe from Kafka to clean up the subscription
+		this.kafaka.unsubscribe(this.subscription);
 
 		this.removeAllListeners();
 	}

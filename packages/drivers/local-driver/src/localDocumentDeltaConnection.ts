@@ -71,10 +71,15 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	 */
 	public submit(messages: IDocumentMessage[]): void {
 		// We use a promise resolve to force a turn break given message processing is sync
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		Promise.resolve().then(() => {
-			this.emitMessages("submitOp", [messages]);
-		});
+		Promise.resolve()
+			.then(() => {
+				this.emitMessages("submitOp", [messages]);
+			})
+			.catch((error) => {
+				// Log any errors from emitting messages - this shouldn't normally happen
+				// but we don't want unhandled promise rejections
+				this.logger.sendErrorEvent({ eventName: "SubmitOpError" }, error);
+			});
 	}
 
 	/**

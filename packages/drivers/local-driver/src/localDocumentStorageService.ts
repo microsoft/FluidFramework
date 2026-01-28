@@ -41,6 +41,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	// empty strings as values.
 	protected readonly blobsShaCache = new Map<string, string>();
 	private readonly summaryTreeUploadManager: ISummaryUploadManager;
+	private _disposed = false;
 
 	constructor(
 		private readonly id: string,
@@ -54,6 +55,18 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			this.blobsShaCache,
 			this.getPreviousFullSnapshot.bind(this),
 		);
+	}
+
+	public get disposed(): boolean {
+		return this._disposed;
+	}
+
+	public dispose(): void {
+		if (this._disposed) {
+			return;
+		}
+		this._disposed = true;
+		this.blobsShaCache.clear();
 	}
 
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {

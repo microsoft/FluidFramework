@@ -136,6 +136,8 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 	private readonly orderers = new Map<string, ProxyOrderer>();
 	private readonly topicMap = new Map<string, ProxySocketConnection[]>();
 	private cid = 0;
+	private closed = false;
+	private readonly messageHandler: ((message: INodeMessage) => void) | undefined;
 
 	// TODO establish some kind of connection to the node from here?
 	// should I rely on the remote node to update me of its details? And only fall back to mongo if necessary?
@@ -148,43 +150,74 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 	) {
 		super();
 
-		this.socket?.on("message", (message) => {
-			switch (message.type) {
-				case "op":
-					this.route(message.payload as IOpMessage);
-					break;
+		if (this.socket) {
+			this.messageHandler = (message) => {
+				switch (message.type) {
+					case "op":
+						this.route(message.payload as IOpMessage);
+						break;
 
-				case "connected":
-					// eslint-disable-next-line no-case-declarations
-					const pendingConnect = this.connectMap.get(message.cid);
-					assert(pendingConnect);
-					this.connectMap.delete(message.cid);
+					case "connected":
+						// eslint-disable-next-line no-case-declarations
+						const pendingConnect = this.connectMap.get(message.cid);
+						assert(pendingConnect);
+						this.connectMap.delete(message.cid);
 
-					// eslint-disable-next-line no-case-declarations
-					const socketConnection = new ProxySocketConnection(
-						pendingConnect.tenantId,
-						pendingConnect.documentId,
-						pendingConnect.socket,
-						this,
-						message.cid,
-						message.payload as IConnectedMessage,
-					);
+						// eslint-disable-next-line no-case-declarations
+						const socketConnection = new ProxySocketConnection(
+							pendingConnect.tenantId,
+							pendingConnect.documentId,
+							pendingConnect.socket,
+							this,
+							message.cid,
+							message.payload as IConnectedMessage,
+						);
 
-					// Add new connection to routing tables
-					this.topicMap.set(`client#${socketConnection.clientId}`, [socketConnection]);
-					// eslint-disable-next-line no-case-declarations
-					const fullId = `${pendingConnect.tenantId}/${pendingConnect.documentId}`;
-					if (!this.topicMap.has(fullId)) {
-						this.topicMap.set(fullId, []);
-					}
-					this.topicMap.get(fullId)?.push(socketConnection);
+						// Add new connection to routing tables
+						this.topicMap.set(`client#${socketConnection.clientId}`, [
+							socketConnection,
+						]);
+						// eslint-disable-next-line no-case-declarations
+						const fullId = `${pendingConnect.tenantId}/${pendingConnect.documentId}`;
+						if (!this.topicMap.has(fullId)) {
+							this.topicMap.set(fullId, []);
+						}
+						this.topicMap.get(fullId)?.push(socketConnection);
 
-					pendingConnect.deferred.resolve(socketConnection);
-					break;
-				default:
-					break;
-			}
-		});
+						pendingConnect.deferred.resolve(socketConnection);
+						break;
+					default:
+						break;
+				}
+			};
+			this.socket.on("message", this.messageHandler);
+		}
+	}
+
+	public close(): void {
+		if (this.closed) {
+			return;
+		}
+		this.closed = true;
+
+		// Remove message handler from socket
+		if (this.socket && this.messageHandler) {
+			this.socket.removeListener("message", this.messageHandler);
+			this.socket.close();
+		}
+
+		// Reject any pending connection promises
+		for (const [, pending] of this.connectMap) {
+			pending.deferred.reject(new Error("RemoteNode closed"));
+		}
+		this.connectMap.clear();
+
+		// Clear orderers and topic maps
+		this.orderers.clear();
+		this.topicMap.clear();
+
+		// Remove all listeners from this EventEmitter
+		this.removeAllListeners();
 	}
 
 	public async connectOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
