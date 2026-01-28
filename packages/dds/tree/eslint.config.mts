@@ -28,17 +28,10 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"jsdoc/require-description": "warn",
 			"unicorn/no-null": "off",
-			"unicorn/prefer-export-from": "off",
 		},
 	},
 	{
 		files: ["src/test/**/*"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./src/test/tsconfig.json"],
-			},
-		},
 		rules: {
 			"@typescript-eslint/no-unused-vars": ["off"],
 			"@typescript-eslint/explicit-function-return-type": "off",

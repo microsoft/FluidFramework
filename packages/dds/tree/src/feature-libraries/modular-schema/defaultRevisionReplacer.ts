@@ -3,28 +3,38 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ChangeAtomId,
-	ChangesetLocalId,
-	RevisionReplacer,
-	RevisionTag,
-} from "../../core/index.js";
-import { brand, brandConst, newTupleBTree, type Mutable } from "../../util/index.js";
+import { assert, fail } from "@fluidframework/core-utils/internal";
+
 import {
-	getFromChangeAtomIdMap,
-	setInChangeAtomIdMap,
-	type ChangeAtomIdBTree,
-} from "../changeAtomIdBTree.js";
+	newChangeAtomIdRangeMap,
+	offsetChangeAtomId,
+	type ChangeAtomId,
+	type ChangeAtomIdRangeMap,
+	type ChangesetLocalId,
+	type RevisionReplacer,
+	type RevisionTag,
+} from "../../core/index.js";
+import {
+	brand,
+	brandConst,
+	newIntegerRangeMap,
+	type RangeMap,
+	type Mutable,
+} from "../../util/index.js";
+
+const offsetChangesetLocalId = (value: ChangesetLocalId, offset: number): ChangesetLocalId =>
+	brand(value + offset);
 
 export class DefaultRevisionReplacer implements RevisionReplacer {
 	/**
 	 * Mapping from (obsolete revision tag, original local id) to the updated local id.
 	 */
-	private readonly updatedLocalIds: ChangeAtomIdBTree<ChangesetLocalId> = newTupleBTree();
+	private readonly updatedLocalIds: ChangeAtomIdRangeMap<ChangesetLocalId> =
+		newChangeAtomIdRangeMap(offsetChangesetLocalId);
 	/**
 	 * The set of local IDs already used in the scope of the updated revision.
 	 */
-	private readonly localIds: Set<ChangesetLocalId> = new Set();
+	private readonly localIds: RangeMap<ChangesetLocalId, true> = newIntegerRangeMap();
 	/**
 	 * The maximum local ID seen so far in the scope of the updated revision.
 	 */
@@ -39,29 +49,45 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 		return this.obsoleteRevisions.has(revision);
 	}
 
-	public getUpdatedAtomId<T extends ChangeAtomId>(id: T): T {
+	public getUpdatedAtomId<T extends ChangeAtomId>(id: T, count: number = 1): T {
+		assert(count >= 1, "Count must be at least 1");
 		if (this.isObsolete(id.revision)) {
 			const updated: Mutable<T> = { ...id, revision: this.updatedRevision };
-			const prior: ChangesetLocalId | undefined = getFromChangeAtomIdMap(
-				this.updatedLocalIds,
-				id,
-			);
-			if (prior === undefined) {
-				let localId: ChangesetLocalId;
-				if (this.localIds.has(id.localId)) {
-					this.maxSeen = brand(this.maxSeen + 1);
-					localId = this.maxSeen;
+			let continuingOutputId: ChangesetLocalId | undefined;
+			let remainderCount = count;
+			let remainderStart = id;
+			while (remainderCount > 0) {
+				const prior = this.updatedLocalIds.getFirst(remainderStart, remainderCount);
+				if (prior.value === undefined) {
+					const defaultOutputId = continuingOutputId ?? remainderStart.localId;
+					const newLocalId =
+						this.localIds.getAll(defaultOutputId, prior.length).length > 0
+							? // Some of the IDs in this range have already been used in the scope of the updated revision.
+								// We need to allocate new local IDs.
+								brand<ChangesetLocalId>(this.maxSeen + 1)
+							: // This change atom ID uses a local ID that has not yet been used in the scope of the updated revision.
+								// We reuse it as is to minimize the number of IDs that need to be updated.
+								defaultOutputId;
+
+					this.maxSeen = brand(Math.max(this.maxSeen, newLocalId + prior.length - 1));
+					this.localIds.set(newLocalId, prior.length, true);
+					this.updatedLocalIds.set(remainderStart, prior.length, newLocalId);
+					if (continuingOutputId === undefined) {
+						updated.localId = newLocalId;
+					} else if (newLocalId !== continuingOutputId) {
+						fail("TODO: Handle non-contiguous ranges");
+					}
+					continuingOutputId = offsetChangesetLocalId(newLocalId, prior.length);
 				} else {
-					// This change atom ID uses a local ID that has not yet been used in the scope of the updated revision.
-					// We reuse it as is to minimize the number of IDs that need to be updated.
-					localId = id.localId;
-					this.maxSeen = brand(Math.max(this.maxSeen, localId));
-					this.localIds.add(id.localId);
+					if (continuingOutputId === undefined) {
+						updated.localId = prior.value;
+					} else if (prior.value !== continuingOutputId) {
+						fail("TODO: Handle non-contiguous ranges");
+					}
+					continuingOutputId = offsetChangesetLocalId(prior.value, prior.length);
 				}
-				setInChangeAtomIdMap(this.updatedLocalIds, id, localId);
-				updated.localId = localId;
-			} else {
-				updated.localId = prior;
+				remainderStart = offsetChangeAtomId(remainderStart, prior.length);
+				remainderCount -= prior.length;
 			}
 			return updated;
 		}

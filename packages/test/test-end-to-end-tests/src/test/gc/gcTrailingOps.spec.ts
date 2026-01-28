@@ -37,6 +37,8 @@ import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSum
  */
 describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 	/**
+	 * Creates a suite of tests for different trailing op scenarios.
+	 *
 	 * @param transition - The referenced state transition that the trailing op would do.
 	 * @param when - Whether the trailing op should be sent before or after sweep timeout.
 	 */

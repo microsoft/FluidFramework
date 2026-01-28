@@ -82,9 +82,11 @@ export class ReferenceMapProperty extends StringMapProperty {
 	/**
 	 * Removes the entry with the given key from the map
 	 *
+	 * Note: If the key does not exist, a warning is logged and no error is thrown.
+	 * This is intentional to support idempotent operations in collaborative editing scenarios.
+	 *
 	 * @param {string} in_key - The key of the entry to remove from the map
-	 * @throws If trying to remove an entry that does not exist
-	 * @returns {String} the item removed (a string pathT
+	 * @returns {String} the item removed (a string path), or undefined if the key does not exist
 	 */
 	remove(in_key) {
 		var item = this.getValue(in_key);

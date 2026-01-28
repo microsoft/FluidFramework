@@ -77,6 +77,8 @@ export interface UserPassCredentials {
 }
 
 /**
+ * Asserts that the endpoint is a valid ODSP endpoint or `undefined`.
+ *
  * @internal
  */
 export function assertOdspEndpoint(

@@ -1067,6 +1067,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
     getChange(): JsonCompatibleReadOnly;
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
     readonly isLocal: true;
+    readonly label?: unknown;
 }
 
 // @public @sealed
@@ -1247,6 +1248,7 @@ export interface RemoteChangeMetadata extends CommitMetadata {
     readonly getChange?: undefined;
     readonly getRevertible?: undefined;
     readonly isLocal: false;
+    readonly label?: undefined;
 }
 
 // @alpha
@@ -1322,6 +1324,7 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParams {
+    readonly label?: unknown;
     readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
@@ -1911,6 +1914,7 @@ export interface TreeArrayNode<TAllowedTypes extends System_Unsafe.ImplicitAllow
     moveToIndex(destinationGap: number, sourceIndex: number, source: TMoveFrom): void;
     moveToStart(sourceIndex: number): void;
     moveToStart(sourceIndex: number, source: TMoveFrom): void;
+    push(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
     values(): IterableIterator<T>;
@@ -1956,7 +1960,7 @@ export interface TreeBranchAlpha extends TreeBranch {
 // @alpha @sealed
 export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
-    commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+    commitApplied(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 // @alpha @sealed
