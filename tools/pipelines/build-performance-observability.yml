@@ -264,8 +264,7 @@ extends:
                 TREND_DAYS=3
                 TREND_LABEL="3-Day Trend"
                 DASHBOARD_TITLE="FluidFramework PR Build Dashboard"
-                SECTION_TITLE="Public PR Builds (Targeting main)"
-                SECTION_ICON="🔀"
+                SECTION_TITLE="PR Builds"
                 CHART_COLOR="rgba(138, 43, 226, 1)"
                 CHART_BG_COLOR="rgba(138, 43, 226, 0.1)"
                 BUILD_TYPE="Pull Request"
@@ -275,12 +274,11 @@ extends:
                 BUILD_DEF_ID="$INTERNAL_BUILD_DEF_ID"
                 TREND_DAYS=7
                 TREND_LABEL="7-Day Trend"
-                DASHBOARD_TITLE="FluidFramework Post-Merge Build Dashboard"
-                SECTION_TITLE="Internal Post-Merge Builds (main branch)"
-                SECTION_ICON="🔨"
+                DASHBOARD_TITLE="FluidFramework Internal Build Dashboard"
+                SECTION_TITLE="Internal Builds"
                 CHART_COLOR="rgba(0, 120, 212, 1)"
                 CHART_BG_COLOR="rgba(0, 120, 212, 0.1)"
-                BUILD_TYPE="Post-Merge"
+                BUILD_TYPE="Internal"
                 REASON_FILTER_LINE=""
                 BRANCH_INFO="Branch: <code>refs/heads/main</code>"
               fi
@@ -614,14 +612,10 @@ extends:
                   <div class="container">
                       <h1>DASHBOARD_TITLE_PLACEHOLDER</h1>
                       <div class="timestamp">
-                          Generated: <span id="timestamp">TIMESTAMP_PLACEHOLDER</span>
+                          Generated on <strong><span id="timestamp">TIMESTAMP_PLACEHOLDER</span></strong>
                       </div>
 
-                      <h2>SECTION_ICON_PLACEHOLDER SECTION_TITLE_PLACEHOLDER</h2>
-                      <div class="timestamp">
-                          <span class="badge">Build BUILD_DEF_ID_PLACEHOLDER</span>
-                          <span class="badge">BUILD_TYPE_PLACEHOLDER</span>
-                      </div>
+                      <h2>SECTION_TITLE_PLACEHOLDER</h2>
                       <div class="metrics">
                           <div class="metric-card">
                               <div class="metric-label">Total Builds</div>
@@ -645,22 +639,22 @@ extends:
                           </div>
                       </div>
 
-                      <h2>📈 Duration Trend</h2>
+                      <h2>Duration Trend</h2>
                       <div class="chart-container duration-chart">
                           <canvas id="durationTrendChart"></canvas>
                       </div>
 
-                      <h2>🏗️ Duration by Stage</h2>
+                      <h2>Duration by Stage</h2>
                       <div class="chart-container stage-chart">
                           <canvas id="stageBreakdownChart"></canvas>
                       </div>
 
-                      <h2>🔍 Individual Task Duration</h2>
+                      <h2>Individual Task Duration</h2>
                       <div class="chart-container stage-chart">
                           <canvas id="buildStageDetailChart"></canvas>
                       </div>
 
-                      <h2>🕐 Recent Builds (20)</h2>
+                      <h2>Recent Builds</h2>
                       <div class="table-container">
                           <table class="builds-table" id="recentBuildsTable">
                               <thead>
@@ -685,7 +679,7 @@ extends:
                           </div>
                       </div>
 
-                      <h2>🐢 Longest Builds (Top 20)</h2>
+                      <h2>Longest Builds</h2>
                       <div class="table-container">
                           <table class="builds-table" id="longestBuildsTable">
                               <thead>
@@ -711,9 +705,9 @@ extends:
                       </div>
 
                       <div class="info">
-                          <h3>📊 About This View</h3>
+                          <h3>About This Dashboard</h3>
                           <p>
-                              This view shows metrics for <strong>BUILD_TYPE_PLACEHOLDER builds</strong> from the PROJECT_PLACEHOLDER project.
+                              This dashboard shows metrics for <strong>BUILD_TYPE_PLACEHOLDER builds</strong> from the PROJECT_PLACEHOLDER project.
                           </p>
                           <h4>Filters Applied:</h4>
                           <ul>
@@ -742,19 +736,10 @@ extends:
                           const isoString = timestampEl.textContent;
                           const date = new Date(isoString);
 
-                          // Format: MM/DD/YYYY hh:mm AM/PM Timezone
-                          const month = String(date.getMonth() + 1).padStart(2, '0');
-                          const day = String(date.getDate()).padStart(2, '0');
-                          const year = date.getFullYear();
+                          const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                          const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
 
-                          let hours = date.getHours();
-                          const minutes = String(date.getMinutes()).padStart(2, '0');
-                          const ampm = hours >= 12 ? 'PM' : 'AM';
-                          hours = hours % 12 || 12;
-
-                          const timezone = date.toLocaleTimeString('en-us', {timeZoneName:'short'}).split(' ').pop();
-
-                          timestampEl.textContent = `${month}/${day}/${year} ${hours}:${minutes} ${ampm} ${timezone}`;
+                          timestampEl.textContent = dateStr + ' ' + timeStr;
                       }
 
                       // Color palette for stacked bar chart segments
@@ -824,7 +809,7 @@ extends:
                                       },
                                       title: {
                                           display: true,
-                                          text: 'Average Build Duration Per Day',
+                                          text: 'Average Build Duration',
                                           font: { size: 14, weight: 'bold' }
                                       },
                                       tooltip: {
@@ -910,7 +895,7 @@ extends:
                                       },
                                       title: {
                                           display: true,
-                                          text: 'Average Duration by Stage/Task',
+                                          text: 'Average Duration by Stage',
                                           font: { size: 14, weight: 'bold' }
                                       },
                                       tooltip: {
@@ -1082,7 +1067,7 @@ extends:
                               const sourceCell = build.sourceUrl ? '<a href="' + build.sourceUrl + '" target="_blank">' + build.source + '</a>' : build.source;
 
                               return '<tr>' +
-                                  '<td><a href="' + build.url + '" target="_blank">#' + build.id + '</a></td>' +
+                                  '<td><a href="' + build.url + '" target="_blank">' + build.id + '</a></td>' +
                                   '<td>' + dateStr + ' ' + timeStr + '</td>' +
                                   '<td>' + build.duration.toFixed(1) + 'm</td>' +
                                   '<td>' + sourceCell + '</td>' +
@@ -1177,7 +1162,6 @@ extends:
               sed -i "s/TOTAL_BUILDS_PLACEHOLDER/$TOTAL_BUILDS/g" "$HTML_FILE"
               sed -i "s/DASHBOARD_TITLE_PLACEHOLDER/$DASHBOARD_TITLE/g" "$HTML_FILE"
               sed -i "s/SECTION_TITLE_PLACEHOLDER/$SECTION_TITLE/g" "$HTML_FILE"
-              sed -i "s/SECTION_ICON_PLACEHOLDER/$SECTION_ICON/g" "$HTML_FILE"
               sed -i "s/BUILD_TYPE_PLACEHOLDER/$BUILD_TYPE/g" "$HTML_FILE"
               sed -i "s/TREND_LABEL_PLACEHOLDER/$TREND_LABEL/g" "$HTML_FILE"
               sed -i "s/TREND_DAYS_PLACEHOLDER/$TREND_DAYS/g" "$HTML_FILE"
