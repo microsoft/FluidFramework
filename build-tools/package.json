@@ -146,6 +146,7 @@
 			]
 		},
 		"overrideComments": [
+			"biome is overridden to make review of the upgrade easier. This can be removed once merged.",
 			"eslint: jssm-viz-cli brings in ESLint 8.x as a transitive dependency. Force ESLint 9.x to ensure consistent version across the workspace.",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
 			"@types/node: To avoid duplicating the oclif package and adding a bunch of dependencies, force @types/node to a single version. For some reason version 22.8.0 can't be overridden, so use that to ensure a single version",
