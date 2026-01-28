@@ -252,6 +252,12 @@ export const reactRecommendedOverride = {
  * Test file overrides for recommended config (from recommended.js).
  */
 export const testRecommendedOverride = {
+	// Use of spread operator shouldn't really be needed here. Under VS Code, a
+	// complaint is raised that
+	//   The type 'readonly [...]' is 'readonly' and cannot be assigned to the mutable type '(string | string[])[]'.ts(4104)
+	// without spread. But that doesn't appear in other uses. Use spread to pacify
+	// that environment. (Remember mutability is not well checked in TS generally.
+	// So an extra copy if safety was needed isn't a problem.)
 	files: [...testFilePatterns],
 	rules: {
 		"unicorn/consistent-function-scoping": "off",
