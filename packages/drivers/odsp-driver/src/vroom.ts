@@ -137,8 +137,7 @@ export const fetchJoinSession = mockify(
 					pushv2: socketUrl.includes("pushf"),
 					webSocketHostName,
 					refreshSessionDurationSeconds: response.content.refreshSessionDurationSeconds,
-					hasSensitivityLabelsInfo:
-						response.content.sensitivityLabelsInfo !== undefined,
+					hasSensitivityLabelsInfo: response.content.sensitivityLabelsInfo !== undefined,
 				});
 
 				if (response.content.runtimeTenantId && !response.content.tenantId) {
