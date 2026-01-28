@@ -41,7 +41,7 @@ variables:
   # Organization
   - name: organization
     value: fluidframework
-  # Mode: public = PR builds, internal = post-merge builds
+  # Mode: public = PR builds, internal = internal builds
   - name: isPublicProject
     value: ${{ eq(variables['System.TeamProject'], 'public') }}
   # Build definition IDs
@@ -89,7 +89,9 @@ extends:
         steps:
         - checkout: none
 
-        # First step: determine if we should run based on project/schedule match
+        # Determine if we should skip the remainder of the pipeline
+        # This happens if we are running from the cron schedule and the run was intended
+        # for the other project (public vs internal).
         - task: Bash@3
           name: detect
           displayName: Detect run mode
@@ -172,54 +174,27 @@ extends:
               # Save mode for subsequent tasks
               echo "$MODE" > "$(Build.ArtifactStagingDirectory)/metrics/mode.txt"
 
-              # Function to fetch with retry
-              fetch_with_retry() {
-                local url="$1"
-                local output="$2"
-                local max_attempts=3
-                local attempt=1
-
-                while [ $attempt -le $max_attempts ]; do
-                  echo "Attempt $attempt of $max_attempts..."
-                  HTTP_CODE=$(curl -sL --max-time 60 -w "%{http_code}" -u ":$ADO_API_TOKEN" "$url" -o "$output")
-
-                  if [ "$HTTP_CODE" = "200" ]; then
-                    # Validate JSON response
-                    if jq empty "$output" 2>/dev/null; then
-                      echo "Successfully fetched data (HTTP $HTTP_CODE)"
-                      return 0
-                    else
-                      echo "Warning: Response is not valid JSON, retrying..."
-                    fi
-                  else
-                    echo "HTTP $HTTP_CODE - request failed"
-                  fi
-
-                  attempt=$((attempt + 1))
-                  if [ $attempt -le $max_attempts ]; then
-                    echo "Waiting 5 seconds before retry..."
-                    sleep 5
-                  fi
-                done
-
-                echo "Error: Failed to fetch data after $max_attempts attempts"
-                return 1
-              }
+              OUTPUT_FILE="$(Build.ArtifactStagingDirectory)/metrics/builds-raw.json"
 
               if [ "$MODE" = "public" ]; then
                 # Fetch PR builds with reasonFilter and statusFilter
                 echo "Fetching last $BUILD_COUNT PR builds (reason=pullRequest, succeeded/partiallySucceeded, completed)..."
-
-                fetch_with_retry \
+                curl -sL --max-time 60 -u ":$ADO_API_TOKEN" \
                   "https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds?definitions=$BUILD_DEF_ID&reasonFilter=pullRequest&resultFilter=succeeded,partiallySucceeded&statusFilter=completed&\$top=$BUILD_COUNT&api-version=7.1" \
-                  "$(Build.ArtifactStagingDirectory)/metrics/builds-raw.json"
+                  -o "$OUTPUT_FILE"
               else
-                # Fetch post-merge builds from main branch
-                echo "Fetching last $BUILD_COUNT post-merge builds (branch=main, succeeded/partiallySucceeded, completed)..."
-
-                fetch_with_retry \
+                # Fetch internal builds from main branch
+                echo "Fetching last $BUILD_COUNT internal builds (branch=main, succeeded/partiallySucceeded, completed)..."
+                curl -sL --max-time 60 -u ":$ADO_API_TOKEN" \
                   "https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds?definitions=$BUILD_DEF_ID&branchName=refs/heads/main&resultFilter=succeeded,partiallySucceeded&statusFilter=completed&\$top=$BUILD_COUNT&api-version=7.1" \
-                  "$(Build.ArtifactStagingDirectory)/metrics/builds-raw.json"
+                  -o "$OUTPUT_FILE"
+              fi
+
+              # Validate JSON response
+              if ! jq empty "$OUTPUT_FILE" 2>/dev/null; then
+                echo "Error: Response is not valid JSON"
+                cat "$OUTPUT_FILE"
+                exit 1
               fi
 
               echo "Build data fetched successfully!"
@@ -253,14 +228,14 @@ extends:
                 echo "Filtered to $TOTAL_AFTER PR builds targeting main branch"
               else
                 echo "=========================================="
-                echo "Post-merge mode - no filtering needed"
+                echo "Internal mode - no filtering needed"
                 echo "=========================================="
 
                 # Just copy the raw file to builds.json
                 cp "$(Build.ArtifactStagingDirectory)/metrics/builds-raw.json" "$(Build.ArtifactStagingDirectory)/metrics/builds.json"
 
                 TOTAL=$(jq '.value | length' "$(Build.ArtifactStagingDirectory)/metrics/builds.json")
-                echo "Total post-merge builds: $TOTAL"
+                echo "Total internal builds: $TOTAL"
               fi
 
         - task: Bash@3
@@ -733,7 +708,7 @@ extends:
                           }
                           const trendColor = durationChange < 0 ? '#107c10' : durationChange > 0 ? '#d13438' : '#605e5c';
                           const trendSign = durationChange > 0 ? '+' : durationChange < 0 ? '' : '';
-                          const timestamp = data.generatedAt ? new Date(data.generatedAt).toLocaleString(undefined, { timeZoneName: 'short' }) : 'Unknown';
+                          const timestamp = data.generatedAt ? (() => { const d = new Date(data.generatedAt); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }); })() : 'Unknown';
                           container.innerHTML = '<div class="timestamp">Last updated: <strong>' + timestamp + '</strong></div>' +
                               '<div class="metrics"><div class="metric-card"><div class="metric-label">Total Builds</div><div class="metric-value">' + (data.summary?.totalBuilds || 0) + '</div></div>' +
                               '<div class="metric-card"><div class="metric-label">Avg Duration</div><div class="metric-value">' + (data.summary?.avgDuration || 0).toFixed(1) + 'm</div></div>' +
