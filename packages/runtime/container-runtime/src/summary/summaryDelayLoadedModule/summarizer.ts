@@ -9,7 +9,7 @@ import type {
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import { Deferred } from "@fluidframework/core-utils/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
@@ -176,14 +176,16 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 				}
 				return coordinator;
 			}),
-			new Promise<"timeout">((resolve) =>
-				setTimeout(() => resolve("timeout"), coordinatorTimeoutMs),
+			new Promise<undefined>((resolve) =>
+				setTimeout(() => {
+					coordinatorTimedOut = true;
+					resolve(undefined);
+				}, coordinatorTimeoutMs),
 			),
 		]);
 
 		// If we timed out before coordinator was created, exit early
-		if (coordinatorResult === "timeout") {
-			coordinatorTimedOut = true;
+		if (coordinatorTimedOut) {
 			this.logger.sendTelemetryEvent({
 				eventName: "CreateRunCoordinatorTimeout",
 				onBehalfOf,
@@ -192,6 +194,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			return "summarizerClientDisconnected";
 		}
 
+		assert(coordinatorResult !== undefined, "Expect coordinatorResult to be defined");
 		const runCoordinator = coordinatorResult;
 
 		// Wait for either external signal to cancel, or loss of connectivity.
