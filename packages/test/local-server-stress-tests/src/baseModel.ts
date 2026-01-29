@@ -78,8 +78,8 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 });
 
 /**
- * Number of operations in the "creation phase" before attach.
- * During this phase, we prioritize creating datastores and channels.
+ * Threshold for the "creation phase": the first N operations before attach
+ * prioritize creating datastores and channels.
  */
 const creationPhaseOps = 7;
 
@@ -194,12 +194,15 @@ export function makeGenerator<T extends BaseOperation>(
 	]);
 
 	return async (state) => {
-		const result = await asyncGenerator(state);
-		// Track detached operation count for phasing (increment AFTER generating op)
-		if (state.client.container.attachState === AttachState.Detached) {
+		// Capture attach state before generating the operation so phase selection
+		// uses the pre-increment detachedOpCount value.
+		const wasDetached = state.client.container.attachState === AttachState.Detached;
+		const op = await asyncGenerator(state);
+		// Track detached operation count for phasing after the operation is generated.
+		if (wasDetached) {
 			detachedOpCount++;
 		}
-		return result;
+		return op;
 	};
 }
 export const saveFailures = { directory: path.join(_dirname, "../src/test/results") };

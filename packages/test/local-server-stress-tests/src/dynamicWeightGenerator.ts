@@ -43,7 +43,7 @@ function evaluateWeight<TState>(weight: DynamicWeight<TState>, state: TState): n
  * evaluated at runtime with the current state.
  *
  * @param weights - Array of [generator, weight, acceptanceCondition?] tuples where
- * weight can be a number or a function (state) =\> number
+ * weight can be a number or a function `(state) => number`
  */
 export function createWeightedAsyncGeneratorWithDynamicWeights<
 	T,
