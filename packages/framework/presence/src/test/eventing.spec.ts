@@ -26,6 +26,8 @@ import {
 	assertFinalExpectations,
 	prepareConnectedPresence,
 	attendeeId1,
+	localAttendeeId,
+	initialLocalClientConnectionId,
 } from "./testUtils.js";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";
@@ -222,8 +224,8 @@ describe("Presence", () => {
 			runtime = new MockEphemeralRuntime(logger);
 			({ presence, processSignal } = prepareConnectedPresence(
 				runtime,
-				"attendeeId-2",
-				"client2",
+				localAttendeeId,
+				initialLocalClientConnectionId,
 				clock,
 				logger,
 			));
@@ -243,7 +245,9 @@ describe("Presence", () => {
 
 		function setupSharedStatesWorkspace({
 			notifications,
-		}: { notifications?: true } = {}): void {
+		}: {
+			notifications?: true;
+		} = {}): void {
 			const statesWorkspace = presence.states.getWorkspace("name:testWorkspace", {
 				latest: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 				latestMap: StateFactory.latestMap({

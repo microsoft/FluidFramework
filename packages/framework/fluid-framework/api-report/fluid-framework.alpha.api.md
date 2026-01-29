@@ -114,6 +114,11 @@ export const ArrayNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is ArrayNodeSchema;
 };
 
+// @alpha @sealed
+export interface ArrayPlaceAnchor {
+    get index(): number;
+}
+
 // @alpha
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
@@ -230,6 +235,9 @@ export interface ContainerSchema {
 
 // @alpha
 export const contentSchemaSymbol: unique symbol;
+
+// @alpha
+export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: number): ArrayPlaceAnchor;
 
 // @alpha
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
@@ -1062,6 +1070,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
     getChange(): JsonCompatibleReadOnly;
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
     readonly isLocal: true;
+    readonly label?: unknown;
 }
 
 // @public @sealed
@@ -1242,6 +1251,7 @@ export interface RemoteChangeMetadata extends CommitMetadata {
     readonly getChange?: undefined;
     readonly getRevertible?: undefined;
     readonly isLocal: false;
+    readonly label?: undefined;
 }
 
 // @alpha
@@ -1317,6 +1327,7 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParams {
+    readonly label?: unknown;
     readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
@@ -1906,6 +1917,7 @@ export interface TreeArrayNode<TAllowedTypes extends System_Unsafe.ImplicitAllow
     moveToIndex(destinationGap: number, sourceIndex: number, source: TMoveFrom): void;
     moveToStart(sourceIndex: number): void;
     moveToStart(sourceIndex: number, source: TMoveFrom): void;
+    push(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
     values(): IterableIterator<T>;
@@ -1951,7 +1963,7 @@ export interface TreeBranchAlpha extends TreeBranch {
 // @alpha @sealed
 export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
-    commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+    commitApplied(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 // @alpha @sealed

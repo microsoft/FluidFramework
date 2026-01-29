@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access -- This file uses intentional `as any` casts to access hidden internal properties (cells, tableSchemaSymbol) */
+
 import { fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { EmptyKey } from "./core/index.js";
 import { TreeAlpha } from "./shared-tree/index.js";
 import {
 	type FieldHasDefault,
@@ -36,7 +39,6 @@ import {
 	type TransactionConstraintAlpha,
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";
-import { EmptyKey } from "./core/index.js";
 
 // Future improvement TODOs:
 // - Omit `cells` property from Row insertion type.
@@ -914,8 +916,7 @@ export namespace System_TableSchema {
 							this.table.rows.removeAt(index);
 						}
 					},
-					preconditionsOnRevert:
-						columnConstraints.length > 0 ? columnConstraints : undefined,
+					preconditionsOnRevert: columnConstraints.length > 0 ? columnConstraints : undefined,
 				});
 				return rowsToRemove;
 			}
@@ -1362,10 +1363,10 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  * This allows association of additional properties with column and row nodes.
  *
  * There is a concept of cells in the table becoming "orphaned.". An orphaned cell is a cell that does not correspond to a valid row and column.
- * In order to preserve the invariant that all cells must have a valid row and column, table operations 
+ * In order to preserve the invariant that all cells must have a valid row and column, table operations
  * (eg, inserting/removing rows/columns, or setting/removing a cell) will automatically include constraints that
- * guards transactions from producing orphaned cells.  
- * 
+ * guards transactions from producing orphaned cells.
+ *
  * @example Defining a Table schema
  *
  * ```typescript

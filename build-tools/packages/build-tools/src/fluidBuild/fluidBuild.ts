@@ -44,6 +44,7 @@ async function main(): Promise<void> {
 	const matched = repo.setMatched(options);
 	if (!matched) {
 		error("No package matched");
+		// eslint-disable-next-line unicorn/no-process-exit -- exit with error code when no packages match the filter
 		process.exit(-4);
 	}
 
@@ -51,6 +52,7 @@ async function main(): Promise<void> {
 	if (options.uninstall) {
 		if (!(await repo.uninstall())) {
 			error(`uninstall failed`);
+			// eslint-disable-next-line unicorn/no-process-exit -- exit with error code when uninstall operation fails
 			process.exit(-8);
 		}
 		timer.time("Uninstall completed", true);
@@ -65,7 +67,7 @@ async function main(): Promise<void> {
 			if (errorStep) {
 				warn(`Skipping ${errorStep} after uninstall`);
 			}
-			process.exit(0);
+			return;
 		}
 	}
 
@@ -74,6 +76,7 @@ async function main(): Promise<void> {
 		log("Installing packages");
 		if (!(await repo.install())) {
 			error(`Install failed`);
+			// eslint-disable-next-line unicorn/no-process-exit -- exit with error code when package installation fails
 			process.exit(-5);
 		}
 		timer.time("Install completed", true);
@@ -94,6 +97,7 @@ async function main(): Promise<void> {
 		} catch (e: unknown) {
 			spinner.stop();
 			error((e as Error).message);
+			// eslint-disable-next-line unicorn/no-process-exit -- exit with error code when build graph creation fails
 			process.exit(-11);
 		}
 		spinner.succeed("Build graph created.");
@@ -102,6 +106,7 @@ async function main(): Promise<void> {
 		// Check install
 		if (!(await buildGraph.checkInstall())) {
 			error("Dependency not installed. Use --install to fix.");
+			// eslint-disable-next-line unicorn/no-process-exit -- exit with error code when required dependencies are missing
 			process.exit(-10);
 		}
 		timer.time("Check install completed");
@@ -141,6 +146,7 @@ async function main(): Promise<void> {
 	if (failureSummary !== "") {
 		log(`\n${failureSummary}`);
 	}
+	// eslint-disable-next-line unicorn/no-process-exit -- CLI entrypoint: return build result code to caller
 	process.exit(exitCode);
 }
 
@@ -155,7 +161,10 @@ function buildResultString(buildResult: BuildResult): string {
 	}
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await -- top-level await requires ESM; this package emits CommonJS
 main().catch((e) => {
 	error(`Unexpected error. ${e.message}`);
 	error(e.stack);
+	// eslint-disable-next-line unicorn/no-process-exit -- exit with error code on unhandled exception
+	process.exit(1);
 });

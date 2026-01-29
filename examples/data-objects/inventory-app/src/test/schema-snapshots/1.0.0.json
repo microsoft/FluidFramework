@@ -1,0 +1,78 @@
+{
+	"version": 1,
+	"root": {
+		"kind": 1,
+		"simpleAllowedTypes": {
+			"com.contoso.app.inventory.Inventory": {
+				"isStaged": false
+			}
+		}
+	},
+	"definitions": {
+		"com.fluidframework.leaf.string": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 1
+			}
+		},
+		"com.fluidframework.leaf.number": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 0
+			}
+		},
+		"com.contoso.app.inventory.Part": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"name": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.string": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "name"
+					},
+					"quantity": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.number": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "quantity"
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.contoso.app.inventory.PartList": {
+			"array": {
+				"kind": 1,
+				"simpleAllowedTypes": {
+					"com.contoso.app.inventory.Part": {
+						"isStaged": false
+					}
+				}
+			}
+		},
+		"com.contoso.app.inventory.Inventory": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"parts": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.contoso.app.inventory.PartList": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "parts"
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		}
+	}
+}

@@ -249,7 +249,10 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 	const ack = ({
 		local,
 		messageCount,
-	}: { local: boolean; messageCount: number }): IRuntimeMessageCollection => ({
+	}: {
+		local: boolean;
+		messageCount: number;
+	}): IRuntimeMessageCollection => ({
 		envelope: {
 			type: "other", // allows us to test top-level logic of runtime.processMessages without actually providing a legit message
 		} satisfies Partial<ISequencedMessageEnvelope> as ISequencedMessageEnvelope,

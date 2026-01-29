@@ -4,16 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { type TreeValue, ValueSchema } from "../core/index.js";
+import { type FieldKey, type TreeValue, ValueSchema } from "../core/index.js";
 import {
 	type FlexTreeNode,
 	isFlexTreeNode,
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
+import { brand, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import {
 	NodeKind,
@@ -27,10 +28,10 @@ import {
 	type TreeNodeSchemaInitializedData,
 	CompatibilityLevel,
 	type FlexContent,
+	type UnhydratedFlexTreeField,
 } from "./core/index.js";
-import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
-import { brand, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 import { getTreeNodeSchemaInitializedData } from "./createContext.js";
+import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
 import type { FactoryContent } from "./unhydratedFlexTreeFromInsertable.js";
 
 /**
@@ -185,7 +186,7 @@ export function leafToFlexContent(
 			value: mappedValue,
 			type: brand(mappedSchema.identifier),
 		},
-		new Map(),
+		new Map<FieldKey, UnhydratedFlexTreeField>(),
 	];
 
 	return result;

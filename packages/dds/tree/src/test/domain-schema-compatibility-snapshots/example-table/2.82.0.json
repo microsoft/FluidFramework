@@ -1,0 +1,210 @@
+{
+  "version": 1,
+  "root": {
+    "kind": 1,
+    "simpleAllowedTypes": {
+      "com.fluidframework.table<test>.TableRoot": {
+        "isStaged": false
+      }
+    }
+  },
+  "definitions": {
+    "com.fluidframework.leaf.string": {
+      "leaf": {
+        "kind": 3,
+        "leafKind": 1
+      }
+    },
+    "test.table-cell": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "value": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.string": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "value"
+          }
+        },
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.table<test>.Row.cells": {
+      "record": {
+        "kind": 4,
+        "simpleAllowedTypes": {
+          "test.table-cell": {
+            "isStaged": false
+          }
+        }
+      }
+    },
+    "com.fluidframework.leaf.boolean": {
+      "leaf": {
+        "kind": 3,
+        "leafKind": 2
+      }
+    },
+    "test.table-row-props": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "selectable": {
+            "kind": 0,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.boolean": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "selectable"
+          }
+        },
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.table<test>.Row": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "id": {
+            "kind": 2,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.string": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "id"
+          },
+          "cells": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.table<test>.Row.cells": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "cells"
+          },
+          "props": {
+            "kind": 0,
+            "simpleAllowedTypes": {
+              "test.table-row-props": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "props"
+          }
+        },
+        "allowUnknownOptionalFields": true
+      }
+    },
+    "com.fluidframework.table<test>.Table.rows": {
+      "array": {
+        "kind": 1,
+        "simpleAllowedTypes": {
+          "com.fluidframework.table<test>.Row": {
+            "isStaged": false
+          }
+        }
+      }
+    },
+    "test.table-column-props": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "label": {
+            "kind": 0,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.string": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "label"
+          }
+        },
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.table<test>.Column": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "id": {
+            "kind": 2,
+            "simpleAllowedTypes": {
+              "com.fluidframework.leaf.string": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "id"
+          },
+          "props": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "test.table-column-props": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "props"
+          }
+        },
+        "allowUnknownOptionalFields": true
+      }
+    },
+    "com.fluidframework.table<test>.Table.columns": {
+      "array": {
+        "kind": 1,
+        "simpleAllowedTypes": {
+          "com.fluidframework.table<test>.Column": {
+            "isStaged": false
+          }
+        }
+      }
+    },
+    "com.fluidframework.table<test>.Table": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "rows": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.table<test>.Table.rows": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "rows"
+          },
+          "columns": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.table<test>.Table.columns": {
+                "isStaged": false
+              }
+            },
+            "storedKey": "columns"
+          }
+        },
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "com.fluidframework.table<test>.TableRoot": {
+      "object": {
+        "kind": 2,
+        "fields": {
+          "table": {
+            "kind": 1,
+            "simpleAllowedTypes": {
+              "com.fluidframework.table<test>.Table": {
+                "isStaged": false
+              }
+            },
+            "storedKey": ""
+          }
+        },
+        "allowUnknownOptionalFields": true
+      }
+    }
+  }
+}

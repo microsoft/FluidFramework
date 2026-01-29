@@ -34,15 +34,6 @@ const config: Linter.Config[] = [
 			"unicorn/prefer-module": "off",
 		},
 	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.json"],
-			},
-		},
-	},
 ];
 
 export default config;
