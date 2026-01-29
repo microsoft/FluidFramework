@@ -122,7 +122,7 @@ export function taggedOptAtomId(
 	return taggedAtomId(id, revision);
 }
 
-export function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {
+export function offsetChangeAtomId<T extends ChangeAtomId>(id: T, offset: number): T {
 	return { ...id, localId: brand(id.localId + offset) };
 }
 
@@ -255,8 +255,10 @@ export function mintCommit<TChange>(
 
 export type ChangeAtomIdRangeMap<V> = RangeMap<ChangeAtomId, V>;
 
-export function newChangeAtomIdRangeMap<V>(): ChangeAtomIdRangeMap<V> {
-	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds);
+export function newChangeAtomIdRangeMap<V>(
+	offsetValue?: (value: V, offset: number) => V,
+): ChangeAtomIdRangeMap<V> {
+	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds, offsetValue);
 }
 
 export function newChangeAtomIdTransform(): ChangeAtomIdRangeMap<ChangeAtomId> {

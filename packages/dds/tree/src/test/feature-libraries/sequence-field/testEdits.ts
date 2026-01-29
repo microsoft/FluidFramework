@@ -59,7 +59,7 @@ export const cases: {
 		undefined /* revision */,
 	),
 	pin: [createPinMark(4, brand(0))],
-	rename: [createRenameMark(3, brand(2), brand(3))],
+	rename: [createRenameMark(3, brand(2), brand(20))],
 	move: createMoveChangeset(1, 2, 4, undefined /* revision */),
 	return: createReturnChangeset(
 		1,
@@ -71,7 +71,7 @@ export const cases: {
 	),
 	transient_insert: [
 		{ count: 1 },
-		createRemoveMark(2, brand(2), { cellId: { localId: brand(1) } }),
+		createRemoveMark(2, brand(4), { cellId: { localId: brand(1) } }),
 	],
 };
 

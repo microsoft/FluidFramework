@@ -36,13 +36,13 @@ export function replaceRevisions(changeset: Changeset, replacer: RevisionReplace
 }
 
 function updateMark(mark: Mark, replacer: RevisionReplacer): Mark {
-	const updatedMark = { ...replaceEffectRevisions(mark, replacer) };
+	const updatedMark = { ...replaceEffectRevisions(mark, mark.count, replacer) };
 	if (mark.cellId !== undefined) {
-		updatedMark.cellId = replacer.getUpdatedAtomId(mark.cellId);
+		updatedMark.cellId = replacer.getUpdatedAtomId(mark.cellId, mark.count);
 	}
 
 	if (mark.changes !== undefined) {
-		updatedMark.changes = replacer.getUpdatedAtomId(mark.changes);
+		updatedMark.changes = replacer.getUpdatedAtomId(mark.changes, mark.count);
 	}
 
 	return updatedMark;
@@ -50,6 +50,7 @@ function updateMark(mark: Mark, replacer: RevisionReplacer): Mark {
 
 function replaceEffectRevisions<TMark extends MarkEffect>(
 	mark: TMark,
+	count: number,
 	replacer: RevisionReplacer,
 ): TMark {
 	const type = mark.type;
@@ -58,16 +59,16 @@ function replaceEffectRevisions<TMark extends MarkEffect>(
 			return mark;
 		}
 		case "Insert": {
-			return updateRevisionAndId(mark as TMark & Attach, replacer);
+			return updateRevisionAndId(mark as TMark & Attach, count, replacer);
 		}
 
 		case "Remove": {
-			return replaceDetachRevisions<TMark & Detach>(mark as Detach & TMark, replacer);
+			return replaceDetachRevisions<TMark & Detach>(mark as Detach & TMark, count, replacer);
 		}
 		case "Rename": {
 			return {
 				...mark,
-				idOverride: replacer.getUpdatedAtomId(mark.idOverride),
+				idOverride: replacer.getUpdatedAtomId(mark.idOverride, count),
 			};
 		}
 		default: {
@@ -78,15 +79,16 @@ function replaceEffectRevisions<TMark extends MarkEffect>(
 
 function replaceDetachRevisions<TDetach extends Detach>(
 	detach: TDetach,
+	count: number,
 	replacer: RevisionReplacer,
 ): TDetach {
-	const updated = updateRevisionAndId(detach, replacer) as Mutable<TDetach>;
+	const updated = updateRevisionAndId(detach, count, replacer) as Mutable<TDetach>;
 	if (updated.cellRename !== undefined) {
-		updated.cellRename = replacer.getUpdatedAtomId(updated.cellRename);
+		updated.cellRename = replacer.getUpdatedAtomId(updated.cellRename, count);
 	}
 
 	if (updated.detachCellId !== undefined) {
-		updated.detachCellId = replacer.getUpdatedAtomId(updated.detachCellId);
+		updated.detachCellId = replacer.getUpdatedAtomId(updated.detachCellId, count);
 	}
 
 	return updated;
@@ -94,12 +96,13 @@ function replaceDetachRevisions<TDetach extends Detach>(
 
 function updateRevisionAndId<T extends HasRevisionTag & HasMoveId>(
 	input: T,
+	count: number,
 	replacer: RevisionReplacer,
 ): T {
 	if (!replacer.isObsolete(input.revision)) {
 		return input;
 	}
-	const newAtom = replacer.getUpdatedAtomId(makeChangeAtomId(input.id, input.revision));
+	const newAtom = replacer.getUpdatedAtomId(makeChangeAtomId(input.id, input.revision), count);
 	return withRevisionAndId(input, newAtom.revision, newAtom.localId);
 }
 
