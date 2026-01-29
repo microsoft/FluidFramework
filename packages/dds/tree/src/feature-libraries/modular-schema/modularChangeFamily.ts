@@ -1602,7 +1602,7 @@ export class ModularChangeFamily
 			baseId,
 		);
 
-		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map();
+		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map<FieldKey, FieldChange>();
 
 		const fieldChanges =
 			change.fieldChanges !== undefined && over.fieldChanges !== undefined
@@ -3430,7 +3430,7 @@ function makeModularChangeset(props?: {
 	const p = props ?? { maxId: -1, rebaseVersion: 1 };
 	const changeset: Mutable<ModularChangeset> = {
 		rebaseVersion: p.rebaseVersion,
-		fieldChanges: p.fieldChanges ?? new Map(),
+		fieldChanges: p.fieldChanges ?? new Map<FieldKey, FieldChange>(),
 		nodeChanges: p.nodeChanges ?? newTupleBTree(),
 		rootNodes: p.rootNodes ?? newRootTable(),
 		nodeToParent: p.nodeToParent ?? newTupleBTree(),
