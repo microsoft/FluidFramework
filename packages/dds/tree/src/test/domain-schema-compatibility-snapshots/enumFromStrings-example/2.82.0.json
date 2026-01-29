@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "root": {
+    "kind": 1,
+    "simpleAllowedTypes": {
+      "test.Mode.Fun": {
+        "isStaged": false
+      },
+      "test.Mode.Cool": {
+        "isStaged": false
+      }
+    }
+  },
+  "definitions": {
+    "test.Mode.Fun": {
+      "object": {
+        "kind": 2,
+        "fields": {},
+        "allowUnknownOptionalFields": false
+      }
+    },
+    "test.Mode.Cool": {
+      "object": {
+        "kind": 2,
+        "fields": {},
+        "allowUnknownOptionalFields": false
+      }
+    }
+  }
+}
