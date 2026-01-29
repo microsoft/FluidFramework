@@ -58,6 +58,7 @@ import {
 	DefaultRevisionReplacer,
 	type ChangeAtomIdBTree,
 	fieldKindConfigurations,
+	ModularChangeFormatVersion,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,
@@ -1498,13 +1499,13 @@ describe("ModularChangeFamily", () => {
 			],
 		};
 
-		makeEncodingTestSuite(
-			family.codecs,
-			encodingTestDataForAllVersions,
-			assertEquivalent,
-			[3, 4],
-		);
-		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [5]);
+		makeEncodingTestSuite(family.codecs, encodingTestDataForAllVersions, assertEquivalent, [
+			ModularChangeFormatVersion.v3,
+			ModularChangeFormatVersion.v4,
+		]);
+		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [
+			ModularChangeFormatVersion.v5,
+		]);
 	});
 
 	it("build child change", () => {
