@@ -131,6 +131,7 @@ module.exports = {
 				"less",
 				"prettier",
 				"typescript",
+				"typescript-eslint",
 				"vue",
 				"webpack-dev-server",
 
