@@ -55,6 +55,9 @@ variables:
   # GitHub repository for source links
   - name: githubRepo
     value: microsoft/FluidFramework
+  # Max concurrent API requests when fetching timeline data
+  - name: parallelJobs
+    value: 20
 
 resources:
   repositories:
@@ -192,8 +195,7 @@ extends:
 
               # Validate JSON response
               if ! jq empty "$OUTPUT_FILE" 2>/dev/null; then
-                echo "Error: Response is not valid JSON"
-                cat "$OUTPUT_FILE"
+                echo "Error: Response is not valid JSON. Response saved to '$OUTPUT_FILE'."
                 exit 1
               fi
 
@@ -245,6 +247,7 @@ extends:
             ADO_API_TOKEN: $(System.AccessToken)
             ORG: $(organization)
             PROJECT: $(targetProject)
+            PARALLEL_JOBS: $(parallelJobs)
           inputs:
             targetType: 'inline'
             script: |
@@ -281,8 +284,8 @@ extends:
               ERRORS_FILE="$(Build.ArtifactStagingDirectory)/metrics/timeline_errors.log"
               touch "$ERRORS_FILE"
 
-              # Fetch in parallel using background jobs (20 at a time to avoid overwhelming the API)
-              PARALLEL_JOBS=20
+              # Fetch in parallel using background jobs
+              echo "Using $PARALLEL_JOBS parallel jobs for timeline fetching"
               count=0
 
               fetch_timeline() {
@@ -291,7 +294,7 @@ extends:
                 local errors_file=$3
                 local http_code
 
-                http_code=$(curl -sL --max-time 30 -w "%{http_code}" -u ":$ADO_API_TOKEN" \
+                http_code=$(curl -sL --max-time 60 -w "%{http_code}" -u ":$ADO_API_TOKEN" \
                   "https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds/$build_id/timeline?api-version=7.1" \
                   -o "$output_file")
 
@@ -381,7 +384,7 @@ extends:
                 # Build duration trend (avg per day)
                 (group_by(.startTime | split("T")[0]) | map({
                   date: .[0].startTime | split("T")[0],
-                  avgDuration: (map(durationMins) | add / length)
+                  avgDuration: (map(durationMins) | if length > 0 then add / length else 0 end)
                 })) as $durationTrend |
 
                 # Recent 20 builds for table (sorted by date descending)
@@ -407,8 +410,8 @@ extends:
                   summary: {
                     totalBuilds: length,
                     succeeded: (map(select(.result == "succeeded")) | length),
-                    successRate: ((map(select(.result == "succeeded")) | length) * 100 / length),
-                    avgDuration: (map(durationMins) | add / length)
+                    successRate: (if length > 0 then ((map(select(.result == "succeeded")) | length) * 100 / length) else 0 end),
+                    avgDuration: (map(durationMins) | if length > 0 then add / length else 0 end)
                   },
                   durationTrend: $durationTrend,
                   recentBuilds: $recentBuilds,
@@ -465,10 +468,10 @@ extends:
 
               # Add stage data to output JSON
               jq --argjson stages "$STAGE_DATA" --argjson stageTasks "$STAGE_TASKS_DATA" '
-                .stagePerformance = ($stages | to_entries | map({name: .key, avgDuration: ((.value | add) / (.value | length))})) |
+                .stagePerformance = ($stages | to_entries | map({name: .key, avgDuration: (if (.value | length) > 0 then ((.value | add) / (.value | length)) else 0 end)})) |
                 .stageTaskBreakdown = ($stageTasks | to_entries | map({
                   key: .key,
-                  value: (.value | to_entries | map({name: .key, avgDuration: ((.value | add) / (.value | length))}))
+                  value: (.value | to_entries | map({name: .key, avgDuration: (if (.value | length) > 0 then ((.value | add) / (.value | length)) else 0 end)}))
                 }) | from_entries)
               ' "$OUTPUT_FILE" > "${OUTPUT_FILE}.tmp"
               mv "${OUTPUT_FILE}.tmp" "$OUTPUT_FILE"
@@ -516,8 +519,11 @@ extends:
               FETCH_OUTPUT="$DEPLOY_DIR/data/$OTHER_FILE"
 
               echo "Fetching from: $FETCH_URL"
-              HTTP_CODE=$(curl -sL --max-time 30 -w "%{http_code}" -o "$FETCH_OUTPUT" "$FETCH_URL") || true
-              if [ "$HTTP_CODE" = "200" ] && [ -s "$FETCH_OUTPUT" ]; then
+              HTTP_CODE=$(curl -sL --max-time 30 -w "%{http_code}" -o "$FETCH_OUTPUT" "$FETCH_URL") || HTTP_CODE="000"
+              if [ "$HTTP_CODE" = "000" ]; then
+                echo "Error: curl failed (network or connectivity issue)"
+                rm -f "$FETCH_OUTPUT"
+              elif [ "$HTTP_CODE" = "200" ] && [ -s "$FETCH_OUTPUT" ]; then
                 echo "Successfully fetched $OTHER_FILE (HTTP $HTTP_CODE, $(wc -c < "$FETCH_OUTPUT") bytes)"
               else
                 echo "HTTP $HTTP_CODE - fetch failed or empty response"
@@ -526,8 +532,8 @@ extends:
                 echo "      The dashboard will show 'No data available' for that tab until the other pipeline runs."
               fi
 
-              # Write staticwebapp.config.json inline (sed strips leading 14 spaces from heredoc)
-              sed 's/^              //' > "$DEPLOY_DIR/staticwebapp.config.json" << 'CONFIGEOF'
+              # Write staticwebapp.config.json inline (sed strips all leading whitespace from heredoc)
+              sed 's/^[[:space:]]*//' > "$DEPLOY_DIR/staticwebapp.config.json" << 'CONFIGEOF'
               {
                 "auth": {
                   "identityProviders": {
@@ -550,8 +556,8 @@ extends:
               }
               CONFIGEOF
 
-              # Write index.html inline (sed strips leading 14 spaces from heredoc)
-              sed 's/^              //' > "$DEPLOY_DIR/index.html" << 'HTMLEOF'
+              # Write index.html inline (sed strips all leading whitespace from heredoc)
+              sed 's/^[[:space:]]*//' > "$DEPLOY_DIR/index.html" << 'HTMLEOF'
               <!DOCTYPE html>
               <html lang="en">
               <head>
@@ -559,6 +565,7 @@ extends:
                   <meta name="viewport" content="width=device-width, initial-scale=1.0">
                   <title>FF Build Dashboard</title>
                   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+                  <!-- Chart.js versions pinned for stability. Update periodically: https://www.chartjs.org/docs/latest/ -->
                   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
                   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
                   <style>
