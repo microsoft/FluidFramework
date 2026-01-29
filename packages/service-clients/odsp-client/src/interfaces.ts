@@ -91,15 +91,15 @@ export interface OdspContainerAttachProps {
 
 	/**
 	 * The ID of the existing ODSP item (file) to convert to a Fluid file.
-	 * This corresponds to the SharePoint/OneDrive item ID of the file.
 	 * When combined with `eTag`, this triggers conversion of an existing file to a Fluid file.
+	 * @remarks This corresponds to the SharePoint/OneDrive item ID of the file.
 	 */
 	readonly itemId?: string | undefined;
 
 	/**
 	 * The eTag of the existing ODSP item to convert to a Fluid file.
-	 * This corresponds to the SharePoint/OneDrive eTag of the file.
 	 * Must be provided together with `itemId` to trigger file conversion.
+	 * @remarks This corresponds to the SharePoint/OneDrive eTag of the file.
 	 */
 	readonly eTag?: string | undefined;
 }
