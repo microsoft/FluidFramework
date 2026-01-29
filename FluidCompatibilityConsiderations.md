@@ -59,24 +59,20 @@ See [Fluid Framework Layer Compatibility](./LayerCompatibility.md) for motivatio
 ```mermaid
 graph TD
     subgraph Application
-        UX[User Experience]
-
         Driver[Driver - version A]
-        subgraph Loader[Loader - version B]
-            subgraph Runtime[Runtime - version C]
-                subgraph DataStore[DataStore - version D]
-                    DDSes[DDSes]
-                end
+        Loader[Loader - version B]
+        subgraph Runtime[Runtime - version C]
+            subgraph DataStore[DataStore - version D]
+                DDSes[DDSes]
             end
         end
     end
     FFS[Fluid Service]
 
-    Loader --> UX
     Driver --> Loader
     Driver --> FFS
+    Loader --> Runtime
 
-    style UX fill:#bf8f00,stroke:#997300,color:#fff
     style Driver fill:#4472c4,stroke:#2f5496,color:#fff
     style Loader fill:#548235,stroke:#3d5c28,color:#fff
     style Runtime fill:#c55a11,stroke:#a04a0e,color:#fff
@@ -106,50 +102,44 @@ Cross-client compatibility implies that clients within a supported set of versio
 ```mermaid
 graph LR
     subgraph Client2[Client 2 - Newer Version B]
-        UX2[User Experience]
         Driver2[Driver]
-        subgraph Loader2[Loader]
-            subgraph Runtime2[Runtime]
-                subgraph DataStore2[DataStore]
-                    DDSes2[DDSes]
-                end
+        Loader2[Loader]
+        subgraph Runtime2[Runtime]
+            subgraph DataStore2[DataStore]
+                DDSes2[DDSes]
             end
         end
     end
 
     subgraph Client1[Client 1 - Older Version A]
-        UX1[User Experience]
         Driver1[Driver]
-        subgraph Loader1[Loader]
-            subgraph Runtime1[Runtime]
-                subgraph DataStore1[Datastore]
-                    DDSes1[DDSes]
-                end
+        Loader1[Loader]
+        subgraph Runtime1[Runtime]
+            subgraph DataStore1[Datastore]
+                DDSes1[DDSes]
             end
         end
     end
 
     FFS[Fluid Service]
 
-    Loader1 --> UX1
     Driver1 --> Loader1
+    Loader1 --> Runtime1
 
-    Loader2 --> UX2
     Driver2 --> Loader2
+    Loader2 --> Runtime2
 
     Client1 --A ops--> FFS
     Client2 --B ops--> FFS
     FFS --A+B ops--> Client1
     FFS --A+B ops--> Client2
 
-    style UX1 fill:#bf8f00,stroke:#997300,color:#fff
     style Driver1 fill:#4472c4,stroke:#2f5496,color:#fff
     style Loader1 fill:#548235,stroke:#3d5c28,color:#fff
     style Runtime1 fill:#c55a11,stroke:#a04a0e,color:#fff
     style DataStore1 fill:#5b9bd5,stroke:#4a8bc4,color:#fff
     style DDSes1 fill:#5b9bd5,stroke:#4a8bc4,color:#fff,stroke-width:1px
 
-    style UX2 fill:#bf8f00,stroke:#997300,color:#fff
     style Driver2 fill:#4472c4,stroke:#2f5496,color:#fff
     style Loader2 fill:#548235,stroke:#3d5c28,color:#fff
     style Runtime2 fill:#c55a11,stroke:#a04a0e,color:#fff
