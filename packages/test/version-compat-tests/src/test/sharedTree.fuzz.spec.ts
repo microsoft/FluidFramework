@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { describeInstallVersions, getDataRuntimeApi } from "@fluid-private/test-version-utils";
+import { ensurePackageInstalled, getDataRuntimeApi } from "@fluid-private/test-version-utils";
 import { createCompatFuzzSuite } from "@fluidframework/tree/internal/test";
 
-const versionForCompat = "2.74.0";
+const versionForCompat = "2.73.0";
+
+await ensurePackageInstalled(versionForCompat, 0, false);
 
 /**
  * Fuzz tests in this suite are meant to exercise as much of the SharedTree code as possible and do so in the most
@@ -18,11 +20,17 @@ const versionForCompat = "2.74.0";
  * The fuzz tests should validate that the clients do not crash and that their document states do not diverge.
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
-describeInstallVersions({
-	requestAbsoluteVersions: [versionForCompat],
-})("Fuzz - Top-Level", () => {
-	const prevTreeFactory =
-		getDataRuntimeApi(versionForCompat).packages.tree.SharedTree.getFactory();
 
-	createCompatFuzzSuite(prevTreeFactory);
+describe("Shared tree cross-version collab fuzz", () => {
+	const treePackage = getDataRuntimeApi(versionForCompat).packages.tree;
+	const prevTreeFactory = treePackage.SharedTree.getFactory();
+	createCompatFuzzSuite(
+		prevTreeFactory,
+		{
+			newSchemaFactory: (scope) => new treePackage.SchemaFactory(scope),
+			newTreeViewConfiguration: (props) => new treePackage.TreeViewConfiguration(props),
+			nodeApi: treePackage.Tree,
+		},
+		versionForCompat,
+	);
 });
