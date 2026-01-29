@@ -1,5 +1,7 @@
 # Fluid Framework Layer Compatibility
 
+**Suggested pre-read:** The [Fluid Framework Compatibility Considerations](./FluidCompatibilityConsiderations.md) document provides an overview of Fluid's four compatibility dimensions: API compatibility, Layer compatibility, Cross-client compatibility, and Data-at-rest compatibility. This document focuses specifically on Layer compatibility — how different versions of Fluid's architectural layers interoperate within a single client.
+
 ## Overview
 
 Fluid Framework uses a **compatibility layer system** to enable different versions of Fluid packages to work together seamlessly within a single client. This system addresses two key scenarios:
@@ -58,6 +60,7 @@ flowchart
 
 - **Validator:** Loader validates Driver
 - **When:** During container creation (before connection established)
+> Note: Driver doesn't validate Loader because there are no interacts from Driver to Loader. So, there isn't a need to maintain compatibility in that direction.
 
 ### Loader ↔ Runtime Boundary
 

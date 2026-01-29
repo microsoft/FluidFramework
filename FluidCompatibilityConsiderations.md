@@ -51,12 +51,7 @@ Layer compatibility implies that a single client can have different versions for
 
 ### Motivation
 
-This compatibility exists to support the following scenarios:
-
-Dynamic loading, where code executed is retrieved from the network in a way that allows the code of each layer to change independently. This differs from other types of lazily loaded code, like webpack chunks, which are still part of the same compiled package, and will always return the same code. Because the layers can be different, each layer must support interacting with other layers of a different version.
-For example, an application could choose to bundle the Driver / Loader code into their application, rarely updating it, while fetching the Runtime code from a CDN that updates frequently.
-
-Applications can import and build code building on different Fluid Layers from different repos. These repos can be released and updated at different frequencies. Without any compatibility, they would need to update all of them to an Fluid version at the same time to be interoperable. For example, the Fluid Runtime natively supports dynamically loading any registered DataStore, and that code could come from another repo, built against a different version of Fluid than the Runtime.
+See [Fluid Framework Layer Compatibility](./LayerCompatibility.md) for motivation and other details about layer compatibility.
 
 
 ### Architecture diagram
@@ -95,10 +90,6 @@ This diagram shows different Fluid layers with different versions in a client:
 - **Loader layer**: Fluid package version B.
 - **Runtime layer**: Fluid package version C.
 - **Datastore layer**: Fluid package version D.
-
-### Details
-
-Layer compatibility is described in more detail in [Fluid Layer Compatibility](./LayerCompatibility.md).
 
 ## Cross-client compatibility
 
