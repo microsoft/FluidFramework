@@ -72,7 +72,7 @@ export interface OdspClientProps {
  *
  * @remarks
  * These properties control how and where the Fluid container is created in SharePoint/OneDrive.
- * The `itemId` and `eTag` properties correspond to existing ODSP file metadata and can be used
+ * The {@link OdspContainerAttachProps.itemId} and {@link OdspContainerAttachProps.eTag} properties correspond to existing ODSP file metadata and can be used
  * to convert an existing file to a Fluid file.
  *
  * @input
