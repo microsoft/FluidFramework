@@ -15845,8 +15845,8 @@ importers:
         version: 11.1.0
     devDependencies:
       '@biomejs/biome':
-        specifier: ~1.9.3
-        version: 1.9.4
+        specifier: ~2.3.11
+        version: 2.3.11
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
         version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
