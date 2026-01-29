@@ -189,9 +189,7 @@ export interface LatestMapEvents<
 	 *
 	 * @eventProperty
 	 */
-	localItemRemoved: (removedItem: {
-		key: K;
-	}) => void;
+	localItemRemoved: (removedItem: { key: K }) => void;
 }
 
 /**

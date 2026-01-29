@@ -159,21 +159,21 @@ export type InferArgsZod<Args extends readonly Arg<z.ZodTypeAny>[]> = Args exten
  * A utility type that infers the function signature from a Zod function definition with strict type checking.
  * @alpha
  */
-export type InferZod<T> = T extends FunctionDef<
-	infer Args extends readonly Arg<z.ZodTypeAny>[],
-	infer Return extends z.ZodTypeAny,
-	any
->
-	? (...args: InferArgsZod<Args>) => z.infer<Return>
-	: never;
+export type InferZod<T> =
+	T extends FunctionDef<
+		infer Args extends readonly Arg<z.ZodTypeAny>[],
+		infer Return extends z.ZodTypeAny,
+		any
+	>
+		? (...args: InferArgsZod<Args>) => z.infer<Return>
+		: never;
 
 /**
  * A utility type that infers the function signature from a type factory function definition with relaxed type checking.
  * @alpha
  */
-export type InferTypeFactory<T> = T extends FunctionDef<readonly Arg[], infer Return, any>
-	? (...args: any[]) => any
-	: never;
+export type InferTypeFactory<T> =
+	T extends FunctionDef<readonly Arg[], infer Return, any> ? (...args: any[]) => any : never;
 
 /**
  * A utility type that infers the return type of a function definition.
@@ -182,11 +182,12 @@ export type InferTypeFactory<T> = T extends FunctionDef<readonly Arg[], infer Re
  * For Zod types, provides strict compile-time type checking. For type factory types, returns `any`.
  * @deprecated Use InferZod or InferTypeFactory directly for better type safety.
  */
-export type Infer<T> = T extends FunctionDef<readonly Arg[], infer Return, any>
-	? Return extends z.ZodTypeAny
-		? InferZod<T>
-		: InferTypeFactory<T>
-	: never;
+export type Infer<T> =
+	T extends FunctionDef<readonly Arg[], infer Return, any>
+		? Return extends z.ZodTypeAny
+			? InferZod<T>
+			: InferTypeFactory<T>
+		: never;
 
 /**
  * An interface for exposing methods of schema classes to an agent.

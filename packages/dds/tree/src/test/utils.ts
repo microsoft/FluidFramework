@@ -1139,20 +1139,21 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
-					describe(includeStringification
-						? "with stringification"
-						: "without stringification", () => {
-						for (const [name, data, context] of successes) {
-							it(name, () => {
-								let encoded = jsonCodec.encode(data, context);
-								if (includeStringification) {
-									encoded = JSON.parse(JSON.stringify(encoded));
-								}
-								const decoded = jsonCodec.decode(encoded, context);
-								assertEquivalent(decoded, data);
-							});
-						}
-					});
+					describe(
+						includeStringification ? "with stringification" : "without stringification",
+						() => {
+							for (const [name, data, context] of successes) {
+								it(name, () => {
+									let encoded = jsonCodec.encode(data, context);
+									if (includeStringification) {
+										encoded = JSON.parse(JSON.stringify(encoded));
+									}
+									const decoded = jsonCodec.decode(encoded, context);
+									assertEquivalent(decoded, data);
+								});
+							}
+						},
+					);
 				}
 			});
 
