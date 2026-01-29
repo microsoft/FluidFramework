@@ -53,6 +53,7 @@ import type {
 	IOdspFluidContainer,
 } from "./interfaces.js";
 import { OdspContainerServices } from "./odspContainerServices.js";
+import { buildOdspBlobContentUrl } from "./odspUrls.js";
 import type { IOdspTokenProvider } from "./token.js";
 
 async function getStorageToken(
@@ -283,8 +284,7 @@ export class OdspClient {
 			return undefined;
 		}
 
-		// ODSP exposes the actual blob/file content stream by appending `/content` to the attachment GET URL.
-		return `${attachmentGETUrl}/${encodeURIComponent(storageId)}/content`;
+		return buildOdspBlobContentUrl(attachmentGETUrl, storageId);
 	}
 
 	private async getContainerRuntime(
