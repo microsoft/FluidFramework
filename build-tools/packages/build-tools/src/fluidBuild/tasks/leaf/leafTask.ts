@@ -22,10 +22,11 @@ import type { BuildContext } from "../../buildContext";
 import type { BuildPackage } from "../../buildGraph";
 import { BuildResult, summarizeBuildResult } from "../../buildResult";
 import {
-	type GitIgnoreSetting,
 	type GitIgnoreSettingValue,
 	gitignoreDefaultValue,
+	replaceRepoRootToken,
 } from "../../fluidBuildConfig";
+import type { GitIgnoreSetting } from "../../fluidTaskDefinitions";
 import { options } from "../../options";
 import { Task, type TaskExec } from "../task";
 import { globWithGitignore } from "../taskUtils";
@@ -542,6 +543,28 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 */
 
 	/**
+	 * Get additional config files to track for this task from the task definition.
+	 * These files will be included in the input files tracked by the done file.
+	 *
+	 * @returns the list of absolute paths to additional config files
+	 */
+	protected getAdditionalConfigFiles(): string[] {
+		const additionalConfigs = this.node.getAdditionalConfigFiles(this.taskName ?? "");
+
+		if (additionalConfigs.length === 0) {
+			return [];
+		}
+
+		// Convert relative paths to absolute paths
+		// Replace ${repoRoot} token with actual repository root path
+		const repoRoot = this.node.context.repoRoot;
+		return additionalConfigs.map((relPath) => {
+			const pathWithRepoRoot = replaceRepoRootToken(relPath, repoRoot);
+			return this.getPackageFileFullPath(pathWithRepoRoot);
+		});
+	}
+
+	/**
 	 * The content to be written in the "done file".
 	 * @remarks
 	 * This file must have different content if the work needed to be done by this task changes.
@@ -623,9 +646,14 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		// operations, file copies). Override useHashes to return true to use content hashes instead.
 		try {
 			const srcFiles = await this.getInputFiles();
+			const additionalConfigFiles = this.getAdditionalConfigFiles();
+
+			// Include additional config files in the input files
+			const allSrcFiles = [...srcFiles, ...additionalConfigFiles];
+
 			const dstFiles = await this.getOutputFiles();
 			const srcTimesP = Promise.all(
-				srcFiles
+				allSrcFiles
 					.map((match) => this.getPackageFileFullPath(match))
 					.map((match) => stat(match)),
 			);
@@ -642,7 +670,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			const dstInfo = dstTimes.map((dstTime) => {
 				return { mtimeMs: dstTime.mtimeMs, size: dstTime.size };
 			});
-			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
+			return JSON.stringify({ srcFiles: allSrcFiles, dstFiles, srcInfo, dstInfo });
 		} catch (e: any) {
 			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
@@ -660,8 +688,13 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 
 		try {
 			const srcFiles = await this.getInputFiles();
+			const additionalConfigFiles = this.getAdditionalConfigFiles();
+
+			// Include additional config files in the input files
+			const allSrcFiles = [...srcFiles, ...additionalConfigFiles];
+
 			const dstFiles = await this.getOutputFiles();
-			const srcHashesP = Promise.all(srcFiles.map(mapHash));
+			const srcHashesP = Promise.all(allSrcFiles.map(mapHash));
 			const dstHashesP = Promise.all(dstFiles.map(mapHash));
 
 			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
