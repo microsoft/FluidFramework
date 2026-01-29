@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FF Build Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+    <!-- Chart.js versions pinned for stability. Update periodically: https://www.chartjs.org/docs/latest/ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #323130; margin-bottom: 8px; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .tabs { display: flex; gap: 4px; background: #e1dfdd; padding: 4px; border-radius: 8px; }
+        .tab { padding: 10px 24px; border: none; background: transparent; cursor: pointer; font-size: 14px; font-weight: 500; color: #605e5c; border-radius: 6px; transition: all 0.2s; }
+        .tab:hover { background: rgba(255,255,255,0.5); }
+        .tab.active { background: white; color: #323130; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .tab.public.active { color: #42a5f5; }
+        .tab.internal.active { color: #1565c0; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .loading { text-align: center; padding: 60px 20px; color: #605e5c; }
+        .loading-spinner { width: 40px; height: 40px; border: 3px solid #e1dfdd; border-top-color: #0078d4; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .no-data { text-align: center; padding: 60px 20px; color: #605e5c; background: white; border-radius: 8px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132); }
+        .no-data h3 { margin: 0 0 8px; color: #323130; }
+        .timestamp { color: #605e5c; font-size: 14px; margin-bottom: 24px; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .metric-card { background: white; padding: 20px; border-radius: 4px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132); }
+        .metric-label { font-size: 12px; color: #605e5c; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
+        .metric-value { font-size: 32px; font-weight: 600; color: #323130; }
+        .metric-subtext { font-size: 14px; color: #605e5c; margin-top: 4px; }
+        .info-icon { position: relative; cursor: help; }
+        .info-icon .tooltip { visibility: hidden; width: 220px; background-color: #323130; color: #fff; text-align: center; border-radius: 4px; padding: 8px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -110px; opacity: 0; transition: opacity 0.3s; font-size: 11px; text-transform: none; letter-spacing: normal; font-weight: normal; }
+        .info-icon .tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #323130 transparent transparent transparent; }
+        .info-icon:hover .tooltip { visibility: visible; opacity: 1; }
+        .chart-container { background: white; padding: 16px; border-radius: 4px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132); margin-bottom: 24px; position: relative; }
+        .chart-container.duration-chart { height: 320px; }
+        .chart-container.stage-chart { height: 420px; }
+        h2 { color: #323130; font-size: 18px; margin-top: 32px; margin-bottom: 16px; }
+        .table-container { background: white; padding: 16px; border-radius: 4px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132); margin-bottom: 24px; overflow-x: auto; }
+        .builds-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .builds-table th, .builds-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #edebe9; }
+        .builds-table th { background: #faf9f8; font-weight: 600; color: #323130; cursor: pointer; user-select: none; white-space: nowrap; }
+        .builds-table th:hover { background: #f3f2f1; }
+        .builds-table th .sort-icon { margin-left: 4px; opacity: 0.5; }
+        .builds-table th.sort-asc .sort-icon, .builds-table th.sort-desc .sort-icon { opacity: 1; }
+        .builds-table tbody tr:hover { background: #faf9f8; }
+        .builds-table a { color: #0078d4; text-decoration: none; }
+        .builds-table a:hover { text-decoration: underline; }
+        .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid #edebe9; }
+        .pagination-info { color: #605e5c; font-size: 14px; }
+        .pagination-controls { display: flex; gap: 8px; }
+        .pagination-btn { padding: 8px 16px; border: 1px solid #8a8886; background: white; border-radius: 4px; cursor: pointer; font-size: 14px; color: #323130; }
+        .pagination-btn:hover:not(:disabled) { background: #f3f2f1; }
+        .pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .info { background: white; padding: 16px; border-radius: 4px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132); margin-bottom: 24px; }
+        .info h3 { margin-top: 0; color: #323130; }
+        .info p, .info ul { color: #605e5c; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-row">
+            <h1>Fluid Framework Build Performance Dashboard</h1>
+            <div class="tabs">
+                <button class="tab public active" onclick="switchTab('public')">PR Builds</button>
+                <button class="tab internal" onclick="switchTab('internal')">Internal Builds</button>
+            </div>
+        </div>
+        <div id="public-content" class="tab-content active">
+            <div class="loading" id="public-loading"><div class="loading-spinner"></div><p>Loading PR build data...</p></div>
+            <div id="public-dashboard" style="display: none;"></div>
+            <div class="no-data" id="public-no-data" style="display: none;"><h3>No PR Build Data Available</h3><p>PR build metrics will appear here once the public pipeline runs.</p></div>
+        </div>
+        <div id="internal-content" class="tab-content">
+            <div class="loading" id="internal-loading"><div class="loading-spinner"></div><p>Loading internal build data...</p></div>
+            <div id="internal-dashboard" style="display: none;"></div>
+            <div class="no-data" id="internal-no-data" style="display: none;"><h3>No Internal Build Data Available</h3><p>Internal build metrics will appear here once the internal pipeline runs.</p></div>
+        </div>
+    </div>
+    <script>
+        // Dashboard state
+        const dashboardData = { public: null, internal: null };
+        const chartInstances = { public: {}, internal: {} };
+        const tableState = {
+            public: { recent: { sort: { column: 'date', direction: 'desc' }, page: 1 }, longest: { sort: { column: 'duration', direction: 'desc' }, page: 1 } },
+            internal: { recent: { sort: { column: 'date', direction: 'desc' }, page: 1 }, longest: { sort: { column: 'duration', direction: 'desc' }, page: 1 } }
+        };
+        const itemsPerPage = 5;
+        const colors = {
+            public: { primary: 'rgba(66, 165, 245, 1)', background: 'rgba(66, 165, 245, 0.1)', tasks: ['rgba(76, 175, 80, 0.8)', 'rgba(66, 165, 245, 0.8)', 'rgba(255, 167, 38, 0.8)', 'rgba(171, 71, 188, 0.8)', 'rgba(38, 166, 154, 0.8)', 'rgba(236, 64, 122, 0.8)'] },
+            internal: { primary: 'rgba(21, 101, 192, 1)', background: 'rgba(21, 101, 192, 0.1)', tasks: ['rgba(27, 94, 32, 0.8)', 'rgba(21, 101, 192, 0.8)', 'rgba(230, 81, 0, 0.8)', 'rgba(106, 27, 154, 0.8)', 'rgba(0, 105, 92, 0.8)', 'rgba(183, 28, 28, 0.8)'] }
+        };
+
+        // Configuration
+        const config = {
+            githubRepo: 'microsoft/FluidFramework',
+            org: 'fluidframework'
+        };
+
+        // ============================================
+        // Data Processing Functions (moved from bash/jq)
+        // ============================================
+
+        // Parse ADO timestamp to Date object
+        function parseAdoTime(timestamp) {
+            if (!timestamp) return null;
+            return new Date(timestamp);
+        }
+
+        // Calculate duration in minutes between two timestamps
+        function calcDurationMins(startTime, finishTime) {
+            const start = parseAdoTime(startTime);
+            const finish = parseAdoTime(finishTime);
+            if (!start || !finish) return null;
+            return (finish - start) / (1000 * 60);
+        }
+
+        // Extract source display text from build
+        function getSourceText(build) {
+            const branch = build.sourceBranch || '';
+            if (branch.startsWith('refs/pull/')) {
+                const prNum = branch.split('/')[2];
+                return prNum ? `PR #${prNum}` : 'N/A';
+            }
+            if (build.sourceVersion) {
+                return build.sourceVersion.substring(0, 7);
+            }
+            return branch.substring(0, 30) || 'N/A';
+        }
+
+        // Build source URL (GitHub PR or commit)
+        function getSourceUrl(build) {
+            const branch = build.sourceBranch || '';
+            if (branch.startsWith('refs/pull/')) {
+                const prNum = branch.split('/')[2];
+                return prNum ? `https://github.com/${config.githubRepo}/pull/${prNum}` : null;
+            }
+            if (build.sourceVersion) {
+                return `https://github.com/${config.githubRepo}/commit/${build.sourceVersion}`;
+            }
+            return null;
+        }
+
+        // Build ADO build URL
+        function getBuildUrl(build, project) {
+            return `https://dev.azure.com/${config.org}/${project}/_build/results?buildId=${build.id}`;
+        }
+
+        // Filter builds for public mode (PR builds targeting main)
+        function filterBuilds(builds, mode) {
+            if (mode !== 'public') return builds;
+            return builds.filter(build => {
+                if (!build.parameters) return false;
+                try {
+                    const params = JSON.parse(build.parameters);
+                    return params['system.pullRequest.targetBranch'] === 'main';
+                } catch {
+                    return false;
+                }
+            });
+        }
+
+        // Process raw build data into display format
+        function processBuild(build, project) {
+            const duration = calcDurationMins(build.startTime, build.finishTime);
+            return {
+                id: build.id,
+                startTime: build.startTime,
+                result: build.result,
+                duration: duration,
+                source: getSourceText(build),
+                sourceUrl: getSourceUrl(build),
+                url: getBuildUrl(build, project)
+            };
+        }
+
+        // Calculate summary statistics
+        function calcSummary(builds) {
+            const validBuilds = builds.filter(b => b.duration !== null);
+            const succeeded = builds.filter(b => b.result === 'succeeded').length;
+            const totalDuration = validBuilds.reduce((sum, b) => sum + b.duration, 0);
+            return {
+                totalBuilds: builds.length,
+                succeeded: succeeded,
+                successRate: builds.length > 0 ? (succeeded * 100 / builds.length) : 0,
+                avgDuration: validBuilds.length > 0 ? (totalDuration / validBuilds.length) : 0
+            };
+        }
+
+        // Calculate duration trend (average per day)
+        function calcDurationTrend(builds) {
+            const validBuilds = builds.filter(b => b.startTime && b.duration !== null);
+            const byDate = {};
+            validBuilds.forEach(b => {
+                const date = b.startTime.split('T')[0];
+                if (!byDate[date]) byDate[date] = [];
+                byDate[date].push(b.duration);
+            });
+            return Object.entries(byDate)
+                .map(([date, durations]) => ({
+                    date,
+                    avgDuration: durations.reduce((a, b) => a + b, 0) / durations.length
+                }))
+                .sort((a, b) => a.date.localeCompare(b.date));
+        }
+
+        // Process timeline data to extract stage metrics
+        function processTimelines(timelines) {
+            const stageData = {};
+            const stageTasksData = {};
+
+            Object.values(timelines || {}).forEach(timeline => {
+                if (!timeline || !timeline.records) return;
+
+                const stages = timeline.records.filter(r =>
+                    r.type === 'Stage' && r.startTime && r.finishTime
+                );
+
+                stages.forEach(stage => {
+                    const duration = calcDurationMins(stage.startTime, stage.finishTime);
+                    if (duration === null) return;
+
+                    if (!stageData[stage.name]) stageData[stage.name] = [];
+                    stageData[stage.name].push(duration);
+
+                    // Find tasks (phases) for this stage
+                    const tasks = timeline.records.filter(r =>
+                        r.type === 'Phase' && r.parentId === stage.id && r.startTime && r.finishTime
+                    );
+
+                    if (!stageTasksData[stage.name]) stageTasksData[stage.name] = {};
+                    tasks.forEach(task => {
+                        const taskDuration = calcDurationMins(task.startTime, task.finishTime);
+                        if (taskDuration === null) return;
+                        if (!stageTasksData[stage.name][task.name]) stageTasksData[stage.name][task.name] = [];
+                        stageTasksData[stage.name][task.name].push(taskDuration);
+                    });
+                });
+            });
+
+            // Calculate averages
+            const stagePerformance = Object.entries(stageData).map(([name, durations]) => ({
+                name,
+                avgDuration: durations.reduce((a, b) => a + b, 0) / durations.length
+            }));
+
+            const stageTaskBreakdown = {};
+            Object.entries(stageTasksData).forEach(([stageName, tasks]) => {
+                stageTaskBreakdown[stageName] = Object.entries(tasks).map(([taskName, durations]) => ({
+                    name: taskName,
+                    avgDuration: durations.reduce((a, b) => a + b, 0) / durations.length
+                }));
+            });
+
+            return { stagePerformance, stageTaskBreakdown };
+        }
+
+        // Process raw data into dashboard format
+        function processRawData(rawData, mode) {
+            const project = mode === 'public' ? 'public' : 'internal';
+
+            // Handle both old (pre-processed) and new (raw) data formats
+            if (rawData.builds) {
+                // New raw format
+                const filteredBuilds = filterBuilds(rawData.builds, mode);
+                const processedBuilds = filteredBuilds
+                    .map(b => processBuild(b, project))
+                    .filter(b => b.duration !== null);
+
+                const { stagePerformance, stageTaskBreakdown } = processTimelines(rawData.timelines);
+
+                // Sort for recent and longest
+                const sortedByDate = [...processedBuilds].sort((a, b) =>
+                    new Date(b.startTime) - new Date(a.startTime)
+                );
+                const sortedByDuration = [...processedBuilds].sort((a, b) =>
+                    b.duration - a.duration
+                );
+
+                return {
+                    generatedAt: rawData.generatedAt,
+                    summary: calcSummary(processedBuilds),
+                    durationTrend: calcDurationTrend(processedBuilds),
+                    recentBuilds: sortedByDate.slice(0, 20),
+                    longestBuilds: sortedByDuration.slice(0, 20),
+                    stagePerformance,
+                    stageTaskBreakdown
+                };
+            } else {
+                // Old pre-processed format (backward compatible)
+                return rawData;
+            }
+        }
+
+        // ============================================
+        // UI Functions
+        // ============================================
+
+        function switchTab(mode) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector('.tab.' + mode).classList.add('active');
+            document.getElementById(mode + '-content').classList.add('active');
+            if (dashboardData[mode]) setTimeout(() => renderDashboard(mode, dashboardData[mode]), 50);
+        }
+
+        async function loadData() {
+            const [prResult, internalResult] = await Promise.allSettled([
+                fetch('data/public-data.json').then(r => r.ok ? r.json() : null),
+                fetch('data/internal-data.json').then(r => r.ok ? r.json() : null)
+            ]);
+            if (prResult.status === 'fulfilled' && prResult.value) {
+                dashboardData.public = processRawData(prResult.value, 'public');
+                document.getElementById('public-loading').style.display = 'none';
+                document.getElementById('public-dashboard').style.display = 'block';
+                renderDashboard('public', dashboardData.public);
+            } else {
+                document.getElementById('public-loading').style.display = 'none';
+                document.getElementById('public-no-data').style.display = 'block';
+            }
+            if (internalResult.status === 'fulfilled' && internalResult.value) {
+                dashboardData.internal = processRawData(internalResult.value, 'internal');
+                document.getElementById('internal-loading').style.display = 'none';
+                document.getElementById('internal-dashboard').style.display = 'block';
+                renderDashboard('internal', dashboardData.internal);
+            } else {
+                document.getElementById('internal-loading').style.display = 'none';
+                document.getElementById('internal-no-data').style.display = 'block';
+            }
+        }
+
+        function renderDashboard(mode, data) {
+            const container = document.getElementById(mode + '-dashboard');
+            const colorScheme = colors[mode];
+            const modeLabel = mode === 'public' ? 'PR' : 'internal';
+            const trendDays = mode === 'public' ? 3 : 7;
+            const trendDate = new Date(); trendDate.setDate(trendDate.getDate() - trendDays);
+            const trendDateStr = trendDate.toISOString().split('T')[0];
+            let durationChange = 0, durationChangeMinutes = 0;
+            if (data.durationTrend && data.durationTrend.length > 0) {
+                const recentBuilds = data.durationTrend.filter(d => d.date >= trendDateStr);
+                const previousBuilds = data.durationTrend.filter(d => d.date < trendDateStr);
+                if (recentBuilds.length > 0 && previousBuilds.length > 0) {
+                    const recentAvg = recentBuilds.reduce((sum, d) => sum + d.avgDuration, 0) / recentBuilds.length;
+                    const previousAvg = previousBuilds.reduce((sum, d) => sum + d.avgDuration, 0) / previousBuilds.length;
+                    durationChange = ((recentAvg - previousAvg) / previousAvg) * 100;
+                    durationChangeMinutes = recentAvg - previousAvg;
+                }
+            }
+            const trendColor = durationChange < 0 ? '#107c10' : durationChange > 0 ? '#d13438' : '#605e5c';
+            const trendSign = durationChange > 0 ? '+' : durationChange < 0 ? '' : '';
+            const timestamp = data.generatedAt ? (() => { const d = new Date(data.generatedAt); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }); })() : 'Unknown';
+            const pipelineUrl = mode === 'public' ? 'https://dev.azure.com/fluidframework/public/_build?definitionId=190' : 'https://dev.azure.com/fluidframework/internal/_build?definitionId=191';
+            const buildPipelineUrl = mode === 'public' ? 'https://dev.azure.com/fluidframework/public/_build?definitionId=11' : 'https://dev.azure.com/fluidframework/internal/_build?definitionId=12';
+            container.innerHTML = '<div class="info"><h3>About This Dashboard</h3><p style="margin-bottom: 4px;">Last updated: <strong>' + timestamp + '</strong></p><p style="font-size: 13px; margin-top: 0; margin-bottom: 16px;">Run the <a href="' + pipelineUrl + '" target="_blank">Build Performance Observability Pipeline (' + mode + ')</a> to manually update the dashboard.</p><p>This dashboard shows metrics for <strong>' + modeLabel + ' builds</strong>.</p><ul>' + (mode === 'public' ? '<li>Target branch: <code>main</code></li>' : '<li>Branch: <code>main</code></li>') + '<li>Status: <code>completed</code> and <code>succeeded</code> or <code>partiallySucceeded</code></li><li>Pipeline: <a href="' + buildPipelineUrl + '" target="_blank">Build - client packages (' + mode + ')</a></li><li>Data source: <a href="https://learn.microsoft.com/en-us/rest/api/azure/devops/build/?view=azure-devops-rest-7.1" target="_blank">Azure DevOps Build API (v7.1)</a></li></ul></div>' +
+                '<div class="metrics"><div class="metric-card"><div class="metric-label">Total Builds</div><div class="metric-value">' + (data.summary?.totalBuilds || 0) + '</div></div>' +
+                '<div class="metric-card"><div class="metric-label">Avg Duration</div><div class="metric-value">' + (data.summary?.avgDuration || 0).toFixed(1) + 'm</div></div>' +
+                '<div class="metric-card"><div class="metric-label">' + trendDays + '-Day Trend <span class="info-icon">ⓘ<span class="tooltip">Compares average duration of last ' + trendDays + ' days vs the average of all builds before that</span></span></div>' +
+                '<div class="metric-value" style="color: ' + trendColor + '">' + trendSign + Math.abs(durationChangeMinutes).toFixed(1) + 'm <span style="font-size: 18px; opacity: 0.8;">(' + trendSign + Math.abs(durationChange).toFixed(1) + '%)</span></div></div></div>' +
+                '<h2>Duration Trend</h2><div class="chart-container duration-chart"><canvas id="' + mode + '-duration-chart"></canvas></div>' +
+                '<h2>Duration by Stage</h2><div class="chart-container stage-chart"><canvas id="' + mode + '-stage-chart"></canvas></div>' +
+                '<h2>Individual Task Duration</h2><div class="chart-container stage-chart"><canvas id="' + mode + '-task-chart"></canvas></div>' +
+                '<h2>Recent Builds</h2><div class="table-container"><table class="builds-table" id="' + mode + '-recent-table"><thead><tr><th data-sort="id">Build ID <span class="sort-icon">↕</span></th><th data-sort="date" class="sort-desc">Date <span class="sort-icon">↓</span></th><th data-sort="duration">Duration <span class="sort-icon">↕</span></th><th data-sort="source">Source <span class="sort-icon">↕</span></th></tr></thead><tbody id="' + mode + '-recent-body"></tbody></table><div class="pagination"><div class="pagination-info">Showing <span id="' + mode + '-recent-start">1</span>-<span id="' + mode + '-recent-end">5</span> of <span id="' + mode + '-recent-total">' + (data.recentBuilds || []).length + '</span></div><div class="pagination-controls"><button class="pagination-btn" id="' + mode + '-recent-prev" onclick="prevPage(\'' + mode + '\', \'recent\')">← Previous</button><button class="pagination-btn" id="' + mode + '-recent-next" onclick="nextPage(\'' + mode + '\', \'recent\')">Next →</button></div></div></div>' +
+                '<h2>Longest Builds</h2><div class="table-container"><table class="builds-table" id="' + mode + '-longest-table"><thead><tr><th data-sort="id">Build ID <span class="sort-icon">↕</span></th><th data-sort="date">Date <span class="sort-icon">↕</span></th><th data-sort="duration" class="sort-desc">Duration <span class="sort-icon">↓</span></th><th data-sort="source">Source <span class="sort-icon">↕</span></th></tr></thead><tbody id="' + mode + '-longest-body"></tbody></table><div class="pagination"><div class="pagination-info">Showing <span id="' + mode + '-longest-start">1</span>-<span id="' + mode + '-longest-end">5</span> of <span id="' + mode + '-longest-total">' + (data.longestBuilds || []).length + '</span></div><div class="pagination-controls"><button class="pagination-btn" id="' + mode + '-longest-prev" onclick="prevPage(\'' + mode + '\', \'longest\')">← Previous</button><button class="pagination-btn" id="' + mode + '-longest-next" onclick="nextPage(\'' + mode + '\', \'longest\')">Next →</button></div></div></div>';
+            createDurationChart(mode, data, colorScheme);
+            createStageChart(mode, data, colorScheme);
+            createTaskChart(mode, data, colorScheme);
+            renderTable(mode, 'recent', data.recentBuilds || []);
+            renderTable(mode, 'longest', data.longestBuilds || []);
+            setupTableSorting(mode, 'recent', data.recentBuilds || []);
+            setupTableSorting(mode, 'longest', data.longestBuilds || []);
+        }
+
+        function createDurationChart(mode, data, colorScheme) {
+            const ctx = document.getElementById(mode + '-duration-chart');
+            if (!ctx) return;
+            if (chartInstances[mode].duration) chartInstances[mode].duration.destroy();
+            if (!data.durationTrend || data.durationTrend.length === 0) { ctx.parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No duration data available</p>'; return; }
+            const chartData = data.durationTrend.map(d => ({ x: new Date(d.date), y: d.avgDuration }));
+            chartInstances[mode].duration = new Chart(ctx, {
+                type: 'line', data: { datasets: [{ label: 'Avg Duration (minutes)', data: chartData, borderColor: colorScheme.primary, backgroundColor: colorScheme.background, borderWidth: 2, fill: true, tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { onClick: null }, title: { display: true, text: 'Average Build Duration', font: { size: 14, weight: 'bold' } } }, scales: { x: { type: 'time', time: { unit: 'day' }, title: { display: true, text: 'Date' } }, y: { beginAtZero: true, title: { display: true, text: 'Duration (minutes)' } } } }
+            });
+        }
+
+        function createStageChart(mode, data, colorScheme) {
+            const ctx = document.getElementById(mode + '-stage-chart');
+            if (!ctx) return;
+            if (chartInstances[mode].stage) chartInstances[mode].stage.destroy();
+            const stageData = data.stageTaskBreakdown || {};
+            const stagePerf = data.stagePerformance || [];
+            const stages = Object.keys(stageData).sort();
+            if (stages.length === 0) { ctx.parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No stage data available</p>'; return; }
+            const stageAvgDurations = {}; stagePerf.forEach(s => { stageAvgDurations[s.name] = s.avgDuration; });
+            const allTasks = new Set();
+            stages.forEach(stage => { const tasks = stageData[stage] || []; if (tasks.length === 0) allTasks.add(stage); else tasks.forEach(task => allTasks.add(task.name)); });
+            const taskNames = Array.from(allTasks).sort();
+            const datasets = taskNames.map((taskName, index) => ({ label: taskName, data: stages.map(stage => { const tasks = stageData[stage] || []; if (tasks.length === 0 && taskName === stage) return stageAvgDurations[stage] || 0; const task = tasks.find(t => t.name === taskName); return task ? task.avgDuration : 0; }), backgroundColor: colorScheme.tasks[index % colorScheme.tasks.length], borderWidth: 1 }));
+            chartInstances[mode].stage = new Chart(ctx, { type: 'bar', data: { labels: stages, datasets }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { onClick: null, position: 'bottom', labels: { boxWidth: 12, padding: 8 } }, title: { display: true, text: 'Average Duration by Stage', font: { size: 14, weight: 'bold' } } }, scales: { x: { stacked: true, beginAtZero: true, title: { display: true, text: 'Duration (minutes)' } }, y: { stacked: true, title: { display: true, text: 'Stage' } } } } });
+        }
+
+        function createTaskChart(mode, data, colorScheme) {
+            const ctx = document.getElementById(mode + '-task-chart');
+            if (!ctx) return;
+            if (chartInstances[mode].task) chartInstances[mode].task.destroy();
+            const stageData = data.stageTaskBreakdown || {};
+            const stagePerf = data.stagePerformance || [];
+            if (Object.keys(stageData).length === 0) { ctx.parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No task data available</p>'; return; }
+            const allTasks = [];
+            const stageAvgDurations = {}; stagePerf.forEach(s => { stageAvgDurations[s.name] = s.avgDuration; });
+            const stages = Object.keys(stageData).sort();
+            const stageColorMap = {}; stages.forEach((stage, idx) => { stageColorMap[stage] = idx; });
+            stages.forEach(stage => { const tasks = stageData[stage] || []; if (tasks.length === 0) allTasks.push({ label: stage, duration: stageAvgDurations[stage] || 0, stageIndex: stageColorMap[stage] }); else tasks.forEach(task => { allTasks.push({ label: stage + ' › ' + task.name, duration: task.avgDuration, stageIndex: stageColorMap[stage] }); }); });
+            allTasks.sort((a, b) => b.duration - a.duration);
+            chartInstances[mode].task = new Chart(ctx, { type: 'bar', data: { labels: allTasks.map(t => t.label), datasets: [{ label: 'Avg Duration (minutes)', data: allTasks.map(t => t.duration), backgroundColor: allTasks.map(t => colorScheme.tasks[t.stageIndex % colorScheme.tasks.length]), borderWidth: 1 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Longest Average Individual Tasks', font: { size: 14, weight: 'bold' } } }, scales: { x: { beginAtZero: true, title: { display: true, text: 'Duration (minutes)' } }, y: { title: { display: true, text: 'Task' } } } } });
+        }
+
+        function renderTable(mode, tableType, builds) {
+            const state = tableState[mode][tableType];
+            const tbody = document.getElementById(mode + '-' + tableType + '-body');
+            if (!tbody) return;
+            const sortedBuilds = sortBuilds(builds, state.sort.column, state.sort.direction);
+            const startIdx = (state.page - 1) * itemsPerPage;
+            const endIdx = Math.min(startIdx + itemsPerPage, sortedBuilds.length);
+            const pageBuilds = sortedBuilds.slice(startIdx, endIdx);
+            tbody.innerHTML = pageBuilds.map(build => {
+                const date = new Date(build.startTime);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+                const sourceCell = build.sourceUrl ? '<a href="' + build.sourceUrl + '" target="_blank">' + build.source + '</a>' : build.source;
+                return '<tr><td><a href="' + build.url + '" target="_blank">' + build.id + '</a></td><td>' + dateStr + ' ' + timeStr + '</td><td>' + build.duration.toFixed(1) + 'm</td><td>' + sourceCell + '</td></tr>';
+            }).join('');
+            document.getElementById(mode + '-' + tableType + '-start').textContent = sortedBuilds.length > 0 ? startIdx + 1 : 0;
+            document.getElementById(mode + '-' + tableType + '-end').textContent = endIdx;
+            updatePaginationControls(mode, tableType, builds.length);
+        }
+
+        function sortBuilds(builds, column, direction) {
+            return [...builds].sort((a, b) => { let aVal, bVal; switch (column) { case 'id': aVal = a.id; bVal = b.id; break; case 'date': aVal = new Date(a.startTime); bVal = new Date(b.startTime); break; case 'duration': aVal = a.duration; bVal = b.duration; break; case 'source': aVal = a.source; bVal = b.source; break; default: return 0; } if (aVal < bVal) return direction === 'asc' ? -1 : 1; if (aVal > bVal) return direction === 'asc' ? 1 : -1; return 0; });
+        }
+
+        function setupTableSorting(mode, tableType, builds) {
+            const headers = document.querySelectorAll('#' + mode + '-' + tableType + '-table th[data-sort]');
+            headers.forEach(header => { header.addEventListener('click', () => { const column = header.dataset.sort; const state = tableState[mode][tableType]; if (state.sort.column === column) state.sort.direction = state.sort.direction === 'asc' ? 'desc' : 'asc'; else { state.sort.column = column; state.sort.direction = 'desc'; } headers.forEach(h => { h.classList.remove('sort-asc', 'sort-desc'); h.querySelector('.sort-icon').textContent = '↕'; }); header.classList.add('sort-' + state.sort.direction); header.querySelector('.sort-icon').textContent = state.sort.direction === 'asc' ? '↑' : '↓'; state.page = 1; renderTable(mode, tableType, builds); }); });
+        }
+
+        function updatePaginationControls(mode, tableType, totalItems) { const state = tableState[mode][tableType]; const totalPages = Math.ceil(totalItems / itemsPerPage); document.getElementById(mode + '-' + tableType + '-prev').disabled = state.page <= 1; document.getElementById(mode + '-' + tableType + '-next').disabled = state.page >= totalPages; }
+        function prevPage(mode, tableType) { const state = tableState[mode][tableType]; if (state.page > 1) { state.page--; renderTable(mode, tableType, dashboardData[mode][tableType === 'recent' ? 'recentBuilds' : 'longestBuilds'] || []); } }
+        function nextPage(mode, tableType) { const state = tableState[mode][tableType]; const builds = dashboardData[mode][tableType === 'recent' ? 'recentBuilds' : 'longestBuilds'] || []; const totalPages = Math.ceil(builds.length / itemsPerPage); if (state.page < totalPages) { state.page++; renderTable(mode, tableType, builds); } }
+
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
