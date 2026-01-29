@@ -512,7 +512,7 @@ export class OdspDelayLoadedDeltaStream {
 	private emitSensitivityLabelUpdateEvent(
 		sensitivityLabelsInfo: ISensitivityLabelsInfo,
 	): void {
-		const createdTimestamp = Date.parse(sensitivityLabelsInfo.timestamp);
+		const createdTimestamp = sensitivityLabelsInfo.timestamp;
 		assert(createdTimestamp > 0, 0x8e0 /* time should be positive */);
 		if (createdTimestamp > this.labelUpdateTimestamp) {
 			this.labelUpdateTimestamp = createdTimestamp;
