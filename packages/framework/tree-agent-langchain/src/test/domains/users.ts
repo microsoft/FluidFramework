@@ -7,10 +7,10 @@ import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import {
 	buildFunc,
 	exposeMethodsSymbol,
+	typeFactory as tf,
 	type ExposedMethods,
 	type IExposedMethods,
 } from "@fluidframework/tree-agent/alpha";
-import z from "zod";
 
 // eslint-disable-next-line @eslint-community/eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */
@@ -62,7 +62,7 @@ export class User
 			buildFunc({
 				description:
 					"Sets the user's display name. This is the only logic that will work for correctly setting it.",
-				returns: z.void(),
+				returns: tf.void(),
 			}),
 		);
 	}

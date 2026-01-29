@@ -15,7 +15,6 @@ import type { BaseChatModel } from "@langchain/core/language_models/chat_models"
 import type { BaseMessage } from "@langchain/core/messages";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { tool } from "@langchain/core/tools";
-import z from "zod";
 
 /**
  * Creates a `SharedTreeChatModel` that uses the LangChain library to connect to the underlying LLM.
@@ -48,18 +47,10 @@ class LangchainChatModel implements SharedTreeChatModel {
 	}
 
 	private async queryEdit(edit: SharedTreeChatQuery["edit"]): Promise<string> {
-		const editingTool = tool(
-			async ({ functionCode }: { functionCode: string }) => {
-				return edit(functionCode);
-			},
-			{
-				name: this.editToolName,
-				description: "Invokes a JavaScript code snippet to edit a tree of application data.",
-				schema: z.object({
-					functionCode: z.string().describe("The JavaScript snippet code."),
-				}),
-			},
-		);
+		const editingTool = tool(edit, {
+			name: this.editToolName,
+			description: "Invokes a JavaScript code snippet to edit a tree of application data.",
+		});
 		const runnable = this.model.bindTools?.([editingTool], { tool_choice: "auto" });
 		if (runnable === undefined) {
 			throw new UsageError("LLM client must support function calling or tool use.");
