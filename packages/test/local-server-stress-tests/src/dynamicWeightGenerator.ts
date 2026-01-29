@@ -43,7 +43,7 @@ function evaluateWeight<TState>(weight: DynamicWeight<TState>, state: TState): n
  * evaluated at runtime with the current state.
  *
  * @param weights - Array of [generator, weight, acceptanceCondition?] tuples where
- * weight can be a number or a function (state) =\> number
+ * weight can be a number or a function (state) => number
  */
 export function createWeightedAsyncGeneratorWithDynamicWeights<
 	T,
@@ -77,7 +77,10 @@ export function createWeightedAsyncGeneratorWithDynamicWeights<
 			const weightSelected = random.real(0, totalWeight);
 
 			let opIndex = 0;
-			while (cumulativeSums[opIndex][1] < weightSelected) {
+			while (
+				opIndex + 1 < cumulativeSums.length &&
+				cumulativeSums[opIndex][1] < weightSelected
+			) {
 				opIndex++;
 			}
 

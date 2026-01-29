@@ -116,7 +116,7 @@ export function makeGenerator<T extends BaseOperation>(
 				asChild: state.random.bool(),
 				tag: state.tag("datastore"),
 			}),
-			// Only during creation phase (detached), normal weight when attached
+			// High weight during creation phase, zero during DDS ops phase, normal weight when attached
 			(state) => (isDdsOpsPhase(state) ? 0 : isCreationPhase(state) ? 20 : 1),
 		],
 		[
@@ -134,7 +134,7 @@ export function makeGenerator<T extends BaseOperation>(
 				channelType: state.random.pick([...ddsModelMap.keys()]),
 				tag: state.tag("channel"),
 			}),
-			// Only during creation phase (detached), normal weight when attached
+			// High weight during creation phase, zero during DDS ops phase, normal weight when attached
 			(state) => (isDdsOpsPhase(state) ? 0 : isCreationPhase(state) ? 20 : 5),
 		],
 		[
