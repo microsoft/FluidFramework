@@ -83,7 +83,7 @@ export type CreateIndependentTreeAlphaOptions = ForestOptions &
 				 * Optional content for initializing the tree.
 				 * If not provided, the tree will be uninitialized.
 				 */
-				content?: undefined;
+				content?: never;
 		  })
 		| (ICodecOptions & {
 				/**
@@ -95,7 +95,7 @@ export type CreateIndependentTreeAlphaOptions = ForestOptions &
 				 * Should not be provided when content is specified.
 				 * The idCompressor will be obtained from the content.
 				 */
-				idCompressor?: undefined;
+				idCompressor?: never;
 		  })
 	);
 

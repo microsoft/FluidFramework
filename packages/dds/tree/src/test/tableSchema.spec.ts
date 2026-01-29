@@ -2028,7 +2028,7 @@ describe("TableFactory unit tests", () => {
 	});
 
 	describe("Prevents orphan cells", () => {
-		it("column removal does not drop cells from concurrently added rows", () => {
+		it("column removal does not orphan cells from concurrently added rows", () => {
 			// Create a provider with minimum version support for noChange constraints
 			const provider = new TestTreeProviderLite(
 				2,
@@ -2414,7 +2414,7 @@ describe("TableFactory unit tests", () => {
 			assert.equal(branchTable.columns.length, 0);
 
 			// Concurrently insert a cell in the column being removed via setCell.
-			// Without the constraint, this would create an orphaned cell (a cell under a non-existent column).
+			// Without the constraint, this is the cell that would be orphaned by the column removal.
 			view2.root.setCell({
 				key: { row: "row-0", column: "column-0" },
 				cell: new Cell({ value: "Hello" }),

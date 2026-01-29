@@ -197,10 +197,10 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 
 // @alpha
 export type CreateIndependentTreeAlphaOptions = ForestOptions & ((IndependentViewOptions & {
-    content?: undefined;
+    content?: never;
 }) | (ICodecOptions & {
     content: ViewContent;
-    idCompressor?: undefined;
+    idCompressor?: never;
 }));
 
 // @beta

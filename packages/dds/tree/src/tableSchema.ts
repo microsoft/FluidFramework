@@ -690,6 +690,7 @@ export namespace System_TableSchema {
 
 				// #endregion
 
+				// Relevant invariant: each cell corresponds to an existing row and column
 				// Prevents cell leaks from concurrently removed columns.
 				// Example scenario: Client A removes a column while concurrently Client B adds a row with cells for those columns (including the one A removed).
 				// If client B is sequenced after A, then B's row could have cells that do not correspond to existing columns.
@@ -734,8 +735,9 @@ export namespace System_TableSchema {
 					applyEdits: () => {
 						(row as RowValueInternalType).cells[column.id] = cell as CellValueType;
 					},
+					// Relevant invariant: each cell corresponds to an existing row and column
 					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits.
-					// Example scenario: Client A removes a column, then Client B sets a cell in that column (sequenced after A's edit).
+					// Example scenario: Client A removes a column, then Client B concurrently sets a cell in that column (sequenced after A's edit).
 					// If both edits are applied, B's cell would not correspond to an existing column.
 					preconditions: [
 						{
@@ -743,10 +745,9 @@ export namespace System_TableSchema {
 							node: column,
 						},
 					],
-					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this cell set is processed.
-					// Example scenario: Client A removes a column, while concurrently Client B sets a cell in that column.
-					// If B reverts its change after after A is sequenced, then B's cell would not correspond to an existing column.
-					// This constraint ensures that the column still exists when this edit is reverted.
+					// Relevant invariant: each cell corresponds to an existing row and column
+					// Example scenario: Client A overwrites a populated cell, then Client B removes the column associated with the A's cell (this clears the cell).
+					// If Client A then reverts their edit, the overwritten value is restored in the cell despite the absence of column for that cell.
 					preconditionsOnRevert:
 						(row as RowValueInternalType).cells[column.id] === undefined
 							? undefined
@@ -763,9 +764,11 @@ export namespace System_TableSchema {
 				indexOrColumns: number | undefined | readonly string[] | readonly ColumnValueType[],
 				count: number | undefined = undefined,
 			): ColumnValueType[] {
+				// Relevant invariant: each cell corresponds to an existing row and column
 				// Prevents cell leaks from concurrently added rows in earlier-sequenced edits.
 				// Example scenario: Client A adds a row, Client B concurrently removes a column that is populated in A's row.
 				// If Client A's edit is sequenced before Client B's edit, then B's removal would orphan the cell in A's row.
+				// We have the same problem if Client A populates a cell for one of the columns removed by B
 				// This constraint ensures no rows were added.
 				// TODO: Replace with "no attach" constraint on the row array when available.
 				const preconditions: TransactionConstraintAlpha[] = [{ type: "noChange" }];
@@ -804,12 +807,6 @@ export namespace System_TableSchema {
 							);
 							removedColumns = columnsToRemove;
 						},
-						
-						// Prevents cell leaks from concurrently added rows in earlier-sequenced edits.
-						// Example scenario: Client A adds a row, Client B concurrently removes a column that is populated in A's row.
-						// If Client A's edit is sequenced before Client B's edit, then B's removal would orphan the cell in A's row.
-						// This constraint ensures no rows were added.
-						// TODO: Replace with "no attach" constraint on the row array when available.
 						preconditions,
 					});
 					return removedColumns ?? fail(0xc1f /* Transaction did not complete. */);
@@ -846,11 +843,6 @@ export namespace System_TableSchema {
 								this.table.columns.removeAt(this.table.columns.indexOf(columnToRemove));
 							}
 						},
-						// Prevents cell leaks from concurrently added rows in earlier-sequenced edits.
-						// Example scenario: Client A adds a row, Client B concurrently removes a column that is populated in A's row.
-						// If Client A's edit is sequenced before Client B's edit, then B's removal would orphan the cell in A's row.
-						// This constraint ensures no rows were added.
-						// TODO: Replace with "no attach" constraint on the row array when available.
 						preconditions,
 					});
 					return columnsToRemove;
@@ -861,6 +853,12 @@ export namespace System_TableSchema {
 				indexOrRows: number | undefined | readonly string[] | readonly RowValueType[],
 				count?: number | undefined,
 			): RowValueType[] {
+				// Relevant invariant: each cell corresponds to an existing row and column
+				// Adding a constraint on columns here to prevent cells being orphaned.  The relevant scenario is:
+				// Client A removes rows
+				// Client B (either concurrently or not, so long as B's edit is sequenced after A's edit) removes a column,
+				// Client A reverts the removal of the rows
+				// TODO: Replace with "no detach on revert" constraint on the column array when available.
 				const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
 					(column) => ({
 						type: "nodeInDocument",
@@ -888,11 +886,6 @@ export namespace System_TableSchema {
 								"Table.removeRows",
 							);
 						},
-					// Adding a constraint on columns here to prevent cells being orphaned.  The relevant scenario is:
-					// Client A removes rows
-					// Client B (either concurrently or not, so long as B's edit is sequenced after A's edit) removes a column,
-					// Client A reverts the removal of the rows
-					// TODO: Replace with "no detach on revert" constraint on the column array when available.
 						preconditionsOnRevert:
 							columnConstraints.length > 0 ? columnConstraints : undefined,
 					});
@@ -921,11 +914,6 @@ export namespace System_TableSchema {
 							this.table.rows.removeAt(index);
 						}
 					},
-					// Adding a constraint on columns here to prevent cells being orphaned.  The relevant scenario is:
-					// Client A removes rows
-					// Client B (either concurrently or not, so long as B's edit is sequenced after A's edit) removes a column,
-					// Client A reverts the removal of the rows
-					// TODO: Replace with "no detach on revert" constraint on the column array when available.
 					preconditionsOnRevert:
 						columnConstraints.length > 0 ? columnConstraints : undefined,
 				});
@@ -949,6 +937,7 @@ export namespace System_TableSchema {
 						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 						delete row.cells[column.id];
 					},
+					// Relevant invariant: each cell corresponds to an existing row and column
 					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this cell removal is reverted.
 					// Example scenario: Client A removes a cell, then Client B removes the column for that cell (sequenced before A's edit).
 					// If A's cell removal is later reverted, the cell would be restored but B's column removal means there's no column for it.
