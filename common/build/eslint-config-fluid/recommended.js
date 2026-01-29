@@ -18,7 +18,7 @@ module.exports = {
 		es2024: false,
 		node: true,
 	},
-	extends: ["./minimal-deprecated.js", "plugin:unicorn/recommended"],
+	extends: ["./minimal-deprecated.js", "plugin:unicorn/recommended", "biome"],
 	plugins: ["eslint-plugin-tsdoc"],
 	rules: {
 		// RECOMMENDED RULES

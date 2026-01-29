@@ -131,9 +131,21 @@
 	},
 	"assist": { "actions": { "source": { "organizeImports": "off" } } },
 	"linter": {
-		"enabled": false,
+		"enabled": true,
 		"rules": {
-			"recommended": true
+			"recommended": true,
+			// Enable rules that correspond to ESLint rules disabled by eslint-config-biome
+			// but are not in Biome's recommended set
+			"suspicious": {
+				"noEmptyBlockStatements": "warn"
+			},
+			// Nursery rules that require TypeScript project info (tsconfig)
+			// These map to @typescript-eslint rules disabled by eslint-config-biome
+			"nursery": {
+				"noFloatingPromises": "error",
+				"noMisusedPromises": "error",
+				"useExhaustiveSwitchCases": "error"
+			}
 		}
 	},
 	"formatter": {

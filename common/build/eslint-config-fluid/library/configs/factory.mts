@@ -11,11 +11,12 @@
  *
  * Configuration hierarchy (each extends the previous):
  * - minimalDeprecatedConfig: Base + minimal-deprecated rules + depend plugin
- * - recommendedConfig: minimal-deprecated + unicorn/recommended + recommended rules
- * - strictConfig: recommended + strict rules
- * - strictBiomeConfig: strict + biome config for Biome formatter compatibility
+ * - recommendedConfigBase: minimal-deprecated + unicorn/recommended + recommended rules
+ * - recommendedConfig: recommendedConfigBase + biome (disables rules handled by Biome)
+ * - strictConfig: recommendedConfigBase + strict rules (does NOT include biome)
+ * - strictBiomeConfig: strict + biome config
  *
- * The "create*" functions add shared configs (project service, test config, React, etc.)
+ * The "full*" exports add shared configs (project service, test config, React, etc.)
  * to produce the final exported configurations.
  */
 
@@ -58,9 +59,10 @@ export const minimalDeprecatedConfig = [
 ] as const satisfies FlatConfigArray;
 
 /**
- * Recommended configuration.
+ * Recommended configuration base (without biome).
+ * This is used internally as the base for both recommendedConfig and strictConfig.
  */
-export const recommendedConfig = [
+const recommendedConfigBase = [
 	...minimalDeprecatedConfig,
 	// unicorn/recommended rules (plugin already registered in base)
 	{
@@ -72,10 +74,21 @@ export const recommendedConfig = [
 ] as const satisfies FlatConfigArray;
 
 /**
+ * Recommended configuration.
+ * Includes biome config to disable ESLint rules that are handled by Biome.
+ */
+export const recommendedConfig = [
+	...recommendedConfigBase,
+	// Disable ESLint rules that are handled by Biome
+	biomeConfig,
+] as const satisfies FlatConfigArray;
+
+/**
  * Strict configuration.
+ * Extends recommendedConfigBase (without biome) and adds strict rules.
  */
 export const strictConfig = [
-	...recommendedConfig,
+	...recommendedConfigBase,
 	{
 		rules: strictRules,
 	},
@@ -88,6 +101,7 @@ export const strictConfig = [
 
 /**
  * Strict-biome configuration.
+ * Strict config with biome rules to disable ESLint rules handled by Biome.
  */
 export const strictBiomeConfig = [...strictConfig, biomeConfig] as const satisfies FlatConfigArray;
 
