@@ -10,11 +10,13 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SerializedIdCompressorWithOngoingSession } from "@fluidframework/id-compressor/legacy";
 import {
 	createIdCompressor,
 	deserializeIdCompressor,
-} from "@fluidframework/id-compressor/legacy";
+	type SerializedIdCompressorWithOngoingSession,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/id-compressor/internal";
+import { SerializationVersion } from "@fluidframework/id-compressor/legacy";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { TreeArrayNode, type InsertableTypedNode } from "@fluidframework/tree";
 import {
@@ -84,7 +86,7 @@ export function loadDocument(source: string | undefined): List {
 			const content: ViewContent = {
 				schema: combo.schema,
 				tree: combo.tree,
-				idCompressor: deserializeIdCompressor(combo.idCompressor),
+				idCompressor: deserializeIdCompressor(combo.idCompressor, SerializationVersion.V3),
 			};
 			const view = independentInitializedView(config, options, content);
 			return view.root;
@@ -164,7 +166,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 		}
 		case "snapshot": {
 			// TODO: This should be made better. See privateRemarks on TreeAlpha.exportCompressed.
-			const idCompressor = createIdCompressor();
+			const idCompressor = createIdCompressor(SerializationVersion.V3);
 			const file: File = {
 				tree: TreeAlpha.exportCompressed(tree, {
 					minVersionForCollab: compatVersion,

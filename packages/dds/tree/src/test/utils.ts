@@ -30,6 +30,7 @@ import {
 	assertIsStableId,
 	createIdCompressor,
 	type IIdCompressorCore,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
@@ -471,7 +472,7 @@ export class TestTreeProviderLite {
 			const runtime = new MockFluidDataStoreRuntime({
 				clientId: `test-client-${i}`,
 				id: "test",
-				idCompressor: createIdCompressor(sessionId),
+				idCompressor: createIdCompressor(sessionId, SerializationVersion.V3),
 				logger: this.logger,
 			});
 			const tree = this.factory.create(runtime, `tree-${i}`);

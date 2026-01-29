@@ -11,7 +11,6 @@ import {
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -52,9 +51,7 @@ class Parent extends schemaFactory.array("Test:Opsize-Bench-Root", Child) {}
  */
 function createConnectedTree(): ITreePrivate {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({
-		idCompressor: createIdCompressor(),
-	});
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({});
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const tree = DefaultTestSharedTreeKind.getFactory().create(dataStoreRuntime, "tree");
 	tree.connect({

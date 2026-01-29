@@ -71,7 +71,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
     // (undocumented)
-    finalizeIdRange(range: IdCreationRange): void;
+    finalizeIdRange(range: unknown): void;
     flush(): void;
     flushSomeMessages(numMessages: number): void;
     // (undocumented)
@@ -337,7 +337,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    idCompressor: IIdCompressorCore & IIdCompressor;
+    idCompressor: IIdCompressor;
     // (undocumented)
     IFluidDataStoreRegistry: IFluidDataStoreRegistry;
     // (undocumented)
@@ -382,7 +382,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
         logger?: ITelemetryBaseLogger;
-        idCompressor?: IIdCompressor & IIdCompressorCore;
+        idCompressor?: IIdCompressor;
         attachState?: AttachState;
         registry?: readonly IChannelFactory[];
         minVersionForCollab?: MinimumVersionForCollab;
@@ -448,7 +448,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+    idCompressor: IIdCompressor | undefined;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)

@@ -14,6 +14,7 @@ import {
 	createIdCompressor,
 	deserializeIdCompressor,
 	type IIdCompressorCore,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 
 import {
@@ -257,10 +258,14 @@ export const createOrDeserializeCompressor = (
 	summary?: FuzzSerializedIdCompressor,
 ): IIdCompressor & IIdCompressorCore => {
 	return summary === undefined
-		? createIdCompressor(sessionId)
+		? createIdCompressor(sessionId, SerializationVersion.V3)
 		: summary.withSession
-			? deserializeIdCompressor(summary.serializedCompressor)
-			: deserializeIdCompressor(summary.serializedCompressor, sessionId);
+			? deserializeIdCompressor(summary.serializedCompressor, SerializationVersion.V3)
+			: deserializeIdCompressor(
+					summary.serializedCompressor,
+					sessionId,
+					SerializationVersion.V3,
+				);
 };
 
 export const deterministicIdCompressorFactory: (
