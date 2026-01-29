@@ -738,11 +738,9 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 	const generatorFactory: () => AsyncGenerator<TOperation, LocalServerStressState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | typeof done> => {
-			// Pick a channel, and:
-			// 1. Make it available for the DDS model generators (so they don't need to
-			// do the boilerplate of selecting a client to perform the operation on)
-			// 2. Make it available to the subsequent reducer logic we're going to inject
-			// (so that we can recover the channel from serialized data)
+			// Pick a channel first (inverted selection), then determine the datastore.
+			// This ensures uniform distribution across channel types globally, rather than
+			// biasing toward datastores with fewer channels (where root directory dominates).
 			const client = state.random.pick(state.clients);
 
 			// Get available datastores for this client (may be a subset of what's in the global tracking)
@@ -751,51 +749,63 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 			);
 			const availableDatastores = globalObjects.filter((v) => v.type === "stressDataObject");
 
-			// Filter to only datastores that both exist in our tracking AND are available to this client
-			const availableDatastoreTags = availableDatastores
-				.map((e) => e.tag)
-				.filter((tag) => state.channelsByDatastore.has(tag));
+			// Build a global list of all channels across all datastores, grouped by type
+			// Each entry includes the channel info and which datastore it belongs to
+			interface ChannelEntry {
+				channelTag: string;
+				channelType: string;
+				datastoreTag: `datastore-${number}`;
+				datastore: (typeof availableDatastores)[0];
+			}
+			const channelsByType = new Map<string, ChannelEntry[]>();
 
-			assert(availableDatastoreTags.length > 0, "at least one datastore must be available");
-			const datastoreTag = state.random.pick(availableDatastoreTags);
-
-			const entry = availableDatastores.find((e) => e.tag === datastoreTag);
-			assert(entry?.type === "stressDataObject", `datastore ${datastoreTag} must exist`);
-			const datastore = entry.stressDataObject;
-
-			// Get the channel tags from in-memory tracking for this datastore
-			const channelMap = state.channelsByDatastore.get(datastoreTag);
-			assert(channelMap !== undefined, `channels for ${datastoreTag} must exist`);
-			const channelTags = Array.from(channelMap.keys());
-
-			// Get available channels for this datastore
-			const channels = await datastore.StressDataObject.getChannels(channelTags);
-			const availableChannelIds = new Set(channels.map((c) => c.id));
-
-			// Group channels by type to ensure uniform coverage across channel types
-			// Only include channels that actually exist
-			const channelsByType = new Map<string, string[]>();
-			for (const [channelTag, channelType] of channelMap.entries()) {
-				if (!availableChannelIds.has(channelTag)) {
-					continue; // Skip channels that don't actually exist
+			for (const dsEntry of availableDatastores) {
+				const dsTag = dsEntry.tag;
+				if (!state.channelsByDatastore.has(dsTag)) {
+					continue;
 				}
-				const existing = channelsByType.get(channelType);
-				if (existing !== undefined) {
-					existing.push(channelTag);
-				} else {
-					channelsByType.set(channelType, [channelTag]);
+				assert(dsEntry.type === "stressDataObject", "type narrowing");
+				const channelMap = state.channelsByDatastore.get(dsTag)!;
+				const channelTags = Array.from(channelMap.keys());
+				const channels = await dsEntry.stressDataObject.getChannels(channelTags);
+				const availableChannelIds = new Set(channels.map((c) => c.id));
+
+				for (const [channelTag, channelType] of channelMap.entries()) {
+					if (!availableChannelIds.has(channelTag)) {
+						continue; // Skip channels that don't actually exist
+					}
+					const entry: ChannelEntry = {
+						channelTag,
+						channelType,
+						datastoreTag: dsTag,
+						datastore: dsEntry,
+					};
+					const existing = channelsByType.get(channelType);
+					if (existing !== undefined) {
+						existing.push(entry);
+					} else {
+						channelsByType.set(channelType, [entry]);
+					}
 				}
 			}
 
-			// First pick a channel type, then pick a channel of that type
+			// First pick a channel type globally, then pick a channel of that type
 			const channelTypes = Array.from(channelsByType.keys());
 			assert(channelTypes.length > 0, "at least one channel type must be available");
 			const selectedType = state.random.pick(channelTypes);
-			const channelTagsOfSelectedType = channelsByType.get(selectedType);
-			assert(channelTagsOfSelectedType !== undefined, "channels of selected type must exist");
-			const channelTag = state.random.pick(channelTagsOfSelectedType);
+			const channelsOfSelectedType = channelsByType.get(selectedType);
+			assert(channelsOfSelectedType !== undefined, "channels of selected type must exist");
+			const selectedChannel = state.random.pick(channelsOfSelectedType);
+
+			// Extract the datastore and channel info from the selected entry
+			const { datastoreTag, datastore: dsEntry, channelTag } = selectedChannel;
+			assert(dsEntry.type === "stressDataObject", "type narrowing");
+			const datastore = dsEntry.stressDataObject;
 
 			// Get the actual channel object
+			const channelMap = state.channelsByDatastore.get(datastoreTag)!;
+			const channelTags = Array.from(channelMap.keys());
+			const channels = await datastore.getChannels(channelTags);
 			const channel = channels.find((c) => c.id === channelTag);
 			assert(channel !== undefined, `channel ${channelTag} must exist`);
 
