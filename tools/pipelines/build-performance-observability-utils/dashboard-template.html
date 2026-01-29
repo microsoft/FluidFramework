@@ -41,6 +41,7 @@
         .info-icon .tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #323130 transparent transparent transparent; }
         .info-icon:hover .tooltip { visibility: visible; opacity: 1; }
         .chart-container { background: white; padding: 16px; border-radius: 4px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132); margin-bottom: 24px; position: relative; }
+        .chart-legend-info { position: absolute; top: 66px; left: 50%; margin-left: 95px; font-size: 14px; color: #605e5c; line-height: 1; }
         .chart-container.duration-chart { height: 320px; }
         .chart-container.stage-chart { height: 420px; }
         h2 { color: #323130; font-size: 18px; margin-top: 32px; margin-bottom: 16px; }
@@ -195,20 +196,31 @@
             };
         }
 
-        // Calculate duration trend (average per day)
+        // Calculate duration trend (min, average, max per day)
         function calcDurationTrend(builds) {
             const validBuilds = builds.filter(b => b.startTime && b.duration !== null);
             const byDate = {};
             validBuilds.forEach(b => {
                 const date = b.startTime.split('T')[0];
                 if (!byDate[date]) byDate[date] = [];
-                byDate[date].push(b.duration);
+                byDate[date].push({ duration: b.duration, id: b.id });
             });
             return Object.entries(byDate)
-                .map(([date, durations]) => ({
-                    date,
-                    avgDuration: durations.reduce((a, b) => a + b, 0) / durations.length
-                }))
+                .map(([date, buildInfos]) => {
+                    const durations = buildInfos.map(b => b.duration);
+                    const minDuration = Math.min(...durations);
+                    const maxDuration = Math.max(...durations);
+                    const minBuild = buildInfos.find(b => b.duration === minDuration);
+                    const maxBuild = buildInfos.find(b => b.duration === maxDuration);
+                    return {
+                        date,
+                        minDuration,
+                        avgDuration: durations.reduce((a, b) => a + b, 0) / durations.length,
+                        maxDuration,
+                        minBuildId: minBuild ? minBuild.id : null,
+                        maxBuildId: maxBuild ? maxBuild.id : null
+                    };
+                })
                 .sort((a, b) => a.date.localeCompare(b.date));
         }
 
@@ -365,7 +377,7 @@
                 '<div class="metric-card"><div class="metric-label">Avg Duration</div><div class="metric-value">' + (data.summary?.avgDuration || 0).toFixed(1) + 'm</div></div>' +
                 '<div class="metric-card"><div class="metric-label">' + trendDays + '-Day Trend <span class="info-icon">ⓘ<span class="tooltip">Compares average duration of last ' + trendDays + ' days vs the average of all builds before that</span></span></div>' +
                 '<div class="metric-value" style="color: ' + trendColor + '">' + trendSign + Math.abs(durationChangeMinutes).toFixed(1) + 'm <span style="font-size: 18px; opacity: 0.8;">(' + trendSign + Math.abs(durationChange).toFixed(1) + '%)</span></div></div></div>' +
-                '<h2>Duration Trend</h2><div class="chart-container duration-chart"><canvas id="' + mode + '-duration-chart"></canvas></div>' +
+                '<h2>Duration Trend</h2><div class="chart-container duration-chart"><canvas id="' + mode + '-duration-chart"></canvas><span class="chart-legend-info info-icon">ⓘ<span class="tooltip">Outliers of ±20% from daily average are highlighted with clickable markers</span></span></div>' +
                 '<h2>Duration by Stage</h2><div class="chart-container stage-chart"><canvas id="' + mode + '-stage-chart"></canvas></div>' +
                 '<h2>Individual Task Duration</h2><div class="chart-container stage-chart"><canvas id="' + mode + '-task-chart"></canvas></div>' +
                 '<h2>Recent Builds</h2><div class="table-container"><table class="builds-table" id="' + mode + '-recent-table"><thead><tr><th data-sort="id">Build ID <span class="sort-icon">↕</span></th><th data-sort="date" class="sort-desc">Date <span class="sort-icon">↓</span></th><th data-sort="duration">Duration <span class="sort-icon">↕</span></th><th data-sort="source">Source <span class="sort-icon">↕</span></th></tr></thead><tbody id="' + mode + '-recent-body"></tbody></table><div class="pagination"><div class="pagination-info">Showing <span id="' + mode + '-recent-start">1</span>-<span id="' + mode + '-recent-end">5</span> of <span id="' + mode + '-recent-total">' + (data.recentBuilds || []).length + '</span></div><div class="pagination-controls"><button class="pagination-btn" id="' + mode + '-recent-prev" onclick="prevPage(\'' + mode + '\', \'recent\')">← Previous</button><button class="pagination-btn" id="' + mode + '-recent-next" onclick="nextPage(\'' + mode + '\', \'recent\')">Next →</button></div></div></div>' +
@@ -384,10 +396,17 @@
             if (!ctx) return;
             if (chartInstances[mode].duration) chartInstances[mode].duration.destroy();
             if (!data.durationTrend || data.durationTrend.length === 0) { ctx.parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No duration data available</p>'; return; }
-            const chartData = data.durationTrend.map(d => ({ x: new Date(d.date), y: d.avgDuration }));
+            const minData = data.durationTrend.map(d => ({ x: new Date(d.date), y: d.minDuration, isOutlier: d.minDuration <= d.avgDuration * 0.8, buildId: d.minBuildId }));
+            const avgData = data.durationTrend.map(d => ({ x: new Date(d.date), y: d.avgDuration }));
+            const maxData = data.durationTrend.map(d => ({ x: new Date(d.date), y: d.maxDuration, isOutlier: d.maxDuration >= d.avgDuration * 1.2, buildId: d.maxBuildId }));
+            const project = mode === 'public' ? 'public' : 'internal';
             chartInstances[mode].duration = new Chart(ctx, {
-                type: 'line', data: { datasets: [{ label: 'Avg Duration (minutes)', data: chartData, borderColor: colorScheme.primary, backgroundColor: colorScheme.background, borderWidth: 2, fill: true, tension: 0.4 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { onClick: null }, title: { display: true, text: 'Average Build Duration', font: { size: 14, weight: 'bold' } } }, scales: { x: { type: 'time', time: { unit: 'day' }, title: { display: true, text: 'Date' } }, y: { beginAtZero: true, title: { display: true, text: 'Duration (minutes)' } } } }
+                type: 'line', data: { datasets: [
+                    { label: 'Max', data: maxData, borderColor: 'rgba(211, 52, 56, 0.6)', backgroundColor: 'rgba(211, 52, 56, 0.6)', borderWidth: 1.5, borderDash: [4, 4], fill: false, tension: 0.4, pointRadius: (ctx) => ctx.raw && ctx.raw.isOutlier ? 4 : 0, pointHoverRadius: (ctx) => ctx.raw && ctx.raw.isOutlier ? 5 : 0, pointStyle: 'circle' },
+                    { label: 'Avg', data: avgData, borderColor: colorScheme.primary, backgroundColor: colorScheme.background, borderWidth: 2, fill: true, tension: 0.4, pointRadius: 3, pointHoverRadius: 4, pointStyle: 'circle' },
+                    { label: 'Min', data: minData, borderColor: 'rgba(16, 124, 16, 0.6)', backgroundColor: 'rgba(16, 124, 16, 0.6)', borderWidth: 1.5, borderDash: [4, 4], fill: false, tension: 0.4, pointRadius: (ctx) => ctx.raw && ctx.raw.isOutlier ? 4 : 0, pointHoverRadius: (ctx) => ctx.raw && ctx.raw.isOutlier ? 5 : 0, pointStyle: 'circle' }
+                ] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { onClick: null, position: 'top', labels: { boxWidth: 20, padding: 15, generateLabels: function(chart) { return chart.data.datasets.map((dataset, i) => ({ text: dataset.label, fillStyle: 'transparent', strokeStyle: dataset.borderColor, lineWidth: dataset.borderWidth, lineDash: dataset.borderDash || [], hidden: !chart.isDatasetVisible(i), datasetIndex: i })); } } }, title: { display: true, text: 'Build Duration Trend', font: { size: 14, weight: 'bold' } }, tooltip: { callbacks: { title: function(context) { const date = context[0].raw.x; return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }, label: function(context) { const label = context.dataset.label || ''; const value = context.parsed.y.toFixed(1) + 'm'; if (context.raw && context.raw.buildId && context.raw.isOutlier) { return label + ': ' + value + ' (Build #' + context.raw.buildId + ')'; } return label + ': ' + value; }, afterLabel: function(context) { if (context.raw && context.raw.isOutlier && context.raw.buildId) { return 'Click to view build'; } return ''; } }, filter: function(tooltipItem) { if (tooltipItem.datasetIndex === 0 || tooltipItem.datasetIndex === 2) { return tooltipItem.raw && tooltipItem.raw.isOutlier; } return true; } } }, scales: { x: { type: 'time', time: { unit: 'day' }, title: { display: true, text: 'Date' } }, y: { beginAtZero: true, title: { display: true, text: 'Duration (minutes)' } } }, onClick: function(event, elements) { if (elements.length > 0) { const el = elements[0]; const dataPoint = this.data.datasets[el.datasetIndex].data[el.index]; if (dataPoint && dataPoint.buildId) { window.open('https://dev.azure.com/' + config.org + '/' + project + '/_build/results?buildId=' + dataPoint.buildId, '_blank'); } } } }
             });
         }
 
