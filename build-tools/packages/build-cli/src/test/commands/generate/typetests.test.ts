@@ -9,9 +9,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach } from "mocha";
 import mockedEnv from "mocked-env";
-
-import GenerateTypetestsCommand from "../../../commands/generate/typetests.js";
-import {
+import GenerateTypetestsCommand, {
 	generateCompatibilityTestCase,
 	loadTypesSourceFile,
 	readExistingVersions,

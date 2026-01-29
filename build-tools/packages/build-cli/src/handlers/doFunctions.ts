@@ -4,12 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
+import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
+import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 import type { Machine } from "jssm";
 import chalk from "picocolors";
-
-import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
-
-import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 
 import { getDefaultInterdependencyRange } from "../config.js";
 import {
@@ -20,7 +18,7 @@ import {
 } from "../library/index.js";
 import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/index.js";
-import { type ReleaseGroup, type ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
+import { isReleaseGroup, type ReleaseGroup, type ReleasePackage } from "../releaseGroups.js";
 import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
 import { BaseStateHandler, type StateHandlerFunction } from "./stateHandlers.js";
 
