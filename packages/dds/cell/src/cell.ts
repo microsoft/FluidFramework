@@ -267,6 +267,7 @@ export class SharedCell<T = any>
 					0x00c /* "messageId is incorrect from from the local client's ACK" */,
 				);
 				assert(
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58518 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 					this.pendingMessageIds !== undefined &&
 						this.pendingMessageIds[0] === cellOpMetadata.pendingMessageId,
 					0x471 /* Unexpected pending message received */,

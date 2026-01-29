@@ -396,13 +396,13 @@ export function encodeRevisionInfos(
 ): EncodedRevisionInfo[] | undefined {
 	if (context.revision !== undefined) {
 		assert(
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58522 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 			revisions.length === 1 &&
 				revisions[0] !== undefined &&
 				revisions[0].revision === context.revision &&
 				revisions[0].rollbackOf === undefined,
 			0x964 /* A tagged change should only contain the tagged revision */,
 		);
-
 		return undefined;
 	}
 
