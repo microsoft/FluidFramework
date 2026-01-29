@@ -175,9 +175,6 @@ extends:
               # Create output directory
               mkdir -p "$(Build.ArtifactStagingDirectory)/metrics"
 
-              # Save mode for subsequent tasks
-              echo "$MODE" > "$(Build.ArtifactStagingDirectory)/metrics/mode.txt"
-
               OUTPUT_FILE="$(Build.ArtifactStagingDirectory)/metrics/builds-raw.json"
 
               if [ "$MODE" = "public" ]; then
@@ -210,12 +207,11 @@ extends:
             ORG: $(organization)
             PROJECT: $(targetProject)
             PARALLEL_JOBS: $(parallelJobs)
+            MODE: $(runMode)
           inputs:
             targetType: 'inline'
             script: |
               set -eu -o pipefail
-
-              MODE=$(cat "$(Build.ArtifactStagingDirectory)/metrics/mode.txt")
 
               echo "=========================================="
               echo "Fetching timeline data for builds ($MODE mode)"
@@ -298,13 +294,14 @@ extends:
         - task: Bash@3
           displayName: Generate data JSON
           condition: eq(variables['shouldRun'], 'true')
+          env:
+            MODE: $(runMode)
           inputs:
             targetType: 'inline'
             script: |
               set -eu -o pipefail
 
               METRICS_PATH="$(Build.ArtifactStagingDirectory)/metrics"
-              MODE=$(cat "$METRICS_PATH/mode.txt")
 
               echo "=========================================="
               echo "Generating data JSON ($MODE mode)"
@@ -351,12 +348,12 @@ extends:
           condition: eq(variables['shouldRun'], 'true')
           env:
             ASWA_HOSTNAME: $(ASWA_HOSTNAME)
+            MODE: $(runMode)
           inputs:
             targetType: 'inline'
             script: |
               set -eu -o pipefail
 
-              MODE=$(cat "$(Build.ArtifactStagingDirectory)/metrics/mode.txt")
               DEPLOY_DIR="$(Build.ArtifactStagingDirectory)/deploy"
 
               echo "=========================================="
