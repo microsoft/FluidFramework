@@ -103,6 +103,7 @@ export class SummaryManager
 	private state = SummaryManagerState.Off;
 	private summarizer?: ISummarizer;
 	private _disposed = false;
+	private summarizerStopTimeout?: ReturnType<typeof setTimeout>;
 
 	public get disposed(): boolean {
 		return this._disposed;
@@ -347,16 +348,26 @@ export class SummaryManager
 			})
 			.finally(() => {
 				assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
-				this.state = SummaryManagerState.Off;
-
-				this.cleanupForwardedEvents();
-				this.summarizer?.close();
-				this.summarizer = undefined;
-
-				if (this.getShouldSummarizeState().shouldSummarize) {
-					this.startSummarization();
-				}
+				this.cleanupAfterSummarizerStop();
 			});
+	}
+
+	private cleanupAfterSummarizerStop(): void {
+		this.state = SummaryManagerState.Off;
+
+		// Clear any pending stop timeout to avoid it firing for a different summarizer
+		if (this.summarizerStopTimeout !== undefined) {
+			clearTimeout(this.summarizerStopTimeout);
+			this.summarizerStopTimeout = undefined;
+		}
+
+		this.cleanupForwardedEvents();
+		this.summarizer?.close();
+		this.summarizer = undefined;
+
+		if (this.getShouldSummarizeState().shouldSummarize) {
+			this.startSummarization();
+		}
 	}
 
 	private stop(reason: SummarizerStopReason): void {
@@ -368,6 +379,23 @@ export class SummaryManager
 		// Stopping the running summarizer client should trigger a change
 		// in states when the running summarizer closes
 		this.summarizer?.stop(reason);
+
+		const summarizerCloseTimeoutMs = 2 * 60 * 1000; // 2 minutes
+		// Clear any existing timeout before setting a new one
+		if (this.summarizerStopTimeout !== undefined) {
+			clearTimeout(this.summarizerStopTimeout);
+		}
+		// Set a timeout to force cleanup if the summarizer doesn't close in time
+		this.summarizerStopTimeout = setTimeout(() => {
+			if (this.state === SummaryManagerState.Stopping && this.summarizer !== undefined) {
+				this.logger.sendTelemetryEvent({
+					eventName: "SummarizerStopTimeout",
+					timeoutMs: summarizerCloseTimeoutMs,
+					stopReason: reason,
+				});
+				this.cleanupAfterSummarizerStop();
+			}
+		}, summarizerCloseTimeoutMs);
 	}
 
 	/**
@@ -453,6 +481,9 @@ export class SummaryManager
 		this.connectedState.off("connected", this.handleConnected);
 		this.connectedState.off("disconnected", this.handleDisconnected);
 		this.cleanupForwardedEvents();
+		if (this.summarizerStopTimeout !== undefined) {
+			clearTimeout(this.summarizerStopTimeout);
+		}
 		this._disposed = true;
 	}
 
