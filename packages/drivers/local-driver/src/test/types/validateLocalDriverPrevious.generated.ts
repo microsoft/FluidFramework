@@ -24,6 +24,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_LocalDocumentServiceFactory": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalDocumentServiceFactory = requireAssignableTo<TypeOnly<old.LocalDocumentServiceFactory>, TypeOnly<current.LocalDocumentServiceFactory>>
 
 /*
