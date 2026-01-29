@@ -104,40 +104,8 @@ extends:
             BUILD_REASON: $(Build.Reason)
             CRON_SCHEDULE_NAME: $(Build.CronSchedule.DisplayName)
           inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-
-              # Determine mode: scheduled runs use schedule name, manual runs use project
-              if [ "$BUILD_REASON" = "Schedule" ]; then
-                if [[ "$CRON_SCHEDULE_NAME" == *"PR build"* ]]; then
-                  MODE="public"
-                else
-                  MODE="internal"
-                fi
-
-                # Check if project matches schedule mode
-                if [ "$MODE" = "public" ] && [ "$IS_PUBLIC" != "True" ]; then
-                  echo "Skipping: Public builds schedule running in internal project"
-                  echo "##vso[task.setvariable variable=shouldRun]false"
-                  exit 0
-                elif [ "$MODE" = "internal" ] && [ "$IS_PUBLIC" = "True" ]; then
-                  echo "Skipping: Internal builds schedule running in public project"
-                  echo "##vso[task.setvariable variable=shouldRun]false"
-                  exit 0
-                fi
-              else
-                # Manual run - use project to determine mode
-                if [ "$IS_PUBLIC" = "True" ]; then
-                  MODE="public"
-                else
-                  MODE="internal"
-                fi
-              fi
-
-              echo "Mode: $MODE"
-              echo "##vso[task.setvariable variable=shouldRun]true"
-              echo "##vso[task.setvariable variable=runMode]$MODE"
+            targetType: 'filePath'
+            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/detect-run-mode.sh'
 
         - task: Bash@3
           displayName: Fetch build data
@@ -150,54 +118,10 @@ extends:
             ORG: $(organization)
             PROJECT: $(targetProject)
             MODE: $(runMode)
+            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
           inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-
-              # Set build definition ID based on mode
-              if [ "$MODE" = "public" ]; then
-                BUILD_DEF_ID="$PR_BUILD_DEF_ID"
-              else
-                BUILD_DEF_ID="$INTERNAL_BUILD_DEF_ID"
-              fi
-
-              echo "=========================================="
-              echo "Fetching build metrics"
-              echo "=========================================="
-              echo "Mode: $MODE"
-              echo "Organization: $ORG"
-              echo "Project: $PROJECT"
-              echo "Build Definition: $BUILD_DEF_ID"
-              echo "Build Count: $BUILD_COUNT"
-              echo ""
-
-              # Create output directory
-              mkdir -p "$(Build.ArtifactStagingDirectory)/metrics"
-
-              OUTPUT_FILE="$(Build.ArtifactStagingDirectory)/metrics/builds-raw.json"
-
-              if [ "$MODE" = "public" ]; then
-                # Fetch PR builds with reasonFilter and statusFilter
-                echo "Fetching last $BUILD_COUNT PR builds (reason=pullRequest, succeeded/partiallySucceeded, completed)..."
-                curl -sL --max-time 60 -u ":$ADO_API_TOKEN" \
-                  "https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds?definitions=$BUILD_DEF_ID&reasonFilter=pullRequest&resultFilter=succeeded,partiallySucceeded&statusFilter=completed&\$top=$BUILD_COUNT&api-version=7.1" \
-                  -o "$OUTPUT_FILE"
-              else
-                # Fetch internal builds from main branch
-                echo "Fetching last $BUILD_COUNT internal builds (branch=main, succeeded/partiallySucceeded, completed)..."
-                curl -sL --max-time 60 -u ":$ADO_API_TOKEN" \
-                  "https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds?definitions=$BUILD_DEF_ID&branchName=refs/heads/main&resultFilter=succeeded,partiallySucceeded&statusFilter=completed&\$top=$BUILD_COUNT&api-version=7.1" \
-                  -o "$OUTPUT_FILE"
-              fi
-
-              # Validate JSON response
-              if ! jq empty "$OUTPUT_FILE" 2>/dev/null; then
-                echo "Error: Response is not valid JSON. Response saved to '$OUTPUT_FILE'."
-                exit 1
-              fi
-
-              echo "Build data fetched successfully!"
+            targetType: 'filePath'
+            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/fetch-build-data.sh'
 
         - task: Bash@3
           displayName: Fetch timeline data for builds
@@ -208,140 +132,20 @@ extends:
             PROJECT: $(targetProject)
             PARALLEL_JOBS: $(parallelJobs)
             MODE: $(runMode)
+            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
           inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-
-              echo "=========================================="
-              echo "Fetching timeline data for builds ($MODE mode)"
-              echo "=========================================="
-
-              # Extract build IDs from builds
-              BUILD_IDS=$(jq -r '.value[] | .id' "$(Build.ArtifactStagingDirectory)/metrics/builds-raw.json")
-
-              # Count builds correctly (wc -l returns 1 for empty string due to trailing newline)
-              if [ -z "$BUILD_IDS" ]; then
-                TOTAL_COUNT=0
-              else
-                TOTAL_COUNT=$(echo "$BUILD_IDS" | wc -l | tr -d ' ')
-              fi
-
-              echo "Found $TOTAL_COUNT builds to fetch timeline data for"
-
-              # Exit early if no builds to process
-              if [ "$TOTAL_COUNT" -eq 0 ]; then
-                echo "Warning: No builds found to process. Skipping timeline fetch."
-                mkdir -p "$(Build.ArtifactStagingDirectory)/metrics/timelines"
-                exit 0
-              fi
-
-              echo ""
-
-              mkdir -p "$(Build.ArtifactStagingDirectory)/metrics/timelines"
-              ERRORS_FILE="$(Build.ArtifactStagingDirectory)/metrics/timeline_errors.log"
-              touch "$ERRORS_FILE"
-
-              # Fetch in parallel using background jobs
-              echo "Using $PARALLEL_JOBS parallel jobs for timeline fetching"
-              count=0
-
-              fetch_timeline() {
-                local build_id=$1
-                local output_file=$2
-                local errors_file=$3
-                local http_code
-
-                http_code=$(curl -sL --max-time 60 -w "%{http_code}" -u ":$ADO_API_TOKEN" \
-                  "https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds/$build_id/timeline?api-version=7.1" \
-                  -o "$output_file")
-
-                if [ "$http_code" != "200" ]; then
-                  echo "Build $build_id: HTTP $http_code" >> "$errors_file"
-                  rm -f "$output_file"
-                elif ! jq empty "$output_file" 2>/dev/null; then
-                  echo "Build $build_id: Invalid JSON response" >> "$errors_file"
-                  rm -f "$output_file"
-                fi
-              }
-
-              for BUILD_ID in $BUILD_IDS; do
-                count=$((count + 1))
-
-                # Start background job
-                fetch_timeline "$BUILD_ID" "$(Build.ArtifactStagingDirectory)/metrics/timelines/timeline_${BUILD_ID}.json" "$ERRORS_FILE" &
-
-                # Limit concurrent jobs
-                if (( count % PARALLEL_JOBS == 0 )); then
-                  wait  # Wait for current batch to complete
-                  echo "[$count/$TOTAL_COUNT] Fetched timeline data..."
-                fi
-              done
-
-              wait  # Wait for remaining jobs
-
-              # Report any errors
-              SUCCESS_COUNT=$(find "$(Build.ArtifactStagingDirectory)/metrics/timelines" -name "*.json" | wc -l | tr -d ' ')
-              ERROR_COUNT=$(wc -l < "$ERRORS_FILE" | tr -d ' ')
-
-              echo "Timeline data fetched: $SUCCESS_COUNT successful, $ERROR_COUNT failed"
-
-              if [ "$ERROR_COUNT" -gt 0 ]; then
-                echo "Warning: Some timeline fetches failed:"
-                cat "$ERRORS_FILE"
-              fi
+            targetType: 'filePath'
+            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/fetch-timeline-data.sh'
 
         - task: Bash@3
           displayName: Generate data JSON
           condition: eq(variables['shouldRun'], 'true')
           env:
             MODE: $(runMode)
+            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
           inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-
-              METRICS_PATH="$(Build.ArtifactStagingDirectory)/metrics"
-
-              echo "=========================================="
-              echo "Generating data JSON ($MODE mode)"
-              echo "=========================================="
-
-              BUILDS_FILE="$METRICS_PATH/builds-raw.json"
-              TOTAL_BUILDS=$(jq '.value | length' "$BUILDS_FILE")
-              echo "Total builds: $TOTAL_BUILDS"
-
-              # Set output filename based on mode
-              if [ "$MODE" = "public" ]; then
-                OUTPUT_FILE="$(Build.ArtifactStagingDirectory)/public-data.json"
-              else
-                OUTPUT_FILE="$(Build.ArtifactStagingDirectory)/internal-data.json"
-              fi
-
-              # Combine timeline files into a single object keyed by build ID
-              # Write to file to avoid "argument list too long" errors with large data
-              TIMELINES_FILE="$METRICS_PATH/timelines-combined.json"
-              for timeline_file in "$METRICS_PATH/timelines"/*.json; do
-                if [ -f "$timeline_file" ]; then
-                  # Extract build ID from filename (timeline_12345.json -> 12345)
-                  BUILD_ID=$(basename "$timeline_file" .json | sed 's/timeline_//')
-                  jq -n --arg id "$BUILD_ID" --slurpfile timeline "$timeline_file" '{($id): $timeline[0]}'
-                fi
-              done | jq -s 'add // {}' > "$TIMELINES_FILE"
-
-              # Create output JSON with raw builds and timelines
-              jq -n \
-                --arg generatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-                --slurpfile builds "$BUILDS_FILE" \
-                --slurpfile timelines "$TIMELINES_FILE" \
-                '{
-                  generatedAt: $generatedAt,
-                  builds: $builds[0].value,
-                  timelines: $timelines[0]
-                }' > "$OUTPUT_FILE"
-
-              echo "Data JSON generated: $OUTPUT_FILE"
-              echo "Data size: $(wc -c < "$OUTPUT_FILE") bytes"
+            targetType: 'filePath'
+            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/generate-data-json.sh'
 
         - task: Bash@3
           displayName: Prepare deployment package
@@ -349,59 +153,12 @@ extends:
           env:
             ASWA_HOSTNAME: $(ASWA_HOSTNAME)
             MODE: $(runMode)
+            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
+            SOURCE_DIR: $(Build.SourcesDirectory)
+            DEPLOY_DIR: $(Build.ArtifactStagingDirectory)/deploy
           inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-
-              DEPLOY_DIR="$(Build.ArtifactStagingDirectory)/deploy"
-
-              echo "=========================================="
-              echo "Preparing deployment package ($MODE mode)"
-              echo "=========================================="
-
-              # Validate ASWA_HOSTNAME is set
-              if [ -z "${ASWA_HOSTNAME:-}" ]; then
-                echo "Error: ASWA_HOSTNAME variable is not set"
-                exit 1
-              fi
-
-              mkdir -p "$DEPLOY_DIR/data"
-
-              # Copy our generated data file
-              if [ "$MODE" = "public" ]; then
-                cp "$(Build.ArtifactStagingDirectory)/public-data.json" "$DEPLOY_DIR/data/public-data.json"
-                OTHER_FILE="internal-data.json"
-              else
-                cp "$(Build.ArtifactStagingDirectory)/internal-data.json" "$DEPLOY_DIR/data/internal-data.json"
-                OTHER_FILE="public-data.json"
-              fi
-
-              # Try to fetch the other mode's data from the live site (may not exist yet)
-              echo "Fetching existing $OTHER_FILE from dashboard..."
-              FETCH_URL="https://${ASWA_HOSTNAME}/data/$OTHER_FILE"
-              FETCH_OUTPUT="$DEPLOY_DIR/data/$OTHER_FILE"
-
-              echo "Fetching from: $FETCH_URL"
-              HTTP_CODE=$(curl -sL --max-time 30 -w "%{http_code}" -o "$FETCH_OUTPUT" "$FETCH_URL") || HTTP_CODE="000"
-              if [ "$HTTP_CODE" = "000" ]; then
-                echo "Error: curl failed (network or connectivity issue)"
-                rm -f "$FETCH_OUTPUT"
-              elif [ "$HTTP_CODE" = "200" ] && [ -s "$FETCH_OUTPUT" ]; then
-                echo "Successfully fetched $OTHER_FILE (HTTP $HTTP_CODE, $(wc -c < "$FETCH_OUTPUT") bytes)"
-              else
-                echo "HTTP $HTTP_CODE - fetch failed or empty response"
-                rm -f "$FETCH_OUTPUT"
-                echo "Note: Could not fetch $OTHER_FILE (first deployment or other mode hasn't run yet)"
-                echo "      The dashboard will show 'No data available' for that tab until the other pipeline runs."
-              fi
-
-              # Copy static web app files from the repo (templates -> deployed names)
-              cp "$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/staticwebapp-template.config.json" "$DEPLOY_DIR/staticwebapp.config.json"
-              cp "$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/dashboard-template.html" "$DEPLOY_DIR/index.html"
-
-              echo "Deployment package contents:"
-              find "$DEPLOY_DIR" -type f
+            targetType: 'filePath'
+            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/prepare-deployment.sh'
 
         - task: AzureStaticWebApp@0
           displayName: Deploy to Azure Static Web Apps
