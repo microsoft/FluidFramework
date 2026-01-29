@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-private/version-compat-tests";
-export const pkgVersion = "2.81.0";
+export const pkgVersion = "2.82.0";

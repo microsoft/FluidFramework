@@ -5,7 +5,7 @@
 @fluid-tools/fetch-tool
 @fluidframework/devtools-core
 @fluidframework/devtools
-@fluid-internal/version-compat-tests
+@fluid-private/version-compat-tests
 @fluid-private/test-version-utils
 @fluidframework/test-utils
 @fluid-internal/test-service-load

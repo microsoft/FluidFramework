@@ -1,9 +1,9 @@
-// XXX
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+// XXX
 // import { strict as assert, fail } from "node:assert";
 
 // import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";

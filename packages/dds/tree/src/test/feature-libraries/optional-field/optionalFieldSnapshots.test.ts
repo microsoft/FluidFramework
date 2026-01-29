@@ -1,9 +1,9 @@
-// XXX
-// /*!
-//  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-//  * Licensed under the MIT License.
-//  */
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
+// XXX
 // import path from "node:path";
 
 // import type { IIdCompressor } from "@fluidframework/id-compressor";
