@@ -419,7 +419,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 				CodecVersion<
 					TDecoded2,
 					// If it does not matter what context is provided, undefined is fine, so allow it to be omitted.
-					TContext2 extends unknown ? void : TContext2,
+					unknown extends TContext2 ? void : TContext2,
 					TFormatVersion2,
 					TBuildOptions2
 				>

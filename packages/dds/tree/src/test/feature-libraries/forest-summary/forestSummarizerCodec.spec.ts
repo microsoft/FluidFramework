@@ -181,7 +181,7 @@ describe("ForestSummarizerCodec", () => {
 						{
 							version: 2.5 as ForestFormatVersion,
 							fields: {
-								version: brand(FieldBatchFormatVersion.v1),
+								version: FieldBatchFormatVersion.v1,
 								identifiers: [],
 								shapes: [],
 								data: [],
@@ -199,7 +199,7 @@ describe("ForestSummarizerCodec", () => {
 				() =>
 					codecCurrent.decode(
 						{
-							version: brand(ForestFormatVersion.v1),
+							version: ForestFormatVersion.v1,
 							fields: {
 								version: 2.5 as FieldBatchFormatVersion,
 								identifiers: [],
