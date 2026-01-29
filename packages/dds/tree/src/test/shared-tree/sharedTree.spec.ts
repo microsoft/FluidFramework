@@ -2815,4 +2815,37 @@ describe("SharedTree", () => {
 			});
 		}
 	});
+
+	it("Can process nested transactions from two different trees", () => {
+		const schemaFactory = new SchemaFactory("test");
+		class TestObject extends schemaFactory.object("TestObject", {
+			content: schemaFactory.number,
+		}) {}
+
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+			}).getFactory(),
+		);
+		const [tree1, tree2] = provider.trees;
+
+		const config = new TreeViewConfiguration({ schema: TestObject, enableSchemaValidation });
+		const view1 = tree1.viewWith(config);
+		view1.initialize({ content: 0 });
+		const view2 = tree2.viewWith(config);
+		view2.initialize({ content: 0 });
+
+		provider.synchronizeMessages();
+
+		Tree.runTransaction(view1, () => {
+			view1.root.content = 1;
+			Tree.runTransaction(view2, () => {
+				view2.root.content = 2;
+			});
+		});
+
+		assert.equal(view1.root.content, 1);
+		assert.equal(view2.root.content, 2);
+	});
 });

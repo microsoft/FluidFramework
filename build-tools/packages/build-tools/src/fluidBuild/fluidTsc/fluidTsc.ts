@@ -29,8 +29,7 @@ async function main(): Promise<void> {
 
 	if (firstArg === "-?" || firstArg === "--help") {
 		printUsage();
-		// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
-		process.exit(0);
+		return;
 	}
 
 	if (firstArg !== "commonjs" && firstArg !== "module") {
@@ -46,15 +45,15 @@ async function main(): Promise<void> {
 	);
 	// In watch mode, there is no result code and the process must be left to continue running.
 	if (result !== undefined) {
-		// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
+		// eslint-disable-next-line unicorn/no-process-exit -- CLI entrypoint: return tsc result code to caller
 		process.exit(result);
 	}
 }
 
-// eslint-disable-next-line unicorn/prefer-top-level-await -- This is a CLI entry point
+// eslint-disable-next-line unicorn/prefer-top-level-await -- top-level await requires ESM; this package emits CommonJS
 main().catch((e): void => {
 	error(`Unexpected error. ${e.message}`);
 	error(e.stack);
-	// eslint-disable-next-line unicorn/no-process-exit -- This is a CLI app
+	// eslint-disable-next-line unicorn/no-process-exit -- CLI entrypoint: exit with error code on unhandled exception
 	process.exit(1);
 });

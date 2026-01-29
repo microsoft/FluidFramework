@@ -204,6 +204,12 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	getRevertible(
 		onDisposed?: (revertible: RevertibleAlpha) => void,
 	): RevertibleAlpha | undefined;
+
+	/**
+	 * Optional label provided by the user when commit was created.
+	 * This can be used by undo/redo to group or classify edits.
+	 */
+	readonly label?: unknown;
 }
 
 /**
@@ -225,6 +231,11 @@ export interface RemoteChangeMetadata extends CommitMetadata {
 	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
 	 */
 	readonly getRevertible?: undefined;
+	/**
+	 * Label provided by the user when commit was created.
+	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
+	 */
+	readonly label?: undefined;
 }
 
 /**
