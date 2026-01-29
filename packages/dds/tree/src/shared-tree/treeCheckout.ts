@@ -388,6 +388,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private editLock: EditLock;
 
+	/**
+	 * User-defined label associated with the transaction whose commit is currently being produced for this checkout.
+	 *
+	 * @remarks
+	 * This label is used to implement {@link TreeCheckout.runWithTransactionLabel}.
+	 */
+	private transactionLabel?: unknown;
+
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
@@ -437,6 +445,34 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
+	}
+
+	/**
+	 * Helper method for {@link SchematizingSimpleTreeView.runTransaction} to properly clear transaction labels once the function completes.
+	 *
+	 * @remarks
+	 * The label is stored during the execution of the function and will be included in the {@link ChangeMetadata} of the transaction.
+	 *
+	 * Labels supplied to nested transactions are ignored - only the outermost transaction label is ever used.
+	 *
+	 * @param fn - The function to execute. It receives the user provided transaction label as an optional parameter.
+	 * @param label - The label to associate with the outermost transaction.
+	 * @returns The result of executing `fn`.
+	 */
+	public runWithTransactionLabel<TLabel, TResult>(
+		fn: (label?: TLabel) => TResult,
+		label: TLabel | undefined,
+	): TResult {
+		// If a transaction label is already set, nesting is occurring, so we should not override it.
+		if (this.transactionLabel !== undefined) {
+			return fn(this.transactionLabel as TLabel);
+		}
+		this.transactionLabel = label;
+		try {
+			return fn(this.transactionLabel as TLabel);
+		} finally {
+			this.transactionLabel = undefined;
+		}
 	}
 
 	public get removedRoots(): ReadOnlyDetachedFieldIndex {
@@ -570,6 +606,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						} satisfies SerializedChange;
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
+					label: this.transactionLabel,
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);
@@ -577,7 +614,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
-			this.#events.emit("changed", { isLocal: false, kind: CommitKind.Default });
+			this.#events.emit("changed", {
+				isLocal: false,
+				kind: CommitKind.Default,
+			});
 		}
 	};
 

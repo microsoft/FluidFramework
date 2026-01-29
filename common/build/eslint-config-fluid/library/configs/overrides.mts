@@ -19,13 +19,13 @@
  * - jsTypeAwareDisable: Disables type-aware rules for JS files
  * - reactRecommendedOverride: React file overrides for recommended config
  * - testRecommendedOverride: Test file overrides for recommended config
- * - addSharedConfigs: Helper function to add all shared configs to a config array
+ * - sharedConfigs: Collection of all shared configs in a config array
  */
 
 import dependPlugin from "eslint-plugin-depend";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
-import type { Linter } from "eslint";
+import type { ESLint, Linter } from "eslint";
 
 import { permittedImports, restrictedImportPaths, testFilePatterns } from "../constants.mjs";
 import type { FlatConfigArray } from "./base.mjs";
@@ -33,7 +33,7 @@ import type { FlatConfigArray } from "./base.mjs";
 /**
  * eslint-plugin-depend configuration.
  */
-export const dependConfig: Linter.Config = {
+export const dependConfig = {
 	plugins: {
 		depend: dependPlugin,
 	},
@@ -45,24 +45,24 @@ export const dependConfig: Linter.Config = {
 			},
 		],
 	},
-};
+} as const satisfies Linter.Config;
 
 /**
  * Use projectService for automatic tsconfig discovery instead of manual project configuration.
  */
-export const useProjectService: Linter.Config = {
+export const useProjectService = {
 	files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 	languageOptions: {
 		parserOptions: {
 			projectService: true,
 		},
 	},
-};
+} as const satisfies Linter.Config;
 
 /**
  * Test file configuration with explicit project paths and rule overrides.
  */
-export const testProjectConfig: Linter.Config = {
+export const testProjectConfig = {
 	files: ["src/test/**", ...testFilePatterns],
 	languageOptions: {
 		parserOptions: {
@@ -86,17 +86,21 @@ export const testProjectConfig: Linter.Config = {
 		"import-x/no-internal-modules": [
 			"error",
 			{
-				allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*"].concat(permittedImports),
+				// Any and all `@fluid*` import paths are allowed in test files.
+				// Preferably, external (alpha/beta/public) entrypoints are used
+				// for clarity where testing is somewhat whitebox versus validating
+				// customer experience.
+				allow: ["@fluid*/**", ...permittedImports],
 			},
 		],
 		"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
 	},
-};
+} as const satisfies Linter.Config;
 
 /**
  * Override import-x/no-internal-modules for non-test files to include /legacy imports.
  */
-export const internalModulesConfig: Linter.Config = {
+export const internalModulesConfig = {
 	files: [
 		"**/*.ts",
 		"**/*.tsx",
@@ -116,12 +120,12 @@ export const internalModulesConfig: Linter.Config = {
 			},
 		],
 	},
-};
+} as const satisfies Linter.Config;
 
 /**
  * React rules for ESLint 9 - extends react/recommended and react-hooks/recommended.
  */
-export const reactConfig: FlatConfigArray = [
+export const reactConfig = [
 	// react/flat.recommended
 	{
 		files: ["**/*.jsx", "**/*.tsx"],
@@ -131,7 +135,8 @@ export const reactConfig: FlatConfigArray = [
 	{
 		files: ["**/*.jsx", "**/*.tsx"],
 		plugins: {
-			"react-hooks": reactHooksPlugin,
+			// reactHooksPlugin.configs.flat does not conform. It is not a `ConfigObject`.
+			"react-hooks": reactHooksPlugin as ESLint.Plugin,
 		},
 		rules: reactHooksPlugin.configs.recommended.rules,
 		settings: {
@@ -151,30 +156,30 @@ export const reactConfig: FlatConfigArray = [
 			"react-hooks/static-components": "warn",
 		},
 	},
-];
+] as const satisfies FlatConfigArray;
 
 /**
  * CommonJS files can use __dirname and require.
  */
-export const cjsFileConfig: Linter.Config = {
+export const cjsFileConfig = {
 	files: ["**/*.cts", "**/*.cjs"],
 	rules: {
 		"unicorn/prefer-module": "off",
 	},
-};
+} as const satisfies Linter.Config;
 
 /**
  * Disable type-aware parsing for JS files and .d.ts files.
  */
-export const jsNoProject: Linter.Config = {
+export const jsNoProject = {
 	files: ["**/*.js", "**/*.cjs", "**/*.mjs", "**/*.d.ts"],
 	languageOptions: { parserOptions: { project: null, projectService: false } },
-};
+} as const satisfies Linter.Config;
 
 /**
  * Disable type-required @typescript-eslint rules for pure JS files and .d.ts files.
  */
-export const jsTypeAwareDisable: Linter.Config = {
+export const jsTypeAwareDisable = {
 	files: ["**/*.js", "**/*.cjs", "**/*.mjs", "**/*.d.ts"],
 	rules: {
 		"@typescript-eslint/await-thenable": "off",
@@ -235,41 +240,44 @@ export const jsTypeAwareDisable: Linter.Config = {
 		"@typescript-eslint/unbound-method": "off",
 		"@typescript-eslint/use-unknown-in-catch-callback-variable": "off",
 	},
-};
+} as const satisfies Linter.Config;
 
 /**
  * React file overrides for recommended config (from recommended.js).
  */
-export const reactRecommendedOverride: Linter.Config = {
+export const reactRecommendedOverride = {
 	files: ["**/*.jsx", "**/*.tsx"],
 	rules: {
 		"unicorn/consistent-function-scoping": "off",
 	},
-};
+} as const satisfies Linter.Config;
 
 /**
  * Test file overrides for recommended config (from recommended.js).
  */
-export const testRecommendedOverride: Linter.Config = {
-	files: testFilePatterns,
+export const testRecommendedOverride = {
+	// Use of spread operator shouldn't really be needed here. Under VS Code, a
+	// complaint is raised that
+	//   The type 'readonly [...]' is 'readonly' and cannot be assigned to the mutable type '(string | string[])[]'.ts(4104)
+	// without spread. But that doesn't appear in other uses. Use spread to pacify
+	// that environment. (Remember mutability is not well checked in TS generally.
+	// So an extra copy if safety was needed isn't a problem.)
+	files: [...testFilePatterns],
 	rules: {
 		"unicorn/consistent-function-scoping": "off",
 		"unicorn/prefer-module": "off",
 	},
-};
+} as const satisfies Linter.Config;
 
 /**
- * Adds shared configuration objects to a config array.
+ * Full set of shared configuration objects in config array.
  */
-export function addSharedConfigs(configs: FlatConfigArray): FlatConfigArray {
-	return [
-		...configs,
-		useProjectService,
-		testProjectConfig,
-		internalModulesConfig,
-		...reactConfig,
-		cjsFileConfig,
-		jsNoProject,
-		jsTypeAwareDisable,
-	];
-}
+export const sharedConfigs = [
+	useProjectService,
+	testProjectConfig,
+	internalModulesConfig,
+	...reactConfig,
+	cjsFileConfig,
+	jsNoProject,
+	jsTypeAwareDisable,
+] as const satisfies FlatConfigArray;
