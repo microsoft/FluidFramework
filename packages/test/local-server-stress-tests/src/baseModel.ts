@@ -194,11 +194,12 @@ export function makeGenerator<T extends BaseOperation>(
 	]);
 
 	return async (state) => {
-		// Track detached operation count for phasing
+		const result = await asyncGenerator(state);
+		// Track detached operation count for phasing (increment AFTER generating op)
 		if (state.client.container.attachState === AttachState.Detached) {
 			detachedOpCount++;
 		}
-		return asyncGenerator(state);
+		return result;
 	};
 }
 export const saveFailures = { directory: path.join(_dirname, "../src/test/results") };
