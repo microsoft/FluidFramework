@@ -11,7 +11,6 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { Revertible } from "../../../core/index.js";
-import type { DownPath } from "../../../feature-libraries/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
@@ -20,6 +19,7 @@ import {
 	type FuzzTransactionView,
 	type FuzzView,
 	getAllowableNodeTypes,
+	type KeyDownPath,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
@@ -465,22 +465,22 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 	}
 }
 
-function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
+function navigateToNode(tree: FuzzView, path: KeyDownPath): TreeNode {
 	let currentNode = tree.root as TreeNode;
 	for (const pathStep of path) {
-		switch (pathStep.field) {
+		if (typeof pathStep === "number") {
+			currentNode = (currentNode as ArrayChildren).at(pathStep) as TreeNode;
+			break;
+		}
+
+		switch (pathStep) {
 			case "rootFieldKey": {
-				break;
-			}
-			case "": {
-				assert(pathStep.index !== undefined);
-				currentNode = (currentNode as ArrayChildren).at(pathStep.index) as TreeNode;
 				break;
 			}
 			case "arrayChildren": {
 				const arrayChildren =
 					(currentNode as FuzzNode).arrayChildren ??
-					assert.fail(`Unexpected field type: ${pathStep.field}`);
+					assert.fail(`Unexpected field type: ${pathStep}`);
 
 				currentNode = arrayChildren;
 				break;
@@ -489,19 +489,19 @@ function navigateToNode(tree: FuzzView, path: DownPath): TreeNode {
 			case "optionalChild": {
 				const optionalChild =
 					(currentNode as FuzzNode).optionalChild ??
-					assert.fail(`Unexpected field type: ${pathStep.field}`);
+					assert.fail(`Unexpected field type: ${pathStep}`);
 				currentNode = optionalChild as FuzzNode;
 				break;
 			}
 			case "requiredChild": {
 				const requiredChild =
 					(currentNode as FuzzNode).requiredChild ??
-					assert.fail(`Unexpected field type: ${pathStep.field}`);
+					assert.fail(`Unexpected field type: ${pathStep}`);
 				currentNode = requiredChild as FuzzNode;
 				break;
 			}
 			default: {
-				assert.fail(`Unexpected field type: ${pathStep.field}`);
+				assert.fail(`Unexpected field type: ${pathStep}`);
 			}
 		}
 	}

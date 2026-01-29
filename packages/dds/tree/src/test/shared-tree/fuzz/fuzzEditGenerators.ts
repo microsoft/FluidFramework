@@ -18,12 +18,8 @@ import type { Client, DDSFuzzTestState, DDSRandom } from "@fluid-private/test-dd
 
 import type {
 	TreeStoredSchemaRepository,
-	FieldKey,
-	FieldUpPath,
-	UpPath,
 	TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
-import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
 import { Tree, type ITreePrivate } from "../../../shared-tree/index.js";
 import { getOrCreate, makeArray } from "../../../util/index.js";
 
@@ -61,7 +57,6 @@ import {
 } from "./operationTypes.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-import { getInnerNode } from "../../../simple-tree/index.js";
 import type { TreeNode, TreeNodeSchema } from "../../../simple-tree/index.js";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedTree } from "../../../treeFactory.js";
@@ -794,29 +789,27 @@ function sumWeights(values: (number | undefined)[]): number {
 	return sum;
 }
 
-export interface FieldPathWithCount {
-	fieldPath: FieldUpPath;
-	fieldKey: FieldKey;
-	count: number;
-}
+export type KeyDownPath = (string | number)[];
 
-function upPathFromNode(node: TreeNode): UpPath {
-	// XXX: Use external API instead.
-	const flexNode = getInnerNode(node);
-	assert(flexNode.isHydrated());
-	const anchorNode = flexNode.anchorNode;
-	return anchorNode;
-}
+function downPathFromNode(node: TreeNode): KeyDownPath {
+	const path: KeyDownPath = [];
+	for (
+		let currentNode: TreeNode | undefined = node;
+		currentNode !== undefined;
+		currentNode = Tree.parent(currentNode)
+	) {
+		path.push(Tree.key(currentNode));
+	}
 
-function downPathFromNode(node: TreeNode): DownPath {
-	return toDownPath(upPathFromNode(node));
+	path.reverse();
+	return path;
 }
 
 export function maybeDownPathFromNode(
 	node: TreeNode | undefined,
 	nodeSchema: FuzzNodeSchema,
 	statics: TreePackageStatics,
-): DownPath | undefined {
+): KeyDownPath | undefined {
 	return statics.nodeApi.is(node, nodeSchema) ? downPathFromNode(node) : undefined;
 }
 
