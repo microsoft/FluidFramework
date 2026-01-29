@@ -26,12 +26,11 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 // eslint-disable-next-line import-x/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
-import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
 import {
 	RuntimeHeaders,
-	toFluidHandleInternal,
 	asLegacyAlpha,
+	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
@@ -100,27 +99,20 @@ export class StressDataObject extends DataObject {
 		return maybe.DefaultStressDataObject;
 	}
 
-	/**
-	 * this map is special, and doesn't participate in stress. it hold data
-	 * about the name of channels which have been created. these created channel
-	 * may or may not be attached and be available
-	 */
-	private channelNameMap: ISharedMap = makeUnreachableCodePathProxy("channelNameMap");
 	protected async initializingFirstTime(props?: any): Promise<void> {
-		this.channelNameMap = SharedMap.create(this.runtime, "channelNameMap");
-		this.channelNameMap.bindToContext();
-		this.channelNameMap.set("root", this.root.attributes.type);
+		// No DDS-backed tracking needed - harness manages channel tracking in-memory
 	}
 
-	public async getChannels(): Promise<IChannel[]> {
+	/**
+	 * Gets channels by trying to resolve each channel tag from the provided list.
+	 * Channels that don't exist or aren't attached will be silently skipped.
+	 * @param channelTags - List of channel tags to try to resolve
+	 */
+	public async getChannels(channelTags: string[]): Promise<IChannel[]> {
 		const channels: IChannel[] = [];
-		for (const [name] of this.channelNameMap.entries()) {
-			// similar to container objects, the entries in this map
-			// can appear before the underlying channel is attached,
-			// so getting the channel can fail, and we need to try
-			// to get all channel each time, as we have no way to
-			// observer when a channel moves from detached to attached,
-			// especially on remove clients/
+		for (const name of channelTags) {
+			// Channels may not be attached yet, so getting them can fail.
+			// We need to try each one and skip those that aren't available.
 			const channel = await timeoutAwait(this.runtime.getChannel(name), {
 				errorMsg: `Timed out waiting for channel: ${name}`,
 			}).catch(() => undefined);
@@ -133,10 +125,6 @@ export class StressDataObject extends DataObject {
 
 	protected async hasInitialized(): Promise<void> {
 		this.defaultStressObject = await this.getDefaultStressDataObject();
-
-		this.channelNameMap = (await this.runtime.getChannel(
-			"channelNameMap",
-		)) as any as ISharedMap;
 	}
 
 	public get attached(): boolean {
@@ -154,10 +142,16 @@ export class StressDataObject extends DataObject {
 
 	public createChannel(tag: `channel-${number}`, type: string): void {
 		this.runtime.createChannel(tag, type);
-		this.channelNameMap.set(tag, type);
+		// Channel tracking is managed by the harness in-memory, not here
 	}
 
-	public async createDataStore(tag: `datastore-${number}`, asChild: boolean): Promise<void> {
+	/**
+	 * Creates a new datastore and returns its absolute URL for tracking.
+	 */
+	public async createDataStore(
+		tag: `datastore-${number}`,
+		asChild: boolean,
+	): Promise<{ absoluteUrl: string }> {
 		const dataStore = await this.context.containerRuntime.createDataStore(
 			asChild
 				? [...this.context.packagePath, StressDataObject.factory.type]
@@ -172,6 +166,9 @@ export class StressDataObject extends DataObject {
 			tag,
 			stressDataObject: maybe.StressDataObject,
 		});
+
+		const absoluteUrl = toFluidHandleInternal(dataStore.entryPoint).absolutePath;
+		return { absoluteUrl };
 	}
 
 	public orderSequentially(act: () => void): void {
@@ -200,26 +197,26 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	/**
-	 * these are object created in memory by this instance of the datastore, they
-	 * will also be in  these the containerObjectMap, but are not necessarily usable
-	 * as they could be detached, in which can only this instance can access them.
+	 * Objects created in memory by this instance of the datastore.
+	 * These may be detached and only accessible to this instance.
 	 */
 	private readonly _locallyCreatedObjects: ContainerObjects[] = [];
-	public async getContainerObjects(): Promise<readonly Readonly<ContainerObjects>[]> {
+
+	/**
+	 * Gets container objects by combining locally created objects with objects
+	 * resolved from the provided URL map (managed by harness).
+	 * @param containerUrls - Map of absolutePath → {tag, type} from harness tracking
+	 */
+	public async getContainerObjects(
+		containerUrls: Map<string, { tag: string; type: string }>,
+	): Promise<readonly Readonly<ContainerObjects>[]> {
 		const containerObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
 		const containerRuntime = // eslint-disable-next-line import-x/no-deprecated
 			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
-		for (const [url, entry] of this.containerObjectMap as any as [
-			string,
-			ContainerObjects,
-		][]) {
-			// the container objects map will see things before they are attached,
-			// so they may not be available to remote clients yet.
-			// Additionally, there is no way to observe when an
-			// object goes from detached to attached.
-			// Due to the both the above, we need to always try
-			// to resolve each object, and just ignore those which can't
-			// be found.
+
+		for (const [url, entry] of containerUrls.entries()) {
+			// Objects may not be attached yet, so they may not be available to remote clients.
+			// We need to try to resolve each one and skip those that aren't available.
 			const resp = await timeoutAwait(
 				containerRuntime.resolveHandle({
 					url,
@@ -237,22 +234,22 @@ export class DefaultStressDataObject extends StressDataObject {
 					switch (type) {
 						case "newBlob":
 							containerObjects.push({
-								...entry,
+								type: "newBlob",
+								tag: entry.tag as `blob-${number}`,
 								handle,
 							});
 							break;
 						case "stressDataObject":
 							assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
-
 							containerObjects.push({
 								type: "stressDataObject",
-								tag: entry.tag,
+								tag: entry.tag as `datastore-${number}`,
 								handle,
 								stressDataObject: maybe.StressDataObject,
 							});
 							break;
 						default:
-							unreachableCase(type, `${type}`);
+							unreachableCase(type as never, `${type}`);
 					}
 				}
 			}
@@ -264,17 +261,9 @@ export class DefaultStressDataObject extends StressDataObject {
 		return this;
 	}
 
-	/**
-	 * this map is special, and doesn't participate in stress. it holds data
-	 * about the name of container objects which have been created. these created objects
-	 * may or may not be attached and be available
-	 */
-	private containerObjectMap: ISharedMap = makeUnreachableCodePathProxy("containerObjectMap");
 	protected async initializingFirstTime(props?: any): Promise<void> {
 		await super.initializingFirstTime(props);
-		this.containerObjectMap = SharedMap.create(this.runtime, "containerObjectMap");
-		this.containerObjectMap.bindToContext();
-
+		// Register the default datastore as a locally created object
 		this.registerLocallyCreatedObject({
 			type: "stressDataObject",
 			handle: this.handle,
@@ -283,39 +272,11 @@ export class DefaultStressDataObject extends StressDataObject {
 		});
 	}
 
-	protected async initializingFromExisting(): Promise<void> {
-		this.containerObjectMap = (await this.runtime.getChannel(
-			"containerObjectMap",
-		)) as any as ISharedMap;
-	}
-
 	/**
-	 * Objects created during staging mode that need to be registered in containerObjectMap
-	 * after staging mode exits. We defer the write to avoid it being rolled back on discard.
+	 * Registers an object as locally created. Container object tracking
+	 * is managed by the harness in-memory, not via DDS.
 	 */
-	private readonly _pendingContainerObjectRegistrations: ContainerObjects[] = [];
-
-	/**
-	 * Registers an object to the containerObjectMap if not already present.
-	 */
-	private registerToContainerObjectMap(obj: ContainerObjects): void {
-		if (obj.handle !== undefined) {
-			const handle = toFluidHandleInternal(obj.handle);
-			if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
-				this.containerObjectMap.set(handle.absolutePath, { tag: obj.tag, type: obj.type });
-			}
-		}
-	}
-
 	public registerLocallyCreatedObject(obj: ContainerObjects): void {
-		if (obj.handle !== undefined) {
-			if (this.inStagingMode()) {
-				// Defer registration until staging mode exits to avoid rollback on discard
-				this._pendingContainerObjectRegistrations.push(obj);
-			} else {
-				this.registerToContainerObjectMap(obj);
-			}
-		}
 		this._locallyCreatedObjects.push(obj);
 	}
 
@@ -345,13 +306,6 @@ export class DefaultStressDataObject extends StressDataObject {
 			this.stageControls.discardChanges();
 		}
 		this.stageControls = undefined;
-
-		// Flush any pending containerObjectMap registrations that were deferred during staging mode.
-		// This happens after staging mode exits so the writes won't be rolled back.
-		for (const obj of this._pendingContainerObjectRegistrations) {
-			this.registerToContainerObjectMap(obj);
-		}
-		this._pendingContainerObjectRegistrations.length = 0;
 	}
 }
 

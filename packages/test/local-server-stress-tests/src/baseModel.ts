@@ -63,9 +63,25 @@ const orderSequentiallyReducer = async (
 export const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
 	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
-	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
+	createDataStore: async (state, op) => {
+		const { absoluteUrl } = await state.datastore.createDataStore(op.tag, op.asChild);
+		// Initialize the new datastore's channel tracking with its root directory
+		const rootChannelType = ddsModelMap.get("https://graph.microsoft.com/types/directory")!
+			.factory.type;
+		state.channelsByDatastore.set(op.tag, new Map([["root", rootChannelType]]));
+		// Add to container objects tracking for cross-client discovery
+		state.containerObjectsByUrl.set(absoluteUrl, { tag: op.tag, type: "stressDataObject" });
+	},
 	createChannel: async (state, op) => {
 		state.datastore.createChannel(op.tag, op.channelType);
+		// Add the channel to the in-memory tracking for the current datastore
+		// The datastoreTag is available via SelectedClientSpec on the operation
+		const datastoreTag = (op as unknown as { datastoreTag: `datastore-${number}` })
+			.datastoreTag;
+		const channelMap = state.channelsByDatastore.get(datastoreTag);
+		if (channelMap !== undefined) {
+			channelMap.set(op.tag, op.channelType);
+		}
 	},
 	uploadBlob: async (state, op) =>
 		// this will hang if we are offline due to disconnect, so we don't wait for blob upload

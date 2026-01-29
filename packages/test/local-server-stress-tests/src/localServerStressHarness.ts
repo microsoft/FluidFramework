@@ -73,6 +73,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { saveFluidOps } from "./baseModel.js";
+import { ddsModelMap } from "./ddsModels.js";
 import { validateConsistencyOfAllDDS } from "./ddsOperations.js";
 import {
 	createRuntimeFactory,
@@ -99,9 +100,22 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 	clients: Client[];
 	client: Client;
 	datastore: StressDataObject;
+	datastoreTag: `datastore-${number}`;
 	channel: IChannel;
 	seed: number;
 	tag<T extends string>(prefix: T): `${T}-${number}`;
+	/**
+	 * In-memory tracking of channels per datastore.
+	 * Maps datastoreTag → (channelTag → channelType)
+	 * Replaces the DDS-backed channelNameMap to avoid rollback/staging mode issues.
+	 */
+	channelsByDatastore: Map<`datastore-${number}`, Map<string, string>>;
+	/**
+	 * In-memory tracking of container objects (datastores and blobs).
+	 * Maps absolutePath → {tag, type}
+	 * Replaces the DDS-backed containerObjectMap to avoid rollback/staging mode issues.
+	 */
+	containerObjectsByUrl: Map<string, { tag: string; type: string }>;
 }
 
 /**
@@ -172,9 +186,16 @@ export interface LocalServerStressModel<TOperation extends BaseOperation> {
 	 * Equivalence validation function, which should verify that the provided clients contain the same data.
 	 * This is run at each synchronization point for all connected clients (as disconnected clients won't
 	 * necessarily have the same set of ops applied).
+	 * @param clientA - First client to compare
+	 * @param clientB - Second client to compare
+	 * @param state - Test state with access to tracking maps
 	 * @throws An informative error if the clients don't have equivalent data.
 	 */
-	validateConsistency: (clientA: Client, clientB: Client) => void | Promise<void>;
+	validateConsistency: (
+		clientA: Client,
+		clientB: Client,
+		state: LocalServerStressState,
+	) => void | Promise<void>;
 
 	/**
 	 * An array of transforms used during fuzz test minimization to reduce test
@@ -515,11 +536,16 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 				(await frozenContainer.getEntryPoint()) ?? {};
 			assert(DefaultStressDataObject !== undefined, "must have entrypoint");
 
-			await validateConsistencyOfAllDDS(removed, {
-				container: frozenContainer,
-				entryPoint: DefaultStressDataObject,
-				tag: `client-${Number.NaN}`,
-			});
+			await validateConsistencyOfAllDDS(
+				removed,
+				{
+					container: frozenContainer,
+					entryPoint: DefaultStressDataObject,
+					tag: `client-${Number.NaN}`,
+				},
+				state.channelsByDatastore,
+				state.containerObjectsByUrl,
+			);
 
 			frozenContainer.dispose();
 			removed.container.dispose();
@@ -671,7 +697,7 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 				await synchronizeClients([validationClient, ...connectedClients]);
 				for (const client of connectedClients) {
 					try {
-						await model.validateConsistency(client, validationClient);
+						await model.validateConsistency(client, validationClient, state);
 					} catch (error: unknown) {
 						if (error instanceof Error) {
 							error.message = `Comparing client ${client.tag} vs client ${validationClient.tag}\n${error.message}`;
@@ -718,43 +744,76 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 			// 2. Make it available to the subsequent reducer logic we're going to inject
 			// (so that we can recover the channel from serialized data)
 			const client = state.random.pick(state.clients);
-			const globalObjects = await client.entryPoint.getContainerObjects();
-			const entry = state.random.pick(
-				globalObjects.filter((v) => v.type === "stressDataObject"),
+
+			// Get available datastores for this client (may be a subset of what's in the global tracking)
+			const globalObjects = await client.entryPoint.getContainerObjects(
+				state.containerObjectsByUrl,
 			);
-			assert(entry?.type === "stressDataObject");
+			const availableDatastores = globalObjects.filter((v) => v.type === "stressDataObject");
+
+			// Filter to only datastores that both exist in our tracking AND are available to this client
+			const availableDatastoreTags = availableDatastores
+				.map((e) => e.tag)
+				.filter((tag) => state.channelsByDatastore.has(tag));
+
+			assert(availableDatastoreTags.length > 0, "at least one datastore must be available");
+			const datastoreTag = state.random.pick(availableDatastoreTags);
+
+			const entry = availableDatastores.find((e) => e.tag === datastoreTag);
+			assert(entry?.type === "stressDataObject", `datastore ${datastoreTag} must exist`);
 			const datastore = entry.stressDataObject;
-			const channels = await datastore.StressDataObject.getChannels();
+
+			// Get the channel tags from in-memory tracking for this datastore
+			const channelMap = state.channelsByDatastore.get(datastoreTag);
+			assert(channelMap !== undefined, `channels for ${datastoreTag} must exist`);
+			const channelTags = Array.from(channelMap.keys());
+
+			// Get available channels for this datastore
+			const channels = await datastore.StressDataObject.getChannels(channelTags);
+			const availableChannelIds = new Set(channels.map((c) => c.id));
 
 			// Group channels by type to ensure uniform coverage across channel types
-			const channelsByType = new Map<string, IChannel[]>();
-			for (const ch of channels) {
-				const channelType = ch.attributes.type;
+			// Only include channels that actually exist
+			const channelsByType = new Map<string, string[]>();
+			for (const [channelTag, channelType] of channelMap.entries()) {
+				if (!availableChannelIds.has(channelTag)) {
+					continue; // Skip channels that don't actually exist
+				}
 				const existing = channelsByType.get(channelType);
 				if (existing !== undefined) {
-					existing.push(ch);
+					existing.push(channelTag);
 				} else {
-					channelsByType.set(channelType, [ch]);
+					channelsByType.set(channelType, [channelTag]);
 				}
 			}
 
 			// First pick a channel type, then pick a channel of that type
 			const channelTypes = Array.from(channelsByType.keys());
+			assert(channelTypes.length > 0, "at least one channel type must be available");
 			const selectedType = state.random.pick(channelTypes);
-			const channelsOfSelectedType = channelsByType.get(selectedType);
-			assert(channelsOfSelectedType !== undefined, "channels of selected type must exist");
-			const channel = state.random.pick(channelsOfSelectedType);
-			assert(channel !== undefined, "channel must exist");
-			const baseOp = await runInStateWithClient(state, client, datastore, channel, async () =>
-				baseGenerator(state),
+			const channelTagsOfSelectedType = channelsByType.get(selectedType);
+			assert(channelTagsOfSelectedType !== undefined, "channels of selected type must exist");
+			const channelTag = state.random.pick(channelTagsOfSelectedType);
+
+			// Get the actual channel object
+			const channel = channels.find((c) => c.id === channelTag);
+			assert(channel !== undefined, `channel ${channelTag} must exist`);
+
+			const baseOp = await runInStateWithClient(
+				state,
+				client,
+				datastore,
+				datastoreTag,
+				channel,
+				async () => baseGenerator(state),
 			);
 			return baseOp === done
 				? done
 				: ({
 						...baseOp,
 						clientTag: client.tag,
-						datastoreTag: entry.tag,
-						channelTag: channel.id as `channel-${number}`,
+						datastoreTag,
+						channelTag: channelTag as `channel-${number}`,
 					} satisfies SelectedClientSpec);
 		};
 	};
@@ -766,16 +825,27 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 		assert(hasSelectedClientSpec(operation), "operation should have been given a client");
 		const client = state.clients.find((c) => c.tag === operation.clientTag);
 		assert(client !== undefined);
-		const globalObjects = await client.entryPoint.getContainerObjects();
+		const globalObjects = await client.entryPoint.getContainerObjects(
+			state.containerObjectsByUrl,
+		);
 		const entry = globalObjects.find((e) => e.tag === operation.datastoreTag);
 		assert(entry?.type === "stressDataObject");
 		const datastore = entry.stressDataObject;
-		const channels = await datastore.StressDataObject.getChannels();
+		const channelMap = state.channelsByDatastore.get(operation.datastoreTag);
+		const channelTags = channelMap ? Array.from(channelMap.keys()) : ["root"];
+		const channels = await datastore.StressDataObject.getChannels(channelTags);
 		const channel = channels.find((c) => c.id === operation.channelTag);
 		assert(channel !== undefined, "channel must exist");
-		await runInStateWithClient(state, client, datastore, channel, async () => {
-			await model.reducer(state, operation as TOperation);
-		});
+		await runInStateWithClient(
+			state,
+			client,
+			datastore,
+			operation.datastoreTag,
+			channel,
+			async () => {
+				await model.reducer(state, operation as TOperation);
+			},
+		);
 	};
 	return {
 		...model,
@@ -811,12 +881,14 @@ async function runInStateWithClient<Result>(
 	state: LocalServerStressState,
 	client: LocalServerStressState["client"],
 	datastore: LocalServerStressState["datastore"],
+	datastoreTag: LocalServerStressState["datastoreTag"],
 	channel: LocalServerStressState["channel"],
 	callback: (state: LocalServerStressState) => Promise<Result>,
 ): Promise<Result> {
 	const old = { ...state };
 	state.client = client;
 	state.datastore = datastore;
+	state.datastoreTag = datastoreTag;
 	state.channel = channel;
 	try {
 		return await callback(state);
@@ -825,6 +897,7 @@ async function runInStateWithClient<Result>(
 
 		state.client = old.client;
 		state.datastore = old.datastore;
+		state.datastoreTag = old.datastoreTag;
 		state.channel = old.channel;
 	}
 }
@@ -1036,6 +1109,24 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		options,
 	);
 
+	// Initialize in-memory tracking maps
+	// Start with datastore-0's root channel (directory type)
+	const channelsByDatastore = new Map<`datastore-${number}`, Map<string, string>>();
+	channelsByDatastore.set(
+		"datastore-0",
+		new Map([
+			["root", ddsModelMap.get("https://graph.microsoft.com/types/directory")!.factory.type],
+		]),
+	);
+
+	// Initialize container objects tracking with datastore-0
+	const containerObjectsByUrl = new Map<string, { tag: string; type: string }>();
+	const defaultDatastoreUrl = detachedClient.entryPoint.handle.absolutePath;
+	containerObjectsByUrl.set(defaultDatastoreUrl, {
+		tag: "datastore-0",
+		type: "stressDataObject",
+	});
+
 	const initialState: LocalServerStressState = {
 		clients: [detachedClient],
 		localDeltaConnectionServer: server,
@@ -1045,9 +1136,14 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		validationClient: detachedClient,
 		client: makeUnreachableCodePathProxy("client"),
 		datastore: makeUnreachableCodePathProxy("datastore"),
+		datastoreTag: makeUnreachableCodePathProxy(
+			"datastoreTag",
+		) as unknown as `datastore-${number}`,
 		channel: makeUnreachableCodePathProxy("channel"),
 		seed,
 		tag,
+		channelsByDatastore,
+		containerObjectsByUrl,
 	};
 
 	let operationCount = 0;
@@ -1081,7 +1177,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 			}
 			await synchronizeClients([validationClient, ...clients]);
 			for (const client of clients) {
-				await model.validateConsistency(client, validationClient);
+				await model.validateConsistency(client, validationClient, state);
 			}
 			return;
 		}

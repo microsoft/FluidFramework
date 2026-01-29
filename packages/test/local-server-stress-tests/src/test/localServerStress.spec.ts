@@ -17,6 +17,7 @@ import { validateConsistencyOfAllDDS } from "../ddsOperations";
 import {
 	createLocalServerStressSuite,
 	LocalServerStressModel,
+	type LocalServerStressState,
 } from "../localServerStressHarness";
 
 describe("Local Server Stress", () => {
@@ -24,9 +25,14 @@ describe("Local Server Stress", () => {
 		workloadName: "default",
 		generatorFactory: () => takeAsync(200, makeGenerator()),
 		reducer,
-		validateConsistency: async (...clients) => {
-			await validateAllDataStoresSaved(...clients);
-			await validateConsistencyOfAllDDS(...clients);
+		validateConsistency: async (clientA, clientB, state: LocalServerStressState) => {
+			await validateAllDataStoresSaved(clientA, clientB, state);
+			await validateConsistencyOfAllDDS(
+				clientA,
+				clientB,
+				state.channelsByDatastore,
+				state.containerObjectsByUrl,
+			);
 		},
 		minimizationTransforms: ddsModelMinimizers,
 	};

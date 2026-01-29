@@ -58,10 +58,12 @@ const channelToDdsState = new WeakMap<IChannel, DDSFuzzTestState<IChannelFactory
 export const covertLocalServerStateToDdsState = async (
 	state: LocalServerStressState,
 ): Promise<DDSFuzzTestState<IChannelFactory>> => {
-	const channels = await state.datastore.getChannels();
+	const channelMap = state.channelsByDatastore.get(state.datastoreTag);
+	const channelTags = channelMap ? Array.from(channelMap.keys()) : ["root"];
+	const channels = await state.datastore.getChannels(channelTags);
 	const allHandles = [
 		...channels.map((c) => ({ tag: c.id, handle: c.handle })),
-		...(await state.client.entryPoint.getContainerObjects()).filter(
+		...(await state.client.entryPoint.getContainerObjects(state.containerObjectsByUrl)).filter(
 			(v) => v.handle !== undefined,
 		),
 	];
@@ -163,8 +165,12 @@ export const loadAllHandles = async (
 }> => {
 	const baseModel = ddsModelMap.get(state.channel.attributes.type);
 	assert(baseModel !== undefined, "must have base model");
-	const channels = await state.datastore.getChannels();
-	const globalObjects = await state.client.entryPoint.getContainerObjects();
+	const channelMap = state.channelsByDatastore.get(state.datastoreTag);
+	const channelTags = channelMap ? Array.from(channelMap.keys()) : ["root"];
+	const channels = await state.datastore.getChannels(channelTags);
+	const globalObjects = await state.client.entryPoint.getContainerObjects(
+		state.containerObjectsByUrl,
+	);
 
 	return {
 		baseModel,
@@ -196,6 +202,8 @@ export const convertToRealHandles = (
 export const validateConsistencyOfAllDDS = async (
 	clientA: Client,
 	clientB: Client,
+	channelsByDatastore: Map<`datastore-${number}`, Map<string, string>>,
+	containerObjectsByUrl: Map<string, { tag: string; type: string }>,
 ): Promise<void> => {
 	const buildChannelMap = async (client: Client): Promise<Map<string, IChannel>> => {
 		/**
@@ -204,13 +212,17 @@ export const validateConsistencyOfAllDDS = async (
 		 * and then reuse the per dds validators to ensure eventual consistency.
 		 */
 		const channelMap = new Map<string, IChannel>();
-		for (const entry of (await client.entryPoint.getContainerObjects()).filter(
-			(v) => v.type === "stressDataObject",
-		)) {
+		for (const entry of (
+			await client.entryPoint.getContainerObjects(containerObjectsByUrl)
+		).filter((v) => v.type === "stressDataObject")) {
 			assert(entry.type === "stressDataObject", "type narrowing");
 			const stressDataObject = entry.stressDataObject;
 			if (stressDataObject.attached === true) {
-				const channels = await stressDataObject.getChannels();
+				const datastoreChannelMap = channelsByDatastore.get(entry.tag);
+				const channelTags = datastoreChannelMap
+					? Array.from(datastoreChannelMap.keys())
+					: ["root"];
+				const channels = await stressDataObject.getChannels(channelTags);
 				for (const channel of channels) {
 					if (channel.isAttached()) {
 						channelMap.set(`${entry.tag}/${channel.id}`, channel);

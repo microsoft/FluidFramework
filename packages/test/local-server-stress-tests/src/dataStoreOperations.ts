@@ -5,14 +5,18 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { Client } from "./localServerStressHarness";
+import type { Client, LocalServerStressState } from "./localServerStressHarness";
 
-export const validateAllDataStoresSaved = async (...clients: Client[]): Promise<void> => {
-	for (const client of clients) {
+export const validateAllDataStoresSaved = async (
+	clientA: Client,
+	clientB: Client,
+	state: LocalServerStressState,
+): Promise<void> => {
+	for (const client of [clientA, clientB]) {
 		assert(client.container.isDirty === false, `[${client.tag}] Container is dirty!`);
-		for (const entry of (await client.entryPoint.getContainerObjects()).filter(
-			(v) => v.type === "stressDataObject",
-		)) {
+		for (const entry of (
+			await client.entryPoint.getContainerObjects(state.containerObjectsByUrl)
+		).filter((v) => v.type === "stressDataObject")) {
 			assert(entry.type === "stressDataObject", "type narrowing");
 			const stressDataObject = entry.stressDataObject;
 			assert(
