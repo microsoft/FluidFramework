@@ -71,8 +71,14 @@ export interface HasRevisionTag {
  * Carries a `MoveId` in case it is rebased over the content being moved out, in which case this mark
  * will transform into a pair of returns which will move the content back into this cell.
  */
-export interface Insert extends HasMoveId, HasRevisionTag {
+export interface Attach extends HasMoveId, HasRevisionTag {
 	type: "Insert";
+
+	// XXX: Use this ID as main ID when serializing
+	/**
+	 * This field should only be used if the attach is a pin.
+	 */
+	detachCellId?: ChangeAtomId;
 }
 
 export interface HasMoveFields extends HasMoveId, HasRevisionTag {
@@ -84,32 +90,6 @@ export interface HasMoveFields extends HasMoveId, HasRevisionTag {
 }
 
 /**
- * Fills empty cells with content that is moved out from another cell.
- * Always brings about the desired outcome: the nodes being moved are in the target cells.
- * Note that this may not require any changes if these nodes are already in the target cells when this mark is applied.
- *
- * Rebasing this mark never causes it to move-in a different set of nodes.
- * Rebasing this mark never causes it to fill a different set of cells
- * (though the way those cells are identified may change).
- *
- * Only ever targets empty cells. It transforms into a idempotent Insert if the target cells are not empty.
- */
-export interface MoveIn extends HasMoveFields {
-	type: "MoveIn";
-}
-
-export interface DetachFields {
-	/**
-	 * When set, the detach should use the `CellId` specified in this object to characterize the cell being emptied.
-	 *
-	 * This is used in two situations:
-	 * - to restore the prior ID of a cell in a rollback changeset
-	 * - to represent the impact of a detach composed with a rename
-	 */
-	readonly idOverride?: CellId;
-}
-
-/**
  * Removes nodes from their cells.
  * Always brings about the desired outcome: the targeted nodes are removed from their cells.
  * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
@@ -117,43 +97,30 @@ export interface DetachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface Remove extends HasRevisionTag, DetachFields {
-	type: "Remove";
-	id: ChangesetLocalId;
-}
+export interface Detach extends HasRevisionTag {
+	readonly type: "Remove";
+	readonly id: ChangesetLocalId;
 
-/**
- * Removes nodes from their cells so they can be moved into other cells.
- * Always brings about the desired outcome: the targeted nodes are removed from their cells.
- * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
- *
- * Rebasing this mark never causes it to target different set of nodes.
- * Rebasing this mark can cause it to clear a different set of cells.
- */
-export interface MoveOut extends HasMoveFields, DetachFields {
-	type: "MoveOut";
-}
+	/**
+	 * The ID the cell should be set to when this detach is applied.
+	 * If not set, this the same as the detach ID.
+	 * This applies to the cell where the node is being detached from,
+	 * or the last cell the node occupied if it is already detached.
+	 *
+	 * This field is used to represent the composition of a pin and a detach.
+	 * The composition will be the second detach but with the pin's detachId as detachCellId.
+	 */
+	detachCellId?: ChangeAtomId;
 
-export type Attach = Insert | MoveIn;
-
-export type Detach = Remove | MoveOut;
-
-/**
- * Fills then empties cells.
- *
- * Only ever targets empty cells.
- *
- * As a matter of normalization, we only use an AttachAndDetach to represent MoveIn ○ Remove.
- *
- * We do NOT use AttachAndDetach to represent the following compositions:
- * - Insert/Revive ○ Remove (represented by a Remove)
- * - Insert/Revive ○ MoveOut (represented by a MoveOut)
- * - MoveIn ○ MoveOut (represented by a Rename)
- */
-export interface AttachAndDetach {
-	type: "AttachAndDetach";
-	attach: Attach;
-	detach: Detach;
+	/**
+	 * When set, this represents a rename of this cell to be applied after the detach.
+	 * Note that this does not affect the ID associated with the detached node.
+	 *
+	 * This is used in two situations:
+	 * - to restore the prior ID of a cell in a rollback changeset
+	 * - to represent the impact of a detach composed with a rename
+	 */
+	readonly cellRename?: CellId;
 }
 
 /**
@@ -169,7 +136,11 @@ export interface Rename {
 	readonly idOverride: CellId;
 }
 
-export type MarkEffect = NoopMark | Attach | Detach | AttachAndDetach | Rename;
+export interface Pin extends CellMark<Attach> {
+	cellId: undefined;
+}
+
+export type MarkEffect = NoopMark | Attach | Detach | Rename;
 
 export type CellMark<TMark> = TMark & HasMarkFields;
 

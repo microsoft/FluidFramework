@@ -241,7 +241,9 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 			return this.getFieldPath();
 		}
 
-		throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
+		throw new UsageError(
+			"Editing only allowed on the root field or on fields under nodes with TreeStatus.InDocument or TreeStatus.Removed status",
+		);
 	}
 
 	protected getEditor(): IDefaultEditBuilder<ITreeCursorSynchronous> {

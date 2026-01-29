@@ -59,7 +59,7 @@ export {
 	type NodeIndex,
 	compareUpPaths,
 	compareFieldUpPaths,
-	isDetachedUpPathRoot as isDetachedUpPath,
+	isDetachedUpPathRoot,
 	getDetachedFieldContainingPath,
 	type UpPathDefault,
 } from "./pathTree.js";

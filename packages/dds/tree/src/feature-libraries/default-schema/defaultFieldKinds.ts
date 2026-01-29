@@ -7,7 +7,7 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import type { CodecTree } from "../../codec/index.js";
 import {
-	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
 	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
@@ -15,7 +15,6 @@ import {
 import { brand, type Brand } from "../../util/index.js";
 import { identifierFieldIdentifier } from "../fieldKindIdentifiers.js";
 import {
-	type FieldChangeDelta,
 	type FieldChangeHandler,
 	type FieldEditor,
 	type FieldKindConfiguration,
@@ -42,8 +41,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChanges: () => fail(0xb0d /* Child changes not supported */) },
-	intoDelta: (change, deltaFromChild: ToDelta): FieldChangeDelta => ({}),
-	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
+	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => ({ marks: [] }),
 	isEmpty: (change: 0) => true,
 	getNestedChanges: (change: 0) => [],
 	createEmpty: () => 0,
@@ -138,9 +136,19 @@ export const fieldKindConfigurations: ReadonlyMap<
 			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
 		]),
 	],
+	[
+		brand(101), // Detached roots
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[required.identifier, { kind: required, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 3 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 2 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
+		]),
+	],
 ]);
 
-export type ModularChangeFormatVersion = Brand<3 | 4 | 5, "ModularChangeFormatVersion">;
+export type ModularChangeFormatVersion = Brand<3 | 4 | 5 | 101, "ModularChangeFormatVersion">;
 export function getCodecTreeForModularChangeFormat(
 	version: ModularChangeFormatVersion,
 ): CodecTree {

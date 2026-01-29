@@ -5,9 +5,10 @@
 
 import path from "node:path";
 
-import { RevisionTagCodec } from "../../../core/index.js";
+import { newChangeAtomIdTransform, RevisionTagCodec } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
+import { brand, newTupleBTree } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
@@ -37,6 +38,23 @@ export function testSnapshots(): void {
 							baseContext,
 							encodeNode: (node) => TestNodeId.encode(node, baseContext),
 							decodeNode: (node) => TestNodeId.decode(node, baseContext),
+							rootNodeChanges: newTupleBTree(),
+							rootRenames: newChangeAtomIdTransform(),
+							getInputRootId: (id, count) => ({ start: id, value: id, length: count }),
+							isAttachId: (id, count) => ({
+								start: id,
+								value: false,
+								length: count,
+							}),
+							isDetachId: (id, count) => ({
+								start: id,
+								value: false,
+								length: count,
+							}),
+							decodeRootNodeChange: () => {},
+							decodeRootRename: () => {},
+							decodeMoveAndDetach: () => {},
+							generateId: () => ({ localId: brand(0) }),
 						});
 						takeJsonSnapshot(encoded);
 					});

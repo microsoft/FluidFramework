@@ -567,6 +567,10 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v6),
 		brand<SharedTreeChangeFormatVersion>(5),
 	],
+	[
+		brand<EditManagerFormatVersion>(EditManagerFormatVersion.vDetachedRoots),
+		brand<SharedTreeChangeFormatVersion>(101),
+	],
 ]);
 
 /**
@@ -591,6 +595,10 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
 	[
 		brand<MessageFormatVersion>(MessageFormatVersion.v6),
 		brand<SharedTreeChangeFormatVersion>(5),
+	],
+	[
+		brand<MessageFormatVersion>(MessageFormatVersion.vDetachedRoots),
+		brand<SharedTreeChangeFormatVersion>(101),
 	],
 ]);
 
@@ -647,6 +655,12 @@ export interface SharedTreeOptions
 	 * Defaults to false.
 	 */
 	readonly enableSharedBranches?: boolean;
+	/**
+	 * Experimental feature flag to enable the ability to edit detached roots.
+	 * This feature is not yet complete and should not be used in production.
+	 * Defaults to false.
+	 */
+	readonly enableDetachedRootEditing?: boolean;
 	/**
 	 * Returns whether a node / field should be incrementally encoded.
 	 * @remarks
@@ -789,6 +803,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	enableSharedBranches: false,
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
+	enableDetachedRootEditing: false,
 };
 
 /**

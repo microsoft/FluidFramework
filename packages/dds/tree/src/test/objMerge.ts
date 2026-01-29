@@ -42,7 +42,9 @@ export function assertStructuralEquality<T>(
 	transform: ObjectTransform = identityTransform,
 ): void {
 	const diff = merge(actual, expected, transform);
-	assert(!hasConflict(diff), "Objects are not structurally equal");
+	if (hasConflict(diff)) {
+		assert.fail("Objects are not structurally equal");
+	}
 }
 
 // TODO: In theory we should also look at object fields on maps and arrays.

@@ -39,7 +39,8 @@ export interface Message {
 		| typeof MessageFormatVersion.v2
 		| typeof MessageFormatVersion.v3
 		| typeof MessageFormatVersion.v4
-		| typeof MessageFormatVersion.v6;
+		| typeof MessageFormatVersion.v6
+		| typeof MessageFormatVersion.vDetachedRoots;
 }
 
 // Return type is intentionally derived.
@@ -56,6 +57,7 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 				Type.Literal(MessageFormatVersion.v3),
 				Type.Literal(MessageFormatVersion.v4),
 				Type.Literal(MessageFormatVersion.v6),
+				Type.Literal(MessageFormatVersion.vDetachedRoots),
 			]),
 		),
 	});

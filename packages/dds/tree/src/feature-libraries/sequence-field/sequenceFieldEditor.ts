@@ -9,20 +9,17 @@ import type { ChangesetLocalId, RevisionTag } from "../../core/index.js";
 import type { FieldEditor, NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
-import type {
-	CellId,
-	CellMark,
-	Changeset,
-	Insert,
-	Mark,
-	MarkList,
-	MoveIn,
-	MoveOut,
-} from "./types.js";
+import type { Attach, CellId, CellMark, Changeset, Detach, Mark, MarkList } from "./types.js";
 import { splitMark } from "./utils.js";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
-	insert(index: number, count: number, firstId: CellId, revision: RevisionTag): Changeset;
+	insert(
+		index: number,
+		count: number,
+		cellId: CellId,
+		revision: RevisionTag,
+		moveId: ChangesetLocalId,
+	): Changeset;
 	remove(index: number, count: number, id: ChangesetLocalId, revision: RevisionTag): Changeset;
 	revive(
 		index: number,
@@ -91,14 +88,15 @@ export const sequenceFieldEditor = {
 	insert: (
 		index: number,
 		count: number,
-		firstId: CellId,
+		cellId: CellId,
 		revision: RevisionTag | undefined,
+		moveId: ChangesetLocalId,
 	): Changeset => {
-		const mark: CellMark<Insert> = {
+		const mark: CellMark<Attach> = {
 			type: "Insert",
-			id: firstId.localId,
+			id: moveId,
 			count,
-			cellId: firstId,
+			cellId,
 			revision,
 		};
 		return markAtIndex(index, mark);
@@ -118,7 +116,7 @@ export const sequenceFieldEditor = {
 		revision: RevisionTag | undefined,
 	): Changeset => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
-		const mark: CellMark<Insert> = {
+		const mark: CellMark<Attach> = {
 			type: "Insert",
 			id: detachEvent.localId,
 			count,
@@ -137,14 +135,14 @@ export const sequenceFieldEditor = {
 		revision: RevisionTag | undefined,
 	): Changeset {
 		const moveIn: Mark = {
-			type: "MoveIn",
+			type: "Insert",
 			id: detachCellId,
 			count,
 			cellId: attachCellId,
 			revision,
 		};
 		const moveOut: Mark = {
-			type: "MoveOut",
+			type: "Remove",
 			id: detachCellId,
 			count,
 			revision,
@@ -159,7 +157,7 @@ export const sequenceFieldEditor = {
 		revision: RevisionTag,
 	): Changeset {
 		const moveOut: Mark = {
-			type: "MoveOut",
+			type: "Remove",
 			id: detachCellId,
 			count,
 			revision,
@@ -175,7 +173,7 @@ export const sequenceFieldEditor = {
 		revision: RevisionTag,
 	): Changeset {
 		const moveIn: Mark = {
-			type: "MoveIn",
+			type: "Insert",
 			id: moveId,
 			count,
 			cellId: attachCellId,
@@ -192,16 +190,16 @@ export const sequenceFieldEditor = {
 		attachCellId: CellId,
 		revision: RevisionTag | undefined,
 	): Changeset {
-		const moveOut: CellMark<MoveOut> = {
-			type: "MoveOut",
+		const moveOut: CellMark<Detach> = {
+			type: "Remove",
 			id: attachCellId.localId,
-			idOverride: detachCellId,
+			cellRename: detachCellId,
 			count,
 			revision,
 		};
 
-		const returnTo: CellMark<MoveIn> = {
-			type: "MoveIn",
+		const returnTo: CellMark<Attach> = {
+			type: "Insert",
 			id: attachCellId.localId,
 			count,
 			cellId: attachCellId,
@@ -216,8 +214,8 @@ function moveMarksToMarkList(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
-	detach: CellMark<MoveOut>,
-	attach: CellMark<MoveIn>,
+	detach: CellMark<Detach>,
+	attach: CellMark<Attach>,
 ): MarkList {
 	if (count === 0) {
 		return [];

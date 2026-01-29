@@ -23,96 +23,58 @@ import {
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	optionalChangeRebaser,
-	RegisterMap,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalField.js";
 import type {
-	ChildChange,
 	Replace,
-	Move,
 	OptionalChangeset,
-	RegisterId,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
-import { type Mutable, brand } from "../../../util/index.js";
-
-const dummyDetachId: ChangeAtomId = { localId: brand(0) };
-
-function asRegister(input: RegisterId | ChangesetLocalId): RegisterId {
-	if (typeof input === "string" || typeof input === "object") {
-		return input;
-	}
-	return { localId: input };
-}
-
-export interface ProtoChange {
-	type: "write";
-	content: RegisterId;
-}
+import { SizedNestedMap, type Mutable } from "../../../util/index.js";
 
 export const Change = {
 	/**
 	 * Creates an empty changeset
 	 */
-	empty: (): OptionalChangeset => ({ moves: [], childChanges: [] }),
+	empty: (): OptionalChangeset => ({}),
 	/**
 	 * Creates a changeset that moves a node from `src` to `dst`.
 	 * @param src - The register to move a node from. The register must be full in the input context of the changeset.
 	 * @param dst - The register to move that node to.
 	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
 	 */
-	move: (
-		src: RegisterId | ChangesetLocalId | ChangeAtomId,
-		dst: RegisterId | ChangesetLocalId | ChangeAtomId,
-	): OptionalChangeset | ProtoChange => {
-		if (dst === "self") {
-			return {
-				type: "write",
-				content: asRegister(src),
-			};
-		}
-		if (src === "self") {
-			return Change.clear("self", dst);
-		}
+	replace: (
+		src: ChangesetLocalId | ChangeAtomId,
+		dst: ChangesetLocalId | ChangeAtomId,
+		isEmpty: boolean,
+	): OptionalChangeset => {
 		return {
-			moves: [[asChangeAtomId(src), asChangeAtomId(dst)]],
-			childChanges: [],
+			valueReplace: {
+				isEmpty,
+				src: asChangeAtomId(src),
+				dst: asChangeAtomId(dst),
+			},
 		};
 	},
 	/**
 	 * Creates a changeset that clears a register and moves the contents to another register.
-	 * @param target - The register remove a node from. The register must be full in the input context of the changeset.
 	 * @param dst - The register to move the contents of the target register to.
 	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
 	 */
 	clear: (
-		target: RegisterId | ChangesetLocalId,
 		dst: ChangeAtomId | ChangesetLocalId,
-	): OptionalChangeset =>
-		target === "self"
-			? {
-					moves: [],
-					childChanges: [],
-					valueReplace: { isEmpty: false, dst: asChangeAtomId(dst) },
-				}
-			: {
-					moves: [[asChangeAtomId(target), asChangeAtomId(dst)]],
-					childChanges: [],
-				},
+		isEmpty: boolean = false,
+	): OptionalChangeset => ({
+		valueReplace: { isEmpty, dst: asChangeAtomId(dst) },
+	}),
 	/**
 	 * Creates a changeset that reserves a register.
 	 * @param target - The register to reserve. The register must NOT be full in the input context of the changeset.
 	 * @param dst - The register that the contents of the target register should be moved to should it become populated.
 	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
 	 */
-	reserve: (
-		target: RegisterId | ChangesetLocalId,
-		dst: ChangeAtomId | ChangesetLocalId,
-	): OptionalChangeset => {
-		assert(target === "self", "Reserve cell only supports self as source");
+	reserve: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset => {
 		return {
-			moves: [],
-			childChanges: [],
 			valueReplace: { isEmpty: true, dst: asChangeAtomId(dst) },
 		};
 	},
@@ -122,10 +84,9 @@ export const Change = {
 	 * with a different node that the current one (which will take its place).
 	 */
 	pin: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset => {
+		const id = asChangeAtomId(dst);
 		return {
-			moves: [],
-			childChanges: [],
-			valueReplace: { isEmpty: false, dst: asChangeAtomId(dst), src: "self" },
+			valueReplace: { isEmpty: false, dst: id, src: id },
 		};
 	},
 	/**
@@ -134,10 +95,12 @@ export const Change = {
 	 * That register must be full in the input context of the changeset.
 	 * @param change - A change to apply to a child node.
 	 */
-	childAt: (location: RegisterId | ChangesetLocalId, change: NodeId): OptionalChangeset => ({
-		moves: [],
-		childChanges: [[asRegister(location), change]],
-	}),
+	childAt: (location: RegisterId | ChangesetLocalId, change: NodeId): OptionalChangeset => {
+		assert(location === "self");
+		return {
+			childChange: change,
+		};
+	},
 	/**
 	 * Creates a changeset that applies the given change to the child node in the "self" register.
 	 * @remarks The "self" register must be full in the input context of the changeset.
@@ -149,32 +112,25 @@ export const Change = {
 	 * @param changes - The change to apply as part of the changeset. Interpreted as applying to the same input context.
 	 * @returns A single changeset that applies all of the given changes.
 	 */
-	atOnce: (...changes: (ProtoChange | OptionalChangeset)[]): OptionalChangeset => {
-		const moves: Move[] = [];
-		const childChanges: ChildChange[] = [];
+	atOnce: (...changes: OptionalChangeset[]): OptionalChangeset => {
+		let childChange: ChangeAtomId | undefined;
 		let replace: Mutable<Replace> | undefined;
-		const changeset: Mutable<OptionalChangeset> = { moves, childChanges };
-		for (const changeLike of changes) {
-			if ("type" in changeLike === false) {
-				const change = changeLike;
-				// Note: this will stack overflow if there are too many moves.
-				moves.push(...change.moves);
-				// Note: this will stack overflow if there are too many child changes.
-				childChanges.push(...change.childChanges);
-				if (change.valueReplace !== undefined) {
-					assert(replace === undefined, "Multiple reserved detach ids");
-					replace = change.valueReplace;
-				}
-			}
-		}
 		for (const change of changes) {
-			if ("type" in change) {
-				assert(replace !== undefined, "Invalid write without detach");
-				replace.src = change.content;
+			if (change.childChange !== undefined) {
+				assert(childChange === undefined, "Multiple child changes are not supported");
+				childChange = change.childChange;
+			}
+			if (change.valueReplace !== undefined) {
+				assert(replace === undefined, "Multiple reserved detach ids");
+				replace = change.valueReplace;
 			}
 		}
+		const changeset: Mutable<OptionalChangeset> = {};
 		if (replace !== undefined) {
 			changeset.valueReplace = replace;
+		}
+		if (childChange !== undefined) {
+			changeset.childChange = childChange;
 		}
 		return changeset;
 	},
@@ -189,36 +145,21 @@ export function assertTaggedEqual(
 		assert.equal(a, b);
 		return;
 	}
-	const normalizeRegisterId = (registerId: RegisterId): string => {
-		if (typeof registerId === "string") {
-			return `s${registerId}`;
-		}
-		return `r${registerId.revision}id${registerId.localId}`;
-	};
-	const compareRegisterIds = (c: RegisterId, d: RegisterId) =>
-		normalizeRegisterId(c).localeCompare(normalizeRegisterId(d));
-	// The composed rebase implementation deep-freezes.
-	const aCopy = { ...a, change: { ...a.change, moves: [...a.change.moves] } };
-	const bCopy = { ...b, change: { ...b.change, moves: [...b.change.moves] } };
-	aCopy.change.moves.sort(([c], [d]) => compareRegisterIds(c, d));
-	bCopy.change.moves.sort(([c], [d]) => compareRegisterIds(c, d));
 
-	if (aCopy.change.valueReplace !== undefined) {
-		assert(bCopy.change.valueReplace !== undefined);
+	assert.deepEqual(a.change.childChange, b.change.childChange);
 
-		if (aCopy.change.valueReplace.isEmpty) {
-			assert(bCopy.change.valueReplace.isEmpty);
+	if (a.change.valueReplace !== undefined) {
+		assert(b.change.valueReplace !== undefined);
 
-			// Detach IDs are only relevant if the field was not empty, so we tolerate compose
-			// assigning them arbitrarily in this case.
-			aCopy.change.valueReplace = { ...aCopy.change.valueReplace, dst: dummyDetachId };
-			bCopy.change.valueReplace = { ...bCopy.change.valueReplace, dst: dummyDetachId };
+		assert.deepEqual(a.change.valueReplace.src, b.change.valueReplace.src);
+		assert.deepEqual(a.change.valueReplace.isEmpty, b.change.valueReplace.isEmpty);
+		if (!a.change.valueReplace.isEmpty) {
+			// We only care about the dst register if the field is not empty.
+			assert.deepEqual(a.change.valueReplace.dst, b.change.valueReplace.dst);
 		}
 	}
 
-	delete aCopy.change.valueReplace;
-	delete bCopy.change.valueReplace;
-	assert.deepEqual(aCopy, bCopy);
+	assert.deepEqual(a, b);
 }
 
 export function assertEqual(
@@ -230,6 +171,97 @@ export function assertEqual(
 		return;
 	}
 	assertTaggedEqual(makeAnonChange(a), makeAnonChange(b));
+}
+
+type RegisterId = ChangeAtomId | "self";
+
+interface IRegisterMap<T> {
+	set(id: RegisterId, childChange: T): void;
+	get(id: RegisterId): T | undefined;
+	delete(id: RegisterId): boolean;
+	keys(): Iterable<RegisterId>;
+	values(): Iterable<T>;
+	entries(): Iterable<[RegisterId, T]>;
+	readonly size: number;
+}
+
+class RegisterMap<T> implements IRegisterMap<T> {
+	private readonly nestedMapData = new SizedNestedMap<
+		ChangesetLocalId | "self",
+		RevisionTag | undefined,
+		T
+	>();
+
+	public clone(): RegisterMap<T> {
+		const clone = new RegisterMap<T>();
+		for (const [id, t] of this.entries()) {
+			clone.set(id, t);
+		}
+		return clone;
+	}
+
+	public set(id: RegisterId, childChange: T): void {
+		if (id === "self") {
+			this.nestedMapData.set("self", undefined, childChange);
+		} else {
+			this.nestedMapData.set(id.localId, id.revision, childChange);
+		}
+	}
+
+	public get(id: RegisterId): T | undefined {
+		return id === "self"
+			? this.nestedMapData.tryGet(id, undefined)
+			: this.nestedMapData.tryGet(id.localId, id.revision);
+	}
+
+	public has(id: RegisterId): boolean {
+		return this.get(id) !== undefined;
+	}
+
+	public delete(id: RegisterId): boolean {
+		return id === "self"
+			? this.nestedMapData.delete("self", undefined)
+			: this.nestedMapData.delete(id.localId, id.revision);
+	}
+
+	public keys(): Iterable<RegisterId> {
+		const changeIds: RegisterId[] = [];
+		for (const [localId, nestedMap] of this.nestedMapData) {
+			if (localId === "self") {
+				changeIds.push("self");
+			} else {
+				for (const [revisionTag, _] of nestedMap) {
+					changeIds.push(
+						revisionTag === undefined ? { localId } : { localId, revision: revisionTag },
+					);
+				}
+			}
+		}
+
+		return changeIds;
+	}
+	public values(): Iterable<T> {
+		return this.nestedMapData.values();
+	}
+	public entries(): Iterable<[RegisterId, T]> {
+		const entries: [RegisterId, T][] = [];
+		for (const changeId of this.keys()) {
+			if (changeId === "self") {
+				const entry = this.nestedMapData.tryGet("self", undefined);
+				assert(entry !== undefined, "Entry should not be undefined when iterating keys.");
+				entries.push(["self", entry]);
+			} else {
+				const entry = this.nestedMapData.tryGet(changeId.localId, changeId.revision);
+				assert(entry !== undefined, "Entry should not be undefined when iterating keys.");
+				entries.push([changeId, entry]);
+			}
+		}
+
+		return entries;
+	}
+	public get size(): number {
+		return this.nestedMapData.size;
+	}
 }
 
 export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
@@ -246,20 +278,13 @@ function getTouchedRegisters({ change, revision }: TaggedChange<OptionalChangese
 } {
 	const src = new RegisterMap<true>();
 	const dst = new RegisterMap<true>();
-	for (const leg1 of change.moves) {
-		if (!isNoopMove(leg1)) {
-			src.set(taggedRegister(leg1[0], revision), true);
-			dst.set(taggedRegister(leg1[1], revision), true);
-		}
-	}
-
-	if (change.valueReplace !== undefined && change.valueReplace.src !== "self") {
+	if (change.valueReplace !== undefined) {
 		if (change.valueReplace.isEmpty === false) {
 			src.set(taggedRegister("self", revision), true);
-			dst.set(taggedRegister(change.valueReplace.dst, revision), true);
+			dst.set(taggedAtomId(change.valueReplace.dst, revision), true);
 		}
 		if (change.valueReplace.src !== undefined) {
-			src.set(taggedRegister(change.valueReplace.src, revision), true);
+			src.set(taggedAtomId(change.valueReplace.src, revision), true);
 			dst.set(taggedRegister("self", revision), true);
 		}
 	}
@@ -302,17 +327,6 @@ export function verifyContextChain(
 			}
 		}
 	}
-}
-
-function isNoopMove(move: Move): boolean {
-	return registerEqual(move[0], move[1]);
-}
-
-function registerEqual(a: RegisterId, b: RegisterId): boolean {
-	if (typeof a === "string" || typeof b === "string") {
-		return a === b;
-	}
-	return a.revision === b.revision && a.localId === b.localId;
 }
 
 export function tagChangeInline(
