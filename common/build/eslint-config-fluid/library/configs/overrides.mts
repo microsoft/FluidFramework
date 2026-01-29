@@ -89,7 +89,11 @@ export const testProjectConfig = {
 		"import-x/no-internal-modules": [
 			"error",
 			{
-				allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*", ...permittedImports],
+				// Any and all `@fluid*` import paths are allowed in test files.
+				// Preferably, external (alpha/beta/public) entrypoints are used
+				// for clarity where testing is somewhat whitebox versus validating
+				// customer experience.
+				allow: ["@fluid*/**", ...permittedImports],
 			},
 		],
 		"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
