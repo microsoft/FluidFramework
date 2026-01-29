@@ -265,7 +265,6 @@ describe("Presence", () => {
 					}),
 				);
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				notificationManager = workspace.states.testEvents;
 			}
 		}

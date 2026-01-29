@@ -64,12 +64,6 @@ export const useProjectService = {
  */
 export const testProjectConfig = {
 	files: ["src/test/**", ...testFilePatterns],
-	languageOptions: {
-		parserOptions: {
-			projectService: false,
-			project: ["./tsconfig.json", "./src/test/tsconfig.json"],
-		},
-	},
 	rules: {
 		"@typescript-eslint/no-invalid-this": "off",
 		"@typescript-eslint/unbound-method": "off",
