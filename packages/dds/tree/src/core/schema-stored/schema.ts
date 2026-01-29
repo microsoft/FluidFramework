@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
@@ -403,6 +403,11 @@ export function encodeFieldSchemaV2(schema: TreeFieldStoredSchema): FieldSchemaF
 }
 
 export function decodeFieldSchema(schema: FieldSchemaFormatV2): TreeFieldStoredSchema {
+	assert(schema.metadata !== null, "invalid null persistedMetadata");
+	assert(
+		schema.metadata === undefined || typeof schema.metadata === "object",
+		"invalid persistedMetadata type",
+	);
 	const out: TreeFieldStoredSchema = {
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
 		kind: schema.kind,
