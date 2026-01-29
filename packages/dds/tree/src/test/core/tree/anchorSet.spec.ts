@@ -27,6 +27,7 @@ import {
 	makeDetachedFieldIndex,
 	rootFieldKey,
 } from "../../../core/index.js";
+import { stringSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	applyTestDelta,
@@ -35,7 +36,6 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { stringSchema } from "../../../simple-tree/index.js";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -78,7 +78,9 @@ describe("AnchorSet", () => {
 			attach: moveId,
 		};
 
-		const delta = new Map([[rootFieldKey, [{ count: 1 }, moveOut, { count: 1 }, moveIn]]]);
+		const delta = new Map([
+			[rootFieldKey, { marks: [{ count: 1 }, moveOut, { count: 1 }, moveIn] }],
+		]);
 		applyTestDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor0), makePath([rootFieldKey, 0]));
 		checkEquality(anchors.locate(anchor1), makePath([rootFieldKey, 2]));
@@ -90,7 +92,9 @@ describe("AnchorSet", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 
 		const trees = chunkFromJsonableTrees([node, node]);
-		const fieldChanges: DeltaFieldChanges = [{ count: 4 }, { count: 2, attach: buildId }];
+		const fieldChanges: DeltaFieldChanges = {
+			marks: [{ count: 4 }, { count: 2, attach: buildId }],
+		};
 		applyTestDelta(makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo)), anchors, {
 			build: [{ id: buildId, trees }],
 		});
@@ -231,10 +235,12 @@ describe("AnchorSet", () => {
 
 		const modify: DeltaMark = {
 			count: 1,
-			fields: new Map([[fieldBar, [{ count: 3 }, moveIn]]]),
+			fields: new Map([[fieldBar, { marks: [{ count: 3 }, moveIn] }]]),
 		};
 
-		const delta = new Map([[fieldFoo, [{ count: 3 }, moveOut, { count: 1 }, modify]]]);
+		const delta = new Map([
+			[fieldFoo, { marks: [{ count: 3 }, moveOut, { count: 1 }, modify] }],
+		]);
 		applyTestDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 5]));
 		checkEquality(
@@ -459,7 +465,7 @@ describe("AnchorSet", () => {
 		};
 
 		log.expect([]);
-		applyTestDelta(new Map([[rootFieldKey, [detachMark]]]), anchors);
+		applyTestDelta(new Map([[rootFieldKey, { marks: [detachMark] }]]), anchors);
 
 		log.expect([
 			["root childrenChange", 1],
@@ -487,7 +493,9 @@ describe("AnchorSet", () => {
 				trees: chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "x" }]),
 			},
 		];
-		applyTestDelta(new Map([[rootFieldKey, [detachMark, insertMark]]]), anchors, { build });
+		applyTestDelta(new Map([[rootFieldKey, { marks: [detachMark, insertMark] }]]), anchors, {
+			build,
+		});
 
 		log.expect([
 			["root childrenChange", 2],
@@ -496,7 +504,7 @@ describe("AnchorSet", () => {
 		log.clear();
 
 		const insertAtFoo5 = makeFieldDelta(
-			[{ count: 5 }, insertMark],
+			{ marks: [{ count: 5 }, insertMark] },
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
 		applyTestDelta(insertAtFoo5, anchors, { build });
@@ -504,7 +512,7 @@ describe("AnchorSet", () => {
 		log.expect([["root treeChange", 1]]);
 		log.clear();
 
-		applyTestDelta(new Map([[rootFieldKey, [detachMark]]]), anchors);
+		applyTestDelta(new Map([[rootFieldKey, { marks: [detachMark] }]]), anchors);
 		log.expect([
 			["root childrenChange", 1],
 			["root treeChange", 1],
@@ -656,7 +664,7 @@ function checkRemoved(
 
 function makeDelta(mark: DeltaMark, path: UpPath): DeltaFieldMap {
 	const fields: DeltaFieldMap = new Map([
-		[path.parentField, [{ count: path.parentIndex }, mark]],
+		[path.parentField, { marks: [{ count: path.parentIndex }, mark] }],
 	]);
 	if (path.parent === undefined) {
 		return fields;

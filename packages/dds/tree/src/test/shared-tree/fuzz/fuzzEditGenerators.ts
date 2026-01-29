@@ -15,12 +15,18 @@ import {
 	done,
 } from "@fluid-private/stochastic-test-utils";
 import type { Client, DDSFuzzTestState, DDSRandom } from "@fluid-private/test-dds-utils";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
+import { asAlpha } from "../../../api.js";
 import type {
 	TreeStoredSchemaRepository,
 	TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import { Tree, type ITreePrivate } from "../../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
+import type { TreeNode, TreeNodeSchema } from "../../../simple-tree/index.js";
+import type { ISharedTree } from "../../../treeFactory.js";
 import { getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
@@ -55,12 +61,6 @@ import {
 	type NodeRange,
 	type ForkMergeOperation,
 } from "./operationTypes.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-import type { TreeNode, TreeNodeSchema } from "../../../simple-tree/index.js";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { ISharedTree } from "../../../treeFactory.js";
-import { asAlpha } from "../../../api.js";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**
@@ -300,7 +300,7 @@ export interface EditGeneratorOptions {
 	maxRemoveCount: number;
 }
 
-export function getAllowableNodeTypes(state: FuzzTestState) {
+export function getAllowableNodeTypes(state: FuzzTestState): string[] {
 	const fuzzView = viewFromState(state, state.client);
 	const nodeSchema = fuzzView.currentSchema;
 	const nodeTypes = [];

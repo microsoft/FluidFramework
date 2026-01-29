@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
 export type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
 export {
-	optionalChangeHandler,
-	optionalFieldEditor,
-	optionalChangeRebaser,
-	optionalFieldIntoDelta,
 	type OptionalFieldEditor,
+	optional,
 } from "./optionalField.js";
+export {
+	required,
+	type RequiredFieldEditor,
+} from "./requiredField.js";

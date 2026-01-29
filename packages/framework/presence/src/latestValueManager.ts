@@ -12,10 +12,9 @@ import type {
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 
-import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
+import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControlsTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import type { FlattenUnionWithOptionals } from "./internalUtils.js";
 import {
 	asDeeplyReadonly,
@@ -34,6 +33,7 @@ import type {
 } from "./latestValueTypes.js";
 import type { Attendee, Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
+import type { PostUpdateAction, ValueManager } from "./statesManagerTypes.js";
 import { brandIVM } from "./valueManager.js";
 
 /**
@@ -58,9 +58,7 @@ export interface LatestEvents<
 	 *
 	 * @eventProperty
 	 */
-	localUpdated: (update: {
-		value: DeepReadonly<JsonSerializable<T>>;
-	}) => void;
+	localUpdated: (update: { value: DeepReadonly<JsonSerializable<T>> }) => void;
 }
 
 /**
@@ -237,7 +235,7 @@ class LatestValueManagerImpl<T, Key extends string>
  * @param value - The object to clone
  * @returns A shallow clone of the input value
  */
-export function shallowCloneNullableObject<T extends object | null>(value: T): T {
+function shallowCloneNullableObject<T extends object | null>(value: T): T {
 	return value === null ? value : shallowCloneObject(value);
 }
 

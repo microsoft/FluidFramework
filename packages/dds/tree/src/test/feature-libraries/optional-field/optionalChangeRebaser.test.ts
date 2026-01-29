@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
+
 import {
 	type ChangeAtomId,
 	type ChangesetLocalId,
@@ -16,16 +18,26 @@ import {
 	rootFieldKey,
 	tagChange,
 } from "../../../core/index.js";
+import {
+	intoDelta,
+	type DefaultChangeset,
+	FieldKinds as defaultFieldKinds,
+} from "../../../feature-libraries/index.js";
 import type {
 	ModularChangeset,
 	NodeId,
 	RebaseVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
+import type {
+	FieldEditDescription,
+	GlobalEditDescription,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	optionalFieldEditor,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/optional-field/index.js";
+} from "../../../feature-libraries/optional-field/optionalField.js";
 import { brand, brandConst } from "../../../util/index.js";
 import {
 	type ChildStateGenerator,
@@ -38,26 +50,18 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 // since OptionalChangeset is not generic over the child changeset type.
 // Search this file for "as any" and "as NodeChangeset"
 import { chunkFromJsonTrees } from "../../utils.js";
-import { intoDelta, type DefaultChangeset } from "../../../feature-libraries/index.js";
-import type {
-	FieldEditDescription,
-	GlobalEditDescription,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import {
-	optional,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
-import {
-	assertEqual,
-	normalizeDelta,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../modular-schema/modularChangesetUtil.js";
 import {
 	defaultFamily,
 	defaultFieldRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../default-field-kinds/defaultChangesetUtil.js";
+import {
+	assertEqual,
+	normalizeDelta,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../modular-schema/modularChangesetUtil.js";
+
+const optional = defaultFieldKinds.optional;
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -596,7 +600,8 @@ const generateChildStateForRebaseVersion = function* (
 			newAttach = priorDetach;
 		}
 		if (priorAttach !== undefined) {
-			const undoMark = intoDelta(changeset).fields?.get(rootFieldKey)?.at(0) ?? assert.fail();
+			const undoMark =
+				intoDelta(changeset).fields?.get(rootFieldKey)?.marks?.at(0) ?? assert.fail();
 			const detachId = undoMark.detach ?? assert.fail("Expected detach");
 			const id = makeChangeAtomId(brand(detachId.minor), detachId.major);
 			newDetach = { id, value: priorAttach.value };
@@ -740,7 +745,7 @@ const generateChildStateForRebaseVersion = function* (
 // 	});
 // }
 
-export function testRebaserAxioms() {
+export function testRebaserAxioms(): void {
 	describe("Rebaser Axioms", () => {
 		// describe("Using valid edits from an undefined field", () => {
 		// 	runSingleEditRebaseAxiomSuite({ content: undefined });

@@ -121,13 +121,14 @@ export interface RevisionReplacer {
 
 	/**
 	 * Returns the updated ID for the given ID.
-	 * @param id - The ID to update.
+	 * @param id - The ID of the first change atom to update.
+	 * @param count - The number of contiguous change atoms to update. Defaults to 1.
 	 * @returns an updated ID iff the given `id` needs updating, otherwise returns the given `id`.
 	 * @remarks
 	 * This function always maps the same input {@link ChangeAtomId.revision | revision} and {@link ChangeAtomId.localId | local ID} to the same output revision local ID.
 	 * This means multiple references to the same atom of change will remain consistent after revision replacement.
 	 */
-	getUpdatedAtomId<T extends ChangeAtomId>(id: T): T;
+	getUpdatedAtomId<T extends ChangeAtomId>(id: T, count?: number): T;
 }
 
 export interface TaggedChange<TChangeset, TTag = RevisionTag | undefined> {

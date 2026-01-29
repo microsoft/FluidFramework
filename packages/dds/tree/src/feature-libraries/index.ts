@@ -48,8 +48,8 @@ export {
 	jsonableTreeFromForest,
 } from "./treeTextCursor.js";
 
-// Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field/index.js";
+// eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor) or named exports (changes public API)
 export { SequenceField };
 
 export {
@@ -127,11 +127,6 @@ export {
 
 export {
 	FieldKinds,
-	type Required,
-	type Optional,
-	type Sequence,
-	type Identifier,
-	type Forbidden,
 	type DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,

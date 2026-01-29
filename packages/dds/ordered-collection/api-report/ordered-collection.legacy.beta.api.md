@@ -13,7 +13,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
     add(value: T): Promise<void>;
     // (undocumented)
-    protected applyStashedOp(): void;
+    protected applyStashedOp(content: unknown): void;
     // (undocumented)
     protected complete(acquireId: string): Promise<void>;
     // (undocumented)

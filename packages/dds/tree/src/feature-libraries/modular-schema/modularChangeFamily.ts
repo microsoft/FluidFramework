@@ -4,8 +4,9 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { BTree } from "@tylerbu/sorted-btree-es6";
+import { lt } from "semver-ts";
 
 import {
 	FluidClientVersion,
@@ -69,6 +70,12 @@ import {
 	type RangeQueryEntry,
 	type RangeQueryResultFragment,
 } from "../../util/index.js";
+import {
+	getFromChangeAtomIdMap,
+	rangeQueryChangeAtomIdMap,
+	setInChangeAtomIdMap,
+	type ChangeAtomIdBTree,
+} from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
 import {
@@ -86,6 +93,7 @@ import {
 	NodeAttachState,
 	type RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
+import type { FlexFieldKind } from "./fieldKind.js";
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import type { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
@@ -106,14 +114,6 @@ import {
 	type RebaseVersion,
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
-import type { FlexFieldKind } from "./fieldKind.js";
-import { lt } from "semver-ts";
-import {
-	getFromChangeAtomIdMap,
-	rangeQueryChangeAtomIdMap,
-	setInChangeAtomIdMap,
-	type ChangeAtomIdBTree,
-} from "../changeAtomIdBTree.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -1602,7 +1602,7 @@ export class ModularChangeFamily
 			baseId,
 		);
 
-		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map();
+		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map<FieldKey, FieldChange>();
 
 		const fieldChanges =
 			change.fieldChanges !== undefined && over.fieldChanges !== undefined
@@ -1892,8 +1892,11 @@ export class ModularChangeFamily
 	}
 
 	public getRevisions(change: ModularChangeset): Set<RevisionTag | undefined> {
+		if (change.revisions === undefined || change.revisions.length === 0) {
+			return new Set([undefined]);
+		}
 		const aggregated: Set<RevisionTag | undefined> = new Set();
-		for (const revInfo of change.revisions ?? [{ revision: undefined }]) {
+		for (const revInfo of change.revisions) {
 			aggregated.add(revInfo.revision);
 		}
 		return aggregated;
@@ -2088,7 +2091,7 @@ function replaceCrossFieldKeyTableRevisions(
 	const updated: CrossFieldKeyTable = newCrossFieldRangeTable();
 	for (const entry of table.entries()) {
 		const key = entry.start;
-		const updatedKey: CrossFieldKey = replacer.getUpdatedAtomId(key);
+		const updatedKey: CrossFieldKey = replacer.getUpdatedAtomId(key, entry.length);
 
 		const field = entry.value;
 		const normalizedFieldId = normalizeFieldId(field, nodeAliases);
@@ -2491,7 +2494,7 @@ function intoDeltaImpl(
 				return deltaFromNodeChange(nodeChange, nodeChanges, nodeAliases, fieldKinds);
 			},
 		);
-		if (fieldDelta !== undefined && fieldDelta.length > 0) {
+		if (fieldDelta !== undefined && fieldDelta.marks.length > 0) {
 			delta.set(field, fieldDelta);
 		}
 	}
@@ -3427,7 +3430,7 @@ function makeModularChangeset(props?: {
 	const p = props ?? { maxId: -1, rebaseVersion: 1 };
 	const changeset: Mutable<ModularChangeset> = {
 		rebaseVersion: p.rebaseVersion,
-		fieldChanges: p.fieldChanges ?? new Map(),
+		fieldChanges: p.fieldChanges ?? new Map<FieldKey, FieldChange>(),
 		nodeChanges: p.nodeChanges ?? newTupleBTree(),
 		rootNodes: p.rootNodes ?? newRootTable(),
 		nodeToParent: p.nodeToParent ?? newTupleBTree(),

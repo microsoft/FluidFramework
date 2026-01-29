@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import type { IJsonCodec } from "../../codec/index.js";
@@ -21,7 +22,6 @@ import {
 
 import { EncodedOptionalChangeset } from "./optionalFieldChangeFormatV3.js";
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
-import { assert } from "@fluidframework/core-utils/internal";
 
 export function makeOptionalFieldCodec(
 	revisionTagCodec: IJsonCodec<

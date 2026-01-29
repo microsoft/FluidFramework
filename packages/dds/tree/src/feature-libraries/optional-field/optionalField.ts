@@ -10,13 +10,20 @@ import {
 	type ChangesetLocalId,
 	type DeltaFieldChanges,
 	type DeltaMark,
+	Multiplicity,
 	type RevisionReplacer,
 	type RevisionTag,
 	areEqualChangeAtomIdOpts,
+	forbiddenFieldKindIdentifier,
 	makeChangeAtomId,
 } from "../../core/index.js";
 import type { IdAllocator, Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
+import {
+	optionalIdentifier,
+	identifierFieldIdentifier,
+	requiredIdentifier,
+} from "../fieldKindIdentifiers.js";
 import {
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
@@ -34,6 +41,7 @@ import {
 	CrossFieldTarget,
 	type RebaseVersion,
 	type RebaseRevisionMetadata,
+	FlexFieldKind,
 } from "../modular-schema/index.js";
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
@@ -477,7 +485,7 @@ export function optionalFieldIntoDelta(
 		markIsANoop = false;
 	}
 
-	return markIsANoop ? [] : [mark];
+	return { marks: markIsANoop ? [] : [mark] };
 }
 
 export const optionalChangeHandler: FieldChangeHandler<
@@ -539,3 +547,26 @@ function invertAttachId(
 
 	return detachId ?? attachId;
 }
+
+interface Optional
+	extends FlexFieldKind<
+		OptionalFieldEditor,
+		typeof optionalIdentifier,
+		Multiplicity.Optional
+	> {}
+
+/**
+ * 0 or 1 items.
+ */
+export const optional: Optional = new FlexFieldKind(
+	optionalIdentifier,
+	Multiplicity.Optional,
+	{
+		changeHandler: optionalChangeHandler,
+		allowMonotonicUpgradeFrom: new Set([
+			identifierFieldIdentifier,
+			requiredIdentifier,
+			forbiddenFieldKindIdentifier,
+		]),
+	},
+);

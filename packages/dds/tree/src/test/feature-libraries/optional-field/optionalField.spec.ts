@@ -1,10 +1,12 @@
-// XXX
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+// XXX
 // import { strict as assert, fail } from "node:assert";
+
+// import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 // import {
 // 	type ChangeAtomId,
@@ -18,36 +20,39 @@
 // 	NodeId,
 // 	RelevantRemovedRootsFromChild,
 // } from "../../../feature-libraries/index.js";
+// import type {
+// 	FieldChangeDelta,
+// 	NestedChangesIndices,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // // eslint-disable-next-line import-x/no-internal-modules
 // import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 // import {
-// 	type OptionalChangeset,
 // 	optionalChangeHandler,
 // 	optionalChangeRebaser,
 // 	optionalFieldEditor,
 // 	optionalFieldIntoDelta,
 // 	// eslint-disable-next-line import-x/no-internal-modules
-// } from "../../../feature-libraries/optional-field/index.js";
+// } from "../../../feature-libraries/optional-field/optionalField.js";
+// import type {
+// 	OptionalChangeset,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 // import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
+// import { TestChange } from "../../testChange.js";
+// import { TestNodeId } from "../../testNodeId.js";
 // import {
 // 	assertFieldChangesEqual,
 // 	defaultRevInfosFromChanges,
 // 	defaultRevisionMetadataFromChanges,
 // 	mintRevisionTag,
 // } from "../../utils.js";
-// import { TestNodeId } from "../../testNodeId.js";
-// import { TestChange } from "../../testChange.js";
-// import { Change, assertEqual, inlineRevision, tagChangeInline } from "./optionalFieldUtils.js";
-// import { testSnapshots } from "./optionalFieldSnapshots.test.js";
+
 import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 // import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
-// import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+// import { testSnapshots } from "./optionalFieldSnapshots.test.js";
+// import { Change, assertEqual, inlineRevision, tagChangeInline } from "./optionalFieldUtils.js";
 // import { testReplaceRevisions } from "./replaceRevisions.test.js";
-// import type {
-// 	FieldChangeDelta,
-// 	NestedChangesIndices,
-// 	// eslint-disable-next-line import-x/no-internal-modules
-// } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 // /**
 //  * A change to a child encoding as a simple placeholder string.
@@ -683,7 +688,7 @@ describe("optionalField", () => {
 	// 					fields: TestNodeId.deltaFromChild(nodeChange1),
 	// 				},
 	// 			],
-	// 			local: [{ count: 1, attach: outerNodeId }],
+	// 			local: { marks: [{ count: 1, attach: outerNodeId }] },
 	// 		};
 
 	// 		const actual = optionalFieldIntoDelta(change1.change, TestNodeId.deltaFromChild);
@@ -692,13 +697,15 @@ describe("optionalField", () => {
 
 	// 	it("can be converted to a delta when restoring content", () => {
 	// 		const expected: FieldChangeDelta = {
-	// 			local: [
-	// 				{
-	// 					count: 1,
-	// 					attach: { major: revertChange2.revision, minor: 2 },
-	// 					detach: { major: revertChange2.revision, minor: 42 },
-	// 				},
-	// 			],
+	// 			local: {
+	// 				marks: [
+	// 					{
+	// 						count: 1,
+	// 						attach: { major: revertChange2.revision, minor: 2 },
+	// 						detach: { major: revertChange2.revision, minor: 42 },
+	// 					},
+	// 				],
+	// 			},
 	// 		};
 
 	// 		const actual = optionalFieldIntoDelta(revertChange2.change, TestNodeId.deltaFromChild);
@@ -707,12 +714,14 @@ describe("optionalField", () => {
 
 	// 	it("can be converted to a delta with only child changes", () => {
 	// 		const expected: FieldChangeDelta = {
-	// 			local: [
-	// 				{
-	// 					count: 1,
-	// 					fields: TestNodeId.deltaFromChild(nodeChange2),
-	// 				},
-	// 			],
+	// 			local: {
+	// 				marks: [
+	// 					{
+	// 						count: 1,
+	// 						fields: TestNodeId.deltaFromChild(nodeChange2),
+	// 					},
+	// 				],
+	// 			},
 	// 		};
 	// 		assertFieldChangesEqual(
 	// 			optionalFieldIntoDelta(change4.change, TestNodeId.deltaFromChild),

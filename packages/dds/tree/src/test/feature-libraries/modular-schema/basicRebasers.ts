@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-import { type TUnsafe, Type } from "@sinclair/typebox";
 
-import { makeCodecFamily } from "../../../codec/index.js";
+import type { TUnsafe } from "@sinclair/typebox";
+
+import { eraseEncodedType, makeCodecFamily } from "../../../codec/index.js";
 import {
 	makeDetachedNodeId,
 	Multiplicity,
@@ -21,7 +22,7 @@ import {
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { brandConst } from "../../../util/index.js";
+import { brandConst, JsonCompatibleReadOnlySchema } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -85,10 +86,12 @@ export type ValueChangeset = ReplaceOp<number>;
 
 export const valueHandler = {
 	rebaser: replaceRebaser(),
-	codecsFactory: () =>
-		makeCodecFamily([
-			[1, makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(Type.Any())],
-		]),
+	codecsFactory: () => {
+		const inner = makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(
+			JsonCompatibleReadOnlySchema,
+		);
+		return makeCodecFamily([[1, eraseEncodedType(inner)]]);
+	},
 	editor: { buildChildChanges: () => assert.fail("Child changes not supported") },
 
 	intoDelta: (change): DeltaFieldChanges => {
@@ -97,9 +100,9 @@ export const valueHandler = {
 			// These would have no real meaning to a delta consumer, but these delta are only used for testing.
 			const detach = makeDetachedNodeId(undefined, change.old);
 			const attach = makeDetachedNodeId(undefined, change.new);
-			return [{ count: 1, attach, detach }];
+			return { marks: [{ count: 1, attach, detach }] };
 		}
-		return [];
+		return { marks: [] };
 	},
 
 	isEmpty: (change) => change === 0,

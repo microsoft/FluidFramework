@@ -122,7 +122,7 @@ export function taggedOptAtomId(
 	return taggedAtomId(id, revision);
 }
 
-export function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {
+export function offsetChangeAtomId<T extends ChangeAtomId>(id: T, offset: number): T {
 	return { ...id, localId: brand(id.localId + offset) };
 }
 
@@ -204,6 +204,12 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	getRevertible(
 		onDisposed?: (revertible: RevertibleAlpha) => void,
 	): RevertibleAlpha | undefined;
+
+	/**
+	 * Optional label provided by the user when commit was created.
+	 * This can be used by undo/redo to group or classify edits.
+	 */
+	readonly label?: unknown;
 }
 
 /**
@@ -225,6 +231,11 @@ export interface RemoteChangeMetadata extends CommitMetadata {
 	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
 	 */
 	readonly getRevertible?: undefined;
+	/**
+	 * Label provided by the user when commit was created.
+	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
+	 */
+	readonly label?: undefined;
 }
 
 /**
@@ -255,8 +266,10 @@ export function mintCommit<TChange>(
 
 export type ChangeAtomIdRangeMap<V> = RangeMap<ChangeAtomId, V>;
 
-export function newChangeAtomIdRangeMap<V>(): ChangeAtomIdRangeMap<V> {
-	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds);
+export function newChangeAtomIdRangeMap<V>(
+	offsetValue?: (value: V, offset: number) => V,
+): ChangeAtomIdRangeMap<V> {
+	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds, offsetValue);
 }
 
 export function newChangeAtomIdTransform(): ChangeAtomIdRangeMap<ChangeAtomId> {

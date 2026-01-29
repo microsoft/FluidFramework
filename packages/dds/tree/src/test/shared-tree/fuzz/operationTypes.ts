@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { FieldKey } from "../../../core/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+
+import type { FieldKey } from "../../../core/index.js";
 import type { KeyDownPath } from "./fuzzEditGenerators.js";
 
 export type Operation = TreeOperation | Synchronize;

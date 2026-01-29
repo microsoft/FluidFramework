@@ -5,16 +5,16 @@
     },
     "plugins": [
         "@",
-        "@eslint-community/eslint-comments",
         "@typescript-eslint:@typescript-eslint/eslint-plugin@8.18.2",
         "import-x:eslint-plugin-import-x@4.16.1",
-        "unicorn:eslint-plugin-unicorn@54.0.0",
+        "@eslint-community/eslint-comments",
+        "@fluid-internal/fluid",
         "@rushstack",
         "jsdoc",
         "promise",
         "tsdoc",
+        "unicorn:eslint-plugin-unicorn@54.0.0",
         "unused-imports:unused-imports",
-        "@fluid-internal/fluid",
         "depend:eslint-plugin-depend@1.4.0"
     ],
     "rules": {
@@ -1208,18 +1208,7 @@
             "error",
             {
                 "allow": [
-                    "@fluid-example/*/internal",
-                    "@fluid-experimental/*/internal",
-                    "@fluid-internal/*/internal",
-                    "@fluid-private/*/internal",
-                    "@fluid-tools/*/internal",
-                    "@fluidframework/*/internal",
-                    "@fluid-example/*/legacy",
-                    "@fluid-experimental/*/legacy",
-                    "@fluid-internal/*/legacy",
-                    "@fluid-private/*/legacy",
-                    "@fluid-tools/*/legacy",
-                    "@fluidframework/*/legacy",
+                    "@fluidframework/*/internal{,/**}",
                     "@fluid-experimental/**",
                     "*/index.js"
                 ]
@@ -1393,6 +1382,9 @@
         "no-const-assign": [
             "off"
         ],
+        "no-constant-binary-expression": [
+            "error"
+        ],
         "no-constant-condition": [
             "error",
             {
@@ -1451,6 +1443,9 @@
                 "allowObjectPatternsAsParameters": false
             }
         ],
+        "no-empty-static-block": [
+            "error"
+        ],
         "no-eval": [
             "error",
             {
@@ -1494,13 +1489,6 @@
         ],
         "no-import-assign": [
             "off"
-        ],
-        "no-inner-declarations": [
-            "error",
-            "functions",
-            {
-                "blockScopedFunctions": "allow"
-            }
         ],
         "no-invalid-regexp": [
             "error",
@@ -1721,6 +1709,9 @@
             }
         ],
         "no-unused-labels": [
+            "error"
+        ],
+        "no-unused-private-class-members": [
             "error"
         ],
         "no-unused-vars": [

@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
+import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import {
 	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
@@ -34,6 +38,20 @@ import {
 	type NodeId,
 	type TreeChunk,
 } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { DetachedNodeEntry } from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
+import {
+	addNodeRename,
+	cloneRootTable,
+	getChangeHandler,
+	getFieldKind,
+	getNodeParent,
+	newRootTable,
+	normalizeFieldId,
+	normalizeNodeId,
+	type RenameDescription,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	newCrossFieldRangeTable,
 	type CrossFieldKey,
@@ -59,24 +77,8 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
-import {
-	addNodeRename,
-	cloneRootTable,
-	getChangeHandler,
-	getFieldKind,
-	getNodeParent,
-	newRootTable,
-	normalizeFieldId,
-	normalizeNodeId,
-	type RenameDescription,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import { testIdCompressor } from "../../utils.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { DetachedNodeEntry } from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
 
 export const Change = {
 	build,
@@ -105,7 +107,11 @@ export function assertEqual<T>(actual: T, expected: T): void {
 	);
 }
 
-export function assertModularChangesetsEqual(a: ModularChangeset, b: ModularChangeset): void {
+export function assertModularChangesetsEqual(
+	a: ModularChangeset,
+	b: ModularChangeset,
+	fieldKinds?: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): void {
 	// Some changesets end up with different maxID values after rebase despite being otherwise equal.
 	const aMaxId = a.maxId;
 	const bMaxId = b.maxId;
@@ -117,8 +123,8 @@ export function assertModularChangesetsEqual(a: ModularChangeset, b: ModularChan
 
 	// Removing aliases ensures that we don't consider the changesets different if they only differ in their aliases.
 	// It also means that we risk treating some changesets that are the same (once you consider aliases) as different.
-	const aNormalized = { ...normalizeChangeset(a), maxId };
-	const bNormalized = { ...normalizeChangeset(b), maxId };
+	const aNormalized = { ...normalizeChangeset(a, fieldKinds), maxId };
+	const bNormalized = { ...normalizeChangeset(b, fieldKinds), maxId };
 
 	assertEqual(aNormalized, bNormalized);
 }
@@ -126,10 +132,12 @@ export function assertModularChangesetsEqual(a: ModularChangeset, b: ModularChan
 export function assertModularChangesetsEqualIgnoreRebaseVersion(
 	actual: ModularChangeset,
 	expected: ModularChangeset,
+	fieldKinds?: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): void {
 	assertModularChangesetsEqual(
 		upgradeToRebaseVersionV2(actual),
 		upgradeToRebaseVersionV2(expected),
+		fieldKinds,
 	);
 }
 
@@ -451,7 +459,7 @@ function normalizeDeltaFieldChanges(
 ): DeltaFieldChanges {
 	const normalizedMarks = [];
 	let lastMark: Mutable<DeltaMark> | undefined;
-	for (const mark of delta) {
+	for (const mark of delta.marks) {
 		const normalizedMark = normalizeDeltaMark(mark, genId, idMap);
 		if (lastMark !== undefined && canMergeDeltaMarks(lastMark, normalizedMark)) {
 			lastMark.count += normalizedMark.count;
@@ -461,7 +469,7 @@ function normalizeDeltaFieldChanges(
 		}
 	}
 
-	return normalizedMarks;
+	return { marks: normalizedMarks };
 }
 
 function canMergeDeltaMarks(mark1: DeltaMark, mark2: DeltaMark): boolean {

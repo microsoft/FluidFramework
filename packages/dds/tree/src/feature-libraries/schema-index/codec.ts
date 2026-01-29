@@ -80,7 +80,7 @@ function encodeNodeSchema<TFormat>(
 	repo: TreeStoredSchema,
 	encodeValue: (schema: TreeNodeStoredSchema) => TFormat,
 ): Record<string, TFormat> {
-	const nodeSchema: Record<string, TFormat> = Object.create(null);
+	const nodeSchema: Record<string, TFormat> = Object.create(null) as Record<string, TFormat>;
 	for (const name of [...repo.nodeSchema.keys()].sort()) {
 		const schema = repo.nodeSchema.get(name) ?? fail(0xb28 /* missing schema */);
 		Object.defineProperty(nodeSchema, name, {

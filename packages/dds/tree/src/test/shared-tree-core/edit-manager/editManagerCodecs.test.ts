@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import type { SessionId } from "@fluidframework/id-compressor";
 
+import { DependentFormatVersion } from "../../../codec/index.js";
 import type { ChangeEncodingContext } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -24,8 +27,6 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { strict as assert } from "node:assert";
-import { DependentFormatVersion } from "../../../codec/index.js";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 
@@ -200,7 +201,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 	},
 };
 
-export function testCodec() {
+export function testCodec(): void {
 	describe("Codec", () => {
 		const family = makeEditManagerCodecs(
 			TestChange.codecs,

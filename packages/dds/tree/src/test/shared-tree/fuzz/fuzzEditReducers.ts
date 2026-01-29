@@ -7,11 +7,23 @@ import { strict as assert } from "node:assert";
 
 import { type Reducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import type { DDSFuzzTestState, Client } from "@fluid-private/test-dds-utils";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
 import type { Revertible } from "../../../core/index.js";
 import { Tree } from "../../../shared-tree/index.js";
+import { getInnerNode } from "../../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeArrayNode,
+	TreeViewConfiguration,
+	type TreeNode,
+	type TreeNodeSchema,
+} from "../../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
+import type { ISharedTree } from "../../../treeFactory.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
@@ -32,7 +44,6 @@ import {
 	convertToFuzzView,
 	getStaticsForTree,
 } from "./fuzzUtils.js";
-
 import {
 	type FieldEdit,
 	type ClearField,
@@ -52,19 +63,6 @@ import {
 	type GUIDNodeValue,
 	type ForkMergeOperation,
 } from "./operationTypes.js";
-
-import { getInnerNode } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
-import {
-	SchemaFactory,
-	TreeArrayNode,
-	TreeViewConfiguration,
-	type TreeNode,
-	type TreeNodeSchema,
-} from "../../../simple-tree/index.js";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { ISharedTree } from "../../../treeFactory.js";
 
 const syncFuzzReducer = combineReducers<
 	Operation,
@@ -109,13 +107,15 @@ export const fuzzReducer: Reducer<
 
 export function checkTreesAreSynchronized(
 	trees: readonly Client<IChannelFactory<ISharedTree>>[],
-) {
+): void {
 	for (const tree of trees) {
 		validateFuzzTreeConsistency(trees[0], tree);
 	}
 }
 
-export function applySynchronizationOp(state: DDSFuzzTestState<IChannelFactory<ISharedTree>>) {
+export function applySynchronizationOp(
+	state: DDSFuzzTestState<IChannelFactory<ISharedTree>>,
+): void {
 	state.containerRuntimeFactory.processAllMessages();
 	const connectedClients = state.clients.filter((client) => client.containerRuntime.connected);
 	if (connectedClients.length > 0) {
@@ -170,7 +170,7 @@ export function generateLeafNodeSchemas2(nodeTypes: string[]): TreeNodeSchema[] 
 	}
 	return leafNodeSchemas;
 }
-export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
+export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): void {
 	const nodeTypes = getAllowableNodeTypes(state);
 	nodeTypes.push(operation.contents.type);
 	const leafNodeSchemas = generateLeafNodeSchemas(nodeTypes);
@@ -198,7 +198,10 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 	state.transactionViews = transactionViews;
 }
 
-export function applyForkMergeOperation(state: FuzzTestState, branchEdit: ForkMergeOperation) {
+export function applyForkMergeOperation(
+	state: FuzzTestState,
+	branchEdit: ForkMergeOperation,
+): void {
 	switch (branchEdit.contents.type) {
 		case "fork": {
 			const forkedViews = state.forkedViews ?? new Map<ISharedTree, FuzzView[]>();
@@ -444,7 +447,7 @@ export function applyUndoRedoEdit(
 	}
 }
 
-export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
+export function applyConstraint(state: FuzzTestState, constraint: Constraint): void {
 	const tree = viewFromState(state);
 	switch (constraint.content.type) {
 		case "nodeConstraint": {

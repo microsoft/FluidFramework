@@ -1,5 +1,9 @@
 # @fluidframework/odsp-driver
 
+## 2.81.0
+
+Dependency updates only.
+
 ## 2.80.0
 
 Dependency updates only.

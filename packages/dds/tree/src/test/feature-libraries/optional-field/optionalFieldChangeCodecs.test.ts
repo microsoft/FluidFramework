@@ -1,12 +1,27 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // XXX
-// /*!
-//  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-//  * Licensed under the MIT License.
-//  */
+describe("optionalFieldChangeCodecs", () => {});
 
-// import type { SessionId } from "@fluidframework/id-compressor";
-
+// import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
+// import {
+// 	optionalFieldEditor,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalField.js";
+// import type {
+// 	OptionalChangeset,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
+// import {
+// 	makeOptionalFieldCodecFamily,
+// 	// eslint-disable-next-line import-x/no-internal-modules
+// } from "../../../feature-libraries/optional-field/optionalFieldCodecs.js";
 // import { brand } from "../../../util/index.js";
+// import { TestChange } from "../../testChange.js";
+// import { TestNodeId } from "../../testNodeId.js";
 // import {
 // 	type EncodingTestData,
 // 	makeEncodingTestSuite,
@@ -14,15 +29,7 @@
 // 	testIdCompressor,
 // 	testRevisionTagCodec,
 // } from "../../utils.js";
-// import {
-// 	type OptionalChangeset,
-// 	makeOptionalFieldCodecFamily,
-// 	optionalFieldEditor,
-// 	// eslint-disable-next-line import-x/no-internal-modules
-// } from "../../../feature-libraries/optional-field/index.js";
-// import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
-// import { TestNodeId } from "../../testNodeId.js";
-// import { TestChange } from "../../testChange.js";
+
 // import { Change, inlineRevision } from "./optionalFieldUtils.js";
 
 // const nodeChange1: TestNodeId = TestNodeId.create(
@@ -67,36 +74,38 @@
 
 // const pin = inlineRevision(Change.pin(brand(4)), tag1);
 
-export function testCodecs() {
-	describe.skip("Codecs", () => {
-		// 		const baseContext = {
-		// 			originatorId: "session1" as SessionId,
-		// 			revision: undefined,
-		// 			idCompressor: testIdCompressor,
-		// 		};
-		// 		const context: FieldChangeEncodingContext = {
-		// 			baseContext,
-		// 			encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
-		// 			decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
-		// 		};
-		// 		const encodingTestData: EncodingTestData<
-		// 			OptionalChangeset,
-		// 			unknown,
-		// 			FieldChangeEncodingContext
-		// 		> = {
-		// 			successes: [
-		// 				["set from empty", change1, context],
-		// 				["set from non-empty", change2, context],
-		// 				["child change", changeWithChildChange, context],
-		// 				["field set with child change", change1WithChildChange, context], // Note: should only get sent over the wire when using transaction APIs.
-		// 				["undone field change", change2Inverted, context],
-		// 				["clear from empty", clearEmpty, context],
-		// 				["pin", pin, context],
-		// 			],
-		// 		};
-		// 		makeEncodingTestSuite(
-		// 			makeOptionalFieldCodecFamily(testRevisionTagCodec),
-		// 			encodingTestData,
-		// 		);
-	});
-}
+// export function testCodecs(): void {
+// 	describe("Codecs", () => {
+// 		const baseContext = {
+// 			originatorId: "session1" as SessionId,
+// 			revision: undefined,
+// 			idCompressor: testIdCompressor,
+// 		};
+// 		const context: FieldChangeEncodingContext = {
+// 			baseContext,
+// 			encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
+// 			decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
+// 		};
+
+// 		const encodingTestData: EncodingTestData<
+// 			OptionalChangeset,
+// 			unknown,
+// 			FieldChangeEncodingContext
+// 		> = {
+// 			successes: [
+// 				["set from empty", change1, context],
+// 				["set from non-empty", change2, context],
+// 				["child change", changeWithChildChange, context],
+// 				["field set with child change", change1WithChildChange, context], // Note: should only get sent over the wire when using transaction APIs.
+// 				["undone field change", change2Inverted, context],
+// 				["clear from empty", clearEmpty, context],
+// 				["pin", pin, context],
+// 			],
+// 		};
+
+// 		makeEncodingTestSuite(
+// 			makeOptionalFieldCodecFamily(testRevisionTagCodec),
+// 			encodingTestData,
+// 		);
+// 	});
+// }

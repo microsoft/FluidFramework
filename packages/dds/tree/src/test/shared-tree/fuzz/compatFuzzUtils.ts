@@ -9,8 +9,6 @@ import {
 	type DDSFuzzSuiteOptions,
 	type DDSFuzzTestState,
 } from "@fluid-private/test-dds-utils";
-import { ITree } from "../../../simple-tree/index.js";
-import { configuredSharedTree, type ISharedTree } from "../../../treeFactory.js";
 import type {
 	IChannel,
 	IChannelAttributes,
@@ -18,6 +16,15 @@ import type {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+
+import { ITree } from "../../../simple-tree/index.js";
+import { configuredSharedTree, type ISharedTree } from "../../../treeFactory.js";
+import { validateFuzzTreeConsistency } from "../../utils.js";
+
+import { generatorFactory } from "./baseModel.js";
+import type { FuzzView } from "./fuzzEditGenerators.js";
+import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	createTreeViewSchema,
 	defaultTreePackageStatics,
@@ -27,11 +34,6 @@ import {
 	type TreePackageStatics,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { generatorFactory } from "./baseModel.js";
-import { fuzzReducer } from "./fuzzEditReducers.js";
-import { validateFuzzTreeConsistency } from "../../utils.js";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import type { FuzzView } from "./fuzzEditGenerators.js";
 
 export function createCompatFuzzSuite(
 	factoryForCompat: IChannelFactory<ITree>,

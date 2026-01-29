@@ -4,3 +4,4 @@
  */
 
 export { TextAsTree } from "./textDomain.js";
+export { FormattedTextAsTree } from "./textDomainFormatted.js";

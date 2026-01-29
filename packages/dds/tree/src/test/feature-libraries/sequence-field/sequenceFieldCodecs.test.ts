@@ -4,14 +4,18 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import {
-	type FieldChangeEncodingContext,
-	SequenceField as SF,
-} from "../../../feature-libraries/index.js";
+
+import { withSchemaValidation } from "../../../codec/index.js";
+import { newChangeAtomIdTransform } from "../../../core/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { Changeset } from "../../../feature-libraries/sequence-field/index.js";
+import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
 import { brand, newTupleBTree, type JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 import {
 	type EncodingTestData,
 	makeEncodingTestSuite,
@@ -19,13 +23,10 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { TestNodeId } from "../../testNodeId.js";
+
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases, MarkMaker as Mark } from "./testEdits.js";
 import { assertChangesetsEqual, inlineRevision } from "./utils.js";
-import { withSchemaValidation } from "../../../codec/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { newChangeAtomIdTransform } from "../../../core/index.js";
 
 type TestCase = [string, Changeset, FieldChangeEncodingContext];
 
@@ -87,9 +88,9 @@ const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncoding
 	],
 };
 
-export function testCodecs() {
+export function testCodecs(): void {
 	describe("Codecs", () => {
-		const sequenceFieldCodec = SF.sequenceFieldChangeCodecFactory(testRevisionTagCodec);
+		const sequenceFieldCodec = sequenceFieldChangeCodecFactory(testRevisionTagCodec);
 		makeEncodingTestSuite(sequenceFieldCodec, encodingTestData);
 		describe("Rename-like AttachAndDetach from documents prior to 2024-07-23 are decoded as Rename", () => {
 			const expected = [
