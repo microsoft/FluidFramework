@@ -43,6 +43,7 @@ import {
 	type GUIDNode,
 	convertToFuzzView,
 	getStaticsForTree,
+	type TreePackageStatics,
 } from "./fuzzUtils.js";
 import {
 	type FieldEdit,
@@ -71,7 +72,11 @@ const syncFuzzReducer = combineReducers<
 	treeEdit: (state, { edit, forkedViewIndex }) => {
 		switch (edit.type) {
 			case "fieldEdit": {
-				applyFieldEdit(viewFromState(state, state.client, forkedViewIndex), edit);
+				applyFieldEdit(
+					viewFromState(state, state.client, forkedViewIndex),
+					edit,
+					getStaticsForTree(state.client.channel),
+				);
 				break;
 			}
 			default: {
@@ -260,12 +265,16 @@ export function applyForkMergeOperation(
  * Assumes tree is using the fuzzSchema.
  * TODO: Maybe take in a schema aware strongly typed Tree node or field.
  */
-export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
+export function applyFieldEdit(
+	tree: FuzzView,
+	fieldEdit: FieldEdit,
+	statics: TreePackageStatics,
+): void {
 	const parentNode = fieldEdit.parentNodePath
 		? (navigateToNode(tree, fieldEdit.parentNodePath) ?? tree.root)
 		: tree.root;
 
-	if (!Tree.is(parentNode, tree.currentSchema)) {
+	if (!statics.nodeApi.is(parentNode, tree.currentSchema)) {
 		assert(fieldEdit.change.type === "optional");
 		switch (fieldEdit.change.edit.type) {
 			case "set": {
@@ -282,7 +291,7 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 		}
 		return;
 	}
-	assert(Tree.is(parentNode, tree.currentSchema));
+	assert(statics.nodeApi.is(parentNode, tree.currentSchema));
 
 	switch (fieldEdit.change.type) {
 		case "sequence": {

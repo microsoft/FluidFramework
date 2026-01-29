@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { takeAsync, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import {
 	createDDSFuzzSuite,
 	type DDSFuzzModel,
@@ -22,8 +23,11 @@ import { ITree } from "../../../simple-tree/index.js";
 import { configuredSharedTree, type ISharedTree } from "../../../treeFactory.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
-import { generatorFactory } from "./baseModel.js";
-import type { FuzzView } from "./fuzzEditGenerators.js";
+import {
+	makeOpGenerator,
+	type EditGeneratorOpWeights,
+	type FuzzView,
+} from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	createTreeViewSchema,
@@ -60,6 +64,30 @@ export function createCompatFuzzSuite(
 
 	createDDSFuzzSuite(compatFuzzModel, options);
 }
+
+// TODO: Enable other types of ops.
+// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
+const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+	set: 3,
+	clear: 1,
+	insert: 5,
+	remove: 5,
+	intraFieldMove: 5,
+	crossFieldMove: 5,
+	start: 1,
+	commit: 1,
+	abort: 1,
+	fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
+	schema: 0,
+	nodeConstraint: 0, // XXX: Support node constraints.
+	fork: 1,
+	merge: 1,
+};
+
+const generatorFactory = (): AsyncGenerator<
+	Operation,
+	DDSFuzzTestState<IChannelFactory<ISharedTree>>
+> => takeAsync(100, makeOpGenerator(editGeneratorOpWeights));
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,

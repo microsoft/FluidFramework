@@ -38,6 +38,7 @@ import {
 import {
 	createOnCreate,
 	deterministicIdCompressorFactory,
+	getStaticsForTree,
 	isRevertibleSharedTreeView,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
@@ -56,7 +57,7 @@ const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeF
 			case "fieldEdit": {
 				const tree = state.branch;
 				assert(tree !== undefined);
-				applyFieldEdit(tree, edit);
+				applyFieldEdit(tree, edit, getStaticsForTree(state.client.channel));
 				break;
 			}
 			default: {

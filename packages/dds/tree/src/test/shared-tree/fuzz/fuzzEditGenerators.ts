@@ -791,14 +791,14 @@ function sumWeights(values: (number | undefined)[]): number {
 
 export type KeyDownPath = (string | number)[];
 
-function downPathFromNode(node: TreeNode): KeyDownPath {
+function downPathFromNode(node: TreeNode, statics: TreePackageStatics): KeyDownPath {
 	const path: KeyDownPath = [];
 	for (
 		let currentNode: TreeNode | undefined = node;
 		currentNode !== undefined;
-		currentNode = Tree.parent(currentNode)
+		currentNode = statics.nodeApi.parent(currentNode)
 	) {
-		path.push(Tree.key(currentNode));
+		path.push(statics.nodeApi.key(currentNode));
 	}
 
 	path.reverse();
@@ -810,7 +810,7 @@ export function maybeDownPathFromNode(
 	nodeSchema: FuzzNodeSchema,
 	statics: TreePackageStatics,
 ): KeyDownPath | undefined {
-	return statics.nodeApi.is(node, nodeSchema) ? downPathFromNode(node) : undefined;
+	return statics.nodeApi.is(node, nodeSchema) ? downPathFromNode(node, statics) : undefined;
 }
 
 // Using TreeNode instead of FuzzNode to handle the case where the root node is not a FuzzNode (like a leafNode or undefined)
