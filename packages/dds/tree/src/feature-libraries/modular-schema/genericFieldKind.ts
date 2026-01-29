@@ -58,7 +58,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
 			nodeIndex += 1;
 		}
-		return markList;
+		return { marks: markList };
 	},
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 	getNestedChanges,

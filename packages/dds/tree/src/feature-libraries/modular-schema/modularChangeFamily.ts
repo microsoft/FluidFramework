@@ -2494,7 +2494,7 @@ function intoDeltaImpl(
 				return deltaFromNodeChange(nodeChange, nodeChanges, nodeAliases, fieldKinds);
 			},
 		);
-		if (fieldDelta !== undefined && fieldDelta.length > 0) {
+		if (fieldDelta !== undefined && fieldDelta.marks.length > 0) {
 			delta.set(field, fieldDelta);
 		}
 	}

@@ -186,11 +186,13 @@ describe("GenericField", () => {
 			[2, nodeChange2],
 		]);
 
-		const expected: DeltaFieldChanges = [
-			{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
-			{ count: 1 },
-			{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
-		];
+		const expected: DeltaFieldChanges = {
+			marks: [
+				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
+				{ count: 1 },
+				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
+			],
+		};
 
 		const actual = genericChangeHandler.intoDelta(input, TestNodeId.deltaFromChild);
 		assert.deepEqual(actual, expected);

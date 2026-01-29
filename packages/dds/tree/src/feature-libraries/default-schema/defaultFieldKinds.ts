@@ -41,7 +41,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChanges: () => fail(0xb0d /* Child changes not supported */) },
-	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => [],
+	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => ({ marks: [] }),
 	isEmpty: (change: 0) => true,
 	getNestedChanges: (change: 0) => [],
 	createEmpty: () => 0,

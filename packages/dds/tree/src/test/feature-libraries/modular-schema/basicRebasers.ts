@@ -98,9 +98,9 @@ export const valueHandler = {
 			// These would have no real meaning to a delta consumer, but these delta are only used for testing.
 			const detach = makeDetachedNodeId(undefined, change.old);
 			const attach = makeDetachedNodeId(undefined, change.new);
-			return [{ count: 1, attach, detach }];
+			return { marks: [{ count: 1, attach, detach }] };
 		}
-		return [];
+		return { marks: [] };
 	},
 
 	isEmpty: (change) => change === 0,

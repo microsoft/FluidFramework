@@ -230,7 +230,10 @@ export class ForestSummarizer
 				id: buildId,
 				trees: chunked,
 			});
-			fieldChanges.push([fieldKey, [{ count: chunked.topLevelLength, attach: buildId }]]);
+			fieldChanges.push([
+				fieldKey,
+				{ marks: [{ count: chunked.topLevelLength, attach: buildId }] },
+			]);
 		}
 
 		assert(this.forest.isEmpty, 0x797 /* forest must be empty */);

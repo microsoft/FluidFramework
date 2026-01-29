@@ -600,7 +600,8 @@ const generateChildStateForRebaseVersion = function* (
 			newAttach = priorDetach;
 		}
 		if (priorAttach !== undefined) {
-			const undoMark = intoDelta(changeset).fields?.get(rootFieldKey)?.at(0) ?? assert.fail();
+			const undoMark =
+				intoDelta(changeset).fields?.get(rootFieldKey)?.marks?.at(0) ?? assert.fail();
 			const detachId = undoMark.detach ?? assert.fail("Expected detach");
 			const id = makeChangeAtomId(brand(detachId.minor), detachId.major);
 			newDetach = { id, value: priorAttach.value };

@@ -485,7 +485,7 @@ export function optionalFieldIntoDelta(
 		markIsANoop = false;
 	}
 
-	return markIsANoop ? [] : [mark];
+	return { marks: markIsANoop ? [] : [mark] };
 }
 
 export const optionalChangeHandler: FieldChangeHandler<

@@ -143,9 +143,9 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild): DeltaFieldChanges => [
-		{ count: 1, fields: change === undefined ? undefined : deltaFromChild(change) },
-	],
+	intoDelta: (change, deltaFromChild): DeltaFieldChanges => ({
+		marks: [{ count: 1, fields: change === undefined ? undefined : deltaFromChild(change) }],
+	}),
 
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
@@ -1051,19 +1051,21 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const nodeDelta: DeltaFieldChanges = [
-				{
-					count: 1,
-					fields: new Map([
-						[fieldA, [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }]],
-					]),
-				},
-			];
+			const nodeDelta: DeltaFieldChanges = {
+				marks: [
+					{
+						count: 1,
+						fields: new Map([
+							[fieldA, { marks: [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }] }],
+						]),
+					},
+				],
+			};
 
 			const expectedDelta: DeltaRoot = {
 				fields: new Map([
 					[fieldA, nodeDelta],
-					[fieldB, [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }]],
+					[fieldB, { marks: [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }] }],
 				]),
 			};
 

@@ -459,7 +459,7 @@ function normalizeDeltaFieldChanges(
 ): DeltaFieldChanges {
 	const normalizedMarks = [];
 	let lastMark: Mutable<DeltaMark> | undefined;
-	for (const mark of delta) {
+	for (const mark of delta.marks) {
 		const normalizedMark = normalizeDeltaMark(mark, genId, idMap);
 		if (lastMark !== undefined && canMergeDeltaMarks(lastMark, normalizedMark)) {
 			lastMark.count += normalizedMark.count;
@@ -469,7 +469,7 @@ function normalizeDeltaFieldChanges(
 		}
 	}
 
-	return normalizedMarks;
+	return { marks: normalizedMarks };
 }
 
 function canMergeDeltaMarks(mark1: DeltaMark, mark2: DeltaMark): boolean {

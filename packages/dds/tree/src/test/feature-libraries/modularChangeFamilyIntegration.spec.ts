@@ -1457,23 +1457,25 @@ describe("ModularChangeFamily integration", () => {
 			const composedDelta = normalizeDelta(intoDelta(makeAnonChange(composed), fieldKinds));
 
 			const nodeAChanges: DeltaFieldMap = new Map([
-				[fieldB, [{ count: 1, attach: { minor: 1, major: tagForCompare } }]],
+				[fieldB, { marks: [{ count: 1, attach: { minor: 1, major: tagForCompare } }] }],
 			]);
 
 			const nodeBChanges: DeltaFieldMap = new Map([
-				[fieldC, [{ count: 1, attach: { minor: 2, major: tagForCompare } }]],
+				[fieldC, { marks: [{ count: 1, attach: { minor: 2, major: tagForCompare } }] }],
 			]);
 
 			const nodeCChanges: DeltaFieldMap = new Map([
-				[fieldC, [{ count: 1, detach: { minor: 3, major: tagForCompare } }]],
+				[fieldC, { marks: [{ count: 1, detach: { minor: 3, major: tagForCompare } }] }],
 			]);
 
-			const fieldAChanges: DeltaFieldChanges = [
-				{ count: 1, detach: { minor: 0, major: tagForCompare }, fields: nodeAChanges },
-				{ count: 1, attach: { minor: 0, major: tagForCompare } },
-				{ count: 1, detach: { minor: 1, major: tagForCompare }, fields: nodeBChanges },
-				{ count: 1, detach: { minor: 2, major: tagForCompare }, fields: nodeCChanges },
-			];
+			const fieldAChanges: DeltaFieldChanges = {
+				marks: [
+					{ count: 1, detach: { minor: 0, major: tagForCompare }, fields: nodeAChanges },
+					{ count: 1, attach: { minor: 0, major: tagForCompare } },
+					{ count: 1, detach: { minor: 1, major: tagForCompare }, fields: nodeBChanges },
+					{ count: 1, detach: { minor: 2, major: tagForCompare }, fields: nodeCChanges },
+				],
+			};
 
 			const expectedDelta: DeltaRoot = normalizeDelta({
 				fields: new Map([[fieldA, fieldAChanges]]),
@@ -1510,17 +1512,22 @@ describe("ModularChangeFamily integration", () => {
 				fields: new Map([
 					[
 						fieldA,
-						[
-							{
-								count: 1,
-								detach: { minor: 0, major: tagForCompare },
-								fields: new Map([
-									[fieldC, [{ count: 1, attach: { minor: 2, major: tagForCompare } }]],
-								]),
-							},
-						],
+						{
+							marks: [
+								{
+									count: 1,
+									detach: { minor: 0, major: tagForCompare },
+									fields: new Map([
+										[
+											fieldC,
+											{ marks: [{ count: 1, attach: { minor: 2, major: tagForCompare } }] },
+										],
+									]),
+								},
+							],
+						},
 					],
-					[fieldB, [{ count: 1, attach: { minor: 0, major: tagForCompare } }]],
+					[fieldB, { marks: [{ count: 1, attach: { minor: 0, major: tagForCompare } }] }],
 				]),
 			};
 
@@ -1571,13 +1578,17 @@ describe("ModularChangeFamily integration", () => {
 				fields: new Map([
 					[
 						fieldB,
-						[
-							{ count: 1 },
-							{
-								count: 1,
-								fields: new Map([[fieldC, [{ count: 1, attach: { major: tag2, minor: 2 } }]]]),
-							},
-						],
+						{
+							marks: [
+								{ count: 1 },
+								{
+									count: 1,
+									fields: new Map([
+										[fieldC, { marks: [{ count: 1, attach: { major: tag2, minor: 2 } }] }],
+									]),
+								},
+							],
+						},
 					],
 				]),
 			};
@@ -2323,8 +2334,8 @@ describe("ModularChangeFamily integration", () => {
 			};
 			const expected: DeltaRoot = {
 				fields: new Map([
-					[brand("foo"), [moveOut1, moveIn1]],
-					[brand("bar"), [moveOut2, moveIn2]],
+					[brand("foo"), { marks: [moveOut1, moveIn1] }],
+					[brand("bar"), { marks: [moveOut2, moveIn2] }],
 				]),
 			};
 			const actual = intoDelta(makeAnonChange(change), family.fieldKinds);
