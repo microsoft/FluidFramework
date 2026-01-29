@@ -513,7 +513,10 @@ export class OdspDelayLoadedDeltaStream {
 		sensitivityLabelsInfo: ISensitivityLabelsInfo,
 	): void {
 		const createdTimestamp = sensitivityLabelsInfo.timestamp;
-		assert(createdTimestamp > 0, 0x8e0 /* time should be positive */);
+		assert(
+			typeof createdTimestamp === "number" && createdTimestamp > 0,
+			0x8e0 /* time should be a positive number */,
+		);
 		if (createdTimestamp > this.labelUpdateTimestamp) {
 			this.labelUpdateTimestamp = createdTimestamp;
 			this.metadataUpdateHandler({
