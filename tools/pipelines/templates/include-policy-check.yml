@@ -9,7 +9,7 @@
 # IMPORTANT: This template only works with pnpm. Don't use in any pipelines that use another package manager.
 
 parameters:
-- name: buildDirectory
+- name: workspaceRootDirectory
   type: string
 
 - name: dependencyInstallCommand
@@ -37,14 +37,14 @@ stages:
 
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:
-        buildDirectory: $(Build.SourcesDirectory)
+        workspaceRootDirectory: $(Build.SourcesDirectory)
 
     - task: Bash@3
       displayName: Install dependencies
       retryCountOnTaskFailure: 4
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: ${{ parameters.workspaceRootDirectory }}
         script: |
           set -eu -o pipefail
           ${{ parameters.dependencyInstallCommand }}
@@ -55,7 +55,7 @@ stages:
           displayName: npm run ${{ check }}
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
+            workingDir: ${{ parameters.workspaceRootDirectory }}
             customCommand: 'run ${{ check }}'
           condition: succeededOrFailed()
 

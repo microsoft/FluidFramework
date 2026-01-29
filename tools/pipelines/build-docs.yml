@@ -102,7 +102,7 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)
+            workspaceRootDirectory: $(Build.SourcesDirectory)
         - task: Bash@3
           name: SetVersion
           displayName: 'Set Build Version'
@@ -172,7 +172,7 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)/docs
+            workspaceRootDirectory: $(Build.SourcesDirectory)/docs
 
         - task: Bash@3
           displayName: Install dependencies
@@ -296,7 +296,7 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)/docs
+            workspaceRootDirectory: $(Build.SourcesDirectory)/docs
 
         - task: Bash@3
           displayName: Install dependencies

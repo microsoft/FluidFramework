@@ -105,7 +105,7 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)
+            workspaceRootDirectory: $(Build.SourcesDirectory)
         - task: Bash@3
           name: SetVersion
           displayName: 'Set Build Version'

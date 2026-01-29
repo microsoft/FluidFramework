@@ -56,7 +56,7 @@ steps:
 - template: /tools/pipelines/templates/include-install.yml@self
   parameters:
     packageManager: pnpm
-    buildDirectory: $(Build.SourcesDirectory)
+    workspaceRootDirectory: $(Build.SourcesDirectory)
     packageManagerInstallCommand: pnpm install
     primaryRegistry: $(ado-feeds-ff-download-only)
     userNpmrcPath: ${{ parameters.userNpmrcDirectory }}/.npmrc

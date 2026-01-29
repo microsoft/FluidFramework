@@ -4,7 +4,7 @@
 # build-docker-service template to build services docker container
 
 parameters:
-  - name: buildDirectory
+  - name: workspaceRootDirectory
     type: string
 
   - name: containerName
@@ -165,7 +165,7 @@ extends:
     - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
       - template: /tools/pipelines/templates/include-policy-check.yml@self
         parameters:
-          buildDirectory: ${{ parameters.buildDirectory }}
+          workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
           checks: ${{ parameters.checks }}
     - stage: build
       displayName: Build Stage
@@ -181,7 +181,7 @@ extends:
         displayName: Build Container - ${{ parameters.containerName }}
         variables:
           hostPathToPackArtifact: $(Build.ArtifactStagingDirectory)/pack
-          hostPathToTestResultsArtifact: $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc
+          hostPathToTestResultsArtifact: $(Build.ArtifactStagingDirectory)/${{ parameters.workspaceRootDirectory }}/nyc
           hostPathToApiExtractorArtifact: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
           # The SKIPAUTOMATICIMAGESCAN field disables Component Governance Scanning for the Microsoft 1ES pipeline template.
           # As of now, the underlying technology used by the 1ES pipeline template for scanning docker
@@ -199,7 +199,7 @@ extends:
           displayName: Parameters
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
+            workingDirectory: ${{ parameters.workspaceRootDirectory }}
             script: |
               # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
               # even in an error case
@@ -287,13 +287,13 @@ extends:
         - ${{ if eq(parameters.shouldPublishNpmPackages, true) }}:
           - template: /tools/pipelines/templates/include-generate-notice-steps.yml@self
             parameters:
-              buildDirectory: ${{ parameters.buildDirectory }}
+              workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
               requireNotice: ${{ parameters.shouldReleaseDockerImage }}
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           - template: /tools/pipelines/templates/include-install-pnpm.yml@self
             parameters:
-              buildDirectory: ${{ parameters.buildDirectory }}
+              workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
 
         # Set version
         - ${{ if eq(parameters.setVersion, true) }}:
@@ -302,14 +302,14 @@ extends:
             retryCountOnTaskFailure: 4
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
+              workingDirectory: ${{ parameters.workspaceRootDirectory }}
               script: |
                 set -eu -o pipefail
                 ${{ parameters.packageManagerInstallCommand }}
 
           - template: /tools/pipelines/templates/include-set-package-version.yml@self
             parameters:
-              buildDirectory: ${{ parameters.buildDirectory }}
+              workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
               buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
@@ -357,7 +357,7 @@ extends:
             workingDirectory: $(Build.SourcesDirectory)
             script: |
               set -eu -o pipefail
-              cp ./CredScanSuppressions.json ${{ parameters.buildDirectory }}
+              cp ./CredScanSuppressions.json ${{ parameters.workspaceRootDirectory }}
 
         # The GitSSH Dockerfile does not have a 'base' target nor does it run pack/lint/test/docs tasks, so skip
         # all that for it. This feels hacky but it's a simple solution for now to the issue of trying to use variables
@@ -366,8 +366,8 @@ extends:
           # Build base image where we can run pack/lint/test/docs tasks
           - task: 1ES.BuildContainerImage@1
             inputs:
-              dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
-              context: ${{ parameters.buildDirectory }}
+              dockerfile: ${{ parameters.workspaceRootDirectory }}/Dockerfile
+              context: ${{ parameters.workspaceRootDirectory }}
               image: $(baseContainerTag)
               buildArguments: --target base $(DockerBuildArgs.output)
               useBuildKit: true
@@ -410,7 +410,7 @@ extends:
                 STAGING_PATH: $(Build.ArtifactStagingDirectory)
               inputs:
                 targetType: 'inline'
-                workingDirectory: ${{ parameters.buildDirectory }}
+                workingDirectory: ${{ parameters.workspaceRootDirectory }}
                 script: |
                   set -eu -o pipefail
                   flub list --no-private $RELEASE_GROUP --tarball --feed public --outFile $STAGING_PATH/pack/packagePublishOrder-public.txt
@@ -507,8 +507,8 @@ extends:
         # Build final image
         - task: 1ES.BuildContainerImage@1
           inputs:
-            dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
-            context: ${{ parameters.buildDirectory }}
+            dockerfile: ${{ parameters.workspaceRootDirectory }}/Dockerfile
+            context: ${{ parameters.workspaceRootDirectory }}
             image: $(containerTag)
             buildArguments: $(DockerBuildArgs.output)
             useBuildKit: true
@@ -527,7 +527,7 @@ extends:
             name: ComputeFinalTagList
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
+              workingDirectory: ${{ parameters.workspaceRootDirectory }}
               script: |
                 set -eu -o pipefail
                 # containerTag should always be pushed
@@ -553,7 +553,7 @@ extends:
             displayName: Prune pnpm store
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
+              workingDirectory: ${{ parameters.workspaceRootDirectory }}
               script: |
                 set -eu -o pipefail
                 pnpm store prune
@@ -591,7 +591,7 @@ extends:
         parameters:
           tagName: ${{ parameters.tagName }}
           isReleaseGroup: ${{ parameters.isReleaseGroup }}
-          buildDirectory: ${{ parameters.buildDirectory }}
+          workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
           buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
     - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:

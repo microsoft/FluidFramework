@@ -47,7 +47,7 @@ stages:
 
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:
-        buildDirectory: $(Build.SourcesDirectory)
+        workspaceRootDirectory: $(Build.SourcesDirectory)
         primaryRegistry: $(ado-feeds-ff-download-only)
 
     - task: Bash@3

@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 parameters:
-- name: buildDirectory
+- name: workspaceRootDirectory
   type: string
 - name: buildNumberInPatch
   type: boolean
@@ -51,7 +51,7 @@ steps:
 
 - template: /tools/pipelines/templates/include-install-build-tools.yml@self
   parameters:
-    buildDirectory: ${{ parameters.buildDirectory }}
+    workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
@@ -68,7 +68,7 @@ steps:
     PACKAGE_TYPES_FIELD: ${{ parameters.packageTypesOverride }}
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: ${{ parameters.workspaceRootDirectory }}
     script: |
       set -eu -o pipefail
       # expect release group root package.json be in the current working directory
@@ -91,7 +91,7 @@ steps:
     continueOnError: false
     inputs:
       targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
+      workingDirectory: ${{ parameters.workspaceRootDirectory }}
       script: |
         set -eu -o pipefail
         # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.
@@ -106,7 +106,7 @@ steps:
       INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
     inputs:
       targetType: 'filePath'
-      workingDirectory: ${{ parameters.buildDirectory }}
+      workingDirectory: ${{ parameters.workspaceRootDirectory }}
       filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
@@ -115,7 +115,7 @@ steps:
   displayName: Check for caret dependencies on internal versions
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: ${{ parameters.workspaceRootDirectory }}
     script: |
       # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
       # even in an error case
@@ -131,7 +131,7 @@ steps:
   displayName: Check for caret dependencies on dev versions
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: ${{ parameters.workspaceRootDirectory }}
     script: |
       # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
       # even in an error case

@@ -123,7 +123,7 @@ extends:
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
-    buildDirectory: server/routerlicious
+    workspaceRootDirectory: server/routerlicious
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
     dockerBuildBumpsVersion: true

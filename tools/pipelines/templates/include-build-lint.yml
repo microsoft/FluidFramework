@@ -16,7 +16,7 @@ parameters:
   type: string
   default: lint 
 
-- name: buildDirectory
+- name: workspaceRootDirectory
   type: string 
 
 steps:
@@ -29,7 +29,7 @@ steps:
       FLUB_TYPETEST_SKIP_VERSION_OUTPUT: $(testBuild)
     inputs:
       command: 'custom'
-      workingDir: ${{ parameters.buildDirectory }}
+      workingDir: ${{ parameters.workspaceRootDirectory }}
       customCommand: 'run ${{ parameters.taskBuild }}'
 
 - ${{ if ne(parameters.taskLint, false) }}:
@@ -37,5 +37,5 @@ steps:
     displayName: npm run ${{ parameters.taskLintName }}
     inputs:
       command: 'custom'
-      workingDir: ${{ parameters.buildDirectory }}
+      workingDir: ${{ parameters.workspaceRootDirectory }}
       customCommand: 'run ${{ parameters.taskLintName }}'

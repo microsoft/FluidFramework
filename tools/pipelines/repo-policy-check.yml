@@ -65,7 +65,7 @@ extends:
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: .
+            workspaceRootDirectory: .
 
         - task: Bash@3
           displayName: Install root dependencies

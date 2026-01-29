@@ -15,7 +15,7 @@ parameters:
   type: boolean
   default: false
 
-- name: buildDirectory
+- name: workspaceRootDirectory
   type: string
 
 - name: buildToolsVersionToInstall
@@ -43,7 +43,7 @@ stages:
       feedKind: internal-test
       environment: test-package-build-feed
       pool: ${{ parameters.pool }}
-      buildDirectory: ${{ parameters.buildDirectory }}
+      workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
       buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
       pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
@@ -64,7 +64,7 @@ stages:
       # Environment should match the condition for publish_npm_internal_dev
       environment: package-build-feed
       pool: ${{ parameters.pool }}
-      buildDirectory: ${{ parameters.buildDirectory }}
+      workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
       buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
       pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
@@ -86,7 +86,7 @@ stages:
         # Environment should match the condition for publish_npm_internal_build
         environment: package-build-feed
         pool: ${{ parameters.pool }}
-        buildDirectory: ${{ parameters.buildDirectory }}
+        workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
         buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
         pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
@@ -106,7 +106,7 @@ stages:
       customEndPoint: npmjs
       publishFlags: --access public
       tagName: ${{ parameters.tagName }}
-      buildDirectory: ${{ parameters.buildDirectory }}
+      workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
       buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
       pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
@@ -139,4 +139,4 @@ stages:
     jobs:
     - template: /tools/pipelines/templates/upload-dev-manifest.yml@self
       parameters:
-        buildDirectory: '${{ parameters.buildDirectory }}'
+        workspaceRootDirectory: '${{ parameters.workspaceRootDirectory }}'

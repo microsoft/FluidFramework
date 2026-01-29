@@ -86,7 +86,7 @@ extends:
     shouldReleaseDockerImage: ${{ variables.releaseImage }}
     shouldPublishNpmPackages: ${{ variables.publish }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: server/gitssh
+    workspaceRootDirectory: server/gitssh
     containerName: fluidframework/routerlicious/gitssh
     setVersion: false
     enableDockerImagePull: false

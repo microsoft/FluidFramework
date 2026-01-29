@@ -2,10 +2,10 @@
 # Licensed under the MIT License.
 
 parameters:
-- name: buildDirectory
+- name: workspaceRootDirectory
   type: string
 
-# A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
+# A list of directories (under the workspaceRootDirectory) to run the PublishTestResults task on in separate steps.
 # Used to avoid the force merge limit of 100 result files.
 - name: testResultDirs
   type: object
@@ -21,6 +21,6 @@ steps:
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/*junit-report.xml'
-        searchFolder: ${{ parameters.buildDirectory }}/${{ testResultDir }}
+        searchFolder: ${{ parameters.workspaceRootDirectory }}/${{ testResultDir }}
         mergeTestResults: false
       condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))

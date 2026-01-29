@@ -96,7 +96,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: common/lib/common-utils
+    workspaceRootDirectory: common/lib/common-utils
     tagName: common-utils
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm

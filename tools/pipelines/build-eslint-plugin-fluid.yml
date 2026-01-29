@@ -90,7 +90,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: common/build/eslint-plugin-fluid
+    workspaceRootDirectory: common/build/eslint-plugin-fluid
     tagName: eslint-plugin-fluid
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm

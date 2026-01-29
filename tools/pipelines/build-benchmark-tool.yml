@@ -89,7 +89,7 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     testCoverage: ${{ variables.testCoverage }}
     packageManager: pnpm
-    buildDirectory: tools/benchmark
+    workspaceRootDirectory: tools/benchmark
     tagName: benchmark
     taskBuild: build
     taskBuildDocs: true

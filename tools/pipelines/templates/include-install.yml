@@ -7,7 +7,7 @@ parameters:
 - name: packageManager
   type: string
 
-- name: buildDirectory
+- name: workspaceRootDirectory
   type: string
 
 - name: packageManagerInstallCommand
@@ -25,7 +25,7 @@ steps:
   - ${{ if eq(parameters.packageManager, 'pnpm') }}:
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:
-        buildDirectory: ${{ parameters.buildDirectory }}
+        workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
         primaryRegistry: ${{ parameters.primaryRegistry }}
         userNpmrcPath: ${{ parameters.userNpmrcPath }}
 
@@ -34,7 +34,7 @@ steps:
     retryCountOnTaskFailure: 4
     inputs:
       targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
+      workingDirectory: ${{ parameters.workspaceRootDirectory }}
       script: |
         set -eu -o pipefail
         ${{ parameters.packageManagerInstallCommand }}

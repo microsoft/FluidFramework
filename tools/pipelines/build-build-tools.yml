@@ -105,7 +105,7 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     testCoverage: ${{ variables.testCoverage }}
-    buildDirectory: build-tools
+    workspaceRootDirectory: build-tools
     tagName: build-tools
     isReleaseGroup: true
     taskBuild: build

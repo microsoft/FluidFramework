@@ -4,7 +4,7 @@
 # include-test-stability template to build and test NPM packages/projects
 
 parameters:
-- name: buildDirectory
+- name: workspaceRootDirectory
   type: string
 
 - name: taskBuild
@@ -70,7 +70,7 @@ jobs:
       displayName: Parameters
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: ${{ parameters.workspaceRootDirectory }}
         script: |
           set -eu -o pipefail
 
@@ -80,7 +80,7 @@ jobs:
           Pipeline Variables:
 
           Tasks Parameters:
-            BuildDir=${{ parameters.buildDirectory }}
+            BuildDir=${{ parameters.workspaceRootDirectory }}
             Build=${{ parameters.taskBuild }}
             Lint=${{ parameters.taskLint }}
             LintName: ${{ parameters.taskLintName }}
@@ -93,7 +93,7 @@ jobs:
     - template: /tools/pipelines/templates/include-install.yml@self
       parameters:
         packageManager: ${{ parameters.packageManager }}
-        buildDirectory: ${{ parameters.buildDirectory }}
+        workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
         packageManagerInstallCommand: ${{ parameters.packageManagerInstallCommand }}
 
     - template: /tools/pipelines/templates/include-build-lint.yml@self
@@ -101,7 +101,7 @@ jobs:
         taskBuild: ${{ parameters.taskBuild }}
         taskLint: ${{ parameters.taskLint }}
         taskLintName: ${{ parameters.taskLintName }}
-        buildDirectory: ${{ parameters.buildDirectory }}
+        workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
 
     # Test
     - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
@@ -114,7 +114,7 @@ jobs:
         - template: /tools/pipelines/templates/include-test-task.yml@self
           parameters:
             taskTestStep: ${{ taskTestStep }}
-            buildDirectory: ${{ parameters.buildDirectory }}
+            workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
             testCoverage: ${{ eq(variables['testCoverage'], true) }}
 
         # Verify if the tinylicious log exists
@@ -122,17 +122,17 @@ jobs:
           displayName: Validate Tinylicious Log
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
+            workingDirectory: ${{ parameters.workspaceRootDirectory }}
             script: |
               set -eu -o pipefail
-              logFile=${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log
+              logFile=${{ parameters.workspaceRootDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log
               echo "##vso[task.setvariable variable=LogExists]$(if [ -f "$logFile" ]; then echo "true"; else echo "false"; fi)"
           condition: and(failed(), contains('${{ taskTestStep }}', 'tinylicious'))
         # Publish tinylicious log for troubleshooting (only run when the tinylicious log is verified existing)
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Tinylicious Log
           inputs:
-            targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
+            targetPath: '${{ parameters.workspaceRootDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
             artifactName: 'tinyliciousLog_${{ parameters.stageName }}_attempt-$(System.JobAttempt)'
             publishLocation: 'pipeline'
           condition: and(failed(), eq(variables['logExists'], 'true'), contains('${{ taskTestStep }}', 'tinylicious'))
@@ -141,4 +141,4 @@ jobs:
       # Process test result, include publishing and logging
       - template: /tools/pipelines/templates/include-process-test-results.yml@self
         parameters:
-          buildDirectory: ${{ parameters.buildDirectory }}
+          workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}

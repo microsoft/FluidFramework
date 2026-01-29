@@ -84,7 +84,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: tools/test-tools
+    workspaceRootDirectory: tools/test-tools
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     testCoverage: ${{ variables.testCoverage }}

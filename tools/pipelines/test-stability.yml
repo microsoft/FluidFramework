@@ -157,7 +157,7 @@ stages:
         parameters:
           packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
           packageManager: pnpm
-          buildDirectory: .
+          workspaceRootDirectory: .
           poolBuild: ${{ parameters.poolBuild }}
           checkoutSubmodules: ${{ parameters.checkoutSubmodules }}
           timeoutInMinutes: 360

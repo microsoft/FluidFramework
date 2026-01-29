@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 parameters:
-- name: buildDirectory
+- name: workspaceRootDirectory
   type: string
 
 jobs:
@@ -16,13 +16,13 @@ jobs:
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
     - template: /tools/pipelines/templates/include-install-build-tools.yml@self
       parameters:
-        buildDirectory: ${{ parameters.buildDirectory }}
+        workspaceRootDirectory: ${{ parameters.workspaceRootDirectory }}
 
     - task: Bash@3
       displayName: Generate release reports
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: ${{ parameters.workspaceRootDirectory }}
         script: |
           set -eu -o pipefail
           mkdir generate_release_reports
@@ -32,7 +32,7 @@ jobs:
       displayName: Update release report version
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: ${{ parameters.workspaceRootDirectory }}
         script: |
           set -eu -o pipefail
           mkdir upload_release_reports
@@ -41,7 +41,7 @@ jobs:
     - task: CopyFiles@2
       displayName: Copy release reports
       inputs:
-        SourceFolder: ${{ parameters.buildDirectory }}/upload_release_reports
+        SourceFolder: ${{ parameters.workspaceRootDirectory }}/upload_release_reports
         TargetFolder: $(Build.ArtifactStagingDirectory)/release_reports
 
     - task: AzureCLI@2
@@ -50,7 +50,7 @@ jobs:
       inputs:
         azureSubscription: 'fluid-docs'
         scriptType: bash
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: ${{ parameters.workspaceRootDirectory }}
         scriptLocation: inlineScript
         inlineScript: |
           for file in upload_release_reports/*; do

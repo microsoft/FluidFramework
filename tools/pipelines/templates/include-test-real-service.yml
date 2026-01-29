@@ -240,7 +240,7 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: ${{ variables.pipelineHostPath }}
+            workspaceRootDirectory: ${{ variables.pipelineHostPath }}
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
@@ -541,7 +541,7 @@ stages:
         # Log Test Failures
         # - template: /tools/pipelines/templates/include-process-test-results.yml@self
         #   parameters:
-        #     buildDirectory: ${{ variables.testPackageDir }}
+        #     workspaceRootDirectory: ${{ variables.testPackageDir }}
 
         # Stop the docker environment if running against it
         - ${{ if eq(parameters.runAgainstDocker, true) }}:

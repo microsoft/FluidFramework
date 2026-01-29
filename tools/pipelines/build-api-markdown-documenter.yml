@@ -85,7 +85,7 @@ extends:
     publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-    buildDirectory: tools/api-markdown-documenter
+    workspaceRootDirectory: tools/api-markdown-documenter
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     testCoverage: ${{ variables.testCoverage }}

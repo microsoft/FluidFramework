@@ -29,7 +29,7 @@ parameters:
   type: string
   default:
 
-- name: buildDirectory
+- name: workspaceRootDirectory
   type: string
 
 - name: buildToolsVersionToInstall
