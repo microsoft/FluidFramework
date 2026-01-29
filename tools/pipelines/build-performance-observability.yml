@@ -540,20 +540,10 @@ extends:
                 },
                 "routes": [
                   {
-                    "route": "/data/*",
-                    "allowedRoles": ["anonymous", "authenticated"]
-                  },
-                  {
                     "route": "/*",
-                    "allowedRoles": ["authenticated"]
+                    "allowedRoles": ["anonymous", "authenticated"]
                   }
                 ],
-                "responseOverrides": {
-                  "401": {
-                    "statusCode": 302,
-                    "redirect": "/.auth/login/aad"
-                  }
-                },
                 "globalHeaders": {
                   "Cache-Control": "no-cache"
                 }
