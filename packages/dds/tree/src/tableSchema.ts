@@ -940,7 +940,7 @@ export namespace System_TableSchema {
 					},
 					// Relevant invariant: each cell corresponds to an existing row and column
 					// Prevents cell leaks from concurrently removed columns in earlier-sequenced edits when this cell removal is reverted.
-					// Example scenario: Client A removes a cell, then Client B removes the column for that cell (sequenced before A's edit).
+					// Example scenario: Client A removes a cell, then Client B removes the column for that cell.
 					// If A's cell removal is later reverted, the cell would be restored but B's column removal means there's no column for it.
 					// This constraint on revert ensures the column still exists, ensuring restored cells correspond to existing columns.
 					preconditionsOnRevert: [

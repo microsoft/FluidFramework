@@ -1401,7 +1401,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 	const minVersionForCollab = options.minVersionForCollab ?? FluidClientVersion.v2_80;
 	const view = independentView(config, {
 		...options,
-		idCompressor: createSnapshotCompressor(),
+		idCompressor: options.idCompressor ?? createSnapshotCompressor(),
 		minVersionForCollab,
 	});
 	assert(view instanceof SchematizingSimpleTreeView);
