@@ -167,7 +167,7 @@ export function importCompatibilitySchemaSnapshot(
  * allowing for greater portability and easier testing.
  *
  * @input
- * @alpha
+ * @beta
  */
 export interface SnapshotFileSystem {
 	/**
@@ -232,11 +232,22 @@ export interface CombinedSchemaCompatibilityStatus {
 /**
  * The options for {@link checkSchemaCompatibilitySnapshots}.
  * @input
- * @alpha
+ * @beta
  */
 export interface SchemaCompatibilitySnapshotsOptions {
 	/**
 	 * Directory where historical schema snapshots are stored.
+	 * @remarks
+	 * As the contents of this directory (specifically historical snapshots) cannot be regenerated,
+	 * a directory appropriate for test data should be used.
+	 * Generally this means that this directory should be versioned like code,
+	 * and not erased when regenerated snapshots.
+	 *
+	 * This directory will be created if it does not already exist.
+	 * All ".json" files in this directory will be treated as schema snapshots.
+	 * It is recommended to use a dedicated directory for each {@link checkSchemaCompatibilitySnapshots} powered test.
+	 *
+	 * This can use any path syntax supported by the provided {@link SchemaCompatibilitySnapshotsOptions.fileSystem}.
 	 */
 	readonly snapshotDirectory: string;
 	/**
@@ -248,6 +259,21 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 * @remarks
 	 * This uses the {@link https://semver.org/#spec-item-11|ordering defined by semver}.
 	 * It is only compared against the version from previous snapshots (taken from this version when they were created by setting `mode` to "update") and the `minVersionForCollaboration`.
+	 *
+	 * Typically `minVersionForCollaboration` should be set to the oldest version currently in use, so it's helpful to use a version which can be easily measured to tell if clients are still using it.
+	 * It is also important that this version increases with every new versions of the application or library that is released (and thus might persist content which needs to be supported).
+	 *
+	 * Often the easiest way to ensure this is to simply use the version of the package or application itself, and set the `minVersionForCollaboration` based on telemetry about which versions are still in use.
+	 * To do this, it is recommended that this version be programmatically derived from the application version rather than hard coded inline.
+	 * For example, reading it from the `package.json` or some other source of truth can be done to ensure it is kept up to date and thus snapshots always have the correct version.
+	 * The version used should typically be the next production version (whose formats must be supported long term) that would be released from the branch of the code being worked on.
+	 * This usually means that that the correct version to use is the same version that would be used when releasing the application or library, but with any prerelease version tags removed.
+	 * If an automated way to keep this version up to date is not used, be very careful when reviewing changes to snapshot files to ensure the version is correct.
+	 * If incorrectly versioned snapshots were committed accidentally, rename the snapshot files to have the correct version, and restore the old files from, version control.
+	 *
+	 * It is possible to use a different versioning scheme, for example one specific to the schema in question.
+	 * This can be done robustly as long as care is taken to ensure the version increases such that every released version has a unique snapshot,
+	 * and `minVersionForCollaboration` is set appropriately using the same versioning scheme.
 	 */
 	readonly version: string;
 	/**
@@ -269,7 +295,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 *
 	 * This is the same approach used by {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
-	 * and this corresponds to the version of the application or library defining the schema.
+	 * and this corresponds to whatever versioning scheme is used with {@link SchemaCompatibilitySnapshotsOptions.version}.
 	 */
 	readonly minVersionForCollaboration: string;
 	/**
@@ -319,6 +345,14 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * This is a known limitation that will be improved in future releases.
  * These improvements, as well as other changes, may change the exact messages produced by this function in the error cases: no stability of these messages should be assumed.
  *
+ * Unlike some other snapshot based testing tools, this stores more than just the current snapshot: historical snapshots are retained as well.
+ * Retention of these additional historical snapshots, whose content can't be regenerated from the current schema, is necessary to properly test compatibility across versions.
+ * Since there is content in the snapshots which cannot be regenerated, tools which assume all snapshotted content can be regenerated cannot be used here.
+ * This means that tools like Jest's built in snapshot testing are not suitable for this purpose.
+ * These snapshots behave partly like test data, and partly like snapshots.
+ * Typically the easiest way to manage this is to place {@link SchemaCompatibilitySnapshotsOptions.snapshotDirectory} inside a directory appropriate for test data,
+ * and use node to provide the filesystem access via {@link SchemaCompatibilitySnapshotsOptions.fileSystem}.
+ *
  * For now, locating what change broke compatibility is likely best discovered by making small schema changes one at a time and updating the snapshot and reviewing the diffs.
  * Details for what kinds of changes are breaking and in which ways can be found in the documentation for {@link TreeView.compatibility} and
  * {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution}.
@@ -347,16 +381,50 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * 	});
  * });
  * ```
+ * @example Complete Mocha test file
+ * ```typescript
+ * import fs from "node:fs";
+ * import path from "node:path";
+ *
+ * import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/beta";
+ *
+ * // The TreeViewConfiguration the application uses, which contains the application's schema.
+ * import { treeViewConfiguration } from "./schema.js";
+ * // The next version of the application which will be released.
+ * import { packageVersion } from "./version.js";
+ *
+ * // Provide some way to run the check in "update" mode when updating snapshots is intended.
+ * const regenerateSnapshots = process.argv.includes("--snapshot");
+ *
+ * // Setup the actual test. In this case using Mocha syntax.
+ * describe("schema", () => {
+ * 	it("schema compatibility", () => {
+ * 		// Select a path to save the snapshots in.
+ * 		// This will depend on how your application organizes its test data.
+ * 		const snapshotDirectory = path.join(
+ * 			import.meta.dirname,
+ * 			"../../../src/test/schema-snapshots",
+ * 		);
+ * 		checkSchemaCompatibilitySnapshots({
+ * 			snapshotDirectory,
+ * 			fileSystem: { ...fs, ...path },
+ * 			version: packageVersion,
+ * 			schema: treeViewConfiguration,
+ * 			minVersionForCollaboration: "2.0.0",
+ * 			mode: regenerateSnapshots ? "update" : "test",
+ * 		});
+ * 	});
+ * });
+ * ```
  * @privateRemarks
  * Use of this function within this package (for schema libraries released as part of this package) should use {@link testSchemaCompatibilitySnapshots} instead.
  *
- * TODO: this uses the format defined in simpleSchemaCodec.ts.
- * Currently this does not include any versioning information in the snapshot format itself.
- * This would make it hard to do things like upgrade to a new format (perhaps for better diffs, or to support new features) in the future.
- * That code should probably be migrated to a proper versioned codec with a schema and validation.
- * This utility can directly depend on the typebox-validator and inject that as this code should not be bundle size sensitive.
- * This should be addressed before this reached beta stability.
- * @alpha
+ * This uses the format defined in simpleSchemaCodec.ts.
+ * This does include versioning information in the snapshot format,
+ * but it would be nice to better unify how we do that versioning and format validation with our codecs.
+ *
+ * See src/test/simple-tree/api/snapshotCompatibilityCheckerExample/snapshotCompatibilityChecker.example.mts for the large example included above.
+ * @beta
  */
 export function checkSchemaCompatibilitySnapshots(
 	options: SchemaCompatibilitySnapshotsOptions,
