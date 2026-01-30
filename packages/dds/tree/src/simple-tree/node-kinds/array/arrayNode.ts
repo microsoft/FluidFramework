@@ -133,8 +133,9 @@ export interface TreeArrayNode<
 	 *
 	 * @remarks
 	 * The order of the inserted items relative to other concurrently inserted items at the same location is only partially specified:
-	 * Inserting `[A, B]` concurrently to an insert of `[X, Y]` at the same location may (no matter the sequence order) yield
-	 * either: `[A, B, X, Y]` or `[X, Y, A, B]`. No other interleavings are possible. (e.g. `[A, X, B, Y]` is not possible.)
+	 * Concurrently inserting `[A, B]` and `[X, Y]` at the same location may yield
+	 * either `[A, B, X, Y]` or `[X, Y, A, B]`, regardless of the order in which those edits are sequenced.
+	 * No other interleavings are possible. (e.g. `[A, X, B, Y]` is not possible.)
 	 *
 	 * @param value - The content to insert.
 	 */
