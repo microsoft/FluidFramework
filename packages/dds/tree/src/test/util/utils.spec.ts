@@ -194,6 +194,55 @@ describe("Utils", () => {
 			);
 		}
 
+		/**
+		 * Shared test helper for number ordering.
+		 * Tests basic ordering, decimals, reflexivity, and anti-symmetry.
+		 */
+		function testNumberOrdering(compareFn: (a: number, b: number) => number): void {
+			// Basic ordering: negative < zero < positive
+			assert.ok(compareFn(-1, 0) < 0);
+			assert.ok(compareFn(0, 1) < 0);
+			assert.ok(compareFn(-1, 1) < 0);
+
+			// Decimal ordering
+			assert.ok(compareFn(-1.5, -1) < 0);
+			assert.ok(compareFn(1, 1.5) < 0);
+			assert.ok(compareFn(-1.5, 1.5) < 0);
+
+			// Reflexivity
+			assert.equal(compareFn(0, 0), 0);
+			assert.equal(compareFn(5, 5), 0);
+			assert.equal(compareFn(-3.7, -3.7), 0);
+
+			// Anti-symmetry
+			assert.ok(compareFn(1, 2) < 0);
+			assert.ok(compareFn(2, 1) > 0);
+		}
+
+		/**
+		 * Shared test helper for string ordering.
+		 * Tests lexicographic ordering, prefixes, and empty strings.
+		 */
+		function testStringOrdering(compareFn: (a: string, b: string) => number): void {
+			// Basic lexicographic ordering
+			assert.ok(compareFn("a", "b") < 0);
+			assert.ok(compareFn("b", "a") > 0);
+			assert.equal(compareFn("a", "a"), 0);
+
+			// Prefix ordering
+			assert.ok(compareFn("ab", "abc") < 0);
+			assert.ok(compareFn("abc", "ab") > 0);
+
+			// Multi-character differences
+			assert.ok(compareFn("ab", "ac") < 0);
+			assert.ok(compareFn("ac", "ab") > 0);
+
+			// Empty string
+			assert.ok(compareFn("", "a") < 0);
+			assert.ok(compareFn("a", "") > 0);
+			assert.equal(compareFn("", ""), 0);
+		}
+
 		describe("compareNumbers", () => {
 			it("handles NaN correctly", () => {
 				// NaN equals itself
@@ -211,24 +260,7 @@ describe("Utils", () => {
 			});
 
 			it("orders numbers correctly", () => {
-				// Basic ordering: negative < zero < positive
-				assert.ok(compareNumbers(-1, 0) < 0);
-				assert.ok(compareNumbers(0, 1) < 0);
-				assert.ok(compareNumbers(-1, 1) < 0);
-
-				// Decimal ordering
-				assert.ok(compareNumbers(-1.5, -1) < 0);
-				assert.ok(compareNumbers(1, 1.5) < 0);
-				assert.ok(compareNumbers(-1.5, 1.5) < 0);
-
-				// Reflexivity
-				assert.equal(compareNumbers(0, 0), 0);
-				assert.equal(compareNumbers(5, 5), 0);
-				assert.equal(compareNumbers(-3.7, -3.7), 0);
-
-				// Anti-symmetry
-				assert.ok(compareNumbers(1, 2) < 0);
-				assert.ok(compareNumbers(2, 1) > 0);
+				testNumberOrdering(compareNumbers);
 			});
 
 			it("handles special values", () => {
@@ -262,11 +294,7 @@ describe("Utils", () => {
 			});
 
 			it("orders numbers correctly", () => {
-				// Same tests as compareNumbers
-				assert.ok(comparePartialNumbers(-1, 0) < 0);
-				assert.ok(comparePartialNumbers(0, 1) < 0);
-				assert.equal(comparePartialNumbers(5, 5), 0);
-				assert.ok(comparePartialNumbers(2, 1) > 0);
+				testNumberOrdering(comparePartialNumbers);
 			});
 
 			it("handles NaN correctly", () => {
@@ -285,23 +313,7 @@ describe("Utils", () => {
 
 		describe("compareStrings", () => {
 			it("orders strings lexicographically", () => {
-				// Basic lexicographic ordering
-				assert.ok(compareStrings("a", "b") < 0);
-				assert.ok(compareStrings("b", "a") > 0);
-				assert.equal(compareStrings("a", "a"), 0);
-
-				// Prefix ordering
-				assert.ok(compareStrings("ab", "abc") < 0);
-				assert.ok(compareStrings("abc", "ab") > 0);
-
-				// Multi-character differences
-				assert.ok(compareStrings("ab", "ac") < 0);
-				assert.ok(compareStrings("ac", "ab") > 0);
-
-				// Empty string
-				assert.ok(compareStrings("", "a") < 0);
-				assert.ok(compareStrings("a", "") > 0);
-				assert.equal(compareStrings("", ""), 0);
+				testStringOrdering(compareStrings);
 			});
 
 			it("handles case sensitivity", () => {
@@ -325,11 +337,7 @@ describe("Utils", () => {
 			});
 
 			it("orders strings lexicographically", () => {
-				// Same tests as compareStrings
-				assert.ok(comparePartialStrings("a", "b") < 0);
-				assert.ok(comparePartialStrings("b", "a") > 0);
-				assert.equal(comparePartialStrings("hello", "hello"), 0);
-				assert.ok(comparePartialStrings("", "a") < 0);
+				testStringOrdering(comparePartialStrings);
 			});
 		});
 

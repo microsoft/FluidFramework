@@ -70,7 +70,7 @@ function createTupleComparator<const K extends readonly DefaultComparable[]>(
  * Merge the entries of two {@link TupleBTree}s.
  * @param tree1 - The first btree.
  * @param tree2 - The second btree.
- * If this is `undefined`, `tree1` is returned directly (it is not cloned).
+ * This always returns a new btree and does not modify either input.
  * @param preferLeft - If true, colliding keys will use the value from `tree1`, otherwise the value from `tree2` is used.
  */
 export function mergeTupleBTrees<const K extends readonly DefaultComparable[], V>(
@@ -78,10 +78,11 @@ export function mergeTupleBTrees<const K extends readonly DefaultComparable[], V
 	tree2: TupleBTree<K, V> | undefined,
 	preferLeft = true,
 ): TupleBTree<K, V> {
-	if (tree2 === undefined) {
-		return tree1;
-	}
 	const result: TupleBTree<K, V> = brand(tree1.clone());
+	if (tree2 === undefined) {
+		return result;
+	}
+
 	for (const [key, value] of tree2.entries()) {
 		result.set(key, value, !preferLeft);
 	}
