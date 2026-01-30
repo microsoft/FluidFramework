@@ -41,10 +41,17 @@
         .info-icon .tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #323130 transparent transparent transparent; }
         .info-icon:hover .tooltip { visibility: visible; opacity: 1; }
         .chart-container { background: white; padding: 16px; border-radius: 4px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132); margin-bottom: 24px; position: relative; }
+        .chart-title-overlay { text-align: center; font-size: 14px; font-weight: bold; color: #666; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .chart-container:has(.chart-title-overlay) { padding-bottom: 28px; }
         .chart-legend-info { position: absolute; top: 66px; left: 50%; margin-left: 95px; font-size: 14px; color: #605e5c; line-height: 1; }
         .chart-container.duration-chart { height: 320px; }
         .chart-container.stage-chart { height: 420px; }
         h2 { color: #323130; font-size: 18px; margin-top: 32px; margin-bottom: 16px; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; margin-bottom: 16px; }
+        .chart-header h2 { margin: 0; }
+        .chart-header select { padding: 6px 12px; border: 1px solid #8a8886; border-radius: 4px; font-size: 14px; background: white; cursor: pointer; }
+        .chart-header select:hover { border-color: #605e5c; }
+        .chart-header select:focus { outline: none; border-color: #0078d4; }
         .table-container { background: white; padding: 16px; border-radius: 4px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,.132); margin-bottom: 24px; overflow-x: auto; }
         .builds-table { width: 100%; border-collapse: collapse; font-size: 14px; }
         .builds-table th, .builds-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #edebe9; }
@@ -275,6 +282,121 @@
             return { stagePerformance, stageTaskBreakdown };
         }
 
+        // Calculate stage duration trend over time (for stacked bar chart)
+        // Returns data grouped by date with stage durations for each day
+        function calcStageDurationTrend(builds, timelines) {
+            const byDate = {};
+
+            builds.forEach(build => {
+                if (!build.startTime || !build.id) return;
+                const date = build.startTime.split('T')[0];
+                const timeline = timelines[build.id];
+                if (!timeline || !timeline.records) return;
+
+                const stages = timeline.records.filter(r =>
+                    r.type === 'Stage' && r.startTime && r.finishTime
+                );
+
+                if (!byDate[date]) byDate[date] = { stages: {}, buildCount: 0, buildIds: [] };
+                byDate[date].buildCount++;
+                byDate[date].buildIds.push(build.id);
+
+                stages.forEach(stage => {
+                    const duration = calcDurationMins(stage.startTime, stage.finishTime);
+                    if (duration === null) return;
+                    if (!byDate[date].stages[stage.name]) byDate[date].stages[stage.name] = [];
+                    byDate[date].stages[stage.name].push(duration);
+                });
+            });
+
+            // Calculate average duration per stage per date, filter out days with no stage data
+            const dates = Object.keys(byDate).sort().filter(date => Object.keys(byDate[date].stages).length > 0);
+            const allStages = new Set();
+            dates.forEach(date => {
+                Object.keys(byDate[date].stages).forEach(stage => allStages.add(stage));
+            });
+
+            const stageNames = Array.from(allStages).sort();
+            const trendData = dates.map(date => {
+                const entry = { date, buildCount: byDate[date].buildCount, buildIds: byDate[date].buildIds };
+                stageNames.forEach(stage => {
+                    const durations = byDate[date].stages[stage] || [];
+                    entry[stage] = durations.length > 0
+                        ? durations.reduce((a, b) => a + b, 0) / durations.length
+                        : 0;
+                });
+                return entry;
+            });
+
+            return { trendData, stageNames };
+        }
+
+        // Calculate task duration trend over time (for stacked bar chart)
+        // Returns data grouped by date with task durations for each day
+        function calcTaskDurationTrend(builds, timelines) {
+            const byDate = {};
+
+            builds.forEach(build => {
+                if (!build.startTime || !build.id) return;
+                const date = build.startTime.split('T')[0];
+                const timeline = timelines[build.id];
+                if (!timeline || !timeline.records) return;
+
+                const stages = timeline.records.filter(r => r.type === 'Stage' && r.id);
+                const stageIdMap = {};
+                stages.forEach(s => { stageIdMap[s.id] = s.name; });
+
+                // Find tasks (phases) within stages
+                const tasks = timeline.records.filter(r =>
+                    r.type === 'Phase' && r.parentId && stageIdMap[r.parentId] && r.startTime && r.finishTime
+                );
+
+                if (!byDate[date]) byDate[date] = { tasks: {}, buildCount: 0, buildIds: [] };
+                byDate[date].buildCount++;
+                byDate[date].buildIds.push(build.id);
+
+                tasks.forEach(task => {
+                    const duration = calcDurationMins(task.startTime, task.finishTime);
+                    if (duration === null) return;
+                    const taskKey = stageIdMap[task.parentId] + ' › ' + task.name;
+                    if (!byDate[date].tasks[taskKey]) byDate[date].tasks[taskKey] = [];
+                    byDate[date].tasks[taskKey].push(duration);
+                });
+            });
+
+            // Calculate average duration per task per date, filter out days with no task data
+            const dates = Object.keys(byDate).sort().filter(date => Object.keys(byDate[date].tasks).length > 0);
+            const allTasks = new Set();
+            dates.forEach(date => {
+                Object.keys(byDate[date].tasks).forEach(task => allTasks.add(task));
+            });
+
+            // Sort tasks by overall average duration (descending) and take top 10
+            const taskAvgs = {};
+            Array.from(allTasks).forEach(task => {
+                let total = 0, count = 0;
+                dates.forEach(date => {
+                    const durations = byDate[date].tasks[task] || [];
+                    durations.forEach(d => { total += d; count++; });
+                });
+                taskAvgs[task] = count > 0 ? total / count : 0;
+            });
+            const taskNames = Array.from(allTasks).sort((a, b) => taskAvgs[b] - taskAvgs[a]).slice(0, 10);
+
+            const trendData = dates.map(date => {
+                const entry = { date, buildCount: byDate[date].buildCount, buildIds: byDate[date].buildIds };
+                taskNames.forEach(task => {
+                    const durations = byDate[date].tasks[task] || [];
+                    entry[task] = durations.length > 0
+                        ? durations.reduce((a, b) => a + b, 0) / durations.length
+                        : 0;
+                });
+                return entry;
+            });
+
+            return { trendData, taskNames };
+        }
+
         // Process raw data into dashboard format
         function processRawData(rawData, mode) {
             const project = mode === 'public' ? 'public' : 'internal';
@@ -288,6 +410,8 @@
                     .filter(b => b.duration !== null);
 
                 const { stagePerformance, stageTaskBreakdown } = processTimelines(rawData.timelines);
+                const stageDurationTrend = calcStageDurationTrend(filteredBuilds, rawData.timelines || {});
+                const taskDurationTrend = calcTaskDurationTrend(filteredBuilds, rawData.timelines || {});
 
                 // Sort for recent and longest
                 const sortedByDate = [...processedBuilds].sort((a, b) =>
@@ -304,7 +428,9 @@
                     recentBuilds: sortedByDate.slice(0, 20),
                     longestBuilds: sortedByDuration.slice(0, 20),
                     stagePerformance,
-                    stageTaskBreakdown
+                    stageTaskBreakdown,
+                    stageDurationTrend,
+                    taskDurationTrend
                 };
             } else {
                 // Old pre-processed format (backward compatible)
@@ -378,8 +504,10 @@
                 '<div class="metric-card"><div class="metric-label">' + trendDays + '-Day Trend <span class="info-icon">ⓘ<span class="tooltip">Compares average duration of last ' + trendDays + ' days vs the average of all builds before that</span></span></div>' +
                 '<div class="metric-value" style="color: ' + trendColor + '">' + trendSign + Math.abs(durationChangeMinutes).toFixed(1) + 'm <span style="font-size: 18px; opacity: 0.8;">(' + trendSign + Math.abs(durationChange).toFixed(1) + '%)</span></div></div></div>' +
                 '<h2>Duration Trend</h2><div class="chart-container duration-chart"><canvas id="' + mode + '-duration-chart"></canvas><span class="chart-legend-info info-icon">ⓘ<span class="tooltip">Outliers of ±20% from daily average are highlighted with clickable markers</span></span></div>' +
-                '<h2>Duration by Stage</h2><div class="chart-container stage-chart"><canvas id="' + mode + '-stage-chart"></canvas></div>' +
-                '<h2>Individual Task Duration</h2><div class="chart-container stage-chart"><canvas id="' + mode + '-task-chart"></canvas></div>' +
+                '<div class="chart-header"><h2>Stage Breakdown</h2><select id="' + mode + '-stage-view-select" onchange="switchStageView(\'' + mode + '\')"><option value="by-stage">By Stage</option><option value="over-time">By Day</option></select></div>' +
+                '<div class="chart-container stage-chart" id="' + mode + '-stage-container"><div class="chart-title-overlay" id="' + mode + '-stage-title-overlay" style="display: none;">Stage Duration by Day <span class="info-icon">ⓘ<span class="tooltip">Click a legend item to isolate it. Click again to show all.</span></span></div><canvas id="' + mode + '-stage-chart"></canvas></div>' +
+                '<div class="chart-header"><h2>Task Breakdown</h2><select id="' + mode + '-task-view-select" onchange="switchTaskView(\'' + mode + '\')"><option value="by-task">By Task</option><option value="over-time">By Day</option></select></div>' +
+                '<div class="chart-container stage-chart" id="' + mode + '-task-container"><div class="chart-title-overlay" id="' + mode + '-task-title-overlay" style="display: none;">Average Task Duration by Day <span class="info-icon">ⓘ<span class="tooltip">Click a legend item to isolate it. Click again to show all.</span></span></div><canvas id="' + mode + '-task-chart"></canvas></div>' +
                 '<h2>Recent Builds</h2><div class="table-container"><table class="builds-table" id="' + mode + '-recent-table"><thead><tr><th data-sort="id">Build ID <span class="sort-icon">↕</span></th><th data-sort="date" class="sort-desc">Date <span class="sort-icon">↓</span></th><th data-sort="duration">Duration <span class="sort-icon">↕</span></th><th data-sort="source">Source <span class="sort-icon">↕</span></th></tr></thead><tbody id="' + mode + '-recent-body"></tbody></table><div class="pagination"><div class="pagination-info">Showing <span id="' + mode + '-recent-start">1</span>-<span id="' + mode + '-recent-end">5</span> of <span id="' + mode + '-recent-total">' + (data.recentBuilds || []).length + '</span></div><div class="pagination-controls"><button class="pagination-btn" id="' + mode + '-recent-prev" onclick="prevPage(\'' + mode + '\', \'recent\')">← Previous</button><button class="pagination-btn" id="' + mode + '-recent-next" onclick="nextPage(\'' + mode + '\', \'recent\')">Next →</button></div></div></div>' +
                 '<h2>Longest Builds</h2><div class="table-container"><table class="builds-table" id="' + mode + '-longest-table"><thead><tr><th data-sort="id">Build ID <span class="sort-icon">↕</span></th><th data-sort="date">Date <span class="sort-icon">↕</span></th><th data-sort="duration" class="sort-desc">Duration <span class="sort-icon">↓</span></th><th data-sort="source">Source <span class="sort-icon">↕</span></th></tr></thead><tbody id="' + mode + '-longest-body"></tbody></table><div class="pagination"><div class="pagination-info">Showing <span id="' + mode + '-longest-start">1</span>-<span id="' + mode + '-longest-end">5</span> of <span id="' + mode + '-longest-total">' + (data.longestBuilds || []).length + '</span></div><div class="pagination-controls"><button class="pagination-btn" id="' + mode + '-longest-prev" onclick="prevPage(\'' + mode + '\', \'longest\')">← Previous</button><button class="pagination-btn" id="' + mode + '-longest-next" onclick="nextPage(\'' + mode + '\', \'longest\')">Next →</button></div></div></div>';
             createDurationChart(mode, data, colorScheme);
@@ -410,6 +538,186 @@
             });
         }
 
+        function createStageDurationTrendChart(mode, data, colorScheme) {
+            const ctx = document.getElementById(mode + '-stage-chart');
+            if (!ctx) return;
+            if (chartInstances[mode].stage) chartInstances[mode].stage.destroy();
+            const trendData = data.stageDurationTrend?.trendData || [];
+            const stageNames = data.stageDurationTrend?.stageNames || [];
+            if (trendData.length === 0 || stageNames.length === 0) {
+                ctx.parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No stage trend data available</p>';
+                return;
+            }
+            const project = mode === 'public' ? 'public' : 'internal';
+            const formatDate = (dateStr) => {
+                const [y, m, d] = dateStr.split('-');
+                return m + '/' + d + '/' + y;
+            };
+            const labels = trendData.map(d => formatDate(d.date));
+            const datasets = stageNames.map((stageName, index) => ({
+                label: stageName,
+                data: trendData.map(d => d[stageName] || 0),
+                backgroundColor: colorScheme.tasks[index % colorScheme.tasks.length],
+                borderWidth: 0
+            }));
+            chartInstances[mode].stage = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, padding: 8 },
+                            onClick: function(e, legendItem, legend) {
+                                const chart = legend.chart;
+                                const clickedIndex = legendItem.datasetIndex;
+                                const allHiddenExceptClicked = chart.data.datasets.every((ds, i) =>
+                                    i === clickedIndex ? chart.isDatasetVisible(i) : !chart.isDatasetVisible(i)
+                                );
+                                if (allHiddenExceptClicked) {
+                                    // Show all datasets
+                                    chart.data.datasets.forEach((ds, i) => { chart.setDatasetVisibility(i, true); });
+                                } else {
+                                    // Hide all except clicked
+                                    chart.data.datasets.forEach((ds, i) => { chart.setDatasetVisibility(i, i === clickedIndex); });
+                                }
+                                chart.update();
+                            }
+                        },
+                        title: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    const idx = context[0].dataIndex;
+                                    const dataPoint = trendData[idx];
+                                    const buildCount = dataPoint ? dataPoint.buildCount : 0;
+                                    const date = new Date(dataPoint.date);
+                                    const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                    return formatted + ' (' + buildCount + ' build' + (buildCount !== 1 ? 's' : '') + ')';
+                                },
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + 'm';
+                                },
+                                afterBody: function(context) {
+                                    const idx = context[0].dataIndex;
+                                    const dataPoint = trendData[idx];
+                                    if (dataPoint && dataPoint.buildIds && dataPoint.buildIds.length === 1) {
+                                        return 'Click to view build #' + dataPoint.buildIds[0];
+                                    }
+                                    return '';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true, title: { display: true, text: 'Date' } },
+                        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Duration (minutes)' } }
+                    },
+                    onClick: function(event, elements) {
+                        if (elements.length > 0) {
+                            const el = elements[0];
+                            const dataPoint = trendData[el.index];
+                            if (dataPoint && dataPoint.buildIds && dataPoint.buildIds.length === 1) {
+                                window.open('https://dev.azure.com/' + config.org + '/' + project + '/_build/results?buildId=' + dataPoint.buildIds[0], '_blank');
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTaskDurationTrendChart(mode, data, colorScheme) {
+            const ctx = document.getElementById(mode + '-task-chart');
+            if (!ctx) return;
+            if (chartInstances[mode].task) chartInstances[mode].task.destroy();
+            const trendData = data.taskDurationTrend?.trendData || [];
+            const taskNames = data.taskDurationTrend?.taskNames || [];
+            if (trendData.length === 0 || taskNames.length === 0) {
+                ctx.parentElement.innerHTML = '<p style="padding: 20px; text-align: center; color: #605e5c;">No task trend data available</p>';
+                return;
+            }
+            const project = mode === 'public' ? 'public' : 'internal';
+            const formatDate = (dateStr) => {
+                const [y, m, d] = dateStr.split('-');
+                return m + '/' + d + '/' + y;
+            };
+            const labels = trendData.map(d => formatDate(d.date));
+            const datasets = taskNames.map((taskName, index) => ({
+                label: taskName,
+                data: trendData.map(d => d[taskName] || 0),
+                backgroundColor: colorScheme.tasks[index % colorScheme.tasks.length],
+                borderWidth: 0
+            }));
+            chartInstances[mode].task = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, padding: 8 },
+                            onClick: function(e, legendItem, legend) {
+                                const chart = legend.chart;
+                                const clickedIndex = legendItem.datasetIndex;
+                                const allHiddenExceptClicked = chart.data.datasets.every((ds, i) =>
+                                    i === clickedIndex ? chart.isDatasetVisible(i) : !chart.isDatasetVisible(i)
+                                );
+                                if (allHiddenExceptClicked) {
+                                    // Show all datasets
+                                    chart.data.datasets.forEach((ds, i) => { chart.setDatasetVisibility(i, true); });
+                                } else {
+                                    // Hide all except clicked
+                                    chart.data.datasets.forEach((ds, i) => { chart.setDatasetVisibility(i, i === clickedIndex); });
+                                }
+                                chart.update();
+                            }
+                        },
+                        title: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    const idx = context[0].dataIndex;
+                                    const dataPoint = trendData[idx];
+                                    const buildCount = dataPoint ? dataPoint.buildCount : 0;
+                                    const date = new Date(dataPoint.date);
+                                    const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                    return formatted + ' (' + buildCount + ' build' + (buildCount !== 1 ? 's' : '') + ')';
+                                },
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + 'm';
+                                },
+                                afterBody: function(context) {
+                                    const idx = context[0].dataIndex;
+                                    const dataPoint = trendData[idx];
+                                    if (dataPoint && dataPoint.buildIds && dataPoint.buildIds.length === 1) {
+                                        return 'Click to view build #' + dataPoint.buildIds[0];
+                                    }
+                                    return '';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true, title: { display: true, text: 'Date' } },
+                        y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Duration (minutes)' } }
+                    },
+                    onClick: function(event, elements) {
+                        if (elements.length > 0) {
+                            const el = elements[0];
+                            const dataPoint = trendData[el.index];
+                            if (dataPoint && dataPoint.buildIds && dataPoint.buildIds.length === 1) {
+                                window.open('https://dev.azure.com/' + config.org + '/' + project + '/_build/results?buildId=' + dataPoint.buildIds[0], '_blank');
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         function createStageChart(mode, data, colorScheme) {
             const ctx = document.getElementById(mode + '-stage-chart');
             if (!ctx) return;
@@ -424,6 +732,46 @@
             const taskNames = Array.from(allTasks).sort();
             const datasets = taskNames.map((taskName, index) => ({ label: taskName, data: stages.map(stage => { const tasks = stageData[stage] || []; if (tasks.length === 0 && taskName === stage) return stageAvgDurations[stage] || 0; const task = tasks.find(t => t.name === taskName); return task ? task.avgDuration : 0; }), backgroundColor: colorScheme.tasks[index % colorScheme.tasks.length], borderWidth: 1 }));
             chartInstances[mode].stage = new Chart(ctx, { type: 'bar', data: { labels: stages, datasets }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { onClick: null, position: 'bottom', labels: { boxWidth: 12, padding: 8 } }, title: { display: true, text: 'Average Duration by Stage', font: { size: 14, weight: 'bold' } } }, scales: { x: { stacked: true, beginAtZero: true, title: { display: true, text: 'Duration (minutes)' } }, y: { stacked: true, title: { display: true, text: 'Stage' } } } } });
+        }
+
+        function switchStageView(mode) {
+            const select = document.getElementById(mode + '-stage-view-select');
+            const titleOverlay = document.getElementById(mode + '-stage-title-overlay');
+            const container = document.getElementById(mode + '-stage-container');
+            const view = select.value;
+            const data = dashboardData[mode];
+            const colorScheme = colors[mode];
+
+            // Show/hide title overlay based on view
+            if (view === 'over-time') {
+                titleOverlay.style.display = 'flex';
+                container.style.paddingBottom = '28px';
+                createStageDurationTrendChart(mode, data, colorScheme);
+            } else {
+                titleOverlay.style.display = 'none';
+                container.style.paddingBottom = '16px';
+                createStageChart(mode, data, colorScheme);
+            }
+        }
+
+        function switchTaskView(mode) {
+            const select = document.getElementById(mode + '-task-view-select');
+            const titleOverlay = document.getElementById(mode + '-task-title-overlay');
+            const container = document.getElementById(mode + '-task-container');
+            const view = select.value;
+            const data = dashboardData[mode];
+            const colorScheme = colors[mode];
+
+            // Show/hide title overlay based on view
+            if (view === 'over-time') {
+                titleOverlay.style.display = 'flex';
+                container.style.paddingBottom = '28px';
+                createTaskDurationTrendChart(mode, data, colorScheme);
+            } else {
+                titleOverlay.style.display = 'none';
+                container.style.paddingBottom = '16px';
+                createTaskChart(mode, data, colorScheme);
+            }
         }
 
         function createTaskChart(mode, data, colorScheme) {
