@@ -68,6 +68,12 @@ function parseSize(size: unknown): number {
 	if (size === "small" || size === "large" || size === "huge") {
 		return sizeMap[size];
 	}
+	if (typeof size === "string") {
+		const parsed = Number.parseInt(size, 10);
+		if (!Number.isNaN(parsed)) {
+			return parsed;
+		}
+	}
 	return defaultSize;
 }
 
@@ -127,7 +133,10 @@ function formatToQuillAttrs(
 	if (format.underline) attrs.underline = true;
 	if (format.size !== defaultSize) {
 		// Convert pixel value back to Quill size name if possible
-		attrs.size = sizeReverse[format.size] ?? `${format.size}px`;
+		attrs.size =
+			format.size in sizeReverse
+				? sizeReverse[format.size as keyof typeof sizeReverse]
+				: `${format.size}px`;
 	}
 	if (format.font !== defaultFont) attrs.font = format.font;
 	return attrs;
