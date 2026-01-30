@@ -49,6 +49,23 @@ export function* mapIterable<T, U>(
 }
 
 /**
+ * Filter an iterable, returning only elements that match the filter condition
+ * @param iterable - the iterable to filter
+ * @param filterCondition - the filter condition function to test each element
+ * @returns a new iterable of elements that pass the filter condition
+ */
+export function* filterIterable<T>(
+	iterable: Iterable<T>,
+	filterCondition: (t: T) => boolean,
+): IterableIterator<T> {
+	for (const t of iterable) {
+		if (filterCondition(t)) {
+			yield t;
+		}
+	}
+}
+
+/**
  * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
  * @param map - The map to query/update
  * @param key - The key to lookup in the map
@@ -194,6 +211,60 @@ export function unqualifySchema(schemaIdentifier: string): string {
 		sanitizedName = `_${sanitizedName}`;
 	}
 	return sanitizedName;
+}
+
+/**
+ * Resolves short name collisions by appending counters to colliding short names.
+ * @param identifiers - An array of full unmodified schema identifiers to be converted to unique short names.
+ * @returns An array of unique, collision-resolved short names (preserving length and index order as input)
+ *
+ * @remarks
+ * When multiple identifiers produce the same short name, the colliding identifiers get a counter appended to its name.
+ * Non-colliding identifiers keep their original short name.
+ * The algorithm ensures collision-resolved names don't conflict with other existing short names.
+ * Counters always start at 1 (suffix `_1`) and increment, skipping over any short names that already exist (including naturally-suffixed names such as `"Foo_1"`).
+ * Examples:
+ * - If only `"scope.Foo"` and `"scope2.Foo"` exist, they resolve to `["Foo_1", "Foo_2"]`.
+ * - If `"scope.Foo"`, `"scope2.Foo"`, and `"scope3.Foo_1"` all exist, they resolve to `["Foo_2", "Foo_3", "Foo_1"]` (indices preserved).
+ */
+export function mapToFriendlyIdentifiers<T extends readonly string[]>(
+	identifiers: T,
+): string[] & { length: T["length"] } {
+	const shortNameCount = new Map<string, number>();
+
+	// Count how many identifiers map to each short name
+	for (const identifier of identifiers) {
+		const shortName = unqualifySchema(identifier);
+		shortNameCount.set(shortName, (shortNameCount.get(shortName) ?? 0) + 1);
+	}
+
+	const result: string[] = [];
+	const shortNameCounter = new Map<string, number>(); // Track which suffix we're on for each name
+
+	// Assign collision-resolved names, iterating in the same order as identifiers
+	for (const identifier of identifiers) {
+		const shortName = unqualifySchema(identifier);
+		const count = shortNameCount.get(shortName);
+		assert(count !== undefined, "Expected short name to have been counted in first pass");
+
+		if (count === 1) {
+			// No collision, unchanged short name.
+			result.push(shortName);
+		} else {
+			// Collision, append counters to conflicting short names
+			let counter = shortNameCounter.get(shortName) ?? 0;
+			counter += 1;
+			let candidateName = `${shortName}_${counter}`;
+			while (shortNameCount.has(candidateName)) {
+				counter += 1;
+				candidateName = `${shortName}_${counter}`;
+			}
+			shortNameCounter.set(shortName, counter);
+			result.push(candidateName);
+		}
+	}
+
+	return result as string[] & { length: T["length"] };
 }
 
 /**
