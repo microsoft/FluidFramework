@@ -45,17 +45,17 @@ export {
 	type FieldChangeEncodingContext,
 	type NestedChangesIndices,
 } from "./fieldChangeHandler.js";
-export {
-	type CrossFieldKey,
-	type CrossFieldKeyRange,
-	type FieldChange,
-	type FieldChangeMap,
-	type FieldChangeset,
-	type HasFieldChanges,
-	type ModularChangeset,
-	type NoChangeConstraint,
-	type NodeExistsConstraint,
-	type NodeId,
+export type {
+	CrossFieldKey,
+	CrossFieldKeyRange,
+	FieldChange,
+	FieldChangeMap,
+	FieldChangeset,
+	HasFieldChanges,
+	ModularChangeset,
+	NoChangeConstraint,
+	NodeExistsConstraint,
+	NodeId,
 } from "./modularChangeTypes.js";
 export {
 	convertGenericChange,
