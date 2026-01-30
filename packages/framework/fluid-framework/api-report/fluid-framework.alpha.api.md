@@ -243,15 +243,15 @@ export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: nu
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
 // @alpha
-export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions & (({
-    idCompressor?: IIdCompressor_2 | undefined;
-} & {
-    content?: undefined;
+export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: CreateIndependentTreeAlphaOptions): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+
+// @alpha
+export type CreateIndependentTreeAlphaOptions = ForestOptions & ((IndependentViewOptions & {
+    content?: never;
 }) | (ICodecOptions & {
     content: ViewContent;
-} & {
-    idCompressor?: undefined;
-}))): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+    idCompressor?: never;
+}));
 
 // @beta
 export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
@@ -787,9 +787,12 @@ export const incrementalSummaryHint: unique symbol;
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeViewAlpha<TSchema>;
 
 // @alpha
-export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: ForestOptions & {
-    idCompressor?: IIdCompressor_2 | undefined;
-}): TreeViewAlpha<TSchema>;
+export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: IndependentViewOptions): TreeViewAlpha<TSchema>;
+
+// @alpha @input
+export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
+    idCompressor?: IIdCompressor | undefined;
+}
 
 // @public
 export type InitialObjects<T extends ContainerSchema> = {
@@ -1877,14 +1880,14 @@ export interface TreeAlpha {
     children(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {
-        idCompressor?: IIdCompressor;
+        idCompressor?: IIdCompressor_2;
     } & Pick<CodecWriteOptions, "minVersionForCollab">): JsonCompatible<IFluidHandle>;
     exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
     exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
     exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;
     readonly identifier: TreeIdentifierUtils;
     importCompressed<const TSchema extends ImplicitFieldSchema>(schema: TSchema, compressedData: JsonCompatible<IFluidHandle>, options: {
-        idCompressor?: IIdCompressor;
+        idCompressor?: IIdCompressor_2;
     } & ICodecOptions): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: TreeParsingOptions): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
@@ -2268,7 +2271,7 @@ export interface ViewableTree {
 
 // @alpha
 export interface ViewContent {
-    readonly idCompressor: IIdCompressor_2;
+    readonly idCompressor: IIdCompressor;
     readonly schema: JsonCompatible;
     readonly tree: JsonCompatible<IFluidHandle>;
 }
