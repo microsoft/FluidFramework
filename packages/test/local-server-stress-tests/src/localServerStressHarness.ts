@@ -73,11 +73,12 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { saveFluidOps } from "./baseModel.js";
+import { ContainerStateTracker } from "./containerStateTracker.js";
 import { validateConsistencyOfAllDDS } from "./ddsOperations.js";
 import {
 	createRuntimeFactory,
 	StressDataObject,
-	type DefaultStressDataObject,
+	DefaultStressDataObject,
 } from "./stressDataObject.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
@@ -99,9 +100,15 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 	clients: Client[];
 	client: Client;
 	datastore: StressDataObject;
+	datastoreTag: `datastore-${number}`;
 	channel: IChannel;
 	seed: number;
 	tag<T extends string>(prefix: T): `${T}-${number}`;
+	/**
+	 * Consolidated state tracker for channels, container objects, and selection biasing.
+	 * Created fresh for each test.
+	 */
+	stateTracker: ContainerStateTracker;
 }
 
 /**
@@ -172,9 +179,16 @@ export interface LocalServerStressModel<TOperation extends BaseOperation> {
 	 * Equivalence validation function, which should verify that the provided clients contain the same data.
 	 * This is run at each synchronization point for all connected clients (as disconnected clients won't
 	 * necessarily have the same set of ops applied).
+	 * @param clientA - First client to compare
+	 * @param clientB - Second client to compare
+	 * @param state - Test state with access to tracking maps
 	 * @throws An informative error if the clients don't have equivalent data.
 	 */
-	validateConsistency: (clientA: Client, clientB: Client) => void | Promise<void>;
+	validateConsistency: (
+		clientA: Client,
+		clientB: Client,
+		state: LocalServerStressState,
+	) => void | Promise<void>;
 
 	/**
 	 * An array of transforms used during fuzz test minimization to reduce test
@@ -379,7 +393,7 @@ export interface LocalServerStressOptions {
 const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	defaultTestCount: 100,
 	detachedStartOptions: {
-		numOpsBeforeAttach: 20,
+		numOpsBeforeAttach: 100,
 	},
 	numberOfClients: 3,
 	clientJoinOptions: {
@@ -511,15 +525,21 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 				}),
 			);
 
-			const { DefaultStressDataObject }: FluidObject<DefaultStressDataObject> | undefined =
+			const {
+				DefaultStressDataObject: frozenEntryPoint,
+			}: FluidObject<DefaultStressDataObject> | undefined =
 				(await frozenContainer.getEntryPoint()) ?? {};
-			assert(DefaultStressDataObject !== undefined, "must have entrypoint");
+			assert(frozenEntryPoint !== undefined, "must have entrypoint");
 
-			await validateConsistencyOfAllDDS(removed, {
-				container: frozenContainer,
-				entryPoint: DefaultStressDataObject,
-				tag: `client-${Number.NaN}`,
-			});
+			await validateConsistencyOfAllDDS(
+				removed,
+				{
+					container: frozenContainer,
+					entryPoint: frozenEntryPoint,
+					tag: `client-${Number.NaN}`,
+				},
+				state.stateTracker,
+			);
 
 			frozenContainer.dispose();
 			removed.container.dispose();
@@ -671,7 +691,7 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 				await synchronizeClients([validationClient, ...connectedClients]);
 				for (const client of connectedClients) {
 					try {
-						await model.validateConsistency(client, validationClient);
+						await model.validateConsistency(client, validationClient, state);
 					} catch (error: unknown) {
 						if (error instanceof Error) {
 							error.message = `Comparing client ${client.tag} vs client ${validationClient.tag}\n${error.message}`;
@@ -712,49 +732,30 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 	const generatorFactory: () => AsyncGenerator<TOperation, LocalServerStressState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | typeof done> => {
-			// Pick a channel, and:
-			// 1. Make it available for the DDS model generators (so they don't need to
-			// do the boilerplate of selecting a client to perform the operation on)
-			// 2. Make it available to the subsequent reducer logic we're going to inject
-			// (so that we can recover the channel from serialized data)
+			// Pick a client randomly, then use the state tracker to select a channel
+			// with inverted selection (type first, then datastore with biasing)
 			const client = state.random.pick(state.clients);
-			const globalObjects = await client.entryPoint.getContainerObjects();
-			const entry = state.random.pick(
-				globalObjects.filter((v) => v.type === "stressDataObject"),
+
+			const selection = await state.stateTracker.selectChannelForOperation(
+				client,
+				state.random,
 			);
-			assert(entry?.type === "stressDataObject");
-			const datastore = entry.stressDataObject;
-			const channels = await datastore.StressDataObject.getChannels();
 
-			// Group channels by type to ensure uniform coverage across channel types
-			const channelsByType = new Map<string, IChannel[]>();
-			for (const ch of channels) {
-				const channelType = ch.attributes.type;
-				const existing = channelsByType.get(channelType);
-				if (existing !== undefined) {
-					existing.push(ch);
-				} else {
-					channelsByType.set(channelType, [ch]);
-				}
-			}
-
-			// First pick a channel type, then pick a channel of that type
-			const channelTypes = Array.from(channelsByType.keys());
-			const selectedType = state.random.pick(channelTypes);
-			const channelsOfSelectedType = channelsByType.get(selectedType);
-			assert(channelsOfSelectedType !== undefined, "channels of selected type must exist");
-			const channel = state.random.pick(channelsOfSelectedType);
-			assert(channel !== undefined, "channel must exist");
-			const baseOp = await runInStateWithClient(state, client, datastore, channel, async () =>
-				baseGenerator(state),
+			const baseOp = await runInStateWithClient(
+				state,
+				selection.client,
+				selection.datastore,
+				selection.datastoreTag,
+				selection.channel,
+				async () => baseGenerator(state),
 			);
 			return baseOp === done
 				? done
 				: ({
 						...baseOp,
-						clientTag: client.tag,
-						datastoreTag: entry.tag,
-						channelTag: channel.id as `channel-${number}`,
+						clientTag: selection.client.tag,
+						datastoreTag: selection.datastoreTag,
+						channelTag: selection.channelTag as `channel-${number}`,
 					} satisfies SelectedClientSpec);
 		};
 	};
@@ -766,16 +767,27 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 		assert(hasSelectedClientSpec(operation), "operation should have been given a client");
 		const client = state.clients.find((c) => c.tag === operation.clientTag);
 		assert(client !== undefined);
-		const globalObjects = await client.entryPoint.getContainerObjects();
+		const globalObjects = await client.entryPoint.getContainerObjects(
+			state.stateTracker.containerObjectsByUrl,
+		);
 		const entry = globalObjects.find((e) => e.tag === operation.datastoreTag);
 		assert(entry?.type === "stressDataObject");
 		const datastore = entry.stressDataObject;
-		const channels = await datastore.StressDataObject.getChannels();
+		const channelMap = state.stateTracker.getChannelsForDatastore(operation.datastoreTag);
+		const channelTags = channelMap ? Array.from(channelMap.keys()) : ["root"];
+		const channels = await datastore.StressDataObject.getChannels(channelTags);
 		const channel = channels.find((c) => c.id === operation.channelTag);
 		assert(channel !== undefined, "channel must exist");
-		await runInStateWithClient(state, client, datastore, channel, async () => {
-			await model.reducer(state, operation as TOperation);
-		});
+		await runInStateWithClient(
+			state,
+			client,
+			datastore,
+			operation.datastoreTag,
+			channel,
+			async () => {
+				await model.reducer(state, operation as TOperation);
+			},
+		);
 	};
 	return {
 		...model,
@@ -811,12 +823,14 @@ async function runInStateWithClient<Result>(
 	state: LocalServerStressState,
 	client: LocalServerStressState["client"],
 	datastore: LocalServerStressState["datastore"],
+	datastoreTag: LocalServerStressState["datastoreTag"],
 	channel: LocalServerStressState["channel"],
 	callback: (state: LocalServerStressState) => Promise<Result>,
 ): Promise<Result> {
 	const old = { ...state };
 	state.client = client;
 	state.datastore = datastore;
+	state.datastoreTag = datastoreTag;
 	state.channel = channel;
 	try {
 		return await callback(state);
@@ -825,6 +839,7 @@ async function runInStateWithClient<Result>(
 
 		state.client = old.client;
 		state.datastore = old.datastore;
+		state.datastoreTag = old.datastoreTag;
 		state.channel = old.channel;
 	}
 }
@@ -1036,6 +1051,11 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		options,
 	);
 
+	// Initialize the state tracker with datastore-0
+	const stateTracker = new ContainerStateTracker();
+	const defaultDatastoreUrl = detachedClient.entryPoint.handle.absolutePath;
+	stateTracker.registerDatastore("datastore-0", defaultDatastoreUrl);
+
 	const initialState: LocalServerStressState = {
 		clients: [detachedClient],
 		localDeltaConnectionServer: server,
@@ -1045,9 +1065,13 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		validationClient: detachedClient,
 		client: makeUnreachableCodePathProxy("client"),
 		datastore: makeUnreachableCodePathProxy("datastore"),
+		datastoreTag: makeUnreachableCodePathProxy(
+			"datastoreTag",
+		) as unknown as `datastore-${number}`,
 		channel: makeUnreachableCodePathProxy("channel"),
 		seed,
 		tag,
+		stateTracker,
 	};
 
 	let operationCount = 0;
@@ -1081,7 +1105,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 			}
 			await synchronizeClients([validationClient, ...clients]);
 			for (const client of clients) {
-				await model.validateConsistency(client, validationClient);
+				await model.validateConsistency(client, validationClient, state);
 			}
 			return;
 		}
@@ -1109,6 +1133,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 
 			finalState.validationClient.container.dispose();
 			await finalState.localDeltaConnectionServer.close();
+			finalState.pendingLocalStateStore.clear();
 		}
 	}
 
