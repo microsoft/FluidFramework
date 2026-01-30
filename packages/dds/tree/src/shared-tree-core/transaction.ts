@@ -9,13 +9,17 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	diffHistories,
 	findAncestor,
+	findCommonAncestor,
+	mintCommit,
+	rebaseBranch,
 	tagChange,
 	type ChangeFamilyEditor,
 	type GraphCommit,
 	type RevisionTag,
 } from "../core/index.js";
-import { getLast, getOrCreate, hasSome } from "../util/index.js";
+import { getLast, getOrCreate } from "../util/index.js";
 
 import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
 
@@ -42,6 +46,8 @@ export interface Transactor {
 	 * Start a new transaction.
 	 * If a transaction is already in progress when this new transaction starts, then this transaction will be "nested" inside of it,
 	 * i.e. the outer transaction will still be in progress after this new transaction is committed or aborted.
+	 * @param isAsync - Whether the transaction is asynchronous.
+	 * An error will be thrown if an asynchronous transaction is started while a synchronous transaction is in progress.
 	 *
 	 * @remarks Asynchronous transactions are not supported on the root checkout,
 	 * since it is always kept up-to-date with the latest remote edits and the results of this rebasing (which might invalidate
@@ -55,7 +61,7 @@ export interface Transactor {
 	 * @privateRemarks There is currently no enforcement that asynchronous transactions don't happen on the root checkout.
 	 * AB#6488 tracks adding some enforcement to make it more clear to application authors that this is not supported.
 	 */
-	start(): void;
+	start(isAsync: boolean): void;
 	/**
 	 * Close this transaction by squashing its edits and committing them as a single edit.
 	 * If this is the root checkout and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
@@ -127,11 +133,21 @@ export type OnPush = () => Callbacks | void;
 export type OnPop = (result: TransactionResult) => void;
 
 /**
+ * A frame in the transaction stack.
+ */
+interface TransactionStackFrame {
+	/** The callbacks provided when this transaction frame was pushed onto the stack. */
+	readonly callbacks: Callbacks;
+	/** Whether this transaction frame is asynchronous. */
+	readonly isAsync: boolean;
+}
+
+/**
  * An implementation of {@link Transactor} that uses a stack to manage transactions.
  * @remarks Using a stack allows transactions to nest - i.e. an inner transaction may be started while an outer transaction is already in progress.
  */
 export class TransactionStack implements Transactor, IDisposable {
-	readonly #stack: Callbacks[] = [];
+	readonly #stack: TransactionStackFrame[] = [];
 	readonly #onPush?: OnPush;
 
 	readonly #events = createEmitter<TransactionEvents>();
@@ -157,11 +173,20 @@ export class TransactionStack implements Transactor, IDisposable {
 		return this.#stack.length > 0;
 	}
 
-	public start(): void {
+	public start(isAsync: boolean): void {
 		this.ensureNotDisposed();
-		const onPushCurrent = hasSome(this.#stack) ? getLast(this.#stack).onPush : this.#onPush;
+		const last = getLast(this.#stack);
+		if (last !== undefined && !last.isAsync && isAsync) {
+			throw new UsageError(
+				"An asynchronous transaction cannot be started while a synchronous transaction is in progress.",
+			);
+		}
+		const onPushCurrent = last === undefined ? this.#onPush : last.callbacks.onPush;
 		const { onPush, onPop } = onPushCurrent?.() ?? {};
-		this.#stack.push({ onPop, onPush: onPush ?? onPushCurrent });
+		this.#stack.push({
+			callbacks: { onPop, onPush: onPush ?? onPushCurrent },
+			isAsync,
+		});
 		this.#events.emit("started");
 	}
 
@@ -171,7 +196,7 @@ export class TransactionStack implements Transactor, IDisposable {
 			throw new UsageError("No transaction to commit");
 		}
 		this.#events.emit("committing");
-		this.#stack.pop()?.onPop?.(TransactionResult.Commit);
+		this.#stack.pop()?.callbacks.onPop?.(TransactionResult.Commit);
 	}
 
 	public abort(): void {
@@ -180,7 +205,7 @@ export class TransactionStack implements Transactor, IDisposable {
 			throw new UsageError("No transaction to abort");
 		}
 		this.#events.emit("aborting");
-		this.#stack.pop()?.onPop?.(TransactionResult.Abort);
+		this.#stack.pop()?.callbacks.onPop?.(TransactionResult.Abort);
 	}
 
 	public dispose(): void {
@@ -197,6 +222,19 @@ export class TransactionStack implements Transactor, IDisposable {
 		}
 	}
 }
+
+/**
+ * A function that will be called when a transaction is popped from the {@link SquashingTransactionStack | stack}.
+ * @remarks This function runs just after the transaction ends, so if this is the end of an outermost (not nested) transaction then {@link Transactor.isInProgress} will be false during its execution.
+ * @param result - The result of the transaction.
+ * @param viewUpdate - The change that needs to be applied to the view to keep it up-to-date with the branch after the transaction ends.
+ * This is needed in asynchronous transactions where new commits have been added to the branch while the transaction was in progress.
+ * This will be `undefined` if no such change is necessary.
+ */
+export type OnPopWithViewUpdate<TChange> = (
+	result: TransactionResult,
+	viewUpdate: TChange | undefined,
+) => void;
 
 /**
  * An implementation of {@link Transactor} that {@link TransactionStack | uses a stack} and a {@link SharedTreeBranch | branch} to manage transactions.
@@ -270,14 +308,14 @@ export class SquashingTransactionStack<
 	public constructor(
 		public readonly branch: SharedTreeBranch<TEditor, TChange>,
 		mintRevisionTag: () => RevisionTag,
-		onPush?: () => OnPop | void,
+		onPush?: () => OnPopWithViewUpdate<TChange> | void,
 	) {
 		super(
 			// Invoked when an outer transaction starts
 			(): Callbacks => {
 				// Keep track of the commit that each transaction was on when it started
-				// TODO:#8603: This may need to be computed differently if we allow rebasing during a transaction.
 				const startHead = this.activeBranch.getHead();
+				const rebaser = this.branch.changeFamily.rebaser;
 				const outerOnPop = onPush?.();
 				let transactionRevision: RevisionTag | undefined;
 				const transactionBranch = this.branch.fork(
@@ -287,33 +325,97 @@ export class SquashingTransactionStack<
 				);
 				this.setTransactionBranch(transactionBranch);
 				transactionBranch.editor.enterTransaction();
+
 				// Invoked when an outer transaction ends
 				const onOuterTransactionPop: OnPop = (result) => {
 					assert(!this.isInProgress(), 0xcae /* The outer transaction should be ending */);
 					transactionBranch.editor.exitTransaction();
+
+					const sourcePath: GraphCommit<TChange>[] = [];
+					const targetPath: GraphCommit<TChange>[] = [];
+					const ancestor = findCommonAncestor(
+						[startHead, sourcePath],
+						[branch.getHead(), targetPath],
+					);
+					assert(ancestor !== undefined, "branches must be related");
+
+					const transactionSteps: GraphCommit<TChange>[] = [];
+					findAncestor(
+						[transactionBranch.getHead(), transactionSteps],
+						(c) => c === startHead,
+					);
+
+					let viewUpdate: TChange | undefined;
 					switch (result) {
 						case TransactionResult.Abort: {
-							// When a transaction is aborted, roll back all the transaction's changes on the current branch
+							// When a transaction is aborted, roll back all the transaction's changes on the current branch.
+							// It is important that this happens before and separately from updating the view because the `TreeCheckout` needs to
+							// revert some internal (state to match what it was before the transaction began) before applying the view update (if any).
 							transactionBranch.removeAfter(startHead);
+							// If changes were made on `branch` since the transaction began, the view will need to be updated to reflect those changes.
+							if (targetPath.length > 0) {
+								viewUpdate = diffHistories(
+									rebaser,
+									startHead,
+									this.branch.getHead(),
+									mintRevisionTag,
+								);
+							}
 							break;
 						}
 						case TransactionResult.Commit: {
-							// ...squash all the new commits on the transaction branch into a new commit on the original branch
-							const removedCommits: GraphCommit<TChange>[] = [];
-							findAncestor(
-								[transactionBranch.getHead(), removedCommits],
-								(c) => c === startHead,
-							);
-							if (removedCommits.length > 0) {
-								for (const commit of removedCommits) {
+							if (transactionSteps.length > 0) {
+								assert(
+									transactionRevision !== undefined,
+									"Expected transaction revision in the presence of transaction steps",
+								);
+								for (const commit of transactionSteps) {
 									assert(
 										commit.revision === transactionRevision,
 										0xcaf /* Unexpected commit in transaction */,
 									);
 								}
-								const squash = this.branch.changeFamily.rebaser.compose(removedCommits);
-								this.branch.apply(tagChange(squash, transactionRevision));
+								// Squash all the new commits on the transaction branch into a new commit on the original branch
+								const squash = rebaser.compose(transactionSteps);
+
+								if (targetPath.length === 0) {
+									// No changes were made on the original branch since the transaction began
+									// The transaction commit can be applied directly
+									this.branch.apply(tagChange(squash, transactionRevision));
+									// The view is already up-to-date so there's nothing more to do
+								} else {
+									// Some changes were made on `branch` since the transaction began
+									const unrebasedHead = mintCommit(startHead, {
+										change: squash,
+										revision: transactionRevision,
+									});
+									// We need to rebase the transaction commit on top of the new changes
+									const rebased = rebaseBranch(
+										mintRevisionTag,
+										rebaser,
+										unrebasedHead,
+										branch.getHead(),
+									);
+									assert(
+										rebased.newSourceHead.revision === transactionRevision,
+										"The transaction commit should be rebased to the tip",
+									);
+									this.branch.apply(rebased.newSourceHead);
+									viewUpdate = rebased.sourceChange;
+								}
+							} else {
+								if (targetPath.length > 0) {
+									// Changes were made on `branch` since the transaction began.
+									// The view will need to be updated to reflect those changes.
+									viewUpdate = diffHistories(
+										rebaser,
+										startHead,
+										this.branch.getHead(),
+										mintRevisionTag,
+									);
+								}
 							}
+
 							break;
 						}
 						default: {
@@ -322,7 +424,7 @@ export class SquashingTransactionStack<
 					}
 					transactionBranch.dispose();
 					this.setTransactionBranch(undefined);
-					outerOnPop?.(result);
+					outerOnPop?.(result, viewUpdate);
 				};
 				// Invoked when a nested transaction begins
 				const onNestedTransactionPush: OnPush = () => {
@@ -346,7 +448,7 @@ export class SquashingTransactionStack<
 									unreachableCase(result);
 								}
 							}
-							nestedOuterOnPop?.(result);
+							nestedOuterOnPop?.(result, undefined);
 						},
 					};
 				};

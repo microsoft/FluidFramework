@@ -500,16 +500,23 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				: undefined;
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
-			return (result) => {
+			return (result, viewUpdate: SharedTreeChange | undefined) => {
+				const newHead = this.#transaction.branch.getHead();
 				switch (result) {
 					case TransactionResult.Abort: {
 						restoreRemovedRoots();
+						if (viewUpdate !== undefined) {
+							this.applyChange(viewUpdate, newHead.revision);
+						}
 						break;
 					}
 					case TransactionResult.Commit: {
+						if (viewUpdate !== undefined) {
+							this.applyChange(viewUpdate, newHead.revision);
+						}
 						if (!this.transaction.isInProgress()) {
 							// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
-							this.validateCommit(this.#transaction.branch.getHead());
+							this.validateCommit(newHead);
 						}
 						break;
 					}
