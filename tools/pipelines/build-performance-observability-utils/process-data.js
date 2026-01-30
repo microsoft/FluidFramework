@@ -362,30 +362,10 @@ function main() {
 		process.exit(1);
 	}
 
-	console.log(`Processing ${mode} data...`);
-	console.log(`  Input: ${inputFile}`);
-	console.log(`  Output: ${outputFile}`);
-
-	// Read raw data
 	const rawData = JSON.parse(fs.readFileSync(inputFile, "utf8"));
-	console.log(`  Raw builds: ${(rawData.builds || []).length}`);
-	console.log(`  Raw timelines: ${Object.keys(rawData.timelines || {}).length}`);
-
-	// Process data
 	const processedData = processRawData(rawData, mode);
-	console.log(`  Processed builds (after filtering): ${processedData.summary.totalBuilds}`);
-
-	// Write output
 	const output = JSON.stringify(processedData);
 	fs.writeFileSync(outputFile, output);
-
-	const inputSize = fs.statSync(inputFile).size;
-	const outputSize = fs.statSync(outputFile).size;
-	const reduction = (((inputSize - outputSize) / inputSize) * 100).toFixed(1);
-
-	console.log(`  Input size: ${(inputSize / 1024 / 1024).toFixed(2)} MB`);
-	console.log(`  Output size: ${(outputSize / 1024).toFixed(2)} KB`);
-	console.log(`  Size reduction: ${reduction}%`);
 }
 
 main();
