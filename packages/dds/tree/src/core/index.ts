@@ -212,7 +212,7 @@ export {
 	isAncestor,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
-	compareRevisions,
+	comparePartialRevisions as compareRevisions,
 	diffHistories,
 	type RevisionReplacer,
 } from "./rebase/index.js";

@@ -31,7 +31,7 @@ export {
 	subtractChangeAtomIds,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
-	compareRevisions,
+	comparePartialRevisions,
 } from "./types.js";
 export { RevisionTagCodec } from "./revisionTagCodec.js";
 export {

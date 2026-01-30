@@ -6,6 +6,7 @@ lib
 nyc
 *.log
 .DS_Store
+.worktrees/
 
 .vale/*
 !.vale/config/

@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../core/index.js";
-import type { TupleBTree } from "../util/index.js";
+import {
+	compareRevisions,
+	type ChangeAtomId,
+	type ChangesetLocalId,
+	type RevisionTag,
+} from "../core/index.js";
+import { compareNumbers, newTupleBTree, type TupleBTree } from "../util/index.js";
 
 /**
  * A BTree which uses ChangeAtomId flattened into a tuple as the key.
@@ -15,6 +20,13 @@ export type ChangeAtomIdBTree<V> = TupleBTree<
 	readonly [RevisionTag | undefined, ChangesetLocalId],
 	V
 >;
+
+/** Creates a {@link TupleBTree} with {@link ChangeAtomId}s as the keys */
+export function newChangeAtomIdBTree<V>(
+	entries?: [readonly [RevisionTag | undefined, ChangesetLocalId], V][],
+): ChangeAtomIdBTree<V> {
+	return newTupleBTree([compareRevisions, compareNumbers], entries);
+}
 
 export function getFromChangeAtomIdMap<T>(
 	map: ChangeAtomIdBTree<T>,
