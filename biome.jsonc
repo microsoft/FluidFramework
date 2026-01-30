@@ -108,6 +108,7 @@
 
 			// local-server-stress-tests results
 			"!**/packages/test/local-server-stress-tests/results/**",
+			"!**/packages/test/local-server-stress-tests/src/test/results/**",
 
 			// The paths below are not formatted by Biome. We ignore them explicitly so other tools that read this ignore
 			// list, like fluid-build, know to ignore these files as well.

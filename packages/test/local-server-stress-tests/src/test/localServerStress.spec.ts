@@ -10,6 +10,7 @@ import {
 	makeGenerator,
 	reducer,
 	saveFailures,
+	saveSuccesses,
 	type StressOperations,
 } from "../baseModel.js";
 import { validateAllDataStoresSaved } from "../dataStoreOperations.js";
@@ -27,12 +28,7 @@ describe("Local Server Stress", () => {
 		reducer,
 		validateConsistency: async (clientA, clientB, state: LocalServerStressState) => {
 			await validateAllDataStoresSaved(clientA, clientB, state);
-			await validateConsistencyOfAllDDS(
-				clientA,
-				clientB,
-				state.channelsByDatastore,
-				state.containerObjectsByUrl,
-			);
+			await validateConsistencyOfAllDDS(clientA, clientB, state.stateTracker);
 		},
 		minimizationTransforms: ddsModelMinimizers,
 	};
@@ -40,11 +36,12 @@ describe("Local Server Stress", () => {
 	createLocalServerStressSuite(model, {
 		defaultTestCount: 200,
 		saveFailures,
+		saveSuccesses,
 		configurations: {
 			"Fluid.Container.enableOfflineFull": true,
 			"Fluid.ContainerRuntime.EnableRollback": true,
 		},
-		// skipMinimization: true,
+		skipMinimization: true,
 		// Use skip, replay, and only properties to control which seeds run.
 	});
 });

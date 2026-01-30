@@ -15,7 +15,7 @@ export const validateAllDataStoresSaved = async (
 	for (const client of [clientA, clientB]) {
 		assert(client.container.isDirty === false, `[${client.tag}] Container is dirty!`);
 		for (const entry of (
-			await client.entryPoint.getContainerObjects(state.containerObjectsByUrl)
+			await client.entryPoint.getContainerObjects(state.stateTracker.containerObjectsByUrl)
 		).filter((v) => v.type === "stressDataObject")) {
 			assert(entry.type === "stressDataObject", "type narrowing");
 			const stressDataObject = entry.stressDataObject;

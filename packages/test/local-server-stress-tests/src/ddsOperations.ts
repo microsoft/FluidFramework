@@ -23,6 +23,7 @@ import type {
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
+import type { ContainerStateTracker } from "./containerStateTracker.js";
 import { ddsModelMap } from "./ddsModels.js";
 import { LocalServerStressState, Client } from "./localServerStressHarness.js";
 import type { ContainerObjects } from "./stressDataObject.js";
@@ -58,15 +59,11 @@ const channelToDdsState = new WeakMap<IChannel, DDSFuzzTestState<IChannelFactory
 export const covertLocalServerStateToDdsState = async (
 	state: LocalServerStressState,
 ): Promise<DDSFuzzTestState<IChannelFactory>> => {
-	const channelMap = state.channelsByDatastore.get(state.datastoreTag);
-	const channelTags = channelMap ? Array.from(channelMap.keys()) : ["root"];
-	const channels = await state.datastore.getChannels(channelTags);
-	const allHandles = [
-		...channels.map((c) => ({ tag: c.id, handle: c.handle })),
-		...(await state.client.entryPoint.getContainerObjects(state.containerObjectsByUrl)).filter(
-			(v) => v.handle !== undefined,
-		),
-	];
+	const allHandles = await state.stateTracker.getAllHandles(
+		state.client,
+		state.datastore,
+		state.datastoreTag,
+	);
 
 	const random = {
 		...state.random,
@@ -81,11 +78,16 @@ export const covertLocalServerStateToDdsState = async (
 			 * here we do some funky stuff with handles so we can serialize them like json for output, but not bind them,
 			 * as they may not be attached. look at the reduce code to see how we deserialized these fake handles into real
 			 * handles.
+			 *
+			 * We use weighted selection to bias toward handles that have been picked less often.
+			 * This ensures newly created datastores eventually get their handles stored in DDSs,
+			 * making them attached and visible to other clients after container attach.
 			 */
-			const { tag, handle } = state.random.pick(allHandles);
-			const realHandle = toFluidHandleInternal(handle);
+
+			const selected = state.stateTracker.selectHandle(state.random, allHandles);
+			const realHandle = toFluidHandleInternal(selected.handle);
 			return {
-				tag,
+				tag: selected.tag,
 				absolutePath: realHandle.absolutePath,
 				get [fluidHandleSymbol](): IFluidHandleErased<unknown> {
 					return realHandle[fluidHandleSymbol];
@@ -155,29 +157,18 @@ export const loadAllHandles = async (
 		validateConsistency: DDSFuzzModel<IChannelFactory, any>["validateConsistency"];
 		minimizationTransforms?: DDSFuzzModel<IChannelFactory, any>["minimizationTransforms"];
 	};
-	taggedHandles: (
-		| Readonly<ContainerObjects>
-		| {
-				tag: string;
-				handle: IFluidHandle;
-		  }
-	)[];
+	taggedHandles: { tag: string; handle: IFluidHandle }[];
 }> => {
 	const baseModel = ddsModelMap.get(state.channel.attributes.type);
 	assert(baseModel !== undefined, "must have base model");
-	const channelMap = state.channelsByDatastore.get(state.datastoreTag);
-	const channelTags = channelMap ? Array.from(channelMap.keys()) : ["root"];
-	const channels = await state.datastore.getChannels(channelTags);
-	const globalObjects = await state.client.entryPoint.getContainerObjects(
-		state.containerObjectsByUrl,
-	);
 
 	return {
 		baseModel,
-		taggedHandles: [
-			...channels.map((c) => ({ tag: c.id, handle: c.handle })),
-			...globalObjects.filter((v) => v.handle !== undefined),
-		],
+		taggedHandles: await state.stateTracker.getAllHandles(
+			state.client,
+			state.datastore,
+			state.datastoreTag,
+		),
 	};
 };
 
@@ -202,8 +193,7 @@ export const convertToRealHandles = (
 export const validateConsistencyOfAllDDS = async (
 	clientA: Client,
 	clientB: Client,
-	channelsByDatastore: Map<`datastore-${number}`, Map<string, string>>,
-	containerObjectsByUrl: Map<string, { tag: string; type: string }>,
+	stateTracker: ContainerStateTracker,
 ): Promise<void> => {
 	const buildChannelMap = async (client: Client): Promise<Map<string, IChannel>> => {
 		/**
@@ -213,12 +203,14 @@ export const validateConsistencyOfAllDDS = async (
 		 */
 		const channelMap = new Map<string, IChannel>();
 		for (const entry of (
-			await client.entryPoint.getContainerObjects(containerObjectsByUrl)
-		).filter((v) => v.type === "stressDataObject")) {
-			assert(entry.type === "stressDataObject", "type narrowing");
+			await client.entryPoint.getContainerObjects(stateTracker.containerObjectsByUrl)
+		).filter(
+			(v): v is Extract<ContainerObjects, { type: "stressDataObject" }> =>
+				v.type === "stressDataObject",
+		)) {
 			const stressDataObject = entry.stressDataObject;
 			if (stressDataObject.attached === true) {
-				const datastoreChannelMap = channelsByDatastore.get(entry.tag);
+				const datastoreChannelMap = stateTracker.channelsByDatastore.get(entry.tag);
 				const channelTags = datastoreChannelMap
 					? Array.from(datastoreChannelMap.keys())
 					: ["root"];

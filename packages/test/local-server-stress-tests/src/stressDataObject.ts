@@ -45,12 +45,16 @@ export interface CreateDataStore {
 	type: "createDataStore";
 	asChild: boolean;
 	tag: `datastore-${number}`;
+	/** Whether to store handle in default datastore's root (for attachment) */
+	storeHandle: boolean;
 }
 
 export interface CreateChannel {
 	type: "createChannel";
 	channelType: string;
 	tag: `channel-${number}`;
+	/** Whether to store handle in default datastore's root (for attachment) */
+	storeHandle: boolean;
 }
 
 export interface EnterStagingMode {
@@ -140,18 +144,19 @@ export class StressDataObject extends DataObject {
 		});
 	}
 
-	public createChannel(tag: `channel-${number}`, type: string): void {
-		this.runtime.createChannel(tag, type);
+	public createChannel(tag: `channel-${number}`, type: string): IFluidHandle {
+		const channel = this.runtime.createChannel(tag, type);
 		// Channel tracking is managed by the harness in-memory, not here
+		return channel.handle;
 	}
 
 	/**
-	 * Creates a new datastore and returns its absolute URL for tracking.
+	 * Creates a new datastore and returns its absolute URL and handle for tracking.
 	 */
 	public async createDataStore(
 		tag: `datastore-${number}`,
 		asChild: boolean,
-	): Promise<{ absoluteUrl: string }> {
+	): Promise<{ absoluteUrl: string; handle: IFluidHandle }> {
 		const dataStore = await this.context.containerRuntime.createDataStore(
 			asChild
 				? [...this.context.packagePath, StressDataObject.factory.type]
@@ -168,11 +173,19 @@ export class StressDataObject extends DataObject {
 		});
 
 		const absoluteUrl = toFluidHandleInternal(dataStore.entryPoint).absolutePath;
-		return { absoluteUrl };
+		return { absoluteUrl, handle: dataStore.entryPoint };
 	}
 
 	public orderSequentially(act: () => void): void {
 		this.context.containerRuntime.orderSequentially(act);
+	}
+
+	/**
+	 * Stores a handle in this datastore's root directory, making the target attached
+	 * (reachable from the attached graph).
+	 */
+	public storeHandleInRoot(key: string, handle: IFluidHandle): void {
+		this.root.set(key, handle);
 	}
 
 	public get isDirty(): boolean | undefined {
@@ -205,10 +218,10 @@ export class DefaultStressDataObject extends StressDataObject {
 	/**
 	 * Gets container objects by combining locally created objects with objects
 	 * resolved from the provided URL map (managed by harness).
-	 * @param containerUrls - Map of absolutePath → {tag, type} from harness tracking
+	 * @param containerUrls - Map of absolutePath to \{tag, type\} from harness tracking
 	 */
 	public async getContainerObjects(
-		containerUrls: Map<string, { tag: string; type: string }>,
+		containerUrls: ReadonlyMap<string, { tag: string; type: string }>,
 	): Promise<readonly Readonly<ContainerObjects>[]> {
 		const containerObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
 		const containerRuntime = // eslint-disable-next-line import-x/no-deprecated

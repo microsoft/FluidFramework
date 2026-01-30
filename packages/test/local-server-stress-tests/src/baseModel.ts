@@ -64,23 +64,23 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
 	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
 	createDataStore: async (state, op) => {
-		const { absoluteUrl } = await state.datastore.createDataStore(op.tag, op.asChild);
-		// Initialize the new datastore's channel tracking with its root directory
-		const rootChannelType = ddsModelMap.get("https://graph.microsoft.com/types/directory")!
-			.factory.type;
-		state.channelsByDatastore.set(op.tag, new Map([["root", rootChannelType]]));
-		// Add to container objects tracking for cross-client discovery
-		state.containerObjectsByUrl.set(absoluteUrl, { tag: op.tag, type: "stressDataObject" });
+		const { absoluteUrl, handle } = await state.datastore.createDataStore(op.tag, op.asChild);
+		// Register the new datastore in the state tracker
+		state.stateTracker.registerDatastore(op.tag, absoluteUrl);
+
+		// Store handle in current datastore's root (builds distributed attached graph)
+		if (op.storeHandle) {
+			state.datastore.storeHandleInRoot(op.tag, handle);
+		}
 	},
 	createChannel: async (state, op) => {
-		state.datastore.createChannel(op.tag, op.channelType);
-		// Add the channel to the in-memory tracking for the current datastore
-		// The datastoreTag is available via SelectedClientSpec on the operation
-		const datastoreTag = (op as unknown as { datastoreTag: `datastore-${number}` })
-			.datastoreTag;
-		const channelMap = state.channelsByDatastore.get(datastoreTag);
-		if (channelMap !== undefined) {
-			channelMap.set(op.tag, op.channelType);
+		const handle = state.datastore.createChannel(op.tag, op.channelType);
+		// Register the channel in the state tracker
+		state.stateTracker.registerChannel(state.datastoreTag, op.tag, op.channelType);
+
+		// Store handle in current datastore's root (builds distributed attached graph)
+		if (op.storeHandle) {
+			state.datastore.storeHandleInRoot(op.tag, handle);
 		}
 	},
 	uploadBlob: async (state, op) =>
@@ -94,10 +94,14 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 });
 
 /**
- * Number of operations in the "creation phase" before attach.
- * During this phase, only createDataStore and createChannel operations are generated.
+ * Number of operations in each creation sub-phase before attach.
+ * Phase 1: Create datastores only
+ * Phase 2: Create channels across all datastores
+ * Phase 3: DDS operations
  */
-const creationPhaseOps = 20;
+const datastoreCreationPhaseOps = 10;
+const channelCreationPhaseOps = 10;
+const totalCreationPhaseOps = datastoreCreationPhaseOps + channelCreationPhaseOps;
 
 export function makeGenerator<T extends BaseOperation>(
 	additional: DynamicAsyncWeights<T, LocalServerStressState> = [],
@@ -106,20 +110,35 @@ export function makeGenerator<T extends BaseOperation>(
 	let detachedOpCount = 0;
 
 	/**
-	 * Returns true if we're in the "creation phase" (prioritize creating datastores/channels).
-	 * This is the first few operations while detached.
+	 * Returns true if we're in the "datastore creation phase".
+	 * First N operations while detached - only create datastores.
+	 */
+	const isDatastoreCreationPhase = (state: LocalServerStressState): boolean =>
+		state.client.container.attachState === AttachState.Detached &&
+		detachedOpCount < datastoreCreationPhaseOps;
+
+	/**
+	 * Returns true if we're in the "channel creation phase".
+	 * After datastore creation, before DDS ops - create channels across all datastores.
+	 */
+	const isChannelCreationPhase = (state: LocalServerStressState): boolean =>
+		state.client.container.attachState === AttachState.Detached &&
+		detachedOpCount >= datastoreCreationPhaseOps &&
+		detachedOpCount < totalCreationPhaseOps;
+
+	/**
+	 * Returns true if we're in either creation phase.
 	 */
 	const isCreationPhase = (state: LocalServerStressState): boolean =>
-		state.client.container.attachState === AttachState.Detached &&
-		detachedOpCount < creationPhaseOps;
+		isDatastoreCreationPhase(state) || isChannelCreationPhase(state);
 
 	/**
 	 * Returns true if we're in the "DDS ops phase" (prioritize DDS operations).
-	 * This is after the creation phase but still detached.
+	 * This is after the creation phases but still detached.
 	 */
 	const isDdsOpsPhase = (state: LocalServerStressState): boolean =>
 		state.client.container.attachState === AttachState.Detached &&
-		detachedOpCount >= creationPhaseOps;
+		detachedOpCount >= totalCreationPhaseOps;
 
 	const asyncGenerator = createWeightedAsyncGeneratorWithDynamicWeights<
 		StressOperations | T,
@@ -131,9 +150,16 @@ export function makeGenerator<T extends BaseOperation>(
 				type: "createDataStore",
 				asChild: state.random.bool(),
 				tag: state.tag("datastore"),
+				// Store handle to build attached graph: 90% during creation phase, 50% otherwise
+				storeHandle: state.random.bool(isCreationPhase(state) ? 0.9 : 0.5),
 			}),
-			// High weight during creation phase, zero during DDS ops phase, normal weight when attached
-			(state) => (isDdsOpsPhase(state) ? 0 : isCreationPhase(state) ? 20 : 1),
+			// High weight during datastore phase, zero during channel/DDS phases, normal when attached
+			(state) =>
+				isDatastoreCreationPhase(state)
+					? 20
+					: isChannelCreationPhase(state) || isDdsOpsPhase(state)
+						? 0
+						: 1,
 		],
 		[
 			async (state) => ({
@@ -145,13 +171,27 @@ export function makeGenerator<T extends BaseOperation>(
 			(state) => state.client.container.attachState !== AttachState.Detached,
 		],
 		[
-			async (state) => ({
-				type: "createChannel",
-				channelType: state.random.pick([...ddsModelMap.keys()]),
-				tag: state.tag("channel"),
-			}),
-			// High weight during creation phase, zero during DDS ops phase, normal weight when attached
-			(state) => (isDdsOpsPhase(state) ? 0 : isCreationPhase(state) ? 20 : 5),
+			async (state) => {
+				// Select channel type with bias toward under-represented types
+				const channelType = state.stateTracker.selectChannelType(state.random);
+
+				return {
+					type: "createChannel",
+					channelType,
+					tag: state.tag("channel"),
+					// Store handle to build attached graph: 90% during creation phase, 50% otherwise
+					storeHandle: state.random.bool(isCreationPhase(state) ? 0.9 : 0.5),
+				};
+			},
+			// Zero during datastore phase, high during channel phase, zero during DDS phase, normal when attached
+			(state) =>
+				isDatastoreCreationPhase(state)
+					? 0
+					: isChannelCreationPhase(state)
+						? 20
+						: isDdsOpsPhase(state)
+							? 0
+							: 5,
 		],
 		[
 			async () => ({
