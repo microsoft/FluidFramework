@@ -274,6 +274,8 @@ export interface ITestContainerConfig {
 }
 
 /**
+ * Generates a new unique document ID.
+ *
  * @internal
  */
 export const createDocumentId = (): string => uuid();
@@ -1185,6 +1187,8 @@ const primaryEventProps = ({
 });
 
 /**
+ * Retrieves unexpected errors from a logger and returns them as an exception.
+ *
  * @internal
  */
 export function getUnexpectedLogErrorException(

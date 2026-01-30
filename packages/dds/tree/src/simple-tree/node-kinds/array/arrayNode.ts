@@ -129,6 +129,16 @@ export interface TreeArrayNode<
 	insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
 	/**
+	 * Inserts new item(s) at the end of the array.
+	 *
+	 * @remarks
+	 * This method has the same behavior as `{@link insertAtEnd}`.
+	 * The merge semantics for concurrent inserts or moves to the same position are unspecified.
+	 * @param value - The content to insert.
+	 */
+	push(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+
+	/**
 	 * Removes the item at the specified location.
 	 * @param index - The index at which to remove the item.
 	 * @throws Throws if `index` is not in the range [0, `array.length`).
@@ -964,6 +974,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		this.insertAt(0, ...value);
 	}
 	public insertAtEnd(...value: Insertable<T>): void {
+		this.insertAt(this.length, ...value);
+	}
+	public push(...value: Insertable<T>): void {
 		this.insertAt(this.length, ...value);
 	}
 	public removeAt(index: number): void {

@@ -6,8 +6,8 @@
 import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/core-interfaces";
 
 import type {
-	CommitMetadata,
 	ChangeMetadata,
+	CommitMetadata,
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 } from "../../core/index.js";
@@ -242,6 +242,7 @@ export interface TreeBranchAlpha extends TreeBranch {
 	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
 	 * for the outermost transaction which includes all inner transactions.
 	 * - Undo will undo the outermost transaction and all inner transactions.
+	 * - If a label is provided in the params, only the label for the outermost transaction will be used. All other labels will be ignored.
 	 */
 	runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
@@ -544,7 +545,7 @@ export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> 
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 */
-	commitApplied(data: CommitMetadata, getRevertible?: RevertibleAlphaFactory): void;
+	commitApplied(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 /**

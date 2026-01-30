@@ -401,25 +401,21 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 		Name extends CodecName,
 		Entry extends CodecVersion<unknown, unknown, FormatVersion, never>,
 	>(name: Name, inputRegistry: ConfigMapEntry<Entry>) {
-		type TDecoded2 = Entry extends CodecVersion<infer D, unknown, FormatVersion, never>
-			? D
-			: never;
-		type TContext2 = Entry extends CodecVersion<unknown, infer C, FormatVersion, never>
-			? C
-			: never;
-		type TFormatVersion2 = Entry extends CodecVersion<unknown, unknown, infer F, never>
-			? F
-			: never;
-		type TBuildOptions2 = Entry extends CodecVersion<unknown, unknown, FormatVersion, infer B>
-			? B
-			: never;
+		type TDecoded2 =
+			Entry extends CodecVersion<infer D, unknown, FormatVersion, never> ? D : never;
+		type TContext2 =
+			Entry extends CodecVersion<unknown, infer C, FormatVersion, never> ? C : never;
+		type TFormatVersion2 =
+			Entry extends CodecVersion<unknown, unknown, infer F, never> ? F : never;
+		type TBuildOptions2 =
+			Entry extends CodecVersion<unknown, unknown, FormatVersion, infer B> ? B : never;
 		const builder = new ClientVersionDispatchingCodecBuilder(
 			name,
 			inputRegistry as ConfigMapEntry<unknown> as ConfigMapEntry<
 				CodecVersion<
 					TDecoded2,
 					// If it does not matter what context is provided, undefined is fine, so allow it to be omitted.
-					TContext2 extends unknown ? void : TContext2,
+					unknown extends TContext2 ? void : TContext2,
 					TFormatVersion2,
 					TBuildOptions2
 				>

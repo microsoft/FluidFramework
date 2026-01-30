@@ -16,7 +16,34 @@ import { strict } from "@fluidframework/eslint-config-fluid/flat.mjs";
 export default [...strict];
 ```
 
-The flat config exports use `FlatCompat` to wrap the legacy configs and add necessary overrides for type-aware parsing in JavaScript files and test files.
+### Modular Structure
+
+The flat config is organized into a modular structure for maintainability:
+
+```
+eslint-config-fluid/
+├── flat.mts                    # Main entry point (~30 lines)
+├── library/
+│   ├── constants.mts           # Shared constants (ignores, file patterns, import restrictions)
+│   ├── settings.mts            # Plugin settings (import-x, jsdoc)
+│   ├── rules/
+│   │   ├── base.mts            # Base rules from eslint:recommended, typescript-eslint, etc.
+│   │   ├── minimal-deprecated.mts  # Additional rules for minimal-deprecated config
+│   │   ├── recommended.mts     # Rules for recommended config (unicorn, type safety)
+│   │   └── strict.mts          # Rules for strict config (jsdoc requirements, explicit access)
+│   └── configs/
+│       ├── base.mts            # Base config builder with all plugins
+│       ├── overrides.mts       # Shared overrides (test files, React, JS files)
+│       └── factory.mts         # Config factory functions
+└── [legacy files]              # Legacy eslintrc-style configs (deprecated)
+```
+
+This structure ensures:
+
+- No single file exceeds ~250 lines
+- Single source of truth for constants and settings
+- Each module has a single responsibility
+- Easy to understand and maintain
 
 ## Configurations
 
