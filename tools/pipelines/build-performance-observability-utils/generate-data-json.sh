@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 # Generate combined data JSON from builds and timeline data
-# Combines raw build data with timeline data into a single JSON file
+# Combines raw build data with timeline data, then processes into aggregated metrics
 #
 # Required environment variables:
 #   MODE       - "public" or "internal" (determines output filename)
@@ -16,6 +16,7 @@ set -eu -o pipefail
 : "${MODE:?MODE environment variable is required}"
 : "${OUTPUT_DIR:?OUTPUT_DIR environment variable is required}"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 METRICS_PATH="$OUTPUT_DIR/metrics"
 
 echo "=========================================="
@@ -33,6 +34,9 @@ else
     OUTPUT_FILE="$OUTPUT_DIR/internal-data.json"
 fi
 
+# Intermediate raw file (will be deleted after processing)
+RAW_FILE="$METRICS_PATH/raw-combined.json"
+
 # Combine timeline files into a single object keyed by build ID
 # Write to file to avoid "argument list too long" errors with large data
 TIMELINES_FILE="$METRICS_PATH/timelines-combined.json"
@@ -44,7 +48,8 @@ for timeline_file in "$METRICS_PATH/timelines"/*.json; do
     fi
 done | jq -s 'add // {}' > "$TIMELINES_FILE"
 
-# Create output JSON with raw builds and timelines
+# Create intermediate raw JSON with builds and timelines
+echo "Creating intermediate raw JSON..."
 jq -n \
     --arg generatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --slurpfile builds "$BUILDS_FILE" \
@@ -53,7 +58,15 @@ jq -n \
       generatedAt: $generatedAt,
       builds: $builds[0].value,
       timelines: $timelines[0]
-    }' > "$OUTPUT_FILE"
+    }' > "$RAW_FILE"
 
-echo "Data JSON generated: $OUTPUT_FILE"
-echo "Data size: $(wc -c < "$OUTPUT_FILE") bytes"
+echo "Raw data size: $(du -h "$RAW_FILE" | cut -f1)"
+
+# Process raw data into aggregated metrics using Node.js
+echo "Processing raw data into aggregated metrics..."
+node "$SCRIPT_DIR/process-data.js" "$RAW_FILE" "$OUTPUT_FILE" "$MODE"
+
+# Clean up intermediate files
+rm -f "$RAW_FILE" "$TIMELINES_FILE"
+
+echo "Data JSON generated: $OUTPUT_FILE ($(du -h "$OUTPUT_FILE" | cut -f1))"
