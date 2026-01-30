@@ -136,7 +136,7 @@ export interface TreeArrayNode<
 	 * Inserting `[A, B]` concurrently to an insert of `[X, Y]` at the same location may (no matter the sequence order) yield
 	 * either: `[A, B, X, Y]` or `[X, Y, A, B]`. However, it will never interleave the concurrently inserted ranges of items:
 	 * - Neither `A` nor `B` will ever be inserted between `X` and `Y`.
-	 * - `A` and `B` will never be inserted around either `X` or `Y`
+	 * - `A` and `B` will never be inserted around either `X` or `Y`.
 	 *
 	 * @param value - The content to insert.
 	 */
