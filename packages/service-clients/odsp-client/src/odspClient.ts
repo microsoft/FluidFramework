@@ -11,6 +11,7 @@ import type {
 import {
 	createDetachedContainer,
 	loadExistingContainer,
+	rehydrateDetachedContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
@@ -137,6 +138,52 @@ export class OdspClient {
 		return { container: fluidContainer, services };
 	}
 
+	/**
+	 * Create a new detached container from the serialized state of a previously serialized detached container.
+	 *
+	 * @param serializedContainer - Serialized string representation of the container, produced by
+	 * {@link IOdspFluidContainer.serializeDetachedContainer}.
+	 * @param containerSchema - The schema of the container to rehydrate. This must match the schema
+	 * used when the container was serialized.
+	 * @returns A promise resolving to an object containing the rehydrated container and associated services.
+	 *
+	 * @remarks
+	 * **Compatibility:** The serialized format is intended for short-term, transient storage
+	 * scenarios (e.g., persisting state across a page reload or brief user session interruption).
+	 * The format is only guaranteed to be compatible with:
+	 *
+	 * - The same version of Fluid Framework that produced it
+	 *
+	 * - The same container schema used when the container was serialized
+	 *
+	 * Long-term storage of serialized containers is not recommended. The serialized format
+	 * may change between Fluid Framework versions without notice, and there is no guaranteed
+	 * migration path for stored serialized data.
+	 */
+	public async rehydrateContainer<T extends ContainerSchema>(
+		serializedContainer: string,
+		containerSchema: T,
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
+	}> {
+		const loaderProps = this.getLoaderProps(containerSchema);
+
+		const container = await rehydrateDetachedContainer({
+			...loaderProps,
+			serializedState: serializedContainer,
+		});
+
+		const fluidContainer = await this.createFluidContainer<T>(
+			container,
+			this.connectionConfig,
+		);
+
+		const services = await this.getContainerServices(container);
+
+		return { container: fluidContainer, services };
+	}
+
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
@@ -153,9 +200,7 @@ export class OdspClient {
 		});
 		const container = await loadExistingContainer({ ...loaderProps, request: { url } });
 
-		const fluidContainer = await createFluidContainer<T>({
-			container,
-		});
+		const fluidContainer = await createFluidContainer<T>({ container });
 		if (!isInternalFluidContainer(fluidContainer)) {
 			throw new Error("Fluid container is not internal");
 		}
