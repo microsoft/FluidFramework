@@ -64,7 +64,7 @@ echo "Raw data size: $(du -h "$RAW_FILE" | cut -f1)"
 
 # Process raw data into aggregated metrics using Node.js
 echo "Processing raw data into aggregated metrics..."
-node "$SCRIPT_DIR/process-data.js" "$RAW_FILE" "$OUTPUT_FILE" "$MODE"
+node "$SCRIPT_DIR/process-data.cjs" "$RAW_FILE" "$OUTPUT_FILE" "$MODE"
 
 # Clean up intermediate files
 rm -f "$RAW_FILE" "$TIMELINES_FILE"

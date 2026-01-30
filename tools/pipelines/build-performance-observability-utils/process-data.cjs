@@ -7,7 +7,7 @@
  * Pre-processes raw ADO build and timeline data into aggregated dashboard metrics.
  * This runs during the pipeline to reduce payload size from ~300MB to ~50KB.
  *
- * Usage: node process-data.js <input-raw.json> <output-processed.json> <mode>
+ * Usage: node process-data.cjs <input-raw.json> <output-processed.json> <mode>
  *   mode: "public" or "internal"
  */
 
@@ -350,7 +350,9 @@ function processRawData(rawData, mode) {
 function main() {
 	const args = process.argv.slice(2);
 	if (args.length < 3) {
-		console.error("Usage: node process-data.js <input-raw.json> <output-processed.json> <mode>");
+		console.error(
+			"Usage: node process-data.cjs <input-raw.json> <output-processed.json> <mode>",
+		);
 		console.error("  mode: 'public' or 'internal'");
 		process.exit(1);
 	}
