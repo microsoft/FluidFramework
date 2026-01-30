@@ -47,6 +47,7 @@ import {
 	mapTaggedChange,
 	type RevisionReplacer,
 	comparePartialRevisions,
+	comparePartialChangesetLocalIds,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -62,7 +63,6 @@ import {
 	RangeMap,
 	balancedReduce,
 	newTupleBTree,
-	comparePartialNumbers,
 	compareStrings,
 } from "../../util/index.js";
 import {
@@ -3211,7 +3211,7 @@ function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 function newFieldIdKeyBTree<V>(): TupleBTree<FieldIdKey, V> {
 	return newTupleBTree([
 		comparePartialRevisions,
-		comparePartialNumbers<ChangesetLocalId>,
+		comparePartialChangesetLocalIds,
 		compareStrings<FieldKey>,
 	]);
 }

@@ -213,6 +213,8 @@ export {
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
 	comparePartialRevisions,
+	compareChangesetLocalIds,
+	comparePartialChangesetLocalIds,
 	diffHistories,
 	type RevisionReplacer,
 } from "./rebase/index.js";
