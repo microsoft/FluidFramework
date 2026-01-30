@@ -869,7 +869,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	// Also payload goes to telemetry, so no content or anything else that shouldn't be logged for privacy reasons
 	// Note: It's possible for a duplicate op to be broadcasted and have everything the same except the timestamp.
 	private comparableMessagePayload(m: ISequencedDocumentMessage): string {
-		return `${m.clientId}-${m.type}-${m.sequenceNumber}-${m.clientSequenceNumber}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
+		return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
 	}
 
 	/**
@@ -893,6 +893,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			lastObservedClientMessage !== undefined &&
 			message.clientSequenceNumber <= lastObservedClientMessage.clientSequenceNumber
 		) {
+			const messagePayloadToLog = (m: ISequencedDocumentMessage): string => {
+				return `${m.type}-${m.sequenceNumber}-${m.clientSequenceNumber}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
+			};
 			// This looks like a data corruption issue where the clientSequenceNumber for a given clientId is not
 			// increasing. The Fluid Service ensures that it only processes ops with contiguous increasing
 			// clientSequenceNumbers for a given clientId.
@@ -901,13 +904,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			// properties except the sequenceNumber will be the same.
 			// Note that we are not checking for gaps in clientSequenceNumber because very old clients may have gaps
 			// as per the op stream in the snapshot tests under test/snapshots/content.
-			const error = new DataCorruptionError(
+			const error = DataCorruptionError.create(
 				"Found two messages with non-increasing clientSequenceNumber for a given client. Likely to be a service issue",
+				"DeltaManager.validateClientSequenceNumberConsistency",
+				message,
 				{
 					clientId: this.connectionManager.clientId,
 					sequenceNumber: message.sequenceNumber,
-					message1: this.comparableMessagePayload(lastObservedClientMessage),
-					message2: this.comparableMessagePayload(message),
+					message1: messagePayloadToLog(lastObservedClientMessage),
+					message2: messagePayloadToLog(message),
 				},
 			);
 			this.close(error);
