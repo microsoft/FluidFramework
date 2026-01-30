@@ -8,9 +8,10 @@ import { strict as assert } from "node:assert";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
+import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 
 import type { ClientConnectionId } from "../baseTypes.js";
-import type { IEphemeralRuntime } from "../internalTypes.js";
+import type { IEphemeralRuntime } from "../runtimeTypes.js";
 
 /**
  * Mock {@link ClientConnectionId} for the local client in tests.
@@ -75,7 +76,7 @@ function makeMockAudience(clients: ClientData[]): MockAudience {
 export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public clientId: string | undefined;
 	public joined: boolean = false;
-	public logger?: ITelemetryBaseLogger;
+	public logger: ITelemetryBaseLogger;
 	public readonly quorum: MockQuorumClients;
 	public readonly audience: MockAudience;
 
@@ -92,12 +93,10 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	}
 
 	public constructor(
-		logger?: ITelemetryBaseLogger,
+		logger: ITelemetryBaseLogger = new EventAndErrorTrackingLogger(),
 		public readonly signalsExpected: Parameters<IEphemeralRuntime["submitSignal"]>[] = [],
 	) {
-		if (logger !== undefined) {
-			this.logger = logger;
-		}
+		this.logger = logger;
 
 		const numWriteClients = 6;
 		const clientsData = buildClientDataArray(

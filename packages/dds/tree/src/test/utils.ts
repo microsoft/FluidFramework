@@ -4,23 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
-import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
+
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import type { Client } from "@fluid-private/test-dds-utils";
+import { LocalServerTestDriver } from "@fluid-private/test-drivers";
+import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import type { ISummarizer } from "@fluidframework/container-runtime/internal";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type {
 	HasListeners,
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import {
-	createMockLoggerExt,
-	type IMockLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
-
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
-import type { ISummarizer } from "@fluidframework/container-runtime/internal";
-import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -28,9 +26,25 @@ import type {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	assertIsStableId,
+	createIdCompressor,
+	type IIdCompressorCore,
+} from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import {
+	FlushMode,
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	createMockLoggerExt,
+	type IMockLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
@@ -51,6 +65,7 @@ import {
 import {
 	currentVersion,
 	type CodecWriteOptions,
+	FluidClientVersion,
 	type FormatVersion,
 	type ICodecFamily,
 	type IJsonCodec,
@@ -132,6 +147,16 @@ import {
 	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
+import {
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	type CheckoutEvents,
 	type ITreePrivate,
@@ -149,6 +174,7 @@ import {
 	ForestTypeReference,
 	type SharedTreeOptionsInternal,
 } from "../shared-tree/index.js";
+import type { Transactor } from "../shared-tree-core/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
@@ -166,6 +192,11 @@ import {
 	toStoredSchema,
 } from "../simple-tree/index.js";
 import {
+	configuredSharedTree,
+	configuredSharedTreeInternal,
+	type ISharedTree,
+} from "../treeFactory.js";
+import {
 	Breakable,
 	type JsonCompatible,
 	type Mutable,
@@ -175,37 +206,15 @@ import {
 	isReadonlyArray,
 	brand,
 } from "../util/index.js";
-import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
-import type { Client } from "@fluid-private/test-dds-utils";
-import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
+
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
-import type { Transactor } from "../shared-tree-core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
-import {
-	configuredSharedTree,
-	configuredSharedTreeInternal,
-	type ISharedTree,
-} from "../treeFactory.js";
-import { JsonAsTree } from "../jsonDomainSchema.js";
+import { initializeForest } from "./feature-libraries/index.js";
+import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
 import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
-import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import type {
-	ISharedObjectKind,
-	SharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
-// eslint-disable-next-line import-x/no-internal-modules
-import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
-import {
-	allowsFieldSuperset,
-	allowsTreeSuperset,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../feature-libraries/modular-schema/index.js";
-import { initializeForest } from "./feature-libraries/index.js";
 
 // Testing utilities
 
@@ -214,6 +223,8 @@ import { initializeForest } from "./feature-libraries/index.js";
  */
 export const DefaultTestSharedTreeKind = configuredSharedTree({
 	jsonValidator: FormatValidatorBasic,
+	// Default to v2_80 to support noChange constraints in table operations
+	minVersionForCollab: FluidClientVersion.v2_80,
 }) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
@@ -538,8 +549,11 @@ export function spyOnMethod(
 	methodName: string,
 	spy: () => void,
 ): () => void {
-	const { prototype } = methodClass;
-	const method: unknown = prototype[methodName];
+	const prototype = methodClass.prototype as Record<
+		string,
+		(this: unknown, ...args: unknown[]) => unknown
+	>;
+	const method = prototype[methodName];
 	assert(typeof method === "function", `Method does not exist: ${methodName}`);
 
 	const methodSpy = function (this: unknown, ...args: unknown[]): unknown {
@@ -557,7 +571,7 @@ export function spyOnMethod(
  * Determines whether or not the given delta has a visible impact on the document tree.
  */
 export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boolean {
-	for (const mark of fieldChanges ?? []) {
+	for (const mark of fieldChanges?.marks ?? []) {
 		if (mark.attach !== undefined || mark.detach !== undefined) {
 			return true;
 		}
@@ -1045,7 +1059,7 @@ const testedFamilies = new WeakSet<ICodecFamily<unknown, unknown>>();
  */
 function registerValidationHook<TDecoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
-	versions: Iterable<FormatVersion>,
+	versions: readonly FormatVersion[],
 ): void {
 	let tested = testedVersionsByFamily.get(family);
 	if (tested === undefined) {
@@ -1096,7 +1110,13 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 	supportedVersions?: FormatVersion[],
 ): void {
-	const supportedVersionsToTest = supportedVersions ?? family.getSupportedFormats();
+	// Type cast away the conditional type: if TContext is void, indexing off the end of this will get undefined which works, making this safe.
+	const successes = encodingTestData.successes as [
+		name: string,
+		data: TDecoded,
+		context: TContext,
+	][];
+	const supportedVersionsToTest = supportedVersions ?? [...family.getSupportedFormats()];
 	registerValidationHook(family, supportedVersionsToTest);
 
 	for (const version of supportedVersionsToTest) {
@@ -1113,19 +1133,16 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
-					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 					describe(
 						includeStringification ? "with stringification" : "without stringification",
 						() => {
-							for (const [name, data, context] of encodingTestData.successes) {
+							for (const [name, data, context] of successes) {
 								it(name, () => {
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									let encoded = jsonCodec.encode(data, context!);
+									let encoded = jsonCodec.encode(data, context);
 									if (includeStringification) {
 										encoded = JSON.parse(JSON.stringify(encoded));
 									}
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									const decoded = jsonCodec.decode(encoded, context!);
+									const decoded = jsonCodec.decode(encoded, context);
 									assertEquivalent(decoded, data);
 								});
 							}
@@ -1135,12 +1152,10 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			});
 
 			describe("can binary roundtrip", () => {
-				for (const [name, data, context] of encodingTestData.successes) {
+				for (const [name, data, context] of successes) {
 					it(name, () => {
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						const encoded = codec.binary.encode(data, context!);
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						const decoded = codec.binary.decode(encoded, context!);
+						const encoded = codec.binary.encode(data, context);
+						const decoded = codec.binary.decode(encoded, context);
 						assertEquivalent(decoded, data);
 					});
 				}
@@ -1152,8 +1167,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					for (const [name, encodedData, context] of failureCases) {
 						it(name, () => {
 							assert.throws(() =>
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								jsonCodec.decode(encodedData as JsonCompatible, context!),
+								jsonCodec.decode(encodedData as JsonCompatible, context as TContext),
 							);
 						});
 					}
@@ -1380,11 +1394,15 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & {
 		idCompressor?: IIdCompressor | undefined;
+		minVersionForCollab?: MinimumVersionForCollab;
 	} = {},
 ): SchematizingSimpleTreeView<TSchema> {
+	// Default to v2_80 to support noChange constraints in table operations
+	const minVersionForCollab = options.minVersionForCollab ?? FluidClientVersion.v2_80;
 	const view = independentView(config, {
-		idCompressor: createSnapshotCompressor(),
 		...options,
+		idCompressor: options.idCompressor ?? createSnapshotCompressor(),
+		minVersionForCollab,
 	});
 	assert(view instanceof SchematizingSimpleTreeView);
 	return view;
@@ -1398,7 +1416,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
  */
 export const snapshotSessionId = assertIsSessionId("beefbeef-beef-4000-8000-000000000001");
 
-export function createSnapshotCompressor(seed?: number) {
+export function createSnapshotCompressor(seed?: number): IIdCompressor & IIdCompressorCore {
 	return createAlwaysFinalizedIdCompressor(snapshotSessionId, undefined, seed);
 }
 
@@ -1504,7 +1522,7 @@ export function moveWithin(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
-) {
+): void {
 	editor.move(field, sourceIndex, count, field, destIndex);
 }
 

@@ -100,6 +100,8 @@ export async function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore)
 }
 
 /**
+ * Casts a delta manager to its full interface type with inbound/outbound queues.
+ *
  * @internal
  */
 export function toIDeltaManagerFull(

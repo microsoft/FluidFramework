@@ -295,7 +295,7 @@ export class SchematizingSimpleTreeView<
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		this.mountTransaction(params, false);
 		const transactionCallbackStatus = transaction();
-		return this.unmountTransaction(transactionCallbackStatus);
+		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
 
 	/**
@@ -318,11 +318,11 @@ export class SchematizingSimpleTreeView<
 			| VoidTransactionCallbackStatus
 			| void
 		>,
-		params?: RunTransactionParams,
+		params: RunTransactionParams | undefined,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
 		this.mountTransaction(params, true);
 		const transactionCallbackStatus = await transaction();
-		return this.unmountTransaction(transactionCallbackStatus);
+		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
 
 	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
@@ -344,6 +344,7 @@ export class SchematizingSimpleTreeView<
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
 			| VoidTransactionCallbackStatus
 			| void,
+		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		this.ensureUndisposed();
 		const { checkout } = this;
@@ -366,7 +367,9 @@ export class SchematizingSimpleTreeView<
 			transactionCallbackStatus?.preconditionsOnRevert,
 		);
 
-		checkout.transaction.commit();
+		checkout.runWithTransactionLabel(() => {
+			checkout.transaction.commit();
+		}, params?.label);
 		return value === undefined
 			? { success: true }
 			: { success: true, value: value as TSuccessValue };

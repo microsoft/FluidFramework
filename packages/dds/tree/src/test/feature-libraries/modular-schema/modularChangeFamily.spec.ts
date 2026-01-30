@@ -6,6 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
+import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import {
 	type CodecWriteOptions,
@@ -13,6 +15,25 @@ import {
 	type IJsonCodec,
 	makeCodecFamily,
 } from "../../../codec/index.js";
+import {
+	makeAnonChange,
+	makeDetachedNodeId,
+	type RevisionTag,
+	tagChange,
+	type TaggedChange,
+	type FieldKindIdentifier,
+	type FieldKey,
+	type UpPath,
+	revisionMetadataSourceFromInfo,
+	type DeltaFieldChanges,
+	type DeltaRoot,
+	type DeltaDetachedNodeId,
+	type ChangeEncodingContext,
+	type ChangeAtomIdMap,
+	Multiplicity,
+	type FieldUpPath,
+	type RevisionInfo,
+} from "../../../core/index.js";
 import {
 	type FieldChangeHandler,
 	genericFieldKind,
@@ -36,26 +57,31 @@ import {
 	jsonableTreeFromFieldCursor,
 	DefaultRevisionReplacer,
 	type ChangeAtomIdBTree,
+	fieldKindConfigurations,
+	ModularChangeFormatVersion,
 } from "../../../feature-libraries/index.js";
+import type {
+	EncodedModularChangesetV1,
+	EncodedNodeChangeset,
+	FieldChangeDelta,
+	FieldChangeEncodingContext,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 import {
-	makeAnonChange,
-	makeDetachedNodeId,
-	type RevisionTag,
-	tagChange,
-	type TaggedChange,
-	type FieldKindIdentifier,
-	type FieldKey,
-	type UpPath,
-	revisionMetadataSourceFromInfo,
-	type DeltaFieldChanges,
-	type DeltaRoot,
-	type DeltaDetachedNodeId,
-	type ChangeEncodingContext,
-	type ChangeAtomIdMap,
-	Multiplicity,
-	type FieldUpPath,
-	type RevisionInfo,
-} from "../../../core/index.js";
+	getFieldKind,
+	intoDelta,
+	updateRefreshers,
+	relevantRemovedRoots as relevantDetachedTreesImplementation,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	newCrossFieldKeyTable,
+	type CrossFieldKeyTable,
+	type FieldChangeMap,
+	type FieldId,
+	type NodeChangeset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	type Mutable,
 	brand,
@@ -66,6 +92,8 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
+import { ajvValidator } from "../../codec/index.js";
+import { fieldJsonCursor } from "../../json/index.js";
 import {
 	type EncodingTestData,
 	assertDeltaEqual,
@@ -79,31 +107,6 @@ import {
 } from "../../utils.js";
 
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
-import { ajvValidator } from "../../codec/index.js";
-import { fieldJsonCursor } from "../../json/index.js";
-import {
-	newCrossFieldKeyTable,
-	type CrossFieldKeyTable,
-	type FieldChangeMap,
-	type FieldId,
-	type NodeChangeset,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
-import {
-	getFieldKind,
-	intoDelta,
-	updateRefreshers,
-	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import type {
-	EncodedNodeChangeset,
-	FieldChangeDelta,
-	FieldChangeEncodingContext,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
-import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import { assertEqual, Change, removeAliases } from "./modularChangesetUtil.js";
 
 type SingleNodeChangeset = NodeId | undefined;
@@ -150,7 +153,9 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
-		local: [{ count: 1, fields: change === undefined ? undefined : deltaFromChild(change) }],
+		local: {
+			marks: [{ count: 1, fields: change === undefined ? undefined : deltaFromChild(change) }],
+		},
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
 		change === undefined ? [] : relevantRemovedRootsFromChild(change),
@@ -187,7 +192,9 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const codec = makeModularChangeCodecFamily(
-	new Map([[5, fieldKindConfiguration]]),
+	new Map(
+		[...fieldKindConfigurations.keys()].map((version) => [version, fieldKindConfiguration]),
+	),
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
@@ -1047,19 +1054,21 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const nodeDelta: DeltaFieldChanges = [
-				{
-					count: 1,
-					fields: new Map([
-						[fieldA, [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }]],
-					]),
-				},
-			];
+			const nodeDelta: DeltaFieldChanges = {
+				marks: [
+					{
+						count: 1,
+						fields: new Map([
+							[fieldA, { marks: [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }] }],
+						]),
+					},
+				],
+			};
 
 			const expectedDelta: DeltaRoot = {
 				fields: new Map([
 					[fieldA, nodeDelta],
-					[fieldB, [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }]],
+					[fieldB, { marks: [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }] }],
 				]),
 			};
 
@@ -1408,9 +1417,9 @@ describe("ModularChangeFamily", () => {
 			revision: tag1,
 			idCompressor: testIdCompressor,
 		};
-		const encodingTestData: EncodingTestData<
+		const encodingTestDataForAllVersions: EncodingTestData<
 			ModularChangeset,
-			EncodedModularChangesetV2,
+			EncodedModularChangesetV1,
 			ChangeEncodingContext
 		> = {
 			successes: [
@@ -1455,6 +1464,16 @@ describe("ModularChangeFamily", () => {
 					inlineRevision(rootChangeWithoutNodeFieldChanges, tag1),
 					context,
 				],
+			],
+		};
+
+		const encodingTestDataV5Only: EncodingTestData<
+			ModularChangeset,
+			EncodedModularChangesetV2,
+			ChangeEncodingContext
+		> = {
+			successes: [
+				...encodingTestDataForAllVersions.successes,
 				[
 					"with no change constraint",
 					inlineRevision(
@@ -1480,7 +1499,13 @@ describe("ModularChangeFamily", () => {
 			],
 		};
 
-		makeEncodingTestSuite(family.codecs, encodingTestData, assertEquivalent);
+		makeEncodingTestSuite(family.codecs, encodingTestDataForAllVersions, assertEquivalent, [
+			ModularChangeFormatVersion.v3,
+			ModularChangeFormatVersion.v4,
+		]);
+		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [
+			ModularChangeFormatVersion.v5,
+		]);
 	});
 
 	it("build child change", () => {
