@@ -32,7 +32,10 @@ import {
 	type IIdCompressorCore,
 } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import {
+	FlushMode,
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type {
 	ISharedObjectKind,
@@ -62,6 +65,7 @@ import {
 import {
 	currentVersion,
 	type CodecWriteOptions,
+	FluidClientVersion,
 	type FormatVersion,
 	type ICodecFamily,
 	type IJsonCodec,
@@ -219,6 +223,8 @@ import {
  */
 export const DefaultTestSharedTreeKind = configuredSharedTree({
 	jsonValidator: FormatValidatorBasic,
+	// Default to v2_80 to support noChange constraints in table operations
+	minVersionForCollab: FluidClientVersion.v2_80,
 }) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
@@ -1127,20 +1133,21 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
-					describe(includeStringification
-						? "with stringification"
-						: "without stringification", () => {
-						for (const [name, data, context] of successes) {
-							it(name, () => {
-								let encoded = jsonCodec.encode(data, context);
-								if (includeStringification) {
-									encoded = JSON.parse(JSON.stringify(encoded));
-								}
-								const decoded = jsonCodec.decode(encoded, context);
-								assertEquivalent(decoded, data);
-							});
-						}
-					});
+					describe(
+						includeStringification ? "with stringification" : "without stringification",
+						() => {
+							for (const [name, data, context] of successes) {
+								it(name, () => {
+									let encoded = jsonCodec.encode(data, context);
+									if (includeStringification) {
+										encoded = JSON.parse(JSON.stringify(encoded));
+									}
+									const decoded = jsonCodec.decode(encoded, context);
+									assertEquivalent(decoded, data);
+								});
+							}
+						},
+					);
 				}
 			});
 
@@ -1387,11 +1394,15 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & {
 		idCompressor?: IIdCompressor | undefined;
+		minVersionForCollab?: MinimumVersionForCollab;
 	} = {},
 ): SchematizingSimpleTreeView<TSchema> {
+	// Default to v2_80 to support noChange constraints in table operations
+	const minVersionForCollab = options.minVersionForCollab ?? FluidClientVersion.v2_80;
 	const view = independentView(config, {
-		idCompressor: createSnapshotCompressor(),
 		...options,
+		idCompressor: options.idCompressor ?? createSnapshotCompressor(),
+		minVersionForCollab,
 	});
 	assert(view instanceof SchematizingSimpleTreeView);
 	return view;

@@ -19,28 +19,16 @@ import type { Linter } from "eslint";
 /**
  * Shared list of permitted imports for configuring the `import-x/no-internal-modules` rule.
  *
- * NOTE: The `/legacy` patterns below are an intentional enhancement over the legacy CJS config
- * (minimal-deprecated.js). They were added during the ESLint 9 flat config migration to support
- * backwards compatibility during API transitions. Many packages in the codebase import from
- * `/legacy` entry points (e.g., `@fluidframework/map/legacy`).
+ * @remarks
+ * All `@fluid-` scopes could probably allow `/**` as entrypoint structuring rules do
+ * NOT apply. Currently there are no known uses of structured imports from these scopes;
+ * so, no broad allowances are stated.
  */
 export const permittedImports = [
 	// Within Fluid Framework allow import of '/internal' from other FF packages.
-	"@fluid-example/*/internal",
-	"@fluid-experimental/*/internal",
-	"@fluid-internal/*/internal",
-	"@fluid-private/*/internal",
-	"@fluid-tools/*/internal",
-	"@fluidframework/*/internal",
-
-	// Allow /legacy imports for backwards compatibility during API transition.
-	// This is an intentional enhancement over the legacy CJS config.
-	"@fluid-example/*/legacy",
-	"@fluid-experimental/*/legacy",
-	"@fluid-internal/*/legacy",
-	"@fluid-private/*/legacy",
-	"@fluid-tools/*/legacy",
-	"@fluidframework/*/legacy",
+	// Note that `/internal/test**` is still restricted (disallowed) but uses
+	// customCondition of "allow-ff-test-exports" for enforcement.
+	"@fluidframework/*/internal{,/**}",
 
 	// Experimental package APIs and exports are unknown, so allow any imports from them.
 	"@fluid-experimental/**",

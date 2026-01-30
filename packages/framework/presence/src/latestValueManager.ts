@@ -58,9 +58,7 @@ export interface LatestEvents<
 	 *
 	 * @eventProperty
 	 */
-	localUpdated: (update: {
-		value: DeepReadonly<JsonSerializable<T>>;
-	}) => void;
+	localUpdated: (update: { value: DeepReadonly<JsonSerializable<T>> }) => void;
 }
 
 /**

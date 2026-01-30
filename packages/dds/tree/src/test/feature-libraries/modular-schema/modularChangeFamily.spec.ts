@@ -57,6 +57,8 @@ import {
 	jsonableTreeFromFieldCursor,
 	DefaultRevisionReplacer,
 	type ChangeAtomIdBTree,
+	fieldKindConfigurations,
+	ModularChangeFormatVersion,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,
@@ -190,14 +192,9 @@ const codecOptions: CodecWriteOptions = {
 };
 
 const codec = makeModularChangeCodecFamily(
-	new Map([
-		[1, fieldKindConfiguration],
-		[2, fieldKindConfiguration],
-		[3, fieldKindConfiguration],
-		[4, fieldKindConfiguration],
-		[5, fieldKindConfiguration],
-		[6, fieldKindConfiguration],
-	]),
+	new Map(
+		[...fieldKindConfigurations.keys()].map((version) => [version, fieldKindConfiguration]),
+	),
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
@@ -1502,13 +1499,13 @@ describe("ModularChangeFamily", () => {
 			],
 		};
 
-		makeEncodingTestSuite(
-			family.codecs,
-			encodingTestDataForAllVersions,
-			assertEquivalent,
-			[1, 2, 3, 4, 6],
-		);
-		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [5]);
+		makeEncodingTestSuite(family.codecs, encodingTestDataForAllVersions, assertEquivalent, [
+			ModularChangeFormatVersion.v3,
+			ModularChangeFormatVersion.v4,
+		]);
+		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [
+			ModularChangeFormatVersion.v5,
+		]);
 	});
 
 	it("build child change", () => {
