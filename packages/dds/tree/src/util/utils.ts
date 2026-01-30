@@ -567,8 +567,9 @@ export function compareNumbers<T extends number>(a: T, b: T): number {
 }
 
 /**
- * Compares two numbers to form a partial ordering, allowing for `undefined` values.
- * @remarks `undefined` is considered less than any number. NaN is treated as less than all other numbers (but greater than undefined) and equal to itself.
+ * Compares two numbers to form a strict total ordering while allowing for `undefined` values.
+ * @remarks `undefined` is considered less than any number and equal to itself.
+ * NaN is treated as less than all other numbers (but greater than undefined) and equal to itself.
  */
 export function comparePartialNumbers<T extends number>(
 	a: T | undefined,
@@ -582,14 +583,14 @@ export function comparePartialNumbers<T extends number>(
 	return compareNumbers(a, b);
 }
 
-/** Compares two strings lexically to form a strict partial ordering. */
+/** Compares two strings lexically to form a strict total ordering. */
 export function compareStrings<T extends string>(a: T, b: T): number {
 	return a > b ? 1 : a === b ? 0 : -1;
 }
 
 /**
- * Compares two strings lexically to form a partial ordering, allowing for `undefined` values.
- * @remarks `undefined` is considered less than any string.
+ * Compares two strings lexically to form a strict total ordering while allowing for `undefined` values.
+ * @remarks `undefined` is considered less than any string and equal to itself.
  */
 export function comparePartialStrings<T extends string>(
 	a: T | undefined,

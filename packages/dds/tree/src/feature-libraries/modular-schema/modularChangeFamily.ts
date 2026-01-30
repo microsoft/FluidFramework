@@ -46,7 +46,7 @@ import {
 	type DeltaDetachedNodeRename,
 	mapTaggedChange,
 	type RevisionReplacer,
-	compareRevisions,
+	comparePartialRevisions,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -3210,7 +3210,7 @@ function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 
 function newFieldIdKeyBTree<V>(): TupleBTree<FieldIdKey, V> {
 	return newTupleBTree([
-		compareRevisions,
+		comparePartialRevisions,
 		comparePartialNumbers<ChangesetLocalId>,
 		compareStrings<FieldKey>,
 	]);

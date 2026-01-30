@@ -4,7 +4,7 @@
  */
 
 import {
-	compareRevisions,
+	comparePartialRevisions,
 	type ChangeAtomId,
 	type ChangesetLocalId,
 	type RevisionTag,
@@ -25,7 +25,7 @@ export type ChangeAtomIdBTree<V> = TupleBTree<
 export function newChangeAtomIdBTree<V>(
 	entries?: [readonly [RevisionTag | undefined, ChangesetLocalId], V][],
 ): ChangeAtomIdBTree<V> {
-	return newTupleBTree([compareRevisions, compareNumbers], entries);
+	return newTupleBTree([comparePartialRevisions, compareNumbers], entries);
 }
 
 export function getFromChangeAtomIdMap<T>(
