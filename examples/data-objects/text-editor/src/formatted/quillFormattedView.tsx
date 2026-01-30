@@ -4,35 +4,44 @@
  */
 
 import { type PropTreeNode, unwrapPropTreeNode } from "@fluidframework/react/alpha";
-import { Tree } from "@fluidframework/tree";
+// eslint-disable-next-line import-x/no-internal-modules
+import { treeDataObjectInternal } from "@fluidframework/react/internal";
+import { Tree, TreeViewConfiguration } from "@fluidframework/tree";
+// eslint-disable-next-line import-x/no-internal-modules
+import { FormattedTextAsTree } from "@fluidframework/tree/internal";
+// eslint-disable-next-line import-x/no-internal-modules
+export { FormattedTextAsTree } from "@fluidframework/tree/internal";
 import Quill from "quill";
 import Delta from "quill-delta";
 import * as React from "react";
 
-import { FormattedTextAsTree } from "./formattedSchema.js";
+export const FormattedTextEditorFactory = treeDataObjectInternal(
+	new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree }),
+	() => FormattedTextAsTree.Tree.fromString(""),
+).factory;
 
 /**
  * Represents a single operation in a Quill Delta.
  * Deltas describe changes to document content as a sequence of operations.
  */
 interface QuillDeltaOp {
-	// Text or embed object to insert at current position
+	/** Text or embed object to insert at current position. */
 	insert?: string | Record<string, unknown>;
-	// Number of characters to delete at current position
+	/** Number of characters to delete at current position. */
 	delete?: number;
-	// Number of characters to keep/skip, optionally applying attributes
+	/** Number of characters to keep/skip, optionally applying attributes. */
 	retain?: number;
-	// Formatting attributes (bold, italic, size, etc.) for insert/retain ops
+	/** Formatting attributes (bold, italic, size, etc.) for insert/retain ops. */
 	attributes?: Record<string, unknown>;
 }
 
-// Represents a Quill Delta
+/** Represents a Quill Delta. */
 interface QuillDelta {
-	// Sequence of operations that make up this delta
+	/** Sequence of operations that make up this delta. */
 	ops?: QuillDeltaOp[];
 }
 
-// Props for the FormattedMainView component.
+/** Props for the FormattedMainView component. */
 export interface FormattedMainViewProps {
 	root: PropTreeNode<FormattedTextAsTree.Tree>;
 }
@@ -41,13 +50,14 @@ export const FormattedMainView: React.FC<FormattedMainViewProps> = ({ root }) =>
 	return <FormattedTextEditorView root={root} />;
 };
 
-// Quill size names mapped to pixel values for tree storage
-const SIZE_MAP: Record<string, number> = { small: 10, large: 18, huge: 24 };
-// Reverse mapping: pixel values back to Quill size names for display
-const SIZE_REVERSE: Record<number, string> = { 10: "small", 18: "large", 24: "huge" };
-// Default formatting values when no explicit format is specified
-const DEFAULT_SIZE = 12;
-const DEFAULT_FONT = "Arial";
+/** Quill size names mapped to pixel values for tree storage. */
+const sizeMap = { small: 10, large: 18, huge: 24 } as const;
+/** Reverse mapping: pixel values back to Quill size names for display. */
+const sizeReverse = { 10: "small", 18: "large", 24: "huge" } as const;
+/** Default formatting values when no explicit format is specified. */
+const defaultSize = 12;
+/** Default font when no explicit font is specified. */
+const defaultFont = "Arial";
 
 /**
  * Parse a size value from Quill into a numeric pixel value.
@@ -55,11 +65,16 @@ const DEFAULT_FONT = "Arial";
  */
 function parseSize(size: unknown): number {
 	if (typeof size === "number") return size;
-	if (typeof size === "string") {
-		// Try named size first, then parse as number, fallback to default
-		return SIZE_MAP[size] ?? (Number.parseInt(size, 10) || DEFAULT_SIZE);
+	if (size === "small" || size === "large" || size === "huge") {
+		return sizeMap[size];
 	}
-	return DEFAULT_SIZE;
+	if (typeof size === "string") {
+		const parsed = Number.parseInt(size, 10);
+		if (!Number.isNaN(parsed)) {
+			return parsed;
+		}
+	}
+	return defaultSize;
 }
 
 /**
@@ -79,7 +94,7 @@ function quillAttrsToFormat(attrs?: Record<string, unknown>): {
 		italic: attrs?.italic === true,
 		underline: attrs?.underline === true,
 		size: parseSize(attrs?.size),
-		font: typeof attrs?.font === "string" ? attrs.font : DEFAULT_FONT,
+		font: typeof attrs?.font === "string" ? attrs.font : defaultFont,
 	};
 }
 
@@ -99,8 +114,7 @@ function quillAttrsToPartial(
 	if ("italic" in attrs) format.italic = attrs.italic === true;
 	if ("underline" in attrs) format.underline = attrs.underline === true;
 	if ("size" in attrs) format.size = parseSize(attrs.size);
-	if ("font" in attrs)
-		format.font = typeof attrs.font === "string" ? attrs.font : DEFAULT_FONT;
+	if ("font" in attrs) format.font = typeof attrs.font === "string" ? attrs.font : defaultFont;
 	return format;
 }
 
@@ -117,11 +131,14 @@ function formatToQuillAttrs(
 	if (format.bold) attrs.bold = true;
 	if (format.italic) attrs.italic = true;
 	if (format.underline) attrs.underline = true;
-	if (format.size !== DEFAULT_SIZE) {
+	if (format.size !== defaultSize) {
 		// Convert pixel value back to Quill size name if possible
-		attrs.size = SIZE_REVERSE[format.size] ?? `${format.size}px`;
+		attrs.size =
+			format.size in sizeReverse
+				? sizeReverse[format.size as keyof typeof sizeReverse]
+				: `${format.size}px`;
 	}
-	if (format.font !== DEFAULT_FONT) attrs.font = format.font;
+	if (format.font !== defaultFont) attrs.font = format.font;
 	return attrs;
 }
 
