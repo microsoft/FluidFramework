@@ -24,7 +24,7 @@ describe("schema", () => {
 		// This will depend on how your application organizes its test data.
 		const snapshotDirectory = path.join(
 			import.meta.dirname,
-			"../../../src/test/schema-snapshots",
+			"../../../../../src/test/schema-snapshots",
 		);
 		checkSchemaCompatibilitySnapshots({
 			snapshotDirectory,
