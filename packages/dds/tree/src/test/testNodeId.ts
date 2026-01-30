@@ -96,7 +96,7 @@ function decode(encoded: JsonCompatibleReadOnly, context: ChangeEncodingContext)
 	const fieldChanges =
 		(encoded as EncodedNodeChangeset).fieldChanges ?? fail("Invalid encoded TestNodeId");
 
-	return fieldChanges[0].change as TestNodeId;
+	return fieldChanges[0].change as object as TestNodeId;
 }
 
 function tryGetTestChange(id: NodeId | undefined): TestChange | undefined {

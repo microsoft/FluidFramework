@@ -4,7 +4,6 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { type TAnySchema, Type } from "@sinclair/typebox";
 
 import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import type {
@@ -14,6 +13,7 @@ import type {
 	RevisionTag,
 } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { JsonCompatibleReadOnlySchema } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 import type { MessageEncodingContext } from "./messageCodecs.js";
@@ -39,12 +39,10 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 > {
 	return withSchemaValidation<
 		DecodedMessage<TChangeset>,
-		TAnySchema,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
+		typeof JsonCompatibleReadOnlySchema,
 		MessageEncodingContext
 	>(
-		Message(changeCodec.encodedSchema ?? Type.Any()),
+		Message(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema),
 		{
 			encode: (
 				message: DecodedMessage<TChangeset>,
