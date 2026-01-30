@@ -23,10 +23,10 @@ export type TupleBTree<K extends readonly DefaultComparable[], V> = Brand<
  * @param entries - Optional initial entries for the btree.
  */
 export function newTupleBTree<const K extends readonly DefaultComparable[], V>(
-	comparator: TupleComparator<K[number]> | TupleComparators<K> | undefined,
+	comparator: (a: K, b: K) => number,
 	entries?: [K, V][],
 ): TupleBTree<K, V> {
-	return brand(new BTree<K, V>(entries, createTupleComparator(comparator)));
+	return brand(new BTree<K, V>(entries, comparator));
 }
 
 /** A comparator which can compare any pair of corresponding elements in the key of a {@link TupleBTree} */
@@ -47,7 +47,7 @@ type TupleComparators<T extends readonly DefaultComparable[]> = {
  * @returns The comparison of the first pair of elements at the same index that differ, or 0 if all elements are equal.
  * @remarks The tuples must be the same length and have the same type of elements in the same order.
  */
-function createTupleComparator<const K extends readonly DefaultComparable[]>(
+export function createTupleComparator<const K extends readonly DefaultComparable[]>(
 	compare: TupleComparator<K[number]> | TupleComparators<K> = defaultComparator,
 ): (a: K, b: K) => number {
 	return (a: K, b: K): number => {

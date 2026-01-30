@@ -154,7 +154,12 @@ export {
 	breakingClass,
 } from "./breakable.js";
 
-export { type TupleBTree, newTupleBTree, mergeTupleBTrees } from "./bTreeUtils.js";
+export {
+	type TupleBTree,
+	newTupleBTree,
+	mergeTupleBTrees,
+	createTupleComparator,
+} from "./bTreeUtils.js";
 
 export { cloneWithReplacements } from "./cloneWithReplacements.js";
 

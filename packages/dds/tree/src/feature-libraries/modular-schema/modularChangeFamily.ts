@@ -64,6 +64,7 @@ import {
 	balancedReduce,
 	newTupleBTree,
 	compareStrings,
+	createTupleComparator,
 } from "../../util/index.js";
 import {
 	getFromChangeAtomIdMap,
@@ -3209,9 +3210,11 @@ function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 }
 
 function newFieldIdKeyBTree<V>(): TupleBTree<FieldIdKey, V> {
-	return newTupleBTree([
-		comparePartialRevisions,
-		comparePartialChangesetLocalIds,
-		compareStrings<FieldKey>,
-	]);
+	return newTupleBTree(compareFieldIdKeys);
 }
+
+const compareFieldIdKeys = createTupleComparator([
+	comparePartialRevisions,
+	comparePartialChangesetLocalIds,
+	compareStrings<FieldKey>,
+]);

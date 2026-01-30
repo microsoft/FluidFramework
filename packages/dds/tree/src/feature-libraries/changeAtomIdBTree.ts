@@ -10,7 +10,7 @@ import {
 	type ChangesetLocalId,
 	type RevisionTag,
 } from "../core/index.js";
-import { newTupleBTree, type TupleBTree } from "../util/index.js";
+import { createTupleComparator, newTupleBTree, type TupleBTree } from "../util/index.js";
 
 /**
  * A BTree which uses ChangeAtomId flattened into a tuple as the key.
@@ -26,8 +26,10 @@ export type ChangeAtomIdBTree<V> = TupleBTree<
 export function newChangeAtomIdBTree<V>(
 	entries?: [readonly [RevisionTag | undefined, ChangesetLocalId], V][],
 ): ChangeAtomIdBTree<V> {
-	return newTupleBTree([comparePartialRevisions, compareChangesetLocalIds], entries);
+	return newTupleBTree(compareKeys, entries);
 }
+
+const compareKeys = createTupleComparator([comparePartialRevisions, compareChangesetLocalIds]);
 
 export function getFromChangeAtomIdMap<T>(
 	map: ChangeAtomIdBTree<T>,
