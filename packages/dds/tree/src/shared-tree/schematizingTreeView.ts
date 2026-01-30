@@ -299,20 +299,20 @@ export class SchematizingSimpleTreeView<
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runAsyncTransaction}
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransactionAsync}
 	 */
-	public runAsyncTransaction<TSuccessValue, TFailureValue>(
+	public runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
 		params?: RunTransactionParams,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
 	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runAsyncTransaction}
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransactionAsync}
 	 */
-	public runAsyncTransaction(
+	public runTransactionAsync(
 		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
 		params?: RunTransactionParams,
 	): Promise<TransactionResult>;
-	public async runAsyncTransaction<TSuccessValue, TFailureValue>(
+	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
 			| VoidTransactionCallbackStatus

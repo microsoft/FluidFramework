@@ -798,7 +798,7 @@ describe("sharedTreeView", () => {
 			assert.throws(
 				() =>
 					view.runTransaction(() => {
-						transactionPromise = view.runAsyncTransaction(async () => {});
+						transactionPromise = view.runTransactionAsync(async () => {});
 					}),
 				expectedError,
 			);
@@ -815,9 +815,9 @@ describe("sharedTreeView", () => {
 			const view = provider.trees[0].kernel.viewWith(config);
 			view.initialize([]);
 
-			await view.runAsyncTransaction(async () => {
+			await view.runTransactionAsync(async () => {
 				view.root.insertAtEnd("A");
-				await view.runAsyncTransaction(async () => {
+				await view.runTransactionAsync(async () => {
 					view.root.insertAtEnd("B");
 				});
 			});
@@ -831,7 +831,7 @@ describe("sharedTreeView", () => {
 			const view = provider.trees[0].kernel.viewWith(config);
 			view.initialize([]);
 
-			await view.runAsyncTransaction(async () => {
+			await view.runTransactionAsync(async () => {
 				view.root.insertAtEnd("A");
 				view.runTransaction(() => {
 					view.root.insertAtEnd("B");
@@ -1633,7 +1633,7 @@ describe("sharedTreeView", () => {
 			});
 
 			assert.equal(view1Revertibles.length, 1);
-			await view1.runAsyncTransaction(async () => {
+			await view1.runTransactionAsync(async () => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
 				// TODO AD#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
@@ -1666,7 +1666,7 @@ describe("sharedTreeView", () => {
 			});
 
 			assert.equal(view1Revertibles.length, 1);
-			await view1.runAsyncTransaction(async () => {
+			await view1.runTransactionAsync(async () => {
 				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
 				// TODO AD#57584: Use such an operation here when one is available
 				view1.root.insertAtEnd({ id: "B" });
@@ -1681,7 +1681,7 @@ describe("sharedTreeView", () => {
 			view2.root.removeAt(0);
 
 			let callCount = 0;
-			await view1.runAsyncTransaction(async () => {
+			await view1.runTransactionAsync(async () => {
 				view1.root[0].id = "a"; // Will require a refresher
 				view1.root[1].id = "b";
 				provider.synchronizeMessages();
@@ -1714,7 +1714,7 @@ describe("sharedTreeView", () => {
 			view2.root.removeAt(0);
 
 			let callCount = 0;
-			await view1.runAsyncTransaction(async () => {
+			await view1.runTransactionAsync(async () => {
 				view1.root[0].id = "a"; // Will require a refresher
 				view1.root[1].id = "b";
 				provider.synchronizeMessages();

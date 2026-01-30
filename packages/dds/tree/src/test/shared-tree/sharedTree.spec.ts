@@ -2016,7 +2016,7 @@ describe("SharedTree", () => {
 			view1.initialize(["A", "C", "E"]);
 			await provider.ensureSynchronized();
 
-			await view1.runAsyncTransaction(async () => {
+			await view1.runTransactionAsync(async () => {
 				view1.root.insertAt(2, "D");
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 
@@ -2048,7 +2048,7 @@ describe("SharedTree", () => {
 			view1.initialize(["A", "C", "E"]);
 			await provider.ensureSynchronized();
 
-			await view1.runAsyncTransaction(async () => {
+			await view1.runTransactionAsync(async () => {
 				view1.root.insertAt(2, "D");
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 
