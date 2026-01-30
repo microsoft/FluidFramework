@@ -111,4 +111,11 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		}
 		return tree;
 	}
+
+	/**
+	 * Clean up resources associated with this document storage service.
+	 */
+	public dispose(): void {
+		this.internalStorageService.dispose?.();
+	}
 }

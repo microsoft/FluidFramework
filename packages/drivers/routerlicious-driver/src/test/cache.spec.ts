@@ -54,4 +54,18 @@ describe("InMemoryCache", () => {
 		assert.equal(await cache.get("two"), 2.1, "'two' shouldn't be expired after 5ms");
 		assert.equal(await cache.get("three"), 3, "'three' shouldn't be expired after 5ms");
 	});
+
+	it("clear removes all entries", async () => {
+		cache = new InMemoryCache<number>();
+
+		await cache.put("key1", 1);
+		await cache.put("key2", 2);
+		await cache.put("key3", 3);
+
+		cache.clear();
+
+		assert.equal(await cache.get("key1"), undefined, "key1 should be removed");
+		assert.equal(await cache.get("key2"), undefined, "key2 should be removed");
+		assert.equal(await cache.get("key3"), undefined, "key3 should be removed");
+	});
 });
