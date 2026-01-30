@@ -44,6 +44,23 @@ const testContainerConfig: ITestContainerConfig = {
 	},
 };
 
+/**
+ * Same as testContainerConfig but with batch ID tracking enabled
+ */
+const testContainerConfigWithBatchIdTracking: ITestContainerConfig = {
+	...testContainerConfig,
+	loaderProps: {
+		configProvider: {
+			getRawConfig: (name: string) => {
+				if (name === "Fluid.ContainerRuntime.enableBatchIdTracking") {
+					return true;
+				}
+				return undefined;
+			},
+		},
+	},
+};
+
 type Patch<T, U> = Omit<T, keyof U> & U;
 
 type ContainerRuntime_WithPrivates = Patch<ContainerRuntime, { flush: () => void }>;
@@ -66,10 +83,10 @@ describeCompat(
 			}
 		});
 
-		const setup = async (): Promise<void> => {
+		const setup = async (config: ITestContainerConfig): Promise<void> => {
 			testId++;
 			provider = getTestObjectProvider();
-			const loader = provider.makeTestLoader(testContainerConfig);
+			const loader = provider.makeTestLoader(config);
 			mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 			await mainContainer.attach(provider.driver.createCreateNewRequest(`test-${testId}`));
@@ -94,59 +111,68 @@ describeCompat(
 			containerRuntime.flush();
 		}
 
-		benchmark({
-			title: `Submit+Flush a single batch of ${batchSize} ops`,
-			...executionOptions, // We could use the defaults for this one, but this way the measurement is symmetrical with the "Process" benchmark below.
-			before: async () => {
-				await setup();
-			},
-			// eslint-disable-next-line object-shorthand
-			benchmarkFnAsync: async function () {
-				sendOps("A");
-				// There's no event fired for "flush" so the simplest thing is to wait for the outbound queue to be idle.
-				// This should not add much time, and is part of the real flow so it's ok to include it in the benchmark.
-				const opsSent = await timeoutPromise<number>(
-					(resolve) => {
-						toIDeltaManagerFull(containerRuntime.deltaManager).outbound.once("idle", resolve);
-					},
-					{ errorMsg: "container's outbound queue never reached idle state" },
-				);
-				assert(opsSent === 1, "Expecting the single grouped batch op to be sent.");
-			},
-		});
+		const configs: { name: string; config: ITestContainerConfig }[] = [
+			{ name: "without batch ID tracking", config: testContainerConfig },
+			{ name: "with batch ID tracking", config: testContainerConfigWithBatchIdTracking },
+		];
 
-		benchmark({
-			title: `Process a single batch of ${batchSize} Inbound ops (local)`,
-			...executionOptions,
-			async benchmarkFnCustom(state): Promise<void> {
-				let running = true;
-				let batchId = 0;
-				do {
-					await setup();
+		for (const { name, config } of configs) {
+			benchmark({
+				title: `Submit+Flush a single batch of ${batchSize} ops (${name})`,
+				...executionOptions, // We could use the defaults for this one, but this way the measurement is symmetrical with the "Process" benchmark below.
+				before: async () => {
+					await setup(config);
+				},
+				benchmarkFnAsync: async () => {
+					sendOps("A");
+					// There's no event fired for "flush" so the simplest thing is to wait for the outbound queue to be idle.
+					// This should not add much time, and is part of the real flow so it's ok to include it in the benchmark.
+					const opsSent = await timeoutPromise<number>(
+						(resolve) => {
+							toIDeltaManagerFull(containerRuntime.deltaManager).outbound.once(
+								"idle",
+								resolve,
+							);
+						},
+						{ errorMsg: "container's outbound queue never reached idle state" },
+					);
+					assert(opsSent === 1, "Expecting the single grouped batch op to be sent.");
+				},
+			});
 
-					// (This is about benchmark's "batch", not the batch of ops we are measuring)
-					assert(state.iterationsPerBatch === 1, "Expecting only one iteration per batch");
+			benchmark({
+				title: `Process a single batch of ${batchSize} Inbound ops (local, ${name})`,
+				...executionOptions,
+				async benchmarkFnCustom(state): Promise<void> {
+					let running = true;
+					let batchId = 0;
+					do {
+						await setup(config);
 
-					// This will get the batch of ops roundtripped and into the inbound queue, but the inbound queue will remain paused
-					await provider.opProcessingController.pauseProcessing();
-					sendOps(`[Batch-${batchId++}]`);
-					await provider.opProcessingController.processOutgoing();
+						// (This is about benchmark's "batch", not the batch of ops we are measuring)
+						assert(state.iterationsPerBatch === 1, "Expecting only one iteration per batch");
 
-					// Now process the batch of ops that's sitting in the inbound queue.
-					// This is the precise duration we want to measure.
-					const start = state.timer.now();
-					// Note that process is synchronous, but this waits for the queue to become idle so it's async. Shouldn't affect measurement though.
-					await provider.opProcessingController.processIncoming();
-					const end = state.timer.now();
+						// This will get the batch of ops roundtripped and into the inbound queue, but the inbound queue will remain paused
+						await provider.opProcessingController.pauseProcessing();
+						sendOps(`[Batch-${batchId++}]`);
+						await provider.opProcessingController.processOutgoing();
 
-					// Record the result
-					const duration = state.timer.toSeconds(start, end);
-					running = state.recordBatch(duration);
+						// Now process the batch of ops that's sitting in the inbound queue.
+						// This is the precise duration we want to measure.
+						const start = state.timer.now();
+						// Note that process is synchronous, but this waits for the queue to become idle so it's async. Shouldn't affect measurement though.
+						await provider.opProcessingController.processIncoming();
+						const end = state.timer.now();
 
-					// Tear down this container, we start fresh for each measurement
-					mainContainer.dispose();
-				} while (running);
-			},
-		});
+						// Record the result
+						const duration = state.timer.toSeconds(start, end);
+						running = state.recordBatch(duration);
+
+						// Tear down this container, we start fresh for each measurement
+						mainContainer.dispose();
+					} while (running);
+				},
+			});
+		}
 	},
 );
