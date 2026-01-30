@@ -55,28 +55,31 @@ export const loaderSupportRequirementsForRuntime: ILayerCompatSupportRequirement
 
 ### Features
 
-Layers can declare **supported features** and **required features**. Features serve two key purposes:
+Layers can declare **supported features** and **required features**:
+
+- **Supported Features:** Features or capabilities a layer provides which another layer may check and/or require
+- **Required Features:** Features or capabilities the adjacent layer must support
+
+Features serve two key purposes:
 
 1. **Validation:** Ensuring adjacent layers have required capabilities before allowing them to interact
-2. **Feature Staging:** Allowing developers to introduce and use new capabilities gradually without waiting for full saturation across the compatibility window
+2. **Feature Staging:** Allowing developers to introduce and use new capabilities gradually without waiting for full saturation across the compatibility boundary
 
-- **Supported Features:** Features or capabilities a layer provides which another layer may require
-- **Required Features:** Features or capabilities the adjacent layer must support
 
 **Validation Scenarios:**
 
 **Scenario 1: Compatible** - Layer A supports a feature, Layer B optionally uses it:
 ```typescript
-layerADetails.supportedFeatures = new Set(["foo"]);
-layerBRequirements.requiredFeatures = []; // Foo is not required yet
+layerADetailsForB.supportedFeatures = new Set(["foo"]);
+layerBRequirementsForA.requiredFeatures = []; // foo is not required yet
 // Result: Compatible. Layer B can conditionally check and use "foo" if available
 ```
 
 **Scenario 2: Incompatible** - Layer B requires a feature, Layer A doesn't support it:
 ```typescript
-layerADetails.supportedFeatures = new Set([]); // foo not supported
-layerBRequirements.requiredFeatures = ["foo"]; // Required
-// Result: Incompatible. Validation fails because foo is missing
+layerADetailsForB.supportedFeatures = new Set([]); // foo not supported
+layerBRequirementsForA.requiredFeatures = ["foo"]; // foo is required
+// Result: Incompatible. Validation fails because "foo" is missing
 ```
 
 See the [Adding a New Feature](#adding-a-new-feature) section for a complete implementation example.
@@ -86,6 +89,8 @@ See the [Adding a New Feature](#adding-a-new-feature) section for a complete imp
 Each layer includes its package version in compatibility details. While not used for validation logic, package versions are included in error telemetry to help diagnose incompatibility issues.
 
 ### Validation Logic
+
+Across a layer boundary, one layer validates the compatibility of the other layer. In most cases, both the layers will validate each other but not always.
 
 The core validation function is `checkLayerCompatibility` in [layerCompat.ts](./packages/common/client-utils/src/layerCompat.ts):
 
@@ -101,6 +106,8 @@ export function checkLayerCompatibility(
 1. Check generation compatibility: `layer2.generation >= layer1.minSupportedGeneration`
 2. Check feature compatibility: All features in `layer1.requiredFeatures` must be in `layer2.supportedFeatures`
 3. Return result indicating compatibility or specific incompatibility reasons
+
+A helper function `validateLayerCompatibility` in [layerCompatError.ts](./packages/utils/telemetry-utils/src/layerCompatError.ts) wraps the validation logic for use by layers. It calls `checkLayerCompatibility` and, if layers are incompatible, logs a `LayerIncompatibilityError` with relevant properties (layer names, versions, generation numbers, and compatibility requirements) before throwing the `LayerIncompatibilityError`.
 
 ### Bypass Configuration
 
@@ -119,9 +126,10 @@ This will log a warning event but allow incompatible layers to work together. **
 
 To add a new feature that requires compatibility validation:
 
-1. **Add to supported features** in the layer providing the feature. Add a comment about which generation the feature is added.
+1. **Add to supported features** in the layer providing the feature. Add a comment like "<feature> supported from generation N onwards" to indicate where this feature is fully supported. Note that this must be the NEXT generation not the current one because that is where the feature will be fully supported - prior releases with the current generation do not support the feature.
 2. **Add logic to conditionally use feature** in the layer that needs the feature. Basically, if the other layer supports the feature, use it, else don't.
-3. **Add to required features** in the layer requiring the feature after it has been in supported features for longer than the supported compatibility window for that layer boundary. Basically, once the generation of the layer is greater than the generation feature was added + compatibility window (in months).
+3. **Add to required features** in the layer requiring the feature after it has been in supported features for longer than the supported compatibility window for that layer boundary.
+Basically, once the generation of the layer is greater than or equal to the generation feature is fully supported + compatibility window (in months) - `generation >= supported compatibility window + generation where feature is fully supported`.
 > Note: It may seem unnecessary and redundant to move the feature to the required features list because generation validation will fail if the layers are incompatible. However, this is done for two purposes:
 > 1. The generation based validation may not be supported long term. We may switch to throwing a warning if generations are incompatible but not fail if there aren't any unsupported features to support maximum compatibility for applications.
 > 2. Having required features will give us telemetry data on how often compatibility fails because of feature incompatibility (and which features) vs layers being out of the compat window. This will help drive the decision for # 1.
@@ -130,23 +138,30 @@ To add a new feature that requires compatibility validation:
 
 Consider adding a new feature "foo" to the Loader ↔ Runtime boundary where say the supported compatibility window is 12 months.
 
-1. Add "foo" to Loader's supported features for Runtime.
+1. Add "foo" to Loader's supported features for Runtime. The current generation is 15, so the feature will be fully supported from generation 16.
     ```typescript
-    // Loader adds support for the new feature
+    // Loader with generation 15 adds support for the new feature which will be fully supported from generation 16 onwards.
     export const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
-        generation: 1,
+        generation: 15,
         packageVersion: "2.5.0",
         supportedFeatures: new Set<string>([
-            "foo", // foo added in generation 10
+            "foo", // foo supported from generation 16 onwards
         ]),
     };
     ```
 
 2. Runtime doesn't require "foo" but uses it conditionally.
     ```typescript
+    // Runtime's generation is 15 as well.
+    export const runtimeCompatDetails: ILayerCompatDetails = {
+        generation: 15,
+        packageVersion: "2.28.0",
+        supportedFeatures: new Set<string>([]),
+    };
+
     // Runtime doesn't require the feature
     export const runtimeSupportRequirementsForLoader: ILayerCompatSupportRequirements = {
-        minSupportedGeneration: 1,
+        minSupportedGeneration: 3,
         requiredFeatures: [], // foo not required yet
     };
 
@@ -171,24 +186,39 @@ Consider adding a new feature "foo" to the Loader ↔ Runtime boundary where say
         }
     }
     ```
-3. Update Runtime to require "foo" once its generation is 13 - "foo" was added in generation 1 and the support window is 12 months.
+3. Update Runtime to require "foo" then its `generation >= supported compatibility window + generation where feature is fully supported`, i.e., `generation >= 28` - 12 (supported compatibility window) + 16 (where "foo" is fully supported).
+    > Note that the `minSupportedGeneration` is 16 which is where "foo" is fully supported. This must be >= the generation where a feature that is made required is fully supported.
+
     ```typescript
-    // Runtime's generation is 13.
+    // Runtime's generation is 28.
     export const runtimeCompatDetails: ILayerCompatDetails = {
-        generation: 13,
+        generation: 28,
         packageVersion: "2.28.0",
         supportedFeatures: new Set<string>([]),
     };
 
-    // Runtime requires the feature
+    // Runtime requires the feature.
     export const runtimeSupportRequirementsForLoader: ILayerCompatSupportRequirements = {
-        minSupportedGeneration: 10,
+        minSupportedGeneration: 16,
         requiredFeatures: ["foo"], // foo is now required
     };
     ```
 
-When Runtime initializes, the compatibility validation with Loader will now fail.
+When Runtime initializes, the compatibility validation with Loader generation < 16 will now fail. `checkLayerCompatibility` (see [validation logic](#validation-logic)) will return a failure:
+```typescript
+// In Runtime initialization
+const layerCheckResult = checkLayerCompatibility(
+    compatSupportRequirementsLayer1,
+    maybeCompatDetailsLayer2,
+);
 
+// Sample layerCheckResult of type `LayerCompatCheckResult`
+{
+    isCompatible = false,
+    isGenerationCompatible = false,
+    unsupportedFeatures: ["foo"],
+}
+```
 
 ### Bumping Generation Numbers
 
