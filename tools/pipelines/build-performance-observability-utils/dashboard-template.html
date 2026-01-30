@@ -207,7 +207,7 @@
             const project = mode === 'public' ? 'public' : 'internal';
             chartInstances[mode].duration = new Chart(ctx, {
                 type: 'line', data: { datasets: [
-                    { label: 'Max', data: maxData, borderColor: 'rgba(211, 52, 56, 0.6)', backgroundColor: 'rgba(211, 52, 56, 0.6)', borderWidth: 1.5, borderDash: [4, 4], fill: false, tension: 0.4, pointRadius: (ctx) => ctx.raw && ctx.raw.isOutlier ? 4 : 0, pointHoverRadius: (ctx) => ctx.raw && ctx.raw.isOutlier ? 5 : 0, pointStyle: 'circle' },
+                    { label: 'Max', data: maxData, borderColor: 'rgba(211, 52, 56, 0.6)', backgroundColor: 'rgba(211, 52, 56, 0.6)', borderWidth: 1.5, borderDash: [4, 4], fill: false, tension: 0.4, pointRadius: (ctx) => ctx.raw && ctx.raw.isOutlier ? 4 : 0, pointHoverRadius: (ctx) => ctx.raw && ctx.raw.isOutlier ? 5 : 0, pointStyle: 'circle', clip: 8 },
                     { label: 'Avg', data: avgData, borderColor: colorScheme.primary, backgroundColor: colorScheme.background, borderWidth: 2, fill: true, tension: 0.4, pointRadius: 3, pointHoverRadius: 4, pointStyle: 'circle' },
                     { label: 'Min', data: minData, borderColor: 'rgba(16, 124, 16, 0.6)', backgroundColor: 'rgba(16, 124, 16, 0.6)', borderWidth: 1.5, borderDash: [4, 4], fill: false, tension: 0.4, pointRadius: (ctx) => ctx.raw && ctx.raw.isOutlier ? 4 : 0, pointHoverRadius: (ctx) => ctx.raw && ctx.raw.isOutlier ? 5 : 0, pointStyle: 'circle' }
                 ] },
