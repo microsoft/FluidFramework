@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import type { IJsonCodec } from "../../codec/index.js";
-import {
-	areEqualChangeAtomIdOpts,
-	type ChangeEncodingContext,
-	type EncodedRevisionTag,
-	type RevisionTag,
+import type {
+	ChangeEncodingContext,
+	EncodedRevisionTag,
+	RevisionTag,
 } from "../../core/index.js";
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
@@ -40,12 +38,6 @@ export function makeOptionalFieldCodec(
 
 	return {
 		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
-			assert(
-				change.nodeDetach === undefined ||
-					areEqualChangeAtomIdOpts(change.valueReplace?.src, change.nodeDetach),
-				"This format only supports node detach when it represents a pin",
-			);
-
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 
 			if (change.valueReplace !== undefined) {
