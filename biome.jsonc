@@ -176,36 +176,6 @@
 	},
 	"overrides": [
 		{
-			// @fluidframework/tree LINTING
-			// Disable rules that conflict with established TypeScript patterns in this package:
-			// - noRedeclare: Type aliases with the same name (e.g., _check) are intentionally repeated
-			//   in different blocks for compile-time type checking. TypeScript handles this correctly.
-			// - noUnusedVariables: Type aliases like `type _check = ...` are compile-time only.
-			// - noAssignInExpressions: Tests use assignments in arrow function bodies to test property changes.
-			// - noUselessLoneBlockStatements: Blocks are used to isolate compile-time type checking code.
-			// - noExportsInTest: Test utility files export functions for reuse by other tests.
-			"includes": ["**/packages/dds/tree/**"],
-			"linter": {
-				"rules": {
-					"suspicious": {
-						"noRedeclare": "off",
-						"noAssignInExpressions": "off",
-						"noExportsInTest": "off",
-						"noExplicitAny": "off"
-					},
-					"correctness": {
-						"noUnusedVariables": "off"
-					},
-					"complexity": {
-						"noUselessLoneBlockStatements": "off"
-					},
-					"style": {
-						"noNonNullAssertion": "off"
-					}
-				}
-			}
-		},
-		{
 			// @fluid-experimental/tree FORMATTING
 			// This configuration is used to format the @fluid-experimental/tree package, which uses different settings than
 			// most projects. This override is needed to ensure that the formatter is applied correctly when run from the root
