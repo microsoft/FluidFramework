@@ -874,7 +874,7 @@ export const TreeAlpha: TreeAlpha = {
 			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 		};
 		const result = codec.encode(batch, context);
-		return result;
+		return result as JsonCompatible<IFluidHandle>;
 	},
 
 	importCompressed<const TSchema extends ImplicitFieldSchema>(

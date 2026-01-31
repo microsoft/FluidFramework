@@ -34,7 +34,7 @@ import {
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
 export type ForestCodec = IJsonCodec<
 	FieldSet,
-	Format,
+	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
 	FieldBatchEncodingContext
 >;

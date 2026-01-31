@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { TAnySchema } from "@sinclair/typebox";
 
 import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import type {
@@ -13,8 +12,8 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
 import { JsonCompatibleReadOnlySchema } from "../util/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { MessageEncodingContext } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
@@ -44,9 +43,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 > {
 	return withSchemaValidation<
 		DecodedMessage<TChangeset>,
-		TAnySchema | typeof JsonCompatibleReadOnlySchema,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
+		typeof JsonCompatibleReadOnlySchema,
 		MessageEncodingContext
 	>(
 		Message(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema),
