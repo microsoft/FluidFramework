@@ -4,6 +4,7 @@
         "ecmaVersion": 2026,
         "parser": "typescript-eslint/parser@8.18.2",
         "parserOptions": {
+            "project": null,
             "projectService": true
         },
         "sourceType": "module"
