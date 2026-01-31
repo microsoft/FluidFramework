@@ -4,7 +4,7 @@
  */
 
 /**
- * Shared ESLint configuration for server/routerlicious packages.
+ * Shared ESLint configuration for server/gitrest packages.
  *
  * Re-exports the server config from @fluidframework/eslint-config-fluid.
  */
