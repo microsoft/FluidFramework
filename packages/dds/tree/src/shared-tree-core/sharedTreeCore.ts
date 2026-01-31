@@ -370,7 +370,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				branchId,
 			);
 			this.editManager.advanceMinimumSequenceNumber(newRevision, false);
-			return undefined;
+			return;
 		}
 
 		const enrichedCommit = isResubmit
@@ -582,7 +582,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		}
 	}
 
-	public rollback(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
+	public rollback(content: JsonCompatibleReadOnly, _localOpMetadata: unknown): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const message = this.messageCodec.decode(this.serializer.decode(content), {
 			idCompressor: this.idCompressor,

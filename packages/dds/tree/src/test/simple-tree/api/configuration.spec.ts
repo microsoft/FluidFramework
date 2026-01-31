@@ -25,7 +25,7 @@ const schema = new SchemaFactory("com.example");
 
 describe("simple-tree configuration", () => {
 	it("preventAmbiguity", () => {
-		const config = new TreeViewConfiguration({
+		const _config = new TreeViewConfiguration({
 			schema: [schema.array(schema.string), schema.array(schema.number)],
 			preventAmbiguity: false,
 		});
@@ -37,7 +37,7 @@ describe("simple-tree configuration", () => {
 				}),
 			validateUsageError(/More than one kind of array/),
 		);
-		const config2 = new TreeViewConfiguration({
+		const _config2 = new TreeViewConfiguration({
 			schema: [schema.object("foo", {}), schema.array(schema.number)],
 			preventAmbiguity: true,
 		});

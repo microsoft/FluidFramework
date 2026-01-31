@@ -38,7 +38,7 @@ const testCases: readonly [string, readonly JsonCompatible[]][] = [
 		[
 			{
 				["__proto__"]: 1,
-				[""]: 2,
+				"": 2,
 				hasOwnProperty: 3,
 				toString: 4,
 			},

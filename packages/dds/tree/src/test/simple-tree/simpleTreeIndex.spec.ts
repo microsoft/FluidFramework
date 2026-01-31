@@ -148,7 +148,7 @@ describe("simple tree indexes", () => {
 		const parent = view.root;
 		const index = createSimpleTreeIndex(
 			view,
-			(schema) => "other",
+			(_schema) => "other",
 			(nodes) => nodes.length,
 			isStringKey,
 			[OtherIndexableChild, OtherIndexableParent],

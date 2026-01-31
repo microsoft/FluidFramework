@@ -116,11 +116,11 @@ export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 		id: "createTree",
 		isAttached: () => false,
 	};
-	const logger: ITelemetryBaseLogger = { send() {} };
+	const logger: ITelemetryBaseLogger = { send() { /* intentional no-op */ } };
 	return createTreeInner(
 		dummyChannel,
 		mockSerializer,
-		() => {},
+		() => { /* intentional no-op */ },
 		logger,
 		indexes,
 		TreeCompressionStrategy.Uncompressed,
@@ -236,7 +236,7 @@ function createTreeInner(
 
 class NoOpChangeEnricher<TChange> implements ChangeEnricher<TChange> {
 	public enrich(
-		context: GraphCommit<TChange>,
+		_context: GraphCommit<TChange>,
 		changes: readonly TaggedChange<TChange>[],
 	): TChange[] {
 		return changes.map((change) => change.change);
@@ -315,7 +315,7 @@ export class TestSharedTreeCore extends SharedObject {
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		this.kernel.processMessagesCore(messagesCollection);
 	}
-	protected onDisconnect(): void {}
+	protected onDisconnect(): void { /* intentional no-op */ }
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await this.kernel.loadCore(services);

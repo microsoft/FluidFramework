@@ -18,7 +18,7 @@ import { mintRevisionTag } from "../../utils.js";
 
 import { MarkMaker as Mark } from "./testEdits.js";
 
-const tag = mintRevisionTag();
+const _tag = mintRevisionTag();
 const atomId: ChangeAtomId = { localId: brand(0) };
 const deltaId: DeltaDetachedNodeId = { minor: atomId.localId };
 const childChange = TestNodeId.create({ localId: brand(0) }, TestChange.mint([0], 1));

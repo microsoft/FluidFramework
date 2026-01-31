@@ -22,6 +22,6 @@ export abstract class EditBuilder<TChange> implements ChangeFamilyEditor {
 		this.changeReceiver(change);
 	}
 
-	public enterTransaction(): void {}
-	public exitTransaction(): void {}
+	public enterTransaction(): void { /* intentional no-op */ }
+	public exitTransaction(): void { /* intentional no-op */ }
 }

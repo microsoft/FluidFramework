@@ -18,7 +18,6 @@ import type { Brand, Opaque } from "../../util/index.js";
 describe("BrandedMap", () => {
 	it("basic use", () => {
 		//  See note on BrandedKey.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		type Key = BrandedKey<number, any>;
 		const m: BrandedMapSubset<Key> = new Map();
 		const keyA: BrandedKey<number, "A"> = brandedSlot();
@@ -27,14 +26,14 @@ describe("BrandedMap", () => {
 		m.set(keyA, "A");
 
 		// @ts-expect-error Wrong value type
-		const outBad = getOrCreateSlotContent(m, keyA, () => "B");
-		const out = getOrCreateSlotContent(m, keyA, () => "A");
+		const _outBad = getOrCreateSlotContent(m, keyA, () => "B");
+		const _out = getOrCreateSlotContent(m, keyA, () => "A");
 
-		const x: "A" | undefined = m.get(keyA);
+		const _x: "A" | undefined = m.get(keyA);
 
 		// Generic access with `any` typed key is unsafe, but can't be prevented while being compatible with map.
 		m.set(keyA as Key, "B");
-		const x2: "B" | undefined = m.get<Key>(keyA);
+		const _x2: "B" | undefined = m.get<Key>(keyA);
 	});
 
 	// Example from BrandedMapSubset docs.
@@ -42,7 +41,6 @@ describe("BrandedMap", () => {
 		type FooSlot<TContent> = BrandedKey<Opaque<Brand<number, "FooSlot">>, TContent>;
 		const counterSlot = brandedSlot<FooSlot<number>>();
 		// See note on BrandedKey
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const slots: BrandedMapSubset<FooSlot<any>> = new Map();
 		slots.set(counterSlot, slots.get(counterSlot) ?? 0 + 1);
 	});

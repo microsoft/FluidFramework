@@ -65,7 +65,7 @@ const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeF
 		}
 		return state;
 	},
-	transactionBoundary: (state, operation) => {
+	transactionBoundary: (_state, _operation) => {
 		assert.fail(
 			"Transactions are simulated manually in these tests and should not be generated.",
 		);
@@ -80,7 +80,7 @@ const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeF
 		applySynchronizationOp(state);
 		return state;
 	},
-	schemaChange: (state, operation) => {
+	schemaChange: (state, _operation) => {
 		return state;
 	},
 	constraint: (state, operation) => {
@@ -135,7 +135,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			factory: new SharedTreeTestFactory(createOnCreate(undefined)),
 			generatorFactory,
 			reducer: fuzzComposedVsIndividualReducer,
-			validateConsistency: () => {},
+			validateConsistency: () => { /* intentional no-op */ },
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {

@@ -16,7 +16,7 @@ import type { NodeId } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldEditor } from "../../../feature-libraries/sequence-field/sequenceFieldEditor.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import * as SF from "../../../feature-libraries/sequence-field/types.js";
+import type * as SF from "../../../feature-libraries/sequence-field/types.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { extractMarkEffect } from "../../../feature-libraries/sequence-field/utils.js";
 import { type Mutable, brand } from "../../../util/index.js";

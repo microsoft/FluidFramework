@@ -59,10 +59,10 @@ import { sequenceFieldToDelta } from "../../../feature-libraries/sequence-field/
 import {
 	type MarkEffect,
 	NoopMarkType,
-	CellId,
-	Changeset,
-	HasMarkFields,
-	MoveId,
+	type CellId,
+	type Changeset,
+	type HasMarkFields,
+	type MoveId,
 	type Remove,
 	type Mark,
 	type MoveOut,
@@ -573,8 +573,6 @@ export class DetachedNodeTracker {
 	private nodes: Map<number, CellId> = new Map();
 	private readonly equivalences: { old: CellId; new: CellId }[] = [];
 
-	public constructor() {}
-
 	/**
 	 * Updates the internals of this instance to account for `change` having been applied.
 	 * @param change - The change that is being applied. Not mutated.
@@ -896,8 +894,8 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			setInCrossFieldMap(getMap(target), revision, id, count, value);
 		},
 
-		onMoveIn: () => {},
-		moveKey: () => {},
+		onMoveIn: () => { /* intentional no-op */ },
+		moveKey: () => { /* intentional no-op */ },
 
 		reset: () => {
 			table.isInvalidated = false;

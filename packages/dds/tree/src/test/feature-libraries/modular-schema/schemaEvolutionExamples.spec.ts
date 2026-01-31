@@ -18,7 +18,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository } from "../../utils.js";
 
-function assertEnumEqual<TEnum extends { [key: number]: string }>(
+function _assertEnumEqual<TEnum extends { [key: number]: string }>(
 	enumObject: TEnum,
 	a: number,
 	b: number,

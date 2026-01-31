@@ -324,7 +324,7 @@ describe("AnchorSet", () => {
 	});
 
 	it("visitor can descend in under anchors and detach all their remaining children", () => {
-		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
+		const [anchors, anchor1, _anchor2, _anchor3, anchor4] = setup();
 
 		// This leaves anchor1 with no refs. It is kelp alive by anchor4 which is below it.
 		anchors.forget(anchor4);
@@ -400,7 +400,7 @@ describe("AnchorSet", () => {
 			assert.equal(anchors.internalizePath(pathLonger), pathLonger);
 
 			// Check that anchor nodes are not used if they are not relevant.
-			const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
+			const _anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 			assert.equal(anchors.internalizePath(path), path);
 			assert.equal(anchors.internalizePath(pathLonger), pathLonger);
 		});
@@ -653,11 +653,9 @@ function checkRemoved(
 	expected: FieldKey = brand("Temp-0"),
 ): void {
 	assert.notEqual(path, undefined);
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	assert.equal(getDetachedFieldContainingPath(path!), expected);
 	assert.deepEqual(
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		path!.detachedNodeId,
+		path?.detachedNodeId,
 		expectedDetachedNodeId,
 	);
 }

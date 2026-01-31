@@ -32,7 +32,7 @@ export const stringKey = "String";
 /**
  * The versions for the edit manager summary format.
  */
-export const enum EditManagerSummaryFormatVersion {
+export enum EditManagerSummaryFormatVersion {
 	/**
 	 * This version represents summary format before summary versioning was introduced.
 	 */
@@ -56,7 +56,7 @@ const supportedVersions = new Set<EditManagerSummaryFormatVersion>([
  * Returns the summary version to use as per the given minimum version for collab.
  */
 function minVersionToEditManagerSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	_version: MinimumVersionForCollab,
 ): EditManagerSummaryFormatVersion {
 	// Currently, version 2 is written which adds metadata blob to the summary.
 	return EditManagerSummaryFormatVersion.v2;

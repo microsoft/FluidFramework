@@ -71,7 +71,7 @@ function createRecordNodeProxy(
 	schema: RecordNodeSchema,
 ): TreeRecordNode {
 	const proxy: TreeRecordNode = new Proxy<TreeRecordNode>(proxyTarget as TreeRecordNode, {
-		get: (target, key, receiver): unknown => {
+		get: (_target, key, receiver): unknown => {
 			if (typeof key === "symbol") {
 				switch (key) {
 					// POJO mode records don't have TreeNode's build in members on their targets, so special case them:
@@ -114,7 +114,7 @@ function createRecordNodeProxy(
 
 			return undefined;
 		},
-		set: (target, key, value: InsertableContent | undefined, receiver): boolean => {
+		set: (_target, key, value: InsertableContent | undefined, receiver): boolean => {
 			if (typeof key === "symbol") {
 				return false;
 			}
@@ -138,7 +138,7 @@ function createRecordNodeProxy(
 			field.editor.set(mapTree, field.length === 0);
 			return true;
 		},
-		has: (target, key): boolean => {
+		has: (_target, key): boolean => {
 			if (typeof key === "symbol") {
 				return false;
 			}
@@ -148,11 +148,11 @@ function createRecordNodeProxy(
 
 			return childField !== undefined;
 		},
-		ownKeys: (target) => {
+		ownKeys: (_target) => {
 			const innerNode = getInnerNode(proxy);
 			return [...innerNode.keys()];
 		},
-		getOwnPropertyDescriptor: (target, key) => {
+		getOwnPropertyDescriptor: (_target, key) => {
 			if (typeof key === "symbol") {
 				return undefined;
 			}
@@ -171,10 +171,10 @@ function createRecordNodeProxy(
 				configurable: true, // Must be 'configurable' if property is absent from proxy target.
 			};
 		},
-		defineProperty(target, key, attributes) {
+		defineProperty(_target, _key, _attributes) {
 			throw new UsageError("Shadowing properties of record nodes is not permitted.");
 		},
-		deleteProperty(target, key) {
+		deleteProperty(_target, key) {
 			if (typeof key === "symbol") {
 				return false;
 			}
@@ -275,7 +275,7 @@ export function recordSchema<
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
-			flexNode: FlexTreeNode,
+			_flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
 			// Differentiate between the following cases:
 			//
@@ -299,16 +299,16 @@ export function recordSchema<
 			return createRecordNodeProxy(
 				proxyTarget,
 				customizable,
-				this as unknown as RecordNodeSchema,
+				Schema as unknown as RecordNodeSchema,
 			) as unknown as Schema;
 		}
 
 		public static override buildRawNode<T2>(
 			this: typeof TreeNodeValid<T2>,
-			instance: TreeNodeValid<T2>,
+			_instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return unhydratedFlexTreeFromInsertable(input as object, this as typeof Schema);
+			return unhydratedFlexTreeFromInsertable(input as object, Schema as typeof Schema);
 		}
 
 		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
@@ -316,7 +316,7 @@ export function recordSchema<
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
 			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
 			{
-				let prototype: object = this.prototype;
+				let prototype: object = Schema.prototype;
 				// There isn't a clear cleaner way to author this loop.
 				while (prototype !== Schema.prototype) {
 					for (const key of Object.getOwnPropertyNames(prototype)) {
@@ -337,8 +337,8 @@ export function recordSchema<
 				}
 			}
 
-			const schema = this as RecordNodeSchema;
-			return getTreeNodeSchemaInitializedData(this, {
+			const schema = Schema as RecordNodeSchema;
+			return getTreeNodeSchemaInitializedData(Schema, {
 				shallowCompatibilityTest,
 				toFlexContent: (data: FactoryContent): FlexContent =>
 					recordToFlexContent(data, schema),
@@ -388,7 +388,7 @@ export function recordSchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [normalizedTypes]));
+			return (privateData ??= createTreeNodeSchemaPrivateData(Schema, [normalizedTypes]));
 		}
 	}
 

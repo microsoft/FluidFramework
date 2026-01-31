@@ -34,7 +34,7 @@ import {
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	FlushMode,
-	MinimumVersionForCollab,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -232,7 +232,6 @@ export const DefaultTestSharedTreeKind = configuredSharedTree({
  *
  * Useful for testing codecs which compose over other codecs (in cases where the "inner" codec should never be called)
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const failCodec: IJsonCodec<any, any, any, any> = {
 	encode: () => assert.fail("Unexpected encode"),
 	decode: () => assert.fail("Unexpected decode"),
@@ -241,7 +240,6 @@ export const failCodec: IJsonCodec<any, any, any, any> = {
 /**
  * A {@link ICodecFamily} implementation which fails to resolve any codec.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const failCodecFamily: ICodecFamily<any, any> = {
 	resolve: () => assert.fail("Unexpected resolve"),
 	getSupportedFormats: () => [],
@@ -329,7 +327,7 @@ export class TestTreeProvider {
 
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();
-			const firstTree = await this.getTree(container);
+			const firstTree = await TestTreeProvider.getTree(container);
 			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
 				container,
@@ -365,7 +363,7 @@ export class TestTreeProvider {
 	 * _i_ is the index of the tree in order of creation.
 	 */
 	public async createTree(): Promise<ISharedTree> {
-		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		const _configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
 		const container =
@@ -408,6 +406,7 @@ export class TestTreeProvider {
 			this._trees.push(firstTree);
 			this.summarizer = summarizer;
 		}
+		// biome-ignore lint/correctness/noConstructorReturn: intentional return of proxy wrapper
 		return new Proxy(this, {
 			get: (target, prop, receiver) => {
 				// Route all properties that are on the `TestTreeProvider` itself
@@ -463,8 +462,7 @@ export class TestTreeProviderLite {
 	public constructor(
 		trees = 1,
 		private readonly factory: IChannelFactory<ITree> = DefaultTestSharedTreeKind.getFactory(),
-		useDeterministicSessionIds = true,
-		private readonly flushMode: FlushMode = FlushMode.Immediate,
+		useDeterministicSessionIds = true,readonly flushMode: FlushMode = FlushMode.Immediate,
 	) {
 		this.runtimeFactory = new MockContainerRuntimeFactoryWithOpBunching({
 			flushMode,
@@ -544,7 +542,7 @@ export class TestTreeProviderLite {
  * after the spy is no longer needed.
  */
 export function spyOnMethod(
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+	// biome-ignore lint/complexity/noBannedTypes: Function type needed for generic method spying
 	methodClass: Function,
 	methodName: string,
 	spy: () => void,
@@ -1448,7 +1446,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 	) {}
 
 	public viewWith<TRoot extends ImplicitFieldSchema>(
-		config: TreeViewConfiguration<TRoot>,
+		_config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot> {
 		throw new Error("'viewWith' not implemented in MockTreeCheckout.");
 	}
@@ -1478,19 +1476,19 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public branch(): ITreeCheckoutFork {
 		throw new Error("Method 'fork' not implemented in MockTreeCheckout.");
 	}
-	public merge(view: unknown, disposeView?: unknown): void {
+	public merge(_view: unknown, _disposeView?: unknown): void {
 		throw new Error("Method 'merge' not implemented in MockTreeCheckout.");
 	}
-	public rebase(view: ITreeCheckoutFork): void {
+	public rebase(_view: ITreeCheckoutFork): void {
 		throw new Error("Method 'rebase' not implemented in MockTreeCheckout.");
 	}
-	public updateSchema(newSchema: TreeStoredSchema): void {
+	public updateSchema(_newSchema: TreeStoredSchema): void {
 		throw new Error("Method 'updateSchema' not implemented in MockTreeCheckout.");
 	}
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
 		throw new Error("Method 'getRemovedRoots' not implemented in MockTreeCheckout.");
 	}
-	public locate(anchor: Anchor): AnchorNode | undefined {
+	public locate(_anchor: Anchor): AnchorNode | undefined {
 		throw new Error("Method 'locate' not implemented in MockTreeCheckout.");
 	}
 }

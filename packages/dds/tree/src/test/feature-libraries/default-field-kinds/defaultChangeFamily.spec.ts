@@ -83,7 +83,7 @@ const root_foo0_foo0: UpPath = {
 	parentIndex: 0,
 };
 
-const root_foo2_foo5: UpPath = {
+const _root_foo2_foo5: UpPath = {
 	parent: root_foo2,
 	parentField: fooKey,
 	parentIndex: 5,

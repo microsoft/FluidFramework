@@ -92,7 +92,7 @@ describe("Fuzz - anchor stability", () => {
 			factory: new SharedTreeTestFactory(createOnCreate(initialTreeState)),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: () => {},
+			validateConsistency: () => { /* intentional no-op */ },
 		};
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
@@ -162,16 +162,11 @@ describe("Fuzz - anchor stability", () => {
 			factory: new SharedTreeTestFactory(createOnCreate(initialTreeState)),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: () => {},
+			validateConsistency: () => { /* intentional no-op */ },
 		};
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
-			// Kludge: we force schematization and synchronization here to ensure that the clients all have the same
-			// starting tree as opposed to isomorphic copies.
-			// If we don't do this, then the anchors created below would be destroyed on all but one client (the client
-			// whose schematize wins the synchronization race).
-			{
 				for (const client of initialState.clients) {
 					// This is a kludge to force the invocation of schematize for each client.
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -180,7 +175,6 @@ describe("Fuzz - anchor stability", () => {
 					// which invalidates its view due to schema change.
 					initialState.containerRuntimeFactory.processAllMessages();
 				}
-			}
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
 				const view = viewFromState(initialState, client).checkout as RevertibleSharedTreeView;

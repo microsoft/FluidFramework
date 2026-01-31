@@ -81,8 +81,6 @@ export type _RecursiveTrick = never;
 
 // This block is kept here to ensure the above example behaves as documented, and can be copied into the example to update it as needed.
 {
-	/* eslint-disable @typescript-eslint/no-unused-vars */
-
 	// @ts-expect-error The TypeScript compiler can't handle this case
 	type Broken<T> = FlattenKeys<
 		{
@@ -103,8 +101,6 @@ export type _RecursiveTrick = never;
 			[K in keyof T]: T extends _RecursiveTrick ? _RecursiveTrick : Works<T[K]>;
 		}
 	>;
-
-	/* eslint-enable @typescript-eslint/no-unused-vars */
 }
 
 /**

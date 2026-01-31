@@ -129,10 +129,7 @@ function createFuzzNodeSchema(
 		]),
 		arrayChildren: ArrayChildren2,
 	}) {}
-
-	{
 		type _check = ValidateRecursiveSchema<typeof Node>;
-	}
 	return Node as unknown as FuzzNodeSchema;
 }
 

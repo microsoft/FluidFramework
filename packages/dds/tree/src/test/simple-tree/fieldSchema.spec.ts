@@ -40,8 +40,6 @@ describe("fieldSchema", () => {
 	{
 		class A extends schema.object("A", { x: [schema.number, schema.string] }) {}
 		class B extends schema.object("B", { x: [schema.number, schema.null] }) {}
-		// Unconstrained
-		{
 			// Input
 			type I1 = InsertableTreeFieldFromImplicitField<ImplicitFieldSchema>;
 			type _check1 = requireTrue<areSafelyAssignable<I1, never>>;
@@ -51,7 +49,6 @@ describe("fieldSchema", () => {
 			type _check6 = requireTrue<
 				areSafelyAssignable<N3, TreeNode | TreeLeafValue | undefined>
 			>;
-		}
 
 		// InsertableTreeFieldFromImplicitField
 		{
@@ -93,10 +90,8 @@ describe("fieldSchema", () => {
 
 		// InsertableField
 		{
-			{
 				type unconstrained = InsertableField<ImplicitFieldSchema>;
 				type _check = requireTrue<areSafelyAssignable<unconstrained, never>>;
-			}
 			type I8 = InsertableField<TreeNodeSchema>;
 
 			type I6 = InsertableField<typeof numberSchema & typeof stringSchema>;
@@ -211,7 +206,7 @@ describe("fieldSchema", () => {
 			/**
 			 * Define a generic container which holds the provided `T` directly as an implicit field schema.
 			 */
-			function makeInstanceImplicit<T extends ImplicitAllowedTypes>(
+			function _makeInstanceImplicit<T extends ImplicitAllowedTypes>(
 				schemaTypes: T,
 				content: InsertableTreeFieldFromImplicitField<T>,
 			) {
@@ -229,7 +224,7 @@ describe("fieldSchema", () => {
 			 *
 			 * This should function identically to the implicit one, but it doesn't.
 			 */
-			function makeInstanceRequired<T extends ImplicitAllowedTypes>(
+			function _makeInstanceRequired<T extends ImplicitAllowedTypes>(
 				schemaTypes: T,
 				content: InsertableTreeFieldFromImplicitField<T>,
 			) {
@@ -250,7 +245,7 @@ describe("fieldSchema", () => {
 			/**
 			 * Define a generic container which holds the provided `T` in an optional field.
 			 */
-			function makeInstanceOptional<T extends ImplicitAllowedTypes>(
+			function _makeInstanceOptional<T extends ImplicitAllowedTypes>(
 				schemaTypes: T,
 				content: InsertableTreeFieldFromImplicitField<T> | undefined,
 			) {
@@ -274,7 +269,7 @@ describe("fieldSchema", () => {
 			 * Define a generic container which holds the provided `T` in an optional field, using objectRecursive.
 			 * This case is included to highlight one scenario where the compiler limitation does not occur due to simpler typing.
 			 */
-			function makeInstanceOptionalRecursive<T extends ImplicitAllowedTypes>(
+			function _makeInstanceOptionalRecursive<T extends ImplicitAllowedTypes>(
 				schemaTypes: T,
 				content: InsertableTreeFieldFromImplicitField<T> | undefined,
 			) {

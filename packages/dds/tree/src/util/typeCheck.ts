@@ -84,7 +84,8 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests.js";
  * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
  * @sealed @public
  */
-export interface MakeNominal {}
+// biome-ignore lint/complexity/noBannedTypes: intentional empty object type for nominal typing
+export type MakeNominal = {}
 
 /**
  * Constrain generic type parameters to Contravariant.

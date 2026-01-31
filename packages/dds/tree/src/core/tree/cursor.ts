@@ -312,6 +312,7 @@ export interface PathRootPrefix {
 	indexOffset?: number;
 }
 
+// biome-ignore lint/suspicious/noConstEnum: const enum is intentional for performance
 export const enum CursorLocationType {
 	/**
 	 * Can iterate through nodes in a field.

@@ -125,7 +125,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 
 		return createAnnouncedVisitor({
 			// nodes (and their entire subtrees) are added to the index as soon as they are created
-			afterCreate: (content: readonly ITreeCursorSynchronous[], destination: FieldKey) => {
+			afterCreate: (_content: readonly ITreeCursorSynchronous[], destination: FieldKey) => {
 				const detachedCursor = this.forest.allocateCursor();
 				assert(
 					this.forest.tryMoveCursorToField(
@@ -162,7 +162,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				};
 				parentField = undefined;
 			},
-			exitNode(index: number): void {
+			exitNode(_index: number): void {
 				assert(parent !== undefined, 0xa8e /* must have parent node */);
 				const temp = parent;
 				parentField = temp.parentField;
@@ -171,7 +171,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			enterField: (key: FieldKey) => {
 				parentField = key;
 			},
-			exitField(key: FieldKey): void {
+			exitField(_key: FieldKey): void {
 				parentField = undefined;
 			},
 		});

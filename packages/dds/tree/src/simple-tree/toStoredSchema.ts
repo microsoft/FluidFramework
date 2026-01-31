@@ -500,5 +500,5 @@ function preservesViewData(options: SimpleSchemaTransformationOptions): boolean 
 	// As noted above in the doc comment, the only case we care about the return value is when the input is a view schema.
 	// There are two such cases: isStoredFromView where we return false, and Unchanged when applied to a view schema, where we return true.
 	// It does not matter what we return in other cases, so for simplicity they just end up as "true".
-	return isStoredFromView(options) ? false : true;
+	return !isStoredFromView(options);
 }

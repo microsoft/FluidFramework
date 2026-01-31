@@ -82,7 +82,7 @@ function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): vo
  */
 function makeLoggingDecoder(log: string[], chunk: TreeChunk, message?: string): ChunkDecoder {
 	return {
-		decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+		decode(_decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 			log.push(message ?? (readStream(stream) as string));
 			chunk.referenceAdded();
 			return chunk;

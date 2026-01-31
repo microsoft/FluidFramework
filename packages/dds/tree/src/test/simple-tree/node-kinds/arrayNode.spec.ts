@@ -95,9 +95,6 @@ describe("ArrayNode", () => {
 		it("Lists", () => {
 			const List = schemaFactory.array(schemaFactory.number);
 			const NestedList = schemaFactory.array(List);
-
-			// leaf
-			{
 				type I1 = InsertableTreeFieldFromImplicitField<typeof schemaFactory.number>;
 				type I2 = InsertableTypedNode<typeof schemaFactory.number>;
 				type I3 = NodeBuilderData<typeof schemaFactory.number>;
@@ -112,10 +109,6 @@ describe("ArrayNode", () => {
 				type _check4 = requireTrue<areSafelyAssignable<N1, number>>;
 				type _check5 = requireTrue<areSafelyAssignable<N2, number>>;
 				type _check6 = requireTrue<areSafelyAssignable<N3, number>>;
-			}
-
-			// Array
-			{
 				type I1 = InsertableTreeFieldFromImplicitField<typeof List>;
 				type I2 = InsertableTypedNode<typeof List>;
 				type I3 = NodeBuilderData<typeof List>;
@@ -131,10 +124,6 @@ describe("ArrayNode", () => {
 				type _check6 = requireTrue<areSafelyAssignable<I4, Iterable<number>>>;
 				type _check4 = requireTrue<areSafelyAssignable<N1, N2>>;
 				type _check5 = requireTrue<areSafelyAssignable<N2, N3>>;
-			}
-
-			// Nested Array
-			{
 				type I1 = InsertableTreeFieldFromImplicitField<typeof NestedList>;
 				type I2 = InsertableTypedNode<typeof NestedList>;
 				type I3 = NodeBuilderData<typeof NestedList>;
@@ -148,7 +137,6 @@ describe("ArrayNode", () => {
 				type _check3 = requireAssignableTo<Iterable<Iterable<number>>, I3>;
 				type _check4 = requireTrue<areSafelyAssignable<N1, N2>>;
 				type _check5 = requireTrue<areSafelyAssignable<N2, N3>>;
-			}
 		});
 	});
 
@@ -811,6 +799,7 @@ describe("ArrayNode", () => {
 			// Apps compiled targeting es2020 will hit the "fails at runtime if attempting to set content via index assignment" case tested above instead of these due to using assignment in the constructor to implement fields defaulting.
 
 			it("Shadowing index property with incompatible type", () => {
+				// biome-ignore lint/suspicious/noShadowRestrictedNames: intentional shadowing for test
 				class Array extends schemaFactory.array(
 					"ArrayWithTypeIncompatibleShadow",
 					schemaFactory.number,
@@ -826,6 +815,7 @@ describe("ArrayNode", () => {
 			});
 
 			it("Shadowing index property with compatible type", () => {
+				// biome-ignore lint/suspicious/noShadowRestrictedNames: intentional shadowing for test
 				class Array extends schemaFactory.array(
 					"ArrayWithTypeCompatibleShadow",
 					schemaFactory.number,
@@ -841,6 +831,7 @@ describe("ArrayNode", () => {
 			});
 
 			it("Shadowing index property with compatible type (getter)", () => {
+				// biome-ignore lint/suspicious/noShadowRestrictedNames: intentional shadowing for test
 				class Array extends schemaFactory.array(
 					"ArrayWithGetterShadow",
 					schemaFactory.number,
@@ -860,6 +851,7 @@ describe("ArrayNode", () => {
 		},
 		() => {
 			it("Shadowing index property with constructor-initialized property", () => {
+				// biome-ignore lint/suspicious/noShadowRestrictedNames: intentional shadowing for test
 				class Array extends schemaFactory.array(
 					"ArrayWithGetterShadow",
 					schemaFactory.number,
@@ -980,7 +972,7 @@ describe("ArrayNode", () => {
 		it("constructor - empty", () => {
 			class Schema extends schemaFactory.array("x", schemaFactory.number) {
 				// Adds a member to the derived class which allows these tests to detect if the constructed value isn't typed with the derived class.
-				public foo(): void {}
+				public foo(): void { /* intentional no-op */ }
 			}
 			const _fromIterable: Schema = new Schema([]);
 			const _fromUndefined: Schema = new Schema(undefined);
@@ -998,7 +990,7 @@ describe("ArrayNode", () => {
 		it("constructor - recursive empty", () => {
 			class Schema extends schemaFactory.arrayRecursive("x", [() => Schema]) {
 				// Adds a member to the derived class which allows these tests to detect if the constructed value isn't typed with the derived class.
-				public foo(): void {}
+				public foo(): void { /* intentional no-op */ }
 			}
 			const _fromIterable: Schema = new Schema([]);
 			const _fromUndefined: Schema = new Schema(undefined);
@@ -1028,7 +1020,7 @@ describe("ArrayNode", () => {
 			it("fromIterable", () => {
 				class Schema extends schemaFactory.array("x", schemaFactory.number) {}
 				class Root extends schemaFactory.object("root", { data: Schema }) {}
-				const fromArray = new Root({ data: [5] });
+				const _fromArray = new Root({ data: [5] });
 				const fromIterable = new Root({ data: new Set([5]) });
 				assert.deepEqual([...fromIterable.data], [5]);
 			});

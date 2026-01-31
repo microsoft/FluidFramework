@@ -135,7 +135,7 @@ export class ChunkedForest implements IEditableForest {
 				);
 				this.forest.activeVisitor = undefined;
 			},
-			destroy(detachedField: FieldKey, count: number): void {
+			destroy(detachedField: FieldKey, _count: number): void {
 				this.forest.#events.emit("beforeChange");
 				this.forest.roots.fields.delete(detachedField);
 			},
@@ -153,7 +153,7 @@ export class ChunkedForest implements IEditableForest {
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.attachEdit(source, count, destination);
 			},
-			detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
+			detach(source: Range, destination: FieldKey, _id: DeltaDetachedNodeId): void {
 				this.detachEdit(source, destination);
 			},
 			/**
@@ -162,7 +162,7 @@ export class ChunkedForest implements IEditableForest {
 			 * @param source - The the range to be attached.
 			 * @param destination - The index in the current field at which to attach the content.
 			 */
-			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
+			attachEdit(source: FieldKey, _count: number, destination: PlaceIndex): void {
 				this.forest.#events.emit("beforeChange");
 				const sourceField = this.forest.roots.fields.get(source) ?? [];
 				this.forest.roots.fields.delete(source);
@@ -259,7 +259,7 @@ export class ChunkedForest implements IEditableForest {
 					this.mutableChunk = found;
 				}
 			},
-			exitNode(index: number): void {
+			exitNode(_index: number): void {
 				assert(this.mutableChunk !== undefined, 0x537 /* should be in node */);
 				this.mutableChunk = undefined;
 			},
@@ -268,7 +268,7 @@ export class ChunkedForest implements IEditableForest {
 				this.mutableChunkStack.push({ key, mutableChunk: this.mutableChunk });
 				this.mutableChunk = undefined;
 			},
-			exitField(key: FieldKey): void {
+			exitField(_key: FieldKey): void {
 				const top = this.mutableChunkStack.pop() ?? fail(0xaf8 /* should not be at root */);
 				assert(this.mutableChunk === undefined, 0x539 /* should be in field */);
 				this.mutableChunk = top.mutableChunk;
@@ -366,7 +366,6 @@ export class ChunkedForest implements IEditableForest {
 		}
 		cursorToMove.clear();
 		while (keyStack.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const key = keyStack.pop()!;
 			if (cursorToMove.state === ITreeSubscriptionCursorState.Cleared) {
 				cursorToMove.setToDetachedSequence(key);
@@ -375,7 +374,6 @@ export class ChunkedForest implements IEditableForest {
 				cursorToMove.enterField(key);
 			}
 
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			cursorToMove.enterNode(indexStack.pop()!);
 		}
 	}

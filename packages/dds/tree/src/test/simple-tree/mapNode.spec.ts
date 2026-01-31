@@ -86,7 +86,7 @@ describeHydration(
 		it("constructor", () => {
 			class Schema extends schemaFactory.map("x", schemaFactory.number) {
 				// Adds a member to the derived class which allows these tests to detect if the constructed value isn't typed with the derived class.
-				public foo(): void {}
+				public foo(): void { /* intentional no-op */ }
 			}
 			const _fromMap: Schema = new Schema(new Map());
 			const _fromIterable: Schema = new Schema([]);
@@ -108,7 +108,7 @@ describeHydration(
 		it("constructor - recursive", () => {
 			class Schema extends schemaFactory.mapRecursive("x", [() => Schema]) {
 				// Adds a member to the derived class which allows these tests to detect if the constructed value isn't typed with the derived class.
-				public foo(): void {}
+				public foo(): void { /* intentional no-op */ }
 			}
 			const _fromMap: Schema = new Schema(new Map());
 			const _fromIterable: Schema = new Schema([]);

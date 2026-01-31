@@ -69,7 +69,7 @@ export function clientVersionToEditManagerFormatVersion(
  * Returns the version that should be used for testing shared branches.
  */
 export function editManagerFormatVersionSelectorForSharedBranches(
-	clientVersion: MinimumVersionForCollab,
+	_clientVersion: MinimumVersionForCollab,
 ): EditManagerFormatVersion {
 	return brand(EditManagerFormatVersion.vSharedBranches);
 }
@@ -133,7 +133,9 @@ export function makeEditManagerCodecs<TChangeset>(
 			JsonCompatibleReadOnly,
 			EditManagerEncodingContext
 		>,
-	][] = Array.from(editManagerFormatVersions, (version) => {
+	][] =
+		// biome-ignore lint/suspicious/useIterableCallbackReturn: unreachableCase in default throws, no return needed
+		Array.from(editManagerFormatVersions, (version) => {
 		switch (version) {
 			case unbrand(EditManagerFormatVersion.v1):
 			case unbrand(EditManagerFormatVersion.v2): {

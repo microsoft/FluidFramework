@@ -97,7 +97,7 @@ export function decodeSchemaCompatibilitySnapshot(
 	return {
 		root: decodeSimpleFieldSchema(encodedSchema.root),
 		definitions: new Map(
-			transformMapValues(objectToMap(encodedSchema.definitions), (value, key) => {
+			transformMapValues(objectToMap(encodedSchema.definitions), (value, _key) => {
 				return decodeNodeSchema(value);
 			}),
 		),

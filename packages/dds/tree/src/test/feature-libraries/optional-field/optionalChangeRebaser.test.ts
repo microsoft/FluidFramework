@@ -79,13 +79,13 @@ function makeRevisionTagMinter(prefix = "rev"): RevisionTagMinter {
 	return () => `${prefix}${currentRevision++}` as unknown as RevisionTag;
 }
 
-const type: TreeNodeSchemaIdentifier = brand("Node");
+const _type: TreeNodeSchemaIdentifier = brand("Node");
 const mintRevisionTag = makeRevisionTagMinter();
 const tag1 = mintRevisionTag();
 
 const OptionalChange = {
 	set(
-		value: string,
+		_value: string,
 		wasEmpty: boolean,
 		ids: {
 			fill: ChangeAtomId;
@@ -186,7 +186,7 @@ function rebase(
 	change: OptionalChangeset,
 	base: TaggedChange<OptionalChangeset>,
 	metadataArg?: RebaseRevisionMetadata,
-	rebaseChild: NodeChangeRebaser = (id, baseId) => id,
+	rebaseChild: NodeChangeRebaser = (id, _baseId) => id,
 ): OptionalChangeset {
 	deepFreeze(change);
 	deepFreeze(base);

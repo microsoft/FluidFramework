@@ -447,7 +447,7 @@ describe("tree indexes", () => {
 		assert.throws(() => [...index.allEntries()]);
 		assert.throws(() => [...index.entries()]);
 		// eslint-disable-next-line unicorn/no-array-for-each -- Testing forEach API on disposed index
-		assert.throws(() => index.forEach(() => {}));
+		assert.throws(() => index.forEach(() => { /* intentional no-op */ }));
 		assert.throws(() => index.get(childId));
 		assert.throws(() => index.has(childId));
 		assert.throws(() => [...index.keys()]);

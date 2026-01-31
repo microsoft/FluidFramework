@@ -70,7 +70,7 @@ function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): voi
 
 function makeCheckout(
 	repository: TreeStoredSchemaRepository,
-	onChange: (change: TaggedChange<ModularChangeset>) => void = () => {},
+	onChange: (change: TaggedChange<ModularChangeset>) => void = () => { /* intentional no-op */ },
 ) {
 	const editor = makeTestDefaultChangeFamily().buildEditor(mintRevisionTag, onChange);
 
@@ -114,11 +114,11 @@ describe("schematizeTree", () => {
 						previousSchema = new TreeStoredSchemaRepository(storedSchema);
 					});
 
-					let currentData: typeof content.initialTree;
+					let _currentData: typeof content.initialTree;
 					const checkout = makeCheckout(storedSchema, () => {
 						// TODO: check currentData is compatible with current schema.
 						// TODO: check data in cursors is compatible with current schema.
-						currentData = content.initialTree;
+						_currentData = content.initialTree;
 					});
 					initialize(
 						checkout,
@@ -183,13 +183,13 @@ describe("schematizeTree", () => {
 			branch(): ITreeCheckoutFork {
 				throw new Error("Function not implemented.");
 			},
-			merge(view: ITreeCheckoutFork): void {
+			merge(_view: ITreeCheckoutFork): void {
 				throw new Error("Function not implemented.");
 			},
-			rebase(view: ITreeCheckoutFork): void {
+			rebase(_view: ITreeCheckoutFork): void {
 				throw new Error("Function not implemented.");
 			},
-			updateSchema(newSchema: TreeStoredSchema): void {
+			updateSchema(_newSchema: TreeStoredSchema): void {
 				throw new Error("Function not implemented.");
 			},
 			events: undefined as unknown as Listenable<CheckoutEvents>,
@@ -197,11 +197,11 @@ describe("schematizeTree", () => {
 			getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
 				throw new Error("Function not implemented.");
 			},
-			locate(anchor: Anchor): AnchorNode | undefined {
+			locate(_anchor: Anchor): AnchorNode | undefined {
 				throw new Error("Function not implemented.");
 			},
 			viewWith<TRoot extends ImplicitFieldSchema>(
-				config: TreeViewConfiguration<TRoot>,
+				_config: TreeViewConfiguration<TRoot>,
 			): TreeView<TRoot> {
 				throw new Error("Function not implemented.");
 			},

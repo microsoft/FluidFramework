@@ -1454,7 +1454,7 @@ describe("treeNodeApi", () => {
 			assert.throws(
 				() => {
 					const children = TreeAlpha.children(tree);
-					for (const [key, child] of children) {
+					for (const [_key, _child] of children) {
 						// Accessing the first child should result in an error
 					}
 				},
@@ -1834,7 +1834,7 @@ describe("treeNodeApi", () => {
 				const id = nodeKeyManager.stabilizeNodeIdentifier(
 					nodeKeyManager.generateLocalNodeIdentifier(),
 				);
-				const test = TreeAlpha.identifier.shorten(view, id);
+				const _test = TreeAlpha.identifier.shorten(view, id);
 				assert.equal(TreeAlpha.identifier.shorten(view, id), undefined);
 			});
 
@@ -2594,7 +2594,7 @@ describe("treeNodeApi", () => {
 
 			// @ts-expect-error Incorrect variance (using method syntax for "nodeChanged" makes this build when it shouldn't: this is a regression test for that issue)
 			TreeBeta.on(ab, "nodeChanged", (data: { changedProperties: ReadonlySet<"A"> }) => {
-				const x = data.changedProperties;
+				const _x = data.changedProperties;
 			});
 
 			function oneOf<T extends readonly unknown[]>(...items: T): T[number] {

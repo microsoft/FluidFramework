@@ -38,6 +38,7 @@ export function makeModularChangeCodecFamily(
 	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 ): ICodecFamily<ModularChangeset, ChangeEncodingContext> {
 	return makeCodecFamily(
+		// biome-ignore lint/suspicious/useIterableCallbackReturn: fail() in default case throws, no return needed
 		Array.from(fieldKindConfigurations.entries(), ([version, fieldKinds]) => {
 			switch (version) {
 				case ModularChangeFormatVersion.v3:

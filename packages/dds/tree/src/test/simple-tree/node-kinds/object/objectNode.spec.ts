@@ -72,124 +72,72 @@ const schemaFactory = new SchemaFactory("Test");
 	};
 
 	type Desired = InsertableTypedNode<typeof Note>;
-
-	{
 		type result = InsertableObjectFromSchemaRecord<Info>["stuff"];
 		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
-	}
-
-	{
 		type result = InsertableTreeFieldFromImplicitField<Info["stuff"]>;
 		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
-	}
-
-	// Generic case
-	{
 		type result = InsertableObjectFromSchemaRecord<
 			RestrictiveStringRecord<ImplicitFieldSchema>
 		>;
 		type _check = requireAssignableTo<result, never>;
-	}
-
-	// Empty case
-	{
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+		// biome-ignore lint/complexity/noBannedTypes: testing empty object type behavior
 		type result = InsertableObjectFromSchemaRecord<{}>;
 		type _check = requireAssignableTo<result, Record<string, never>>;
-	}
 }
 
 // FieldHasDefault
 {
 	class Note extends schemaFactory.object("Note", {}) {}
-
-	{
 		type _check = requireFalse<FieldHasDefault<ImplicitAllowedTypes>>;
 		type _check2 = requireFalse<FieldHasDefault<ImplicitFieldSchema>>;
-	}
-
-	// Node schema via ImplicitAllowedTypes
-	{
 		// Implicitly required field does not have a default value.
 		type _check = requireFalse<FieldHasDefault<typeof Note>>;
-	}
-
-	// Required field
-	{
 		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
 
 		// Required field does not have a default value.
 		type _check = requireFalse<FieldHasDefault<RequiredNoteField>>;
-	}
-
-	// Optional field
-	{
 		type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
 
 		// Optional field has default.
 		type _check = requireTrue<FieldHasDefault<OptionalNoteField>>;
-	}
-
-	// Identifier field
-	{
 		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
 
 		// Identifier fields have default.
 		type _check = requireTrue<FieldHasDefault<IdentifierField>>;
-	}
-
-	// Union of required fields
-	{
 		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
 		type ImplicitlyRequiredStringField = typeof SchemaFactory.string;
 		type Union = RequiredNoteField | ImplicitlyRequiredStringField;
 
 		// Field definitively does not have a default value.
 		type _check = requireFalse<FieldHasDefault<Union>>;
-	}
-
-	// Union of optional fields
-	{
 		type OptionalNoteField = FieldSchema<FieldKind.Optional, typeof Note>;
 		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
 		type Union = OptionalNoteField | IdentifierField;
 
 		// Field definitively has a default value.
 		type _check = requireTrue<FieldHasDefault<Union>>;
-	}
-
-	// Union of required and optional fields
-	{
 		type RequiredNoteField = FieldSchema<FieldKind.Required, typeof Note>;
 		type IdentifierField = FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
 		type Union = RequiredNoteField | IdentifierField;
 
 		// Field may or may not have a default value.
 		type _check = requireFalse<FieldHasDefault<Union>>;
-	}
 }
 
 // ObjectFromSchemaRecord
 {
-	// Generic case
-	{
 		type result = ObjectFromSchemaRecord<RestrictiveStringRecord<ImplicitFieldSchema>>;
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+		// biome-ignore lint/complexity/noBannedTypes: testing empty object type behavior
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 
 		type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
-	}
-
-	// Empty case
-	{
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+		// biome-ignore lint/complexity/noBannedTypes: testing empty object type behavior
 		type result = ObjectFromSchemaRecord<{}>;
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+		// biome-ignore lint/complexity/noBannedTypes: testing empty object type behavior
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 		type _check2 = requireFalse<isAssignableTo<result, { x: unknown }>>;
 
 		type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
-	}
 }
 
 describeHydration(
@@ -203,7 +151,7 @@ describeHydration(
 					// constructor is a special case, since one is built in on the derived type.
 					// Check that it is exposed as expected based on type:
 					const x = n.constructor;
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+					// biome-ignore lint/complexity/noBannedTypes: testing Function type behavior
 					type check_ = requireAssignableTo<typeof x, Function>;
 					assert.equal(x, Schema);
 				});
@@ -267,7 +215,7 @@ describeHydration(
 				const a = hydrate([Schema, Other], { constructor: 5 });
 				const b = hydrate([Schema, Other], { other: 6 });
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+				// biome-ignore lint/complexity/noBannedTypes: testing Function type behavior
 				type check_ = requireAssignableTo<typeof a.constructor, number | Function>;
 				assert.equal(a.constructor, 5);
 				assert.equal(b.constructor, Other);
@@ -499,16 +447,16 @@ describeHydration(
 
 			class Canvas extends schemaFactory.object("Canvas", { stuff: [Note] }) {}
 
-			const y = new Note({});
+			const _y = new Note({});
 
-			const x = new Canvas({
+			const _x = new Canvas({
 				stuff: {},
 			});
 
 			const allowed = [Note] as const;
 			{
 				type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
-				const test: X = {};
+				const _test: X = {};
 			}
 		});
 
@@ -519,19 +467,19 @@ describeHydration(
 			type A = NodeFromSchema<typeof A>;
 
 			const a = new A({});
-			const b = new B({ a });
-			const b2 = new B({ a: {} });
+			const _b = new B({ a });
+			const _b2 = new B({ a: {} });
 
 			// @ts-expect-error empty nodes should not allow non objects.
-			const a2: A = 0;
+			const _a2: A = 0;
 			// @ts-expect-error empty nodes should not allow non objects.
-			const a3: InsertableTypedNode<typeof A> = 0;
+			const _a3: InsertableTypedNode<typeof A> = 0;
 
 			// @ts-expect-error empty nodes should not allow non-node.
-			const a4: NodeFromSchema<typeof A> = {};
+			const _a4: NodeFromSchema<typeof A> = {};
 
 			// Insertable nodes allow non-node objects.
-			const a5: InsertableTypedNode<typeof A> = {};
+			const _a5: InsertableTypedNode<typeof A> = {};
 		});
 
 		it("Customized customized", () => {
@@ -543,8 +491,8 @@ describeHydration(
 			}
 
 			const a = new A({});
-			const b = new B({ a });
-			const b2 = new B({ a: {} });
+			const _b = new B({ a });
+			const _b2 = new B({ a: {} });
 		});
 
 		it("ObjectNodeSchema", () => {
@@ -556,9 +504,9 @@ describeHydration(
 			const schemaEmpty: ObjectNodeSchema = EmptyObject;
 
 			// @ts-expect-error Cannot call constructor with unknown schema
-			const note = new schema({ f: null });
+			const _note = new schema({ f: null });
 			// @ts-expect-error Cannot call constructor with unknown schema
-			const empty = new schemaEmpty({});
+			const _empty = new schemaEmpty({});
 
 			assert.deepEqual(
 				Note.fields.get("f")?.allowedTypesIdentifiers,
@@ -575,9 +523,6 @@ describeHydration(
 				const _check1: TreeNodeSchema = ExplicitField;
 				const _check2: ObjectNodeSchema = ExplicitField;
 			}
-
-			// Non implicitly constructable
-			{
 				type TestObject = ObjectNodeSchema<
 					"x",
 					RestrictiveStringRecord<ImplicitFieldSchema>,
@@ -585,16 +530,13 @@ describeHydration(
 				>;
 				type _check1 = requireAssignableTo<TestObject, TreeNodeSchema>;
 				type _check2 = requireAssignableTo<TestObject, ObjectNodeSchema>;
-			}
 
 			// Recursive
 			{
 				class RecursiveTest extends sf.objectRecursive("RecursiveTest", {
 					f: sf.optionalRecursive([() => RecursiveTest]),
 				}) {}
-				{
 					type _check = ValidateRecursiveSchema<typeof RecursiveTest>;
-				}
 
 				type Info = (typeof RecursiveTest)["info"];
 				type Info2 = ObjectNodeSchema["info"];
@@ -624,27 +566,18 @@ describeHydration(
 				// This line fails to compile without the workaround.
 				const _check2: ObjectNodeSchema = ExplicitField;
 			}
-
-			// Explicit field POJO mode typing unit tests
-			{
 				type SchemaType = ObjectNodeSchema<string, { readonly f: LeafSchema<"null", null> }>;
 				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
 				type _check4 = requireAssignableTo<SchemaType, ObjectNodeSchema>;
 				// It does work for the different types that make up ObjectNodeSchema however:
 				type _check5 = requireAssignableTo<SchemaType, SimpleObjectNodeSchema>;
-			}
-
-			// ObjectNodeSchema assignability bug minimization
-			{
 				type RecordX = Record<string, unknown>;
 
 				// A type with complicated variance.
 				type Create<T extends RecordX> = (data: RecordX extends T ? never : T) => unknown;
 
 				// Two identical interfaces
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				interface X1<T extends RecordX = RecordX> extends Create<T> {}
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				interface X2<T extends RecordX = RecordX> extends Create<T> {}
 
 				// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -660,7 +593,6 @@ describeHydration(
 				// @ts-expect-error Missing workaround for https://github.com/microsoft/TypeScript/issues/59049#issuecomment-2773459693 so this fails.
 				type _check22 = requireAssignableTo<Result2, X2>; // Result from X2 is not assignable to X2, only X1
 				type _check21 = requireAssignableTo<Result2, X1>;
-			}
 		});
 
 		describe("shadowing", () => {
@@ -687,7 +619,7 @@ describeHydration(
 					foo: schemaFactory.optional(schemaFactory.number),
 				}) {
 					// @ts-expect-error incompatible shadowed field errors.
-					public foo(): void {}
+					public foo(): void { /* intentional no-op */ }
 				}
 			});
 
@@ -702,14 +634,14 @@ describeHydration(
 						return 5;
 					}
 				}
-				function typeTest() {
+				function _typeTest() {
 					const n = hydrate(Schema, { foo: 1 });
 					assert.equal(n.foo, 1);
 					// @ts-expect-error TypeScript typing does not understand that fields are own properties and thus shadow the getter here.
 					n.foo = undefined;
 				}
 
-				function typeTest2() {
+				function _typeTest2() {
 					const n = hydrate(Schema, { foo: undefined });
 					const x = n.foo;
 					// TypeScript is typing the "foo" field based on the getter not the field, which does not match runtime behavior.
@@ -874,22 +806,22 @@ describeHydration(
 			class A extends schemaFactory.object("A", {}) {}
 			class B extends schemaFactory.object("B", { a: schemaFactory.number }) {}
 
-			const a = new A({});
-			const b = new B({ a: 1 });
+			const _a = new A({});
+			const _b = new B({ a: 1 });
 
 			// @ts-expect-error "Object literal may only specify known properties"
-			const a2 = new A({ thisDoesNotExist: 5 });
+			const _a2 = new A({ thisDoesNotExist: 5 });
 
 			// @ts-expect-error "Object literal may only specify known properties"
-			const b3 = new B({ a: 1, thisDoesNotExist: 5 });
+			const _b3 = new B({ a: 1, thisDoesNotExist: 5 });
 
 			type BuildA = NodeBuilderData<typeof A>;
 			type BuildB = NodeBuilderData<typeof B>;
 
 			// @ts-expect-error "Object literal may only specify known properties"
-			const builderA: BuildA = { thisDoesNotExist: 5 };
+			const _builderA: BuildA = { thisDoesNotExist: 5 };
 			// @ts-expect-error "Object literal may only specify known properties"
-			const builderB: BuildB = { a: 1, thisDoesNotExist: 5 };
+			const _builderB: BuildB = { a: 1, thisDoesNotExist: 5 };
 		});
 
 		it("Custom Keys", () => {

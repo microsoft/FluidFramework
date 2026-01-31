@@ -69,7 +69,7 @@ class TestChunk1 extends ReferenceCountedBase implements TreeChunk {
 		fail("not implemented");
 	}
 
-	protected onUnreferenced(): void {}
+	protected onUnreferenced(): void { /* intentional no-op */ }
 }
 
 class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
@@ -87,7 +87,7 @@ class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
 		fail("not implemented");
 	}
 
-	protected onUnreferenced(): void {}
+	protected onUnreferenced(): void { /* intentional no-op */ }
 }
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<
@@ -95,16 +95,16 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	[cache: DecoderContext<EncodedChunkShape>],
 	ChunkDecoder
 >({
-	a(shape: Constant, cache): ChunkDecoder {
+	a(_shape: Constant, _cache): ChunkDecoder {
 		return {
-			decode(decoders, stream): TreeChunk {
+			decode(_decoders, stream): TreeChunk {
 				return new TestChunk2(readStreamNumber(stream));
 			},
 		};
 	},
-	b(shape: StringShape, cache): ChunkDecoder {
+	b(shape: StringShape, _cache): ChunkDecoder {
 		return {
-			decode(decoders, stream): TreeChunk {
+			decode(_decoders, _stream): TreeChunk {
 				return new TestChunk1(shape);
 			},
 		};

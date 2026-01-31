@@ -193,6 +193,7 @@ export class TreeViewConfiguration<
 		if (this.constructor === TreeViewConfiguration) {
 			// Ensure all TreeViewConfiguration instances are actually TreeViewConfigurationAlpha, allowing `asAlpha` to work correctly.
 			// If everything in TreeViewConfigurationAlpha is stabilized and this is removed, the `!` on the properties above should be removed to restore better type safety.
+			// biome-ignore lint/correctness/noConstructorReturn: intentional return of subclass instance for factory pattern
 			return new TreeViewConfigurationAlpha(props);
 		}
 		assert(

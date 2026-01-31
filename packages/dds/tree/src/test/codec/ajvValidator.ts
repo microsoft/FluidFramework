@@ -19,7 +19,6 @@ import { mockSerializer } from "../mockSerializer.js";
 // Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
 const Ajv =
 	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown }).default ??
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(ajvModuleOrClass as any);
 
 // See: https://github.com/sinclairzx81/typebox#ajv
@@ -55,7 +54,7 @@ const ajvJsonValidator: JsonValidator = {
 				if (!valid) {
 					const mockHandle = new MockHandle("");
 					// Make stringify not assert when checking for "bind"
-					(mockHandle as IFluidHandle as ISharedObjectHandle).bind = () => {};
+					(mockHandle as IFluidHandle as ISharedObjectHandle).bind = () => { /* intentional no-op */ };
 					throw new Error(
 						`Invalid JSON.\n\nData: ${mockSerializer.stringify(
 							data,

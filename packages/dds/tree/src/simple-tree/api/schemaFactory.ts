@@ -37,9 +37,6 @@ import {
 	FieldKind,
 	type FieldSchema,
 	type ImplicitFieldSchema,
-	// This import prevents a large number of FieldProps references in the API reports from showing up as FieldProps_2.
-	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
-	type FieldProps,
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
@@ -50,9 +47,6 @@ import {
 	nullSchema,
 	numberSchema,
 	stringSchema,
-	// This import prevents a large number of LeafSchema references in the API reports from showing up as LeafSchema_2.
-	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
-	type LeafSchema,
 } from "../leafNodeSchema.js";
 import {
 	arraySchema,

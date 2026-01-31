@@ -9,17 +9,6 @@ import type {
 	FixRecursiveArraySchema,
 	TreeNodeFromImplicitAllowedTypes,
 	ValidateRecursiveSchema,
-	// #region Unused imports to make d.ts cleaner
-	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
-	ArrayNodeCustomizableSchemaUnsafe,
-	System_Unsafe,
-	TreeNodeSchemaNonClass,
-	TreeNodeSchemaClass,
-	TreeRecordNodeUnsafe,
-	NodeKind,
-	TreeNodeSchemaCore,
-	WithType,
-	LeafSchema,
 	/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 	// #endregion
 } from "./simple-tree/index.js";
@@ -142,6 +131,7 @@ export namespace JsonAsTree {
 	 * ```
 	 * @sealed @alpha
 	 */
+	// biome-ignore lint/suspicious/noShadowRestrictedNames: intentional shadowing within namespace
 	export class Array extends _APIExtractorWorkaroundArrayBase {}
 	{
 		type _check = ValidateRecursiveSchema<typeof Array>;

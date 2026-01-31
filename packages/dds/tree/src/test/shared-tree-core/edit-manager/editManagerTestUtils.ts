@@ -122,7 +122,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
 	bunchCommits: boolean = false,
-): void | (() => void) {
+): undefined | (() => void) {
 	subscribeToLocalBranch(manager);
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		const revision = mintRevisionTag();
@@ -222,7 +222,7 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
 	bunchCommits: boolean = false,
-): void | (() => void) {
+): undefined | (() => void) {
 	subscribeToLocalBranch(manager);
 	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 		const revision = mintRevisionTag();
@@ -337,7 +337,7 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
-): void | (() => void) {
+): undefined | (() => void) {
 	subscribeToLocalBranch(manager);
 	for (let iChange = 0; iChange < editCount; iChange++) {
 		const revision = mintRevisionTag();
@@ -438,7 +438,7 @@ export function rebaseConcurrentPeerEdits<TChange>(
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
-): void | (() => void) {
+): undefined | (() => void) {
 	subscribeToLocalBranch(manager);
 	const peerEdits: Commit<TChange>[] = [];
 	for (let iChange = 0; iChange < editsPerPeerCount; iChange++) {

@@ -57,7 +57,7 @@ describe("eraseSchemaDetails", () => {
 				}
 			}
 
-			const Square = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
+			const _Square = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
 			type Square = SquareNode & TreeNode & WithType<"com.example.Demo">;
 		});
 
@@ -89,7 +89,7 @@ describe("eraseSchemaDetails", () => {
 				}
 			}
 
-			const Square = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
+			const _Square = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
 			// This can't do `NodeFromSchema<typeof Square>` because TypeScript (but not intellisense) gives "Return type annotation circularly references itself".
 			type Square = SquareNode & TreeNode & WithType<"com.example.Demo">;
 		});
@@ -144,23 +144,23 @@ describe("eraseSchemaDetails", () => {
 
 			// Constructor
 			{
-				const nodeA = new Demo({ hidden: 10 });
+				const _nodeA = new Demo({ hidden: 10 });
 
 				// @ts-expect-error - eraseSchemaDetails removes constructor from public type
-				const nodeB = new DemoPublic({ hidden: 10 });
+				const _nodeB = new DemoPublic({ hidden: 10 });
 				// @ts-expect-error - eraseSchemaDetails removes constructor from public type
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				const nodeC = new DemoPublic({ hidden: 10 } as never);
+				const _nodeC = new DemoPublic({ hidden: 10 } as never);
 			}
 
 			// createFromInsertable
 			{
-				const nodeA = Demo.createFromInsertable({ hidden: 10 });
+				const _nodeA = Demo.createFromInsertable({ hidden: 10 });
 
 				// @ts-expect-error - createFromInsertable still exists but takes in `never`
-				const nodeB = DemoPublic.createFromInsertable({ hidden: 10 });
+				const _nodeB = DemoPublic.createFromInsertable({ hidden: 10 });
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				const nodeC = DemoPublic.createFromInsertable({ hidden: 10 } as never);
+				const _nodeC = DemoPublic.createFromInsertable({ hidden: 10 } as never);
 				allowUnused<
 					requireAssignableTo<Parameters<typeof DemoPublic.createFromInsertable>, [never]>
 				>();
@@ -198,7 +198,7 @@ describe("eraseSchemaDetails", () => {
 
 			class Square extends eraseSchemaDetailsSubclassable<SquareInterface>()(SquareInternal) {
 				public static create(sideLength: number): Square {
-					return new (this as TreeNodeSchema as typeof SquareInternal)({ size: sideLength });
+					return new (Square as TreeNodeSchema as typeof SquareInternal)({ size: sideLength });
 				}
 			}
 
@@ -251,9 +251,9 @@ describe("eraseSchemaDetails", () => {
 			// createFromInsertable
 			{
 				// @ts-expect-error - createFromInsertable still exists but takes in `never`
-				const nodeB = DemoPublic.createFromInsertable({ hidden: 10 });
+				const _nodeB = DemoPublic.createFromInsertable({ hidden: 10 });
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				const nodeC = DemoPublic.createFromInsertable({ hidden: 10 } as never);
+				const _nodeC = DemoPublic.createFromInsertable({ hidden: 10 } as never);
 				allowUnused<
 					requireAssignableTo<Parameters<typeof DemoPublic.createFromInsertable>, [never]>
 				>();
@@ -307,7 +307,7 @@ describe("eraseSchemaDetails", () => {
 					this: TThis,
 					sideLength: number,
 				): TreeFieldFromImplicitField<TThis> {
-					return TreeBeta.importConcise(this, {
+					return TreeBeta.importConcise(InternalSchema, {
 						hidden: sideLength,
 					} satisfies InsertableTreeFieldFromImplicitField<typeof InternalSchema>);
 				}
@@ -342,7 +342,7 @@ describe("eraseSchemaDetails", () => {
 			// Constructor
 			{
 				// Constructor still exists but, but has insertable type erased.
-				const nodeB = new ConsumerSchema({ hidden: 10 } as unknown as InternalTreeNode);
+				const _nodeB = new ConsumerSchema({ hidden: 10 } as unknown as InternalTreeNode);
 
 				allowUnused<
 					requireAssignableTo<ConstructorParameters<typeof ErasedExported>, [InternalTreeNode]>
@@ -352,9 +352,9 @@ describe("eraseSchemaDetails", () => {
 			// createFromInsertable
 			{
 				// @ts-expect-error - createFromInsertable still exists but takes in `never`
-				const nodeB = ConsumerSchema.createFromInsertable({ hidden: 10 });
+				const _nodeB = ConsumerSchema.createFromInsertable({ hidden: 10 });
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				const nodeC = ConsumerSchema.createFromInsertable({ hidden: 10 } as never);
+				const _nodeC = ConsumerSchema.createFromInsertable({ hidden: 10 } as never);
 				allowUnused<
 					requireAssignableTo<Parameters<typeof ConsumerSchema.createFromInsertable>, [never]>
 				>();
@@ -403,9 +403,9 @@ describe("eraseSchemaDetails", () => {
 			// Check the node works as a node in a few APIs
 			{
 				const node = DemoPublic.create(5);
-				Tree.on(node, "treeChanged", () => {});
+				Tree.on(node, "treeChanged", () => { /* intentional no-op */ });
 				assert.equal(Tree.is(node, DemoPublic), true);
-				const config = new TreeViewConfiguration({ schema: DemoPublic });
+				const _config = new TreeViewConfiguration({ schema: DemoPublic });
 			}
 		});
 	});

@@ -333,7 +333,6 @@ describe("Editing", () => {
 
 			expectJsonTree([tree1, tree2], ["x", "y", "a", "b", "c"]);
 
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const { parent, parentField, parentIndex } = tree2.locate(anchor)!;
 			const expectedPath: NormalizedUpPath = {
 				detachedNodeId: undefined,
@@ -775,8 +774,7 @@ describe("Editing", () => {
 			moveWithin(tree2.editor, rootField, 1, 1, 0);
 			tree2.editor.sequenceField(rootField).remove(0, 1);
 
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			undoStack.pop()!.revert();
+			undoStack.pop()?.revert();
 
 			// This merge causes the move, remove, and restore to be composed and applied in one changeset on tree1
 			tree1.merge(tree2, false);
@@ -1915,7 +1913,7 @@ describe("Editing", () => {
 
 			const [outerFixture, innerFixture] = individualTests
 				? [describe, it]
-				: [it, (title: string, fn: () => void) => fn()];
+				: [it, (_title: string, fn: () => void) => fn()];
 
 			enum StepType {
 				Remove,
@@ -2031,6 +2029,7 @@ describe("Editing", () => {
 			function runScenario(scenario: readonly ScenarioStep[], useMove: boolean): void {
 				const [verb, action] = useMove ? ["M", moveAction] : ["D", delAction];
 				const title = scenario
+					// biome-ignore lint/suspicious/useIterableCallbackReturn: unreachableCase throws
 					.map((s) => {
 						switch (s.type) {
 							case StepType.Remove: {
@@ -2075,7 +2074,6 @@ describe("Editing", () => {
 							case StepType.Undo: {
 								peerUndoStacks[iPeer].undoStack.pop()?.revert();
 								presence = 1;
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 								affectedNode = undoQueues[iPeer].pop()!;
 								break;
 							}
@@ -3451,6 +3449,7 @@ describe("Editing", () => {
 				getInnerSequenceFieldPath({ parent: rootNode2, field: brand("foo") }),
 			);
 
+			// biome-ignore lint/suspicious/noShadowRestrictedNames: intentional shadowing for test
 			const Number: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
 
 			foo0.remove(1, 1);

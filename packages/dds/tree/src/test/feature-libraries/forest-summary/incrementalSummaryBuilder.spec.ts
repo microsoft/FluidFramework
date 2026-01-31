@@ -91,7 +91,7 @@ function getReadAndParseChunk<T extends JsonCompatible<IFluidHandle>>(
  * method since that is the only method of the `TreeChunk` used by the `ForestIncrementalSummaryBuilder`.
  */
 function getMockChunk(): TreeChunk {
-	return { referenceAdded: () => {} } as unknown as TreeChunk;
+	return { referenceAdded: () => { /* intentional no-op */ } } as unknown as TreeChunk;
 }
 
 const testCursor = { getFieldLength: () => 1 } as unknown as ITreeCursorSynchronous;
@@ -106,7 +106,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 		const mockChunk = getMockChunk();
 		return new ForestIncrementalSummaryBuilder(
 			true /* enableIncrementalSummary */,
-			(cursor: ITreeCursorSynchronous) => {
+			(_cursor: ITreeCursorSynchronous) => {
 				return [mockChunk];
 			},
 			defaultIncrementalEncodingPolicy,
@@ -645,7 +645,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const builder = createIncrementalSummaryBuilder();
 			assert.throws(
 				() =>
-					builder.decodeIncrementalChunk(999 as ChunkReferenceId, (encoded) => {
+					builder.decodeIncrementalChunk(999 as ChunkReferenceId, (_encoded) => {
 						return getMockChunk();
 					}),
 				validateAssertionError("Encoded incremental chunk not found"),

@@ -62,8 +62,7 @@ export class SharedTreeChangeFamily
 		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: CodecWriteOptions,
-		chunkCompressionStrategy?: TreeCompressionStrategy,
-		private readonly idCompressor?: IIdCompressor,
+		chunkCompressionStrategy?: TreeCompressionStrategy,readonly _idCompressor?: IIdCompressor,
 	) {
 		const modularChangeCodec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,

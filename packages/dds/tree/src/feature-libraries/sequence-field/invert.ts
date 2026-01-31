@@ -58,7 +58,7 @@ import {
 export function invert(
 	change: Changeset,
 	isRollback: boolean,
-	genId: IdAllocator,
+	_genId: IdAllocator,
 	revision: RevisionTag | undefined,
 	crossFieldManager: CrossFieldManager,
 ): Changeset {

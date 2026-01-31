@@ -151,10 +151,10 @@ describe("simple-tree tree", () => {
 			"tree",
 		);
 
-		const view = tree.viewWith(config);
+		const _view = tree.viewWith(config);
 		assert.throws(
 			() => {
-				const view2 = tree.viewWith(config);
+				const _view2 = tree.viewWith(config);
 			},
 			validateUsageError(/second tree view/),
 		);

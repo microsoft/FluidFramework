@@ -92,7 +92,7 @@ function rebaseMarkList(
 	baseMarkList: MarkList,
 	metadata: RebaseRevisionMetadata,
 	rebaseChild: NodeChangeRebaser,
-	genId: IdAllocator,
+	_genId: IdAllocator,
 	moveEffects: CrossFieldManager<MoveEffect>,
 ): MarkList {
 	const factory = new MarkListFactory();

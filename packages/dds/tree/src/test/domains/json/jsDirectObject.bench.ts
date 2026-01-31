@@ -43,7 +43,7 @@ export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 		benchmark({
 			type: BenchmarkType.Measurement,
 			title: `sum JS Object: '${name}'`,
-			before: () => {},
+			before: () => { /* intentional no-op */ },
 			benchmarkFn: () => {
 				sumDirect(json);
 			},
@@ -52,7 +52,7 @@ export function jsObjectBench<T extends JsonCompatibleReadOnlyObject>(
 		benchmark({
 			type: BenchmarkType.Measurement,
 			title: `averageValues JS Object: '${name}'`,
-			before: () => {},
+			before: () => { /* intentional no-op */ },
 			benchmarkFn: () => {
 				averageValues(json, dataConsumer);
 			},

@@ -284,14 +284,14 @@ export class SchematizingSimpleTreeView<
 	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
 	 */
 	public runTransaction(
-		transaction: () => VoidTransactionCallbackStatus | void,
+		transaction: () => VoidTransactionCallbackStatus | undefined,
 		params?: RunTransactionParams,
 	): TransactionResult;
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
 			| VoidTransactionCallbackStatus
-			| void,
+			| undefined,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		const { checkout } = this;

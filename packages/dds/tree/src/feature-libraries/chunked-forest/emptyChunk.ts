@@ -31,8 +31,8 @@ export const emptyChunk: TreeChunk = {
 	cursor(): ChunkedCursor {
 		return emptyCursor;
 	},
-	referenceAdded(): void {},
-	referenceRemoved(): void {},
+	referenceAdded(): void { /* intentional no-op */ },
+	referenceRemoved(): void { /* intentional no-op */ },
 	isShared(): boolean {
 		return false; // Immutable, so sharing does not matter.
 	},
@@ -70,7 +70,7 @@ export const emptyCursor: ChunkedCursor = {
 	firstNode(): boolean {
 		return false;
 	},
-	enterNode(childIndex: number): void {
+	enterNode(_childIndex: number): void {
 		fail(0xafd /* empty cursor has no nodes */);
 	},
 	getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
@@ -88,7 +88,7 @@ export const emptyCursor: ChunkedCursor = {
 	get chunkLength(): never {
 		return fail(0xb01 /* empty cursor has no nodes */);
 	},
-	seekNodes(offset: number): boolean {
+	seekNodes(_offset: number): boolean {
 		fail(0xb02 /* empty cursor has no nodes */);
 	},
 	nextNode(): boolean {
@@ -100,7 +100,7 @@ export const emptyCursor: ChunkedCursor = {
 	firstField(): boolean {
 		fail(0xb05 /* empty cursor has no nodes */);
 	},
-	enterField(key: FieldKey): void {
+	enterField(_key: FieldKey): void {
 		fail(0xb06 /* empty cursor has no nodes */);
 	},
 	get type(): never {

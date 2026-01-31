@@ -49,7 +49,6 @@ function visit(
 }
 
 type CallSignatures<T> = {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[K in keyof T]: T[K] extends (...args: any) => any ? [K, ...Parameters<T[K]>] : never;
 };
 type PropType<T> = T[keyof T];
@@ -83,7 +82,7 @@ function testDeltaVisit(
 	detachedFieldIndex?: DetachedFieldIndex,
 	revision?: RevisionTag,
 ): void {
-	let callIndex = 0;
+	let _callIndex = 0;
 	const result: VisitScript = [];
 	const makeChecker =
 		(name: keyof DeltaVisitor) =>
@@ -99,7 +98,7 @@ function testDeltaVisit(
 			result.push(call);
 			// To break when the first off script event happens, enable this line:
 			// assert.deepStrictEqual([name, ...args], expected[callIndex]);
-			callIndex += 1;
+			_callIndex += 1;
 		};
 	const visitor: DeltaVisitor = {} as unknown as DeltaVisitor;
 	for (const methodName of visitorMethods) {

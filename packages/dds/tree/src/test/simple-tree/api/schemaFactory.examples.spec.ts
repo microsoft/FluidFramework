@@ -93,7 +93,7 @@ function setup(tree: ITree): Note[] {
 	secondItem.moveToFront();
 	// Access to a schema based field. Intellisense for doc comment and navigate to source just work, as does refactor rename.
 	// Thus functionality isn't new, but its nice.
-	const s: string = secondItem.text;
+	const _s: string = secondItem.text;
 	// Lists are iterable:
 	const items: Note[] = [...stuff];
 	return items;

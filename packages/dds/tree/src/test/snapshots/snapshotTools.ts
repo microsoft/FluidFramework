@@ -25,7 +25,7 @@ export const regenerateSnapshots = process.argv.includes("--snapshot");
 
 export function takeJsonSnapshot(data: JsonCompatibleReadOnly, suffix: string = ""): void {
 	const dataStr = JSON.stringify(data, undefined, 2);
-	return takeSnapshot(dataStr, `${suffix}.json`, jsonCompare);
+	takeSnapshot(dataStr, `${suffix}.json`, jsonCompare);
 }
 
 function jsonCompare(actual: string, expected: string, message: string): void {

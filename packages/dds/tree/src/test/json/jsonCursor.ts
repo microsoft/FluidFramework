@@ -91,7 +91,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
 			return key === EmptyKey ? node : [];
 		}
 
-		if (Object.prototype.hasOwnProperty.call(node, key)) {
+		if (Object.hasOwn(node, key)) {
 			const field = node[key];
 			assert(
 				field !== undefined,

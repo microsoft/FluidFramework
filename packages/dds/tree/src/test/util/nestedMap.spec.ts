@@ -81,8 +81,8 @@ describe("NestedMap unit tests", () => {
 
 		it("Existing value", () => {
 			const nestedMap: NestedMap<string, string, number> = new Map();
-			const got1 = getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) => 1);
-			const got2 = getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) =>
+			const got1 = getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (..._args: unknown[]) => 1);
+			const got2 = getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (..._args: unknown[]) =>
 				assert.fail("Should not be called"),
 			);
 			assert.equal(got1, 1);

@@ -139,7 +139,8 @@ export function makeV2CodecHelpers(
 						context,
 					);
 				}
-				case NoopMarkType: {
+				// biome-ignore lint/suspicious/noFallthroughSwitchClause: fail() throws, no actual fallthrough
+			case NoopMarkType: {
 					fail(0xb2c /* Mark type: NoopMarkType should not be encoded. */);
 				}
 				default: {

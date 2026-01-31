@@ -46,34 +46,6 @@ import { type WithType, typeNameSymbol, type typeSchemaSymbol } from "./withType
  * @sealed @public
  */
 export abstract class TreeNode implements WithType {
-	/**
-	 * This is added to prevent TypeScript from implicitly allowing non-TreeNode types to be used as TreeNodes.
-	 * @remarks
-	 * This field forces TypeScript to use nominal instead of structural typing,
-	 * preventing compiler error messages and tools like "add missing properties"
-	 * from adding the [type] field as a solution when using a non-TreeNode object where a TreeNode is required.
-	 * Instead TreeNodes must be created through the appropriate APIs, see the documentation on {@link TreeNode} for details.
-	 *
-	 * @privateRemarks
-	 * This is a JavaScript private field, so is not accessible from outside this class.
-	 * This prevents it from having name collisions with object fields.
-	 * Since this is private, the type of this field is stripped in the d.ts file.
-	 * To get matching type checking within and from outside the package, the least informative type (`unknown`) is used.
-	 * To avoid this having any runtime impact, the field is uninitialized.
-	 *
-	 * Making this field optional results in different type checking within this project than outside of it, since the d.ts file drops the optional aspect of the field.
-	 * This is extra confusing since since the tests get in-project typing for intellisense and separate project checking at build time.
-	 * To avoid all this mess, this field is required, not optional.
-	 *
-	 * Another option would be to use a symbol (possibly as a private field).
-	 * That approach ran into some strange difficulties causing SchemaFactory to fail to compile, and was not investigated further.
-	 *
-	 * The [type] symbol provides a lot of the value this private brand does, but is not all of it:
-	 * someone could manually (or via Intellisense auto-implement completion, or in response to a type error)
-	 * make an object literal with the [type] field and pass it off as a node: this private brand prevents that.
-	 */
-	// eslint-disable-next-line no-unused-private-class-members
-	readonly #brand!: unknown;
 
 	/**
 	 * Adds a type symbol for stronger typing.
@@ -121,7 +93,7 @@ export abstract class TreeNode implements WithType {
 		}
 
 		assert("prototype" in schema, 0x98a /* expected class based schema */);
-		return inPrototypeChain(schema.prototype, this.prototype);
+		return inPrototypeChain(schema.prototype, TreeNode.prototype);
 	}
 
 	/**

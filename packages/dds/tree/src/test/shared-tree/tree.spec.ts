@@ -246,7 +246,7 @@ describe("treeApi", () => {
 					it("transaction on unhydrated throws", () => {
 						assert.throws(
 							() => {
-								Tree.runTransaction(new ChildObject({}), (r) => {});
+								Tree.runTransaction(new ChildObject({}), (_r) => { /* intentional no-op */ });
 							},
 							validateUsageError(/Transactions cannot be run on Unhydrated nodes/),
 						);
@@ -255,7 +255,7 @@ describe("treeApi", () => {
 					it("transaction on view modifies unhydrated - not rolled back", () => {
 						const view = getTestObjectView();
 						const node = new TestObject({ content: 5 });
-						Tree.runTransaction(view, (root) => {
+						Tree.runTransaction(view, (_root) => {
 							node.content = 6;
 							return Tree.runTransaction.rollback;
 						});
@@ -368,9 +368,7 @@ describe("treeApi", () => {
 		class Node extends schemaFactory.objectRecursive("Node", {
 			child: schemaFactory.optionalRecursive([() => Node]),
 		}) {}
-		{
 			type _check = ValidateRecursiveSchema<typeof Node>;
-		}
 
 		const level1 = hydrate(
 			Node,

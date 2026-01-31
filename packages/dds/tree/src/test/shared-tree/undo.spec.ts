@@ -837,11 +837,11 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 		});
 	}
 
-	temp = tree;
+	_temp = tree;
 	return tree.kernel.checkout;
 }
 
-let temp: unknown;
+let _temp: unknown;
 
 /**
  * Helper for use with `initialize` when the root is a sequence.

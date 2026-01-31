@@ -46,38 +46,37 @@ class TestShape extends Shape<EncodedChunkShape> {
 		public readonly countReferencedShapesAndIdentifiers: (
 			identifiers: Counter<string>,
 			shapeDiscovered: (shape: Shape<EncodedChunkShape>) => void,
-		) => void = () => {},
+		) => void =
+			() => { /* intentional no-op */ },
 	) {
 		super();
 	}
 
 	public encodeShape(
-		identifiers: DeduplicationTable<string>,
-		shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
+		_identifiers: DeduplicationTable<string>,
+		_shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 	): EncodedChunkShape {
 		return { b: this.data };
 	}
 }
 
 class TestConstantShape extends Shape<EncodedChunkShape> {
-	public constructor() {
-		super();
-	}
 
 	public countReferencedShapesAndIdentifiers(
-		identifiers: Counter<string>,
-		shapeDiscovered: (shape: Shape<EncodedChunkShape>) => void,
-	): void {}
+		_identifiers: Counter<string>,
+		_shapeDiscovered: (shape: Shape<EncodedChunkShape>) => void,
+	):
+		void { /* intentional no-op */ }
 
 	public encodeShape(
-		identifiers: DeduplicationTable<string>,
-		shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
+		_identifiers: DeduplicationTable<string>,
+		_shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 	): EncodedChunkShape {
 		return { a: 0 };
 	}
 }
 
-const testConstantShape = new TestConstantShape();
+const _testConstantShape = new TestConstantShape();
 
 describe("chunkEncodingGeneric", () => {
 	describe("updateShapesAndIdentifiersEncoding", () => {
@@ -170,14 +169,14 @@ describe("chunkEncodingGeneric", () => {
 			);
 		});
 		it("shape: references and counting", () => {
-			const shape1 = new TestShape("1", (identifier, countShape) => {
+			const shape1 = new TestShape("1", (identifier, _countShape) => {
 				identifier.add("inline-id");
 				identifier.add("deduplicated-id", 5);
 			});
-			const shape2 = new TestShape("2", (identifier, countShape) => {
+			const shape2 = new TestShape("2", (_identifier, countShape) => {
 				countShape(shape1);
 			});
-			const shape3 = new TestShape("3", (identifier, countShape) => {
+			const shape3 = new TestShape("3", (_identifier, countShape) => {
 				countShape(shape2);
 				countShape(shape3); // cycle
 			});

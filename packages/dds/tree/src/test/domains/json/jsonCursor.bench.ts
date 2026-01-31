@@ -79,6 +79,7 @@ function bench(
 						encodedTree = jsonableTreeFromCursor(singleJsonCursor(json));
 					});
 					if (emulateProduction) {
+						// biome-ignore lint/suspicious/noDuplicateTestHooks: intentional conditional setup hook
 						before(() => {
 							emulateProductionBuild();
 						});

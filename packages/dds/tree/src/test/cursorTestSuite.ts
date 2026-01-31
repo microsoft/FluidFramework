@@ -345,8 +345,7 @@ export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(c
 					config.builders.withKeys === undefined
 						? undefined
 						: // This is known to be non-null from check above, but typescript can't infer it.
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							(keys) => [0, config.builders.withKeys!(keys)],
+							(keys) => [0, config.builders.withKeys?.(keys)],
 			},
 			cursorFactory: (data: [number, TData]): TCursor => {
 				const cursor = config.cursorFactory(data[1]);

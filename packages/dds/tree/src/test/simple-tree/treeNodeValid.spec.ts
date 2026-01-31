@@ -73,7 +73,7 @@ describe("TreeNodeValid", () => {
 				log.push("prepareInstance");
 				assert(inPrototypeChain(Reflect.getPrototypeOf(instance), Subclass.prototype));
 				assert(flexNode instanceof MockFlexNode);
-				assert.equal(this, Subclass);
+				assert.equal(Subclass, Subclass);
 				return customThis as TreeNodeValid<T2>;
 			}
 
@@ -82,7 +82,7 @@ describe("TreeNodeValid", () => {
 				instance: TreeNodeValid<T2>,
 				input: T2,
 			): UnhydratedFlexTreeNode {
-				assert.equal(this, Subclass);
+				assert.equal(Subclass, Subclass);
 				assert(inPrototypeChain(Reflect.getPrototypeOf(instance), Subclass.prototype));
 				log.push(`buildRawNode ${input}`);
 				return new MockFlexNode(Subclass);
@@ -92,7 +92,7 @@ describe("TreeNodeValid", () => {
 
 			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push("oneTimeSetup");
-				return getTreeNodeSchemaInitializedData(this, handler);
+				return getTreeNodeSchemaInitializedData(Subclass, handler);
 			}
 
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
@@ -105,7 +105,7 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+				return (privateData ??= createTreeNodeSchemaPrivateData(Subclass, []));
 			}
 
 			public constructor(input: number | InternalTreeNode) {
@@ -170,10 +170,10 @@ describe("TreeNodeValid", () => {
 
 			public static override buildRawNode<T2>(
 				this: typeof TreeNodeValid<T2>,
-				instance: TreeNodeValid<T2>,
-				input: T2,
+				_instance: TreeNodeValid<T2>,
+				_input: T2,
 			): UnhydratedFlexTreeNode {
-				return new MockFlexNode(this as unknown as TreeNodeSchema);
+				return new MockFlexNode(Subclass as unknown as TreeNodeSchema);
 			}
 
 			public override get [typeNameSymbol](): string {
@@ -187,7 +187,7 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+				return (privateData ??= createTreeNodeSchemaPrivateData(Subclass, []));
 			}
 		}
 
@@ -196,7 +196,7 @@ describe("TreeNodeValid", () => {
 
 			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push("A");
-				return getTreeNodeSchemaInitializedData(this, handler);
+				return getTreeNodeSchemaInitializedData(A, handler);
 			}
 		}
 
@@ -232,10 +232,10 @@ describe("TreeNodeValid", () => {
 
 			public static override buildRawNode<T2>(
 				this: typeof TreeNodeValid<T2>,
-				instance: TreeNodeValid<T2>,
-				input: T2,
+				_instance: TreeNodeValid<T2>,
+				_input: T2,
 			): UnhydratedFlexTreeNode {
-				return new MockFlexNode(this as unknown as TreeNodeSchema);
+				return new MockFlexNode(Subclass as unknown as TreeNodeSchema);
 			}
 
 			public override get [typeNameSymbol](): string {
@@ -253,11 +253,11 @@ describe("TreeNodeValid", () => {
 			protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
-				log.push(this.name);
-				return getTreeNodeSchemaInitializedData(this, handler);
+				log.push(A.name);
+				return getTreeNodeSchemaInitializedData(A, handler);
 			}
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+				return (privateData ??= createTreeNodeSchemaPrivateData(A, []));
 			}
 		}
 

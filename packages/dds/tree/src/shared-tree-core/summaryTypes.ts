@@ -90,7 +90,7 @@ export type SharedTreeSummarizableMetadata = {
 /**
  * The versions for the SharedTree summary format.
  */
-export const enum SharedTreeSummaryFormatVersion {
+export enum SharedTreeSummaryFormatVersion {
 	/**
 	 * This version represents summary format before summary versioning was introduced.
 	 */
@@ -115,7 +115,7 @@ export const supportedSharedTreeSummaryFormatVersions =
  * Returns the summary version to use as per the given minimum version for collab.
  */
 export function minVersionToSharedTreeSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	_version: MinimumVersionForCollab,
 ): SharedTreeSummaryFormatVersion {
 	// Currently, version 2 is written which adds metadata blob to the summary.
 	return SharedTreeSummaryFormatVersion.v2;

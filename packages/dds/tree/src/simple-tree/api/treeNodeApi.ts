@@ -249,6 +249,7 @@ export function tryGetSchema(value: unknown): undefined | TreeNodeSchema {
 		case "boolean": {
 			return booleanSchema;
 		}
+		// biome-ignore lint/suspicious/noFallthroughSwitchClause: intentional fallthrough to default case
 		case "object": {
 			if (isTreeNode(value)) {
 				// TODO: This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
@@ -319,6 +320,7 @@ export function getIdentifierFromNode(
 		case 0: {
 			return undefined;
 		}
+		// biome-ignore lint/suspicious/noFallthroughSwitchClause: false positive - this case has nested switch with returns
 		case 1: {
 			const key = identifierFieldKeys[0] ?? oob();
 			const identifierField = flexNode.tryGetField(key);

@@ -116,6 +116,7 @@ export namespace FluidSerializableAsTree {
 	 * ```
 	 * @sealed @beta
 	 */
+	// biome-ignore lint/suspicious/noShadowRestrictedNames: intentional shadowing within namespace
 	export class Array extends _APIExtractorWorkaroundArrayBase {}
 	{
 		type _check = ValidateRecursiveSchema<typeof Array>;
