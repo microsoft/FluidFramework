@@ -5,7 +5,10 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import { currentVersion } from "../../../../codec/index.js";
@@ -451,6 +454,7 @@ describe("schemaBasedEncoding", () => {
 				it(name, () => {
 					const idCompressor = createIdCompressor(
 						assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+						SerializationVersion.V3,
 					);
 					const storedSchema = schemaData;
 					const tree = treeFactory(idCompressor);

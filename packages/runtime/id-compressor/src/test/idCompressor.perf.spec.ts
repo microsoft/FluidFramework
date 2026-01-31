@@ -18,6 +18,7 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 } from "../index.js";
+import { SerializationVersion } from "../types/index.js";
 import { createSessionId } from "../utilities.js";
 
 import {
@@ -380,6 +381,7 @@ describe("IdCompressor Perf", () => {
 				IdCompressor.deserialize({
 					serialized,
 					newSessionId: overrideRemoteSessionId,
+					requestedWriteVersion: SerializationVersion.V3,
 				});
 			},
 		});
