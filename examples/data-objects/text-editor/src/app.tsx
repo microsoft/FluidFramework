@@ -159,20 +159,23 @@ async function initFluid(): Promise<DualUserViews> {
 const viewLabels = {
 	plainTextarea: {
 		description: "Plain Textarea",
-		component: (root: TextEditorRoot) => (
+		component: (root: TextEditorRoot, _treeView: TreeView<typeof TextEditorRoot>) => (
 			<PlainTextMainView root={toPropTreeNode(root.plainText)} />
 		),
 	},
 	plainQuill: {
 		description: "Plain Quill Editor",
-		component: (root: TextEditorRoot) => (
+		component: (root: TextEditorRoot, _treeView: TreeView<typeof TextEditorRoot>) => (
 			<PlainQuillView root={toPropTreeNode(root.plainText)} />
 		),
 	},
 	formatted: {
 		description: "Formatted Quill Editor",
-		component: (root: TextEditorRoot) => (
-			<FormattedMainView root={toPropTreeNode(root.formattedText)} />
+		component: (root: TextEditorRoot, treeView: TreeView<typeof TextEditorRoot>) => (
+			<FormattedMainView
+				root={toPropTreeNode(root.formattedText)}
+				treeViewEvents={treeView.events}
+			/>
 		),
 	},
 } as const;
@@ -185,7 +188,7 @@ const UserPanel: React.FC<{
 }> = ({ label, color, viewType, treeView }) => {
 	const renderView = (): JSX.Element => {
 		const root = treeView.root;
-		return viewLabels[viewType].component(root);
+		return viewLabels[viewType].component(root, treeView);
 	};
 
 	return (

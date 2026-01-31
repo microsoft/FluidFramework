@@ -6,13 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import { toPropTreeNode } from "@fluidframework/react/alpha";
-import { TreeViewConfiguration } from "@fluidframework/tree";
+import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
 import { independentView } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import * as React from "react";
 
-import { FormattedTextAsTree, FormattedMainView } from "../formatted/quillFormattedView.js";
+import {
+	FormattedTextAsTree,
+	FormattedMainView,
+	type FormattedEditorHandle,
+} from "../formatted/quillFormattedView.js";
 import {
 	PlainTextMainView,
 	QuillMainView,
@@ -25,14 +29,15 @@ const formattedTreeConfig = new TreeViewConfiguration({ schema: FormattedTextAsT
 
 /**
  * Creates a TreeView for formatted text, initialized with the provided initial value.
- * Returns the tree for direct manipulation.
+ * Returns the tree for direct manipulation and treeView for events.
  */
 function createFormattedTreeView(initialValue = ""): {
 	tree: FormattedTextAsTree.Tree;
+	treeView: TreeView<typeof FormattedTextAsTree.Tree>;
 } {
 	const treeView = independentView(formattedTreeConfig);
 	treeView.initialize(FormattedTextAsTree.Tree.fromString(initialValue));
-	return { tree: treeView.root };
+	return { tree: treeView.root, treeView };
 }
 
 const views: { name: string; component: React.FC<MainViewProps> }[] = [
@@ -181,8 +186,13 @@ describe("textEditor", () => {
 			for (const reactStrictMode of [false, true]) {
 				describe(`StrictMode: ${reactStrictMode}`, () => {
 					it("renders FormattedMainView with editor container", () => {
-						const { tree } = createFormattedTreeView();
-						const content = <FormattedMainView root={toPropTreeNode(tree)} />;
+						const { tree, treeView } = createFormattedTreeView();
+						const content = (
+							<FormattedMainView
+								root={toPropTreeNode(tree)}
+								treeViewEvents={treeView.events}
+							/>
+						);
 						const rendered = render(content, { reactStrictMode });
 
 						assert.match(
@@ -192,16 +202,26 @@ describe("textEditor", () => {
 					});
 
 					it("renders FormattedMainView with initial text content", () => {
-						const { tree } = createFormattedTreeView("Hello World");
-						const content = <FormattedMainView root={toPropTreeNode(tree)} />;
+						const { tree, treeView } = createFormattedTreeView("Hello World");
+						const content = (
+							<FormattedMainView
+								root={toPropTreeNode(tree)}
+								treeViewEvents={treeView.events}
+							/>
+						);
 						const rendered = render(content, { reactStrictMode });
 
 						assert.match(rendered.baseElement.textContent ?? "", /Hello World/);
 					});
 
 					it("invalidates view when tree is mutated", () => {
-						const { tree: text } = createFormattedTreeView("Hello");
-						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const { tree: text, treeView } = createFormattedTreeView("Hello");
+						const content = (
+							<FormattedMainView
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
 						const rendered = render(content, { reactStrictMode });
 
 						// Mutate the tree by inserting text
@@ -213,8 +233,13 @@ describe("textEditor", () => {
 					});
 
 					it("invalidates view when text is removed", () => {
-						const { tree: text } = createFormattedTreeView("Hello World");
-						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const { tree: text, treeView } = createFormattedTreeView("Hello World");
+						const content = (
+							<FormattedMainView
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
 						const rendered = render(content, { reactStrictMode });
 
 						// Mutate the tree by removing " World" (indices 5 to 11)
@@ -227,8 +252,13 @@ describe("textEditor", () => {
 					});
 
 					it("invalidates view when text is cleared and replaced", () => {
-						const { tree: text } = createFormattedTreeView("Original");
-						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const { tree: text, treeView } = createFormattedTreeView("Original");
+						const content = (
+							<FormattedMainView
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
 						const rendered = render(content, { reactStrictMode });
 
 						// Clear all text
@@ -249,16 +279,26 @@ describe("textEditor", () => {
 
 					it("renders FormattedMainView with surrogate pair characters", () => {
 						// 😀 is a surrogate pair: "😀".length === 2, but [..."😀"].length === 1
-						const { tree: text } = createFormattedTreeView("Hello 😀 World");
-						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const { tree: text, treeView } = createFormattedTreeView("Hello 😀 World");
+						const content = (
+							<FormattedMainView
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
 						const rendered = render(content, { reactStrictMode });
 
 						assert.match(rendered.baseElement.textContent ?? "", /Hello 😀 World/);
 					});
 
 					it("inserts text after surrogate pair characters", () => {
-						const { tree: text } = createFormattedTreeView("A😀B");
-						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const { tree: text, treeView } = createFormattedTreeView("A😀B");
+						const content = (
+							<FormattedMainView
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
 						const rendered = render(content, { reactStrictMode });
 
 						// Insert after the emoji (index 2 in character count: A, 😀, B)
@@ -269,8 +309,13 @@ describe("textEditor", () => {
 					});
 
 					it("removes surrogate pair characters", () => {
-						const { tree: text } = createFormattedTreeView("A😀B");
-						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const { tree: text, treeView } = createFormattedTreeView("A😀B");
+						const content = (
+							<FormattedMainView
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
 						const rendered = render(content, { reactStrictMode });
 
 						// Remove the emoji (index 1, length 1 in character count)
@@ -282,8 +327,13 @@ describe("textEditor", () => {
 					});
 
 					it("handles multiple surrogate pair characters", () => {
-						const { tree: text } = createFormattedTreeView("👋🌍🎉");
-						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const { tree: text, treeView } = createFormattedTreeView("👋🌍🎉");
+						const content = (
+							<FormattedMainView
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
 						const rendered = render(content, { reactStrictMode });
 
 						// Insert between emojis
@@ -313,8 +363,13 @@ describe("textEditor", () => {
 			for (const reactStrictMode of [false, true]) {
 				describe(`StrictMode: ${reactStrictMode}`, () => {
 					it("delete on empty string does not throw", () => {
-						const { tree: text } = createFormattedTreeView();
-						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const { tree: text, treeView } = createFormattedTreeView();
+						const content = (
+							<FormattedMainView
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
 						const rendered = render(content, { reactStrictMode });
 
 						assert.doesNotThrow(() => {
@@ -325,8 +380,13 @@ describe("textEditor", () => {
 
 					describe("bold", () => {
 						it("inserts bold text and renders with <strong> tag", () => {
-							const { tree: text } = createFormattedTreeView("Hello");
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const { tree: text, treeView } = createFormattedTreeView("Hello");
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							assert.ok(!rendered.container.querySelector("strong"), "Initially: no <strong>");
@@ -347,7 +407,7 @@ describe("textEditor", () => {
 						});
 
 						it("deletes bold text and removes <strong> tag", () => {
-							const { tree: text } = createFormattedTreeView();
+							const { tree: text, treeView } = createFormattedTreeView();
 							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
 								bold: true,
 								italic: false,
@@ -359,7 +419,12 @@ describe("textEditor", () => {
 							text.defaultFormat = createPlainFormat();
 							text.insertAt(4, "plain");
 
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							assert.ok(rendered.container.querySelector("strong"), "Initially: has <strong>");
@@ -374,8 +439,13 @@ describe("textEditor", () => {
 						});
 
 						it("applies bold via formatRange", () => {
-							const { tree: text } = createFormattedTreeView("Hello World");
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const { tree: text, treeView } = createFormattedTreeView("Hello World");
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							text.formatRange(6, 5, { bold: true });
@@ -389,8 +459,13 @@ describe("textEditor", () => {
 
 					describe("italic", () => {
 						it("inserts italic text and renders with <em> tag", () => {
-							const { tree: text } = createFormattedTreeView("Hello");
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const { tree: text, treeView } = createFormattedTreeView("Hello");
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							assert.ok(!rendered.container.querySelector("em"), "Initially: no <em>");
@@ -411,7 +486,7 @@ describe("textEditor", () => {
 						});
 
 						it("deletes italic text and removes <em> tag", () => {
-							const { tree: text } = createFormattedTreeView();
+							const { tree: text, treeView } = createFormattedTreeView();
 							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
 								bold: false,
 								italic: true,
@@ -423,7 +498,12 @@ describe("textEditor", () => {
 							text.defaultFormat = createPlainFormat();
 							text.insertAt(4, "plain");
 
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							assert.ok(rendered.container.querySelector("em"), "Initially: has <em>");
@@ -435,8 +515,13 @@ describe("textEditor", () => {
 						});
 
 						it("applies italic via formatRange", () => {
-							const { tree: text } = createFormattedTreeView("Hello World");
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const { tree: text, treeView } = createFormattedTreeView("Hello World");
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							text.formatRange(6, 5, { italic: true });
@@ -450,8 +535,13 @@ describe("textEditor", () => {
 
 					describe("underline", () => {
 						it("inserts underlined text and renders with <u> tag", () => {
-							const { tree: text } = createFormattedTreeView("Hello");
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const { tree: text, treeView } = createFormattedTreeView("Hello");
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							assert.ok(!rendered.container.querySelector("u"), "Initially: no <u>");
@@ -472,7 +562,7 @@ describe("textEditor", () => {
 						});
 
 						it("deletes underlined text and removes <u> tag", () => {
-							const { tree: text } = createFormattedTreeView();
+							const { tree: text, treeView } = createFormattedTreeView();
 							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
 								bold: false,
 								italic: false,
@@ -484,7 +574,12 @@ describe("textEditor", () => {
 							text.defaultFormat = createPlainFormat();
 							text.insertAt(5, "plain");
 
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							assert.ok(rendered.container.querySelector("u"), "Initially: has <u>");
@@ -496,8 +591,13 @@ describe("textEditor", () => {
 						});
 
 						it("applies underline via formatRange", () => {
-							const { tree: text } = createFormattedTreeView("Hello World");
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const { tree: text, treeView } = createFormattedTreeView("Hello World");
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							text.formatRange(6, 5, { underline: true });
@@ -511,8 +611,13 @@ describe("textEditor", () => {
 
 					describe("size", () => {
 						it("inserts huge size text and renders with .ql-size-huge", () => {
-							const { tree: text } = createFormattedTreeView("Hello");
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const { tree: text, treeView } = createFormattedTreeView("Hello");
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							assert.ok(
@@ -536,7 +641,7 @@ describe("textEditor", () => {
 						});
 
 						it("deletes huge size text and removes .ql-size-huge", () => {
-							const { tree: text } = createFormattedTreeView();
+							const { tree: text, treeView } = createFormattedTreeView();
 							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
 								bold: false,
 								italic: false,
@@ -548,7 +653,12 @@ describe("textEditor", () => {
 							text.defaultFormat = createPlainFormat();
 							text.insertAt(4, "plain");
 
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							assert.ok(
@@ -566,8 +676,13 @@ describe("textEditor", () => {
 						});
 
 						it("applies size via formatRange", () => {
-							const { tree: text } = createFormattedTreeView("Hello World");
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const { tree: text, treeView } = createFormattedTreeView("Hello World");
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							text.formatRange(6, 5, { size: 24 });
@@ -581,8 +696,13 @@ describe("textEditor", () => {
 
 					describe("font", () => {
 						it("inserts monospace font text and renders with .ql-font-monospace", () => {
-							const { tree: text } = createFormattedTreeView("Hello");
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const { tree: text, treeView } = createFormattedTreeView("Hello");
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							assert.ok(
@@ -606,7 +726,7 @@ describe("textEditor", () => {
 						});
 
 						it("deletes monospace font text and removes .ql-font-monospace", () => {
-							const { tree: text } = createFormattedTreeView();
+							const { tree: text, treeView } = createFormattedTreeView();
 							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
 								bold: false,
 								italic: false,
@@ -618,7 +738,12 @@ describe("textEditor", () => {
 							text.defaultFormat = createPlainFormat();
 							text.insertAt(4, "plain");
 
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							assert.ok(
@@ -636,8 +761,13 @@ describe("textEditor", () => {
 						});
 
 						it("applies font via formatRange", () => {
-							const { tree: text } = createFormattedTreeView("Hello World");
-							const content = <FormattedMainView root={toPropTreeNode(text)} />;
+							const { tree: text, treeView } = createFormattedTreeView("Hello World");
+							const content = (
+								<FormattedMainView
+									root={toPropTreeNode(text)}
+									treeViewEvents={treeView.events}
+								/>
+							);
 							const rendered = render(content, { reactStrictMode });
 
 							text.formatRange(6, 5, { font: "monospace" });
@@ -652,6 +782,77 @@ describe("textEditor", () => {
 			}
 		});
 
+		// Undo/Redo tests for non-transactional edits
+		describe("undo/redo", () => {
+			for (const reactStrictMode of [false, true]) {
+				describe(`StrictMode: ${reactStrictMode}`, () => {
+					it("insert character, undo removes it, redo restores it", () => {
+						const { tree: text, treeView } = createFormattedTreeView();
+						const editorRef = React.createRef<FormattedEditorHandle>();
+						const content = (
+							<FormattedMainView
+								ref={editorRef}
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
+						const rendered = render(content, { reactStrictMode });
+
+						// Insert a character
+						text.insertAt(0, "A");
+						rendered.rerender(content);
+						assert.match(rendered.baseElement.textContent ?? "", /A/);
+
+						// Undo - character should be removed
+						editorRef.current?.undo();
+						rendered.rerender(content);
+						assert.doesNotMatch(rendered.baseElement.textContent ?? "", /A/);
+
+						// Redo - character should be restored
+						editorRef.current?.redo();
+						rendered.rerender(content);
+						assert.match(rendered.baseElement.textContent ?? "", /A/);
+					});
+
+					it("insert character, make bold, undo removes bold but keeps character", () => {
+						const { tree: text, treeView } = createFormattedTreeView();
+						const editorRef = React.createRef<FormattedEditorHandle>();
+						const content = (
+							<FormattedMainView
+								ref={editorRef}
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
+						const rendered = render(content, { reactStrictMode });
+
+						// Insert a character
+						text.insertAt(0, "B");
+						rendered.rerender(content);
+						assert.match(rendered.baseElement.textContent ?? "", /B/);
+						assert.ok(!rendered.container.querySelector("strong"), "Initially: no <strong>");
+
+						// Make it bold
+						text.formatRange(0, 1, { bold: true });
+						rendered.rerender(content);
+						assert.ok(
+							rendered.container.querySelector("strong"),
+							"After format: has <strong>",
+						);
+
+						// Undo - bold should be removed, character should remain
+						editorRef.current?.undo();
+						rendered.rerender(content);
+						assert.match(rendered.baseElement.textContent ?? "", /B/);
+						assert.ok(
+							!rendered.container.querySelector("strong"),
+							"After undo: no <strong>, character remains",
+						);
+					});
+				});
+			}
+		});
+
 		// Unicode 16+ (joined emojis) section - test attribute cycling
 		describe("Unicode 16+ joined emoji attribute cycling", () => {
 			// ZWJ (Zero Width Joiner) emoji sequence: 👨‍👩‍👧‍👦 = family emoji
@@ -660,8 +861,15 @@ describe("textEditor", () => {
 			for (const reactStrictMode of [false, true]) {
 				describe(`StrictMode: ${reactStrictMode}`, () => {
 					it("applies bold to joined emoji and removes it preserving text", () => {
-						const { tree: text } = createFormattedTreeView(`Test ${joinedEmoji} Text`);
-						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const { tree: text, treeView } = createFormattedTreeView(
+							`Test ${joinedEmoji} Text`,
+						);
+						const content = (
+							<FormattedMainView
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
 						const rendered = render(content, { reactStrictMode });
 
 						const emojiStart = 5; // "Test " is 5 chars
@@ -692,8 +900,15 @@ describe("textEditor", () => {
 					});
 
 					it("applies size to joined emoji and removes it preserving text", () => {
-						const { tree: text } = createFormattedTreeView(`Test ${joinedEmoji} Text`);
-						const content = <FormattedMainView root={toPropTreeNode(text)} />;
+						const { tree: text, treeView } = createFormattedTreeView(
+							`Test ${joinedEmoji} Text`,
+						);
+						const content = (
+							<FormattedMainView
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
 						const rendered = render(content, { reactStrictMode });
 
 						const emojiStart = 5;
