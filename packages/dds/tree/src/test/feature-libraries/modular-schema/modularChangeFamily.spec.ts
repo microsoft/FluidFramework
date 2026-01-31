@@ -153,6 +153,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0]]),
 	createEmpty: () => undefined,
 	getCrossFieldKeys: (_change) => [],
+	getDetachCellIds: (_change) => [],
 };
 
 const singleNodeField = new FlexFieldKind(

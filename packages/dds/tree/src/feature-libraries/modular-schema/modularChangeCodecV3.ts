@@ -154,6 +154,8 @@ export function makeModularChangeCodecV3(
 				getInputRootId: getInputDetachId,
 				isAttachId,
 				isDetachId,
+				getCellIdForMove: () => fail("Unsupported"),
+
 				decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 				decodeRootNodeChange: () => fail("Should not be called during encoding"),
 				decodeRootRename: () => fail("Should not be called during encoding"),
@@ -274,6 +276,7 @@ export function makeModularChangeCodecV3(
 				getInputRootId: () => fail("Should not query during decoding"),
 				isAttachId: () => fail("Should not query during decoding"),
 				isDetachId: () => fail("Should not query during decoding"),
+				getCellIdForMove: () => fail("Should not query during decoding"),
 
 				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId =>
 					decodeNode(encodedNode, { field: fieldId }),

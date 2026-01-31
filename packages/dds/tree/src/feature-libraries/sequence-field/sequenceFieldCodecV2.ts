@@ -179,15 +179,10 @@ function makeMarkEffectDecoder(
 > {
 	function decodeMoveIn(encoded: Encoded.MoveIn, context: FieldChangeEncodingContext): Attach {
 		const { id, revision } = encoded;
-		const endpoint =
-			encoded.finalEndpoint === undefined
-				? undefined
-				: changeAtomIdCodec.decode(encoded.finalEndpoint, context.baseContext);
-
 		const mark: Attach = {
 			type: "Insert",
-			id: endpoint?.localId ?? id,
-			revision: endpoint?.revision ?? decodeRevision(revision, context.baseContext),
+			id,
+			revision: decodeRevision(revision, context.baseContext),
 		};
 
 		return mark;
@@ -551,7 +546,9 @@ function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): 
 
 	switch (mark.type) {
 		case "Insert": {
-			count = context.isDetachId(getAttachedRootId(mark), count).length;
+			const attachId = getAttachedRootId(mark);
+			count = context.isDetachId(attachId, count).length;
+			count = context.getCellIdForMove(attachId, count).length;
 			break;
 		}
 		case "Remove": {
@@ -643,16 +640,28 @@ function encodeMarkEffectV2(
 			const isInitialAttachLocation =
 				mark.cellId === undefined || areEqualChangeAtomIds(mark.cellId, inputId);
 
-			return isMove || !isInitialAttachLocation
-				? {
-						moveIn: { revision: encodeRevision(mark.revision), id: mark.id },
-					}
-				: {
-						insert: {
-							revision: encodeRevision(mark.revision),
-							id: mark.id,
-						},
-					};
+			if (!isMove && isInitialAttachLocation) {
+				return {
+					insert: {
+						revision: encodeRevision(mark.revision),
+						id: mark.id,
+					},
+				};
+			}
+
+			const detachCellId = context.getCellIdForMove(attachId, mark.count).value;
+			const encodedEndpoint =
+				detachCellId === undefined
+					? undefined
+					: changeAtomIdCodec.encode(detachCellId, context.baseContext);
+
+			return {
+				moveIn: {
+					revision: encodeRevision(mark.revision),
+					id: mark.id,
+					finalEndpoint: encodedEndpoint,
+				},
+			};
 		}
 		case "Remove": {
 			const encodedIdOverride =

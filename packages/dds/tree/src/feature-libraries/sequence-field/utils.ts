@@ -797,3 +797,25 @@ function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange
 		}
 	}
 }
+
+export function getDetachCellIds(change: Changeset): {
+	detachId: ChangeAtomId;
+	cellId: ChangeAtomId;
+	count: number;
+}[] {
+	const entries: {
+		detachId: ChangeAtomId;
+		cellId: ChangeAtomId;
+		count: number;
+	}[] = [];
+
+	for (const mark of change) {
+		if (mark.type === "Remove" && mark.detachCellId !== undefined) {
+			const detachId = getDetachedRootId(mark);
+			if (!areEqualChangeAtomIds(mark.detachCellId, detachId)) {
+				entries.push({ count: mark.count, detachId, cellId: mark.detachCellId });
+			}
+		}
+	}
+	return entries;
+}

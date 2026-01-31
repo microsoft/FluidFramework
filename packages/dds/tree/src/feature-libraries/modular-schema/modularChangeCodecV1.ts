@@ -172,6 +172,7 @@ function encodeFieldChangesForJson(
 	getInputRootId: ChangeAtomMappingQuery,
 	isAttachId: ChangeAtomIdRangeQuery,
 	isDetachId: ChangeAtomIdRangeQuery,
+	getCellIdForMove: ChangeAtomMappingQuery,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): EncodedFieldChangeMap {
 	const encodedFields: EncodedFieldChangeMap = [];
@@ -192,6 +193,8 @@ function encodeFieldChangesForJson(
 			getInputRootId,
 			isAttachId,
 			isDetachId,
+			getCellIdForMove,
+
 			decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 			decodeRootNodeChange: () => fail("Should not be called during encoding"),
 			decodeRootRename: () => fail("Should not be called during encoding"),
@@ -235,6 +238,7 @@ function encodeNodeChangesForJson(
 	getInputRootId: ChangeAtomMappingQuery,
 	isAttachId: ChangeAtomIdRangeQuery,
 	isDetachId: ChangeAtomIdRangeQuery,
+	getCellIdForMove: ChangeAtomMappingQuery,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): EncodedNodeChangeset {
 	const encodedChange: EncodedNodeChangeset = {};
@@ -251,6 +255,7 @@ function encodeNodeChangesForJson(
 			getInputRootId,
 			isAttachId,
 			isDetachId,
+			getCellIdForMove,
 			fieldChangesetCodecs,
 		);
 	}
@@ -309,6 +314,7 @@ function decodeFieldChangesFromJson(
 			getInputRootId: () => fail("Should not query during decoding"),
 			isAttachId: () => fail("Should not query during decoding"),
 			isDetachId: () => fail("Should not query during decoding"),
+			getCellIdForMove: () => fail("Should not query during decoding"),
 
 			decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 				return decodeNode(encodedNode, { field: fieldId });
@@ -495,6 +501,7 @@ export function makeModularChangeCodecV1(
 			encodeChange(
 				change,
 				context,
+				fieldKinds,
 				fieldChangesetCodecs,
 				revisionTagCodec,
 				fieldsCodec,
@@ -523,6 +530,7 @@ export function makeModularChangeCodecV1(
 export function encodeChange(
 	change: ModularChangeset,
 	context: ChangeEncodingContext,
+	fieldKinds: FieldKindConfiguration,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
@@ -549,6 +557,12 @@ export function encodeChange(
 		return { start: id, value: isDetach, length: renameEntry.length };
 	};
 
+	const moveIdToCellId = getMoveIdToCellId(change, fieldKinds);
+	const getCellIdForMove = (
+		id: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined> => moveIdToCellId.getFirst(id, count);
+
 	const getInputRootId = (
 		id: ChangeAtomId,
 		count: number,
@@ -569,6 +583,7 @@ export function encodeChange(
 			getInputRootId,
 			isAttachId,
 			isDetachId,
+			getCellIdForMove,
 			fieldChangesetCodecs,
 		);
 	};
@@ -590,6 +605,7 @@ export function encodeChange(
 			getInputRootId,
 			isAttachId,
 			isDetachId,
+			getCellIdForMove,
 			fieldChangesetCodecs,
 		),
 		builds: encodeDetachedNodes(
@@ -785,6 +801,34 @@ function getOrAddInFieldRootMap(map: FieldRootMap, fieldId: FieldId): FieldRootC
 	};
 	map.set(key, newRootChanges);
 	return newRootChanges;
+}
+
+function getMoveIdToCellId(
+	change: ModularChangeset,
+	fieldKinds: FieldKindConfiguration,
+): ChangeAtomIdRangeMap<ChangeAtomId> {
+	const map = newChangeAtomIdTransform();
+	getMoveIdToCellIdsForFieldChanges(change.fieldChanges, map, fieldKinds);
+	for (const nodeChange of change.nodeChanges.values()) {
+		if (nodeChange.fieldChanges !== undefined) {
+			getMoveIdToCellIdsForFieldChanges(nodeChange.fieldChanges, map, fieldKinds);
+		}
+	}
+	return map;
+}
+
+function getMoveIdToCellIdsForFieldChanges(
+	changes: FieldChangeMap,
+	moveIdToCellId: ChangeAtomIdRangeMap<ChangeAtomId>,
+	fieldKinds: FieldKindConfiguration,
+): void {
+	for (const field of changes.values()) {
+		for (const entry of getChangeHandler(fieldKinds, field.fieldKind).getDetachCellIds(
+			field.change,
+		)) {
+			moveIdToCellId.set(entry.detachId, entry.count, entry.cellId);
+		}
+	}
 }
 
 export function decodeChange(

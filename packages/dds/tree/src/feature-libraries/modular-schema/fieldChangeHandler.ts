@@ -76,6 +76,11 @@ export interface FieldChangeHandler<
 	 */
 	getCrossFieldKeys(change: TChangeset): CrossFieldKeyRange[];
 
+	// XXX: Document
+	getDetachCellIds(
+		change: TChangeset,
+	): { detachId: ChangeAtomId; cellId: ChangeAtomId; count: number }[];
+
 	createEmpty(): TChangeset;
 }
 
@@ -219,20 +224,46 @@ export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 
 export interface FieldChangeEncodingContext {
 	readonly baseContext: ChangeEncodingContext;
+
+	// Should only be used during encoding.
 	readonly rootNodeChanges: ChangeAtomIdBTree<NodeId>;
+
+	// Should only be used during encoding.
 	readonly rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
+
+	// Should only be used during encoding.
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
+
+	// Should only be used during encoding.
 	getInputRootId(
 		outputRootId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId | undefined>;
 
+	// Should only be used during encoding.
 	isAttachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
+
+	// Should only be used during encoding.
 	isDetachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
 
+	// Should only be used during encoding.
+	getCellIdForMove(
+		moveId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined>;
+
+	// Should only be used during decoding.
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
+
+	// Should only be used during decoding.
 	decodeRootNodeChange(detachId: ChangeAtomId, encodedNode: EncodedNodeChangeset): void;
+
+	// Should only be used during decoding.
 	decodeRootRename(oldId: ChangeAtomId, newId: ChangeAtomId, count: number): void;
+
+	// Should only be used during decoding.
 	decodeMoveAndDetach(detachId: ChangeAtomId, count: number): void;
+
+	// Should only be used during decoding.
 	generateId(): ChangeAtomId;
 }

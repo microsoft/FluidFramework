@@ -86,9 +86,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				inverted.childChange = attachEntry.value.nodeChange;
 			}
 
-			// TODO: Use nodeDetach instead of valueReplace if not supporting older client versions.
-			// inverted.nodeDetach = detachIdForInverse;
-			if (inverted.valueReplace === undefined) {
+			// TODO: Always use nodeDetach instead of valueReplace if not supporting older client versions.
+			if (isPin(change)) {
+				inverted.nodeDetach = detachIdForInverse;
+			} else if (inverted.valueReplace === undefined) {
 				inverted.valueReplace = { isEmpty: false, dst: detachIdForInverse };
 			} else {
 				(inverted.valueReplace as Mutable<Replace>).dst = detachIdForInverse;
@@ -115,12 +116,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const rebasedChild = rebaseChild(newChange.childChange, overChange.childChange);
 		const overDetach = getEffectiveDetachId(overChange);
 		if (overDetach !== undefined) {
-			const isPin = areEqualChangeAtomIdOpts(
-				newChange.nodeDetach,
-				newChange.valueReplace?.src,
-			);
-
-			const nodeDetach = rebaseVersion < 2 && !isPin ? undefined : newChange.nodeDetach;
+			const nodeDetach =
+				rebaseVersion < 2 && !isPin(newChange) ? undefined : newChange.nodeDetach;
 			nodeManager.rebaseOverDetach(overDetach, 1, nodeDetach, rebasedChild);
 		}
 
@@ -507,6 +504,7 @@ export const optionalChangeHandler: FieldChangeHandler<
 
 	createEmpty: () => ({}),
 	getCrossFieldKeys,
+	getDetachCellIds: (_change) => [],
 };
 
 function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
@@ -546,6 +544,13 @@ function invertAttachId(
 	}
 
 	return detachId ?? attachId;
+}
+
+function isPin(change: OptionalChangeset): boolean {
+	return (
+		change.nodeDetach !== undefined &&
+		areEqualChangeAtomIdOpts(change.nodeDetach, change.valueReplace?.src)
+	);
 }
 
 interface Optional

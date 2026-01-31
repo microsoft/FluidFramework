@@ -4992,8 +4992,95 @@ export function validateChangeset(
 		}
 	}
 
+	if (!containsRollbacks(change)) {
+		for (const entry of change.crossFieldKeys.entries()) {
+			if (entry.start.target !== CrossFieldTarget.Destination) {
+				continue;
+			}
+
+			validateAttach(change, entry.start, entry.length);
+		}
+	}
+
 	assert(unreachableNodes.size === 0, "Unreachable nodes found");
 	assert(unreachableCFKs.entries().length === 0, "Unreachable cross-field keys found");
+}
+
+function containsRollbacks(change: ModularChangeset): boolean {
+	if (change.revisions === undefined) {
+		return false;
+	}
+
+	for (const revInfo of change.revisions) {
+		if (revInfo.rollbackOf !== undefined) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function validateAttach(
+	changeset: ModularChangeset,
+	attachId: ChangeAtomId,
+	count: number,
+): void {
+	let countProcessed = count;
+	const buildEntry = hasBuildForIdRange(changeset.builds, attachId, count);
+	countProcessed = buildEntry.length;
+
+	const detachEntry = changeset.crossFieldKeys.getFirst(
+		{ ...attachId, target: CrossFieldTarget.Source },
+		countProcessed,
+	);
+	countProcessed = detachEntry.length;
+
+	const renameEntry = changeset.rootNodes.newToOldId.getFirst(attachId, countProcessed);
+	countProcessed = renameEntry.length;
+
+	assert(
+		buildEntry.value || detachEntry.value !== undefined || renameEntry.value !== undefined,
+		"No build, detach, or rename found for attach",
+	);
+
+	if (countProcessed < count) {
+		validateAttach(
+			changeset,
+			offsetChangeAtomId(attachId, countProcessed),
+			count - countProcessed,
+		);
+	}
+}
+
+function hasBuildForIdRange(
+	builds: ChangeAtomIdBTree<TreeChunk> | undefined,
+	id: ChangeAtomId,
+	count: number,
+): RangeQueryResult<boolean> {
+	if (builds === undefined) {
+		return { value: false, length: count };
+	}
+
+	const prevBuildEntry = builds.nextLowerPair([id.revision, id.localId]);
+
+	if (prevBuildEntry !== undefined) {
+		const prevBuildKey: ChangeAtomId = {
+			revision: prevBuildEntry[0][0],
+			localId: prevBuildEntry[0][1],
+		};
+
+		const prevBuildLength = prevBuildEntry[1].topLevelLength;
+		const lastLocalId = prevBuildKey.localId + prevBuildLength - 1;
+		if (prevBuildKey.revision === id.revision && lastLocalId >= id.localId) {
+			return { value: true, length: Math.min(count, lastLocalId - id.localId + 1) };
+		}
+	}
+
+	const buildEntry = rangeQueryChangeAtomIdMap(builds, id, count);
+	const length =
+		buildEntry.value === undefined ? buildEntry.length : buildEntry.value.topLevelLength;
+
+	const hasBuild = buildEntry.value !== undefined;
+	return { value: hasBuild, length };
 }
 
 /**

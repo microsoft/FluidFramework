@@ -53,6 +53,11 @@ const context: FieldChangeEncodingContext = {
 		value: false,
 		length: count,
 	}),
+	getCellIdForMove: (id, count) => ({
+		start: id,
+		length: count,
+		value: undefined,
+	}),
 	decodeNode: (node) => TestNodeId.decode(node, baseContext),
 	rootNodeChanges: newTupleBTree(),
 	rootRenames: newChangeAtomIdTransform(),
