@@ -6,7 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { checkSchemaCompatibilitySnapshots } from "../../../../index.js";
+import { checkSchemaCompatibilitySnapshots } from "../../index.js";
 // import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/beta";
 
 // The TreeViewConfiguration the application uses, which contains the application's schema.
@@ -24,7 +24,7 @@ describe("schema", () => {
 		// This will depend on how your application organizes its test data.
 		const snapshotDirectory = path.join(
 			import.meta.dirname,
-			"../../../../../src/test/schema-snapshots",
+			"../../../src/test/snapshotCompatibilityCheckerExample/schema-snapshots",
 		);
 		checkSchemaCompatibilitySnapshots({
 			snapshotDirectory,

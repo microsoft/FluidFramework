@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory, TreeViewConfiguration } from "../../../../index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../index.js";
 
 export const treeViewConfiguration: TreeViewConfiguration = new TreeViewConfiguration({
 	schema: SchemaFactory.number,

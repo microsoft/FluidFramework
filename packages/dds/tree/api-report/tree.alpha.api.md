@@ -970,6 +970,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
     readonly snapshotDirectory: string;
     readonly snapshotUnchangedVersions?: true;
     readonly version: string;
+    readonly versionComparer?: (a: string, b: string) => number;
 }
 
 // @public @sealed
