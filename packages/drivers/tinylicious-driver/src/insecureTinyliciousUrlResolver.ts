@@ -93,10 +93,33 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 }
 
 /**
- * Creates an insecure Tinylicious URL resolver for testing purposes with localhost port 7070.
+ * Detects the appropriate Tinylicious endpoint based on the environment.
+ * In GitHub Codespaces, returns the forwarded port URL. Otherwise returns localhost.
  */
-export function createInsecureTinyliciousTestUrlResolver(): IUrlResolver {
-	return new InsecureTinyliciousUrlResolver();
+function getTinyliciousEndpoint(port: number = defaultTinyliciousPort): {
+	endpoint: string;
+	port: number;
+} {
+	if (typeof window !== "undefined") {
+		const match = /^(.+)-\d+\.(.+)$/.exec(window.location.hostname);
+		if (match) {
+			// In Codespaces, the port is embedded in the hostname, use HTTPS port 443
+			return { endpoint: `https://${match[1]}-${port}.${match[2]}`, port: 443 };
+		}
+	}
+	return { endpoint: defaultTinyliciousEndpoint, port };
+}
+
+/**
+ * Creates an insecure Tinylicious URL resolver for testing purposes.
+ * Automatically detects GitHub Codespaces and uses the appropriate endpoint.
+ * @param tinyliciousPort - Optional port number (defaults to 7070)
+ */
+export function createInsecureTinyliciousTestUrlResolver(
+	tinyliciousPort?: number,
+): IUrlResolver {
+	const { endpoint, port } = getTinyliciousEndpoint(tinyliciousPort);
+	return new InsecureTinyliciousUrlResolver(port, endpoint);
 }
 
 /**

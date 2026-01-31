@@ -24,7 +24,7 @@ class TinyliciousService {
 
 	constructor(tinyliciousPort?: number) {
 		const tokenProvider = createInsecureTinyliciousTestTokenProvider();
-		this.urlResolver = createInsecureTinyliciousTestUrlResolver();
+		this.urlResolver = createInsecureTinyliciousTestUrlResolver(tinyliciousPort);
 		this.documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);
 	}
 }

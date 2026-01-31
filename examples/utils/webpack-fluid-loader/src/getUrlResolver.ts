@@ -29,6 +29,15 @@ export const tinyliciousUrls = (
 } => {
 	const port = options.tinyliciousPort ?? defaultTinyliciousPort;
 
+	// Detect GitHub Codespaces and use the forwarded port URL
+	if (typeof window !== "undefined") {
+		const match = /^(.+)-\d+\.(.+)$/.exec(window.location.hostname);
+		if (match) {
+			const url = `https://${match[1]}-${port}.${match[2]}`;
+			return { deltaStreamUrl: url, hostUrl: url, ordererUrl: url, storageUrl: url };
+		}
+	}
+
 	return {
 		deltaStreamUrl: `http://localhost:${port}`,
 		hostUrl: `http://localhost:${port}`,
