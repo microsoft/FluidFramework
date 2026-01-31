@@ -13,14 +13,15 @@ import type {
 	RevisionInfo,
 	RevisionMetadataSource,
 } from "../../../core/index.js";
-import type {
-	ChangeAtomIdBTree,
-	CrossFieldManager,
-	FieldChangeHandler,
-	FieldChangeMap,
-	ModularChangeFamily,
-	ModularChangeset,
-	NodeId,
+import {
+	type ChangeAtomIdBTree,
+	type CrossFieldManager,
+	type FieldChangeHandler,
+	type FieldChangeMap,
+	type ModularChangeFamily,
+	type ModularChangeset,
+	newChangeAtomIdBTree,
+	type NodeId,
 } from "../../../feature-libraries/index.js";
 import {
 	getChangeHandler,
@@ -41,7 +42,6 @@ import {
 	type Mutable,
 	brand,
 	idAllocatorFromMaxId,
-	newTupleBTree,
 } from "../../../util/index.js";
 import { assertStructuralEquality } from "../../objMerge.js";
 
@@ -75,9 +75,9 @@ export function assertEqual<T>(actual: T, expected: T): void {
 function empty(): ModularChangeset {
 	return {
 		fieldChanges: new Map(),
-		nodeChanges: newTupleBTree(),
-		nodeToParent: newTupleBTree(),
-		nodeAliases: newTupleBTree(),
+		nodeChanges: newChangeAtomIdBTree(),
+		nodeToParent: newChangeAtomIdBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 		crossFieldKeys: newCrossFieldKeyTable(),
 	};
 }
@@ -113,8 +113,8 @@ interface BuildArgs {
 }
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
-	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
-	const nodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
+	const nodeChanges = newChangeAtomIdBTree<NodeChangeset>();
+	const nodeToParent = newChangeAtomIdBTree<FieldId>();
 	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
 
 	const idAllocator = idAllocatorFromMaxId();
@@ -134,7 +134,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 		fieldChanges,
 		nodeToParent,
 		crossFieldKeys,
-		nodeAliases: newTupleBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 		maxId: brand(args.maxId ?? idAllocator.getMaxId()),
 	};
 
@@ -270,6 +270,6 @@ export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 		...changeset,
 		nodeToParent: brand(updatedNodeToParent),
 		crossFieldKeys: updatedCrossFieldKeys,
-		nodeAliases: newTupleBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 	};
 }
