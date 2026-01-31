@@ -101,7 +101,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	const rebaseOverComposeDescribe = skipRebaseOverCompose ? describe.skip : describe;
 
 	const [outerFixture, innerFixture] = groupSubSuites
-		? [it, (title: string, fn: () => void) => fn()]
+		? [it, (_title: string, fn: () => void) => fn()]
 		: [describe, it];
 
 	rebaseOverComposeDescribe("Rebase over compose", () => {

@@ -687,7 +687,7 @@ export function testRebase(): void {
 		it("move-out + idOverride ↷ move-out = rename", () => {
 			const nodeId: NodeId = { localId: brand(0) };
 			const baseNodeId: NodeId = { revision: tag1, localId: brand(1) };
-			const startCellId: SF.CellId = { revision: tag2, localId: brand(1) };
+			const _startCellId: SF.CellId = { revision: tag2, localId: brand(1) };
 			const endCellId: SF.CellId = { revision: tag3, localId: brand(0) };
 
 			const inputChildChange = TestNodeId.create(nodeId, TestChange.mint([], 2));
@@ -838,9 +838,9 @@ export function testRebase(): void {
 		});
 
 		it("remove ↷ composite move", () => {
-			const [mo1, mi1] = Mark.move(1, brand(1));
-			const [mo2, mi2] = Mark.move(1, brand(10));
-			const [mo3, mi3] = Mark.move(1, brand(20));
+			const [mo1, _mi1] = Mark.move(1, brand(1));
+			const [_mo2, _mi2] = Mark.move(1, brand(10));
+			const [_mo3, mi3] = Mark.move(1, brand(20));
 			const src: CellMark<MoveOut> = { ...mo1, finalEndpoint: { localId: brand(20) } };
 			const dst: CellMark<MoveIn> = { ...mi3, finalEndpoint: { localId: brand(1) } };
 			const move = [

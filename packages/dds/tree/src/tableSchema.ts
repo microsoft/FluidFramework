@@ -34,8 +34,6 @@ import {
 	type TreeRecordNode,
 	objectSchema,
 	eraseSchemaDetailsSubclassable,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This makes the API report slightly cleaner.
-	TreeNodeSchemaCore,
 	type TransactionConstraintAlpha,
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";
@@ -584,7 +582,7 @@ export namespace System_TableSchema {
 				);
 
 				// #endregion
-				return new this(
+				return new Table(
 					initialContents === undefined
 						? undefined
 						: ({
@@ -649,10 +647,8 @@ export namespace System_TableSchema {
 						// TypeScript is unable to narrow the column type correctly here, hence the casts below.
 						// See: https://github.com/microsoft/TypeScript/issues/52144
 						if (index === undefined) {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							this.table.columns.insertAtEnd(TreeArrayNode.spread(columns) as any);
 						} else {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							this.table.columns.insertAt(index, TreeArrayNode.spread(columns) as any);
 						}
 					},
@@ -710,10 +706,8 @@ export namespace System_TableSchema {
 						// TypeScript is unable to narrow the row type correctly here, hence the casts below.
 						// See: https://github.com/microsoft/TypeScript/issues/52144
 						if (index === undefined) {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							this.table.rows.insertAtEnd(TreeArrayNode.spread(rows) as any);
 						} else {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							this.table.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
 						}
 					},
@@ -1130,7 +1124,7 @@ export namespace System_TableSchema {
 			 * - A column with a duplicate ID is being inserted.
 			 */
 			#validateNewColumns(newColumns: readonly ColumnInsertableType[]): void {
-				return Table._validateNewColumns(
+				Table._validateNewColumns(
 					newColumns,
 					new Set(this.table.columns.map((column) => (column as ColumnValueType).id)),
 				);
@@ -1143,7 +1137,7 @@ export namespace System_TableSchema {
 			 * - A row is being inserted that contains cells for columns that do not exist in the table.
 			 */
 			#validateNewRows(newRows: readonly RowInsertableType[]): void {
-				return Table._validateNewRows(
+				Table._validateNewRows(
 					newRows,
 					new Set(this.table.rows.map((row) => (row as RowValueType).id)),
 					new Set(this.table.columns.map((column) => (column as ColumnValueType).id)),
@@ -1210,9 +1204,7 @@ export namespace System_TableSchema {
 					// #region If the row contains cells, verify that the table contains the columns for those cells
 
 					// Note: we intentionally hide `cells` on `IRow` to avoid leaking the internal data representation as much as possible, so we have to cast here.
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					if ((newRow as any).cells !== undefined) {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						const keys: string[] = Object.keys((newRow as any).cells);
 						for (const key of keys) {
 							if (!columnIds.has(key)) {
@@ -1251,7 +1243,6 @@ export namespace System_TableSchema {
 		// Column / Row functionality use this to validate that they are being used in a table.
 		// This is effectively a work-around that allows columns and rows to invoke table methods
 		// without having to pass the table as a parameter to their construction, which isn't possible.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(Table as any)[tableSchemaSymbol] = true;
 
 		// Named interfaces here do not compile.
@@ -1456,7 +1447,7 @@ export namespace TableSchema {
 	 */
 	export interface Column<
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Reserving this for future use.
-		TCell extends ImplicitAllowedTypes,
+		_TCell extends ImplicitAllowedTypes,
 		TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> {
 		/**
@@ -1524,6 +1515,7 @@ export namespace TableSchema {
 	 */
 	export function column({
 		schemaFactory,
+		// biome-ignore lint/correctness/noUnusedFunctionParameters: parameter used for overload type narrowing
 		cell,
 		props = SchemaFactory.optional(SchemaFactory.null),
 	}: System_TableSchema.CreateColumnOptionsBase & {
@@ -1545,7 +1537,7 @@ export namespace TableSchema {
 	 */
 	export interface Row<
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Reserving this for future use.
-		TCell extends ImplicitAllowedTypes,
+		_TCell extends ImplicitAllowedTypes,
 		TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
 	> {
 		/**

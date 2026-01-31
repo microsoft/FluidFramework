@@ -30,7 +30,6 @@ import type { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
  */
 export class FlexFieldKind<
 	// TODO: stronger typing
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	TEditor extends FieldEditor<any> = FieldEditor<any>,
 	TName extends FieldKindIdentifier = FieldKindIdentifier,
 	TMultiplicity extends Multiplicity = Multiplicity,
@@ -42,14 +41,12 @@ export class FlexFieldKind<
 	 * Change handling policy.
 	 */
 	// TODO: stronger typing
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly changeHandler: FieldChangeHandler<any, TEditor>;
 
 	public constructor(
 		public readonly identifier: TName,
 		public readonly multiplicity: TMultiplicity,
 		// TODO: stronger typing
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		public readonly options: FieldKindOptions<FieldChangeHandler<any, TEditor>>,
 	) {
 		this.changeHandler = options.changeHandler;

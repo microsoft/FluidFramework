@@ -76,7 +76,7 @@ export function isNodeInSchema<T extends NotUndefined>(
 		}
 
 		if (schema instanceof ObjectNodeStoredSchema) {
-			const uncheckedFieldsFromNode = new Set(mapIterable(node.fields, ([key, field]) => key));
+			const uncheckedFieldsFromNode = new Set(mapIterable(node.fields, ([key, _field]) => key));
 			for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
 				const nodeField = node.fields.get(fieldKey) ?? [];
 				const fieldInSchemaResult = isFieldInSchema(

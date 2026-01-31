@@ -67,7 +67,7 @@ describe("uniformChunk", () => {
 			});
 		}
 		it("shape with maybeCompressedStringAsNumber flag set to true fails if it is not a string leaf node.", () => {
-			const validShapeWithFlag = new TreeShape(brand(stringSchema.identifier), true, [], true);
+			const _validShapeWithFlag = new TreeShape(brand(stringSchema.identifier), true, [], true);
 			// Test that a non string leaf node shape with maybeCompressedStringAsNumber set to true fails.
 			assert.throws(
 				() => new TreeShape(brand(numberSchema.identifier), true, [], true),

@@ -419,7 +419,7 @@ export function cloneCellId(id: CellId): CellId {
  * @param ignorePairing - When true, the length of a paired mark (e.g. MoveIn/MoveOut) whose matching mark is not active
  * will be treated the same as if the matching mark were active.
  */
-export function getOutputLength(mark: Mark, ignorePairing: boolean = false): number {
+export function getOutputLength(mark: Mark, _ignorePairing: boolean = false): number {
 	return areOutputCellsEmpty(mark) ? 0 : mark.count;
 }
 

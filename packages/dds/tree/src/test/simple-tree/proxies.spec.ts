@@ -393,7 +393,7 @@ describe("ArrayNode Proxy", () => {
 
 		it("booleans", () => {
 			const root = hydrate(schema, initialTree);
-			const a = root.booleans;
+			const _a = root.booleans;
 			type T = InsertableTreeNodeFromImplicitAllowedTypes<
 				TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>
 			>;

@@ -4,7 +4,7 @@
  */
 
 import type { Mark, MarkList } from "./types.js";
-import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils.js";
+import { isNoopMark, isTombstone, tryMergeMarks } from "./utils.js";
 
 /**
  * Helper class for constructing an offset list of marks that...
@@ -16,8 +16,6 @@ import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils
 export class MarkListFactory {
 	private offset = 0;
 	public readonly list: MarkList = [];
-
-	public constructor() {}
 
 	public push(...marks: Mark[]): void {
 		for (const item of marks) {

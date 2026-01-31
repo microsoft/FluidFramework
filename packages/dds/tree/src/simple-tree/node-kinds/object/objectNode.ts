@@ -99,7 +99,7 @@ import type {
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
 	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+		? // biome-ignore lint/complexity/noBannedTypes: empty object type needed for conditional type
 			{}
 		: {
 				-readonly [Property in keyof T]: Property extends string
@@ -485,7 +485,7 @@ export function objectSchema<
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
-			flexNode: FlexTreeNode,
+			_flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
 			// Differentiate between the following cases:
 			//
@@ -514,25 +514,25 @@ export function objectSchema<
 
 		public static override buildRawNode<T2>(
 			this: typeof TreeNodeValid<T2>,
-			instance: TreeNodeValid<T2>,
+			_instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return unhydratedFlexTreeFromInsertable(input as object, this as Output);
+			return unhydratedFlexTreeFromInsertable(input as object, CustomObjectNode as Output);
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
-			customizable = (this as unknown) !== CustomObjectNode;
-			const schema = this as unknown as ObjectNodeSchemaPrivate;
+			customizable = (CustomObjectNode as unknown) !== CustomObjectNode;
+			const schema = CustomObjectNode as unknown as ObjectNodeSchemaPrivate;
 			handler = createProxyHandler(schema, customizable);
 
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
 			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
 			{
-				let prototype: object = this.prototype;
+				let prototype: object = CustomObjectNode.prototype;
 				// There isn't a clear cleaner way to author this loop.
 				while (prototype !== CustomObjectNode.prototype) {
 					for (const [key] of flexKeyMap) {
@@ -558,7 +558,7 @@ export function objectSchema<
 					shallowCompatibilityTest(data, schema),
 				toFlexContent: (
 					data: FactoryContent,
-					allowedTypes: ReadonlySet<TreeNodeSchema>,
+					_allowedTypes: ReadonlySet<TreeNodeSchema>,
 				): FlexContent => objectToFlexContent(data, schema),
 			});
 		}
@@ -585,7 +585,7 @@ export function objectSchema<
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
 			return (privateData ??= createTreeNodeSchemaPrivateData(
-				this,
+				CustomObjectNode,
 				Array.from(CustomObjectNode.fields.values(), (schema) => schema.allowedTypesFull),
 			));
 		}
@@ -738,7 +738,7 @@ function getFieldProperty(
 	key: string | symbol,
 ): InsertableContent | undefined {
 	// This policy only allows own properties.
-	if (Object.hasOwnProperty.call(data, key)) {
+	if (Object.hasOwn(data, key)) {
 		return (data as Record<string, InsertableContent>)[key as string];
 	}
 	return undefined;

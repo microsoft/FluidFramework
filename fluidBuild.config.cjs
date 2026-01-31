@@ -135,6 +135,8 @@ module.exports = {
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],
+		"lint:biome": ["eslint"],
+		"lint:biome:fix": [],
 		"prettier": [],
 		"prettier:fix": [],
 		"webpack": ["^tsc", "^build:esnext"],

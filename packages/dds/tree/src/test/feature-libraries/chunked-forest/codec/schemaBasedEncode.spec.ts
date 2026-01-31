@@ -361,7 +361,7 @@ describe("schemaBasedEncoding", () => {
 				),
 				encodeIncrementalField: (
 					cursor: ITreeCursorSynchronous,
-					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
+					_chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
 				): ChunkReferenceId[] => {
 					const fieldKey = cursor.getFieldKey();
 					assert(fieldKey === "incrementalField", "should only encode incremental fields");
@@ -369,7 +369,7 @@ describe("schemaBasedEncoding", () => {
 				},
 			};
 			const mockIncrementalDecoder: IncrementalDecoder = {
-				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
+				decodeIncrementalChunk: (referenceId, _chunkDecoder) => {
 					assert(referenceId === testReferenceId);
 					return emptyChunk;
 				},
@@ -490,7 +490,7 @@ describe("schemaBasedEncoding", () => {
 					const dataStr = JSON.stringify(
 						encoded,
 						// The mock handle doesn't stringify deterministically, so replace it:
-						(key, value: JsonCompatibleReadOnly) =>
+						(_key, value: JsonCompatibleReadOnly) =>
 							isFluidHandle(value) ? "Handle Placeholder" : value,
 						2,
 					);

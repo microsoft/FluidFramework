@@ -61,7 +61,6 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	}
 	assert(mapTrees.length === 1, 0xa11 /* unexpected field length */);
 	// Length asserted above, so this is safe. This assert is done instead of checking for undefined after indexing to ensure a length greater than 1 also errors.
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const mapTree = mapTrees[0]!;
 
 	return getOrCreateNodeFromInnerNode(mapTree) as Unhydrated<

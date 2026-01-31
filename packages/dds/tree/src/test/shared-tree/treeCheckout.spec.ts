@@ -573,7 +573,7 @@ describe("sharedTreeView", () => {
 		it("cannot create a second view from an uninitialized simple tree view's checkout", () => {
 			const sf = new SchemaFactory("schema1");
 			const provider = new TestTreeProviderLite(1);
-			const view1 = provider.trees[0].kernel.viewWith(
+			const _view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: sf.array(sf.string),
 					enableSchemaValidation,
@@ -1176,11 +1176,9 @@ describe("sharedTreeView", () => {
 			assert.equal(viewBranch.root[0], "C");
 			// It should still be possible to revert the the child branch's revertibles
 			assert.equal(stacks.undoStack.length, 2);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			stacks.undoStack.pop()!.revert();
+			stacks.undoStack.pop()?.revert();
 			assert.equal(viewBranch.root[0], "B");
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			stacks.undoStack.pop()!.revert();
+			stacks.undoStack.pop()?.revert();
 			assert.equal(viewBranch.root[0], "A");
 
 			stacks.unsubscribe();
@@ -1228,7 +1226,7 @@ describe("sharedTreeView", () => {
 			 */
 			setup?: (
 				view: SchematizingSimpleTreeView<typeof NumberNode>,
-			) => void | SchematizingSimpleTreeView<typeof NumberNode>;
+			) => undefined | SchematizingSimpleTreeView<typeof NumberNode>;
 			/** The code to run during the edit that should throw an error */
 			duringEdit: (view: SchematizingSimpleTreeView<typeof NumberNode>) => void;
 			/** The expected error message */

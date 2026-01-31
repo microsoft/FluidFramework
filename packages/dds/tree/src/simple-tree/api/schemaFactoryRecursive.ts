@@ -137,7 +137,7 @@ import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
  * TODO: this currently does not reject `any`, but ideally should.
  * @public
  */
-export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;
+export type ValidateRecursiveSchema<_T extends ValidateRecursiveSchemaTemplate<_T>> = true;
 
 /**
  * Validation logic used by {@link ValidateRecursiveSchema}.
@@ -251,7 +251,7 @@ export type FixRecursiveRecursionLimit<T extends TreeNodeSchemaClass> =
  * This will allow you to still have the check, but have more control over it, for example being able to suppress it, or enable patterns like allowing unused locals with an "_" prefix.
  * @alpha
  */
-export function allowUnused<T>(t?: T): void {}
+export function allowUnused<T>(_t?: T): void { /* intentional no-op */ }
 
 /**
  * Workaround for fixing errors resulting from an issue with recursive ArrayNode schema exports.

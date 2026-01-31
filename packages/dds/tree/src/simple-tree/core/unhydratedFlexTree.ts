@@ -425,7 +425,7 @@ export class UnhydratedFlexTreeField
 	 * This function ensures that the parent MapTree has no empty fields (which is an invariant of `MapTree`) after the mutation.
 	 */
 	protected edit(
-		edit: (mapTrees: UnhydratedFlexTreeNode[]) => void | UnhydratedFlexTreeNode[],
+		edit: (mapTrees: UnhydratedFlexTreeNode[]) => undefined | UnhydratedFlexTreeNode[],
 	): void {
 		// Clear parents for all old map trees.
 		for (const tree of this.children) {

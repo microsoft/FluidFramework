@@ -428,7 +428,7 @@ describe("Branches", () => {
 		assert.throws(fn, validateAssertionError("Branch is disposed"));
 	}
 
-	function assertNotDisposed(fn: () => void): void {
+	function _assertNotDisposed(fn: () => void): void {
 		assert.doesNotThrow(fn, validateAssertionError(/\*/));
 	}
 });

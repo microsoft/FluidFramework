@@ -238,6 +238,7 @@ export class AnnotatedAllowedTypesInternal<
 			};
 		});
 
+		// biome-ignore lint/correctness/noConstructorReturn: intentional return of proxy wrapper
 		return proxy;
 	}
 
@@ -272,7 +273,7 @@ export class AnnotatedAllowedTypesInternal<
 		this: TThis,
 		value: unknown,
 	): value is InstanceTypeRelaxed<TThis> & AnnotatedAllowedTypesInternal & AllowedTypesFull {
-		return ErasedTypeImplementation[Symbol.hasInstance].call(this, value);
+		return ErasedTypeImplementation[Symbol.hasInstance].call(AnnotatedAllowedTypesInternal, value);
 	}
 
 	public static override narrow<TThis extends { prototype: object }>(
@@ -281,7 +282,7 @@ export class AnnotatedAllowedTypesInternal<
 	): asserts value is InstanceTypeRelaxed<TThis> &
 		AnnotatedAllowedTypesInternal &
 		AllowedTypesFull {
-		if (!ErasedTypeImplementation[Symbol.hasInstance].call(this, value)) {
+		if (!ErasedTypeImplementation[Symbol.hasInstance].call(AnnotatedAllowedTypesInternal, value)) {
 			throw new TypeError("Invalid AnnotatedAllowedTypes instance");
 		}
 	}
@@ -294,7 +295,7 @@ export class AnnotatedAllowedTypesInternal<
 				throw new UsageError("AnnotatedAllowedTypes is immutable");
 			},
 
-			get: (target, property, receiver) => {
+			get: (target, property, _receiver) => {
 				// Hide common array editing methods.
 				if (property === "push" || property === "pop") {
 					return undefined;
@@ -323,7 +324,7 @@ export class AnnotatedAllowedTypesInternal<
 			},
 
 			getOwnPropertyDescriptor: (target, property) => {
-				if (Object.prototype.hasOwnProperty.call(target.unannotatedTypes, property)) {
+				if (Object.hasOwn(target.unannotatedTypes, property)) {
 					const inner = Object.getOwnPropertyDescriptor(target.unannotatedTypes, property);
 					return {
 						...inner,

@@ -143,7 +143,7 @@ export function createTableTree({ tableSize, initialCellValue }: TableTreeOption
 	}
 
 	// Configure event listeners
-	const cleanUpEventHandler = Tree.on(table, "treeChanged", () => {});
+	const cleanUpEventHandler = Tree.on(table, "treeChanged", () => { /* intentional no-op */ });
 
 	// Configure undo/redo
 	const undoRedoStack = new UndoRedoManager(treeView);

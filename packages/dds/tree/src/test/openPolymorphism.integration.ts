@@ -196,7 +196,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 					return new TextItem({ text: "", location: { x: 0, y: 0 } });
 				}
 
-				public foo(): void {}
+				public foo(): void { /* intentional no-op */ }
 			}
 
 			ItemTypes.push(ContainerItem);
@@ -246,7 +246,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 					return new TextItem({ text: "", location: { x: 0, y: 0 } });
 				}
 
-				public foo(): void {}
+				public foo(): void { /* intentional no-op */ }
 			}
 
 			return ContainerItem;
@@ -266,7 +266,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 
 		const appConfig = composeComponents([containerComponent, textComponent]);
 
-		const treeConfig = new TreeViewConfiguration({
+		const _treeConfig = new TreeViewConfiguration({
 			schema: appConfig.ItemTypes,
 			enableSchemaValidation: true,
 			preventAmbiguity: true,
@@ -295,7 +295,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 					return new TextItem({ text: "", location: { x: 0, y: 0 } });
 				}
 
-				public foo(): void {}
+				public foo(): void { /* intentional no-op */ }
 			}
 
 			return ContainerItem;
@@ -354,7 +354,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 		// Export the tree config appropriate for this schema.
 		// This is passed into the SharedTree when it is initialized.
 		// This eagerly evaluates the schema, so anything that used by these schema must be defined before this point.
-		const treeConfig = new TreeViewConfiguration(
+		const _treeConfig = new TreeViewConfiguration(
 			// Schema for the root
 			{ schema: appConfig.allowedItemTypes },
 		);
@@ -405,7 +405,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 						return new TextItem({ text: "", location: { x: 0, y: 0 } });
 					}
 
-					public foo(): void {}
+				public foo(): void { /* intentional no-op */ }
 				}
 
 				return ContainerItem;
@@ -441,7 +441,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 		const comboComponent = ((lazyConfig: () => MyAppConfigPartial) => {
 			const blank = () => {
 				// This could use config if needed.
-				const config = lazyConfig();
+				const _config = lazyConfig();
 
 				class Blank extends sf.object("Blank", { ...itemFields }) implements Background, Item {
 					public html(): string {
@@ -451,7 +451,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 					public static default(): Blank {
 						return new Blank({ location: { x: 0, y: 0 } });
 					}
-					public foo(): void {}
+				public foo(): void { /* intentional no-op */ }
 				}
 				return Blank;
 			};
@@ -532,9 +532,9 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 		// Export the tree config appropriate for this schema.
 		// This is passed into the SharedTree when it is initialized.
 		// This eagerly evaluates the schema, so anything that used by these schema must be defined before this point.
-		const treeConfig = new TreeViewConfiguration({ schema: Root });
+		const _treeConfig = new TreeViewConfiguration({ schema: Root });
 
-		const blankNode = TreeBeta.create(
+		const _blankNode = TreeBeta.create(
 			// Example for how to access content from a components which might depend on the full set of composed components.
 			[appConfig.composed.getComponent(comboComponent).blank],
 			{ location: { x: 0, y: 0 } },
@@ -611,7 +611,7 @@ export namespace Component {
 			lazyConfiguration: (composed: ComposedComponents<TConfig, TComponent>) => TConfig,
 		) {
 			// eslint-disable-next-line no-undef-init
-			let config: TConfig | undefined = undefined;
+			let config: TConfig | undefined ;
 			const lazyConfigInner = () => {
 				if (config === undefined) {
 					throw new Error("Configuration not yet available");

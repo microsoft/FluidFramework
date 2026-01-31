@@ -750,7 +750,7 @@ function createArrayNodeProxy(
 	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
 	// requirements without use of Array[Symbol.species], which is potentially on a path to deprecation.
 	const proxy: TreeArrayNode = new Proxy<TreeArrayNode>(proxyTarget as TreeArrayNode, {
-		get: (target, key, receiver) => {
+		get: (_target, key, receiver) => {
 			const field = getSequenceField(receiver);
 			const maybeIndex = asIndex(key, field.length);
 
@@ -802,7 +802,7 @@ function createArrayNodeProxy(
 			}
 			return allowAdditionalProperties ? Reflect.set(target, key, newValue, receiver) : false;
 		},
-		has: (target, key) => {
+		has: (_target, key) => {
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
 			return maybeIndex !== undefined || Reflect.has(dispatchTarget, key);
@@ -824,7 +824,7 @@ function createArrayNodeProxy(
 			}
 			return keys;
 		},
-		getOwnPropertyDescriptor: (target, key) => {
+		getOwnPropertyDescriptor: (_target, key) => {
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
 			if (maybeIndex !== undefined) {
@@ -849,7 +849,7 @@ function createArrayNodeProxy(
 			}
 			return Reflect.getOwnPropertyDescriptor(dispatchTarget, key);
 		},
-		defineProperty(target, key, attributes) {
+		defineProperty(_target, key, attributes) {
 			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
 			if (maybeIndex !== undefined) {
 				throw new UsageError("Shadowing of array indices is not permitted.");
@@ -1203,7 +1203,7 @@ export function arraySchema<
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
-			flexNode: FlexTreeNode,
+			_flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
 			const proxyTarget = customizable ? instance : [];
 
@@ -1222,10 +1222,10 @@ export function arraySchema<
 
 		public static override buildRawNode<T2>(
 			this: typeof TreeNodeValid<T2>,
-			instance: TreeNodeValid<T2>,
+			_instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return unhydratedFlexTreeFromInsertable(input as object, this as typeof Schema);
+			return unhydratedFlexTreeFromInsertable(input as object, Schema as typeof Schema);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
@@ -1246,7 +1246,7 @@ export function arraySchema<
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
 			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
 			{
-				let prototype: object = this.prototype;
+				let prototype: object = Schema.prototype;
 				// There isn't a clear cleaner way to author this loop.
 				while (prototype !== Schema.prototype) {
 					// Search prototype keys and check for positive integers. Throw if any are found.
@@ -1266,14 +1266,14 @@ export function arraySchema<
 					prototype = Reflect.getPrototypeOf(prototype) as object;
 				}
 			}
-			const schema = this as ArrayNodeSchema;
+			const schema = Schema as ArrayNodeSchema;
 
-			return getTreeNodeSchemaInitializedData(this, {
+			return getTreeNodeSchemaInitializedData(Schema, {
 				shallowCompatibilityTest: (data: FactoryContent): CompatibilityLevel =>
 					shallowCompatibilityTest(data, schema),
 				toFlexContent: (
 					data: FactoryContent,
-					allowedTypes: ReadonlySet<TreeNodeSchema>,
+					_allowedTypes: ReadonlySet<TreeNodeSchema>,
 				): FlexContent => arrayToFlexContent(data, schema),
 			});
 		}
@@ -1306,7 +1306,7 @@ export function arraySchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [normalizedTypes]));
+			return (privateData ??= createTreeNodeSchemaPrivateData(Schema, [normalizedTypes]));
 		}
 	}
 
@@ -1385,7 +1385,7 @@ function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): Flex
  */
 function shallowCompatibilityTest(
 	data: FactoryContent,
-	schema: ArrayNodeSchema,
+	_schema: ArrayNodeSchema,
 ): CompatibilityLevel {
 	if (isTreeValue(data)) {
 		return CompatibilityLevel.None;

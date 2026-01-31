@@ -29,7 +29,7 @@ import { initializeForest } from "./initializeForest.js";
 describe("object-forest", () => {
 	describe("forest suite", () => {
 		testForest({
-			factory: (schema) => buildForest(new Breakable("testForest")),
+			factory: (_schema) => buildForest(new Breakable("testForest")),
 		});
 	});
 
@@ -112,11 +112,11 @@ describe("object-forest", () => {
 		);
 		const named = forest.allocateCursor("named");
 		moveToDetachedField(forest, named);
-		const forkOfNamed = named.fork();
-		const namedFork = named.fork("namedFork");
+		const _forkOfNamed = named.fork();
+		const _namedFork = named.fork("namedFork");
 		const unnamed = forest.allocateCursor();
 		moveToDetachedField(forest, unnamed);
-		const forkOfUnnamed = unnamed.fork();
+		const _forkOfUnnamed = unnamed.fork();
 		const visitor = forest.acquireVisitor();
 		visitor.enterField(rootFieldKey);
 		assert.throws(

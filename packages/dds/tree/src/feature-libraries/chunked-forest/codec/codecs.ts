@@ -50,7 +50,7 @@ import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode
  * Reference ID for a chunk that is incrementally encoded.
  */
 export type ChunkReferenceId = Brand<number, "forest.ChunkReferenceId">;
-const ChunkReferenceId = brandedNumberType<ChunkReferenceId>({ multipleOf: 1, minimum: 0 });
+const _ChunkReferenceId = brandedNumberType<ChunkReferenceId>({ multipleOf: 1, minimum: 0 });
 
 /**
  * Properties for incremental encoding.
@@ -191,6 +191,7 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 					encoded = uncompressedEncodeFn(data);
 					break;
 				}
+				// biome-ignore lint/suspicious/noFallthroughSwitchClause: intentional fallthrough to Compressed case
 				case TreeCompressionStrategy.CompressedIncremental: {
 					assert(
 						writeVersion >= FieldBatchFormatVersion.v2,
@@ -199,7 +200,6 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 					// Incremental encoding is only supported for CompressedIncremental.
 					incrementalEncoder = context.incrementalEncoderDecoder;
 				}
-				// fallthrough
 				case TreeCompressionStrategy.Compressed: {
 					// eslint-disable-next-line unicorn/prefer-ternary
 					if (context.schema === undefined) {

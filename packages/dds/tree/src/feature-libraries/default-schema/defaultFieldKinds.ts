@@ -35,17 +35,17 @@ import { noChangeCodecFamily } from "./noChangeCodecs.js";
  */
 export const noChangeHandler: FieldChangeHandler<0> = {
 	rebaser: referenceFreeFieldChangeRebaser({
-		compose: (change1: 0, change2: 0) => 0,
-		invert: (changes: 0) => 0,
-		rebase: (change: 0, over: 0) => 0,
-		mute: (changes: 0) => 0,
+		compose: (_change1: 0, _change2: 0) => 0,
+		invert: (_changes: 0) => 0,
+		rebase: (_change: 0, _over: 0) => 0,
+		mute: (_changes: 0) => 0,
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChanges: () => fail(0xb0d /* Child changes not supported */) },
-	intoDelta: (change, deltaFromChild: ToDelta): FieldChangeDelta => ({}),
-	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
-	isEmpty: (change: 0) => true,
-	getNestedChanges: (change: 0) => [],
+	intoDelta: (_change, _deltaFromChild: ToDelta): FieldChangeDelta => ({}),
+	relevantRemovedRoots: (_change): Iterable<DeltaDetachedNodeId> => [],
+	isEmpty: (_change: 0) => true,
+	getNestedChanges: (_change: 0) => [],
 	createEmpty: () => 0,
 	getCrossFieldKeys: () => [],
 };

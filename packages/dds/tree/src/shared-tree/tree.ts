@@ -135,7 +135,6 @@ export interface RunTransaction {
 	 */
 	// TODO: TreeView is invariant over the schema, so to accept any view, `any` is the only real option unless a non generic (or covariant) base type for view is introduced (which is planned).
 	// This use of any is actually type safe as it is only used as a constraint, and the actual strongly typed view (TView) is passed to the callback.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	<TView extends TreeView<any>, TResult>(
 		tree: TView,
 		transaction: (root: TView["root"]) => TResult,
@@ -186,7 +185,6 @@ export interface RunTransaction {
 	 * If the transaction is rolled back (whether by an error or by returning the {@link RunTransaction.rollback} | rollback value), a corresponding change event will also be emitted for the rollback.
 	 */
 	// See comment on previous overload about use of any here.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	<TView extends TreeView<any>, TResult>(
 		tree: TView,
 		transaction: (root: TView["root"]) => TResult | typeof rollback,
@@ -230,7 +228,6 @@ export interface RunTransaction {
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 */
 	// See comment on previous overload about use of any here.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	<TView extends TreeView<any>>(tree: TView, transaction: (root: TView["root"]) => void): void;
 	/**
 	 * Apply one or more edits to the tree as a single atomic unit.
@@ -283,7 +280,6 @@ export interface RunTransaction {
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 */
 	// See comment on previous overload about use of any here.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	<TView extends TreeView<any>, TResult>(
 		tree: TView,
 		transaction: (root: TView["root"]) => TResult,
@@ -342,7 +338,6 @@ export interface RunTransaction {
 	 * If the transaction is rolled back (whether by an error or by returning the {@link RunTransaction.rollback} | rollback value), a corresponding change event will also be emitted for the rollback.
 	 */
 	// See comment on previous overload about use of any here.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	<TView extends TreeView<any>, TResult>(
 		tree: TView,
 		transaction: (root: TView["root"]) => TResult | typeof rollback,
@@ -397,7 +392,6 @@ export interface RunTransaction {
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 */
 	// See comment on previous overload about use of any here.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	<TView extends TreeView<any>>(
 		tree: TView,
 		transaction: (root: TView["root"]) => void,

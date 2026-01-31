@@ -40,7 +40,7 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 	);
 	getUnhydratedContextIsRunning = true;
 	try {
-		return getOrCreate(contextCache, schema, (s) => {
+		return getOrCreate(contextCache, schema, (_s) => {
 			const normalized = normalizeFieldSchema(schema);
 
 			const flexContext = new UnhydratedContext(

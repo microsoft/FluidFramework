@@ -147,14 +147,12 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 			map: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
 		) => void,
 		// Typing inherited from `ReadonlyMap`.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
 	): void;
 }
 
 // TreeMapNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
 // This is not ideal, but no alternatives are possible.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handler: ProxyHandler<TreeMapNode<any>> = {
 	getPrototypeOf: () => {
 		return Map.prototype;
@@ -287,7 +285,7 @@ export function mapSchema<
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
-			flexNode: FlexTreeNode,
+			_flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
 			if (useMapPrototype) {
 				return new Proxy<Schema>(instance as Schema, handler as ProxyHandler<Schema>);
@@ -297,10 +295,10 @@ export function mapSchema<
 
 		public static override buildRawNode<T2>(
 			this: typeof TreeNodeValid<T2>,
-			instance: TreeNodeValid<T2>,
+			_instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return unhydratedFlexTreeFromInsertable(input as FactoryContent, this as typeof Schema);
+			return unhydratedFlexTreeFromInsertable(input as FactoryContent, Schema as typeof Schema);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
@@ -317,8 +315,8 @@ export function mapSchema<
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
-			const schema = this as MapNodeSchema;
-			return getTreeNodeSchemaInitializedData(this, {
+			const schema = Schema as MapNodeSchema;
+			return getTreeNodeSchemaInitializedData(Schema, {
 				shallowCompatibilityTest,
 				toFlexContent: (data: FactoryContent): FlexContent => mapToFlexContent(data, schema),
 			});
@@ -345,7 +343,7 @@ export function mapSchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [normalizedTypes]));
+			return (privateData ??= createTreeNodeSchemaPrivateData(Schema, [normalizedTypes]));
 		}
 	}
 	const schemaErased: MapNodeCustomizableSchema<

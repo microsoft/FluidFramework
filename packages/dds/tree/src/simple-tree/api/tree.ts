@@ -11,11 +11,6 @@ import type {
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 } from "../../core/index.js";
-import type {
-	// This is referenced by doc comments.
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
-	TreeAlpha,
-} from "../../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import type {
 	ImplicitFieldSchema,
@@ -282,7 +277,7 @@ export interface TreeBranchAlpha extends TreeBranch {
 	 * - Undo will undo the outermost transaction and all inner transactions.
 	 */
 	runTransaction(
-		transaction: () => VoidTransactionCallbackStatus | void,
+		transaction: () => VoidTransactionCallbackStatus | undefined,
 		params?: RunTransactionParams,
 	): TransactionResult;
 

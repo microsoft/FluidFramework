@@ -33,8 +33,8 @@ export type IncrementalEncodingPolicy = (
  * Default policy for incremental encoding is to not encode incrementally.
  */
 export const defaultIncrementalEncodingPolicy: IncrementalEncodingPolicy = (
-	nodeIdentifier: string | undefined,
-	fieldKey?: string,
+	_nodeIdentifier: string | undefined,
+	_fieldKey?: string,
 ): boolean => {
 	return false;
 };

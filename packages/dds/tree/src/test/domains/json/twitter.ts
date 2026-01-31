@@ -341,7 +341,7 @@ function generateTwitterStatus(
 		id_str: `${statusIdString}`,
 		text: textFieldMarkovChain.generateData(144), // average length the original json text field is 123
 		// source can have unicode nested in it
-		source: `<a href=\"https://twitter.com/${user.screen_name}\" rel=\"nofollow\">
+		source: `<a href="https://twitter.com/${user.screen_name}" rel="nofollow">
          ${random.string(random.integer(2, 30), alphabet)}</a>`,
 		truncated: true, // no examples found where truncated was false
 		user,
@@ -358,8 +358,8 @@ function generateTwitterStatus(
 			urls: [],
 			user_mentions: [],
 		},
-		favorited: retweetCount > 0 ? true : false,
-		retweeted: favoriteCount > 0 ? true : false,
+		favorited: retweetCount  > 0,
+		retweeted: favoriteCount  > 0,
 		lang: "ja",
 	};
 	if (type === "standard") {

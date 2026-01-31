@@ -220,7 +220,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 					this.forest.checkSchema();
 				}
 			}
-			public destroy(detachedField: FieldKey, count: number): void {
+			public destroy(detachedField: FieldKey, _count: number): void {
 				preEdit();
 				this.forest.delete(detachedField);
 			}
@@ -233,7 +233,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				preEdit();
 				this.attachEdit(source, count, destination);
 			}
-			public detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
+			public detach(source: Range, destination: FieldKey, _id: DeltaDetachedNodeId): void {
 				preEdit();
 				this.detachEdit(source, destination);
 			}
@@ -295,13 +295,13 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 			public enterNode(index: number): void {
 				cursor.enterNode(index);
 			}
-			public exitNode(index: number): void {
+			public exitNode(_index: number): void {
 				cursor.exitNode();
 			}
 			public enterField(key: FieldKey): void {
 				cursor.enterField(key);
 			}
-			public exitField(key: FieldKey): void {
+			public exitField(_key: FieldKey): void {
 				cursor.exitField();
 			}
 		}
@@ -403,9 +403,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 		}
 		cursorToMove.setToAboveDetachedSequences();
 		while (keyStack.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			cursorToMove.enterField(keyStack.pop()!);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			cursorToMove.enterNode(indexStack.pop()!);
 		}
 
@@ -462,7 +460,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 	public exitField(): void {
 		assert(this.innerCursor !== undefined, 0x430 /* Cursor must be current to be used */);
-		return this.innerCursor.exitField();
+		this.innerCursor.exitField();
 	}
 	public override skipPendingFields(): boolean {
 		assert(this.innerCursor !== undefined, 0x431 /* Cursor must be current to be used */);
@@ -482,7 +480,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 	public enterNode(childIndex: number): void {
 		assert(this.innerCursor !== undefined, 0x435 /* Cursor must be current to be used */);
-		return this.innerCursor.enterNode(childIndex);
+		this.innerCursor.enterNode(childIndex);
 	}
 	public getPath(prefix?: PathRootPrefix): UpPath {
 		assert(this.innerCursor !== undefined, 0x436 /* Cursor must be current to be used */);
@@ -510,7 +508,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 	public exitNode(): void {
 		assert(this.innerCursor !== undefined, 0x43c /* Cursor must be current to be used */);
-		return this.innerCursor.exitNode();
+		this.innerCursor.exitNode();
 	}
 	public firstField(): boolean {
 		assert(this.innerCursor !== undefined, 0x43d /* Cursor must be current to be used */);
@@ -518,7 +516,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 	public enterField(key: FieldKey): void {
 		assert(this.innerCursor !== undefined, 0x43e /* Cursor must be current to be used */);
-		return this.innerCursor.enterField(key);
+		this.innerCursor.enterField(key);
 	}
 	public get type(): TreeNodeSchemaIdentifier {
 		assert(this.innerCursor !== undefined, 0x43f /* Cursor must be current to be used */);

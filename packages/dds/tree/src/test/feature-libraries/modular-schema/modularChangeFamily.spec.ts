@@ -150,7 +150,7 @@ const singleNodeCodec: IJsonCodec<
 
 const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	rebaser: singleNodeRebaser,
-	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
+	codecsFactory: (_revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
 		local: {
@@ -162,7 +162,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
-	isEmpty: (change) => false,
+	isEmpty: (_change) => false,
 	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0, 0]]),
 	createEmpty: () => undefined,
 	getCrossFieldKeys: (_change) => [],
@@ -463,7 +463,7 @@ describe("ModularChangeFamily", () => {
 	describe("compose", () => {
 		const composedValues: ValueChangeset = { old: 0, new: 2 };
 
-		const composedNodeChange: NodeChangeset = {
+		const _composedNodeChange: NodeChangeset = {
 			fieldChanges: new Map([
 				[
 					fieldA,

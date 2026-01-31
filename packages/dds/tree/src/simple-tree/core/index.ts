@@ -22,9 +22,9 @@ export {
 	typeSchemaSymbol,
 	contentSchemaSymbol,
 } from "./withType.js";
-export {
-	type Unhydrated,
-	type InternalTreeNode,
+export type {
+	Unhydrated,
+	InternalTreeNode,
 } from "./types.js";
 export {
 	TreeNode,

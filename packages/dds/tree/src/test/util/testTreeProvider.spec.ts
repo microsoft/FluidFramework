@@ -10,10 +10,10 @@ import { SummarizeType, TestTreeProvider, spyOnMethod } from "../utils.js";
 
 describe("TestTreeProvider", () => {
 	it("can create 1", async () => {
-		const provider = await TestTreeProvider.create(1);
+		const _provider = await TestTreeProvider.create(1);
 	});
 	it("can create 2", async () => {
-		const provider = await TestTreeProvider.create(2);
+		const _provider = await TestTreeProvider.create(2);
 	});
 
 	it("can manually trigger summaries with summarizeOnDemand", async () => {
@@ -32,7 +32,7 @@ describe("TestTreeProvider", () => {
 	});
 
 	it("cannot manually trigger summaries without setting summarizeOnDemand", async () => {
-		let summarizerError;
+		let summarizerError: unknown;
 		try {
 			const provider = await TestTreeProvider.create(1);
 			await provider.summarize();
@@ -43,7 +43,7 @@ describe("TestTreeProvider", () => {
 	});
 
 	it("cannot manually trigger summaries with 0 trees", async () => {
-		let summarizerError;
+		let summarizerError: unknown;
 		try {
 			const provider = await TestTreeProvider.create(0, SummarizeType.onDemand);
 			await provider.summarize();

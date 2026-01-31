@@ -299,7 +299,7 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 		return { kind, metadata: this.metadata };
 	}
 
-	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
+	public override getFieldSchema(_field: FieldKey): TreeFieldStoredSchema {
 		return this.mapFields;
 	}
 }
@@ -336,7 +336,7 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 		};
 	}
 
-	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
+	public override getFieldSchema(_field: FieldKey): TreeFieldStoredSchema {
 		return storedEmptyFieldSchema;
 	}
 }
@@ -354,7 +354,7 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 	[],
 	StoredSchemaDecoder
 > = new DiscriminatedUnionDispatcher({
-	leaf: (data: PersistedValueSchema) => (metadata) =>
+	leaf: (data: PersistedValueSchema) => (_metadata) =>
 		new LeafNodeStoredSchema(decodeValueSchema(data)),
 	object: (data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>) => (metadata) => {
 		const map = new Map();

@@ -118,7 +118,7 @@ export interface Callbacks {
  * @remarks This function may return other functions that will be called when the transaction is popped from the stack or a nested transaction is pushed onto the stack.
  * This function runs just before the transaction begins, so if this is the beginning of an outermost (not nested) transaction then {@link Transactor.isInProgress} will be false during its execution.
  */
-export type OnPush = () => Callbacks | void;
+export type OnPush = () => Callbacks | undefined;
 
 /**
  * A function that will be called when a transaction is popped from the {@link TransactionStack | stack}.
@@ -270,7 +270,7 @@ export class SquashingTransactionStack<
 	public constructor(
 		public readonly branch: SharedTreeBranch<TEditor, TChange>,
 		mintRevisionTag: () => RevisionTag,
-		onPush?: () => OnPop | void,
+		onPush?: () => OnPop | undefined,
 	) {
 		super(
 			// Invoked when an outer transaction starts

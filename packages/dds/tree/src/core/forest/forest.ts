@@ -266,6 +266,7 @@ export enum ITreeSubscriptionCursorState {
 	Freed,
 }
 
+// biome-ignore lint/suspicious/noConstEnum: const enum is intentional for performance
 export const enum TreeNavigationResult {
 	/**
 	 * Attempt to navigate cursor to a key or index that is outside the client's view.

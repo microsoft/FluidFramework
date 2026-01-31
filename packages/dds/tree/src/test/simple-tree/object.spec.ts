@@ -37,7 +37,7 @@ function test<T extends ImplicitFieldSchema>(t: TestCase<T>): TestCaseErased {
  * This is useful for processing arrays of generically parameterized values with differing values for their type parameter.
  * If the type parameter got type erased when collecting the items into the array, this utility can be used to process the items as iff they each still had the type parameter.
  */
-function unsafeMapErased<E, R>(data: readonly E[], f: <T>(t: never) => R): R[] {
+function unsafeMapErased<E, R>(data: readonly E[], f: <_T>(t: never) => R): R[] {
 	return data.map((item) => f(item as never));
 }
 
@@ -118,14 +118,14 @@ function testObjectLike(testCases: TestCaseErased[]) {
 						it(`${pretty(initialTree)}.isPrototypeOf(Object.create(root)) -> true`, () => {
 							const root = hydrate(schema, initialTree);
 							const asObject = root as object;
-							// eslint-disable-next-line no-prototype-builtins -- compatibility test
+							// biome-ignore lint/suspicious/noPrototypeBuiltins: compatibility test
 							assert.equal(asObject.isPrototypeOf(Object.create(asObject)), true);
 						});
 
 						it(`${pretty(initialTree)}.isPrototypeOf(root) -> false`, () => {
 							const root = hydrate(schema, initialTree);
 							const asObject = root as object;
-							// eslint-disable-next-line no-prototype-builtins -- compatibility test
+							// biome-ignore lint/suspicious/noPrototypeBuiltins: compatibility test
 							assert.equal(asObject.isPrototypeOf(asObject), false);
 						});
 					});
@@ -137,7 +137,7 @@ function testObjectLike(testCases: TestCaseErased[]) {
 							it(`${key} -> ${expected}`, () => {
 								const root = hydrate(schema, initialTree);
 								const asObject = root as object;
-								// eslint-disable-next-line no-prototype-builtins -- compatibility test
+								// biome-ignore lint/suspicious/noPrototypeBuiltins: compatibility test
 								assert.equal(asObject.propertyIsEnumerable(key), expected);
 							});
 						}
@@ -212,7 +212,7 @@ function testObjectLike(testCases: TestCaseErased[]) {
 				const all = Object.getOwnPropertyDescriptors(subject);
 				return Object.fromEntries(
 					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- intentional behavior
-					Object.entries(all).filter(([key, descriptor]) => descriptor.enumerable),
+					Object.entries(all).filter(([_key, descriptor]) => descriptor.enumerable),
 				);
 			});
 		});
@@ -385,7 +385,7 @@ const tcs: TestCaseErased[] = [
 			const _ = new SchemaFactory("testI");
 			return _.object("special keys", {
 				value: _.number,
-				[""]: _.number,
+				"": _.number,
 				set: _.number,
 				__proto__: _.number,
 				constructor: _.number,
@@ -394,7 +394,7 @@ const tcs: TestCaseErased[] = [
 		})(),
 		initialTree: {
 			value: 1,
-			[""]: 2,
+			"": 2,
 			set: 3,
 			__proto__: 4,
 			constructor: 5,

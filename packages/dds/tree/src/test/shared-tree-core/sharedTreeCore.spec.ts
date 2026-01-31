@@ -362,7 +362,7 @@ describe("SharedTreeCore", () => {
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
 			idCompressor: createIdCompressor(),
 		});
-		const factory = new SharedTreeTestFactory(() => {});
+		const factory = new SharedTreeTestFactory(() => { /* intentional no-op */ });
 
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
@@ -578,7 +578,7 @@ describe("SharedTreeCore", () => {
 				this.submissionLog.push(commit);
 			}
 
-			public onSequencedCommitApplied(revision: RevisionTag, isLocal: boolean): void {
+			public onSequencedCommitApplied(_revision: RevisionTag, isLocal: boolean): void {
 				this.sequencingLog.push(isLocal);
 			}
 
@@ -606,7 +606,7 @@ describe("SharedTreeCore", () => {
 				this.calls = 0;
 			}
 
-			public enrich(context: GraphCommit<T>, commits: readonly TaggedChange<T>[]): T[] {
+			public enrich(_context: GraphCommit<T>, commits: readonly TaggedChange<T>[]): T[] {
 				this.calls++;
 				const enriched: T[] = [];
 				for (const { change } of commits) {
@@ -814,7 +814,7 @@ describe("SharedTreeCore", () => {
 			);
 		}
 
-		public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
+		public getGCData(_fullGC?: boolean | undefined): IGarbageCollectionData {
 			this.emit("gcRequested");
 			return { gcNodes: {} };
 		}

@@ -1645,7 +1645,7 @@ export class ModularChangeFamily
 	}
 
 	public buildEditor(
-		mintRevisionTag: () => RevisionTag,
+		_mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<ModularChangeset>) => void,
 	): ModularEditBuilder {
 		return new ModularEditBuilder(this, this.fieldKinds, changeReceiver, this.codecOptions);
@@ -2432,10 +2432,10 @@ class InvertManager extends CrossFieldManagerI<FieldChange> {
 	}
 
 	public override moveKey(
-		target: CrossFieldTarget,
-		revision: RevisionTag | undefined,
-		id: ChangesetLocalId,
-		count: number,
+		_target: CrossFieldTarget,
+		_revision: RevisionTag | undefined,
+		_id: ChangesetLocalId,
+		_count: number,
 	): void {
 		assert(false, 0x9c5 /* Keys should not be moved manually during invert */);
 	}
@@ -2597,10 +2597,10 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 	}
 
 	public override moveKey(
-		target: CrossFieldTarget,
-		revision: RevisionTag | undefined,
-		id: ChangesetLocalId,
-		count: number,
+		_target: CrossFieldTarget,
+		_revision: RevisionTag | undefined,
+		_id: ChangesetLocalId,
+		_count: number,
 	): void {
 		throw new Error("Moving cross-field keys during compose is currently unsupported");
 	}

@@ -16,7 +16,7 @@ import {
 	type RevisionTag,
 	tagChange,
 } from "../../../core/index.js";
-import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FieldChangeDelta } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules

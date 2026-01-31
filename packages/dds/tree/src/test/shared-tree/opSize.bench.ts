@@ -279,7 +279,7 @@ function withTransactionsOrNot(
 	fn: (run: <T>(view: TreeView<typeof Parent>, op: () => T) => T) => void,
 ): void {
 	describe("Many Ops", () => {
-		fn((view, op) => op());
+		fn((_view, op) => op());
 	});
 	describe("Single Transaction", () => {
 		fn((view, op) => Tree.runTransaction(view, () => op()));

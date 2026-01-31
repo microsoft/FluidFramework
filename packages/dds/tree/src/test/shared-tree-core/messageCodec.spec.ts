@@ -45,7 +45,7 @@ const commitWithoutRevision = {
 	change: TestChange.mint([], 0),
 };
 
-const commitWithoutChange = {
+const _commitWithoutChange = {
 	revision: mintRevisionTag(),
 };
 

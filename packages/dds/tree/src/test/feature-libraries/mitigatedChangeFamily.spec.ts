@@ -20,11 +20,9 @@ import { mintRevisionTag } from "../utils.js";
 const fallback = "Fallback";
 
 // TODO: use something other than any for the mocking patterns here
-/* eslint-disable @typescript-eslint/no-explicit-any */
 const arg1: any = "arg1";
 const arg2: any = "arg2";
 const arg3: any = "arg3";
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	buildEditor: (

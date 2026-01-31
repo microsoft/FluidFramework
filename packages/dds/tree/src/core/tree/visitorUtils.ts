@@ -174,7 +174,7 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	): void;
 }
 
-const noOp = (): void => {};
+const noOp = (): void => { /* intentional no-op */ };
 
 /**
  * Creates an announced visitor with only the provided functions and uses a no op for the rest.

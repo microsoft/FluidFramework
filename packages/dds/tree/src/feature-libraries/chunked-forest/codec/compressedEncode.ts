@@ -170,17 +170,17 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 	public static readonly instance = new AnyShape();
 
 	public encodeShape(
-		identifiers: DeduplicationTable<string>,
-		shapes: DeduplicationTable<Shape>,
+		_identifiers: DeduplicationTable<string>,
+		_shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
 		const encodedAnyShape: EncodedAnyShape = 0;
 		return { d: encodedAnyShape };
 	}
 
 	public countReferencedShapesAndIdentifiers(
-		identifiers: Counter<string>,
-		shapeDiscovered: (shape: Shape) => void,
-	): void {}
+		_identifiers: Counter<string>,
+		_shapeDiscovered: (shape: Shape) => void,
+	): void { /* intentional no-op */ }
 
 	public static encodeField(
 		cursor: ITreeCursorSynchronous,
@@ -277,9 +277,9 @@ export class InlineArrayEncoder
 			return InlineArrayEncoder.empty;
 		},
 		encodeNodes(
-			cursor: ITreeCursorSynchronous,
-			context: EncoderContext,
-			outputBuffer: BufferFormat,
+			_cursor: ITreeCursorSynchronous,
+			_context: EncoderContext,
+			_outputBuffer: BufferFormat,
 		): void {
 			fail(0xb4d /* Empty array should not encode any nodes */);
 		},
@@ -326,7 +326,7 @@ export class InlineArrayEncoder
 	}
 
 	public encodeShape(
-		identifiers: DeduplicationTable<string>,
+		_identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
 		return {
@@ -338,7 +338,7 @@ export class InlineArrayEncoder
 	}
 
 	public countReferencedShapesAndIdentifiers(
-		identifiers: Counter<string>,
+		_identifiers: Counter<string>,
 		shapeDiscovered: (shape: Shape) => void,
 	): void {
 		shapeDiscovered(this.inner.shape);
@@ -361,7 +361,7 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
 	}
 
 	public encodeShape(
-		identifiers: DeduplicationTable<string>,
+		_identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
 		const shape: EncodedNestedArrayShape =
@@ -373,7 +373,7 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
 	}
 
 	public countReferencedShapesAndIdentifiers(
-		identifiers: Counter<string>,
+		_identifiers: Counter<string>,
 		shapeDiscovered: (shape: Shape) => void,
 	): void {
 		shapeDiscovered(this.innerShape);
@@ -424,8 +424,8 @@ export class NestedArrayEncoder implements FieldEncoder {
  */
 export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
 	public encodeShape(
-		identifiers: DeduplicationTable<string>,
-		shapes: DeduplicationTable<Shape>,
+		_identifiers: DeduplicationTable<string>,
+		_shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
 		return {
 			e: 0 /* EncodedIncrementalChunkShape */,
@@ -433,9 +433,9 @@ export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
 	}
 
 	public countReferencedShapesAndIdentifiers(
-		identifiers: Counter<string>,
-		shapeDiscovered: (shape: Shape) => void,
-	): void {}
+		_identifiers: Counter<string>,
+		_shapeDiscovered: (shape: Shape) => void,
+	): void { /* intentional no-op */ }
 
 	public get shape(): this {
 		return this;

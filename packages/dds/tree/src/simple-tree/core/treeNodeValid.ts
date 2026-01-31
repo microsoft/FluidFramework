@@ -48,7 +48,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	protected static prepareInstance<T>(
 		this: typeof TreeNodeValid<T>,
 		instance: TreeNodeValid<T>,
-		input: FlexTreeNode,
+		_input: FlexTreeNode,
 	): TreeNodeValid<T> {
 		return instance;
 	}
@@ -58,8 +58,8 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 */
 	protected static buildRawNode<T>(
 		this: typeof TreeNodeValid<T>,
-		instance: TreeNodeValid<T>,
-		input: T,
+		_instance: TreeNodeValid<T>,
+		_input: T,
 	): UnhydratedFlexTreeNode {
 		return fail(0xae4 /* Schema must override buildRawNode */);
 	}
@@ -100,9 +100,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * Indicate that `this` is the most derived version of a schema, and thus the only one allowed to be used (other than by being subclassed a single time).
 	 */
 	public static markMostDerived(this: typeof TreeNodeValid & TreeNodeSchema): MostDerivedData {
-		assert(this.constructorCached !== "default", 0x95f /* invalid schema class */);
+		assert(TreeNodeValid.constructorCached !== "default", 0x95f /* invalid schema class */);
 
-		if (this.constructorCached === undefined) {
+		if (TreeNodeValid.constructorCached === undefined) {
 			// Set the constructorCached on the layer of the prototype chain that declared it.
 			// This is necessary to ensure there is only one subclass of that type used:
 			// if constructorCached was simply set on `schema`,
@@ -111,29 +111,29 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 
 			// This is not just an alias of `this`, but a reference to the item in the prototype chain being walked, which happens to start at `this`.
 			// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
-			let schemaBase: typeof TreeNodeValid = this;
-			while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
+			let schemaBase: typeof TreeNodeValid = TreeNodeValid;
+			while (!Object.hasOwn(schemaBase, "constructorCached")) {
 				schemaBase = Reflect.getPrototypeOf(schemaBase) as typeof TreeNodeValid;
 			}
 			assert(schemaBase.constructorCached === undefined, 0x962 /* overwriting wrong cache */);
-			schemaBase.constructorCached = { constructor: this, oneTimeInitialized: undefined };
+			schemaBase.constructorCached = { constructor: TreeNodeValid, oneTimeInitialized: undefined };
 			assert(
-				this.constructorCached === schemaBase.constructorCached,
+				TreeNodeValid.constructorCached === schemaBase.constructorCached,
 				0x9b5 /* Inheritance should work */,
 			);
-			return this.constructorCached;
-		} else if (this.constructorCached.constructor === this) {
-			return this.constructorCached;
+			return TreeNodeValid.constructorCached;
+		} else if (TreeNodeValid.constructorCached.constructor === TreeNodeValid) {
+			return TreeNodeValid.constructorCached;
 		}
 
 		// If users trying to diagnose the cause of this error becomes a common issue, more information could be captured.
 		// The call stack to when a schema is first marked most derived could be captured in debug builds and stored in the `MostDerivedData` object:
 		// This could then be included in the error to aid in debugging this error.
 		throw new UsageError(
-			`Two schema classes were used (${this.name} and ${
-				this.constructorCached.constructor.name
+			`Two schema classes were used (${TreeNodeValid.name} and ${
+				TreeNodeValid.constructorCached.constructor.name
 			}) which derived from the same SchemaFactory generated class (${JSON.stringify(
-				this.identifier,
+				TreeNodeValid.identifier,
 			)}). This is invalid.`,
 		);
 	}
@@ -149,7 +149,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		this: TThis,
 		input: TInput,
 	): TOut {
-		return new this(input);
+		return new TreeNodeValid(input);
 	}
 
 	/**
@@ -159,7 +159,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		this: TThis,
 		input: TInput,
 	): TOut {
-		return new this(input);
+		return new TreeNodeValid(input);
 	}
 
 	/**
@@ -168,8 +168,8 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	public static oneTimeInitialize(
 		this: typeof TreeNodeValid & TreeNodeSchema,
 	): Required<MostDerivedData> {
-		const cache = this.markMostDerived();
-		cache.oneTimeInitialized ??= this.oneTimeSetup();
+		const cache = TreeNodeValid.markMostDerived();
+		cache.oneTimeInitialized ??= TreeNodeValid.oneTimeSetup();
 		// TypeScript fails to narrow the type of `oneTimeInitialized` to `Context` here, so use a cast:
 		return cache as MostDerivedData & { oneTimeInitialized: TreeNodeSchemaInitializedData };
 	}
@@ -205,6 +205,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		// so just relying on the WeakMap seems like the cleanest approach.
 		new TreeNodeKernel(result, schema, node, context);
 
+		// biome-ignore lint/correctness/noConstructorReturn: intentional return of wrapped result
 		return result;
 	}
 }
@@ -289,8 +290,8 @@ const customInspectSymbol = Symbol.for("nodejs.util.inspect.custom");
 function inspectNodeFunction(
 	this: TreeNodeValid<unknown>,
 	depth: number,
-	options?: unknown,
-	inspect?: unknown,
+	_options?: unknown,
+	_inspect?: unknown,
 ): unknown {
 	const schema = this[typeSchemaSymbol];
 	const title = `${schema.name}: ${NodeKind[schema.kind]} Node (${schema.identifier})`;
@@ -342,13 +343,13 @@ const formatters = ((
 ).devtoolsFormatters ??= []);
 
 const nodeFormatter: DevtoolsFormatter.DevtoolsFormatter = {
-	header(object, config) {
+	header(object, _config) {
 		if (isTreeNode(object)) {
 			return ["span", `${inspectNodeFunction.call(object, 1)}`];
 		}
 		return null;
 	},
-	body(object, config): DevtoolsFormatter.Item {
+	body(object, _config): DevtoolsFormatter.Item {
 		const children: DevtoolsFormatter.Item[] = [];
 		for (const [key, value] of Object.entries(object as TreeNode)) {
 			children.push(["li", ["span", `${key}: `], formattedReference(value)]);
@@ -362,7 +363,7 @@ const nodeFormatter: DevtoolsFormatter.DevtoolsFormatter = {
 
 		return ["ol", ...children];
 	},
-	hasBody(object, config) {
+	hasBody(object, _config) {
 		return shortContent(object as TreeNodeValid<undefined>) === undefined;
 	},
 };

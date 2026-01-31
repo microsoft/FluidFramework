@@ -18,7 +18,6 @@ import { getOrCreate } from "./utils.js";
  */
 export type BrandedKey<TKey, TContent> = Brand<TKey, ["BrandedKey", Invariant<TContent>]>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> =
 	TKey extends BrandedKey<unknown, infer TContent> ? TContent : never;
 
@@ -36,7 +35,6 @@ export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> =
  * @remarks
  * These APIs are designed so that a Map can be used to implement this type.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
 	get<K2 extends K>(key: K2): BrandedKeyContent<K2> | undefined;
 	has(key: K): boolean;
@@ -69,7 +67,6 @@ let slotCounter = 0;
  */
 export function brandedSlot<
 	// See note on BrandedKey.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	TSlot extends BrandedKey<number | Opaque<Brand<number, string>>, any>,
 >(): TSlot {
 	return slotCounter++ as TSlot;

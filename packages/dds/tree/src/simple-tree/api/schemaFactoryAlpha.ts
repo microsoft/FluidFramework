@@ -15,11 +15,7 @@ import type { ImplicitFieldSchema } from "../fieldSchema.js";
 /* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 import type {
 	FieldProps,
-	FieldSchemaAlpha,
-	FieldPropsAlpha,
-	FieldKind,
 } from "../fieldSchema.js";
-import type { LeafSchema } from "../leafNodeSchema.js";
 import {
 	type ArrayNodeCustomizableSchema,
 	arraySchema,
@@ -31,7 +27,6 @@ import {
 	recordSchema,
 } from "../node-kinds/index.js";
 import type { SchemaType, SimpleObjectNodeSchema } from "../simpleSchema.js";
-import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
 
 import {
 	defaultSchemaFactoryObjectOptions,
@@ -48,7 +43,6 @@ import type {
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
-import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 
 /**
