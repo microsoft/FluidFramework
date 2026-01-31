@@ -11,17 +11,6 @@ const config: Linter.Config[] = [
 	{
 		rules: {
 			"@typescript-eslint/consistent-indexed-object-style": "off",
-			"import-x/no-internal-modules": [
-				"error",
-				{
-					"allow": [
-						"@fluidframework/*/internal{,/**}",
-						"*/index.js",
-						"@fluidframework/presence/alpha",
-						"@fluidframework/presence/beta",
-					],
-				},
-			],
 		},
 	},
 	{

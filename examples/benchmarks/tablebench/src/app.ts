@@ -4,17 +4,15 @@
  */
 
 import { initFluid } from "./azure.js";
-import { generateTable } from "./data.js";
-import { Table } from "./tree/index.js";
 
-export { generateTable };
-export { Table };
+export { generateTable } from "./data.js";
+export { Table } from "./tree/index.js";
 
 export async function initApp(): Promise<void> {
 	const { view } = await initFluid();
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	document.getElementById("run")!.addEventListener("click", (): void => {
+	document.querySelector("#run")!.addEventListener("click", (): void => {
 		performance.mark("start");
 
 		for (const row of view.root) {
@@ -35,10 +33,12 @@ export async function initApp(): Promise<void> {
 		const measurement = performance.measure("run", "start", "end");
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		document.getElementById("result")!.innerText = `Time: ${measurement.duration}ms`;
+		document.querySelector("#result")!.textContent = `Time: ${measurement.duration}ms`;
 	});
 }
 
-initApp().catch((error) => {
+try {
+	await initApp();
+} catch (error) {
 	console.error(error);
-});
+}

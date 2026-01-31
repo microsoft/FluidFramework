@@ -219,6 +219,7 @@ export class ForestSummarizer
 				forestSummaryRootContentKey,
 				services,
 				parse,
+				// TODO: this type cast assumes there are no handles, which should probably be enforced at runtime or the need for this cast should be removed altogether.
 			)) as JsonCompatibleReadOnly,
 			{
 				...this.encoderContext,

@@ -3919,9 +3919,15 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
+      '@fluidframework/azure-client':
+        specifier: workspace:~
+        version: link:../../../packages/service-clients/azure-client
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -3931,9 +3937,15 @@ importers:
       quill:
         specifier: ^2.0.2
         version: 2.0.3
+      quill-delta:
+        specifier: ^4.2.2
+        version: 4.2.2
       react:
         specifier: ^18.3.1
         version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.3.11
@@ -3965,6 +3977,12 @@ importers:
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.15
+      '@types/react-dom':
+        specifier: ^18.3.1
+        version: 18.3.3(@types/react@18.3.15)
+      css-loader:
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.103.0)
       eslint:
         specifier: ~9.39.1
         version: 9.39.1(jiti@2.6.1)
@@ -3977,6 +3995,9 @@ importers:
       global-jsdom:
         specifier: ^26.0.0
         version: 26.0.0(jsdom@20.0.3)
+      html-webpack-plugin:
+        specifier: ^5.6.0
+        version: 5.6.3(webpack@5.103.0)
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
@@ -3989,6 +4010,12 @@ importers:
       source-map-loader:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.103.0)
+      style-loader:
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.103.0)
+      tinylicious:
+        specifier: ^7.0.0
+        version: 7.0.0
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -12641,6 +12668,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@20.19.30)
+      '@types/lz4js':
+        specifier: ^0.2.0
+        version: 0.2.2
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -20107,6 +20137,9 @@ packages:
 
   '@types/lz4js@0.2.1':
     resolution: {integrity: sha512-aAnbA4uKPNqZqu0XK1QAwKP0Wskb4Oa7ZFqxW5CMIyGgqYQKFgBxTfK3m3KODXoOLv5t14VregzgrEak13uGQA==}
+
+  '@types/lz4js@0.2.2':
+    resolution: {integrity: sha512-pqXfoJ2AwllcLTf1Nia0+HT1KHj8z4wWo3bBP6vn7Aen5ySywBqrh/u1TyBwWxuKDS+mPzVHkPbHivqZEfk6pA==}
 
   '@types/mdast@3.0.15':
     resolution: {integrity: sha512-LnwD+mUEfxWMa1QpDraczIn6k0Ee3SMicuYSSzS6ZYl2gKS09EClnJYGd8Du6rfc5r/GZEk5o1mRb8TaTj03sQ==}
@@ -33697,6 +33730,8 @@ snapshots:
   '@types/lru-cache@5.1.1': {}
 
   '@types/lz4js@0.2.1': {}
+
+  '@types/lz4js@0.2.2': {}
 
   '@types/mdast@3.0.15':
     dependencies:
