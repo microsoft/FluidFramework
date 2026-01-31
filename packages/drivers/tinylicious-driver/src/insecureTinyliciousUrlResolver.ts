@@ -101,6 +101,12 @@ function getTinyliciousEndpoint(port: number = defaultTinyliciousPort): {
 	port: number;
 } {
 	if (typeof window !== "undefined") {
+		// Detect GitHub Codespaces and use the forwarded port URL
+		// <codespace-name>-<fowarded-port>.<domain>
+		// e.g. my-codespace-7070.githubpreview.dev
+		// Capture Group 1: <codespace-name>
+		// Capture Group 2: <domain>
+		// reconstruct a hostname that fowards tinlicious's port via HTTPS.
 		const match = /^(.+)-\d+\.(.+)$/.exec(window.location.hostname);
 		if (match) {
 			// In Codespaces, the port is embedded in the hostname, use HTTPS port 443
