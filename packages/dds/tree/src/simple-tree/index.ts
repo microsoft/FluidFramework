@@ -200,6 +200,7 @@ export {
 	checkSchemaCompatibilitySnapshots,
 	type SnapshotFileSystem,
 	type SchemaCompatibilitySnapshotsOptions,
+	createCustomizedFluidFrameworkScopedFactory,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,

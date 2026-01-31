@@ -17,6 +17,7 @@ import type {
 } from "../core/index.js";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
+import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 
 /*
  * This file does two things:
@@ -312,4 +313,27 @@ function _enumFromStrings2<TScope extends string, const Members extends readonly
 	}
 
 	return adaptEnum(factory, enumObject);
+}
+
+function createCustomizedScopedFactory<
+	TUserScope extends string,
+	TCreatorDomain extends string,
+>(
+	inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
+	creatorDomain: TCreatorDomain,
+): SchemaFactoryBeta<`${TCreatorDomain}<${TUserScope}>`> {
+	return new SchemaFactoryBeta(`${creatorDomain}<${inputSchemaFactory.scope}>`);
+}
+
+export function createCustomizedFluidFrameworkScopedFactory<
+	TUserScope extends string,
+	TCreatorDomain extends string,
+>(
+	inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
+	fluidDomainSuffix: TCreatorDomain,
+): SchemaFactoryBeta<`com.fluidframework.${TCreatorDomain}<${TUserScope}>`> {
+	return createCustomizedScopedFactory(
+		inputSchemaFactory,
+		`com.fluidframework.${fluidDomainSuffix}` as const,
+	);
 }

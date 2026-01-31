@@ -146,6 +146,13 @@ assert(existsSync(schemaCompatibilitySnapshotsFolder));
 
 /**
  * Test schema snapshots for shared tree components which are part of this package.
+ * @param currentViewSchema - The current schema to test.
+ * @param minVersionForCollaboration - The minimum version which is required to be able to collaborate with `currentViewSchema`.
+ * @param domainName - The name of the domain for which snapshots are being tested.
+ * This is used to select the subdirectory within {@link schemaCompatibilitySnapshotsFolder} to use for snapshots.
+ * @param forceUpdate - If true, forces updating snapshots even if not in regenerate mode.
+ * Handy when initially writing a test to generate the snapshots.
+ * This fails the test to ensure its never checked in unnoticed.
  * @remarks
  * Snapshots are stored in a subdirectory of {@link schemaCompatibilitySnapshotsFolder} based on the provided `domainName`.
  */
@@ -153,6 +160,7 @@ export function testSchemaCompatibilitySnapshots(
 	currentViewSchema: TreeViewConfiguration,
 	minVersionForCollaboration: MinimumVersionForCollab,
 	domainName: string,
+	forceUpdate: boolean = false,
 ): void {
 	const snapshotDirectory = path.join(schemaCompatibilitySnapshotsFolder, domainName);
 	checkSchemaCompatibilitySnapshots({
@@ -161,6 +169,10 @@ export function testSchemaCompatibilitySnapshots(
 		version: cleanedPackageVersion,
 		schema: currentViewSchema,
 		minVersionForCollaboration,
-		mode: regenerateSnapshots ? "update" : "test",
+		mode: regenerateSnapshots || forceUpdate ? "update" : "test",
 	});
+	assert(
+		forceUpdate === false,
+		"Forcing update of schema compatibility snapshots should not be checked in.",
+	);
 }
