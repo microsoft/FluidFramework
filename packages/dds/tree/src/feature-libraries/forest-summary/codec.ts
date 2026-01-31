@@ -40,14 +40,6 @@ export type ForestCodec = IJsonCodec<
 >;
 
 /**
- * Options for building the forest summarizer codec.
- * Extends CodecWriteOptions with the required fieldBatchCodec dependency.
- */
-export interface ForestCodecOptions extends CodecWriteOptions {
-	readonly fieldBatchCodec: FieldBatchCodec;
-}
-
-/**
  * Convert a MinimumVersionForCollab to a ForestFormatVersion.
  * @param clientVersion - The MinimumVersionForCollab to convert.
  * @returns The ForestFormatVersion that corresponds to the provided MinimumVersionForCollab.

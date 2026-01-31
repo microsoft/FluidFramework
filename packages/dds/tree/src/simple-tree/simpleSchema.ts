@@ -4,7 +4,7 @@
  */
 
 import type { ValueSchema } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import type { NodeKind, SchemaUpgrade, SimpleNodeSchemaBase } from "./core/index.js";
 import type { FieldKind, FieldSchemaMetadata } from "./fieldSchema.js";
@@ -38,7 +38,7 @@ export interface SimpleNodeSchemaBaseAlpha<
 	 * and how to read it from documents should be documented here when this feature is more mature and these questions have good answers.
 	 * If this does end up getting reflected in some compatibility value, that should also be documented.
 	 */
-	readonly persistedMetadata: JsonCompatibleReadOnly | undefined;
+	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 
 	// This overrides the type from SimpleNodeSchemaBase to make it more specific. When stabilized, this should be moved to the base interface.
 	readonly metadata: SimpleNodeSchemaBase<TNodeKind, TCustomMetadata>["metadata"] &
@@ -285,7 +285,7 @@ export interface SimpleFieldSchema<Type extends SchemaType = SchemaType> {
 	 * Like {@link SimpleNodeSchemaBaseAlpha.persistedMetadata} but for fields.
 	 * Set via {@link FieldPropsAlpha.persistedMetadata}.
 	 */
-	readonly persistedMetadata?: JsonCompatibleReadOnly | undefined;
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**

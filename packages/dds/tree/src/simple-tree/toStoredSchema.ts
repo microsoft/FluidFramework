@@ -30,7 +30,7 @@ import {
 	filterIterable,
 	getOrCreate,
 	mapIterable,
-	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
 } from "../util/index.js";
 
 import {
@@ -387,7 +387,7 @@ export function transformSimpleNodeSchema(
 
 function arrayNodeStoredSchema(
 	schema: SimpleAllowedTypes<SchemaType.Stored>,
-	persistedMetadata: JsonCompatibleReadOnly | undefined,
+	persistedMetadata: JsonCompatibleReadOnlyObject | undefined,
 ): ObjectNodeStoredSchema {
 	const field = {
 		kind: FieldKinds.sequence.identifier,
