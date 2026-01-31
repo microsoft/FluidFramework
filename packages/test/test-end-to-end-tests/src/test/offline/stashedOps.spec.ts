@@ -55,6 +55,7 @@ import type {
 	ISequenceIntervalCollection,
 	SharedString,
 } from "@fluidframework/sequence/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,

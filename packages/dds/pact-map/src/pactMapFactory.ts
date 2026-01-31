@@ -5,10 +5,12 @@
 
 import type {
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type { IPactMap } from "./interfaces.js";
@@ -18,6 +20,7 @@ import { PactMapClass } from "./pactMap.js";
 /**
  * The factory that produces the PactMap
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class PactMapFactory implements IChannelFactory<IPactMap> {
 	public static readonly Type = "https://graph.microsoft.com/types/pact-map";
 
@@ -115,4 +118,5 @@ export class PactMapFactory implements IChannelFactory<IPactMap> {
  * ```
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const PactMap = createSharedObjectKind(PactMapFactory);

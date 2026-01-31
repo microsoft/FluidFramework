@@ -6,12 +6,17 @@
 export { type ISharedObjectHandle, isISharedObjectHandle } from "./handle.js";
 export { FluidSerializer, type IFluidSerializer } from "./serializer.js";
 export {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	SharedObject,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	SharedObjectCore,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	type ISharedObjectKind,
 	type SharedObjectKind,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	createSharedObjectKind,
 } from "./sharedObject.js";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export type { ISharedObject, ISharedObjectEvents } from "./types.js";
 export {
 	createSingleBlobSummary,

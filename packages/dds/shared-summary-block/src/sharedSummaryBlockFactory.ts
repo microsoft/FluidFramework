@@ -5,10 +5,12 @@
 
 import type {
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedSummaryBlock } from "./interfaces.js";
@@ -18,6 +20,7 @@ import { SharedSummaryBlockClass } from "./sharedSummaryBlock.js";
 /**
  * The factory that defines the shared summary block.
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummaryBlock> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
@@ -81,6 +84,7 @@ export class SharedSummaryBlockFactory implements IChannelFactory<ISharedSummary
  * {@inheritDoc ISharedSummaryBlock}
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const SharedSummaryBlock = createSharedObjectKind(SharedSummaryBlockFactory);
 
 /**

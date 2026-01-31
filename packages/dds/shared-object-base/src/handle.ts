@@ -8,6 +8,7 @@ import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { isFluidHandle, asLegacyAlpha } from "@fluidframework/runtime-utils/internal";
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { ISharedObject } from "./types.js";
 
 /**
@@ -16,6 +17,7 @@ import type { ISharedObject } from "./types.js";
  *
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedObjectHandle extends IFluidHandleInternal<ISharedObject> {
 	/**
 	 * Binds the given handle to this DDS or attach the given handle if this DDS is attached.
@@ -45,6 +47,7 @@ export function isISharedObjectHandle(handle: unknown): handle is ISharedObjectH
  * ensuring the target object becomes attached along with this DDS.
  */
 export class SharedObjectHandle
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	extends FluidObjectHandle<ISharedObject>
 	implements ISharedObjectHandle
 {
@@ -89,6 +92,7 @@ export class SharedObjectHandle
 	 * to this handle.
 	 */
 	constructor(
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		protected readonly value: ISharedObject,
 		path: string,
 		private readonly runtime: IFluidDataStoreRuntime,

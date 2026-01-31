@@ -17,6 +17,7 @@ import type {
 	IChannelStorageService,
 	IChannel,
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IDeltaHandler,
@@ -58,6 +59,7 @@ import { v4 as uuid } from "uuid";
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, type IFluidSerializer } from "./serializer.js";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
@@ -83,12 +85,19 @@ interface ProcessTelemetryProperties {
  *
  * TODO:
  * This class should eventually be made internal, as custom subclasses of it outside this repository are intended to be made unsupported in the future.
+ *
+ * @deprecated This class will be removed in version 2.100.0. It is intended for internal Fluid Framework use only.
+ * External implementations of custom DDSes are not supported.
+ * Applications should use SharedTree or another existing DDS type (SharedDirectory, SharedMap, etc.) instead.
+ *
  * @legacy @beta
  */
 export abstract class SharedObjectCore<
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		TEvent extends ISharedObjectEvents = ISharedObjectEvents,
 	>
 	extends EventEmitterWithErrorHandling<TEvent>
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	implements ISharedObject<TEvent>
 {
 	public get IFluidLoadable(): this {
@@ -738,9 +747,15 @@ export abstract class SharedObjectCore<
  * This class is badly named.
  * Once it becomes `@internal` "SharedObjectCore" should probably become "SharedObject"
  * and this class should be renamed to something like "SharedObjectSynchronous".
+ *
+ * @deprecated This class will be removed in version 2.100.0. It is intended for internal Fluid Framework use only.
+ * External implementations of custom DDSes are not supported.
+ * Applications should use SharedTree or another existing DDS type (SharedDirectory, SharedMap, etc.) instead.
+ *
  * @legacy @beta
  */
 export abstract class SharedObject<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,
 > extends SharedObjectCore<TEvent> {
 	/**
@@ -927,6 +942,12 @@ export abstract class SharedObject<
  * This does not extend {@link SharedObjectKind} since doing so would prevent implementing this interface in type safe code.
  * Any implementation of this can safely be used as a {@link SharedObjectKind} with an explicit type conversion,
  * but doing so is typically not needed as {@link createSharedObjectKind} is used to produce values that are both types simultaneously.
+ *
+ * @deprecated This interface will be removed in version 2.100.0. It is intended for internal Fluid Framework use only.
+ * External implementations of custom DDSes are not supported.
+ * Applications should use SharedTree or another existing DDS type (SharedDirectory, SharedMap, etc.) instead.
+ * The `SharedObjectKind` type will remain public as the safe, sealed type for referencing DDS kinds.
+ *
  * @legacy @beta
  */
 export interface ISharedObjectKind<TSharedObject> {
@@ -940,6 +961,7 @@ export interface ISharedObjectKind<TSharedObject> {
 	 *
 	 * - {@link ISharedObjectKind.create} if using a custom container definitions (and thus not using {@link @fluidframework/fluid-static#IFluidContainer}).
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	getFactory(): IChannelFactory<TSharedObject>;
 
 	/**
@@ -993,13 +1015,20 @@ export interface SharedObjectKind<out TSharedObject = unknown>
  * and uses it to return a a single value which is intended to be used as the API entry point for the corresponding shared object type.
  * The returned value implements {@link ISharedObjectKind} for use in the encapsulated API, as well as the type erased {@link SharedObjectKind} used by the declarative API.
  * See {@link @fluidframework/fluid-static#ContainerSchema} for how this is used in the declarative API.
+ *
+ * @deprecated This function will be removed in version 2.100.0. It is intended for internal Fluid Framework use only.
+ * External implementations of custom DDSes are not supported.
+ * Applications should use SharedTree or another existing DDS type (SharedDirectory, SharedMap, etc.) instead.
+ *
  * @internal
  */
 export function createSharedObjectKind<TSharedObject>(
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	factory: (new () => IChannelFactory<TSharedObject>) & { readonly Type: string },
 ): ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject> {
 	const result: ISharedObjectKind<TSharedObject> &
 		Omit<SharedObjectKind<TSharedObject>, "brand"> = {
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		getFactory(): IChannelFactory<TSharedObject> {
 			return new factory();
 		},

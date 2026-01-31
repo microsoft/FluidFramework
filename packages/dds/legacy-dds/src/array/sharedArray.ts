@@ -8,6 +8,7 @@ import type {
 	Serializable,
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
@@ -21,6 +22,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
@@ -52,6 +54,7 @@ const snapshotFileName = "header";
  * @internal
  */
 export class SharedArrayClass<T extends SerializableTypeForSharedArray>
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	extends SharedObject<ISharedArrayEvents>
 	implements ISharedArray<T>, ISharedArrayRevertible
 {
@@ -96,6 +99,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 *
 	 * @returns a factory that creates and load SharedArray
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	public static getFactory<T extends SerializableTypeForSharedArray>(): IChannelFactory {
 		return new SharedArrayFactory<T>();
 	}

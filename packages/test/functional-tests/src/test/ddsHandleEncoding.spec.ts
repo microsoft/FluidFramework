@@ -15,6 +15,7 @@ import {
 } from "@fluid-experimental/tree";
 import { CellFactory } from "@fluidframework/cell/internal";
 import { detectOutboundReferences } from "@fluidframework/container-runtime/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";

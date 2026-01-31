@@ -8,6 +8,7 @@
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
@@ -28,6 +29,7 @@ import { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt.js";
 /**
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
 	public abstract get attributes();
 	public abstract get type();

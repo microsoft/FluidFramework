@@ -42,6 +42,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
@@ -81,6 +82,7 @@ export interface DDSRandom extends IRandom {
 /**
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory>
 	extends BaseFuzzTestState {
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
@@ -231,6 +233,7 @@ export type HarnessOperation =
  * @internal
  */
 export interface DDSFuzzModel<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory> = DDSFuzzTestState<TChannelFactory>,
@@ -293,6 +296,7 @@ export interface DDSFuzzModel<
  * @internal
  */
 export interface DDSFuzzHarnessModel<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory> = DDSFuzzTestState<TChannelFactory>,
@@ -310,16 +314,19 @@ export interface DDSFuzzHarnessEvents {
 	/**
 	 * Raised for each non-summarizer client created during fuzz test execution.
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	(event: "clientCreate", listener: (client: Client<IChannelFactory>) => void);
 
 	/**
 	 * Raised after creating the initialState but prior to performing the fuzzActions..
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	(event: "testStart", listener: (initialState: DDSFuzzTestState<IChannelFactory>) => void);
 
 	/**
 	 * Raised after all fuzzActions have been completed.
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
 
 	/**
@@ -595,6 +602,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinNewClient<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
@@ -668,6 +676,7 @@ export function mixinNewClient<
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinReconnect<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
@@ -730,6 +739,7 @@ export function mixinReconnect<
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinAttach<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
@@ -868,6 +878,7 @@ export function mixinAttach<
 			};
 		} else if (isOperationType<Attaching>("attaching", operation)) {
 			assert.equal(state.clients.length, 1);
+			// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 			const clientA: ClientWithStashData<IChannelFactory> = state.clients[0];
 			finalizeAllocatedIds(clientA);
 
@@ -901,6 +912,7 @@ export function mixinAttach<
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinRebase<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
@@ -957,6 +969,7 @@ export function mixinRebase<
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinSynchronization<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
@@ -1078,7 +1091,9 @@ const isClientSpec = (op: unknown): op is ClientSpec =>
 	(op as ClientSpec).clientId !== undefined;
 
 export function setupClientContext(
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	state: DDSFuzzTestState<IChannelFactory>,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	client: Client<IChannelFactory>,
 ): CleanupFunction {
 	const { client: oldClient, random } = state;
@@ -1104,6 +1119,7 @@ export function setupClientContext(
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinClientSelection<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
@@ -1155,6 +1171,7 @@ export function mixinClientSelection<
  * Mixes in functionality to allow for rollback operations in a DDS fuzz model and applies them during state transitions.
  */
 export function mixinRollback<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
@@ -1202,6 +1219,7 @@ export function mixinRollback<
 }
 
 export function mixinStashedClient<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
@@ -1292,6 +1310,7 @@ export type CleanupFunction = () => void;
  *
  * Since the callback is async, this modification to the state could be an issue if multiple runs of this function are done concurrently.
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 async function runInStateWithClient<TState extends DDSFuzzTestState<IChannelFactory>, Result>(
 	state: TState,
 	client: TState["client"],
@@ -1306,6 +1325,7 @@ async function runInStateWithClient<TState extends DDSFuzzTestState<IChannelFact
 	}
 }
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 function createDetachedClient<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	factory: TChannelFactory,
@@ -1343,6 +1363,7 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 	return newClient;
 }
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 async function loadClient<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	summarizerClient: ClientWithStashData<TChannelFactory>,
@@ -1391,6 +1412,7 @@ function isFluidSerializerLike(object: unknown): object is IFluidSerializer {
 	);
 }
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	loadData: ClientLoadData,
@@ -1438,6 +1460,7 @@ async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 	return newClient;
 }
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 async function loadDetached<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	summarizerClient: ClientWithStashData<TChannelFactory>,
@@ -1513,6 +1536,7 @@ function makeFriendlyClientId(random: IRandom, index: number): string {
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export async function runTestForSeed<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 >(
@@ -1621,6 +1645,7 @@ export async function runTestForSeed<
 	return finalState;
 }
 
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 function runTest<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
 	model: DDSFuzzHarnessModel<TChannelFactory, TOperation>,
 	options: InternalOptions,
@@ -1703,6 +1728,7 @@ export const normalizeSeedOption = (
  * @internal
  */
 export async function replayTest<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 >(
@@ -1738,6 +1764,7 @@ export function convertOnlyAndSkip<TOptions extends DDSFuzzSuiteOptions>(
 }
 
 export function createSuite<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 >(model: DDSFuzzHarnessModel<TChannelFactory, TOperation>, options: InternalOptions): void {
@@ -1821,6 +1848,7 @@ function disposeAllOracles(): void {
 }
 
 const getFullModel = <
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 >(
@@ -1849,6 +1877,7 @@ const getFullModel = <
  * @internal
  */
 export function createDDSFuzzSuite<
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 >(
@@ -1880,6 +1909,7 @@ export namespace createDDSFuzzSuite {
 	 */
 	export const only =
 		(...seeds: number[]) =>
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
 			ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
 			providedOptions?: Partial<DDSFuzzSuiteOptions>,
@@ -1902,6 +1932,7 @@ export namespace createDDSFuzzSuite {
 	 */
 	export const skip =
 		(...seeds: number[]) =>
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
 			ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
 			providedOptions?: Partial<DDSFuzzSuiteOptions>,

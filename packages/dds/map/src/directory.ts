@@ -25,6 +25,7 @@ import type {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	SharedObject,
 	ValueType,
 	bindHandles,
@@ -405,6 +406,7 @@ interface SequenceData {
  * @sealed
  */
 export class SharedDirectory
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	extends SharedObject<ISharedDirectoryEvents>
 	implements ISharedDirectory
 {

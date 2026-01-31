@@ -17,6 +17,7 @@ import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/clien
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
@@ -31,6 +32,7 @@ import {
 	type ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
 import lodash from "lodash";
@@ -154,6 +156,7 @@ const defaultEncDec: ISharedPropertyTreeEncDec = {
  * DDS that models a tree made of objects with properties under string keys.
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export class SharedPropertyTree extends SharedObject {
 	tipView: SerializedChangeSet = {};
 	remoteTipView: SerializedChangeSet = {};
@@ -204,6 +207,7 @@ export class SharedPropertyTree extends SharedObject {
 	 *
 	 * @returns a factory that creates and load SharedDie
 	 */
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	public static getFactory(): IChannelFactory {
 		return new PropertyTreeFactory();
 	}

@@ -7,10 +7,13 @@ import type {
 	IChannelServices,
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	createSharedObjectKind,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	type ISharedObjectKind,
 	type SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
@@ -24,6 +27,7 @@ import { SharedArrayClass } from "./sharedArray.js";
  * @internal
  */
 export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	implements IChannelFactory
 {
 	public static readonly Type = "https://graph.microsoft.com/types/SharedArray";
@@ -70,8 +74,10 @@ export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
  * Entrypoint for {@link ISharedArray} creation.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> &
 	SharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> =
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	createSharedObjectKind<ISharedArray<SerializableTypeForSharedArray>>(SharedArrayFactory);
 
 /**
@@ -80,7 +86,9 @@ export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForShar
  */
 export const SharedArrayBuilder = <
 	T extends SerializableTypeForSharedArray,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 >(): ISharedObjectKind<ISharedArray<T>> & SharedObjectKind<ISharedArray<T>> => {
 	const factory = SharedArrayFactory<T>;
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	return createSharedObjectKind<ISharedArray<T>>(factory);
 };

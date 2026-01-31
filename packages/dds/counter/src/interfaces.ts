@@ -4,7 +4,9 @@
  */
 
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObject,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
 
@@ -12,6 +14,7 @@ import type {
  * Events sent by {@link ISharedCounter}.
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedCounterEvents extends ISharedObjectEvents {
 	/**
 	 * This event is raised when the counter is incremented or decremented.
@@ -63,6 +66,7 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
  * ```
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
 	/**
 	 * The counter value.

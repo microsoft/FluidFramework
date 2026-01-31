@@ -7,6 +7,7 @@ import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
 import type { FluidObjectKeys, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { oob } from "@fluidframework/core-utils/internal";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
@@ -15,6 +16,7 @@ import type {
 	MinimumVersionForCollab,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
@@ -53,6 +55,7 @@ export function isDataObjectKind(
 
 	if (
 		isDataObject ===
+		// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 		((obj as Partial<ISharedObjectKind<IFluidLoadable>>).getFactory !== undefined)
 	) {
 		// TODO: Currently nothing in the types or docs requires an actual DataObjectClass to not have a member called "getFactory" so there is a risk of this being a false positive.
@@ -68,6 +71,7 @@ export function isDataObjectKind(
  */
 export function isSharedObjectKind(
 	obj: LoadableObjectKind,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 ): obj is ISharedObjectKind<IFluidLoadable> {
 	return !isDataObjectKind(obj);
 }
@@ -79,8 +83,10 @@ export function isSharedObjectKind(
  */
 export const parseDataObjectsFromSharedObjects = (
 	schema: ContainerSchema,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 ): [NamedFluidDataStoreRegistryEntry[], IChannelFactory[]] => {
 	const registryEntries = new Set<NamedFluidDataStoreRegistryEntry>();
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	const sharedObjects = new Set<IChannelFactory>();
 
 	const tryAddObject = (obj: LoadableObjectKind): void => {
@@ -127,6 +133,7 @@ export async function createDataObject<T extends IFluidLoadable>(
  * Creates a new shared object of the specified type.
  */
 export function createSharedObject<T extends IFluidLoadable>(
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	sharedObjectClass: ISharedObjectKind<T>,
 	runtime: IFluidDataStoreRuntime,
 ): T {

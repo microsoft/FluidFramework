@@ -5,12 +5,15 @@
 
 import type {
 	IChannelAttributes,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObject,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
 
@@ -36,6 +39,7 @@ export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
  * Use for the runtime to create and load distributed data structure by type name of each channel
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
 	load(
 		document: IFluidDataStoreRuntime,
@@ -51,6 +55,7 @@ export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
  * Events notifying about addition, acquisition, release and completion of items
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents {
 	/**
 	 * Event fires when new item is added to the queue or
@@ -107,6 +112,7 @@ export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvent
 // TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface IConsensusOrderedCollection<T = any>
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	extends ISharedObject<IConsensusOrderedCollectionEvents<T>> {
 	/**
 	 * Adds a value to the collection

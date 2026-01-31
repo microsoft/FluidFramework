@@ -5,6 +5,7 @@
 
 import { takeAsync, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
 import { pkgVersion } from "../../../packageVersion.js";

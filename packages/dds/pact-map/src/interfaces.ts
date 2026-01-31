@@ -4,7 +4,9 @@
  */
 
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObject,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
 
@@ -12,6 +14,7 @@ import type {
  * Events emitted by {@link IPactMap}.
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface IPactMapEvents extends ISharedObjectEvents {
 	/**
 	 * Notifies when a new value goes pending or has been accepted.
@@ -47,6 +50,7 @@ export interface IAcceptedPact<T> {
  * or disconnected.
  * @internal
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
 	/**
 	 * Gets the accepted value for the given key.

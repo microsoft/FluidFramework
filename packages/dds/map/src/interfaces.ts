@@ -10,7 +10,9 @@ import type {
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
 import type {
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObject,
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base/internal";
 
@@ -127,6 +129,7 @@ export interface IDirectory
  * @sealed
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	/**
 	 * Emitted when a key is set or deleted. This is emitted for any key in the {@link ISharedDirectory} or any
@@ -303,6 +306,7 @@ export interface IDirectoryEvents extends IEvent {
  * @legacy @beta
  */
 export interface ISharedDirectory
+	// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 	extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
 		Omit<IDirectory, "on" | "once" | "off"> {
 	// The Omit type excludes symbols, which we don't want to exclude.  Adding them back here manually.
@@ -334,6 +338,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
  * @sealed
  * @legacy @beta
  */
+// eslint-disable-next-line import-x/no-deprecated -- can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedMapEvents extends ISharedObjectEvents {
 	/**
 	 * Emitted when a key is set or deleted.
@@ -379,7 +384,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * @legacy @beta
  */
 // TODO: Use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, import-x/no-deprecated -- import-x/no-deprecated can be removed once 2.100.0 is released and this API becomes internal
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
 	/**
 	 * Retrieves the given key from the map if it exists.
