@@ -13,6 +13,16 @@ import { SharedTree } from "@fluidframework/tree/legacy";
 import { generateTable } from "./data.js";
 import { Table } from "./tree/index.js";
 
+function getTinyliciousEndpoint(port = 7070): string {
+	if (typeof window !== "undefined") {
+		const match = /^(.+)-\d+\.(.+)$/.exec(window.location.hostname);
+		if (match) {
+			return `https://${match[1]}-${port}.${match[2]}`;
+		}
+	}
+	return `http://localhost:${port}`;
+}
+
 const userId = Math.random().toString(36).slice(2);
 
 const localConnectionConfig: AzureLocalConnectionConfig = {
@@ -21,7 +31,7 @@ const localConnectionConfig: AzureLocalConnectionConfig = {
 		id: userId,
 		name: `TestUser-${userId}`,
 	}),
-	endpoint: "http://localhost:7070",
+	endpoint: getTinyliciousEndpoint(),
 };
 
 const client = new AzureClient({ connection: localConnectionConfig });

@@ -24,6 +24,16 @@ import { TodoItem, TodoList } from "./schema.js";
 // Define the server we will be using and initialize Fluid
 const useAzure = process.env.FLUID_CLIENT === "azure";
 
+function getTinyliciousEndpoint(port = 7070): string {
+	if (typeof window !== "undefined") {
+		const match = /^(.+)-\d+\.(.+)$/.exec(window.location.hostname);
+		if (match) {
+			return `https://${match[1]}-${port}.${match[2]}`;
+		}
+	}
+	return `http://localhost:${port}`;
+}
+
 const user = {
 	id: uuid(),
 	name: uuid(),
@@ -52,7 +62,7 @@ export const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectio
 		: {
 				type: "local",
 				tokenProvider: new InsecureTokenProvider("fooBar", user),
-				endpoint: "http://localhost:7070",
+				endpoint: getTinyliciousEndpoint(),
 			};
 
 /**
