@@ -16,7 +16,16 @@ import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
 import { mapWait } from "./utils.js";
 
-describe("Fluid data updates", () => {
+/**
+ * ODSP client E2E tests are currently disabled due to authentication failures
+ * ("The Host-provided token fetcher threw an error"). These tests require tenant
+ * configuration updates to work with FIC (Federated Identity Credentials) enabled
+ * tenants due to new security policies.
+ *
+ * Tracked by: {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/54427}
+ * Tests should be re-enabled once FIC-enabled tenant setup is complete.
+ */
+describe.skip("Fluid data updates", () => {
 	const connectTimeoutMs = 10_000;
 	let client: OdspClient;
 	const schema = {
