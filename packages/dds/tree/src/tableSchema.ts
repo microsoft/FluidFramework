@@ -1744,6 +1744,11 @@ export namespace TableSchema {
 		getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
 		/**
 		 * Gets a table column by its index in the table.
+		 *
+		 * @remarks
+		 * Note that edits to the table structure (including edits by collaborators) can cause indexes to refer to different columns over time.
+		 * Therefore, it is recommended to use IDs whenever possible to identify columns.
+		 *
 		 * @returns The column, if it exists. Otherwise, `undefined`.
 		 */
 		getColumn(index: number): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
@@ -1755,6 +1760,11 @@ export namespace TableSchema {
 		getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
 		/**
 		 * Gets a table row by its index in the table.
+		 *
+		 * @remarks
+		 * Note that edits to the table structure (including edits by collaborators) can cause indexes to refer to different rows over time.
+		 * Therefore, it is recommended to use IDs whenever possible to identify rows.
+		 *
 		 * @returns The row, if it exists. Otherwise, `undefined`.
 		 */
 		getRow(index: number): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
