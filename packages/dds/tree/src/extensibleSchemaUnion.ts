@@ -28,8 +28,8 @@ import type { UnionToIntersection } from "./util/index.js";
  * This does mean however that old clients may see types they do not know about, which are simply exposed as `undefined` children.
  *
  * `staged` types are lower overhead, and might gain support for `unknown` types in the future, so prefer them when possible.
- * This is simply an alternative for when future compat with unknown types is required,
- * and is built on top of the existing {@link ObjectSchemaOptions.allowUnknownOptionalFields | allowUnknownOptionalFields} feature.
+ * This is simply an alternative for when future compatibility with unknown types is required.
+ * It is built on top of the existing {@link ObjectSchemaOptions.allowUnknownOptionalFields | allowUnknownOptionalFields} feature.
  * @alpha
  */
 export namespace ExtensibleSchemaUnion {
