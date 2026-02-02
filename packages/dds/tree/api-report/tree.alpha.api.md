@@ -364,7 +364,7 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public @system
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
-// @alpha
+// @beta
 export const FluidClientVersion: {
     readonly v2_0: "2.0.0";
     readonly v2_43: "2.43.0";
