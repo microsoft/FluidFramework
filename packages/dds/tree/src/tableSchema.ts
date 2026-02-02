@@ -1631,6 +1631,11 @@ export namespace TableSchema {
 
 	/**
 	 * A key to uniquely identify a cell within a table.
+	 *
+	 * @remarks
+	 * Note that edits to the table structure (including edits by collaborators) can cause indexes to refer to different cells over time.
+	 * Therefore, it is recommended to use IDs or node references whenever possible to identify cells.
+	 *
 	 * @input @beta
 	 */
 	export interface CellKey<
