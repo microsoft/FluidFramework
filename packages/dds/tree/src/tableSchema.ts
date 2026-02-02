@@ -96,7 +96,7 @@ export interface RowPrivate<
  * (eg, inserting/removing rows/columns, or setting/removing a cell) will automatically include constraints that
  * guard transactions from producing orphaned cells.
  *
- * @system @beta
+ * @system @alpha
  */
 export namespace System_TableSchema {
 	/**
@@ -107,7 +107,7 @@ export namespace System_TableSchema {
 	 * Note: this can't reasonably be implemented via `Pick<ArrayNode<...>>` because we only want to include the
 	 * subset of its method overloads which do not support moving items between lists.
 	 *
-	 * @beta @system
+	 * @alpha @system
 	 */
 	export type RearrangeableList<TItemSchema extends ImplicitAllowedTypes> = TreeNode &
 		readonly TreeNodeFromImplicitAllowedTypes<TItemSchema>[] & {
@@ -135,7 +135,7 @@ export namespace System_TableSchema {
 	 * Longer term, it would be better to simply omit "props" altogether by default.
 	 * For now, this ensures that the user doesn't have to specify a "props" entry when initializing column/row nodes
 	 * and ensures that they cannot set anything that might conflict with future evolutions of the schema.
-	 * @system @beta
+	 * @system @alpha
 	 */
 	export type DefaultPropsType = ReturnType<typeof SchemaFactory.optional<[]>>;
 
@@ -143,7 +143,7 @@ export namespace System_TableSchema {
 	 * A base interface for factory input options which include an schema factory.
 	 * @remarks This interface should not be referenced directly.
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
-	 * @system @beta
+	 * @system @alpha
 	 */
 	export interface OptionsWithSchemaFactory<TSchemaFactory extends SchemaFactoryBeta> {
 		/**
@@ -158,7 +158,7 @@ export namespace System_TableSchema {
 	 * A base interface for factory input options which include the table cell schema.
 	 * @remarks This interface should not be referenced directly.
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
-	 * @system @beta
+	 * @system @alpha
 	 */
 	export interface OptionsWithCellSchema<TCellSchema extends ImplicitAllowedTypes> {
 		/**
@@ -172,7 +172,7 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table column schema.
 	 * @remarks Includes parameters common to all column factory overloads.
-	 * @system @beta
+	 * @system @alpha
 	 */
 	export type CreateColumnOptionsBase<
 		TUserScope extends string = string,
@@ -182,7 +182,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Factory for creating column schema.
-	 * @system @beta
+	 * @system @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createColumnSchema<
@@ -298,7 +298,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base column schema type.
-	 * @sealed @system @beta
+	 * @sealed @system @alpha
 	 */
 	export type ColumnSchemaBase<
 		TUserScope extends string = string,
@@ -313,7 +313,7 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table row schema.
 	 * @remarks Includes parameters common to all row factory overloads.
-	 * @system @beta
+	 * @system @alpha
 	 */
 	export type CreateRowOptionsBase<
 		TUserScope extends string = string,
@@ -323,7 +323,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Factory for creating row schema.
-	 * @system @beta
+	 * @system @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createRowSchema<
@@ -451,7 +451,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base row schema type.
-	 * @sealed @system @beta
+	 * @sealed @system @alpha
 	 */
 	export type RowSchemaBase<
 		TUserScope extends string = string,
@@ -466,7 +466,7 @@ export namespace System_TableSchema {
 	/**
 	 * Base options for creating table schema.
 	 * @remarks Includes parameters common to all table factory overloads.
-	 * @system @beta
+	 * @system @alpha
 	 */
 	export type TableFactoryOptionsBase<
 		TUserScope extends string = string,
@@ -476,7 +476,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Factory for creating table schema.
-	 * @system @beta
+	 * @system @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createTableSchema<
@@ -1297,7 +1297,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Base row schema type.
-	 * @sealed @system @beta
+	 * @sealed @system @alpha
 	 */
 	export type TableSchemaBase<
 		TUserScope extends string,
@@ -1450,7 +1450,7 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  * The above examples are backed by tests in `tableSchema.spec.ts`.
  * Those tests and these examples should be kept in-sync to ensure that the examples are correct.
  *
- * @beta
+ * @alpha
  */
 export namespace TableSchema {
 	// #region Column
@@ -1460,7 +1460,7 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(column:2)}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the column.
-	 * @sealed @beta
+	 * @sealed @alpha
 	 */
 	export interface Column<
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Reserving this for future use.
@@ -1488,7 +1488,7 @@ export namespace TableSchema {
 	 * Factory for creating new table column schema.
 	 * @typeParam TUserScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
-	 * @beta
+	 * @alpha
 	 */
 	export function column<
 		const TUserScope extends string,
@@ -1509,7 +1509,7 @@ export namespace TableSchema {
 	 * @typeParam TUserScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the column.
-	 * @beta
+	 * @alpha
 	 */
 	export function column<
 		const TUserScope extends string,
@@ -1549,7 +1549,7 @@ export namespace TableSchema {
 	 * @remarks Implemented by the schema class returned from {@link TableSchema.(row:2)}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the row.
-	 * @sealed @beta
+	 * @sealed @alpha
 	 */
 	export interface Row<
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Reserving this for future use.
@@ -1577,7 +1577,7 @@ export namespace TableSchema {
 	 * Factory for creating new table column schema.
 	 * @typeParam TUserScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
-	 * @beta
+	 * @alpha
 	 */
 	export function row<
 		const TUserScope extends string,
@@ -1594,7 +1594,7 @@ export namespace TableSchema {
 	 * @typeParam TUserScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * @typeParam TCell - The type of the cells in the {@link TableSchema.Table}.
 	 * @typeParam TProps - Additional properties to associate with the row.
-	 * @beta
+	 * @alpha
 	 */
 	export function row<
 		const TUserScope extends string,
@@ -1632,11 +1632,7 @@ export namespace TableSchema {
 	/**
 	 * A key to uniquely identify a cell within a table.
 	 *
-	 * @remarks
-	 * Note that edits to the table structure (including edits by collaborators) can cause indexes to refer to different cells over time.
-	 * Therefore, it is recommended to use IDs or node references whenever possible to identify cells.
-	 *
-	 * @input @beta
+	 * @input @alpha
 	 */
 	export interface CellKey<
 		TColumn extends ImplicitAllowedTypes,
@@ -1655,7 +1651,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.insertColumns} parameters.
-	 * @input @beta
+	 * @input @alpha
 	 */
 	export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
 		/**
@@ -1672,7 +1668,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.insertRows} parameters.
-	 * @input @beta
+	 * @input @alpha
 	 */
 	export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
 		/**
@@ -1689,7 +1685,7 @@ export namespace TableSchema {
 
 	/**
 	 * {@link TableSchema.Table.setCell} parameters.
-	 * @input @beta
+	 * @input @alpha
 	 */
 	export interface SetCellParameters<
 		TCell extends ImplicitAllowedTypes,
@@ -1719,7 +1715,7 @@ export namespace TableSchema {
 	 * @typeParam TColumn - The type of the columns in the table.
 	 * @typeParam TRow - The type of the rows in the table.
 	 *
-	 * @sealed @beta
+	 * @sealed @alpha
 	 */
 	export interface Table<
 		TUserScope extends string,
@@ -1744,11 +1740,6 @@ export namespace TableSchema {
 		getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
 		/**
 		 * Gets a table column by its index in the table.
-		 *
-		 * @remarks
-		 * Note that edits to the table structure (including edits by collaborators) can cause indexes to refer to different columns over time.
-		 * Therefore, it is recommended to use IDs whenever possible to identify columns.
-		 *
 		 * @returns The column, if it exists. Otherwise, `undefined`.
 		 */
 		getColumn(index: number): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
@@ -1760,11 +1751,6 @@ export namespace TableSchema {
 		getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
 		/**
 		 * Gets a table row by its index in the table.
-		 *
-		 * @remarks
-		 * Note that edits to the table structure (including edits by collaborators) can cause indexes to refer to different rows over time.
-		 * Therefore, it is recommended to use IDs whenever possible to identify rows.
-		 *
 		 * @returns The row, if it exists. Otherwise, `undefined`.
 		 */
 		getRow(index: number): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
@@ -1895,7 +1881,7 @@ export namespace TableSchema {
 
 	/**
 	 * Input parameters for {@link TableSchema.Table}'s `create` factory method.
-	 * @input @beta
+	 * @input @alpha
 	 */
 	export interface TableFactoryMethodParameters<
 		TUserScope extends string,
@@ -1922,7 +1908,7 @@ export namespace TableSchema {
 	 * @typeParam TUserScope - The {@link SchemaFactory.scope | schema factory scope}.
 	 * The resulting schema will have an identifier of the form: `com.fluidframework.table<${TUserScope}>.Table`.
 	 * @typeParam TCell - The type of the cells in the table.
-	 * @beta
+	 * @alpha
 	 */
 	export function table<
 		const TUserScope extends string,
@@ -1949,7 +1935,7 @@ export namespace TableSchema {
 	 * The resulting schema will have an identifier of the form: `com.fluidframework.table<${TUserScope}>.Table`.
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TColumn - The type of the columns in the table.
-	 * @beta
+	 * @alpha
 	 */
 	export function table<
 		const TUserScope extends string,
@@ -1975,7 +1961,7 @@ export namespace TableSchema {
 	 * The resulting schema will have an identifier of the form: `com.fluidframework.table<${TUserScope}>.Table`.
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TRow - The type of the rows in the table.
-	 * @beta
+	 * @alpha
 	 */
 	export function table<
 		const TUserScope extends string,
@@ -2006,7 +1992,7 @@ export namespace TableSchema {
 	 * @typeParam TCell - The type of the cells in the table.
 	 * @typeParam TColumn - The type of the columns in the table.
 	 * @typeParam TRow - The type of the rows in the table.
-	 * @beta
+	 * @alpha
 	 */
 	export function table<
 		const TUserScope extends string,

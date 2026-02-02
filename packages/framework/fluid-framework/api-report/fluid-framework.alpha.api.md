@@ -1590,7 +1590,7 @@ export interface SnapshotFileSystem {
     }): void;
 }
 
-// @beta @system
+// @alpha @system
 export namespace System_TableSchema {
     // @sealed @system
     export type ColumnSchemaBase<TUserScope extends string = string, TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes, TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema> = ReturnType<typeof createColumnSchema<TUserScope, TCellSchema, TPropsSchema>>;
@@ -1736,7 +1736,7 @@ export namespace System_Unsafe {
     export type TreeObjectNodeUnsafe<T extends RestrictiveStringRecord<ImplicitFieldSchemaUnsafe>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName, NodeKind.Object, T>;
 }
 
-// @beta
+// @alpha
 export namespace TableSchema {
     // @input
     export interface CellKey<TColumn extends ImplicitAllowedTypes, TRow extends ImplicitAllowedTypes> {
