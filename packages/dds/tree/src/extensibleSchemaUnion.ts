@@ -34,7 +34,7 @@ import type { UnionToIntersection } from "./util/index.js";
  */
 export namespace ExtensibleSchemaUnion {
 	/**
-	 * Members for classes created by {@link extensibleSchemaUnion}.
+	 * Members for classes created by {@link ExtensibleSchemaUnion.extensibleSchemaUnion}.
 	 * @alpha
 	 */
 	export interface Members<T> {
@@ -42,7 +42,7 @@ export namespace ExtensibleSchemaUnion {
 	}
 
 	/**
-	 * Statics for classes created by {@link extensibleSchemaUnion}.
+	 * Statics for classes created by {@link ExtensibleSchemaUnion.extensibleSchemaUnion}.
 	 * @alpha
 	 */
 	export interface Statics<T extends readonly TreeNodeSchema[]> {
