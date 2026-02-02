@@ -14,7 +14,6 @@ import { generateTable } from "./data.js";
 import { Table } from "./tree/index.js";
 
 /**
- * Creates an insecure Tinylicious URL resolver for testing purposes with localhost port 7070.
  * Detects the appropriate Tinylicious endpoint based on the environment.
  * In GitHub Codespaces, returns the forwarded port URL. Otherwise returns localhost.
  * If using codespaces, set tinylicious (port 7070) visibility to "public" for this to work.
