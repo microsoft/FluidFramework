@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { toPropTreeNode } from "@fluidframework/react/alpha";
-import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
+import { Tree, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
 // eslint-disable-next-line import-x/no-internal-modules
 import { independentView } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
@@ -848,6 +848,38 @@ describe("textEditor", () => {
 							!rendered.container.querySelector("strong"),
 							"After undo: no <strong>, character remains",
 						);
+					});
+
+					it("multiple operations in transaction undo together as one unit", () => {
+						const { tree: text, treeView } = createFormattedTreeView();
+						const editorRef = React.createRef<FormattedEditorHandle>();
+						const content = (
+							<FormattedMainView
+								ref={editorRef}
+								root={toPropTreeNode(text)}
+								treeViewEvents={treeView.events}
+							/>
+						);
+						const rendered = render(content, { reactStrictMode });
+
+						// Two operations in one transaction
+						Tree.runTransaction(text, () => {
+							text.insertAt(0, "A");
+							text.insertAt(1, "B");
+						});
+						rendered.rerender(content);
+						assert.match(rendered.baseElement.textContent ?? "", /AB/);
+
+						// Single undo should remove both characters
+						editorRef.current?.undo();
+						rendered.rerender(content);
+						assert.doesNotMatch(rendered.baseElement.textContent ?? "", /A/);
+						assert.doesNotMatch(rendered.baseElement.textContent ?? "", /B/);
+
+						// Single redo should restore both characters
+						editorRef.current?.redo();
+						rendered.rerender(content);
+						assert.match(rendered.baseElement.textContent ?? "", /AB/);
 					});
 				});
 			}
