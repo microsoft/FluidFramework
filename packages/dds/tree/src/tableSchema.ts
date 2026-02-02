@@ -1623,7 +1623,6 @@ export namespace TableSchema {
 
 	/**
 	 * A key to uniquely identify a cell within a table.
-	 *
 	 * @input @alpha
 	 */
 	export interface CellKey<
