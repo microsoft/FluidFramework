@@ -2,7 +2,7 @@
     "language": "@/js",
     "languageOptions": {
         "ecmaVersion": 2026,
-        "parser": "typescript-eslint/parser@8.18.2",
+        "parser": "typescript-eslint/parser@8.54.0",
         "parserOptions": {
             "project": null,
             "projectService": true
@@ -14,7 +14,7 @@
     },
     "plugins": [
         "@",
-        "@typescript-eslint:@typescript-eslint/eslint-plugin@8.18.2",
+        "@typescript-eslint:@typescript-eslint/eslint-plugin@8.54.0",
         "import-x:eslint-plugin-import-x@4.16.1",
         "@eslint-community/eslint-comments",
         "@fluid-internal/fluid",
@@ -1757,7 +1757,7 @@
             "off"
         ],
         "no-with": [
-            "error"
+            "off"
         ],
         "no-wrap-func": [
             "off"
