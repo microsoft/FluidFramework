@@ -38,6 +38,10 @@ export namespace ExtensibleSchemaUnion {
 	 * @alpha
 	 */
 	export interface Members<T> {
+		/**
+		 * The child wrapped by this node, which is has one of the type allowed by the union,
+		 * or `undefined` if the type is one which was added to the union by a future version of this schema.
+		 */
 		readonly child: T | undefined;
 	}
 
@@ -46,6 +50,9 @@ export namespace ExtensibleSchemaUnion {
 	 * @alpha
 	 */
 	export interface Statics<T extends readonly TreeNodeSchema[]> {
+		/**
+		 * Create a {@link TreeNode} with `this` schema which wraps the provided child to create the union.
+		 */
 		create<TThis extends TreeNodeSchema>(
 			this: TThis,
 			child: TreeNodeFromImplicitAllowedTypes<T>,
