@@ -152,7 +152,7 @@ assert(existsSync(schemaCompatibilitySnapshotsFolder));
  * This is used to select the subdirectory within {@link schemaCompatibilitySnapshotsFolder} to use for snapshots.
  * @param forceUpdate - If true, forces updating snapshots even if not in regenerate mode.
  * Handy when initially writing a test to generate the snapshots.
- * This fails the test to ensure its never checked in unnoticed.
+ * This fails the test to ensure it's never checked in unnoticed.
  * @remarks
  * Snapshots are stored in a subdirectory of {@link schemaCompatibilitySnapshotsFolder} based on the provided `domainName`.
  */
