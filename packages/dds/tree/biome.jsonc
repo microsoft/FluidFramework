@@ -17,6 +17,7 @@
 	// - noUselessLoneBlockStatements: Blocks are used to isolate compile-time type checking code.
 	// - noExportsInTest: Test utility files export functions for reuse by other tests.
 	"linter": {
+		"enabled": true,
 		"rules": {
 			"suspicious": {
 				"noRedeclare": "off",

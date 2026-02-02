@@ -5,48 +5,73 @@ This document summarizes the performance impact of adding Biome linting to the `
 ## Benchmark Environment
 
 - **Machine**: Apple Silicon Mac
-- **Date**: January 2025
+- **Date**: February 2025
 - **Tool**: [hyperfine](https://github.com/sharkdp/hyperfine)
 - **Methodology**: 5 runs with 1 warmup run
 
 ## Results
 
-| Command | Mean Time | Min | Max | Relative to Baseline |
-|:--------|----------:|----:|----:|---------------------:|
-| ESLint (main branch) | 28.6s | 28.3s | 28.7s | 1.00x (baseline) |
-| ESLint (strictBiome config) | 26.3s | 24.4s | 27.6s | 0.92x (8% faster) |
-| Biome lint only | 5.7s | 5.5s | 5.8s | 0.20x (5x faster) |
-| ESLint + Biome (sequential) | 32.2s | 31.8s | 32.5s | 1.13x (13% slower) |
+| Command | Mean Time | Min | Max | Relative |
+|:--------|----------:|----:|----:|:---------|
+| ESLint only | 26.7s | 26.4s | 27.0s | baseline |
+| Biome lint only | 0.58s | 0.53s | 0.65s | 46x faster than ESLint |
+| ESLint + Biome (parallel) | 26.5s | 26.2s | 26.9s | ~0.3s faster than sequential |
+| ESLint + Biome (sequential) | 26.8s | 26.5s | 27.2s | +0.6s over ESLint alone |
 
 ## Key Findings
 
 ### 1. Biome is significantly faster than ESLint
 
-Biome completes linting in ~5.7 seconds compared to ESLint's ~26-28 seconds. This represents a **~5x speedup** for the linting operations that Biome handles.
+Biome completes linting in **~0.6 seconds** compared to ESLint's **~27 seconds**. This represents a **~46x speedup** for the linting operations that Biome handles.
 
-### 2. strictBiome config improves ESLint performance
+### 2. Parallel execution provides marginal benefit
 
-By using the `strictBiome` ESLint configuration (which disables rules that Biome now handles), ESLint runs **~8% faster** (28.6s → 26.3s). This is because ESLint no longer needs to check rules that are delegated to Biome.
+Running ESLint and Biome in parallel saves only **~0.3 seconds** compared to sequential execution. This is because:
+- ESLint dominates the runtime at ~27s
+- Biome's ~0.6s runs "hidden" under ESLint's execution time
+- The theoretical maximum speedup is limited to the shorter task's duration
 
-### 3. Total lint time increases modestly
+### 3. Total lint time increases minimally
 
-Adding Biome to the lint pipeline increases total lint time by **~13%** (28.6s → 32.2s). This is a modest increase considering:
+Adding Biome to the lint pipeline increases total lint time by only **~2%** (0.6s / 27.3s). This is negligible considering the additional coverage Biome provides.
 
-- You get additional lint coverage from Biome's unique rules
-- Biome catches different categories of issues than ESLint
-- The strictBiome config partially offsets the addition by making ESLint faster
+### 4. fluid-build task orchestration
 
-### 4. Biome adds ~5.7 seconds to lint time
+With the configuration:
+```javascript
+// In fluidBuild.config.cjs
+"lint:biome": ["^eslint"],  // Depends on upstream packages' eslint only
+"lint": {
+    dependsOn: ["eslint", "lint:biome", ...],  // Both tasks in lint
+    script: false,
+}
+```
 
-The overhead of running Biome in addition to ESLint is approximately 5.7 seconds per lint run.
+fluid-build will run `eslint` and `lint:biome` in parallel for each package because:
+- `lint:biome` only waits for `^eslint` (upstream packages), not the local `eslint`
+- Both tasks are listed in `lint.dependsOn`, so fluid-build schedules them together
+- The dependency graph allows parallel execution within the same package
+
+## Performance Summary
+
+| Metric | Value |
+|:-------|------:|
+| ESLint time | 26.7s |
+| Biome time | 0.58s |
+| Parallel execution time | 26.5s |
+| Sequential execution time | 27.3s |
+| Time saved by parallelization | 0.3s (~1%) |
+| Overhead of adding Biome | 0.6s (~2%) |
 
 ## Recommendations
 
-1. **For CI pipelines**: The 13% increase in lint time is acceptable given the additional coverage. Consider running ESLint and Biome in parallel if your CI system supports it.
+1. **Keep Biome lint enabled**: The ~2% overhead is negligible for the additional lint coverage.
 
-2. **For local development**: Use `pnpm lint:biome` for quick feedback during development (5.7s), and run the full lint before committing.
+2. **Use parallel execution**: While the benefit is small for this package, it adds up across many packages in the monorepo.
 
-3. **Future optimization**: As more ESLint rules are migrated to Biome, the ESLint portion will become faster, potentially resulting in net time savings.
+3. **For local development**: Use `pnpm lint:biome` for quick feedback (0.6s), then run full lint before committing.
+
+4. **Future optimization**: As more ESLint rules migrate to Biome, ESLint's runtime will decrease, and Biome's speed advantage will provide greater overall benefit.
 
 ## Running the Benchmark
 
@@ -60,3 +85,4 @@ cd packages/dds/tree
 Requirements:
 - hyperfine (`brew install hyperfine`)
 - Node.js and pnpm
+- Package must be built (`pnpm build:compile`)
