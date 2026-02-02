@@ -219,48 +219,78 @@ export function unqualifySchema(schemaIdentifier: string): string {
  * @returns An array of unique, collision-resolved short names (preserving length and index order as input)
  *
  * @remarks
- * When multiple identifiers produce the same short name, the colliding identifiers get a counter appended to its name.
+ * When multiple different identifiers produce the same short name, the first occurrence keeps its original short name,
+ * and subsequent occurrences get a counter appended starting at `_2`.
+ * Identical full identifiers (same schema) always map to the same friendly name.
  * Non-colliding identifiers keep their original short name.
  * The algorithm ensures collision-resolved names don't conflict with other existing short names.
- * Counters always start at 1 (suffix `_1`) and increment, skipping over any short names that already exist (including naturally-suffixed names such as `"Foo_1"`).
  * Examples:
- * - If only `"scope.Foo"` and `"scope2.Foo"` exist, they resolve to `["Foo_1", "Foo_2"]`.
- * - If `"scope.Foo"`, `"scope2.Foo"`, and `"scope3.Foo_1"` all exist, they resolve to `["Foo_2", "Foo_3", "Foo_1"]` (indices preserved).
+ * - If only `"scope.Foo"` and `"scope2.Foo"` exist, they resolve to `["Foo", "Foo_2"]`.
+ * - If `"scope.Foo"`, `"scope2.Foo"`, and `"scope3.Foo_2"` all exist, they resolve to `["Foo", "Foo_3", "Foo_2"]` (indices preserved).
+ * - If `"scope.Foo"` appears twice (same identifier), both resolve to `["Foo", "Foo"]`.
  */
 export function mapToFriendlyIdentifiers<T extends readonly string[]>(
 	identifiers: T,
 ): string[] & { length: T["length"] } {
-	const shortNameCount = new Map<string, number>();
-
-	// Count how many identifiers map to each short name
+	// Count how many unique identifiers map to each short name
+	const uniqueIdentifiersByShortName = new Map<string, Set<string>>();
 	for (const identifier of identifiers) {
 		const shortName = unqualifySchema(identifier);
-		shortNameCount.set(shortName, (shortNameCount.get(shortName) ?? 0) + 1);
+		const identifiersForShortName = uniqueIdentifiersByShortName.get(shortName) ?? new Set();
+		identifiersForShortName.add(identifier);
+		uniqueIdentifiersByShortName.set(shortName, identifiersForShortName);
+	}
+
+	// Also track all short names that exist (for avoiding conflicts when generating suffixes)
+	const allShortNames = new Set<string>();
+	for (const identifier of identifiers) {
+		allShortNames.add(unqualifySchema(identifier));
 	}
 
 	const result: string[] = [];
-	const shortNameCounter = new Map<string, number>(); // Track which suffix we're on for each name
+	const assignedNames = new Map<string, string>(); // full identifier -> assigned friendly name
+	const shortNameCounter = new Map<string, number>(); // Track which suffix we're on for each short name
 
 	// Assign collision-resolved names, iterating in the same order as identifiers
 	for (const identifier of identifiers) {
-		const shortName = unqualifySchema(identifier);
-		const count = shortNameCount.get(shortName);
-		assert(count !== undefined, "Expected short name to have been counted in first pass");
+		// If we've already assigned a name to this exact identifier, reuse it
+		const existingName = assignedNames.get(identifier);
+		if (existingName !== undefined) {
+			result.push(existingName);
+			continue;
+		}
 
-		if (count === 1) {
-			// No collision, unchanged short name.
+		const shortName = unqualifySchema(identifier);
+		const uniqueIdentifiers = uniqueIdentifiersByShortName.get(shortName);
+		assert(
+			uniqueIdentifiers !== undefined,
+			"Expected short name to have been counted in first pass",
+		);
+
+		if (uniqueIdentifiers.size === 1) {
+			// No collision (only one unique identifier maps to this short name)
 			result.push(shortName);
+			assignedNames.set(identifier, shortName);
 		} else {
-			// Collision, append counters to conflicting short names
-			let counter = shortNameCounter.get(shortName) ?? 0;
-			counter += 1;
-			let candidateName = `${shortName}_${counter}`;
-			while (shortNameCount.has(candidateName)) {
-				counter += 1;
-				candidateName = `${shortName}_${counter}`;
+			// Collision detected (multiple unique identifiers map to this short name)
+			const currentCounter = shortNameCounter.get(shortName);
+			if (currentCounter === undefined) {
+				// First occurrence of this colliding name - keep original
+				shortNameCounter.set(shortName, 1);
+				result.push(shortName);
+				assignedNames.set(identifier, shortName);
+			} else {
+				// Subsequent occurrence - append counter starting from _2
+				let counter = currentCounter + 1;
+				let candidateName = `${shortName}_${counter}`;
+				while (allShortNames.has(candidateName)) {
+					counter += 1;
+					candidateName = `${shortName}_${counter}`;
+				}
+				shortNameCounter.set(shortName, counter);
+				result.push(candidateName);
+				assignedNames.set(identifier, candidateName);
 			}
-			shortNameCounter.set(shortName, counter);
-			result.push(candidateName);
 		}
 	}
 

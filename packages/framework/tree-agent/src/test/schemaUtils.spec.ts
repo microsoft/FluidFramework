@@ -297,10 +297,10 @@ describe("resolveShortNameCollisions", () => {
 		assert.deepEqual(result, ["Foo", "Bar", "Baz"]);
 	});
 
-	it("resolves three-way collisions with counters as suffixes", () => {
+	it("resolves three-way collisions: first keeps original, rest get suffixes", () => {
 		const input = ["scope1.Foo", "scope2.Foo", "scope3.Foo"];
 		const result = mapToFriendlyIdentifiers(input);
-		assert.equal(result[0], "Foo_1");
+		assert.equal(result[0], "Foo");
 		assert.equal(result[1], "Foo_2");
 		assert.equal(result[2], "Foo_3");
 	});
@@ -308,27 +308,27 @@ describe("resolveShortNameCollisions", () => {
 	it("handles mixed colliding and non-colliding names", () => {
 		const input = ["scope1.Foo", "scope2.Foo", "scope1.Bar"];
 		const result = mapToFriendlyIdentifiers(input);
-		assert.equal(result[0], "Foo_1");
+		assert.equal(result[0], "Foo");
 		assert.equal(result[1], "Foo_2");
 		assert.equal(result[2], "Bar");
 	});
 
 	it("skips suffix values that conflict with existing short names", () => {
-		const input = ["scope1.Foo", "scope2.Foo", "scope3.Foo_1"];
+		const input = ["scope1.Foo", "scope2.Foo", "scope3.Foo_2"];
 		const result = mapToFriendlyIdentifiers(input);
-		assert.equal(result[0], "Foo_2");
+		assert.equal(result[0], "Foo");
 		assert.equal(result[1], "Foo_3");
-		assert.equal(result[2], "Foo_1");
+		assert.equal(result[2], "Foo_2");
 	});
 
-	it("duplicate full names are resolved with counters as suffixes", () => {
+	it("identical full identifiers map to the same friendly name", () => {
 		const input = ["scope.Foo", "scope.Foo"];
 		const result = mapToFriendlyIdentifiers(input);
-		assert.equal(result[0], "Foo_1");
-		assert.equal(result[1], "Foo_2");
+		assert.equal(result[0], "Foo");
+		assert.equal(result[1], "Foo");
 	});
 
-	it("multi-level scope collisions are resolved with counters as suffixes", () => {
+	it("multi-level scope collisions: first keeps original, rest get suffixes", () => {
 		const input = [
 			"outer1.inner1.Foo",
 			"outer2.inner1.Foo",
@@ -340,13 +340,20 @@ describe("resolveShortNameCollisions", () => {
 			"outer2.inner2.Bar",
 		];
 		const result = mapToFriendlyIdentifiers(input);
-		assert.equal(result[0], "Foo_1");
+		assert.equal(result[0], "Foo");
 		assert.equal(result[1], "Foo_2");
 		assert.equal(result[2], "Foo_3");
 		assert.equal(result[3], "Foo_4");
-		assert.equal(result[4], "Bar_1");
+		assert.equal(result[4], "Bar");
 		assert.equal(result[5], "Bar_2");
 		assert.equal(result[6], "Bar_3");
 		assert.equal(result[7], "Bar_4");
+	});
+
+	it("handles names that already have numeric suffixes", () => {
+		const input = ["scope1.Foo_2", "scope2.Foo_2"];
+		const result = mapToFriendlyIdentifiers(input);
+		assert.equal(result[0], "Foo_2");
+		assert.equal(result[1], "Foo_2_2");
 	});
 });

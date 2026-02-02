@@ -310,12 +310,12 @@ type MapWithProperty = Map<string, string> & {
 		const schema = getSimpleSchema(view.schema);
 		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
 
-		assert.ok(schemaText.includes("interface Foo_1"), "Name should have suffix _1");
-		assert.ok(schemaText.includes("interface Foo_2"), "Name should have suffix _2");
+		assert.ok(schemaText.includes("interface Foo {"), "First collision keeps original name");
+		assert.ok(schemaText.includes("interface Foo_2"), "Second collision gets suffix _2");
 
 		assert.ok(
-			!schemaText.includes("interface Foo {"),
-			"Original name without suffix should not appear",
+			!schemaText.includes("interface Foo_1"),
+			"Suffix _1 should not appear (first keeps original)",
 		);
 	});
 
@@ -344,8 +344,8 @@ type MapWithProperty = Map<string, string> & {
 		const schema = getSimpleSchema(view.schema);
 		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
 
-		assert.ok(schemaText.includes("interface Foo_1"), "Name should have suffix _1");
-		assert.ok(schemaText.includes("interface Foo_2"), "Name should have suffix _2");
+		assert.ok(schemaText.includes("interface Foo {"), "First collision keeps original name");
+		assert.ok(schemaText.includes("interface Foo_2"), "Second collision gets suffix _2");
 		assert.ok(schemaText.includes("interface Bar"), "Unique name Bar should not have suffix");
 	});
 
@@ -377,12 +377,12 @@ type MapWithProperty = Map<string, string> & {
 		assert.ok(schemaText.includes("interface Foo {"), "Unique Foo should not have suffix");
 
 		assert.ok(
-			schemaText.includes("interface Foo_1_1"),
-			"First Foo_1 collision should have _1",
+			schemaText.includes("interface Foo_1 {"),
+			"First Foo_1 collision keeps original name",
 		);
 		assert.ok(
 			schemaText.includes("interface Foo_1_2"),
-			"Second Foo_1 collision should have _2",
+			"Second Foo_1 collision gets suffix _2",
 		);
 	});
 
@@ -413,23 +413,17 @@ type MapWithProperty = Map<string, string> & {
 		const schema = getSimpleSchema(view.schema);
 		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
 
-		// The two "foo" schemas collide, so they need suffixes
-		// "foo_1" is already taken by the natural "foo_1", so the collision-resolved names
-		// should skip it and use "foo_2" and "foo_3" (or similar)
+		// The two "Foo" schemas collide: first keeps original, second gets suffix
+		// "Foo_1" is already taken by the natural "Foo_1" but that's a different short name
 		const hasFoo = schemaText.includes("interface Foo {");
 		const hasFoo_1 = schemaText.includes("interface Foo_1 {");
 		const hasFoo_2 = schemaText.includes("interface Foo_2 {");
 		const hasFoo_3 = schemaText.includes("interface Foo_3 {");
 
-		assert.ok(
-			!hasFoo,
-			"There should be no unsuffixed 'Foo' since both scope1.Foo and scope2.Foo collide",
-		);
+		assert.ok(hasFoo, "First colliding Foo keeps its original name");
 		assert.ok(hasFoo_1, "Natural Foo_1 should exist without modification");
-		assert.ok(
-			hasFoo_2 && hasFoo_3,
-			"Both collision-resolved 'Foo' instances should have unique names avoiding Foo_1",
-		);
+		assert.ok(hasFoo_2, "Second colliding Foo gets suffix _2");
+		assert.ok(!hasFoo_3, "Foo_3 should not exist");
 	});
 });
 
