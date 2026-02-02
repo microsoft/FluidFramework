@@ -485,7 +485,7 @@ describe("SharedTree", () => {
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
 					idCompressor: createIdCompressor(),
 				});
-				const factory = new SharedTreeTestFactory(() => {});
+				const factory = new SharedTreeTestFactory(() => { /* intentional no-op */ });
 
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
@@ -499,9 +499,7 @@ describe("SharedTree", () => {
 				const node = sf.objectRecursive("test node", {
 					child: sf.optionalRecursive([() => node, sf.number]),
 				});
-				{
 					type _check = ValidateRecursiveSchema<typeof node>;
-				}
 
 				const view = tree1.viewWith(
 					new TreeViewConfiguration({
@@ -1744,7 +1742,7 @@ describe("SharedTree", () => {
 			const view1 = asAlpha(tree1.viewWith(config));
 			view1.initialize(["A", "B"]);
 			assert.throws(() => {
-				view1.runTransaction(() => {}, {
+				view1.runTransaction(() => { /* intentional no-op */ }, {
 					preconditions: [{ type: "noChange" }],
 				});
 			});
@@ -1966,7 +1964,7 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			const pausedContainer: ContainerAlpha = asLegacyAlpha(provider.containers[0]);
-			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
+			const _url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = view1;
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			pausedTree.root.insertAt(1, "b");
@@ -2298,7 +2296,7 @@ describe("SharedTree", () => {
 			const provider = await TestTreeProvider.create(2);
 
 			const pausedContainer: ContainerAlpha = asLegacyAlpha(provider.containers[0]);
-			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
+			const _url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			const pausedView = pausedTree.viewWith(
@@ -2538,8 +2536,7 @@ describe("SharedTree", () => {
 			);
 
 			const schema = treeView.schema;
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			assert.deepEqual(schema.fields.get("bar")!.persistedMetadata, { "fieldMetadata": 1 });
+			assert.deepEqual(schema.fields.get("bar")?.persistedMetadata, { "fieldMetadata": 1 });
 			assert.deepEqual(schema.persistedMetadata, { "nodeMetadata": 2 });
 		});
 	});
@@ -2773,7 +2770,7 @@ describe("SharedTree", () => {
 				const provider = await TestTreeProvider.create(
 					1,
 					SummarizeType.onDemand,
-					new SharedTreeTestFactory(() => {}, undefined, internalOption),
+					new SharedTreeTestFactory(() => { /* intentional no-op */ }, undefined, internalOption),
 				);
 				const tree1 = provider.trees[0];
 				const config = new TreeViewConfiguration({

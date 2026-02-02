@@ -118,7 +118,7 @@ describe("RecordNode", () => {
 		});
 	});
 
-	describeHydration("POJO emulation", (init) => {
+	describeHydration("POJO emulation", (_init) => {
 		it("deep equality", () => {
 			const aInsertable = { foo: 42, bar: 100 };
 			const aNode = PojoEmulationNumberRecord.create(aInsertable);

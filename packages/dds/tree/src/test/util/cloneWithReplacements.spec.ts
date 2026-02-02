@@ -10,7 +10,7 @@ import { cloneWithReplacements } from "../../util/index.js";
 describe("cloneWithReplacements", () => {
 	it("deep clone", () => {
 		const data = { a: 1, b: { c: null }, d: "s", e: [1, 2] };
-		const clone = cloneWithReplacements(data, "root", (key, value) => ({
+		const clone = cloneWithReplacements(data, "root", (_key, value) => ({
 			clone: true,
 			value,
 		})) as typeof data;

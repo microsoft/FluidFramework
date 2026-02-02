@@ -79,19 +79,19 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	[context: DecoderContext<EncodedChunkShape>],
 	ChunkDecoder
 >({
-	a(shape: EncodedNestedArrayShape, context): ChunkDecoder {
+	a(shape: EncodedNestedArrayShape, _context): ChunkDecoder {
 		return new NestedArrayDecoder(shape);
 	},
-	b(shape: EncodedInlineArrayShape, context): ChunkDecoder {
+	b(shape: EncodedInlineArrayShape, _context): ChunkDecoder {
 		return new InlineArrayDecoder(shape);
 	},
 	c(shape: EncodedNodeShape, context): ChunkDecoder {
 		return new NodeDecoder(shape, context);
 	},
-	d(shape: EncodedAnyShape): ChunkDecoder {
+	d(_shape: EncodedAnyShape): ChunkDecoder {
 		return anyDecoder;
 	},
-	e(shape: EncodedIncrementalChunkShape, cache): ChunkDecoder {
+	e(_shape: EncodedIncrementalChunkShape, cache): ChunkDecoder {
 		return new IncrementalChunkDecoder(cache);
 	},
 });

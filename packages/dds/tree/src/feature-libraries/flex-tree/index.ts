@@ -30,7 +30,7 @@ export {
 	type FlexTreeHydratedContextMinimal,
 } from "./context.js";
 
-export { type FlexTreeNodeEvents } from "./treeEvents.js";
+export type { FlexTreeNodeEvents } from "./treeEvents.js";
 
 export {
 	assertFlexTreeEntityNotFreed,

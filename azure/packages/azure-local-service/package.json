@@ -25,7 +25,9 @@
 		"start": "pm2 start -n azure-local-service index.js",
 		"start:debug": "node --inspect=0.0.0.0:9229 index.js",
 		"stop": "pm2 stop azure-local-service",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"lint:biome": "biome lint .",
+		"lint:biome:fix": "biome lint . --write"
 	},
 	"dependencies": {
 		"tinylicious": "^7.0.0"

@@ -254,7 +254,7 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 		);
 	}
 
-	public getRevisions(change: TestChange): Set<RevisionTag | undefined> {
+	public getRevisions(_change: TestChange): Set<RevisionTag | undefined> {
 		return new Set();
 	}
 
@@ -265,8 +265,8 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
 	public override rebase(
-		change: TaggedChange<TestChange>,
-		over: TaggedChange<TestChange>,
+		_change: TaggedChange<TestChange>,
+		_over: TaggedChange<TestChange>,
 	): TestChange {
 		assert.fail("Unexpected call to rebase");
 	}
@@ -279,7 +279,7 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 
 	public override rebase(
 		change: TaggedChange<TestChange>,
-		over: TaggedChange<TestChange>,
+		_over: TaggedChange<TestChange>,
 	): TestChange {
 		this.rebasedCount += 1;
 		return change.change;

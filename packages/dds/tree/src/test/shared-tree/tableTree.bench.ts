@@ -147,12 +147,12 @@ describe("SharedTree table APIs execution time", () => {
 							}
 							assert(undoRedoManager.canUndo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								undoRedoManager.undo();
 							}
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canUndo);
 						},
 						maxBenchmarkDurationSeconds,
@@ -176,12 +176,12 @@ describe("SharedTree table APIs execution time", () => {
 							assert(!undoRedoManager.canUndo);
 							assert(undoRedoManager.canRedo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								undoRedoManager.redo();
 							}
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canRedo);
 						},
 						maxBenchmarkDurationSeconds,
@@ -214,10 +214,10 @@ describe("SharedTree table APIs execution time", () => {
 							});
 							assert(undoRedoManager.canUndo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							undoRedoManager.undo();
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canUndo);
 							assert(undoRedoManager.canRedo);
 						},
@@ -237,10 +237,10 @@ describe("SharedTree table APIs execution time", () => {
 							assert(!undoRedoManager.canUndo);
 							assert(undoRedoManager.canRedo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							undoRedoManager.redo();
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canRedo);
 						},
 						maxBenchmarkDurationSeconds,
@@ -275,12 +275,12 @@ describe("SharedTree table APIs execution time", () => {
 							}
 							assert(undoRedoManager.canUndo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								undoRedoManager.undo();
 							}
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canUndo);
 						},
 						maxBenchmarkDurationSeconds,
@@ -301,12 +301,12 @@ describe("SharedTree table APIs execution time", () => {
 							assert(!undoRedoManager.canUndo);
 							assert(undoRedoManager.canRedo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								undoRedoManager.redo();
 							}
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canRedo);
 						},
 						maxBenchmarkDurationSeconds,
@@ -339,10 +339,10 @@ describe("SharedTree table APIs execution time", () => {
 							});
 							assert(undoRedoManager.canUndo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							undoRedoManager.undo();
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canUndo);
 							assert(undoRedoManager.canRedo);
 						},
@@ -362,10 +362,10 @@ describe("SharedTree table APIs execution time", () => {
 							assert(!undoRedoManager.canUndo);
 							assert(undoRedoManager.canRedo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							undoRedoManager.redo();
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canRedo);
 						},
 						maxBenchmarkDurationSeconds,
@@ -411,7 +411,7 @@ describe("SharedTree table APIs execution time", () => {
 						}
 						assert(undoRedoManager.canUndo);
 					},
-					operation: (table, undoRedoManager) => {
+					operation: (_table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							// Undo insert row
 							undoRedoManager.undo();
@@ -419,7 +419,7 @@ describe("SharedTree table APIs execution time", () => {
 							undoRedoManager.undo();
 						}
 					},
-					afterOperation: (table, undoRedoManager) => {
+					afterOperation: (_table, undoRedoManager) => {
 						assert(!undoRedoManager.canUndo);
 					},
 					maxBenchmarkDurationSeconds,
@@ -656,10 +656,10 @@ describe("SharedTree table APIs execution time", () => {
 							);
 							assert(undoRedoManager.canUndo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							undoRedoManager.undo();
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canUndo);
 						},
 						maxBenchmarkDurationSeconds,
@@ -678,10 +678,10 @@ describe("SharedTree table APIs execution time", () => {
 							assert(!undoRedoManager.canUndo);
 							assert(undoRedoManager.canRedo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							undoRedoManager.redo();
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canRedo);
 						},
 						maxBenchmarkDurationSeconds,
@@ -716,12 +716,12 @@ describe("SharedTree table APIs execution time", () => {
 							}
 							assert(undoRedoManager.canUndo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								undoRedoManager.undo();
 							}
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canUndo);
 						},
 						maxBenchmarkDurationSeconds,
@@ -742,12 +742,12 @@ describe("SharedTree table APIs execution time", () => {
 							assert(!undoRedoManager.canUndo);
 							assert(undoRedoManager.canRedo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								undoRedoManager.redo();
 							}
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canRedo);
 						},
 						maxBenchmarkDurationSeconds,
@@ -780,10 +780,10 @@ describe("SharedTree table APIs execution time", () => {
 							);
 							assert(undoRedoManager.canUndo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							undoRedoManager.undo();
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canUndo);
 						},
 						maxBenchmarkDurationSeconds,
@@ -802,10 +802,10 @@ describe("SharedTree table APIs execution time", () => {
 							assert(!undoRedoManager.canUndo);
 							assert(undoRedoManager.canRedo);
 						},
-						operation: (table, undoRedoManager) => {
+						operation: (_table, undoRedoManager) => {
 							undoRedoManager.redo();
 						},
-						afterOperation: (table, undoRedoManager) => {
+						afterOperation: (_table, undoRedoManager) => {
 							assert(!undoRedoManager.canRedo);
 						},
 						maxBenchmarkDurationSeconds,
@@ -938,12 +938,12 @@ describe("SharedTree table APIs execution time", () => {
 						}
 						assert(undoRedoManager.canUndo);
 					},
-					operation: (table, undoRedoManager) => {
+					operation: (_table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.undo();
 						}
 					},
-					afterOperation: (table, undoRedoManager) => {
+					afterOperation: (_table, undoRedoManager) => {
 						assert(!undoRedoManager.canUndo);
 					},
 					maxBenchmarkDurationSeconds,
@@ -972,12 +972,12 @@ describe("SharedTree table APIs execution time", () => {
 						assert(!undoRedoManager.canUndo);
 						assert(undoRedoManager.canRedo);
 					},
-					operation: (table, undoRedoManager) => {
+					operation: (_table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.redo();
 						}
 					},
-					afterOperation: (table, undoRedoManager) => {
+					afterOperation: (_table, undoRedoManager) => {
 						assert(!undoRedoManager.canRedo);
 					},
 					maxBenchmarkDurationSeconds,

@@ -73,7 +73,7 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 		return new Cursor(this);
 	}
 
-	protected onUnreferenced(): void {}
+	protected onUnreferenced(): void { /* intentional no-op */ }
 }
 
 /**

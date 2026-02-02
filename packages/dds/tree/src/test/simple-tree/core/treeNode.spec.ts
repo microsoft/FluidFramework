@@ -24,9 +24,9 @@ describe("simple-tree core types", () => {
 	describe("TreeNode", () => {
 		it("Assignability", () => {
 			// @ts-expect-error TreeNode should not allow non-node objects.
-			const n: TreeNode = {};
+			const _n: TreeNode = {};
 			// @ts-expect-error TreeNode should not allow non-node objects.
-			const n2: TreeNode = {
+			const _n2: TreeNode = {
 				[typeNameSymbol]: "",
 			};
 
@@ -93,10 +93,8 @@ describe("simple-tree core types", () => {
 			assert.equal(inPrototypeChain(A.prototype, B.prototype), false);
 
 			// Static inheritance
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			assert(inPrototypeChain(Reflect.getPrototypeOf(B), Reflect.getPrototypeOf(A)!));
 			assert.equal(
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				inPrototypeChain(Reflect.getPrototypeOf(A), Reflect.getPrototypeOf(B)!),
 				false,
 			);

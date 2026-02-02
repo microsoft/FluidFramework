@@ -4,10 +4,10 @@
  */
 
 import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { strictBiome } from "../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...recommended,
+	...strictBiome,
 	{
 		rules: {
 			"@typescript-eslint/no-namespace": "off",

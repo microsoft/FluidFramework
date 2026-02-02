@@ -57,8 +57,8 @@ class TestVersionedSummarizer extends VersionedSummarizer<number> {
 	}
 
 	protected async loadInternal(
-		services: IChannelStorageService,
-		parse: SummaryElementParser,
+		_services: IChannelStorageService,
+		_parse: SummaryElementParser,
 	): Promise<void> {
 		this.loadInternalCallCount++;
 	}

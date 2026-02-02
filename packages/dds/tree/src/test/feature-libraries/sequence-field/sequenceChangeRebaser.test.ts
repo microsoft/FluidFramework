@@ -98,7 +98,6 @@ function withAdjacentTombstones(
 		"Expected to find exactly one mark with the given type",
 	);
 	const mark = marks[markIdx];
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const cellId = mark.cellId!;
 	const countBefore = cellId.localId;
 	if (countBefore > 0) {
@@ -164,7 +163,7 @@ const testChanges: [
 				Change.insert(i, 2, undefined /* revision */, { localId: brand(42) }),
 			),
 	],
-	["NoOp", (i) => ChangesetWrapper.create([])],
+	["NoOp", (_i) => ChangesetWrapper.create([])],
 	[
 		"TransientInsert",
 		(i) =>
@@ -1017,7 +1016,7 @@ export function testSandwichComposing(): void {
 			const changes = [return3, unMod, return2, return1, del, move1Rebased, move2, mod, move3];
 
 			const sandwich = composeShallow(changes);
-			const pruned = prune(sandwich, (id) => undefined);
+			const pruned = prune(sandwich, (_id) => undefined);
 			const noTombstones = withoutTombstones(pruned);
 			assertChangesetsEqual(noTombstones, []);
 		});

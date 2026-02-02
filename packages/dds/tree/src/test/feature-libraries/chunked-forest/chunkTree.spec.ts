@@ -110,7 +110,7 @@ describe("chunkTree", () => {
 		it("maxTopLevelLength and skipLastNavigation are respected", () => {
 			const uniformPolygon = polygonTree.dataFactory();
 			const polygonReference = cursorForJsonableTreeNode(polygonTree.reference);
-			const [key, pointShape, pointCount] = uniformPolygon.shape.treeShape.fieldsArray[0];
+			const [key, pointShape, _pointCount] = uniformPolygon.shape.treeShape.fieldsArray[0];
 			polygonReference.enterField(key);
 			polygonReference.firstNode();
 			const chunk1 = uniformChunkFromCursor(polygonReference, pointShape, 1, true);

@@ -270,10 +270,6 @@ export class RangeMap<K, V> {
 		return this.subtractKeys(a, b) >= 0;
 	}
 
-	private lt(a: K, b: K): boolean {
-		return this.subtractKeys(a, b) < 0;
-	}
-
 	private le(a: K, b: K): boolean {
 		return this.subtractKeys(a, b) <= 0;
 	}
@@ -333,6 +329,6 @@ function subtractIntegers<K extends number>(a: K, b: K): number {
 	return a - b;
 }
 
-function defaultValueOffsetFn<T>(value: T, offset: number): T {
+function defaultValueOffsetFn<T>(value: T, _offset: number): T {
 	return value;
 }

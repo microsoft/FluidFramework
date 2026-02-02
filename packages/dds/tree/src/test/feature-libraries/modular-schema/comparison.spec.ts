@@ -621,7 +621,7 @@ function intoSimpleObject(obj: unknown): unknown {
 	const out: Record<string, unknown> = {};
 	// eslint-disable-next-line no-restricted-syntax
 	for (const key in obj) {
-		if (Object.prototype.hasOwnProperty.call(obj, key)) {
+		if (Object.hasOwn(obj, key)) {
 			out[key] = intoSimpleObject((obj as Record<string, unknown>)[key]);
 		}
 	}

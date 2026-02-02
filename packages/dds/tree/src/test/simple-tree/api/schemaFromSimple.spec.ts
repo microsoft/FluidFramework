@@ -54,9 +54,7 @@ describe("schemaFromSimple", () => {
 			class A extends schema.objectRecursive("A", {
 				field: schema.optionalRecursive([() => A]),
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof A>;
-			}
 			roundtrip(A);
 		});
 

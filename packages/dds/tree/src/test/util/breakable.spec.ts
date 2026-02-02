@@ -102,7 +102,7 @@ Error: BreakFoo`;
 		}
 
 		// overridden, should not run
-		public read(a: number): number {
+		public read(_a: number): number {
 			throw new Error("overridden");
 		}
 	}

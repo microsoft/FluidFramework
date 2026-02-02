@@ -77,18 +77,15 @@ import { hydrate } from "../utils.js";
 	class NodeList extends schema.array("Notes", Note) {}
 
 	// eslint-disable-next-line no-inner-declarations
-	function f(n: NodeMap): void {
-		const item = n.get("x");
+	function _f(n: NodeMap): void {
+		const _item = n.get("x");
 	}
 
 	// Leaf stuff
 	{
-		const x = schema.string;
+		const _x = schema.string;
 		type _check = requireAssignableTo<typeof schema.string, TreeNodeSchema>;
 	}
-
-	// TreeNodeFromImplicitAllowedTypes
-	{
 		type _check = requireAssignableTo<typeof Note, TreeNodeSchema>;
 		type Test = TreeNodeFromImplicitAllowedTypes<typeof Note>;
 		type Instance = InstanceType<typeof Note>;
@@ -103,7 +100,6 @@ import { hydrate } from "../utils.js";
 
 		type FromArray = TreeNodeFromImplicitAllowedTypes<[typeof Note, typeof Note]>;
 		type _check5 = requireTrue<areSafelyAssignable<FromArray, Note>>;
-	}
 	// TreeNodeFromImplicitAllowedTypes with a class
 	{
 		class NoteCustomized extends schema.object("Note", { text: schema.string }) {
@@ -140,9 +136,6 @@ import { hydrate } from "../utils.js";
 		>;
 		type _check5 = requireTrue<areSafelyAssignable<FromArray, NoteCustomized>>;
 	}
-
-	// TreeFieldFromImplicitField
-	{
 		type _check = requireAssignableTo<typeof Note, TreeNodeSchema>;
 		type Test = TreeFieldFromImplicitField<typeof Note>;
 		type Instance = InstanceType<typeof Note>;
@@ -157,7 +150,6 @@ import { hydrate } from "../utils.js";
 
 		type FromArray = TreeFieldFromImplicitField<[typeof Note, typeof Note]>;
 		type _check5 = requireTrue<areSafelyAssignable<FromArray, Note>>;
-	}
 }
 
 describe("schemaFactory", () => {
@@ -186,7 +178,7 @@ describe("schemaFactory", () => {
 		assert(!(a instanceof B));
 
 		// @ts-expect-error Nodes should get type based nominal typing.
-		const b: A = new B({});
+		const _b: A = new B({});
 
 		const c = new C({});
 		assert(c instanceof C);
@@ -506,8 +498,7 @@ describe("schemaFactory", () => {
 			const foo = hydrate(Foo, { bar: 37 });
 
 			const schema = Tree.schema(foo) as ObjectNodeSchema;
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			assert.deepEqual(schema.fields.get("bar")!.metadata, barMetadata);
+			assert.deepEqual(schema.fields.get("bar")?.metadata, barMetadata);
 		});
 
 		it("Node schema persisted metadata", () => {
@@ -552,12 +543,9 @@ describe("schemaFactory", () => {
 			});
 
 			const schema = Tree.schema(foo) as ObjectNodeSchema;
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			assert.deepEqual(schema.fields.get("bar")!.persistedMetadata, fooMetadata);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			assert.deepEqual(schema.fields.get("baz")!.persistedMetadata, fooMetadata);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			assert.deepEqual(schema.fields.get("qux")!.persistedMetadata, fooMetadata);
+			assert.deepEqual(schema.fields.get("bar")?.persistedMetadata, fooMetadata);
+			assert.deepEqual(schema.fields.get("baz")?.persistedMetadata, fooMetadata);
+			assert.deepEqual(schema.fields.get("qux")?.persistedMetadata, fooMetadata);
 		});
 
 		describe("deep equality", () => {
@@ -588,7 +576,7 @@ describe("schemaFactory", () => {
 					x: schema.number,
 				}) {
 					public extra = true;
-					public method(): void {}
+					public method(): void { /* intentional no-op */ }
 				}
 				const p1 = hydrate(WithLocals, { x: 1 });
 				const p2 = hydrate(WithLocals, { x: 1 });
@@ -667,7 +655,7 @@ describe("schemaFactory", () => {
 			// Inline structural example
 			factory.object("Foo", { myList: factory.array(factory.number) });
 
-			function broken() {
+			function _broken() {
 				// @ts-expect-error structural list schema are not typed as classes.
 				class NotAClass extends factory.array(factory.number) {}
 			}
@@ -704,7 +692,7 @@ describe("schemaFactory", () => {
 		it("Unhydrated", () => {
 			const factory = new SchemaFactory("test");
 			class NamedList extends factory.array("name", factory.number) {}
-			const namedInstance = new NamedList([5]);
+			const _namedInstance = new NamedList([5]);
 		});
 
 		it("Node schema metadata", () => {
@@ -740,7 +728,7 @@ describe("schemaFactory", () => {
 			// Inline structural example
 			factory.object("Foo", { myMap: factory.map(factory.number) });
 
-			function broken() {
+			function _broken() {
 				// @ts-expect-error structural map schema are not typed as classes.
 				class NotAClass extends factory.map(factory.number) {}
 			}
@@ -775,7 +763,7 @@ describe("schemaFactory", () => {
 		it("Unhydrated", () => {
 			const factory = new SchemaFactory("test");
 			class NamedMap extends factory.map("name", factory.number) {}
-			const namedInstance = new NamedMap(new Map([["x", 5]]));
+			const _namedInstance = new NamedMap(new Map([["x", 5]]));
 		});
 
 		it("Node schema metadata", () => {
@@ -811,7 +799,7 @@ describe("schemaFactory", () => {
 			// Inline structural example
 			factory.object("Foo", { myMap: factory.record(factory.number) });
 
-			function broken() {
+			function _broken() {
 				// @ts-expect-error structural map schema are not typed as classes.
 				class NotAClass extends factory.record(factory.number) {}
 			}
@@ -843,9 +831,9 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactoryAlpha("test");
 			class NamedRecord extends factory.record("name", factory.number) {}
 			const namedInstance = new NamedRecord({ x: 5 });
-			const x: number = namedInstance.x;
+			const _x: number = namedInstance.x;
 			// TODO: AB#47136: this (and likely the line above as well) should not compile as the typing is incorrect (y is undefined, not number)
-			const y: number = namedInstance.y;
+			const _y: number = namedInstance.y;
 			delete namedInstance.x;
 		});
 
@@ -1132,7 +1120,7 @@ describe("schemaFactory", () => {
 
 		// @ts-expect-error Invalid extra field
 		// TODO: this should runtime error when constructed (not just when hydrated)
-		const c2 = new Empty({ x: {} });
+		const _c2 = new Empty({ x: {} });
 
 		class NonEmpty extends f.object("C", { a: f.null }) {}
 
@@ -1166,7 +1154,7 @@ describe("schemaFactory", () => {
 			class Foo extends base {}
 			assert.throws(
 				() => {
-					const config = new TreeViewConfiguration({ schema: [Foo, base] });
+					const _config = new TreeViewConfiguration({ schema: [Foo, base] });
 				},
 				validateUsageError(/same SchemaFactory generated class/),
 			);
@@ -1181,7 +1169,7 @@ describe("schemaFactory", () => {
 
 			assert.throws(
 				() => {
-					const tree_B = hydrate(other, [new Foo({})]);
+					const _tree_B = hydrate(other, [new Foo({})]);
 				},
 				validateUsageError(/same SchemaFactory generated class/),
 			);
@@ -1223,11 +1211,11 @@ describe("schemaFactory", () => {
 			const schemaFactory = new SchemaFactory("");
 			const base = schemaFactory.object("Foo", {});
 			class Foo extends base {}
-			const config = new TreeViewConfiguration({ schema: base });
+			const _config = new TreeViewConfiguration({ schema: base });
 
 			assert.throws(
 				() => {
-					const config2 = new TreeViewConfiguration({ schema: Foo });
+					const _config2 = new TreeViewConfiguration({ schema: Foo });
 				},
 				validateUsageError(/same SchemaFactory generated class/),
 			);
@@ -1250,12 +1238,12 @@ describe("schemaFactory", () => {
 			const schemaFactory = new SchemaFactory("");
 			const base = schemaFactory.object("Foo", {});
 			class Foo extends base {}
-			const config = new TreeViewConfiguration({
+			const _config = new TreeViewConfiguration({
 				schema: schemaFactory.object("x", { x: base }),
 			});
 			assert.throws(
 				() => {
-					const config2 = new TreeViewConfiguration({
+					const _config2 = new TreeViewConfiguration({
 						schema: schemaFactory.map("x", Foo),
 					});
 				},
@@ -1280,15 +1268,15 @@ describe("schemaFactory", () => {
 		function f(node: TreeNode & WithType<string, NodeKind.Map>): "map";
 		function f(node: TreeNode): "any";
 
-		function f(node: TreeNode): string {
+		function f(_node: TreeNode): string {
 			return "nope";
 		}
 
 		// Compile time check that NodeKind based overload resolution works as expected.
-		const s1: "object" = f(obj);
-		const s2: "array" = f(arr);
-		const s3: "map" = f(mapNode);
-		const s4: "any" = f(obj as TreeNode);
+		const _s1: "object" = f(obj);
+		const _s2: "array" = f(arr);
+		const _s3: "map" = f(mapNode);
+		const _s4: "any" = f(obj as TreeNode);
 
 		// Check runtime data:
 		assert.equal(obj[typeSchemaSymbol], Obj);
@@ -1460,7 +1448,7 @@ describe("schemaFactory", () => {
 
 			class B extends schemaFactoryAlpha.objectAlpha("B", {}) {}
 
-			const config = new TreeViewConfiguration({
+			const _config = new TreeViewConfiguration({
 				schema: A,
 			});
 		});
@@ -1471,12 +1459,12 @@ describe("schemaFactory", () => {
 			class B extends factory.objectAlpha("B", {}) {}
 
 			// Does not support B
-			const configBefore = new TreeViewConfigurationAlpha({
+			const _configBefore = new TreeViewConfigurationAlpha({
 				schema: A,
 			});
 
 			// Supports documents with or without B
-			const configStaged = new TreeViewConfigurationAlpha({
+			const _configStaged = new TreeViewConfigurationAlpha({
 				// Adds staged support for B.
 				// Currently this requires wrapping the root field with `SchemaFactoryAlpha.required`:
 				// this is normally implicitly included, but is currently required while the "staged" APIs are `@alpha`.
@@ -1484,7 +1472,7 @@ describe("schemaFactory", () => {
 			});
 
 			// Only supports documents with A and B: can be used to upgrade schema to add B.
-			const configAfter = new TreeViewConfigurationAlpha({
+			const _configAfter = new TreeViewConfigurationAlpha({
 				schema: [A, B],
 			});
 		});
@@ -1575,26 +1563,17 @@ describe("schemaFactory", () => {
 						>
 					>
 				>();
-
-				{
 					type InField = InsertableTreeFieldFromImplicitField<typeof allowedTypes>;
 					allowUnused<requireAssignableTo<InField, number | string>>();
 					allowUnused<requireAssignableTo<number | string, InField>>();
-				}
-
-				{
 					type InAllowedTypes = InsertableTreeNodeFromImplicitAllowedTypes<
 						typeof allowedTypes
 					>;
 					allowUnused<requireAssignableTo<InAllowedTypes, number | string>>();
 					allowUnused<requireAssignableTo<number | string, InAllowedTypes>>();
-				}
-
-				{
 					type InAllowedTypes = InsertableTreeNodeFromAllowedTypes<typeof allowedTypes>;
 					allowUnused<requireAssignableTo<InAllowedTypes, number | string>>();
 					allowUnused<requireAssignableTo<number | string, InAllowedTypes>>();
-				}
 
 				allowUnused<requireFalse<IsUnion<typeof allowedTypes>>>();
 			});
@@ -1766,7 +1745,7 @@ describe("schemaFactory", () => {
 					view as SchematizingSimpleTreeView<typeof Root>
 				).checkout.storedSchema.nodeSchema.get(brand(Root.identifier));
 
-				const f = x?.getFieldSchema(EmptyKey);
+				const _f = x?.getFieldSchema(EmptyKey);
 
 				assert.throws(
 					() => {
@@ -1799,7 +1778,7 @@ describe("schemaFactory", () => {
 					view as SchematizingSimpleTreeView<typeof Root>
 				).checkout.storedSchema.nodeSchema.get(brand(Root.identifier));
 
-				const f = x?.getFieldSchema(EmptyKey);
+				const _f = x?.getFieldSchema(EmptyKey);
 
 				assert.throws(
 					() => {

@@ -528,7 +528,7 @@ describe("largeSchema", () => {
 		class Depth001 extends schema.object("Depth001", { x: Depth002 }) {}
 		class Depth000 extends schema.object("Depth000", { x: Depth001 }) {}
 
-		const config = new TreeViewConfiguration({
+		const _config = new TreeViewConfiguration({
 			schema: Depth000,
 			enableSchemaValidation: true,
 		});
@@ -558,7 +558,7 @@ describe("largeSchema", () => {
 		}
 
 		const deep10 = deepObject10("", schema.null);
-		const config10 = new TreeViewConfiguration({
+		const _config10 = new TreeViewConfiguration({
 			schema: deep10,
 			enableSchemaValidation: true,
 		});
@@ -574,7 +574,7 @@ describe("largeSchema", () => {
 		{
 			const deep20 = deepObject20("", schema.null);
 			// @ts-expect-error Recursion limit
-			const config20 = new TreeViewConfiguration({
+			const _config20 = new TreeViewConfiguration({
 				schema: deep20,
 				enableSchemaValidation: true,
 			});
@@ -583,19 +583,19 @@ describe("largeSchema", () => {
 		// Can go deeper with just deep10
 		{
 			const deep20 = deepObject10("x", deep10);
-			const config20 = new TreeViewConfiguration({
+			const _config20 = new TreeViewConfiguration({
 				schema: deep20,
 				enableSchemaValidation: true,
 			});
 
 			const deep30 = deepObject10("y", deep20);
-			const config30 = new TreeViewConfiguration({
+			const _config30 = new TreeViewConfiguration({
 				schema: deep30,
 				enableSchemaValidation: true,
 			});
 
 			const deep40 = deepObject10("z", deep30);
-			const config40 = new TreeViewConfiguration({
+			const _config40 = new TreeViewConfiguration({
 				schema: deep40,
 				enableSchemaValidation: true,
 			});
@@ -810,7 +810,7 @@ describe("largeSchema", () => {
 		class Empty001 extends schema.object("001", {}) {}
 		class Empty000 extends schema.object("000", {}) {}
 
-		const union40 = [
+		const _union40 = [
 			Empty039,
 			Empty038,
 			Empty037,
@@ -1061,40 +1061,40 @@ describe("largeSchema", () => {
 		] as const;
 
 		{
-			const config = new TreeViewConfiguration({
+			const _config = new TreeViewConfiguration({
 				schema: union200,
 				enableSchemaValidation: true,
 			});
 
-			const field1 = schema.required(union200);
-			const field2 = schema.optional(union200);
+			const _field1 = schema.required(union200);
+			const _field2 = schema.optional(union200);
 
 			class ObjectNode extends schema.object("ObjectNode", {
 				data: union200,
 			}) {}
 
-			const node = new ObjectNode({ data: new Empty000({}) });
+			const _node = new ObjectNode({ data: new Empty000({}) });
 		}
 
 		{
 			class ArrayNode extends schema.array("ArrayNode", union200) {}
-			const config = new TreeViewConfiguration({
+			const _config = new TreeViewConfiguration({
 				schema: ArrayNode,
 				enableSchemaValidation: true,
 			});
 
-			const field = schema.required(ArrayNode);
+			const _field = schema.required(ArrayNode);
 
-			const node = new ArrayNode([new Empty000({})]);
+			const _node = new ArrayNode([new Empty000({})]);
 		}
 
 		{
 			class MapNode extends schema.map("MapNode", union200) {}
-			const config = new TreeViewConfiguration({
+			const _config = new TreeViewConfiguration({
 				schema: MapNode,
 				enableSchemaValidation: true,
 			});
-			const field = schema.optional([() => MapNode]);
+			const _field = schema.optional([() => MapNode]);
 		}
 	});
 
@@ -1307,19 +1307,16 @@ describe("largeSchema", () => {
 		class Empty002 extends schema.objectRecursive("002", { x: union }) {}
 		class Empty001 extends schema.objectRecursive("001", { x: union }) {}
 		class Empty000 extends schema.objectRecursive("000", { x: union }) {}
-
-		{
 			type _check3 = ValidateRecursiveSchema<typeof Empty000>;
-		}
 
 		{
 			class ObjectNode extends schema.object("ObjectNode", { x: union }) {}
-			const config = new TreeViewConfiguration({
+			const _config = new TreeViewConfiguration({
 				schema: union,
 				enableSchemaValidation: true,
 			});
 
-			const node = new ObjectNode({ x: new Empty000({ x: new Empty041({ x: null }) }) });
+			const _node = new ObjectNode({ x: new Empty000({ x: new Empty041({ x: null }) }) });
 		}
 	});
 });

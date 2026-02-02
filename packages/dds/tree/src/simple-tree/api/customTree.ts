@@ -282,7 +282,6 @@ export function customFromCursorStored<TChild>(
 		if (children.length === 1) {
 			const storedKey = reader.getFieldKey();
 			// Length is checked above.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			fields[storedKey] = children[0]!;
 		} else {
 			assert(children.length === 0, 0xa9e /* invalid children number */);
@@ -335,7 +334,7 @@ export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
  * @alpha
  */
 export function replaceHandles<T>(tree: unknown, replacer: HandleConverter<T>): unknown {
-	return cloneWithReplacements(tree, "", (key, value) => {
+	return cloneWithReplacements(tree, "", (_key, value) => {
 		// eslint-disable-next-line unicorn/prefer-ternary
 		if (isFluidHandle(value)) {
 			return { clone: false, value: replacer(value) };

@@ -26,9 +26,7 @@ describe("simple-tree API integration tests", () => {
 		class O extends sf.objectRecursive("O", {
 			recursive: sf.optionalRecursive([() => O]),
 		}) {}
-		{
 			type _check = ValidateRecursiveSchema<typeof O>;
-		}
 		it("making a recursive unhydrated and un-parented object node errors", () => {
 			const obj = new O({ recursive: undefined });
 			assert.throws(

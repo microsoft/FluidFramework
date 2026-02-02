@@ -78,7 +78,7 @@ function messageFormatVersionFromOptions(
  * Returns the version that should be used for testing shared branches.
  */
 export function messageFormatVersionSelectorForSharedBranches(
-	clientVersion: MinimumVersionForCollab,
+	_clientVersion: MinimumVersionForCollab,
 ): MessageFormatVersion {
 	return brand(MessageFormatVersion.vSharedBranches);
 }
@@ -131,7 +131,9 @@ export function makeMessageCodecs<TChangeset>(
 			JsonCompatibleReadOnly,
 			MessageEncodingContext
 		>,
-	][] = [...messageFormatVersions].map((version) => {
+	][] =
+		// biome-ignore lint/suspicious/useIterableCallbackReturn: unreachableCase in default throws, no return needed
+		[...messageFormatVersions].map((version) => {
 		switch (version) {
 			case unbrand(MessageFormatVersion.undefined):
 			case unbrand(MessageFormatVersion.v1):

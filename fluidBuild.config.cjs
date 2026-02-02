@@ -57,7 +57,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["eslint", "good-fences", "depcruise", "check:exports", "check:release-tags"],
+			dependsOn: ["eslint", "lint:biome", "good-fences", "depcruise", "check:exports", "check:release-tags"],
 			script: false,
 		},
 		"checks": {
@@ -135,6 +135,8 @@ module.exports = {
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],
+		"lint:biome": ["^eslint"],
+		"lint:biome:fix": [],
 		"prettier": [],
 		"prettier:fix": [],
 		"webpack": ["^tsc", "^build:esnext"],

@@ -99,7 +99,7 @@ describe("TestChange", () => {
 	type TestChangeTestState = FieldStateTree<number[], TestChange>;
 
 	function rebaseComposed(
-		metadata: RevisionMetadataSource,
+		_metadata: RevisionMetadataSource,
 		change: TaggedChange<TestChange>,
 		...baseChanges: TaggedChange<TestChange>[]
 	): TestChange {
@@ -159,7 +159,7 @@ describe("TestChange", () => {
 						return TestChange.invert(change.change);
 					},
 					rebaseComposed,
-					inlineRevision: (change, revision) => change,
+					inlineRevision: (change, _revision) => change,
 					createEmpty: () => TestChange.emptyChange,
 					isEmpty: TestChange.isEmpty,
 					assertChangesetsEquivalent,

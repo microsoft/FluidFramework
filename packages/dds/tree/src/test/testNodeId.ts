@@ -92,7 +92,7 @@ function encode(id: NodeId, context: ChangeEncodingContext): EncodedNodeChangese
 	};
 }
 
-function decode(encoded: JsonCompatibleReadOnly, context: ChangeEncodingContext): NodeId {
+function decode(encoded: JsonCompatibleReadOnly, _context: ChangeEncodingContext): NodeId {
 	const fieldChanges =
 		(encoded as EncodedNodeChangeset).fieldChanges ?? fail("Invalid encoded TestNodeId");
 

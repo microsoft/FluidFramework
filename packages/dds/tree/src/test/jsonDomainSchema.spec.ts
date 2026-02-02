@@ -14,16 +14,16 @@ import { testSchemaCompatibilitySnapshots } from "./snapshots/index.js";
 
 describe("JsonDomainSchema", () => {
 	it("examples", () => {
-		const tree1 = TreeBeta.importConcise(JsonAsTree.Tree, {
+		const _tree1 = TreeBeta.importConcise(JsonAsTree.Tree, {
 			example: { nested: true },
 			value: 5,
 		});
 
-		const tree3 = TreeBeta.importConcise(JsonAsTree.Array, [1, "x", { a: 0 }]);
+		const _tree3 = TreeBeta.importConcise(JsonAsTree.Array, [1, "x", { a: 0 }]);
 
 		{
 			// Due to TypeScript restrictions on recursive types, the constructor and be somewhat limiting.
-			const fromRecord = new JsonAsTree.JsonObject({ a: 0 });
+			const _fromRecord = new JsonAsTree.JsonObject({ a: 0 });
 			// Using `importConcise` can work better for JSON data:
 			const imported = TreeBeta.importConcise(JsonAsTree.JsonObject, { a: 0 });
 			const value = imported.a;
@@ -32,7 +32,7 @@ describe("JsonDomainSchema", () => {
 
 		{
 			// Due to TypeScript restrictions on recursive types, the constructor and be somewhat limiting.
-			const usingConstructor = new JsonAsTree.Array(["a", 0, new JsonAsTree.Array([1])]);
+			const _usingConstructor = new JsonAsTree.Array(["a", 0, new JsonAsTree.Array([1])]);
 			// Using `importConcise` can work better for JSON data:
 			const imported = TreeBeta.importConcise(JsonAsTree.Array, ["a", 0, [1]]);
 			assert(Tree.is(imported, JsonAsTree.Array));

@@ -132,7 +132,7 @@ export function breakingMethod<
 	This extends WithBreakable,
 	Args extends never[],
 	Return,
->(target: Target, context?: ClassMethodDecoratorContext<This, Target>): Target {
+>(target: Target, _context?: ClassMethodDecoratorContext<This, Target>): Target {
 	function replacementMethod(this: This, ...args: Args): Return {
 		if (this.breaker === undefined) {
 			// This case is necessary for when wrapping methods which are invoked inside the constructor of the base class before `breaker` is set.
@@ -161,7 +161,7 @@ export function throwIfBroken<
 	This extends WithBreakable,
 	Args extends never[],
 	Return,
->(target: Target, context: ClassMethodDecoratorContext<This, Target>): Target {
+>(target: Target, _context: ClassMethodDecoratorContext<This, Target>): Target {
 	function replacementMethod(this: This, ...args: Args): Return {
 		this.breaker.use();
 		return target.call(this, ...args);
@@ -171,10 +171,10 @@ export function throwIfBroken<
 	return replacementMethod as Target;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+// biome-ignore lint/complexity/noBannedTypes: Function type needed for decorator pattern
 type PossiblyNamedFunction = Function & { displayName?: undefined | string };
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+// biome-ignore lint/complexity/noBannedTypes: Function type needed for decorator pattern
 function nameFunctionFrom(toName: Function, nameFrom: Function): void {
 	(toName as PossiblyNamedFunction).displayName =
 		(nameFrom as PossiblyNamedFunction).displayName ?? nameFrom.name;
@@ -183,13 +183,13 @@ function nameFunctionFrom(toName: Function, nameFrom: Function): void {
 const isBreakerSymbol: unique symbol = Symbol("isBreaker");
 
 // Accepting any function like value is desired and safe here as this does not call the provided function.
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+// biome-ignore lint/complexity/noBannedTypes: Function type needed for decorator pattern
 function markBreaker(f: Function): void {
 	(f as unknown as Record<typeof isBreakerSymbol, true>)[isBreakerSymbol] = true;
 }
 
 // Accepting any function like value is desired and safe here as this does not call the provided function.
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+// biome-ignore lint/complexity/noBannedTypes: Function type needed for decorator pattern
 function isBreaker(f: Function): boolean {
 	return isBreakerSymbol in (f as unknown as Record<typeof isBreakerSymbol, true>);
 }
@@ -204,7 +204,7 @@ function isBreaker(f: Function): boolean {
  */
 export function breakingClass<Target extends abstract new (...args: any[]) => WithBreakable>(
 	target: Target,
-	context: ClassDecoratorContext<Target>,
+	_context: ClassDecoratorContext<Target>,
 ): Target {
 	// This could extend target, but doing so adds an extra step in the prototype chain and makes the instances just show up as "DecoratedBreakable" in the debugger.
 	const DecoratedBreakable = target;

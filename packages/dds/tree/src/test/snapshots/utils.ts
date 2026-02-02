@@ -94,6 +94,7 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 		const baseEntry = {
 			type: getSummaryTypeName(summaryObject),
 		};
+		// biome-ignore lint/suspicious/noImplicitAnyLet: complex conditional type, let TypeScript infer
 		let entry;
 		if (value !== undefined) {
 			assert.equal(id, undefined, "Snapshot entry has both a tree value and a referenced id!");

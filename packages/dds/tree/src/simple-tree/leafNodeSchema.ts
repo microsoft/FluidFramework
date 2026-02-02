@@ -228,12 +228,12 @@ function mapValueWithFallbacks(
 		case "boolean": {
 			return value;
 		}
+		// biome-ignore lint/suspicious/noFallthroughSwitchClause: intentional fallthrough to default case
 		case "object": {
 			if (value === null || isFluidHandle(value)) {
 				return value;
 			}
 		}
-		// fallthrough
 		default: {
 			throw new UsageError(`Received unsupported leaf value: ${value}.`);
 		}

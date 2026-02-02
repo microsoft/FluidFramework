@@ -113,82 +113,43 @@ const schema = new SchemaFactory("com.example");
 {
 	class A extends schema.object("A", { x: [schema.number, schema.string] }) {}
 	class B extends schema.object("B", { x: [schema.number, schema.null] }) {}
-
-	{
 		type T = InsertableTreeNodeFromAllowedTypes<AllowedTypes>;
 		type _check = requireAssignableTo<T, never>;
-	}
-
-	{
 		type T = InsertableTreeNodeFromAllowedTypes<[typeof numberSchema, typeof stringSchema]>;
 		type _check = requireTrue<areSafelyAssignable<T, number | string>>;
-	}
-
-	{
 		type T = InsertableTreeNodeFromAllowedTypes<[]>;
 		type _check = requireAssignableTo<T, never>;
-	}
-
-	{
 		type T = InsertableTreeNodeFromAllowedTypes<[typeof A, typeof B]>;
 		type _check = requireAssignableTo<A | B, T>;
-	}
-
-	{
 		type T = InsertableTreeNodeFromAllowedTypes<[typeof A, typeof B] | [typeof A]>;
 		type _check = requireAssignableTo<T, never>;
-	}
-
-	{
 		type T = InsertableTreeNodeFromAllowedTypes<[typeof B, typeof A] | [typeof A]>;
 		type _check = requireAssignableTo<T, never>;
-	}
-
-	{
 		type T = InsertableTreeNodeFromAllowedTypes<[typeof A, typeof B | typeof A]>;
 		type _check = requireAssignableTo<A, T>;
 		type _check2 = requireFalse<isAssignableTo<B, T>>;
-	}
-
-	{
 		type T = InsertableTreeNodeFromAllowedTypes<
 			UnannotateAllowedTypesList<AnnotateAllowedTypesList<[typeof A, typeof B]>>
 		>;
 		type _check = requireAssignableTo<A | B, T>;
-	}
-
-	{
 		type T = InsertableTreeNodeFromAllowedTypes<
 			AllowedTypesFull<AnnotateAllowedTypesList<[typeof A, typeof B]>>
 		>;
 		type _check = requireAssignableTo<A | B, T>;
-	}
-
-	{
 		type T = InsertableTreeNodeFromAllowedTypes<
 			AllowedTypesFullFromMixed<[typeof A, typeof B]>
 		>;
 		type _check = requireAssignableTo<A | B, T>;
-	}
-
-	{
 		type Annotated = AnnotateAllowedTypesList<[typeof A, typeof B]>;
 		type T = InsertableTreeNodeFromAllowedTypes<
 			AnnotatedAllowedTypes<Annotated> & [typeof A, typeof B]
 		>;
 		type _check = requireAssignableTo<A | B, T>;
-	}
-
-	{
 		type T = InsertableTreeNodeFromAllowedTypes<AnnotatedAllowedTypes & [typeof A, typeof B]>;
 		type _check = requireAssignableTo<A | B, T>;
-	}
-
-	{
 		// Must ignore irrelevant fields
 		type T = InsertableTreeNodeFromAllowedTypes<{ x: 5 } & [typeof A, typeof B]>;
 		type _check = requireAssignableTo<A | B, T>;
-	}
 }
 
 // NumberKeys
@@ -207,20 +168,13 @@ const schema = new SchemaFactory("com.example");
 
 // Type tests for unannotate utilities
 {
-	// UnannotateAllowedTypesList
-	{
 		type A1 = AnnotatedAllowedType;
 		type A2 = LazyItem<TreeNodeSchema>;
 		type Mixed = readonly [A1, A2];
 
 		type Empty = readonly [];
-		{
 			type _check1 = requireAssignableTo<Empty, UnannotateAllowedTypesList<Empty>>;
 			type _check2 = requireAssignableTo<UnannotateAllowedTypesList<Mixed>, readonly A2[]>;
-		}
-
-		// Generic cases
-		{
 			type A = LazyItem<TreeNodeSchema>;
 			type B = AnnotatedAllowedType;
 
@@ -231,9 +185,6 @@ const schema = new SchemaFactory("com.example");
 				UnannotateAllowedTypesList<[AnnotatedAllowedType<TreeNodeSchema>]>,
 				[TreeNodeSchema]
 			>;
-		}
-		// Concrete cases
-		{
 			type A = typeof SchemaFactory.number;
 
 			type _check1 = requireTrue<areSafelyAssignable<UnannotateAllowedTypesList<[A]>, [A]>>;
@@ -245,24 +196,12 @@ const schema = new SchemaFactory("com.example");
 			>;
 
 			type _check4 = requireAssignableTo<UnannotateAllowedTypesList<[A]>, [A]>;
-		}
-		// Can assign to ImplicitAllowedTypes
-		{
 			type A = UnannotateAllowedTypesList<(AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>;
 			// @ts-expect-error TODO: AB#53315
 			type _check1 = requireAssignableTo<A, ImplicitAllowedTypes>;
-		}
-	}
-
-	// AllowedTypesFullFromMixed
-	{
-		// Can assign to ImplicitAllowedTypes
-		{
 			type A = AllowedTypesFullFromMixed<(AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>;
 			// @ts-expect-error TODO: AB#53315
 			type _check1 = requireAssignableTo<A, ImplicitAllowedTypes>;
-		}
-	}
 }
 
 describe("allowedTypes", () => {
@@ -383,7 +322,7 @@ describe("allowedTypes", () => {
 
 		let Bar: TreeNodeSchema;
 
-		// eslint-disable-next-line no-constant-condition
+		// biome-ignore lint/correctness/noConstantCondition: intentional false block for type checking
 		if (false) {
 			// Make the compiler think that Bar might be initialized.
 			Bar = assert.fail();
@@ -418,7 +357,7 @@ describe("allowedTypes", () => {
 
 	describe("normalizeToAnnotatedAllowedType", () => {
 		const fakeSchema = SchemaFactory.string;
-		const lazy = () => fakeSchema;
+		const _lazy = () => fakeSchema;
 
 		it("wraps TreeNodeSchema in an annotation", () => {
 			const result = normalizeToAnnotatedAllowedType(fakeSchema);
@@ -533,16 +472,16 @@ describe("allowedTypes", () => {
 
 			class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
-			const y = new NodeList([{}]);
+			const _y = new NodeList([{}]);
 
 			// There was a bug where unions with maps lost implicit contractibility, causing this to not compile:
-			const x = new Canvas({
+			const _x = new Canvas({
 				stuff: [{}],
 			});
 
 			const allowed = [NodeMap, NodeList] as const;
 			type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
-			const test: X = [{}];
+			const _test: X = [{}];
 
 			const allowed2 = [NodeMap] as const;
 			type X2 = InsertableTreeNodeFromAllowedTypes<typeof allowed2>;
@@ -555,7 +494,7 @@ describe("allowedTypes", () => {
 			type X4 = InsertableTypedNode<typeof allowed4>;
 
 			type X5 = InsertableTreeFieldFromImplicitField<typeof allowed>;
-			const test2: X5 = [{}];
+			const _test2: X5 = [{}];
 
 			type X6 = InsertableObjectFromSchemaRecord<typeof Canvas.info>;
 			type X7 = InsertableTreeFieldFromImplicitField<typeof Canvas.info.stuff>;
@@ -568,16 +507,16 @@ describe("allowedTypes", () => {
 
 			class Canvas extends schema.object("Canvas", { stuff: [Note] }) {}
 
-			const y = new Note({});
+			const _y = new Note({});
 
 			// There was a bug where unions with maps lost implicit contractibility, causing this to not compile:
-			const x = new Canvas({
+			const _x = new Canvas({
 				stuff: {},
 			});
 
 			const allowed = [Note] as const;
 			type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
-			const test: X = {};
+			const _test: X = {};
 
 			const allowed3 = [Note] as const;
 			type X3 = InsertableTreeNodeFromAllowedTypes<typeof allowed3>;
@@ -587,7 +526,7 @@ describe("allowedTypes", () => {
 			type X4 = InsertableTypedNode<typeof allowed4>;
 
 			type X5 = InsertableTreeFieldFromImplicitField<typeof allowed>;
-			const test2: X5 = {};
+			const _test2: X5 = {};
 
 			type X6 = InsertableObjectFromSchemaRecord<typeof Canvas.info>;
 			type X7 = InsertableTreeFieldFromImplicitField<typeof Canvas.info.stuff>;
@@ -693,9 +632,6 @@ describe("allowedTypes", () => {
 			type ItemSchema = TreeNodeSchema<string, NodeKind.Object, Item>;
 			type ItemSchemaClass = TreeNodeSchemaClass<string, NodeKind.Object, Item>;
 			type ItemSchemaNonClass = TreeNodeSchemaNonClass<string, NodeKind.Object, Item>;
-
-			// UnionToIntersection
-			{
 				type Text1Case = UnionToIntersection<typeof Text1>;
 				type TextUnionCase = UnionToIntersection<typeof Text1 | typeof Text2>;
 
@@ -748,10 +684,6 @@ describe("allowedTypes", () => {
 						>
 					>
 				>();
-			}
-
-			// SchemaUnionToIntersection
-			{
 				type Text1Case = SchemaUnionToIntersection<typeof Text1>;
 				type TextUnionCase = SchemaUnionToIntersection<typeof Text1 | typeof Text2>;
 
@@ -793,10 +725,6 @@ describe("allowedTypes", () => {
 					requireTrue<areSafelyAssignable<TreeNodeSchemaNonClassCase, TreeNodeSchemaNonClass>>
 				>();
 				allowUnused<requireAssignableTo<TreeNodeSchemaCoreCase, never>>();
-			}
-
-			// Use of SchemaToPair included to ease debugging.
-			{
 				type Text1Case = SchemaToPair<typeof Text1>;
 				type TextUnionCase = SchemaToPair<typeof Text1 | typeof Text2>;
 
@@ -812,7 +740,6 @@ describe("allowedTypes", () => {
 				type TreeNodeSchemaCoreCase = SchemaToPair<
 					TreeNodeSchemaCore<string, NodeKind, boolean>
 				>;
-			}
 		});
 	});
 

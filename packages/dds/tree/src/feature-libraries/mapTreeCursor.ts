@@ -136,7 +136,7 @@ export function cursorForMapTreeField<T extends MapTreeNodeViewGeneric<T>>(
 const adapter: CursorAdapter<MinimalMapTreeNodeView> = {
 	value: (node) => node.value,
 	type: (node) => node.type,
-	keysFromNode: (node) => Array.from(node.fields, ([key, field]) => key),
+	keysFromNode: (node) => Array.from(node.fields, ([key, _field]) => key),
 	getFieldFromNode: (node, key): Field<MinimalMapTreeNodeView> => {
 		const field = node.fields.get(key) as
 			| MinimalMapTreeNodeView[]

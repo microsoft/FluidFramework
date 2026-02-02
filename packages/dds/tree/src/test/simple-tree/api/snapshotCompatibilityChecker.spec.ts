@@ -289,17 +289,17 @@ describe("snapshotCompatibilityChecker", () => {
 			const snapshots = new Map<string, string>();
 
 			const fileSystem: SnapshotFileSystem = {
-				writeFileSync(file: string, data: string, options: { encoding: "utf8" }): void {
+				writeFileSync(file: string, data: string, _options: { encoding: "utf8" }): void {
 					snapshots.set(file, data);
 				},
-				readFileSync(file: string, encoding: "utf8"): string {
+				readFileSync(file: string, _encoding: "utf8"): string {
 					return snapshots.get(file) ?? assert.fail(`File not found: ${file}`);
 				},
-				mkdirSync(dir: string, options: { recursive: true }): void {},
-				readdirSync(dir: string): readonly string[] {
+				mkdirSync(_dir: string, _options: { recursive: true }): void { /* intentional no-op */ },
+				readdirSync(_dir: string): readonly string[] {
 					return [...snapshots.keys()];
 				},
-				join(parentPath: string, childPath: string): string {
+				join(_parentPath: string, childPath: string): string {
 					return childPath;
 				},
 			};

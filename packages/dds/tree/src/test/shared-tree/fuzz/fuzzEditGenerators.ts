@@ -863,7 +863,7 @@ function selectField(
 		if (Tree.is(node.requiredChild, nodeSchema)) {
 			childNodes.push(node.requiredChild);
 		}
-		node.arrayChildren.map((child) => {
+		node.arrayChildren.forEach((child) => {
 			if (Tree.is(child, nodeSchema)) {
 				childNodes.push(child);
 			}

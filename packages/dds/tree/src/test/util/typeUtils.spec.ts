@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+// biome-ignore-all lint/correctness/noUnusedVariables: type aliases used for compile-time type checking only
+// biome-ignore-all lint/complexity/noUselessLoneBlockStatements: blocks used for scoping in type tests
+// biome-ignore-all lint/suspicious/noExplicitAny: needed for type utility tests
+
 import { allowUnused } from "../../simple-tree/index.js";
 import type {
 	areSafelyAssignable,
@@ -101,13 +105,9 @@ import type {
 			areSafelyAssignable<UnionToIntersection<{ a: 1 } & { b: 2 }>, { a: 1 } & { b: 2 }>
 		>
 	>();
-
-	// Check intersections of unions behave as if intersection was distributed over union
-	{
 		type intersectedUnion = ({ a: 1 } | { b: 2 }) & { foo: 1 };
 		type converted = UnionToIntersection<intersectedUnion>;
 		allowUnused<
 			requireTrue<areSafelyAssignable<converted, { a: 1 } & { b: 2 } & { foo: 1 }>>
 		>();
-	}
 }

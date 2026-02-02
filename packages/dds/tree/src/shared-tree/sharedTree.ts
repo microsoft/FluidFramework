@@ -204,8 +204,7 @@ export class SharedTreeKernel
 		serializer: IFluidSerializer,
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
-		initialSequenceNumber: number,
-		private readonly logger: ITelemetryLoggerExt | undefined,
+		initialSequenceNumber: number,readonly logger: ITelemetryLoggerExt | undefined,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
@@ -456,7 +455,8 @@ export class SharedTreeKernel
 			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
 		);
 		if (isResubmit) {
-			return super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit);
+			super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit);
+			return;
 		}
 
 		// Refrain from submitting new commits until they are validated by the checkout.
@@ -467,7 +467,7 @@ export class SharedTreeKernel
 		);
 	}
 
-	public onDisconnect(): void {}
+	public onDisconnect(): void { /* intentional no-op */ }
 }
 
 export function exportSimpleSchema(
@@ -688,7 +688,7 @@ export interface ForestType extends ErasedType<"ForestType"> {}
  * @beta
  */
 export const ForestTypeReference = toForestType(
-	(breaker: Breakable, schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
+	(breaker: Breakable, schema: TreeStoredSchemaSubscription, _idCompressor: IIdCompressor) =>
 		buildForest(breaker, schema),
 );
 
@@ -703,7 +703,7 @@ export const ForestTypeReference = toForestType(
  */
 export const ForestTypeOptimized = toForestType(
 	(
-		breaker: Breakable,
+		_breaker: Breakable,
 		schema: TreeStoredSchemaSubscription,
 		idCompressor: IIdCompressor,
 		shouldEncodeIncrementally: IncrementalEncodingPolicy,

@@ -68,22 +68,22 @@ export {
 	trackDirtyNodes,
 	type DirtyTreeMap,
 } from "./dirtyIndex.js";
-export {
-	type JsonSchemaId,
-	type JsonSchemaType,
-	type JsonObjectNodeSchema,
-	type JsonArrayNodeSchema,
-	type JsonMapNodeSchema,
-	type JsonLeafNodeSchema,
-	type JsonSchemaRef,
-	type JsonRefPath,
-	type JsonNodeSchema,
-	type JsonNodeSchemaBase,
-	type JsonTreeSchema,
-	type JsonFieldSchema,
-	type JsonLeafSchemaType,
-	type JsonRecordNodeSchema,
-	type JsonStringKeyPatternProperties,
+export type {
+	JsonSchemaId,
+	JsonSchemaType,
+	JsonObjectNodeSchema,
+	JsonArrayNodeSchema,
+	JsonMapNodeSchema,
+	JsonLeafNodeSchema,
+	JsonSchemaRef,
+	JsonRefPath,
+	JsonNodeSchema,
+	JsonNodeSchemaBase,
+	JsonTreeSchema,
+	JsonFieldSchema,
+	JsonLeafSchemaType,
+	JsonRecordNodeSchema,
+	JsonStringKeyPatternProperties,
 } from "./jsonSchema.js";
 export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";

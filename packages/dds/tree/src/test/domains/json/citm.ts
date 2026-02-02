@@ -233,7 +233,6 @@ export function generateCitmJson(
 		}
 		topicSubTopics[`${currTopicId}`] = [];
 		for (let i = 0; i < numSubTopicsToAdd; i++) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			topicSubTopics[`${currTopicId}`].push(Number.parseInt(subTopicIds.pop()!, 10));
 		}
 	}

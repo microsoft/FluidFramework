@@ -763,7 +763,7 @@ export function testCorrectness(): void {
 					manager
 						.getLocalBranch("main")
 						.apply({ change: TestChange.emptyChange, revision: revision2 });
-					const commit1 = {
+					const _commit1 = {
 						change: TestChange.emptyChange,
 						revision: mintRevisionTag(),
 						sessionId: peer1,

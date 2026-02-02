@@ -66,7 +66,7 @@ type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableT
 	allowUnused<requireTrue<areSafelyAssignable<typeof constant, 42 & T1>>>();
 
 	// @ts-expect-error incompatible constant value
-	const invalidConstant = brandConst("x")<T1>();
+	const _invalidConstant = brandConst("x")<T1>();
 }
 
 // strictEnum
@@ -97,7 +97,7 @@ type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableT
 
 	// Switch using the actual constants works fine
 	// eslint-disable-next-line no-inner-declarations
-	function switchLiterals(x: TestA) {
+	function _switchLiterals(x: TestA) {
 		switch (x) {
 			case 1: {
 				return "a";
@@ -113,7 +113,7 @@ type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableT
 
 	// Switch using the enum members does not narrow without unbrand
 	// eslint-disable-next-line no-inner-declarations
-	function switchConstants(x: TestA) {
+	function _switchConstants(x: TestA) {
 		switch (x) {
 			case TestA.a: {
 				return "a";
@@ -130,7 +130,7 @@ type _check1 = requireFalse<isAssignableTo<E4, E5>> | requireFalse<isAssignableT
 
 	// Switch using the enum members does narrow with unbrand
 	// eslint-disable-next-line no-inner-declarations
-	function switchUnbrand(x: TestA) {
+	function _switchUnbrand(x: TestA) {
 		switch (x) {
 			case unbrand(TestA.a): {
 				return "a";

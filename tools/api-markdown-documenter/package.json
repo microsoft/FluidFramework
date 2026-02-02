@@ -49,7 +49,9 @@
 		"test:mocha": "mocha \"lib/**/test/**/*.test.js\" --reporter-option maxDiffSize=100000",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:verbose": "npm run test:mocha:verbose",
-		"tsc": "tsc"
+		"tsc": "tsc",
+		"lint:biome": "biome lint .",
+		"lint:biome:fix": "biome lint . --write"
 	},
 	"c8": {
 		"all": true,

@@ -126,7 +126,7 @@ describe("Summary benchmarks", () => {
 					const services: IChannelServices = {
 						deltaConnection: new MockDeltaConnection(
 							() => 0,
-							() => {},
+							() => { /* intentional no-op */ },
 						),
 						objectStorage: new MockStorage(summaryTree),
 					};

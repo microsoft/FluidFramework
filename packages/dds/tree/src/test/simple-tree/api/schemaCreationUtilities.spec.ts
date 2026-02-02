@@ -75,9 +75,11 @@ describe("schemaCreationUtilities", () => {
 				// This one runs
 				break;
 			}
+			// biome-ignore lint/suspicious/noFallthroughSwitchClause: assert.fail throws
 			case mode instanceof Mode.Fun: {
 				assert.fail();
 			}
+			// biome-ignore lint/suspicious/noFallthroughSwitchClause: assert.fail throws
 			case mode instanceof Mode.Cool: {
 				assert.fail();
 			}
@@ -91,11 +93,11 @@ describe("schemaCreationUtilities", () => {
 		const schemaFactory = new SchemaFactory("com.myApp");
 		const Mode = enumFromStrings(schemaFactory, ["Fun", "Cool"]);
 		type Mode = TreeNodeFromImplicitAllowedTypes<typeof Mode.schema>;
-		const nodeFromString: Mode = Mode("Fun");
+		const _nodeFromString: Mode = Mode("Fun");
 		const nodeFromSchema: Mode = new Mode.Fun();
 
 		// Schema nodes have a strongly typed `.value` property.
-		const nameFromNode: "Fun" | "Cool" = nodeFromSchema.value;
+		const _nameFromNode: "Fun" | "Cool" = nodeFromSchema.value;
 
 		class Parent extends schemaFactory.object("Parent", { mode: Mode.schema }) {}
 	});
@@ -131,9 +133,9 @@ describe("schemaCreationUtilities", () => {
 			mode: ModeNodes.schema,
 		}) {}
 
-		const parent1 = new Parent({ mode: ModeNodes("A") });
-		const parent2 = new Parent({ mode: ModeNodes("A" as "A" | "B") });
-		const parent3 = new Parent({ mode: ModeNodes("A" as "A" | "B" | "C") });
+		const _parent1 = new Parent({ mode: ModeNodes("A") });
+		const _parent2 = new Parent({ mode: ModeNodes("A" as "A" | "B") });
+		const _parent3 = new Parent({ mode: ModeNodes("A" as "A" | "B" | "C") });
 	});
 
 	it("adaptEnum example from docs", () => {
@@ -154,13 +156,13 @@ describe("schemaCreationUtilities", () => {
 		}) {}
 
 		// Example usage of enum based nodes, showing what type to use and that `.value` can be used to read out the enum value.
-		function getValue(node: ModeNodes): Mode {
+		function _getValue(node: ModeNodes): Mode {
 			return node.value;
 		}
 
 		// Example constructing a tree containing an enum node from an enum value.
 		// The syntax `new ModeNodes.a()` is also supported.
-		function setValue(node: Parent): void {
+		function _setValue(node: Parent): void {
 			node.mode = ModeNodes(Mode.a);
 		}
 	});
@@ -294,10 +296,10 @@ describe("schemaCreationUtilities", () => {
 		}
 		const ModeNodes = adaptEnum(schema, Mode);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
-		const nodeFromString: ModeNodes = ModeNodes(Mode.a);
+		const _nodeFromString: ModeNodes = ModeNodes(Mode.a);
 		const nodeFromSchema: ModeNodes = new ModeNodes.a();
 
-		const nameFromNode: Mode = nodeFromSchema.value;
+		const _nameFromNode: Mode = nodeFromSchema.value;
 
 		class Parent extends schemaFactory.object("Parent", {
 			mode: ModeNodes.schema,
@@ -317,7 +319,7 @@ describe("schemaCreationUtilities", () => {
 				a = 1,
 			}
 			const ModeNodes = adaptEnum(schemaFactory, Mode);
-			const union = ModeNodes.schema;
+			const _union = ModeNodes.schema;
 		}
 
 		// New
@@ -328,7 +330,7 @@ describe("schemaCreationUtilities", () => {
 			const ModeNodes = adaptEnum(schemaFactory, Mode);
 			// Bugged version of adaptEnum used to include this: it should not be used.
 			class Workaround extends schemaFactory.object("a", {}) {}
-			const union = [...ModeNodes.schema, Workaround] as const;
+			const _union = [...ModeNodes.schema, Workaround] as const;
 		}
 	});
 
@@ -339,6 +341,7 @@ describe("schemaCreationUtilities", () => {
 		const mode = root.mode;
 
 		switch (mode.value) {
+			// biome-ignore lint/suspicious/noFallthroughSwitchClause: assert.fail throws
 			case "Fun": {
 				assert.fail();
 			}
@@ -361,6 +364,7 @@ describe("schemaCreationUtilities", () => {
 		const node = new Mode.Bonus() as Mode;
 
 		switch (node.value) {
+			// biome-ignore lint/suspicious/noFallthroughSwitchClause: assert.fail throws
 			case "Fun": {
 				assert.fail();
 			}
@@ -392,6 +396,7 @@ describe("schemaCreationUtilities", () => {
 				// This one runs
 				break;
 			}
+			// biome-ignore lint/suspicious/noFallthroughSwitchClause: assert.fail throws
 			case Day.Tomorrow: {
 				assert.fail();
 			}
@@ -410,10 +415,10 @@ describe("schemaCreationUtilities", () => {
 		const DayNodes = adaptEnum(schema, Day);
 
 		// Can convert enum to unhydrated node:
-		const x = DayNodes(Day.Today);
+		const _x = DayNodes(Day.Today);
 		// Can construct unhydrated node from enum's key:
 		const y = new DayNodes.Today();
-		const z: Day.Today = y.value;
+		const _z: Day.Today = y.value;
 
 		const view = getView(new TreeViewConfiguration({ schema: DayNodes.schema }));
 		view.initialize(DayNodes(Day.Today));
@@ -422,6 +427,7 @@ describe("schemaCreationUtilities", () => {
 			case Day.Today: {
 				break;
 			}
+			// biome-ignore lint/suspicious/noFallthroughSwitchClause: assert.fail throws
 			case Day.Tomorrow: {
 				assert.fail();
 			}
@@ -449,10 +455,10 @@ describe("schemaCreationUtilities", () => {
 		const DayNodes = adaptEnum(schema, Day);
 
 		// Can convert enum to unhydrated node:
-		const x = DayNodes(Day.Today);
+		const _x = DayNodes(Day.Today);
 		// Can construct unhydrated node from enum's key:
 		const y = new DayNodes.Today();
-		const z: Day.Today = y.value;
+		const _z: Day.Today = y.value;
 
 		const view = getView(new TreeViewConfiguration({ schema: DayNodes.schema }));
 		view.initialize(DayNodes(Day.Today));
@@ -461,6 +467,7 @@ describe("schemaCreationUtilities", () => {
 			case Day.Today: {
 				break;
 			}
+			// biome-ignore lint/suspicious/noFallthroughSwitchClause: assert.fail throws
 			case Day.Tomorrow: {
 				assert.fail();
 			}
@@ -530,6 +537,7 @@ describe("schemaCreationUtilities", () => {
 				// Due to https://github.com/microsoft/TypeScript/issues/61993 this produces 0 not -0
 				"+1.1" = -0,
 				// Actually -0
+				// biome-ignore lint/style/useLiteralEnumMembers: intentionally testing non-literal enum value
 				"1.10" = (() => -0)(),
 			}
 
@@ -547,7 +555,9 @@ describe("schemaCreationUtilities", () => {
 			// See https://github.com/microsoft/TypeScript/issues/48956
 			// TypeScript screws this case up in an undetectable way, but confirm it doesn't assert.
 			enum TestEnumNumber {
+				// biome-ignore lint/style/useLiteralEnumMembers: intentionally testing non-literal enum value
 				Infinity = Number.POSITIVE_INFINITY,
+				// biome-ignore lint/style/useLiteralEnumMembers: intentionally testing non-literal enum value
 				NaN = Number.NaN,
 			}
 

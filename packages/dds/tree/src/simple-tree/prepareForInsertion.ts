@@ -329,7 +329,7 @@ function scheduleHydration(
  * Implementation of {@link Hydrator}.
  */
 function hydrator(
-	locatedNodes: readonly LocatedNodesBatch[],
+	_locatedNodes: readonly LocatedNodesBatch[],
 	forest: IForestSubscription,
 ): (batch: LocatedNodesBatch, attachedPath: UpPath) => void {
 	return (batch: LocatedNodesBatch, attachedPath: UpPath) => {

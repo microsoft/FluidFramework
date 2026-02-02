@@ -32,7 +32,6 @@ export const unionOptions: ObjectOptions = {
  */
 export type DiscriminatedUnionLibrary<
 	TUnion extends object,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	TArgs extends any[],
 	TResult,
 > = [
@@ -101,7 +100,6 @@ export type DiscriminatedUnionLibrary<
  */
 export class DiscriminatedUnionDispatcher<
 	TUnion extends object,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	TArgs extends any[],
 	TResult,
 > {

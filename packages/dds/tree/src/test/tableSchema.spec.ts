@@ -101,7 +101,7 @@ describe("TableFactory unit tests", () => {
 		assert.deepEqual(actualVerbose, expected);
 	}
 
-	describeHydration("Column Schema", (initializeTree) => {
+	describeHydration("Column Schema", (_initializeTree) => {
 		it("Can create without props", () => {
 			class MyColumn extends TableSchema.column({
 				schemaFactory,

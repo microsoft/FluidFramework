@@ -274,7 +274,7 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 			const convertedKey =
 				options.keyConverter === undefined ? key : options.keyConverter.encode(node.type, key);
 
-			if (Object.prototype.hasOwnProperty.call(node.fields, convertedKey)) {
+			if (Object.hasOwn(node.fields, convertedKey)) {
 				const field = node.fields[convertedKey];
 				return field === undefined ? [] : [field];
 			}

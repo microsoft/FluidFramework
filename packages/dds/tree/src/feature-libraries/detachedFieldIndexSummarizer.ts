@@ -29,7 +29,7 @@ export const detachedFieldIndexBlobKey = "DetachedFieldIndexBlob";
 /**
  * The versions for the detached field index summary format.
  */
-export const enum DetachedFieldIndexSummaryFormatVersion {
+export enum DetachedFieldIndexSummaryFormatVersion {
 	/**
 	 * This version represents summary format before summary versioning was introduced.
 	 */
@@ -53,7 +53,7 @@ const supportedVersions = new Set<DetachedFieldIndexSummaryFormatVersion>([
  * Returns the summary version to use as per the given minimum version for collab.
  */
 function minVersionToDetachedFieldIndexSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	_version: MinimumVersionForCollab,
 ): DetachedFieldIndexSummaryFormatVersion {
 	// Currently, version 2 is written which adds metadata blob to the summary.
 	return DetachedFieldIndexSummaryFormatVersion.v2;

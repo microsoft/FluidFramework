@@ -190,7 +190,7 @@ export type EnforceTypeCheckTests =
 	  >
 
 	// test eitherIsAny
-	| requireTrue<eitherIsAny<any, Nominal1>>
+	| requireTrue<eitherIsAny<any, Nominal1>>>
 	| requireTrue<eitherIsAny<Nominal1, any>>
 	| requireTrue<eitherIsAny<any, any>>
 	| requireFalse<eitherIsAny<Nominal1, Nominal1>>

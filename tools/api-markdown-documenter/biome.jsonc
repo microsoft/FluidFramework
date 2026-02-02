@@ -23,5 +23,8 @@
 				}
 			}
 		}
-	]
+	],
+	"linter": {
+		"enabled": true
+	}
 }

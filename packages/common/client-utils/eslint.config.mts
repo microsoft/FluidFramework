@@ -4,10 +4,10 @@
  */
 
 import type { Linter } from "eslint";
-import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { strictBiome } from "../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...strict,
+	...strictBiome,
 	{
 		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
 		// This package has non-standard test directories (mocha/, jest/, types/) that

@@ -118,9 +118,7 @@ describe("SchemaFactory Recursive methods", () => {
 				 */
 				child: schema.optionalRecursive([() => Box]),
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof Box>;
-			}
 
 			const config = new TreeViewConfiguration({ schema: Box });
 
@@ -145,11 +143,8 @@ describe("SchemaFactory Recursive methods", () => {
 				text: "hi2",
 				child: new Box({ text: "hi3", child: new Box({ text: "hi4", child: undefined }) }),
 			});
-
-			{
 				type _check1 = requireAssignableTo<undefined, typeof view.root.child.child>;
 				type _check2 = requireAssignableTo<Box, typeof view.root.child.child>;
-			}
 
 			const stuff2 = view.root.child?.child?.child;
 
@@ -160,9 +155,7 @@ describe("SchemaFactory Recursive methods", () => {
 			class ObjectRecursive extends schemaFactory.objectRecursive("Object", {
 				x: SchemaFactory.optionalRecursive([() => ObjectRecursive]),
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
-			}
 
 			type XSchema = typeof ObjectRecursive.info.x;
 			type Field2 =
@@ -211,7 +204,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 			tree.x = tree.x?.x?.x?.x ?? new ObjectRecursive({ x: undefined });
 
-			const tree2 = hydrate(
+			const _tree2 = hydrate(
 				ObjectRecursive,
 				new ObjectRecursive({ x: new ObjectRecursive({ x: undefined }) }),
 			);
@@ -221,9 +214,7 @@ describe("SchemaFactory Recursive methods", () => {
 			class ObjectRecursive extends schemaFactory.objectRecursive("Object", {
 				x: SchemaFactory.requiredRecursive([() => ObjectRecursive, SchemaFactory.number]),
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
-			}
 
 			type XSchema = typeof ObjectRecursive.info.x;
 			type Field2 =
@@ -273,7 +264,7 @@ describe("SchemaFactory Recursive methods", () => {
 				>
 			>;
 
-			const tree = hydrate(
+			const _tree = hydrate(
 				ObjectRecursive,
 				new ObjectRecursive({ x: new ObjectRecursive({ x: 42 }) }),
 			);
@@ -291,12 +282,10 @@ describe("SchemaFactory Recursive methods", () => {
 				d: schemaFactory.optional(Other),
 				e: schemaFactory.optional([() => Other]),
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
-			}
 
 			// Explicit construction under recursive type
-			const tree2 = hydrate(
+			const _tree2 = hydrate(
 				ObjectRecursive,
 				new ObjectRecursive({
 					x: undefined,
@@ -309,7 +298,7 @@ describe("SchemaFactory Recursive methods", () => {
 			);
 
 			// implicit construction under recursive type
-			const tree3 = hydrate(
+			const _tree3 = hydrate(
 				ObjectRecursive,
 				new ObjectRecursive({
 					x: undefined,
@@ -332,12 +321,10 @@ describe("SchemaFactory Recursive methods", () => {
 				d: schemaFactory.optional(Other),
 				e: schemaFactory.optional([() => Other]),
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
-			}
 
 			// Explicit construction under recursive type
-			const tree2 = hydrate(
+			const _tree2 = hydrate(
 				ObjectRecursive,
 				new ObjectRecursive({
 					x: undefined,
@@ -350,7 +337,7 @@ describe("SchemaFactory Recursive methods", () => {
 			);
 
 			// implicit construction under recursive type
-			const tree3 = hydrate(
+			const _tree3 = hydrate(
 				ObjectRecursive,
 				new ObjectRecursive({
 					x: undefined,
@@ -367,9 +354,7 @@ describe("SchemaFactory Recursive methods", () => {
 			class ObjectRecursive extends schemaFactory.objectRecursive("Object", {
 				x: schemaFactory.optionalRecursive([() => ObjectRecursive]),
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
-			}
 
 			{
 				const field = ObjectRecursive.info.x;
@@ -403,9 +388,7 @@ describe("SchemaFactory Recursive methods", () => {
 			class A extends schemaFactory.objectRecursive("A", {
 				a: schemaFactory.optionalRecursive([() => B]),
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof A>;
-			}
 
 			class B extends schemaFactory.object("B", {
 				// Implicit required field
@@ -429,12 +412,12 @@ describe("SchemaFactory Recursive methods", () => {
 
 			{
 				const tree = hydrate(A, new A({ a: new B({ b: new A({ a: undefined }) }) }));
-				assert.equal(tree.a!.b.a, undefined);
+				assert.equal(tree.a?.b.a, undefined);
 			}
 
 			{
 				const tree = hydrate(A, new A({ a: { b: new A({ a: undefined }) } }));
-				assert.equal(tree.a!.b.a, undefined);
+				assert.equal(tree.a?.b.a, undefined);
 			}
 		});
 
@@ -442,9 +425,7 @@ describe("SchemaFactory Recursive methods", () => {
 			class A extends schemaFactory.objectRecursive("A", {
 				a: schemaFactory.optionalRecursive([() => B]),
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof A>;
-			}
 
 			class B extends schemaFactory.object("B", {
 				b: schemaFactory.optional(A),
@@ -452,12 +433,12 @@ describe("SchemaFactory Recursive methods", () => {
 
 			{
 				const tree = hydrate(B, { b: new A({ a: undefined }) });
-				assert.equal(tree.b!.a, undefined);
+				assert.equal(tree.b?.a, undefined);
 			}
 
 			{
 				const tree = hydrate(B, new B({ b: new A({ a: undefined }) }));
-				assert.equal(tree.b!.a, undefined);
+				assert.equal(tree.b?.a, undefined);
 			}
 
 			{
@@ -467,12 +448,12 @@ describe("SchemaFactory Recursive methods", () => {
 
 			{
 				const tree = hydrate(A, new A({ a: new B({ b: new A({ a: undefined }) }) }));
-				assert.equal(tree.a!.b!.a, undefined);
+				assert.equal(tree.a?.b?.a, undefined);
 			}
 
 			{
 				const tree = hydrate(A, new A({ a: { b: new A({ a: undefined }) } }));
-				assert.equal(tree.a!.b!.a, undefined);
+				assert.equal(tree.a?.b?.a, undefined);
 			}
 		});
 
@@ -480,9 +461,7 @@ describe("SchemaFactory Recursive methods", () => {
 			class A extends schemaFactory.objectRecursive("A", {
 				a: [() => B, schemaFactory.number],
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof A>;
-			}
 
 			class B extends schemaFactory.object("B", {
 				b: schemaFactory.optional(A),
@@ -490,7 +469,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 			{
 				const tree = hydrate(B, { b: new A({ a: 5 }) });
-				assert.equal(tree.b!.a, 5);
+				assert.equal(tree.b?.a, 5);
 			}
 
 			{
@@ -500,7 +479,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 			{
 				const tree = hydrate(A, new A({ a: new B({ b: new A({ a: 6 }) }) }));
-				assert.equal((tree.a as B).b!.a, 6);
+				assert.equal((tree.a as B).b?.a, 6);
 			}
 		});
 
@@ -638,7 +617,7 @@ describe("SchemaFactory Recursive methods", () => {
 					SchemaFactoryAlpha.typesRecursive([{ type: () => Test, metadata: {} }]),
 				) {}
 				type _check = ValidateRecursiveSchema<typeof Test>;
-				const t = new Test({ x: new Test({ y: new Test({}) }) });
+				const _t = new Test({ x: new Test({ y: new Test({}) }) });
 			}
 		});
 
@@ -750,7 +729,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 		it("Invalid cases", () => {
 			// These are type tests and expected to fail during compilation
-			// eslint-disable-next-line no-constant-condition
+			// biome-ignore lint/correctness/noConstantCondition: intentional false block for type checking
 			if (false) {
 				{
 					// @ts-expect-error Missing [] around allowed types.
@@ -792,7 +771,7 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 
 			{
-				class Test extends schemaFactory.arrayRecursive("Test", [() => {}]) {}
+				class Test extends schemaFactory.arrayRecursive("Test", [() => { /* intentional no-op */ }]) {}
 				// @ts-expect-error referenced type not a schema.
 				type _check = ValidateRecursiveSchema<typeof Test>;
 			}
@@ -811,7 +790,7 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 
 			{
-				class Test extends schemaFactory.arrayRecursive("Test", [() => {}]) {}
+				class Test extends schemaFactory.arrayRecursive("Test", [() => { /* intentional no-op */ }]) {}
 				// @ts-expect-error referenced type not a schema.
 				allowUnused<ValidateRecursiveSchema<typeof Test>>();
 			}
@@ -824,11 +803,8 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("Invalid undetected case ", () => {
-			// Any should be rejected to help ensure builds which allow implicit any allowed error on schema which implicitly produce `any`.
-			{
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				type _check = ValidateRecursiveSchema<any>;
-			}
 		});
 	});
 
@@ -837,9 +813,7 @@ describe("SchemaFactory Recursive methods", () => {
 			class ArrayRecursive extends schemaFactory.arrayRecursive("List", [
 				() => ArrayRecursive,
 			]) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof ArrayRecursive>;
-			}
 			// Explicit constructor call
 			{
 				const data: ArrayRecursive = hydrate(ArrayRecursive, new ArrayRecursive([]));
@@ -868,13 +842,9 @@ describe("SchemaFactory Recursive methods", () => {
 
 		it("co-recursive", () => {
 			class A extends schemaFactory.arrayRecursive("A", [() => B]) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof A>;
-			}
 			class B extends schemaFactory.arrayRecursive("B", A) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof B>;
-			}
 			// Explicit constructor call
 			{
 				const data: A = hydrate(A, new A([]));
@@ -884,13 +854,9 @@ describe("SchemaFactory Recursive methods", () => {
 
 		it("co-recursive with object", () => {
 			class A extends schemaFactory.arrayRecursive("A", [() => B]) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof A>;
-			}
 			class B extends schemaFactory.objectRecursive("B", { x: A }) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof B>;
-			}
 			// Explicit constructor call
 			{
 				const data: A = hydrate(A, new A([]));
@@ -900,9 +866,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 		it("co-recursive with object first", () => {
 			class B extends schemaFactory.objectRecursive("B", { x: [() => A] }) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof B>;
-			}
 			// It is interesting this compiles using "array" and does not need to be "arrayRecursive".
 			// It is unclear if this should be considered supported, but it is currently working.
 			// TODO: Determine exactly which cases like this work, why, and document they are supported.
@@ -916,15 +880,11 @@ describe("SchemaFactory Recursive methods", () => {
 
 		it("co-recursive object with out of line non-lazy subclassed array", () => {
 			class TheArray extends schemaFactory.arrayRecursive("FooList", [() => Foo]) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof TheArray>;
-			}
 			class Foo extends schemaFactory.objectRecursive("Foo", {
 				fooList: TheArray,
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 		});
 
 		it("recursive with subclassed array", () => {
@@ -940,9 +900,7 @@ describe("SchemaFactory Recursive methods", () => {
 					custom: { baz: true },
 				},
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 
 			assert.deepEqual(Foo.metadata, {
 				description: "A recursive list",
@@ -957,9 +915,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 	describe("mapRecursive", () => {
 		class MapRecursive extends schemaFactory.mapRecursive("Map", [() => MapRecursive]) {}
-		{
 			type _check = ValidateRecursiveSchema<typeof MapRecursive>;
-		}
 
 		it("basic use", () => {
 			const node = hydrate(MapRecursive, new MapRecursive([]));
@@ -987,18 +943,18 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("constructors", () => {
-			const fromIterator = new MapRecursive([["x", new MapRecursive()]]);
-			const fromMap = new MapRecursive(new Map([["x", new MapRecursive()]]));
-			const fromObject = new MapRecursive({ x: new MapRecursive() });
+			const _fromIterator = new MapRecursive([["x", new MapRecursive()]]);
+			const _fromMap = new MapRecursive(new Map([["x", new MapRecursive()]]));
+			const _fromObject = new MapRecursive({ x: new MapRecursive() });
 
-			const fromNothing = new MapRecursive();
-			const fromUndefined = new MapRecursive(undefined);
+			const _fromNothing = new MapRecursive();
+			const _fromUndefined = new MapRecursive(undefined);
 
 			// If supporting implicit construction, these would work:
 			// @ts-expect-error Implicit construction disabled
-			const fromNestedNeverArray = new MapRecursive({ x: [] });
+			const _fromNestedNeverArray = new MapRecursive({ x: [] });
 			// @ts-expect-error Implicit construction disabled
-			const fromNestedObject = new MapRecursive({ x: { x: [] } });
+			const _fromNestedObject = new MapRecursive({ x: { x: [] } });
 		});
 
 		it("Node schema metadata", () => {
@@ -1010,9 +966,7 @@ describe("SchemaFactory Recursive methods", () => {
 					custom: { baz: true },
 				},
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 
 			assert.deepEqual(Foo.metadata, {
 				description: "A recursive map",
@@ -1030,9 +984,7 @@ describe("SchemaFactory Recursive methods", () => {
 		class RecordRecursive extends schemaFactoryAlpha.recordRecursive("Record", [
 			() => RecordRecursive,
 		]) {}
-		{
 			type _check = ValidateRecursiveSchema<typeof RecordRecursive>;
-		}
 
 		it("basic use", () => {
 			const node = hydrate(RecordRecursive, new RecordRecursive({}));
@@ -1050,7 +1002,7 @@ describe("SchemaFactory Recursive methods", () => {
 				// Check constructor
 				type TBuild = NodeBuilderData<typeof RecordRecursive>;
 				type _check2 = requireAssignableTo<RecordRecursive, TBuild>;
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+				// biome-ignore lint/complexity/noBannedTypes: testing empty object type behavior
 				type _check3 = requireAssignableTo<{}, TBuild>;
 				type _check4 = requireAssignableTo<{ a: RecordRecursive }, TBuild>;
 				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;
@@ -1066,15 +1018,15 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("constructors", () => {
-			const fromObject = new RecordRecursive({ x: new RecordRecursive() });
-			const fromNothing = new RecordRecursive();
-			const fromUndefined = new RecordRecursive(undefined);
+			const _fromObject = new RecordRecursive({ x: new RecordRecursive() });
+			const _fromNothing = new RecordRecursive();
+			const _fromUndefined = new RecordRecursive(undefined);
 
 			// If supporting implicit construction, these would typ check:
 			// @ts-expect-error Implicit construction disabled
-			const fromNestedNeverArray = new RecordRecursive({ x: {} });
+			const _fromNestedNeverArray = new RecordRecursive({ x: {} });
 			// @ts-expect-error Implicit construction disabled
-			const fromNestedObject = new RecordRecursive({ x: { x: {} } });
+			const _fromNestedObject = new RecordRecursive({ x: { x: {} } });
 		});
 
 		it("Node schema metadata", () => {
@@ -1086,9 +1038,7 @@ describe("SchemaFactory Recursive methods", () => {
 					custom: { baz: true },
 				},
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 
 			assert.deepEqual(Foo.metadata, {
 				description: "A recursive record",
@@ -1114,9 +1064,7 @@ describe("SchemaFactory Recursive methods", () => {
 		// Test adding persistedMetadata to a recursive array schema
 		const factory = new SchemaFactoryAlpha("");
 		class Foos extends factory.arrayRecursive("Foos", [() => Foos], { persistedMetadata }) {}
-		{
 			type _check = ValidateRecursiveSchema<typeof Foos>;
-		}
 		assert.deepEqual(Foos.persistedMetadata, persistedMetadata);
 
 		// Test adding persistedMetadata to a recursive object schema
@@ -1125,18 +1073,14 @@ describe("SchemaFactory Recursive methods", () => {
 			{ fooList: [() => Foo] },
 			{ persistedMetadata },
 		) {}
-		{
 			type _check = ValidateRecursiveSchema<typeof Foo>;
-		}
 		assert.deepEqual(Foo.persistedMetadata, persistedMetadata);
 
 		// Test adding persistedMetadata to a recursive map schema
 		class FooMap extends factory.mapRecursive("FooMap", [() => FooMap], {
 			persistedMetadata,
 		}) {}
-		{
 			type _check = ValidateRecursiveSchema<typeof FooMap>;
-		}
 		assert.deepEqual(FooMap.persistedMetadata, persistedMetadata);
 	});
 
@@ -1144,9 +1088,7 @@ describe("SchemaFactory Recursive methods", () => {
 		class ArrayRecursive extends schemaFactory.arrayRecursive("List", [
 			() => ArrayRecursive,
 		]) {}
-		{
 			type _check = ValidateRecursiveSchema<typeof ArrayRecursive>;
-		}
 		class Root extends schemaFactory.object("Root", {
 			r: ArrayRecursive,
 		}) {}
@@ -1214,7 +1156,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 				type _check = ValidateRecursiveSchema<typeof Recursive>;
 
-				const node = new Recursive([]);
+				const _node = new Recursive([]);
 			}
 		});
 
@@ -1239,7 +1181,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 				type _check = ValidateRecursiveSchema<typeof Recursive>;
 
-				const node = new Recursive([]);
+				const _node = new Recursive([]);
 			}
 		});
 	});
@@ -1312,7 +1254,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 				type _check = ValidateRecursiveSchema<typeof Recursive>;
 
-				const node = new Recursive([]);
+				const _node = new Recursive([]);
 			}
 		});
 
@@ -1398,22 +1340,18 @@ describe("SchemaFactory Recursive methods", () => {
 		it("co-recursive object with out of line non-lazy array", () => {
 			// @ts-expect-error co-recursive arrays without named subclass cause "referenced directly or indirectly in its own base expression" errors.
 			const TheArray = schemaFactory.arrayRecursive("FooList", [() => Foo]);
-			{
 				// In this case the error above does not cause ValidateRecursiveSchema to fail to compile.
 				// It's interesting that is not consistent with the other cases below,
 				// but doesn't seem to matter from a customer perspective since they already have a compile error, and other than that error,
 				// nothing else is wrong (the schema would work fine at runtime).
 				type _check = ValidateRecursiveSchema<typeof TheArray>;
-			}
 
 			// @ts-expect-error due to error above
 			class Foo extends schemaFactory.objectRecursive("Foo", {
 				fooList: TheArray,
 			}) {}
-			{
 				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 		});
 
 		it("co-recursive object with inline array", () => {
@@ -1422,10 +1360,8 @@ describe("SchemaFactory Recursive methods", () => {
 				// @ts-expect-error due to error above
 				fooList: schemaFactory.arrayRecursive("FooList", [() => Foo]),
 			}) {}
-			{
 				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 		});
 
 		it("co-recursive object with inline array class ", () => {
@@ -1434,19 +1370,15 @@ describe("SchemaFactory Recursive methods", () => {
 				// @ts-expect-error Implicit any due to error above
 				fooList: class extends schemaFactory.arrayRecursive("FooList", [() => Foo]) {},
 			}) {}
-			{
 				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 		});
 
 		it("co-recursive object with inline array lazy", () => {
 			class Foo extends schemaFactory.objectRecursive("Foo", {
 				fooList: [() => schemaFactory.arrayRecursive("FooList", [() => Foo])],
 			}) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 		});
 
 		it("co-recursive map with inline array", () => {
@@ -1456,19 +1388,15 @@ describe("SchemaFactory Recursive methods", () => {
 				// @ts-expect-error Implicit any due to error above
 				schemaFactory.arrayRecursive("FooList", [() => Foo]),
 			) {}
-			{
 				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 		});
 
 		it("co-recursive map with inline array lazy", () => {
 			class Foo extends schemaFactory.mapRecursive("Foo", [
 				() => schemaFactory.arrayRecursive("FooList", [() => Foo]),
 			]) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 		});
 
 		it("co-recursive array with inline array", () => {
@@ -1478,19 +1406,15 @@ describe("SchemaFactory Recursive methods", () => {
 				// @ts-expect-error Implicit any due to error above
 				schemaFactory.arrayRecursive("FooList", [() => Foo]),
 			) {}
-			{
 				// @ts-expect-error due to error above
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 		});
 
 		it("co-recursive array with inline array lazy", () => {
 			class Foo extends schemaFactory.arrayRecursive("Foo", [
 				() => schemaFactory.arrayRecursive("FooList", [() => Foo]),
 			]) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 		});
 
 		it("co-recursive map with inline map", () => {
@@ -1498,18 +1422,14 @@ describe("SchemaFactory Recursive methods", () => {
 				"Foo",
 				schemaFactory.mapRecursive("FooList", [() => Foo]),
 			) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 		});
 
 		it("co-recursive map with inline map lazy", () => {
 			class Foo extends schemaFactory.mapRecursive("Foo", [
 				() => schemaFactory.mapRecursive("FooList", [() => Foo]),
 			]) {}
-			{
 				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
 		});
 	});
 });

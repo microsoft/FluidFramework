@@ -33,7 +33,7 @@ export const schemaStringKey = "SchemaString";
 /**
  * The versions for the schema summary format.
  */
-export const enum SchemaSummaryFormatVersion {
+export enum SchemaSummaryFormatVersion {
 	/**
 	 * This version represents summary format before summary versioning was introduced.
 	 */
@@ -57,7 +57,7 @@ const supportedVersions = new Set<SchemaSummaryFormatVersion>([
  * Returns the summary version to use as per the given minimum version for collab.
  */
 function minVersionToSchemaSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	_version: MinimumVersionForCollab,
 ): SchemaSummaryFormatVersion {
 	// Currently, version 2 is written which adds metadata blob to the summary.
 	return SchemaSummaryFormatVersion.v2;
@@ -119,7 +119,7 @@ export class SchemaSummarizer
 
 	protected async loadInternal(
 		services: IChannelStorageService,
-		parse: SummaryElementParser,
+		_parse: SummaryElementParser,
 	): Promise<void> {
 		const schemaBuffer: ArrayBufferLike = await services.readBlob(schemaStringKey);
 		// After the awaits, validate that the schema is in a clean state.

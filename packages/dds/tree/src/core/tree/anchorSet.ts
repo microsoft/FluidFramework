@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+// biome-ignore-all lint/style/noNonNullAssertion: file uses non-null assertions extensively
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { HasListeners, Listenable } from "@fluidframework/core-interfaces/internal";
@@ -215,7 +215,6 @@ export interface AnchorNode extends INormalizedUpPath<AnchorNode> {
 	 * Use {@link anchorSlot} to create slots.
 	 */
 	// See note on BrandedKey
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly slots: BrandedMapSubset<AnchorSlot<any>>;
 
 	/**
@@ -330,7 +329,6 @@ export class AnchorSet implements AnchorLocator {
 	 * This forwards to the slots of the special above root anchor which locate can't access.
 	 */
 	// See note on BrandedKey.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public get slots(): BrandedMapSubset<AnchorSlot<any>> {
 		return this.root.slots;
 	}
@@ -813,7 +811,7 @@ export class AnchorSet implements AnchorLocator {
 							changedField: this.parentField,
 						});
 					},
-					() => {},
+					() => { /* intentional no-op */ },
 				);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
@@ -892,7 +890,7 @@ export class AnchorSet implements AnchorLocator {
 					count,
 				);
 			},
-			create(content: ITreeCursorSynchronous[], destination: FieldKey): void {
+			create(_content: ITreeCursorSynchronous[], _destination: FieldKey): void {
 				// Nothing to do since content can only be created in a new detached field,
 				// which cannot contain any anchors.
 			},
@@ -910,7 +908,7 @@ export class AnchorSet implements AnchorLocator {
 				});
 				this.currentDepth++;
 			},
-			exitNode(index: number): void {
+			exitNode(_index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
 				if (this.depthThresholdForSubtreeChanged === this.currentDepth) {
 					this.maybeWithNode((p) => {
@@ -931,7 +929,7 @@ export class AnchorSet implements AnchorLocator {
 			enterField(key: FieldKey): void {
 				this.parentField = key;
 			},
-			exitField(key: FieldKey): void {
+			exitField(_key: FieldKey): void {
 				this.parentField = undefined;
 			},
 		};
@@ -1018,7 +1016,6 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 	public readonly children: Map<FieldKey, PathNode[]> = new Map();
 
 	// See note on BrandedKey.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly slots: BrandedMapSubset<AnchorSlot<any>> = new Map();
 
 	/**

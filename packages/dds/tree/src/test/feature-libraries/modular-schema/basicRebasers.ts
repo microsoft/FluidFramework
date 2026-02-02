@@ -111,9 +111,9 @@ export const valueHandler = {
 		return delta;
 	},
 
-	relevantRemovedRoots: (change) => [],
+	relevantRemovedRoots: (_change) => [],
 	isEmpty: (change) => change === 0,
-	getNestedChanges: (change) => [],
+	getNestedChanges: (_change) => [],
 	createEmpty: () => 0,
 	getCrossFieldKeys: (_change) => [],
 } satisfies FieldChangeHandler<ValueChangeset>;

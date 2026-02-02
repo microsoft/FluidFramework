@@ -19,6 +19,7 @@ import { getView } from "../utils.js";
 
 describe("TreeBranch", () => {
 	const schemaFactory = new SchemaFactory(undefined);
+	// biome-ignore lint/suspicious/noShadowRestrictedNames: intentional shadowing for test
 	class Array extends schemaFactory.array("array", schemaFactory.string) {}
 
 	function init(content: string[]): TreeViewAlpha<typeof Array> {

@@ -105,7 +105,7 @@ function makeFieldBatchCodec(
 	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
 		encode: (
 			data: FieldBatch,
-			fieldBatchContext: FieldBatchEncodingContext,
+			_fieldBatchContext: FieldBatchEncodingContext,
 		): EncodedFieldBatch => {
 			return compressedEncode(data, encoderContext);
 		},
@@ -135,10 +135,10 @@ describe("compressedEncode", () => {
 					const input: FieldBatch = [cursorForJsonableTreeField([jsonable])];
 					const context = new EncoderContext(
 						(
-							fieldBuilder: FieldEncodeBuilder,
-							schemaName: TreeNodeSchemaIdentifier,
+							_fieldBuilder: FieldEncodeBuilder,
+							_schemaName: TreeNodeSchemaIdentifier,
 						): NodeEncoder => anyNodeShape,
-						(nodeBuilder: NodeEncodeBuilder, field: TreeFieldStoredSchema): FieldEncoder =>
+						(_nodeBuilder: NodeEncodeBuilder, _field: TreeFieldStoredSchema): FieldEncoder =>
 							anyFieldEncoder,
 						fieldKinds,
 						testIdCompressor,
@@ -463,7 +463,7 @@ describe("compressedEncode", () => {
 		it("non-empty", () => {
 			const referenceIds: ChunkReferenceId[] = [brand(1), brand(2)];
 			const mockIncrementalDecoder: IncrementalDecoder = {
-				decodeIncrementalChunk: (referenceId, chunkDecoder) => {
+				decodeIncrementalChunk: (referenceId, _chunkDecoder) => {
 					assert(referenceIds.includes(referenceId));
 					return emptyChunk;
 				},

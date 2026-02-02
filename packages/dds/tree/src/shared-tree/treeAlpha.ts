@@ -951,14 +951,14 @@ export const TreeAlpha: TreeAlpha = {
 				}
 
 				return getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
-			}
+				}
+			// biome-ignore lint/suspicious/noFallthroughSwitchClause: intentional fallthrough to Record/Object case
 			case NodeKind.Map: {
 				if (typeof propertyKey !== "string") {
 					// Map nodes only support string keys.
 					return undefined;
 				}
 			}
-			// Fall through
 			case NodeKind.Record:
 			case NodeKind.Object: {
 				let storedKey: string | number = propertyKey;
@@ -978,6 +978,7 @@ export const TreeAlpha: TreeAlpha = {
 
 				return undefined;
 			}
+			// biome-ignore lint/suspicious/noFallthroughSwitchClause: fail() throws, no actual fallthrough
 			case NodeKind.Leaf: {
 				fail(0xbc3 /* Leaf schema associated with non-leaf tree node. */);
 			}
@@ -1037,6 +1038,7 @@ export const TreeAlpha: TreeAlpha = {
 				}
 				break;
 			}
+			// biome-ignore lint/suspicious/noFallthroughSwitchClause: fail() throws, no actual fallthrough
 			case NodeKind.Leaf: {
 				fail(0xbc7 /* Leaf schema associated with non-leaf tree node. */);
 			}

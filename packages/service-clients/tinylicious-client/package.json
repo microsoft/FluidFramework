@@ -82,7 +82,9 @@
 		"test:realsvc:tinylicious:run": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
+		"lint:biome": "biome lint .",
+		"lint:biome:fix": "biome lint . --write"
 	},
 	"dependencies": {
 		"@fluidframework/container-definitions": "workspace:~",

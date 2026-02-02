@@ -765,7 +765,7 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.deepEqual([...mainRoot], ["a", "a", "b", "c"]);
 
 			let changes = 0;
-			branch.events.on("changed", (data) => {
+			branch.events.on("changed", (_data) => {
 				changes++;
 			});
 
@@ -931,7 +931,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			it("breaks the view on error", () => {
 				const view = getTestObjectView();
-				const node = view.root;
+				const _node = view.root;
 				assert.throws(
 					() =>
 						view.runTransaction(() => {

@@ -61,6 +61,8 @@
 			"!**/packages/dds/sequence/src/test/fuzz/**/*.json",
 			"!**/packages/dds/tree/src/test/snapshots/**/*.json",
 			"!**/packages/dds/tree/src/test/shared-tree/fuzz/failures/**/*.json",
+			// Type-level test file that biome's parser can't handle
+			"!**/packages/dds/tree/src/util/typeCheckTests.ts",
 			"!**/packages/drivers/odsp-driver/src/test/**/*.json",
 			"!**/packages/framework/attributor/src/test/attribution/documents/**/*.json",
 			"!**/packages/test/snapshots/content/**",
