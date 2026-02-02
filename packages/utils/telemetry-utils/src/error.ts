@@ -58,7 +58,7 @@ export function validatePrecondition(
 }
 
 /**
- * Creates a data error (e.g., DataProcessingError or DataCorruptionError) with telemetry properties.
+ * Creates an error during data processing (DataProcessingError or DataCorruptionError) with telemetry properties.
  *
  * @remarks
  * This helper allows customizing the stack trace limit during error creation, which is useful
@@ -73,7 +73,7 @@ export function validatePrecondition(
  * @param stackTraceLimit - Optional limit for the stack trace depth.
  * @returns The created error with telemetry properties attached.
  */
-function buildDataError(
+function buildDataProcessingError(
 	factory: (message: string) => LoggingError & IFluidErrorBase,
 	errorMessage: string,
 	codepath: string,
@@ -88,7 +88,12 @@ function buildDataError(
 			ErrorConfig.stackTraceLimit = stackTraceLimit;
 		}
 
-		const error = wrapOrAnnotateError(factory, errorMessage, codepath, messageLike);
+		const error = wrapDataProcessingErrorIfUnrecognized(
+			factory,
+			errorMessage,
+			codepath,
+			messageLike,
+		);
 		error.addTelemetryProperties(props);
 
 		return error;
@@ -101,7 +106,8 @@ function buildDataError(
 }
 
 /**
- * Wraps an unrecognized error using the provided factory, or annotates a recognized error with telemetry properties.
+ * Wraps an unrecognized error into a data processing error (DataProcessingError or DataCorruptionError)
+ * using the provided factory.
  *
  * @remarks
  * This function handles two cases:
@@ -122,7 +128,7 @@ function buildDataError(
  * @param messageLike - Optional message properties to include in telemetry.
  * @returns The wrapped or annotated error as an {@link IFluidErrorBase}.
  */
-function wrapOrAnnotateError(
+function wrapDataProcessingErrorIfUnrecognized(
 	factory: (message: string) => LoggingError & IFluidErrorBase,
 	originalError: unknown,
 	codepath: string,
@@ -215,7 +221,7 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
 		props: ITelemetryPropertiesExt = {},
 		stackTraceLimit?: number,
 	): IFluidErrorBase {
-		return buildDataError(
+		return buildDataProcessingError(
 			(message: string) => new DataCorruptionError(message, {}),
 			errorMessage,
 			dataCorruptionCodepath,
@@ -259,7 +265,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 		props: ITelemetryPropertiesExt = {},
 		stackTraceLimit?: number,
 	): IFluidErrorBase {
-		return buildDataError(
+		return buildDataProcessingError(
 			(message: string) => new DataProcessingError(message),
 			errorMessage,
 			dataProcessingCodepath,
@@ -275,7 +281,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 	 *
 	 * In either case, the error will have some relevant properties added for telemetry.
 	 *
-	 * @remarks See `wrapOrAnnotateError` for details on wrapping behavior.
+	 * @remarks See `wrapDataProcessingErrorIfUnrecognized` for details on wrapping behavior.
 	 *
 	 * @param originalError - The error to be converted.
 	 * @param dataProcessingCodepath - Which code-path failed while processing data.
@@ -288,7 +294,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 		dataProcessingCodepath: string,
 		messageLike?: MessageLike,
 	): IFluidErrorBase {
-		return wrapOrAnnotateError(
+		return wrapDataProcessingErrorIfUnrecognized(
 			(errorMessage: string, props?: ITelemetryBaseProperties) =>
 				new DataProcessingError(errorMessage, props),
 			originalError,
