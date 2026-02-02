@@ -570,9 +570,9 @@ describe("IdCompressor Sharding", () => {
 			// Verify by checking it generates sequential IDs
 
 			// Child1 now generates sequentially from where it left off
-			// After unsharding, it continues from highest genCount across all shards (8) + 1
+			// After unsharding, it continues from highest genCount across all shards (8) + stride = 11
 			const child1Id2 = child1.generateCompressedId();
-			assert.equal(child1Id2, -9);
+			assert.equal(child1Id2, -11);
 
 			// Child2 is still in sharding mode from root (can generate IDs)
 			// Root is still in sharding mode because it has active child count = 2
@@ -581,6 +581,10 @@ describe("IdCompressor Sharding", () => {
 			// Generate some more IDs to verify behavior
 			const child2Id2 = child2.generateCompressedId();
 			assert.equal(child2Id2, -6); // Child2's second ID in stride=3
+
+			// Verify: child2 should generate -9 next (stride pattern: 3, 6, 9, ...)
+			const child2Id3 = child2.generateCompressedId();
+			assert.equal(child2Id3, -9); // This would be a collision if child1 also generated -9!
 		});
 	});
 
