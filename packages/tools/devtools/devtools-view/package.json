@@ -58,7 +58,9 @@
 		"test:jest:esm": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --roots ./lib",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:jest",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
-		"tsc:watch": "copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist && fluid-tsc commonjs --watch --project ./tsconfig.cjs.json"
+		"tsc:watch": "copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist && fluid-tsc commonjs --watch --project ./tsconfig.cjs.json",
+		"lint:biome": "biome lint .",
+		"lint:biome:fix": "biome lint . --write"
 	},
 	"dependencies": {
 		"@fluentui/react": "^8.109.4",

@@ -107,7 +107,9 @@
 		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=normal mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.spec.js\"",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
+		"lint:biome": "biome lint .",
+		"lint:biome:fix": "biome lint . --write"
 	},
 	"c8": {
 		"all": true,

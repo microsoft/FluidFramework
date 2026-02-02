@@ -4,10 +4,10 @@
  */
 
 import type { Linter } from "eslint";
-import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { strictBiome } from "../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...strict,
+	...strictBiome,
 	{
 		rules: {
 			"@typescript-eslint/consistent-indexed-object-style": "off",

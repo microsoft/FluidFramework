@@ -79,7 +79,9 @@
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"lint:biome": "biome lint .",
+		"lint:biome:fix": "biome lint . --write"
 	},
 	"c8": {
 		"all": true,

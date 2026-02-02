@@ -4,10 +4,10 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
  */
 import type { Linter } from "eslint";
-import { strict } from "../../common/build/eslint-config-fluid/flat.mts";
+import { strictBiome } from "../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
-	...strict,
+	...strictBiome,
 	{
 		rules: {
 			"@fluid-internal/fluid/no-unchecked-record-access": "off",

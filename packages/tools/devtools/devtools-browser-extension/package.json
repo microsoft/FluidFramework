@@ -48,7 +48,9 @@
 		"test:verbose": "concurrently npm:test:mocha:verbose npm:test:jest:verbose",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"webpack": "webpack",
-		"webpack:dev": "webpack --env development"
+		"webpack:dev": "webpack --env development",
+		"lint:biome": "biome lint .",
+		"lint:biome:fix": "biome lint . --write"
 	},
 	"c8": {
 		"all": true,

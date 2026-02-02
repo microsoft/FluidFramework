@@ -37,7 +37,9 @@
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
 		"tinylicious": "tinylicious",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development"
+		"webpack:dev": "webpack --env development",
+		"lint:biome": "biome lint .",
+		"lint:biome:fix": "biome lint . --write"
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",

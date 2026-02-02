@@ -39,7 +39,9 @@
 		"watch:devtools-view": "copyfiles -f ../../../../common/build/build-common/src/esm/package.json ../devtools-view/lib && fluid-tsc module --watch --project ../devtools-view/tsconfig.esm.json --preserveWatchOutput",
 		"watch:esnext": "tsc --watch --project ./tsconfig.json",
 		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development"
+		"webpack:dev": "webpack --env development",
+		"lint:biome": "biome lint .",
+		"lint:biome:fix": "biome lint . --write"
 	},
 	"dependencies": {
 		"@fluentui/react-components": "^9.47.5",
