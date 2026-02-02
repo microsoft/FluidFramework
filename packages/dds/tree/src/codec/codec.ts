@@ -137,7 +137,7 @@ export interface ICodecOptions {
 }
 
 /**
- * Options relating to collaborative features.
+ * Options relating to encoding of persisted data.
  * @input @beta
  */
 export interface CodecWriteOptionsBeta {
