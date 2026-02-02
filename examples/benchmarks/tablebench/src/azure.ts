@@ -13,8 +13,20 @@ import { SharedTree } from "@fluidframework/tree/legacy";
 import { generateTable } from "./data.js";
 import { Table } from "./tree/index.js";
 
+/**
+ * Creates an insecure Tinylicious URL resolver for testing purposes with localhost port 7070.
+ * Detects the appropriate Tinylicious endpoint based on the environment.
+ * In GitHub Codespaces, returns the forwarded port URL. Otherwise returns localhost.
+ * If using codespaces, set tinylicious (port 7070) visibility to "public" for this to work.
+ */
 function getTinyliciousEndpoint(port = 7070): string {
 	if (typeof window !== "undefined") {
+		// Detect GitHub Codespaces and use the forwarded port URL
+		// <codespace-name>-<fowarded-port>.<domain>
+		// e.g. my-codespace-7070.githubpreview.dev
+		// Capture Group 1: <codespace-name>
+		// Capture Group 2: <domain>
+		// reconstruct a hostname that fowards tinlicious's port via HTTPS.
 		const match = /^(.+)-\d+\.(.+)$/.exec(window.location.hostname);
 		if (match) {
 			return `https://${match[1]}-${port}.${match[2]}`;
