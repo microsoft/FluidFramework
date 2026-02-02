@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 "__section": feature
 ---
-Add push as alias for insertAtEnd on TreeArrayNode
+Add "push" as alias for insertAtEnd on TreeArrayNode
 
 #### Why this change
 
