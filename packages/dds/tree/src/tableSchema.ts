@@ -1343,10 +1343,16 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  *
  * @remarks
  *
- * Note: The APIs produced by this module ensure various tabular data invariants are maintained that the raw, underlying tree structures do not.
+ * Note: the APIs produced by this module ensure various tabular data invariants are maintained that the raw, underlying tree structures do not.
  * For example, they ensure that cells always correspond to existing rows and columns (and do not become "orphaned" due to row/column deletion, etc.).
  * For this reason, direct manipulation of the underlying tree structures is not supported.
  * To modify the data, only the APIs provided here may be used.
+ *
+ * Also note: these APIs leverage `SharedTree` functionality that was added in version {@link FluidClientVersion.v2_80 | 2.80.0},
+ * which is not compatible with previous versions of this library.
+ * To ensure safe collaboration, you will need to configure the {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+ * for the Fluid Runtime and/or `SharedTree` to at least `2.80.0`.
+ * To set this minimum version for `SharedTree`, use {@link configuredSharedTreeBeta}.
  *
  * The primary APIs for create tabular data schema are:
  *
