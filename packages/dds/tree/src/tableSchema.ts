@@ -89,13 +89,6 @@ export interface RowPrivate<
  * This namespace should be strictly type-exported by the package.
  * All members should be tagged with `@system`.
  *
- * Orphaned Cells:
- * Without safeguards, it is possible for cells to become "orphaned".
- * An orphaned cell is a cell that does not correspond to a valid row and column.
- * In order to preserve the invariant that all cells must have a valid row and column, table operations
- * (eg, inserting/removing rows/columns, or setting/removing a cell) will automatically include constraints that
- * guard transactions from producing orphaned cells.
- *
  * @system @alpha
  */
 export namespace System_TableSchema {
