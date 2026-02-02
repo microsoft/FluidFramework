@@ -84,7 +84,10 @@ export interface RowPrivate<
 /**
  * Not intended for use outside of this package.
  *
- * @remarks
+ * @privateRemarks
+ * This namespace is a collection of internal system types relate to {@link TableSchema}.
+ * This namespace should be strictly type-exported by the package.
+ * All members should be tagged with `@system`.
  *
  * Orphaned Cells:
  * There is a concept of cells in the table becoming "orphaned.".
@@ -92,11 +95,6 @@ export interface RowPrivate<
  * In order to preserve the invariant that all cells must have a valid row and column, table operations
  * (eg, inserting/removing rows/columns, or setting/removing a cell) will automatically include constraints that
  * guard transactions from producing orphaned cells.
- *
- * @privateRemarks
- * This namespace is a collection of internal system types relate to {@link TableSchema}.
- * This namespace should be strictly type-exported by the package.
- * All members should be tagged with `@system`.
  *
  * @system @beta
  */
@@ -1344,6 +1342,11 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  * Contains types and factories for creating schema to represent dynamic tabular data.
  *
  * @remarks
+ *
+ * Note: The APIs produced by this module ensure various tabular data invariants are maintained that the raw, underlying tree structures do not.
+ * For example, they ensure that cells always correspond to existing rows and columns (and do not become "orphaned" due to row/column deletion, etc.).
+ * For this reason, direct manipulation of the underlying tree structures is not supported.
+ * To modify the data, only the APIs provided here may be used.
  *
  * The primary APIs for create tabular data schema are:
  *
