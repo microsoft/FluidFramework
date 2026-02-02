@@ -34,7 +34,7 @@ import {
 	allowUnused,
 } from "../../../simple-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
-import { mapFileSystem } from "../../utils.js";
+import { inMemorySnapshotFileSystem } from "../../utils.js";
 
 const nodeFileSystem = {
 	...fs,
@@ -285,7 +285,7 @@ describe("snapshotCompatibilityChecker", () => {
 		// Tests the various operations a user of the checkSchemaCompatibilitySnapshots function might perform across various versions of their codebase.
 		it("workflow over time", () => {
 			const snapshotDirectory = "dir";
-			const [fileSystem, snapshots] = mapFileSystem();
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
 
 			const factory = new SchemaFactoryBeta("test");
 
@@ -516,7 +516,7 @@ describe("snapshotCompatibilityChecker", () => {
 
 		it("invalid versions", () => {
 			const snapshotDirectory = "dir";
-			const [fileSystem] = mapFileSystem();
+			const [fileSystem] = inMemorySnapshotFileSystem();
 
 			assert.throws(
 				() =>

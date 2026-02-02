@@ -1685,10 +1685,12 @@ export function treeChunkFromCursor(fieldCursor: ITreeCursorSynchronous): TreeCh
 }
 
 /**
- * Trivial in-memory file system for testing.
- * Ignores the directory and stores files by filename.
+ * Create a trivial in-memory {@link SnapshotFileSystem} for testing.
+ * Ignores the directory and stores files by filename in a map.
+ * @remarks
+ * This is useful for testing how schema compatibility changes over time (using {@link testSchemaCompatibilitySnapshots} when making specific schema changes.
  */
-export function mapFileSystem(): [SnapshotFileSystem, Map<string, string>] {
+export function inMemorySnapshotFileSystem(): [SnapshotFileSystem, Map<string, string>] {
 	const snapshots = new Map<string, string>();
 
 	const fileSystem: SnapshotFileSystem = {

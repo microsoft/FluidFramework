@@ -14,7 +14,7 @@ import {
 } from "../simple-tree/index.js";
 
 import { testSchemaCompatibilitySnapshots } from "./snapshots/index.js";
-import { mapFileSystem } from "./utils.js";
+import { inMemorySnapshotFileSystem } from "./utils.js";
 
 describe("extensibleSchemaUnion", () => {
 	it("examples", () => {
@@ -33,6 +33,7 @@ describe("extensibleSchemaUnion", () => {
 		assert.equal(aSchema, A);
 	});
 
+	// Test that this packages doesn't make any schema changes.
 	it("compatibility", () => {
 		// Test schema compatibility for an example schema using extensibleSchemaUnion.
 		const currentViewSchema = new TreeViewConfiguration({
@@ -49,25 +50,10 @@ describe("extensibleSchemaUnion", () => {
 		);
 	});
 
-	it("compatibility over time", () => {
-		// Test schema compatibility for an example schema using extensibleSchemaUnion.
-		const currentViewSchema = new TreeViewConfiguration({
-			schema: ExtensibleSchemaUnion.extensibleSchemaUnion(
-				[SchemaFactoryBeta.number, SchemaFactoryBeta.string],
-				new SchemaFactoryBeta("extensibleSchemaUnion-example"),
-				"ExtensibleUnion",
-			),
-		});
-		testSchemaCompatibilitySnapshots(
-			currentViewSchema,
-			"2.82.0",
-			"extensibleSchemaUnion-example",
-		);
-	});
-
+	// Test that users of ExtensibleSchemaUnion can evolve their schema over time.
 	it("workflow over time", () => {
 		const snapshotDirectory = "dir";
-		const [fileSystem, snapshots] = mapFileSystem();
+		const [fileSystem] = inMemorySnapshotFileSystem();
 
 		const factory = new SchemaFactoryBeta("test");
 
