@@ -467,7 +467,7 @@ function runTransactionInCheckout<TResult>(
 	transaction: () => TResult | typeof rollback,
 	preconditions: readonly TransactionConstraint[],
 ): TResult | typeof rollback {
-	checkout.transaction.start();
+	checkout.transaction.start(false);
 	addConstraintsToTransaction(checkout, false, preconditions);
 
 	let result: ReturnType<typeof transaction>;

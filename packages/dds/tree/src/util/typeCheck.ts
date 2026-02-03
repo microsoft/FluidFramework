@@ -154,22 +154,24 @@ export type isAssignableTo<Source, Destination> = [Source] extends [Destination]
 /**
  * Returns a type parameter that is true iff Subset is a strict subset of Superset.
  */
-export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> extends false
-	? false
-	: isAssignableTo<Superset, Subset> extends true
+export type isStrictSubset<Subset, Superset> =
+	isAssignableTo<Subset, Superset> extends false
 		? false
-		: true;
+		: isAssignableTo<Superset, Subset> extends true
+			? false
+			: true;
 
 /**
  * Returns a type parameter that is true iff A and B are assignable to each other, and neither is any.
  * This is useful for checking if the output of a type meta-function is the expected type.
  * @internal
  */
-export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
-	? false
-	: isAssignableTo<A, B> extends true
-		? isAssignableTo<B, A>
-		: false;
+export type areSafelyAssignable<A, B> =
+	eitherIsAny<A, B> extends true
+		? false
+		: isAssignableTo<A, B> extends true
+			? isAssignableTo<B, A>
+			: false;
 
 /**
  * Returns a type parameter that is true iff A is any or B is any.
