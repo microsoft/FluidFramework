@@ -144,3 +144,40 @@ describe("withBufferedTreeEvents", () => {
 		assert.equal(eventCounter, 1); // Only a single event should have been raised.
 	});
 });
+
+describe("array move events", () => {
+	const schemaFactory = new SchemaFactory("test");
+
+	describeHydration("move operations", (init) => {
+		const MyArray = schemaFactory.array("myArray", schemaFactory.number);
+
+		it("move within array emits single nodeChanged event", () => {
+			const myArray = init(MyArray, [1, 2, 3]);
+
+			let nodeChangedCount = 0;
+			let treeChangedCount = 0;
+
+			TreeBeta.on(myArray, "nodeChanged", () => {
+				nodeChangedCount++;
+			});
+			TreeBeta.on(myArray, "treeChanged", () => {
+				treeChangedCount++;
+			});
+
+			// Move element at index 0 to the end
+			myArray.moveToEnd(0);
+
+			assert.deepEqual([...myArray], [2, 3, 1]);
+			assert.equal(
+				nodeChangedCount,
+				1,
+				`nodeChanged should fire exactly once, but fired ${nodeChangedCount} times`,
+			);
+			assert.equal(
+				treeChangedCount,
+				1,
+				`treeChanged should fire exactly once, but fired ${treeChangedCount} times`,
+			);
+		});
+	});
+});

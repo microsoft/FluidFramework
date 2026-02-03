@@ -59,7 +59,22 @@ import type { Context } from "./context.js";
 import type { TreeNode } from "./treeNode.js";
 
 interface UnhydratedTreeSequenceFieldEditBuilder
-	extends SequenceFieldEditBuilder<FlexibleFieldContent, UnhydratedFlexTreeNode[]> {}
+	extends SequenceFieldEditBuilder<FlexibleFieldContent, UnhydratedFlexTreeNode[]> {
+	/**
+	 * Moves elements from a source position to a destination position.
+	 * Can move within the same field or from another unhydrated sequence field.
+	 * @param sourceIndex - The index of the first element to move.
+	 * @param count - The number of elements to move.
+	 * @param destIndex - The index at which to insert the moved elements.
+	 * @param source - The source field to move from (defaults to this field for within-field moves).
+	 */
+	move(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		source?: UnhydratedSequenceField,
+	): void;
+}
 
 type UnhydratedFlexTreeNodeEvents = Pick<
 	AnchorEvents,
@@ -542,6 +557,28 @@ export class UnhydratedSequenceField
 				removed = mapTrees.splice(index, count);
 			});
 			return removed ?? fail(0xb4a /* Expected removed to be set by edit */);
+		},
+		move: (sourceIndex, count, destIndex, source?): void => {
+			const sourceField = source ?? this;
+			for (let i = sourceIndex; i < sourceIndex + count; i++) {
+				const child = sourceField.children[i];
+				assert(child !== undefined, "Unexpected sparse array in move source");
+			}
+
+			if (sourceField === this) {
+				// Within-field move: do both operations in a single edit to emit only one event
+				this.edit((mapTrees) => {
+					const removed = mapTrees.splice(sourceIndex, count);
+					// Adjust destination index if it comes after the source
+					const adjustedDest = destIndex > sourceIndex ? destIndex - count : destIndex;
+					mapTrees.splice(adjustedDest, 0, ...removed);
+				});
+			} else {
+				// Cross-field move: remove from source, insert into destination
+				// Each field emits one event (correct behavior for different fields)
+				const removed = sourceField.editor.remove(sourceIndex, count);
+				this.editor.insert(destIndex, removed);
+			}
 		},
 	} satisfies UnhydratedTreeSequenceFieldEditBuilder;
 
