@@ -67,7 +67,7 @@ resources:
     ref: refs/tags/release
 
 extends:
-  template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
+  template: v1/M365.Unofficial.PipelineTemplate.yml@m365Pipelines
   parameters:
     customBuildTags:
     - ES365AIMigrationTooling
