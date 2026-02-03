@@ -47,7 +47,8 @@ interface QuillDelta {
 /** Props for the FormattedMainView component. */
 export interface FormattedMainViewProps {
 	root: PropTreeNode<FormattedTextAsTree.Tree>;
-	treeViewEvents: Listenable<TreeViewEvents>;
+	/** Optional tree view events for undo/redo support. */
+	treeViewEvents?: Listenable<TreeViewEvents>;
 }
 
 /** Ref handle exposing undo/redo methods for the formatted editor. */
@@ -223,7 +224,7 @@ const FormattedTextEditorView = React.forwardRef<
 	FormattedEditorHandle,
 	{
 		root: PropTreeNode<FormattedTextAsTree.Tree>;
-		treeViewEvents: Listenable<TreeViewEvents>;
+		treeViewEvents?: Listenable<TreeViewEvents>;
 	}
 >(({ root: propRoot, treeViewEvents }, ref) => {
 	// Unwrap the PropTreeNode to get the actual tree node
@@ -245,7 +246,7 @@ const FormattedTextEditorView = React.forwardRef<
 
 	// Initialize undo/redo stacks (guard against StrictMode double-mount)
 	React.useEffect(() => {
-		if (undoRedoRef.current) return;
+		if (undoRedoRef.current || !treeViewEvents) return;
 		undoRedoRef.current = createUndoRedoStacks(treeViewEvents);
 		return () => {
 			undoRedoRef.current?.dispose();
