@@ -190,6 +190,7 @@ import {
 	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	toStoredSchema,
+	type SnapshotFileSystem,
 } from "../simple-tree/index.js";
 import {
 	configuredSharedTree,
@@ -1681,4 +1682,31 @@ export function treeChunkFromCursor(fieldCursor: ITreeCursorSynchronous): TreeCh
 		policy: defaultChunkPolicy,
 		idCompressor: testIdCompressor,
 	});
+}
+
+/**
+ * Create a trivial in-memory {@link SnapshotFileSystem} for testing.
+ * Ignores the directory and stores files by filename in a map.
+ * @remarks
+ * This is useful for testing how schema compatibility changes over time (using {@link testSchemaCompatibilitySnapshots} when making specific schema changes.
+ */
+export function inMemorySnapshotFileSystem(): [SnapshotFileSystem, Map<string, string>] {
+	const snapshots = new Map<string, string>();
+
+	const fileSystem: SnapshotFileSystem = {
+		writeFileSync(file: string, data: string, options: { encoding: "utf8" }): void {
+			snapshots.set(file, data);
+		},
+		readFileSync(file: string, encoding: "utf8"): string {
+			return snapshots.get(file) ?? assert.fail(`File not found: ${file}`);
+		},
+		mkdirSync(dir: string, options: { recursive: true }): void {},
+		readdirSync(dir: string): readonly string[] {
+			return [...snapshots.keys()];
+		},
+		join(parentPath: string, childPath: string): string {
+			return childPath;
+		},
+	};
+	return [fileSystem, snapshots];
 }

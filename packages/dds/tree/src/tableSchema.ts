@@ -8,13 +8,13 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey } from "./core/index.js";
 import { TreeAlpha } from "./shared-tree/index.js";
+import type { SchemaFactoryBeta } from "./simple-tree/index.js";
 import {
 	type FieldHasDefault,
 	type ImplicitAllowedTypes,
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeKind,
-	SchemaFactoryBeta,
 	type ScopedSchemaName,
 	TreeArrayNode,
 	type TreeNode,
@@ -35,6 +35,7 @@ import {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This makes the API report slightly cleaner.
 	TreeNodeSchemaCore,
 	type TransactionConstraintAlpha,
+	createCustomizedFluidFrameworkScopedFactory,
 } from "./simple-tree/index.js";
 import { validateIndex, validateIndexRange } from "./util/index.js";
 
@@ -45,12 +46,6 @@ import { validateIndex, validateIndexRange } from "./util/index.js";
 
 // Longer-term work:
 // - Use more focused constraint APIs to protect against leaked cells
-
-/**
- * Scope for table schema built-in types.
- * @remarks User-provided factory scoping will be applied as `com.fluidframework.tableV2<user-scope>`.
- */
-const baseSchemaScope = "com.fluidframework.tableV2";
 
 /**
  * A row in a table.
@@ -1288,10 +1283,15 @@ export namespace System_TableSchema {
 	// #endregion
 }
 
+/**
+ * Sets up scope for table schema built-in types.
+ * @remarks User-provided factory scoping will be applied as `com.fluidframework.table<user-scope>`.
+ */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createTableScopedFactory<TUserScope extends string>(
 	inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
-): SchemaFactoryBeta<`${typeof baseSchemaScope}<${TUserScope}>`> {
-	return new SchemaFactoryBeta(`${baseSchemaScope}<${inputSchemaFactory.scope}>`);
+) {
+	return createCustomizedFluidFrameworkScopedFactory(inputSchemaFactory, "tableV2");
 }
 
 /**
