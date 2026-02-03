@@ -2248,9 +2248,6 @@ importers:
 
   examples/benchmarks/tablebench:
     dependencies:
-      '@fluid-example/example-utils':
-        specifier: workspace:~
-        version: link:../../utils/example-utils
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
@@ -2279,6 +2276,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-utils':
+        specifier: workspace:~
+        version: link:../../utils/example-utils
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -4529,9 +4529,6 @@ importers:
 
   examples/service-clients/azure-client/external-controller:
     dependencies:
-      '@fluid-example/example-utils':
-        specifier: workspace:~
-        version: link:../../../utils/example-utils
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/azure-client
@@ -4563,6 +4560,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.3.11
         version: 2.3.11
+      '@fluid-example/example-utils':
+        specifier: workspace:~
+        version: link:../../../utils/example-utils
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
