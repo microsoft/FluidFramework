@@ -16,7 +16,7 @@ import {
 } from "../../core/index.js";
 import { type Mutable, areAdjacentIntegerRanges, brand } from "../../util/index.js";
 import {
-	CrossFieldTarget,
+	NodeMoveType,
 	type NodeId,
 	type CrossFieldKeyRange,
 	type NestedChangesIndices,
@@ -764,7 +764,7 @@ function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange
 					key: {
 						revision: mark.revision,
 						localId: mark.id,
-						target: CrossFieldTarget.Destination,
+						target: NodeMoveType.Attach,
 					},
 					count,
 				},
@@ -773,7 +773,7 @@ function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange
 			if (mark.cellId === undefined) {
 				// This is a pin, which is treated as a detach and attach.
 				keys.push({
-					key: { revision: mark.revision, localId: mark.id, target: CrossFieldTarget.Source },
+					key: { revision: mark.revision, localId: mark.id, target: NodeMoveType.Detach },
 					count,
 				});
 			}
@@ -786,7 +786,7 @@ function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange
 					key: {
 						revision: mark.revision,
 						localId: mark.id,
-						target: CrossFieldTarget.Source,
+						target: NodeMoveType.Detach,
 					},
 					count,
 				},

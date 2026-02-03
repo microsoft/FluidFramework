@@ -38,7 +38,7 @@ import {
 	type ComposeNodeManager,
 	type InvertNodeManager,
 	type CrossFieldKeyRange,
-	CrossFieldTarget,
+	NodeMoveType,
 	type RebaseVersion,
 	type RebaseRevisionMetadata,
 	FlexFieldKind,
@@ -511,7 +511,7 @@ function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
 	const keys: CrossFieldKeyRange[] = [];
 	if (change.valueReplace?.src !== undefined) {
 		keys.push({
-			key: { ...change.valueReplace.src, target: CrossFieldTarget.Destination },
+			key: { ...change.valueReplace.src, target: NodeMoveType.Attach },
 			count: 1,
 		});
 	}
@@ -519,7 +519,7 @@ function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
 	const detachId = getEffectiveDetachId(change);
 
 	if (detachId !== undefined) {
-		keys.push({ key: { ...detachId, target: CrossFieldTarget.Source }, count: 1 });
+		keys.push({ key: { ...detachId, target: NodeMoveType.Detach }, count: 1 });
 	}
 
 	return keys;

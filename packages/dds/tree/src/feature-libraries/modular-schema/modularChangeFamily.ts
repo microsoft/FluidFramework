@@ -81,7 +81,7 @@ import type { TreeChunk } from "../chunked-forest/index.js";
 import {
 	type ComposeNodeManager,
 	type CrossFieldMap,
-	CrossFieldTarget,
+	NodeMoveType,
 	type DetachedNodeEntry,
 	type InvertNodeManager,
 	type RebaseDetachedNodeEntry,
@@ -1431,7 +1431,7 @@ export class ModularChangeFamily
 			).value;
 
 			const attachField = table.baseChange.crossFieldKeys.getFirst(
-				{ ...renamedRoot, target: CrossFieldTarget.Destination },
+				{ ...renamedRoot, target: NodeMoveType.Attach },
 				1,
 			).value;
 
@@ -2248,7 +2248,7 @@ function addAttachesToSet(
 ): void {
 	// This includes each attach which does not have a corresponding detach.
 	for (const entry of change.crossFieldKeys.entries()) {
-		if (entry.start.target !== CrossFieldTarget.Destination) {
+		if (entry.start.target !== NodeMoveType.Attach) {
 			continue;
 		}
 
@@ -2259,7 +2259,7 @@ function addAttachesToSet(
 			const detachId =
 				detachIdEntry.value ?? offsetChangeAtomId(entry.start, detachIdEntry.offset);
 			for (const detachEntry of change.crossFieldKeys.getAll2(
-				{ ...detachId, target: CrossFieldTarget.Source },
+				{ ...detachId, target: NodeMoveType.Detach },
 				detachIdEntry.length,
 			)) {
 				if (detachEntry.value === undefined) {
@@ -2280,7 +2280,7 @@ function addRenamesToSet(
 ): void {
 	for (const renameEntry of change.rootNodes.oldToNewId.entries()) {
 		for (const detachEntry of change.crossFieldKeys.getAll2(
-			{ ...renameEntry.start, target: CrossFieldTarget.Source },
+			{ ...renameEntry.start, target: NodeMoveType.Detach },
 			renameEntry.length,
 		)) {
 			// We only want to include renames of nodes which are detached in the input context of the changeset.
@@ -2750,7 +2750,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 			);
 
 			const attachFieldEntry = this.table.change.crossFieldKeys.getFirst(
-				{ target: CrossFieldTarget.Destination, ...attachEntry.value },
+				{ target: NodeMoveType.Attach, ...attachEntry.value },
 				count,
 			);
 
@@ -2801,7 +2801,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 
 		const detachEntry = getFirstFieldForCrossFieldKey(
 			this.table.change,
-			{ target: CrossFieldTarget.Source, ...detachIdEntry.value },
+			{ target: NodeMoveType.Detach, ...detachIdEntry.value },
 			countToProcess,
 		);
 		countToProcess = detachEntry.length;
@@ -2920,7 +2920,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 
 		const attachFieldEntry = getFirstFieldForCrossFieldKey(
 			this.table.baseChange,
-			{ ...baseAttachId, target: CrossFieldTarget.Destination },
+			{ ...baseAttachId, target: NodeMoveType.Attach },
 			countToProcess,
 		);
 		countToProcess = attachFieldEntry.length;
@@ -3099,7 +3099,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		const baseAttachEntry = getFirstFieldForCrossFieldKey(
 			this.table.baseChange,
-			{ target: CrossFieldTarget.Destination, ...baseDetachId },
+			{ target: NodeMoveType.Attach, ...baseDetachId },
 			countToProcess,
 		);
 
@@ -3170,7 +3170,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		if (!hasNewAttachWithBaseAttachId) {
 			this.table.removedCrossFieldKeys.set(
-				{ ...baseAttachId, target: CrossFieldTarget.Destination },
+				{ ...baseAttachId, target: NodeMoveType.Attach },
 				countToProcess,
 				true,
 			);
@@ -3212,7 +3212,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			);
 
 			this.table.removedCrossFieldKeys.set(
-				{ ...newDetachId, target: CrossFieldTarget.Source },
+				{ ...newDetachId, target: NodeMoveType.Detach },
 				countToProcess,
 				true,
 			);
@@ -3229,14 +3229,14 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			// The new detach will replace the base detach, so we remove the key for the base detach, unless they have the same ID.
 			if (!areEqualChangeAtomIds(baseAttachId, newDetachId)) {
 				this.table.removedCrossFieldKeys.set(
-					{ ...baseAttachId, target: CrossFieldTarget.Source },
+					{ ...baseAttachId, target: NodeMoveType.Detach },
 					countToProcess,
 					true,
 				);
 			}
 
 			this.table.movedCrossFieldKeys.set(
-				{ ...newDetachId, target: CrossFieldTarget.Source },
+				{ ...newDetachId, target: NodeMoveType.Detach },
 				countToProcess,
 				baseDetachEntry.value,
 			);
@@ -3284,7 +3284,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			this.table.baseChange,
 			{
 				...baseDetachId,
-				target: CrossFieldTarget.Source,
+				target: NodeMoveType.Detach,
 			},
 			1,
 		);
@@ -3351,7 +3351,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		if (composeToPin) {
 			this.table.movedCrossFieldKeys.set(
-				{ target: CrossFieldTarget.Source, ...newAttachId },
+				{ target: NodeMoveType.Detach, ...newAttachId },
 				countToProcess,
 				this.fieldId,
 			);
@@ -3360,7 +3360,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				// The pin will have `newAttachId` as both its detach and attach ID.
 				// So we remove `baseDetachId` unless that is equal to the pin's detach ID.
 				this.table.removedCrossFieldKeys.set(
-					{ target: CrossFieldTarget.Source, ...baseDetachId },
+					{ target: NodeMoveType.Detach, ...baseDetachId },
 					countToProcess,
 					true,
 				);
@@ -3370,19 +3370,19 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			// In that case, change1's attach should be canceled out by a detach from change2.
 			// Here we make sure that the composed change has the correct location (this field) for the attach ID.
 			this.table.movedCrossFieldKeys.set(
-				{ target: CrossFieldTarget.Destination, ...newAttachId },
+				{ target: NodeMoveType.Attach, ...newAttachId },
 				countToProcess,
 				this.fieldId,
 			);
 		} else {
 			this.table.removedCrossFieldKeys.set(
-				{ target: CrossFieldTarget.Source, ...baseDetachId },
+				{ target: NodeMoveType.Detach, ...baseDetachId },
 				countToProcess,
 				true,
 			);
 
 			this.table.removedCrossFieldKeys.set(
-				{ target: CrossFieldTarget.Destination, ...newAttachId },
+				{ target: NodeMoveType.Attach, ...newAttachId },
 				countToProcess,
 				true,
 			);
@@ -4132,12 +4132,12 @@ function rebaseCrossFieldKeys(
 ): CrossFieldKeyTable {
 	const rebasedTable = sourceTable.clone();
 	for (const entry of movedDetaches.entries()) {
-		rebasedTable.delete({ ...entry.start, target: CrossFieldTarget.Source }, entry.length);
+		rebasedTable.delete({ ...entry.start, target: NodeMoveType.Detach }, entry.length);
 	}
 
 	for (const entry of newDetachLocations.entries()) {
 		rebasedTable.set(
-			{ ...entry.start, target: CrossFieldTarget.Source },
+			{ ...entry.start, target: NodeMoveType.Detach },
 			entry.length,
 			entry.value,
 		);
@@ -4178,7 +4178,7 @@ function rebaseRoots(
 		const detachId = makeChangeAtomId(detachIdKey[1], detachIdKey[0]);
 		const attachId = firstAttachIdFromDetachId(base.rootNodes, detachId, 1).value;
 		const baseAttachEntry = base.crossFieldKeys.getFirst(
-			{ target: CrossFieldTarget.Destination, ...attachId },
+			{ target: NodeMoveType.Attach, ...attachId },
 			1,
 		);
 		if (baseAttachEntry.value === undefined) {
@@ -4233,7 +4233,7 @@ function rebaseRename(
 	const baseAttachEntry = base.crossFieldKeys.getFirst(
 		{
 			...baseRenameEntry.value,
-			target: CrossFieldTarget.Destination,
+			target: NodeMoveType.Attach,
 		},
 		count,
 	);
@@ -4397,7 +4397,7 @@ function composeRootTables(
 		if (nodeId1 === undefined) {
 			const fieldId = getFieldsForCrossFieldKey(
 				change1,
-				{ ...detachId1, target: CrossFieldTarget.Source },
+				{ ...detachId1, target: NodeMoveType.Detach },
 				1,
 			)[0];
 
@@ -4524,14 +4524,14 @@ function composeRename(
 		if (!areEqualChangeAtomIds(oldId, newId)) {
 			// `change1`'s detach will be replaced by `change2`'s detach, so we update the cross-field keys.
 			removedCrossFieldKeys.set(
-				{ ...oldId, target: CrossFieldTarget.Source },
+				{ ...oldId, target: NodeMoveType.Detach },
 				countToProcess,
 				true,
 			);
 		}
 
 		movedCrossFieldKeys.set(
-			{ ...newId, target: CrossFieldTarget.Source },
+			{ ...newId, target: NodeMoveType.Detach },
 			countToProcess,
 			detachEntry.value,
 		);
@@ -4589,7 +4589,7 @@ function invertRootTable(
 		// This checks whether `change` attaches this node.
 		// If it does, the node is not detached in the input context of the inverse, and so should not be included in the root table.
 		if (
-			change.crossFieldKeys.getFirst({ ...renamedId, target: CrossFieldTarget.Destination }, 1)
+			change.crossFieldKeys.getFirst({ ...renamedId, target: NodeMoveType.Attach }, 1)
 				.value === undefined
 		) {
 			assignRootChange(
@@ -4659,7 +4659,7 @@ function doesChangeAttachNodes(
 	count: number,
 ): RangeQueryResultFragment<boolean>[] {
 	return table
-		.getAll2({ ...id, target: CrossFieldTarget.Destination }, count)
+		.getAll2({ ...id, target: NodeMoveType.Attach }, count)
 		.map((entry) => ({ ...entry, value: entry.value !== undefined }));
 }
 
@@ -4669,7 +4669,7 @@ function doesChangeDetachNodes(
 	count: number,
 ): RangeQueryResultFragment<boolean>[] {
 	return table
-		.getAll2({ ...id, target: CrossFieldTarget.Source }, count)
+		.getAll2({ ...id, target: NodeMoveType.Detach }, count)
 		.map((entry) => ({ ...entry, value: entry.value !== undefined }));
 }
 
@@ -4678,7 +4678,7 @@ export function getFirstDetachField(
 	id: ChangeAtomId,
 	count: number,
 ): RangeQueryResult<FieldId | undefined> {
-	return table.getFirst({ target: CrossFieldTarget.Source, ...id }, count);
+	return table.getFirst({ target: NodeMoveType.Detach, ...id }, count);
 }
 
 export function getFirstAttachField(
@@ -4686,7 +4686,7 @@ export function getFirstAttachField(
 	id: ChangeAtomId,
 	count: number,
 ): RangeQueryResult<FieldId | undefined> {
-	return table.getFirst({ target: CrossFieldTarget.Destination, ...id }, count);
+	return table.getFirst({ target: NodeMoveType.Attach, ...id }, count);
 }
 
 export function addNodeRename(
@@ -4994,7 +4994,7 @@ export function validateChangeset(
 
 	if (!containsRollbacks(change)) {
 		for (const entry of change.crossFieldKeys.entries()) {
-			if (entry.start.target !== CrossFieldTarget.Destination) {
+			if (entry.start.target !== NodeMoveType.Attach) {
 				continue;
 			}
 
@@ -5029,7 +5029,7 @@ function validateAttach(
 	countProcessed = buildEntry.length;
 
 	const detachEntry = changeset.crossFieldKeys.getFirst(
-		{ ...attachId, target: CrossFieldTarget.Source },
+		{ ...attachId, target: NodeMoveType.Detach },
 		countProcessed,
 	);
 	countProcessed = detachEntry.length;

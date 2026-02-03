@@ -16,7 +16,7 @@ import { brand, RangeMap, type Brand } from "../../util/index.js";
 import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
-import type { CrossFieldTarget } from "./crossFieldQueries.js";
+import type { NodeMoveType } from "./crossFieldQueries.js";
 
 export type RebaseVersion = 1 | 2;
 
@@ -125,7 +125,7 @@ function subtractCrossFieldKeys(a: CrossFieldKey, b: CrossFieldKey): number {
 }
 
 export interface CrossFieldKey extends ChangeAtomId {
-	readonly target: CrossFieldTarget;
+	readonly target: NodeMoveType;
 }
 
 export interface CrossFieldKeyRange {
