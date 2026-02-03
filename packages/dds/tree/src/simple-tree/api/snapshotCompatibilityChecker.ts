@@ -241,7 +241,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 * As the contents of this directory (specifically historical snapshots) cannot be regenerated,
 	 * a directory appropriate for test data should be used.
 	 * Generally this means that this directory should be versioned like code,
-	 * and not erased when regenerated snapshots.
+	 * and not erased when regenerating snapshots.
 	 *
 	 * This directory will be created if it does not already exist.
 	 * All ".json" files in this directory will be treated as schema snapshots.
