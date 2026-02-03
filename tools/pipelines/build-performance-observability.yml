@@ -107,7 +107,7 @@ extends:
 
         - task: Bash@3
           displayName: Fetch build data
-          condition: eq(variables['shouldRun'], 'true')
+          condition: eq(variables['detect.shouldRun'], 'true')
           env:
             ADO_API_TOKEN: $(System.AccessToken)
             PR_BUILD_DEF_ID: $(publicPRBuildDefinitionId)
@@ -115,7 +115,7 @@ extends:
             BUILD_COUNT: $(buildCount)
             ORG: $(organization)
             PROJECT: $(targetProject)
-            MODE: $(runMode)
+            MODE: $(detect.runMode)
             OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
           inputs:
             targetType: 'filePath'
@@ -123,13 +123,13 @@ extends:
 
         - task: Bash@3
           displayName: Fetch timeline data for builds
-          condition: eq(variables['shouldRun'], 'true')
+          condition: eq(variables['detect.shouldRun'], 'true')
           env:
             ADO_API_TOKEN: $(System.AccessToken)
             ORG: $(organization)
             PROJECT: $(targetProject)
             PARALLEL_JOBS: $(parallelJobs)
-            MODE: $(runMode)
+            MODE: $(detect.runMode)
             OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
           inputs:
             targetType: 'filePath'
@@ -137,9 +137,9 @@ extends:
 
         - task: Bash@3
           displayName: Generate data JSON
-          condition: eq(variables['shouldRun'], 'true')
+          condition: eq(variables['detect.shouldRun'], 'true')
           env:
-            MODE: $(runMode)
+            MODE: $(detect.runMode)
             OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
           inputs:
             targetType: 'filePath'
@@ -147,10 +147,10 @@ extends:
 
         - task: Bash@3
           displayName: Prepare deployment package
-          condition: eq(variables['shouldRun'], 'true')
+          condition: eq(variables['detect.shouldRun'], 'true')
           env:
             ASWA_HOSTNAME: $(ASWA_HOSTNAME)
-            MODE: $(runMode)
+            MODE: $(detect.runMode)
             OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
             SOURCE_DIR: $(Build.SourcesDirectory)
             DEPLOY_DIR: $(Build.ArtifactStagingDirectory)/deploy
@@ -163,7 +163,7 @@ extends:
           outputs:
           - output: pipelineArtifact
             displayName: Publish dashboard artifact
-            condition: eq(variables['shouldRun'], 'true')
+            condition: eq(variables['detect.shouldRun'], 'true')
             targetPath: $(Build.ArtifactStagingDirectory)/deploy
             artifactName: deploy
             publishLocation: pipeline
