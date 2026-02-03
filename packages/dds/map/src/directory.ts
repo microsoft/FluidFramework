@@ -1215,14 +1215,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 		const previousOptimisticLocalValue = this.getOptimisticValue(key);
 
-		const detachedBind =
-			this.mc.config.getBoolean("Fluid.Directory.AllowDetachedResolve") ?? false;
-		if (detachedBind) {
-			// Create a local value and serialize it.
-			// AB#47081: This will be removed once we can validate that it is no longer needed.
-			bindHandles(value, this.directory.handle);
-		}
-
 		// If we are not attached, don't submit the op.
 		if (!this.directory.isAttached()) {
 			this.sequencedStorageData.set(key, value);
