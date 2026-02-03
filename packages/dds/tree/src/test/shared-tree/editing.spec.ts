@@ -1777,7 +1777,7 @@ describe("Editing", () => {
 				parentIndex: 0,
 			};
 
-			tree.transaction.start();
+			tree.transaction.start(true);
 			tree.editor.move(
 				{ parent: srcList, field: EmptyKey },
 				0,
@@ -1823,7 +1823,7 @@ describe("Editing", () => {
 			};
 
 			const branch = tree.branch();
-			branch.transaction.start();
+			branch.transaction.start(true);
 			branch.editor.addNodeExistsConstraint(tmpList);
 			branch.editor.move(
 				{ parent: srcList, field: EmptyKey },
