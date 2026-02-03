@@ -62,6 +62,8 @@ export class EndpointIndex implements IEndpointIndex {
 }
 
 /**
+ * Creates an endpoint index for the provided SharedString.
+ *
  * @internal
  */
 export function createEndpointIndex(sharedString: ISharedString): IEndpointIndex {

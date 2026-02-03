@@ -16,7 +16,7 @@ import {
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,
 } from "./filter.js";
-import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
+import { filterFlags, type PackageSelectionDefault, selectionFlags } from "./flags.js";
 import { BaseCommand } from "./library/index.js";
 
 /**

@@ -25,17 +25,7 @@ You can run this example using the following steps:
 ## Testing
 
 ```bash
-    npm run test:jest
-```
-
-For in browser testing update `./jest-puppeteer.config.js` to:
-
-```javascript
-  launch: {
-    dumpio: true, // output browser console to cmd line
-    slowMo: 500,
-    headless: false,
-  },
+npm run test
 ```
 
 ## Trademark

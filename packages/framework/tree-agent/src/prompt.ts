@@ -8,11 +8,16 @@ import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
 import type { ImplicitFieldSchema, TreeMapNode } from "@fluidframework/tree";
 import type { ReadableField } from "@fluidframework/tree/alpha";
 import { getSimpleSchema } from "@fluidframework/tree/alpha";
-import { normalizeFieldSchema } from "@fluidframework/tree/internal";
+import { normalizeFieldSchema, ValueSchema } from "@fluidframework/tree/internal";
 
 import type { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
 import { getFriendlyName, communize, findSchemas } from "./utils.js";
+
+/**
+ * The type name used for handles in generated TypeScript.
+ */
+export const fluidHandleTypeName = "_OpaqueHandle";
 
 /**
  * Produces a "system" prompt for the tree agent, based on the provided subtree.
@@ -32,6 +37,7 @@ export function getPrompt(args: {
 	let nodeTypeUnion: string | undefined;
 	let hasArrays = false;
 	let hasMaps = false;
+	let hasFluidHandles = false;
 	let exampleObjectName: string | undefined;
 	for (const s of findSchemas(schema)) {
 		if (s.kind !== NodeKind.Leaf) {
@@ -54,6 +60,10 @@ export function getPrompt(args: {
 				exampleObjectName ??= getFriendlyName(s);
 				break;
 			}
+			case NodeKind.Leaf: {
+				hasFluidHandles ||= s.info === ValueSchema.FluidHandle;
+				break;
+			}
 			// No default
 		}
 	}
@@ -63,6 +73,15 @@ export function getPrompt(args: {
 		schema,
 		getSimpleSchema(schema),
 	);
+	const fluidHandleType = hasFluidHandles
+		? `/**
+ * Opaque handle type representing a reference to a Fluid object.
+ * This type should not be constructed by generated code.
+ */
+type ${fluidHandleTypeName} = unknown;
+
+`
+		: "";
 	const exampleTypeName =
 		nodeTypeUnion === undefined
 			? undefined
@@ -274,7 +293,7 @@ Finally, double check that the edits would accomplish the user's request (if it 
 The JSON tree adheres to the following Typescript schema:
 
 \`\`\`typescript
-${typescriptSchemaTypes}
+${fluidHandleType}${typescriptSchemaTypes}
 \`\`\`
 
 If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.

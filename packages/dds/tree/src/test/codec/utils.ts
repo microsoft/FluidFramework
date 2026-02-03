@@ -64,7 +64,7 @@ import type { JsonCompatibleReadOnly } from "../../util/index.js";
 export function makeValueCodec<Schema extends TSchema, TContext>(
 	schema: Schema,
 	validator?: JsonValidator,
-): IJsonCodec<Static<Schema>, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
+): IJsonCodec<Static<Schema>, Static<Schema>, JsonCompatibleReadOnly, TContext> {
 	return withSchemaValidation(
 		schema,
 		{

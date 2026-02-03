@@ -1,5 +1,13 @@
 {
     "language": "@/js",
+    "languageOptions": {
+        "ecmaVersion": 2026,
+        "parser": "typescript-eslint/parser@8.18.2",
+        "parserOptions": {
+            "projectService": true
+        },
+        "sourceType": "module"
+    },
     "linterOptions": {
         "reportUnusedDisableDirectives": 1
     },
@@ -1208,18 +1216,7 @@
             "error",
             {
                 "allow": [
-                    "@fluid-example/*/internal",
-                    "@fluid-experimental/*/internal",
-                    "@fluid-internal/*/internal",
-                    "@fluid-private/*/internal",
-                    "@fluid-tools/*/internal",
-                    "@fluidframework/*/internal",
-                    "@fluid-example/*/legacy",
-                    "@fluid-experimental/*/legacy",
-                    "@fluid-internal/*/legacy",
-                    "@fluid-private/*/legacy",
-                    "@fluid-tools/*/legacy",
-                    "@fluidframework/*/legacy",
+                    "@fluidframework/*/internal{,/**}",
                     "@fluid-experimental/**",
                     "*/index.js"
                 ]
@@ -1401,6 +1398,9 @@
         "no-const-assign": [
             "off"
         ],
+        "no-constant-binary-expression": [
+            "error"
+        ],
         "no-constant-condition": [
             "error",
             {
@@ -1459,6 +1459,9 @@
                 "allowObjectPatternsAsParameters": false
             }
         ],
+        "no-empty-static-block": [
+            "error"
+        ],
         "no-eval": [
             "error",
             {
@@ -1502,13 +1505,6 @@
         ],
         "no-import-assign": [
             "off"
-        ],
-        "no-inner-declarations": [
-            "error",
-            "functions",
-            {
-                "blockScopedFunctions": "allow"
-            }
         ],
         "no-invalid-regexp": [
             "error",
@@ -1732,6 +1728,9 @@
             }
         ],
         "no-unused-labels": [
+            "error"
+        ],
+        "no-unused-private-class-members": [
             "error"
         ],
         "no-unused-vars": [

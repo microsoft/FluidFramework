@@ -61,6 +61,8 @@ export interface FluidTestDriverConfig {
 }
 
 /**
+ * Creates a test driver for the specified Fluid service type.
+ *
  * @internal
  */
 export async function createFluidTestDriver(

@@ -4,11 +4,11 @@
  */
 
 import { existsSync } from "node:fs";
-import { readFile, readdir } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import * as path from "path";
 import * as glob from "glob";
 import globby from "globby";
+import * as path from "path";
 
 import type { PackageJson } from "../../common/npmPackage";
 import { lookUpDirSync } from "../../common/utils";
