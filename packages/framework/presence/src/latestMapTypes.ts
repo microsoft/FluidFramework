@@ -241,9 +241,24 @@ export interface StateMap<K extends string, V> {
 	readonly size: number;
 
 	/**
+	 * Returns an iterable of entries in the map.
+	 */
+	// [Symbol.iterator](): IterableIterator<[K, DeepReadonly<JsonDeserialized<V>>]>;
+
+	/**
+	 * Returns an iterable of key, value pairs for every entry in the map.
+	 */
+	// entries(): IterableIterator<[K, DeepReadonly<JsonDeserialized<V>>]>;
+
+	/**
 	 * Returns an iterable of keys in the map.
 	 */
 	keys(): IterableIterator<K>;
+
+	/**
+	 * Returns an iterable of values in the map.
+	 */
+	// values(): IterableIterator<DeepReadonly<JsonDeserialized<V>>>;
 }
 
 /**
