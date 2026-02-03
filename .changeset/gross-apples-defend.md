@@ -14,7 +14,7 @@ For more details, see [FluidClientVersion](https://fluidframework.com/docs/api/f
 
 ```typescript
 // Configure SharedTree DDS to ensure all clients must be on at least version `2.80.0` in order to collaborate.
-// Edits made to this DDS by a client on an earlier version will fail, preventing potential  document corruption.
+// Edits made to this DDS by this client might cause clients older than the specified version to be unable to open the document and/or error out of collaboration sessions.
 const SharedTree = configuredSharedTreeBeta({
 	minVersionForCollab: FluidClientVersion.v2_80,
 });
