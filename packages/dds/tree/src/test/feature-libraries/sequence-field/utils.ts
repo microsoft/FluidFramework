@@ -32,7 +32,7 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
 import {
-	CrossFieldTarget,
+	NodeMoveType,
 	setInCrossFieldMap,
 	type InvertNodeManager,
 	type NodeId,
@@ -144,8 +144,8 @@ function normalizeMoveIds(change: Changeset): Changeset {
 	const normalSrcAtoms: ChangeAtomIdMap<ChangeAtomId> = new Map();
 	const normalDstAtoms: ChangeAtomIdMap<ChangeAtomId> = new Map();
 
-	function normalizeAtom(atom: ChangeAtomId, target: CrossFieldTarget): ChangeAtomId {
-		const normalAtoms = target === CrossFieldTarget.Source ? normalSrcAtoms : normalDstAtoms;
+	function normalizeAtom(atom: ChangeAtomId, target: NodeMoveType): ChangeAtomId {
+		const normalAtoms = target === NodeMoveType.Detach ? normalSrcAtoms : normalDstAtoms;
 		const normal = tryGetFromNestedMap(normalAtoms, atom.revision, atom.localId);
 		if (normal === undefined) {
 			const newId: ChangesetLocalId = brand(idAllocator.allocate());
@@ -174,7 +174,7 @@ function normalizeMoveIds(change: Changeset): Changeset {
 			case "Insert": {
 				const atom = normalizeAtom(
 					{ revision: effect.revision, localId: effect.id },
-					CrossFieldTarget.Source,
+					NodeMoveType.Detach,
 				);
 				return {
 					...effect,
@@ -184,7 +184,7 @@ function normalizeMoveIds(change: Changeset): Changeset {
 			}
 			case "Remove": {
 				const effectId = { revision: effect.revision, localId: effect.id };
-				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
+				const atom = normalizeAtom(effectId, NodeMoveType.Attach);
 				const normalized: Mutable<Detach> = { ...effect };
 				if (normalized.cellRename === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID

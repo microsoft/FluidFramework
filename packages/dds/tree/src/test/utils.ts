@@ -769,12 +769,7 @@ export function validateSnapshotConsistency(
 	assertStructuralEquality(
 		prepareTreeForCompare(treeA.tree),
 		prepareTreeForCompare(treeB.tree),
-	);
-
-	assert.deepEqual(
-		prepareTreeForCompare(treeA.tree),
-		prepareTreeForCompare(treeB.tree),
-		`Inconsistent document tree json representation: ${idDifferentiator}`,
+		{ message: `Inconsistent document tree json representation: ${idDifferentiator}` },
 	);
 
 	// Removed trees are garbage collected so we only enforce that whenever two

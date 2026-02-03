@@ -34,17 +34,16 @@ export function getFirstFromCrossFieldMap<T>(
 	return map.getFirst({ revision, localId: id }, count);
 }
 
-// TODO: Rename to NodeMoveType(Attach | Detach)
-export enum CrossFieldTarget {
-	Source,
-	Destination,
+export enum NodeMoveType {
+	Detach,
+	Attach,
 }
 
 export interface InvertNodeManager {
 	/**
 	 * Transfers the given node changes from the input context of the field changeset being inverted to the input context of the detached space (from which it may be further moved).
 	 *
-	 * This must be called for each detach in the field kind when rolling-back or undoing an detach.
+	 * This must be called for each detach in the field kind when rolling-back or reverting a detach.
 	 * This implies that all detaches in the field must be inverted.
 	 * @param detachId - The ID of the detach to invert.
 	 * @param count - The number of nodes being detached.
@@ -61,7 +60,7 @@ export interface InvertNodeManager {
 	/**
 	 * Gets the node changes associated with the node being attached in input changeset.
 	 *
-	 * This must be called for each attach in the field kind when rolling-back or undoing an attach.
+	 * This must be called for each attach in the field kind when rolling-back or reverting a attach.
 	 * This implies that all attaches in the field must be inverted.
 	 * @param attachId - The ID of the attach to invert.
 	 * @param count - The number of nodes being attached.
@@ -102,7 +101,7 @@ export interface ComposeNodeManager {
 	 *
 	 * This is needed because child changes are represented at the location of the node they impact in the input context of a changeset.
 	 * So if the later of the two changes being composed carries nested changes for a node,
-	 * then in the composed changeset, these nested changes must to be represented at the location of that node in the input context of the composed changeset.
+	 * then in the composed changeset, these nested changes need to be represented at the location of that node in the input context of the composed changeset.
 	 *
 	 * @param baseAttachId - The ID of the attach in the base changeset.
 	 * @param newChanges - The ID of the nested changes associated with this node in the new changeset.

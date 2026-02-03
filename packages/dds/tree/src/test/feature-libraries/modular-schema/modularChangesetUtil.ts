@@ -102,9 +102,9 @@ export interface NodeChangesetDescription {
 }
 
 export function assertEqual<T>(actual: T, expected: T): void {
-	assertStructuralEquality(actual, expected, (item) =>
-		item instanceof BTree ? item.toArray() : item,
-	);
+	assertStructuralEquality(actual, expected, {
+		transform: (item) => (item instanceof BTree ? item.toArray() : item),
+	});
 }
 
 export function assertModularChangesetsEqual(

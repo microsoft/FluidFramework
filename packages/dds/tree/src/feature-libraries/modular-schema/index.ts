@@ -18,7 +18,7 @@ export {
 	type CrossFieldMap,
 	type CrossFieldQuerySet,
 	type DetachedNodeEntry,
-	CrossFieldTarget,
+	NodeMoveType,
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
 export {

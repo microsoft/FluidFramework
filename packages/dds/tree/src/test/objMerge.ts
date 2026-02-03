@@ -39,11 +39,14 @@ export type ObjectTransform = (item: object) => object;
 export function assertStructuralEquality<T>(
 	actual: T,
 	expected: T,
-	transform: ObjectTransform = identityTransform,
+	options: {
+		readonly message?: string;
+		readonly transform?: ObjectTransform;
+	} = {},
 ): void {
-	const diff = merge(actual, expected, transform);
+	const diff = merge(actual, expected, options.transform ?? identityTransform);
 	if (hasConflict(diff)) {
-		assert.fail("Objects are not structurally equal");
+		assert.fail(options.message ?? "Objects are not structurally equal");
 	}
 }
 

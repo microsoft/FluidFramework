@@ -26,7 +26,7 @@ import type {
 import type { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 import type { CrossFieldKeyRange, NodeId, RebaseVersion } from "./modularChangeTypes.js";
 
-export type NestedChangesIndices = [NodeId, number /* inputIndex */][];
+export type NestedChangesIndices = [NodeId, inputIndex: number][];
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -214,8 +214,6 @@ export type NodeChangeComposer = (
 ) => NodeId;
 
 export type NodeChangePruner = (change: NodeId) => NodeId | undefined;
-
-export type HasDetachedChanges = (detachId: ChangeAtomId, count: number) => boolean;
 
 export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 	readonly getRevisionToRebase: () => RevisionTag | undefined;

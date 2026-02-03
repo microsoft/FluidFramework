@@ -72,7 +72,7 @@ export {
 	type ComposeNodeManager,
 	type InvertNodeManager,
 	type RebaseNodeManager,
-	CrossFieldTarget,
+	NodeMoveType,
 	FlexFieldKind,
 	type FullSchemaPolicy,
 	allowsRepoSuperset,
