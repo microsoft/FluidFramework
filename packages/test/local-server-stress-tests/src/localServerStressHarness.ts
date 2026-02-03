@@ -531,14 +531,6 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 				(await frozenContainer.getEntryPoint()) ?? {};
 			assert(frozenEntryPoint !== undefined, "must have entrypoint");
 
-			// Skip TaskManager in frozen container validation because:
-			// 1. TaskManager intentionally doesn't restore state from pending ops (applyStashedOp is empty)
-			// 2. The disconnect() call above triggers removeClientFromAllQueues() which modifies in-memory
-			//    state without creating pending ops, causing the removed client's state to diverge from
-			//    what gets loaded from the frozen pending state.
-			const skipDdsTypesForFrozenValidation = new Set([
-				"https://graph.microsoft.com/types/task-manager",
-			]);
 			await validateConsistencyOfAllDDS(
 				removed,
 				{
@@ -547,7 +539,6 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 					tag: `client-${Number.NaN}`,
 				},
 				state.stateTracker,
-				skipDdsTypesForFrozenValidation,
 			);
 
 			frozenContainer.dispose();
