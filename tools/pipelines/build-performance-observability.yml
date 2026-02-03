@@ -84,12 +84,9 @@ extends:
     - stage: collect_metrics
       displayName: Collect Build Metrics
       jobs:
-      - job: collect_and_publish
-        displayName: Collect and Publish Build Metrics
-        templateContext:
-          # Required for AzureStaticWebApp task which is classified as a release task
-          type: releaseJob
-          isProduction: false
+      # Build job: checkout, fetch data, prepare dashboard
+      - job: prepare
+        displayName: Prepare Dashboard
         steps:
         - checkout: self
           clean: true
@@ -159,11 +156,33 @@ extends:
             DEPLOY_DIR: $(Build.ArtifactStagingDirectory)/deploy
           inputs:
             targetType: 'filePath'
-            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/prepare-deployment.sh'
+            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/prepare-dashboard.sh'
 
+        # Publish the dashboard as a pipeline artifact
+        - task: PublishPipelineArtifact@1
+          displayName: Publish dashboard artifact
+          condition: eq(variables['shouldRun'], 'true')
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)/deploy'
+            artifact: 'deploy'
+            publishLocation: 'pipeline'
+
+      # Release job: deploy to Azure Static Web Apps
+      - job: deploy_to_aswa
+        displayName: Deploy to Azure Static Web Apps
+        dependsOn: prepare
+        condition: eq(dependencies.prepare.outputs['detect.shouldRun'], 'true')
+        templateContext:
+          # Required for AzureStaticWebApp task which is classified as a release task
+          type: releaseJob
+          isProduction: false
+          inputs:
+          - input: pipelineArtifact
+            artifactName: deploy
+            targetPath: $(Build.ArtifactStagingDirectory)/deploy
+        steps:
         - task: AzureStaticWebApp@0
           displayName: Deploy to Azure Static Web Apps
-          condition: eq(variables['shouldRun'], 'true')
           inputs:
             skip_app_build: true
             skip_api_build: true
@@ -171,15 +190,3 @@ extends:
             app_location: 'deploy'
             output_location: ''
             azure_static_web_apps_api_token: $(ASWA_DEPLOYMENT_TOKEN)
-
-        - task: Bash@3
-          displayName: Clean up
-          condition: eq(variables['shouldRun'], 'true')
-          inputs:
-            targetType: 'inline'
-            script: |
-              echo "Cleaning up temporary files..."
-              rm -rf "$(Build.ArtifactStagingDirectory)/metrics"
-              rm -rf "$(Build.ArtifactStagingDirectory)/deploy"
-              rm -f "$(Build.ArtifactStagingDirectory)"/*.json
-              echo "Cleanup complete"
