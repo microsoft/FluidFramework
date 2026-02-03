@@ -276,9 +276,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	public async load(args: {
 		services: IChannelStorageService;
-		readAndParseChunk: <T extends JsonCompatible<IFluidHandle>>(
-			chunkBlobPath: string,
-		) => Promise<T>;
+		readAndParseChunk: (chunkBlobPath: string) => Promise<JsonCompatible<IFluidHandle>>;
 	}): Promise<void> {
 		const forestTree = args.services.getSnapshotTree?.();
 		// Snapshot tree should be available when loading forest's contents. However, it is an optional function
@@ -303,8 +301,9 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 						`SharedTree: Cannot find contents for incremental chunk ${chunkContentsPath}`,
 					);
 				}
-				const chunkContents =
-					await args.readAndParseChunk<EncodedFieldBatch>(chunkContentsPath);
+				const chunkContents = (await args.readAndParseChunk(
+					chunkContentsPath,
+				)) as EncodedFieldBatch; // TODO: this should use a codec to validate the data instead of just type casting.
 				this.loadedChunksMap.set(chunkReferenceId, {
 					encodedContents: chunkContents,
 					summaryPath: chunkSubTreePath,

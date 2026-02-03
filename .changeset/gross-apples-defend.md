@@ -13,7 +13,7 @@ This allows users to opt into new features and optimizations that are only avail
 
 ```typescript
 // Configure SharedTree DDS to limit the features it requires of collaborators and future document users to only those available in version `2.80.0` and later, overriding the `MinimumVersionForCollab` provided by the runtime (default: "2.0.0").
-// Edits made to this DDS by a client on an earlier version will fail, preventing potential  document corruption.
+// Edits made to this DDS by this client might cause clients older than the specified version to be unable to open the document and/or error out of collaboration sessions.
 const SharedTree = configuredSharedTreeBeta({
 	minVersionForCollab: "2.80.0",
 });

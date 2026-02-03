@@ -8,11 +8,6 @@ import type { IReactTreeDataObject } from "@fluidframework/react/alpha";
 import * as React from "react";
 
 import {
-	type FormattedTextAsTree,
-	FormattedTextEditorFactory,
-	FormattedMainView,
-} from "./formatted/index.js";
-import {
 	type TextAsTree,
 	TextEditorFactory,
 	PlainTextMainView,
@@ -22,13 +17,13 @@ import {
 
 /**
  * Injected by webpack DefinePlugin.
- * Set via --env view=quill, --env view=plaintext, or --env view=formatted
+ * Set via --env view=quill or --env view=plaintext
  */
-declare const __FLUID_VIEW__: "quill" | "plaintext" | "formatted";
+declare const __FLUID_VIEW__: "quill" | "plaintext";
 
 /**
  * Get the view component based on webpack build configuration.
- * Set via --env view=quill, --env view=plaintext, or --env view=formatted
+ * Set via --env view=quill or --env view=plaintext
  */
 function getViewComponent(): React.FC<MainViewProps> {
 	if (__FLUID_VIEW__ === "plaintext") {
@@ -42,17 +37,6 @@ function getViewComponent(): React.FC<MainViewProps> {
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createFluidExport() {
-	if (__FLUID_VIEW__ === "formatted") {
-		return new ContainerViewRuntimeFactory(
-			FormattedTextEditorFactory,
-			(tree: IReactTreeDataObject<typeof FormattedTextAsTree.Tree>) => {
-				return React.createElement(tree.TreeViewComponent, {
-					viewComponent: FormattedMainView,
-				});
-			},
-		);
-	}
-
 	return new ContainerViewRuntimeFactory(
 		TextEditorFactory,
 		(tree: IReactTreeDataObject<typeof TextAsTree.Tree>) => {
