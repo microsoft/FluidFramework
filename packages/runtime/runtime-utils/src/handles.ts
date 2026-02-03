@@ -8,7 +8,7 @@ import type {
 	IContainerRuntimeInternal,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
-import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
+import { type IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
 	IFluidHandleInternalPayloadPending,
@@ -126,18 +126,14 @@ export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean {
  * @legacy @beta
  */
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
-	if (!(fluidHandleSymbol in handle) || !(fluidHandleSymbol in handle[fluidHandleSymbol])) {
-		if (enableBackwardsCompatibility && IFluidHandle in handle) {
-			// Type assertion needed for backward compatibility with old handle format
-			return handle[IFluidHandle] as IFluidHandleInternal<T>;
-		}
-		throw new TypeError("Invalid IFluidHandle");
+	if (fluidHandleSymbol in handle) {
+		// This casts the IFluidHandleErased from the symbol instead of `handle` to ensure that if someone
+		// implements their own IFluidHandle in terms of an existing handle, it won't break anything.
+		// Type assertion is safe as fluidHandleSymbol is guaranteed to contain an IFluidHandleInternal
+		return handle[fluidHandleSymbol] as unknown as IFluidHandleInternal<T>;
 	}
 
-	// This casts the IFluidHandleErased from the symbol instead of `handle` to ensure that if someone
-	// implements their own IFluidHandle in terms of an existing handle, it won't break anything.
-	// Type assertion is safe as fluidHandleSymbol is guaranteed to contain an IFluidHandleInternal
-	return handle[fluidHandleSymbol] as unknown as IFluidHandleInternal<T>;
+	throw new TypeError("Invalid IFluidHandle");
 }
 
 /**
