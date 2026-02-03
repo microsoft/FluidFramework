@@ -47,7 +47,7 @@ describe("compatibilityBase", () => {
 		});
 	});
 
-	it("getConfigsForMinVersionForCollab", () => {
+	describe("getConfigsForMinVersionForCollab", () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigMap processing
 		type ITestConfigMap = {
 			featureA: string;
