@@ -1,7 +1,7 @@
 ---
 "fluid-framework": minor
 "@fluidframework/tree": minor
-"__section": feature
+"__section": tree
 ---
 Promote MinimumVersionForCollab to beta
 
