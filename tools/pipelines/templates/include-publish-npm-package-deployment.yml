@@ -111,7 +111,8 @@ jobs:
   variables:
     version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
   steps:
-  - checkout: self
+  - checkout: FluidFramework
+    path: s/FluidFramework
     clean: true
   - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
     parameters:

@@ -25,7 +25,8 @@ jobs:
   pool:
     vmImage: ubuntu-latest
   steps:
-  - checkout: self
+  - checkout: FluidFramework
+    path: s/FluidFramework
     clean: true
     fetchDepth: 1
 

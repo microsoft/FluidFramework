@@ -104,7 +104,8 @@ stages:
     - job: check_branch_version
       displayName: 'Check Version Deployment Condition'
       steps:
-        - checkout: self
+        - checkout: FluidFramework
+          path: s/FluidFramework
           submodules: false
           clean: true
 
@@ -248,7 +249,8 @@ stages:
       variables:
         shouldDeploy: $[eq(stageDependencies.check_branch_version.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'], 'true')]
       steps:
-        - checkout: self
+        - checkout: FluidFramework
+          path: s/FluidFramework
           submodules: false
           clean: true
         - task: TriggerBuild@4

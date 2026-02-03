@@ -233,7 +233,8 @@ extends:
                   value: $(System.PullRequest.TargetBranch)
             steps:
               # Setup
-              - checkout: self
+              - checkout: FluidFramework
+                path: s/FluidFramework
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
@@ -607,7 +608,8 @@ extends:
 
             steps:
               # Setup
-              - checkout: self
+              - checkout: FluidFramework
+                path: s/FluidFramework
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
@@ -766,7 +768,8 @@ extends:
                   value: $[ dependencies.build.outputs['setCommitSHA.COMMIT_SHA'] ]
               steps:
                 # Setup
-                - checkout: self
+                - checkout: FluidFramework
+                  path: s/FluidFramework
                   clean: true
                   lfs: '${{ parameters.checkoutSubmodules }}'
                   submodules: '${{ parameters.checkoutSubmodules }}'

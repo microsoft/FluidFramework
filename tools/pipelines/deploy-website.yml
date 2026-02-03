@@ -115,7 +115,8 @@ stages:
       displayName: 'Build website'
       pool: Large-eastus2
       steps:
-        - checkout: self
+        - checkout: FluidFramework
+          path: s/FluidFramework
           submodules: false
           clean: true
 
@@ -186,7 +187,8 @@ stages:
     - job: guardian_tasks
       displayName: Guardian tasks
       steps:
-        - checkout: self
+        - checkout: FluidFramework
+          path: s/FluidFramework
           submodules: false
           clean: true
 
@@ -252,7 +254,8 @@ stages:
       displayName: 'Website Link Check'
       continueOnError: true
       steps:
-        - checkout: self
+        - checkout: FluidFramework
+          path: s/FluidFramework
           submodules: false
           clean: true
 
@@ -304,7 +307,8 @@ stages:
     - job: deploy_site
       displayName: 'Deploy website'
       steps:
-        - checkout: self
+        - checkout: FluidFramework
+          path: s/FluidFramework
           submodules: false
           clean: true
 

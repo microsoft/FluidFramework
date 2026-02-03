@@ -254,7 +254,8 @@ stages:
         # Set up Docker environment if running against docker
         - ${{ if eq(parameters.runAgainstDocker, true) }}:
           # Checks out FluidFramework repo
-          - checkout: self
+          - checkout: FluidFramework
+            path: s/FluidFramework
             clean: true
           - task: Docker@2
             displayName: 'Login to container registry'

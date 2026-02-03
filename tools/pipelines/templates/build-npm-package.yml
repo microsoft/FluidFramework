@@ -224,7 +224,8 @@ extends:
                   value: $(System.PullRequest.TargetBranch)
             steps:
               # Setup
-              - checkout: self
+              - checkout: FluidFramework
+                path: s/FluidFramework
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'

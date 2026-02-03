@@ -194,7 +194,8 @@ extends:
           SKIPAUTOMATICIMAGESCAN: true
         steps:
         # Setup
-        - checkout: self
+        - checkout: FluidFramework
+          path: s/FluidFramework
           clean: true
           lfs: false
           submodules: false
