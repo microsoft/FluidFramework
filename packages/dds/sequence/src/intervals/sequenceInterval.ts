@@ -488,7 +488,7 @@ export class SequenceIntervalClass
 	}
 
 	/**
-	 * @returns whether this interval overlaps two numerical positions.
+	 * Whether this interval overlaps the provided numerical positions.
 	 */
 	public overlapsPos(bstart: number, bend: number) {
 		this.verifyNotDispose();

@@ -17,7 +17,7 @@ import type { Linter } from "eslint";
 /**
  * Rules from recommended.js.
  */
-export const recommendedRules: Linter.RulesRecord = {
+export const recommendedRules = {
 	"@rushstack/no-new-null": "error",
 	"no-void": "error",
 	"require-atomic-updates": "error",
@@ -206,4 +206,4 @@ export const recommendedRules: Linter.RulesRecord = {
 	"@typescript-eslint/consistent-type-imports": ["error", { fixStyle: "separate-type-imports" }],
 
 	// #endregion
-};
+} as const satisfies Linter.RulesRecord;
