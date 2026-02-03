@@ -414,7 +414,7 @@ export type Listeners<T extends object> = {
     [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
 };
 
-// @public @deprecated
+// @public
 export const LogLevel: {
     readonly verbose: 10;
     readonly default: 20;

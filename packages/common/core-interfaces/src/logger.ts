@@ -53,7 +53,6 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 /**
  * Specify levels of the logs.
  * @public
- * @deprecated I want to test if this updates the
  */
 export const LogLevel = {
 	verbose: 10, // To log any verbose event for example when you are debugging something.
