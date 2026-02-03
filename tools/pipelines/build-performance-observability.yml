@@ -86,6 +86,9 @@ extends:
       jobs:
       - job: collect_and_publish
         displayName: Collect and Publish Build Metrics
+        templateContext:
+          # Required for AzureStaticWebApp task which is classified as a release task
+          type: releaseJob
         steps:
         - checkout: self
           clean: true
