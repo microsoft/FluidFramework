@@ -91,10 +91,12 @@ export interface LatestMapItemRemovedClientData<K extends string> {
 	 * Associated {@link Attendee}.
 	 */
 	attendee: Attendee;
+
 	/**
 	 * Key of the removed item.
 	 */
 	key: K;
+
 	/**
 	 * Metadata associated with the removal of the item.
 	 */
@@ -279,14 +281,17 @@ export interface LatestMap<
 	 * Current value map for this client.
 	 */
 	readonly local: StateMap<Keys, T>;
+
 	/**
 	 * Iterable access to remote clients' map of values.
 	 */
 	getRemotes(): IterableIterator<LatestMapClientData<T, Keys, TRemoteAccessor>>;
+
 	/**
 	 * Array of {@link Attendee}s that have provided states.
 	 */
 	getStateAttendees(): Attendee[];
+
 	/**
 	 * Access to a specific client's map of values.
 	 */
@@ -344,6 +349,7 @@ export interface LatestMapArguments<T, Keys extends string = string>
 	 * @see {@link StateSchemaValidator}.
 	 */
 	validator: StateSchemaValidator<T>;
+
 	/**
 	 * An optional function that will be called at runtime to validate the presence
 	 * data key. A runtime validator is strongly recommended when key type is not
