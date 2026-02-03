@@ -10,7 +10,6 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 import { cleanedPackageVersion as runtimeUtilsCleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
-import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
@@ -139,11 +138,9 @@ export interface ICodecOptions {
 
 /**
  * Options relating to encoding of persisted data.
- * @remarks
- * Extends {@link ICodecOptions} with options that are specific to encoding data.
- * @alpha @input
+ * @input @beta
  */
-export interface CodecWriteOptions extends ICodecOptions {
+export interface CodecWriteOptionsBeta {
 	/**
 	 * The minimum version of the Fluid Framework client output must be encoded to be compatible with.
 	 * @remarks
@@ -154,16 +151,24 @@ export interface CodecWriteOptions extends ICodecOptions {
 	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
 	readonly minVersionForCollab: MinimumVersionForCollab;
+}
 
+/**
+ * Options relating to encoding of persisted data.
+ * @remarks
+ * Extends {@link ICodecOptions} with options that are specific to encoding data.
+ * @alpha @input
+ */
+export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta {
 	/**
 	 * Overrides the version of the codec to use for encoding.
 	 * @remarks
-	 * Without an override, the selected version will be based on {@link CodecWriteOptions.minVersionForCollab}.
+	 * Without an override, the selected version will be based on {@link CodecWriteOptionsBeta.minVersionForCollab}.
 	 */
 	readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
 
 	/**
-	 * If true, suppress errors when `writeVersionOverrides` selects a version which may not be compatible with the {@link CodecWriteOptions.minVersionForCollab}.
+	 * If true, suppress errors when `writeVersionOverrides` selects a version which may not be compatible with the {@link CodecWriteOptionsBeta.minVersionForCollab}.
 	 */
 	readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
 }
@@ -196,6 +201,20 @@ export interface IJsonCodec<
 > extends IEncoder<TDecoded, TEncoded, TContext>,
 		IDecoder<TDecoded, TValidate, TContext> {
 	encodedSchema?: TAnySchema;
+}
+
+/**
+ * Type erase the more detailed encoded type from a codec.
+ */
+export function eraseEncodedType<
+	TDecoded,
+	TEncoded = JsonCompatibleReadOnly,
+	TValidate = TEncoded,
+	TContext = void,
+>(
+	codec: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
+): IJsonCodec<TDecoded, TValidate, TValidate, TContext> {
+	return codec as unknown as IJsonCodec<TDecoded, TValidate, TValidate, TContext>;
 }
 
 /**
@@ -453,9 +472,9 @@ export const unitCodec: IMultiFormatCodec<
 export function withSchemaValidation<
 	TInMemoryFormat,
 	EncodedSchema extends TSchema,
-	TEncodedFormat = JsonCompatibleReadOnly,
-	TValidate = TEncodedFormat,
-	TContext = ChangeEncodingContext,
+	TEncodedFormat,
+	TValidate,
+	TContext,
 >(
 	schema: EncodedSchema,
 	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext>,

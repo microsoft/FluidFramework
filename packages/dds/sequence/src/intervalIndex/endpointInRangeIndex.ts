@@ -89,6 +89,8 @@ export class EndpointInRangeIndex implements IEndpointInRangeIndex {
 }
 
 /**
+ * Creates an endpoint-in-range index for the provided SharedString.
+ *
  * @internal
  */
 export function createEndpointInRangeIndex(
