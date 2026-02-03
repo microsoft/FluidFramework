@@ -26,7 +26,7 @@
  * For example it might make sense to constrain this to something like `"1.4.0" | typeof defaultMinVersionForCollab | 2.${bigint}.0"`.
  *
  * @input
- * @beta
+ * @legacy @beta
  */
 export type MinimumVersionForCollab =
 	| `${1 | 2}.${bigint}.${bigint}`
