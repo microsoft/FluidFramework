@@ -1,7 +1,7 @@
 ---
 "fluid-framework": minor
 "@fluidframework/tree": minor
-"__section": feature
+"__section": tree
 ---
 Adds optional "label" parameter to runTransaction for grouping changes
 
