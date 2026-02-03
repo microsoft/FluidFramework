@@ -373,7 +373,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		this.connectionMap.clear();
 
 		// Close the web socket server
-		this.webSocketServer.close();
+		await this.webSocketServer.close();
 
 		// Remove all event listeners
 		this.removeAllListeners();
