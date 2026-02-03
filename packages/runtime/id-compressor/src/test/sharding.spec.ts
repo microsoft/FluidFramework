@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { IdCompressor } from "../idCompressor.js";
 import { isFinalId } from "../identifiers.js";
@@ -509,7 +509,7 @@ describe("IdCompressor Sharding", () => {
 				requestedWriteVersion: SerializationVersion.V3,
 			});
 			const child3Id = child3.generateCompressedId();
-			assert.equal(child3Id, -10);
+			assert.equal(child3Id, -12);
 
 			// Child1 still has original stride=3, starts at localGenCount=1
 			const child1 = IdCompressor.deserialize({
@@ -548,8 +548,8 @@ describe("IdCompressor Sharding", () => {
 			const child1Id1 = child1.generateCompressedId();
 			assert.equal(child1Id1, -4);
 
-			// Level 2: Child1 recursively shards into 2 grandchildren (stride becomes 6)
-			// Child1 at 4, grandchild1 at 5, grandchild2 at 6
+			// Level 2: Child1 recursively shards into 2 grandchildren (stride becomes 9)
+			// Child1 at 4, grandchild1 at 7, grandchild2 at 10
 			const [grandchild1Ser, grandchild2Ser] = child1.shard(2);
 			const grandchild1 = IdCompressor.deserialize({
 				serialized: grandchild1Ser,
@@ -560,13 +560,13 @@ describe("IdCompressor Sharding", () => {
 				requestedWriteVersion: SerializationVersion.V3,
 			});
 
-			// Grandchild1 generates: 5→14 (adds stride 9, which is grandchild's original stride)
+			// Grandchild1 generates: 7→16 (adds stride 9, which is grandchild's original stride)
 			const gc1Id = grandchild1.generateCompressedId();
-			assert.equal(gc1Id, -14);
+			assert.equal(gc1Id, -16);
 
-			// Grandchild2 generates: 6→15 (adds stride 9)
+			// Grandchild2 generates: 10→19 (adds stride 9)
 			const gc2Id = grandchild2.generateCompressedId();
-			assert.equal(gc2Id, -15);
+			assert.equal(gc2Id, -19);
 
 			// Child2 generates: 2→5 (adds stride 3)
 			const child2Id1 = child2.generateCompressedId();
@@ -577,14 +577,11 @@ describe("IdCompressor Sharding", () => {
 			const gc2ShardId = grandchild2.disposeShard();
 			assert(gc1ShardId !== undefined);
 			assert(gc2ShardId !== undefined);
-			child1.unshard(gc1ShardId);
-			child1.unshard(gc2ShardId);
+			child1.unshard(gc1ShardId); // bumps child1's gen count to 4 + (9*2) = 22
+			child1.unshard(gc2ShardId); // moves child1 back to a leaf shard, restores original stride = 3
 
-			// Child1 exits recursive sharding mode and restores its original stride-3 pattern
-			// After unsharding, it continues its stride-3 pattern (2, 5, 8, 11, ...)
-			// The highest genCount generated was 8, so the next in the pattern is 11
 			const child1Id2 = child1.generateCompressedId();
-			assert.equal(child1Id2, -25);
+			assert.equal(child1Id2, -25); // 22 + 3
 
 			// Child2 is still a shard of root with stride-3 pattern (3, 6, 9, ...)
 			// Root is still in sharding mode because it has active children (child1 and child2)
@@ -596,6 +593,12 @@ describe("IdCompressor Sharding", () => {
 			// Verify: child2 should generate -9 next (stride pattern: 3, 6, 9, ...)
 			const child2Id3 = child2.generateCompressedId();
 			assert.equal(child2Id3, -11); // This would be a collision if child1 also generated -9!
+
+			root.unshard(child1.disposeShard() ?? fail()); // bumps gen count from 3 to 27, which is first on (3, 6, 9, ... 21, 24, 27) cycle > 25
+			root.unshard(child2.disposeShard() ?? fail()); // back to unsharded mode, stride = 1
+
+			const rootId = root.generateCompressedId();
+			assert.equal(rootId, -28); // 27 + 1
 		});
 	});
 
@@ -711,7 +714,7 @@ describe("IdCompressor Sharding", () => {
 			// Generate IDs at each level
 			assert.equal(root.generateCompressedId(), -3); // Root: 0→3
 			assert.equal(child1.generateCompressedId(), -10); // Child1: 1→10 (stride 9)
-			assert.equal(grandchild1.generateCompressedId(), -11); // Grandchild1: 2→11 (stride 9)
+			assert.equal(grandchild1.generateCompressedId(), -13); // Grandchild1: 4→13 (stride 9)
 
 			// Serialize each compressor
 			const rootSerialized = root.serialize(true);
@@ -742,7 +745,7 @@ describe("IdCompressor Sharding", () => {
 
 			assert.equal(rootNext, -6);
 			assert.equal(child1Next, -19);
-			assert.equal(grandchild1Next, -20);
+			assert.equal(grandchild1Next, -22);
 		});
 	});
 

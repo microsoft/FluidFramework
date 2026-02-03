@@ -324,7 +324,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			// Create a child shard positioned at parent's localGenCount + i
 			const childShard = this.createChildShard(
 				newStride,
-				parentLocalGenCountBeforeShard + i,
+				parentLocalGenCountBeforeShard + i * currentStride,
 				childShardId,
 			);
 			shards.push(childShard);
