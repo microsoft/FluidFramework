@@ -254,6 +254,12 @@ function composeNodeDetaches(
 	if (detach1 !== undefined) {
 		const newDetachId = nodeManager.getNewChangesForBaseDetach(detach1, 1).value?.detachId;
 		if (newDetachId !== undefined) {
+			// change2 either renames or detaches this node (the latter case implying that that change1 reattaches/moves it).
+			// In either case, the composition ends with the node detached by `newDetachId`.
+			// Note that even if change2 detaches the node with a location-targeting detach (e.g. an optional field clear),
+			// the composition should still have a node-targeting detach.
+			// This is because change1 must attach the node in the location targeted by the detach,
+			// and rebasing does not affect attaches, although that could change if slice moves are implemented.
 			return newDetachId;
 		}
 	}
