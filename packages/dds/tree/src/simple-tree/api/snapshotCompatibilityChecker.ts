@@ -436,7 +436,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * This does include versioning information in the snapshot format,
  * but it would be nice to better unify how we do that versioning and format validation with our codecs.
  *
- * See src/test/simple-tree/api/snapshotCompatibilityCheckerExample/snapshotCompatibilityChecker.example.mts for the large example included above.
+ * See snapshotCompatibilityChecker.example.mts for the large example included above.
  * @alpha
  */
 export function checkSchemaCompatibilitySnapshots(
