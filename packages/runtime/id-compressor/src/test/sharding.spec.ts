@@ -566,17 +566,14 @@ describe("IdCompressor Sharding", () => {
 			child1.unshard(gc1ShardId);
 			child1.unshard(gc2ShardId);
 
-			// Child1 exits sharding mode and resumes normal sequential generation
-			// Verify by checking it generates sequential IDs
-
-			// Child1 now generates sequentially from where it left off
-			// After unsharding, it continues from highest genCount across all shards (8) + stride = 11
+			// Child1 exits recursive sharding mode and restores its original stride-3 pattern
+			// After unsharding, it continues its stride-3 pattern (2, 5, 8, 11, ...)
+			// The highest genCount generated was 8, so the next in the pattern is 11
 			const child1Id2 = child1.generateCompressedId();
 			assert.equal(child1Id2, -11);
 
-			// Child2 is still in sharding mode from root (can generate IDs)
-			// Root is still in sharding mode because it has active child count = 2
-			// (it doesn't know that child1 exited sharding mode independently)
+			// Child2 is still a shard of root with stride-3 pattern (3, 6, 9, ...)
+			// Root is still in sharding mode because it has active children (child1 and child2)
 
 			// Generate some more IDs to verify behavior
 			const child2Id2 = child2.generateCompressedId();
@@ -765,25 +762,31 @@ describe("IdCompressor Sharding", () => {
 			const sessionId = createSessionId();
 			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
-			// Shard immediately (stride=2, parent owns {1,3,5,...})
-			parent.shard(1);
+			// Shard immediately (stride=2, parent owns {1,3,5,...}, child owns {2,4,6,...})
+			const [childSer] = parent.shard(1);
+			const child = IdCompressor.deserialize({
+				serialized: childSer,
+				requestedWriteVersion: SerializationVersion.V3,
+			});
 
-			// Generate first ID
+			// Parent generates IDs with stride 2
 			const id1 = parent.generateCompressedId(); // genCount 1, ID -1
 			assert.equal(id1, -1);
-
-			// Generate second ID - should jump by stride to genCount 3
 			const id2 = parent.generateCompressedId(); // genCount 3, ID -3
 			assert.equal(id2, -3);
-
-			// Generate third ID
 			const id3 = parent.generateCompressedId(); // genCount 5, ID -5
 			assert.equal(id3, -5);
 
-			// Verify localGenCount by disposing and checking
-			const shardId = parent.disposeShard();
-			assert(shardId !== undefined);
-			assert.equal(shardId.localGenCount, 5, "localGenCount should reflect absolute genCount");
+			// Child generates IDs with stride 2
+			const childId1 = child.generateCompressedId(); // genCount 2, ID -2
+			assert.equal(childId1, -2);
+			const childId2 = child.generateCompressedId(); // genCount 4, ID -4
+			assert.equal(childId2, -4);
+
+			// Verify localGenCount by disposing child and checking
+			const childShardId = child.disposeShard();
+			assert(childShardId !== undefined);
+			assert.equal(childShardId.localGenCount, 4, "Child localGenCount should be 4");
 		});
 	});
 

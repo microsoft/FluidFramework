@@ -210,6 +210,11 @@ export interface CompressorShardId {
 	 * so this value may be non-zero even if the shard hasn't generated any IDs yet.
 	 */
 	localGenCount: number;
+
+	/**
+	 * Unique identifier for this shard within its parent.
+	 */
+	shardId: SessionId;
 }
 
 /**

@@ -91,27 +91,43 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * When defined, this compressor operates in "sharding mode" where:
 	 * - IDs are generated using stride-based allocation (no eager finals)
 	 * - The normalizer backfills all IDs in each stride cycle
-	 * - Normal operation resumes when activeChildCount reaches 0
+	 * - Normal operation resumes when all children are unsharded
 	 */
 	private shardingState?:
 		| {
 				/**
-				 * Total number of shards in the current stride pattern (the stride)
+				 * Current stride - used when this compressor has active children.
+				 * Changes each time shard() is called.
 				 */
-				stride: number;
+				currentStride: number;
 				/**
-				 * This compressor's offset in the stride pattern (0 to stride-1)
+				 * Original stride - the stride this compressor was created with.
+				 * Used when this compressor has no children (is a leaf).
+				 * IMMUTABLE after creation.
+				 */
+				originalStride: number;
+				/**
+				 * This compressor's offset in the stride pattern (0 to stride-1).
+				 * IMMUTABLE after creation.
 				 */
 				shardOffset: number;
-				/**
-				 * Counter of how many child shards are still active
-				 */
-				activeChildCount: number;
 				/**
 				 * Highest genCount that has been backfilled in the normalizer during sharding.
 				 * Used to avoid duplicate backfilling in recursive sharding scenarios.
 				 */
 				highestBackfilledGenCount: number;
+				/**
+				 * Set of unique child shard IDs (UUIDs) currently active.
+				 * Each child is assigned a UUID when created via shard().
+				 * Safe across serialization/deserialization cycles.
+				 */
+				activeChildIds: Set<SessionId>;
+				/**
+				 * This compressor's unique shard ID within its parent (if it's a child).
+				 * Undefined for root compressors.
+				 * Assigned by parent when creating this shard.
+				 */
+				shardId?: SessionId;
 		  }
 		| undefined;
 
@@ -273,39 +289,58 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		// Determine current sharding state
-		const currentStride = this.shardingState?.stride ?? 1;
+		const isFirstShard = this.shardingState === undefined;
+		const currentStride = this.shardingState?.currentStride ?? 1;
 		const currentOffset = this.shardingState?.shardOffset ?? 0;
-		const currentActiveCount = this.shardingState?.activeChildCount ?? 0;
 
 		const newStride = currentStride * (newShardCount + 1);
 
 		// Store parent's localGenCount before creating shards
 		const parentLocalGenCountBeforeShard = this.localGenCount;
 
-		// Update parent compressor's sharding state
+		// Initialize or update parent compressor's sharding state
 		const previousHighestBackfilled =
 			this.shardingState?.highestBackfilledGenCount ?? parentLocalGenCountBeforeShard;
-		this.shardingState = {
-			stride: newStride,
-			shardOffset: currentOffset, // Parent keeps its offset
-			activeChildCount: currentActiveCount + newShardCount,
-			// Preserve the highest backfilled genCount from previous sharding, or use current localGenCount if first shard
-			highestBackfilledGenCount: previousHighestBackfilled,
-		};
+
+		if (isFirstShard) {
+			// First time sharding - initialize state
+			this.shardingState = {
+				currentStride: newStride,
+				originalStride: currentStride, // Remember original stride (1 for root)
+				shardOffset: currentOffset,
+				highestBackfilledGenCount: previousHighestBackfilled,
+				activeChildIds: new Set(),
+				// Root has no shard ID - omit property rather than setting to undefined
+			};
+		} else {
+			// Already in sharding mode - update currentStride only
+			// originalStride and shardOffset never change
+			assert(this.shardingState !== undefined, "Sharding state must exist");
+			this.shardingState.currentStride = newStride;
+		}
 
 		// Create serialized shards for each child
-		// Children use the parent's ORIGINAL localGenCount (before recalculation) to determine their own
 		const shards: SerializedIdCompressorWithOngoingSession[] = [];
+
+		// Assert sharding state exists (was created above)
+		assert(this.shardingState !== undefined, "Sharding state must exist after initialization");
 
 		for (let i = 1; i <= newShardCount; i++) {
 			const childOffset = currentOffset + i * currentStride;
 
+			// Generate unique UUID for this child
+			const childShardId = createSessionId();
+
+			// Add child ID to active set
+			this.shardingState.activeChildIds.add(childShardId);
+
 			// Create a child shard with the correct sharding state
-			// Pass the original parent localGenCount so child can calculate correctly
 			const childShard = this.createChildShard(
 				newStride,
 				childOffset,
 				parentLocalGenCountBeforeShard,
+				previousHighestBackfilled,
+				childShardId,
 			);
 			shards.push(childShard);
 		}
@@ -328,26 +363,24 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		stride: number,
 		shardOffset: number,
 		parentLocalGenCountBeforeShard: number,
+		parentHighestBackfilled: number,
+		childShardId: SessionId,
 	): SerializedIdCompressorWithOngoingSession {
-		// Temporarily store parent's sharding state
+		// Save parent's state for restoration
 		const parentShardingState = this.shardingState;
 		const parentOriginalLocalGenCount = this.localGenCount;
 
-		// Child inherits parent's localGenCount - represents all IDs generated before the shard
-		// When child generates its first ID, it will calculate the next genCount in its stride
-		const parentHighestBackfilled =
-			parentShardingState?.highestBackfilledGenCount ?? parentLocalGenCountBeforeShard;
-
-		// Set child's sharding state
+		// Set child's sharding state - child starts as a leaf with no children
 		this.shardingState = {
-			stride,
+			currentStride: stride,
+			originalStride: stride, // Child's original stride is what it was created with
 			shardOffset,
-			activeChildCount: 0, // Child has no children initially
-			// Inherit parent's highest backfilled genCount to avoid re-backfilling
 			highestBackfilledGenCount: parentHighestBackfilled,
+			activeChildIds: new Set(), // Child starts with no children
+			shardId: childShardId, // Store the child's unique UUID
 		};
 
-		// Child inherits parent's localGenCount (no modification needed)
+		// Child inherits parent's localGenCount
 		this.localGenCount = parentLocalGenCountBeforeShard;
 
 		// Serialize with the child's state
@@ -374,10 +407,16 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			throw new Error("Shard must belong to this session");
 		}
 		if (this.shardingState === undefined) {
-			throw new Error("Must be in sharding mode");
+			throw new Error("Must be in sharding mode to unshard");
 		}
-		if (this.shardingState.activeChildCount <= 0) {
-			throw new Error("No active shards to unshard");
+
+		const childShardId = shardId.shardId;
+
+		// Verify this child belongs to us
+		if (!this.shardingState.activeChildIds.has(childShardId)) {
+			throw new Error(
+				`Cannot unshard child with ID ${childShardId}: not in active children set`,
+			);
 		}
 
 		const childHighestGenCount = shardId.localGenCount;
@@ -388,13 +427,20 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// Advance localGenCount to cover all IDs generated by any shard up to the child's highest
 		this.localGenCount = Math.max(this.localGenCount, childHighestGenCount);
 
-		// Decrement active shard counter
-		this.shardingState.activeChildCount--;
+		// Remove child from active set
+		this.shardingState.activeChildIds.delete(childShardId);
 
-		// Exit sharding mode if all shards have been returned
-		if (this.shardingState.activeChildCount === 0) {
-			this.shardingState = undefined;
-			// Future generateCompressedId() calls will check for eager finals again
+		// If all children are unsharded, restore original stride
+		if (this.shardingState.activeChildIds.size === 0) {
+			// Restore original stride
+			this.shardingState.currentStride = this.shardingState.originalStride;
+
+			// If originalStride === 1, we're the root with no children - exit sharding entirely
+			if (this.shardingState.originalStride === 1) {
+				this.shardingState = undefined;
+				// Future generateCompressedId() calls will check for eager finals again
+			}
+			// Otherwise, we're a shard that's now a leaf again - keep sharding state
 		}
 	}
 
@@ -411,9 +457,15 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			return undefined;
 		}
 
+		// Root cannot be disposed (shardId is undefined for root)
+		if (this.shardingState.shardId === undefined) {
+			throw new Error("Cannot dispose root compressor - only shards can be disposed");
+		}
+
 		const shardId: CompressorShardId = {
 			sessionId: this.localSessionId,
 			localGenCount: this.localGenCount,
+			shardId: this.shardingState.shardId,
 		};
 
 		// Make this compressor unusable by replacing all methods with throwing stubs
@@ -458,7 +510,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private generateNextLocalIdWithStride(): LocalCompressedId {
 		assert(this.shardingState !== undefined, "Must be in sharding mode");
 
-		const { stride, shardOffset } = this.shardingState;
+		const { shardOffset, activeChildIds, currentStride, originalStride } = this.shardingState;
+
+		// Use originalStride if we're a leaf, currentStride if we have children
+		const effectiveStride = activeChildIds.size === 0 ? originalStride : currentStride;
 
 		// Calculate the next genCount in this shard's stride sequence
 		// Sequence: offset+1, offset+1+stride, offset+1+2*stride, ...
@@ -472,15 +527,15 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		} else {
 			// Find next in sequence: base + k*stride where k is chosen so result > localGenCount
 			const distance = this.localGenCount - base;
-			const completedCycles = Math.floor(distance / stride);
-			nextGenCount = base + (completedCycles + 1) * stride;
+			const completedCycles = Math.floor(distance / effectiveStride);
+			nextGenCount = base + (completedCycles + 1) * effectiveStride;
 		}
 
 		// Backfill normalizer with ALL IDs in this stride cycle
 		// This ensures the normalizer knows about IDs generated by other shards in this cycle
 		// Example: for stride=3 and nextGenCount=7, backfill cycle [7, 8, 9]
-		const cycleNumber = Math.ceil(nextGenCount / stride);
-		const cycleEndGenCount = cycleNumber * stride;
+		const cycleNumber = Math.ceil(nextGenCount / effectiveStride);
+		const cycleEndGenCount = cycleNumber * effectiveStride;
 		this.backfillNormalizerToGenCount(cycleEndGenCount);
 
 		this.localGenCount = nextGenCount;
@@ -842,7 +897,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				? this.shardingState === undefined
 					? 1 // just the boolean indicating no sharding state
 					: 1 + // has sharding state boolean
-						4 // stride, shardOffset, activeChildCount, highestBackfilledGenCount
+						4 + // currentStride, originalStride, shardOffset, highestBackfilledGenCount
+						1 + // activeChildIds count
+						this.shardingState.activeChildIds.size * 2 + // activeChildIds (each UUID is 2 units)
+						1 + // hasShardId boolean
+						(this.shardingState.shardId === undefined ? 0 : 2) // shardId if present (UUID is 2 units)
 				: 0;
 		const localStateSize = hasLocalState
 			? 1 + // generated ID count
@@ -896,14 +955,34 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			if (this.writeVersion >= SerializationVersion.V3) {
 				index = writeBoolean(serializedFloat, index, this.shardingState !== undefined);
 				if (this.shardingState !== undefined) {
-					index = writeNumber(serializedFloat, index, this.shardingState.stride);
+					index = writeNumber(serializedFloat, index, this.shardingState.currentStride);
+					index = writeNumber(serializedFloat, index, this.shardingState.originalStride);
 					index = writeNumber(serializedFloat, index, this.shardingState.shardOffset);
-					index = writeNumber(serializedFloat, index, this.shardingState.activeChildCount);
 					index = writeNumber(
 						serializedFloat,
 						index,
 						this.shardingState.highestBackfilledGenCount,
 					);
+
+					// Write activeChildIds Set as count + array of NumericUuids
+					index = writeNumber(serializedFloat, index, this.shardingState.activeChildIds.size);
+					for (const childId of this.shardingState.activeChildIds) {
+						index = writeNumericUuid(serializedUint, index, numericUuidFromStableId(childId));
+					}
+
+					// Write shardId (optional)
+					index = writeBoolean(
+						serializedFloat,
+						index,
+						this.shardingState.shardId !== undefined,
+					);
+					if (this.shardingState.shardId !== undefined) {
+						index = writeNumericUuid(
+							serializedUint,
+							index,
+							numericUuidFromStableId(this.shardingState.shardId),
+						);
+					}
 				}
 			}
 		}
@@ -1031,11 +1110,34 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			if (version >= 3) {
 				const hasShardingState = readBoolean(index);
 				if (hasShardingState) {
+					const currentStride = readNumber(index);
+					const originalStride = readNumber(index);
+					const shardOffset = readNumber(index);
+					const highestBackfilledGenCount = readNumber(index);
+
+					// Read activeChildIds Set
+					const activeChildCount = readNumber(index);
+					const activeChildIds = new Set<SessionId>();
+					for (let i = 0; i < activeChildCount; i++) {
+						const childIdNumeric = readNumericUuid(index);
+						// Safe cast: these were serialized as SessionIds
+						activeChildIds.add(stableIdFromNumericUuid(childIdNumeric) as SessionId);
+					}
+
+					// Read shardId (optional)
+					const hasShardId = readBoolean(index);
+					const shardId: SessionId | undefined = hasShardId
+						? (stableIdFromNumericUuid(readNumericUuid(index)) as SessionId)
+						: undefined;
+
+					// Build sharding state object, conditionally including shardId
 					compressor.shardingState = {
-						stride: readNumber(index),
-						shardOffset: readNumber(index),
-						activeChildCount: readNumber(index),
-						highestBackfilledGenCount: readNumber(index),
+						currentStride,
+						originalStride,
+						shardOffset,
+						highestBackfilledGenCount,
+						activeChildIds,
+						...(shardId !== undefined && { shardId }),
 					};
 				}
 			}
