@@ -158,14 +158,15 @@ extends:
             targetType: 'filePath'
             filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/prepare-dashboard.sh'
 
-        # Publish the dashboard as a pipeline artifact
-        - task: PublishPipelineArtifact@1
-          displayName: Publish dashboard artifact
-          condition: eq(variables['shouldRun'], 'true')
-          inputs:
-            targetPath: '$(Build.ArtifactStagingDirectory)/deploy'
-            artifact: 'deploy'
-            publishLocation: 'pipeline'
+        templateContext:
+          outputParentDirectory: $(Build.ArtifactStagingDirectory)
+          outputs:
+          - output: pipelineArtifact
+            displayName: Publish dashboard artifact
+            condition: eq(variables['shouldRun'], 'true')
+            targetPath: $(Build.ArtifactStagingDirectory)/deploy
+            artifactName: deploy
+            publishLocation: pipeline
 
       # Release job: deploy to Azure Static Web Apps
       - job: deploy_to_aswa
