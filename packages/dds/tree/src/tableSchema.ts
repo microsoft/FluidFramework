@@ -77,6 +77,13 @@ export interface RowPrivate<
  * This namespace should be strictly type-exported by the package.
  * All members should be tagged with `@system`.
  *
+ * Orphaned Cells:
+ * Without safeguards, it is possible for cells to become "orphaned".
+ * An orphaned cell is a cell that does not correspond to a valid row and column.
+ * In order to preserve the invariant that all cells must have a valid row and column, table operations
+ * (eg, inserting/removing rows/columns, or setting/removing a cell) will automatically include constraints that
+ * guard transactions from producing orphaned cells.
+ *
  * @system @beta
  */
 export namespace System_TableSchema {
@@ -304,7 +311,7 @@ export namespace System_TableSchema {
 
 	/**
 	 * Factory for creating row schema.
-	 * @sealed @beta
+	 * @system @beta
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 	export function createRowSchema<
@@ -1322,10 +1329,16 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  *
  * @remarks
  *
- * WARNING: These APIs are in preview and are subject to change.
- * Until these APIs have stabilized, it is not recommended to use them in production code.
- * There may be breaking changes to these APIs and their underlying data format.
- * Using these APIs in production code may result in data loss or corruption.
+ * Note: the APIs produced by this module ensure various tabular data invariants are maintained that the raw, underlying tree structures do not.
+ * For example, they ensure that cells always correspond to existing rows and columns (and do not become "orphaned" due to row/column deletion, etc.).
+ * For this reason, direct manipulation of the underlying tree structures is not supported.
+ * To modify the data, only the APIs provided here may be used.
+ *
+ * Also note: these APIs leverage `SharedTree` functionality that was added in version `2.80.0`,
+ * which is not compatible with previous versions of this library.
+ * To ensure safe collaboration, you will need to configure the {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+ * for the Fluid Runtime and/or `SharedTree` to at least `2.80.0`.
+ * To set this minimum version for `SharedTree`, use {@link configuredSharedTreeBeta}.
  *
  * The primary APIs for create tabular data schema are:
  *
@@ -1347,11 +1360,6 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  *
  * Column and Row schema created using these APIs are extensible via the `props` field.
  * This allows association of additional properties with column and row nodes.
- *
- * There is a concept of cells in the table becoming "orphaned.". An orphaned cell is a cell that does not correspond to a valid row and column.
- * In order to preserve the invariant that all cells must have a valid row and column, table operations
- * (eg, inserting/removing rows/columns, or setting/removing a cell) will automatically include constraints that
- * guards transactions from producing orphaned cells.
  *
  * @example Defining a Table schema
  *
@@ -1609,6 +1617,11 @@ export namespace TableSchema {
 
 	/**
 	 * A key to uniquely identify a cell within a table.
+	 *
+	 * @remarks
+	 * Note that edits to the table structure (including edits by collaborators) can cause indexes to refer to different cells over time.
+	 * Therefore, it is recommended to use IDs or node references whenever possible to identify cells.
+	 *
 	 * @input @beta
 	 */
 	export interface CellKey<
@@ -1717,6 +1730,11 @@ export namespace TableSchema {
 		getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
 		/**
 		 * Gets a table column by its index in the table.
+		 *
+		 * @remarks
+		 * Note that edits to the table structure (including edits by collaborators) can cause indexes to refer to different columns over time.
+		 * Therefore, it is recommended to use IDs whenever possible to identify columns.
+		 *
 		 * @returns The column, if it exists. Otherwise, `undefined`.
 		 */
 		getColumn(index: number): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
@@ -1728,6 +1746,11 @@ export namespace TableSchema {
 		getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
 		/**
 		 * Gets a table row by its index in the table.
+		 *
+		 * @remarks
+		 * Note that edits to the table structure (including edits by collaborators) can cause indexes to refer to different rows over time.
+		 * Therefore, it is recommended to use IDs whenever possible to identify rows.
+		 *
 		 * @returns The row, if it exists. Otherwise, `undefined`.
 		 */
 		getRow(index: number): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
