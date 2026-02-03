@@ -100,18 +100,21 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				 * Changes each time shard() is called.
 				 */
 				currentStride: number;
+
 				/**
 				 * Original stride - the stride this compressor was created with.
 				 * Used when this compressor has no children (is a leaf).
 				 * IMMUTABLE after creation.
 				 */
 				originalStride: number;
+
 				/**
 				 * Set of unique child shard IDs (UUIDs) currently active.
 				 * Each child is assigned a UUID when created via shard().
 				 * Safe across serialization/deserialization cycles.
 				 */
 				activeChildIds: Set<SessionId>;
+
 				/**
 				 * This compressor's unique shard ID within its parent (if it's a child).
 				 * Undefined for root compressors.
@@ -299,20 +302,15 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				currentStride: newStride,
 				originalStride: currentStride, // Remember original stride (1 for root)
 				activeChildIds: new Set(),
-				// Root has no shard ID - omit property rather than setting to undefined
 			};
 		} else {
-			// Already in sharding mode - update currentStride only
-			// originalStride never changes
+			// Already in sharding mode, shard out current stride
 			assert(this.shardingState !== undefined, "Sharding state must exist");
 			this.shardingState.currentStride = newStride;
 		}
 
 		// Create serialized shards for each child
 		const shards: SerializedIdCompressorWithOngoingSession[] = [];
-
-		// Assert sharding state exists (was created above)
-		assert(this.shardingState !== undefined, "Sharding state must exist after initialization");
 
 		// Children are positioned at consecutive localGenCount values after parent
 		// This ensures collision-free generation without needing absolute offsets
@@ -364,13 +362,16 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// This is parent's localGenCount + offset (i * oldStride for recursive sharding)
 		this.localGenCount = childLocalGenCount;
 
-		// Serialize with the child's state
-		// Child inherits parent's normalizer (they share the same session and need to recognize pre-shard IDs)
-		const childSerialized = this.serialize(true);
-
-		// Restore parent's state
-		this.localGenCount = parentOriginalLocalGenCount;
-		this.shardingState = parentShardingState;
+		let childSerialized: SerializedIdCompressorWithOngoingSession;
+		try {
+			// Serialize with the child's state
+			// Child inherits parent's normalizer (they share the same session and need to recognize pre-shard IDs)
+			childSerialized = this.serialize(true);
+		} finally {
+			// Restore parent's state
+			this.localGenCount = parentOriginalLocalGenCount;
+			this.shardingState = parentShardingState;
+		}
 
 		return childSerialized;
 	}
