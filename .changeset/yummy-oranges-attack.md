@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 "__section": feature
 ---
-Adds optional `label` parameter to `runTransaction` for grouping changes.
+Adds optional "label" parameter to runTransaction for grouping changes
 
 Transaction labels can be used to group multiple changes for undo/redo, where groups of changes with the same label can be undone together. When multiple labels are used in nested transactions, only the outermost label will be used.
 

@@ -54,6 +54,9 @@ export const useProjectService = {
 	files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 	languageOptions: {
 		parserOptions: {
+			// Explicitly clear any inherited project setting to avoid conflicts with projectService.
+			// Newer typescript-eslint versions error if both project and projectService are enabled.
+			project: null,
 			projectService: true,
 		},
 	},

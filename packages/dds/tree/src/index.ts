@@ -371,3 +371,4 @@ export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
 export { TextAsTree, FormattedTextAsTree } from "./text/index.js";
+export { ExtensibleSchemaUnion } from "./extensibleSchemaUnion.js";
