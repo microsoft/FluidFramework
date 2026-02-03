@@ -686,7 +686,6 @@ function encodeMarkEffectV2(
 					"Only detaches representing a move out should specify a detach cell ID",
 				);
 
-				// XXX: Set final endpoint on the move in.
 				return {
 					moveOut: {
 						revision: encodeRevision(mark.detachCellId.revision),
