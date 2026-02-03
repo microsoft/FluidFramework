@@ -9,9 +9,6 @@ parameters:
   default: false
 - name: tagName
   type: string
-- name: includeInternalVersions
-  type: boolean
-  default: false
 - name: buildToolsVersionToInstall
   type: string
   default: repo
@@ -64,7 +61,6 @@ steps:
     TEST_BUILD: $(testBuild)
     VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
     VERSION_TAGNAME: ${{ parameters.tagName }}
-    VERSION_INCLUDE_INTERNAL_VERSIONS: ${{ parameters.includeInternalVersions }}
     PACKAGE_TYPES_FIELD: ${{ parameters.packageTypesOverride }}
   inputs:
     targetType: 'inline'
@@ -77,7 +73,6 @@ steps:
       echo TEST_BUILD=$TEST_BUILD
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
-      echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
       echo PACKAGE_TYPES_FIELD=$PACKAGE_TYPES_FIELD
 
       # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
