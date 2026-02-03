@@ -35,11 +35,11 @@ if [ "$BUILD_REASON" = "Schedule" ]; then
     # Check if project matches schedule mode
     if [ "$MODE" = "public" ] && [ "$IS_PUBLIC" != "True" ]; then
         echo "Skipping: Public builds schedule running in internal project"
-        echo "##vso[task.setvariable variable=shouldRun]false"
+        echo "##vso[task.setvariable variable=shouldRun;isoutput=true]false"
         exit 0
     elif [ "$MODE" = "internal" ] && [ "$IS_PUBLIC" = "True" ]; then
         echo "Skipping: Internal builds schedule running in public project"
-        echo "##vso[task.setvariable variable=shouldRun]false"
+        echo "##vso[task.setvariable variable=shouldRun;isoutput=true]false"
         exit 0
     fi
 else
@@ -52,5 +52,5 @@ else
 fi
 
 echo "Mode: $MODE"
-echo "##vso[task.setvariable variable=shouldRun]true"
-echo "##vso[task.setvariable variable=runMode]$MODE"
+echo "##vso[task.setvariable variable=shouldRun;isoutput=true]true"
+echo "##vso[task.setvariable variable=runMode;isoutput=true]$MODE"
