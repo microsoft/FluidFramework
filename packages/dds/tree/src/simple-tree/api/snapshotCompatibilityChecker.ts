@@ -271,7 +271,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 * To do this, it is recommended that this version be programmatically derived from the application version rather than hard coded inline.
 	 * For example, reading it from the `package.json` or some other source of truth can be done to ensure it is kept up to date and thus snapshots always have the correct version.
 	 * The version used should typically be the next production version (whose formats must be supported long term) that would be released from the branch of the code being worked on.
-	 * This usually means that that the correct version to use is the same version that would be used when releasing the application or library, but with any prerelease version tags removed.
+	 * This usually means that the correct version to use is the same version that would be used when releasing the application or library, but with any prerelease version tags removed.
 	 * If an automated way to keep this version up to date is not used, be very careful when reviewing changes to snapshot files to ensure the version is correct.
 	 * If incorrectly versioned snapshots were committed accidentally, rename the snapshot files to have the correct version, and restore the old files from, version control.
 	 *
