@@ -280,7 +280,7 @@ describe("IdCompressor Sharding", () => {
 			assert.equal(parentId2, -6);
 
 			// Child1 generates 1 ID
-			const child1Id1 = child1.generateCompressedId(); // localGenCount 1→4, ID=-4, backfills up to 6
+			const child1Id1 = child1.generateCompressedId(); // localGenCount 1→4, ID=-4, backfills up to 4
 			assert.equal(child1Id1, -4);
 
 			// Each shard can decompress its own IDs
@@ -288,9 +288,12 @@ describe("IdCompressor Sharding", () => {
 			assert(parent.decompress(parentId2) !== undefined);
 			assert(child1.decompress(child1Id1) !== undefined);
 
-			// Child1 can decompress parent's IDs because they're within backfilled range (up to 6)
+			// Child1 CAN decompress parent's IDs if they're within child1's backfilled range
+			// When child1 generates an ID at genCount 4, it backfills [2,3,4]
+			// parentId1 is at genCount 3, so child1 can decompress it
 			assert(child1.decompress(parentId1) !== undefined);
-			assert(child1.decompress(parentId2) !== undefined);
+			// parentId2 is at genCount 6, beyond child1's backfilled range, so it cannot decompress it
+			assert.throws(() => child1.decompress(parentId2));
 
 			// Parent generates a 3rd ID to advance beyond child1's backfilled range
 			const parentId3 = parent.generateCompressedId(); // localGenCount 6→9, ID=-9, backfills up to 9
