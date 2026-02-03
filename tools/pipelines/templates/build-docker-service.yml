@@ -119,6 +119,10 @@ trigger: none
 
 resources:
   repositories:
+  - repository: FluidFramework
+    type: github
+    name: microsoft/FluidFramework
+    endpoint: internal
   - repository: m365Pipelines
     type: git
     name: 1ESPipelineTemplates/M365GPT

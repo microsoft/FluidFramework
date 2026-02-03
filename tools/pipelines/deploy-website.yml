@@ -63,6 +63,13 @@ variables:
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
 
+resources:
+  repositories:
+    - repository: FluidFramework
+      type: github
+      name: microsoft/FluidFramework
+      endpoint: internal
+
 trigger:
   branches:
     include:

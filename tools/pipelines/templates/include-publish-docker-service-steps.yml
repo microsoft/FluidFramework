@@ -27,6 +27,13 @@ parameters:
   type: string
   default:
 
+resources:
+  repositories:
+    - repository: FluidFramework
+      type: github
+      name: microsoft/FluidFramework
+      endpoint: internal
+
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}

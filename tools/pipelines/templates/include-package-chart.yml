@@ -12,6 +12,13 @@ variables:
     value: $(Build.ArtifactStagingDirectory)/chart
     readonly: true
 
+resources:
+  repositories:
+    - repository: FluidFramework
+      type: github
+      name: microsoft/FluidFramework
+      endpoint: internal
+
 jobs:
 - job: package_chart
   displayName: Package chart

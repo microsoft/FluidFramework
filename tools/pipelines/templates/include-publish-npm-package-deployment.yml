@@ -41,6 +41,13 @@ parameters:
   type: string
   default: $(Pipeline.Workspace)/.pnpm-store
 
+resources:
+  repositories:
+    - repository: FluidFramework
+      type: github
+      name: microsoft/FluidFramework
+      endpoint: internal
+
 jobs:
 # Note: must be kept in sync with the name of the dependsOn job below
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}

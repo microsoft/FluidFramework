@@ -79,6 +79,11 @@ variables:
     value: $(Pipeline.Workspace)/.pnpm-store
 
 resources:
+  repositories:
+    - repository: FluidFramework
+      type: github
+      name: microsoft/FluidFramework
+      endpoint: internal
   pipelines:
   - pipeline: client
     source: Build - client packages

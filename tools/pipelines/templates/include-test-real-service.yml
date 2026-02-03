@@ -133,6 +133,13 @@ parameters:
   type: string
   default: 'latest'
 
+resources:
+  repositories:
+    - repository: FluidFramework
+      type: github
+      name: microsoft/FluidFramework
+      endpoint: internal
+
 stages:
 - stage: ${{ parameters.stageId }}
   ${{ if ne(parameters.lockBehavior, 'none') }}:
