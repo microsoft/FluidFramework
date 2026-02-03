@@ -25,7 +25,7 @@ import {
 	setupForestForIncrementalSummarization,
 } from "./forestSummarizerTestUtils.js";
 
-describe.only("Forest Summarizer benchmarks", () => {
+describe("Forest Summarizer benchmarks", () => {
 	// Scale test parameters based on performance testing mode
 	const itemCounts = isInPerformanceTestingMode ? [1000, 10000, 50000] : [10, 100, 1000];
 
