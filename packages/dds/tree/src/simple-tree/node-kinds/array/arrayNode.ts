@@ -132,8 +132,11 @@ export interface TreeArrayNode<
 	 * Inserts new item(s) at the end of the array.
 	 *
 	 * @remarks
-	 * This method has the same behavior as `{@link insertAtEnd}`.
-	 * The merge semantics for concurrent inserts or moves to the same position are unspecified.
+	 * The order of the inserted items relative to other concurrently inserted items at the same location is only partially specified:
+	 * Concurrently inserting `[A, B]` and `[X, Y]` at the same location may yield
+	 * either `[A, B, X, Y]` or `[X, Y, A, B]`, regardless of the order in which those edits are sequenced.
+	 * No other interleavings are possible. (e.g. `[A, X, B, Y]` is not possible.)
+	 *
 	 * @param value - The content to insert.
 	 */
 	push(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
