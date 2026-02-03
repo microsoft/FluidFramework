@@ -592,7 +592,6 @@ extends:
           tagName: ${{ parameters.tagName }}
           isReleaseGroup: ${{ parameters.isReleaseGroup }}
           buildDirectory: ${{ parameters.buildDirectory }}
-          buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
     - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
       - stage: publish_docker_official

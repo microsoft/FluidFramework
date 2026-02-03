@@ -29,18 +29,6 @@ parameters:
   type: string
   default:
 
-- name: buildDirectory
-  type: string
-
-- name: buildToolsVersionToInstall
-  type: string
-  default: repo
-
-# The path to the pnpm store.
-- name: pnpmStorePath
-  type: string
-  default: $(Pipeline.Workspace)/.pnpm-store
-
 jobs:
 # Note: must be kept in sync with the name of the dependsOn job below
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
