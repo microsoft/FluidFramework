@@ -399,7 +399,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * import fs from "node:fs";
  * import path from "node:path";
  *
- * import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/beta";
+ * import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/alpha";
  *
  * // The TreeViewConfiguration the application uses, which contains the application's schema.
  * import { treeViewConfiguration } from "./schema.js";
