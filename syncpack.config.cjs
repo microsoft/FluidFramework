@@ -120,17 +120,18 @@ module.exports = {
 			dependencies: [
 				"@biomejs/biome",
 				"@eslint-community/*",
+				"@eslint/*",
 				"@rushstack/eslint-*",
 				"@typescript-eslint/*",
 				"eslint-config-*",
 				"eslint-config-prettier",
 				"eslint-import-resolver-typescript",
 				"eslint-plugin-*",
-				"eslint-config-prettier",
 				"eslint",
 				"less",
 				"prettier",
 				"typescript",
+				"typescript-eslint",
 				"vue",
 				"webpack-dev-server",
 
@@ -162,6 +163,14 @@ module.exports = {
 			range: "~",
 		},
 
+		// `@types` packages should often use `~` to avoid pulling in newer types with more features than the code they are the types for.
+		{
+			label: "Must use tilde dependency ranges",
+			dependencies: ["@types/node"],
+			packages: ["**"],
+			range: "~",
+		},
+
 		// All deps should use caret ranges unless previously overridden
 		{
 			label: "Dependencies should use caret dependency ranges",
@@ -185,7 +194,13 @@ module.exports = {
 		{
 			label:
 				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
-			dependencies: ["react-virtualized-auto-sizer", "@types/react", "@types/react-dom"],
+			dependencies: [
+				// TODO: Remove @biomejs/biome once all packages are updated to the latest version
+				"@biomejs/biome",
+				"react-virtualized-auto-sizer",
+				"@types/react",
+				"@types/react-dom",
+			],
 			packages: ["**"],
 			isIgnored: true,
 		},

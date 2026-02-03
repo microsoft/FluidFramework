@@ -6,13 +6,15 @@
 import path from "node:path";
 
 import { RevisionTagCodec } from "../../../core/index.js";
-import { SequenceField } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
+
 import { generatePopulatedMarks } from "./populatedMarks.js";
 
-export function testSnapshots() {
+export function testSnapshots(): void {
 	describe("Snapshots", () => {
 		const compressor = createSnapshotCompressor();
 		const baseContext = {
@@ -21,9 +23,7 @@ export function testSnapshots() {
 			idCompressor: testIdCompressor,
 		};
 
-		const family = SequenceField.sequenceFieldChangeCodecFactory(
-			new RevisionTagCodec(compressor),
-		);
+		const family = sequenceFieldChangeCodecFactory(new RevisionTagCodec(compressor));
 		const marks = generatePopulatedMarks(compressor);
 		for (const version of family.getSupportedFormats()) {
 			describe(`version ${version}`, () => {

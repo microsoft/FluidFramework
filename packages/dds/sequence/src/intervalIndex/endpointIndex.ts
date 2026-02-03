@@ -8,7 +8,7 @@ import { Client, RedBlackTree } from "@fluidframework/merge-tree/internal";
 import { createTransientInterval, SequenceInterval } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
-import { type SequenceIntervalIndex } from "./intervalIndex.js";
+import type { SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
  * @internal
@@ -62,6 +62,8 @@ export class EndpointIndex implements IEndpointIndex {
 }
 
 /**
+ * Creates an endpoint index for the provided SharedString.
+ *
  * @internal
  */
 export function createEndpointIndex(sharedString: ISharedString): IEndpointIndex {

@@ -6,9 +6,9 @@
 import { readFile, writeFile } from "node:fs/promises";
 import type { IPackage } from "@fluid-tools/build-infrastructure";
 import {
-	type VersionBumpType,
 	bumpVersionScheme,
 	isInternalVersionScheme,
+	type VersionBumpType,
 } from "@fluid-tools/version-tools";
 import { inc } from "semver";
 

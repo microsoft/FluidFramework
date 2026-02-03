@@ -143,6 +143,9 @@ function tscOutput(
 		throw new Error(`Error parsing ${pkg.name} tsc command line: ${commandLine}`);
 	}
 	const configFile = tscUtils.findConfigFile(packageDir, parsedCommand);
+	if (configFile === undefined) {
+		throw new Error(`Could not find config file for ${pkg.name} in ${packageDir}`);
+	}
 	const configJson = tscUtils.readConfigFile(configFile) as TsConfigJson;
 	if (configJson === undefined) {
 		throw new Error(`Failed to load config file '${configFile}'`);
@@ -237,10 +240,7 @@ export class FluidBuildDatabase {
 		packageGroup: ReadonlyMap<PackageName, Package>,
 		packageName: PackageName,
 		script: Script,
-		ignorePackage?: (packageInfo: {
-			name: string;
-			version: string;
-		}) => boolean,
+		ignorePackage?: (packageInfo: { name: string; version: string }) => boolean,
 	): BuildScript[][] {
 		const pkg = packageGroup.get(packageName);
 		if (pkg === undefined) {

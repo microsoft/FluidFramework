@@ -61,6 +61,8 @@ const odspSessionOptions: OptionsMatrix<ICollabSessionOptions> = {
 };
 
 /**
+ * Generates pairwise combinations of ODSP host storage policy configurations for testing.
+ *
  * @internal
  */
 export const generateOdspHostStoragePolicy = (seed: number): HostStoragePolicy[] => {

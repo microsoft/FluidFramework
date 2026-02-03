@@ -1,8 +1,8 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
 import { minimalDeprecated } from "../../../common/build/eslint-config-fluid/flat.mts";
 
@@ -10,9 +10,10 @@ const config: Linter.Config[] = [
 	...minimalDeprecated,
 	{
 		rules: {
-			"prefer-arrow-callback": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+			"@typescript-eslint/explicit-function-return-type": "warn",
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			"prefer-arrow-callback": "off",
 			"import-x/no-nodejs-modules": ["error"],
 			"@typescript-eslint/no-restricted-imports": [
 				"error",
@@ -102,6 +103,9 @@ const config: Linter.Config[] = [
 		},
 	},
 	{
+		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
+		// This is a test-only package without a root tsconfig.json, so typescript-eslint's
+		// projectService can't auto-discover the project configuration.
 		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 		languageOptions: {
 			parserOptions: {

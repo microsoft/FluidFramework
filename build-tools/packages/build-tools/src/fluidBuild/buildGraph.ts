@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import type { AsyncPriorityQueue } from "async";
+import registerDebug from "debug";
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 import * as semver from "semver";
-
-import * as assert from "assert";
-import registerDebug from "debug";
 import type { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import type { Package } from "../common/npmPackage";
@@ -19,13 +18,13 @@ import { BuildResult, summarizeBuildResult } from "./buildResult";
 import { FileHashCache } from "./fileHashCache";
 import type { IFluidBuildConfig } from "./fluidBuildConfig";
 import {
+	getDefaultTaskDefinition,
+	getTaskDefinitions,
+	normalizeGlobalTaskDefinitions,
 	type TaskDefinition,
 	type TaskDefinitions,
 	type TaskDefinitionsOnDisk,
 	type TaskFileDependencies,
-	getDefaultTaskDefinition,
-	getTaskDefinitions,
-	normalizeGlobalTaskDefinitions,
 } from "./fluidTaskDefinitions";
 import { options } from "./options";
 import { Task, type TaskExec } from "./tasks/task";
@@ -93,7 +92,7 @@ export class BuildPackage {
 		);
 	}
 
-	public createTasks(buildTaskNames: string[]) {
+	public createTasks(buildTaskNames: string[]): boolean | undefined {
 		const taskNames = buildTaskNames;
 		if (taskNames.length === 0) {
 			return undefined;
@@ -146,7 +145,7 @@ export class BuildPackage {
 		return undefined;
 	}
 
-	private createTask(taskName: string, pendingInitDep: Task[]) {
+	private createTask(taskName: string, pendingInitDep: Task[]): Task | undefined {
 		const config = this.getTaskDefinition(taskName);
 		if (config?.script === false) {
 			const task = TaskFactory.CreateTargetTask(this, this.context, taskName);
@@ -162,7 +161,7 @@ export class BuildPackage {
 		taskName: string,
 		pendingInitDep: Task[],
 		files: TaskFileDependencies | undefined,
-	) {
+	): Task | undefined {
 		const command = this.pkg.getScript(taskName);
 		if (command !== undefined && !command.startsWith("fluid-build ")) {
 			// Find the script task (without the lifecycle task)
@@ -201,7 +200,7 @@ export class BuildPackage {
 		return undefined;
 	}
 
-	private ensureScriptTask(taskName: string, pendingInitDep: Task[]) {
+	private ensureScriptTask(taskName: string, pendingInitDep: Task[]): Task | undefined {
 		const scriptTask = this.scriptTasks.get(taskName);
 		if (scriptTask !== undefined) {
 			return scriptTask;
@@ -258,7 +257,7 @@ export class BuildPackage {
 		return this.createScriptTask(taskName, pendingInitDep, config?.files);
 	}
 
-	public getDependsOnTasks(task: Task, taskName: string, pendingInitDep: Task[]) {
+	public getDependsOnTasks(task: Task, taskName: string, pendingInitDep: Task[]): Task[] {
 		const taskConfig = this.getTaskDefinition(taskName);
 		if (taskConfig === undefined) {
 			return [];
@@ -271,7 +270,7 @@ export class BuildPackage {
 	}
 
 	// Create or get the task with names in the `deps` array
-	private getMatchedTasks(deps: readonly string[], pendingInitDep?: Task[]) {
+	private getMatchedTasks(deps: readonly string[], pendingInitDep?: Task[]): Task[] {
 		const matchedTasks: Task[] = [];
 		for (const dep of deps) {
 			// If pendingInitDep is undefined, that mean we don't expect the task to be found, so pretend that we already found it.
@@ -321,12 +320,12 @@ export class BuildPackage {
 		return matchedTasks;
 	}
 
-	public finalizeDependentTasks() {
+	public finalizeDependentTasks(): void {
 		// Set up the dependencies for "before" and "after"
 
 		// Get the beforeStar and afterStar tasks name on demand
 		let beforeStarTaskNames: string[] | undefined;
-		const getBeforeStarTaskNames = () => {
+		const getBeforeStarTaskNames = (): string[] => {
 			if (beforeStarTaskNames !== undefined) {
 				return beforeStarTaskNames;
 			}
@@ -338,7 +337,7 @@ export class BuildPackage {
 		};
 
 		let afterStarTaskNames: string[] | undefined;
-		const getAfterStarTaskNames = () => {
+		const getAfterStarTaskNames = (): string[] => {
 			if (afterStarTaskNames !== undefined) {
 				return afterStarTaskNames;
 			}
@@ -350,14 +349,14 @@ export class BuildPackage {
 		};
 
 		// Expand the star entry to all scheduled tasks
-		const expandStar = (deps: readonly string[], getTaskNames: () => string[]) => {
+		const expandStar = (deps: readonly string[], getTaskNames: () => string[]): string[] => {
 			const newDeps = deps.filter((dep) => dep !== "*");
 			if (newDeps.length === deps.length) {
 				return newDeps;
 			}
 			return newDeps.concat(getTaskNames());
 		};
-		const finalizeTask = (task: Task) => {
+		const finalizeTask = (task: Task): void => {
 			assert.notStrictEqual(task.taskName, undefined);
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -397,13 +396,13 @@ export class BuildPackage {
 		this.tasks.forEach(finalizeTask);
 	}
 
-	public initializeDependentLeafTasks() {
+	public initializeDependentLeafTasks(): void {
 		this.tasks.forEach((task) => {
 			task.initializeDependentLeafTasks();
 		});
 	}
 
-	public initializeWeight() {
+	public initializeWeight(): void {
 		this.tasks.forEach((task) => {
 			task.initializeWeight();
 		});
@@ -439,7 +438,7 @@ export class BuildPackage {
 		return this.buildP;
 	}
 
-	public async getLockFileHash() {
+	public async getLockFileHash(): Promise<string> {
 		const lockfile = this.pkg.getLockFilePath();
 		if (lockfile) {
 			return this.context.fileHashCache.getFileHash(lockfile);
@@ -502,7 +501,7 @@ export class BuildGraph {
 		this.initializeTasks(buildTaskNames);
 	}
 
-	private async isUpToDate() {
+	private async isUpToDate(): Promise<boolean> {
 		try {
 			const isUpToDateP = new Array<Promise<boolean>>();
 			this.buildPackages.forEach((node) => {
@@ -516,7 +515,7 @@ export class BuildGraph {
 		}
 	}
 
-	public async checkInstall() {
+	public async checkInstall(): Promise<boolean> {
 		let succeeded = true;
 		for (const buildPackage of this.buildPackages.values()) {
 			if (!(await buildPackage.pkg.checkInstall())) {
@@ -606,7 +605,7 @@ export class BuildGraph {
 		pkg: Package,
 		globalTaskDefinitions: TaskDefinitions,
 		pendingInitDep: BuildPackage[],
-	) {
+	): BuildPackage {
 		let buildPackage = this.buildPackages.get(pkg);
 		if (buildPackage === undefined) {
 			try {
@@ -629,7 +628,7 @@ export class BuildGraph {
 		releaseGroupPackages: Package[],
 		globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk | undefined,
 		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
-	) {
+	): void {
 		const globalTaskDefinitions = normalizeGlobalTaskDefinitions(globalTaskDefinitionsOnDisk);
 		const pendingInitDep: BuildPackage[] = [];
 		for (const pkg of packages.values()) {
@@ -693,9 +692,9 @@ export class BuildGraph {
 		traceGraph("package dependencies initialized");
 	}
 
-	private populateLevel() {
+	private populateLevel(): void {
 		// level is not strictly necessary, except for circular reference.
-		const getLevel = (node: BuildPackage, parent?: BuildPackage) => {
+		const getLevel = (node: BuildPackage, parent?: BuildPackage): number => {
 			if (node.level === -2) {
 				throw new Error(
 					`Circular Reference detected ${parent ? parent.pkg.nameColored : "<none>"} -> ${
@@ -721,7 +720,7 @@ export class BuildGraph {
 		traceGraph("package dependency level initialized");
 	}
 
-	private initializeTasks(buildTaskNames: string[]) {
+	private initializeTasks(buildTaskNames: string[]): void {
 		let hasTask = false;
 		this.buildPackages.forEach((node) => {
 			if (options.matchedOnly && !node.pkg.matched) {

@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 import { EOL as newline } from "node:os";
-import * as path from "node:path";
+import path from "node:path";
 import process from "node:process";
 import { Flags } from "@oclif/core";
 
@@ -14,8 +14,8 @@ import {
 	BaseCommand,
 	type Context,
 	type Handler,
-	Repository,
 	policyHandlers,
+	Repository,
 } from "../../library/index.js";
 
 type policyAction = "handle" | "resolve" | "final";
@@ -313,7 +313,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	): Promise<void> {
 		const { exclusions, gitRoot, pathRegex } = commandContext;
 
-		const filePath = path.join(gitRoot, inputPath).trim().replace(/\\/g, "/");
+		const filePath = path.join(gitRoot, inputPath).trim().replaceAll("\\", "/");
 		assert(path.isAbsolute(filePath) === true);
 
 		if (!pathRegex.test(inputPath) || !fs.existsSync(filePath)) {

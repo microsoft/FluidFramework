@@ -295,6 +295,7 @@ export class ConsensusRegisterCollection<T>
 				case "write": {
 					// backward compatibility: File at rest written with runtime <= 0.13 do not have refSeq
 					// when the refSeq property didn't exist
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (op.refSeq === undefined) {
 						op.refSeq = messageEnvelope.referenceSequenceNumber;
 					}
@@ -431,7 +432,12 @@ export class ConsensusRegisterCollection<T>
 		this.internalEvents.emit("pendingMessageRollback", localOpMetadata);
 	}
 
-	protected applyStashedOp(): void {
-		// empty implementation
+	protected applyStashedOp(content: unknown): void {
+		const op = content as IIncomingRegisterOperation<T>;
+		assert(op.type === "write", "Only write ops should be stashed");
+		// Submit the original op (preserving its refSeq) so we can match the ACK
+		// when it arrives during remote op processing.
+		const pendingMessageId = this.nextPendingMessageId++;
+		this.submitLocalMessage(op, pendingMessageId);
 	}
 }

@@ -167,6 +167,7 @@ export function generateConfigurations(
 }
 
 /**
+ * Extracts the appropriate option override from test configuration based on driver type and endpoint.
  *
  * @param testConfig - the ILoadTestConfig to extract the Option Override from
  * @param driverType - the DriverType being used in the test, used to determine which option override to pick
