@@ -567,6 +567,7 @@ export function checkSchemaCompatibilitySnapshots(
 		selectedMinVersionForCollaborationSnapshot = selectVersionRoundedDown(
 			minVersionForCollaboration,
 			compatibilityMap,
+			versionComparer,
 		);
 		if (selectedMinVersionForCollaborationSnapshot === undefined) {
 			compatibilityErrors.push(
@@ -579,7 +580,7 @@ export function checkSchemaCompatibilitySnapshots(
 		// Current should be able to view all versions.
 		if (!compatibility.currentViewOfSnapshotDocument.canUpgrade) {
 			compatibilityErrors.push(
-				`Current version ${JSON.stringify(currentVersion)} cannot upgrade documents from ${JSON.stringify(snapshotVersion)}.`,
+				`Current version ${JSON.stringify(currentVersion)} cannot upgrade documents froPm ${JSON.stringify(snapshotVersion)}.`,
 			);
 		}
 

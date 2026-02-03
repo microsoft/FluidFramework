@@ -616,6 +616,114 @@ Snapshots exist for versions: [
 				),
 			);
 		});
+
+		it("custom versionComparer", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+
+			const factory = new SchemaFactoryBeta("test");
+
+			const versionComparer = (a: string, b: string): number => {
+				// Simple numeric comparer for versions like "1", "2.5", "3" etc.
+				return Number.parseFloat(a) - Number.parseFloat(b);
+			};
+
+			class Point1 extends factory.object("Point", {
+				x: factory.number,
+				y: factory.number,
+			}) {}
+
+			class Point2 extends factory.object(
+				"Point",
+				{
+					x: factory.number,
+					y: factory.number,
+				},
+				{ allowUnknownOptionalFields: true },
+			) {}
+
+			class Point3 extends factory.object("Point", {
+				x: factory.number,
+				y: factory.number,
+				z: factory.optional(factory.number),
+			}) {}
+
+			checkSchemaCompatibilitySnapshots({
+				version: "1",
+				schema: new TreeViewConfiguration({ schema: Point1 }),
+				fileSystem,
+				minVersionForCollaboration: "1",
+				mode: "update",
+				snapshotDirectory,
+				versionComparer,
+			});
+
+			checkSchemaCompatibilitySnapshots({
+				version: "1.5",
+				schema: new TreeViewConfiguration({ schema: Point1 }),
+				fileSystem,
+				minVersionForCollaboration: "1",
+				mode: "update",
+				snapshotDirectory,
+				versionComparer,
+			});
+
+			checkSchemaCompatibilitySnapshots({
+				version: "2",
+				schema: new TreeViewConfiguration({ schema: Point2 }),
+				fileSystem,
+				minVersionForCollaboration: "1",
+				mode: "update",
+				snapshotDirectory,
+				versionComparer,
+			});
+
+			assert.throws(
+				() =>
+					checkSchemaCompatibilitySnapshots({
+						version: "3",
+						schema: new TreeViewConfiguration({ schema: Point3 }),
+						fileSystem,
+						minVersionForCollaboration: "1",
+						mode: "test",
+						snapshotDirectory,
+						versionComparer,
+					}),
+				validateError(
+					`Schema compatibility check failed:
+ - Snapshot for current version "3" is out of date: schema has changed since latest existing snapshot version "2". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
+ - Historical version "1" cannot view documents from "3": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being "1".
+Snapshots in: "dir".
+Snapshots exist for versions: [
+  "1",
+  "2"
+].`,
+				),
+			);
+
+			checkSchemaCompatibilitySnapshots({
+				version: "3",
+				schema: new TreeViewConfiguration({ schema: Point3 }),
+				fileSystem,
+				minVersionForCollaboration: "2",
+				mode: "update",
+				snapshotDirectory,
+				versionComparer,
+			});
+
+			checkSchemaCompatibilitySnapshots({
+				version: "4",
+				schema: new TreeViewConfiguration({ schema: Point3 }),
+				fileSystem,
+				minVersionForCollaboration: "2",
+				mode: "test",
+				snapshotDirectory,
+				versionComparer,
+			});
+
+			// Confirm no snapshots were created during the failed test above since it was in test mode.
+			assert.deepEqual([...snapshots.keys()], [1, 2, 3]);
+		});
 	});
 
 	it("getCompatibility", () => {
