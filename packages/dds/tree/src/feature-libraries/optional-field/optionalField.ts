@@ -115,9 +115,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const rebasedChild = rebaseChild(newChange.childChange, overChange.childChange);
 		const overDetach = getEffectiveDetachId(overChange);
+
+		// Note that composition ignores rebase version, and so will create node detaches even we are supporting collaboration with older clients.
+		// Therefore, in rebase version 1 we must rebase node detach as if it were a clear, matching the behavior of older clients.
+		const hasLegacyNodeDetach =
+			newChange.nodeDetach !== undefined && rebaseVersion < 2 && !isPin(newChange);
+
 		if (overDetach !== undefined) {
-			const nodeDetach =
-				rebaseVersion < 2 && !isPin(newChange) ? undefined : newChange.nodeDetach;
+			const nodeDetach = hasLegacyNodeDetach ? undefined : newChange.nodeDetach;
 			nodeManager.rebaseOverDetach(overDetach, 1, nodeDetach, rebasedChild);
 		}
 
@@ -148,7 +153,20 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
-		if (newChange.valueReplace !== undefined) {
+		if (hasLegacyNodeDetach && overDetach !== undefined) {
+			// In order to emulate the rebasing behavior of older clients,
+			// we convert the node detach to a clear.
+			const valueReplace: Mutable<Replace> = {
+				dst: newChange.nodeDetach,
+				isEmpty: overChange.valueReplace?.src === undefined,
+			};
+
+			if (newChange.valueReplace?.src !== undefined) {
+				valueReplace.src = newChange.valueReplace.src;
+			}
+
+			rebased.valueReplace = valueReplace;
+		} else if (newChange.valueReplace !== undefined) {
 			const isEmpty =
 				overDetach !== undefined || overChange.valueReplace !== undefined
 					? overChange.valueReplace?.src === undefined
@@ -268,9 +286,7 @@ function composeNodeDetaches(
 		return change1.nodeDetach;
 	}
 
-	return detach1 !== undefined || change1.valueReplace?.isEmpty === true
-		? undefined
-		: change2.nodeDetach;
+	return change1.valueReplace === undefined ? change2.nodeDetach : undefined;
 }
 
 function composeReplaces(
