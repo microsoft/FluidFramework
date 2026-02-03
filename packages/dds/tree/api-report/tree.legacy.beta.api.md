@@ -89,11 +89,6 @@ Kind
 // @beta
 export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
 
-// @beta @input
-export interface CodecWriteOptionsBeta {
-    readonly minVersionForCollab: MinimumVersionForCollab;
-}
-
 // @public
 export enum CommitKind {
     Default = 0,
@@ -579,7 +574,7 @@ export const SharedTreeAttributes: IChannelAttributes;
 export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
 
 // @beta @input
-export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
+export type SharedTreeOptionsBeta = ForestOptions;
 
 // @public @sealed @system
 export interface SimpleNodeSchemaBase<out TNodeKind extends NodeKind, out TCustomMetadata = unknown> {

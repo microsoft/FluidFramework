@@ -138,9 +138,11 @@ export interface ICodecOptions {
 
 /**
  * Options relating to encoding of persisted data.
- * @input @beta
+ * @remarks
+ * Extends {@link ICodecOptions} with options that are specific to encoding data.
+ * @alpha @input
  */
-export interface CodecWriteOptionsBeta {
+export interface CodecWriteOptions extends ICodecOptions {
 	/**
 	 * The minimum version of the Fluid Framework client output must be encoded to be compatible with.
 	 * @remarks
@@ -151,24 +153,16 @@ export interface CodecWriteOptionsBeta {
 	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
 	readonly minVersionForCollab: MinimumVersionForCollab;
-}
 
-/**
- * Options relating to encoding of persisted data.
- * @remarks
- * Extends {@link ICodecOptions} with options that are specific to encoding data.
- * @alpha @input
- */
-export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta {
 	/**
 	 * Overrides the version of the codec to use for encoding.
 	 * @remarks
-	 * Without an override, the selected version will be based on {@link CodecWriteOptionsBeta.minVersionForCollab}.
+	 * Without an override, the selected version will be based on {@link CodecWriteOptions.minVersionForCollab}.
 	 */
 	readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
 
 	/**
-	 * If true, suppress errors when `writeVersionOverrides` selects a version which may not be compatible with the {@link CodecWriteOptionsBeta.minVersionForCollab}.
+	 * If true, suppress errors when `writeVersionOverrides` selects a version which may not be compatible with the {@link CodecWriteOptions.minVersionForCollab}.
 	 */
 	readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
 }

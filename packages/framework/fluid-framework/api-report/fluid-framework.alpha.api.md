@@ -165,14 +165,10 @@ export function cloneWithReplacements(root: unknown, rootKey: string, replacer: 
 export type CodecName = string;
 
 // @alpha @input
-export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta {
+export interface CodecWriteOptions extends ICodecOptions {
     readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
-    readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
-}
-
-// @beta @input
-export interface CodecWriteOptionsBeta {
     readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
 }
 
 // @public
@@ -1506,7 +1502,7 @@ export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecW
 }
 
 // @beta @input
-export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
+export type SharedTreeOptionsBeta = ForestOptions;
 
 // @alpha @sealed
 export interface SimpleAllowedTypeAttributes<out Type extends SchemaType = SchemaType> {

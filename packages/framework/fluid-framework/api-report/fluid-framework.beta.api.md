@@ -96,11 +96,6 @@ export enum AttachState {
     Detached = "Detached"
 }
 
-// @beta @input
-export interface CodecWriteOptionsBeta {
-    readonly minVersionForCollab: MinimumVersionForCollab;
-}
-
 // @public
 export enum CommitKind {
     Default = 0,
@@ -939,7 +934,7 @@ export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedTyp
 export const SharedTree: SharedObjectKind<ITree>;
 
 // @beta @input
-export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
+export type SharedTreeOptionsBeta = ForestOptions;
 
 // @public @sealed @system
 export interface SimpleNodeSchemaBase<out TNodeKind extends NodeKind, out TCustomMetadata = unknown> {

@@ -319,7 +319,6 @@ export { persistedToSimpleSchema } from "./shared-tree/index.js";
 export {
 	type ICodecOptions,
 	type CodecWriteOptions,
-	type CodecWriteOptionsBeta,
 	FluidClientVersion,
 	type FormatValidator,
 	FormatValidatorNoOp,

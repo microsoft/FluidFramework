@@ -10,7 +10,6 @@ export {
 	type ICodecFamily,
 	type ICodecOptions,
 	type CodecWriteOptions,
-	type CodecWriteOptionsBeta,
 	type IDecoder,
 	type IEncoder,
 	type IJsonCodec,

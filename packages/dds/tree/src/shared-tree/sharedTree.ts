@@ -21,7 +21,6 @@ import {
 import {
 	type CodecTree,
 	type CodecWriteOptions,
-	type CodecWriteOptionsBeta,
 	DependentFormatVersion,
 	FluidClientVersion,
 	FormatValidatorNoOp,
@@ -613,7 +612,7 @@ export function getCodecTreeForSharedTreeFormat(
  * Configuration options for SharedTree.
  * @beta @input
  */
-export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
+export type SharedTreeOptionsBeta = ForestOptions;
 
 /**
  * Configuration options for SharedTree with alpha features.

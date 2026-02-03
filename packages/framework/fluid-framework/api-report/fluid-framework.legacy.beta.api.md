@@ -96,11 +96,6 @@ export enum AttachState {
     Detached = "Detached"
 }
 
-// @beta @input
-export interface CodecWriteOptionsBeta {
-    readonly minVersionForCollab: MinimumVersionForCollab;
-}
-
 // @public
 export enum CommitKind {
     Default = 0,
@@ -1297,7 +1292,7 @@ export type SharedStringSegment = TextSegment | Marker;
 export const SharedTree: SharedObjectKind<ITree>;
 
 // @beta @input
-export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
+export type SharedTreeOptionsBeta = ForestOptions;
 
 export { Side }
 
