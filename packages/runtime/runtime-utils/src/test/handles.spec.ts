@@ -22,10 +22,9 @@ describe("Handles", () => {
 			assert(!isFluidHandle({ get: () => {} }));
 			assert(!isFluidHandle({ IFluidHandle: 5, get: () => {} }));
 
-			// Legacy compatibility for non symbol based handle
 			const loopy = { IFluidHandle: {} };
 			loopy.IFluidHandle = loopy;
-			assert(isFluidHandle(loopy));
+			assert(!isFluidHandle(loopy));
 			assert(!isFluidHandle({ IFluidHandle: 5 }));
 			assert(!isFluidHandle({ IFluidHandle: {} }));
 			// eslint-disable-next-line unicorn/no-null -- We want to explicitly test for null
