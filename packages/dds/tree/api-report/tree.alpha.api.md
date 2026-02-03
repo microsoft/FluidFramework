@@ -201,15 +201,15 @@ export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: nu
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
 // @alpha
-export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions & (({
-    idCompressor?: IIdCompressor | undefined;
-} & {
-    content?: undefined;
+export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: CreateIndependentTreeAlphaOptions): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+
+// @alpha
+export type CreateIndependentTreeAlphaOptions = ForestOptions & ((IndependentViewOptions & {
+    content?: never;
 }) | (ICodecOptions & {
     content: ViewContent;
-} & {
-    idCompressor?: undefined;
-}))): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+    idCompressor?: never;
+}));
 
 // @beta
 export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
@@ -473,9 +473,12 @@ export const incrementalSummaryHint: unique symbol;
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeViewAlpha<TSchema>;
 
 // @alpha
-export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: ForestOptions & {
+export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: IndependentViewOptions): TreeViewAlpha<TSchema>;
+
+// @alpha @input
+export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
     idCompressor?: IIdCompressor | undefined;
-}): TreeViewAlpha<TSchema>;
+}
 
 // @public @system
 type _InlineTrick = 0;
@@ -1563,6 +1566,8 @@ export interface TreeBranchAlpha extends TreeBranch {
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
+    runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>, params?: RunTransactionParams): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+    runTransactionAsync(transaction: () => Promise<VoidTransactionCallbackStatus | void>, params?: RunTransactionParams): Promise<TransactionResult>;
 }
 
 // @alpha @sealed
