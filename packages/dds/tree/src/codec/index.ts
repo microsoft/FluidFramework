@@ -29,6 +29,7 @@ export {
 	jsonableCodecTree,
 	extractJsonValidator,
 	type CodecName,
+	eraseEncodedType,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,

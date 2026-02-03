@@ -17,6 +17,7 @@ import { z } from "zod";
 
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
+import { fluidHandleTypeName } from "./prompt.js";
 import { getExposedProperties, type PropertyDef } from "./propertyBinding.js";
 import {
 	instanceOfsTypeFactory,
@@ -290,7 +291,9 @@ export function renderSchemaTypeScript(
 					lines.push(`// ${note}`);
 				}
 			}
-			lines.push(formatMethod(name, method));
+			const methodString = formatMethod(name, method);
+			const methodLines = methodString.split("\n");
+			lines.push(...methodLines);
 		}
 		if (lines.length > 0) {
 			hasHelperMethods = true;
@@ -440,7 +443,11 @@ function renderPropertyLines(properties: Record<string, PropertyDef>): string[] 
 			}
 		}
 		const modifier = property.readOnly ? "readonly " : "";
-		lines.push(`${modifier}${name}: ${renderType(property.schema)};`);
+		const typeString = renderType(property.schema, 0);
+		const propertyLine = `${modifier}${name}: ${typeString};`;
+		// Split multi-line type strings and add to lines array
+		const propertyLines = propertyLine.split("\n");
+		lines.push(...propertyLines);
 	}
 	return lines;
 }
@@ -449,13 +456,13 @@ function formatMethod(name: string, method: FunctionWrapper): string {
 	const args: string[] = [];
 	for (const [argName, argType] of method.args) {
 		const { innerType, optional } = unwrapOptional(argType);
-		const renderedType = renderType(innerType);
+		const renderedType = renderType(innerType, 0);
 		args.push(`${argName}${optional ? "?" : ""}: ${renderedType}`);
 	}
 	if (method.rest !== null) {
-		args.push(`...rest: ${renderType(method.rest)}[]`);
+		args.push(`...rest: ${renderType(method.rest, 0)}[]`);
 	}
-	return `${name}(${args.join(", ")}): ${renderType(method.returns)};`;
+	return `${name}(${args.join(", ")}): ${renderType(method.returns, 0)};`;
 }
 
 function renderLeaf(leafKind: ValueSchema): string {
@@ -472,8 +479,11 @@ function renderLeaf(leafKind: ValueSchema): string {
 		case ValueSchema.Null: {
 			return "null";
 		}
+		case ValueSchema.FluidHandle: {
+			return fluidHandleTypeName;
+		}
 		default: {
-			throw new Error(`Unsupported leaf kind ${NodeKind[leafKind]}.`);
+			throw new Error(`Unsupported leaf kind.`);
 		}
 	}
 }
@@ -532,8 +542,8 @@ function ensureNoMemberConflicts(
 /**
  * Dispatches to the correct renderer based on whether the type is Zod or type factory.
  */
-function renderType(type: z.ZodTypeAny | TypeFactoryType): string {
+function renderType(type: z.ZodTypeAny | TypeFactoryType, indentLevel: number = 0): string {
 	return isTypeFactoryType(type)
-		? renderTypeFactoryTypeScript(type, getFriendlyName, instanceOfsTypeFactory)
+		? renderTypeFactoryTypeScript(type, getFriendlyName, instanceOfsTypeFactory, indentLevel)
 		: renderZodTypeScript(type, getFriendlyName, instanceOfs);
 }

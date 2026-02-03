@@ -162,4 +162,14 @@ export interface RunTransactionParams {
 	 * this client and ignored by all other clients.
 	 */
 	readonly preconditions?: readonly TransactionConstraintAlpha[];
+	/**
+	 * A label for this transaction that allows it to be correlated with later edits (e.g. for controlling undo/redo grouping).
+	 *
+	 * @remarks
+	 * This label is associated with the commit produced by this transaction, and is surfaced through the
+	 * `label` property of {@link ChangeMetadata} in the `commitApplied` or `changed` event.
+	 *
+	 * If there is a nested transaction, only the outermost transaction label will be used.
+	 */
+	readonly label?: unknown;
 }

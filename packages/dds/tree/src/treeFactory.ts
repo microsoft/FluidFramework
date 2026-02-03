@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { FluidClientVersion } from "./codec/index.js";
 import {
 	SharedTreeKernel,
 	type ITreePrivate,
@@ -24,16 +25,15 @@ import {
 	type SharedTreeOptionsInternal,
 	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
-import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
-import type { ITree } from "./simple-tree/index.js";
-import { Breakable, copyProperty } from "./util/index.js";
-import { FluidClientVersion } from "./codec/index.js";
 import {
 	editManagerFormatVersionSelectorForConstraints,
 	editManagerFormatVersionSelectorForSharedBranches,
 	messageFormatVersionSelectorForConstraints,
 	messageFormatVersionSelectorForSharedBranches,
 } from "./shared-tree-core/index.js";
+import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
+import type { ITree } from "./simple-tree/index.js";
+import { Breakable, copyProperty } from "./util/index.js";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.

@@ -53,6 +53,7 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
+	createCustomizedFluidFrameworkScopedFactory,
 } from "./schemaCreationUtilities.js";
 export {
 	getIdentifierFromNode,

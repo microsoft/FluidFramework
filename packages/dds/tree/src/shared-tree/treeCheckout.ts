@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
+import type { IDisposable } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 import {
 	UsageError,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	FluidClientVersion,
 	FormatValidatorNoOp,
@@ -54,6 +57,8 @@ import {
 	type ChangeMetadata,
 	type ChangeEncodingContext,
 	type ReadOnlyDetachedFieldIndex,
+	makeAnonChange,
+	type TaggedChange,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -75,18 +80,6 @@ import {
 	type Transactor,
 } from "../shared-tree-core/index.js";
 import {
-	Breakable,
-	disposeSymbol,
-	getOrCreate,
-	type JsonCompatibleReadOnly,
-	type WithBreakable,
-} from "../util/index.js";
-
-import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
-import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import type { IDisposable } from "@fluidframework/core-interfaces";
-import {
 	type ImplicitFieldSchema,
 	type ReadSchema,
 	type TreeView,
@@ -100,8 +93,20 @@ import {
 	type CustomTreeValue,
 	type CustomTreeNode,
 } from "../simple-tree/index.js";
+import {
+	Breakable,
+	disposeSymbol,
+	getOrCreate,
+	hasSome,
+	type JsonCompatibleReadOnly,
+	type WithBreakable,
+} from "../util/index.js";
+
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { isStableId } from "@fluidframework/id-compressor/internal";
+import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
+import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -383,6 +388,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private editLock: EditLock;
 
+	/**
+	 * User-defined label associated with the transaction whose commit is currently being produced for this checkout.
+	 *
+	 * @remarks
+	 * This label is used to implement {@link TreeCheckout.runWithTransactionLabel}.
+	 */
+	private transactionLabel?: unknown;
+
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
@@ -434,6 +447,34 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.registerForBranchEvents();
 	}
 
+	/**
+	 * Helper method for {@link SchematizingSimpleTreeView.runTransaction} to properly clear transaction labels once the function completes.
+	 *
+	 * @remarks
+	 * The label is stored during the execution of the function and will be included in the {@link ChangeMetadata} of the transaction.
+	 *
+	 * Labels supplied to nested transactions are ignored - only the outermost transaction label is ever used.
+	 *
+	 * @param fn - The function to execute. It receives the user provided transaction label as an optional parameter.
+	 * @param label - The label to associate with the outermost transaction.
+	 * @returns The result of executing `fn`.
+	 */
+	public runWithTransactionLabel<TLabel, TResult>(
+		fn: (label?: TLabel) => TResult,
+		label: TLabel | undefined,
+	): TResult {
+		// If a transaction label is already set, nesting is occurring, so we should not override it.
+		if (this.transactionLabel !== undefined) {
+			return fn(this.transactionLabel as TLabel);
+		}
+		this.transactionLabel = label;
+		try {
+			return fn(this.transactionLabel as TLabel);
+		} finally {
+			this.transactionLabel = undefined;
+		}
+	}
+
 	public get removedRoots(): ReadOnlyDetachedFieldIndex {
 		return this._removedRoots;
 	}
@@ -459,16 +500,23 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				: undefined;
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
-			return (result) => {
+			return (result, viewUpdate: SharedTreeChange | undefined) => {
+				const newHead = this.#transaction.branch.getHead();
 				switch (result) {
 					case TransactionResult.Abort: {
 						restoreRemovedRoots();
+						if (viewUpdate !== undefined) {
+							this.applyChange(viewUpdate, newHead.revision);
+						}
 						break;
 					}
 					case TransactionResult.Commit: {
+						if (viewUpdate !== undefined) {
+							this.applyChange(viewUpdate, newHead.revision);
+						}
 						if (!this.transaction.isInProgress()) {
 							// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
-							this.validateCommit(this.#transaction.branch.getHead());
+							this.validateCommit(newHead);
 						}
 						break;
 					}
@@ -565,6 +613,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						} satisfies SerializedChange;
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
+					label: this.transactionLabel,
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);
@@ -572,7 +621,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
-			this.#events.emit("changed", { isLocal: false, kind: CommitKind.Default });
+			this.#events.emit("changed", {
+				isLocal: false,
+				kind: CommitKind.Default,
+			});
 		}
 	};
 
@@ -1135,6 +1187,90 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	// #endregion Commit Validation
+
+	// #region Enrichment
+
+	/**
+	 * Statistics about enrichment operations performed by this checkout.
+	 * Used for testing. May be used for telemetry in the future.
+	 * The performance cost of maintaining this information is negligible.
+	 */
+	private readonly enrichmentStats: {
+		batches: number;
+		diffs: number;
+		commitsEnriched: number;
+		refreshers: number;
+		forks: number;
+		applied: number;
+	} = { batches: 0, diffs: 0, commitsEnriched: 0, refreshers: 0, forks: 0, applied: 0 };
+
+	public resetEnrichmentStats(): void {
+		this.enrichmentStats.batches = 0;
+		this.enrichmentStats.diffs = 0;
+		this.enrichmentStats.commitsEnriched = 0;
+		this.enrichmentStats.refreshers = 0;
+		this.enrichmentStats.forks = 0;
+		this.enrichmentStats.applied = 0;
+	}
+
+	public getEnrichmentStats(): {
+		batches: number;
+		diffs: number;
+		commitsEnriched: number;
+		refreshers: number;
+		forks: number;
+		applied: number;
+	} {
+		return { ...this.enrichmentStats };
+	}
+
+	public enrich(
+		context: GraphCommit<SharedTreeChange>,
+		changes: readonly TaggedChange<SharedTreeChange>[],
+	): SharedTreeChange[] {
+		if (!hasSome(changes)) {
+			return [];
+		}
+		this.enrichmentStats.batches += 1;
+		const enricher = new SharedTreeChangeEnricher(
+			this.forest,
+			this._removedRoots,
+			this.storedSchema,
+			this.idCompressor,
+			() => (this.enrichmentStats.commitsEnriched += 1),
+			() => (this.enrichmentStats.refreshers += 1),
+			() => (this.enrichmentStats.forks += 1),
+			() => (this.enrichmentStats.applied += 1),
+		);
+		// This `lastCommitApplied` may be on the main branch or on a transaction branch.
+		// In either case, it is crucial that the state of the forest & detached field index reflects all changes up to and including this commit.
+		const lastCommitApplied = this.#transaction.activeBranch.getHead();
+		if (context !== lastCommitApplied) {
+			enricher.enqueueChange(() => {
+				this.enrichmentStats.diffs += 1;
+				const diff = diffHistories(
+					this.changeFamily.rebaser,
+					lastCommitApplied,
+					context,
+					this.mintRevisionTag,
+				);
+				return makeAnonChange(diff);
+			});
+		}
+		const enriched: SharedTreeChange[] = [];
+		for (const change of changes) {
+			enriched.push(enricher.enrich(change.change));
+			enricher.enqueueChange(change);
+		}
+		enricher[disposeSymbol]();
+		return enriched;
+	}
+
+	public get mainBranch(): SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange> {
+		return this.#transaction.branch;
+	}
+
+	// #endregion Enrichment
 }
 
 /**

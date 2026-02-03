@@ -14,6 +14,13 @@ import type {
 } from "../../../feature-libraries/index.js";
 import { FieldKinds, isTreeValue } from "../../../feature-libraries/index.js";
 import {
+	brand,
+	validateIndex,
+	validateIndexRange,
+	type JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
+import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
+import {
 	CompatibilityLevel,
 	type WithType,
 	// eslint-disable-next-line import-x/no-deprecated
@@ -49,30 +56,24 @@ import {
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
 import {
+	getTreeNodeSchemaInitializedData,
+	getUnhydratedContext,
+} from "../../createContext.js";
+import { nullSchema } from "../../leafNodeSchema.js";
+import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
+import {
 	type FactoryContent,
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
 	unhydratedFlexTreeFromInsertableNode,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
-import {
-	getTreeNodeSchemaInitializedData,
-	getUnhydratedContext,
-} from "../../createContext.js";
-import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
+
 import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 } from "./arrayNodeTypes.js";
-import {
-	brand,
-	validateIndex,
-	validateIndexRange,
-	type JsonCompatibleReadOnlyObject,
-} from "../../../util/index.js";
-import { nullSchema } from "../../leafNodeSchema.js";
-import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -126,6 +127,19 @@ export interface TreeArrayNode<
 	 * @param value - The content to insert.
 	 */
 	insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+
+	/**
+	 * Inserts new item(s) at the end of the array.
+	 *
+	 * @remarks
+	 * The order of the inserted items relative to other concurrently inserted items at the same location is only partially specified:
+	 * Concurrently inserting `[A, B]` and `[X, Y]` at the same location may yield
+	 * either `[A, B, X, Y]` or `[X, Y, A, B]`, regardless of the order in which those edits are sequenced.
+	 * No other interleavings are possible. (e.g. `[A, X, B, Y]` is not possible.)
+	 *
+	 * @param value - The content to insert.
+	 */
+	push(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -965,6 +979,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	public insertAtEnd(...value: Insertable<T>): void {
 		this.insertAt(this.length, ...value);
 	}
+	public push(...value: Insertable<T>): void {
+		this.insertAt(this.length, ...value);
+	}
 	public removeAt(index: number): void {
 		const field = getSequenceField(this);
 		validateIndex(index, field, "TreeArrayNode.removeAt");
@@ -1387,4 +1404,74 @@ function shallowCompatibilityTest(
 	}
 
 	return CompatibilityLevel.None;
+}
+
+/**
+ * A location in a {@link (TreeArrayNode:interface)}.
+ * @remarks
+ * Tracks a location even as the array is mutated.
+ * How this is adjusted for edits depends on the specific anchor being used.
+ * See {@link createArrayInsertionAnchor} for one way to create such an anchor.
+ * @privateRemarks
+ * This being sealed is not important for its current behaviors as nothing downcasts this,
+ * however it is possible we might want to add additional members in the future:
+ * sealing this ensures that such additions are a non-breaking change.
+ * Things we might want to add include status (for example if its deleted) or events (for example to notify when its index changes).
+ * Some specific anchors might even want to add additional method members for things like confidence
+ * (so we can indicate when the anchor goes from being truly robust to a heuristic guess due to an edit).
+ * @alpha
+ * @sealed
+ */
+export interface ArrayPlaceAnchor {
+	/**
+	 * The current index within the array that this anchor refers to.
+	 * @remarks
+	 * This value is updated as the array is edited in a way that depends on the specific anchor implementation.
+	 * This index may take on a value from 0 to the length of the array (inclusive).
+	 * If used as the index to insert content into the array, this means it can point to any location in the array,
+	 * including just after the last child.
+	 */
+	get index(): number;
+}
+
+/**
+ * Create an {@link ArrayPlaceAnchor} tracking an insertion point in the array which is currently at the provided index.
+ *
+ * @param node - The array node to anchor into.
+ * @param currentIndex - The current index of the place to track.
+ * @remarks
+ * This anchor will track the logical position in the array across changes.
+ * As long as the subsection of the array surrounding the anchor point is not edited,
+ * this anchor will move with them, keeping its relative position to those children fixed.
+ * How exactly it behaves when the adjacent portion of the array is modified is subject to change,
+ * but this will always report a valid index to insert content at (which can be the index after the last item in the array).
+ *
+ * This is intended to track a location that might be used for an insertion point (for example in a text editor): future changes to its details should
+ * make it behave better for such uses.
+ *
+ * The current implementation is known to behave particularly poorly if the child which was at the original anchor point's index is removed
+ * (jumps to the end of the array): this behavior is subject to change.
+ * @privateRemarks
+ * When stabilized, this should probably become a method on {@link (TreeArrayNode:interface)}.
+ * Future versions of this should use rebaser / changeset logic to do a better job of tracking a location across removals or reinsertion.
+ * How this would work, especially for unhydrated nodes is not yet clear.
+ * @alpha
+ */
+export function createArrayInsertionAnchor(
+	node: TreeArrayNode,
+	currentIndex: number,
+): ArrayPlaceAnchor {
+	const field = getInnerNode(node).getBoxed(EmptyKey);
+	const child = field.boxedAt(currentIndex);
+	return {
+		get index() {
+			if (child === undefined) {
+				return field.length;
+			}
+			if (child.parentField.parent !== field) {
+				return field.length;
+			}
+			return child.parentField.index;
+		},
+	};
 }

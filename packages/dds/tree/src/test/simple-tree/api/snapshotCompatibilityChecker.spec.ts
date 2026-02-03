@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import path from "node:path";
+import { strict as assert } from "node:assert";
 import fs from "node:fs";
+import path from "node:path";
 
 import type { requireAssignableTo } from "@fluidframework/build-tools";
 import {
@@ -12,6 +13,7 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { pkgVersion } from "../../../packageVersion.js";
 import {
 	checkCompatibility,
 	importCompatibilitySchemaSnapshot,
@@ -22,7 +24,6 @@ import {
 	// Allow importing file which is being tested.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/snapshotCompatibilityChecker.js";
-
 import {
 	normalizeFieldSchema,
 	SchemaFactory,
@@ -32,9 +33,8 @@ import {
 	numberSchema,
 	allowUnused,
 } from "../../../simple-tree/index.js";
-import { strict as assert } from "node:assert";
 import { testSrcPath } from "../../testSrcPath.cjs";
-import { pkgVersion } from "../../../packageVersion.js";
+import { inMemorySnapshotFileSystem } from "../../utils.js";
 
 const nodeFileSystem = {
 	...fs,
@@ -282,35 +282,10 @@ describe("snapshotCompatibilityChecker", () => {
 			});
 		});
 
-		/**
-		 * Trivial in-memory file system for testing.
-		 * Ignores the directory and stores files by filename.
-		 */
-		function mapFileSystem(): [SnapshotFileSystem, Map<string, string>] {
-			const snapshots = new Map<string, string>();
-
-			const fileSystem: SnapshotFileSystem = {
-				writeFileSync(file: string, data: string, options: { encoding: "utf8" }): void {
-					snapshots.set(file, data);
-				},
-				readFileSync(file: string, encoding: "utf8"): string {
-					return snapshots.get(file) ?? assert.fail(`File not found: ${file}`);
-				},
-				mkdirSync(dir: string, options: { recursive: true }): void {},
-				readdirSync(dir: string): readonly string[] {
-					return [...snapshots.keys()];
-				},
-				join(parentPath: string, childPath: string): string {
-					return childPath;
-				},
-			};
-			return [fileSystem, snapshots];
-		}
-
 		// Tests the various operations a user of the checkSchemaCompatibilitySnapshots function might perform across various versions of their codebase.
 		it("workflow over time", () => {
 			const snapshotDirectory = "dir";
-			const [fileSystem, snapshots] = mapFileSystem();
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
 
 			const factory = new SchemaFactoryBeta("test");
 
@@ -541,7 +516,7 @@ describe("snapshotCompatibilityChecker", () => {
 
 		it("invalid versions", () => {
 			const snapshotDirectory = "dir";
-			const [fileSystem] = mapFileSystem();
+			const [fileSystem] = inMemorySnapshotFileSystem();
 
 			assert.throws(
 				() =>

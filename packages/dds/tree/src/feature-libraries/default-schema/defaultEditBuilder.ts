@@ -36,15 +36,10 @@ import {
 	intoDelta as intoModularDelta,
 	relevantRemovedRoots as relevantModularRemovedRoots,
 } from "../modular-schema/index.js";
-import type { OptionalChangeset } from "../optional-field/index.js";
-import type { CellId } from "../sequence-field/index.js";
+import { optional, type OptionalChangeset, required } from "../optional-field/index.js";
+import { sequence, type CellId } from "../sequence-field/index.js";
 
-import {
-	fieldKinds,
-	optional,
-	sequence,
-	required as valueFieldKind,
-} from "./defaultFieldKinds.js";
+import { fieldKinds } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -268,7 +263,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
 				const build = this.modularBuilder.buildTrees(fill.localId, newContent, revision);
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set({
+					required.changeHandler.editor.set({
 						fill,
 						detach,
 					}),
@@ -277,7 +272,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const edit: FieldEditDescription = {
 					type: "field",
 					field,
-					fieldKind: valueFieldKind.identifier,
+					fieldKind: required.identifier,
 					change,
 					revision,
 				};

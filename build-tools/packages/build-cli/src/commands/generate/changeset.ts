@@ -150,16 +150,18 @@ export default class GenerateChangesetCommand extends BaseCommand<
 		this.log(`Remote for ${repo.upstreamRemotePartialUrl} is: ${chalk.bold(remote)}`);
 
 		ux.action.start(`Comparing local changes to remote for branch ${branch}`);
-		let {
+		const {
 			packages: initialBranchChangedPackages,
-			files: changedFiles,
-			releaseGroups: changedReleaseGroups,
+			files: initialChangedFiles,
+			releaseGroups: initialChangedReleaseGroups,
 		} = await repo.getChangedSinceRef(branch, remote, context);
 		ux.action.stop();
 
-		// Separate definition to address no-atomic-updates lint rule
+		// Separate definitions to address no-atomic-updates lint rule
 		// https://eslint.org/docs/latest/rules/require-atomic-updates
 		let changedPackages = initialBranchChangedPackages;
+		let changedFiles = initialChangedFiles;
+		let changedReleaseGroups = initialChangedReleaseGroups;
 
 		// If the branch flag was passed explicitly, we don't want to prompt the user to select one. We can't check for
 		// undefined because there's a default value for the flag.

@@ -5,17 +5,18 @@
 
 import { strict as assert } from "node:assert";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import path from "node:path";
 import fs from "node:fs";
+import path from "node:path";
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
-import { testSrcPath } from "../testSrcPath.cjs";
+
 import {
 	checkSchemaCompatibilitySnapshots,
 	type TreeViewConfiguration,
 } from "../../simple-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
+import { testSrcPath } from "../testSrcPath.cjs";
 
 /**
  * Use `pnpm run test:snapshots:regen` to set this flag.
@@ -28,8 +29,8 @@ export function takeJsonSnapshot(data: JsonCompatibleReadOnly, suffix: string = 
 }
 
 function jsonCompare(actual: string, expected: string, message: string): void {
-	const parsedA = JSON.parse(actual);
-	const parsedB = JSON.parse(expected);
+	const parsedA = JSON.parse(actual) as JsonCompatibleReadOnly;
+	const parsedB = JSON.parse(expected) as JsonCompatibleReadOnly;
 	assert.deepEqual(parsedA, parsedB, message);
 }
 
@@ -57,7 +58,7 @@ export function takeSnapshot(
 		writeFileSync(fullFile, data);
 	} else {
 		assert(exists, `test snapshot file does not exist: "${fullFile}"`);
-		const pastData = readFileSync(fullFile, "utf-8");
+		const pastData = readFileSync(fullFile, "utf8");
 		const message = `snapshot different for "${currentTestName}"`;
 		compare?.(data, pastData, message);
 		assert.equal(data, pastData, message);
@@ -145,6 +146,13 @@ assert(existsSync(schemaCompatibilitySnapshotsFolder));
 
 /**
  * Test schema snapshots for shared tree components which are part of this package.
+ * @param currentViewSchema - The current schema to test.
+ * @param minVersionForCollaboration - The minimum version which is required to be able to collaborate with `currentViewSchema`.
+ * @param domainName - The name of the domain for which snapshots are being tested.
+ * This is used to select the subdirectory within {@link schemaCompatibilitySnapshotsFolder} to use for snapshots.
+ * @param forceUpdate - If true, forces updating snapshots even if not in regenerate mode.
+ * Handy when initially writing a test to generate the snapshots.
+ * This fails the test to ensure it's never checked in unnoticed.
  * @remarks
  * Snapshots are stored in a subdirectory of {@link schemaCompatibilitySnapshotsFolder} based on the provided `domainName`.
  */
@@ -152,6 +160,7 @@ export function testSchemaCompatibilitySnapshots(
 	currentViewSchema: TreeViewConfiguration,
 	minVersionForCollaboration: MinimumVersionForCollab,
 	domainName: string,
+	forceUpdate: boolean = false,
 ): void {
 	const snapshotDirectory = path.join(schemaCompatibilitySnapshotsFolder, domainName);
 	checkSchemaCompatibilitySnapshots({
@@ -160,6 +169,10 @@ export function testSchemaCompatibilitySnapshots(
 		version: cleanedPackageVersion,
 		schema: currentViewSchema,
 		minVersionForCollaboration,
-		mode: regenerateSnapshots ? "update" : "test",
+		mode: regenerateSnapshots || forceUpdate ? "update" : "test",
 	});
+	assert(
+		forceUpdate === false,
+		"Forcing update of schema compatibility snapshots should not be checked in.",
+	);
 }

@@ -28,15 +28,6 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unused-expressions": "off",
 		},
 	},
-	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.json"],
-			},
-		},
-	},
 ];
 
 export default config;

@@ -31,8 +31,8 @@ import {
 	type Mutable,
 	brand,
 	idAllocatorFromMaxId,
-	newTupleBTree,
 } from "../../util/index.js";
+import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import {
 	type FieldBatchCodec,
 	type TreeChunk,
@@ -66,7 +66,6 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -386,7 +385,7 @@ export function decodeDetachedNodes(
 		});
 	};
 
-	const map: ModularChangeset["builds"] = newTupleBTree();
+	const map: ModularChangeset["builds"] = newChangeAtomIdBTree();
 	// eslint-disable-next-line unicorn/no-array-for-each -- Codec internals: minimizing changes to serialization logic
 	encoded.builds.forEach((build) => {
 		// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
@@ -550,9 +549,9 @@ export function decodeChange(
 ): Mutable<ModularChangeset> {
 	const decoded: Mutable<ModularChangeset> = {
 		fieldChanges: new Map(),
-		nodeChanges: newTupleBTree(),
-		nodeToParent: newTupleBTree(),
-		nodeAliases: newTupleBTree(),
+		nodeChanges: newChangeAtomIdBTree(),
+		nodeToParent: newChangeAtomIdBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 		crossFieldKeys: newCrossFieldKeyTable(),
 	};
 

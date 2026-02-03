@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
+import type { UnionToTuple } from "../../util/index.js";
 import type {
 	NodeFromSchema,
 	InternalTreeNode,
@@ -15,7 +15,9 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 } from "../core/index.js";
-import type { UnionToTuple } from "../../util/index.js";
+
+import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
+import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 
 /*
  * This file does two things:
@@ -246,9 +248,8 @@ export function enumFromStrings<
 	type MembersUnion = Members[number];
 
 	// Get all keys of the Members tuple which are numeric strings as union of numbers:
-	type Indexes = Extract<keyof Members, `${number}`> extends `${infer N extends number}`
-		? N
-		: never;
+	type Indexes =
+		Extract<keyof Members, `${number}`> extends `${infer N extends number}` ? N : never;
 
 	type TOut = {
 		[Index in Indexes as Members[Index]]: ReturnType<
@@ -297,11 +298,11 @@ function _enumFromStrings2<TScope extends string, const Members extends readonly
 	factory: SchemaFactory<TScope>,
 	members: Members,
 ) {
-	const enumObject: {
+	const enumObject = Object.create(null) as {
 		[key in keyof Members as Members[key] extends string
 			? Members[key]
 			: string]: Members[key] extends string ? Members[key] : string;
-	} = Object.create(null);
+	};
 	for (const name of members) {
 		Object.defineProperty(enumObject, name, {
 			enumerable: true,
@@ -312,4 +313,34 @@ function _enumFromStrings2<TScope extends string, const Members extends readonly
 	}
 
 	return adaptEnum(factory, enumObject);
+}
+
+function createCustomizedScopedFactory<
+	TUserScope extends string,
+	TCreatorDomain extends string,
+>(
+	inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
+	creatorDomain: TCreatorDomain,
+): SchemaFactoryBeta<`${TCreatorDomain}<${TUserScope}>`> {
+	return new SchemaFactoryBeta(`${creatorDomain}<${inputSchemaFactory.scope}>`);
+}
+
+/**
+ * Declare a SchemaFactory for use in cases where the Fluid Framework's code creates the schema and owns its schema compatibility (and thus scope)
+ * but it is parameterized by user provided data, the `TUserScope`.
+ * @remarks
+ * This should allow future logic in {@link generateSchemaFromSimpleSchema} to recognize these schema as ones defined by Fluid Framework,
+ * and special case them to provide better APIs and maintain data invariants.
+ */
+export function createCustomizedFluidFrameworkScopedFactory<
+	TUserScope extends string,
+	TCreatorDomain extends string,
+>(
+	inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
+	fluidDomainSuffix: TCreatorDomain,
+): SchemaFactoryBeta<`com.fluidframework.${TCreatorDomain}<${TUserScope}>`> {
+	return createCustomizedScopedFactory(
+		inputSchemaFactory,
+		`com.fluidframework.${fluidDomainSuffix}` as const,
+	);
 }
