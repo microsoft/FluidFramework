@@ -26,11 +26,11 @@ export const LayerCompatibilityPolicyWindowMonths = {
 	/**
 	 * The Driver layer must be within this many months of the Loader layer to be compatible.
 	 */
-	LoaderDriver: 6,
+	LoaderDriver: 12,
 	/**
 	 * The Runtime layer must be within this many months of the Loader layer to be compatible.
 	 */
-	LoaderRuntime: 6,
+	LoaderRuntime: 12,
 	/**
 	 * The Loader layer must be within this many months of the Runtime layer to be compatible.
 	 */
