@@ -190,10 +190,20 @@ export const convertToRealHandles = (
 	});
 };
 
+/**
+ * Validates consistency of all DDSs between two clients.
+ * @param clientA - First client to compare
+ * @param clientB - Second client to compare
+ * @param stateTracker - Container state tracker
+ * @param skipDdsTypes - Optional set of DDS type names to skip during validation.
+ *   This is useful for DDSs like TaskManager that intentionally don't support
+ *   full pending state restoration and thus can't be validated against frozen containers.
+ */
 export const validateConsistencyOfAllDDS = async (
 	clientA: Client,
 	clientB: Client,
 	stateTracker: ContainerStateTracker,
+	skipDdsTypes?: Set<string>,
 ): Promise<void> => {
 	const buildChannelMap = async (client: Client): Promise<Map<string, IChannel>> => {
 		/**
@@ -232,6 +242,12 @@ export const validateConsistencyOfAllDDS = async (
 		const bChannel = bMap.get(key);
 		assert(aChannel !== undefined, "channel must exist");
 		assert(aChannel.attributes.type === bChannel?.attributes.type, "channel types must match");
+
+		// Skip DDSs that don't support frozen state validation
+		if (skipDdsTypes?.has(aChannel.attributes.type)) {
+			continue;
+		}
+
 		const model = ddsModelMap.get(aChannel.attributes.type);
 		assert(model !== undefined, "model must exist");
 		try {
