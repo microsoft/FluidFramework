@@ -201,7 +201,13 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// Never use eager finals to maintain consistency across shards
 		if (this.shardingState !== undefined) {
 			this.telemetryLocalIdCount++;
-			return this.generateNextLocalIdWithStride();
+			const { activeChildIds, currentStride, originalStride } = this.shardingState;
+
+			// Use originalStride if we're a leaf, currentStride if we have children
+			const effectiveStride = activeChildIds.size === 0 ? originalStride : currentStride;
+			this.normalizer.addLocalRange(this.localGenCount + 1, effectiveStride);
+			this.localGenCount += effectiveStride;
+			return localIdFromGenCount(this.localGenCount);
 		}
 
 		// Normal ID generation
@@ -406,7 +412,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			const distance = childHighestGenCount - this.localGenCount + 1;
 			const steps = Math.ceil(distance / effectiveStride);
 			const count = steps * effectiveStride;
-			this.normalizer.addLocalRange(this.localGenCount, count);
+			this.normalizer.addLocalRange(this.localGenCount + 1, count);
 			this.localGenCount += count;
 		}
 
@@ -461,17 +467,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private generateNextLocalId(): LocalCompressedId {
 		// Must tell the normalizer that we generated a local ID
 		this.normalizer.addLocalRange(this.localGenCount, 1);
-		return localIdFromGenCount(this.localGenCount);
-	}
-
-	private generateNextLocalIdWithStride(): LocalCompressedId {
-		assert(this.shardingState !== undefined, "Must be in sharding mode");
-		const { activeChildIds, currentStride, originalStride } = this.shardingState;
-
-		// Use originalStride if we're a leaf, currentStride if we have children
-		const effectiveStride = activeChildIds.size === 0 ? originalStride : currentStride;
-		this.normalizer.addLocalRange(this.localGenCount, effectiveStride);
-		this.localGenCount += effectiveStride;
 		return localIdFromGenCount(this.localGenCount);
 	}
 
