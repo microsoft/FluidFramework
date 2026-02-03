@@ -156,11 +156,26 @@ async function initFluid(): Promise<DualUserViews> {
 	}
 }
 
-const viewLabels: Record<ViewType, string> = {
-	plainTextarea: "Plain Textarea",
-	plainQuill: "Plain Quill",
-	formatted: "Formatted Quill",
-};
+const viewLabels = {
+	plainTextarea: {
+		description: "Plain Textarea",
+		component: (root: TextEditorRoot) => (
+			<PlainTextMainView root={toPropTreeNode(root.plainText)} />
+		),
+	},
+	plainQuill: {
+		description: "Plain Quill Editor",
+		component: (root: TextEditorRoot) => (
+			<PlainQuillView root={toPropTreeNode(root.plainText)} />
+		),
+	},
+	formatted: {
+		description: "Formatted Quill Editor",
+		component: (root: TextEditorRoot) => (
+			<FormattedMainView root={toPropTreeNode(root.formattedText)} />
+		),
+	},
+} as const;
 
 const UserPanel: React.FC<{
 	label: string;
@@ -169,17 +184,8 @@ const UserPanel: React.FC<{
 	treeView: TreeView<typeof TextEditorRoot>;
 }> = ({ label, color, viewType, treeView }) => {
 	const renderView = (): JSX.Element => {
-		switch (viewType) {
-			case "plainTextarea": {
-				return <PlainTextMainView root={toPropTreeNode(treeView.root.plainText)} />;
-			}
-			case "plainQuill": {
-				return <PlainQuillView root={toPropTreeNode(treeView.root.plainText)} />;
-			}
-			default: {
-				return <FormattedMainView root={toPropTreeNode(treeView.root.formattedText)} />;
-			}
-		}
+		const root = treeView.root;
+		return viewLabels[viewType].component(root);
 	};
 
 	return (
@@ -238,7 +244,7 @@ const App: React.FC<{ views: DualUserViews }> = ({ views }) => {
 				>
 					{(Object.keys(viewLabels) as ViewType[]).map((type) => (
 						<option key={type} value={type}>
-							{viewLabels[type]}
+							{viewLabels[type].description}
 						</option>
 					))}
 				</select>
