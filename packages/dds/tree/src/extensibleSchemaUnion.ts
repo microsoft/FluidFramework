@@ -46,7 +46,7 @@ import type { UnionToIntersection } from "./util/index.js";
  * ) {}
  * // Instances of the union are created using `create`.
  * const anyItem = AnyItem.create(new ItemA({ x: "hello" }));
- * // Reacting the content our of the union is done via `child`,
+ * // Reading the content from the union is done via `child`,
  * // which can be `undefined` to handle the case where a future version of this schema allows a type unknown to the current version.
  * const childNode: ItemA | ItemB | undefined = anyItem.child;
  * // To determine which member of the union was present, its schema can be inspected:
