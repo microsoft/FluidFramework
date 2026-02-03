@@ -92,12 +92,12 @@ Layer compatibility policy describes specific **support windows** between layers
 
 | Layer Boundary | Support Window | What This Means |
 | -------------- | -------------- | --------------- |
-| **Driver → Loader** | 12 months | Driver can work with Loader versions up to 12 months older |
-| **Loader → Driver** | 6 months | Loader can work with Driver versions up to 6 months older |
-| **Loader → Runtime** | 6 months | Loader can work with Runtime versions up to 6 months older |
-| **Runtime → Loader** | 12 months | Runtime can work with Loader versions up to 12 months older |
-| **Runtime → DataStore** | 3 months | Runtime can work with DataStore versions up to 3 months older |
-| **DataStore → Runtime** | 3 months | DataStore can work with Runtime versions up to 3 months older |
+| **Driver → Loader** | 12 months | Driver is compatible with Loader versions up to 12 months older |
+| **Loader → Driver** | 6 months | Loader is compatible with Driver versions up to 6 months older |
+| **Loader → Runtime** | 6 months | Loader is compatible with Runtime versions up to 6 months older |
+| **Runtime → Loader** | 12 months | Runtime is compatible with Loader versions up to 12 months older |
+| **Runtime → DataStore** | 3 months | Runtime is compatible with DataStore versions up to 3 months older |
+| **DataStore → Runtime** | 3 months | DataStore is compatible with Runtime versions up to 3 months older |
 
 ### What This Means for An Application
 
