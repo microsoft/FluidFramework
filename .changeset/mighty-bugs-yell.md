@@ -1,13 +1,11 @@
 ---
 "fluid-framework": minor
 "@fluidframework/tree": minor
-"__section": feature
+"__section": tree
 ---
-Add push as alias for insertAtEnd on TreeArrayNode
+Add "push" as alias for insertAtEnd on TreeArrayNode
 
-#### Why this change
-
-Adding push as an alias makes the API more intuitive and reduces friction for both `LLM` generated code and developers familiar with JavaScript array semantics.
+Adds `push` as an alias to make the API more intuitive and reduce friction for both `LLM`-generated code and developers familiar with JavaScript array semantics.
 
 #### Usage
 

@@ -158,10 +158,14 @@ export function cloneWithReplacements(root: unknown, rootKey: string, replacer: 
 export type CodecName = string;
 
 // @alpha @input
-export interface CodecWriteOptions extends ICodecOptions {
+export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta {
     readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
-    readonly minVersionForCollab: MinimumVersionForCollab;
     readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
+}
+
+// @beta @input
+export interface CodecWriteOptionsBeta {
+    readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 // @public
@@ -269,6 +273,17 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
 
 // @alpha
 export function exportCompatibilitySchemaSnapshot(config: Pick<TreeViewConfiguration, "schema">): JsonCompatibleReadOnly;
+
+// @alpha
+export namespace ExtensibleSchemaUnion {
+    export function extensibleSchemaUnion<const T extends readonly TreeNodeSchema[], const TScope extends string, const TName extends string>(types: T, inputSchemaFactory: SchemaFactoryBeta<TScope>, name: TName): Statics<T> & TreeNodeSchemaCore_2<ScopedSchemaName_2<`com.fluidframework.extensibleSchemaUnion<${TScope}>`, TName>, NodeKind_2, false, unknown, never, unknown> & (new (data: InternalTreeNode_2) => Members<TreeNodeFromImplicitAllowedTypes<T>> & TreeNode_2 & WithType_2<ScopedSchemaName_2<`com.fluidframework.extensibleSchemaUnion<${TScope}>`, TName>, NodeKind_2, unknown>);
+    export interface Members<T> {
+        readonly child: T | undefined;
+    }
+    export interface Statics<T extends readonly TreeNodeSchema[]> {
+        create<TThis extends TreeNodeSchema>(this: TThis, child: TreeNodeFromImplicitAllowedTypes<T>): TreeFieldFromImplicitField<TThis>;
+    }
+}
 
 // @public @system
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
@@ -1113,7 +1128,7 @@ export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecW
 }
 
 // @beta @input
-export type SharedTreeOptionsBeta = ForestOptions;
+export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
 
 // @alpha @sealed
 export interface SimpleAllowedTypeAttributes<out Type extends SchemaType = SchemaType> {
