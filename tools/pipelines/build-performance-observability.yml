@@ -156,7 +156,7 @@ extends:
             DEPLOY_DIR: $(Build.ArtifactStagingDirectory)/deploy
           inputs:
             targetType: 'filePath'
-            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/prepare-dashboard.sh'
+            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/prepare-deployment.sh'
 
         templateContext:
           outputParentDirectory: $(Build.ArtifactStagingDirectory)
