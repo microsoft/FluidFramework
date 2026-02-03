@@ -30,6 +30,7 @@ parameters:
 
 steps:
 - checkout: ff_pipeline_host
+  path: s/ff_pipeline_host
 
 - task: Bash@3
   displayName: Print parameter/variable values for troubleshooting

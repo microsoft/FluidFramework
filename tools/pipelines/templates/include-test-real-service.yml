@@ -189,6 +189,7 @@ stages:
         steps:
         # Setup
         - checkout: ff_pipeline_host
+          path: s/ff_pipeline_host
           clean: true
 
         # Install self-signed cert for R11s deployment in local cert store
