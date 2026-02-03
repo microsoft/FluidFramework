@@ -1923,5 +1923,7 @@ export const shortCodeMap = {
 	"0xcc8": "Object.entries returned a non-string key.",
 	"0xcc9": "Count must be at least 1",
 	"0xcca": "TODO: Handle non-contiguous ranges",
-	"0xccb": "TODO: Handle non-contiguous ranges"
+	"0xccb": "TODO: Handle non-contiguous ranges",
+	"0xccc": "Only write ops should be stashed",
+	"0xccd": "Transaction did not complete"
 };

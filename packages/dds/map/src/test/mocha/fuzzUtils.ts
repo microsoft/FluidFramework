@@ -304,6 +304,7 @@ export function makeDirOperationGenerator(
 			}
 			// If this dir already has max number of child, then choose one and continue.
 			if (
+				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58519 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 				dir.countSubDirectory !== undefined &&
 				dir.countSubDirectory() === options.maxSubDirectoryChild
 			) {
