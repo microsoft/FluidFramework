@@ -115,9 +115,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const rebasedChild = rebaseChild(newChange.childChange, overChange.childChange);
 		const overDetach = getEffectiveDetachId(overChange);
+
+		// Note that composition ignores rebase version, and so will create node detaches even we are supporting collaboration with older clients.
+		// Therefore, in rebase version 1 we must rebase node detach as if it were a clear, matching the behavior of older clients.
+		const hasLegacyNodeDetach =
+			newChange.nodeDetach !== undefined && rebaseVersion < 2 && !isPin(newChange);
+
 		if (overDetach !== undefined) {
-			const nodeDetach =
-				rebaseVersion < 2 && !isPin(newChange) ? undefined : newChange.nodeDetach;
+			const nodeDetach = hasLegacyNodeDetach ? undefined : newChange.nodeDetach;
 			nodeManager.rebaseOverDetach(overDetach, 1, nodeDetach, rebasedChild);
 		}
 
@@ -148,7 +153,20 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
-		if (newChange.valueReplace !== undefined) {
+		if (hasLegacyNodeDetach && overDetach !== undefined) {
+			// In order to emulate the rebasing behavior of older clients,
+			// we convert the node detach to a clear.
+			const valueReplace: Mutable<Replace> = {
+				dst: newChange.nodeDetach,
+				isEmpty: overChange.valueReplace?.src === undefined,
+			};
+
+			if (newChange.valueReplace?.src !== undefined) {
+				valueReplace.src = newChange.valueReplace.src;
+			}
+
+			rebased.valueReplace = valueReplace;
+		} else if (newChange.valueReplace !== undefined) {
 			const isEmpty =
 				overDetach !== undefined || overChange.valueReplace !== undefined
 					? overChange.valueReplace?.src === undefined
@@ -254,6 +272,12 @@ function composeNodeDetaches(
 	if (detach1 !== undefined) {
 		const newDetachId = nodeManager.getNewChangesForBaseDetach(detach1, 1).value?.detachId;
 		if (newDetachId !== undefined) {
+			// change2 either renames or detaches this node (the latter case implying that that change1 reattaches/moves it).
+			// In either case, the composition ends with the node detached by `newDetachId`.
+			// Note that even if change2 detaches the node with a location-targeting detach (e.g. an optional field clear),
+			// the composition should still have a node-targeting detach.
+			// This is because change1 must attach the node in the location targeted by the detach,
+			// and rebasing does not affect attaches, although that could change if slice moves are implemented.
 			return newDetachId;
 		}
 	}
@@ -262,9 +286,7 @@ function composeNodeDetaches(
 		return change1.nodeDetach;
 	}
 
-	return detach1 !== undefined || change1.valueReplace?.isEmpty === true
-		? undefined
-		: change2.nodeDetach;
+	return change1.valueReplace === undefined ? change2.nodeDetach : undefined;
 }
 
 function composeReplaces(
