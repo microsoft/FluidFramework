@@ -81,8 +81,8 @@ extends:
         os: windows
 
     stages:
-    - stage: collect_metrics
-      displayName: Collect Build Metrics
+    - stage: collect_and_deploy_metrics
+      displayName: Collect Build Metrics and Deploy Dashboard
       jobs:
       # Build job: checkout, fetch data, prepare dashboard
       - job: prepare
