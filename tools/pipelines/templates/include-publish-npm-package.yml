@@ -86,7 +86,6 @@ stages:
       environment: package-npmjs-feed
       pool: ${{ parameters.pool }}
       customEndPoint: npmjs
-      publishFlags: --access public
       tagName: ${{ parameters.tagName }}
 
 # Only upload release manifest files for runs in the internal project (i.e. CI runs, not PR runs), for the main, test, and release branches, and

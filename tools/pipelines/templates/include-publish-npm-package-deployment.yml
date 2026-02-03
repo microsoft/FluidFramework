@@ -17,10 +17,6 @@ parameters:
   type: object
   default: Small-eastus2
 
-- name: publishFlags
-  type: string
-  default:
-
 - name: customEndPoint
   type: string
   default:
@@ -81,7 +77,6 @@ jobs:
               feedUrl: ${{ parameters.feedUrl }}
               customEndPoint: ${{ parameters.customEndPoint }}
               feedKind: ${{ parameters.feedKind }}
-              publishFlags: ${{ parameters.publishFlags }}
 
 - job: TagRelease
   displayName: Tag Release
