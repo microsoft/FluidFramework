@@ -1,6 +1,6 @@
 ---
-"@fluidframework/tree": minor
 "fluid-framework": minor
+"@fluidframework/tree": minor
 "__section": tree
 ---
 Fix bug in multi-step move of array elements
