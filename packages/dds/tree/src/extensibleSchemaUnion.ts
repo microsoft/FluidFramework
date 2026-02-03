@@ -23,6 +23,8 @@ import type { UnionToIntersection } from "./util/index.js";
 /**
  * Utilities for creating extensible schema unions.
  * @remarks
+ * Use {@link ExtensibleSchemaUnion.extensibleSchemaUnion} to create the union schema.
+ *
  * Unlike a schema union created using {@link SchemaStaticsBeta.staged | staged} allowed types, this union allows for unknown future types to exist in addition to the known types.
  * This allows for faster roll-outs of new types without waiting for old clients to be updated to be aware of them.
  * This does mean however that old clients may see types they do not know about, which are simply exposed as `undefined` children.
@@ -30,6 +32,27 @@ import type { UnionToIntersection } from "./util/index.js";
  * `staged` types are lower overhead, and might gain support for `unknown` types in the future, so prefer them when possible.
  * This is simply an alternative for when future compatibility with unknown types is required.
  * It is built on top of the existing {@link ObjectSchemaOptions.allowUnknownOptionalFields | allowUnknownOptionalFields} feature.
+ *
+ * @example
+ * ```typescript
+ * const sf = new SchemaFactoryBeta("extensibleSchemaUnionExample.items");
+ * class ItemA extends sf.object("A", { x: sf.string }) {}
+ * class ItemB extends sf.object("B", { x: sf.number }) {}
+ *
+ * class AnyItem extends ExtensibleSchemaUnion.extensibleSchemaUnion(
+ * 	[ItemA, ItemB], // Future versions may add more members here
+ * 	sf,
+ * 	"ExtensibleUnion",
+ * ) {}
+ * // Instances of the union are created using `create`.
+ * const anyItem = AnyItem.create(new ItemA({ x: "hello" }));
+ * // Reacting the content our of the union is done via `child`,
+ * // which can be `undefined` to handle the case where a future version of this schema allows a type unknown to the current version.
+ * const childNode: ItemA | ItemB | undefined = anyItem.child;
+ * // To determine which member of the union was present, its schema can be inspected:
+ * const aSchema = Tree.schema(childNode ?? assert.fail("No child"));
+ * assert.equal(aSchema, ItemA);
+ * ```
  * @alpha
  */
 export namespace ExtensibleSchemaUnion {
@@ -62,6 +85,8 @@ export namespace ExtensibleSchemaUnion {
 	/**
 	 * Create an extensible schema union which currently supports the types in `types`,
 	 * but tolerates collaboration with future versions that may include additional types.
+	 * @remarks
+	 * See {@link ExtensibleSchemaUnion} for an example use.
 	 * @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
