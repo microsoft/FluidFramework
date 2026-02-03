@@ -98,7 +98,7 @@ Layer compatibility policy describes specific **support windows** between layers
 
 ### What This Means for An Application
 
-These support windows determine how much version drift is acceptable between layers in your application. Applications should these windows to plan their upgrade strategy and ensure layers remain compatible. They should coordinate updates across repositories and deployment boundaries to stay within the support windows.
+These support windows determine how much version drift is acceptable between layers in your application. Applications should use this to plan their upgrade strategy and ensure layers remain compatible. They should coordinate updates across repositories and deployment boundaries to stay within the support windows.
 
 ### Implementation Details
 
