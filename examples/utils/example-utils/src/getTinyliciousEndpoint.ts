@@ -11,7 +11,7 @@ const defaultTinyliciousPort = 7070;
 /**
  * Detects the appropriate Tinylicious endpoint based on the environment.
  * In GitHub Codespaces, returns the forwarded port URL. Otherwise returns localhost.
- * If using codespaces, set tinylicious (port 7070) visibility to "public" for this to work.
+ * @remarks If using codespaces, set tinylicious (port 7070) visibility to "public" for this to work.
  *
  * @param port - The port number to use. Defaults to 7070.
  * @returns The Tinylicious endpoint URL.
