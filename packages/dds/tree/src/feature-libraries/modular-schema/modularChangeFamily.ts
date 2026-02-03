@@ -46,6 +46,7 @@ import {
 	mapTaggedChange,
 	type RevisionReplacer,
 } from "../../core/index.js";
+import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import {
 	type IdAllocationState,
 	type IdAllocator,
@@ -580,6 +581,26 @@ export class ModularChangeFamily
 			change: brand(composedChange),
 		};
 
+		if (
+			change1.fieldShallowChangeConstraint !== undefined ||
+			change2.fieldShallowChangeConstraint !== undefined
+		) {
+			const violated =
+				change1.fieldShallowChangeConstraint?.violated === true ||
+				change2.fieldShallowChangeConstraint?.violated === true;
+			composedField.fieldShallowChangeConstraint = { violated };
+		}
+
+		if (
+			change1.fieldShallowChangeConstraintOnRevert !== undefined ||
+			change2.fieldShallowChangeConstraintOnRevert !== undefined
+		) {
+			const violated =
+				change1.fieldShallowChangeConstraintOnRevert?.violated === true ||
+				change2.fieldShallowChangeConstraintOnRevert?.violated === true;
+			composedField.fieldShallowChangeConstraintOnRevert = { violated };
+		}
+
 		crossFieldTable.fieldToContext.set(change1, {
 			fieldId,
 			change1: change1Normalized,
@@ -820,9 +841,19 @@ export class ModularChangeFamily
 			);
 
 			const invertedFieldChange: FieldChange = {
-				...fieldChange,
+				fieldKind: fieldChange.fieldKind,
 				change: brand(invertedChange),
 			};
+
+			if (fieldChange.fieldShallowChangeConstraint !== undefined) {
+				invertedFieldChange.fieldShallowChangeConstraintOnRevert =
+					fieldChange.fieldShallowChangeConstraint;
+			}
+			if (fieldChange.fieldShallowChangeConstraintOnRevert !== undefined) {
+				invertedFieldChange.fieldShallowChangeConstraint =
+					fieldChange.fieldShallowChangeConstraintOnRevert;
+			}
+
 			invertedFields.set(field, invertedFieldChange);
 
 			crossFieldTable.originalFieldToContext.set(fieldChange, {
@@ -950,6 +981,7 @@ export class ModularChangeFamily
 			constraintState,
 			revertConstraintState,
 			rebasedNodes,
+			over.change.fieldChanges
 		);
 
 		const rebased = makeModularChangeset({
@@ -1348,6 +1380,15 @@ export class ModularChangeFamily
 				change: brand(rebasedField),
 			};
 
+			if (fieldChange.fieldShallowChangeConstraint !== undefined) {
+				rebasedFieldChange.fieldShallowChangeConstraint =
+					fieldChange.fieldShallowChangeConstraint;
+			}
+			if (fieldChange.fieldShallowChangeConstraintOnRevert !== undefined) {
+				rebasedFieldChange.fieldShallowChangeConstraintOnRevert =
+					fieldChange.fieldShallowChangeConstraintOnRevert;
+			}
+
 			rebasedFields.set(field, rebasedFieldChange);
 
 			crossFieldTable.baseFieldToContext.set(baseChange, {
@@ -1413,8 +1454,9 @@ export class ModularChangeFamily
 		constraintState: ConstraintState,
 		revertConstraintState: ConstraintState,
 		nodes: ChangeAtomIdBTree<NodeChangeset>,
+		baseFields?: FieldChangeMap,
 	): void {
-		for (const field of fields.values()) {
+		for (const [fieldKey, field] of fields) {
 			const handler = getChangeHandler(this.fieldKinds, field.fieldKind);
 			for (const [nodeId, inputIndex, outputIndex] of handler.getNestedChanges(field.change)) {
 				const isInputDetached = inputIndex === undefined;
@@ -1435,6 +1477,20 @@ export class ModularChangeFamily
 					constraintState,
 					revertConstraintState,
 				);
+			}
+
+			const baseFieldChange = baseFields?.get(fieldKey);
+			const baseHasShallowChanges =
+				baseFieldChange === undefined
+					? false
+					: getChangeHandler(
+							this.fieldKinds,
+							baseFieldChange.fieldKind,
+						).containsShallowChanges(baseFieldChange.change);
+
+			if (baseHasShallowChanges && field.fieldShallowChangeConstraint !== undefined && !field.fieldShallowChangeConstraint.violated) {
+				field.fieldShallowChangeConstraint = { violated: true };
+				constraintState.violationCount += 1;
 			}
 		}
 	}
@@ -1498,7 +1554,12 @@ export class ModularChangeFamily
 				this.pruneNodeChange(nodeId, nodeMap),
 			);
 
-			if (!handler.isEmpty(prunedFieldChangeset)) {
+			// Keep field if it has changes OR constraints
+			if (
+				!handler.isEmpty(prunedFieldChangeset) ||
+				fieldChange.fieldShallowChangeConstraint !== undefined ||
+				fieldChange.fieldShallowChangeConstraintOnRevert !== undefined
+			) {
 				prunedChangeset.set(field, { ...fieldChange, change: brand(prunedFieldChangeset) });
 			}
 		}
@@ -1757,10 +1818,20 @@ export class ModularChangeFamily
 
 	private muteFieldChange(change: FieldChange): FieldChange {
 		const handler = getChangeHandler(this.fieldKinds, change.fieldKind);
-		return {
+		const muted: FieldChange = {
 			fieldKind: change.fieldKind,
 			change: brand(handler.rebaser.mute(change.change)),
 		};
+
+		// Preserve shallow change constraints when muting
+		if (change.fieldShallowChangeConstraint !== undefined) {
+			muted.fieldShallowChangeConstraint = change.fieldShallowChangeConstraint;
+		}
+		if (change.fieldShallowChangeConstraintOnRevert !== undefined) {
+			muted.fieldShallowChangeConstraintOnRevert = change.fieldShallowChangeConstraintOnRevert;
+		}
+
+		return muted;
 	}
 }
 
@@ -2884,6 +2955,63 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		});
 
 		this.applyChange(tagChange(changeset, revision));
+	}
+
+	public addShallowChangeConstraint(path: FieldUpPath, revision: RevisionTag): void {
+		if (lt(this.codecOptions.minVersionForCollab, FluidClientVersion.v2_80)) {
+			throw new UsageError(
+				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
+			);
+		}
+
+		const fieldChange: FieldChange = {
+			fieldKind: genericFieldKind.identifier,
+			change: genericFieldKind.changeHandler.createEmpty(),
+			fieldShallowChangeConstraint: { violated: false },
+		};
+
+		const changeset = buildModularChangesetFromField({
+			path,
+			fieldChange,
+			localCrossFieldKeys: [],
+			nodeChanges: newTupleBTree(),
+			nodeToParent: newTupleBTree(),
+			crossFieldKeys: newCrossFieldKeyTable(),
+			idAllocator: this.idAllocator,
+			revision,
+		});
+
+		this.applyChange(tagChange(changeset, revision));
+	}
+
+	public addShallowChangeConstraintOnRevert(path: FieldUpPath, revision: RevisionTag): void {
+		if (lt(this.codecOptions.minVersionForCollab, FluidClientVersion.v2_80)) {
+			throw new UsageError(
+				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
+			);
+		}
+
+		const fieldChange: FieldChange = {
+			fieldKind: genericFieldKind.identifier,
+			change: genericFieldKind.changeHandler.createEmpty(),
+			fieldShallowChangeConstraintOnRevert: { violated: false },
+		};
+
+		this.applyChange(
+			tagChange(
+				buildModularChangesetFromField({
+					path,
+					fieldChange,
+					localCrossFieldKeys: [],
+					nodeChanges: newTupleBTree(),
+					nodeToParent: newTupleBTree(),
+					crossFieldKeys: newCrossFieldKeyTable(),
+					idAllocator: this.idAllocator,
+					revision,
+				}),
+				revision,
+			),
+		);
 	}
 }
 

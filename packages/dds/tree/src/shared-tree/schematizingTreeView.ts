@@ -12,7 +12,14 @@ import type {
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, rootFieldKey } from "../core/index.js";
+import {
+	anchorSlot,
+	rootFieldKey,
+	type FieldKey,
+	EmptyKey,
+	type FieldUpPath,
+} from "../core/index.js";
+import { brand } from "../util/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -62,6 +69,8 @@ import {
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchAlpha,
+	treeNodeApi,
+	NodeKind,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -590,6 +599,57 @@ export function addConstraintsToTransaction(
 					checkout.editor.addNoChangeConstraintOnRevert();
 				} else {
 					checkout.editor.addNoChangeConstraint();
+				}
+				break;
+			}
+			case "noShallowChange": {
+				const node = getInnerNode(constraint.node);
+				const nodeStatus = getKernel(constraint.node).getStatus();
+				if (nodeStatus !== TreeStatus.InDocument) {
+					const revertText = constraintsOnRevert ? " on revert" : "";
+					throw new UsageError(
+						`Attempted to add a "noShallowChange" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
+					);
+				}
+				assert(node.isHydrated(), "In document node must be hydrated.");
+				const schema = treeNodeApi.schema(constraint.node);
+				let fieldKey: FieldKey;
+				switch (schema.kind) {
+					case NodeKind.Array: {
+						// For array nodes, always use EmptyKey (ignore key parameter if provided)
+						fieldKey = EmptyKey;
+						break;
+					}
+					case NodeKind.Map:
+					case NodeKind.Record:
+					case NodeKind.Object: {
+						if (constraint.key === undefined) {
+							throw new UsageError(
+								`Map, Record, and Object nodes require a "key" parameter to specify which field to constrain.`,
+							);
+						}
+						fieldKey = brand(constraint.key);
+						break;
+					}
+					case NodeKind.Leaf: {
+						throw new UsageError(
+							`Leaf nodes do not have fields and cannot use the "noShallowChange" constraint. This constraint is only applicable to array, map, record, and object nodes.`,
+						);
+					}
+					default: {
+						unreachableCase(schema.kind);
+					}
+				}
+
+				const fieldPath: FieldUpPath = {
+					parent: node.anchorNode,
+					field: fieldKey,
+				};
+
+				if (constraintsOnRevert) {
+					checkout.editor.addShallowChangeConstraintOnRevert(fieldPath);
+				} else {
+					checkout.editor.addShallowChangeConstraint(fieldPath);
 				}
 				break;
 			}

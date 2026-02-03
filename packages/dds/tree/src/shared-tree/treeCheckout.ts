@@ -1205,6 +1205,12 @@ class EditLock {
 			addNoChangeConstraintOnRevert() {
 				editor.addNoChangeConstraintOnRevert();
 			},
+			addShallowChangeConstraint(path) {
+				editor.addShallowChangeConstraint(path);
+			},
+			addShallowChangeConstraintOnRevert(path) {
+				editor.addShallowChangeConstraintOnRevert(path);
+			},
 		};
 	}
 

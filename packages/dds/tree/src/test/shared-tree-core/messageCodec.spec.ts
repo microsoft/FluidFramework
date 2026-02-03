@@ -154,6 +154,7 @@ describe("message codec", () => {
 		MessageFormatVersion.v4,
 		MessageFormatVersion.v6,
 		MessageFormatVersion.vSharedBranches,
+		MessageFormatVersion.vConstraints,
 	]);
 	makeDiscontinuedEncodingTestSuite(family, [
 		undefined,

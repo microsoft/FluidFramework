@@ -14,6 +14,7 @@ import {
 	MockStorage,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type TestFluidObjectInternal,
 	waitForContainerConnection,
@@ -1869,6 +1870,213 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view2.root], ["Y", "A", "B"]);
 			assert.deepEqual([...fork.root], ["Y", "A", "X", "B"]);
 			stackFork.unsubscribe();
+		});
+
+		describe("noShallowChange", () => {
+			it("object field constraint gets violated when a shallow change is rebased", () => {
+				const sf = new SchemaFactory("test");
+				class Child extends sf.object("Child", { value: sf.string }) {}
+				class Parent extends sf.object("Parent", { child: sf.optional(Child) }) {}
+
+				const provider = new TestTreeProviderLite(
+					2,
+					configuredSharedTree({
+						enableConstraints: true,
+						jsonValidator: FormatValidatorBasic,
+						minVersionForCollab: FluidClientVersion.v2_80,
+					}).getFactory(),
+				);
+				const config = new TreeViewConfiguration({
+					schema: Parent,
+					enableSchemaValidation,
+				});
+				const tree1 = provider.trees[0];
+				const view1 = asAlpha(tree1.viewWith(config));
+				view1.initialize(new Parent({ child: new Child({ value: "A" }) }));
+				provider.synchronizeMessages();
+				const tree2 = provider.trees[1];
+				const view2 = asAlpha(tree2.viewWith(config));
+
+				const fork = view1.fork();
+
+				// Make a concurrent edit on the other tree that replaces the child
+				view2.runTransaction(() => {
+					view2.root.child = new Child({ value: "B" });
+				});
+
+				// Make an edit on the fork with a noShallowChange constraint on the "child" field
+				fork.runTransaction(
+					() => {
+						const child = fork.root.child;
+						assert(child !== undefined);
+						child.value = "modified";
+					},
+					{
+						preconditions: [
+							{
+								type: "noShallowChange",
+								node: fork.root,
+								key: "child",
+							},
+						],
+					},
+				);
+				assert.equal(view1.root.child?.value, "A");
+				assert.equal(view2.root.child?.value, "B");
+				assert.equal(fork.root.child?.value, "modified");
+
+				provider.synchronizeMessages();
+				assert.equal(view1.root.child?.value, "B");
+				assert.equal(view2.root.child?.value, "B");
+				assert.equal(fork.root.child?.value, "modified");
+
+				// rebase the fork, which should violate the noShallowChange constraint
+				// since there was a concurrent replace on the child field
+				fork.rebaseOnto(view1);
+				assert.equal(view1.root.child?.value, "B");
+				assert.equal(view2.root.child?.value, "B");
+				// The fork's transaction should be dropped due to violated constraint
+				assert.equal(fork.root.child?.value, "B");
+			});
+
+			it("throws error when map node constraint is missing key parameter", () => {
+				const sf = new SchemaFactory("test");
+				const TestMap = sf.map("TestMap", sf.string);
+
+				const provider = new TestTreeProviderLite(
+					1,
+					configuredSharedTree({
+						enableConstraints: true,
+						jsonValidator: FormatValidatorBasic,
+						minVersionForCollab: FluidClientVersion.v2_80,
+					}).getFactory(),
+				);
+				const config = new TreeViewConfiguration({
+					schema: TestMap,
+					enableSchemaValidation,
+				});
+				const view = asAlpha(provider.trees[0].viewWith(config));
+				view.initialize(new TestMap([["key1", "value1"]]));
+
+				assert.throws(
+					() => {
+						view.runTransaction(
+							() => {
+								view.root.set("key2", "value2");
+							},
+							{
+								preconditions: [{ type: "noShallowChange", node: view.root }],
+							},
+						);
+					},
+					(error: Error) => {
+						return (
+							error instanceof UsageError &&
+							error.message.includes("Map") &&
+							error.message.includes("key")
+						);
+					},
+				);
+			});
+
+			it("throws error when object node constraint is missing key parameter", () => {
+				const sf = new SchemaFactory("test");
+				class TestObject extends sf.object("TestObject", {
+					prop1: sf.string,
+					prop2: sf.optional(sf.string),
+				}) {}
+
+				const provider = new TestTreeProviderLite(
+					1,
+					configuredSharedTree({
+						enableConstraints: true,
+						jsonValidator: FormatValidatorBasic,
+						minVersionForCollab: FluidClientVersion.v2_80,
+					}).getFactory(),
+				);
+				const config = new TreeViewConfiguration({
+					schema: TestObject,
+					enableSchemaValidation,
+				});
+				const view = asAlpha(provider.trees[0].viewWith(config));
+				view.initialize(new TestObject({ prop1: "initial" }));
+
+				assert.throws(
+					() => {
+						view.runTransaction(
+							() => {
+								view.root.prop2 = "modified";
+							},
+							{
+								preconditions: [{ type: "noShallowChange", node: view.root }],
+							},
+						);
+					},
+					(error: Error) => {
+						return (
+							error instanceof UsageError &&
+							error.message.includes("Object") &&
+							error.message.includes("key")
+						);
+					},
+				);
+			});
+
+			it("map node with key works correctly", () => {
+				const sf = new SchemaFactory("test");
+				class Item extends sf.object("Item", { value: sf.string }) {}
+				const TestMap = sf.map("TestMap", Item);
+
+				const provider = new TestTreeProviderLite(
+					2,
+					configuredSharedTree({
+						enableConstraints: true,
+						jsonValidator: FormatValidatorBasic,
+						minVersionForCollab: FluidClientVersion.v2_80,
+					}).getFactory(),
+				);
+				const config = new TreeViewConfiguration({
+					schema: TestMap,
+					enableSchemaValidation,
+				});
+
+				const view1 = asAlpha(provider.trees[0].viewWith(config));
+				view1.initialize(new TestMap([["key1", new Item({ value: "A" })]]));
+				provider.synchronizeMessages();
+
+				const view2 = asAlpha(provider.trees[1].viewWith(config));
+				const fork = view1.fork();
+
+				view2.runTransaction(() => {
+					view2.root.set("key1", new Item({ value: "B" }));
+				});
+
+				fork.runTransaction(
+					() => {
+						const item = fork.root.get("key1");
+						assert(item !== undefined);
+						item.value = "modified";
+					},
+					{
+						preconditions: [{ type: "noShallowChange", node: fork.root, key: "key1" }],
+					},
+				);
+
+				assert.equal(view1.root.get("key1")?.value, "A");
+				assert.equal(view2.root.get("key1")?.value, "B");
+				assert.equal(fork.root.get("key1")?.value, "modified");
+
+				provider.synchronizeMessages();
+				assert.equal(view1.root.get("key1")?.value, "B");
+				assert.equal(view2.root.get("key1")?.value, "B");
+				assert.equal(fork.root.get("key1")?.value, "modified");
+
+				fork.rebaseOnto(view1);
+				assert.equal(view1.root.get("key1")?.value, "B");
+				assert.equal(view2.root.get("key1")?.value, "B");
+				// The fork's transaction should be dropped since key1 was replaced
+				assert.equal(fork.root.get("key1")?.value, "B");
+			});
 		});
 	});
 

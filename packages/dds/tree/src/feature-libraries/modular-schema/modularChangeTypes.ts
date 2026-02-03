@@ -122,6 +122,15 @@ export interface NoChangeConstraint {
 }
 
 /**
+ * A constraint that is violated whenever a field has shallow changes when rebased over concurrent changes.
+ * Shallow changes are changes to the field's immediate structure (e.g., changing a top-level field on a node,
+ * insert/remove/move in sequence field).
+ */
+export interface FieldShallowChangeConstraint {
+	violated: boolean;
+}
+
+/**
  * Changeset for a subtree rooted at a specific node.
  */
 export interface NodeChangeset extends HasFieldChanges {
@@ -142,6 +151,10 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 export interface FieldChange {
 	readonly fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
+	/** Keeps track of whether field shallow change constraint has been violated by this change */
+	fieldShallowChangeConstraint?: FieldShallowChangeConstraint;
+	/** Keeps track of whether field shallow change constraint will be violated when this change is reverted */
+	fieldShallowChangeConstraintOnRevert?: FieldShallowChangeConstraint;
 }
 
 export type FieldChangeset = Brand<unknown, "FieldChangeset">;

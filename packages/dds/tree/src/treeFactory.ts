@@ -29,7 +29,9 @@ import type { ITree } from "./simple-tree/index.js";
 import { Breakable, copyProperty } from "./util/index.js";
 import { FluidClientVersion } from "./codec/index.js";
 import {
+	editManagerFormatVersionSelectorForConstraints,
 	editManagerFormatVersionSelectorForSharedBranches,
+	messageFormatVersionSelectorForConstraints,
 	messageFormatVersionSelectorForSharedBranches,
 } from "./shared-tree-core/index.js";
 
@@ -213,9 +215,18 @@ export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInt
 
 function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
 	const enableSharedBranches = options.enableSharedBranches ?? false;
+	const enableConstraints = options.enableConstraints ?? false;
+	if (enableSharedBranches && enableConstraints) {
+		throw new UsageError(
+			"Cannot enable both shared branches and constraints at the same time.",
+		);
+	}
 
 	if (enableSharedBranches) {
 		return sharedBranchesOptions;
+	}
+	if (enableConstraints) {
+		return constraintOptions;
 	}
 
 	return {};
@@ -224,4 +235,9 @@ function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInte
 const sharedBranchesOptions: SharedTreeOptionsInternal = {
 	messageFormatSelector: messageFormatVersionSelectorForSharedBranches,
 	editManagerFormatSelector: editManagerFormatVersionSelectorForSharedBranches,
+};
+
+const constraintOptions: SharedTreeOptionsInternal = {
+	messageFormatSelector: messageFormatVersionSelectorForConstraints,
+	editManagerFormatSelector: editManagerFormatVersionSelectorForConstraints,
 };

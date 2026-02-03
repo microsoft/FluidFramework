@@ -22,6 +22,7 @@ import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
 import { makeModularChangeCodecV1 } from "./modularChangeCodecV1.js";
 import { makeModularChangeCodecV2 } from "./modularChangeCodecV2.js";
+import { makeModularChangeCodecVConstraint } from "./modularChangeCodecVConstraint.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -58,6 +59,18 @@ export function makeModularChangeCodecFamily(
 					return [
 						version,
 						makeModularChangeCodecV2(
+							fieldKinds,
+							revisionTagCodec,
+							fieldsCodec,
+							codecOptions,
+							chunkCompressionStrategy,
+						),
+					];
+				}
+				case 101: {
+					return [
+						version,
+						makeModularChangeCodecVConstraint(
 							fieldKinds,
 							revisionTagCodec,
 							fieldsCodec,

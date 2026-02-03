@@ -214,7 +214,8 @@ export function testCodec() {
 		makeEncodingTestSuite(family, testCases, assertEquivalentSummaryDataIgnoreOriginator, [
 			EditManagerFormatVersion.v3,
 			EditManagerFormatVersion.v4,
-			EditManagerFormatVersion.v6,
+			EditManagerFormatVersion.v6,			
+			EditManagerFormatVersion.vConstraints,
 		]);
 		makeDiscontinuedEncodingTestSuite(family, [
 			EditManagerFormatVersion.v1,

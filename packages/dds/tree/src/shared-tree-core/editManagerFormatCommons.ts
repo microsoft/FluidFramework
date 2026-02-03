@@ -166,6 +166,11 @@ export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", 
 	 * Only used for testing shared branches.
 	 */
 	vSharedBranches: "shared-branches|v0.1",
+	/**
+	 * Not yet released.
+	 * Only used for testing new constraint APIs not yet ready for production.
+	 */
+	vConstraints: "constraints|v0.1",
 });
 export type EditManagerFormatVersion = Values<typeof EditManagerFormatVersion>;
 export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> =
@@ -174,6 +179,7 @@ export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVe
 		EditManagerFormatVersion.v4,
 		EditManagerFormatVersion.v6,
 		EditManagerFormatVersion.vSharedBranches,
+		EditManagerFormatVersion.vConstraints,
 	]);
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set(
 	Object.values(EditManagerFormatVersion),

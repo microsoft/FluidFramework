@@ -605,6 +605,10 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v6),
 		brand<SharedTreeChangeFormatVersion>(5),
 	],
+	[
+		brand<EditManagerFormatVersion>(EditManagerFormatVersion.vConstraints),
+		brand<SharedTreeChangeFormatVersion>(5),
+	],
 ]);
 
 /**
@@ -628,6 +632,10 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
 	],
 	[
 		brand<MessageFormatVersion>(MessageFormatVersion.v6),
+		brand<SharedTreeChangeFormatVersion>(5),
+	],
+	[
+		brand<MessageFormatVersion>(MessageFormatVersion.vConstraints),
 		brand<SharedTreeChangeFormatVersion>(5),
 	],
 ]);
@@ -685,6 +693,11 @@ export interface SharedTreeOptions
 	 * Defaults to false.
 	 */
 	readonly enableSharedBranches?: boolean;
+	/**
+	 * Experimental feature flag to enable constraints not yet ready for use in production.
+	 * Defaults to false.
+	 */
+	readonly enableConstraints?: boolean;
 	/**
 	 * Returns whether a node / field should be incrementally encoded.
 	 * @remarks
@@ -825,6 +838,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
 	messageFormatSelector: clientVersionToMessageFormatVersion,
 	enableSharedBranches: false,
+	enableConstraints: false,
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
 };
