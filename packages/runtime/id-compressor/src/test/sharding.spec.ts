@@ -252,13 +252,10 @@ describe("IdCompressor Sharding", () => {
 		});
 
 		it("shards cannot decompress IDs beyond their generation count", () => {
-			// When a shard generates an ID, it "backfills" the entire cycle containing that ID.
-			// A cycle is a group of consecutive genCounts equal to the stride size.
-			// With consecutive positioning:
+			// When a shard generates an ID, it "backfills" all IDs up to and including that ID.
 			// - Parent starts at localGenCount=0, children at 1, 2, etc.
 			// - Each shard adds stride when generating
-			// - Backfilling happens up to the cycle end containing the generated ID
-			// For stride=3: cycle ending at 3 = [1,2,3], cycle ending at 6 = [4,5,6], etc.
+			// - Backfilling applies to a full "stride" worth of IDs.
 			// Shards can only decompress IDs within genCounts they have backfilled.
 
 			const sessionId = createSessionId();
