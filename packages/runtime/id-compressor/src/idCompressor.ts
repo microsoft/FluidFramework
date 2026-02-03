@@ -1013,46 +1013,34 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 					logger?: ITelemetryLoggerExt | undefined;
 			  },
 	): IdCompressor {
-		const { serialized, newSessionId, logger, requestedWriteVersion } = params;
+		const { serialized, newSessionId: sessionId, logger, requestedWriteVersion } = params;
 		const buffer = stringToBuffer(serialized, "base64");
 		const index: Index = {
 			index: 0,
 			bufferFloat: new Float64Array(buffer),
 			bufferUint: new BigUint64Array(buffer),
 		};
-		const serializedVersion = readNumber(index);
+		const serializedVersion = readNumber(index) as SerializationVersion;
 		// If requested version is < the serialized version, we must write the version serialized
 		// to avoid losing data.
 		const writeVersion = Math.max(
 			requestedWriteVersion,
 			serializedVersion,
 		) as SerializationVersion;
+
 		switch (serializedVersion) {
-			case 1: {
-				throw new Error("IdCompressor version 1.0 is no longer supported.");
-			}
-			case 2: {
-				return IdCompressor.deserialize2_0(index, newSessionId, logger, writeVersion);
-			}
+			case 2:
 			case 3: {
-				return IdCompressor.deserialize3_0(index, newSessionId, logger, writeVersion);
+				break;
 			}
 			default: {
+				if (serializedVersion === 1) {
+					throw new Error("IdCompressor version 1.0 is no longer supported.");
+				}
 				throw new Error("Unknown IdCompressor serialized version.");
 			}
 		}
-	}
 
-	/**
-	 * Common deserialization logic shared between version 2.0 and 3.0.
-	 * Version 3.0 adds optional sharding state to the local state section.
-	 */
-	private static deserializeCommon(
-		index: Index,
-		sessionId: SessionId | undefined,
-		logger: ITelemetryLoggerExt | undefined,
-		version: SerializationVersion,
-	): IdCompressor {
 		const hasLocalState = readBoolean(index);
 		const sessionCount = readNumber(index);
 		const clusterCount = readNumber(index);
@@ -1078,7 +1066,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			sessions.push([numeric, new Session(numeric)]);
 		}
 
-		const compressor = new IdCompressor(new Sessions(sessions), logger, version);
+		const compressor = new IdCompressor(new Sessions(sessions), logger, writeVersion);
 
 		// Clusters
 		let baseFinalId = 0;
@@ -1107,7 +1095,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			}
 
 			// Sharding state (version 3+)
-			if (version >= 3) {
+			if (serializedVersion >= 3) {
 				const hasShardingState = readBoolean(index);
 				if (hasShardingState) {
 					const currentStride = readNumber(index);
@@ -1148,30 +1136,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			0x75f /* Failed to read entire serialized compressor. */,
 		);
 		return compressor;
-	}
-
-	/**
-	 * Deserializes version 2.0 format (no sharding state).
-	 */
-	private static deserialize2_0(
-		index: Index,
-		sessionId: SessionId | undefined,
-		logger: ITelemetryLoggerExt | undefined,
-		writeVersion: SerializationVersion,
-	): IdCompressor {
-		return IdCompressor.deserializeCommon(index, sessionId, logger, writeVersion);
-	}
-
-	/**
-	 * Deserializes version 3.0 format which includes optional sharding state.
-	 */
-	private static deserialize3_0(
-		index: Index,
-		sessionId: SessionId | undefined,
-		logger: ITelemetryLoggerExt | undefined,
-		writeVersion: SerializationVersion,
-	): IdCompressor {
-		return IdCompressor.deserializeCommon(index, sessionId, logger, writeVersion);
 	}
 
 	public equals(other: IdCompressor, includeLocalState: boolean): boolean {
