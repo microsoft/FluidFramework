@@ -54,6 +54,9 @@ export const useProjectService = {
 	files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 	languageOptions: {
 		parserOptions: {
+			// Explicitly clear any inherited project setting to avoid conflicts with projectService.
+			// Newer typescript-eslint versions error if both project and projectService are enabled.
+			project: null,
 			projectService: true,
 		},
 	},
@@ -64,12 +67,6 @@ export const useProjectService = {
  */
 export const testProjectConfig = {
 	files: ["src/test/**", ...testFilePatterns],
-	languageOptions: {
-		parserOptions: {
-			projectService: false,
-			project: ["./tsconfig.json", "./src/test/tsconfig.json"],
-		},
-	},
 	rules: {
 		"@typescript-eslint/no-invalid-this": "off",
 		"@typescript-eslint/unbound-method": "off",
