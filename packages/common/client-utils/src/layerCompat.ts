@@ -10,6 +10,42 @@
 export type FluidLayer = "loader" | "driver" | "runtime" | "dataStore";
 
 /**
+ * The policy for compatibility windows (in months) that a layer uses to validate compatibility with another layer.
+ * The other layer must be within this window relative to the layer to be compatible.
+ *
+ * IMPORTANT: When changing these policy values, update the documentation in "Layer Compatibility Policy" section of
+ * LayerCompatibility.md at the root of the repository.
+ *
+ * @internal
+ */
+export const LayerCompatibilityPolicyWindowMonths = {
+	/**
+	 * The Loader layer must be within this many months of the Driver layer to be compatible.
+	 */
+	DriverLoader: 12,
+	/**
+	 * The Driver layer must be within this many months of the Loader layer to be compatible.
+	 */
+	LoaderDriver: 6,
+	/**
+	 * The Runtime layer must be within this many months of the Loader layer to be compatible.
+	 */
+	LoaderRuntime: 6,
+	/**
+	 * The Loader layer must be within this many months of the Runtime layer to be compatible.
+	 */
+	RuntimeLoader: 12,
+	/**
+	 * The DataStore layer must be within this many months of the Runtime layer to be compatible.
+	 */
+	RuntimeDataStore: 3,
+	/**
+	 * The Runtime layer must be within this many months of the DataStore layer to be compatible.
+	 */
+	DataStoreRuntime: 3,
+} as const;
+
+/**
  * Result of a layer compatibility check - whether a layer is compatible with another layer.
  * @internal
  */
