@@ -171,7 +171,7 @@ export class RangeMap<K, V> {
 	 *
 	 * @param start - The start of the range to delete (inclusive).
 	 * @param length - The length of the range to delete.
-	 * @returns The number of entries deleted.
+	 * @returns The number of keys/value pairs deleted (integer between 0 and `length`, inclusive).
 	 */
 	public delete(start: K, length: number): number {
 		let deleteCount = 0;
