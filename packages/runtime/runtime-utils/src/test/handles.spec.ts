@@ -11,28 +11,26 @@ import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-inter
 import { isFluidHandle, lookupTemporaryBlobStorageId } from "../handles.js";
 
 describe("Handles", () => {
-	it("encodeCompactIdToString() with strings", () => {
-		it("isFluidHandle", () => {
-			assert(!isFluidHandle(0));
-			assert(!isFluidHandle({}));
-			assert(!isFluidHandle(undefined));
-			// eslint-disable-next-line unicorn/no-null -- We want to explicitly test for null
-			assert(!isFluidHandle(null));
-			assert(!isFluidHandle([]));
-			assert(!isFluidHandle({ get: () => {} }));
-			assert(!isFluidHandle({ IFluidHandle: 5, get: () => {} }));
+	it("isFluidHandle", () => {
+		assert(!isFluidHandle(0));
+		assert(!isFluidHandle({}));
+		assert(!isFluidHandle(undefined));
+		// eslint-disable-next-line unicorn/no-null -- We want to explicitly test for null
+		assert(!isFluidHandle(null));
+		assert(!isFluidHandle([]));
+		assert(!isFluidHandle({ get: () => {} }));
+		assert(!isFluidHandle({ IFluidHandle: 5, get: () => {} }));
 
-			const loopy = { IFluidHandle: {} };
-			loopy.IFluidHandle = loopy;
-			assert(!isFluidHandle(loopy));
-			assert(!isFluidHandle({ IFluidHandle: 5 }));
-			assert(!isFluidHandle({ IFluidHandle: {} }));
-			// eslint-disable-next-line unicorn/no-null -- We want to explicitly test for null
-			assert(!isFluidHandle({ IFluidHandle: null }));
+		const loopy = { IFluidHandle: {} };
+		loopy.IFluidHandle = loopy;
+		assert(!isFluidHandle(loopy));
+		assert(!isFluidHandle({ IFluidHandle: 5 }));
+		assert(!isFluidHandle({ IFluidHandle: {} }));
+		// eslint-disable-next-line unicorn/no-null -- We want to explicitly test for null
+		assert(!isFluidHandle({ IFluidHandle: null }));
 
-			// Symbol based:
-			assert(isFluidHandle({ [fluidHandleSymbol]: {} }));
-		});
+		// Symbol based:
+		assert(isFluidHandle({ [fluidHandleSymbol]: {} }));
 	});
 
 	describe("lookupTemporaryBlobStorageId", () => {
