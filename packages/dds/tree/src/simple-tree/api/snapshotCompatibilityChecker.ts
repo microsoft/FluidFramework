@@ -237,6 +237,17 @@ export interface CombinedSchemaCompatibilityStatus {
 export interface SchemaCompatibilitySnapshotsOptions {
 	/**
 	 * Directory where historical schema snapshots are stored.
+	 * @remarks
+	 * As the contents of this directory (specifically historical snapshots) cannot be regenerated,
+	 * a directory appropriate for test data should be used.
+	 * Generally this means that this directory should be versioned like code,
+	 * and not erased when regenerated snapshots.
+	 *
+	 * This directory will be created if it does not already exist.
+	 * All ".json" files in this directory will be treated as schema snapshots.
+	 * It is recommended to use a dedicated directory for each {@link checkSchemaCompatibilitySnapshots} powered test.
+	 *
+	 * This can use any path syntax supported by the provided {@link SchemaCompatibilitySnapshotsOptions.fileSystem}.
 	 */
 	readonly snapshotDirectory: string;
 	/**
@@ -244,19 +255,36 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 */
 	readonly fileSystem: SnapshotFileSystem;
 	/**
-	 * The current application or library version.
-	 * @remarks
-	 * This uses the {@link https://semver.org/#spec-item-11|ordering defined by semver}.
-	 * It is only compared against the version from previous snapshots (taken from this version when they were created by setting `mode` to "update") and the `minVersionForCollaboration`.
-	 */
-	readonly version: string;
-	/**
 	 * The current view schema.
 	 */
 	readonly schema: TreeViewConfiguration;
 	/**
+	 * The current application or library version.
+	 * @remarks
+	 * Can use any format supported by {@link SchemaCompatibilitySnapshotsOptions.versionComparer}.
+	 * Only compared against the version from previous snapshots (taken from this version when they were created by setting `mode` to "update") and the `minVersionForCollaboration`.
+	 *
+	 * Typically `minVersionForCollaboration` should be set to the oldest version currently in use, so it's helpful to use a version which can be easily measured to tell if clients are still using it.
+	 * It is also important that this version increases with every new versions of the application or library that is released (and thus might persist content which needs to be supported).
+	 *
+	 * Often the easiest way to ensure this is to simply use the version of the package or application itself, and set the `minVersionForCollaboration` based on telemetry about which versions are still in use.
+	 * To do this, it is recommended that this version be programmatically derived from the application version rather than hard coded inline.
+	 * For example, reading it from the `package.json` or some other source of truth can be done to ensure it is kept up to date and thus snapshots always have the correct version.
+	 * The version used should typically be the next production version (whose formats must be supported long term) that would be released from the branch of the code being worked on.
+	 * This usually means that that the correct version to use is the same version that would be used when releasing the application or library, but with any prerelease version tags removed.
+	 * If an automated way to keep this version up to date is not used, be very careful when reviewing changes to snapshot files to ensure the version is correct.
+	 * If incorrectly versioned snapshots were committed accidentally, rename the snapshot files to have the correct version, and restore the old files from, version control.
+	 *
+	 * It is possible to use a different versioning scheme, for example one specific to the schema in question.
+	 * This can be done robustly as long as care is taken to ensure the version increases such that every released version has a unique snapshot,
+	 * and `minVersionForCollaboration` is set appropriately using the same versioning scheme.
+	 */
+	readonly version: string;
+	/**
 	 * The minimum version that the current version is expected to be able to collaborate with.
 	 * @remarks
+	 * Can use any format supported by {@link SchemaCompatibilitySnapshotsOptions.versionComparer}.
+	 *
 	 * This defines a range of versions whose schema must be forwards compatible with trees using the current schema:
 	 * Any schema from snapshots with a version greater than or equal to this must be able to view documents created with the current schema.
 	 * This means that if the current `schema` is used to create a {@link TreeView}, then {@link TreeView.upgradeSchema} is used, the older clients,
@@ -269,9 +297,20 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 *
 	 * This is the same approach used by {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
-	 * and this corresponds to the version of the application or library defining the schema.
+	 * and this corresponds to whatever versioning scheme is used with {@link SchemaCompatibilitySnapshotsOptions.version}.
 	 */
 	readonly minVersionForCollaboration: string;
+
+	/**
+	 * A comparison function for version strings.
+	 * @remarks
+	 * A comparison function like that provided to {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#comparefn | Array.sort}.
+	 * This is used to partition snapshots into those less than `minVersionForCollaboration` and those greater than or equal to it, as well as to sanity check `version` against the versions of the snapshots.
+	 * If not provided, the ordering is defined by {@link https://semver.org/#spec-item-11|semver}.
+	 * @returns A negative number if `a` is less than `b`, zero if they are equal, or a positive number if `a` is greater than `b`.
+	 */
+	readonly versionComparer?: (a: string, b: string) => number;
+
 	/**
 	 * When true, every version must be snapshotted, and an increased version number will require a new snapshot.
 	 * @remarks
@@ -299,7 +338,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
 /**
  * Check `currentViewSchema` for compatibility with a collection of historical schema snapshots stored in `snapshotDirectory`.
  *
- * @throws Throws errors if the input version strings (including those in snapshot file names) are not valid semver versions.
+ * @throws Throws errors if the input version strings (including those in snapshot file names) are not valid semver versions when using default semver version comparison.
  * @throws Throws errors if the input version strings (including those in snapshot file names) are not ordered as expected (current being the highest, and `minVersionForCollaboration` corresponding to the current version or a lower snapshotted version).
  * @throws In `test` mode, throws an error if there is not an up to date snapshot for the current version.
  * @throws Throws an error if any snapshotted schema cannot be upgraded to the current schema.
@@ -318,6 +357,14 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * however it currently does not do a good job of explaining exactly what change to the schema is causing the compatibility issues.
  * This is a known limitation that will be improved in future releases.
  * These improvements, as well as other changes, may change the exact messages produced by this function in the error cases: no stability of these messages should be assumed.
+ *
+ * Unlike some other snapshot based testing tools, this stores more than just the current snapshot: historical snapshots are retained as well.
+ * Retention of these additional historical snapshots, whose content can't be regenerated from the current schema, is necessary to properly test compatibility across versions.
+ * Since there is content in the snapshots which cannot be regenerated, tools which assume all snapshotted content can be regenerated cannot be used here.
+ * This means that tools like Jest's built in snapshot testing are not suitable for this purpose.
+ * These snapshots behave partly like test data, and partly like snapshots.
+ * Typically the easiest way to manage this is to place {@link SchemaCompatibilitySnapshotsOptions.snapshotDirectory} inside a directory appropriate for test data,
+ * and use node to provide the filesystem access via {@link SchemaCompatibilitySnapshotsOptions.fileSystem}.
  *
  * For now, locating what change broke compatibility is likely best discovered by making small schema changes one at a time and updating the snapshot and reviewing the diffs.
  * Details for what kinds of changes are breaking and in which ways can be found in the documentation for {@link TreeView.compatibility} and
@@ -347,15 +394,49 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * 	});
  * });
  * ```
+ * @example Complete Mocha test file
+ * ```typescript
+ * import fs from "node:fs";
+ * import path from "node:path";
+ *
+ * import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/beta";
+ *
+ * // The TreeViewConfiguration the application uses, which contains the application's schema.
+ * import { treeViewConfiguration } from "./schema.js";
+ * // The next version of the application which will be released.
+ * import { packageVersion } from "./version.js";
+ *
+ * // Provide some way to run the check in "update" mode when updating snapshots is intended.
+ * const regenerateSnapshots = process.argv.includes("--snapshot");
+ *
+ * // Setup the actual test. In this case using Mocha syntax.
+ * describe("schema", () => {
+ * 	it("schema compatibility", () => {
+ * 		// Select a path to save the snapshots in.
+ * 		// This will depend on how your application organizes its test data.
+ * 		const snapshotDirectory = path.join(
+ * 			import.meta.dirname,
+ * 			"../../../src/test/schema-snapshots",
+ * 		);
+ * 		checkSchemaCompatibilitySnapshots({
+ * 			snapshotDirectory,
+ * 			fileSystem: { ...fs, ...path },
+ * 			version: packageVersion,
+ * 			schema: treeViewConfiguration,
+ * 			minVersionForCollaboration: "2.0.0",
+ * 			mode: regenerateSnapshots ? "update" : "test",
+ * 		});
+ * 	});
+ * });
+ * ```
  * @privateRemarks
  * Use of this function within this package (for schema libraries released as part of this package) should use {@link testSchemaCompatibilitySnapshots} instead.
  *
- * TODO: this uses the format defined in simpleSchemaCodec.ts.
- * Currently this does not include any versioning information in the snapshot format itself.
- * This would make it hard to do things like upgrade to a new format (perhaps for better diffs, or to support new features) in the future.
- * That code should probably be migrated to a proper versioned codec with a schema and validation.
- * This utility can directly depend on the typebox-validator and inject that as this code should not be bundle size sensitive.
- * This should be addressed before this reached beta stability.
+ * This uses the format defined in simpleSchemaCodec.ts.
+ * This does include versioning information in the snapshot format,
+ * but it would be nice to better unify how we do that versioning and format validation with our codecs.
+ *
+ * See src/test/simple-tree/api/snapshotCompatibilityCheckerExample/snapshotCompatibilityChecker.example.mts for the large example included above.
  * @alpha
  */
 export function checkSchemaCompatibilitySnapshots(
@@ -372,17 +453,23 @@ export function checkSchemaCompatibilitySnapshots(
 		minVersionForCollaboration,
 		snapshotUnchangedVersions,
 	} = options;
-	if (semver.valid(currentVersion) === null) {
+
+	const validateVersion =
+		options.versionComparer === undefined ? semver.valid : (v: string) => v;
+	const versionComparer = options.versionComparer ?? semver.compare;
+
+	if (validateVersion(currentVersion) === null) {
 		throw new UsageError(
 			`Invalid version: ${JSON.stringify(currentVersion)}. Must be a valid semver version.`,
 		);
 	}
-	if (semver.valid(minVersionForCollaboration) === null) {
+	if (validateVersion(minVersionForCollaboration) === null) {
 		throw new UsageError(
 			`Invalid minVersionForCollaboration: ${JSON.stringify(minVersionForCollaboration)}. Must be a valid semver version.`,
 		);
 	}
-	if (!semver.lte(minVersionForCollaboration, currentVersion)) {
+
+	if (versionComparer(minVersionForCollaboration, currentVersion) > 0) {
 		throw new UsageError(
 			`Invalid minVersionForCollaboration: ${JSON.stringify(minVersionForCollaboration)}. Must be less than or equal to current version ${JSON.stringify(currentVersion)}.`,
 		);
@@ -395,7 +482,7 @@ export function checkSchemaCompatibilitySnapshots(
 	}
 
 	const currentEncodedForSnapshotting = exportCompatibilitySchemaSnapshot(currentViewSchema);
-	const snapshots = checker.readAllSchemaSnapshots();
+	const snapshots = checker.readAllSchemaSnapshots(versionComparer);
 
 	const compatibilityErrors: string[] = [];
 
@@ -436,7 +523,7 @@ export function checkSchemaCompatibilitySnapshots(
 				updatableError(`No snapshots found.`);
 			}
 		} else {
-			if (semver.lte(latestSnapshot[0], currentVersion)) {
+			if (versionComparer(latestSnapshot[0], currentVersion) <= 0) {
 				// Check to see if schema in snapshot is the same as the latest existing snapshot.
 				const oldString = JSON.stringify(exportCompatibilitySchemaSnapshot(latestSnapshot[1]));
 				const currentString = JSON.stringify(currentEncodedForSnapshotting);
@@ -496,7 +583,7 @@ export function checkSchemaCompatibilitySnapshots(
 			);
 		}
 
-		if (semver.eq(snapshotVersion, currentVersion)) {
+		if (versionComparer(snapshotVersion, currentVersion) === 0) {
 			if (currentVersion !== snapshotVersion) {
 				throw new UsageError(
 					`Snapshot version ${JSON.stringify(snapshotVersion)} is semantically equal but not string equal to current version ${JSON.stringify(currentVersion)}: this is not supported.`,
@@ -510,7 +597,7 @@ export function checkSchemaCompatibilitySnapshots(
 					`Current version ${JSON.stringify(snapshotVersion)} expected to be equivalent to its snapshot.`,
 				);
 			}
-		} else if (semver.lt(snapshotVersion, currentVersion)) {
+		} else if (versionComparer(snapshotVersion, currentVersion) < 0) {
 			if (selectedMinVersionForCollaborationSnapshot === undefined) {
 				assert(
 					compatibilityErrors.length > 0,
@@ -518,7 +605,9 @@ export function checkSchemaCompatibilitySnapshots(
 				);
 			} else {
 				// Collaboration with this version is expected to work.
-				if (semver.gte(snapshotVersion, selectedMinVersionForCollaborationSnapshot[0])) {
+				if (
+					versionComparer(snapshotVersion, selectedMinVersionForCollaborationSnapshot[0]) >= 0
+				) {
 					// Check that the historical version can view documents from the current version, since collaboration with this one is expected to work.
 					if (!compatibility.snapshotViewOfCurrentDocument.canView) {
 						const message = `Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being ${JSON.stringify(selectedMinVersionForCollaborationSnapshot[0])}.`;
@@ -535,16 +624,17 @@ export function checkSchemaCompatibilitySnapshots(
 			}
 		} else {
 			throw new UsageError(
-				`Unexpected semver comparison result between snapshot version ${JSON.stringify(snapshotVersion)} and app version ${JSON.stringify(currentVersion)}.`,
+				`Unexpected comparison result between snapshot version ${JSON.stringify(snapshotVersion)} and app version ${JSON.stringify(currentVersion)}.`,
 			);
 		}
 	}
 
 	if (compatibilityErrors.length > 0) {
 		throw new Error(
-			`Schema compatibility check failed:\n${compatibilityErrors
-				.map((e) => ` - ${e}`)
-				.join("\n")}`,
+			`Schema compatibility check failed:
+${compatibilityErrors.map((e) => ` - ${e}`).join("\n")}
+Snapshots in: ${JSON.stringify(options.snapshotDirectory)}.
+Snapshots exist for versions: ${JSON.stringify([...snapshots.keys()], undefined, 2)}.`,
 		);
 	}
 }
@@ -594,7 +684,9 @@ export class SnapshotCompatibilityChecker {
 	/**
 	 * Returns all schema snapshots stored in the snapshot directory, sorted in order of increasing version.
 	 */
-	public readAllSchemaSnapshots(): Map<string, TreeViewConfiguration> {
+	public readAllSchemaSnapshots(
+		compare: (a: string, b: string) => number,
+	): Map<string, TreeViewConfiguration> {
 		this.ensureSnapshotDirectoryExists();
 		const files = this.fileSystemMethods.readdirSync(this.snapshotDirectory);
 		const versions: string[] = [];
@@ -605,7 +697,7 @@ export class SnapshotCompatibilityChecker {
 			}
 		}
 		// Ensures that errors are in a consistent and friendly order, independent of file system order.
-		versions.sort((a, b) => semver.compare(a, b));
+		versions.sort(compare);
 
 		const snapshots: Map<string, TreeViewConfiguration> = new Map();
 		for (const version of versions) {

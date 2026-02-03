@@ -236,7 +236,12 @@ describe("snapshotCompatibilityChecker", () => {
 				validateError(`Schema compatibility check failed:
  - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
  - Current version "2.0.0" cannot upgrade documents from "2.0.0".
- - Current version "2.0.0" expected to be equivalent to its snapshot.`),
+ - Current version "2.0.0" expected to be equivalent to its snapshot.
+Snapshots in: "${testSrcPath}/schemaSnapshots/point".
+Snapshots exist for versions: [
+  "1.0.0",
+  "2.0.0"
+].`),
 			);
 
 			assert.throws(
@@ -254,7 +259,12 @@ describe("snapshotCompatibilityChecker", () => {
  - Current version "2.0.0" cannot upgrade documents from "1.0.0".
  - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being "1.0.0".
  - Current version "2.0.0" cannot upgrade documents from "2.0.0".
- - Current version "2.0.0" expected to be equivalent to its snapshot.`),
+ - Current version "2.0.0" expected to be equivalent to its snapshot.
+Snapshots in: "${testSrcPath}/schemaSnapshots/point".
+Snapshots exist for versions: [
+  "1.0.0",
+  "2.0.0"
+].`),
 			);
 
 			assert.throws(
@@ -268,7 +278,12 @@ describe("snapshotCompatibilityChecker", () => {
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being "1.0.0".`),
+ - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being "1.0.0".
+Snapshots in: "${testSrcPath}/schemaSnapshots/point".
+Snapshots exist for versions: [
+  "1.0.0",
+  "2.0.0"
+].`),
 			);
 
 			// Avoids all the above tested issues, and matches saved snapshot, so should pass
@@ -325,7 +340,9 @@ describe("snapshotCompatibilityChecker", () => {
 				validateError(
 					`Schema compatibility check failed:
  - No snapshots found. If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
- - No snapshot found with version less than or equal to minVersionForCollaboration "1.0.0".`,
+ - No snapshot found with version less than or equal to minVersionForCollaboration "1.0.0".
+Snapshots in: "dir".
+Snapshots exist for versions: [].`,
 				),
 			);
 
@@ -368,7 +385,11 @@ describe("snapshotCompatibilityChecker", () => {
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Snapshot for current version "1.0.0" is out of date: schema has changed since latest existing snapshot version "1.0.0". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.`),
+ - Snapshot for current version "1.0.0" is out of date: schema has changed since latest existing snapshot version "1.0.0". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
+Snapshots in: "dir".
+Snapshots exist for versions: [
+  "1.0.0"
+].`),
 			);
 
 			// If the change was desired, a new snapshot can be taken to include it in 2.0.0:
@@ -405,7 +426,13 @@ describe("snapshotCompatibilityChecker", () => {
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Historical version "1.0.0" cannot view documents from "3.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being "1.0.0".`),
+ - Historical version "1.0.0" cannot view documents from "3.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being "1.0.0".
+Snapshots in: "dir".
+Snapshots exist for versions: [
+  "1.0.0",
+  "2.0.0",
+  "3.0.0"
+].`),
 			);
 
 			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json", "3.0.0.json"]);
@@ -444,7 +471,13 @@ describe("snapshotCompatibilityChecker", () => {
 						snapshotUnchangedVersions: true,
 					}),
 				validateError(`Schema compatibility check failed:
- - No snapshot found for version "3.1.0": snapshotUnchangedVersions is true, so every version must be snapshotted. If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.`),
+ - No snapshot found for version "3.1.0": snapshotUnchangedVersions is true, so every version must be snapshotted. If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
+Snapshots in: "dir".
+Snapshots exist for versions: [
+  "1.0.0",
+  "2.0.0",
+  "3.0.0"
+].`),
 			);
 
 			// Here we confirm that even when running update, no new snapshot is taken if the schema is unchanged and snapshotUnchangedVersions is false.
@@ -500,7 +533,14 @@ describe("snapshotCompatibilityChecker", () => {
 						snapshotUnchangedVersions: true,
 					}),
 				validateError(`Schema compatibility check failed:
- - Using snapshotUnchangedVersions: a snapshot of the exact minVersionForCollaboration "2.1.0" is required. No snapshot found.`),
+ - Using snapshotUnchangedVersions: a snapshot of the exact minVersionForCollaboration "2.1.0" is required. No snapshot found.
+Snapshots in: "dir".
+Snapshots exist for versions: [
+  "1.0.0",
+  "2.0.0",
+  "3.0.0",
+  "3.1.0"
+].`),
 			);
 
 			// Final sanity check that everything is left in a good state.
