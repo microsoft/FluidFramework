@@ -3,7 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import { strict as assert } from "node:assert";
+
+import { IsoBuffer } from "@fluid-internal/client-utils";
+import {
+	BenchmarkType,
+	benchmark,
+	benchmarkCustom,
+	isInPerformanceTestingMode,
+	type IMeasurementReporter,
+} from "@fluid-tools/benchmark";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 
 import type { ForestSummarizer } from "../../../feature-libraries/index.js";
@@ -16,10 +25,10 @@ import {
 	setupForestForIncrementalSummarization,
 } from "./forestSummarizerTestUtils.js";
 
-// Scale test parameters based on performance testing mode
-const itemCounts = isInPerformanceTestingMode ? [1000, 10000, 50000] : [10, 100];
-
 describe.only("Forest Summarizer benchmarks", () => {
+	// Scale test parameters based on performance testing mode
+	const itemCounts = isInPerformanceTestingMode ? [1000, 10000, 50000] : [10, 100, 1000];
+
 	configureBenchmarkHooks();
 
 	describe("Incremental summarization performance", () => {
@@ -134,6 +143,132 @@ describe.only("Forest Summarizer benchmarks", () => {
 						});
 						summarySequenceNumber += 10;
 					} while (running);
+				},
+			});
+		}
+	});
+
+	describe("Summary size", () => {
+		/**
+		 * Helper function to measure the size of a summary tree.
+		 */
+		function measureSummarySize(
+			summaryTree: object,
+			reporter: IMeasurementReporter,
+			minLength?: number,
+			maxLength?: number,
+		): void {
+			const summaryString = JSON.stringify(summaryTree);
+			const summarySize = IsoBuffer.from(summaryString).byteLength;
+			reporter.addMeasurement("summarySize (bytes)", summarySize);
+			if (minLength !== undefined) {
+				assert(
+					summarySize >= minLength,
+					`Summary size ${summarySize} is less than minimum ${minLength}`,
+				);
+			}
+			if (maxLength !== undefined) {
+				assert(
+					summarySize <= maxLength,
+					`Summary size ${summarySize} exceeds maximum ${maxLength}`,
+				);
+			}
+		}
+
+		for (const itemCount of itemCounts) {
+			const benchmarkType =
+				itemCount >= 100 ? BenchmarkType.Measurement : BenchmarkType.Perspective;
+
+			// Initial (full) summary size
+			benchmarkCustom({
+				type: benchmarkType,
+				title: `Initial summary size with ${itemCount} items`,
+				run: async (reporter) => {
+					const { forestSummarizer } = setupForestForIncrementalSummarization(
+						createInitialBoard(itemCount),
+					);
+					const summaryTree = forestSummarizer.summarize({
+						stringify: JSON.stringify,
+						incrementalSummaryContext: {
+							summarySequenceNumber: 0,
+							latestSummarySequenceNumber: -1,
+							summaryPath: "",
+						},
+					});
+					measureSummarySize(summaryTree, reporter);
+				},
+			});
+
+			// Incremental summary size with no changes
+			benchmarkCustom({
+				type: benchmarkType,
+				title: `Incremental summary size with ${itemCount} unchanged items`,
+				run: async (reporter) => {
+					const { forestSummarizer } = setupForestForIncrementalSummarization(
+						createInitialBoard(itemCount),
+					);
+					// First summary to establish baseline
+					forestSummarizer.summarize({
+						stringify: JSON.stringify,
+						incrementalSummaryContext: {
+							summarySequenceNumber: 0,
+							latestSummarySequenceNumber: -1,
+							summaryPath: "",
+						},
+					});
+					// Second summary (incremental, no changes) - this is what we measure
+					const summaryTree = forestSummarizer.summarize({
+						stringify: JSON.stringify,
+						incrementalSummaryContext: {
+							summarySequenceNumber: 10,
+							latestSummarySequenceNumber: 0,
+							summaryPath: "",
+						},
+					});
+					measureSummarySize(summaryTree, reporter);
+				},
+			});
+
+			// Incremental summary size with 10% changes
+			benchmarkCustom({
+				type: benchmarkType,
+				title: `Incremental summary size with ${itemCount} items (10% changed)`,
+				run: async (reporter) => {
+					const { checkout, forestSummarizer } = setupForestForIncrementalSummarization(
+						createInitialBoard(itemCount),
+					);
+					// First summary to establish baseline
+					forestSummarizer.summarize({
+						stringify: JSON.stringify,
+						incrementalSummaryContext: {
+							summarySequenceNumber: 0,
+							latestSummarySequenceNumber: -1,
+							summaryPath: "",
+						},
+					});
+
+					// Make 10% of items change
+					const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
+					const root = view.root;
+					for (let i = 0; i < itemCount; i++) {
+						if (i % 10 === 0) {
+							const item = root.barArray.at(i);
+							if (item !== undefined) {
+								item.summary = `Updated summary 10`;
+							}
+						}
+					}
+
+					// Second summary (incremental, 10% changes) - this is what we measure
+					const summaryTree = forestSummarizer.summarize({
+						stringify: JSON.stringify,
+						incrementalSummaryContext: {
+							summarySequenceNumber: 10,
+							latestSummarySequenceNumber: 0,
+							summaryPath: "",
+						},
+					});
+					measureSummarySize(summaryTree, reporter);
 				},
 			});
 		}
