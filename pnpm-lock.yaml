@@ -2248,6 +2248,9 @@ importers:
 
   examples/benchmarks/tablebench:
     dependencies:
+      '@fluid-example/example-utils':
+        specifier: workspace:~
+        version: link:../../utils/example-utils
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
@@ -4526,6 +4529,9 @@ importers:
 
   examples/service-clients/azure-client/external-controller:
     dependencies:
+      '@fluid-example/example-utils':
+        specifier: workspace:~
+        version: link:../../../utils/example-utils
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/azure-client

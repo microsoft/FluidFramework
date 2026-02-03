@@ -49,6 +49,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
