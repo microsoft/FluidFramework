@@ -107,11 +107,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				 */
 				originalStride: number;
 				/**
-				 * Highest genCount that has been backfilled in the normalizer during sharding.
-				 * Used to avoid duplicate backfilling in recursive sharding scenarios.
-				 */
-				highestBackfilledGenCount: number;
-				/**
 				 * Set of unique child shard IDs (UUIDs) currently active.
 				 * Each child is assigned a UUID when created via shard().
 				 * Safe across serialization/deserialization cycles.
@@ -292,16 +287,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// Store parent's localGenCount before creating shards
 		const parentLocalGenCountBeforeShard = this.localGenCount;
 
-		// Initialize or update parent compressor's sharding state
-		const previousHighestBackfilled =
-			this.shardingState?.highestBackfilledGenCount ?? parentLocalGenCountBeforeShard;
-
 		if (isFirstShard) {
 			// First time sharding - initialize state
 			this.shardingState = {
 				currentStride: newStride,
 				originalStride: currentStride, // Remember original stride (1 for root)
-				highestBackfilledGenCount: previousHighestBackfilled,
 				activeChildIds: new Set(),
 				// Root has no shard ID - omit property rather than setting to undefined
 			};
@@ -331,7 +321,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			const childShard = this.createChildShard(
 				newStride,
 				parentLocalGenCountBeforeShard + i,
-				previousHighestBackfilled,
 				childShardId,
 			);
 			shards.push(childShard);
@@ -351,7 +340,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private createChildShard(
 		stride: number,
 		childLocalGenCount: number,
-		parentHighestBackfilled: number,
 		childShardId: SessionId,
 	): SerializedIdCompressorWithOngoingSession {
 		// Save parent's state for restoration
@@ -362,7 +350,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		this.shardingState = {
 			currentStride: stride,
 			originalStride: stride, // Child's original stride is what it was created with
-			highestBackfilledGenCount: parentHighestBackfilled,
 			activeChildIds: new Set(), // Child starts with no children
 			shardId: childShardId, // Store the child's unique UUID
 		};
@@ -416,14 +403,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// Realign parent to next position in its sequence if child is ahead
 		if (childHighestGenCount > this.localGenCount) {
 			// Find next aligned position in parent's sequence after child's genCount
-			// Formula: next = current + ceil((child - current + 1) / stride) * stride
 			const distance = childHighestGenCount - this.localGenCount + 1;
 			const steps = Math.ceil(distance / effectiveStride);
-			this.localGenCount = this.localGenCount + steps * effectiveStride;
+			const count = steps * effectiveStride;
+			this.normalizer.addLocalRange(this.localGenCount, count);
+			this.localGenCount += count;
 		}
-
-		// Backfill normalizer to cover all IDs up to parent's new position
-		this.backfillNormalizerToGenCount(this.localGenCount);
 
 		// Remove child from active set
 		this.shardingState.activeChildIds.delete(childShardId);
@@ -479,55 +464,14 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return localIdFromGenCount(this.localGenCount);
 	}
 
-	/**
-	 * Backfills the normalizer with genCounts up to the target, avoiding duplicates.
-	 * Used during sharding to ensure the normalizer knows about all IDs in a stride cycle.
-	 * @param targetGenCount - The highest genCount to backfill up to (inclusive)
-	 */
-	private backfillNormalizerToGenCount(targetGenCount: number): void {
-		assert(this.shardingState !== undefined, "Must be in sharding mode");
-
-		if (targetGenCount > this.shardingState.highestBackfilledGenCount) {
-			const startGenCount = Math.max(this.shardingState.highestBackfilledGenCount + 1, 1);
-			const countToAdd = targetGenCount - startGenCount + 1;
-			if (countToAdd > 0) {
-				this.normalizer.addLocalRange(startGenCount, countToAdd);
-				this.shardingState.highestBackfilledGenCount = targetGenCount;
-			}
-		}
-	}
-
-	/**
-	 * Generates the next local ID using stride-based allocation for sharding mode.
-	 * This method:
-	 * 1. Adds the effective stride to localGenCount
-	 * 2. Backfills the normalizer with ALL IDs in the stride cycle containing that genCount
-	 * 3. Returns the local ID
-	 *
-	 * The simplified design uses consecutive positioning: shards are positioned at consecutive
-	 * localGenCount values during creation, ensuring collision-free generation by simply
-	 * adding the stride each time.
-	 */
 	private generateNextLocalIdWithStride(): LocalCompressedId {
 		assert(this.shardingState !== undefined, "Must be in sharding mode");
-
 		const { activeChildIds, currentStride, originalStride } = this.shardingState;
 
 		// Use originalStride if we're a leaf, currentStride if we have children
 		const effectiveStride = activeChildIds.size === 0 ? originalStride : currentStride;
-
-		// Simply add stride to get next genCount
-		// Consecutive starting positions + same stride = guaranteed no collisions
+		this.normalizer.addLocalRange(this.localGenCount, effectiveStride);
 		this.localGenCount += effectiveStride;
-
-		// Backfill normalizer with ALL IDs in this stride cycle
-		// This ensures the normalizer knows about IDs generated by other shards in this cycle
-		// Example: for stride=3 and localGenCount=7, backfill cycle [6, 7, 8]
-		const cycleNumber = Math.ceil(this.localGenCount / effectiveStride);
-		const cycleEndGenCount = cycleNumber * effectiveStride;
-		this.backfillNormalizerToGenCount(cycleEndGenCount);
-
-		// Convert genCount to local ID
 		return localIdFromGenCount(this.localGenCount);
 	}
 
@@ -884,7 +828,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				? this.shardingState === undefined
 					? 1 // just the boolean indicating no sharding state
 					: 1 + // has sharding state boolean
-						3 + // currentStride, originalStride, highestBackfilledGenCount
+						2 + // currentStride, originalStride
 						1 + // activeChildIds count
 						this.shardingState.activeChildIds.size * 2 + // activeChildIds (each UUID is 2 units)
 						1 + // hasShardId boolean
@@ -944,11 +888,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				if (this.shardingState !== undefined) {
 					index = writeNumber(serializedFloat, index, this.shardingState.currentStride);
 					index = writeNumber(serializedFloat, index, this.shardingState.originalStride);
-					index = writeNumber(
-						serializedFloat,
-						index,
-						this.shardingState.highestBackfilledGenCount,
-					);
 
 					// Write activeChildIds Set as count + array of NumericUuids
 					index = writeNumber(serializedFloat, index, this.shardingState.activeChildIds.size);
@@ -1086,7 +1025,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				if (hasShardingState) {
 					const currentStride = readNumber(index);
 					const originalStride = readNumber(index);
-					const highestBackfilledGenCount = readNumber(index);
 
 					// Read activeChildIds Set
 					const activeChildCount = readNumber(index);
@@ -1107,7 +1045,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 					compressor.shardingState = {
 						currentStride,
 						originalStride,
-						highestBackfilledGenCount,
 						activeChildIds,
 						...(shardId !== undefined && { shardId }),
 					};
