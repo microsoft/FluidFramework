@@ -57,7 +57,7 @@ export type {
 	LatestMapRaw,
 	LatestMapRawEvents,
 	StateMap,
-} from "./latestMapValueManager.js";
+} from "./latestMapTypes.js";
 export type {
 	Latest,
 	LatestArguments,
@@ -66,7 +66,7 @@ export type {
 	LatestFactory,
 	LatestRaw,
 	LatestRawEvents,
-} from "./latestValueManager.js";
+} from "./latestTypes.js";
 export type {
 	Accessor,
 	LatestClientData,

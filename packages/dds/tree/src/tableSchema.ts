@@ -886,7 +886,7 @@ export namespace System_TableSchema {
 						preconditionsOnRevert:
 							columnConstraints.length > 0 ? columnConstraints : undefined,
 					});
-					return removedRows ?? fail("Transaction did not complete");
+					return removedRows ?? fail(0xccd /* Transaction did not complete */);
 				}
 
 				// If there are no rows to remove, do nothing
