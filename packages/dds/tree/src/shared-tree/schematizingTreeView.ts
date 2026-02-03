@@ -19,7 +19,6 @@ import {
 	EmptyKey,
 	type FieldUpPath,
 } from "../core/index.js";
-import { brand } from "../util/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -73,6 +72,7 @@ import {
 	NodeKind,
 } from "../simple-tree/index.js";
 import {
+	brand,
 	type Breakable,
 	breakingClass,
 	disposeSymbol,

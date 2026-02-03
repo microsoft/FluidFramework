@@ -14,13 +14,13 @@ import type {
 	ISharedObjectKind,
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type TestFluidObjectInternal,
 	waitForContainerConnection,

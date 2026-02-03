@@ -1509,6 +1509,7 @@ describe("ModularChangeFamily", () => {
 		makeEncodingTestSuite(family.codecs, encodingTestDataForAllVersions, assertEquivalent, [
 			ModularChangeFormatVersion.v3,
 			ModularChangeFormatVersion.v4,
+			ModularChangeFormatVersion.vConstraint,
 		]);
 		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [
 			ModularChangeFormatVersion.v5,

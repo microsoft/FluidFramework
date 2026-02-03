@@ -49,7 +49,6 @@ import {
 	comparePartialRevisions,
 	comparePartialChangesetLocalIds,
 } from "../../core/index.js";
-import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import {
 	type IdAllocationState,
 	type IdAllocator,
@@ -986,7 +985,7 @@ export class ModularChangeFamily
 			constraintState,
 			revertConstraintState,
 			rebasedNodes,
-			over.change.fieldChanges
+			over.change.fieldChanges,
 		);
 
 		const rebased = makeModularChangeset({
@@ -1484,7 +1483,11 @@ export class ModularChangeFamily
 							baseFieldChange.fieldKind,
 						).containsShallowChanges(baseFieldChange.change);
 
-			if (baseHasShallowChanges && field.fieldShallowChangeConstraint !== undefined && !field.fieldShallowChangeConstraint.violated) {
+			if (
+				baseHasShallowChanges &&
+				field.fieldShallowChangeConstraint !== undefined &&
+				!field.fieldShallowChangeConstraint.violated
+			) {
 				field.fieldShallowChangeConstraint = { violated: true };
 				constraintState.violationCount += 1;
 			}
@@ -2979,8 +2982,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			path,
 			fieldChange,
 			localCrossFieldKeys: [],
-			nodeChanges: newTupleBTree(),
-			nodeToParent: newTupleBTree(),
+			nodeChanges: newChangeAtomIdBTree(),
+			nodeToParent: newChangeAtomIdBTree(),
 			crossFieldKeys: newCrossFieldKeyTable(),
 			idAllocator: this.idAllocator,
 			revision,
@@ -3008,8 +3011,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 					path,
 					fieldChange,
 					localCrossFieldKeys: [],
-					nodeChanges: newTupleBTree(),
-					nodeToParent: newTupleBTree(),
+					nodeChanges: newChangeAtomIdBTree(),
+					nodeToParent: newChangeAtomIdBTree(),
 					crossFieldKeys: newCrossFieldKeyTable(),
 					idAllocator: this.idAllocator,
 					revision,

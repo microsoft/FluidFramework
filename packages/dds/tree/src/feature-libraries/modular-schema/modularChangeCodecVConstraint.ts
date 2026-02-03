@@ -14,12 +14,12 @@ import type {
 	FieldKey,
 	RevisionTag,
 } from "../../core/index.js";
+import type { BrandedType } from "../../util/index.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
+import type { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
-import { EncodedModularChangesetVConstraint } from "./modularChangeFormatVConstraint.js";
-import type { FieldChange, ModularChangeset } from "./modularChangeTypes.js";
 import {
 	encodeChange,
 	decodeChange,
@@ -28,9 +28,9 @@ import {
 	encodeFieldV1,
 	decodeFieldChangeV1,
 } from "./modularChangeCodecV1.js";
-import type { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
+import { EncodedModularChangesetVConstraint } from "./modularChangeFormatVConstraint.js";
 import type { EncodedFieldChangeVConstraint } from "./modularChangeFormatVConstraint.js";
-import type { BrandedType } from "../../util/index.js";
+import type { FieldChange, ModularChangeset } from "./modularChangeTypes.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,

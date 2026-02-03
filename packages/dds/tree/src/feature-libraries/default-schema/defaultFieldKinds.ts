@@ -140,7 +140,7 @@ export const fieldKindConfigurations: ReadonlyMap<
 		]),
 	],
 	[
-		brand(101),
+		ModularChangeFormatVersion.vConstraint,
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],

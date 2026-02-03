@@ -56,10 +56,9 @@ export interface NoChangeConstraint {
  * when this transaction is rebased over concurrent changes.
  *
  * @remarks
-
  * For map, record, and object nodes, the constraint targets a specific field identified by the `key` parameter.
  * The `key` parameter is required for these node types.
- * 
+ *
  * For array nodes, the `key` parameter is ignored if provided.
  *
  * Leaf nodes do not have fields and cannot use this constraint.

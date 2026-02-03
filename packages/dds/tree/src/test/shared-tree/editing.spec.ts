@@ -3349,7 +3349,7 @@ describe("Editing", () => {
 				const branch = tree.branch();
 
 				// Add a No Shallow Change constraint on the root field and make an edit
-				branch.transaction.start();
+				branch.transaction.start(false);
 				branch.editor.addShallowChangeConstraint(rootField);
 				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
 				branch.transaction.commit();
@@ -3372,7 +3372,7 @@ describe("Editing", () => {
 				const branch = tree.branch();
 
 				// Add a No Shallow Change constraint on the root field and make an edit
-				branch.transaction.start();
+				branch.transaction.start(false);
 				branch.editor.addShallowChangeConstraint(rootField);
 				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
 				branch.transaction.commit();
@@ -3395,7 +3395,7 @@ describe("Editing", () => {
 				const branch = tree.branch();
 
 				// Add a No Shallow Change constraint on the root field and make an edit
-				branch.transaction.start();
+				branch.transaction.start(false);
 				branch.editor.addShallowChangeConstraint(rootField);
 				branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
 				branch.transaction.commit();
@@ -3419,7 +3419,7 @@ describe("Editing", () => {
 			const branch = tree.branch();
 
 			// Add a No Shallow Change constraint and make an edit
-			branch.transaction.start();
+			branch.transaction.start(false);
 			branch.editor.addShallowChangeConstraint(rootField);
 			branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
 			branch.transaction.commit();
@@ -3440,7 +3440,7 @@ describe("Editing", () => {
 
 			// Add a No Shallow Change constraint on revert and make an edit
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
-			branch.transaction.start();
+			branch.transaction.start(false);
 			branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
 			branch.editor.addShallowChangeConstraintOnRevert(rootField);
 			branch.transaction.commit();
@@ -3470,7 +3470,7 @@ describe("Editing", () => {
 			const branch = tree.branch();
 
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(branch.events);
-			branch.transaction.start();
+			branch.transaction.start(false);
 			branch.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
 			branch.editor.addShallowChangeConstraintOnRevert(rootField);
 			branch.transaction.commit();

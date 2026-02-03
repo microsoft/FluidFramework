@@ -150,7 +150,7 @@ export function makeEditManagerCodecs<TChangeset>(
 			}
 			case unbrand(EditManagerFormatVersion.v3):
 			case unbrand(EditManagerFormatVersion.v4):
-			case unbrand(EditManagerFormatVersion.v6): 
+			case unbrand(EditManagerFormatVersion.v6):
 			case unbrand(EditManagerFormatVersion.vConstraints): {
 				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [

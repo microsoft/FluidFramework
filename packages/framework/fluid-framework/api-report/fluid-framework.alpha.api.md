@@ -1179,6 +1179,16 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends N
 // @alpha
 export function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypesFull;
 
+// @alpha
+export interface NoShallowChangeConstraint {
+    // (undocumented)
+    readonly key?: string;
+    // (undocumented)
+    readonly node: TreeNode;
+    // (undocumented)
+    readonly type: "noShallowChange";
+}
+
 // @public @system
 export type NumberKeys<T, Transformed = {
     readonly [Property in keyof T as number extends Property ? never : Property]: Property;
@@ -1497,6 +1507,7 @@ export interface SharedTreeFormatOptions {
 
 // @alpha @input
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
+    readonly enableConstraints?: boolean;
     readonly enableSharedBranches?: boolean;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 }
@@ -1852,7 +1863,7 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ({
 export type TransactionConstraint = NodeInDocumentConstraint;
 
 // @alpha @sealed
-export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
+export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint | NoShallowChangeConstraint;
 
 // @alpha
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
