@@ -89,6 +89,7 @@ extends:
         templateContext:
           # Required for AzureStaticWebApp task which is classified as a release task
           type: releaseJob
+          isProduction: false
         steps:
         - checkout: self
           clean: true
