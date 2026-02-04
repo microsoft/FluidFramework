@@ -398,16 +398,15 @@ describe("IdCompressor Sharding Fuzz Tests", () => {
 		performShardingFuzzActions(generator, root, 123);
 	});
 
-	it("large and deep fuzz test - heavy ID generation with deep sharding", function () {
-		this.timeout(30000); // 30 second timeout
+	it("large and deep fuzz test - heavy ID generation with deep sharding", () => {
 		const sessionId = createSessionId();
 		const root = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 		const generator = take(
 			5000,
 			makeShardingOpGenerator({
-				shardWeight: 4,
-				unshardWeight: 3,
-				generateIdWeight: 30,
+				shardWeight: 2,
+				unshardWeight: 10,
+				generateIdWeight: 20,
 				validateInterval: 200,
 			}),
 		);

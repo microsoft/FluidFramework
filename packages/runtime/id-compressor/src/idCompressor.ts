@@ -69,7 +69,7 @@ function rangeFinalizationError(expectedStart: number, actualStart: number): Log
 	});
 }
 
-const MAX_STRIDE_LENGTH = 1024;
+const MAX_STRIDE_LENGTH = 1000000;
 
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}

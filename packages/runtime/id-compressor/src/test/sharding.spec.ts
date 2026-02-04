@@ -5,7 +5,7 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { IdCompressor } from "../idCompressor.js";
+import { createIdCompressor, IdCompressor } from "../idCompressor.js";
 import { isFinalId } from "../identifiers.js";
 import type { SessionSpaceCompressedId } from "../index.js";
 import { SerializationVersion } from "../types/index.js";
@@ -634,6 +634,33 @@ describe("IdCompressor Sharding", () => {
 					compressor.shard(1);
 				});
 			}, /Cannot shard during ghost session/);
+		});
+
+		it("throws when disposing a shard twice", () => {
+			const otherCompressor = createIdCompressor(SerializationVersion.V3);
+			const sessionId = createSessionId();
+			const root = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+			const [child1Ser] = root.shard(1);
+			const child1 = IdCompressor.deserialize({
+				serialized: child1Ser,
+				requestedWriteVersion: SerializationVersion.V3,
+			});
+
+			// First dispose should succeed
+			const shardId1 = child1.disposeShard();
+			assert(shardId1 !== undefined, "Expected disposeShard to return a shard ID");
+
+			// Second dispose should throw
+			assert.throws(() => {
+				child1.disposeShard();
+			}, /disposed/);
+
+			// Any operation on disposed compressor should throw
+			assert.throws(() => {
+				child1.generateCompressedId();
+			}, /disposed/);
+
+			otherCompressor.generateCompressedId();
 		});
 	});
 
