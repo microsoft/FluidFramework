@@ -12,10 +12,10 @@ import {
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import type { IStream } from "@fluidframework/driver-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
-	LocalResolver,
 	createLocalResolverCreateNewRequest,
 } from "@fluidframework/local-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -31,31 +31,12 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 });
 
 /**
- * A deferred promise that can be resolved/rejected externally.
- */
-interface Deferred<T> {
-	promise: Promise<T>;
-	resolve: (value: T) => void;
-	reject: (reason?: unknown) => void;
-}
-
-function createDeferred<T>(): Deferred<T> {
-	let resolve!: (value: T) => void;
-	let reject!: (reason?: unknown) => void;
-	const promise = new Promise<T>((res, rej) => {
-		resolve = res;
-		reject = rej;
-	});
-	return { promise, resolve, reject };
-}
-
-/**
  * Creates a proxy over the document service factory that intercepts storage operations.
  * This allows tracking when storage fetch operations start and complete.
  * Uses direct method overriding pattern to avoid type assertion issues.
  */
 function createStorageTrackingFactory(
-	deltaConnectionServer: ReturnType<typeof LocalDeltaConnectionServer.create>,
+	baseFactory: LocalDocumentServiceFactory,
 	options: {
 		onDeltaStorageConnected?: () => void;
 		onFetchMessagesStart?: () => void;
@@ -71,10 +52,9 @@ function createStorageTrackingFactory(
 		blockUntilResolved,
 	} = options;
 
-	const factory = new LocalDocumentServiceFactory(deltaConnectionServer);
-	const originalCreateDocService = factory.createDocumentService.bind(factory);
+	const originalCreateDocService = baseFactory.createDocumentService.bind(baseFactory);
 
-	factory.createDocumentService = async (...args) => {
+	baseFactory.createDocumentService = async (...args) => {
 		const service = await originalCreateDocService(...args);
 		const originalConnectToDeltaStorage = service.connectToDeltaStorage.bind(service);
 
@@ -110,7 +90,7 @@ function createStorageTrackingFactory(
 		return service;
 	};
 
-	return factory;
+	return baseFactory;
 }
 
 /**
@@ -160,13 +140,9 @@ describe("Storage fetch wait for Connected state", () => {
 	it("Container waits for storage fetch before transitioning to Connected", async () => {
 		// Setup: Create server and initial container
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const baseFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-		const urlResolver = new LocalResolver();
 
-		const { loaderProps, codeDetails } = createLoader({
+		const { loaderProps, codeDetails, documentServiceFactory } = createLoader({
 			deltaConnectionServer,
-			documentServiceFactory: baseFactory,
-			urlResolver,
 		});
 
 		// Create and attach a container to establish the document
@@ -178,14 +154,14 @@ describe("Storage fetch wait for Connected state", () => {
 		initialContainer.close();
 
 		// Use deferred promises to control test flow
-		const fetchDeferred = createDeferred<void>();
-		const fetchStartedDeferred = createDeferred<void>();
+		const fetchDeferred = new Deferred<void>();
+		const fetchStartedDeferred = new Deferred<void>();
 		let storageFetchCompleted = false;
 		let connectionStateWhenFetchStarted: ConnectionState | undefined;
 		// eslint-disable-next-line prefer-const
 		let containerRef: { current: IContainer | undefined } = { current: undefined };
 
-		const trackingFactory = createStorageTrackingFactory(deltaConnectionServer, {
+		const trackingFactory = createStorageTrackingFactory(documentServiceFactory, {
 			onFetchMessagesStart: () => {
 				connectionStateWhenFetchStarted = containerRef.current?.connectionState;
 				fetchStartedDeferred.resolve();
@@ -250,13 +226,9 @@ describe("Storage fetch wait for Connected state", () => {
 	it("Container respects DisableStorageFetchWait config flag", async () => {
 		// Setup
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const baseFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-		const urlResolver = new LocalResolver();
 
 		const { loaderProps, codeDetails } = createLoader({
 			deltaConnectionServer,
-			documentServiceFactory: baseFactory,
-			urlResolver,
 		});
 
 		// Create initial container
@@ -296,13 +268,9 @@ describe("Storage fetch wait for Connected state", () => {
 	it("Connected state is delayed until storage fetch completes", async () => {
 		// Setup
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const baseFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-		const urlResolver = new LocalResolver();
 
-		const { loaderProps, codeDetails } = createLoader({
+		const { loaderProps, codeDetails, documentServiceFactory } = createLoader({
 			deltaConnectionServer,
-			documentServiceFactory: baseFactory,
-			urlResolver,
 		});
 
 		// Create initial container
@@ -314,11 +282,11 @@ describe("Storage fetch wait for Connected state", () => {
 		initialContainer.close();
 
 		// Use deferred promises to control test flow
-		const fetchDeferred = createDeferred<void>();
-		const fetchStartedDeferred = createDeferred<void>();
+		const fetchDeferred = new Deferred<void>();
+		const fetchStartedDeferred = new Deferred<void>();
 		const events: string[] = [];
 
-		const trackingFactory = createStorageTrackingFactory(deltaConnectionServer, {
+		const trackingFactory = createStorageTrackingFactory(documentServiceFactory, {
 			onFetchMessagesStart: () => {
 				events.push("fetch_start");
 				fetchStartedDeferred.resolve();
@@ -338,6 +306,16 @@ describe("Storage fetch wait for Connected state", () => {
 		const loadPromise = loadExistingContainer({
 			...loadProps,
 			request: { url: documentLoadUrl },
+		}).then((container) => {
+			// Track connection event immediately when container is available
+			container.on("connected", () => {
+				events.push("connected");
+			});
+			// Check if already connected
+			if (container.connectionState === ConnectionState.Connected) {
+				events.push("connected");
+			}
+			return container;
 		});
 
 		// Wait for fetch to start (it will block on fetchDeferred)
@@ -353,15 +331,6 @@ describe("Storage fetch wait for Connected state", () => {
 
 		// Wait for container to finish loading
 		const loadedContainer = await loadPromise;
-
-		// Track connection event
-		loadedContainer.on("connected", () => {
-			events.push("connected");
-		});
-		// Check if already connected
-		if (loadedContainer.connectionState === ConnectionState.Connected) {
-			events.push("connected");
-		}
 
 		// Wait for connection
 		await waitForContainerConnection(loadedContainer);
@@ -384,13 +353,9 @@ describe("Storage fetch wait for Connected state", () => {
 	it("Container is not in Connected state while storage fetch is pending", async () => {
 		// Setup
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const baseFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-		const urlResolver = new LocalResolver();
 
-		const { loaderProps, codeDetails } = createLoader({
+		const { loaderProps, codeDetails, documentServiceFactory } = createLoader({
 			deltaConnectionServer,
-			documentServiceFactory: baseFactory,
-			urlResolver,
 		});
 
 		// Create initial container
@@ -402,13 +367,13 @@ describe("Storage fetch wait for Connected state", () => {
 		initialContainer.close();
 
 		// Use deferred to block fetch and track state
-		const fetchDeferred = createDeferred<void>();
-		const fetchStartedDeferred = createDeferred<void>();
+		const fetchDeferred = new Deferred<void>();
+		const fetchStartedDeferred = new Deferred<void>();
 		let containerStateWhenFetchStarted: ConnectionState | undefined;
 		// eslint-disable-next-line prefer-const
 		let containerRef: { current: IContainer | undefined } = { current: undefined };
 
-		const trackingFactory = createStorageTrackingFactory(deltaConnectionServer, {
+		const trackingFactory = createStorageTrackingFactory(documentServiceFactory, {
 			onFetchMessagesStart: () => {
 				// Capture container state when fetch starts (while blocked)
 				containerStateWhenFetchStarted = containerRef.current?.connectionState;
@@ -459,13 +424,9 @@ describe("Storage fetch wait for Connected state", () => {
 	it("Container can disconnect and reconnect successfully", async () => {
 		// Setup
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const baseFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-		const urlResolver = new LocalResolver();
 
 		const { loaderProps, codeDetails } = createLoader({
 			deltaConnectionServer,
-			documentServiceFactory: baseFactory,
-			urlResolver,
 		});
 
 		// Create initial container
@@ -518,13 +479,9 @@ describe("Storage fetch wait for Connected state", () => {
 	it("Handles storage fetch error gracefully", async () => {
 		// Setup
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const baseFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
-		const urlResolver = new LocalResolver();
 
 		const { loaderProps, codeDetails } = createLoader({
 			deltaConnectionServer,
-			documentServiceFactory: baseFactory,
-			urlResolver,
 		});
 
 		// Create initial container
@@ -535,8 +492,10 @@ describe("Storage fetch wait for Connected state", () => {
 		await waitForContainerConnection(initialContainer);
 		initialContainer.close();
 
-		// Create factory that throws error during fetch - mutate the factory directly
-		const errorFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+		// Create a new factory for the error case and mutate it directly
+		const { documentServiceFactory: errorFactory } = createLoader({
+			deltaConnectionServer,
+		});
 		const originalCreateDocService = errorFactory.createDocumentService.bind(errorFactory);
 		errorFactory.createDocumentService = async (...args) => {
 			const service = await originalCreateDocService(...args);
