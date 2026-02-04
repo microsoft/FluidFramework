@@ -13,6 +13,7 @@
  * Our separate rule, `no-markdown-links-in-jsdoc`, disallows Markdown link syntax in JSDoc/TSDoc comments.
  * File path links are allowed in `@privateRemarks` blocks since those are not part of the public API documentation.
  *
+ * @typedef {import('@microsoft/tsdoc').DocExcerpt} DocExcerpt
  * @typedef {import('@microsoft/tsdoc').DocInlineTag} DocInlineTag
  * @typedef {import('@microsoft/tsdoc').DocNode} DocNode
  * @typedef {import('@microsoft/tsdoc').DocPlainText} DocPlainText
@@ -46,22 +47,42 @@ function isFilePath(linkTarget) {
  * @returns {{start: number, end: number} | undefined} The text range, or undefined if not available.
  */
 function getInlineTagRange(inlineTagNode) {
-	// Get all Excerpt children
-	const excerpts = inlineTagNode.getChildNodes();
-	if (excerpts.length === 0) {
-		return undefined;
+	// Recursively collect all text ranges from Excerpt nodes within this InlineTag
+	let minStart = Infinity;
+	let maxEnd = -Infinity;
+
+	/**
+	 * Recursively walk the tree to find all Excerpt nodes
+	 * @param {DocNode} node
+	 */
+	function collectExcerptRanges(node) {
+		if (node.kind === DocNodeKind.Excerpt) {
+			const excerpt = /** @type {DocExcerpt} */ (node);
+			if (excerpt.content) {
+				try {
+					const range = excerpt.content.getContainingTextRange();
+					minStart = Math.min(minStart, range.pos);
+					maxEnd = Math.max(maxEnd, range.end);
+				} catch (e) {
+					// Ignore excerpts that don't have valid ranges
+				}
+			}
+		}
+
+		// Recurse into children
+		const children = node.getChildNodes();
+		for (const child of children) {
+			collectExcerptRanges(child);
+		}
 	}
 
-	// Get the range from the first and last excerpts
-	try {
-		const firstExcerpt = excerpts[0];
-		const lastExcerpt = excerpts[excerpts.length - 1];
-		const firstRange = firstExcerpt.content.getContainingTextRange();
-		const lastRange = lastExcerpt.content.getContainingTextRange();
-		return { start: firstRange.pos, end: lastRange.end };
-	} catch (e) {
-		return undefined;
+	collectExcerptRanges(inlineTagNode);
+
+	if (minStart !== Infinity && maxEnd !== -Infinity) {
+		return { start: minStart, end: maxEnd };
 	}
+
+	return undefined;
 }
 
 /**
@@ -93,6 +114,8 @@ function findFilePathLinks(node) {
 					});
 				}
 			}
+			// Don't recurse into InlineTag children - getInlineTagRange already walked them
+			return;
 		}
 
 		// Recurse into child nodes
