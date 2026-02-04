@@ -23,44 +23,67 @@
  * }} FilePathLinkMatch
  */
 
-const { DocNodeKind, TSDocParser } = require("@microsoft/tsdoc");
+const { fail } = require("node:assert");
+const { TSDocParser } = require("@microsoft/tsdoc");
 
 const parser = new TSDocParser();
 
 /**
- * Extracts the text excerpt from a DocNode and searches for file path links.
- * @param {DocNode} node - The doc node to extract text from.
- * @returns {FilePathLinkMatch[]} The list of found file path links.
+ * Gets the text range (start and end positions) for a DocNode.
+ * @param {DocNode} node - The doc node to get the range for.
+ * @returns {{start: number, end: number} | undefined} The text range, or undefined if not available.
  */
-function findFilePathLinks(node) {
-	const links = [];
+function getNodeRange(node) {
+	// Try to get the range from the node's excerpt
+	if (node.excerpt) {
+		const textRange = node.excerpt.getContainingTextRange();
+		return { start: textRange.pos, end: textRange.end };
+	}
 
-	// Recursively walk the node tree
-	function walk(currentNode) {
-		// Check if this node has an excerpt that we can extract text from
-		if (currentNode.excerpt) {
-			const textRange = currentNode.excerpt.getContainingTextRange();
-			const text = currentNode.excerpt.content.toString();
+	// If no excerpt, try to get range from child nodes
+	const childNodes = node.getChildNodes();
+	if (childNodes.length === 0) {
+		return undefined;
+	}
 
-			// JSDoc/TSDoc link syntax: {@link target|text} or {@link target}
-			// Find links where the `target` component is a file path (starts with `/`, `./`, or `../`)
-			const matches = text.matchAll(/{@link\s+(\/|\.\/|\.\.\/).*?}/g);
-			for (const match of matches) {
-				links.push({
-					startIndex: textRange.pos + match.index,
-					endIndex: textRange.pos + match.index + match[0].length,
-				});
-			}
-		}
+	let minStart = Infinity;
+	let maxEnd = -Infinity;
 
-		// Recurse into child nodes
-		const childNodes = currentNode.getChildNodes();
-		for (const childNode of childNodes) {
-			walk(childNode);
+	for (const child of childNodes) {
+		const childRange = getNodeRange(child);
+		if (childRange) {
+			minStart = Math.min(minStart, childRange.start);
+			maxEnd = Math.max(maxEnd, childRange.end);
 		}
 	}
 
-	walk(node);
+	if (minStart !== Infinity && maxEnd !== -Infinity) {
+		return { start: minStart, end: maxEnd };
+	}
+
+	return undefined;
+}
+
+/**
+ * Finds file path links in the given text within the specified range.
+ * @param {string} text - The full comment text.
+ * @param {{start: number, end: number}} range - The range to search within.
+ * @returns {FilePathLinkMatch[]} The list of found file path links.
+ */
+function findFilePathLinksInRange(text, range) {
+	const links = [];
+	const rangeText = text.substring(range.start, range.end);
+
+	// JSDoc/TSDoc link syntax: {@link target|text} or {@link target}
+	// Find links where the `target` component is a file path (starts with `/`, `./`, or `../`)
+	const matches = rangeText.matchAll(/{@link\s+(\/|\.\/|\.\.\/).*?}/g);
+	for (const match of matches) {
+		links.push({
+			startIndex: range.start + match.index,
+			endIndex: range.start + match.index + match[0].length,
+		});
+	}
+
 	return links;
 }
 
@@ -104,8 +127,18 @@ module.exports = {
 					const commentStartIndex = comment.range[0];
 
 					// TSDoc parser requires the surrounding "/**" and "*/", but eslint strips those off in `comment.value`.
-					const parserContext = parser.parseString(`/**${comment.value}*/`);
+					const fullCommentText = `/**${comment.value}*/`;
+					const parserContext = parser.parseString(fullCommentText);
 					const parsedComment = parserContext.docComment;
+
+					// Collect ranges to check (all blocks except privateRemarks)
+					const rangesToCheck = [];
+
+					// Check summary section
+					const summaryRange = getNodeRange(parsedComment.summarySection);
+					if (summaryRange) {
+						rangesToCheck.push(summaryRange);
+					}
 
 					// Check all blocks except privateRemarks
 					const blocksToCheck = [
@@ -123,14 +156,20 @@ module.exports = {
 						blocksToCheck.push(parsedComment.returnsBlock);
 					}
 
-					/**
-					 * Checks the provided comment block for file path links and report eslint errors for them.
-					 * @param {DocNode} node - The comment block to check.
-					 * @returns {void}
-					 */
-					function checkCommentBlock(node) {
-						const links = findFilePathLinks(node);
+					for (const block of blocksToCheck) {
+						const blockRange = getNodeRange(block.content);
+						if (blockRange) {
+							rangesToCheck.push(blockRange);
+						}
+					}
+
+					// Search for file path links in each range
+					for (const range of rangesToCheck) {
+						const links = findFilePathLinksInRange(fullCommentText, range);
 						for (const link of links) {
+							// Adjust indices: TSDoc parser adds "/**" at the start (3 chars),
+							// but eslint's comment.range[0] points to the "/*" (not "/**"),
+							// so we need to subtract 1 to account for the difference
 							const startIndex = commentStartIndex + link.startIndex - 1;
 							const endIndex = commentStartIndex + link.endIndex - 1;
 
@@ -142,12 +181,6 @@ module.exports = {
 								messageId: "filePathLink",
 							});
 						}
-					}
-
-					// Check summary section and all blocks (except privateRemarks)
-					checkCommentBlock(parsedComment.summarySection);
-					for (const block of blocksToCheck) {
-						checkCommentBlock(block.content);
 					}
 				}
 			},
