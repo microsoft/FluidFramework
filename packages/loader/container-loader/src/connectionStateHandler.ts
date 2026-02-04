@@ -370,7 +370,8 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 	};
 
 	private readonly transitionToConnectedState = (): void => {
-		// Defensive measure, we should always be in Connecting state when this is called.
+		// Defensive measure: when this is called, the outer connection should already be Connected
+		// and this handler should be in the CatchingUp state.
 		const state = this.pimpl.connectionState;
 		assert(state === ConnectionState.Connected, 0x3e5 /* invariant broken */);
 		assert(this._connectionState === ConnectionState.CatchingUp, 0x3e6 /* invariant broken */);

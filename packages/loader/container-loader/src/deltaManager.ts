@@ -585,8 +585,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				this.fetchMissingDeltas(reason);
 			}
 		} else {
-			// No fetch needed, emit completion via microtask to ensure connect handlers finish first
-			queueMicrotask(() => this.emit("storageFetchComplete", "NoFetchNeeded"));
+			// No fetch needed, emit completion via microtask to ensure connect handlers finish first.
+			// Check we're still connected before emitting, in case a disconnect happened during the microtask delay.
+			queueMicrotask(() => {
+				if (this.connectionManager.connected) {
+					this.emit("storageFetchComplete", "NoFetchNeeded");
+				}
+			});
 		}
 	}
 
