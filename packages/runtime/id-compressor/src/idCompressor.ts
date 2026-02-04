@@ -346,34 +346,21 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		childLocalGenCount: number,
 		childShardId: SessionId,
 	): SerializedIdCompressorWithOngoingSession {
-		// Save parent's state for restoration
-		const parentShardingState = this.shardingState;
-		const parentOriginalLocalGenCount = this.localGenCount;
-
-		// Set child's sharding state - child starts as a leaf with no children
-		this.shardingState = {
+		// This code results in a double roundtrip, but is probably plenty fast enough for scenarios that need sharding,
+		// as they necessarily have process boundaries to deal with.
+		// If this ever became an issue we can implement a fast clone of compressors
+		const child = deserializeIdCompressor(this.serialize(true), this.writeVersion) as IdCompressor;
+		const genCountJump = childLocalGenCount - this.localGenCount;
+		assert(child.localGenCount === this.localGenCount && genCountJump > 0, "Child offsets incorrectly calculated.");
+		child.normalizer.addLocalRange(child.localGenCount, genCountJump);
+		child.localGenCount = childLocalGenCount;
+		child.shardingState = {
 			currentStride: stride,
 			originalStride: stride, // Child's original stride is what it was created with
 			activeChildIds: new Set(), // Child starts with no children
 			shardId: childShardId, // Store the child's unique UUID
 		};
-
-		// Position child at its assigned localGenCount
-		// This is parent's localGenCount + offset (i * oldStride for recursive sharding)
-		this.localGenCount = childLocalGenCount;
-
-		let childSerialized: SerializedIdCompressorWithOngoingSession;
-		try {
-			// Serialize with the child's state
-			// Child inherits parent's normalizer (they share the same session and need to recognize pre-shard IDs)
-			childSerialized = this.serialize(true);
-		} finally {
-			// Restore parent's state
-			this.localGenCount = parentOriginalLocalGenCount;
-			this.shardingState = parentShardingState;
-		}
-
-		return childSerialized;
+		return child.serialize(true);
 	}
 
 	/**
