@@ -246,12 +246,12 @@ extends:
         - task: Bash@3
           name: checkThresholds
           displayName: Check performance thresholds
-          env:
-            MODE: $(runMode)
-            INPUT_DIR: $(Build.ArtifactStagingDirectory)/deploy
-            AVG_DURATION_THRESHOLD: $(avgDurationThreshold)
-            CHANGE_PERIOD_THRESHOLD: $(changePeriodThreshold)
-            FORCE_FAILURE: ${{ parameters.forceAlertFailure }}
           inputs:
-            targetType: 'filePath'
-            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/check-thresholds.sh'
+            targetType: 'inline'
+            script: |
+              export MODE="$(runMode)"
+              export INPUT_DIR="$(Build.ArtifactStagingDirectory)/deploy"
+              export AVG_DURATION_THRESHOLD="$(avgDurationThreshold)"
+              export CHANGE_PERIOD_THRESHOLD="$(changePeriodThreshold)"
+              export FORCE_FAILURE="${{ parameters.forceAlertFailure }}"
+              "$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/check-thresholds.sh"
