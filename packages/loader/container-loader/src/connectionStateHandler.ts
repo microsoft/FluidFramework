@@ -4,11 +4,7 @@
  */
 
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import type {
-	IDisposable,
-	IEventProvider,
-	ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces";
+import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
@@ -21,21 +17,14 @@ import {
 
 import { CatchUpMonitor, type ICatchUpMonitor } from "./catchUpMonitor.js";
 import { ConnectionState } from "./connectionState.js";
-import type { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts.js";
-import type { IDeltaManagerInternalEvents } from "./deltaManager.js";
+import type {
+	IConnectionDetailsInternal,
+	IConnectionManager,
+	IConnectionStateChangeReason,
+} from "./contracts.js";
+import type { DeltaManager } from "./deltaManager.js";
 import type { IProtocolHandler } from "./protocol.js";
 import { StorageFetchMonitor } from "./storageFetchMonitor.js";
-
-/**
- * Internal interface for DeltaManager that exposes additional properties needed
- * for connection state handling that are not part of the public IDeltaManager interface.
- */
-interface IDeltaManagerInternal extends IDeltaManager<unknown, unknown> {
-	/**
-	 * Whether a connection-triggered storage fetch is currently in progress.
-	 */
-	readonly isConnectionFetchPending: boolean;
-}
 
 // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
 // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
@@ -145,7 +134,11 @@ export function createConnectionStateHandlerCore(
 		new ConnectionStateHandler(handler, readClientsWaitForJoinSignal, clientId);
 
 	return connectedRaisedWhenCaughtUp
-		? new ConnectionStateCatchup(inputs, factory, deltaManager as IDeltaManagerInternal)
+		? new ConnectionStateCatchup(
+				inputs,
+				factory,
+				deltaManager as DeltaManager<IConnectionManager>,
+			)
 		: factory(inputs);
 }
 
@@ -268,7 +261,7 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 	constructor(
 		inputs: IConnectionStateHandlerInputs,
 		pimplFactory: (handler: IConnectionStateHandlerInputs) => IConnectionStateHandler,
-		private readonly deltaManager: IDeltaManagerInternal,
+		private readonly deltaManager: DeltaManager<IConnectionManager>,
 	) {
 		super(inputs, pimplFactory);
 		this._connectionState = this.pimpl.connectionState;
@@ -303,9 +296,8 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 					const fetchPending = this.deltaManager.isConnectionFetchPending;
 					this.storageFetchComplete = !fetchPending;
 					if (fetchPending) {
-						// Cast is safe: the DeltaManager implements IDeltaManagerInternalEvents
 						this.storageFetchMonitor = new StorageFetchMonitor(
-							this.deltaManager as unknown as IEventProvider<IDeltaManagerInternalEvents>,
+							this.deltaManager,
 							this.onStorageFetchComplete,
 							false,
 						);
