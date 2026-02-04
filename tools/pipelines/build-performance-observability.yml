@@ -177,6 +177,7 @@ extends:
           displayName: Generate HTML dashboard artifact
           condition: eq(variables['detect.shouldRun'], 'true')
           env:
+            MODE: $(detect.runMode)
             OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
             SOURCE_DIR: $(Build.SourcesDirectory)
           inputs:

@@ -5,14 +5,17 @@
 
 # Generate a standalone HTML dashboard with inlined data
 # This creates a single HTML file that can be viewed offline
+# The generated file only contains data for the specified mode (no tabs)
 #
 # Required environment variables:
+#   MODE           - "public" or "internal" (determines which data to include)
 #   OUTPUT_DIR     - Directory containing the deploy folder with data files
 #   SOURCE_DIR     - Directory containing source template files
 
 set -eu -o pipefail
 
 # Validate required environment variables
+: "${MODE:?MODE environment variable is required}"
 : "${OUTPUT_DIR:?OUTPUT_DIR environment variable is required}"
 : "${SOURCE_DIR:?SOURCE_DIR environment variable is required}"
 
@@ -21,21 +24,22 @@ UTILS_DIR="$SOURCE_DIR/tools/pipelines/build-performance-observability-utils"
 STANDALONE_FILE="$OUTPUT_DIR/dashboard.html"
 
 echo "=========================================="
-echo "Generating standalone HTML dashboard"
+echo "Generating standalone HTML dashboard ($MODE mode)"
 echo "=========================================="
 
-# Check which data files exist
-HAS_PUBLIC="false"
-HAS_INTERNAL="false"
-
-if [ -f "$DEPLOY_DIR/data/public-data.json" ]; then
-    HAS_PUBLIC="true"
-    echo "Found public-data.json ($(wc -c < "$DEPLOY_DIR/data/public-data.json") bytes)"
+# Determine the data file for this mode
+if [ "$MODE" = "public" ]; then
+    DATA_FILE="$DEPLOY_DIR/data/public-data.json"
+    MODE_LABEL="PR Builds"
+else
+    DATA_FILE="$DEPLOY_DIR/data/internal-data.json"
+    MODE_LABEL="Internal Builds"
 fi
 
-if [ -f "$DEPLOY_DIR/data/internal-data.json" ]; then
-    HAS_INTERNAL="true"
-    echo "Found internal-data.json ($(wc -c < "$DEPLOY_DIR/data/internal-data.json") bytes)"
+if [ -f "$DATA_FILE" ]; then
+    echo "Found data file: $DATA_FILE ($(wc -c < "$DATA_FILE") bytes)"
+else
+    echo "Warning: Data file not found: $DATA_FILE"
 fi
 
 # Use node to do the HTML transformation, reading files directly
@@ -44,60 +48,44 @@ const fs = require('fs');
 
 const templatePath = '${UTILS_DIR}/dashboard-template.html';
 const outputPath = '${STANDALONE_FILE}';
-const deployDir = '${DEPLOY_DIR}';
-const hasPublic = ${HAS_PUBLIC};
-const hasInternal = ${HAS_INTERNAL};
+const dataFile = '${DATA_FILE}';
+const mode = '${MODE}';
+const modeLabel = '${MODE_LABEL}';
 
 let html = fs.readFileSync(templatePath, 'utf8');
 
-// Read data files if they exist
-let publicData = 'null';
-let internalData = 'null';
-
-if (hasPublic) {
-    const content = fs.readFileSync(deployDir + '/data/public-data.json', 'utf8');
-    publicData = content.trim();
+// Read data file if it exists
+let modeData = 'null';
+if (fs.existsSync(dataFile)) {
+    const content = fs.readFileSync(dataFile, 'utf8');
+    modeData = content.trim();
 }
 
-if (hasInternal) {
-    const content = fs.readFileSync(deployDir + '/data/internal-data.json', 'utf8');
-    internalData = content.trim();
-}
-
-// Create the inlined data script block
+// Create the inlined data script block (only for current mode)
 const inlineDataScript = \`
         // Inlined data for standalone mode
-        const INLINED_PUBLIC_DATA = \${publicData};
-        const INLINED_INTERNAL_DATA = \${internalData};
+        const STANDALONE_MODE = '\${mode}';
+        const INLINED_DATA = \${modeData};
 \`;
 
-// Create replacement loadData function that uses inlined data
+// Create replacement loadData function that uses inlined data (single mode only)
 const newLoadData = \`
         async function loadData() {
-            // Use inlined data instead of fetching
-            if (INLINED_PUBLIC_DATA) {
-                dashboardData.public = INLINED_PUBLIC_DATA;
-                document.getElementById('public-loading').style.display = 'none';
-                document.getElementById('public-dashboard').style.display = 'block';
-                renderDashboard('public', dashboardData.public);
+            // Use inlined data instead of fetching (single mode standalone)
+            const mode = STANDALONE_MODE;
+            if (INLINED_DATA) {
+                dashboardData[mode] = INLINED_DATA;
+                document.getElementById(mode + '-loading').style.display = 'none';
+                document.getElementById(mode + '-dashboard').style.display = 'block';
+                renderDashboard(mode, dashboardData[mode]);
             } else {
-                document.getElementById('public-loading').style.display = 'none';
-                document.getElementById('public-no-data').style.display = 'block';
-            }
-            if (INLINED_INTERNAL_DATA) {
-                dashboardData.internal = INLINED_INTERNAL_DATA;
-                document.getElementById('internal-loading').style.display = 'none';
-                document.getElementById('internal-dashboard').style.display = 'block';
-                renderDashboard('internal', dashboardData.internal);
-            } else {
-                document.getElementById('internal-loading').style.display = 'none';
-                document.getElementById('internal-no-data').style.display = 'block';
+                document.getElementById(mode + '-loading').style.display = 'none';
+                document.getElementById(mode + '-no-data').style.display = 'block';
             }
         }
 \`;
 
 // Find and replace the loadData function
-// Match from "async function loadData()" to its closing brace at the right indentation
 const loadDataRegex = /async function loadData\(\)\s*\{[\s\S]*?^\s{8}\}/m;
 html = html.replace(loadDataRegex, newLoadData.trim());
 
@@ -107,11 +95,26 @@ html = html.replace(
     'const itemsPerPage = 5;\\n' + inlineDataScript
 );
 
-// Update the title to indicate standalone version
-html = html.replace('<title>FF Build Dashboard</title>', '<title>FF Build Dashboard (Standalone)</title>');
+// Update the title to indicate which mode
+html = html.replace('<title>FF Build Dashboard</title>', '<title>FF Build Dashboard - ' + modeLabel + '</title>');
+
+// Remove the tabs UI (keep only header with title)
+html = html.replace(
+    /<div class="header-row">[\s\S]*?<\/div>\s*<\/div>/m,
+    '<div class="header-row"><h1>Fluid Framework Build Performance Dashboard - ' + modeLabel + '</h1></div>'
+);
+
+// Remove the other mode's tab content entirely
+const otherMode = mode === 'public' ? 'internal' : 'public';
+const otherTabRegex = new RegExp('<div id="' + otherMode + '-content"[^>]*>[\\s\\S]*?<\\/div>\\s*(?=<\\/div>\\s*<script>)', 'm');
+html = html.replace(otherTabRegex, '');
+
+// Make current mode's tab content always active and visible
+html = html.replace('id="' + mode + '-content" class="tab-content active"', 'id="' + mode + '-content" class="tab-content active" style="display: block;"');
+html = html.replace('id="' + mode + '-content" class="tab-content"', 'id="' + mode + '-content" class="tab-content active" style="display: block;"');
 
 fs.writeFileSync(outputPath, html, 'utf8');
-console.log('Standalone HTML generated successfully');
+console.log('Standalone HTML generated successfully for ' + modeLabel);
 NODESCRIPT
 
 echo "Generated standalone dashboard: $STANDALONE_FILE"
