@@ -56,7 +56,7 @@ export function createWeightedAsyncGeneratorWithDynamicWeights<
 		let totalWeight = 0;
 		for (const [generator, weight, shouldAccept] of weights) {
 			// Skip entries that don't pass the acceptance condition
-			if (!(shouldAccept?.(state) ?? true)) {
+			if (shouldAccept?.(state) === false) {
 				continue;
 			}
 			const evaluatedWeight = evaluateWeight(weight, state);
