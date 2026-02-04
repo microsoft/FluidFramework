@@ -86,7 +86,6 @@ export type PropsOrAdjust =
 
 const opToChanges = (op: PropsOrAdjust, seq: number): [string, PropertyChange][] => [
 	...Object.entries(op.props ?? {})
-
 		.map<[string, PropertyChange]>(([k, raw]) => [k, { raw, seq }])
 		.filter(([_, v]) => v.raw !== undefined),
 	...Object.entries(op.adjust ?? {}).map<[string, PropertyChange]>(([k, adjust]) => [

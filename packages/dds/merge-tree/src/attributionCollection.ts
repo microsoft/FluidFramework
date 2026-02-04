@@ -392,8 +392,6 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	): void {
 		const { channels } = summary;
 		assert(
-			// Destructuring here would require renaming the variables, since seqs is declared below
-
 			summary.seqs.length === summary.posBreakpoints.length,
 			0x445 /* Invalid attribution summary blob provided */,
 		);
