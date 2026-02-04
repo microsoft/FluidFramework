@@ -137,7 +137,7 @@ describe("Storage fetch wait for Connected state", () => {
 	const documentId = "storageFetchWaitTest";
 	const documentLoadUrl = `https://localhost/${documentId}`;
 
-	it("Container waits for storage fetch before transitioning to Connected", async () => {
+	it("Read connection is not Connected while storage fetch is blocked", async () => {
 		// Setup: Create server and initial container
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
@@ -157,13 +157,10 @@ describe("Storage fetch wait for Connected state", () => {
 		const fetchDeferred = new Deferred<void>();
 		const fetchStartedDeferred = new Deferred<void>();
 		let storageFetchCompleted = false;
-		let connectionStateWhenFetchStarted: ConnectionState | undefined;
-		// eslint-disable-next-line prefer-const
-		let containerRef: { current: IContainer | undefined } = { current: undefined };
+		const containerRef: { current: IContainer | undefined } = { current: undefined };
 
 		const trackingFactory = createStorageTrackingFactory(documentServiceFactory, {
 			onFetchMessagesStart: () => {
-				connectionStateWhenFetchStarted = containerRef.current?.connectionState;
 				fetchStartedDeferred.resolve();
 			},
 			onFetchMessagesEnd: () => {
@@ -182,6 +179,9 @@ describe("Storage fetch wait for Connected state", () => {
 		const loadPromise = loadExistingContainer({
 			...loadProps,
 			request: { url: documentLoadUrl },
+		}).then((container) => {
+			containerRef.current = container;
+			return container;
 		});
 
 		// Wait for fetch to start (it will block on fetchDeferred)
@@ -194,12 +194,23 @@ describe("Storage fetch wait for Connected state", () => {
 			"Storage fetch should not have completed yet",
 		);
 
+		// KEY VALIDATION: Capture state right before resolving fetch
+		// This is the critical point - container should NOT be connected while fetch is pending
+		const connectionStateBeforeFetchResolved = containerRef.current?.connectionState;
+
+		// The key assertion: container is NOT Connected while fetch is blocked
+		// Note: container might be undefined if load hasn't returned yet, or in CatchingUp state
+		assert.notStrictEqual(
+			connectionStateBeforeFetchResolved,
+			ConnectionState.Connected,
+			"Container should not be Connected while storage fetch is pending",
+		);
+
 		// Now resolve the deferred to allow the fetch to complete
 		fetchDeferred.resolve();
 
 		// Wait for the container to finish loading
 		const loadedContainer = await loadPromise;
-		containerRef.current = loadedContainer;
 
 		// Wait for container to be connected
 		await waitForContainerConnection(loadedContainer);
@@ -209,21 +220,14 @@ describe("Storage fetch wait for Connected state", () => {
 		assert.strictEqual(
 			loadedContainer.connectionState,
 			ConnectionState.Connected,
-			"Container should be in Connected state",
-		);
-
-		// When fetch started, container should NOT have been Connected yet
-		assert.notStrictEqual(
-			connectionStateWhenFetchStarted,
-			ConnectionState.Connected,
-			"Container should not be Connected when storage fetch starts",
+			"Container should be in Connected state after fetch completes",
 		);
 
 		loadedContainer.close();
 		await deltaConnectionServer.webSocketServer.close();
 	});
 
-	it("Container respects DisableStorageFetchWait config flag", async () => {
+	it("Opt-out flag allows container to connect without waiting for storage fetch", async () => {
 		// Setup
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
@@ -239,7 +243,7 @@ describe("Storage fetch wait for Connected state", () => {
 		await waitForContainerConnection(createContainer);
 		createContainer.close();
 
-		// Load with opt-out flag
+		// Load with opt-out flag - container should connect without waiting for storage fetch
 		const loadProps: ILoaderProps = {
 			...loaderProps,
 			configProvider: configProvider({
@@ -252,7 +256,7 @@ describe("Storage fetch wait for Connected state", () => {
 			request: { url: documentLoadUrl },
 		});
 
-		// Wait for connection - should still reach Connected state
+		// With opt-out flag, container should reach Connected state
 		await waitForContainerConnection(loadedContainer);
 
 		assert.strictEqual(
@@ -265,7 +269,7 @@ describe("Storage fetch wait for Connected state", () => {
 		await deltaConnectionServer.webSocketServer.close();
 	});
 
-	it("Connected state is delayed until storage fetch completes", async () => {
+	it("fetch_end event occurs before connected event (event ordering)", async () => {
 		// Setup
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
@@ -335,7 +339,7 @@ describe("Storage fetch wait for Connected state", () => {
 		// Wait for connection
 		await waitForContainerConnection(loadedContainer);
 
-		// Verify order: fetch should complete before or at the same time as connected
+		// Verify order: fetch_end should occur before or at the same time as connected
 		const fetchEndIndex = events.indexOf("fetch_end");
 		const connectedIndex = events.indexOf("connected");
 
@@ -343,78 +347,7 @@ describe("Storage fetch wait for Connected state", () => {
 		assert.ok(connectedIndex !== -1, "connected event should have occurred");
 		assert.ok(
 			fetchEndIndex <= connectedIndex,
-			`Storage fetch should complete before Connected state. Events: ${events.join(", ")}`,
-		);
-
-		loadedContainer.close();
-		await deltaConnectionServer.webSocketServer.close();
-	});
-
-	it("Container is not in Connected state while storage fetch is pending", async () => {
-		// Setup
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-		const { loaderProps, codeDetails, documentServiceFactory } = createLoader({
-			deltaConnectionServer,
-		});
-
-		// Create initial container
-		const initialContainer = await createAndAttachContainerUsingProps(
-			{ ...loaderProps, codeDetails },
-			createLocalResolverCreateNewRequest(documentId),
-		);
-		await waitForContainerConnection(initialContainer);
-		initialContainer.close();
-
-		// Use deferred to block fetch and track state
-		const fetchDeferred = new Deferred<void>();
-		const fetchStartedDeferred = new Deferred<void>();
-		let containerStateWhenFetchStarted: ConnectionState | undefined;
-		// eslint-disable-next-line prefer-const
-		let containerRef: { current: IContainer | undefined } = { current: undefined };
-
-		const trackingFactory = createStorageTrackingFactory(documentServiceFactory, {
-			onFetchMessagesStart: () => {
-				// Capture container state when fetch starts (while blocked)
-				containerStateWhenFetchStarted = containerRef.current?.connectionState;
-				fetchStartedDeferred.resolve();
-			},
-			blockUntilResolved: fetchDeferred.promise,
-		});
-
-		const loadProps: ILoaderProps = {
-			...loaderProps,
-			documentServiceFactory: trackingFactory,
-		};
-
-		// Start loading
-		const loadPromise = loadExistingContainer({
-			...loadProps,
-			request: { url: documentLoadUrl },
-		});
-
-		// Wait for fetch to start (container is now blocked)
-		await fetchStartedDeferred.promise;
-
-		// Resolve fetch to let load complete
-		fetchDeferred.resolve();
-
-		const loadedContainer = await loadPromise;
-		containerRef.current = loadedContainer;
-
-		await waitForContainerConnection(loadedContainer);
-
-		// When fetch started, container should NOT have been in Connected state
-		assert.notStrictEqual(
-			containerStateWhenFetchStarted,
-			ConnectionState.Connected,
-			"Container should not be Connected when storage fetch starts",
-		);
-
-		assert.strictEqual(
-			loadedContainer.connectionState,
-			ConnectionState.Connected,
-			"Container should be Connected after fetch completes",
+			`fetch_end should occur before connected event. Events: ${events.join(", ")}`,
 		);
 
 		loadedContainer.close();

@@ -586,9 +586,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			}
 		} else {
 			// No fetch needed, emit completion via microtask to ensure connect handlers finish first.
-			// Check we're still connected before emitting, in case a disconnect happened during the microtask delay.
+			// Check we're still connected and that no fetch has started in the meantime before emitting,
+			// in case a disconnect/reconnect or state change happened during the microtask delay.
 			queueMicrotask(() => {
-				if (this.connectionManager.connected) {
+				if (this.connectionManager.connected && !this.connectionFetchPending) {
 					this.emit("storageFetchComplete", "NoFetchNeeded");
 				}
 			});
