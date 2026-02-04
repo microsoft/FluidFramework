@@ -254,4 +254,4 @@ extends:
               export AVG_DURATION_THRESHOLD="$(avgDurationThreshold)"
               export CHANGE_PERIOD_THRESHOLD="$(changePeriodThreshold)"
               export FORCE_FAILURE="${{ parameters.forceAlertFailure }}"
-              "$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/check-thresholds.sh"
+              bash "$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/check-thresholds.sh"
