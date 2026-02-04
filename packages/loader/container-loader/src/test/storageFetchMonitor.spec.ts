@@ -129,4 +129,25 @@ describe("StorageFetchMonitor", () => {
 			"Should not add listener when fetch already complete",
 		);
 	});
+
+	it("Does not call listener if disposed before microtask executes", async () => {
+		let fetchComplete = false;
+
+		monitor = new StorageFetchMonitor(
+			mockDeltaManager,
+			() => {
+				fetchComplete = true;
+			},
+			true, // fetchAlreadyComplete - triggers microtask path
+		);
+
+		// Dispose immediately, before microtask can execute
+		monitor.dispose();
+
+		// Wait for microtask to execute
+		await Promise.resolve();
+
+		// Listener should not have been called because we disposed before the microtask ran
+		assert(!fetchComplete, "Listener should not be called after dispose");
+	});
 });

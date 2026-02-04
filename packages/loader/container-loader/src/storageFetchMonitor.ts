@@ -31,7 +31,11 @@ export class StorageFetchMonitor implements IDisposable {
 	) {
 		if (fetchAlreadyComplete) {
 			this.fetchComplete = true;
-			queueMicrotask(() => this.listener());
+			queueMicrotask(() => {
+				if (!this._disposed) {
+					this.listener();
+				}
+			});
 		} else {
 			this.deltaManager.on("storageFetchComplete", this.fetchCompleteHandler);
 		}
