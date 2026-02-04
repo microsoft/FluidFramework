@@ -12,6 +12,10 @@ parameters:
   displayName: Publish dashboard to Azure Static Web Apps
   type: boolean
   default: false
+- name: forceAlertFailure
+  displayName: Force threshold failure (for testing notifications)
+  type: boolean
+  default: false
 
 name: $(Build.BuildId)
 
@@ -220,12 +224,12 @@ extends:
             azure_static_web_apps_api_token: $(ASWA_DEPLOYMENT_TOKEN)
 
     - stage: alert_on_thresholds
-      displayName: Check Thresholds and Send Alerts
+      displayName: Check Thresholds
       dependsOn: collect_and_deploy_metrics
       condition: succeeded('collect_and_deploy_metrics')
       jobs:
-      - job: check_and_alert
-        displayName: Check Thresholds and Send Email Alert
+      - job: check_thresholds
+        displayName: Check Performance Thresholds
         variables:
           runMode: $[stageDependencies.collect_and_deploy_metrics.prepare.outputs['detect.runMode']]
           shouldRun: $[stageDependencies.collect_and_deploy_metrics.prepare.outputs['detect.shouldRun']]
@@ -247,81 +251,7 @@ extends:
             INPUT_DIR: $(Build.ArtifactStagingDirectory)/deploy
             AVG_DURATION_THRESHOLD: $(avgDurationThreshold)
             CHANGE_PERIOD_THRESHOLD: $(changePeriodThreshold)
+            FORCE_FAILURE: ${{ parameters.forceAlertFailure }}
           inputs:
             targetType: 'filePath'
             filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/check-thresholds.sh'
-
-        - task: Bash@3
-          displayName: Send alert to Teams
-          condition: eq(variables['checkThresholds.shouldAlert'], 'true')
-          env:
-            WEBHOOK_URL: $(ALERT_WEBHOOK_URL)
-            MODE: $(runMode)
-            AVG_DURATION: $(checkThresholds.avgDuration)
-            AVG_DURATION_THRESHOLD: $(avgDurationThreshold)
-            CHANGE_PERIOD: $(checkThresholds.changePeriod)
-            CHANGE_PERIOD_DAYS: $(checkThresholds.changePeriodDays)
-            CHANGE_PERIOD_THRESHOLD: $(changePeriodThreshold)
-            DASHBOARD_URL: https://$(ASWA_HOSTNAME)
-            PIPELINE_URL: $(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)
-          inputs:
-            targetType: 'inline'
-            script: |
-              # Build Teams Adaptive Card payload
-              PAYLOAD=$(cat <<EOF
-              {
-                "type": "message",
-                "attachments": [
-                  {
-                    "contentType": "application/vnd.microsoft.card.adaptive",
-                    "content": {
-                      "type": "AdaptiveCard",
-                      "version": "1.2",
-                      "body": [
-                        {
-                          "type": "TextBlock",
-                          "size": "Large",
-                          "weight": "Bolder",
-                          "text": "⚠️ Build Performance Alert",
-                          "color": "Warning"
-                        },
-                        {
-                          "type": "TextBlock",
-                          "text": "Thresholds exceeded for **${MODE}** builds",
-                          "wrap": true
-                        },
-                        {
-                          "type": "FactSet",
-                          "facts": [
-                            {
-                              "title": "Avg Duration",
-                              "value": "${AVG_DURATION} min (threshold: ${AVG_DURATION_THRESHOLD} min)"
-                            },
-                            {
-                              "title": "${CHANGE_PERIOD_DAYS}-Day Change",
-                              "value": "${CHANGE_PERIOD}% (threshold: ±${CHANGE_PERIOD_THRESHOLD}%)"
-                            }
-                          ]
-                        }
-                      ],
-                      "actions": [
-                        {
-                          "type": "Action.OpenUrl",
-                          "title": "View Dashboard",
-                          "url": "${DASHBOARD_URL}"
-                        },
-                        {
-                          "type": "Action.OpenUrl",
-                          "title": "View Pipeline",
-                          "url": "${PIPELINE_URL}"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-              EOF
-              )
-
-              # Post to Teams webhook
-              curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
