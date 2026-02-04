@@ -11,7 +11,7 @@
  *
  * @remarks
  * Our separate rule, `no-markdown-links-in-jsdoc`, disallows Markdown link syntax in JSDoc/TSDoc comments.
- * File path links are allowed in `@privateRemarks` blocks since those are not part of the public API documentation.
+ * File path links are allowed in `@privateRemarks` blocks since those do not show up in public API documentation.
  *
  * @typedef {import('@microsoft/tsdoc').DocExcerpt} DocExcerpt
  * @typedef {import('@microsoft/tsdoc').DocInlineTag} DocInlineTag
