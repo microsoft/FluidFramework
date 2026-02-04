@@ -40,14 +40,25 @@ When these differ, the same code can produce different type information, causing
 2. If so, VS Code may be using projectService while CLI uses the explicit array
 3. Ensure VS Code's ESLint settings match the CLI configuration, or update the package to use projectService if possible
 
-#### Packages requiring explicit project arrays
+#### When projectService works
 
-Some packages cannot use projectService due to non-standard tsconfig structures:
+projectService works when all TypeScript files are covered by tsconfigs that are **discoverable**. A tsconfig is discoverable if:
+1. It is named `tsconfig.json` and exists in the directory ancestry of the source file, OR
+2. It is referenced (directly or transitively) via project references from a discoverable `tsconfig.json`
 
-- **Test-only packages without root tsconfig.json** - projectService looks for `./tsconfig.json` first and fails
-- **Non-standard test directory paths** (e.g., `src/test/mocha/` instead of `src/test/`)
-- **Files needing separate tsconfigs for different compiler settings** (e.g., test files that require a separate tsconfig to disable `exactOptionalPropertyTypes` for testing purposes, which are excluded from the main test tsconfig)
-- **Non-standard tsconfig naming** (e.g., `tsconfig.jest.json` instead of `tsconfig.json`)
+For example:
+- `./tsconfig.json` references `./tsconfig.main.json` → both are discoverable
+- `./tsconfig.json` references `./src/test/tsconfig.json` → test config is discoverable
+- `./tsconfig.jest.json` with no reference from any `tsconfig.json` → NOT discoverable
+
+#### When explicit project arrays are required
+
+Explicit `parserOptions.project` arrays are needed when files exist that are **not covered** by any discoverable tsconfig.
+
+Common scenarios requiring explicit arrays:
+- **Standalone non-standard tsconfig naming** - e.g., `tsconfig.jest.json` or `tsconfig.cjs.lint.json` that is NOT referenced by any `tsconfig.json`
+- **Files intentionally excluded from the main tsconfig graph** - e.g., test files compiled separately to test different compiler options like `exactOptionalPropertyTypes`, where referencing them from the main tsconfig would cause double-compilation
+- **Test-only packages without root tsconfig.json** - no entry point for projectService to discover
 
 These packages have comments in their `eslint.config.mts` explaining why explicit project arrays are needed.
 
@@ -89,8 +100,8 @@ For example, a test-only package without a root tsconfig could add one:
 ```
 
 However, some scenarios are fundamentally incompatible with projectService:
-- Files that must be excluded from one tsconfig but included in another (e.g., testing different compiler options)
-- Files needing different compiler settings than the nearest `tsconfig.json` would provide
+- **Files that cannot be referenced from the main tsconfig graph** - For example, test files that need different compiler options (like `exactOptionalPropertyTypes: false`) and would cause double-compilation if referenced. These files are intentionally excluded from the main tsconfig and use a separate tsconfig that cannot be added as a project reference.
+- **Files needing different compiler settings than projectService would provide** - projectService uses the nearest discoverable `tsconfig.json`. If files need settings from a different tsconfig that isn't in their directory ancestry and can't be referenced, explicit arrays are required.
 
 For these cases, use flat config overrides targeting specific file patterns:
 

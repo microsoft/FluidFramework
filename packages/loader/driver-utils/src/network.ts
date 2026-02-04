@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
-	IAuthorizationError,
-	ILocationRedirectionError,
-	IResolvedUrl,
-	IThrottlingWarning,
 	DriverErrorTypes,
-	IDriverErrorBase,
+	type IAuthorizationError,
+	type ILocationRedirectionError,
+	type IResolvedUrl,
+	type IThrottlingWarning,
+	type IDriverErrorBase,
 } from "@fluidframework/driver-definitions/internal";
-import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
+import { type IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * @internal
@@ -226,6 +226,8 @@ export class ThrottlingError
 }
 
 /**
+ * Creates a non-retryable write error.
+ *
  * @internal
  */
 export const createWriteError = (
@@ -235,6 +237,8 @@ export const createWriteError = (
 	new NonRetryableError(message, DriverErrorTypes.writeError, props);
 
 /**
+ * Creates a generic network error, either throttling or non-throttling based on the provided retry information.
+ *
  * @internal
  */
 export function createGenericNetworkError(
@@ -254,18 +258,28 @@ export function createGenericNetworkError(
  * @param error - The error to inspect for ability to retry
  * @internal
  */
-export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
+export const canRetryOnError = (error: unknown): boolean =>
+	typeof error === "object" &&
+	error !== null &&
+	(error as { canRetry?: boolean }).canRetry === true;
 
 /**
  * Check retryAfterSeconds property on error
  * @internal
  */
-export const getRetryDelaySecondsFromError = (error: any): number | undefined =>
-	error?.retryAfterSeconds as number | undefined;
+export const getRetryDelaySecondsFromError = (error: unknown): number | undefined => {
+	if (typeof error === "object" && error !== null) {
+		const retryAfterSeconds = (error as { retryAfterSeconds?: unknown }).retryAfterSeconds;
+		return typeof retryAfterSeconds === "number" ? retryAfterSeconds : undefined;
+	}
+	return undefined;
+};
 
 /**
  * Check retryAfterSeconds property on error and convert to ms
  * @internal
  */
-export const getRetryDelayFromError = (error: any): number | undefined =>
-	error?.retryAfterSeconds !== undefined ? error.retryAfterSeconds * 1000 : undefined;
+export const getRetryDelayFromError = (error: unknown): number | undefined => {
+	const retryAfterSeconds = getRetryDelaySecondsFromError(error);
+	return retryAfterSeconds === undefined ? undefined : retryAfterSeconds * 1000;
+};

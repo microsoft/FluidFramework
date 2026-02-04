@@ -943,40 +943,43 @@ import {
 				});
 			});
 
-			describe("@bugfix Local templates with 'abstract' properties fail validation " +
-				"with remote one.", () => {
-				describe("pass: deep equal between no properties and an empty properties array", () => {
-					let templateArray = {
-						typeid: "SimpleTest:Shape-1.0.0",
-						properties: [],
-					};
-					let templateAbstract = {
-						typeid: "SimpleTest:Shape-1.0.0",
-					};
-
-					it("source is abstract and target is an empty properties array", function () {
-						let expectations = function (result) {
-							expect(result).property("isValid", true);
-							expect(result.errors).to.be.empty;
-							expect(result.warnings).to.be.empty;
-							return result;
+			describe(
+				"@bugfix Local templates with 'abstract' properties fail validation " +
+					"with remote one.",
+				() => {
+					describe("pass: deep equal between no properties and an empty properties array", () => {
+						let templateArray = {
+							typeid: "SimpleTest:Shape-1.0.0",
+							properties: [],
+						};
+						let templateAbstract = {
+							typeid: "SimpleTest:Shape-1.0.0",
 						};
 
-						return validate(expectations, templateAbstract, templateArray);
-					});
+						it("source is abstract and target is an empty properties array", function () {
+							let expectations = function (result) {
+								expect(result).property("isValid", true);
+								expect(result.errors).to.be.empty;
+								expect(result.warnings).to.be.empty;
+								return result;
+							};
 
-					it("target is abstract and source is an empty properties array", function () {
-						let expectations = function (result) {
-							expect(result).property("isValid", true);
-							expect(result.errors).to.be.empty;
-							expect(result.warnings).to.be.empty;
-							return result;
-						};
+							return validate(expectations, templateAbstract, templateArray);
+						});
 
-						return validate(expectations, templateArray, templateAbstract);
+						it("target is abstract and source is an empty properties array", function () {
+							let expectations = function (result) {
+								expect(result).property("isValid", true);
+								expect(result.errors).to.be.empty;
+								expect(result.warnings).to.be.empty;
+								return result;
+							};
+
+							return validate(expectations, templateArray, templateAbstract);
+						});
 					});
-				});
-			});
+				},
+			);
 		});
 
 		describe("Constants", function () {
