@@ -69,8 +69,7 @@ describe(`Do not allow file path links in JSDoc/TSDoc comments (eslint ${eslintV
 		const result = await lintFile("test.ts");
 		// All errors should be from other blocks, not from @privateRemarks
 		const privateRemarksErrors = result.messages.filter(
-			(msg) =>
-				msg.line >= 29 && msg.line <= 34, // Lines with @privateRemarks block
+			(message) => message.line >= 29 && message.line <= 34, // Lines with @privateRemarks block
 		);
 		assert.strictEqual(
 			privateRemarksErrors.length,
