@@ -25,7 +25,6 @@
  * }} TextRange
  */
 
-const { fail } = require("node:assert");
 const { DocNodeKind, TSDocParser } = require("@microsoft/tsdoc");
 const { getBlockComments } = require("./tsdoc-utils");
 
