@@ -50,20 +50,20 @@ export function createWeightedAsyncGeneratorWithDynamicWeights<
 	TState extends BaseFuzzTestState,
 >(weights: DynamicAsyncWeights<T, TState>): AsyncGenerator<T, TState> {
 	return async (state) => {
-		// Evaluate weights dynamically and compute cumulative sums
-		const cumulativeSums: [
-			T | AsyncGenerator<T, TState>,
-			number,
-			AcceptanceCondition<TState>?,
-		][] = [];
+		// Evaluate weights dynamically and compute cumulative sums,
+		// filtering out entries that don't pass the acceptance condition
+		const cumulativeSums: [T | AsyncGenerator<T, TState>, number][] = [];
 		let totalWeight = 0;
-		for (const [generator, weight, acceptCondition] of weights) {
-			const evaluatedWeight = evaluateWeight(weight, state);
-			const cumulativeWeight = totalWeight + evaluatedWeight;
-			if (evaluatedWeight > 0) {
-				cumulativeSums.push([generator, cumulativeWeight, acceptCondition]);
+		for (const [generator, weight, shouldAccept] of weights) {
+			// Skip entries that don't pass the acceptance condition
+			if (!(shouldAccept?.(state) ?? true)) {
+				continue;
 			}
-			totalWeight = cumulativeWeight;
+			const evaluatedWeight = evaluateWeight(weight, state);
+			if (evaluatedWeight > 0) {
+				totalWeight += evaluatedWeight;
+				cumulativeSums.push([generator, totalWeight]);
+			}
 		}
 
 		if (totalWeight === 0) {
@@ -73,25 +73,14 @@ export function createWeightedAsyncGeneratorWithDynamicWeights<
 		}
 
 		const { random } = state;
-		const sample = (): number => {
-			const weightSelected = random.real(0, totalWeight);
+		const weightSelected = random.real(0, totalWeight);
 
-			let opIndex = 0;
-			while (cumulativeSums[opIndex][1] < weightSelected) {
-				opIndex++;
-			}
+		let opIndex = 0;
+		while (cumulativeSums[opIndex][1] < weightSelected) {
+			opIndex++;
+		}
 
-			return opIndex;
-		};
-
-		let index;
-		let shouldAccept: AcceptanceCondition<TState> | undefined;
-		do {
-			index = sample();
-			shouldAccept = cumulativeSums[index][2];
-		} while (!(shouldAccept?.(state) ?? true));
-
-		const [tOrGenerator] = cumulativeSums[index];
+		const [tOrGenerator] = cumulativeSums[opIndex];
 		return typeof tOrGenerator === "function"
 			? (tOrGenerator as AsyncGenerator<T, TState>)(state)
 			: (tOrGenerator as unknown as T);
