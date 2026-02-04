@@ -162,7 +162,7 @@ extends:
 
         - task: Bash@3
           displayName: Prepare deployment package
-          condition: eq(variables['detect.shouldRun'], 'true')
+          condition: and(eq(variables['detect.shouldRun'], 'true'), eq('${{ parameters.publishToASWA }}', 'true'))
           env:
             ASWA_HOSTNAME: $(ASWA_HOSTNAME)
             MODE: $(detect.runMode)
@@ -188,15 +188,15 @@ extends:
           outputs:
           - output: pipelineArtifact
             displayName: Publish dashboard artifact
-            condition: eq(variables['detect.shouldRun'], 'true')
+            condition: and(eq(variables['detect.shouldRun'], 'true'), eq('${{ parameters.publishToASWA }}', 'true'))
             targetPath: $(Build.ArtifactStagingDirectory)/deploy
             artifactName: deploy
             publishLocation: pipeline
           - output: pipelineArtifact
-            displayName: Publish standalone HTML dashboard
+            displayName: Publish HTML dashboard artifact
             condition: eq(variables['detect.shouldRun'], 'true')
-            targetPath: $(Build.ArtifactStagingDirectory)/dashboard-standalone.html
-            artifactName: dashboard-standalone
+            targetPath: $(Build.ArtifactStagingDirectory)/dashboard.html
+            artifactName: dashboard
             publishLocation: pipeline
 
       # Release job: deploy to Azure Static Web Apps
@@ -226,7 +226,7 @@ extends:
     - stage: alert_on_thresholds
       displayName: Check Thresholds
       dependsOn: collect_and_deploy_metrics
-      condition: succeeded('collect_and_deploy_metrics')
+      condition: and(succeeded('collect_and_deploy_metrics'), eq('${{ parameters.publishToASWA }}', 'true'))
       jobs:
       - job: check_thresholds
         displayName: Check Performance Thresholds
