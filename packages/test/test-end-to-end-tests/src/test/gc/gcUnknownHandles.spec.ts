@@ -13,7 +13,7 @@ import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 // This test doesn't care to test compat of the Fluid handle implementation, it's just used for convenience
 // to simulate an unknown object.
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
+
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import {

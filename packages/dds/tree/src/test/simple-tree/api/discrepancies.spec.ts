@@ -36,7 +36,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { LeafNodeSchema } from "../../../simple-tree/leafNodeSchema.js";
 import { brand } from "../../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
+
 import { fieldSchema } from "../../utils.js";
 
 // Arbitrary schema name used in tests

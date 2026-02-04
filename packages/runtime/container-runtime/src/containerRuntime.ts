@@ -1684,12 +1684,11 @@ export class ContainerRuntime
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
-		// eslint-disable-next-line unicorn/consistent-destructuring
+
 		this._getClientId = () => context.clientId;
-		// eslint-disable-next-line unicorn/consistent-destructuring
+
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
-			// eslint-disable-next-line unicorn/consistent-destructuring
 			if (context.getAbsoluteUrl === undefined) {
 				throw new Error("Driver does not implement getAbsoluteUrl");
 			}
@@ -1870,7 +1869,6 @@ export class ContainerRuntime
 			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}
 
-		// eslint-disable-next-line unicorn/consistent-destructuring
 		if (context.attachState === AttachState.Attached) {
 			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 			if (
@@ -5468,7 +5466,7 @@ export class ContainerRuntime
 					entry = factory.resolvePriorInstantiation(entry);
 				}
 			}
-			// eslint-disable-next-line unicorn/consistent-destructuring -- 'entry' may have been update and thus use of 'extension' would be incorrect
+
 			entry.extension.onNewUse(...useContext);
 		}
 		return entry.interface as T;

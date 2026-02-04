@@ -14,7 +14,6 @@ import {
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import-x/no-internal-modules
 import { DependentFormatVersion, FluidClientVersion } from "../../codec/index.js";
 import { RevisionTagCodec } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
@@ -36,7 +35,7 @@ import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../shared-tree-core/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
+
 import { testChangeFamilyFactory } from "../testChange.js";
 import { testIdCompressor } from "../utils.js";
 

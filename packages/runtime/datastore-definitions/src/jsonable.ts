@@ -39,7 +39,7 @@ export type JsonableTypeWith<T> =
  * The TypeOnly filter is not useful for {@link JsonableTypeWith}; so, if type testing improves, this can be removed.
  * @legacy @beta
  */
-// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style -- Use of mapped type required to prevent circular reference issue
+
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
 	[index: string | number]: JsonableTypeWith<T>;
 }
