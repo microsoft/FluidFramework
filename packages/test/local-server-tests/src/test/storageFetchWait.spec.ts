@@ -31,6 +31,25 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 });
 
 /**
+ * A deferred promise that can be resolved/rejected externally.
+ */
+interface Deferred<T> {
+	promise: Promise<T>;
+	resolve: (value: T) => void;
+	reject: (reason?: unknown) => void;
+}
+
+function createDeferred<T>(): Deferred<T> {
+	let resolve!: (value: T) => void;
+	let reject!: (reason?: unknown) => void;
+	const promise = new Promise<T>((res, rej) => {
+		resolve = res;
+		reject = rej;
+	});
+	return { promise, resolve, reject };
+}
+
+/**
  * Creates a proxy over the document service factory that intercepts storage operations.
  * This allows tracking when storage fetch operations start and complete.
  * Uses direct method overriding pattern to avoid type assertion issues.
@@ -41,11 +60,16 @@ function createStorageTrackingFactory(
 		onDeltaStorageConnected?: () => void;
 		onFetchMessagesStart?: () => void;
 		onFetchMessagesEnd?: () => void;
-		delayFetchMs?: number;
+		/** Promise that blocks the fetch until resolved - use for deterministic test control */
+		blockUntilResolved?: Promise<void>;
 	} = {},
 ): LocalDocumentServiceFactory {
-	const { onDeltaStorageConnected, onFetchMessagesStart, onFetchMessagesEnd, delayFetchMs } =
-		options;
+	const {
+		onDeltaStorageConnected,
+		onFetchMessagesStart,
+		onFetchMessagesEnd,
+		blockUntilResolved,
+	} = options;
 
 	const factory = new LocalDocumentServiceFactory(deltaConnectionServer);
 	const originalCreateDocService = factory.createDocumentService.bind(factory);
@@ -71,13 +95,13 @@ function createStorageTrackingFactory(
 					fetchReason,
 				);
 
-				if (delayFetchMs === undefined || delayFetchMs === 0) {
-					// Wrap the stream to track completion
+				if (blockUntilResolved === undefined) {
+					// No blocking - just wrap the stream to track completion
 					return wrapStreamWithCompletion(originalStream, onFetchMessagesEnd);
 				}
 
-				// Create a delayed stream
-				return createDelayedStream(originalStream, delayFetchMs, onFetchMessagesEnd);
+				// Create a blocked stream that waits for the promise before reading
+				return createBlockedStream(originalStream, blockUntilResolved, onFetchMessagesEnd);
 			};
 
 			return deltaStorage;
@@ -105,20 +129,20 @@ function wrapStreamWithCompletion<T>(stream: IStream<T>, onComplete?: () => void
 }
 
 /**
- * Creates a stream that delays yielding results.
+ * Creates a stream that blocks until a promise resolves before yielding results.
  */
-function createDelayedStream<T>(
+function createBlockedStream<T>(
 	originalStream: IStream<T>,
-	delayMs: number,
+	blockUntil: Promise<void>,
 	onComplete?: () => void,
 ): IStream<T> {
-	let firstRead = true;
+	let blocked = true;
 
 	return {
 		read: async () => {
-			if (firstRead) {
-				firstRead = false;
-				await new Promise((resolve) => setTimeout(resolve, delayMs));
+			if (blocked) {
+				blocked = false;
+				await blockUntil;
 			}
 			const result = await originalStream.read();
 			if (result.done) {
@@ -153,8 +177,9 @@ describe("Storage fetch wait for Connected state", () => {
 		await waitForContainerConnection(initialContainer);
 		initialContainer.close();
 
-		// Track storage fetch timing - use a container ref that can be set later
-		let storageFetchStarted = false;
+		// Use deferred promises to control test flow
+		const fetchDeferred = createDeferred<void>();
+		const fetchStartedDeferred = createDeferred<void>();
 		let storageFetchCompleted = false;
 		let connectionStateWhenFetchStarted: ConnectionState | undefined;
 		// eslint-disable-next-line prefer-const
@@ -162,13 +187,13 @@ describe("Storage fetch wait for Connected state", () => {
 
 		const trackingFactory = createStorageTrackingFactory(deltaConnectionServer, {
 			onFetchMessagesStart: () => {
-				storageFetchStarted = true;
 				connectionStateWhenFetchStarted = containerRef.current?.connectionState;
+				fetchStartedDeferred.resolve();
 			},
 			onFetchMessagesEnd: () => {
 				storageFetchCompleted = true;
 			},
-			delayFetchMs: 50, // Add small delay to ensure we can observe timing
+			blockUntilResolved: fetchDeferred.promise,
 		});
 
 		// Load existing container with tracking factory
@@ -177,17 +202,33 @@ describe("Storage fetch wait for Connected state", () => {
 			documentServiceFactory: trackingFactory,
 		};
 
-		const loadedContainer = await loadExistingContainer({
+		// Start loading - this will block on the fetch
+		const loadPromise = loadExistingContainer({
 			...loadProps,
 			request: { url: documentLoadUrl },
 		});
+
+		// Wait for fetch to start (it will block on fetchDeferred)
+		await fetchStartedDeferred.promise;
+
+		// Fetch started but should not be completed while blocked
+		assert.strictEqual(
+			storageFetchCompleted,
+			false,
+			"Storage fetch should not have completed yet",
+		);
+
+		// Now resolve the deferred to allow the fetch to complete
+		fetchDeferred.resolve();
+
+		// Wait for the container to finish loading
+		const loadedContainer = await loadPromise;
 		containerRef.current = loadedContainer;
 
 		// Wait for container to be connected
 		await waitForContainerConnection(loadedContainer);
 
-		// Verify the timing: storage fetch should have completed before Connected state
-		assert.strictEqual(storageFetchStarted, true, "Storage fetch should have started");
+		// Verify the container is connected and fetch completed
 		assert.strictEqual(storageFetchCompleted, true, "Storage fetch should have completed");
 		assert.strictEqual(
 			loadedContainer.connectionState,
@@ -252,7 +293,7 @@ describe("Storage fetch wait for Connected state", () => {
 		await deltaConnectionServer.webSocketServer.close();
 	});
 
-	it("Connected state is delayed until storage fetch completes with delayed storage", async () => {
+	it("Connected state is delayed until storage fetch completes", async () => {
 		// Setup
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const baseFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
@@ -272,22 +313,20 @@ describe("Storage fetch wait for Connected state", () => {
 		await waitForContainerConnection(initialContainer);
 		initialContainer.close();
 
-		// Track exact timing of state transitions
+		// Use deferred promises to control test flow
+		const fetchDeferred = createDeferred<void>();
+		const fetchStartedDeferred = createDeferred<void>();
 		const events: string[] = [];
-		let resolveStorageFetch: (() => void) | undefined;
-		const storageFetchPromise = new Promise<void>((resolve) => {
-			resolveStorageFetch = resolve;
-		});
 
 		const trackingFactory = createStorageTrackingFactory(deltaConnectionServer, {
 			onFetchMessagesStart: () => {
 				events.push("fetch_start");
+				fetchStartedDeferred.resolve();
 			},
 			onFetchMessagesEnd: () => {
 				events.push("fetch_end");
-				resolveStorageFetch?.();
 			},
-			delayFetchMs: 100, // Significant delay
+			blockUntilResolved: fetchDeferred.promise,
 		});
 
 		const loadProps: ILoaderProps = {
@@ -295,23 +334,37 @@ describe("Storage fetch wait for Connected state", () => {
 			documentServiceFactory: trackingFactory,
 		};
 
-		const loadedContainer = await loadExistingContainer({
+		// Start loading - this will block on the fetch
+		const loadPromise = loadExistingContainer({
 			...loadProps,
 			request: { url: documentLoadUrl },
 		});
 
-		// Check if already connected (event already fired during load)
+		// Wait for fetch to start (it will block on fetchDeferred)
+		await fetchStartedDeferred.promise;
+
+		// Verify fetch started but container is not connected yet
+		assert.ok(events.includes("fetch_start"), "fetch_start should have occurred");
+		assert.ok(!events.includes("fetch_end"), "fetch_end should not have occurred yet");
+		assert.ok(!events.includes("connected"), "connected should not have occurred yet");
+
+		// Now resolve the deferred to allow the fetch to complete
+		fetchDeferred.resolve();
+
+		// Wait for container to finish loading
+		const loadedContainer = await loadPromise;
+
+		// Track connection event
+		loadedContainer.on("connected", () => {
+			events.push("connected");
+		});
+		// Check if already connected
 		if (loadedContainer.connectionState === ConnectionState.Connected) {
 			events.push("connected");
-		} else {
-			// Track connection state changes if not yet connected
-			loadedContainer.on("connected", () => {
-				events.push("connected");
-			});
 		}
 
-		// Wait for both storage fetch and connection
-		await Promise.all([storageFetchPromise, waitForContainerConnection(loadedContainer)]);
+		// Wait for connection
+		await waitForContainerConnection(loadedContainer);
 
 		// Verify order: fetch should complete before or at the same time as connected
 		const fetchEndIndex = events.indexOf("fetch_end");
