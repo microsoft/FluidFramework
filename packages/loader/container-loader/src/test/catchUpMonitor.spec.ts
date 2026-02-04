@@ -39,10 +39,7 @@ class MockDeltaManagerForCatchingUp
 	}
 
 	static create(
-		sequenceNumbers: {
-			lastSequenceNumber?: number;
-			lastKnownSeqNumber?: number;
-		} = {},
+		sequenceNumbers: { lastSequenceNumber?: number; lastKnownSeqNumber?: number } = {},
 	): MockDeltaManagerForCatchingUp & IDeltaManager<unknown, unknown> {
 		return new MockDeltaManagerForCatchingUp(
 			sequenceNumbers.lastSequenceNumber,

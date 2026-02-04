@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+export {
+	FluidReleaseStateHandler,
+	type FluidReleaseStateHandlerData,
+} from "./fluidReleaseStateHandler.js";
 export { InitFailedStateHandler } from "./initFailedStateHandler.js";
 export { BaseStateHandler, type StateHandler } from "./stateHandlers.js";
-export {
-	type FluidReleaseStateHandlerData,
-	FluidReleaseStateHandler,
-} from "./fluidReleaseStateHandler.js";

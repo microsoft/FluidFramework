@@ -8,16 +8,16 @@ import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicio
 import {
 	createTinyliciousCreateNewRequest,
 	InsecureTinyliciousTokenProvider,
-	InsecureTinyliciousUrlResolver,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/tinylicious-driver/internal";
+import { createInsecureTinyliciousTestUrlResolver } from "@fluidframework/tinylicious-driver/test-utils";
 
 import type { ExampleDriver } from "./interfaces.js";
 
 export const createTinyliciousDriver = async (): Promise<ExampleDriver> => {
 	const tokenProvider = new InsecureTinyliciousTokenProvider();
 	return {
-		urlResolver: new InsecureTinyliciousUrlResolver(),
+		urlResolver: createInsecureTinyliciousTestUrlResolver(),
 		documentServiceFactory: new RouterliciousDocumentServiceFactory(tokenProvider),
 		createCreateNewRequest: (id: string) => createTinyliciousCreateNewRequest(),
 		createLoadExistingRequest: async (id: string) => {

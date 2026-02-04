@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/sequence-deprecated";
-export const pkgVersion = "2.82.0";
+export const pkgVersion = "2.83.0";
