@@ -18,7 +18,7 @@ set -eu -o pipefail
 
 DEPLOY_DIR="$OUTPUT_DIR/deploy"
 UTILS_DIR="$SOURCE_DIR/tools/pipelines/build-performance-observability-utils"
-STANDALONE_FILE="$OUTPUT_DIR/dashboard-standalone.html"
+STANDALONE_FILE="$OUTPUT_DIR/dashboard.html"
 
 echo "=========================================="
 echo "Generating standalone HTML dashboard"
