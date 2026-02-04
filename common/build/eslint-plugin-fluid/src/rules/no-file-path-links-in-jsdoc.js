@@ -22,7 +22,7 @@
  * @typedef {{
  * 	startIndex: number;
  * 	endIndex: number;
- * }} FilePathLinkMatch
+ * }} TextRange
  */
 
 const { fail } = require("node:assert");
@@ -42,44 +42,44 @@ function isFilePath(linkTarget) {
 }
 
 /**
- * Gets the text range for an InlineTag node (which represents a {@link} tag).
- * @param {DocInlineTag} inlineTagNode - The inline tag node.
- * @returns {{start: number, end: number} | undefined} The text range, or undefined if not available.
+ * Recursively collects all Excerpt ranges from a DocNode tree.
+ * @remarks Used to determine the full text range of an InlineTag node.
+ * @param {DocNode} node - The node to collect ranges from.
+ * @param {number} startIndex - The current minimum start position.
+ * @param {number} endIndex - The current maximum end position.
+ * @returns {TextRange} The updated start/end positions.
  */
-function getInlineTagRange(inlineTagNode) {
-	// Recursively collect all text ranges from Excerpt nodes within this InlineTag
-	let minStart = Infinity;
-	let maxEnd = -Infinity;
-
-	/**
-	 * Recursively walk the tree to find all Excerpt nodes
-	 * @param {DocNode} node
-	 */
-	function collectExcerptRanges(node) {
-		if (node.kind === DocNodeKind.Excerpt) {
-			const excerpt = /** @type {DocExcerpt} */ (node);
-			if (excerpt.content) {
-				try {
-					const range = excerpt.content.getContainingTextRange();
-					minStart = Math.min(minStart, range.pos);
-					maxEnd = Math.max(maxEnd, range.end);
-				} catch (e) {
-					// Ignore excerpts that don't have valid ranges
-				}
-			}
-		}
-
-		// Recurse into children
-		const children = node.getChildNodes();
-		for (const child of children) {
-			collectExcerptRanges(child);
+function collectExcerptRanges(node, startIndex, endIndex) {
+	if (node.kind === DocNodeKind.Excerpt) {
+		const excerpt = /** @type {DocExcerpt} */ (node);
+		if (excerpt.content) {
+			const range = excerpt.content.getContainingTextRange();
+			startIndex = Math.min(startIndex, range.pos);
+			endIndex = Math.max(endIndex, range.end);
 		}
 	}
 
-	collectExcerptRanges(inlineTagNode);
+	// Recurse into children
+	const children = node.getChildNodes();
+	for (const child of children) {
+		const result = collectExcerptRanges(child, startIndex, endIndex);
+		startIndex = result.startIndex;
+		endIndex = result.endIndex;
+	}
 
-	if (minStart !== Infinity && maxEnd !== -Infinity) {
-		return { start: minStart, end: maxEnd };
+	return { startIndex, endIndex };
+}
+
+/**
+ * Gets the text range for an InlineTag node (which represents a {@link} tag).
+ * @param {DocInlineTag} inlineTagNode - The inline tag node.
+ * @returns {TextRange | undefined} The text range, or `undefined` if the tag has no content.
+ */
+function getInlineTagRange(inlineTagNode) {
+	const { startIndex, endIndex } = collectExcerptRanges(inlineTagNode, Infinity, -Infinity);
+
+	if (startIndex !== Infinity && endIndex !== -Infinity) {
+		return { startIndex, endIndex };
 	}
 
 	return undefined;
@@ -88,44 +88,35 @@ function getInlineTagRange(inlineTagNode) {
 /**
  * Finds instances of file path links within the provided DocNode tree.
  * @param {DocNode} node - The doc node to search.
- * @returns {FilePathLinkMatch[]} The list of found file path links.
+ * @returns {TextRange[]} The list of found file path links.
  */
 function findFilePathLinks(node) {
-	/** @type {FilePathLinkMatch[]} */
+	/** @type {TextRange[]} */
 	const links = [];
 
-	/**
-	 * Recursively walk the node tree
-	 * @param {DocNode} currentNode
-	 */
-	function walk(currentNode) {
-		// Check if this is an InlineTag (which represents a {@link} tag)
-		if (currentNode.kind === DocNodeKind.InlineTag) {
-			/** @type {DocInlineTag} */
-			const inlineTag = /** @type {any} */ (currentNode);
+	// Check if this is an InlineTag (which represents a {@link} tag)
+	if (node.kind === DocNodeKind.InlineTag) {
+		const inlineTag = /** @type {DocInlineTag} */ (node);
 
-			// Check if this is a @link tag with a file path target
-			if (inlineTag.tagName === "@link" && inlineTag.tagContent && isFilePath(inlineTag.tagContent)) {
-				const range = getInlineTagRange(inlineTag);
-				if (range) {
-					links.push({
-						startIndex: range.start,
-						endIndex: range.end,
-					});
-				}
+		// Check if this is a @link tag with a file path target
+		if (inlineTag.tagName === "@link" && inlineTag.tagContent.length > 0 && isFilePath(inlineTag.tagContent)) {
+			// Get the text range for the entire InlineTag.
+			// This is the range we will report to eslint.
+			const range = getInlineTagRange(inlineTag);
+			if (range) {
+				links.push(range);
 			}
-			// Don't recurse into InlineTag children - getInlineTagRange already walked them
-			return;
 		}
-
-		// Recurse into child nodes
-		const childNodes = currentNode.getChildNodes();
-		for (const childNode of childNodes) {
-			walk(childNode);
-		}
+		// Don't recurse into InlineTag children - getInlineTagRange already walked them
+		return links;
 	}
 
-	walk(node);
+	// Recurse into child nodes
+	const childNodes = node.getChildNodes();
+	for (const childNode of childNodes) {
+		links.push(...findFilePathLinks(childNode));
+	}
+
 	return links;
 }
 
