@@ -149,7 +149,7 @@ export function importCompatibilitySchemaSnapshot(
 }
 
 /**
- * The file system methods required by {@link checkSchemaCompatibilitySnapshots}.
+ * The file system methods required by {@link snapshotSchemaCompatibility}.
  * @remarks
  * Implemented by both Node.js `fs` and `path` modules, but other implementations can be provided as needed.
  *
@@ -230,11 +230,11 @@ export interface CombinedSchemaCompatibilityStatus {
 }
 
 /**
- * The options for {@link checkSchemaCompatibilitySnapshots}.
+ * The options for {@link snapshotSchemaCompatibility}.
  * @input
  * @alpha
  */
-export interface SchemaCompatibilitySnapshotsOptions {
+export interface SnapshotSchemaCompatibilityOptions {
 	/**
 	 * Directory where historical schema snapshots are stored.
 	 * @remarks
@@ -245,9 +245,9 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 *
 	 * This directory will be created if it does not already exist.
 	 * All ".json" files in this directory will be treated as schema snapshots.
-	 * It is recommended to use a dedicated directory for each {@link checkSchemaCompatibilitySnapshots} powered test.
+	 * It is recommended to use a dedicated directory for each {@link snapshotSchemaCompatibility} powered test.
 	 *
-	 * This can use any path syntax supported by the provided {@link SchemaCompatibilitySnapshotsOptions.fileSystem}.
+	 * This can use any path syntax supported by the provided {@link SnapshotSchemaCompatibilityOptions.fileSystem}.
 	 */
 	readonly snapshotDirectory: string;
 	/**
@@ -261,7 +261,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	/**
 	 * The current application or library version.
 	 * @remarks
-	 * Can use any format supported by {@link SchemaCompatibilitySnapshotsOptions.versionComparer}.
+	 * Can use any format supported by {@link SnapshotSchemaCompatibilityOptions.versionComparer}.
 	 * Only compared against the version from previous snapshots (taken from this version when they were created by setting `mode` to "update") and the `minVersionForCollaboration`.
 	 *
 	 * Typically `minVersionForCollaboration` should be set to the oldest version currently in use, so it's helpful to use a version which can be easily measured to tell if clients are still using it.
@@ -283,7 +283,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	/**
 	 * The minimum version that the current version is expected to be able to collaborate with.
 	 * @remarks
-	 * Can use any format supported by {@link SchemaCompatibilitySnapshotsOptions.versionComparer}.
+	 * Can use any format supported by {@link SnapshotSchemaCompatibilityOptions.versionComparer}.
 	 *
 	 * This defines a range of versions whose schema must be forwards compatible with trees using the current schema:
 	 * Any schema from snapshots with a version greater than or equal to this must be able to view documents created with the current schema.
@@ -293,11 +293,11 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 * Typically applications will attempt to manage their deployment/update schedule such that all versions concurrently deployed can
 	 * collaborate to avoid users losing access to documents when other users upgrade the schema.
 	 * Such applications can set this to the oldest version currently deployed,
-	 * then rely on {@link checkSchemaCompatibilitySnapshots} to verify that no schema changes are made which would break collaboration with that (or newer) versions.
+	 * then rely on {@link snapshotSchemaCompatibility} to verify that no schema changes are made which would break collaboration with that (or newer) versions.
 	 *
 	 * This is the same approach used by {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
-	 * and this corresponds to whatever versioning scheme is used with {@link SchemaCompatibilitySnapshotsOptions.version}.
+	 * and this corresponds to whatever versioning scheme is used with {@link SnapshotSchemaCompatibilityOptions.version}.
 	 */
 	readonly minVersionForCollaboration: string;
 
@@ -323,16 +323,16 @@ export interface SchemaCompatibilitySnapshotsOptions {
 	 * The mode of operation, either "test" or "update".
 	 * @remarks
 	 * In "update" mode, a new snapshot is created if the current schema differs from the latest existing snapshot.
-	 * Note: {@link SchemaCompatibilitySnapshotsOptions.snapshotUnchangedVersions} impacts this behavior.
+	 * Note: {@link SnapshotSchemaCompatibilityOptions.snapshotUnchangedVersions} impacts this behavior.
 	 *
-	 * In "test" mode, an error is thrown if running in "update" mode would have made any changes.
+	 * In "assert" mode, an error is thrown if running in "update" mode would have made any changes.
 	 *
 	 * Both modes will throw errors if any compatibility issues are detected (but after updating snapshots in "update" mode so the diff can be used to help debug).
 	 *
-	 * It is recommended that "test" mode be used in automated tests to verify schema compatibility,
+	 * It is recommended that "assert" mode be used in automated tests to verify schema compatibility,
 	 * and "update" mode only be used manually to update snapshots when making schema changes (or version changes if `snapshotUnchangedVersions` is true).
 	 */
-	readonly mode: "test" | "update";
+	readonly mode: "assert" | "update";
 }
 
 /**
@@ -363,8 +363,8 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * Since there is content in the snapshots which cannot be regenerated, tools which assume all snapshotted content can be regenerated cannot be used here.
  * This means that tools like Jest's built in snapshot testing are not suitable for this purpose.
  * These snapshots behave partly like test data, and partly like snapshots.
- * Typically the easiest way to manage this is to place {@link SchemaCompatibilitySnapshotsOptions.snapshotDirectory} inside a directory appropriate for test data,
- * and use node to provide the filesystem access via {@link SchemaCompatibilitySnapshotsOptions.fileSystem}.
+ * Typically the easiest way to manage this is to place {@link SnapshotSchemaCompatibilityOptions.snapshotDirectory} inside a directory appropriate for test data,
+ * and use node to provide the filesystem access via {@link SnapshotSchemaCompatibilityOptions.fileSystem}.
  *
  * For now, locating what change broke compatibility is likely best discovered by making small schema changes one at a time and updating the snapshot and reviewing the diffs.
  * Details for what kinds of changes are breaking and in which ways can be found in the documentation for {@link TreeView.compatibility} and
@@ -384,7 +384,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * @example Mocha test which validates the current `config` can collaborate with all historical version back to 2.0.0, and load and update any versions older than that.
  * ```typescript
  * it("schema compatibility", () => {
- * 	checkSchemaCompatibilitySnapshots({
+ * 	snapshotSchemaCompatibility({
  * 		version: pkgVersion,
  * 		schema: config,
  * 		fileSystem: { ...fs, ...path },
@@ -399,7 +399,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * import fs from "node:fs";
  * import path from "node:path";
  *
- * import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/alpha";
+ * import { snapshotSchemaCompatibility } from "@fluidframework/tree/alpha";
  *
  * // The TreeViewConfiguration the application uses, which contains the application's schema.
  * import { treeViewConfiguration } from "./schema.js";
@@ -418,7 +418,7 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * 			import.meta.dirname,
  * 			"../../../src/test/schema-snapshots",
  * 		);
- * 		checkSchemaCompatibilitySnapshots({
+ * 		snapshotSchemaCompatibility({
  * 			snapshotDirectory,
  * 			fileSystem: { ...fs, ...path },
  * 			version: packageVersion,
@@ -439,8 +439,8 @@ export interface SchemaCompatibilitySnapshotsOptions {
  * See snapshotCompatibilityChecker.example.mts for the large example included above.
  * @alpha
  */
-export function checkSchemaCompatibilitySnapshots(
-	options: SchemaCompatibilitySnapshotsOptions,
+export function snapshotSchemaCompatibility(
+	options: SnapshotSchemaCompatibilityOptions,
 ): void {
 	const checker = new SnapshotCompatibilityChecker(
 		options.snapshotDirectory,
@@ -475,7 +475,7 @@ export function checkSchemaCompatibilitySnapshots(
 		);
 	}
 
-	if (mode !== "test" && mode !== "update") {
+	if (mode !== "assert" && mode !== "update") {
 		throw new UsageError(
 			`Invalid mode: ${JSON.stringify(mode)}. Must be either "test" or "update".`,
 		);
@@ -487,9 +487,9 @@ export function checkSchemaCompatibilitySnapshots(
 	const compatibilityErrors: string[] = [];
 
 	function updatableError(message: string): void {
-		assert(mode === "test", 0xcc6 /* updatableError should only be called in test mode */);
+		assert(mode === "assert", 0xcc6 /* updatableError should only be called in assert mode */);
 		compatibilityErrors.push(
-			`${message} If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.`,
+			`${message} If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update the snapshot.`,
 		);
 	}
 

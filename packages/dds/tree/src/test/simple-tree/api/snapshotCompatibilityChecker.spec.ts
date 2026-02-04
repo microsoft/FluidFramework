@@ -19,7 +19,7 @@ import {
 	importCompatibilitySchemaSnapshot,
 	exportCompatibilitySchemaSnapshot,
 	type SnapshotFileSystem,
-	checkSchemaCompatibilitySnapshots,
+	snapshotSchemaCompatibility,
 	getCompatibility,
 	// Allow importing file which is being tested.
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -43,7 +43,7 @@ const nodeFileSystem = {
 
 describe("snapshotCompatibilityChecker", () => {
 	it("parse and snapshot can roundtrip schema", () => {
-		const factory = new SchemaFactory("test");
+		const factory = new SchemaFactory("assert");
 		const Schema = factory.optional(factory.string, {});
 
 		const view = new TreeViewConfiguration({ schema: Schema });
@@ -60,7 +60,7 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	function checkCompatibilityDetectsUpgradeableSchemas(roundtripSnapshot: boolean): void {
-		const factory = new SchemaFactory("test");
+		const factory = new SchemaFactory("assert");
 
 		// The past view schema, for the purposes of illustration. This wouldn't normally appear as a concrete schema in the test
 		// checking compatibility, but rather would be loaded from a snapshot.
@@ -115,7 +115,7 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	it("checkCompatibility: allowUnknownOptionalFields", () => {
-		const factory = new SchemaFactoryBeta("test");
+		const factory = new SchemaFactoryBeta("assert");
 
 		// Point2D is constructed with allowUnknownOptionalFields, so it can read Point3D trees
 		// even though it does not know about the optional field `z`.
@@ -152,7 +152,7 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	it("checkCompatibility: staged schema", () => {
-		const factory = new SchemaFactoryBeta("test");
+		const factory = new SchemaFactoryBeta("assert");
 		const oldSchema = factory.optional(
 			factory.types([numberSchema, factory.staged(stringSchema)]),
 		);
@@ -181,9 +181,9 @@ describe("snapshotCompatibilityChecker", () => {
 		allowUnused<requireAssignableTo<typeof nodeFileSystem, SnapshotFileSystem>>();
 	});
 
-	describe("checkSchemaCompatibilitySnapshots", () => {
+	describe("snapshotSchemaCompatibility", () => {
 		describe("example from docs", () => {
-			const factory = new SchemaFactory("test");
+			const factory = new SchemaFactory("assert");
 
 			class Point extends factory.object("Point", {
 				x: factory.number,
@@ -194,14 +194,14 @@ describe("snapshotCompatibilityChecker", () => {
 			const config = new TreeViewConfiguration({ schema: Point });
 			const snapshotDirectory = path.join(testSrcPath, "schemaSnapshots", "point");
 
-			// This test is included in the docs for checkSchemaCompatibilitySnapshots, and should be kept in sync with it.
+			// This test is included in the docs for snapshotSchemaCompatibility, and should be kept in sync with it.
 			it("schema compatibility", () => {
-				checkSchemaCompatibilitySnapshots({
+				snapshotSchemaCompatibility({
 					version: pkgVersion,
 					schema: config,
 					fileSystem: { ...fs, ...path },
 					minVersionForCollaboration: "2.0.0",
-					mode: process.argv.includes("--snapshot") ? "update" : "test",
+					mode: process.argv.includes("--snapshot") ? "update" : "assert",
 					snapshotDirectory,
 				});
 			});
@@ -210,7 +210,7 @@ describe("snapshotCompatibilityChecker", () => {
 		it("write current view schema snapshot", () => {
 			const snapshotDirectory = path.join(testSrcPath, "schemaSnapshots", "point");
 
-			const factory = new SchemaFactory("test");
+			const factory = new SchemaFactory("assert");
 
 			class Point2D extends factory.object("Point", {
 				x: factory.number,
@@ -225,16 +225,16 @@ describe("snapshotCompatibilityChecker", () => {
 
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: Point2D }), // Using the schema from v1 as v2, so should fail
 						fileSystem: nodeFileSystem,
 						minVersionForCollaboration: "1.0.0",
-						mode: "test",
+						mode: "assert",
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
+ - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update the snapshot.
  - Current version "2.0.0" cannot upgrade documents from "2.0.0".
  - Current version "2.0.0" expected to be equivalent to its snapshot.
 Snapshots in: "${testSrcPath}/schemaSnapshots/point".
@@ -246,16 +246,16 @@ Snapshots exist for versions: [
 
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: [] }), // Schema invalid for all versions, so should fail
 						fileSystem: nodeFileSystem,
 						minVersionForCollaboration: "1.0.0",
-						mode: "test",
+						mode: "assert",
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
+ - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update the snapshot.
  - Current version "2.0.0" cannot upgrade documents from "1.0.0".
  - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being "1.0.0".
  - Current version "2.0.0" cannot upgrade documents from "2.0.0".
@@ -269,12 +269,12 @@ Snapshots exist for versions: [
 
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: Point3D }),
 						fileSystem: nodeFileSystem,
 						minVersionForCollaboration: "1.0.0", // Due to not using allowUnknownOptionalFields, these cannot collaborate, so should fail
-						mode: "test",
+						mode: "assert",
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
@@ -287,22 +287,22 @@ Snapshots exist for versions: [
 			);
 
 			// Avoids all the above tested issues, and matches saved snapshot, so should pass
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: Point3D }),
 				fileSystem: nodeFileSystem,
 				minVersionForCollaboration: "2.0.0",
-				mode: "test",
+				mode: "assert",
 				snapshotDirectory,
 			});
 		});
 
-		// Tests the various operations a user of the checkSchemaCompatibilitySnapshots function might perform across various versions of their codebase.
+		// Tests the various operations a user of the snapshotSchemaCompatibility function might perform across various versions of their codebase.
 		it("workflow over time", () => {
 			const snapshotDirectory = "dir";
 			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
 
-			const factory = new SchemaFactoryBeta("test");
+			const factory = new SchemaFactoryBeta("assert");
 
 			// For this scenario the application will evolve through three versions of a Point schema across 3 versions of the app.
 
@@ -326,20 +326,20 @@ Snapshots exist for versions: [
 				z: factory.optional(factory.number),
 			}) {}
 
-			// The first time they use checkSchemaCompatibilitySnapshots, no snapshot will exist, and it must error suggesting a snapshot be created using update.
+			// The first time they use snapshotSchemaCompatibility, no snapshot will exist, and it must error suggesting a snapshot be created using update.
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "1.0.0",
 						schema: new TreeViewConfiguration({ schema: Point1 }),
 						fileSystem,
 						minVersionForCollaboration: "1.0.0",
-						mode: "test",
+						mode: "assert",
 						snapshotDirectory,
 					}),
 				validateError(
 					`Schema compatibility check failed:
- - No snapshots found. If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
+ - No snapshots found. If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update the snapshot.
  - No snapshot found with version less than or equal to minVersionForCollaboration "1.0.0".
 Snapshots in: "dir".
 Snapshots exist for versions: [].`,
@@ -350,7 +350,7 @@ Snapshots exist for versions: [].`,
 			assert.deepEqual([...snapshots.keys()], []);
 
 			// Update, as directed by the error message, to create the initial snapshot.
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "1.0.0",
 				schema: new TreeViewConfiguration({ schema: Point1 }),
 				fileSystem,
@@ -364,28 +364,28 @@ Snapshots exist for versions: [].`,
 
 			// Now that the snapshot exists, test should pass.
 			// This would be the first state the app author would commit, and would be released as 1.0.0.
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "1.0.0",
 				schema: new TreeViewConfiguration({ schema: Point1 }),
 				fileSystem,
 				minVersionForCollaboration: "1.0.0",
-				mode: "test",
+				mode: "assert",
 				snapshotDirectory,
 			});
 
 			// If a developer accidentally changed the schema leading up to the 1.0.0 release, the test catches it like this:
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "1.0.0",
 						schema: new TreeViewConfiguration({ schema: Point2 }),
 						fileSystem,
 						minVersionForCollaboration: "1.0.0",
-						mode: "test",
+						mode: "assert",
 						snapshotDirectory,
 					}),
 				validateError(`Schema compatibility check failed:
- - Snapshot for current version "1.0.0" is out of date: schema has changed since latest existing snapshot version "1.0.0". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
+ - Snapshot for current version "1.0.0" is out of date: schema has changed since latest existing snapshot version "1.0.0". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update the snapshot.
 Snapshots in: "dir".
 Snapshots exist for versions: [
   "1.0.0"
@@ -393,7 +393,7 @@ Snapshots exist for versions: [
 			);
 
 			// If the change was desired, a new snapshot can be taken to include it in 2.0.0:
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: Point2 }),
 				fileSystem,
@@ -404,12 +404,12 @@ Snapshots exist for versions: [
 
 			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json"]);
 
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: Point2 }),
 				fileSystem,
 				minVersionForCollaboration: "1.0.0",
-				mode: "test",
+				mode: "assert",
 				snapshotDirectory,
 			});
 
@@ -417,7 +417,7 @@ Snapshots exist for versions: [
 			// In this case the developer did not realize it is a breaking change, and so the test notifies them of the issue:
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "3.0.0",
 						schema: new TreeViewConfiguration({ schema: Point3 }),
 						fileSystem,
@@ -439,39 +439,39 @@ Snapshots exist for versions: [
 
 			// In this case the developer is ok with dropping support for collaboration with 1.0.0,
 			// so they update minVersionForCollaboration to 2.0.0 acknowledging the break.
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "3.0.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2.0.0",
-				mode: "test",
+				mode: "assert",
 				snapshotDirectory,
 			});
 
 			// If they go to publish patch or minor versions, the snapshots should not need updating (since  snapshotUnchangedVersions is false) as confirmed by this test:
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2.0.0",
-				mode: "test",
+				mode: "assert",
 				snapshotDirectory,
 			});
 
 			// If the app developers specifically want to snapshot every version's schema, they can require that with `snapshotUnchangedVersions: true` as validated here:
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "3.1.0",
 						schema: new TreeViewConfiguration({ schema: Point3 }),
 						fileSystem,
 						minVersionForCollaboration: "2.0.0",
-						mode: "test",
+						mode: "assert",
 						snapshotDirectory,
 						snapshotUnchangedVersions: true,
 					}),
 				validateError(`Schema compatibility check failed:
- - No snapshot found for version "3.1.0": snapshotUnchangedVersions is true, so every version must be snapshotted. If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
+ - No snapshot found for version "3.1.0": snapshotUnchangedVersions is true, so every version must be snapshotted. If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update the snapshot.
 Snapshots in: "dir".
 Snapshots exist for versions: [
   "1.0.0",
@@ -481,7 +481,7 @@ Snapshots exist for versions: [
 			);
 
 			// Here we confirm that even when running update, no new snapshot is taken if the schema is unchanged and snapshotUnchangedVersions is false.
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
@@ -493,7 +493,7 @@ Snapshots exist for versions: [
 			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json", "3.0.0.json"]);
 
 			// But if snapshotUnchangedVersions is true, a new snapshot is taken even though the schema is unchanged.
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
@@ -508,13 +508,13 @@ Snapshots exist for versions: [
 				["1.0.0.json", "2.0.0.json", "3.0.0.json", "3.1.0.json"],
 			);
 
-			// Confirm that tests pass with "test" mode and snapshotUnchangedVersions true.
-			checkSchemaCompatibilitySnapshots({
+			// Confirm that tests pass with "assert" mode and snapshotUnchangedVersions true.
+			snapshotSchemaCompatibility({
 				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2.0.0",
-				mode: "test",
+				mode: "assert",
 				snapshotDirectory,
 				snapshotUnchangedVersions: true,
 			});
@@ -523,12 +523,12 @@ Snapshots exist for versions: [
 			// since in that mode it is assumed every released version has a snapshot.
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "3.1.0",
 						schema: new TreeViewConfiguration({ schema: Point3 }),
 						fileSystem,
 						minVersionForCollaboration: "2.1.0",
-						mode: "test",
+						mode: "assert",
 						snapshotDirectory,
 						snapshotUnchangedVersions: true,
 					}),
@@ -544,12 +544,12 @@ Snapshots exist for versions: [
 			);
 
 			// Final sanity check that everything is left in a good state.
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2.1.0",
-				mode: "test",
+				mode: "assert",
 				snapshotDirectory,
 			});
 		});
@@ -560,12 +560,12 @@ Snapshots exist for versions: [
 
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "3.1.0x",
 						schema: new TreeViewConfiguration({ schema: [] }),
 						fileSystem,
 						minVersionForCollaboration: "2.1.0",
-						mode: "test",
+						mode: "assert",
 						snapshotDirectory,
 					}),
 				validateUsageError(`Invalid version: "3.1.0x". Must be a valid semver version.`),
@@ -573,12 +573,12 @@ Snapshots exist for versions: [
 
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "3.1.0",
 						schema: new TreeViewConfiguration({ schema: [] }),
 						fileSystem,
 						minVersionForCollaboration: "2.1",
-						mode: "test",
+						mode: "assert",
 						snapshotDirectory,
 					}),
 				validateUsageError(
@@ -588,12 +588,12 @@ Snapshots exist for versions: [
 
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "3.1.0",
 						schema: new TreeViewConfiguration({ schema: [] }),
 						fileSystem,
 						minVersionForCollaboration: "3.1.1",
-						mode: "test",
+						mode: "assert",
 						snapshotDirectory,
 					}),
 				validateUsageError(
@@ -603,12 +603,12 @@ Snapshots exist for versions: [
 
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "1.0.0-beta",
 						schema: new TreeViewConfiguration({ schema: [] }),
 						fileSystem,
 						minVersionForCollaboration: "1.0.0",
-						mode: "test",
+						mode: "assert",
 						snapshotDirectory,
 					}),
 				validateUsageError(
@@ -621,7 +621,7 @@ Snapshots exist for versions: [
 			const snapshotDirectory = "dir";
 			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
 
-			const factory = new SchemaFactoryBeta("test");
+			const factory = new SchemaFactoryBeta("assert");
 
 			const versionComparer = (a: string, b: string): number => {
 				// Simple numeric comparer for versions like "1", "2.5", "3" etc.
@@ -648,7 +648,7 @@ Snapshots exist for versions: [
 				z: factory.optional(factory.number),
 			}) {}
 
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "1",
 				schema: new TreeViewConfiguration({ schema: Point1 }),
 				fileSystem,
@@ -658,7 +658,7 @@ Snapshots exist for versions: [
 				versionComparer,
 			});
 
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "1.5",
 				schema: new TreeViewConfiguration({ schema: Point1 }),
 				fileSystem,
@@ -668,7 +668,7 @@ Snapshots exist for versions: [
 				versionComparer,
 			});
 
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "2",
 				schema: new TreeViewConfiguration({ schema: Point2 }),
 				fileSystem,
@@ -680,18 +680,18 @@ Snapshots exist for versions: [
 
 			assert.throws(
 				() =>
-					checkSchemaCompatibilitySnapshots({
+					snapshotSchemaCompatibility({
 						version: "3",
 						schema: new TreeViewConfiguration({ schema: Point3 }),
 						fileSystem,
 						minVersionForCollaboration: "1",
-						mode: "test",
+						mode: "assert",
 						snapshotDirectory,
 						versionComparer,
 					}),
 				validateError(
 					`Schema compatibility check failed:
- - Snapshot for current version "3" is out of date: schema has changed since latest existing snapshot version "2". If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.
+ - Snapshot for current version "3" is out of date: schema has changed since latest existing snapshot version "2". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update the snapshot.
  - Historical version "1" cannot view documents from "3": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being "1".
 Snapshots in: "dir".
 Snapshots exist for versions: [
@@ -701,7 +701,7 @@ Snapshots exist for versions: [
 				),
 			);
 
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "3",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
@@ -711,12 +711,12 @@ Snapshots exist for versions: [
 				versionComparer,
 			});
 
-			checkSchemaCompatibilitySnapshots({
+			snapshotSchemaCompatibility({
 				version: "4",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2",
-				mode: "test",
+				mode: "assert",
 				snapshotDirectory,
 				versionComparer,
 			});
