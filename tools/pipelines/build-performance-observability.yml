@@ -250,7 +250,7 @@ extends:
             targetType: 'inline'
             script: |
               export MODE="$(runMode)"
-              export INPUT_DIR="$(Build.ArtifactStagingDirectory)/deploy"
+              export INPUT_DIR="$(Build.ArtifactStagingDirectory)/deploy/data"
               export AVG_DURATION_THRESHOLD="$(avgDurationThreshold)"
               export CHANGE_PERIOD_THRESHOLD="$(changePeriodThreshold)"
               export FORCE_FAILURE="${{ parameters.forceAlertFailure }}"
