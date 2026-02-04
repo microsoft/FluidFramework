@@ -162,7 +162,7 @@ extends:
 
         - task: Bash@3
           displayName: Prepare deployment package
-          condition: and(eq(variables['detect.shouldRun'], 'true'), eq('${{ parameters.publishToASWA }}', 'true'))
+          condition: eq(variables['detect.shouldRun'], 'true')
           env:
             ASWA_HOSTNAME: $(ASWA_HOSTNAME)
             MODE: $(detect.runMode)
@@ -188,7 +188,7 @@ extends:
           outputs:
           - output: pipelineArtifact
             displayName: Publish dashboard artifact
-            condition: and(eq(variables['detect.shouldRun'], 'true'), eq('${{ parameters.publishToASWA }}', 'true'))
+            condition: eq(variables['detect.shouldRun'], 'true')
             targetPath: $(Build.ArtifactStagingDirectory)/deploy
             artifactName: deploy
             publishLocation: pipeline
@@ -226,7 +226,7 @@ extends:
     - stage: alert_on_thresholds
       displayName: Check Thresholds
       dependsOn: collect_and_deploy_metrics
-      condition: and(succeeded('collect_and_deploy_metrics'), eq('${{ parameters.publishToASWA }}', 'true'))
+      condition: succeeded('collect_and_deploy_metrics')
       jobs:
       - job: check_thresholds
         displayName: Check Performance Thresholds
