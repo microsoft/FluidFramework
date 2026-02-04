@@ -182,7 +182,7 @@ describe("Forest Summarizer benchmarks", () => {
 			// Initial (full) summary size
 			benchmarkCustom({
 				type: benchmarkType,
-				title: `Initial summary size with ${itemCount} items`,
+				title: `Non-incremental summary size with ${itemCount} items`,
 				run: async (reporter) => {
 					const { forestSummarizer } = setupForestForIncrementalSummarization(
 						createInitialBoard(itemCount),
