@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
 import { FluidAppOdspUrlResolver } from "@fluidframework/odsp-urlresolver/internal";
-
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspSampleCache } from "./odspPersistantCache.js";
