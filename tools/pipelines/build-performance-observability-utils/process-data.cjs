@@ -105,6 +105,27 @@ function calcSummary(builds) {
 	};
 }
 
+// Calculate percentage change over a period (comparing most recent day to N days ago)
+function calcPeriodChange(durationTrend, days) {
+	if (!durationTrend || durationTrend.length === 0) return 0;
+
+	// durationTrend is sorted by date ascending, so reverse to get most recent first
+	const sorted = [...durationTrend].sort((a, b) => b.date.localeCompare(a.date));
+
+	const latestAvg = sorted[0]?.avgDuration;
+	if (latestAvg === undefined || latestAvg === null) return 0;
+
+	// Get the average from N days ago (or oldest available if less than N days)
+	const idx = Math.min(days - 1, sorted.length - 1);
+	if (idx < 0) return 0;
+
+	const olderAvg = sorted[idx]?.avgDuration;
+	if (!olderAvg || olderAvg === 0) return 0;
+
+	// Calculate percentage change: ((new - old) / old) * 100
+	return ((latestAvg - olderAvg) / olderAvg) * 100;
+}
+
 // Calculate duration trend (min, average, max per day)
 function calcDurationTrend(builds) {
 	const validBuilds = builds.filter((b) => b.startTime && b.duration !== null);
@@ -333,10 +354,17 @@ function processRawData(rawData, mode) {
 	);
 	const sortedByDuration = [...processedBuilds].sort((a, b) => b.duration - a.duration);
 
+	// Calculate duration trend and period changes
+	const durationTrend = calcDurationTrend(processedBuilds);
+	const change3Day = calcPeriodChange(durationTrend, 3);
+	const change7Day = calcPeriodChange(durationTrend, 7);
+
 	return {
 		generatedAt: rawData.generatedAt,
 		summary: calcSummary(processedBuilds),
-		durationTrend: calcDurationTrend(processedBuilds),
+		durationTrend,
+		change3Day,
+		change7Day,
 		recentBuilds: sortedByDate.slice(0, 20),
 		longestBuilds: sortedByDuration.slice(0, 20),
 		stagePerformance,

@@ -7,6 +7,12 @@
 # When run from the "public" project: collects PR build metrics
 # When run from the "internal" project: collects internal build metrics
 
+parameters:
+- name: publishToASWA
+  displayName: Publish dashboard to Azure Static Web Apps
+  type: boolean
+  default: false
+
 name: $(Build.BuildId)
 
 # Both schedules run in both projects (public and internal), but each schedule
@@ -58,6 +64,11 @@ variables:
   # Max concurrent API requests when fetching timeline data
   - name: parallelJobs
     value: 20
+  # Alert thresholds
+  - name: avgDurationThreshold
+    value: 90  # Maximum acceptable average build duration in minutes
+  - name: changePeriodThreshold
+    value: 15  # Maximum acceptable percentage change (3-day for public, 7-day for internal)
 
 resources:
   repositories:
@@ -158,6 +169,16 @@ extends:
             targetType: 'filePath'
             filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/prepare-deployment.sh'
 
+        - task: Bash@3
+          displayName: Generate HTML dashboard artifact
+          condition: eq(variables['detect.shouldRun'], 'true')
+          env:
+            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
+            SOURCE_DIR: $(Build.SourcesDirectory)
+          inputs:
+            targetType: 'filePath'
+            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/generate-standalone-html.sh'
+
         templateContext:
           outputParentDirectory: $(Build.ArtifactStagingDirectory)
           outputs:
@@ -167,12 +188,18 @@ extends:
             targetPath: $(Build.ArtifactStagingDirectory)/deploy
             artifactName: deploy
             publishLocation: pipeline
+          - output: pipelineArtifact
+            displayName: Publish standalone HTML dashboard
+            condition: eq(variables['detect.shouldRun'], 'true')
+            targetPath: $(Build.ArtifactStagingDirectory)/dashboard-standalone.html
+            artifactName: dashboard-standalone
+            publishLocation: pipeline
 
       # Release job: deploy to Azure Static Web Apps
       - job: deploy_to_aswa
         displayName: Deploy to Azure Static Web Apps
         dependsOn: prepare
-        condition: eq(dependencies.prepare.outputs['detect.shouldRun'], 'true')
+        condition: and(eq(dependencies.prepare.outputs['detect.shouldRun'], 'true'), eq('${{ parameters.publishToASWA }}', 'true'))
         templateContext:
           # Required for AzureStaticWebApp task which is classified as a release task
           type: releaseJob
@@ -191,3 +218,63 @@ extends:
             app_location: 'deploy'
             output_location: ''
             azure_static_web_apps_api_token: $(ASWA_DEPLOYMENT_TOKEN)
+
+    - stage: alert_on_thresholds
+      displayName: Check Thresholds and Send Alerts
+      dependsOn: collect_and_deploy_metrics
+      condition: succeeded('collect_and_deploy_metrics')
+      jobs:
+      - job: check_and_alert
+        displayName: Check Thresholds and Send Email Alert
+        variables:
+          runMode: $[stageDependencies.collect_and_deploy_metrics.prepare.outputs['detect.runMode']]
+          shouldRun: $[stageDependencies.collect_and_deploy_metrics.prepare.outputs['detect.shouldRun']]
+        condition: eq(variables['shouldRun'], 'true')
+        templateContext:
+          inputs:
+          - input: pipelineArtifact
+            artifactName: deploy
+            targetPath: $(Build.ArtifactStagingDirectory)/deploy
+        steps:
+        - checkout: self
+          clean: true
+
+        - task: Bash@3
+          name: checkThresholds
+          displayName: Check performance thresholds
+          env:
+            MODE: $(runMode)
+            INPUT_DIR: $(Build.ArtifactStagingDirectory)/deploy
+            AVG_DURATION_THRESHOLD: $(avgDurationThreshold)
+            CHANGE_PERIOD_THRESHOLD: $(changePeriodThreshold)
+          inputs:
+            targetType: 'filePath'
+            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/check-thresholds.sh'
+
+        - task: SendEmail@1
+          displayName: Send alert email
+          condition: eq(variables['checkThresholds.shouldAlert'], 'true')
+          inputs:
+            To: $(ALERT_EMAIL_TO)
+            From: $(ALERT_EMAIL_FROM)
+            Subject: '[Build Performance Alert] $(runMode) builds - Thresholds Exceeded'
+            Body: |
+              <h2>Build Performance Alert</h2>
+              <p>One or more build performance thresholds have been exceeded for <strong>$(runMode)</strong> builds.</p>
+
+              <h3>Current Metrics</h3>
+              <ul>
+                <li><strong>Average Build Duration:</strong> $(checkThresholds.avgDuration) minutes (threshold: $(avgDurationThreshold) min)</li>
+                <li><strong>$(checkThresholds.changePeriodDays)-Day Change:</strong> $(checkThresholds.changePeriod)% (threshold: ±$(changePeriodThreshold)%)</li>
+              </ul>
+
+              <h3>Thresholds Configured</h3>
+              <ul>
+                <li>Average Duration: $(avgDurationThreshold) minutes</li>
+                <li>$(checkThresholds.changePeriodDays)-Day Change: ±$(changePeriodThreshold)%</li>
+              </ul>
+
+              <p>View the dashboard for more details: <a href="https://$(ASWA_HOSTNAME)">Build Performance Dashboard</a></p>
+              <p>Pipeline run: <a href="$(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)">View Pipeline</a></p>
+            BodyAsHtml: true
+            AddAttachment: false
