@@ -7,10 +7,10 @@ import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
+	getTypeTestPreviousPackageDetails,
 	type Logger,
 	type Package,
 	type PackageJson,
-	getTypeTestPreviousPackageDetails,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
@@ -40,15 +40,15 @@ import {
 import { getTypesPathFromPackage } from "../../library/packageExports.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import-x/no-internal-modules
-import { type TestCaseTypeData, buildTestCase } from "../../typeValidator/testGeneration.js";
+import { buildTestCase, type TestCaseTypeData } from "../../typeValidator/testGeneration.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TypeData } from "../../typeValidator/typeData.js";
 import {
 	type BrokenCompatSettings,
 	type BrokenCompatTypes,
-	type PackageWithTypeTestSettings,
 	defaultTypeValidationConfig,
+	type PackageWithTypeTestSettings,
 	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../typeValidator/typeValidatorConfig.js";

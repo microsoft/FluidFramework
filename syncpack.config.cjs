@@ -120,13 +120,13 @@ module.exports = {
 			dependencies: [
 				"@biomejs/biome",
 				"@eslint-community/*",
+				"@eslint/*",
 				"@rushstack/eslint-*",
 				"@typescript-eslint/*",
 				"eslint-config-*",
 				"eslint-config-prettier",
 				"eslint-import-resolver-typescript",
 				"eslint-plugin-*",
-				"eslint-config-prettier",
 				"eslint",
 				"less",
 				"prettier",
@@ -194,7 +194,13 @@ module.exports = {
 		{
 			label:
 				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
-			dependencies: ["react-virtualized-auto-sizer", "@types/react", "@types/react-dom"],
+			dependencies: [
+				// TODO: Remove @biomejs/biome once all packages are updated to the latest version
+				"@biomejs/biome",
+				"react-virtualized-auto-sizer",
+				"@types/react",
+				"@types/react-dom",
+			],
 			packages: ["**"],
 			isIgnored: true,
 		},

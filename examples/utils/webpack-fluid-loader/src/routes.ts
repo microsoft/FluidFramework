@@ -336,7 +336,7 @@ const makeAfterMiddlewares = (
 };
 
 /**
- * @returns A portion of a webpack config needed to add support for the
+ * Creates the portion of a webpack config needed to add support for the
  * webpack-dev-server to use the webpack-fluid-loader.
  * @internal
  */

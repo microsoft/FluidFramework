@@ -354,6 +354,7 @@
 	},
 	"pnpm": {
 		"comments": [
+			"biome is overridden to make review of the upgrade easier. This can be removed once merged.",
 			"node types are forced to a consistent version to avoid conflicts between globals.",
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
@@ -362,6 +363,7 @@
 			"axios pre-1.0 needs an override to stay current on a version with no reported CVEs. Caret dependencies aren't enough on a pre-1.0 package."
 		],
 		"overrides": {
+			"@biomejs/biome": "~2.3.11",
 			"@types/node": "~20.19.30",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",

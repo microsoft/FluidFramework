@@ -1161,7 +1161,7 @@ export const shortCodeMap = {
 	"0x8dc": "Unexpected collision of new node changes",
 	"0x8dd": "No tree found for the given groupIds",
 	"0x8de": "loadingGroupIds should not be empty",
-	"0x8e0": "time should be positive",
+	"0x8e0": "time should be a positive number",
 	"0x8e1": "Should have retrieved aliased handle",
 	"0x8e2": "must be attaching by this point",
 	"0x8e3": "should not be a promise",
@@ -1919,5 +1919,14 @@ export const shortCodeMap = {
 	"0xcc4": "Missing enriched commit.",
 	"0xcc5": "Unsupported modular change codec version",
 	"0xcc6": "updatableError should only be called in test mode",
-	"0xcc7": "expected compatibility errors for missing min collab version snapshot"
+	"0xcc7": "expected compatibility errors for missing min collab version snapshot",
+	"0xcc8": "Object.entries returned a non-string key.",
+	"0xcc9": "Count must be at least 1",
+	"0xcca": "TODO: Handle non-contiguous ranges",
+	"0xccb": "TODO: Handle non-contiguous ranges",
+	"0xccc": "Only write ops should be stashed",
+	"0xccd": "Transaction did not complete",
+	"0xcce": "branches must be related",
+	"0xccf": "Expected transaction revision in the presence of transaction steps",
+	"0xcd0": "The transaction commit should be rebased to the tip"
 };

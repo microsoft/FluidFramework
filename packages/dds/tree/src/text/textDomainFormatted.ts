@@ -94,7 +94,7 @@ class TextNode
 			][]) {
 				// Object.entries should only return string keyed enumerable own properties.
 				// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
-				assert(typeof key === "string", "Object.entries returned a non-string key.");
+				assert(typeof key === "string", 0xcc8 /* Object.entries returned a non-string key. */);
 				const f = FormattedTextAsTree.CharacterFormat.fields.get(key);
 				if (f === undefined) {
 					throw new UsageError(`Unknown format key: ${key}`);

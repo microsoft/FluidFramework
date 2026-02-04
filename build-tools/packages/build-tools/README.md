@@ -245,6 +245,26 @@ within the package if possible). It then copy the content of the `tsc` build inf
 the version and config for `eslint` and `api-extractor` and generate a "done" file. Compare the content of
 the current state and previous build will determine whether the task needs to be invoked.
 
+### Environment Variables
+
+The following environment variables can be used to control incremental build behavior. By default, some tasks use
+file timestamps for incremental detection. Setting these variables to `"1"` enables content-based hashing instead,
+which avoids false rebuilds when timestamps change without meaningful content modification (e.g., after git operations
+or file copies).
+
+| Variable | Task | Description |
+|----------|------|-------------|
+| `FLUID_BUILD_ENABLE_COPYFILES_HASH` | CopyfilesTask | Enables content hashing for copyfiles tasks |
+| `FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH` | TypeValidationTask | Enables content hashing for type validation tasks |
+| `FLUID_BUILD_ENABLE_GOODFENCE_HASH` | GoodFence | Enables content hashing for good-fence tasks |
+| `FLUID_BUILD_ENABLE_DEPCRUISE_HASH` | DepCruiseTask | Enables content hashing for dependency-cruiser tasks |
+
+Example:
+
+```sh
+FLUID_BUILD_ENABLE_COPYFILES_HASH=1 fluid-build
+```
+
 ### Worker mode (Experimental)
 
 In worker mode using the option `--worker`, `fluid-build` will create worker processes reuse it to run some of the tools
