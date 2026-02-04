@@ -173,7 +173,6 @@ const schemaFactory = new SchemaFactory("Test");
 	// Generic case
 	{
 		type result = ObjectFromSchemaRecord<RestrictiveStringRecord<ImplicitFieldSchema>>;
-
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 
 		type _check3 = requireTrue<isAssignableTo<{ x: unknown }, result>>;
@@ -182,7 +181,6 @@ const schemaFactory = new SchemaFactory("Test");
 	// Empty case
 	{
 		type result = ObjectFromSchemaRecord<{}>;
-
 		type _check = requireTrue<areSafelyAssignable<{}, result>>;
 		type _check2 = requireFalse<isAssignableTo<result, { x: unknown }>>;
 
@@ -640,9 +638,7 @@ describeHydration(
 				type Create<T extends RecordX> = (data: RecordX extends T ? never : T) => unknown;
 
 				// Two identical interfaces
-
 				interface X1<T extends RecordX = RecordX> extends Create<T> {}
-
 				interface X2<T extends RecordX = RecordX> extends Create<T> {}
 
 				// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -695,7 +691,6 @@ describeHydration(
 				}) {
 					// Since fields are own properties, we expect inherited properties (like this) to be shadowed by fields.
 					// However in TypeScript they work like inherited properties, so the types don't make the runtime behavior.
-
 					public override get foo(): 5 {
 						return 5;
 					}

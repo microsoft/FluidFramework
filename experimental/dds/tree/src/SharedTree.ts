@@ -545,7 +545,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	public constructor(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
-
 		private writeFormat: WriteFormat,
 		options: SharedTreeOptions<typeof writeFormat> = {}
 	) {

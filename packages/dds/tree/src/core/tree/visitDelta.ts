@@ -206,7 +206,6 @@ function transferRoots(
 				delayed.push({ oldId, newId });
 				continue;
 			}
-
 			newRootId = detachedFieldIndex.createEntry(newId, revision);
 			const fields = mapToUpdate.get(oldRootId);
 			if (fields !== undefined) {

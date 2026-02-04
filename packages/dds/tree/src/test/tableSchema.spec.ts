@@ -26,8 +26,6 @@ import {
 	type TreeNode,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
-// We have to use disable twice this rule here and below, otherwise this rule gets in conflict with itself and ends up flagging
-// the fixes made to resolve the error as wrong and demands the changes it demanded be reverted.
 import type {
 	areSafelyAssignable,
 	JsonCompatibleReadOnly,
