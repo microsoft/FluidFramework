@@ -2283,6 +2283,47 @@ describe("ModularChangeFamily integration", () => {
 
 			assertModularChangesetsEqual(inverse, expected);
 		});
+
+		it("Detached move", () => {
+			const oldId: ChangeAtomId = { revision: tag0, localId: brand(0) };
+			const moveId: ChangeAtomId = { revision: tag1, localId: brand(1) };
+			const newId: ChangeAtomId = { revision: tag1, localId: brand(3) };
+
+			const fieldAId = { nodeId: undefined, field: fieldA };
+			const fieldBId = { nodeId: undefined, field: fieldB };
+
+			const detachedMove = Change.build(
+				{
+					family,
+					renames: [{ oldId, newId, count: 1, detachLocation: fieldAId }],
+					detachedMoves: [{ detachId: newId, count: 1, newLocation: fieldBId }],
+					revisions: [{ revision: tag1 }],
+					maxId: 3,
+				},
+				Change.field(fieldA, sequenceIdentifier, [MarkMaker.rename(1, oldId, moveId)]),
+				Change.field(fieldB, sequenceIdentifier, [
+					MarkMaker.rename(1, { revision: tag1, localId: brand(2) }, newId),
+				]),
+			);
+
+			const inverse = family.invert(tagChange(detachedMove, tag1), true, tag2);
+
+			const expected = Change.build(
+				{
+					family,
+					renames: [{ oldId: newId, newId: oldId, count: 1, detachLocation: fieldBId }],
+					detachedMoves: [{ detachId: oldId, count: 1, newLocation: fieldAId }],
+					revisions: [{ revision: tag2, rollbackOf: tag1 }],
+					maxId: 3,
+				},
+				Change.field(fieldA, sequenceIdentifier, [MarkMaker.rename(1, moveId, oldId)]),
+				Change.field(fieldB, sequenceIdentifier, [
+					MarkMaker.rename(1, newId, { revision: tag1, localId: brand(2) }),
+				]),
+			);
+
+			assertEqual(inverse, expected);
+		});
 	});
 
 	describe("toDelta", () => {

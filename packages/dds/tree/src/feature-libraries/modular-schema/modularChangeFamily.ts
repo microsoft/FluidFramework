@@ -4572,7 +4572,6 @@ function invertRootTable(
 	if (isRollback) {
 		// We only invert renames of nodes which are not attached or detached by this changeset.
 		// When we invert an attach we will create a detach which incorporates the rename.
-		// XXX: Do we need to update detachLocations and outputDetachLocations?
 		for (const {
 			start: oldId,
 			value: newId,
@@ -4640,6 +4639,10 @@ function invertRename(
 			countProcessed,
 			outputDetachEntry.value ?? inputDetachEntry.value,
 		);
+
+		if (outputDetachEntry.value !== undefined && inputDetachEntry.value !== undefined) {
+			invertedRoots.outputDetachLocations.set(oldId, countProcessed, inputDetachEntry.value);
+		}
 	}
 
 	if (countProcessed < length) {
