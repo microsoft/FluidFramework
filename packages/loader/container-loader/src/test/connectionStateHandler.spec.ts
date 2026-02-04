@@ -6,10 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type {
-	IDeltaManager,
-	IDeltaManagerEvents,
-} from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import type {
 	ConnectionMode,
@@ -35,19 +31,27 @@ import {
 	createConnectionStateHandlerCore,
 } from "../connectionStateHandler.js";
 import type { IConnectionDetailsInternal, IConnectionManager } from "../contracts.js";
-import type { DeltaManager } from "../deltaManager.js";
+import type { IDeltaManagerInternalEvents, DeltaManager } from "../deltaManager.js";
 import { ProtocolHandler } from "../protocol.js";
 
-class MockDeltaManagerForCatchingUp
-	extends TypedEventEmitter<IDeltaManagerEvents>
-	implements Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber" | "lastKnownSeqNumber">
-{
+/**
+ * Mock DeltaManager that implements the subset of DeltaManager needed for ConnectionStateHandler tests.
+ * Uses IDeltaManagerInternalEvents to support the storageFetchComplete event.
+ */
+class MockDeltaManagerForCatchingUp extends TypedEventEmitter<IDeltaManagerInternalEvents> {
 	lastSequenceNumber: number = 5;
 	lastKnownSeqNumber: number = 10;
+	isConnectionFetchPending: boolean = false;
+
 	catchUp(seq = 10): void {
 		this.lastKnownSeqNumber = seq;
 		this.lastSequenceNumber = seq;
 		this.emit("op", { sequenceNumber: this.lastKnownSeqNumber });
+	}
+
+	emitStorageFetchComplete(reason: string = "test"): void {
+		this.isConnectionFetchPending = false;
+		this.emit("storageFetchComplete", reason);
 	}
 }
 
