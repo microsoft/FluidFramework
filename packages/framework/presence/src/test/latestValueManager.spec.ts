@@ -137,10 +137,8 @@ describe("Presence", () => {
 			const camera = workspace.states.camera;
 
 			let localUpdateCount = 0;
-
 			camera.events.on("localUpdated", (update) => {
 				localUpdateCount++;
-
 				assert.deepStrictEqual(update.value, { x: 1, y: 2, z: 3 });
 			});
 
