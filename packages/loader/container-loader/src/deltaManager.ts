@@ -552,14 +552,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this.opsSize = 0;
 		this.noOpCount = 0;
 
-		this.emit(
-			"connect",
-			connection,
-			checkpointSequenceNumber === undefined
-				? undefined
-				: this.lastObservedSeqNumber - this.lastSequenceNumber,
-		);
-
 		// If we got some initial ops, then we know the gap and call above fetched ops to fill it.
 		// Same is true for "write" mode even if we have no ops - we will get "join" own op very very soon.
 		// However if we are connecting as view-only, then there is no good signal to realize if client is behind.
@@ -569,10 +561,22 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				checkpointSequenceNumber > this.lastQueuedSequenceNumber) ||
 			(checkpointSequenceNumber === undefined && connection.mode === "read");
 
+		// Set connectionFetchPending BEFORE emitting connect, so that handlers
+		// checking isConnectionFetchPending see the correct value synchronously.
 		if (needsFetch) {
-			// Setting connectionFetchPending ensures that when the fetch completes,
-			// it will emit storageFetchComplete.
 			this.connectionFetchPending = true;
+		}
+
+		this.emit(
+			"connect",
+			connection,
+			checkpointSequenceNumber === undefined
+				? undefined
+				: this.lastObservedSeqNumber - this.lastSequenceNumber,
+		);
+
+		// After emitting connect, start the fetch or emit storageFetchComplete.
+		if (needsFetch) {
 			// If no fetch is in progress, start one now. If a fetch is already in progress,
 			// that fetch will emit storageFetchComplete when it completes.
 			if (this.fetchReason === undefined) {
@@ -581,8 +585,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				this.fetchMissingDeltas(reason);
 			}
 		} else {
-			// No fetch needed, emit completion immediately
-			this.emit("storageFetchComplete", "NoFetchNeeded");
+			// No fetch needed, emit completion via microtask to ensure connect handlers finish first
+			queueMicrotask(() => this.emit("storageFetchComplete", "NoFetchNeeded"));
 		}
 	}
 

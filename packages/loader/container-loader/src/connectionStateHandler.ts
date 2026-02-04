@@ -309,7 +309,7 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 
 				// Create catch-up monitor here (not earlier), as we might get more exact info by now about how far
 				// client is behind through join signal. This is only true if base layer uses signals (i.e. audience,
-				// not quorum, including for "rea" connections) to make decisions about moving to "connected" state.
+				// not quorum, including for "read" connections) to make decisions about moving to "connected" state.
 				// In addition to that, in its current form, doing this in ConnectionState.CatchingUp is dangerous as
 				// we might get callback right away, and it will screw up state transition (as code outside of switch
 				// statement will overwrite current state).
