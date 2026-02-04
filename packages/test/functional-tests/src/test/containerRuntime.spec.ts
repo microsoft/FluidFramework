@@ -15,17 +15,13 @@ import {
 	ICriticalContainerError,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-
 import { ConnectionManager } from "@fluidframework/container-loader/internal/test/connectionManager";
-
 import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/internal/test/contracts";
-
 import { DeltaManager } from "@fluidframework/container-loader/internal/test/deltaManager";
 import {
 	ContainerMessageType,
 	loadContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
-
 import { DeltaScheduler } from "@fluidframework/container-runtime/internal/test/deltaScheduler";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IClient } from "@fluidframework/driver-definitions";

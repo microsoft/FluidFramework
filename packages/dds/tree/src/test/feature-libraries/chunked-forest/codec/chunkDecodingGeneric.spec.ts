@@ -8,7 +8,6 @@ import { strict as assert, fail } from "node:assert";
 import { type Static, Type } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
-
 import type { ChunkedCursor } from "../../../../core/index.js";
 import {
 	type ChunkDecoder,

@@ -11,7 +11,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
 // This import is required for intellisense in @link doc comments on mouseover in VSCode.
-
 import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import {
 	type JsonCompatibleReadOnlyObject,

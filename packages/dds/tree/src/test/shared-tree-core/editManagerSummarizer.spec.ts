@@ -35,7 +35,6 @@ import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../shared-tree-core/index.js";
-
 import { testChangeFamilyFactory } from "../testChange.js";
 import { testIdCompressor } from "../utils.js";
 

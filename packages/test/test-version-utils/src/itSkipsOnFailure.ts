@@ -6,7 +6,6 @@
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { TestObjectProvider, timeoutAwait } from "@fluidframework/test-utils/internal";
-
 import { Context } from "mocha";
 
 import { ExpectedEvents, createExpectsTest } from "./itExpects.js";

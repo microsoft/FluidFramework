@@ -31,7 +31,6 @@ import {
 	TreeNodeValid,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/treeNodeValid.js";
-
 import {
 	getTreeNodeSchemaInitializedData,
 	getUnhydratedContext,

@@ -12,7 +12,6 @@ import {
 	getUnexpectedLogErrorException,
 	TestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-
 import { Context } from "mocha";
 
 /**

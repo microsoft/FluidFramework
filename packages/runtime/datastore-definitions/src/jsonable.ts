@@ -39,7 +39,6 @@ export type JsonableTypeWith<T> =
  * The TypeOnly filter is not useful for {@link JsonableTypeWith}; so, if type testing improves, this can be removed.
  * @legacy @beta
  */
-
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
 	[index: string | number]: JsonableTypeWith<T>;
 }

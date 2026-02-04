@@ -12,7 +12,6 @@ import {
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 // TODO:AB#6558: This should be provided based on the compatibility configuration.
-
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
