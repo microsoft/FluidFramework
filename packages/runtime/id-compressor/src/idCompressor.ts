@@ -349,10 +349,16 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// This code results in a double roundtrip, but is probably plenty fast enough for scenarios that need sharding,
 		// as they necessarily have process boundaries to deal with.
 		// If this ever became an issue we can implement a fast clone of compressors
-		const child = deserializeIdCompressor(this.serialize(true), this.writeVersion) as IdCompressor;
+		const child = deserializeIdCompressor(
+			this.serialize(true),
+			this.writeVersion,
+		) as IdCompressor;
 		const genCountJump = childLocalGenCount - this.localGenCount;
-		assert(child.localGenCount === this.localGenCount && genCountJump > 0, "Child offsets incorrectly calculated.");
-		child.normalizer.addLocalRange(child.localGenCount, genCountJump);
+		assert(
+			child.localGenCount === this.localGenCount && genCountJump > 0,
+			"Child offsets incorrectly calculated.",
+		);
+		child.normalizer.addLocalRange(child.localGenCount + 1, genCountJump);
 		child.localGenCount = childLocalGenCount;
 		child.shardingState = {
 			currentStride: stride,
