@@ -251,30 +251,77 @@ extends:
             targetType: 'filePath'
             filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/check-thresholds.sh'
 
-        - task: SendEmail@1
-          displayName: Send alert email
+        - task: Bash@3
+          displayName: Send alert to Teams
           condition: eq(variables['checkThresholds.shouldAlert'], 'true')
+          env:
+            WEBHOOK_URL: $(ALERT_WEBHOOK_URL)
+            MODE: $(runMode)
+            AVG_DURATION: $(checkThresholds.avgDuration)
+            AVG_DURATION_THRESHOLD: $(avgDurationThreshold)
+            CHANGE_PERIOD: $(checkThresholds.changePeriod)
+            CHANGE_PERIOD_DAYS: $(checkThresholds.changePeriodDays)
+            CHANGE_PERIOD_THRESHOLD: $(changePeriodThreshold)
+            DASHBOARD_URL: https://$(ASWA_HOSTNAME)
+            PIPELINE_URL: $(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)
           inputs:
-            To: $(ALERT_EMAIL_TO)
-            From: $(ALERT_EMAIL_FROM)
-            Subject: '[Build Performance Alert] $(runMode) builds - Thresholds Exceeded'
-            Body: |
-              <h2>Build Performance Alert</h2>
-              <p>One or more build performance thresholds have been exceeded for <strong>$(runMode)</strong> builds.</p>
+            targetType: 'inline'
+            script: |
+              # Build Teams Adaptive Card payload
+              PAYLOAD=$(cat <<EOF
+              {
+                "type": "message",
+                "attachments": [
+                  {
+                    "contentType": "application/vnd.microsoft.card.adaptive",
+                    "content": {
+                      "type": "AdaptiveCard",
+                      "version": "1.2",
+                      "body": [
+                        {
+                          "type": "TextBlock",
+                          "size": "Large",
+                          "weight": "Bolder",
+                          "text": "⚠️ Build Performance Alert",
+                          "color": "Warning"
+                        },
+                        {
+                          "type": "TextBlock",
+                          "text": "Thresholds exceeded for **${MODE}** builds",
+                          "wrap": true
+                        },
+                        {
+                          "type": "FactSet",
+                          "facts": [
+                            {
+                              "title": "Avg Duration",
+                              "value": "${AVG_DURATION} min (threshold: ${AVG_DURATION_THRESHOLD} min)"
+                            },
+                            {
+                              "title": "${CHANGE_PERIOD_DAYS}-Day Change",
+                              "value": "${CHANGE_PERIOD}% (threshold: ±${CHANGE_PERIOD_THRESHOLD}%)"
+                            }
+                          ]
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "type": "Action.OpenUrl",
+                          "title": "View Dashboard",
+                          "url": "${DASHBOARD_URL}"
+                        },
+                        {
+                          "type": "Action.OpenUrl",
+                          "title": "View Pipeline",
+                          "url": "${PIPELINE_URL}"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+              EOF
+              )
 
-              <h3>Current Metrics</h3>
-              <ul>
-                <li><strong>Average Build Duration:</strong> $(checkThresholds.avgDuration) minutes (threshold: $(avgDurationThreshold) min)</li>
-                <li><strong>$(checkThresholds.changePeriodDays)-Day Change:</strong> $(checkThresholds.changePeriod)% (threshold: ±$(changePeriodThreshold)%)</li>
-              </ul>
-
-              <h3>Thresholds Configured</h3>
-              <ul>
-                <li>Average Duration: $(avgDurationThreshold) minutes</li>
-                <li>$(checkThresholds.changePeriodDays)-Day Change: ±$(changePeriodThreshold)%</li>
-              </ul>
-
-              <p>View the dashboard for more details: <a href="https://$(ASWA_HOSTNAME)">Build Performance Dashboard</a></p>
-              <p>Pipeline run: <a href="$(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)">View Pipeline</a></p>
-            BodyAsHtml: true
-            AddAttachment: false
+              # Post to Teams webhook
+              curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
