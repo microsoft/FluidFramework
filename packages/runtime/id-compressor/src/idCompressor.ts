@@ -69,6 +69,8 @@ function rangeFinalizationError(expectedStart: number, actualStart: number): Log
 	});
 }
 
+const MAX_STRIDE_LENGTH = 1024;
+
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
  */
@@ -168,7 +170,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (typeof localSessionIdOrDeserialized === "string") {
 			this.localSessionId = localSessionIdOrDeserialized;
 			this.localSession = this.sessions.getOrCreate(localSessionIdOrDeserialized);
-			this.writeVersion = writeVersion;
 		} else {
 			// Deserialize case
 			this.sessions = localSessionIdOrDeserialized;
@@ -200,16 +201,18 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			) as unknown as SessionSpaceCompressedId;
 		}
 
-		// In sharding mode, always generate local IDs with stride-based allocation
-		// Never use eager finals to maintain consistency across shards
+		// In sharding mode, always generate local IDs with stride-based allocation.
+		// Eager finals are disabled because shards backfill IDs not in their stride cycle.
+		// If another shard generated them as eager finals, ingesting IDs from another shard
+		// would fail depending on timing.
 		if (this.shardingState !== undefined) {
 			this.telemetryLocalIdCount++;
 			const { activeChildIds, currentStride, originalStride } = this.shardingState;
 
-			// Use originalStride if we're a leaf, currentStride if we have children
-			const effectiveStride = activeChildIds.size === 0 ? originalStride : currentStride;
-			this.normalizer.addLocalRange(this.localGenCount + 1, effectiveStride);
-			this.localGenCount += effectiveStride;
+			// Leaf nodes use their creation stride; internal nodes use the expanded stride from sharding
+			const activeStride = activeChildIds.size === 0 ? originalStride : currentStride;
+			this.normalizer.addLocalRange(this.localGenCount + 1, activeStride);
+			this.localGenCount += activeStride;
 			return localIdFromGenCount(this.localGenCount);
 		}
 
@@ -275,9 +278,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (newShardCount <= 0) {
 			throw new Error("Shard count must be positive");
 		}
-		if (newShardCount > 1000) {
-			throw new Error("Shard count too large - recommend < 1000 shards");
-		}
 		if (this.ongoingGhostSession) {
 			throw new Error("Cannot shard during ghost session");
 		}
@@ -292,6 +292,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const currentStride = this.shardingState?.currentStride ?? 1;
 
 		const newStride = currentStride * (newShardCount + 1);
+
+		// ID usage is exponential in stride count. Limit to practical size to avoid overflow.
+		if (newStride > MAX_STRIDE_LENGTH) {
+			throw new Error("Sharding limit reached.");
+		}
 
 		// Store parent's localGenCount before creating shards
 		const parentLocalGenCountBeforeShard = this.localGenCount;
@@ -396,16 +401,18 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		const childHighestGenCount = shardId.localGenCount;
 
-		// Use the effective stride for realignment calculation
+		// Determine stride to use for realignment based on state after removing this child
 		const { activeChildIds, currentStride, originalStride } = this.shardingState;
-		const effectiveStride = activeChildIds.size === 1 ? originalStride : currentStride;
+		// Will there be children left after removing this one?
+		const willHaveChildrenAfterRemoval = activeChildIds.size > 1;
+		const activeStride = willHaveChildrenAfterRemoval ? currentStride : originalStride;
 
 		// Realign parent to next position in its sequence if child is ahead
 		if (childHighestGenCount > this.localGenCount) {
 			// Find next aligned position in parent's sequence after child's genCount
 			const distance = childHighestGenCount - this.localGenCount + 1;
-			const steps = Math.ceil(distance / effectiveStride);
-			const count = steps * effectiveStride;
+			const steps = Math.ceil(distance / activeStride);
+			const count = steps * activeStride;
 			this.normalizer.addLocalRange(this.localGenCount + 1, count);
 			this.localGenCount += count;
 		}
@@ -812,16 +819,17 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				sessionIndex++;
 			}
 		}
+		const sizeOfUuid = 2;
 		const shardingStateSize =
 			hasLocalState && this.writeVersion >= SerializationVersion.V3
 				? this.shardingState === undefined
-					? 1 // just the boolean indicating no sharding state
-					: 1 + // has sharding state boolean
-						2 + // currentStride, originalStride
-						1 + // activeChildIds count
-						this.shardingState.activeChildIds.size * 2 + // activeChildIds (each UUID is 2 units)
-						1 + // hasShardId boolean
-						(this.shardingState.shardId === undefined ? 0 : 2) // shardId if present (UUID is 2 units)
+					? 1 // Boolean: no sharding state
+					: 1 + // Boolean: has sharding state
+						2 + // Numbers: currentStride, originalStride (Float64)
+						1 + // Number: activeChildIds count (Float64)
+						this.shardingState.activeChildIds.size * sizeOfUuid + // UUIDs: each is 128-bit
+						1 + // Boolean: hasShardId
+						(this.shardingState.shardId === undefined ? 0 : sizeOfUuid) // UUID: 128-bit if present
 				: 0;
 		const localStateSize = hasLocalState
 			? 1 + // generated ID count
@@ -836,7 +844,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			1 + // hasLocalState
 			1 + // session count
 			1 + // cluster count
-			sessionIndexMap.size * 2 + // session IDs
+			sessionIndexMap.size * sizeOfUuid + // session IDs
 			finalSpace.clusters.length * 3 + // clusters: (sessionIndex, capacity, count)[]
 			localStateSize; // local state, if present
 
@@ -1183,28 +1191,19 @@ const throwDisposed = (): never => {
 /**
  * Makes an IdCompressor instance unusable by replacing all its methods with functions that throw.
  * This is called once when disposeShard() is invoked to make the compressor permanently unusable.
- * Uses prototype mutation to avoid runtime checks in every method.
  * @param compressor - The compressor instance to make unusable
  */
 function makeCompressorUnusable(compressor: IdCompressor): void {
-	// Enumerate all properties on the instance and its prototype, replacing any functions
-	// This automatically handles all methods without needing to maintain a manual list
-	/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+	/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 	const obj = compressor as any;
 
-	// Replace methods on the instance itself
-	for (const key of Object.keys(obj)) {
-		if (typeof obj[key] === "function") {
-			obj[key] = throwDisposed;
-		}
-	}
-
-	// Replace methods on the prototype (this is where class methods live)
+	// Get all method names from the prototype (where class methods live)
 	const proto = Object.getPrototypeOf(obj);
 	for (const key of Object.getOwnPropertyNames(proto)) {
 		if (key !== "constructor" && typeof proto[key] === "function") {
+			// Create an instance-specific override (doesn't mutate shared prototype)
 			obj[key] = throwDisposed;
 		}
 	}
-	/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+	/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 }
