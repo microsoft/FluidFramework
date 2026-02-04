@@ -166,7 +166,7 @@ export function testSchemaCompatibilitySnapshots(
 	snapshotSchemaCompatibility({
 		snapshotDirectory,
 		fileSystem: { ...fs, ...path },
-		version: cleanedPackageVersion,
+		nextReleaseVersion: cleanedPackageVersion,
 		schema: currentViewSchema,
 		minVersionForCollaboration,
 		mode: regenerateSnapshots || forceUpdate ? "update" : "assert",

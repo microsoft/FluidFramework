@@ -250,16 +250,19 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * This can use any path syntax supported by the provided {@link SnapshotSchemaCompatibilityOptions.fileSystem}.
 	 */
 	readonly snapshotDirectory: string;
+
 	/**
 	 * How the `snapshotDirectory` is accessed.
 	 */
 	readonly fileSystem: SnapshotFileSystem;
+
 	/**
 	 * The current view schema.
 	 */
 	readonly schema: TreeViewConfiguration;
+
 	/**
-	 * The current application or library version.
+	 * The version of the next release of the application or library.
 	 * @remarks
 	 * Can use any format supported by {@link SnapshotSchemaCompatibilityOptions.versionComparer}.
 	 * Only compared against the version from previous snapshots (taken from this version when they were created by setting `mode` to "update") and the `minVersionForCollaboration`.
@@ -279,7 +282,8 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * This can be done robustly as long as care is taken to ensure the version increases such that every released version has a unique snapshot,
 	 * and `minVersionForCollaboration` is set appropriately using the same versioning scheme.
 	 */
-	readonly version: string;
+	readonly nextReleaseVersion: string;
+
 	/**
 	 * The minimum version that the current version is expected to be able to collaborate with.
 	 * @remarks
@@ -297,7 +301,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 *
 	 * This is the same approach used by {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
-	 * and this corresponds to whatever versioning scheme is used with {@link SnapshotSchemaCompatibilityOptions.version}.
+	 * and this corresponds to whatever versioning scheme is used with {@link SnapshotSchemaCompatibilityOptions.nextReleaseVersion}.
 	 */
 	readonly minVersionForCollaboration: string;
 
@@ -319,18 +323,45 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * can refer to versions between snapshots and will get its schema from the preceding version.
 	 */
 	readonly snapshotUnchangedVersions?: true;
+
 	/**
-	 * The mode of operation, either "test" or "update".
+	 * Determines when `update` mode will create new snapshots, and how versions are expected to relate to schema changes.
 	 * @remarks
-	 * In "update" mode, a new snapshot is created if the current schema differs from the latest existing snapshot.
-	 * Note: {@link SnapshotSchemaCompatibilityOptions.snapshotUnchangedVersions} impacts this behavior.
-	 *
-	 * In "assert" mode, an error is thrown if running in "update" mode would have made any changes.
-	 *
+	 * - "everyVersion": a snapshot will be taken for every version, regardless of if the schema has changed.
+	 * If there are multiple schema changes before the version is incremented,
+	 * old snapshots will be overwritten keeping only the latest from each version.
+	 * - "versionsWithSchemaChanges": the same as "everyVersion", except omits snapshots if their content is identical to the previous one.
+	 * This keeps the number of snapshots down and avoids needing to run in "update" mode when bumping the version number.
+	 * - "schemaForEveryVersion": the same as "everyVersion", except it is an error if there is no schema change when the version changes.
+	 * - "versionForEverySchemaChange": requires that version changes and schema changes are done together, erroring if one changes but not the other.
+	 * Never overwrites snapshots.
+	 * During development may require manual removal of snapshots if making corrections to schema changes before finalizing a version.
+	 * This option is the same as "schemaForEveryVersion", except it errors instead of overwriting snapshots.
+	 * 
+	 * Applications and libraries which have versioned releases are recommended to use the `"versionsWithSchemaChanges"` schedule.
+	 * For this schedule it is recommended ensure the version is kept up to date in an automated way to avoid accidentally overwriting old snapshots.
+	 * If forgetting to run the tool on a release and thus missing a snapshot is a concern,
+	 * "everyVersion" can be used such that explicit evidence of using the tool for every version is recorded.
+	 * 
+	 * When such a version is not available, a versioning scheme specific to the schema or schema compatibility test can be used.
+	 * Such cases are recommended to pick from "versionForEverySchemaChange" or "schemaForEveryVersion" based on their preference for how they want
+	 * updates with an unchanged versions to be handled.
+	 */
+	readonly snapshottingSchedule: "everyVersion" | "versionsWithSchemaChanges" | "versionForEverySchemaChange" | "schemaForEveryVersion";
+
+	/**
+	 * The mode of operation, either "assert" or "update".
+	 * @remarks
 	 * Both modes will throw errors if any compatibility issues are detected (but after updating snapshots in "update" mode so the diff can be used to help debug).
+	 * 
+	 * In "assert" mode, an error is additionally thrown if the latest snapshot is not up to date (meaning "update" mode would make a change).
+	 * 
+	 * In "update" mode, a new snapshot is created if the current schema differs from the latest existing snapshot.
+	 * If {@link SnapshotSchemaCompatibilityOptions.snapshottingSchedule} disallows the update, an error is thrown instead.
 	 *
 	 * It is recommended that "assert" mode be used in automated tests to verify schema compatibility,
-	 * and "update" mode only be used manually to update snapshots when making schema changes (or version changes if `snapshotUnchangedVersions` is true).
+	 * and "update" mode only be used manually to update snapshots when making schema or version changes
+	 * as required by the {@link SnapshotSchemaCompatibilityOptions.snapshottingSchedule}.
 	 */
 	readonly mode: "assert" | "update";
 }
@@ -447,7 +478,7 @@ export function snapshotSchemaCompatibility(
 		options.fileSystem,
 	);
 	const {
-		version: currentVersion,
+		nextReleaseVersion: currentVersion,
 		schema: currentViewSchema,
 		mode,
 		minVersionForCollaboration,
