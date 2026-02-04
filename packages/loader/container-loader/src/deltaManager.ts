@@ -564,20 +564,24 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// Same is true for "write" mode even if we have no ops - we will get "join" own op very very soon.
 		// However if we are connecting as view-only, then there is no good signal to realize if client is behind.
 		// Thus we have to hit storage to see if any ops are there.
-		if (checkpointSequenceNumber !== undefined) {
-			// We know how far we are behind (roughly). If it's non-zero gap, fetch ops right away.
-			if (checkpointSequenceNumber > this.lastQueuedSequenceNumber) {
-				this.connectionFetchPending = true;
-				this.fetchMissingDeltas("AfterConnection");
-			}
-			// we do not know the gap, and we will not learn about it if socket is quite - have to ask.
-		} else if (connection.mode === "read") {
-			this.connectionFetchPending = true;
-			this.fetchMissingDeltas("AfterReadConnection");
-		}
+		const needsFetch =
+			(checkpointSequenceNumber !== undefined &&
+				checkpointSequenceNumber > this.lastQueuedSequenceNumber) ||
+			(checkpointSequenceNumber === undefined && connection.mode === "read");
 
-		// If no fetch was triggered, emit completion immediately
-		if (!this.connectionFetchPending) {
+		if (needsFetch) {
+			// Setting connectionFetchPending ensures that when the fetch completes,
+			// it will emit storageFetchComplete.
+			this.connectionFetchPending = true;
+			// If no fetch is in progress, start one now. If a fetch is already in progress,
+			// that fetch will emit storageFetchComplete when it completes.
+			if (this.fetchReason === undefined) {
+				const reason =
+					checkpointSequenceNumber === undefined ? "AfterReadConnection" : "AfterConnection";
+				this.fetchMissingDeltas(reason);
+			}
+		} else {
+			// No fetch needed, emit completion immediately
 			this.emit("storageFetchComplete", "NoFetchNeeded");
 		}
 	}
