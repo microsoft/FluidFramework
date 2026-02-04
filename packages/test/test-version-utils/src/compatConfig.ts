@@ -68,8 +68,8 @@ const defaultCompatVersions = {
 	currentVersionDeltas: [0, -1],
 	// N, N-1, and N-2 for cross-client compat
 	currentCrossClientVersionDeltas: [0, -1, -2],
-	// we are currently supporting 1.3.X long-term
-	ltsVersions: [resolveVersion("^1.3", false)],
+	// This is the oldest supported version (OSV) for Loader and Driver layers.
+	oldestSupportedVersions: [resolveVersion("2.0.0-internal.5.4.2", false)],
 };
 
 // This indicates the number of versions above 2.0.0.internal.1.y.z that we want to support for back compat.
@@ -155,16 +155,16 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
 	];
 }
 
-const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
+const genOldestSupportedConfig = (compatVersion: number | string): CompatConfig[] => {
 	return [
 		{
-			name: `compat LTS ${compatVersion} - old loader`,
+			name: `compat OSV ${compatVersion} - old loader`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
 		},
 		{
-			name: `compat LTS ${compatVersion} - old loader + old driver`,
+			name: `compat OSV ${compatVersion} - old loader + old driver`,
 			kind: CompatKind.LoaderDriver,
 			compatVersion,
 			driver: compatVersion,
@@ -213,8 +213,8 @@ const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): numb
 	// We want to generate back compat configs for all of them because they are all considered major releases.
 	// RCs can be thought of as internal 9 through 13 for this purpose, so just add them.
 	const numOfInternalMajorsBeforePublic2dot0 = 8 + 5;
-	// This allows us to increase our "LTS" support for certain versions above 2.0.0.internal.1.y.z, where
-	// we don't want to go that far.
+	// This allows us to increase our oldest supported version (OSV) support for certain versions above
+	// 2.0.0.internal.1.y.z, where we don't want to go that far.
 	return numOfInternalMajorsBeforePublic2dot0 - numOfVersionsAboveV2Int1;
 };
 
@@ -312,7 +312,7 @@ function genCompatConfig(versionDetails: {
  * The delta versions will be:
  * - N-1 and N-2, for "fast train" customers (i.e. \>=2.10.0 \<2.20.0, \>=2.20.0 \<2.30.0, etc.)
  * - N-1 and N-2, for "slow train" customers (i.e. ^1.0.0, ^2.0.0, etc.)
- * - LTS versions
+ * - OSV (Oldest Supported Version)
  *
  * @remarks
  * Fast/slow trains refer to the different velocities that customers adopt new releases.
@@ -333,7 +333,7 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	// We build a map of all the versions we want to test the current version against.
 	// The key is the version and the value is a string describing the delta from the current version.
 	// We will not add any versions below 1.0.0 (only >1.0.0 is supported by our cross-client compat policy).
-	// If there is a duplicate version (i.e. the N-1 public major version is the same as the LTS version),
+	// If there is a duplicate version (i.e. the N-1 public major version is the same as the OSV),
 	// then we will append the delta description to the existing delta description for that version.
 	const deltaVersions: Map<string, string> = new Map();
 
@@ -348,7 +348,7 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 		});
 
 	// N-1 and N-2 for "slow train" releases
-	// Note: We add these in a separate for loop to maintain the order of tests (minor, major, then LTS).
+	// Note: We add these in a separate for loop to maintain the order of tests (minor, major, then OSV).
 	defaultCompatVersions.currentCrossClientVersionDeltas
 		.filter((delta) => delta !== 0) // skip current build
 		.forEach((delta) => {
@@ -362,13 +362,13 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 			}
 		});
 
-	// LTS releases
-	for (const v of defaultCompatVersions.ltsVersions) {
+	// Oldest supported versions
+	for (const v of defaultCompatVersions.oldestSupportedVersions) {
 		if (semver.gte(v, "1.0.0")) {
 			if (deltaVersions.has(v)) {
-				deltaVersions.set(v, `${deltaVersions.get(v)}/LTS`);
+				deltaVersions.set(v, `${deltaVersions.get(v)}/OSV`);
 			} else {
-				deltaVersions.set(v, "LTS");
+				deltaVersions.set(v, "OSV");
 			}
 		}
 	}
@@ -417,12 +417,12 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 
 	// CompatVersions is set via pipeline flags. If not set, use default scenarios.
 	if (!compatVersions || compatVersions.length === 0) {
-		// By default run currentVersionDeltas (N/N-1), LTS, and cross-client compat tests
+		// By default run currentVersionDeltas (N/N-1), OSV, and cross-client compat tests
 		defaultCompatVersions.currentVersionDeltas.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
-		defaultCompatVersions.ltsVersions.forEach((value) => {
-			_configList.push(...genLTSConfig(value));
+		defaultCompatVersions.oldestSupportedVersions.forEach((value) => {
+			_configList.push(...genOldestSupportedConfig(value));
 		});
 		_configList.push(...genCrossClientCompatConfig());
 		// If fluid__test__backCompat=FULL is enabled, run full back compat tests
@@ -435,9 +435,9 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	} else {
 		compatVersions.forEach((value) => {
 			switch (value) {
-				case "LTS": {
-					defaultCompatVersions.ltsVersions.forEach((lts) => {
-						_configList.push(...genLTSConfig(lts));
+				case "OSV": {
+					defaultCompatVersions.oldestSupportedVersions.forEach((osv) => {
+						_configList.push(...genOldestSupportedConfig(osv));
 					});
 					break;
 				}
