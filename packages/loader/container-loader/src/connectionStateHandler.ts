@@ -4,7 +4,10 @@
  */
 
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type {
+	IEventProvider,
+	ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
@@ -18,7 +21,9 @@ import {
 import { CatchUpMonitor, type ICatchUpMonitor } from "./catchUpMonitor.js";
 import { ConnectionState } from "./connectionState.js";
 import type { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts.js";
+import type { DeltaManager, IDeltaManagerInternalEvents } from "./deltaManager.js";
 import type { IProtocolHandler } from "./protocol.js";
+import { StorageFetchMonitor, type IStorageFetchMonitor } from "./storageFetchMonitor.js";
 
 // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
 // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
@@ -243,6 +248,10 @@ class ConnectionStateHandlerPassThrough
  */
 export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 	private catchUpMonitor: ICatchUpMonitor | undefined;
+	private storageFetchMonitor: IStorageFetchMonitor | undefined;
+	private storageFetchComplete: boolean = false;
+	private caughtUpToOps: boolean = false;
+	private readonly waitForStorageFetch: boolean;
 
 	constructor(
 		inputs: IConnectionStateHandlerInputs,
@@ -251,6 +260,9 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 	) {
 		super(inputs, pimplFactory);
 		this._connectionState = this.pimpl.connectionState;
+		// Config flag to opt-out of waiting for storage fetch (default is to wait)
+		this.waitForStorageFetch =
+			inputs.mc.config.getBoolean("Fluid.Container.DisableStorageFetchWait") !== true;
 	}
 
 	private _connectionState: ConnectionState;
@@ -269,22 +281,50 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 					this._connectionState === ConnectionState.CatchingUp,
 					0x3e1 /* connectivity transitions */,
 				);
+
+				// Reset completion flags
+				this.storageFetchComplete = false;
+				this.caughtUpToOps = false;
+
+				// Wait for storage fetch to complete (applies to both read and write connections)
+				if (this.waitForStorageFetch) {
+					// Cast to access the internal property - this is safe because we know it's our DeltaManager
+					const dm = this.deltaManager as unknown as DeltaManager<never>;
+					const fetchPending = dm.isConnectionFetchPending;
+					// If isConnectionFetchPending is undefined (e.g., in tests with mock delta manager),
+					// treat it as "no fetch pending" to maintain backward compatibility
+					this.storageFetchComplete = fetchPending !== true;
+					if (fetchPending === true) {
+						this.storageFetchMonitor = new StorageFetchMonitor(
+							dm as unknown as IEventProvider<IDeltaManagerInternalEvents>,
+							this.onStorageFetchComplete,
+							false,
+						);
+					}
+				} else {
+					// If not waiting for storage fetch, mark it as complete
+					this.storageFetchComplete = true;
+				}
+
 				// Create catch-up monitor here (not earlier), as we might get more exact info by now about how far
 				// client is behind through join signal. This is only true if base layer uses signals (i.e. audience,
 				// not quorum, including for "rea" connections) to make decisions about moving to "connected" state.
 				// In addition to that, in its current form, doing this in ConnectionState.CatchingUp is dangerous as
 				// we might get callback right away, and it will screw up state transition (as code outside of switch
 				// statement will overwrite current state).
+				// Note: CatchUpMonitor may call onCaughtUpToOps synchronously during construction if already caught up.
+				// This is fine because checkTransitionToConnected will only transition if both conditions are met.
 				assert(this.catchUpMonitor === undefined, 0x3eb /* catchUpMonitor should be gone */);
-				this.catchUpMonitor = new CatchUpMonitor(
-					this.deltaManager,
-					this.transitionToConnectedState,
-				);
+				this.catchUpMonitor = new CatchUpMonitor(this.deltaManager, this.onCaughtUpToOps);
 				return;
 			}
 			case ConnectionState.Disconnected: {
 				this.catchUpMonitor?.dispose();
 				this.catchUpMonitor = undefined;
+				this.storageFetchMonitor?.dispose();
+				this.storageFetchMonitor = undefined;
+				this.storageFetchComplete = false;
+				this.caughtUpToOps = false;
 				break;
 			}
 			// ConnectionState.EstablishingConnection state would be set when we start establishing connection
@@ -308,6 +348,24 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 		this._connectionState = value;
 		this.inputs.connectionStateChanged(value, oldState, reason);
 	}
+
+	private readonly onStorageFetchComplete = (): void => {
+		this.storageFetchComplete = true;
+		this.storageFetchMonitor?.dispose();
+		this.storageFetchMonitor = undefined;
+		this.checkTransitionToConnected();
+	};
+
+	private readonly onCaughtUpToOps = (): void => {
+		this.caughtUpToOps = true;
+		this.checkTransitionToConnected();
+	};
+
+	private readonly checkTransitionToConnected = (): void => {
+		if (this.storageFetchComplete && this.caughtUpToOps) {
+			this.transitionToConnectedState();
+		}
+	};
 
 	private readonly transitionToConnectedState = (): void => {
 		// Defensive measure, we should always be in Connecting state when this is called.

@@ -79,6 +79,7 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 		event: "cancelEstablishingConnection",
 		listener: (reason: IConnectionStateChangeReason) => void,
 	);
+	(event: "storageFetchComplete", listener: (reason: string) => void);
 }
 
 /**
@@ -171,6 +172,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	private pending: ISequencedDocumentMessage[] = [];
 	private fetchReason: string | undefined;
+	private connectionFetchPending: boolean = false;
 
 	// A boolean used to assert that ops are not being sent while processing another op.
 	private currentlyProcessingOps: boolean = false;
@@ -276,6 +278,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// Valid to be called only if we have active connection.
 		assert(this.connectionManager.connected, 0x0df /* "Missing active connection" */);
 		return this._checkpointSequenceNumber !== undefined;
+	}
+
+	/**
+	 * Tells if there is a connection-triggered storage fetch currently in progress.
+	 * Used to delay Connected state until we know the true latest sequence number.
+	 */
+	public get isConnectionFetchPending(): boolean {
+		return this.connectionFetchPending;
 	}
 
 	// Forwarding connection manager properties / IDeltaManager implementation
@@ -557,11 +567,18 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		if (checkpointSequenceNumber !== undefined) {
 			// We know how far we are behind (roughly). If it's non-zero gap, fetch ops right away.
 			if (checkpointSequenceNumber > this.lastQueuedSequenceNumber) {
+				this.connectionFetchPending = true;
 				this.fetchMissingDeltas("AfterConnection");
 			}
 			// we do not know the gap, and we will not learn about it if socket is quite - have to ask.
 		} else if (connection.mode === "read") {
+			this.connectionFetchPending = true;
 			this.fetchMissingDeltas("AfterReadConnection");
+		}
+
+		// If no fetch was triggered, emit completion immediately
+		if (!this.connectionFetchPending) {
+			this.emit("storageFetchComplete", "NoFetchNeeded");
 		}
 	}
 
@@ -1243,7 +1260,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.close(normalizeError(error));
 		} finally {
 			this.refreshDelayInfo(this.deltaStorageDelayId);
+			const wasConnectionFetch = this.connectionFetchPending;
+			const completedReason = this.fetchReason;
 			this.fetchReason = undefined;
+			if (wasConnectionFetch) {
+				this.connectionFetchPending = false;
+				this.emit("storageFetchComplete", completedReason ?? "unknown");
+			}
 			this.processPendingOps(reason);
 		}
 	}
