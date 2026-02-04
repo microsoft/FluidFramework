@@ -105,7 +105,7 @@ stages:
           flags: --compatVersion=0
         - name: N-1
           flags: --compatVersion=-1
-        - name: oldestCompatibleVersion
+        - name: Oldest-Compatible-Version
           flags: --compatVersion=OCV
         - name: Cross-Client
           flags: --compatVersion=CROSS_CLIENT
@@ -146,7 +146,7 @@ stages:
           flags: --compatVersion=0
         - name: N-1
           flags: --compatVersion=-1
-        - name: oldestCompatibleVersion
+        - name: Oldest-Compatible-Version
           flags: --compatVersion=OCV
         - name: Cross-Client
           flags: --compatVersion=CROSS_CLIENT

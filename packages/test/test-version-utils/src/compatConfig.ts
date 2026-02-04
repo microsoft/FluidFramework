@@ -321,7 +321,6 @@ function genCompatConfig(versionDetails: {
  * The delta versions will be:
  * - N-1 and N-2, for "fast train" customers (i.e. \>=2.10.0 \<2.20.0, \>=2.20.0 \<2.30.0, etc.)
  * - N-1 and N-2, for "slow train" customers (i.e. ^1.0.0, ^2.0.0, etc.)
- * - OCV (Oldest Compatible Version)
  *
  * @remarks
  * Fast/slow trains refer to the different velocities that customers adopt new releases.
@@ -342,8 +341,6 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	// We build a map of all the versions we want to test the current version against.
 	// The key is the version and the value is a string describing the delta from the current version.
 	// We will not add any versions below 1.0.0 (only >1.0.0 is supported by our cross-client compat policy).
-	// If there is a duplicate version (i.e. the N-1 public major version is the same as the OCV),
-	// then we will append the delta description to the existing delta description for that version.
 	const deltaVersions: Map<string, string> = new Map();
 
 	// N-1 and N-2 for "fast train" releases
