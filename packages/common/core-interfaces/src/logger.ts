@@ -68,7 +68,7 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 /**
  * Interface to output telemetry events.
- * Implemented by hosting app / loader
+ * Implemented by hosting app / loader. The host should implement this interface but not directly call it.
  * @public
  */
 export interface ITelemetryBaseLogger {
@@ -83,7 +83,7 @@ export interface ITelemetryBaseLogger {
 	 * Minimum log level to be logged.
 	 * @defaultValue {@link (LogLevel:variable).default}
 	 */
-	minLogLevel?: LogLevel;
+	readonly minLogLevel?: LogLevel;
 }
 
 /**
