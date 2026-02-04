@@ -27,6 +27,7 @@
 
 const { fail } = require("node:assert");
 const { DocNodeKind, TSDocParser } = require("@microsoft/tsdoc");
+const { getBlockComments } = require("./tsdoc-utils");
 
 const parser = new TSDocParser();
 
@@ -99,7 +100,11 @@ function findFilePathLinks(node) {
 		const inlineTag = /** @type {DocInlineTag} */ (node);
 
 		// Check if this is a @link tag with a file path target
-		if (inlineTag.tagName === "@link" && inlineTag.tagContent.length > 0 && isFilePath(inlineTag.tagContent)) {
+		if (
+			inlineTag.tagName === "@link" &&
+			inlineTag.tagContent.length > 0 &&
+			isFilePath(inlineTag.tagContent)
+		) {
 			// Get the text range for the entire InlineTag.
 			// This is the range we will report to eslint.
 			const range = getInlineTagRange(inlineTag);
@@ -170,22 +175,10 @@ module.exports = {
 					// Check summary section
 					nodesToCheck.push(parsedComment.summarySection);
 
-					// Check all blocks except privateRemarks
-					const blocksToCheck = [
-						...parsedComment.customBlocks,
-						...parsedComment.seeBlocks,
-					];
-					if (parsedComment.remarksBlock) {
-						blocksToCheck.push(parsedComment.remarksBlock);
-					}
-					// Note: we intentionally skip parsedComment.privateRemarks to allow file path links there
-					if (parsedComment.deprecatedBlock) {
-						blocksToCheck.push(parsedComment.deprecatedBlock);
-					}
-					if (parsedComment.returnsBlock) {
-						blocksToCheck.push(parsedComment.returnsBlock);
-					}
-
+					// Check all blocks except privateRemarks (we exclude privateRemarks to allow file path links there)
+					const blocksToCheck = getBlockComments(parsedComment, {
+						exclude: ["@privateRemarks"],
+					});
 					for (const block of blocksToCheck) {
 						nodesToCheck.push(block.content);
 					}
