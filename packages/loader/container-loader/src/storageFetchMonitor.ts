@@ -10,15 +10,10 @@ import type { IDeltaManagerInternalEvents } from "./deltaManager.js";
 type StorageFetchCompleteListener = () => void;
 
 /**
- * @see {@link StorageFetchMonitor} for usage.
- */
-export type IStorageFetchMonitor = IDisposable;
-
-/**
  * Monitors DeltaManager for storage fetch completion.
  * Used to delay Connected state until we know the true latest sequence number.
  */
-export class StorageFetchMonitor implements IStorageFetchMonitor {
+export class StorageFetchMonitor implements IDisposable {
 	private fetchComplete: boolean = false;
 	private _disposed: boolean = false;
 

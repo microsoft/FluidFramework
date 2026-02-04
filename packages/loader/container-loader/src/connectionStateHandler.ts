@@ -5,6 +5,7 @@
 
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
+	IDisposable,
 	IEventProvider,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
@@ -23,7 +24,7 @@ import { ConnectionState } from "./connectionState.js";
 import type { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts.js";
 import type { IDeltaManagerInternalEvents } from "./deltaManager.js";
 import type { IProtocolHandler } from "./protocol.js";
-import { StorageFetchMonitor, type IStorageFetchMonitor } from "./storageFetchMonitor.js";
+import { StorageFetchMonitor } from "./storageFetchMonitor.js";
 
 /**
  * Internal interface for DeltaManager that exposes additional properties needed
@@ -259,7 +260,7 @@ class ConnectionStateHandlerPassThrough
  */
 export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 	private catchUpMonitor: ICatchUpMonitor | undefined;
-	private storageFetchMonitor: IStorageFetchMonitor | undefined;
+	private storageFetchMonitor: IDisposable | undefined;
 	private storageFetchComplete: boolean = false;
 	private caughtUpToOps: boolean = false;
 	private readonly waitForStorageFetch: boolean;
