@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
@@ -110,7 +109,7 @@ export interface IConnectionStateHandler {
 
 export function createConnectionStateHandler(
 	inputs: IConnectionStateHandlerInputs,
-	deltaManager: IDeltaManager<unknown, unknown>,
+	deltaManager: DeltaManager<IConnectionManager>,
 	clientId?: string,
 ): ConnectionStateHandler | ConnectionStateCatchup {
 	const config = inputs.mc.config;
@@ -127,18 +126,14 @@ export function createConnectionStateHandlerCore(
 	connectedRaisedWhenCaughtUp: boolean,
 	readClientsWaitForJoinSignal: boolean,
 	inputs: IConnectionStateHandlerInputs,
-	deltaManager: IDeltaManager<unknown, unknown>,
+	deltaManager: DeltaManager<IConnectionManager>,
 	clientId?: string,
 ): ConnectionStateCatchup | ConnectionStateHandler {
 	const factory = (handler: IConnectionStateHandlerInputs): ConnectionStateHandler =>
 		new ConnectionStateHandler(handler, readClientsWaitForJoinSignal, clientId);
 
 	return connectedRaisedWhenCaughtUp
-		? new ConnectionStateCatchup(
-				inputs,
-				factory,
-				deltaManager as DeltaManager<IConnectionManager>,
-			)
+		? new ConnectionStateCatchup(inputs, factory, deltaManager)
 		: factory(inputs);
 }
 

@@ -34,7 +34,8 @@ import {
 	type IConnectionStateHandlerInputs,
 	createConnectionStateHandlerCore,
 } from "../connectionStateHandler.js";
-import type { IConnectionDetailsInternal } from "../contracts.js";
+import type { IConnectionDetailsInternal, IConnectionManager } from "../contracts.js";
+import type { DeltaManager } from "../deltaManager.js";
 import { ProtocolHandler } from "../protocol.js";
 
 class MockDeltaManagerForCatchingUp
@@ -96,7 +97,7 @@ describe("ConnectionStateHandler Tests", () => {
 			connectedRaisedWhenCaughtUp,
 			readClientsWaitForJoinSignal,
 			handlerInputs,
-			deltaManagerForCatchingUp as unknown as IDeltaManager<unknown, unknown>,
+			deltaManagerForCatchingUp as unknown as DeltaManager<IConnectionManager>,
 			undefined,
 		);
 		handler.initProtocol(protocolHandler);
@@ -446,7 +447,7 @@ describe("ConnectionStateHandler Tests", () => {
 			false, // connectedRaisedWhenCaughtUp,
 			false, // readClientsWaitForJoinSignal
 			handlerInputs,
-			deltaManagerForCatchingUp as unknown as IDeltaManager<unknown, unknown>,
+			deltaManagerForCatchingUp as unknown as DeltaManager<IConnectionManager>,
 			undefined,
 		);
 
@@ -481,7 +482,7 @@ describe("ConnectionStateHandler Tests", () => {
 			false, // connectedRaisedWhenCaughtUp,
 			false, // readClientsWaitForJoinSignal
 			handlerInputs,
-			deltaManagerForCatchingUp as unknown as IDeltaManager<unknown, unknown>,
+			deltaManagerForCatchingUp as unknown as DeltaManager<IConnectionManager>,
 			undefined,
 		);
 
