@@ -381,6 +381,140 @@ describe("Storage fetch wait for Connected state", () => {
 		await deltaConnectionServer.webSocketServer.close();
 	});
 
+	it("Container is not in Connected state while storage fetch is pending", async () => {
+		// Setup
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const baseFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+		const urlResolver = new LocalResolver();
+
+		const { loaderProps, codeDetails } = createLoader({
+			deltaConnectionServer,
+			documentServiceFactory: baseFactory,
+			urlResolver,
+		});
+
+		// Create initial container
+		const initialContainer = await createAndAttachContainerUsingProps(
+			{ ...loaderProps, codeDetails },
+			createLocalResolverCreateNewRequest(documentId),
+		);
+		await waitForContainerConnection(initialContainer);
+		initialContainer.close();
+
+		// Use deferred to block fetch and track state
+		const fetchDeferred = createDeferred<void>();
+		const fetchStartedDeferred = createDeferred<void>();
+		let containerStateWhenFetchStarted: ConnectionState | undefined;
+		// eslint-disable-next-line prefer-const
+		let containerRef: { current: IContainer | undefined } = { current: undefined };
+
+		const trackingFactory = createStorageTrackingFactory(deltaConnectionServer, {
+			onFetchMessagesStart: () => {
+				// Capture container state when fetch starts (while blocked)
+				containerStateWhenFetchStarted = containerRef.current?.connectionState;
+				fetchStartedDeferred.resolve();
+			},
+			blockUntilResolved: fetchDeferred.promise,
+		});
+
+		const loadProps: ILoaderProps = {
+			...loaderProps,
+			documentServiceFactory: trackingFactory,
+		};
+
+		// Start loading
+		const loadPromise = loadExistingContainer({
+			...loadProps,
+			request: { url: documentLoadUrl },
+		});
+
+		// Wait for fetch to start (container is now blocked)
+		await fetchStartedDeferred.promise;
+
+		// Resolve fetch to let load complete
+		fetchDeferred.resolve();
+
+		const loadedContainer = await loadPromise;
+		containerRef.current = loadedContainer;
+
+		await waitForContainerConnection(loadedContainer);
+
+		// When fetch started, container should NOT have been in Connected state
+		assert.notStrictEqual(
+			containerStateWhenFetchStarted,
+			ConnectionState.Connected,
+			"Container should not be Connected when storage fetch starts",
+		);
+
+		assert.strictEqual(
+			loadedContainer.connectionState,
+			ConnectionState.Connected,
+			"Container should be Connected after fetch completes",
+		);
+
+		loadedContainer.close();
+		await deltaConnectionServer.webSocketServer.close();
+	});
+
+	it("Container can disconnect and reconnect successfully", async () => {
+		// Setup
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const baseFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+		const urlResolver = new LocalResolver();
+
+		const { loaderProps, codeDetails } = createLoader({
+			deltaConnectionServer,
+			documentServiceFactory: baseFactory,
+			urlResolver,
+		});
+
+		// Create initial container
+		const initialContainer = await createAndAttachContainerUsingProps(
+			{ ...loaderProps, codeDetails },
+			createLocalResolverCreateNewRequest(documentId),
+		);
+		await waitForContainerConnection(initialContainer);
+		initialContainer.close();
+
+		// Load container (no blocking needed for this test)
+		const loadedContainer = await loadExistingContainer({
+			...loaderProps,
+			request: { url: documentLoadUrl },
+		});
+
+		await waitForContainerConnection(loadedContainer);
+
+		assert.strictEqual(
+			loadedContainer.connectionState,
+			ConnectionState.Connected,
+			"Container should be Connected initially",
+		);
+
+		// Disconnect
+		loadedContainer.disconnect();
+
+		assert.strictEqual(
+			loadedContainer.connectionState,
+			ConnectionState.Disconnected,
+			"Container should be Disconnected after disconnect()",
+		);
+
+		// Reconnect
+		loadedContainer.connect();
+
+		// Wait for reconnection
+		await waitForContainerConnection(loadedContainer);
+
+		assert.strictEqual(
+			loadedContainer.connectionState,
+			ConnectionState.Connected,
+			"Container should be Connected after reconnect",
+		);
+
+		loadedContainer.close();
+		await deltaConnectionServer.webSocketServer.close();
+	});
+
 	it("Handles storage fetch error gracefully", async () => {
 		// Setup
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
