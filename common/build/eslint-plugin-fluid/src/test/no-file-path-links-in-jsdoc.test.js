@@ -60,8 +60,8 @@ describe(`Do not allow file path links in JSDoc/TSDoc comments (eslint ${eslintV
 		// Error 5: @remarks block with file path link
 		const error5 = result.messages[4];
 		assert.strictEqual(error5.message, expectedErrorMessage);
-		assert.strictEqual(error5.line, 23);
-		assert.strictEqual(error5.column, 29); // 1-based, inclusive
+		assert.strictEqual(error5.line, 24);
+		assert.strictEqual(error5.column, 31); // 1-based, inclusive
 		assert.strictEqual(error5.endColumn, 53); // 1-based, exclusive
 	});
 
