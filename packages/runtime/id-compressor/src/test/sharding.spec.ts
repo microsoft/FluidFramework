@@ -342,8 +342,8 @@ describe("IdCompressor Sharding", () => {
 			// We can verify this by checking it generates sequential IDs again
 
 			// After realignment to 6 and exiting sharding, generates sequential -7
-			const nextId = parent.generateCompressedId();
-			assert.equal(nextId, -7);
+			assert.equal(parent.generateCompressedId(), -7);
+			assert.equal(parent.generateCompressedId(), -8);
 		});
 
 		it("resumes eager final ID allocation after unsharding", () => {
