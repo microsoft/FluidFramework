@@ -66,7 +66,7 @@ function doesCommentBodyStartWithHyphen(commentBodyNode: DocNode): HyphenPattern
 /**
  * JSDoc/TSDoc tags do not require a hyphen after them.
  */
-const rule: Rule.RuleModule = {
+export const rule: Rule.RuleModule = {
 	meta: {
 		type: "problem",
 		docs: {
@@ -129,5 +129,3 @@ const rule: Rule.RuleModule = {
 		};
 	},
 };
-
-export = rule;

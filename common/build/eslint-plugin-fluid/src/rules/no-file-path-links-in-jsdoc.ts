@@ -34,7 +34,7 @@ function isFilePath(linkTarget: string): boolean {
 	// Remove any pipe separator and text after it (e.g., "./path|text" -> "./path")
 	const target = linkTarget.split("|")[0]?.trim();
 	return (
-		!!target && (target.startsWith("/") || target.startsWith("./") || target.startsWith("../"))
+		target !== undefined && (target.startsWith("/") || target.startsWith("./") || target.startsWith("../"))
 	);
 }
 
@@ -124,7 +124,7 @@ function findFilePathLinks(node: DocNode): TextRange[] {
  * Eslint rule to disallow file path link syntax in JSDoc/TSDoc comments.
  * File path links are allowed in `@privateRemarks` blocks.
  */
-const rule: Rule.RuleModule = {
+export const rule: Rule.RuleModule = {
 	meta: {
 		type: "problem",
 		docs: {
@@ -200,5 +200,3 @@ const rule: Rule.RuleModule = {
 		};
 	},
 };
-
-export = rule;

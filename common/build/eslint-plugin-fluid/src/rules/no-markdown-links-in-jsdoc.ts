@@ -4,9 +4,12 @@
  */
 
 import { fail } from "node:assert";
-import type { Rule } from "eslint";
+import { assert } from "node:console";
+
 import type { DocNode, DocPlainText } from "@microsoft/tsdoc";
 import { DocNodeKind, TSDocParser } from "@microsoft/tsdoc";
+import type { Rule } from "eslint";
+
 import { getBlockComments } from "./tsdoc-utils.js";
 
 interface MarkdownLinkInfo {
@@ -35,11 +38,18 @@ function findMarkdownLinksInPlainText(plainTextNode: DocPlainText): MarkdownLink
 	// ([^)]*)   - Capture group 2: Match zero or more characters that are not a closing parenthesis (the link target)
 	// \)        - Match the closing parenthesis
 	const matches = plainTextNode.text.matchAll(/\[([^\]]*)\]\(([^)]*)\)/g);
+
+	const linkText = matches[1];
+	assert(linkText !== undefined, "Full match should contain expected capture groups.");
+
+	const linkTarget = matches[2];
+	assert(linkTarget !== undefined, "Full match should contain expected capture groups.");
+
 	return Array.from(matches, (match) => ({
-		linkText: match[1] ?? "",
-		linkTarget: match[2] ?? "",
-		startIndex: textRange.pos + (match.index ?? 0),
-		endIndex: textRange.pos + (match.index ?? 0) + match[0].length,
+		linkText: linkText,
+		linkTarget: linkTarget,
+		startIndex: textRange.pos + match.index,
+		endIndex: textRange.pos + match.index + match[0].length,
 	}));
 }
 
@@ -71,7 +81,7 @@ function findMarkdownLinks(commentBodyNode: DocNode): MarkdownLinkInfo[] {
  * Eslint rule to disallow Markdown link syntax in JSDoc/TSDoc comments.
  * `{@link}` syntax should be used instead.
  */
-const rule: Rule.RuleModule = {
+export const rule: Rule.RuleModule = {
 	meta: {
 		type: "problem",
 		docs: {
@@ -154,5 +164,3 @@ const rule: Rule.RuleModule = {
 		};
 	},
 };
-
-export = rule;
