@@ -273,6 +273,9 @@ importers:
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
+      '@types/node':
+        specifier: ~20.19.30
+        version: 20.19.30
       '@types/sort-json':
         specifier: ^2.0.3
         version: 2.0.3
