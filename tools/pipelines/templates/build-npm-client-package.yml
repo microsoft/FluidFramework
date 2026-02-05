@@ -261,6 +261,12 @@ extends:
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
 
+              - checkout: ff_pipeline_host
+                # Specifying the path explicitly guarantees consistent location regardless of whether we check out
+                # a single repository or multiple.
+                path: s/ff_pipeline_host
+                clean: true
+
               - script: |
                   echo "Pipeline.Workspace"
                   echo $(Pipeline.Workspace)
