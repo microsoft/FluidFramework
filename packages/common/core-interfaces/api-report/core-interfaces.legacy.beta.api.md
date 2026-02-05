@@ -5,6 +5,13 @@
 ```ts
 
 // @public
+export class BrandedType<out Brand> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected constructor();
+    protected readonly brand: (dummy: never) => Brand;
+}
+
+// @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 // @beta @sealed @system
@@ -416,13 +423,13 @@ export type Listeners<T extends object> = {
 
 // @public
 export const LogLevel: {
-    readonly verbose: 10;
-    readonly default: 20;
-    readonly error: 30;
+    readonly verbose: 10 & BrandedType<"LogLevel">;
+    readonly default: 20 & BrandedType<"LogLevel">;
+    readonly error: 30 & BrandedType<"LogLevel">;
 };
 
 // @public
-export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+export type LogLevel = (number & BrandedType<"LogLevel">) | 10 | 20 | 30;
 
 // @public
 export type Off = () => void;

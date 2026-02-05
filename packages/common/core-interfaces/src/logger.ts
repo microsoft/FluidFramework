@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { BrandedType } from "./brandedType.js";
+
 /**
  * Property types that can be logged.
  *
@@ -55,16 +57,20 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
  * @public
  */
 export const LogLevel = {
-	verbose: 10, // To log any verbose event for example when you are debugging something.
-	default: 20, // Default log level
-	error: 30, // To log errors.
-} as const;
+	verbose: 10 as 10 & BrandedType<"LogLevel">, // To log any verbose event for example when you are debugging something.
+	default: 20 as 20 & BrandedType<"LogLevel">, // Default log level
+	error: 30 as 30 & BrandedType<"LogLevel">, // To log errors.
+} as const satisfies Record<string, LogLevel>;
 
 /**
  * Specify a level to the log to filter out logs based on the level.
+ *
+ * @remarks
+ * `10 | 20 | 30` are allowed without branding to preserve historical compatibility.
+ *
  * @public
  */
-export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+export type LogLevel = (number & BrandedType<"LogLevel">) | 10 | 20 | 30;
 
 /**
  * Interface to output telemetry events.
