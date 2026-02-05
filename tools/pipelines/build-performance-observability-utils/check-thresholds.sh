@@ -4,7 +4,6 @@
 # Licensed under the MIT License.
 
 # Check build performance thresholds and fail the pipeline if exceeded
-# Configure Azure DevOps notifications to alert on pipeline failure
 #
 # Required environment variables:
 #   MODE                      - "public" or "internal" (determines input filename and which threshold to check)
@@ -57,7 +56,7 @@ AVG_DURATION=$(jq '.summary.avgDuration' "$DATA_FILE")
 CHANGE_PERIOD=$(jq ".$CHANGE_FIELD" "$DATA_FILE")
 
 echo ""
-echo "Current metrics:"
+echo "Key metrics:"
 echo "  Average duration: ${AVG_DURATION} minutes"
 echo "  ${CHANGE_PERIOD_DAYS}-day change: ${CHANGE_PERIOD}%"
 
@@ -87,12 +86,12 @@ fi
 echo ""
 echo "=========================================="
 if [ "$SHOULD_FAIL" = "true" ]; then
-    echo "ALERT: Thresholds exceeded!"
+    echo "ALERT: Thresholds exceeded:"
     for reason in "${ALERT_REASONS[@]}"; do
         echo "  - $reason"
     done
     echo ""
-    echo "Current Metrics:"
+    echo "Key metrics:"
     echo "  - Average Duration: ${AVG_DURATION} minutes"
     echo "  - ${CHANGE_PERIOD_DAYS}-day Change: ${CHANGE_PERIOD}%"
     echo "=========================================="

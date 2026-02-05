@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 # Fetch timeline data for builds from Azure DevOps REST API
-# Retrieves detailed timeline information for each build in parallel
+# Retrieves detailed timeline data for each build in parallel
 #
 # Required environment variables:
 #   ADO_API_TOKEN  - Azure DevOps API token for authentication

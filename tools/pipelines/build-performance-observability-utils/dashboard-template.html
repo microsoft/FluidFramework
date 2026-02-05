@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FF Build Dashboard</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
-    <!-- Chart.js versions pinned for stability. Update periodically: https://www.chartjs.org/docs/latest/ -->
+    <!-- Chart.js versions pinned for stability -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <style>
@@ -102,6 +102,9 @@
             internal: { recent: { sort: { column: 'date', direction: 'desc' }, page: 1 }, longest: { sort: { column: 'duration', direction: 'desc' }, page: 1 } }
         };
         const itemsPerPage = 5;
+        // Standalone mode variables (injected by generate-html-artifact.sh)
+        // const STANDALONE_MODE = 'public'; // or 'internal'
+        // const INLINED_DATA = {...};
         const colors = {
             public: { primary: 'rgba(66, 165, 245, 1)', background: 'rgba(66, 165, 245, 0.1)', tasks: ['rgba(76, 175, 80, 0.8)', 'rgba(66, 165, 245, 0.8)', 'rgba(255, 167, 38, 0.8)', 'rgba(171, 71, 188, 0.8)', 'rgba(38, 166, 154, 0.8)', 'rgba(236, 64, 122, 0.8)'] },
             internal: { primary: 'rgba(21, 101, 192, 1)', background: 'rgba(21, 101, 192, 0.1)', tasks: ['rgba(27, 94, 32, 0.8)', 'rgba(21, 101, 192, 0.8)', 'rgba(230, 81, 0, 0.8)', 'rgba(106, 27, 154, 0.8)', 'rgba(0, 105, 92, 0.8)', 'rgba(183, 28, 28, 0.8)'] }
@@ -126,12 +129,35 @@
         }
 
         async function loadData() {
+            // Check for standalone mode (variables injected by generate-html-artifact.sh)
+            if (typeof STANDALONE_MODE !== 'undefined' && typeof INLINED_DATA !== 'undefined') {
+                const mode = STANDALONE_MODE;
+                const modeLabel = mode === 'public' ? 'PR Builds' : 'Internal Builds';
+                // Adapt UI for single-mode standalone
+                document.querySelector('.tabs')?.remove();
+                document.title = 'FF Build Dashboard - ' + modeLabel;
+                document.querySelector('.header-row h1').textContent = 'Fluid Framework Build Performance Dashboard - ' + modeLabel;
+                const otherMode = mode === 'public' ? 'internal' : 'public';
+                document.getElementById(otherMode + '-content')?.remove();
+                document.getElementById(mode + '-content').classList.add('active');
+                // Load inlined data
+                if (INLINED_DATA) {
+                    dashboardData[mode] = INLINED_DATA;
+                    document.getElementById(mode + '-loading').style.display = 'none';
+                    document.getElementById(mode + '-dashboard').style.display = 'block';
+                    renderDashboard(mode, dashboardData[mode]);
+                } else {
+                    document.getElementById(mode + '-loading').style.display = 'none';
+                    document.getElementById(mode + '-no-data').style.display = 'block';
+                }
+                return;
+            }
+            // Multi-mode: fetch data from JSON files
             const [prResult, internalResult] = await Promise.allSettled([
                 fetch('data/public-data.json').then(r => r.ok ? r.json() : null),
                 fetch('data/internal-data.json').then(r => r.ok ? r.json() : null)
             ]);
             if (prResult.status === 'fulfilled' && prResult.value) {
-                // Data is pre-processed by the pipeline, use directly
                 dashboardData.public = prResult.value;
                 document.getElementById('public-loading').style.display = 'none';
                 document.getElementById('public-dashboard').style.display = 'block';
@@ -141,7 +167,6 @@
                 document.getElementById('public-no-data').style.display = 'block';
             }
             if (internalResult.status === 'fulfilled' && internalResult.value) {
-                // Data is pre-processed by the pipeline, use directly
                 dashboardData.internal = internalResult.value;
                 document.getElementById('internal-loading').style.display = 'none';
                 document.getElementById('internal-dashboard').style.display = 'block';

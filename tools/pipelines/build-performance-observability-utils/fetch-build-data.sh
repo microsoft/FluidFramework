@@ -36,7 +36,7 @@ else
 fi
 
 echo "=========================================="
-echo "Fetching build metrics"
+echo "Fetching build data"
 echo "=========================================="
 echo "Mode: $MODE"
 echo "Organization: $ORG"
@@ -70,4 +70,4 @@ if ! jq empty "$OUTPUT_FILE" 2>/dev/null; then
     exit 1
 fi
 
-echo "Build data fetched successfully!"
+echo "Build data fetched successfully"

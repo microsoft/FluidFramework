@@ -8,8 +8,8 @@
 # and whether the pipeline should skip (when schedule doesn't match project)
 #
 # Required environment variables:
-#   IS_PUBLIC         - "True" if running in public project
-#   BUILD_REASON      - ADO build reason (e.g., "Schedule", "Manual")
+#   IS_PUBLIC          - "True" if running in public project
+#   BUILD_REASON       - ADO build reason (e.g., "Schedule", "Manual")
 #   CRON_SCHEDULE_NAME - Display name of the cron schedule (if scheduled)
 #
 # Outputs (via ADO logging commands):

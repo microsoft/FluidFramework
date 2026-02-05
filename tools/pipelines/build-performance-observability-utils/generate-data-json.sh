@@ -3,8 +3,8 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# Generate combined data JSON from builds and timeline data
-# Combines raw build data with timeline data, then processes into aggregated metrics
+# Generates combined data JSON from builds and timeline data
+# Combines initial build data with timeline data and processes into aggregated metrics
 #
 # Required environment variables:
 #   MODE       - "public" or "internal" (determines output filename)
@@ -34,7 +34,7 @@ else
     OUTPUT_FILE="$OUTPUT_DIR/internal-data.json"
 fi
 
-# Intermediate raw file (will be deleted after processing)
+# Intermediate raw data file
 RAW_FILE="$METRICS_PATH/raw-combined.json"
 
 # Combine timeline files into a single object keyed by build ID
@@ -48,8 +48,7 @@ for timeline_file in "$METRICS_PATH/timelines"/*.json; do
     fi
 done | jq -s 'add // {}' > "$TIMELINES_FILE"
 
-# Create intermediate raw JSON with builds and timelines
-echo "Creating intermediate raw JSON..."
+# Create intermediate JSON with builds and timelines
 jq -n \
     --arg generatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --slurpfile builds "$BUILDS_FILE" \

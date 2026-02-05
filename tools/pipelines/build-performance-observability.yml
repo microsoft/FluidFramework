@@ -2,8 +2,7 @@
 # Licensed under the MIT License.
 
 # build-performance-observability pipeline
-# This pipeline collects build metrics using ADO REST APIs and generates an HTML dashboard
-# which is uploaded to an Azure Static Web App (ASWA).
+# This pipeline collects build metrics using ADO REST APIs and generates an HTML dashboard.
 # When run from the "public" project: collects PR build metrics
 # When run from the "internal" project: collects internal build metrics
 
@@ -13,7 +12,7 @@ parameters:
   type: boolean
   default: false
 - name: forceAlertFailure
-  displayName: Force threshold failure (for testing notifications)
+  displayName: Force threshold failure (for testing)
   type: boolean
   default: false
 
@@ -161,7 +160,7 @@ extends:
             filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/generate-data-json.sh'
 
         - task: Bash@3
-          displayName: Prepare deployment package
+          displayName: Prepare deployment data
           condition: eq(variables['detect.shouldRun'], 'true')
           env:
             ASWA_HOSTNAME: $(ASWA_HOSTNAME)
@@ -182,7 +181,7 @@ extends:
             SOURCE_DIR: $(Build.SourcesDirectory)
           inputs:
             targetType: 'filePath'
-            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/generate-standalone-html.sh'
+            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/generate-html-artifact.sh'
 
         templateContext:
           outputParentDirectory: $(Build.ArtifactStagingDirectory)
