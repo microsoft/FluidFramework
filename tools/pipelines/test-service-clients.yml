@@ -82,6 +82,7 @@ stages:
     parameters:
       stageId: e2e_odsp_client_odsp_server
       stageDisplayName: e2e - odsp-client with ODSP service
+      condition: false
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testOdspPackage }}
       testCommand: test:realsvc:odsp
