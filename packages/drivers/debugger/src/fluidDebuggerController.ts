@@ -321,7 +321,6 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		fetchedOps: ISequencedDocumentMessage[],
 	): Promise<void> {
 		let _fetchedOps = fetchedOps;
-
 		while (true) {
 			if (_fetchedOps.length === 0) {
 				this.ui.updateNextOpText([]);

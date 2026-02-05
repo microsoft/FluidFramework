@@ -200,7 +200,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		await mockGetFileLink(Promise.resolve(sharelink), async () => {
 			return urlResolverWithShareLinkFetcher.resolve({ url });
 		});
-
 		const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -212,7 +211,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		await mockGetFileLink(Promise.resolve(sharelink), async () => {
 			return urlResolverWithoutShareLinkFetcher.resolve({ url });
 		});
-
 		const actualShareLink = await urlResolverWithoutShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -258,7 +256,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		});
 
 		assert(absoluteUrl !== undefined, "Absolute url should be defined!!");
-
 		const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -283,7 +280,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		});
 
 		assert(absoluteUrl === undefined, "Absolute url should be undefined!!");
-
 		const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -300,7 +296,6 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		});
 
 		assert(absoluteUrl === undefined, "Absolute url should be undefined!!");
-
 		const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);

@@ -573,7 +573,6 @@ export class ReplayTool {
 			? this.mainDocument.originalSummarySequenceNumbers.filter((s) => s >= this.args.from)
 			: [];
 		let nextSnapPoint = -1;
-
 		while (true) {
 			const currentOp = this.mainDocument.currentOp;
 			if (nextSnapPoint <= currentOp) {

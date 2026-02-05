@@ -402,7 +402,6 @@ describe("OdspDeltaStorageWithCache", () => {
 		stream: IStream<ISequencedDocumentMessage[]>,
 	): Promise<ISequencedDocumentMessage[]> {
 		const ops: ISequencedDocumentMessage[] = [];
-
 		while (true) {
 			const result = await stream.read();
 			if (result.done) {

@@ -104,7 +104,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		 * Encoded handle or path to the node
 		 */
 		private readonly _summaryHandleId: string,
-
 		private _changeSequenceNumber: number,
 		/**
 		 * Summary reference sequence number, i.e. last sequence number seen when last successful summary was created

@@ -47,7 +47,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 			keys.forEach((splitKey) => {
 				value = value[splitKey];
 			});
-
 			return value;
 		}
 
@@ -88,7 +87,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 
 			filteredCollection = filteredCollection.sort(compare);
 		}
-
 		return filteredCollection;
 	}
 

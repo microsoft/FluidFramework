@@ -1684,9 +1684,7 @@ export class ContainerRuntime
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
-
 		this._getClientId = () => context.clientId;
-
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
 			if (context.getAbsoluteUrl === undefined) {
@@ -5466,7 +5464,6 @@ export class ContainerRuntime
 					entry = factory.resolvePriorInstantiation(entry);
 				}
 			}
-
 			entry.extension.onNewUse(...useContext);
 		}
 		return entry.interface as T;

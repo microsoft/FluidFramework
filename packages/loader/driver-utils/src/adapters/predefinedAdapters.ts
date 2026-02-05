@@ -50,7 +50,6 @@ export function applyStorageCompression(
 function applyStorageCompressionInternal(
 	constructor: new (
 		documentServiceFactory: IDocumentServiceFactory,
-
 		config: ICompressionStorageConfig,
 	) => IDocumentServiceFactory,
 	documentServiceFactory: IDocumentServiceFactory,
