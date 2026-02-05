@@ -396,7 +396,7 @@ describe("renderTypeFactoryTypeScript", () => {
 			const invalidType = { _kind: "__invalid__" } as unknown as TypeFactoryType;
 			assert.throws(
 				() => renderTypeFactoryTypeScript(invalidType, () => ""),
-				/Unsupported type when formatting helper types: invalid/,
+				/Unsupported type when formatting helper types: __invalid__/,
 			);
 		});
 
