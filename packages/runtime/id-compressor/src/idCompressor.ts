@@ -161,9 +161,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		localSessionIdOrDeserialized: SessionId | Sessions,
 		private readonly logger: ITelemetryLoggerExt | undefined,
 		/**
-		 * The version of the document this compressor was created from or deserialized from.
-		 * This version determines what features are available and what format will be used for serialization.
-		 * Documents with version less than 3 cannot use sharding.
+		 * The version this compressor will write out.
+		 * This applies to both `serialize` and creation range functions.
+		 * This number also determines what features are available (e.g. sharding support starts at V3).
 		 */
 		private readonly writeVersion: SerializationVersion,
 	) {
@@ -287,10 +287,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			);
 		}
 
-		// Determine current sharding state
-		const isFirstShard = this.shardingState === undefined;
 		const currentStride = this.shardingState?.currentStride ?? 1;
-
 		const newStride = currentStride * (newShardCount + 1);
 
 		// ID usage is exponential in stride count. Limit to practical size to avoid overflow.
@@ -298,10 +295,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			throw new Error("Sharding limit reached.");
 		}
 
-		// Store parent's localGenCount before creating shards
-		const parentLocalGenCountBeforeShard = this.localGenCount;
-
-		if (isFirstShard) {
+		if (this.shardingState === undefined) {
 			// First time sharding - initialize state
 			this.shardingState = {
 				currentStride: newStride,
@@ -309,69 +303,50 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				activeChildIds: new Set(),
 			};
 		} else {
-			// Already in sharding mode, shard out current stride
-			assert(this.shardingState !== undefined, "Sharding state must exist");
 			this.shardingState.currentStride = newStride;
 		}
 
-		// Create serialized shards for each child
+		// Cache to avoid repeating per child
+		const serialized = this.serialize(true);
+		const { localGenCount: parentGenCount } = this;
+
 		const shards: SerializedIdCompressorWithOngoingSession[] = [];
 
-		// Children are positioned at consecutive localGenCount values after parent
-		// This ensures collision-free generation without needing absolute offsets
+		// Children are positioned at consecutive positions within the parents current stride cycle
+		// e.g. if parent owns the "evens" space (-2, -4, -6, ...) and is sharded into 3 (two children)
+		// while at -8, then the child shards will start at -10 and -12 with a stride of 6
 		for (let i = 1; i <= newShardCount; i++) {
-			// Generate unique UUID for this child
 			const childShardId = createSessionId();
-
-			// Add child ID to active set
 			this.shardingState.activeChildIds.add(childShardId);
 
-			// Create a child shard positioned at parent's localGenCount + i
-			const childShard = this.createChildShard(
-				newStride,
-				parentLocalGenCountBeforeShard + i * currentStride,
-				childShardId,
+			const childLocalGenCount = parentGenCount + i * currentStride;
+
+			// This code results in a double roundtrip, but is probably plenty fast enough for scenarios that need sharding,
+			// as they necessarily have process boundaries to deal with.
+			// If this ever became an issue we can implement a fast clone of compressors
+			const child = deserializeIdCompressor(
+				serialized,
+				this.writeVersion,
+			) as IdCompressor;
+			const genCountJump = childLocalGenCount - parentGenCount;
+			assert(
+				child.localGenCount === parentGenCount && genCountJump > 0,
+				"Child offsets incorrectly calculated.",
 			);
-			shards.push(childShard);
+
+			child.normalizer.addLocalRange(child.localGenCount + 1, genCountJump);
+			child.localGenCount = childLocalGenCount;
+			child.shardingState = {
+				currentStride: newStride,
+				originalStride: newStride,
+				activeChildIds: new Set(),
+				shardId: childShardId,
+			};
+
+			shards.push(child.serialize(true));
 		}
 
 		return shards;
-	}
-
-	/**
-	 * Helper method to create a child shard with specific sharding state.
-	 * Creates a serialized compressor that has:
-	 * - Same finalized state (clusters, sessions) as parent
-	 * - Same normalizer as parent (child is a fork and recognizes pre-shard IDs)
-	 * - Positioned at childLocalGenCount (consecutive positioning ensures no collisions)
-	 * - Specified sharding state
-	 */
-	private createChildShard(
-		stride: number,
-		childLocalGenCount: number,
-		childShardId: SessionId,
-	): SerializedIdCompressorWithOngoingSession {
-		// This code results in a double roundtrip, but is probably plenty fast enough for scenarios that need sharding,
-		// as they necessarily have process boundaries to deal with.
-		// If this ever became an issue we can implement a fast clone of compressors
-		const child = deserializeIdCompressor(
-			this.serialize(true),
-			this.writeVersion,
-		) as IdCompressor;
-		const genCountJump = childLocalGenCount - this.localGenCount;
-		assert(
-			child.localGenCount === this.localGenCount && genCountJump > 0,
-			"Child offsets incorrectly calculated.",
-		);
-		child.normalizer.addLocalRange(child.localGenCount + 1, genCountJump);
-		child.localGenCount = childLocalGenCount;
-		child.shardingState = {
-			currentStride: stride,
-			originalStride: stride, // Child's original stride is what it was created with
-			activeChildIds: new Set(), // Child starts with no children
-			shardId: childShardId, // Store the child's unique UUID
-		};
-		return child.serialize(true);
 	}
 
 	/**
@@ -403,7 +378,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		// Determine stride to use for realignment based on state after removing this child
 		const { activeChildIds, currentStride, originalStride } = this.shardingState;
-		// Will there be children left after removing this one?
 		const willHaveChildrenAfterRemoval = activeChildIds.size > 1;
 		const activeStride = willHaveChildrenAfterRemoval ? currentStride : originalStride;
 
@@ -418,19 +392,18 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		// Remove child from active set
-		this.shardingState.activeChildIds.delete(childShardId);
+		activeChildIds.delete(childShardId);
 
 		// If all children are unsharded, restore original stride
-		if (this.shardingState.activeChildIds.size === 0) {
+		if (activeChildIds.size === 0) {
 			// Restore original stride
 			this.shardingState.currentStride = this.shardingState.originalStride;
 
-			// If originalStride === 1, we're the root with no children - exit sharding entirely
+			// If originalStride === 1, we're the root with no children, so exit sharding mode
+			// Otherwise, we're a shard that's now a leaf again, keep sharding state
 			if (this.shardingState.originalStride === 1) {
 				this.shardingState = undefined;
-				// Future generateCompressedId() calls will check for eager finals again
 			}
-			// Otherwise, we're a shard that's now a leaf again - keep sharding state
 		}
 	}
 
