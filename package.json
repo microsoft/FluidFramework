@@ -394,7 +394,8 @@
 			]
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.52.11": "patches/@microsoft__api-extractor@7.52.11.patch"
+			"@microsoft/api-extractor@7.52.11": "patches/@microsoft__api-extractor@7.52.11.patch",
+			"@tylerbu/sorted-btree-es6@2.1.0": "patches/@tylerbu__sorted-btree-es6@2.1.0.patch"
 		},
 		"onlyBuiltDependencies": [
 			"@azure/msal-node-extensions",
