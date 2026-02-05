@@ -366,20 +366,19 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		const childShardId = shardId.shardId;
+		const { activeChildIds, currentStride, originalStride } = this.shardingState;
 
 		// Verify this child belongs to us
-		if (!this.shardingState.activeChildIds.has(childShardId)) {
+		if (!activeChildIds.delete(childShardId)) {
 			throw new Error(
 				`Cannot unshard child with ID ${childShardId}: not in active children set`,
 			);
 		}
 
 		const childHighestGenCount = shardId.localGenCount;
-
-		// Determine stride to use for realignment based on state after removing this child
-		const { activeChildIds, currentStride, originalStride } = this.shardingState;
-		const willHaveChildrenAfterRemoval = activeChildIds.size > 1;
-		const activeStride = willHaveChildrenAfterRemoval ? currentStride : originalStride;
+		const isLeaf = activeChildIds.size === 0;
+		// If we are now a leaf, resume using original stride
+		const activeStride = isLeaf ? originalStride : currentStride;
 
 		// Realign parent to next position in its sequence if child is ahead
 		if (childHighestGenCount > this.localGenCount) {
@@ -391,12 +390,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			this.localGenCount += count;
 		}
 
-		// Remove child from active set
-		activeChildIds.delete(childShardId);
-
-		// If all children are unsharded, restore original stride
-		if (activeChildIds.size === 0) {
-			// Restore original stride
+		if (isLeaf) {
 			this.shardingState.currentStride = this.shardingState.originalStride;
 
 			// If originalStride === 1, we're the root with no children, so exit sharding mode
