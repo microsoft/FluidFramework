@@ -186,14 +186,14 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	addNoChangeConstraintOnRevert(): void;
 
 	/**
-	 * Add a constraint that, for this change to apply, the field at the given path must not have shallow changes when this change is applied.
+	 * Add a constraint that, for this change to apply, the field at the given path must be in the same state it was in before this change was authored
 	 * Shallow changes are changes to the field's immediate structure (e.g., changing a top-level field on a node, insert/remove/move in sequence field)
 	 * @param path - The path to the field that must not have shallow changes.
 	 */
 	addShallowChangeConstraint(path: FieldUpPath): void;
 
 	/**
-	 * Add a constraint that, for the revert of this change to apply, the field at the given path must not have shallow changes when the revert is applied.
+	 * Add a constraint that, for the revert of this change to apply, the field at the given path must be in the same state it was in immediately before the revert is applied as it was after this change was applied.
 	 * @param path - The path to the field that must not have shallow changes when reverting a change.
 	 */
 	addShallowChangeConstraintOnRevert(path: FieldUpPath): void;

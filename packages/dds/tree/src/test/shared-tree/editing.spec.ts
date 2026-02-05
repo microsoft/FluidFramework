@@ -3531,6 +3531,31 @@ describe("Editing", () => {
 			tree.merge(branch, false);
 			expectJsonTree(tree, ["A", "X", "B"]);
 		});
+
+		it("is not violated by a nested change", () => {
+			const tree = makeTreeFromJsonSequence([{ foo: ["A"] }], {
+				codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+			});
+			const branch = tree.branch();
+
+			branch.transaction.start(false);
+			branch.editor.addShallowChangeConstraint({ parent: rootNode, field: brand("foo") });
+			branch.editor
+				.sequenceField({
+					parent: {
+						parent: rootNode,
+						parentField: brand("foo"),
+						parentIndex: 0,
+					},
+					field: brand(""),
+				})
+				.insert(0, chunkFromJsonTrees(["X"]));
+			branch.transaction.commit();
+
+			expectJsonTree(branch, [{ foo: ["X", "A"] }]);
+			tree.merge(branch, false);
+			expectJsonTree(tree, [{ foo: ["X", "A"] }]);
+		});
 	});
 
 	describe("No Shallow Change constraint on revert", () => {

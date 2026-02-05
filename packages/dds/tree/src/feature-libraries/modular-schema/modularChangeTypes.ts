@@ -151,9 +151,7 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 export interface FieldChange {
 	readonly fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
-	/** Keeps track of whether field shallow change constraint has been violated by this change */
 	fieldShallowChangeConstraint?: FieldShallowChangeConstraint;
-	/** Keeps track of whether field shallow change constraint will be violated when this change is reverted */
 	fieldShallowChangeConstraintOnRevert?: FieldShallowChangeConstraint;
 }
 

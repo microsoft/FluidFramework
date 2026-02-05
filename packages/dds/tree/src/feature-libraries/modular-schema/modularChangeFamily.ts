@@ -1474,22 +1474,20 @@ export class ModularChangeFamily
 				);
 			}
 
-			const baseFieldChange = baseFields?.get(fieldKey);
-			const baseHasShallowChanges =
-				baseFieldChange === undefined
-					? false
-					: getChangeHandler(
-							this.fieldKinds,
-							baseFieldChange.fieldKind,
-						).containsShallowChanges(baseFieldChange.change);
-
 			if (
-				baseHasShallowChanges &&
 				field.fieldShallowChangeConstraint !== undefined &&
 				!field.fieldShallowChangeConstraint.violated
 			) {
-				field.fieldShallowChangeConstraint = { violated: true };
-				constraintState.violationCount += 1;
+				const baseFieldChange = baseFields?.get(fieldKey);
+				if (
+					baseFieldChange !== undefined &&
+					getChangeHandler(this.fieldKinds, field.fieldKind).containsShallowChanges(
+						baseFieldChange.change,
+					)
+				) {
+					field.fieldShallowChangeConstraint = { violated: true };
+					constraintState.violationCount += 1;
+				}
 			}
 		}
 	}
@@ -1820,20 +1818,10 @@ export class ModularChangeFamily
 
 	private muteFieldChange(change: FieldChange): FieldChange {
 		const handler = getChangeHandler(this.fieldKinds, change.fieldKind);
-		const muted: FieldChange = {
-			fieldKind: change.fieldKind,
+		return {
+			...change,
 			change: brand(handler.rebaser.mute(change.change)),
 		};
-
-		// Preserve shallow change constraints when muting
-		if (change.fieldShallowChangeConstraint !== undefined) {
-			muted.fieldShallowChangeConstraint = change.fieldShallowChangeConstraint;
-		}
-		if (change.fieldShallowChangeConstraintOnRevert !== undefined) {
-			muted.fieldShallowChangeConstraintOnRevert = change.fieldShallowChangeConstraintOnRevert;
-		}
-
-		return muted;
 	}
 }
 
@@ -2981,10 +2969,6 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		const changeset = buildModularChangesetFromField({
 			path,
 			fieldChange,
-			localCrossFieldKeys: [],
-			nodeChanges: newChangeAtomIdBTree(),
-			nodeToParent: newChangeAtomIdBTree(),
-			crossFieldKeys: newCrossFieldKeyTable(),
 			idAllocator: this.idAllocator,
 			revision,
 		});
@@ -3010,10 +2994,6 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 				buildModularChangesetFromField({
 					path,
 					fieldChange,
-					localCrossFieldKeys: [],
-					nodeChanges: newChangeAtomIdBTree(),
-					nodeToParent: newChangeAtomIdBTree(),
-					crossFieldKeys: newCrossFieldKeyTable(),
 					idAllocator: this.idAllocator,
 					revision,
 				}),
@@ -3026,9 +3006,9 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 function buildModularChangesetFromField(props: {
 	path: FieldUpPath;
 	fieldChange: FieldChange;
-	nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
-	nodeToParent: ChangeAtomIdBTree<FieldId>;
-	crossFieldKeys: CrossFieldKeyTable;
+	nodeChanges?: ChangeAtomIdBTree<NodeChangeset>;
+	nodeToParent?: ChangeAtomIdBTree<FieldId>;
+	crossFieldKeys?: CrossFieldKeyTable;
 	localCrossFieldKeys?: CrossFieldKeyRange[];
 	revision: RevisionTag;
 	idAllocator?: IdAllocator;
@@ -3037,9 +3017,9 @@ function buildModularChangesetFromField(props: {
 	const {
 		path,
 		fieldChange,
-		nodeChanges,
-		nodeToParent,
-		crossFieldKeys,
+		nodeChanges = newChangeAtomIdBTree(),
+		nodeToParent = newChangeAtomIdBTree(),
+		crossFieldKeys = newCrossFieldKeyTable(),
 		idAllocator = idAllocatorFromMaxId(),
 		localCrossFieldKeys = [],
 		childId,

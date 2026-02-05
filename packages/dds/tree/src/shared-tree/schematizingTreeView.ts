@@ -649,14 +649,10 @@ export function addConstraintsToTransaction(
 			}
 			case "noShallowChange": {
 				const node = getInnerNode(constraint.node);
-				const nodeStatus = getKernel(constraint.node).getStatus();
-				if (nodeStatus !== TreeStatus.InDocument) {
-					const revertText = constraintsOnRevert ? " on revert" : "";
-					throw new UsageError(
-						`Attempted to add a "noShallowChange" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
-					);
-				}
-				assert(node.isHydrated(), "In document node must be hydrated.");
+				assert(
+					node.isHydrated(),
+					"Node must be hydrated before noShallowChange can be applied.",
+				);
 				const schema = treeNodeApi.schema(constraint.node);
 				let fieldKey: FieldKey;
 				switch (schema.kind) {

@@ -67,7 +67,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	getNestedChanges,
 	createEmpty: newGenericChangeset,
 	getCrossFieldKeys: (_change) => [],
-	containsShallowChanges: (change: GenericChangeset): boolean => change.size > 0,
+	containsShallowChanges: (_change: GenericChangeset): boolean => false,
 };
 
 function compose(
