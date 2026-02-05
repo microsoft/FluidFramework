@@ -13,11 +13,10 @@
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
 	"scripts": {
-		"build": "npm run build:compile && npm run build:readme && npm run build:test:examples",
+		"build": "npm run build:compile && npm run build:readme && npm run build:test",
 		"build:compile": "tsc --project ./tsconfig.json",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
-		"build:test": "tsc --project ./tsconfig.test.json",
-		"build:test:examples": "tsc --project ./src/test/test-cases/tsconfig.json",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob lib nyc *.tsbuildinfo",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",

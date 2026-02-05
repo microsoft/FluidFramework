@@ -4,7 +4,7 @@
 		"module": "NodeNext",
 		"strict": true,
 		"allowImportingTsExtensions": true,
-		"noEmit": true,
+		"noEmit": true
 	},
-	"include": ["./**/*"],
+	"include": ["./**/*"]
 }

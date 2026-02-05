@@ -39,18 +39,20 @@ function findMarkdownLinksInPlainText(plainTextNode: DocPlainText): MarkdownLink
 	// \)        - Match the closing parenthesis
 	const matches = plainTextNode.text.matchAll(/\[([^\]]*)\]\(([^)]*)\)/g);
 
-	const linkText = matches[1];
-	assert(linkText !== undefined, "Full match should contain expected capture groups.");
+	return Array.from(matches, (match) => {
+		const linkText = match[1];
+		assert(linkText !== undefined, "Full match should contain expected capture groups.");
 
-	const linkTarget = matches[2];
-	assert(linkTarget !== undefined, "Full match should contain expected capture groups.");
+		const linkTarget = match[2];
+		assert(linkTarget !== undefined, "Full match should contain expected capture groups.");
 
-	return Array.from(matches, (match) => ({
-		linkText: linkText,
-		linkTarget: linkTarget,
-		startIndex: textRange.pos + match.index,
-		endIndex: textRange.pos + match.index + match[0].length,
-	}));
+		return {
+			linkText: linkText!,
+			linkTarget: linkTarget!,
+			startIndex: textRange.pos + match.index!,
+			endIndex: textRange.pos + match.index! + match[0].length,
+		};
+	});
 }
 
 /**

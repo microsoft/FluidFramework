@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import * as path from "path";
+import assert from "node:assert";
+import * as path from "node:path";
 import type { ESLint } from "eslint";
 import {
 	createESLintConfig,

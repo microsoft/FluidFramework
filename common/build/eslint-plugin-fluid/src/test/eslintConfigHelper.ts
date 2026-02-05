@@ -10,26 +10,17 @@
 
 import * as path from "node:path";
 import type { ESLint } from "eslint";
-import type { Rule } from "eslint";
+import { plugin } from "../../lib/index.js";
 
 // Support testing against different ESLint versions using npm aliases
 const eslintPackage = process.env.ESLINT_PACKAGE || "eslint";
 const eslintVersion = parseInt(require(`${eslintPackage}/package.json`).version.split(".")[0]);
 const { ESLint: ESLintClass } = require(eslintPackage) as { ESLint: typeof ESLint };
-const plugin = require("../../lib/index.js");
 
 interface ConfigInput {
 	rules: Record<string, any>;
 	parserOptions?: Record<string, any>;
 	extraPlugins?: Record<string, any>;
-}
-
-interface ESLintOptions {
-	overrideConfigFile?: boolean | null;
-	overrideConfig?: any[];
-	baseConfig?: any;
-	useEslintrc?: boolean;
-	plugins?: Record<string, any>;
 }
 
 /**
@@ -38,21 +29,21 @@ interface ESLintOptions {
  * @param config - Configuration object
  * @returns ESLint options object
  */
-function createESLintConfig(config: ConfigInput): ESLintOptions {
+function createESLintConfig(config: ConfigInput): any {
 	const { rules, extraPlugins, parserOptions: customParserOptions } = config;
 
 	const parser = "@typescript-eslint/parser";
-	// When running from compiled code in lib/, we need to reference the src/ directory for test-cases
+	// Test cases are at the root level, adjacent to src/
 	const testCasesDir = __dirname.includes("lib")
-		? path.join(__dirname, "../../src/test/test-cases")
-		: path.join(__dirname, "test-cases");
+		? path.join(__dirname, "../../test-cases")
+		: path.join(__dirname, "../test-cases");
 	const parserOptions = customParserOptions || {
 		project: path.join(testCasesDir, "tsconfig.json"),
 	};
 	const pluginName = "@fluid-internal/fluid";
 
-	const eslintOptions: ESLintOptions = {
-		overrideConfigFile: eslintVersion >= 9 ? true : null,
+	const eslintOptions: any = {
+		overrideConfigFile: eslintVersion >= 9 ? true : undefined,
 	};
 
 	if (eslintVersion >= 9) {
@@ -118,12 +109,12 @@ function createESLintInstance(rulesOrConfig: Record<string, any> | ESLintInstanc
 
 /**
  * Gets the test cases directory path.
- * When running from compiled code in lib/, this references the src/ directory.
+ * Test cases are at the root level, adjacent to src/.
  */
 function getTestCasesDir(): string {
 	return __dirname.includes("lib")
-		? path.join(__dirname, "../../src/test/test-cases")
-		: path.join(__dirname, "test-cases");
+		? path.join(__dirname, "../../test-cases")
+		: path.join(__dirname, "../test-cases");
 }
 
 export {
