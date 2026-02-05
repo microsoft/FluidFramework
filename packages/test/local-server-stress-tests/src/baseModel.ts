@@ -90,18 +90,18 @@ export function makeGenerator<T extends BaseOperation>(
 	let detachedOpCount = 0;
 
 	/**
-	 * Returns true if we're in the "creation phase" (prioritize creating datastores/channels).
-	 * This is the first few operations while detached.
+	 * Returns true if we're in the detached "creation phase" (prioritize creating datastores/channels).
+	 * This is the first few operations while detached, before the DDS ops phase.
 	 */
-	const isCreationPhase = (state: LocalServerStressState): boolean =>
+	const isDetachedCreationPhase = (state: LocalServerStressState): boolean =>
 		state.client.container.attachState === AttachState.Detached &&
 		detachedOpCount < creationPhaseOps;
 
 	/**
-	 * Returns true if we're in the "DDS ops phase" (prioritize DDS operations).
+	 * Returns true if we're in the detached "DDS ops phase" (prioritize DDS operations).
 	 * This is after the creation phase but still detached.
 	 */
-	const isDdsOpsPhase = (state: LocalServerStressState): boolean =>
+	const isDetachedDdsOpsPhase = (state: LocalServerStressState): boolean =>
 		state.client.container.attachState === AttachState.Detached &&
 		detachedOpCount >= creationPhaseOps;
 
@@ -116,8 +116,16 @@ export function makeGenerator<T extends BaseOperation>(
 				asChild: state.random.bool(),
 				tag: state.tag("datastore"),
 			}),
-			// High weight during creation phase, low weight otherwise
-			(state) => (isCreationPhase(state) ? 20 : 1),
+			// High weight during detached creation phase, zero during detached DDS ops phase, low otherwise
+			(state) => {
+				if (isDetachedCreationPhase(state)) {
+					return 20;
+				}
+				if (isDetachedDdsOpsPhase(state)) {
+					return 0;
+				}
+				return 1;
+			},
 		],
 		[
 			async (state) => ({
@@ -134,8 +142,16 @@ export function makeGenerator<T extends BaseOperation>(
 				channelType: state.random.pick([...ddsModelMap.keys()]),
 				tag: state.tag("channel"),
 			}),
-			// High weight during creation phase, low weight otherwise
-			(state) => (isCreationPhase(state) ? 20 : 5),
+			// High weight during detached creation phase, zero during detached DDS ops phase, low otherwise
+			(state) => {
+				if (isDetachedCreationPhase(state)) {
+					return 20;
+				}
+				if (isDetachedDdsOpsPhase(state)) {
+					return 0;
+				}
+				return 5;
+			},
 		],
 		[
 			async () => ({
@@ -158,12 +174,12 @@ export function makeGenerator<T extends BaseOperation>(
 		],
 		[
 			DDSModelOpGenerator,
-			// Low weight during creation phase, high weight during DDS ops phase
+			// Zero weight during detached creation phase, high weight during detached DDS ops phase
 			(state) => {
-				if (isCreationPhase(state)) {
-					return 10;
+				if (isDetachedCreationPhase(state)) {
+					return 0;
 				}
-				if (isDdsOpsPhase(state)) {
+				if (isDetachedDdsOpsPhase(state)) {
 					return 150;
 				}
 				return 100;
