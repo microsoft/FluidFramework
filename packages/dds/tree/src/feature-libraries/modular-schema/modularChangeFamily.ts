@@ -793,6 +793,7 @@ export class ModularChangeFamily
 
 		const crossFieldTable: InvertTable = {
 			change: change.change,
+			isRollback,
 			entries: newChangeAtomIdRangeMap(),
 			originalFieldToContext: new Map(),
 			invertRevision: revisionForInvert,
@@ -2575,6 +2576,7 @@ export function getChangeHandler(
 
 interface InvertTable {
 	change: ModularChangeset;
+	isRollback: boolean;
 
 	// Entries are keyed on attach ID
 	entries: CrossFieldMap<NodeId>;
@@ -2814,10 +2816,37 @@ class InvertNodeManagerI implements InvertNodeManager {
 				detachIdEntry.value,
 				countToProcess,
 			);
-
 			countToProcess = nodeIdEntry.length;
+
+			const detachLocationEntry = this.table.change.rootNodes.detachLocations.getFirst(
+				detachIdEntry.value,
+				countToProcess,
+			);
+			countToProcess = detachLocationEntry.length;
+
+			if (
+				this.table.isRollback &&
+				detachLocationEntry.value !== undefined &&
+				!areEqualFieldIds(
+					normalizeFieldId(detachLocationEntry.value, this.table.change.nodeAliases),
+					this.fieldId,
+				)
+			) {
+				// These nodes are detached in the input context of the original change,
+				// and the change attaches these nodes in a different location from their detach location.
+				// The rollback change should send them back to that prior detach location.
+				this.table.invertedRoots.outputDetachLocations.set(
+					detachIdEntry.value,
+					countToProcess,
+					detachLocationEntry.value,
+				);
+			}
+
 			result = {
-				value: { nodeChange: nodeIdEntry.value, detachId: detachIdEntry.value },
+				value: {
+					nodeChange: nodeIdEntry.value,
+					detachId: detachIdEntry.value,
+				},
 				length: countToProcess,
 			};
 		} else {
@@ -4620,18 +4649,18 @@ function invertRename(
 	}
 
 	let countProcessed = length;
+	const outputDetachEntry = change.rootNodes.outputDetachLocations.getFirst(
+		newId,
+		countProcessed,
+	);
+	countProcessed = outputDetachEntry.length;
+
+	const inputDetachEntry = change.rootNodes.detachLocations.getFirst(oldId, countProcessed);
+	countProcessed = inputDetachEntry.length;
+
 	const attachEntry = getFirstAttachField(change.crossFieldKeys, newId, countProcessed);
 	countProcessed = attachEntry.length;
 	if (attachEntry.value === undefined) {
-		const outputDetachEntry = change.rootNodes.outputDetachLocations.getFirst(
-			newId,
-			countProcessed,
-		);
-		countProcessed = outputDetachEntry.length;
-
-		const inputDetachEntry = change.rootNodes.detachLocations.getFirst(oldId, countProcessed);
-		countProcessed = inputDetachEntry.length;
-
 		addNodeRename(
 			invertedRoots,
 			newId,
@@ -4640,6 +4669,7 @@ function invertRename(
 			outputDetachEntry.value ?? inputDetachEntry.value,
 		);
 
+		// The original change moves the detached node, so the inverse should also record a move back to the original location.
 		if (outputDetachEntry.value !== undefined && inputDetachEntry.value !== undefined) {
 			invertedRoots.outputDetachLocations.set(oldId, countProcessed, inputDetachEntry.value);
 		}
