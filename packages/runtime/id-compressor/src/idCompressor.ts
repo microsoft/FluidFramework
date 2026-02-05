@@ -207,12 +207,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// would fail depending on timing.
 		if (this.shardingState !== undefined) {
 			this.telemetryLocalIdCount++;
-			const { activeChildIds, currentStride, originalStride } = this.shardingState;
-
-			// Leaf nodes use their creation stride; internal nodes use the expanded stride from sharding
-			const activeStride = activeChildIds.size === 0 ? originalStride : currentStride;
-			this.normalizer.addLocalRange(this.localGenCount + 1, activeStride);
-			this.localGenCount += activeStride;
+			const { currentStride } = this.shardingState;
+			this.normalizer.addLocalRange(this.localGenCount + 1, currentStride);
+			this.localGenCount += currentStride;
 			return localIdFromGenCount(this.localGenCount);
 		}
 
@@ -366,7 +363,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		const childShardId = shardId.shardId;
-		const { activeChildIds, currentStride, originalStride } = this.shardingState;
+		const { activeChildIds, originalStride } = this.shardingState;
 
 		// Verify this child belongs to us
 		if (!activeChildIds.delete(childShardId)) {
@@ -377,15 +374,18 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		const childHighestGenCount = shardId.localGenCount;
 		const isLeaf = activeChildIds.size === 0;
-		// If we are now a leaf, resume using original stride
-		const activeStride = isLeaf ? originalStride : currentStride;
+		if (isLeaf) {
+			this.shardingState.currentStride = originalStride;
+		}
+
+		const { currentStride } = this.shardingState;
 
 		// Realign parent to next position in its sequence if child is ahead
 		if (childHighestGenCount > this.localGenCount) {
 			// Find next aligned position in parent's sequence after child's genCount
 			const distance = childHighestGenCount - this.localGenCount + 1;
-			const steps = Math.ceil(distance / activeStride);
-			const count = steps * activeStride;
+			const steps = Math.ceil(distance / currentStride);
+			const count = steps * currentStride;
 			this.normalizer.addLocalRange(this.localGenCount + 1, count);
 			this.localGenCount += count;
 		}
@@ -412,6 +412,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 		if (this.shardingState === undefined) {
 			return undefined;
+		} else {
+			if (this.shardingState.activeChildIds.size > 0) {
+				throw new Error("Cannot dispose a shard with active children.");
+			}
 		}
 
 		// Root cannot be disposed (shardId is undefined for root)

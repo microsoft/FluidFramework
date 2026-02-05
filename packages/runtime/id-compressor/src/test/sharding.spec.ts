@@ -480,7 +480,6 @@ describe("IdCompressor Sharding", () => {
 			// Should have exited sharding mode (verify by generating sequential ID)
 			// After all children unsharded, parent should generate sequentially
 
-			// localGenCount should be max of all shards: 3*4 = 12
 			const nextId = parent.generateCompressedId();
 			assert.equal(nextId, -17);
 		});
