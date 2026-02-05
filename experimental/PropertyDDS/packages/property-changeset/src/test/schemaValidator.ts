@@ -117,7 +117,6 @@ export class SchemaValidator {
 		in_skipSemver?: boolean,
 		in_allowDraft?: boolean,
 	): SchemaValidationResult;
-
 	validate(
 		in_schema: PropertySchema,
 		in_previousSchema?: PropertySchema,

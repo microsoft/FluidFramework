@@ -56,7 +56,6 @@ class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
 						collabManager: proseMirror.collabManager,
 					}),
 				) as any;
-
 				let getMountableDefaultView = async (): Promise<any> => view;
 				if (MountableView.canMount(view)) {
 					getMountableDefaultView = async (): Promise<MountableView> =>

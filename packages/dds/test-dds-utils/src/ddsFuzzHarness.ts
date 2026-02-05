@@ -1089,7 +1089,6 @@ export function setupClientContext(
 	random.handle = () => new DDSFuzzHandle(random.pick(handles), client.dataStoreRuntime);
 	return () => {
 		state.client = oldClient;
-
 		state.random.handle = oldHandle;
 	};
 }

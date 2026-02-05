@@ -160,7 +160,6 @@ describeCompat("TableDocument", "LoaderCompat", (getTestObjectProvider) => {
 				2,
 				2,
 			);
-
 			assert.throws(() => slice.getCellValue(-1, 0));
 			assert.throws(() => slice.getCellValue(3, 0));
 			assert.throws(() => slice.getCellValue(0, -1));

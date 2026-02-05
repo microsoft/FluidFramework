@@ -46,7 +46,6 @@ export interface ICollaborativeInputState {
  * Given a {@link @fluidframework/sequence#SharedString}, will produce a collaborative input element.
  * @internal
  */
-
 export class CollaborativeInput extends React.Component<
 	ICollaborativeInputProps,
 	ICollaborativeInputState
