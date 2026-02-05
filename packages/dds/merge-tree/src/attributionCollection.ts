@@ -393,7 +393,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		const { channels } = summary;
 		assert(
 			// Destructuring here would require renaming the variables, since seqs is declared below
-			// eslint-disable-next-line unicorn/consistent-destructuring
+
 			summary.seqs.length === summary.posBreakpoints.length,
 			0x445 /* Invalid attribution summary blob provided */,
 		);
