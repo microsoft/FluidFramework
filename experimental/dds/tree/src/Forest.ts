@@ -5,6 +5,7 @@
 
 import { assert } from '@fluidframework/core-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
+import { diffAgainst } from '@tylerbu/sorted-btree-es6/extended/diffAgainst';
 
 import { compareBtrees, compareFiniteNumbers, copyPropertyIfDefined, fail } from './Common.js';
 import { NodeId, TraitLabel } from './Identifiers.js';
@@ -481,7 +482,8 @@ export class Forest {
 		const changed: NodeId[] = [];
 		const removed: NodeId[] = [];
 		const added: NodeId[] = [];
-		this.nodes.diffAgainst(
+		diffAgainst(
+			this.nodes,
 			forest.nodes,
 			(id) => {
 				removed.push(id);

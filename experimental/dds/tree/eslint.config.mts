@@ -16,6 +16,24 @@ const config: Linter.Config[] = [
 			'@typescript-eslint/no-unsafe-return': 'off',
 			'import-x/no-deprecated': 'off',
 			'@fluid-internal/fluid/no-unchecked-record-access': 'off',
+			'import-x/no-internal-modules': [
+				'error',
+				{
+					allow: [
+						// From base config
+						'@fluid-example/*/internal',
+						'@fluid-experimental/*/internal',
+						'@fluid-internal/*/internal',
+						'@fluid-private/*/internal',
+						'@fluid-tools/*/internal',
+						'@fluidframework/*/internal',
+						'@fluid-experimental/**',
+						'*/index.js',
+						// Package-specific
+						'@tylerbu/sorted-btree-es6/**',
+					],
+				},
+			],
 		},
 	},
 	{
