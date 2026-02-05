@@ -63,6 +63,8 @@ export function createSampledLogger(
 		monitoringContext.config.getBoolean("Fluid.Telemetry.DisableSampling") ?? false;
 
 	const sampledLogger = {
+		// !!! bad - assumes no change - just to pass compile
+		minLogLevel: logger.minLogLevel,
 		send: (event: ITelemetryBaseEvent): void => {
 			// The sampler uses the following logic for sending events:
 			// 1. If isSamplingDisabled is true, then this means events should be unsampled. Therefore we send the event without any checks.

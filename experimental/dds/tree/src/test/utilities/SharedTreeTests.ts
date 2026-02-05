@@ -5,7 +5,7 @@
 
 import { strict as assert } from 'assert';
 
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent, ITelemetryBaseLogger, LogLevel } from '@fluidframework/core-interfaces';
 import { SummaryType } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import {
@@ -991,6 +991,7 @@ export function runSharedTreeOperationsTests(
 
 		describe('telemetry', () => {
 			class LoggerThatOnlySeesSharedTreeEvents implements ITelemetryBaseLogger {
+				public readonly minLogLevel = LogLevel.default;
 				public constructor(private readonly additionalFilter: (event: ITelemetryBaseEvent) => boolean = (e) => true) {}
 				public events: ITelemetryBaseEvent[] = [];
 				public send(event: ITelemetryBaseEvent) {

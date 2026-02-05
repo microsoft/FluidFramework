@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent, LogLevel } from '@fluidframework/core-interfaces';
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
@@ -23,6 +23,7 @@ async function setupHeartbeat() {
 		localMode: false,
 		logger: {
 			send: (event) => !event.eventName.includes('IdCompressor') && events.push(event),
+			minLogLevel: LogLevel.default,
 		},
 		allowInvalid: true,
 	});

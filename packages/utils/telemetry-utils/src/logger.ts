@@ -176,6 +176,8 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 */
 	public abstract send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
+	public abstract readonly minLogLevel: LogLevel;
+
 	/**
 	 * Send a telemetry event with the logger
 	 *
@@ -317,6 +319,10 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	public constructor(private readonly logger: ITelemetryBaseLogger) {}
 
+	public get minLogLevel(): LogLevel {
+		return this.logger.minLogLevel;
+	}
+
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
@@ -385,7 +391,7 @@ export function createChildLogger(props?: {
  * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events.
  */
-export class ChildLogger extends TelemetryLogger {
+class ChildLogger extends TelemetryLogger {
 	/**
 	 * Create child logger
 	 * @param baseLogger - Base logger to use to output events. If undefined, proper child logger
@@ -438,7 +444,11 @@ export class ChildLogger extends TelemetryLogger {
 			return child;
 		}
 
-		return new ChildLogger(baseLogger ?? { send(): void {} }, namespace, properties);
+		return new ChildLogger(
+			baseLogger ?? { send(): void {}, minLogLevel: LogLevel.error },
+			namespace,
+			properties,
+		);
 	}
 
 	private constructor(
@@ -454,7 +464,7 @@ export class ChildLogger extends TelemetryLogger {
 		}
 	}
 
-	public get minLogLevel(): LogLevel | undefined {
+	public get minLogLevel(): LogLevel {
 		return this.baseLogger.minLogLevel;
 	}
 

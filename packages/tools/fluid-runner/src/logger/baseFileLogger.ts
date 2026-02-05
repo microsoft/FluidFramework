@@ -6,7 +6,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 
 import type { IFileLogger } from "./fileLogger.js";
 
@@ -30,6 +30,8 @@ export abstract class BaseFileLogger implements IFileLogger {
 		protected readonly eventsPerFlush: number = 50,
 		protected readonly defaultProps?: Record<string, string | number>,
 	) {}
+
+	public abstract readonly minLogLevel: LogLevel;
 
 	public send(event: ITelemetryBaseEvent): void {
 		// eslint-disable-next-line no-param-reassign

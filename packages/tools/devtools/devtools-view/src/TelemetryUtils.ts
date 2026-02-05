@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+import {
+	LogLevel,
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import React from "react";
@@ -43,6 +44,10 @@ export function useLogger(): ITelemetryLoggerExt | undefined {
  */
 export class ConsoleVerboseLogger implements ITelemetryBaseLogger {
 	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
+
+	public get minLogLevel(): LogLevel {
+		return this.baseLogger?.minLogLevel ?? LogLevel.default;
+	}
 
 	public send(event: ITelemetryBaseEvent): void {
 		// Deliberately using console.debug() instead of console.log() so the events are only shown when the console's
@@ -100,6 +105,10 @@ export const useTelemetryOptIn = (): [
  */
 export class TelemetryOptInLogger implements ITelemetryBaseLogger {
 	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
+
+	public get minLogLevel(): LogLevel {
+		return this.baseLogger?.minLogLevel ?? LogLevel.default;
+	}
 
 	public send(event: ITelemetryBaseEvent): void {
 		const optIn = getStorageValue(telemetryOptInKey);

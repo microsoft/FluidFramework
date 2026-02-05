@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+import {
+	LogLevel,
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import structuredClone from "@ungap/structured-clone";
@@ -174,6 +175,10 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 				return namespaceBLength - namespaceALength;
 			});
 		}
+	}
+
+	public get minLogLevel(): LogLevel {
+		return LogLevel.default;
 	}
 
 	/**

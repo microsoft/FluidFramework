@@ -4,10 +4,11 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
-	ITelemetryBaseProperties,
+import {
+	LogLevel,
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
+	type ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import {
 	type ITelemetryLoggerExt,
@@ -68,6 +69,10 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		private readonly debug: IDebugger,
 		private readonly debugErr: IDebugger,
 	) {}
+
+	get minLogLevel(): LogLevel {
+		return LogLevel.default;
+	}
 
 	/**
 	 * Send an event to debug loggers

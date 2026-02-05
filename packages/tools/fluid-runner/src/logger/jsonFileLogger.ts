@@ -7,6 +7,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { BaseFileLogger } from "./baseFileLogger.js";
+import { LogLevel } from "@fluidframework/core-interfaces";
 
 /**
  * FileLogger that writes events into a defined CSV file
@@ -22,6 +23,10 @@ export class JSONFileLogger extends BaseFileLogger {
 		const dirName = path.dirname(this.filePath);
 		fs.mkdirSync(dirName, { recursive: true });
 		fs.appendFileSync(this.filePath, "[");
+	}
+
+	public get minLogLevel(): LogLevel {
+		return LogLevel.default;
 	}
 
 	public async close(): Promise<void> {

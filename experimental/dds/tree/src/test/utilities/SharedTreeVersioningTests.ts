@@ -6,7 +6,7 @@
 import { strict as assert } from 'assert';
 
 import { LoaderHeader } from '@fluidframework/container-definitions/internal';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent, LogLevel } from '@fluidframework/core-interfaces';
 import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
@@ -504,7 +504,7 @@ export function runSharedTreeVersioningTests(
 
 		describe('telemetry', () => {
 			const events: ITelemetryBaseEvent[] = [];
-			const logger = { send: (event) => events.push(event) };
+			const logger = { send: (event) => events.push(event), minLogLevel: LogLevel.default };
 			beforeEach(() => {
 				events.length = 0;
 			});

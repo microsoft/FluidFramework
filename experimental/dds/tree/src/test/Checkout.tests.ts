@@ -5,7 +5,7 @@
 
 import { strict as assert } from 'assert';
 
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent, LogLevel } from '@fluidframework/core-interfaces';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
@@ -178,6 +178,7 @@ export function checkoutTests(
 			const { checkout } = await setUpTestTreeCheckout({
 				logger: {
 					send: (event) => event.eventName.includes('Checkout') && events.push(event),
+					minLogLevel: LogLevel.default,
 				},
 			});
 			checkout.openEdit();

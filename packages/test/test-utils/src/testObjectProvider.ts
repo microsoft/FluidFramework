@@ -21,6 +21,7 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
+	LogLevel,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -380,6 +381,8 @@ export class EventAndErrorTrackingLogger
 			...orderedExpectedEvents.map((event, index) => ({ index, event })),
 		);
 	}
+
+	public readonly minLogLevel = LogLevel.default;
 
 	send(event: ITelemetryBaseEvent): void {
 		if (isNonEmptyArray(this.expectedEvents)) {

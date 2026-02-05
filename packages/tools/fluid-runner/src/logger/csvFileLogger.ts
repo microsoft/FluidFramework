@@ -6,7 +6,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { LogLevel, type ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { Parser } from "@json2csv/plainjs";
 
 import { BaseFileLogger } from "./baseFileLogger.js";
@@ -25,6 +25,10 @@ export class CSVFileLogger extends BaseFileLogger {
 
 	protected async flush(): Promise<void> {
 		// No flushing is performed since we need all log entries to determine set of CSV columns
+	}
+
+	public get minLogLevel(): LogLevel {
+		return LogLevel.default;
 	}
 
 	public send(event: ITelemetryBaseEvent): void {

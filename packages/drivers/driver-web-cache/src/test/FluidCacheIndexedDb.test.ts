@@ -4,6 +4,7 @@
  */
 
 import { openDB } from "idb";
+import { LogLevel } from "@fluidframework/core-interfaces";
 
 import {
 	CurrentCacheVersion,
@@ -20,6 +21,9 @@ require("fake-indexeddb/auto");
 class MockLogger {
 	NamespaceLogger = this;
 	send = jest.fn();
+	get minLogLevel(): LogLevel {
+		return LogLevel.default;
+	}
 }
 
 const versions = Object.keys(oldVersionNameMapping);

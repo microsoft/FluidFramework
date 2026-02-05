@@ -429,6 +429,7 @@ declare type current_as_old_for_Interface_ITelemetryBaseEvent = requireAssignabl
  * typeValidation.broken:
  * "Interface_ITelemetryBaseLogger": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ITelemetryBaseLogger = requireAssignableTo<TypeOnly<old.ITelemetryBaseLogger>, TypeOnly<current.ITelemetryBaseLogger>>
 
 /*

@@ -9,9 +9,10 @@ import fs from "fs";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+import {
+	LogLevel,
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -171,6 +172,9 @@ class Logger implements ITelemetryBaseLogger {
 			// throw instead of printing an error to fail tests
 			throw error;
 		}
+	}
+	public get minLogLevel(): LogLevel {
+		return LogLevel.default;
 	}
 }
 

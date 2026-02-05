@@ -4,7 +4,7 @@
  */
 
 import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
-import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import * as mochaModule from "mocha";
 
 import { pkgName } from "./packageVersion.js";
@@ -30,6 +30,10 @@ const _global: any = global;
  */
 class FluidTestRunLogger implements ITelemetryBufferedLogger {
 	private currentTestName: string | undefined;
+
+	get minLogLevel(): LogLevel {
+		return this.parentLogger.minLogLevel;
+	}
 
 	send(event: ITelemetryBaseEvent): void {
 		// TODO: Remove when issue #7061 is resolved.
@@ -74,6 +78,7 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 	}
 }
 const nullLogger: ITelemetryBufferedLogger = {
+	minLogLevel: 20 as const,
 	send: (): void => {},
 	flush: async (): Promise<void> => {},
 };

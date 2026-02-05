@@ -11,13 +11,14 @@ import {
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 
-import { ChildLogger, createChildLogger, createMultiSinkLogger } from "../logger.js";
+import { createChildLogger, createMultiSinkLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 
 describe("ChildLogger", () => {
 	it("Properties & Getters Propagate", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
+			minLogLevel: LogLevel.default,
 			send(event: ITelemetryBaseEvent): void {
 				if (event.testProperty !== true || event.testGetter !== true) {
 					throw new Error("expected testProperty and testGetter on event");
@@ -25,10 +26,14 @@ describe("ChildLogger", () => {
 				sent = true;
 			},
 		};
-		const childLogger1 = ChildLogger.create(logger, "test1", {
-			all: {
-				testProperty: true,
-				testGetter: () => true,
+		const childLogger1 = createChildLogger({
+			logger,
+			namespace: "test1",
+			properties: {
+				all: {
+					testProperty: true,
+					testGetter: () => true,
+				},
 			},
 		});
 
@@ -45,6 +50,7 @@ describe("ChildLogger", () => {
 	it("Undefined initial Properties and Getter", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
+			minLogLevel: LogLevel.default,
 			send(event: ITelemetryBaseEvent): void {
 				if (event.testProperty !== true || event.testGetter !== true) {
 					throw new Error("expected testProperty and testGetter on event");
@@ -58,10 +64,14 @@ describe("ChildLogger", () => {
 		const childLogger1 = createChildLogger({ logger, namespace: "test1" });
 
 		sent = false;
-		const childLogger2 = ChildLogger.create(childLogger1, "test2", {
-			all: {
-				testProperty: true,
-				testGetter: () => true,
+		const childLogger2 = createChildLogger({
+			logger: childLogger1,
+			namespace: "test2",
+			properties: {
+				all: {
+					testProperty: true,
+					testGetter: () => true,
+				},
 			},
 		});
 
@@ -72,6 +82,7 @@ describe("ChildLogger", () => {
 	it("Properties Are Combined", () => {
 		let sent = false;
 		const logger: ITelemetryBaseLogger = {
+			minLogLevel: LogLevel.default,
 			send(event: ITelemetryBaseEvent): void {
 				if (event.testProperty1 !== true || event.testProperty2 !== true) {
 					throw new Error("expected testProperty1 and testProperty2 on event");
@@ -82,15 +93,22 @@ describe("ChildLogger", () => {
 				sent = true;
 			},
 		};
-		const childLogger1 = ChildLogger.create(logger, "test1", {
-			all: {
-				testProperty1: true,
+		const childLogger1 = createChildLogger({
+			logger,
+			namespace: "test1",
+			properties: {
+				all: {
+					testProperty1: true,
+				},
 			},
 		});
-
-		const childLogger2 = ChildLogger.create(childLogger1, "test2", {
-			all: {
-				testProperty2: true,
+		const childLogger2 = createChildLogger({
+			logger: childLogger1,
+			namespace: "test2",
+			properties: {
+				all: {
+					testProperty2: true,
+				},
 			},
 		});
 
@@ -110,16 +128,25 @@ describe("ChildLogger", () => {
 				}
 				sent = true;
 			},
+			minLogLevel: LogLevel.default,
 		};
-		const childLogger1 = ChildLogger.create(logger, "test1", {
-			all: {
-				testGetter1: () => true,
+		const childLogger1 = createChildLogger({
+			logger,
+			namespace: "test1",
+			properties: {
+				all: {
+					testGetter1: () => true,
+				},
 			},
 		});
 
-		const childLogger2 = ChildLogger.create(childLogger1, "test2", {
-			all: {
-				testGetter2: () => true,
+		const childLogger2 = createChildLogger({
+			logger: childLogger1,
+			namespace: "test2",
+			properties: {
+				all: {
+					testGetter2: () => true,
+				},
 			},
 		});
 
@@ -136,6 +163,7 @@ describe("ChildLogger", () => {
 				}
 				sent = true;
 			},
+			minLogLevel: LogLevel.default,
 		};
 		const childLogger1 = createChildLogger({ logger });
 
@@ -155,6 +183,7 @@ describe("ChildLogger", () => {
 				}
 				sent = true;
 			},
+			minLogLevel: LogLevel.default,
 		};
 		const childLogger1 = createChildLogger({ logger, namespace: "test1" });
 
@@ -174,6 +203,7 @@ describe("ChildLogger", () => {
 				}
 				sent = true;
 			},
+			minLogLevel: LogLevel.default,
 		};
 		const childLogger1 = createChildLogger({ logger });
 
@@ -237,6 +267,7 @@ describe("ChildLogger", () => {
 				}
 				sent = true;
 			},
+			minLogLevel: LogLevel.default,
 		};
 		const childLogger1 = createChildLogger({ logger });
 

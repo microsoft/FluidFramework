@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+import {
+	LogLevel,
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 
 import type { ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";
@@ -124,6 +125,10 @@ class DevtoolsLogger implements IDevtoolsLogger {
 
 		// Register listener for inbound messages from the window (globalThis)
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
+	}
+
+	public get minLogLevel(): LogLevel {
+		return this.baseLogger?.minLogLevel ?? LogLevel.default;
 	}
 
 	/**
