@@ -177,7 +177,7 @@
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@sinclair/typebox": "^0.34.13",
-		"@tylerbu/sorted-btree-es6": "^1.8.0",
+		"@tylerbu/sorted-btree-es6": "^2.1.0",
 		"@types/ungap__structured-clone": "^1.2.0",
 		"@ungap/structured-clone": "^1.2.0",
 		"semver-ts": "^1.0.3",
