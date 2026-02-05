@@ -4,7 +4,7 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
-import { BTree } from "@tylerbu/sorted-btree-es6";
+import { BTreeEx as BTree } from "@tylerbu/sorted-btree-es6/extended";
 
 /**
  * RangeMap represents a mapping from keys of type K to values of type V or undefined.

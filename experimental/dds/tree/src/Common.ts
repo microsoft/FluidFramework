@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { BTree } from '@tylerbu/sorted-btree-es6';
+import { BTreeEx as BTree } from '@tylerbu/sorted-btree-es6/extended';
 
 const defaultFailMessage = 'Assertion failed';
 

@@ -1,8 +1,501 @@
+diff --git a/b+tree.d.ts b/b+tree.d.ts
+index a8d550f140fdd993fdd5ac414cecb59f59c24dd1..07f82cedcecd24e5ecdf309d98dba2b44191a304 100644
+--- a/b+tree.d.ts
++++ b/b+tree.d.ts
+@@ -103,7 +103,7 @@ export declare function simpleComparator(a: (number | string)[], b: (number | st
+  *
+  * @author David Piepgrass
+  */
+-export default class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K, V> {
++export declare class BTree<K = any, V = any> implements ISortedMapF<K, V>, ISortedMap<K, V> {
+     private _root;
+     _maxNodeSize: number;
+     /**
+diff --git a/b+tree.js b/b+tree.js
+index 7fcc50b7e10cb8eec413694765ce7e0bfd598f23..ef71f8ce7411b1dd7bd1b6273d27773e876e5c72 100644
+--- a/b+tree.js
++++ b/b+tree.js
+@@ -1,6 +1,6 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+-exports.EmptyBTree = exports.BNodeInternal = exports.BNode = void 0;
++exports.EmptyBTree = exports.BNodeInternal = exports.BNode = exports.BTree = void 0;
+ exports.defaultComparator = defaultComparator;
+ exports.simpleComparator = simpleComparator;
+ exports.fixMaxSize = fixMaxSize;
+@@ -799,7 +799,7 @@ class BTree {
+         check(size === this.size, "size mismatch: counted ", size, "but stored", this.size);
+     }
+ }
+-exports.default = BTree;
++exports.BTree = BTree;
+ /** A TypeScript helper function that simply returns its argument, typed as
+  *  `ISortedSet<K>` if the BTree implements it, as it does if `V extends undefined`.
+  *  If `V` cannot be `undefined`, it returns `unknown` instead. Or at least, that
+diff --git a/b+tree.min.js b/b+tree.min.js
+index 9f3b2829b225ba1d9aa61941fab5a2f3a8c279eb..fe7182d163bebb192899059f9a4113cb9c3b1c70 100644
+--- a/b+tree.min.js
++++ b/b+tree.min.js
+@@ -1 +1 @@
+-function defaultComparator(e,t){if(Number.isFinite(e)&&Number.isFinite(t))return e-t;var i=typeof e,r=typeof t;if(i!=r)return i<r?-1:1;if("object"==i){if(null===e)return null===t?0:-1;if(null===t)return 1;if((i=typeof(e=e.valueOf()))!=(r=typeof(t=t.valueOf())))return i<r?-1:1}return e<t?-1:t<e?1:e===t?0:Number.isNaN(e)?Number.isNaN(t)?0:-1:Number.isNaN(t)?1:Array.isArray(e)?0:Number.NaN}function simpleComparator(e,t){return t<e?1:e<t?-1:0}function fixMaxSize(e){return 4<=e?Math.min(0|e,256):32}Object.defineProperty(exports,"__esModule",{value:!0}),exports.EmptyBTree=exports.BNodeInternal=exports.BNode=void 0,exports.defaultComparator=defaultComparator,exports.simpleComparator=simpleComparator,exports.fixMaxSize=fixMaxSize,exports.asSet=asSet,exports.sumChildSizes=sumChildSizes,exports.areOverlapping=areOverlapping,exports.check=check;class BTree{constructor(e,t,i){this._root=EmptyLeaf,this._maxNodeSize=fixMaxSize(i),this._compare=t||defaultComparator,e&&this.setPairs(e)}get size(){return this._root.size()}get length(){return this.size}get isEmpty(){return 0===this._root.size()}clear(){this._root=EmptyLeaf}forEach(i,e){return void 0!==e&&(i=i.bind(e)),this.forEachPair((e,t)=>i(t,e,this))}forEachPair(e,t){var i=this.minKey(),r=this.maxKey();return this.forRange(i,r,!0,e,t)}get(e,t){return this._root.get(e,t,this)}set(e,t,i){this._root.isShared&&(this._root=this._root.clone());e=this._root.set(e,t,i,this);return!0===e||!1===e?e:(t=[this._root,e],this._root=new BNodeInternal(t,sumChildSizes(t)),!0)}has(e){return 0!==this.forRange(e,e,!0,void 0)}delete(e){return 0!==this.editRange(e,e,!0,DeleteRange)}with(e,t,i){var r=this.clone();return r.set(e,t,i)||i?r:this}withPairs(e,t){var i=this.clone();return 0!==i.setPairs(e,t)||t?i:this}withKeys(e,t){let i=this.clone(),r=!1;for(var s=0;s<e.length;s++)r=i.set(e[s],void 0,!1)||r;return t&&!r?this:i}without(e,t){return this.withoutRange(e,e,!0,t)}withoutKeys(e,t){var i=this.clone();return i.deleteKeys(e)||!t?i:this}withoutRange(e,t,i,r){var s=this.clone();return 0===s.deleteRange(e,t,i)&&r?this:s}filter(r,e){var s,t=this.greedyClone();return t.editAll((e,t,i)=>{if(!r(e,t,i))return s=Delete}),!s&&e?this:t}mapValues(r){var s={},e=this.greedyClone();return e.editAll((e,t,i)=>(s.value=r(t,e,i),s)),e}reduce(e,t){let i=0,r=t,s=this.entries(this.minKey(),ReusedArray),h;for(;!(h=s.next()).done;)r=e(r,h.value,i++,this);return r}entries(e,t){var i,r,s,h,n,a=this.findPath(e);return void 0===a?iterator():({nodequeue:i,nodeindex:r,leaf:s}=a,h=void 0!==t?1:0,n=void 0===e?-1:s.indexOf(e,0,this._compare)-1,iterator(()=>{e:for(;;)switch(h){case 0:if(++n<s.keys.length)return{done:!1,value:[s.keys[n],s.values[n]]};h=2;continue;case 1:if(++n<s.keys.length)return t[0]=s.keys[n],t[1]=s.values[n],{done:!1,value:t};h=2;case 2:for(var e=-1;;){if(++e>=i.length){h=3;continue e}if(++r[e]<i[e].length)break}for(;0<e;e--)i[e-1]=i[e][r[e]].children,r[e-1]=0;s=i[0][r[0]],n=-1,h=void 0!==t?1:0;continue;case 3:return{done:!0,value:void 0}}}))}entriesReversed(e,t,i){var r,s,h,n,a;return void 0===e&&(i=void 0)===(e=this.maxKey())?iterator():({nodequeue:r,nodeindex:s,leaf:h}=this.findPath(e)||this.findPath(this.maxKey()),check(!r[0]||h===r[0][s[0]],"wat!"),n=h.indexOf(e,0,this._compare),!i&&n<h.keys.length&&this._compare(h.keys[n],e)<=0&&n++,a=void 0!==t?1:0,iterator(()=>{e:for(;;)switch(a){case 0:if(0<=--n)return{done:!1,value:[h.keys[n],h.values[n]]};a=2;continue;case 1:if(0<=--n)return t[0]=h.keys[n],t[1]=h.values[n],{done:!1,value:t};a=2;case 2:for(var e=-1;;){if(++e>=r.length){a=3;continue e}if(0<=--s[e])break}for(;0<e;e--)r[e-1]=r[e][s[e]].children,s[e-1]=r[e-1].length-1;h=r[0][s[0]],n=h.keys.length,a=void 0!==t?1:0;continue;case 3:return{done:!0,value:void 0}}}))}findPath(e){var t=this._root;if(t.isLeaf)r=i=EmptyArray;else{for(var i=[],r=[],s=0;!t.isLeaf;s++){if(i[s]=t.children,r[s]=void 0===e?0:t.indexOf(e,0,this._compare),r[s]>=i[s].length)return;t=i[s][r[s]]}i.reverse(),r.reverse()}return{nodequeue:i,nodeindex:r,leaf:t}}keys(e){var t=this.entries(e,ReusedArray);return iterator(()=>{var e=t.next();return e.value&&(e.value=e.value[0]),e})}values(e){var t=this.entries(e,ReusedArray);return iterator(()=>{var e=t.next();return e.value&&(e.value=e.value[1]),e})}get maxNodeSize(){return this._maxNodeSize}minKey(){return this._root.minKey()}maxKey(){return this._root.maxKey()}clone(){this._root.isShared=!0;var e=new BTree(void 0,this._compare,this._maxNodeSize);return e._root=this._root,e}greedyClone(e){var t=new BTree(void 0,this._compare,this._maxNodeSize);return t._root=this._root.greedyClone(e),t}toArray(e=2147483647){var t=this.minKey(),i=this.maxKey();return void 0!==t?this.getRange(t,i,!0,e):[]}keysArray(){var i=[];return this._root.forRange(this.minKey(),this.maxKey(),!0,!1,this,0,(e,t)=>{i.push(e)}),i}valuesArray(){var i=[];return this._root.forRange(this.minKey(),this.maxKey(),!0,!1,this,0,(e,t)=>{i.push(t)}),i}toString(){return this.toArray().toString()}setIfNotPresent(e,t){return this.set(e,t,!1)}nextHigherPair(e,t){return t=t||[],void 0===e?this._root.minPair(t):this._root.getPairOrNextHigher(e,this._compare,!1,t)}nextHigherKey(e){e=this.nextHigherPair(e,ReusedArray);return e&&e[0]}nextLowerPair(e,t){return t=t||[],void 0===e?this._root.maxPair(t):this._root.getPairOrNextLower(e,this._compare,!1,t)}nextLowerKey(e){e=this.nextLowerPair(e,ReusedArray);return e&&e[0]}getPairOrNextLower(e,t){return this._root.getPairOrNextLower(e,this._compare,!0,t||[])}getPairOrNextHigher(e,t){return this._root.getPairOrNextHigher(e,this._compare,!0,t||[])}changeIfPresent(e,i){return 0!==this.editRange(e,e,!0,(e,t)=>({value:i}))}getRange(e,t,i,r=67108863){var s=[];return this._root.forRange(e,t,i,!1,this,0,(e,t)=>(s.push([e,t]),r<s.length?Break:void 0)),s}setPairs(e,t){for(var i=0,r=0;r<e.length;r++)this.set(e[r][0],e[r][1],t)&&i++;return i}forRange(e,t,i,r,s){e=this._root.forRange(e,t,i,!1,this,s||0,r);return"number"==typeof e?e:e.break}editRange(e,t,i,r,s){var h=this._root;h.isShared&&(this._root=h=h.clone());try{var n=h.forRange(e,t,i,!0,this,s||0,r);return"number"==typeof n?n:n.break}finally{let e;for(;h.keys.length<=1&&!h.isLeaf;)e=e||h.isShared,this._root=h=0===h.keys.length?EmptyLeaf:h.children[0];e&&(h.isShared=!0)}}editAll(e,t){return this.editRange(this.minKey(),this.maxKey(),!0,e,t)}deleteRange(e,t,i){return this.editRange(e,t,i,DeleteRange)}deleteKeys(e){for(var t=0,i=0;t<e.length;t++)this.delete(e[t])&&i++;return i}get height(){let e=this._root,t=-1;for(;e;)t++,e=e.isLeaf?void 0:e.children[0];return t}freeze(){this.clear=this.set=this.editRange=function(){throw new Error("Attempted to modify a frozen BTree")}}unfreeze(){delete this.clear,delete this.set,delete this.editRange}get isFrozen(){return this.hasOwnProperty("editRange")}checkValid(e=!1){var[e]=this._root.checkValid(0,this,0,e);check(e===this.size,"size mismatch: counted ",e,"but stored",this.size)}}function asSet(e){return e}function iterator(e=()=>({done:!0,value:void 0})){e={next:e};return Symbol&&Symbol.iterator&&(e[Symbol.iterator]=function(){return this}),e}exports.default=BTree,Symbol&&Symbol.iterator&&(BTree.prototype[Symbol.iterator]=BTree.prototype.entries),BTree.prototype.where=BTree.prototype.filter,BTree.prototype.setRange=BTree.prototype.setPairs,BTree.prototype.add=BTree.prototype.set;class BNode{get isLeaf(){return void 0===this.children}constructor(e=[],t){this.keys=e,this.values=t||undefVals,this.isShared=void 0}size(){return this.keys.length}maxKey(){return this.keys[this.keys.length-1]}indexOf(e,t,i){for(var r=this.keys,s=0,h=r.length,n=h>>1;s<h;){var a=i(r[n],e);if(a<0)s=n+1;else{if(!(0<a)){if(0===a)return n;if(e==e)return r.length;throw new Error("BTree: NaN was used as a key")}h=n}n=s+h>>1}return n^t}minKey(){return this.keys[0]}minPair(e){if(0!==this.keys.length)return e[0]=this.keys[0],e[1]=this.values[0],e}maxPair(e){var t;if(0!==this.keys.length)return t=this.keys.length-1,e[0]=this.keys[t],e[1]=this.values[t],e}clone(){var e=this.values;return new BNode(this.keys.slice(0),e===undefVals?e:e.slice(0))}greedyClone(e){return this.isShared&&!e?this:this.clone()}get(e,t,i){e=this.indexOf(e,-1,i._compare);return e<0?t:this.values[e]}getPairOrNextLower(e,t,i,r){e=this.indexOf(e,-1,t),t=e<0?~e-1:i?e:e-1;if(0<=t)return r[0]=this.keys[t],r[1]=this.values[t],r}getPairOrNextHigher(e,t,i,r){e=this.indexOf(e,-1,t),t=e<0?~e:i?e:e+1,i=this.keys;if(t<i.length)return r[0]=i[t],r[1]=this.values[t],r}checkValid(e,t,i,r){var s=this.keys.length,h=this.values.length;if(check(this.values===undefVals?s<=h:s===h,"keys/values length mismatch: depth",e,"with lengths",s,h,"and baseIndex",i),check(0==e||0<s,"empty leaf at depth",e,"and baseIndex",i),!0===r)for(var n=1;n<s;n++)check(t._compare(this.keys[n-1],this.keys[n])<0,"keys out of order at depth",e,"and baseIndex",i+n-1,": ",this.keys[n-1]," !< ",this.keys[n]);return[s,this.keys[0],this.keys[s-1]]}set(e,t,i,r){var s,h,n=this.indexOf(e,-1,r._compare);return n<0?(n=~n,this.keys.length<r._maxNodeSize?this.insertInLeaf(n,e,t,r):(s=this.splitOffRightSide(),n>(h=this).keys.length&&(n-=this.keys.length,h=s),h.insertInLeaf(n,e,t,r),s)):(!1!==i&&(void 0!==t&&this.reifyValues(),this.keys[n]=e,this.values[n]=t),!1)}reifyValues(){return this.values===undefVals?this.values=this.values.slice(0,this.keys.length):this.values}insertInLeaf(e,t,i,r){if(this.keys.splice(e,0,t),this.values===undefVals){for(;undefVals.length<r._maxNodeSize;)undefVals.push(void 0);if(void 0===i)return!0;this.values=undefVals.slice(0,this.keys.length-1)}return this.values.splice(e,0,i),!0}takeFromRight(e){var t=this.values;e.values===undefVals?t!==undefVals&&t.push(void 0):(t=this.reifyValues()).push(e.values.shift()),this.keys.push(e.keys.shift())}takeFromLeft(e){var t=this.values;e.values===undefVals?t!==undefVals&&t.unshift(void 0):(t=this.reifyValues()).unshift(e.values.pop()),this.keys.unshift(e.keys.pop())}splitOffRightSide(){var e=this.keys.length>>1,t=this.keys.splice(e),e=this.values===undefVals?undefVals:this.values.splice(e);return new BNode(t,e)}forRange(e,t,i,r,s,h,n){var a,o,s=s._compare;if(t===e){if(!i)return h;if(o=(a=this.indexOf(e,-1,s))+1,a<0)return h}else a=this.indexOf(e,0,s),(o=this.indexOf(t,-1,s))<0?o=~o:!0===i&&o++;var l=this.keys,d=this.values;if(void 0!==n)for(var u=a;u<o;u++){var c=l[u],f=n(c,d[u],h++);if(void 0!==f){if(!0===r){if(c!==l[u]||!0===this.isShared)throw new Error("BTree illegally changed or cloned in editRange");f.delete?(this.keys.splice(u,1),this.values!==undefVals&&this.values.splice(u,1),u--,o--):f.hasOwnProperty("value")&&(d[u]=f.value)}if(void 0!==f.break)return f}}else h+=o-a;return h}mergeSibling(e,t){if(this.keys.push.apply(this.keys,e.keys),this.values===undefVals){if(e.values===undefVals)return;this.values=this.values.slice(0,this.keys.length)}this.values.push.apply(this.values,e.reifyValues())}}exports.BNode=BNode;class BNodeInternal extends BNode{constructor(e,t,i){if(!i){i=[];for(var r=0;r<e.length;r++)i[r]=e[r].maxKey()}super(i),this.children=e,this._size=t}clone(){for(var e=this.children.slice(0),t=0;t<e.length;t++)e[t].isShared=!0;return new BNodeInternal(e,this._size,this.keys.slice(0))}size(){return this._size}greedyClone(e){if(this.isShared&&!e)return this;for(var t=new BNodeInternal(this.children.slice(0),this._size,this.keys.slice(0)),i=0;i<t.children.length;i++)t.children[i]=t.children[i].greedyClone(e);return t}minKey(){return this.children[0].minKey()}minPair(e){return this.children[0].minPair(e)}maxPair(e){return this.children[this.children.length-1].maxPair(e)}get(e,t,i){var r=this.indexOf(e,0,i._compare),s=this.children;return r<s.length?s[r].get(e,t,i):void 0}getPairOrNextLower(e,t,i,r){var s=this.indexOf(e,0,t),h=this.children;return s>=h.length?this.maxPair(r):void 0===(e=h[s].getPairOrNextLower(e,t,i,r))&&0<s?h[s-1].maxPair(r):e}getPairOrNextHigher(e,t,i,r){var s=this.indexOf(e,0,t),h=this.children,n=h.length;if(!(n<=s))return void 0===(e=h[s].getPairOrNextHigher(e,t,i,r))&&s<n-1?h[s+1].minPair(r):e}checkValid(e,t,i,r){var s=this.keys.length,h=this.children.length;check(s===h,"keys/children length mismatch: depth",e,"lengths",s,h,"baseIndex",i),check(1<s||0<e,"internal node has length",s,"at depth",e,"baseIndex",i);let n=0,a=this.children,o=this.keys,l=0,d=void 0,u=void 0;for(var c=0;c<h;c++){var f=a[c],[y,v,g]=f.checkValid(e+1,t,i+n,r);check(y===f.size(),"cached size mismatch at depth",e,"index",c,"baseIndex",i),check(1===y||t._compare(v,g)<0,"child node keys not sorted at depth",e,"index",c,"baseIndex",i),void 0!==d&&void 0!==u&&r&&(check(!areOverlapping(d,u,v,g,t._compare),"children keys not sorted at depth",e,"index",c,"baseIndex",i,": ",u," !< ",v),check(t._compare(u,v)<0,"children keys not sorted at depth",e,"index",c,"baseIndex",i,": ",u," !< ",v)),d=v,u=g,n+=y,l+=f.keys.length,check(n>=l,"wtf",i),check(0===c||a[c-1].constructor===f.constructor,"type mismatch, baseIndex:",i),f.maxKey()!=o[c]&&check(!1,"keys[",c,"] =",o[c],"is wrong, should be ",f.maxKey(),"at depth",e,"baseIndex",i),0===c||t._compare(o[c-1],o[c])<0||check(!1,"sort violation at depth",e,"index",c,"keys",o[c-1],o[c])}check(this._size===n,"internal node cached size mismatch at depth",e,"baseIndex",i,"cached",this._size,"actual",n);s=0===l;return(s||l>t.maxNodeSize*h)&&check(!1,s?"too few":"too many","children (",l,n,") at depth",e,"maxNodeSize:",t.maxNodeSize,"children.length:",h,"baseIndex:",i),[n,this.minKey(),this.maxKey()]}set(e,t,i,r){var s=this.children,h=r._maxNodeSize,n=r._compare,a=Math.min(this.indexOf(e,0,n),s.length-1),o=s[a],l=(o.isShared&&(s[a]=o=o.clone()),o.keys.length>=h&&(0<a&&(l=s[a-1]).keys.length<h&&n(o.keys[0],e)<0?(l.isShared&&(s[a-1]=l=l.clone()),l.takeFromRight(o),this.keys[a-1]=l.maxKey()):void 0!==(l=s[a+1])&&l.keys.length<h&&n(o.maxKey(),e)<0&&(l.isShared&&(s[a+1]=l=l.clone()),l.takeFromLeft(o),this.keys[a]=s[a].maxKey())),o.size()),s=o.set(e,t,i,r);return this._size+=o.size()-l,!1!==s&&(this.keys[a]=o.maxKey(),!0===s||(this.keys.length<h?(this.insert(a+1,s),!0):(e=this.splitOffRightSide(),t=this,0<n(s.maxKey(),this.maxKey())&&(t=e,a-=this.keys.length),t.insert(a+1,s),e)))}insert(e,t){this.children.splice(e,0,t),this.keys.splice(e,0,t.maxKey()),this._size+=t.size()}splitOffRightSide(){var e=this.children.length>>1,t=this.children.splice(e),e=this.keys.splice(e),i=this._size,t=(this._size=sumChildSizes(this.children),new BNodeInternal(t,i-this._size,e));return t}splitOffLeftSide(){var e=this.children.length>>1,t=this.children.splice(0,e),e=this.keys.splice(0,e),i=this._size,t=(this._size=sumChildSizes(this.children),new BNodeInternal(t,i-this._size,e));return t}takeFromRight(e){var t=e,e=(this.keys.push(e.keys.shift()),t.children.shift()),e=(this.children.push(e),e.size());t._size-=e,this._size+=e}takeFromLeft(e){var t=e,i=t.children.pop(),e=(this.keys.unshift(e.keys.pop()),this.children.unshift(i),i.size());t._size-=e,this._size+=e}forRange(i,r,s,h,n,a,o){var e=n._compare,l=this.keys,d=this.children,t=this.indexOf(i,0,e),u=t,c=Math.min(r===i?t:this.indexOf(r,0,e),l.length-1);if(h){if(u<=c)try{for(;u<=c;u++){let e=d[u];e.isShared&&(d[u]=e=e.clone());var f=e.size();let t=e.forRange(i,r,s,h,n,a,o);if(l[u]=e.maxKey(),this._size+=e.size()-f,"number"!=typeof t)return t;a=t}}finally{var y=n._maxNodeSize>>1;for(0<t&&t--,u=c;t<=u;u--)d[u].keys.length<=y&&(0!==d[u].keys.length?this.tryMerge(u,n._maxNodeSize):(l.splice(u,1),check(0===d.splice(u,1)[0].size(),"emptiness cleanup")));0!==d.length&&0===d[0].keys.length&&check(!1,"emptiness bug")}}else for(;u<=c;u++){var v=d[u].forRange(i,r,s,h,n,a,o);if("number"!=typeof v)return v;a=v}return a}tryMerge(e,t){var i=this.children;return 0<=e&&e+1<i.length&&i[e].keys.length+i[e+1].keys.length<=t&&(i[e].isShared&&(i[e]=i[e].clone()),i[e].mergeSibling(i[e+1],t),i.splice(e+1,1),this.keys.splice(e+1,1),this.keys[e]=i[e].maxKey(),!0)}mergeSibling(e,t){var i=this.keys.length,r=(this.keys.push.apply(this.keys,e.keys),e.children);if(this.children.push.apply(this.children,r),this._size+=e.size(),e.isShared&&!this.isShared)for(var s=0;s<r.length;s++)r[s].isShared=!0;this.tryMerge(i-1,t)}}exports.BNodeInternal=BNodeInternal;var undefVals=[];function sumChildSizes(e){for(var t=0,i=0;i<e.length;i++)t+=e[i].size();return t}function areOverlapping(e,t,i,r,s){return s(e,r)<=0&&0<=s(t,i)}let Delete={delete:!0},DeleteRange=()=>Delete,Break={break:!0},EmptyLeaf=(()=>{var e=new BNode;return e.isShared=!0,e})(),EmptyArray=[],ReusedArray=[];function check(e,...t){if(!e)throw t.unshift("B+ tree"),new Error(t.join(" "))}exports.EmptyBTree=(()=>{var e=new BTree;return e.freeze(),e})();
++function defaultComparator(e,t){if(Number.isFinite(e)&&Number.isFinite(t))return e-t;var i=typeof e,r=typeof t;if(i!=r)return i<r?-1:1;if("object"==i){if(null===e)return null===t?0:-1;if(null===t)return 1;if((i=typeof(e=e.valueOf()))!=(r=typeof(t=t.valueOf())))return i<r?-1:1}return e<t?-1:t<e?1:e===t?0:Number.isNaN(e)?Number.isNaN(t)?0:-1:Number.isNaN(t)?1:Array.isArray(e)?0:Number.NaN}function simpleComparator(e,t){return t<e?1:e<t?-1:0}function fixMaxSize(e){return 4<=e?Math.min(0|e,256):32}Object.defineProperty(exports,"__esModule",{value:!0}),exports.EmptyBTree=exports.BNodeInternal=exports.BNode=exports.BTree=void 0,exports.defaultComparator=defaultComparator,exports.simpleComparator=simpleComparator,exports.fixMaxSize=fixMaxSize,exports.asSet=asSet,exports.sumChildSizes=sumChildSizes,exports.areOverlapping=areOverlapping,exports.check=check;class BTree{constructor(e,t,i){this._root=EmptyLeaf,this._maxNodeSize=fixMaxSize(i),this._compare=t||defaultComparator,e&&this.setPairs(e)}get size(){return this._root.size()}get length(){return this.size}get isEmpty(){return 0===this._root.size()}clear(){this._root=EmptyLeaf}forEach(i,e){return void 0!==e&&(i=i.bind(e)),this.forEachPair((e,t)=>i(t,e,this))}forEachPair(e,t){var i=this.minKey(),r=this.maxKey();return this.forRange(i,r,!0,e,t)}get(e,t){return this._root.get(e,t,this)}set(e,t,i){this._root.isShared&&(this._root=this._root.clone());e=this._root.set(e,t,i,this);return!0===e||!1===e?e:(t=[this._root,e],this._root=new BNodeInternal(t,sumChildSizes(t)),!0)}has(e){return 0!==this.forRange(e,e,!0,void 0)}delete(e){return 0!==this.editRange(e,e,!0,DeleteRange)}with(e,t,i){var r=this.clone();return r.set(e,t,i)||i?r:this}withPairs(e,t){var i=this.clone();return 0!==i.setPairs(e,t)||t?i:this}withKeys(e,t){let i=this.clone(),r=!1;for(var s=0;s<e.length;s++)r=i.set(e[s],void 0,!1)||r;return t&&!r?this:i}without(e,t){return this.withoutRange(e,e,!0,t)}withoutKeys(e,t){var i=this.clone();return i.deleteKeys(e)||!t?i:this}withoutRange(e,t,i,r){var s=this.clone();return 0===s.deleteRange(e,t,i)&&r?this:s}filter(r,e){var s,t=this.greedyClone();return t.editAll((e,t,i)=>{if(!r(e,t,i))return s=Delete}),!s&&e?this:t}mapValues(r){var s={},e=this.greedyClone();return e.editAll((e,t,i)=>(s.value=r(t,e,i),s)),e}reduce(e,t){let i=0,r=t,s=this.entries(this.minKey(),ReusedArray),h;for(;!(h=s.next()).done;)r=e(r,h.value,i++,this);return r}entries(e,t){var i,r,s,h,n,a=this.findPath(e);return void 0===a?iterator():({nodequeue:i,nodeindex:r,leaf:s}=a,h=void 0!==t?1:0,n=void 0===e?-1:s.indexOf(e,0,this._compare)-1,iterator(()=>{e:for(;;)switch(h){case 0:if(++n<s.keys.length)return{done:!1,value:[s.keys[n],s.values[n]]};h=2;continue;case 1:if(++n<s.keys.length)return t[0]=s.keys[n],t[1]=s.values[n],{done:!1,value:t};h=2;case 2:for(var e=-1;;){if(++e>=i.length){h=3;continue e}if(++r[e]<i[e].length)break}for(;0<e;e--)i[e-1]=i[e][r[e]].children,r[e-1]=0;s=i[0][r[0]],n=-1,h=void 0!==t?1:0;continue;case 3:return{done:!0,value:void 0}}}))}entriesReversed(e,t,i){var r,s,h,n,a;return void 0===e&&(i=void 0)===(e=this.maxKey())?iterator():({nodequeue:r,nodeindex:s,leaf:h}=this.findPath(e)||this.findPath(this.maxKey()),check(!r[0]||h===r[0][s[0]],"wat!"),n=h.indexOf(e,0,this._compare),!i&&n<h.keys.length&&this._compare(h.keys[n],e)<=0&&n++,a=void 0!==t?1:0,iterator(()=>{e:for(;;)switch(a){case 0:if(0<=--n)return{done:!1,value:[h.keys[n],h.values[n]]};a=2;continue;case 1:if(0<=--n)return t[0]=h.keys[n],t[1]=h.values[n],{done:!1,value:t};a=2;case 2:for(var e=-1;;){if(++e>=r.length){a=3;continue e}if(0<=--s[e])break}for(;0<e;e--)r[e-1]=r[e][s[e]].children,s[e-1]=r[e-1].length-1;h=r[0][s[0]],n=h.keys.length,a=void 0!==t?1:0;continue;case 3:return{done:!0,value:void 0}}}))}findPath(e){var t=this._root;if(t.isLeaf)r=i=EmptyArray;else{for(var i=[],r=[],s=0;!t.isLeaf;s++){if(i[s]=t.children,r[s]=void 0===e?0:t.indexOf(e,0,this._compare),r[s]>=i[s].length)return;t=i[s][r[s]]}i.reverse(),r.reverse()}return{nodequeue:i,nodeindex:r,leaf:t}}keys(e){var t=this.entries(e,ReusedArray);return iterator(()=>{var e=t.next();return e.value&&(e.value=e.value[0]),e})}values(e){var t=this.entries(e,ReusedArray);return iterator(()=>{var e=t.next();return e.value&&(e.value=e.value[1]),e})}get maxNodeSize(){return this._maxNodeSize}minKey(){return this._root.minKey()}maxKey(){return this._root.maxKey()}clone(){this._root.isShared=!0;var e=new BTree(void 0,this._compare,this._maxNodeSize);return e._root=this._root,e}greedyClone(e){var t=new BTree(void 0,this._compare,this._maxNodeSize);return t._root=this._root.greedyClone(e),t}toArray(e=2147483647){var t=this.minKey(),i=this.maxKey();return void 0!==t?this.getRange(t,i,!0,e):[]}keysArray(){var i=[];return this._root.forRange(this.minKey(),this.maxKey(),!0,!1,this,0,(e,t)=>{i.push(e)}),i}valuesArray(){var i=[];return this._root.forRange(this.minKey(),this.maxKey(),!0,!1,this,0,(e,t)=>{i.push(t)}),i}toString(){return this.toArray().toString()}setIfNotPresent(e,t){return this.set(e,t,!1)}nextHigherPair(e,t){return t=t||[],void 0===e?this._root.minPair(t):this._root.getPairOrNextHigher(e,this._compare,!1,t)}nextHigherKey(e){e=this.nextHigherPair(e,ReusedArray);return e&&e[0]}nextLowerPair(e,t){return t=t||[],void 0===e?this._root.maxPair(t):this._root.getPairOrNextLower(e,this._compare,!1,t)}nextLowerKey(e){e=this.nextLowerPair(e,ReusedArray);return e&&e[0]}getPairOrNextLower(e,t){return this._root.getPairOrNextLower(e,this._compare,!0,t||[])}getPairOrNextHigher(e,t){return this._root.getPairOrNextHigher(e,this._compare,!0,t||[])}changeIfPresent(e,i){return 0!==this.editRange(e,e,!0,(e,t)=>({value:i}))}getRange(e,t,i,r=67108863){var s=[];return this._root.forRange(e,t,i,!1,this,0,(e,t)=>(s.push([e,t]),r<s.length?Break:void 0)),s}setPairs(e,t){for(var i=0,r=0;r<e.length;r++)this.set(e[r][0],e[r][1],t)&&i++;return i}forRange(e,t,i,r,s){e=this._root.forRange(e,t,i,!1,this,s||0,r);return"number"==typeof e?e:e.break}editRange(e,t,i,r,s){var h=this._root;h.isShared&&(this._root=h=h.clone());try{var n=h.forRange(e,t,i,!0,this,s||0,r);return"number"==typeof n?n:n.break}finally{let e;for(;h.keys.length<=1&&!h.isLeaf;)e=e||h.isShared,this._root=h=0===h.keys.length?EmptyLeaf:h.children[0];e&&(h.isShared=!0)}}editAll(e,t){return this.editRange(this.minKey(),this.maxKey(),!0,e,t)}deleteRange(e,t,i){return this.editRange(e,t,i,DeleteRange)}deleteKeys(e){for(var t=0,i=0;t<e.length;t++)this.delete(e[t])&&i++;return i}get height(){let e=this._root,t=-1;for(;e;)t++,e=e.isLeaf?void 0:e.children[0];return t}freeze(){this.clear=this.set=this.editRange=function(){throw new Error("Attempted to modify a frozen BTree")}}unfreeze(){delete this.clear,delete this.set,delete this.editRange}get isFrozen(){return this.hasOwnProperty("editRange")}checkValid(e=!1){var[e]=this._root.checkValid(0,this,0,e);check(e===this.size,"size mismatch: counted ",e,"but stored",this.size)}}function asSet(e){return e}function iterator(e=()=>({done:!0,value:void 0})){e={next:e};return Symbol&&Symbol.iterator&&(e[Symbol.iterator]=function(){return this}),e}exports.BTree=BTree,Symbol&&Symbol.iterator&&(BTree.prototype[Symbol.iterator]=BTree.prototype.entries),BTree.prototype.where=BTree.prototype.filter,BTree.prototype.setRange=BTree.prototype.setPairs,BTree.prototype.add=BTree.prototype.set;class BNode{get isLeaf(){return void 0===this.children}constructor(e=[],t){this.keys=e,this.values=t||undefVals,this.isShared=void 0}size(){return this.keys.length}maxKey(){return this.keys[this.keys.length-1]}indexOf(e,t,i){for(var r=this.keys,s=0,h=r.length,n=h>>1;s<h;){var a=i(r[n],e);if(a<0)s=n+1;else{if(!(0<a)){if(0===a)return n;if(e==e)return r.length;throw new Error("BTree: NaN was used as a key")}h=n}n=s+h>>1}return n^t}minKey(){return this.keys[0]}minPair(e){if(0!==this.keys.length)return e[0]=this.keys[0],e[1]=this.values[0],e}maxPair(e){var t;if(0!==this.keys.length)return t=this.keys.length-1,e[0]=this.keys[t],e[1]=this.values[t],e}clone(){var e=this.values;return new BNode(this.keys.slice(0),e===undefVals?e:e.slice(0))}greedyClone(e){return this.isShared&&!e?this:this.clone()}get(e,t,i){e=this.indexOf(e,-1,i._compare);return e<0?t:this.values[e]}getPairOrNextLower(e,t,i,r){e=this.indexOf(e,-1,t),t=e<0?~e-1:i?e:e-1;if(0<=t)return r[0]=this.keys[t],r[1]=this.values[t],r}getPairOrNextHigher(e,t,i,r){e=this.indexOf(e,-1,t),t=e<0?~e:i?e:e+1,i=this.keys;if(t<i.length)return r[0]=i[t],r[1]=this.values[t],r}checkValid(e,t,i,r){var s=this.keys.length,h=this.values.length;if(check(this.values===undefVals?s<=h:s===h,"keys/values length mismatch: depth",e,"with lengths",s,h,"and baseIndex",i),check(0==e||0<s,"empty leaf at depth",e,"and baseIndex",i),!0===r)for(var n=1;n<s;n++)check(t._compare(this.keys[n-1],this.keys[n])<0,"keys out of order at depth",e,"and baseIndex",i+n-1,": ",this.keys[n-1]," !< ",this.keys[n]);return[s,this.keys[0],this.keys[s-1]]}set(e,t,i,r){var s,h,n=this.indexOf(e,-1,r._compare);return n<0?(n=~n,this.keys.length<r._maxNodeSize?this.insertInLeaf(n,e,t,r):(s=this.splitOffRightSide(),n>(h=this).keys.length&&(n-=this.keys.length,h=s),h.insertInLeaf(n,e,t,r),s)):(!1!==i&&(void 0!==t&&this.reifyValues(),this.keys[n]=e,this.values[n]=t),!1)}reifyValues(){return this.values===undefVals?this.values=this.values.slice(0,this.keys.length):this.values}insertInLeaf(e,t,i,r){if(this.keys.splice(e,0,t),this.values===undefVals){for(;undefVals.length<r._maxNodeSize;)undefVals.push(void 0);if(void 0===i)return!0;this.values=undefVals.slice(0,this.keys.length-1)}return this.values.splice(e,0,i),!0}takeFromRight(e){var t=this.values;e.values===undefVals?t!==undefVals&&t.push(void 0):(t=this.reifyValues()).push(e.values.shift()),this.keys.push(e.keys.shift())}takeFromLeft(e){var t=this.values;e.values===undefVals?t!==undefVals&&t.unshift(void 0):(t=this.reifyValues()).unshift(e.values.pop()),this.keys.unshift(e.keys.pop())}splitOffRightSide(){var e=this.keys.length>>1,t=this.keys.splice(e),e=this.values===undefVals?undefVals:this.values.splice(e);return new BNode(t,e)}forRange(e,t,i,r,s,h,n){var a,o,s=s._compare;if(t===e){if(!i)return h;if(o=(a=this.indexOf(e,-1,s))+1,a<0)return h}else a=this.indexOf(e,0,s),(o=this.indexOf(t,-1,s))<0?o=~o:!0===i&&o++;var l=this.keys,d=this.values;if(void 0!==n)for(var u=a;u<o;u++){var c=l[u],f=n(c,d[u],h++);if(void 0!==f){if(!0===r){if(c!==l[u]||!0===this.isShared)throw new Error("BTree illegally changed or cloned in editRange");f.delete?(this.keys.splice(u,1),this.values!==undefVals&&this.values.splice(u,1),u--,o--):f.hasOwnProperty("value")&&(d[u]=f.value)}if(void 0!==f.break)return f}}else h+=o-a;return h}mergeSibling(e,t){if(this.keys.push.apply(this.keys,e.keys),this.values===undefVals){if(e.values===undefVals)return;this.values=this.values.slice(0,this.keys.length)}this.values.push.apply(this.values,e.reifyValues())}}exports.BNode=BNode;class BNodeInternal extends BNode{constructor(e,t,i){if(!i){i=[];for(var r=0;r<e.length;r++)i[r]=e[r].maxKey()}super(i),this.children=e,this._size=t}clone(){for(var e=this.children.slice(0),t=0;t<e.length;t++)e[t].isShared=!0;return new BNodeInternal(e,this._size,this.keys.slice(0))}size(){return this._size}greedyClone(e){if(this.isShared&&!e)return this;for(var t=new BNodeInternal(this.children.slice(0),this._size,this.keys.slice(0)),i=0;i<t.children.length;i++)t.children[i]=t.children[i].greedyClone(e);return t}minKey(){return this.children[0].minKey()}minPair(e){return this.children[0].minPair(e)}maxPair(e){return this.children[this.children.length-1].maxPair(e)}get(e,t,i){var r=this.indexOf(e,0,i._compare),s=this.children;return r<s.length?s[r].get(e,t,i):void 0}getPairOrNextLower(e,t,i,r){var s=this.indexOf(e,0,t),h=this.children;return s>=h.length?this.maxPair(r):void 0===(e=h[s].getPairOrNextLower(e,t,i,r))&&0<s?h[s-1].maxPair(r):e}getPairOrNextHigher(e,t,i,r){var s=this.indexOf(e,0,t),h=this.children,n=h.length;if(!(n<=s))return void 0===(e=h[s].getPairOrNextHigher(e,t,i,r))&&s<n-1?h[s+1].minPair(r):e}checkValid(e,t,i,r){var s=this.keys.length,h=this.children.length;check(s===h,"keys/children length mismatch: depth",e,"lengths",s,h,"baseIndex",i),check(1<s||0<e,"internal node has length",s,"at depth",e,"baseIndex",i);let n=0,a=this.children,o=this.keys,l=0,d=void 0,u=void 0;for(var c=0;c<h;c++){var f=a[c],[y,v,g]=f.checkValid(e+1,t,i+n,r);check(y===f.size(),"cached size mismatch at depth",e,"index",c,"baseIndex",i),check(1===y||t._compare(v,g)<0,"child node keys not sorted at depth",e,"index",c,"baseIndex",i),void 0!==d&&void 0!==u&&r&&(check(!areOverlapping(d,u,v,g,t._compare),"children keys not sorted at depth",e,"index",c,"baseIndex",i,": ",u," !< ",v),check(t._compare(u,v)<0,"children keys not sorted at depth",e,"index",c,"baseIndex",i,": ",u," !< ",v)),d=v,u=g,n+=y,l+=f.keys.length,check(n>=l,"wtf",i),check(0===c||a[c-1].constructor===f.constructor,"type mismatch, baseIndex:",i),f.maxKey()!=o[c]&&check(!1,"keys[",c,"] =",o[c],"is wrong, should be ",f.maxKey(),"at depth",e,"baseIndex",i),0===c||t._compare(o[c-1],o[c])<0||check(!1,"sort violation at depth",e,"index",c,"keys",o[c-1],o[c])}check(this._size===n,"internal node cached size mismatch at depth",e,"baseIndex",i,"cached",this._size,"actual",n);s=0===l;return(s||l>t.maxNodeSize*h)&&check(!1,s?"too few":"too many","children (",l,n,") at depth",e,"maxNodeSize:",t.maxNodeSize,"children.length:",h,"baseIndex:",i),[n,this.minKey(),this.maxKey()]}set(e,t,i,r){var s=this.children,h=r._maxNodeSize,n=r._compare,a=Math.min(this.indexOf(e,0,n),s.length-1),o=s[a],l=(o.isShared&&(s[a]=o=o.clone()),o.keys.length>=h&&(0<a&&(l=s[a-1]).keys.length<h&&n(o.keys[0],e)<0?(l.isShared&&(s[a-1]=l=l.clone()),l.takeFromRight(o),this.keys[a-1]=l.maxKey()):void 0!==(l=s[a+1])&&l.keys.length<h&&n(o.maxKey(),e)<0&&(l.isShared&&(s[a+1]=l=l.clone()),l.takeFromLeft(o),this.keys[a]=s[a].maxKey())),o.size()),s=o.set(e,t,i,r);return this._size+=o.size()-l,!1!==s&&(this.keys[a]=o.maxKey(),!0===s||(this.keys.length<h?(this.insert(a+1,s),!0):(e=this.splitOffRightSide(),t=this,0<n(s.maxKey(),this.maxKey())&&(t=e,a-=this.keys.length),t.insert(a+1,s),e)))}insert(e,t){this.children.splice(e,0,t),this.keys.splice(e,0,t.maxKey()),this._size+=t.size()}splitOffRightSide(){var e=this.children.length>>1,t=this.children.splice(e),e=this.keys.splice(e),i=this._size,t=(this._size=sumChildSizes(this.children),new BNodeInternal(t,i-this._size,e));return t}splitOffLeftSide(){var e=this.children.length>>1,t=this.children.splice(0,e),e=this.keys.splice(0,e),i=this._size,t=(this._size=sumChildSizes(this.children),new BNodeInternal(t,i-this._size,e));return t}takeFromRight(e){var t=e,e=(this.keys.push(e.keys.shift()),t.children.shift()),e=(this.children.push(e),e.size());t._size-=e,this._size+=e}takeFromLeft(e){var t=e,i=t.children.pop(),e=(this.keys.unshift(e.keys.pop()),this.children.unshift(i),i.size());t._size-=e,this._size+=e}forRange(i,r,s,h,n,a,o){var e=n._compare,l=this.keys,d=this.children,t=this.indexOf(i,0,e),u=t,c=Math.min(r===i?t:this.indexOf(r,0,e),l.length-1);if(h){if(u<=c)try{for(;u<=c;u++){let e=d[u];e.isShared&&(d[u]=e=e.clone());var f=e.size();let t=e.forRange(i,r,s,h,n,a,o);if(l[u]=e.maxKey(),this._size+=e.size()-f,"number"!=typeof t)return t;a=t}}finally{var y=n._maxNodeSize>>1;for(0<t&&t--,u=c;t<=u;u--)d[u].keys.length<=y&&(0!==d[u].keys.length?this.tryMerge(u,n._maxNodeSize):(l.splice(u,1),check(0===d.splice(u,1)[0].size(),"emptiness cleanup")));0!==d.length&&0===d[0].keys.length&&check(!1,"emptiness bug")}}else for(;u<=c;u++){var v=d[u].forRange(i,r,s,h,n,a,o);if("number"!=typeof v)return v;a=v}return a}tryMerge(e,t){var i=this.children;return 0<=e&&e+1<i.length&&i[e].keys.length+i[e+1].keys.length<=t&&(i[e].isShared&&(i[e]=i[e].clone()),i[e].mergeSibling(i[e+1],t),i.splice(e+1,1),this.keys.splice(e+1,1),this.keys[e]=i[e].maxKey(),!0)}mergeSibling(e,t){var i=this.keys.length,r=(this.keys.push.apply(this.keys,e.keys),e.children);if(this.children.push.apply(this.children,r),this._size+=e.size(),e.isShared&&!this.isShared)for(var s=0;s<r.length;s++)r[s].isShared=!0;this.tryMerge(i-1,t)}}exports.BNodeInternal=BNodeInternal;var undefVals=[];function sumChildSizes(e){for(var t=0,i=0;i<e.length;i++)t+=e[i].size();return t}function areOverlapping(e,t,i,r,s){return s(e,r)<=0&&0<=s(t,i)}let Delete={delete:!0},DeleteRange=()=>Delete,Break={break:!0},EmptyLeaf=(()=>{var e=new BNode;return e.isShared=!0,e})(),EmptyArray=[],ReusedArray=[];function check(e,...t){if(!e)throw t.unshift("B+ tree"),new Error(t.join(" "))}exports.EmptyBTree=(()=>{var e=new BTree;return e.freeze(),e})();
+diff --git a/extended/bulkLoad.d.ts b/extended/bulkLoad.d.ts
+index f4e042bd7576b0d75671791e9fab77a839630d29..829e3be96e63e559a727e6742adffe1f559adffd 100644
+--- a/extended/bulkLoad.d.ts
++++ b/extended/bulkLoad.d.ts
+@@ -1,4 +1,4 @@
+-import BTree from '../b+tree';
++import { BTree } from '../b+tree';
+ /**
+  * Loads a B-Tree from a sorted list of entries in bulk. This is faster than inserting
+  * entries one at a time, and produces a more optimally balanced tree.
+diff --git a/extended/bulkLoad.js b/extended/bulkLoad.js
+index e9aac9c377e7085d2359fe31964171a2eafa3849..ab41d017a2d85a19b4339fd8858bb71300ff118c 100644
+--- a/extended/bulkLoad.js
++++ b/extended/bulkLoad.js
+@@ -1,41 +1,8 @@
+ "use strict";
+-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+-    if (k2 === undefined) k2 = k;
+-    var desc = Object.getOwnPropertyDescriptor(m, k);
+-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+-      desc = { enumerable: true, get: function() { return m[k]; } };
+-    }
+-    Object.defineProperty(o, k2, desc);
+-}) : (function(o, m, k, k2) {
+-    if (k2 === undefined) k2 = k;
+-    o[k2] = m[k];
+-}));
+-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+-    Object.defineProperty(o, "default", { enumerable: true, value: v });
+-}) : function(o, v) {
+-    o["default"] = v;
+-});
+-var __importStar = (this && this.__importStar) || (function () {
+-    var ownKeys = function(o) {
+-        ownKeys = Object.getOwnPropertyNames || function (o) {
+-            var ar = [];
+-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+-            return ar;
+-        };
+-        return ownKeys(o);
+-    };
+-    return function (mod) {
+-        if (mod && mod.__esModule) return mod;
+-        var result = {};
+-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+-        __setModuleDefault(result, mod);
+-        return result;
+-    };
+-})();
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.bulkLoad = bulkLoad;
+ exports.bulkLoadRoot = bulkLoadRoot;
+-const b_tree_1 = __importStar(require("../b+tree"));
++const b_tree_1 = require("../b+tree");
+ const shared_1 = require("./shared");
+ /**
+  * Loads a B-Tree from a sorted list of entries in bulk. This is faster than inserting
+@@ -51,7 +18,7 @@ const shared_1 = require("./shared");
+  */
+ function bulkLoad(keys, values, maxNodeSize, compare, loadFactor = 0.8) {
+     const root = bulkLoadRoot(keys, values, maxNodeSize, compare, loadFactor);
+-    const tree = new b_tree_1.default(undefined, compare, maxNodeSize);
++    const tree = new b_tree_1.BTree(undefined, compare, maxNodeSize);
+     const target = tree;
+     target._root = root;
+     return tree;
+diff --git a/extended/bulkLoad.min.js b/extended/bulkLoad.min.js
+index ceabd4547a8341c471457b9d8cccfcba08a6f116..b0e1811e69c33d935884db39839d3c9436bddebb 100644
+--- a/extended/bulkLoad.min.js
++++ b/extended/bulkLoad.min.js
+@@ -1 +1 @@
+-var __createBinding=this&&this.__createBinding||(Object.create?function(e,t,r,o){void 0===o&&(o=r);var n=Object.getOwnPropertyDescriptor(t,r);n&&("get"in n?t.__esModule:!n.writable&&!n.configurable)||(n={enumerable:!0,get:function(){return t[r]}}),Object.defineProperty(e,o,n)}:function(e,t,r,o){e[o=void 0===o?r:o]=t[r]}),__setModuleDefault=this&&this.__setModuleDefault||(Object.create?function(e,t){Object.defineProperty(e,"default",{enumerable:!0,value:t})}:function(e,t){e.default=t}),__importStar=this&&this.__importStar||(()=>{var n=function(e){return(n=Object.getOwnPropertyNames||function(e){var t,r=[];for(t in e)Object.prototype.hasOwnProperty.call(e,t)&&(r[r.length]=t);return r})(e)};return function(e){if(e&&e.__esModule)return e;var t={};if(null!=e)for(var r=n(e),o=0;o<r.length;o++)"default"!==r[o]&&__createBinding(t,e,r[o]);return __setModuleDefault(t,e),t}})();Object.defineProperty(exports,"__esModule",{value:!0}),exports.bulkLoad=bulkLoad,exports.bulkLoadRoot=bulkLoadRoot;let b_tree_1=__importStar(require("../b+tree")),shared_1=require("./shared");function bulkLoad(e,t,r,o,n=.8){e=bulkLoadRoot(e,t,r,o,n),t=new b_tree_1.default(void 0,o,r);return t._root=e,t}function bulkLoadRoot(r,e,t,o,n=.8){if(n<.5||1<n)throw new Error("bulkLoad: loadFactor must be between 0.5 and 1.0");if(r.length!==e.length)throw new Error("bulkLoad: keys and values arrays must be the same length");t=(0,b_tree_1.fixMaxSize)(t);var a=r.length;if(1<a){let t=r[0];for(let e=1;e<a;e++){var l=r[e];if(0<=o(t,l))throw new Error("bulkLoad: keys must be sorted in strictly ascending order");t=l}}let i=[];if((0,shared_1.makeLeavesFrom)(r,e,t,n,i.push.bind(i)),0===i.length)return new b_tree_1.BNode;var u=Math.ceil(t*n),d=u===t/2,_=Math.floor(t/2);for(let a;1<i.length;i=a){var f=i.length;if(f<=t&&(f!==t||!d)){i=[new b_tree_1.BNodeInternal(i,(0,b_tree_1.sumChildSizes)(i))];break}var b=Math.ceil(f/u);(0,b_tree_1.check)(1<b),a=new Array(b);let r=f,o=b,n=0;for(let e=0;e<b;e++){var s=Math.ceil(r/o),c=new Array(s);let t=0;for(let e=0;e<s;e++){var h=i[n++];c[e]=h,t+=h.size()}r-=s,o--,a[e]=new b_tree_1.BNodeInternal(c,t)}for(var v=a[b-2],g=a[b-1];g.children.length<_;)g.takeFromLeft(v)}return i[0]}
++Object.defineProperty(exports,"__esModule",{value:!0}),exports.bulkLoad=bulkLoad,exports.bulkLoadRoot=bulkLoadRoot;let b_tree_1=require("../b+tree"),shared_1=require("./shared");function bulkLoad(e,r,t,o,a=.8){e=bulkLoadRoot(e,r,t,o,a),r=new b_tree_1.BTree(void 0,o,t);return r._root=e,r}function bulkLoadRoot(t,e,r,o,a=.8){if(a<.5||1<a)throw new Error("bulkLoad: loadFactor must be between 0.5 and 1.0");if(t.length!==e.length)throw new Error("bulkLoad: keys and values arrays must be the same length");r=(0,b_tree_1.fixMaxSize)(r);var l=t.length;if(1<l){let r=t[0];for(let e=1;e<l;e++){var n=t[e];if(0<=o(r,n))throw new Error("bulkLoad: keys must be sorted in strictly ascending order");r=n}}let d=[];if((0,shared_1.makeLeavesFrom)(t,e,r,a,d.push.bind(d)),0===d.length)return new b_tree_1.BNode;var b=Math.ceil(r*a),i=b===r/2,u=Math.floor(r/2);for(let l;1<d.length;d=l){var h=d.length;if(h<=r&&(h!==r||!i)){d=[new b_tree_1.BNodeInternal(d,(0,b_tree_1.sumChildSizes)(d))];break}var s=Math.ceil(h/b);(0,b_tree_1.check)(1<s),l=new Array(s);let t=h,o=s,a=0;for(let e=0;e<s;e++){var _=Math.ceil(t/o),f=new Array(_);let r=0;for(let e=0;e<_;e++){var k=d[a++];f[e]=k,r+=k.size()}t-=_,o--,l[e]=new b_tree_1.BNodeInternal(f,r)}for(var w=l[s-2],c=l[s-1];c.children.length<u;)c.takeFromLeft(w)}return d[0]}
+diff --git a/extended/diffAgainst.d.ts b/extended/diffAgainst.d.ts
+index 7b4e0aad48900a299e97c61c7830080342a3b396..67d1f3fcb42e095a1390cfa4a58c81e4f58ecb70 100644
+--- a/extended/diffAgainst.d.ts
++++ b/extended/diffAgainst.d.ts
+@@ -1,4 +1,4 @@
+-import BTree from '../b+tree';
++import { BTree } from '../b+tree';
+ /**
+  * Computes the differences between `treeA` and `treeB`.
+  * For efficiency, the diff is returned via invocations of supplied handlers.
+@@ -14,7 +14,7 @@ import BTree from '../b+tree';
+  * @returns The first `break` payload returned by a handler, or `undefined` if no handler breaks.
+  * @throws Error if the supplied trees were created with different comparators.
+  */
+-export default function diffAgainst<K, V, R>(_treeA: BTree<K, V>, _treeB: BTree<K, V>, onlyA?: (k: K, v: V) => {
++export declare function diffAgainst<K, V, R>(_treeA: BTree<K, V>, _treeB: BTree<K, V>, onlyA?: (k: K, v: V) => {
+     break?: R;
+ } | void, onlyB?: (k: K, v: V) => {
+     break?: R;
+diff --git a/extended/diffAgainst.js b/extended/diffAgainst.js
+index e661377ec42608e7e31c74b026eff70ce2860f2d..2898bb5c2647603f37d99b3b20e4eb53e9a44809 100644
+--- a/extended/diffAgainst.js
++++ b/extended/diffAgainst.js
+@@ -1,6 +1,6 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+-exports.default = diffAgainst;
++exports.diffAgainst = diffAgainst;
+ const b_tree_1 = require("../b+tree");
+ /**
+  * Computes the differences between `treeA` and `treeB`.
+diff --git a/extended/diffAgainst.min.js b/extended/diffAgainst.min.js
+index c37addff65ae4afef701c3838f499f1ca4adb44d..ae1b16b42c9fb6d6c895a7b75ec431fd60122bad 100644
+--- a/extended/diffAgainst.min.js
++++ b/extended/diffAgainst.min.js
+@@ -1 +1 @@
+-Object.defineProperty(exports,"__esModule",{value:!0}),exports.default=diffAgainst;let b_tree_1=require("../b+tree");function diffAgainst(e,r,i,t,n){var f=e;if(r._compare!==f._compare)throw new Error("Tree comparators are not the same.");if(f.isEmpty||r.isEmpty)return e.isEmpty&&r.isEmpty?void 0:f.isEmpty?void 0===t?void 0:stepToEnd(makeDiffCursor(r),t):void 0===i?void 0:stepToEnd(makeDiffCursor(f),i);var s=f._compare,a=makeDiffCursor(f),l=makeDiffCursor(r);let u=!0,o=!0,c=compareDiffCursors(a,l,s);for(;u&&o;){var p=compareDiffCursors(a,l,s),{leaf:v,internalSpine:h,levelIndices:d}=a,{leaf:m,internalSpine:y,levelIndices:g}=l;if(v||m){if(0!==c)if(0===p){if(v&&m&&n){var k=v.values[d[d.length-1]],C=m.values[g[g.length-1]];if(!Object.is(k,C)){k=n(a.currentKey,k,C);if(k&&k.break)return k.break}}}else if(0<p){if(m&&t){C=m.values[g[g.length-1]],k=t(l.currentKey,C);if(k&&k.break)return k.break}}else if(i&&v&&0!==c){var D=v.values[d[d.length-1]],D=i(a.currentKey,D);if(D&&D.break)return D.break}}else if(!v&&!m&&0===p){D=h.length-1,v=y.length-1,m=h[D][d[D]];if(y[v][g[v]]===m){c=0,u=stepDiffCursor(a,!0),o=stepDiffCursor(l,!0);continue}}(c=p)<0?u=stepDiffCursor(a):o=stepDiffCursor(l)}return u&&i?finishCursorWalk(a,l,s,i):o&&t?finishCursorWalk(l,a,s,t):void 0}function finishCursorWalk(e,r,i,t){r=compareDiffCursors(e,r,i);if(0===r){if(!stepDiffCursor(e))return}else r<0&&(0,b_tree_1.check)(!1,"cursor walk terminated early");return stepToEnd(e,t)}function stepToEnd(e,r){let i=!0;for(;i;){var{leaf:t,levelIndices:n,currentKey:f}=e;if(t){f=r(f,t.values[n[n.length-1]]);if(f&&f.break)return f.break}i=stepDiffCursor(e)}}function makeDiffCursor(e){var r=e._root;return{height:e.height,internalSpine:[[r]],levelIndices:[0],leaf:void 0,currentKey:r.maxKey()}}function stepDiffCursor(r,e){var i,{internalSpine:t,levelIndices:n,leaf:f}=r;if(!0===e||f){var s=n.length;if(!0!==e&&0!==n[s-1])return e=--n[s-1],r.currentKey=f.keys[e],!0;var f=t.length;if(0!==f){var a=f-1;let e=a;for(;0<=e;){if(0<n[e])return e<s-1&&(r.leaf=void 0,n.pop()),e<a&&(r.internalSpine=t.slice(0,e+1)),r.currentKey=t[e][--n[e]].maxKey(),!0;e--}}return!1}return(f=t[f=(e=t.length)-1][n[f]]).isLeaf?(r.leaf=f,i=n[e]=f.values.length-1,r.currentKey=f.keys[i]):(i=f.children,f=(t[e]=i).length-1,n[e]=f,r.currentKey=i[f].maxKey()),!0}function compareDiffCursors(e,r,i){var{height:e,currentKey:t,levelIndices:n}=e,{height:r,currentKey:f,levelIndices:s}=r,i=i(f,t);return 0!==i?i:n.length-(e-(f=e<r?e:r))-(s.length-(r-f))}
++Object.defineProperty(exports,"__esModule",{value:!0}),exports.diffAgainst=diffAgainst;let b_tree_1=require("../b+tree");function diffAgainst(e,r,i,t,n){var f=e;if(r._compare!==f._compare)throw new Error("Tree comparators are not the same.");if(f.isEmpty||r.isEmpty)return e.isEmpty&&r.isEmpty?void 0:f.isEmpty?void 0===t?void 0:stepToEnd(makeDiffCursor(r),t):void 0===i?void 0:stepToEnd(makeDiffCursor(f),i);var s=f._compare,a=makeDiffCursor(f),l=makeDiffCursor(r);let o=!0,u=!0,c=compareDiffCursors(a,l,s);for(;o&&u;){var p=compareDiffCursors(a,l,s),{leaf:v,internalSpine:h,levelIndices:d}=a,{leaf:m,internalSpine:y,levelIndices:g}=l;if(v||m){if(0!==c)if(0===p){if(v&&m&&n){var k=v.values[d[d.length-1]],C=m.values[g[g.length-1]];if(!Object.is(k,C)){k=n(a.currentKey,k,C);if(k&&k.break)return k.break}}}else if(0<p){if(m&&t){C=m.values[g[g.length-1]],k=t(l.currentKey,C);if(k&&k.break)return k.break}}else if(i&&v&&0!==c){var D=v.values[d[d.length-1]],D=i(a.currentKey,D);if(D&&D.break)return D.break}}else if(!v&&!m&&0===p){D=h.length-1,v=y.length-1,m=h[D][d[D]];if(y[v][g[v]]===m){c=0,o=stepDiffCursor(a,!0),u=stepDiffCursor(l,!0);continue}}(c=p)<0?o=stepDiffCursor(a):u=stepDiffCursor(l)}return o&&i?finishCursorWalk(a,l,s,i):u&&t?finishCursorWalk(l,a,s,t):void 0}function finishCursorWalk(e,r,i,t){r=compareDiffCursors(e,r,i);if(0===r){if(!stepDiffCursor(e))return}else r<0&&(0,b_tree_1.check)(!1,"cursor walk terminated early");return stepToEnd(e,t)}function stepToEnd(e,r){let i=!0;for(;i;){var{leaf:t,levelIndices:n,currentKey:f}=e;if(t){f=r(f,t.values[n[n.length-1]]);if(f&&f.break)return f.break}i=stepDiffCursor(e)}}function makeDiffCursor(e){var r=e._root;return{height:e.height,internalSpine:[[r]],levelIndices:[0],leaf:void 0,currentKey:r.maxKey()}}function stepDiffCursor(r,e){var i,{internalSpine:t,levelIndices:n,leaf:f}=r;if(!0===e||f){var s=n.length;if(!0!==e&&0!==n[s-1])return e=--n[s-1],r.currentKey=f.keys[e],!0;var f=t.length;if(0!==f){var a=f-1;let e=a;for(;0<=e;){if(0<n[e])return e<s-1&&(r.leaf=void 0,n.pop()),e<a&&(r.internalSpine=t.slice(0,e+1)),r.currentKey=t[e][--n[e]].maxKey(),!0;e--}}return!1}return(f=t[f=(e=t.length)-1][n[f]]).isLeaf?(r.leaf=f,i=n[e]=f.values.length-1,r.currentKey=f.keys[i]):(i=f.children,f=(t[e]=i).length-1,n[e]=f,r.currentKey=i[f].maxKey()),!0}function compareDiffCursors(e,r,i){var{height:e,currentKey:t,levelIndices:n}=e,{height:r,currentKey:f,levelIndices:s}=r,i=i(f,t);return 0!==i?i:n.length-(e-(f=e<r?e:r))-(s.length-(r-f))}
+diff --git a/extended/forEachKeyInBoth.d.ts b/extended/forEachKeyInBoth.d.ts
+index 296d43909c61c5aa3796c958511c95e7391189b2..255454aa9123ff0e7875a56255e94f46a7782bbb 100644
+--- a/extended/forEachKeyInBoth.d.ts
++++ b/extended/forEachKeyInBoth.d.ts
+@@ -1,4 +1,4 @@
+-import BTree from '../b+tree';
++import { BTree } from '../b+tree';
+ /**
+  * Calls the supplied `callback` for each key/value pair shared by both trees, in sorted key order.
+  * Neither tree is modified.
+@@ -14,6 +14,6 @@ import BTree from '../b+tree';
+  * @returns The first `break` payload returned by the callback, or `undefined` if the walk finishes.
+  * @throws Error if the trees were built with different comparators.
+  */
+-export default function forEachKeyInBoth<K, V, R = void>(treeA: BTree<K, V>, treeB: BTree<K, V>, callback: (key: K, leftValue: V, rightValue: V) => {
++export declare function forEachKeyInBoth<K, V, R = void>(treeA: BTree<K, V>, treeB: BTree<K, V>, callback: (key: K, leftValue: V, rightValue: V) => {
+     break?: R;
+ } | void): R | undefined;
+diff --git a/extended/forEachKeyInBoth.js b/extended/forEachKeyInBoth.js
+index 0386a8d0de14e10fa052a1264d892310de1dc541..545fdfd13d45a9c4cd6bc369e47f55e589294dcc 100644
+--- a/extended/forEachKeyInBoth.js
++++ b/extended/forEachKeyInBoth.js
+@@ -1,6 +1,6 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+-exports.default = forEachKeyInBoth;
++exports.forEachKeyInBoth = forEachKeyInBoth;
+ const shared_1 = require("./shared");
+ const parallelWalk_1 = require("./parallelWalk");
+ /**
+diff --git a/extended/forEachKeyInBoth.min.js b/extended/forEachKeyInBoth.min.js
+index a1929c533d482a9aa218b9f58fbb271a67ba1051..3eec2fb2e90b570e5ac8255f4804962919386407 100644
+--- a/extended/forEachKeyInBoth.min.js
++++ b/extended/forEachKeyInBoth.min.js
+@@ -1 +1 @@
+-Object.defineProperty(exports,"__esModule",{value:!0}),exports.default=forEachKeyInBoth;let shared_1=require("./shared"),parallelWalk_1=require("./parallelWalk");function forEachKeyInBoth(r,o,p){var k=r,_=o;if((0,shared_1.checkCanDoSetOperation)(k,_,!0),0!==o.size&&0!==r.size){var W=r._compare,o=()=>{},n=(0,parallelWalk_1.createCursor)(k,o,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop),t=(0,parallelWalk_1.createCursor)(_,o,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop);let l=n,a=t,e=W((0,parallelWalk_1.getKey)(l),(0,parallelWalk_1.getKey)(a));for(;;){var f=0===e;if(f){var s=p((0,parallelWalk_1.getKey)(l),n.leaf.values[n.leafIndex],t.leaf.values[t.leafIndex]);if(s&&s.break)return s.break;var s=(0,parallelWalk_1.moveForwardOne)(a,l),i=(0,parallelWalk_1.moveForwardOne)(l,a);if(s&&i)break;e=W((0,parallelWalk_1.getKey)(l),(0,parallelWalk_1.getKey)(a))}else{e<0&&(s=a,a=l,l=s);var[i,f]=(0,parallelWalk_1.moveTo)(a,l,(0,parallelWalk_1.getKey)(l),!0,f);if(i)break;e=f?0:-1}}}}
++Object.defineProperty(exports,"__esModule",{value:!0}),exports.forEachKeyInBoth=forEachKeyInBoth;let shared_1=require("./shared"),parallelWalk_1=require("./parallelWalk");function forEachKeyInBoth(r,o,p){var k=r,_=o;if((0,shared_1.checkCanDoSetOperation)(k,_,!0),0!==o.size&&0!==r.size){var n=r._compare,o=()=>{},W=(0,parallelWalk_1.createCursor)(k,o,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop),t=(0,parallelWalk_1.createCursor)(_,o,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop);let l=W,a=t,e=n((0,parallelWalk_1.getKey)(l),(0,parallelWalk_1.getKey)(a));for(;;){var f=0===e;if(f){var s=p((0,parallelWalk_1.getKey)(l),W.leaf.values[W.leafIndex],t.leaf.values[t.leafIndex]);if(s&&s.break)return s.break;var s=(0,parallelWalk_1.moveForwardOne)(a,l),i=(0,parallelWalk_1.moveForwardOne)(l,a);if(s&&i)break;e=n((0,parallelWalk_1.getKey)(l),(0,parallelWalk_1.getKey)(a))}else{e<0&&(s=a,a=l,l=s);var[i,f]=(0,parallelWalk_1.moveTo)(a,l,(0,parallelWalk_1.getKey)(l),!0,f);if(i)break;e=f?0:-1}}}}
+diff --git a/extended/forEachKeyNotIn.d.ts b/extended/forEachKeyNotIn.d.ts
+index 474750a51bbb7f5d3f6b59cfa5f0e27fe9f3320a..0503711203ca04f44f968c32a4ec82ad8b600134 100644
+--- a/extended/forEachKeyNotIn.d.ts
++++ b/extended/forEachKeyNotIn.d.ts
+@@ -1,4 +1,4 @@
+-import BTree from '../b+tree';
++import { BTree } from '../b+tree';
+ /**
+  * Calls the supplied `callback` for each key/value pair that is in `includeTree` but not in `excludeTree`
+  * (set subtraction). The callback runs in sorted key order and neither tree is modified.
+@@ -13,6 +13,6 @@ import BTree from '../b+tree';
+  * @returns The first `break` payload returned by the callback, or `undefined` if all qualifying keys are visited.
+  * @throws Error if the trees were built with different comparators.
+  */
+-export default function forEachKeyNotIn<K, V, R = void>(includeTree: BTree<K, V>, excludeTree: BTree<K, V>, callback: (key: K, value: V) => {
++export declare function forEachKeyNotIn<K, V, R = void>(includeTree: BTree<K, V>, excludeTree: BTree<K, V>, callback: (key: K, value: V) => {
+     break?: R;
+ } | void): R | undefined;
+diff --git a/extended/forEachKeyNotIn.js b/extended/forEachKeyNotIn.js
+index d3c00b5b2d15c25a1002564723333f955a4764ee..a315ab2df0974d2af041b1694b6a02d16b3fb6e7 100644
+--- a/extended/forEachKeyNotIn.js
++++ b/extended/forEachKeyNotIn.js
+@@ -1,6 +1,6 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+-exports.default = forEachKeyNotIn;
++exports.forEachKeyNotIn = forEachKeyNotIn;
+ const shared_1 = require("./shared");
+ const parallelWalk_1 = require("./parallelWalk");
+ /**
+diff --git a/extended/forEachKeyNotIn.min.js b/extended/forEachKeyNotIn.min.js
+index 4e5c4c78cb44767cacd3d4321fd9efb0d4dfbb05..27e4b8ffc83c2599792d7b8a43bda9326d90bb37 100644
+--- a/extended/forEachKeyNotIn.min.js
++++ b/extended/forEachKeyNotIn.min.js
+@@ -1 +1 @@
+-Object.defineProperty(exports,"__esModule",{value:!0}),exports.default=forEachKeyNotIn;let shared_1=require("./shared"),parallelWalk_1=require("./parallelWalk");function forEachKeyNotIn(a,o,p){var k=a,_=o;if((0,shared_1.checkCanDoSetOperation)(k,_,!0),0!==a.size){var n=a._compare,a=()=>{};let e=(0,parallelWalk_1.createCursor)(k,a,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop),r=(0,parallelWalk_1.createCursor)(_,a,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop);var t=()=>{do{var l=(0,parallelWalk_1.getKey)(e),a=e.leaf.values[e.leafIndex],l=p(l,a);if(l&&l.break)return l.break}while(!(0,parallelWalk_1.moveForwardOne)(e,r))};if(0===o.size)return t();let l=n((0,parallelWalk_1.getKey)(e),(0,parallelWalk_1.getKey)(r));for(;;){var W=0===l;if(W){if((0,parallelWalk_1.moveForwardOne)(e,r))break;l=1}else if(l<0){var f=(0,parallelWalk_1.getKey)(e),i=e.leaf.values[e.leafIndex],f=p(f,i);if(f&&f.break)return f.break;if((0,parallelWalk_1.moveForwardOne)(e,r))break;l=n((0,parallelWalk_1.getKey)(e),(0,parallelWalk_1.getKey)(r))}else{var[i,f]=(0,parallelWalk_1.moveTo)(r,e,(0,parallelWalk_1.getKey)(e),!0,W);if(i)return t();l=f?0:-1}}}}
++Object.defineProperty(exports,"__esModule",{value:!0}),exports.forEachKeyNotIn=forEachKeyNotIn;let shared_1=require("./shared"),parallelWalk_1=require("./parallelWalk");function forEachKeyNotIn(a,o,p){var k=a,_=o;if((0,shared_1.checkCanDoSetOperation)(k,_,!0),0!==a.size){var n=a._compare,a=()=>{};let e=(0,parallelWalk_1.createCursor)(k,a,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop),r=(0,parallelWalk_1.createCursor)(_,a,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop,parallelWalk_1.noop);var t=()=>{do{var l=(0,parallelWalk_1.getKey)(e),a=e.leaf.values[e.leafIndex],l=p(l,a);if(l&&l.break)return l.break}while(!(0,parallelWalk_1.moveForwardOne)(e,r))};if(0===o.size)return t();let l=n((0,parallelWalk_1.getKey)(e),(0,parallelWalk_1.getKey)(r));for(;;){var W=0===l;if(W){if((0,parallelWalk_1.moveForwardOne)(e,r))break;l=1}else if(l<0){var f=(0,parallelWalk_1.getKey)(e),i=e.leaf.values[e.leafIndex],f=p(f,i);if(f&&f.break)return f.break;if((0,parallelWalk_1.moveForwardOne)(e,r))break;l=n((0,parallelWalk_1.getKey)(e),(0,parallelWalk_1.getKey)(r))}else{var[i,f]=(0,parallelWalk_1.moveTo)(r,e,(0,parallelWalk_1.getKey)(e),!0,W);if(i)return t();l=f?0:-1}}}}
+diff --git a/extended/index.d.ts b/extended/index.d.ts
+index 5d98f68685231a59b743fa1f7048ceaef7af64b8..01a449a6fdb3b3d0e2f0eb6a1f3027e9e4fa4a6e 100644
+--- a/extended/index.d.ts
++++ b/extended/index.d.ts
+@@ -1,4 +1,4 @@
+-import BTree from '../b+tree';
++import { BTree } from '../b+tree';
+ /**
+  * An extended version of the `BTree` class that includes additional functionality
+  * such as bulk loading, set operations, and diffing.
+@@ -130,4 +130,3 @@ export interface BTreeEx<K = any, V = any> {
+     /** See {@link BTree.mapValues}. */
+     mapValues<R>(callback: (v: V, k: K, counter: number) => R): BTreeEx<K, R>;
+ }
+-export default BTreeEx;
+diff --git a/extended/index.js b/extended/index.js
+index 22ca29dd0bde8520cc8cdb150c2a29cc3f5d325e..7fe8f18b7373357d45b74f6e5e48d362f49c67e3 100644
+--- a/extended/index.js
++++ b/extended/index.js
+@@ -1,49 +1,13 @@
+ "use strict";
+-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+-    if (k2 === undefined) k2 = k;
+-    var desc = Object.getOwnPropertyDescriptor(m, k);
+-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+-      desc = { enumerable: true, get: function() { return m[k]; } };
+-    }
+-    Object.defineProperty(o, k2, desc);
+-}) : (function(o, m, k, k2) {
+-    if (k2 === undefined) k2 = k;
+-    o[k2] = m[k];
+-}));
+-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+-    Object.defineProperty(o, "default", { enumerable: true, value: v });
+-}) : function(o, v) {
+-    o["default"] = v;
+-});
+-var __importStar = (this && this.__importStar) || (function () {
+-    var ownKeys = function(o) {
+-        ownKeys = Object.getOwnPropertyNames || function (o) {
+-            var ar = [];
+-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+-            return ar;
+-        };
+-        return ownKeys(o);
+-    };
+-    return function (mod) {
+-        if (mod && mod.__esModule) return mod;
+-        var result = {};
+-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+-        __setModuleDefault(result, mod);
+-        return result;
+-    };
+-})();
+-var __importDefault = (this && this.__importDefault) || function (mod) {
+-    return (mod && mod.__esModule) ? mod : { "default": mod };
+-};
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.BTreeEx = void 0;
+-const b_tree_1 = __importStar(require("../b+tree"));
+-const diffAgainst_1 = __importDefault(require("./diffAgainst"));
+-const forEachKeyInBoth_1 = __importDefault(require("./forEachKeyInBoth"));
+-const forEachKeyNotIn_1 = __importDefault(require("./forEachKeyNotIn"));
+-const intersect_1 = __importDefault(require("./intersect"));
+-const subtract_1 = __importDefault(require("./subtract"));
+-const union_1 = __importDefault(require("./union"));
++const b_tree_1 = require("../b+tree");
++const diffAgainst_1 = require("./diffAgainst");
++const forEachKeyInBoth_1 = require("./forEachKeyInBoth");
++const forEachKeyNotIn_1 = require("./forEachKeyNotIn");
++const intersect_1 = require("./intersect");
++const subtract_1 = require("./subtract");
++const union_1 = require("./union");
+ const bulkLoad_1 = require("./bulkLoad");
+ /**
+  * An extended version of the `BTree` class that includes additional functionality
+@@ -52,7 +16,7 @@ const bulkLoad_1 = require("./bulkLoad");
+  * Note: each additional functionality piece is available as a standalone function from the extended folder.
+  * @extends BTree
+  */
+-class BTreeEx extends b_tree_1.default {
++class BTreeEx extends b_tree_1.BTree {
+     /**
+      * Bulk loads a new `BTreeEx` from parallel arrays of sorted entries.
+      * This reuses the same algorithm as `extended/bulkLoad`, but produces a `BTreeEx`.
+@@ -104,7 +68,7 @@ class BTreeEx extends b_tree_1.default {
+      * @throws Error if the supplied trees were created with different comparators.
+      */
+     diffAgainst(other, onlyThis, onlyOther, different) {
+-        return (0, diffAgainst_1.default)(this, other, onlyThis, onlyOther, different);
++        return (0, diffAgainst_1.diffAgainst)(this, other, onlyThis, onlyOther, different);
+     }
+     /**
+      * Calls the supplied `callback` for each key/value pair shared by this tree and `other`, in sorted key order.
+@@ -120,7 +84,7 @@ class BTreeEx extends b_tree_1.default {
+      * @throws Error if the two trees were created with different comparators.
+      */
+     forEachKeyInBoth(other, callback) {
+-        return (0, forEachKeyInBoth_1.default)(this, other, callback);
++        return (0, forEachKeyInBoth_1.forEachKeyInBoth)(this, other, callback);
+     }
+     /**
+      * Calls the supplied `callback` for each key/value pair that exists in this tree but not in `other`
+@@ -136,7 +100,7 @@ class BTreeEx extends b_tree_1.default {
+      * @throws Error if the trees were created with different comparators.
+      */
+     forEachKeyNotIn(other, callback) {
+-        return (0, forEachKeyNotIn_1.default)(this, other, callback);
++        return (0, forEachKeyNotIn_1.forEachKeyNotIn)(this, other, callback);
+     }
+     /**
+      * Returns a new tree containing only keys present in both trees.
+@@ -152,7 +116,7 @@ class BTreeEx extends b_tree_1.default {
+      * @throws Error if the trees were created with different comparators.
+      */
+     intersect(other, combineFn) {
+-        return (0, intersect_1.default)(this, other, combineFn);
++        return (0, intersect_1.intersect)(this, other, combineFn);
+     }
+     /**
+      * Efficiently unions this tree with `other`, reusing subtrees wherever possible without modifying either input.
+@@ -167,7 +131,7 @@ class BTreeEx extends b_tree_1.default {
+      * @throws Error if the trees were created with different comparators or max node sizes.
+      */
+     union(other, combineFn) {
+-        return (0, union_1.default)(this, other, combineFn);
++        return (0, union_1.union)(this, other, combineFn);
+     }
+     /**
+      * Returns a new tree containing only the keys that are present in this tree but not `other` (set subtraction).
+@@ -183,8 +147,7 @@ class BTreeEx extends b_tree_1.default {
+      * @throws Error if the trees were created with different comparators or max node sizes.
+      */
+     subtract(other) {
+-        return (0, subtract_1.default)(this, other);
++        return (0, subtract_1.subtract)(this, other);
+     }
+ }
+ exports.BTreeEx = BTreeEx;
+-exports.default = BTreeEx;
+diff --git a/extended/index.min.js b/extended/index.min.js
+index 41e017d67ef0649cd3ae8549ed162c6d7dd4f730..7358b001e852bea28500ef1144469539af758b4f 100644
+--- a/extended/index.min.js
++++ b/extended/index.min.js
+@@ -1 +1 @@
+-var __createBinding=this&&this.__createBinding||(Object.create?function(e,t,r,o){void 0===o&&(o=r);var i=Object.getOwnPropertyDescriptor(t,r);i&&("get"in i?t.__esModule:!i.writable&&!i.configurable)||(i={enumerable:!0,get:function(){return t[r]}}),Object.defineProperty(e,o,i)}:function(e,t,r,o){e[o=void 0===o?r:o]=t[r]}),__setModuleDefault=this&&this.__setModuleDefault||(Object.create?function(e,t){Object.defineProperty(e,"default",{enumerable:!0,value:t})}:function(e,t){e.default=t}),__importStar=this&&this.__importStar||(()=>{var i=function(e){return(i=Object.getOwnPropertyNames||function(e){var t,r=[];for(t in e)Object.prototype.hasOwnProperty.call(e,t)&&(r[r.length]=t);return r})(e)};return function(e){if(e&&e.__esModule)return e;var t={};if(null!=e)for(var r=i(e),o=0;o<r.length;o++)"default"!==r[o]&&__createBinding(t,e,r[o]);return __setModuleDefault(t,e),t}})(),__importDefault=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(exports,"__esModule",{value:!0}),exports.BTreeEx=void 0;let b_tree_1=__importStar(require("../b+tree")),diffAgainst_1=__importDefault(require("./diffAgainst")),forEachKeyInBoth_1=__importDefault(require("./forEachKeyInBoth")),forEachKeyNotIn_1=__importDefault(require("./forEachKeyNotIn")),intersect_1=__importDefault(require("./intersect")),subtract_1=__importDefault(require("./subtract")),union_1=__importDefault(require("./union")),bulkLoad_1=require("./bulkLoad");class BTreeEx extends b_tree_1.default{static bulkLoad(e,t,r,o){o=o??b_tree_1.defaultComparator,e=(0,bulkLoad_1.bulkLoadRoot)(e,t,r,o),t=new BTreeEx(void 0,o,r);return t._root=e,t}clone(){this._root.isShared=!0;var e=new BTreeEx(void 0,this._compare,this._maxNodeSize);return e._root=this._root,e}greedyClone(e){var t=new BTreeEx(void 0,this._compare,this._maxNodeSize);return t._root=this._root.greedyClone(e),t}diffAgainst(e,t,r,o){return(0,diffAgainst_1.default)(this,e,t,r,o)}forEachKeyInBoth(e,t){return(0,forEachKeyInBoth_1.default)(this,e,t)}forEachKeyNotIn(e,t){return(0,forEachKeyNotIn_1.default)(this,e,t)}intersect(e,t){return(0,intersect_1.default)(this,e,t)}union(e,t){return(0,union_1.default)(this,e,t)}subtract(e){return(0,subtract_1.default)(this,e)}}exports.BTreeEx=BTreeEx,exports.default=BTreeEx;
++Object.defineProperty(exports,"__esModule",{value:!0}),exports.BTreeEx=void 0;let b_tree_1=require("../b+tree"),diffAgainst_1=require("./diffAgainst"),forEachKeyInBoth_1=require("./forEachKeyInBoth"),forEachKeyNotIn_1=require("./forEachKeyNotIn"),intersect_1=require("./intersect"),subtract_1=require("./subtract"),union_1=require("./union"),bulkLoad_1=require("./bulkLoad");class BTreeEx extends b_tree_1.BTree{static bulkLoad(e,r,t,o){o=o??b_tree_1.defaultComparator,e=(0,bulkLoad_1.bulkLoadRoot)(e,r,t,o),r=new BTreeEx(void 0,o,t);return r._root=e,r}clone(){this._root.isShared=!0;var e=new BTreeEx(void 0,this._compare,this._maxNodeSize);return e._root=this._root,e}greedyClone(e){var r=new BTreeEx(void 0,this._compare,this._maxNodeSize);return r._root=this._root.greedyClone(e),r}diffAgainst(e,r,t,o){return(0,diffAgainst_1.diffAgainst)(this,e,r,t,o)}forEachKeyInBoth(e,r){return(0,forEachKeyInBoth_1.forEachKeyInBoth)(this,e,r)}forEachKeyNotIn(e,r){return(0,forEachKeyNotIn_1.forEachKeyNotIn)(this,e,r)}intersect(e,r){return(0,intersect_1.intersect)(this,e,r)}union(e,r){return(0,union_1.union)(this,e,r)}subtract(e){return(0,subtract_1.subtract)(this,e)}}exports.BTreeEx=BTreeEx;
+diff --git a/extended/intersect.d.ts b/extended/intersect.d.ts
+index ddda066a63b17e14406eff641418cc7715dc0f07..2bcff2669c11aa95ee1af9a9401daf11ac1c9f91 100644
+--- a/extended/intersect.d.ts
++++ b/extended/intersect.d.ts
+@@ -1,4 +1,4 @@
+-import BTree from '../b+tree';
++import { BTree } from '../b+tree';
+ /**
+  * Returns a new tree containing only keys present in both input trees.
+  * Neither tree is modified.
+@@ -13,4 +13,4 @@ import BTree from '../b+tree';
+  * @returns A new tree populated with the intersection.
+  * @throws Error if the trees were created with different comparators.
+  */
+-export default function intersect<TBTree extends BTree<K, V>, K, V>(treeA: TBTree, treeB: TBTree, combineFn: (key: K, leftValue: V, rightValue: V) => V): TBTree;
++export declare function intersect<TBTree extends BTree<K, V>, K, V>(treeA: TBTree, treeB: TBTree, combineFn: (key: K, leftValue: V, rightValue: V) => V): TBTree;
+diff --git a/extended/intersect.js b/extended/intersect.js
+index 2db7525368519e8ec9e3eb04bc10046c745d7baa..983514e2974c566a474ec73d5b4d51f2216ebedb 100644
+--- a/extended/intersect.js
++++ b/extended/intersect.js
+@@ -1,11 +1,8 @@
+ "use strict";
+-var __importDefault = (this && this.__importDefault) || function (mod) {
+-    return (mod && mod.__esModule) ? mod : { "default": mod };
+-};
+ Object.defineProperty(exports, "__esModule", { value: true });
+-exports.default = intersect;
++exports.intersect = intersect;
+ const shared_1 = require("./shared");
+-const forEachKeyInBoth_1 = __importDefault(require("./forEachKeyInBoth"));
++const forEachKeyInBoth_1 = require("./forEachKeyInBoth");
+ const bulkLoad_1 = require("./bulkLoad");
+ /**
+  * Returns a new tree containing only keys present in both input trees.
+@@ -31,7 +28,7 @@ function intersect(treeA, treeB, combineFn) {
+         return treeB.clone();
+     const intersectedKeys = [];
+     const intersectedValues = [];
+-    (0, forEachKeyInBoth_1.default)(treeA, treeB, (key, leftValue, rightValue) => {
++    (0, forEachKeyInBoth_1.forEachKeyInBoth)(treeA, treeB, (key, leftValue, rightValue) => {
+         const mergedValue = combineFn(key, leftValue, rightValue);
+         intersectedKeys.push(key);
+         intersectedValues.push(mergedValue);
+diff --git a/extended/intersect.min.js b/extended/intersect.min.js
+index d8622e5aa119e68269c693a26e2c65e1b014a786..4cfbcbd69524adabd52512af5b56c0e57b6ffeb5 100644
+--- a/extended/intersect.min.js
++++ b/extended/intersect.min.js
+@@ -1 +1 @@
+-var __importDefault=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(exports,"__esModule",{value:!0}),exports.default=intersect;let shared_1=require("./shared"),forEachKeyInBoth_1=__importDefault(require("./forEachKeyInBoth")),bulkLoad_1=require("./bulkLoad");function intersect(e,r,o){var t=e,u=r,a=(0,shared_1.checkCanDoSetOperation)(t,u,!0);if(0===t._root.size())return e.clone();if(0===u._root.size())return r.clone();let _=[],n=[];(0,forEachKeyInBoth_1.default)(e,r,(e,r,t)=>{r=o(e,r,t);_.push(e),n.push(r)});t=new e.constructor(void 0,e._compare,a);return t._root=(0,bulkLoad_1.bulkLoadRoot)(_,n,a,e._compare),t}
++Object.defineProperty(exports,"__esModule",{value:!0}),exports.intersect=intersect;let shared_1=require("./shared"),forEachKeyInBoth_1=require("./forEachKeyInBoth"),bulkLoad_1=require("./bulkLoad");function intersect(e,r,t){var o=e,n=r,a=(0,shared_1.checkCanDoSetOperation)(o,n,!0);if(0===o._root.size())return e.clone();if(0===n._root.size())return r.clone();let c=[],u=[];(0,forEachKeyInBoth_1.forEachKeyInBoth)(e,r,(e,r,o)=>{r=t(e,r,o);c.push(e),u.push(r)});o=new e.constructor(void 0,e._compare,a);return o._root=(0,bulkLoad_1.bulkLoadRoot)(c,u,a,e._compare),o}
+diff --git a/extended/subtract.d.ts b/extended/subtract.d.ts
+index 27060ce4e4db9194f8e140966812bc65e675f3a4..9f490cb1b31d74c091d12a3d15c62eec089250dd 100644
+--- a/extended/subtract.d.ts
++++ b/extended/subtract.d.ts
+@@ -1,4 +1,4 @@
+-import BTree from '../b+tree';
++import { BTree } from '../b+tree';
+ /**
+  * Returns a new tree containing only the keys that are present in `targetTree` but not `subtractTree` (set subtraction).
+  * Neither tree is modified.
+@@ -13,4 +13,4 @@ import BTree from '../b+tree';
+  * @returns A new tree that contains the subtraction result.
+  * @throws Error if the trees were created with different comparators or max node sizes.
+  */
+-export default function subtract<TBTree extends BTree<K, V>, K, V>(targetTree: TBTree, subtractTree: TBTree): TBTree;
++export declare function subtract<TBTree extends BTree<K, V>, K, V>(targetTree: TBTree, subtractTree: TBTree): TBTree;
+diff --git a/extended/subtract.js b/extended/subtract.js
+index 7bad27b501b86e1d02976ba9a009afc63fe3f67b..4a3f5d70bc9182bb910451c1f28e49b3001429e4 100644
+--- a/extended/subtract.js
++++ b/extended/subtract.js
+@@ -1,6 +1,6 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+-exports.default = subtract;
++exports.subtract = subtract;
+ const shared_1 = require("./shared");
+ const decompose_1 = require("./decompose");
+ /**
+diff --git a/extended/subtract.min.js b/extended/subtract.min.js
+index 034e8ce7c943d96778f45a4b61b5f553e993f397..95c0ef0b3f50218f8ab7405b4335abba22e6f4bf 100644
+--- a/extended/subtract.min.js
++++ b/extended/subtract.min.js
+@@ -1 +1 @@
+-Object.defineProperty(exports,"__esModule",{value:!0}),exports.default=subtract;let shared_1=require("./shared"),decompose_1=require("./decompose");function subtract(e,o){var r=e,t=(0,shared_1.checkCanDoSetOperation)(r,o,!1);return 0===r._root.size()||0===o._root.size()?e.clone():(r=(0,decompose_1.decompose)(r,o,()=>{},!0),o=e.constructor,0===r.heights.length?new o(void 0,e._compare,e._maxNodeSize):(0,decompose_1.buildFromDecomposition)(o,t,r,e._compare,e._maxNodeSize))}
++Object.defineProperty(exports,"__esModule",{value:!0}),exports.subtract=subtract;let shared_1=require("./shared"),decompose_1=require("./decompose");function subtract(e,o){var r=e,t=(0,shared_1.checkCanDoSetOperation)(r,o,!1);return 0===r._root.size()||0===o._root.size()?e.clone():(r=(0,decompose_1.decompose)(r,o,()=>{},!0),o=e.constructor,0===r.heights.length?new o(void 0,e._compare,e._maxNodeSize):(0,decompose_1.buildFromDecomposition)(o,t,r,e._compare,e._maxNodeSize))}
+diff --git a/extended/union.d.ts b/extended/union.d.ts
+index 74ea5ccd1f4e18743f3a437331212f95e3a8d45c..c5b8f71e082e5b5e709edd1ba4e428a8f8a5f706 100644
+--- a/extended/union.d.ts
++++ b/extended/union.d.ts
+@@ -1,4 +1,4 @@
+-import BTree from '../b+tree';
++import { BTree } from '../b+tree';
+ /**
+  * Efficiently unions two trees, reusing subtrees wherever possible without mutating either input.
+  *
+@@ -13,4 +13,4 @@ import BTree from '../b+tree';
+  * @returns A new BTree that contains the unioned key/value pairs.
+  * @throws Error if the trees were created with different comparators or max node sizes.
+  */
+-export default function union<TBTree extends BTree<K, V>, K, V>(treeA: TBTree, treeB: TBTree, combineFn: (key: K, leftValue: V, rightValue: V) => V | undefined): TBTree;
++export declare function union<TBTree extends BTree<K, V>, K, V>(treeA: TBTree, treeB: TBTree, combineFn: (key: K, leftValue: V, rightValue: V) => V | undefined): TBTree;
+diff --git a/extended/union.js b/extended/union.js
+index 445d5c16fe0006e542528af76c1a2a0b0b536af8..5a09a02c28f06e5d3c9db03848ae1c3d4754c5b9 100644
+--- a/extended/union.js
++++ b/extended/union.js
+@@ -1,6 +1,6 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+-exports.default = union;
++exports.union = union;
+ const shared_1 = require("./shared");
+ const decompose_1 = require("./decompose");
+ /**
+diff --git a/extended/union.min.js b/extended/union.min.js
+index cc4db751df4c38ddc41f273f2883b824077698fe..1f70e772f7d7031475a14a6f5de590cf059a16e8 100644
+--- a/extended/union.min.js
++++ b/extended/union.min.js
+@@ -1 +1 @@
+-Object.defineProperty(exports,"__esModule",{value:!0}),exports.default=union;let shared_1=require("./shared"),decompose_1=require("./decompose");function union(e,o,r){var c,n,s;return e===o?e.clone():(c=e,s=o,n=(0,shared_1.checkCanDoSetOperation)(c,s,!1),0===c._root.size()?o.clone():0===s._root.size()?e.clone():(o=(0,decompose_1.decompose)(c,s,r),s=e.constructor,(0,decompose_1.buildFromDecomposition)(s,n,o,c._compare,c._maxNodeSize)))}
++Object.defineProperty(exports,"__esModule",{value:!0}),exports.union=union;let shared_1=require("./shared"),decompose_1=require("./decompose");function union(e,o,r){var n,c,s;return e===o?e.clone():(n=e,s=o,c=(0,shared_1.checkCanDoSetOperation)(n,s,!1),0===n._root.size()?o.clone():0===s._root.size()?e.clone():(o=(0,decompose_1.decompose)(n,s,r),s=e.constructor,(0,decompose_1.buildFromDecomposition)(s,c,o,n._compare,n._maxNodeSize)))}
 diff --git a/package.json b/package.json
-index 30fc0b5da91aa291ed9ee326ea5f5ded73ec467d..8f57e70019e978fa9cae15a93405a1ffba642f5e 100644
+index 30fc0b5da91aa291ed9ee326ea5f5ded73ec467d..30972bddaeddd135c9365f7ebd7dfd4b0dd5b335 100644
 --- a/package.json
 +++ b/package.json
-@@ -3,8 +3,40 @@
+@@ -3,8 +3,30 @@
    "version": "2.1.0",
    "description": "A sorted list of key-value pairs in a fast, typed in-memory B+ tree with a powerful API.",
    "sideEffects": false,
@@ -31,20 +524,10 @@ index 30fc0b5da91aa291ed9ee326ea5f5ded73ec467d..8f57e70019e978fa9cae15a93405a1ff
 +      "types": "./interfaces.d.ts"
 +    }
 +  },
-+  "scripts": {
-+    "test": "tsc && echo //ts-jest-issue-657 >interfaces.js && jest",
-+    "clean": "rimraf b+tree.js b+tree.d.ts sorted-array.js sorted-array.d.ts extended/*.js extended/*.d.ts",
-+    "build": "npm run clean && tsc && npm run minify",
-+    "minify": "node scripts/minify.js",
-+    "sizes": "npm run build && node scripts/size-report.js",
-+    "prepare": "npm run build",
-+    "safePublish": "npm run build && testpack && npm publish",
-+    "benchmark": "npm run build && node benchmarks.js"
-+  },
    "files": [
      "b+tree.js",
      "b+tree.d.ts",
-@@ -53,6 +85,7 @@
+@@ -53,6 +75,7 @@
      "functional-red-black-tree": "^1.0.1",
      "jest": "^29.7.0",
      "mersenne-twister": "^1.1.0",
@@ -52,17 +535,42 @@ index 30fc0b5da91aa291ed9ee326ea5f5ded73ec467d..8f57e70019e978fa9cae15a93405a1ff
      "testpack-cli": "^1.1.4",
      "ts-jest": "^29.1.1",
      "ts-node": "^10.9.2",
-@@ -111,13 +144,5 @@
-       "|\\.\\.|$P|",
-       "|\\.\\.([/\\\\].*)|$P$1|"
-     ]
--  },
--  "scripts": {
--    "test": "tsc && echo //ts-jest-issue-657 >interfaces.js && jest",
+@@ -114,7 +137,8 @@
+   },
+   "scripts": {
+     "test": "tsc && echo //ts-jest-issue-657 >interfaces.js && jest",
 -    "build": "tsc && npm run minify",
--    "minify": "node scripts/minify.js",
--    "sizes": "npm run build && node scripts/size-report.js",
--    "safePublish": "npm run build && testpack && npm publish",
--    "benchmark": "npm run build && node benchmarks.js"
-   }
++    "clean": "rimraf b+tree.js b+tree.d.ts sorted-array.js sorted-array.d.ts extended/*.js extended/*.d.ts",
++    "build": "npm run clean && tsc && npm run minify",
+     "minify": "node scripts/minify.js",
+     "sizes": "npm run build && node scripts/size-report.js",
+     "safePublish": "npm run build && testpack && npm publish",
+diff --git a/sorted-array.d.ts b/sorted-array.d.ts
+index c79d8cbcb603025d00cd8cd7490782c511dd0f42..66b92932f29e894b9cff7acedd929bc2ec8e0065 100644
+--- a/sorted-array.d.ts
++++ b/sorted-array.d.ts
+@@ -1,6 +1,6 @@
+ import { IMap } from './interfaces';
+ /** A super-inefficient sorted list for testing purposes */
+-export default class SortedArray<K = any, V = any> implements IMap<K, V> {
++export declare class SortedArray<K = any, V = any> implements IMap<K, V> {
+     a: [K, V][];
+     cmp: (a: K, b: K) => number;
+     constructor(entries?: [K, V][], compare?: (a: K, b: K) => number);
+diff --git a/sorted-array.js b/sorted-array.js
+index 5c0a9d2381d2457118088cfe769ea8486e90e4d7..e1da8da6b55cd18fb36ccfcf1c4a5520799f46a4 100644
+--- a/sorted-array.js
++++ b/sorted-array.js
+@@ -1,5 +1,6 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
++exports.SortedArray = void 0;
+ /** A super-inefficient sorted list for testing purposes */
+ class SortedArray {
+     constructor(entries, compare) {
+@@ -60,4 +61,4 @@ class SortedArray {
+         return mid ^ failXor;
+     }
  }
+-exports.default = SortedArray;
++exports.SortedArray = SortedArray;

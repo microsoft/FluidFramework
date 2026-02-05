@@ -23,7 +23,7 @@ patchedDependencies:
     hash: c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069
     path: patches/@microsoft__api-extractor@7.52.11.patch
   '@tylerbu/sorted-btree-es6@2.1.0':
-    hash: d4180b33ebf61c8761d1678837d0f58b440f2dc813144b6737090670391d66b9
+    hash: 17ebb4354e603965cb694811c0de6fcc75a41fc2e3db06d36c191f762c3afdde
     path: patches/@tylerbu__sorted-btree-es6@2.1.0.patch
 
 importers:
@@ -7372,7 +7372,7 @@ importers:
         version: link:../../../packages/dds/tree
       '@tylerbu/sorted-btree-es6':
         specifier: ^2.1.0
-        version: 2.1.0(patch_hash=d4180b33ebf61c8761d1678837d0f58b440f2dc813144b6737090670391d66b9)
+        version: 2.1.0(patch_hash=17ebb4354e603965cb694811c0de6fcc75a41fc2e3db06d36c191f762c3afdde)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -9673,7 +9673,7 @@ importers:
         version: 0.34.13
       '@tylerbu/sorted-btree-es6':
         specifier: ^2.1.0
-        version: 2.1.0(patch_hash=d4180b33ebf61c8761d1678837d0f58b440f2dc813144b6737090670391d66b9)
+        version: 2.1.0(patch_hash=17ebb4354e603965cb694811c0de6fcc75a41fc2e3db06d36c191f762c3afdde)
       '@types/ungap__structured-clone':
         specifier: ^1.2.0
         version: 1.2.0
@@ -12818,7 +12818,7 @@ importers:
         version: link:../../utils/telemetry-utils
       '@tylerbu/sorted-btree-es6':
         specifier: ^2.1.0
-        version: 2.1.0(patch_hash=d4180b33ebf61c8761d1678837d0f58b440f2dc813144b6737090670391d66b9)
+        version: 2.1.0(patch_hash=17ebb4354e603965cb694811c0de6fcc75a41fc2e3db06d36c191f762c3afdde)
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
@@ -13173,7 +13173,7 @@ importers:
         version: link:../../utils/telemetry-utils
       '@tylerbu/sorted-btree-es6':
         specifier: ^2.1.0
-        version: 2.1.0(patch_hash=d4180b33ebf61c8761d1678837d0f58b440f2dc813144b6737090670391d66b9)
+        version: 2.1.0(patch_hash=17ebb4354e603965cb694811c0de6fcc75a41fc2e3db06d36c191f762c3afdde)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -33514,7 +33514,7 @@ snapshots:
 
   '@tylerbu/sorted-btree-es6@1.8.0': {}
 
-  '@tylerbu/sorted-btree-es6@2.1.0(patch_hash=d4180b33ebf61c8761d1678837d0f58b440f2dc813144b6737090670391d66b9)': {}
+  '@tylerbu/sorted-btree-es6@2.1.0(patch_hash=17ebb4354e603965cb694811c0de6fcc75a41fc2e3db06d36c191f762c3afdde)': {}
 
   '@types/argparse@1.0.38': {}
 
