@@ -16,9 +16,17 @@ import type { Listenable } from "fluid-framework";
  * Interface for undo/redo stack operations.
  */
 export interface UndoRedo {
-	undo: () => void;
-	redo: () => void;
-	dispose: () => void;
+	readonly undo: () => void;
+	readonly redo: () => void;
+	readonly dispose: () => void;
+	readonly canUndo: boolean;
+	readonly canRedo: boolean;
+	/**
+	 * Subscribe to state changes (when canUndo/canRedo may have changed).
+	 * @param callback - Called when the undo/redo stack state changes
+	 * @returns Unsubscribe function
+	 */
+	readonly onStateChange: (callback: () => void) => () => void;
 }
 
 /**
@@ -31,6 +39,13 @@ export interface UndoRedo {
 export function createUndoRedoStacks(events: Listenable<TreeViewEvents>): UndoRedo {
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
+	const listeners = new Set<() => void>();
+
+	const notifyListeners = (): void => {
+		for (const listener of listeners) {
+			listener();
+		}
+	};
 
 	const unsubscribe = events.on(
 		"commitApplied",
@@ -46,16 +61,32 @@ export function createUndoRedoStacks(events: Listenable<TreeViewEvents>): UndoRe
 				}
 				undoStack.push(revertible);
 			}
+			notifyListeners();
 		},
 	);
 
 	return {
-		undo: () => undoStack.pop()?.revert(),
-		redo: () => redoStack.pop()?.revert(),
+		undo: () => {
+			undoStack.pop()?.revert();
+		},
+		redo: () => {
+			redoStack.pop()?.revert();
+		},
 		dispose: () => {
 			unsubscribe();
+			listeners.clear();
 			for (const r of undoStack) r.dispose();
 			for (const r of redoStack) r.dispose();
+		},
+		get canUndo() {
+			return undoStack.length > 0;
+		},
+		get canRedo() {
+			return redoStack.length > 0;
+		},
+		onStateChange: (callback: () => void) => {
+			listeners.add(callback);
+			return () => listeners.delete(callback);
 		},
 	};
 }
