@@ -175,7 +175,7 @@ export interface IIdCompressorCore {
 	 * @returns The shard ID if this compressor is part of a sharded group, otherwise undefined.
 	 * The returned ID is serializable and can be passed across marshaling boundaries. This ID can be used to unshard the compressor
 	 * by calling {@link IIdCompressorCore.unshard}.
-	 * @throws If called on a compressor with writeVersion less than V3 or if this shard has active child shards.
+	 * @throws If this shard has active child shards.
 	 * This means that a shard tree must be disposed/unsharded from the leaves upwards.
 	 */
 	disposeShard(): CompressorShardId | undefined;

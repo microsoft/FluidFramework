@@ -296,7 +296,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			// First time sharding - initialize state
 			this.shardingState = {
 				currentStride: newStride,
-				originalStride: currentStride, // Remember original stride (1 for root)
+				originalStride: 1,
 				activeChildIds: new Set(),
 			};
 		} else {
@@ -355,9 +355,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.writeVersion}`,
 			);
 		}
-		if (shardId.sessionId !== this.localSessionId) {
-			throw new Error("Shard must belong to this session");
-		}
 		if (this.shardingState === undefined) {
 			throw new Error("Must be in sharding mode to unshard");
 		}
@@ -372,7 +369,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			);
 		}
 
-		const childHighestGenCount = shardId.localGenCount;
+		const childGenCount = shardId.localGenCount;
 		const isLeaf = activeChildIds.size === 0;
 		if (isLeaf) {
 			this.shardingState.currentStride = originalStride;
@@ -381,35 +378,26 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const { currentStride } = this.shardingState;
 
 		// Realign parent to next position in its sequence if child is ahead
-		if (childHighestGenCount > this.localGenCount) {
+		if (childGenCount > this.localGenCount) {
 			// Find next aligned position in parent's sequence after child's genCount
-			const distance = childHighestGenCount - this.localGenCount + 1;
+			const distance = childGenCount - this.localGenCount + 1;
 			const steps = Math.ceil(distance / currentStride);
 			const count = steps * currentStride;
 			this.normalizer.addLocalRange(this.localGenCount + 1, count);
 			this.localGenCount += count;
 		}
 
-		if (isLeaf) {
-			this.shardingState.currentStride = this.shardingState.originalStride;
-
-			// If originalStride === 1, we're the root with no children, so exit sharding mode
-			// Otherwise, we're a shard that's now a leaf again, keep sharding state
-			if (this.shardingState.originalStride === 1) {
-				this.shardingState = undefined;
-			}
+		// Otherwise, we're a shard that's now a leaf again, keep sharding state
+		// If originalStride === 1, we're the root with no children, so exit sharding mode
+		if (isLeaf && this.shardingState.originalStride === 1) {
+			this.shardingState = undefined;
 		}
 	}
 
 	/**
-	 * {@inheritdoc IIdCompressorCore.disposeShard}
+	 * {@inheritdoc IIdCompressorCore.dispose}
 	 */
 	public disposeShard(): CompressorShardId | undefined {
-		if (this.writeVersion < SerializationVersion.V3) {
-			throw new Error(
-				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.writeVersion}`,
-			);
-		}
 		if (this.shardingState === undefined) {
 			return undefined;
 		} else {
@@ -1165,16 +1153,12 @@ const throwDisposed = (): never => {
  * @param compressor - The compressor instance to make unusable
  */
 function makeCompressorUnusable(compressor: IdCompressor): void {
-	/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
-	const obj = compressor as any;
-
 	// Get all method names from the prototype (where class methods live)
-	const proto = Object.getPrototypeOf(obj);
-	for (const key of Object.getOwnPropertyNames(proto)) {
+	const proto = Object.getPrototypeOf(compressor) as object;
+	for (const key of Reflect.ownKeys(proto)) {
 		if (key !== "constructor" && typeof proto[key] === "function") {
 			// Create an instance-specific override (doesn't mutate shared prototype)
-			obj[key] = throwDisposed;
+			compressor[key] = throwDisposed;
 		}
 	}
-	/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 }

@@ -710,9 +710,7 @@ describe("IdCompressor Sharding", () => {
 			});
 
 			// Calling disposeShard() on V2 document should throw
-			assert.throws(() => {
-				restored.disposeShard();
-			}, /Sharding requires document version 3 or higher/);
+			assert.equal(restored.disposeShard(), undefined);
 
 			// Should work normally
 			const id = restored.generateCompressedId();
