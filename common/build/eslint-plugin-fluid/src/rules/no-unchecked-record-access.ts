@@ -18,7 +18,7 @@ import type { ParserServicesWithTypeInformation } from "@typescript-eslint/utils
 import type * as ts from "typescript";
 import { SyntaxKind, TypeFlags } from "typescript";
 
-const rule: Rule.RuleModule = {
+export const rule: Rule.RuleModule = {
 	meta: {
 		type: "problem",
 		docs: {
@@ -183,8 +183,6 @@ const rule: Rule.RuleModule = {
 		};
 	},
 };
-
-export = rule;
 
 // Helper function to check if a type includes undefined
 function isTypeUndefinable(type: ts.Type): boolean {

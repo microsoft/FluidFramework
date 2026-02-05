@@ -68,7 +68,7 @@ function errorLoggerHelper(
 	});
 }
 
-const rule: Rule.RuleModule = {
+export const rule: Rule.RuleModule = {
 	meta: {
 		type: "problem",
 		docs: {
@@ -108,5 +108,3 @@ const rule: Rule.RuleModule = {
 		};
 	},
 };
-
-export = rule;

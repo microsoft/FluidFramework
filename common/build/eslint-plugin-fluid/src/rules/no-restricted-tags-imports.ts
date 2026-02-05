@@ -71,7 +71,7 @@ function resolveImportPath(importPath: string, currentFilePath: string): string 
 		: path.resolve(path.dirname(currentFilePath), importPath);
 }
 
-const rule: Rule.RuleModule = {
+export const rule: Rule.RuleModule = {
 	meta: {
 		type: "problem",
 		docs: {
@@ -172,5 +172,3 @@ const rule: Rule.RuleModule = {
 		};
 	},
 };
-
-export = rule;
