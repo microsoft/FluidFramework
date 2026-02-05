@@ -12,12 +12,12 @@
  */
 
 import type { Rule } from "eslint";
-import noHyphenAfterJsdocTag = require("./rules/no-hyphen-after-jsdoc-tag.js");
-import noFilePathLinksInJsdoc = require("./rules/no-file-path-links-in-jsdoc.js");
-import noMarkdownLinksInJsdoc = require("./rules/no-markdown-links-in-jsdoc.js");
-import noMemberReleaseTags = require("./rules/no-member-release-tags.js");
-import noRestrictedTagsImports = require("./rules/no-restricted-tags-imports.js");
-import noUncheckedRecordAccess = require("./rules/no-unchecked-record-access.js");
+import { rule as noHyphenAfterJsdocTag } from "./rules/no-hyphen-after-jsdoc-tag.js";
+import { rule as noFilePathLinksInJsdoc } from "./rules/no-file-path-links-in-jsdoc.js";
+import { rule as noMarkdownLinksInJsdoc } from "./rules/no-markdown-links-in-jsdoc.js";
+import { rule as noMemberReleaseTags } from "./rules/no-member-release-tags.js";
+import { rule as noRestrictedTagsImports } from "./rules/no-restricted-tags-imports.js";
+import { rule as noUncheckedRecordAccess } from "./rules/no-unchecked-record-access.js";
 
 interface PluginExport {
 	rules: {
@@ -25,7 +25,7 @@ interface PluginExport {
 	};
 }
 
-const plugin: PluginExport = {
+export const plugin: PluginExport = {
 	rules: {
 		/**
 		 * Disallow `-` following JSDoc/TSDoc tags.
@@ -54,5 +54,3 @@ const plugin: PluginExport = {
 		"no-unchecked-record-access": noUncheckedRecordAccess,
 	},
 };
-
-export = plugin;
