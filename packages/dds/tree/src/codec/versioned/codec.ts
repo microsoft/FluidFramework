@@ -195,19 +195,6 @@ export type CodecAndSchema<TDecoded, TContext = void> = { readonly schema: TSche
 );
 
 /**
- * A friendly format for codec authors use to define their codec and schema for use in {@link CodecVersion}.
- * @remarks
- * The codec should not perform its own schema validation.
- * The schema validation gets added when normalizing to {@link NormalizedCodecVersion}.
- */
-export type CodecAndSchemaInput<TDecoded, TFormat extends TSchema, TContext = void> = {
-	readonly schema: TFormat;
-} & (
-	| IMultiFormatCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>
-	| IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>
-);
-
-/**
  * A codec alongside its format version and schema.
  */
 export interface CodecVersionBase<

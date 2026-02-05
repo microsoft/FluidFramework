@@ -87,7 +87,7 @@ const malformedData: [string, unknown][] = [
  * data to encode,
  * data to decode,
  * which coded version is expected to encode to this exact data (if any)
- * ]
+ * ][]
  */
 const validData: [string, FieldSet, FormatV2 | undefined, ForestFormatVersion | undefined][] =
 	[
@@ -180,8 +180,15 @@ describe("ForestSummarizerCodec", () => {
 			for (const [name, data, expected, encoderVersion] of validData) {
 				it(`${name} with codec version ${codecVersion}`, () => {
 					const encodedData = codec.encode(data, context);
-					if (expected !== undefined && encoderVersion === codecVersion) {
-						assert.deepEqual(encodedData, expected);
+					if (expected !== undefined) {
+						if (encoderVersion === codecVersion) {
+							assert.deepEqual(encodedData, expected);
+						} else {
+							// Should be able to decode the expected data with either codec,
+							// since codec should be able to decode all formats, not just the one it encodes.
+							const decodedData2 = codec.decode(expected, context);
+							assert.deepEqual(decodedData2, data);
+						}
 					}
 
 					const decodedData = codec.decode(encodedData, context);
@@ -220,9 +227,11 @@ describe("ForestSummarizerCodec", () => {
 		it("invalid nested version", () => {
 			// Create a properly encoded forest, then modify the nested version to be invalid
 			const encoded = fieldBatchCodecOld.encode([], context);
+			fieldBatchCodecOld.decode(encoded, context);
 
 			const x = (validData[0] ?? assert.fail())[2] ?? assert.fail();
 
+			fieldBatchCodecOld.decode(x.fields, context);
 			codecCurrent.decode(x, context);
 
 			const y = {
