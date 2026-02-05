@@ -20,27 +20,27 @@ export type FluidLayer = "loader" | "driver" | "runtime" | "dataStore";
  */
 export const LayerCompatibilityPolicyWindowMonths = {
 	/**
-	 * The Driver layer supports Loader that is at most this many months older.
+	 * Driver is compatible with Loader versions up to 12 months older.
 	 */
 	DriverLoader: 12,
 	/**
-	 * The Loader layer supports Driver that is at most this many months older.
+	 * Loader is compatible with Driver versions up to 3 months older.
 	 */
-	LoaderDriver: 12,
+	LoaderDriver: 3,
 	/**
-	 * The Loader layer supports Runtime that is at most this many months older.
+	 * Loader is compatible with Runtime versions up to 3 months older.
 	 */
-	LoaderRuntime: 12,
+	LoaderRuntime: 3,
 	/**
-	 * The Runtime layer supports Loader that is at most this many months older.
+	 * Runtime is compatible with Loader versions up to 12 months older.
 	 */
 	RuntimeLoader: 12,
 	/**
-	 * The Runtime layer supports DataStore that is at most this many months older.
+	 * Runtime is compatible with DataStore versions up to 3 months older.
 	 */
 	RuntimeDataStore: 3,
 	/**
-	 * The DataStore layer supports Runtime that is at most this many months older.
+	 * DataStore is compatible with Runtime versions up to 3 months older.
 	 */
 	DataStoreRuntime: 3,
 } as const;
