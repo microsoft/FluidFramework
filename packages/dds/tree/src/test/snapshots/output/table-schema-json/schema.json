@@ -1,5 +1,5 @@
 {
-  "$ref": "#/$defs/com.fluidframework.table<test>.TableRoot",
+  "$ref": "#/$defs/com.fluidframework.tableV2<test>.TableRoot",
   "$defs": {
     "com.fluidframework.leaf.string": {
       "type": "string",
@@ -18,7 +18,7 @@
       ],
       "additionalProperties": false
     },
-    "com.fluidframework.table<test>.Row.cells": {
+    "com.fluidframework.tableV2<test>.Row.cells": {
       "type": "object",
       "_treeNodeSchemaKind": 4,
       "patternProperties": {
@@ -42,7 +42,7 @@
       "required": [],
       "additionalProperties": false
     },
-    "com.fluidframework.table<test>.Row": {
+    "com.fluidframework.tableV2<test>.Row": {
       "type": "object",
       "_treeNodeSchemaKind": 2,
       "properties": {
@@ -50,7 +50,7 @@
           "$ref": "#/$defs/com.fluidframework.leaf.string"
         },
         "cells": {
-          "$ref": "#/$defs/com.fluidframework.table<test>.Row.cells",
+          "$ref": "#/$defs/com.fluidframework.tableV2<test>.Row.cells",
           "description": "The cells of the table row, keyed by column ID."
         },
         "props": {
@@ -62,11 +62,11 @@
       ],
       "additionalProperties": false
     },
-    "com.fluidframework.table<test>.Table.rows": {
+    "com.fluidframework.tableV2<test>.Table.rows": {
       "type": "array",
       "_treeNodeSchemaKind": 1,
       "items": {
-        "$ref": "#/$defs/com.fluidframework.table<test>.Row"
+        "$ref": "#/$defs/com.fluidframework.tableV2<test>.Row"
       }
     },
     "test.table-column-props": {
@@ -80,7 +80,7 @@
       "required": [],
       "additionalProperties": false
     },
-    "com.fluidframework.table<test>.Column": {
+    "com.fluidframework.tableV2<test>.Column": {
       "type": "object",
       "_treeNodeSchemaKind": 2,
       "properties": {
@@ -96,22 +96,22 @@
       ],
       "additionalProperties": false
     },
-    "com.fluidframework.table<test>.Table.columns": {
+    "com.fluidframework.tableV2<test>.Table.columns": {
       "type": "array",
       "_treeNodeSchemaKind": 1,
       "items": {
-        "$ref": "#/$defs/com.fluidframework.table<test>.Column"
+        "$ref": "#/$defs/com.fluidframework.tableV2<test>.Column"
       }
     },
-    "com.fluidframework.table<test>.Table": {
+    "com.fluidframework.tableV2<test>.Table": {
       "type": "object",
       "_treeNodeSchemaKind": 2,
       "properties": {
         "rows": {
-          "$ref": "#/$defs/com.fluidframework.table<test>.Table.rows"
+          "$ref": "#/$defs/com.fluidframework.tableV2<test>.Table.rows"
         },
         "columns": {
-          "$ref": "#/$defs/com.fluidframework.table<test>.Table.columns"
+          "$ref": "#/$defs/com.fluidframework.tableV2<test>.Table.columns"
         }
       },
       "required": [
@@ -120,12 +120,12 @@
       ],
       "additionalProperties": false
     },
-    "com.fluidframework.table<test>.TableRoot": {
+    "com.fluidframework.tableV2<test>.TableRoot": {
       "type": "object",
       "_treeNodeSchemaKind": 2,
       "properties": {
         "table": {
-          "$ref": "#/$defs/com.fluidframework.table<test>.Table"
+          "$ref": "#/$defs/com.fluidframework.tableV2<test>.Table"
         }
       },
       "required": [

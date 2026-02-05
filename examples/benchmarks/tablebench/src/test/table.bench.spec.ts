@@ -49,6 +49,7 @@ describe("Table", () => {
 
 				for (let r = 0; r < data.length; r++) {
 					for (const [c, key] of columnNames.entries()) {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: Use real types
 						matrix.setCell(r, c, (data as any)[r][key]);
 					}
 				}
@@ -115,15 +116,17 @@ describe("Table", () => {
 			 * This is used when measuring the baseline size of the table.
 			 */
 			function transposeTable(rows: typeof data): Record<string, unknown[]> {
+				// eslint-disable-next-line unicorn/no-array-reduce
 				return data.reduce(
 					(cols, row) => {
-						Object.entries(row).forEach(([key, value]) => {
+						for (const [key, value] of Object.entries(row)) {
 							cols[key].push(value);
-						});
+						}
 						return cols;
 					},
 					// Create the 'cols' object, pre-initialing each row key with an empty array:
 					//    { "Country": [], "Region": [], ... }
+					// eslint-disable-next-line unicorn/no-array-reduce
 					Object.keys(rows[0]).reduce<Record<string, unknown[]>>((cols, key) => {
 						cols[key] = [];
 						return cols;
@@ -173,6 +176,7 @@ describe("Table", () => {
 
 					for (let r = 0; r < data.length; r++) {
 						for (const [c, key] of columnNames.entries()) {
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: Use real types
 							matrix.setCell(r, c, (data as any)[r][key]);
 						}
 					}

@@ -82,23 +82,15 @@ export abstract class BrandedType<out ValueType, Name> {
  * Implementation detail of type branding. Should not be used directly outside this file,
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  */
-export type ValueFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<
-	infer ValueType,
-	unknown
->
-	? ValueType
-	: never;
+export type ValueFromBranded<T extends BrandedType<unknown, unknown>> =
+	T extends BrandedType<infer ValueType, unknown> ? ValueType : never;
 
 /**
  * Implementation detail of type branding. Should not be used directly outside this file,
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  */
-export type NameFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<
-	unknown,
-	infer Name
->
-	? Name
-	: never;
+export type NameFromBranded<T extends BrandedType<unknown, unknown>> =
+	T extends BrandedType<unknown, infer Name> ? Name : never;
 
 /**
  * Adds a type {@link Brand} to a value.
