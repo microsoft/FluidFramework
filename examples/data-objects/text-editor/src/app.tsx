@@ -23,7 +23,7 @@ import { createRoot } from "react-dom/client";
 
 import { FormattedMainView } from "./formatted/index.js";
 import { PlainTextMainView, QuillMainView as PlainQuillView } from "./plain/index.js";
-import { createUndoRedoStacks, type UndoRedo } from "./undoRedo.js";
+import { UndoRedoStacks, type UndoRedo } from "./undoRedo.js";
 
 /**
  * Get the Tinylicious endpoint URL, handling Codespaces port forwarding. Tinylicious only works for localhost,
@@ -191,10 +191,7 @@ const UserPanel: React.FC<{
 	treeView: TreeView<typeof TextEditorRoot>;
 }> = ({ label, color, viewType, treeView }) => {
 	// Create undo/redo stack for this user's tree view
-	const undoRedo = React.useMemo(
-		() => createUndoRedoStacks(treeView.events),
-		[treeView.events],
-	);
+	const undoRedo = React.useMemo(() => new UndoRedoStacks(treeView.events), [treeView.events]);
 
 	// Cleanup on unmount
 	React.useEffect(() => {

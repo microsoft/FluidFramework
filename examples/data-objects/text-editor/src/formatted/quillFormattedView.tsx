@@ -54,10 +54,7 @@ export interface FormattedMainViewProps {
 }
 
 /** Ref handle exposing undo/redo methods for the formatted editor. */
-export interface FormattedEditorHandle {
-	undo: () => void;
-	redo: () => void;
-}
+export type FormattedEditorHandle = Pick<UndoRedo, "undo" | "redo">;
 
 export const FormattedMainView = React.forwardRef<
 	FormattedEditorHandle,
@@ -380,13 +377,13 @@ const FormattedTextEditorView = React.forwardRef<
 					<button
 						type="button"
 						className="ql-undo"
-						disabled={undoRedo?.canUndo !== true}
+						disabled={undoRedo?.canUndo() !== true}
 						onClick={() => undoRedo?.undo()}
 					/>
 					<button
 						type="button"
 						className="ql-redo"
-						disabled={undoRedo?.canRedo !== true}
+						disabled={undoRedo?.canRedo() !== true}
 						onClick={() => undoRedo?.redo()}
 					/>
 				</>,
