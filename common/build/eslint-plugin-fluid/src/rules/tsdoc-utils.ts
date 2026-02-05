@@ -3,45 +3,45 @@
  * Licensed under the MIT License.
  */
 
-//@ts-check
 /**
  * Utilities for working with TSDoc parsed comments.
- *
- * @typedef {import('@microsoft/tsdoc').DocBlock} DocBlock
- * @typedef {import('@microsoft/tsdoc').DocComment} DocComment
- * @typedef {import('@microsoft/tsdoc').DocNode} DocNode
  */
+
+import type { DocBlock, DocComment } from "@microsoft/tsdoc";
 
 /**
  * Options for getting block comments from a parsed TSDoc comment.
- * @typedef {{
- * 	exclude?: string[];
- * }} GetBlockCommentsOptions
  */
+export interface GetBlockCommentsOptions {
+	exclude?: string[];
+}
 
 /**
  * Checks if a tag name should be excluded based on the exclude list.
- * @param {string} tagName - The tag name to check (e.g., "@privateRemarks").
- * @param {Set<string>} excludeSet - Set of normalized tag names to exclude.
- * @returns {boolean} True if the tag should be excluded.
+ * @param tagName - The tag name to check (e.g., "@privateRemarks").
+ * @param excludeSet - Set of normalized tag names to exclude.
+ * @returns True if the tag should be excluded.
  */
-function shouldExcludeTag(tagName, excludeSet) {
+function shouldExcludeTag(tagName: string, excludeSet: Set<string>): boolean {
 	// Normalize to uppercase for case-insensitive comparison (TSDoc convention)
 	return excludeSet.has(tagName.toUpperCase());
 }
 
 /**
  * Gets all block nodes from a parsed TSDoc comment that should be checked.
- * @param {DocComment} parsedComment - The parsed TSDoc comment.
- * @param {GetBlockCommentsOptions} [options] - Options for filtering blocks. Use `exclude` to specify tag names to exclude (e.g., ['@privateRemarks']).
- * @returns {DocBlock[]} Array of block nodes to check.
+ * @param parsedComment - The parsed TSDoc comment.
+ * @param options - Options for filtering blocks. Use `exclude` to specify tag names to exclude (e.g., ['@privateRemarks']).
+ * @returns Array of block nodes to check.
  */
-function getBlockComments(parsedComment, options = {}) {
+export function getBlockComments(
+	parsedComment: DocComment,
+	options: GetBlockCommentsOptions = {},
+): DocBlock[] {
 	const { exclude = [] } = options;
 	// Normalize exclude list to uppercase for case-insensitive comparison (TSDoc convention)
 	const excludeSet = new Set(exclude.map((tag) => tag.toUpperCase()));
 
-	const blocksToCheck = [];
+	const blocksToCheck: DocBlock[] = [];
 
 	// Filter customBlocks and seeBlocks based on their tag names
 	for (const block of parsedComment.customBlocks) {
@@ -72,7 +72,3 @@ function getBlockComments(parsedComment, options = {}) {
 
 	return blocksToCheck;
 }
-
-module.exports = {
-	getBlockComments,
-};

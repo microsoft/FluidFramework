@@ -3,32 +3,27 @@
  * Licensed under the MIT License.
  */
 
-//@ts-check
-/**
- * @typedef {import("eslint").Rule.RuleModule} RuleModule
- * @typedef {import('@microsoft/tsdoc').DocNode} DocNode
- * @typedef {import('@microsoft/tsdoc').DocPlainText} DocPlainText
- *
- * @typedef {{
- * 	linkText: string;
- * 	linkTarget: string;
- * 	startIndex: number;
- * 	endIndex: number;
- * }} MarkdownLinkInfo
- */
+import { fail } from "node:assert";
+import type { Rule } from "eslint";
+import type { DocNode, DocPlainText } from "@microsoft/tsdoc";
+import { DocNodeKind, TSDocParser } from "@microsoft/tsdoc";
+import { getBlockComments } from "./tsdoc-utils.js";
 
-const { fail } = require("node:assert");
-const { DocNodeKind, TSDocParser } = require("@microsoft/tsdoc");
-const { getBlockComments } = require("./tsdoc-utils");
+interface MarkdownLinkInfo {
+	linkText: string;
+	linkTarget: string;
+	startIndex: number;
+	endIndex: number;
+}
 
 const parser = new TSDocParser();
 
 /**
  * Finds instances of Markdown-syntax links within the provided plain text.
- * @param {DocPlainText} plainTextNode - The plain text node to check.
- * @returns {MarkdownLinkInfo[]} The list of found Markdown links.
+ * @param plainTextNode - The plain text node to check.
+ * @returns The list of found Markdown links.
  */
-function findMarkdownLinksInPlainText(plainTextNode) {
+function findMarkdownLinksInPlainText(plainTextNode: DocPlainText): MarkdownLinkInfo[] {
 	const textRange =
 		plainTextNode.textExcerpt?.getContainingTextRange() ??
 		fail("Expected textExcerpt to be defined.");
@@ -41,31 +36,31 @@ function findMarkdownLinksInPlainText(plainTextNode) {
 	// \)        - Match the closing parenthesis
 	const matches = plainTextNode.text.matchAll(/\[([^\]]*)\]\(([^)]*)\)/g);
 	return Array.from(matches, (match) => ({
-		linkText: match[1],
-		linkTarget: match[2],
-		startIndex: textRange.pos + match.index,
-		endIndex: textRange.pos + match.index + match[0].length,
+		linkText: match[1] ?? "",
+		linkTarget: match[2] ?? "",
+		startIndex: textRange.pos + (match.index ?? 0),
+		endIndex: textRange.pos + (match.index ?? 0) + match[0].length,
 	}));
 }
 
 /**
  * Finds instances of Markdown-syntax links within the provided comment body.
- * @param { DocNode } commentBodyNode - The doc node representing the body of the comment.
- * @returns {MarkdownLinkInfo[]} The list of found Markdown links.
+ * @param commentBodyNode - The doc node representing the body of the comment.
+ * @returns The list of found Markdown links.
  */
-function findMarkdownLinks(commentBodyNode) {
+function findMarkdownLinks(commentBodyNode: DocNode): MarkdownLinkInfo[] {
 	// Walk down all children to find all plain text nodes.
 	// Search those nodes for Markdown links.
 	// We only search plain text because we want to ignore link syntax that may appear in other
 	// contexts like code spans / code blocks where they would not be interpreted as links, and
 	// where they may exist to serve as examples, etc.
 	if (commentBodyNode.kind === DocNodeKind.PlainText) {
-		return findMarkdownLinksInPlainText(/** @type {DocPlainText} */ (commentBodyNode));
+		return findMarkdownLinksInPlainText(commentBodyNode as DocPlainText);
 	}
 
 	const childNodes = commentBodyNode.getChildNodes();
 
-	const links = [];
+	const links: MarkdownLinkInfo[] = [];
 	for (const childNode of childNodes) {
 		links.push(...findMarkdownLinks(childNode));
 	}
@@ -75,10 +70,8 @@ function findMarkdownLinks(commentBodyNode) {
 /**
  * Eslint rule to disallow Markdown link syntax in JSDoc/TSDoc comments.
  * `{@link}` syntax should be used instead.
- *
- * @type {RuleModule}
  */
-const rule = {
+const rule: Rule.RuleModule = {
 	meta: {
 		type: "problem",
 		docs: {
@@ -94,7 +87,7 @@ const rule = {
 		schema: [],
 	},
 
-	create(context) {
+	create(context: Rule.RuleContext) {
 		return {
 			Program() {
 				const sourceCode = context.getSourceCode();
@@ -120,10 +113,10 @@ const rule = {
 
 					/**
 					 * Checks the provided comment block for Markdown-syntax links and report eslint errors for them.
-					 * @param {DocNode} node - The comment block to check.
+					 * @param node - The comment block to check.
 					 * @returns {void}
 					 */
-					function checkCommentBlock(node) {
+					function checkCommentBlock(node: DocNode): void {
 						const links = findMarkdownLinks(node);
 						for (const link of links) {
 							const startIndex = commentStartIndex + link.startIndex - 1;
@@ -162,4 +155,4 @@ const rule = {
 	},
 };
 
-module.exports = rule;
+export = rule;

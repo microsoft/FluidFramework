@@ -1,0 +1,14 @@
+{
+	"extends": "../build-common/tsconfig.node16.json",
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"types": ["node"],
+		"forceConsistentCasingInFileNames": true,
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["src/test/**/*"],
+}

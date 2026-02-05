@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-const assert = require("assert");
-const path = require("path");
-const { createESLintInstance, eslintVersion } = require("./eslintConfigHelper.cjs");
+import assert from "assert";
+import * as path from "path";
+import { createESLintInstance, eslintVersion, getTestCasesDir } from "./eslintConfigHelper.js";
 
 describe(`Do not allow release tags on members (eslint ${eslintVersion})`, function () {
 	const eslintRules = {
@@ -16,7 +16,7 @@ describe(`Do not allow release tags on members (eslint ${eslintVersion})`, funct
 		const eslint = createESLintInstance(eslintRules);
 
 		const filesToLint = ["mockClassDeclaration.ts"].map((file) =>
-			path.join(__dirname, "./test-cases/no-member-release-tags", file),
+			path.join(getTestCasesDir(), "no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 
@@ -61,7 +61,7 @@ describe(`Do not allow release tags on members (eslint ${eslintVersion})`, funct
 		const eslint = createESLintInstance(eslintRules);
 
 		const filesToLint = ["mockClassExpression.ts"].map((file) =>
-			path.join(__dirname, "./test-cases/no-member-release-tags", file),
+			path.join(getTestCasesDir(), "no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -112,7 +112,7 @@ describe(`Do not allow release tags on members (eslint ${eslintVersion})`, funct
 		const eslint = createESLintInstance(eslintRules);
 
 		const filesToLint = ["mockAbstractClass.ts"].map((file) =>
-			path.join(__dirname, "./test-cases/no-member-release-tags", file),
+			path.join(getTestCasesDir(), "no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -131,7 +131,7 @@ describe(`Do not allow release tags on members (eslint ${eslintVersion})`, funct
 		const eslint = createESLintInstance(eslintRules);
 
 		const filesToLint = ["mockInterface.ts"].map((file) =>
-			path.join(__dirname, "./test-cases/no-member-release-tags", file),
+			path.join(getTestCasesDir(), "no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -170,7 +170,7 @@ describe(`Do not allow release tags on members (eslint ${eslintVersion})`, funct
 		const eslint = createESLintInstance(eslintRules);
 
 		const filesToLint = ["mockType.ts"].map((file) =>
-			path.join(__dirname, "./test-cases/no-member-release-tags", file),
+			path.join(getTestCasesDir(), "no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];
@@ -206,7 +206,7 @@ describe(`Do not allow release tags on members (eslint ${eslintVersion})`, funct
 		const eslint = createESLintInstance(eslintRules);
 
 		const filesToLint = ["mockFunction.ts"].map((file) =>
-			path.join(__dirname, "./test-cases/no-member-release-tags", file),
+			path.join(getTestCasesDir(), "no-member-release-tags", file),
 		);
 		const results = await eslint.lintFiles(filesToLint);
 		const result = results[0];

@@ -3,20 +3,26 @@
  * Licensed under the MIT License.
  */
 
-const assert = require("assert");
-const path = require("path");
-const { createESLintConfig, eslintVersion, ESLint } = require("./eslintConfigHelper.cjs");
+import assert from "assert";
+import * as path from "path";
+import type { ESLint } from "eslint";
+import {
+	createESLintConfig,
+	eslintVersion,
+	ESLint as ESLintClass,
+	getTestCasesDir,
+} from "./eslintConfigHelper.js";
 
 describe(`ESLint Rule Tests (eslint ${eslintVersion})`, function () {
-	async function lintFile(file) {
+	async function lintFile(file: string): Promise<ESLint.LintResult> {
 		const eslintOptions = createESLintConfig({
 			rules: {
 				"@fluid-internal/fluid/no-unchecked-record-access": "error",
 			},
 		});
 
-		const eslint = new ESLint(eslintOptions);
-		const fileToLint = path.join(__dirname, "./test-cases/no-unchecked-record-access", file);
+		const eslint = new ESLintClass(eslintOptions);
+		const fileToLint = path.join(getTestCasesDir(), "no-unchecked-record-access", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		return results[0];
 	}

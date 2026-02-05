@@ -3,30 +3,25 @@
  * Licensed under the MIT License.
  */
 
-//@ts-check
-/**
- * @typedef {import("eslint").Rule.RuleModule} RuleModule
- * @typedef {import('@microsoft/tsdoc').DocNode} DocNode
- * @typedef {import('@microsoft/tsdoc').DocPlainText} DocPlainText
- *
- * @typedef {{
- * 	startIndex: number; // Starting character index of the hyphen pattern (inclusive).
- * 	endIndex: number; // Ending character index of the hyphen pattern (exclusive).
- * }} HyphenPatternMatch
- */
+import { fail } from "node:assert";
+import type { Rule } from "eslint";
+import type { DocNode, DocPlainText } from "@microsoft/tsdoc";
+import { DocNodeKind, TSDocParser } from "@microsoft/tsdoc";
+import { getBlockComments } from "./tsdoc-utils.js";
 
-const { fail } = require("node:assert");
-const { DocNodeKind, TSDocParser } = require("@microsoft/tsdoc");
-const { getBlockComments } = require("./tsdoc-utils");
+interface HyphenPatternMatch {
+	startIndex: number; // Starting character index of the hyphen pattern (inclusive).
+	endIndex: number; // Ending character index of the hyphen pattern (exclusive).
+}
 
 const parser = new TSDocParser();
 
 /**
  * Checks if a comment text starts with a hyphen.
- * @param {DocPlainText} plainTextNode - The plain text node to check.
- * @return {HyphenPatternMatch | undefined} The hyphen pattern match info if found; otherwise, undefined.
+ * @param plainTextNode - The plain text node to check.
+ * @return The hyphen pattern match info if found; otherwise, undefined.
  */
-function doesTextNodeStartWithHyphen(plainTextNode) {
+function doesTextNodeStartWithHyphen(plainTextNode: DocPlainText): HyphenPatternMatch | undefined {
 	// RegEx explanation:
 	// ^\s*    - Match the start of the string, followed by zero or more whitespace characters
 	// -       - Match the `-` character literal
@@ -48,15 +43,15 @@ function doesTextNodeStartWithHyphen(plainTextNode) {
 
 /**
  * Checks if a comment body starts with a hyphen.
- * @param { DocNode } commentBodyNode - The doc node representing the body of the comment.
- * @return {HyphenPatternMatch | undefined} The hyphen pattern match info if found; otherwise, undefined.
+ * @param commentBodyNode - The doc node representing the body of the comment.
+ * @return The hyphen pattern match info if found; otherwise, undefined.
  */
-function doesCommentBodyStartWithHyphen(commentBodyNode) {
+function doesCommentBodyStartWithHyphen(commentBodyNode: DocNode): HyphenPatternMatch | undefined {
 	// Walk down first node of the tree until we find a leaf.
 	// If it's plain text, and starts with a hyphen, return true.
 	// Otherwise, return false.
 	if (commentBodyNode.kind === DocNodeKind.PlainText) {
-		return doesTextNodeStartWithHyphen(/** @type {DocPlainText} */ (commentBodyNode));
+		return doesTextNodeStartWithHyphen(commentBodyNode as DocPlainText);
 	}
 
 	const childNodes = commentBodyNode.getChildNodes();
@@ -64,14 +59,14 @@ function doesCommentBodyStartWithHyphen(commentBodyNode) {
 		return undefined;
 	}
 
-	return doesCommentBodyStartWithHyphen(childNodes[0]);
+	const firstChild = childNodes[0];
+	return firstChild ? doesCommentBodyStartWithHyphen(firstChild) : undefined;
 }
 
 /**
  * JSDoc/TSDoc tags do not require a hyphen after them.
- * @type {RuleModule}
  */
-const rule = {
+const rule: Rule.RuleModule = {
 	meta: {
 		type: "problem",
 		docs: {
@@ -87,7 +82,7 @@ const rule = {
 		schema: [],
 	},
 
-	create(context) {
+	create(context: Rule.RuleContext) {
 		return {
 			Program() {
 				const sourceCode = context.getSourceCode();
@@ -135,4 +130,4 @@ const rule = {
 	},
 };
 
-module.exports = rule;
+export = rule;

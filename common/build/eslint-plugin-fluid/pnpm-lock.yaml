@@ -30,6 +30,12 @@ importers:
       '@types/eslint':
         specifier: ^9.6.1
         version: 9.6.1
+      '@types/mocha':
+        specifier: ^10.0.0
+        version: 10.0.10
+      '@types/node':
+        specifier: ^20.12.12
+        version: 20.12.12
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -218,6 +224,9 @@ packages:
 
   '@types/minimatch@5.1.2':
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
+
+  '@types/mocha@10.0.10':
+    resolution: {integrity: sha512-xPyYSz1cMPnJQhl0CLMH68j3gprKZaTjG3s5Vi+fDgx+uhG9NOXwbVt52eFS8ECyXhyKcjDLCBEqBExKuiZb7Q==}
 
   '@types/node@10.17.60':
     resolution: {integrity: sha512-F0KIgDJfy2nA3zMLmWGKxcH2ZVEtCZXHHdOQs2gSaQ27+lNeEfGxzkIw90aXswATX7AZ33tahPbzy6KAfUreVw==}
@@ -1889,6 +1898,8 @@ snapshots:
       '@types/unist': 2.0.10
 
   '@types/minimatch@5.1.2': {}
+
+  '@types/mocha@10.0.10': {}
 
   '@types/node@10.17.60': {}
 
