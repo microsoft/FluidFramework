@@ -97,6 +97,7 @@ extends:
     stages:
     - stage: collect_and_deploy_metrics
       displayName: Collect Build Metrics and Deploy Dashboard
+      dependsOn: [] # Run in parallel with SDL stages
       jobs:
       # Build job: checkout, fetch data, prepare dashboard
       - job: prepare
