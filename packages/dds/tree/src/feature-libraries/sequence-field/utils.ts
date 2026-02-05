@@ -53,7 +53,7 @@ export function createEmpty(): Changeset {
 }
 
 export function getNestedChanges(change: Changeset): NestedChangesIndices {
-	const output: NestedChangesIndices = [];
+	const output: NestedChangesIndices[number][] = [];
 	let inputIndex = 0;
 	for (const mark of change) {
 		const { changes, count } = mark;
