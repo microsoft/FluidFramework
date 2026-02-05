@@ -83,22 +83,22 @@ export interface ModularChangeset extends HasFieldChanges {
 
 export interface RootNodeTable {
 	// TODO: Include builds, destroys, refreshers, and field changes
-	oldToNewId: ChangeAtomIdRangeMap<ChangeAtomId>;
-	newToOldId: ChangeAtomIdRangeMap<ChangeAtomId>;
-	nodeChanges: ChangeAtomIdBTree<NodeId>;
+	readonly oldToNewId: ChangeAtomIdRangeMap<ChangeAtomId>;
+	readonly newToOldId: ChangeAtomIdRangeMap<ChangeAtomId>;
+	readonly nodeChanges: ChangeAtomIdBTree<NodeId>;
 
 	/**
 	 * Maps from input context detach ID to the field where the node was last attached.
 	 * There should be an entry for every detach ID referenced in `oldToNewId` or `nodeChanges`.
 	 */
-	detachLocations: ChangeAtomIdRangeMap<FieldId>;
+	readonly detachLocations: ChangeAtomIdRangeMap<FieldId>;
 
 	/**
 	 * Maps from the output root ID of a node to the output detach location of that node.
 	 * This is only guaranteed to contain entries for nodes which have an output detach location
 	 * which is different from their location in the input context.
 	 */
-	outputDetachLocations: ChangeAtomIdRangeMap<FieldId>;
+	readonly outputDetachLocations: ChangeAtomIdRangeMap<FieldId>;
 }
 
 export type CrossFieldRangeTable<T> = RangeMap<CrossFieldKey, T>;
@@ -150,8 +150,8 @@ export interface RootParent {
 
 export type NodeLocation = FieldParent | RootParent;
 export interface DetachLocation {
-	field: FieldId;
-	atomId: ChangeAtomId | undefined;
+	readonly field: FieldId;
+	readonly atomId: ChangeAtomId | undefined;
 }
 
 /**

@@ -285,38 +285,37 @@ function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
 }
 
 function normalizeRangeMaps(change: ModularChangeset): ModularChangeset {
-	const normalized = { ...change };
-	normalized.crossFieldKeys = normalizeRangeMap(
-		change.crossFieldKeys,
-		areEqualCrossFieldKeys,
-		areEqualFieldIds,
-	);
-
-	normalized.rootNodes.oldToNewId = normalizeRangeMap(
-		change.rootNodes.oldToNewId,
-		areEqualChangeAtomIds,
-		areEqualChangeAtomIds,
-	);
-
-	normalized.rootNodes.newToOldId = normalizeRangeMap(
-		change.rootNodes.newToOldId,
-		areEqualChangeAtomIds,
-		areEqualChangeAtomIds,
-	);
-
-	normalized.rootNodes.detachLocations = normalizeRangeMap(
-		change.rootNodes.detachLocations,
-		areEqualChangeAtomIds,
-		areEqualFieldIds,
-	);
-
-	normalized.rootNodes.outputDetachLocations = normalizeRangeMap(
-		change.rootNodes.outputDetachLocations,
-		areEqualChangeAtomIds,
-		areEqualFieldIds,
-	);
-
-	return normalized;
+	return {
+		...change,
+		crossFieldKeys: normalizeRangeMap(
+			change.crossFieldKeys,
+			areEqualCrossFieldKeys,
+			areEqualFieldIds,
+		),
+		rootNodes: {
+			nodeChanges: change.rootNodes.nodeChanges,
+			oldToNewId: normalizeRangeMap(
+				change.rootNodes.oldToNewId,
+				areEqualChangeAtomIds,
+				areEqualChangeAtomIds,
+			),
+			newToOldId: normalizeRangeMap(
+				change.rootNodes.newToOldId,
+				areEqualChangeAtomIds,
+				areEqualChangeAtomIds,
+			),
+			detachLocations: normalizeRangeMap(
+				change.rootNodes.detachLocations,
+				areEqualChangeAtomIds,
+				areEqualFieldIds,
+			),
+			outputDetachLocations: normalizeRangeMap(
+				change.rootNodes.outputDetachLocations,
+				areEqualChangeAtomIds,
+				areEqualFieldIds,
+			),
+		},
+	};
 }
 
 function normalizeRangeMap<K, V>(
