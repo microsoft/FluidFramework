@@ -94,8 +94,11 @@ export class PendingLocalStateStore<TKey> {
 		const state = getAttachedContainerStateFromSerializedContainer(pendingLocalState);
 		const { savedOps, snapshotBlobs, loadedGroupIdSnapshots, url } = state;
 
+		// Normalize URL by removing trailing slash for comparison
+		const normalizedUrl = url.replace(/\/$/, "");
+		const normalizedFirstUrl = this.#firstUrl?.replace(/\/$/, "");
 		this.#firstUrl ??= url;
-		if (this.#firstUrl !== url) {
+		if (normalizedFirstUrl !== undefined && normalizedFirstUrl !== normalizedUrl) {
 			throw new UsageError("PendingLocalStateStore can only be used with a single container.");
 		}
 

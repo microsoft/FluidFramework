@@ -20,6 +20,7 @@ import {
 	cleanedPackageVersion,
 	validateMinimumVersionForCollab,
 	getConfigForMinVersionForCollab,
+	selectVersionRoundedDown,
 } from "../compatibilityBase.js";
 import { pkgVersion } from "../packageVersion.js";
 
@@ -272,7 +273,26 @@ describe("compatibilityBase", () => {
 		}
 	});
 
-	describe("validateRuntimeOptions", () => {
+	// The getConfigForMinVersionForCollab and getConfigsForMinVersionForCollab also provide good coverage for this.
+	it("selectVersionRoundedDown", () => {
+		const versions: [string, string][] = [
+			["2.0.0", "x"],
+			["3.0.0", "x"],
+			["2.5.0", "x"],
+		];
+		// Matching versions
+		assert.equal(selectVersionRoundedDown("2.0.0", versions), versions[0]);
+		assert.equal(selectVersionRoundedDown("2.5.0", versions), versions[2]);
+		assert.equal(selectVersionRoundedDown("3.0.0", versions), versions[1]);
+		// Between versions
+		assert.equal(selectVersionRoundedDown("2.6.0", versions), versions[2]);
+		// Below lowest version
+		assert.equal(selectVersionRoundedDown("1.5.0", versions), undefined);
+		// Empty
+		assert.equal(selectVersionRoundedDown("2.0.0", []), undefined);
+	});
+
+	describe("validateConfigMapOverrides", () => {
 		type FeatureAType = string;
 		type FeatureBType = boolean;
 		type FeatureCType = object;
