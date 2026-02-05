@@ -28,13 +28,13 @@ export const LayerCompatibilityPolicyWindowMonths = {
 	 */
 	LoaderDriver: 3,
 	/**
-	 * Loader is compatible with Runtime versions up to 3 months older.
-	 */
-	LoaderRuntime: 3,
-	/**
 	 * Runtime is compatible with Loader versions up to 12 months older.
 	 */
 	RuntimeLoader: 12,
+	/**
+	 * Loader is compatible with Runtime versions up to 3 months older.
+	 */
+	LoaderRuntime: 3,
 	/**
 	 * Runtime is compatible with DataStore versions up to 3 months older.
 	 */
