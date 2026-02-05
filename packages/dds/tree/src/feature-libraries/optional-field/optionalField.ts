@@ -431,8 +431,6 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 			fill: ChangeAtomId;
 			/** The ID to assign to whichever node (if any) is detached from the field when the change applies. */
 			detach: ChangeAtomId;
-			/** The ID to assign to the node that is currently in the field. Takes precedence over `detach`. */
-			detachNode?: ChangeAtomId;
 		},
 	): OptionalChangeset;
 
@@ -450,7 +448,6 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		ids: {
 			fill: ChangeAtomId;
 			detach: ChangeAtomId;
-			detachNode?: ChangeAtomId;
 		},
 	): OptionalChangeset => ({
 		valueReplace: {
@@ -458,7 +455,6 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 			src: ids.fill,
 			dst: ids.detach,
 		},
-		nodeDetach: ids.detachNode,
 	}),
 
 	clear: (isEmpty: boolean, detachId: ChangeAtomId): OptionalChangeset => ({
