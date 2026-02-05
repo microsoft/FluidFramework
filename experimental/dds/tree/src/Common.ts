@@ -4,7 +4,15 @@
  */
 
 import { ITelemetryBaseEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { BTreeEx as BTree } from '@tylerbu/sorted-btree-es6/extended';
+import { BTree } from '@tylerbu/sorted-btree-es6';
+import { BTreeEx } from '@tylerbu/sorted-btree-es6/extended';
+
+const first = new BTreeEx([
+	[1, '1'],
+	[2, '2'],
+]);
+const second = new BTreeEx([[1, '1']]);
+const subtracted = first.subtract(second);
 
 const defaultFailMessage = 'Assertion failed';
 
