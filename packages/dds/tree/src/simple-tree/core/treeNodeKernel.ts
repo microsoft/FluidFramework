@@ -129,6 +129,18 @@ export class TreeNodeKernel {
 	readonly #eventBuffer: KernelEventBuffer;
 
 	/**
+	 * Emitter for status change events.
+	 * Unlike content events, status events are not buffered.
+	 */
+	readonly #statusEvents = createEmitter<KernelStatusEvents>();
+
+	/**
+	 * The last known status of this node.
+	 * Used to detect and emit status changes.
+	 */
+	#lastKnownStatus: TreeStatus;
+
+	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
 	 *
 	 * @param initialContext - context from when this node was originally created. Only used when unhydrated.
@@ -158,10 +170,13 @@ export class TreeNodeKernel {
 			};
 
 			this.#eventBuffer = new KernelEventBuffer(innerNode.events);
+			this.#lastKnownStatus = TreeStatus.New;
 		} else {
 			// Hydrated case
 			this.#hydrationState = this.createHydratedState(innerNode);
 			this.#eventBuffer = new KernelEventBuffer(innerNode.anchorNode.events);
+			// For hydrated nodes created directly, compute initial status
+			this.#lastKnownStatus = this.getStatus();
 		}
 	}
 
@@ -191,6 +206,17 @@ export class TreeNodeKernel {
 
 		// Lazily migrate existing event listeners to the anchor node
 		this.#eventBuffer.migrateEventSource(inner.anchorNode.events);
+
+		// Note: We intentionally don't call getStatus() here because it accesses
+		// treeStatusFromAnchorCache which can modify the anchor node's cache during
+		// hydration, which causes issues with the tree state.
+		// Instead, we schedule a deferred status check that runs after hydration completes.
+		// This ensures status change events fire for the New -> InDocument transition.
+		queueMicrotask(() => {
+			if (!this.disposed) {
+				this.checkAndEmitStatusChange();
+			}
+		});
 	}
 
 	private createHydratedState(innerNode: HydratedFlexTreeNode): HydratedState {
@@ -206,6 +232,11 @@ export class TreeNodeKernel {
 				// TODO: this should be triggered on change even for unhydrated nodes.
 				innerNode.anchorNode.events.on("childrenChanging", () => {
 					this.generationNumber += 1;
+				}),
+				// Check for status changes after a batch of changes completes.
+				// This detects when a node is moved (e.g., detached then re-attached via undo).
+				innerNode.anchorNode.events.on("childrenChangedAfterBatch", () => {
+					this.checkAndEmitStatusChange();
 				}),
 			]),
 		};
@@ -235,8 +266,43 @@ export class TreeNodeKernel {
 		return this.#eventBuffer;
 	}
 
+	/**
+	 * Returns a listenable for status change events.
+	 * @remarks
+	 * Status events are separate from content events and are not buffered.
+	 */
+	public get statusEvents(): Listenable<KernelStatusEvents> {
+		return this.#statusEvents;
+	}
+
+	/**
+	 * Checks the current status and emits a status changed event if it differs from the last known status.
+	 * @remarks
+	 * This should be called after operations that might change the node's status,
+	 * but not during hydration (see {@link TreeNodeKernel.hydrate} for details).
+	 */
+	public checkAndEmitStatusChange(): void {
+		const newStatus = this.getStatus();
+		if (newStatus !== this.#lastKnownStatus) {
+			const oldStatus = this.#lastKnownStatus;
+			this.#lastKnownStatus = newStatus;
+			this.#statusEvents.emit("statusChanged", { oldStatus, newStatus });
+		}
+	}
+
 	public dispose(): void {
 		debugAssert(() => !this.disposed || "Cannot dispose a disposed node");
+
+		// Emit status change to Deleted before fully disposing
+		const oldStatus = this.#lastKnownStatus;
+		if (oldStatus !== TreeStatus.Deleted) {
+			this.#lastKnownStatus = TreeStatus.Deleted;
+			this.#statusEvents.emit("statusChanged", {
+				oldStatus,
+				newStatus: TreeStatus.Deleted,
+			});
+		}
+
 		this.disposed = true;
 		if (isHydrated(this.#hydrationState)) {
 			for (const off of this.#hydrationState.offAnchorNode) {
@@ -298,6 +364,33 @@ export class TreeNodeKernel {
 const kernelEvents = ["childrenChangedAfterBatch", "subtreeChangedAfterBatch"] as const;
 
 type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
+
+/**
+ * Event data for status change events.
+ * @alpha
+ */
+export interface StatusChangedEventData {
+	/**
+	 * The status before the change.
+	 */
+	readonly oldStatus: TreeStatus;
+	/**
+	 * The status after the change.
+	 */
+	readonly newStatus: TreeStatus;
+}
+
+/**
+ * Events emitted by the kernel for status changes.
+ * These are separate from content events and are not buffered.
+ * @alpha
+ */
+export interface KernelStatusEvents {
+	/**
+	 * Emitted when the node's {@link TreeStatus} changes.
+	 */
+	statusChanged(data: StatusChangedEventData): void;
+}
 
 // #region TreeNodeEventBuffer
 

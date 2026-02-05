@@ -61,6 +61,7 @@ export {
 	type NumberKeys,
 	ExpectStored,
 	createSchemaUpgrade,
+	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
 export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";

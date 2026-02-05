@@ -53,6 +53,9 @@ export {
 	TreeAlpha,
 	type TreeIdentifierUtils,
 	type ObservationResults,
+	type ParentType,
+	type ParentObject,
+	type TreeNodeParent,
 } from "./treeAlpha.js";
 
 export {
