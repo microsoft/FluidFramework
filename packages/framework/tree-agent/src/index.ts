@@ -57,7 +57,6 @@ export type {
 export {
 	typeFactory,
 	isTypeFactoryType,
-	instanceOfsTypeFactory,
 } from "./treeAgentTypes.js";
 
 export type {
