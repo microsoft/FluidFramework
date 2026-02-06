@@ -10,7 +10,6 @@ import {
 	makeGenerator,
 	reducer,
 	saveFailures,
-	saveSuccesses,
 	type StressOperations,
 } from "../baseModel.js";
 import { validateAllDataStoresSaved } from "../dataStoreOperations.js";
@@ -35,11 +34,12 @@ describe("Local Server Stress", () => {
 	createLocalServerStressSuite(model, {
 		defaultTestCount: 200,
 		saveFailures,
-		saveSuccesses,
 		configurations: {
 			"Fluid.Container.enableOfflineFull": true,
 			"Fluid.ContainerRuntime.EnableRollback": true,
 		},
+		// Minimization is slow with many seeds; use only to minimize specific failing seeds.
 		skipMinimization: true,
+		// Use skip, replay, and only properties to control which seeds run.
 	});
 });
