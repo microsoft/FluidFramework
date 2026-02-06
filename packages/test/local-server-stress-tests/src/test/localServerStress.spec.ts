@@ -10,6 +10,7 @@ import {
 	makeGenerator,
 	reducer,
 	saveFailures,
+	saveSuccesses,
 	type StressOperations,
 } from "../baseModel.js";
 import { validateAllDataStoresSaved } from "../dataStoreOperations.js";
@@ -22,7 +23,7 @@ import {
 describe("Local Server Stress", () => {
 	const model: LocalServerStressModel<StressOperations> = {
 		workloadName: "default",
-		generatorFactory: () => takeAsync(100, makeGenerator()),
+		generatorFactory: () => takeAsync(200, makeGenerator()),
 		reducer,
 		validateConsistency: async (...clients) => {
 			await validateAllDataStoresSaved(...clients);
@@ -34,11 +35,11 @@ describe("Local Server Stress", () => {
 	createLocalServerStressSuite(model, {
 		defaultTestCount: 200,
 		saveFailures,
+		saveSuccesses,
 		configurations: {
 			"Fluid.Container.enableOfflineFull": true,
 			"Fluid.ContainerRuntime.EnableRollback": true,
 		},
-		// skipMinimization: true,
-		// Use skip, replay, and only properties to control which seeds run.
+		skipMinimization: true,
 	});
 });

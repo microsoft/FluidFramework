@@ -379,7 +379,7 @@ export interface LocalServerStressOptions {
 const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	defaultTestCount: 100,
 	detachedStartOptions: {
-		numOpsBeforeAttach: 20,
+		numOpsBeforeAttach: 100,
 	},
 	numberOfClients: 3,
 	clientJoinOptions: {

@@ -63,9 +63,17 @@ const orderSequentiallyReducer = async (
 export const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
 	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
-	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
+	createDataStore: async (state, op) => {
+		const { handle } = await state.datastore.createDataStore(op.tag, op.asChild);
+		if (op.storeHandle) {
+			state.datastore.storeHandleInRoot(op.tag, handle);
+		}
+	},
 	createChannel: async (state, op) => {
-		state.datastore.createChannel(op.tag, op.channelType);
+		const handle = state.datastore.createChannel(op.tag, op.channelType);
+		if (op.storeHandle) {
+			state.datastore.storeHandleInRoot(op.tag, handle);
+		}
 	},
 	uploadBlob: async (state, op) =>
 		// this will hang if we are offline due to disconnect, so we don't wait for blob upload
@@ -81,7 +89,8 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
  * Threshold for the "creation phase": the first N operations before attach
  * prioritize creating datastores and channels.
  */
-const creationPhaseOps = 7;
+const creationPhaseOps = 20;
+
 
 export function makeGenerator<T extends BaseOperation>(
 	additional: DynamicAsyncWeights<T, LocalServerStressState> = [],
@@ -115,6 +124,7 @@ export function makeGenerator<T extends BaseOperation>(
 				type: "createDataStore",
 				asChild: state.random.bool(),
 				tag: state.tag("datastore"),
+				storeHandle: state.random.bool(isDetachedCreationPhase(state) ? 0.9 : 0.5),
 			}),
 			// High weight during detached creation phase, zero during detached DDS ops phase, low otherwise
 			(state) => {
@@ -141,6 +151,7 @@ export function makeGenerator<T extends BaseOperation>(
 				type: "createChannel",
 				channelType: state.random.pick([...ddsModelMap.keys()]),
 				tag: state.tag("channel"),
+				storeHandle: state.random.bool(isDetachedCreationPhase(state) ? 0.9 : 0.5),
 			}),
 			// High weight during detached creation phase, zero during detached DDS ops phase, low otherwise
 			(state) => {
