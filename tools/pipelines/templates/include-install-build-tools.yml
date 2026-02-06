@@ -26,7 +26,7 @@ steps:
   - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:
-        buildDirectory: $(Build.SourcesDirectory)/build-tools
+        buildDirectory: ${{ parameters.buildDirectory }}/build-tools
         pnpmStorePath: ${{ parameters.pnpmStorePath }}
         enableCache: false
 
@@ -35,7 +35,7 @@ steps:
       displayName: Install Fluid Build Tools (from repo)
       inputs:
         targetType: 'inline'
-        workingDirectory: $(Build.SourcesDirectory)/build-tools
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/build-tools
         script: |
           set -eu -o pipefail
           pnpm i --frozen-lockfile
@@ -53,7 +53,7 @@ steps:
       displayName: Install Fluid Build Tools (from npm)
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
         script: |
           set -eu -o pipefail
           echo "${{ parameters.buildToolsVersionToInstall }}"
@@ -64,7 +64,7 @@ steps:
     displayName: Check Build Tools Installation
     inputs:
       targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
+      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
       script: |
         set -eu -o pipefail
         # Output the help and full command list for debugging purposes
