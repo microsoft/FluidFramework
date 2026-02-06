@@ -557,7 +557,7 @@ export function encodeChange(
 		return { start: id, value: isDetach, length: renameEntry.length };
 	};
 
-	const moveIdToCellId = getMoveIdToCellId(change, fieldKinds);
+	const moveIdToCellId = getMoveIdToCellId(change, fieldKinds, fieldToRoots);
 	const getCellIdForMove = (
 		id: ChangeAtomId,
 		count: number,
@@ -806,12 +806,25 @@ function getOrAddInFieldRootMap(map: FieldRootMap, fieldId: FieldId): FieldRootC
 function getMoveIdToCellId(
 	change: ModularChangeset,
 	fieldKinds: FieldKindConfiguration,
+	fieldToRoot: FieldRootMap,
 ): ChangeAtomIdRangeMap<ChangeAtomId> {
 	const map = newChangeAtomIdTransform();
-	getMoveIdToCellIdsForFieldChanges(change.fieldChanges, map, fieldKinds);
-	for (const nodeChange of change.nodeChanges.values()) {
+	getMoveIdToCellIdsForFieldChanges(
+		change.fieldChanges,
+		undefined,
+		fieldKinds,
+		fieldToRoot,
+		map,
+	);
+	for (const [nodeId, nodeChange] of change.nodeChanges.entries()) {
 		if (nodeChange.fieldChanges !== undefined) {
-			getMoveIdToCellIdsForFieldChanges(nodeChange.fieldChanges, map, fieldKinds);
+			getMoveIdToCellIdsForFieldChanges(
+				nodeChange.fieldChanges,
+				{ revision: nodeId[0], localId: nodeId[1] },
+				fieldKinds,
+				fieldToRoot,
+				map,
+			);
 		}
 	}
 	return map;
@@ -819,12 +832,16 @@ function getMoveIdToCellId(
 
 function getMoveIdToCellIdsForFieldChanges(
 	changes: FieldChangeMap,
-	moveIdToCellId: ChangeAtomIdRangeMap<ChangeAtomId>,
+	nodeId: NodeId | undefined,
 	fieldKinds: FieldKindConfiguration,
+	fieldToRoots: FieldRootMap,
+	moveIdToCellId: ChangeAtomIdRangeMap<ChangeAtomId>,
 ): void {
-	for (const field of changes.values()) {
+	for (const [fieldKey, field] of changes.entries()) {
 		for (const entry of getChangeHandler(fieldKinds, field.fieldKind).getDetachCellIds(
 			field.change,
+			fieldToRoots.get([nodeId?.revision, nodeId?.localId, fieldKey])?.renames ??
+				newChangeAtomIdTransform(),
 		)) {
 			moveIdToCellId.set(entry.detachId, entry.count, entry.cellId);
 		}

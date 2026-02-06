@@ -7,6 +7,7 @@ import { assert, unreachableCase, fail } from "@fluidframework/core-utils/intern
 
 import {
 	type ChangeAtomId,
+	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -797,7 +798,10 @@ function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange
 	}
 }
 
-export function getDetachCellIds(change: Changeset): {
+export function getDetachCellIds(
+	change: Changeset,
+	rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
+): {
 	detachId: ChangeAtomId;
 	cellId: ChangeAtomId;
 	count: number;
@@ -814,7 +818,37 @@ export function getDetachCellIds(change: Changeset): {
 			if (!areEqualChangeAtomIds(mark.detachCellId, detachId)) {
 				entries.push({ count: mark.count, detachId, cellId: mark.detachCellId });
 			}
+		} else if (mark.type === "Rename") {
+			addDetachCellIdsForRename(mark, rootRenames, entries);
 		}
 	}
 	return entries;
+}
+
+function addDetachCellIdsForRename(
+	mark: CellMark<Rename>,
+	rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
+	entries: {
+		detachId: ChangeAtomId;
+		cellId: ChangeAtomId;
+		count: number;
+	}[],
+): void {
+	assert(mark.cellId !== undefined, "Rename should not target a full cell");
+	const rootRenameEntry = rootRenames.getFirst(mark.cellId, mark.count);
+	const countProcessed = rootRenameEntry.length;
+	if (
+		rootRenameEntry.value !== undefined &&
+		!areEqualChangeAtomIds(mark.idOverride, rootRenameEntry.value)
+	) {
+		entries.push({
+			cellId: mark.cellId,
+			detachId: rootRenameEntry.value,
+			count: countProcessed,
+		});
+	}
+
+	if (countProcessed < mark.count) {
+		addDetachCellIdsForRename(splitMark(mark, countProcessed)[1], rootRenames, entries);
+	}
 }

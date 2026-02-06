@@ -79,6 +79,7 @@ export interface FieldChangeHandler<
 	// XXX: Document
 	getDetachCellIds(
 		change: TChangeset,
+		rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
 	): { detachId: ChangeAtomId; cellId: ChangeAtomId; count: number }[];
 
 	createEmpty(): TChangeset;

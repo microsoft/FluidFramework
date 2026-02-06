@@ -338,7 +338,7 @@ function decodeDetach(
 		context.decodeRootRename(cellId, detachId, count);
 		return {
 			type: "Rename",
-			idOverride: cellRename ?? detachId,
+			idOverride: cellRename ?? detachCellId ?? detachId,
 		};
 	}
 
@@ -469,14 +469,19 @@ function encodeRename(
 	if (isMoveInAndDetach) {
 		// These cells are the final detach location of moved nodes.
 		const encodedRevision = encodeRevision(mark.idOverride.revision);
+		const endpoint = context.getCellIdForMove(mark.idOverride, mark.count).value;
+		const encodedEndpoint =
+			endpoint === undefined
+				? undefined
+				: changeAtomIdCodec.encode(endpoint, context.baseContext);
 
-		// XXX: Use finalEndpoint if there is an associated cellDetachId.
 		return {
 			attachAndDetach: {
 				attach: {
 					moveIn: {
 						revision: encodedRevision,
 						id: mark.idOverride.localId,
+						finalEndpoint: encodedEndpoint,
 					},
 				},
 				detach: {
@@ -490,21 +495,35 @@ function encodeRename(
 	}
 
 	const renamedRootId = context.rootRenames.getFirst(mark.cellId, mark.count).value;
+	const isMoveOutAndAttach =
+		renamedRootId !== undefined && context.isAttachId(renamedRootId, mark.count).value;
 
-	const outputRootId = renamedRootId ?? mark.cellId;
-	const isMoveOutAndAttach = context.isAttachId(outputRootId, mark.count).value;
+	const isRenameOfRoot = renamedRootId !== undefined;
+
+	// If we are renaming a root, but the output ID is not `mark.idOverride`,
+	// then we must be moving the node to another cell.
+	// If it were left in this cell, the root's output ID would not match the cell's output ID.
 	const isMoveOutAndDetach =
-		renamedRootId !== undefined && !areEqualChangeAtomIds(renamedRootId, mark.idOverride);
+		isRenameOfRoot && !areEqualChangeAtomIds(renamedRootId, mark.idOverride);
 
 	if (isMoveOutAndAttach || isMoveOutAndDetach) {
-		// Detached nodes which were last at this cell location have been moved.
-		// XXX: mark.idOverride represents detachCellId, so we should represent it using the moveOut's ID and use outputRootId as the finalDetachId.
-		// Is that always true?
+		// This mark represents a move of a node which was detached from this cell.
+		// The root will be either be reattached with `moveId`,
+		// or left detached in another cell, with `moveId` as its output root ID.
+		// In the latter case, the other endpoint will be encoded as
+		// attach and detach (move-in and remove), where both the move-in and the remove
+		// use `moveId` as their ID.
+		// In either of these cases, we need this mark's `finalEndpoint` to be `moveId`.
+		// We can omit the final endpoint if it is the same as the move-out ID.
+		const encodedEndpoint = areEqualChangeAtomIds(mark.idOverride, renamedRootId)
+			? undefined
+			: changeAtomIdCodec.encode(renamedRootId, context.baseContext);
+
 		return {
 			moveOut: {
-				revision: encodeRevision(outputRootId.revision),
-				id: outputRootId.localId,
-				idOverride: changeAtomIdCodec.encode(mark.idOverride, context.baseContext),
+				revision: encodeRevision(mark.idOverride.revision),
+				id: mark.idOverride.localId,
+				finalEndpoint: encodedEndpoint,
 			},
 		};
 	}
@@ -512,8 +531,8 @@ function encodeRename(
 	if (renamedRootId !== undefined) {
 		return {
 			remove: {
-				revision: encodeRevision(outputRootId.revision),
-				id: outputRootId.localId,
+				revision: encodeRevision(renamedRootId.revision),
+				id: renamedRootId.localId,
 			},
 		};
 	}
@@ -559,6 +578,7 @@ function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): 
 			count = context.getInputRootId(mark.idOverride, count).length;
 			count = context.isAttachId(mark.idOverride, count).length;
 			count = context.isDetachId(mark.idOverride, count).length;
+			count = context.getCellIdForMove(mark.idOverride, count).length;
 			const cellId = mark.cellId ?? fail("Rename should have cell ID");
 			const renameEntry = context.rootRenames.getFirst(cellId, count);
 			count = renameEntry.length;
