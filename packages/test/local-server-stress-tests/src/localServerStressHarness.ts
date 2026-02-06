@@ -75,17 +75,13 @@ import {
 import { saveFluidOps } from "./baseModel.js";
 import { ContainerStateTracker } from "./containerStateTracker.js";
 import { validateConsistencyOfAllDDS } from "./ddsOperations.js";
-import {
-	createRuntimeFactory,
-	StressDataObject,
-	type DefaultStressDataObject,
-} from "./stressDataObject.js";
+import { createRuntimeFactory, StressDataObject } from "./stressDataObject.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
 export interface Client {
 	container: ContainerAlpha;
 	tag: `client-${number}`;
-	entryPoint: DefaultStressDataObject;
+	entryPoint: StressDataObject;
 }
 
 /**
@@ -518,15 +514,15 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 				}),
 			);
 
-			const { DefaultStressDataObject }: FluidObject<DefaultStressDataObject> | undefined =
+			const maybe: FluidObject<StressDataObject> | undefined =
 				(await frozenContainer.getEntryPoint()) ?? {};
-			assert(DefaultStressDataObject !== undefined, "must have entrypoint");
+			assert(maybe.StressDataObject !== undefined, "must have entrypoint");
 
 			await validateConsistencyOfAllDDS(
 				removed,
 				{
 					container: frozenContainer,
-					entryPoint: DefaultStressDataObject,
+					entryPoint: maybe.StressDataObject,
 					tag: `client-${Number.NaN}`,
 				},
 				state.stateTracker,
@@ -855,14 +851,13 @@ async function createDetachedClient(
 		}),
 	);
 
-	const maybe: FluidObject<DefaultStressDataObject> | undefined =
-		await container.getEntryPoint();
-	assert(maybe.DefaultStressDataObject !== undefined, "must be DefaultStressDataObject");
+	const maybe: FluidObject<StressDataObject> | undefined = await container.getEntryPoint();
+	assert(maybe.StressDataObject !== undefined, "must be StressDataObject");
 
 	const newClient: Client = {
 		container,
 		tag,
-		entryPoint: maybe.DefaultStressDataObject,
+		entryPoint: maybe.StressDataObject,
 	};
 	return newClient;
 }
@@ -895,18 +890,18 @@ async function loadClient(
 		),
 	);
 
-	const maybe: FluidObject<DefaultStressDataObject> | undefined = await timeoutAwait(
+	const maybe: FluidObject<StressDataObject> | undefined = await timeoutAwait(
 		container.getEntryPoint(),
 		{
 			errorMsg: `Timed out waiting for client entrypoint ${tag}`,
 		},
 	);
-	assert(maybe.DefaultStressDataObject !== undefined, "must be DefaultStressDataObject");
+	assert(maybe.StressDataObject !== undefined, "must be StressDataObject");
 
 	return {
 		container,
 		tag,
-		entryPoint: maybe.DefaultStressDataObject,
+		entryPoint: maybe.StressDataObject,
 	};
 }
 

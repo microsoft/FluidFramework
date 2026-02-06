@@ -64,6 +64,8 @@ export type StressDataObjectOperations =
 	| ExitStagingMode;
 
 export class StressDataObject extends DataObject {
+	public static readonly alias = "default";
+
 	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory({
 		type: "StressDataObject",
 		ctor: StressDataObject,
@@ -140,14 +142,6 @@ export class StressDataObject extends DataObject {
 	public get isDirty(): boolean | undefined {
 		return asLegacyAlpha(this.runtime).isDirty;
 	}
-}
-
-export class DefaultStressDataObject extends StressDataObject {
-	public static readonly alias = "default";
-
-	public get DefaultStressDataObject(): this {
-		return this;
-	}
 
 	private stageControls: StageControlsAlpha | undefined;
 	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
@@ -179,14 +173,6 @@ export class DefaultStressDataObject extends StressDataObject {
 }
 
 export const createRuntimeFactory = (): IRuntimeFactory => {
-	const defaultStressDataObjectFactory = new DataObjectFactory({
-		type: "DefaultStressDataObject",
-		ctor: DefaultStressDataObject,
-		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
-
-		registryEntries: [[StressDataObject.factory.type, StressDataObject.factory]],
-	});
-
 	const runtimeOptions: IContainerRuntimeOptionsInternal = {
 		summaryOptions: {
 			summaryConfigOverrides: {
@@ -209,36 +195,27 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 				existing,
 				runtimeOptions,
 				registryEntries: [
-					[
-						defaultStressDataObjectFactory.type,
-						Promise.resolve(defaultStressDataObjectFactory),
-					],
 					[StressDataObject.factory.type, Promise.resolve(StressDataObject.factory)],
 				],
 				provideEntryPoint: async (rt) => {
 					const aliasedDefault = await rt.getAliasedDataStoreEntryPoint(
-						DefaultStressDataObject.alias,
+						StressDataObject.alias,
 					);
 					assert(aliasedDefault !== undefined, "default must exist");
 
 					return aliasedDefault.get();
 				},
 			});
-			// id compressor isn't made available via the interface right now.
-			// We could revisit exposing the safe part of its API (IIdCompressor, not IIdCompressorCore) in a way
-			// that would avoid this instanceof check, but most customers shouldn't really have a need for it.
 			assert(runtime instanceof ContainerRuntime, "Expected to create a ContainerRuntime");
 			assert(
 				runtime.idCompressor !== undefined,
 				"IdCompressor should be enabled by stress test options.",
 			);
-			// Forcing the cluster size to a low value makes it more likely to generate staging mode scenarios with more
-			// interesting interleaving of id allocation ops and normal ops.
 			modifyClusterSize(runtime.idCompressor, 2);
 
 			if (!existing) {
-				const ds = await runtime.createDataStore(defaultStressDataObjectFactory.type);
-				await ds.trySetAlias(DefaultStressDataObject.alias);
+				const ds = await runtime.createDataStore(StressDataObject.factory.type);
+				await ds.trySetAlias(StressDataObject.alias);
 			}
 
 			return runtime;
