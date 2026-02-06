@@ -146,7 +146,7 @@ function composeMarksIgnoreChild(
 	}
 
 	if (!markHasCellEffect(baseMark)) {
-		assert(baseMark.type === "Insert", "Expected baseMark to be a pin");
+		assert(baseMark.type === "Attach", "Expected baseMark to be a pin");
 
 		// `newMark` can be either a remove or another pin.
 		// A pin is treated as a detach and attach, so we call `composeAttachDetach` in either case.
@@ -160,7 +160,7 @@ function composeMarksIgnoreChild(
 		);
 
 		const pinId = getAttachedRootId(baseMark);
-		return newMark.type === "Remove"
+		return newMark.type === "Detach"
 			? {
 					...newMark,
 					detachCellId: baseMark.detachCellId ?? pinId,
@@ -201,8 +201,8 @@ function composeMarksIgnoreChild(
 		}
 		return normalizeCellRename(baseMark.cellId, baseMark.count, attach, detach);
 	} else {
-		assert(baseMark.type === "Remove", "Unexpected mark type");
-		assert(newMark.type === "Insert", "Unexpected mark type");
+		assert(baseMark.type === "Detach", "Unexpected mark type");
+		assert(newMark.type === "Attach", "Unexpected mark type");
 		const detachId = getDetachedRootId(baseMark);
 		const attachId = getAttachedRootId(newMark);
 
@@ -266,7 +266,7 @@ function handleNodeChanges(
 ): NodeId | undefined {
 	if (
 		newMark.changes !== undefined &&
-		baseMark.type === "Insert" &&
+		baseMark.type === "Attach" &&
 		baseMark.cellId !== undefined
 	) {
 		moveEffects.sendNewChangesToBaseSourceLocation(

@@ -164,12 +164,12 @@ const testChanges: [
 			),
 	],
 	[
-		"MInsert",
+		"MAttach",
 		(i) =>
 			ChangesetWrapper.create(
 				[
 					...(i > 0 ? [Mark.skip(i)] : []),
-					Mark.insert(1, brand(42), {
+					Mark.attach(1, brand(42), {
 						changes: nodeId3,
 					}),
 				],
@@ -177,7 +177,7 @@ const testChanges: [
 			),
 	],
 	[
-		"Insert",
+		"Attach",
 		(i) =>
 			ChangesetWrapper.create(
 				Change.insert(i, 2, undefined /* revision */, { localId: brand(42) }),
@@ -189,10 +189,10 @@ const testChanges: [
 		(i) =>
 			ChangesetWrapper.create([
 				...(i > 0 ? [Mark.skip(i)] : []),
-				Mark.remove(1, brand(0), { cellId: { localId: brand(0) } }),
+				Mark.detach(1, brand(0), { cellId: { localId: brand(0) } }),
 			]),
 	],
-	["Remove", (i) => ChangesetWrapper.create(Change.remove(i, 2, undefined /* revision */))],
+	["Detach", (i) => ChangesetWrapper.create(Change.remove(i, 2, undefined /* revision */))],
 	[
 		"Revive",
 		(i, max) =>
@@ -200,7 +200,7 @@ const testChanges: [
 				Mark.skip(2),
 				...withAdjacentTombstones(
 					[Mark.revive(2, { revision: tag1, localId: brand(i) })],
-					"Insert",
+					"Attach",
 					max,
 				),
 			]),
@@ -210,7 +210,7 @@ const testChanges: [
 		(i) =>
 			ChangesetWrapper.create([
 				...(i > 0 ? [Mark.skip(i)] : []),
-				Mark.remove(1, brand(0), {
+				Mark.detach(1, brand(0), {
 					cellId: {
 						revision: tag1,
 						localId: brand(0),
@@ -240,7 +240,7 @@ const testChanges: [
 						{ revision: tag3, localId: brand(i) },
 						undefined /* revision */,
 					),
-					"Insert",
+					"Attach",
 					max,
 				),
 			),
@@ -258,7 +258,7 @@ const testChanges: [
 						{ revision: tag3, localId: brand(i) },
 						undefined /* revision */,
 					),
-					"Insert",
+					"Attach",
 					max,
 				),
 			),
@@ -896,14 +896,14 @@ export function testSandwichRebasing(): void {
 			// C: Remove y
 			// This test simulates rebasing C back to the trunk.
 
-			const changeC = tagChangeInline([Mark.remove(1, brand(0))], tag3);
+			const changeC = tagChangeInline([Mark.detach(1, brand(0))], tag3);
 
 			const rollbackTag2 = mintRevisionTag();
-			const changeB = tagChangeInline([Mark.insert(1, brand(0))], tag2);
+			const changeB = tagChangeInline([Mark.attach(1, brand(0))], tag2);
 			const inverseB = tagChangeInline(testInvert(changeB, rollbackTag2), rollbackTag2, tag2);
 
 			const rollbackTag1 = mintRevisionTag();
-			const changeA = tagChangeInline([Mark.insert(1, brand(0))], tag1);
+			const changeA = tagChangeInline([Mark.attach(1, brand(0))], tag1);
 			const inverseA = tagChangeInline(testInvert(changeA, rollbackTag1), rollbackTag1, tag1);
 
 			const revInfos: RevisionInfo[] = [
@@ -915,7 +915,7 @@ export function testSandwichRebasing(): void {
 
 			const cRebasedToTrunk = rebaseOverChanges(changeC, [inverseB, inverseA], revInfos);
 			const expected = [
-				Mark.remove(1, brand(0), {
+				Mark.detach(1, brand(0), {
 					cellId: { revision: tag2, localId: brand(0) },
 					revision: tag3,
 				}),
@@ -925,13 +925,13 @@ export function testSandwichRebasing(): void {
 		});
 
 		it("[insert, insert] ↷ insert", () => {
-			const insertT = tagChangeInline([Mark.insert(1, brand(0))], tag1);
-			const insertA = tagChangeInline([Mark.insert(1, brand(0))], tag2);
+			const insertT = tagChangeInline([Mark.attach(1, brand(0))], tag1);
+			const insertA = tagChangeInline([Mark.attach(1, brand(0))], tag2);
 			const insertA2 = rebaseOverChanges(insertA, [insertT]);
 			const inverseA = tagChangeInline(testInvert(insertA, tag4), tag4, tag2);
-			const insertB = tagChangeInline([{ count: 1 }, Mark.insert(1, brand(0))], tag3);
+			const insertB = tagChangeInline([{ count: 1 }, Mark.attach(1, brand(0))], tag3);
 			const insertB2 = rebaseOverChanges(insertB, [inverseA, insertT, insertA2]);
-			const expected = [{ count: 1 }, Mark.insert(1, { revision: tag3, localId: brand(0) })];
+			const expected = [{ count: 1 }, Mark.attach(1, { revision: tag3, localId: brand(0) })];
 			assertChangesetsEqual(insertB2.change, expected);
 		});
 
@@ -940,10 +940,10 @@ export function testSandwichRebasing(): void {
 				[Mark.revive(2, { revision: tag1, localId: brand(0) })],
 				tag2,
 			);
-			const insertB = tagChangeInline([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
+			const insertB = tagChangeInline([Mark.skip(1), Mark.attach(1, brand(0))], tag3);
 			const inverseA = tagChangeInline(testInvert(reviveA, tag4), tag4, tag2);
 			const insertB2 = rebaseOverChanges(insertB, [inverseA, reviveA]);
-			const expected = [Mark.skip(1), Mark.insert(1, { revision: tag3, localId: brand(0) })];
+			const expected = [Mark.skip(1), Mark.attach(1, { revision: tag3, localId: brand(0) })];
 
 			assertChangesetsEqual(insertB2.change, expected);
 		});
@@ -953,17 +953,17 @@ export function testSandwichRebasing(): void {
 export function testSandwichComposing(): void {
 	describe("Sandwich composing", () => {
 		it("insert ↷ redundant remove", () => {
-			const insertA = tagChangeInline([Mark.insert(1, { localId: brand(0) })], tag3);
+			const insertA = tagChangeInline([Mark.attach(1, { localId: brand(0) })], tag3);
 			const uninsertA = tagChangeInline(testInvert(insertA, tag4), tag4, tag3);
 			const redundantRemoveT = tagChangeInline(
-				[Mark.remove(1, brand(0), { cellId: { revision: tag1, localId: brand(0) } })],
+				[Mark.detach(1, brand(0), { cellId: { revision: tag1, localId: brand(0) } })],
 				tag2,
 			);
 
 			const composed = testCompose([uninsertA, redundantRemoveT, insertA]);
 			const expected = [
 				Mark.skip(1),
-				Mark.remove(
+				Mark.detach(
 					1,
 					{ revision: tag2, localId: brand(0) },
 					{ cellId: { revision: tag1, localId: brand(0) } },
@@ -974,11 +974,11 @@ export function testSandwichComposing(): void {
 		});
 
 		it("[insert, insert] ↷ adjacent remove", () => {
-			const removeT = tagChangeInline([Mark.remove(1, brand(0))], tag1);
-			const insertA = tagChangeInline([Mark.skip(1), Mark.insert(1, brand(0))], tag2);
+			const removeT = tagChangeInline([Mark.detach(1, brand(0))], tag1);
+			const insertA = tagChangeInline([Mark.skip(1), Mark.attach(1, brand(0))], tag2);
 			const insertA2 = rebaseTagged(insertA, removeT);
 			const inverseA = tagChangeInline(testInvert(insertA, tag4), tag4, tag2);
-			const insertB = tagChangeInline([Mark.skip(1), Mark.insert(1, brand(0))], tag3);
+			const insertB = tagChangeInline([Mark.skip(1), Mark.attach(1, brand(0))], tag3);
 			const insertB2 = rebaseOverChanges(insertB, [inverseA, removeT, insertA2]);
 			const TAB = testCompose([removeT, insertA2, insertB2]);
 			const AiTAB = testCompose(
@@ -992,8 +992,8 @@ export function testSandwichComposing(): void {
 			);
 
 			const expected = [
-				Mark.remove(1, { revision: tag1, localId: brand(0) }),
-				Mark.insert(1, { revision: tag3, localId: brand(0) }),
+				Mark.detach(1, { revision: tag1, localId: brand(0) }),
+				Mark.attach(1, { revision: tag3, localId: brand(0) }),
 			];
 
 			assertChangesetsEqual(AiTAB, expected);
@@ -1001,7 +1001,7 @@ export function testSandwichComposing(): void {
 
 		it("[removeB, reviveB, reviveA] ↷ []", () => {
 			// Note: this test presupposes the existence of a cell A, located before cell B, emptied by tag1
-			const removeB = tagChangeInline([Mark.remove(1, brand(1))], tag2);
+			const removeB = tagChangeInline([Mark.detach(1, brand(1))], tag2);
 			const reviveB = tagChangeInline(
 				[Mark.revive(1, { revision: tag2, localId: brand(1) })],
 				tag3,
@@ -1049,7 +1049,7 @@ export function testSandwichComposing(): void {
 			const mod = tagChangeInline([Mark.modify(nodeId)], tag3);
 			const [mo3, mi3] = Mark.move(1, brand(3));
 			const move3 = tagChangeInline([mi3, mo3], tag4);
-			const del = tagChangeInline([Mark.remove(1, brand(0))], tag0);
+			const del = tagChangeInline([Mark.detach(1, brand(0))], tag0);
 			const return1 = tagChangeInline(testInvert(move1, tag5), tag5, move1.revision);
 			const return2 = tagChangeInline(testInvert(move2, tag6), tag6, move2.revision);
 			const unMod = tagChangeInline(testInvert(mod, tag7), tag7, mod.revision);
@@ -1085,11 +1085,11 @@ export function testExamples(): void {
 				[Mark.revive(1, { revision: tag1, localId: brand(0) })],
 				tag3,
 			);
-			const concurrentRemove = tagChangeInline([Mark.remove(1, brand(42))], tag2);
+			const concurrentRemove = tagChangeInline([Mark.detach(1, brand(42))], tag2);
 			const rebasedRevive = rebaseTagged(revive, concurrentRemove);
 			const redetach = testInvert(rebasedRevive, tag4);
 			const expected = [
-				Mark.remove(1, brand(0), {
+				Mark.detach(1, brand(0), {
 					cellRename: { revision: tag1, localId: brand(0) },
 					revision: tag4,
 				}),

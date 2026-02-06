@@ -251,7 +251,7 @@ class RebaseQueue {
  */
 function addMovedMarkEffect(mark: Mark, effect: Detach): Mark {
 	if (isAttach(mark) && isDetach(effect)) {
-		return { ...mark, type: "Insert" };
+		return { ...mark, type: "Attach" };
 	} else if (isRename(mark) && isDetach(effect)) {
 		const result = { ...effect, count: mark.count };
 		if (!areEqualChangeAtomIds(mark.idOverride, getDetachedRootId(effect))) {
@@ -347,7 +347,7 @@ function rebaseMarkIgnoreChild(
 			baseMark.count,
 		).value;
 
-		if (newRenameId !== undefined && currMark.type !== "Insert") {
+		if (newRenameId !== undefined && currMark.type !== "Attach") {
 			return {
 				type: "Rename",
 				cellId: baseMark.idOverride,
@@ -379,7 +379,7 @@ function separateEffectsForMove(
 		case NoopMarkType: {
 			return {};
 		}
-		case "Remove": {
+		case "Detach": {
 			if (mark.cellRename !== undefined) {
 				return { remains: { type: "Rename", idOverride: mark.cellRename }, follows: mark };
 			}
@@ -404,9 +404,9 @@ function separateEffectsForMove(
 		case "Rename": {
 			return { remains: mark };
 		}
-		case "Insert": {
+		case "Attach": {
 			const follows: Mutable<Detach> = {
-				type: "Remove",
+				type: "Detach",
 				id: mark.id,
 			};
 
@@ -415,7 +415,7 @@ function separateEffectsForMove(
 			}
 
 			const remains: Attach = {
-				type: "Insert",
+				type: "Attach",
 				id: mark.id,
 			};
 			if (mark.revision !== undefined) {
@@ -512,7 +512,7 @@ function getMovedEffect(
 	}
 
 	const detach: Mutable<Detach> = {
-		type: "Remove",
+		type: "Detach",
 		revision: detachId.revision,
 		id: detachId.localId,
 	};

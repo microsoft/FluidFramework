@@ -30,13 +30,13 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 	const atomId: Populated<ChangeAtomId> = { localId: brand(0), revision: tag };
 	const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));
 	const attach: Populated<Attach> = {
-		type: "Insert",
+		type: "Attach",
 		id: brand(0),
 		revision: tag,
 		detachCellId: atomId,
 	};
 	const detach: Populated<Detach> = {
-		type: "Remove",
+		type: "Detach",
 		id: brand(0),
 		revision: tag,
 		cellRename: atomId,
@@ -46,9 +46,9 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 	// XXX: Why are the above not used?
 	const populatedMarks: PopulatedMark[] = [
 		{ count: 1, cellId: atomId, changes },
-		{ type: "Insert", count: 1, cellId: atomId, changes, id: brand(0), revision: tag },
+		{ type: "Attach", count: 1, cellId: atomId, changes, id: brand(0), revision: tag },
 		{
-			type: "Remove",
+			type: "Detach",
 			count: 1,
 			cellId: atomId,
 			changes,

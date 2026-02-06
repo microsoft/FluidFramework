@@ -74,16 +74,16 @@ export function testInvert(): void {
 			const input = Change.insert(0, 2, tag1, cellId);
 			const actual = invert(input, tag2);
 			const expected = [
-				Mark.remove(2, brand(0), { cellRename: cellId, revision: tagForInvert }),
+				Mark.detach(2, brand(0), { cellRename: cellId, revision: tagForInvert }),
 			];
 			assertChangesetsEqual(actual, expected);
 		});
 
 		it("insert & modify => modify & remove", () => {
 			const cellId: CellId = { revision: tag1, localId: brand(0) };
-			const input = [Mark.insert(1, brand(0), { changes: childChange1 })];
+			const input = [Mark.attach(1, brand(0), { changes: childChange1 })];
 			const expected = [
-				Mark.remove(1, cellId, {
+				Mark.detach(1, cellId, {
 					changes: { ...childChange1, revision: tag1 },
 					cellRename: cellId,
 					revision: tagForInvert,
@@ -95,8 +95,8 @@ export function testInvert(): void {
 
 		it("remove => revive", () => {
 			const input = [
-				Mark.remove(1, brand(0), { changes: childChange1 }),
-				Mark.remove(1, brand(1)),
+				Mark.detach(1, brand(0), { changes: childChange1 }),
+				Mark.detach(1, brand(1)),
 			];
 			const expected = [
 				Mark.revive(
@@ -113,7 +113,7 @@ export function testInvert(): void {
 		it("remove => revive (with rollback ID)", () => {
 			const detachId: ChangeAtomId = { revision: tag2, localId: brand(0) };
 			const input = tagChangeInline(
-				[Mark.remove(2, brand(0), { cellRename: detachId })],
+				[Mark.detach(2, brand(0), { cellRename: detachId })],
 				tag1,
 				tag3, // This ID should be ignored
 			);
@@ -124,7 +124,7 @@ export function testInvert(): void {
 
 		it("remove => revive (with override ID)", () => {
 			const cellId: CellId = { revision: tag2, localId: brand(0) };
-			const input: Changeset = [Mark.remove(2, { localId: brand(5) }, { cellRename: cellId })];
+			const input: Changeset = [Mark.detach(2, { localId: brand(5) }, { cellRename: cellId })];
 			const expected = [Mark.revive(2, cellId, { id: brand(5), revision: tagForInvert })];
 			const actual = invert(input);
 			assertChangesetsEqual(actual, expected);
@@ -134,7 +134,7 @@ export function testInvert(): void {
 			const cellId: CellId = { revision: tag1, localId: brand(0) };
 			const input = Change.revive(0, 2, cellId, tag1);
 			const expected: Changeset = [
-				Mark.remove(
+				Mark.detach(
 					2,
 					{ localId: brand(0), revision: tag2 },
 					{ cellRename: cellId, revision: tagForInvert },
@@ -234,7 +234,7 @@ export function testInvert(): void {
 			const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 			const input = [Mark.pin(1, brand(0), { cellId, changes: childChange1 })];
 			const expected: Changeset = [
-				Mark.remove(1, brand(0), {
+				Mark.detach(1, brand(0), {
 					cellRename: cellId,
 					changes: { ...childChange1, revision: tag2 },
 					revision: tagForInvert,
@@ -246,13 +246,13 @@ export function testInvert(): void {
 
 		it("insert & remove => revive & remove", () => {
 			const transient = [
-				Mark.remove(1, brand(0), { cellId: { localId: brand(1) }, changes: childChange1 }),
+				Mark.detach(1, brand(0), { cellId: { localId: brand(1) }, changes: childChange1 }),
 			];
 
 			const inverse = invert(transient, tag1);
 			const cellRename: CellId = { revision: tag1, localId: brand(1) };
 			const expected = [
-				Mark.remove(1, brand(0), {
+				Mark.detach(1, brand(0), {
 					cellId: { revision: tag1, localId: brand(0) },
 					changes: { ...childChange1, revision: tag1 },
 					cellRename,
@@ -267,7 +267,7 @@ export function testInvert(): void {
 			const startId: ChangeAtomId = { revision: tag1, localId: brand(1) };
 			const detachId: ChangeAtomId = { revision: tag1, localId: brand(2) };
 			const transient = [
-				Mark.remove(1, detachId.localId, {
+				Mark.detach(1, detachId.localId, {
 					cellId: { localId: startId.localId },
 					changes: childChange1,
 				}),
@@ -275,7 +275,7 @@ export function testInvert(): void {
 
 			const inverse = invert(transient, tag1);
 			const expected = [
-				Mark.remove(1, detachId.localId, {
+				Mark.detach(1, detachId.localId, {
 					cellId: detachId,
 					changes: { ...childChange1, revision: tag1 },
 					cellRename: startId,
@@ -422,7 +422,7 @@ export function testInvert(): void {
 				const input = [
 					Mark.onEmptyCell(
 						cellId,
-						Mark.remove(1, brand(0), {
+						Mark.detach(1, brand(0), {
 							changes: childChange1,
 						}),
 					),
@@ -438,7 +438,7 @@ export function testInvert(): void {
 				const input = [
 					Mark.onEmptyCell(
 						cellId,
-						Mark.remove(1, brand(0), { changes: childChange1, cellRename: cellId }),
+						Mark.detach(1, brand(0), { changes: childChange1, cellRename: cellId }),
 					),
 				];
 
@@ -451,7 +451,7 @@ export function testInvert(): void {
 				const startId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 				const endId: ChangeAtomId = { revision: tag2, localId: brand(0) };
 				const input = [
-					Mark.remove(1, endId, {
+					Mark.detach(1, endId, {
 						changes: childChange1,
 						cellId: startId,
 					}),
@@ -459,7 +459,7 @@ export function testInvert(): void {
 
 				const actual = invert(input, tag2);
 				const expected = [
-					Mark.remove(1, brand(0), {
+					Mark.detach(1, brand(0), {
 						changes: { ...childChange1, revision: tag2 },
 						cellId: endId,
 						cellRename: startId,

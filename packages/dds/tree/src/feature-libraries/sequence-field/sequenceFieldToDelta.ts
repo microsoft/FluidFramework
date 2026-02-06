@@ -43,7 +43,7 @@ export function sequenceFieldToDelta(
 			const type = mark.type;
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			switch (type) {
-				case "Remove": {
+				case "Detach": {
 					const newDetachId = getDetachedRootId(mark);
 					if (inputCellId === undefined) {
 						deltaMark.detach = nodeIdFromChangeAtom(newDetachId);
@@ -51,7 +51,7 @@ export function sequenceFieldToDelta(
 					}
 					break;
 				}
-				case "Insert": {
+				case "Attach": {
 					const buildId = nodeIdFromChangeAtom(getAttachedRootId(mark));
 					deltaMark.attach = buildId;
 					deltaMarks.push(deltaMark);

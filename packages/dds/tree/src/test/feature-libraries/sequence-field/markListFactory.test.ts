@@ -13,7 +13,7 @@ import { mintRevisionTag } from "../../utils.js";
 
 import { MarkMaker as Mark } from "./testEdits.js";
 
-const dummyMark = Mark.remove(1, brand(0));
+const dummyMark = Mark.detach(1, brand(0));
 const detachedBy: RevisionTag = mintRevisionTag();
 
 export function testMarkListFactory(): void {
@@ -60,25 +60,25 @@ export function testMarkListFactory(): void {
 			const id1: ChangesetLocalId = brand(1);
 			const id2: ChangesetLocalId = brand(2);
 			const factory = new MarkListFactory();
-			const insert1 = Mark.insert(1, id1);
-			const insert2 = Mark.insert(1, id2);
+			const insert1 = Mark.attach(1, id1);
+			const insert2 = Mark.attach(1, id2);
 			factory.pushContent(insert1);
 			factory.pushContent(insert2);
-			assert.deepStrictEqual(factory.list, [Mark.insert(2, id1)]);
+			assert.deepStrictEqual(factory.list, [Mark.attach(2, id1)]);
 		});
 
 		it("Can merge consecutive removes", () => {
 			const factory = new MarkListFactory();
-			const remove1 = Mark.remove(1, brand(0), {
+			const remove1 = Mark.detach(1, brand(0), {
 				cellRename: { revision: detachedBy, localId: brand(10) },
 			});
-			const remove2 = Mark.remove(1, brand(1), {
+			const remove2 = Mark.detach(1, brand(1), {
 				cellRename: { revision: detachedBy, localId: brand(11) },
 			});
 			factory.pushContent(remove1);
 			factory.pushContent(remove2);
 			assert.deepStrictEqual(factory.list, [
-				Mark.remove(2, brand(0), {
+				Mark.detach(2, brand(0), {
 					cellRename: { revision: detachedBy, localId: brand(10) },
 				}),
 			]);
@@ -86,10 +86,10 @@ export function testMarkListFactory(): void {
 
 		it("Does not merge consecutive removes with discontinuous detach overrides", () => {
 			const factory = new MarkListFactory();
-			const remove1 = Mark.remove(1, brand(0), {
+			const remove1 = Mark.detach(1, brand(0), {
 				cellRename: { revision: detachedBy, localId: brand(10) },
 			});
-			const remove2 = Mark.remove(1, brand(1), {
+			const remove2 = Mark.detach(1, brand(1), {
 				cellRename: { revision: detachedBy, localId: brand(42) },
 			});
 			factory.pushContent(remove1);

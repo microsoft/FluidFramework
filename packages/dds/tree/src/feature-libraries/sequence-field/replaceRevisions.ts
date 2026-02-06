@@ -58,11 +58,11 @@ function replaceEffectRevisions<TMark extends MarkEffect>(
 		case NoopMarkType: {
 			return mark;
 		}
-		case "Insert": {
+		case "Attach": {
 			return updateRevisionAndId(mark as TMark & Attach, count, replacer);
 		}
 
-		case "Remove": {
+		case "Detach": {
 			return replaceDetachRevisions<TMark & Detach>(mark as Detach & TMark, count, replacer);
 		}
 		case "Rename": {

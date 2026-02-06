@@ -29,7 +29,7 @@ export function testGetNestedChanges(): void {
 		});
 		it("includes changes to nodes in the field", () => {
 			const change = [
-				Mark.remove(1, brand(42), { changes: nodeId1 }),
+				Mark.detach(1, brand(42), { changes: nodeId1 }),
 				{ count: 42 },
 				Mark.modify(nodeId2),
 			];

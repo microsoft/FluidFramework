@@ -87,12 +87,8 @@ export function isRename(mark: MarkEffect): mark is Rename {
 	return mark.type === "Rename";
 }
 
-export function isInsert(mark: MarkEffect): mark is Attach {
-	return mark.type === "Insert";
-}
-
 export function isAttach(effect: MarkEffect): effect is Attach {
-	return effect.type === "Insert";
+	return effect.type === "Attach";
 }
 
 export function isReattach(mark: Mark): boolean {
@@ -123,10 +119,10 @@ export function getOutputCellId(mark: Mark): CellId | undefined {
 		case NoopMarkType: {
 			return getInputCellId(mark);
 		}
-		case "Insert": {
+		case "Attach": {
 			return undefined;
 		}
-		case "Remove": {
+		case "Detach": {
 			return getDetachOutputCellId(mark);
 		}
 		case "Rename": {
@@ -384,11 +380,11 @@ export function areOutputCellsEmpty(mark: Mark): boolean {
 		case NoopMarkType: {
 			return mark.cellId !== undefined;
 		}
-		case "Remove":
+		case "Detach":
 		case "Rename": {
 			return true;
 		}
-		case "Insert": {
+		case "Attach": {
 			return false;
 		}
 		default: {
@@ -413,7 +409,7 @@ export function isImpactful(mark: Mark): boolean {
 		case "Rename": {
 			return true;
 		}
-		case "Remove": {
+		case "Detach": {
 			const inputId = getInputCellId(mark);
 			if (inputId === undefined) {
 				return true;
@@ -422,7 +418,7 @@ export function isImpactful(mark: Mark): boolean {
 			assert(outputId !== undefined, 0x824 /* Remove marks must have an output cell ID */);
 			return !areEqualChangeAtomIds(inputId, outputId);
 		}
-		case "Insert": {
+		case "Attach": {
 			// A Revive has no impact if the nodes are already in the document.
 			return mark.cellId !== undefined;
 		}
@@ -469,15 +465,15 @@ export function compareCellsFromSameRevision(
 
 export function isDetach(mark: MarkEffect | undefined): mark is Detach {
 	const type = mark?.type;
-	return type === "Remove";
+	return type === "Detach";
 }
 
 export function isPin(mark: Mark): mark is Pin {
-	return mark?.type === "Insert" && mark.cellId === undefined;
+	return mark?.type === "Attach" && mark.cellId === undefined;
 }
 
 export function isRemoveMark(mark: Mark | undefined): mark is CellMark<Detach> {
-	return mark?.type === "Remove";
+	return mark?.type === "Detach";
 }
 
 export function areMergeableChangeAtoms(
@@ -560,7 +556,7 @@ function tryMergeEffects(
 
 	const type = rhs.type;
 	switch (type) {
-		case "Remove": {
+		case "Detach": {
 			const lhsDetach = lhs as Detach;
 			if (
 				(lhsDetach.id as number) + lhsCount === rhs.id &&
@@ -578,7 +574,7 @@ function tryMergeEffects(
 			}
 			break;
 		}
-		case "Insert": {
+		case "Attach": {
 			const lhsInsert = lhs as Attach;
 			if (
 				(lhsInsert.id as number) + lhsCount === rhs.id &&
@@ -634,21 +630,24 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 		case NoopMarkType: {
 			return [effect, effect];
 		}
-		case "Insert": {
-			const effect1: TEffect = {
+		case "Attach": {
+			const effect1: Mutable<TEffect> = {
 				...effect,
 			};
-			const effect2: TEffect = {
+			const effect2: Mutable<TEffect> = {
 				...effect,
 				id: (effect.id as number) + length,
 			};
 
 			if (effect.detachCellId !== undefined) {
-				(effect2 as Attach).detachCellId = splitDetachEvent(effect.detachCellId, length);
+				(effect2 as Mutable<Attach>).detachCellId = splitDetachEvent(
+					effect.detachCellId,
+					length,
+				);
 			}
 			return [effect1, effect2];
 		}
-		case "Remove": {
+		case "Detach": {
 			const effect1 = { ...effect };
 			const id2: ChangesetLocalId = brand((effect.id as number) + length);
 			const effect2 = { ...effect, id: id2 };
@@ -758,7 +757,7 @@ export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {
 
 function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange[] {
 	switch (mark.type) {
-		case "Insert": {
+		case "Attach": {
 			const keys = [
 				{
 					key: {
@@ -780,7 +779,7 @@ function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange
 
 			return keys;
 		}
-		case "Remove": {
+		case "Detach": {
 			return [
 				{
 					key: {
@@ -810,7 +809,7 @@ export function getDetachCellIds(change: Changeset): {
 	}[] = [];
 
 	for (const mark of change) {
-		if (mark.type === "Remove" && mark.detachCellId !== undefined) {
+		if (mark.type === "Detach" && mark.detachCellId !== undefined) {
 			const detachId = getDetachedRootId(mark);
 			if (!areEqualChangeAtomIds(mark.detachCellId, detachId)) {
 				entries.push({ count: mark.count, detachId, cellId: mark.detachCellId });

@@ -102,24 +102,24 @@ function runCases(outputRev: RevisionTag) {
 
 	it("insert and remove marks", () => {
 		const input: Changeset = [
-			Mark.insert(1, atom0),
-			Mark.insert(1, atom1),
-			Mark.insert(1, atom2),
-			Mark.insert(1, atom3),
-			Mark.remove(1, atom0, { cellRename: atom1 }),
-			Mark.remove(1, atom1, { cellRename: atom2 }),
-			Mark.remove(1, atom2, { cellRename: atom3 }),
-			Mark.remove(1, atom3, { cellRename: atom0 }),
+			Mark.attach(1, atom0),
+			Mark.attach(1, atom1),
+			Mark.attach(1, atom2),
+			Mark.attach(1, atom3),
+			Mark.detach(1, atom0, { cellRename: atom1 }),
+			Mark.detach(1, atom1, { cellRename: atom2 }),
+			Mark.detach(1, atom2, { cellRename: atom3 }),
+			Mark.detach(1, atom3, { cellRename: atom0 }),
 		];
 		const expected: Changeset = [
-			Mark.insert(1, atom0),
-			Mark.insert(1, atomOut1),
-			Mark.insert(1, atomOut2),
-			Mark.insert(1, atomOut3),
-			Mark.remove(1, atom0, { cellRename: atomOut1 }),
-			Mark.remove(1, atomOut1, { cellRename: atomOut2 }),
-			Mark.remove(1, atomOut2, { cellRename: atomOut3 }),
-			Mark.remove(1, atomOut3, { cellRename: atom0 }),
+			Mark.attach(1, atom0),
+			Mark.attach(1, atomOut1),
+			Mark.attach(1, atomOut2),
+			Mark.attach(1, atomOut3),
+			Mark.detach(1, atom0, { cellRename: atomOut1 }),
+			Mark.detach(1, atomOut1, { cellRename: atomOut2 }),
+			Mark.detach(1, atomOut2, { cellRename: atomOut3 }),
+			Mark.detach(1, atomOut3, { cellRename: atom0 }),
 		];
 		const actual = process(input);
 		assertChangesetsEqual(actual, expected);
