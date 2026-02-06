@@ -281,6 +281,9 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * It is possible to use a different versioning scheme, for example one specific to the schema in question.
 	 * This can be done robustly as long as care is taken to ensure the version increases such that every released version has a unique snapshot,
 	 * and `minVersionForCollaboration` is set appropriately using the same versioning scheme.
+	 * {@link SnapshotSchemaCompatibilityOptions.rejectVersionsWithNoSchemaChange} and
+	 * {@link SnapshotSchemaCompatibilityOptions.rejectSchemaChangesWithNoVersionChange}
+	 * can be used to help enforce the expected relationship between version changes and schema changes in such cases.
 	 */
 	readonly nextReleaseVersion: string;
 
@@ -325,43 +328,40 @@ export interface SnapshotSchemaCompatibilityOptions {
 	readonly snapshotUnchangedVersions?: true;
 
 	/**
-	 * Determines when `update` mode will create new snapshots, and how versions are expected to relate to schema changes.
+	 * When true, it is an error if a new a snapshot for a new version would be created, but the schema compatibility is identical to the previous snapshot.
 	 * @remarks
-	 * - "everyVersion": a snapshot will be taken for every version, regardless of if the schema has changed.
-	 * If there are multiple schema changes before the version is incremented,
-	 * old snapshots will be overwritten keeping only the latest from each version.
-	 * - "versionsWithSchemaChanges": the same as "everyVersion", except omits snapshots if their content is identical to the previous one.
-	 * This keeps the number of snapshots down and avoids needing to run in "update" mode when bumping the version number.
-	 * - "schemaForEveryVersion": the same as "everyVersion", except it is an error if there is no schema change when the version changes.
-	 * - "versionForEverySchemaChange": requires that version changes and schema changes are done together, erroring if one changes but not the other.
-	 * Never overwrites snapshots.
-	 * During development may require manual removal of snapshots if making corrections to schema changes before finalizing a version.
-	 * This option is the same as "schemaForEveryVersion", except it errors instead of overwriting snapshots.
-	 * 
-	 * Applications and libraries which have versioned releases are recommended to use the `"versionsWithSchemaChanges"` schedule.
-	 * For this schedule it is recommended ensure the version is kept up to date in an automated way to avoid accidentally overwriting old snapshots.
-	 * If forgetting to run the tool on a release and thus missing a snapshot is a concern,
-	 * "everyVersion" can be used such that explicit evidence of using the tool for every version is recorded.
-	 * 
-	 * When such a version is not available, a versioning scheme specific to the schema or schema compatibility test can be used.
-	 * Such cases are recommended to pick from "versionForEverySchemaChange" or "schemaForEveryVersion" based on their preference for how they want
-	 * updates with an unchanged versions to be handled.
+	 * This prevents creating a snapshot with the same schema compatibility results as the previous one.
+	 *
+	 * Applications and libraries which do not have versioned releases can make up a version specific to the compatibility of the schema, and use this option to help ensure they manage that version correctly.
+	 * Such cases can also opt into {@link SnapshotSchemaCompatibilityOptions.rejectSchemaChangesWithNoVersionChange} if they want additional strictness.
 	 */
-	readonly snapshottingSchedule: "everyVersion" | "versionsWithSchemaChanges" | "versionForEverySchemaChange" | "schemaForEveryVersion";
+	readonly rejectVersionsWithNoSchemaChange?: true;
+
+	/**
+	 * When true, it is an error if a schema change occurs without a corresponding version change.
+	 * @remarks
+	 * This disables overwriting existing snapshots.
+	 * This option is recommended if the {@link SnapshotSchemaCompatibilityOptions.nextReleaseVersion} is not automatically updated ahead of releasing a version which must be supported.
+	 * If updating the snapshot is still desired, the preceding one which needs to be overwritten can be manually deleted before running the update.
+	 *
+	 * This option does not impact the behavior of assert mode (other than impacting what error is given).
+	 * This option simply makes update mode more strict, converting cases that would overwrite a snapshot in place into errors.
+	 */
+	readonly rejectSchemaChangesWithNoVersionChange?: true;
 
 	/**
 	 * The mode of operation, either "assert" or "update".
 	 * @remarks
 	 * Both modes will throw errors if any compatibility issues are detected (but after updating snapshots in "update" mode so the diff can be used to help debug).
-	 * 
+	 *
 	 * In "assert" mode, an error is additionally thrown if the latest snapshot is not up to date (meaning "update" mode would make a change).
-	 * 
+	 *
 	 * In "update" mode, a new snapshot is created if the current schema differs from the latest existing snapshot.
-	 * If {@link SnapshotSchemaCompatibilityOptions.snapshottingSchedule} disallows the update, an error is thrown instead.
+	 * If {@link SnapshotSchemaCompatibilityOptions.rejectVersionsWithNoSchemaChange} or
+	 * {@link SnapshotSchemaCompatibilityOptions.rejectSchemaChangesWithNoVersionChange} disallows the update, an error is thrown instead.
 	 *
 	 * It is recommended that "assert" mode be used in automated tests to verify schema compatibility,
-	 * and "update" mode only be used manually to update snapshots when making schema or version changes
-	 * as required by the {@link SnapshotSchemaCompatibilityOptions.snapshottingSchedule}.
+	 * and "update" mode only be used manually to update snapshots when making schema or version changes.
 	 */
 	readonly mode: "assert" | "update";
 }
