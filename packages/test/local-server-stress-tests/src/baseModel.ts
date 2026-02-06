@@ -175,13 +175,10 @@ export function makeGenerator<T extends BaseOperation>(
 		],
 		[
 			DDSModelOpGenerator,
-			// Zero weight during detached creation phase, high weight during detached DDS ops phase
+			// Zero weight during detached creation phase, otherwise high weight
 			(state) => {
 				if (isDetachedCreationPhase(state)) {
 					return 0;
-				}
-				if (isDetachedDdsOpsPhase(state)) {
-					return 150;
 				}
 				return 100;
 			},
