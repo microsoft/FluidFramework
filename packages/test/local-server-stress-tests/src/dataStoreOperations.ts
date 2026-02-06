@@ -5,19 +5,23 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
+import type { ContainerStateTracker } from "./containerStateTracker.js";
 import type { Client } from "./localServerStressHarness";
 
-export const validateAllDataStoresSaved = async (...clients: Client[]): Promise<void> => {
+export const validateAllDataStoresSaved = async (
+	stateTracker: ContainerStateTracker,
+	...clients: Client[]
+): Promise<void> => {
 	for (const client of clients) {
 		assert(client.container.isDirty === false, `[${client.tag}] Container is dirty!`);
-		for (const entry of (await client.entryPoint.getContainerObjects()).filter(
-			(v) => v.type === "stressDataObject",
-		)) {
-			assert(entry.type === "stressDataObject", "type narrowing");
-			const stressDataObject = entry.stressDataObject;
+		const containerObjects = await stateTracker.resolveAllContainerObjects(client);
+		for (const entry of containerObjects) {
+			if (entry.type !== "stressDataObject" || entry.stressDataObject === undefined) {
+				continue;
+			}
 			assert(
-				stressDataObject.isDirty === false,
-				`[${client.tag}] DataObject ${stressDataObject.id} is dirty!`,
+				entry.stressDataObject.isDirty === false,
+				`[${client.tag}] DataObject ${entry.stressDataObject.id} is dirty!`,
 			);
 		}
 	}

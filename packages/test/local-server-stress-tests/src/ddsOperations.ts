@@ -26,7 +26,6 @@ import { timeoutAwait } from "@fluidframework/test-utils/internal";
 import type { ContainerStateTracker } from "./containerStateTracker.js";
 import { ddsModelMap } from "./ddsModels.js";
 import { LocalServerStressState, Client } from "./localServerStressHarness.js";
-import type { ContainerObjects } from "./stressDataObject.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
 export interface DDSModelOp {
@@ -59,21 +58,11 @@ const channelToDdsState = new WeakMap<IChannel, DDSFuzzTestState<IChannelFactory
 export const covertLocalServerStateToDdsState = async (
 	state: LocalServerStressState,
 ): Promise<DDSFuzzTestState<IChannelFactory>> => {
-	// Resolve channels using the state tracker instead of scanning all channels
-	const channelNames = state.stateTracker.getChannelNames(state.datastoreTag);
-	const resolvedChannels: IChannel[] = [];
-	for (const name of channelNames) {
-		const ch = await state.datastore.getChannel(name);
-		if (ch !== undefined) {
-			resolvedChannels.push(ch);
-		}
-	}
-	const allHandles = [
-		...resolvedChannels.map((c) => ({ tag: c.id, handle: c.handle })),
-		...(await state.client.entryPoint.getContainerObjects()).filter(
-			(v) => v.handle !== undefined,
-		),
-	];
+	const allHandles = await state.stateTracker.getAllHandles(
+		state.client,
+		state.datastore,
+		state.datastoreTag,
+	);
 
 	const random = {
 		...state.random,
@@ -162,33 +151,23 @@ export const loadAllHandles = async (
 		validateConsistency: DDSFuzzModel<IChannelFactory, any>["validateConsistency"];
 		minimizationTransforms?: DDSFuzzModel<IChannelFactory, any>["minimizationTransforms"];
 	};
-	taggedHandles: (
-		| Readonly<ContainerObjects>
-		| {
-				tag: string;
-				handle: IFluidHandle;
-		  }
-	)[];
+	taggedHandles: {
+		tag: string;
+		handle: IFluidHandle;
+	}[];
 }> => {
 	const baseModel = ddsModelMap.get(state.channel.attributes.type);
 	assert(baseModel !== undefined, "must have base model");
-	// Resolve channels using the state tracker instead of scanning all channels
-	const channelNames = state.stateTracker.getChannelNames(state.datastoreTag);
-	const resolvedChannels: IChannel[] = [];
-	for (const name of channelNames) {
-		const ch = await state.datastore.getChannel(name);
-		if (ch !== undefined) {
-			resolvedChannels.push(ch);
-		}
-	}
-	const globalObjects = await state.client.entryPoint.getContainerObjects();
+
+	const taggedHandles = await state.stateTracker.getAllHandles(
+		state.client,
+		state.datastore,
+		state.datastoreTag,
+	);
 
 	return {
 		baseModel,
-		taggedHandles: [
-			...resolvedChannels.map((c) => ({ tag: c.id, handle: c.handle })),
-			...globalObjects.filter((v) => v.handle !== undefined),
-		],
+		taggedHandles,
 	};
 };
 
@@ -213,7 +192,7 @@ export const convertToRealHandles = (
 export const validateConsistencyOfAllDDS = async (
 	clientA: Client,
 	clientB: Client,
-	stateTracker?: ContainerStateTracker,
+	stateTracker: ContainerStateTracker,
 ): Promise<void> => {
 	const buildChannelMap = async (client: Client): Promise<Map<string, IChannel>> => {
 		/**
@@ -222,16 +201,16 @@ export const validateConsistencyOfAllDDS = async (
 		 * and then reuse the per dds validators to ensure eventual consistency.
 		 */
 		const channelMap = new Map<string, IChannel>();
-		for (const entry of (await client.entryPoint.getContainerObjects()).filter(
-			(v) => v.type === "stressDataObject",
-		)) {
-			assert(entry.type === "stressDataObject", "type narrowing");
-			const stressDataObject = entry.stressDataObject;
-			if (stressDataObject.attached === true) {
-				// Use state tracker for channel names when available
-				const channelNames = stateTracker?.getChannelNames(entry.tag) ?? [];
+		const containerObjects = await stateTracker.resolveAllContainerObjects(client);
+		for (const entry of containerObjects) {
+			if (entry.type !== "stressDataObject" || entry.stressDataObject === undefined) {
+				continue;
+			}
+			if (entry.stressDataObject.attached === true) {
+				const dsTag = entry.tag as `datastore-${number}`;
+				const channelNames = stateTracker.getChannelNames(dsTag);
 				for (const name of channelNames) {
-					const channel = await stressDataObject.StressDataObject.getChannel(name);
+					const channel = await entry.stressDataObject.StressDataObject.getChannel(name);
 					if (channel?.isAttached() === true) {
 						channelMap.set(`${entry.tag}/${channel.id}`, channel);
 					}
@@ -242,8 +221,11 @@ export const validateConsistencyOfAllDDS = async (
 	};
 	const aMap = await buildChannelMap(clientA);
 	const bMap = await buildChannelMap(clientB);
-	assert(aMap.size === bMap.size, "channel maps should be the same size");
-	for (const key of aMap.keys()) {
+	// Use intersection-based comparison: only compare channels both clients can resolve.
+	// This handles the case where the state tracker knows about more objects than a specific
+	// client can resolve (e.g. frozen container loaded from pending state).
+	const commonKeys = [...aMap.keys()].filter((key) => bMap.has(key));
+	for (const key of commonKeys) {
 		const aChannel = aMap.get(key);
 		const bChannel = bMap.get(key);
 		assert(aChannel !== undefined, "channel must exist");

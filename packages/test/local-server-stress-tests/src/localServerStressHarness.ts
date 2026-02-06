@@ -1038,7 +1038,10 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 
 	const stateTracker = new ContainerStateTracker();
 	// Register the default datastore (datastore-0) which is created with the detached container
-	stateTracker.registerDatastore("datastore-0" as `datastore-${number}`);
+	stateTracker.registerDatastore(
+		"datastore-0" as `datastore-${number}`,
+		detachedClient.entryPoint.handle,
+	);
 
 	const initialState: LocalServerStressState = {
 		clients: [detachedClient],

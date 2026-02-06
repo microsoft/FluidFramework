@@ -16,27 +16,17 @@ import {
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import-x/no-deprecated
 import type { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
-import type {
-	IFluidHandle,
-	FluidObject,
-	IFluidLoadable,
-} from "@fluidframework/core-interfaces";
-import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 // eslint-disable-next-line import-x/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
-import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
-import {
-	RuntimeHeaders,
-	toFluidHandleInternal,
-	asLegacyAlpha,
-} from "@fluidframework/runtime-utils/internal";
+import { asLegacyAlpha } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
-import { makeUnreachableCodePathProxy } from "./utils.js";
 
 export interface UploadBlob {
 	type: "uploadBlob";
@@ -90,18 +80,13 @@ export class StressDataObject extends DataObject {
 		return this;
 	}
 
-	private defaultStressObject: DefaultStressDataObject = makeUnreachableCodePathProxy(
-		"defaultStressDataObject",
-	);
-	protected async getDefaultStressDataObject(): Promise<DefaultStressDataObject> {
-		const defaultDataStore =
-			await this.context.containerRuntime.getAliasedDataStoreEntryPoint("default");
-		assert(defaultDataStore !== undefined, "default must exist");
-
-		const maybe: FluidObject<DefaultStressDataObject> | undefined =
-			await defaultDataStore.get();
-		assert(maybe.DefaultStressDataObject !== undefined, "must be DefaultStressDataObject");
-		return maybe.DefaultStressDataObject;
+	/**
+	 * Exposes the container runtime for handle resolution by the state tracker.
+	 */
+	// eslint-disable-next-line import-x/no-deprecated
+	get containerRuntimeForTest(): IContainerRuntimeWithResolveHandle_Deprecated {
+		// eslint-disable-next-line import-x/no-deprecated
+		return this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
 	}
 
 	/**
@@ -114,21 +99,12 @@ export class StressDataObject extends DataObject {
 		}).catch(() => undefined);
 	}
 
-	protected async hasInitialized(): Promise<void> {
-		this.defaultStressObject = await this.getDefaultStressDataObject();
-	}
-
 	public get attached(): boolean {
 		return this.runtime.attachState !== AttachState.Detached;
 	}
 
-	public async uploadBlob(tag: `blob-${number}`, contents: string): Promise<void> {
-		const handle = await this.runtime.uploadBlob(stringToBuffer(contents, "utf-8"));
-		this.defaultStressObject.registerLocallyCreatedObject({
-			type: "newBlob",
-			handle,
-			tag,
-		});
+	public async uploadBlob(tag: `blob-${number}`, contents: string): Promise<IFluidHandle> {
+		return this.runtime.uploadBlob(stringToBuffer(contents, "utf-8"));
 	}
 
 	public createChannel(tag: `channel-${number}`, type: string): IFluidHandle {
@@ -146,14 +122,6 @@ export class StressDataObject extends DataObject {
 				: StressDataObject.factory.type,
 		);
 
-		const maybe: FluidObject<StressDataObject> | undefined = await dataStore.entryPoint.get();
-		assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
-		this.defaultStressObject.registerLocallyCreatedObject({
-			type: "stressDataObject",
-			handle: dataStore.entryPoint,
-			tag,
-			stressDataObject: maybe.StressDataObject,
-		});
 		return { handle: dataStore.entryPoint };
 	}
 
@@ -174,140 +142,11 @@ export class StressDataObject extends DataObject {
 	}
 }
 
-export type ContainerObjects =
-	| { type: "newBlob"; handle: IFluidHandle; tag: `blob-${number}` }
-	| {
-			type: "stressDataObject";
-			tag: `datastore-${number}`;
-			handle: IFluidHandle;
-			stressDataObject: StressDataObject;
-	  };
-
 export class DefaultStressDataObject extends StressDataObject {
 	public static readonly alias = "default";
 
 	public get DefaultStressDataObject(): this {
 		return this;
-	}
-
-	/**
-	 * these are object created in memory by this instance of the datastore, they
-	 * will also be in  these the containerObjectMap, but are not necessarily usable
-	 * as they could be detached, in which can only this instance can access them.
-	 */
-	private readonly _locallyCreatedObjects: ContainerObjects[] = [];
-	public async getContainerObjects(): Promise<readonly Readonly<ContainerObjects>[]> {
-		const containerObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
-		const containerRuntime = // eslint-disable-next-line import-x/no-deprecated
-			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
-		for (const [url, entry] of this.containerObjectMap as any as [
-			string,
-			ContainerObjects,
-		][]) {
-			// the container objects map will see things before they are attached,
-			// so they may not be available to remote clients yet.
-			// Additionally, there is no way to observe when an
-			// object goes from detached to attached.
-			// Due to the both the above, we need to always try
-			// to resolve each object, and just ignore those which can't
-			// be found.
-			const resp = await timeoutAwait(
-				containerRuntime.resolveHandle({
-					url,
-					headers: { [RuntimeHeaders.wait]: false },
-				}),
-				{
-					errorMsg: `Timed out waiting for client to resolveHandle: ${url}`,
-				},
-			);
-			if (resp.status === 200) {
-				const maybe: FluidObject<IFluidLoadable & StressDataObject> | undefined = resp.value;
-				const handle = maybe?.IFluidLoadable?.handle;
-				if (handle !== undefined) {
-					const type = entry?.type;
-					switch (type) {
-						case "newBlob":
-							containerObjects.push({
-								...entry,
-								handle,
-							});
-							break;
-						case "stressDataObject":
-							assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
-
-							containerObjects.push({
-								type: "stressDataObject",
-								tag: entry.tag,
-								handle,
-								stressDataObject: maybe.StressDataObject,
-							});
-							break;
-						default:
-							unreachableCase(type, `${type}`);
-					}
-				}
-			}
-		}
-		return containerObjects;
-	}
-
-	protected override async getDefaultStressDataObject(): Promise<DefaultStressDataObject> {
-		return this;
-	}
-
-	/**
-	 * this map is special, and doesn't participate in stress. it holds data
-	 * about the name of container objects which have been created. these created objects
-	 * may or may not be attached and be available
-	 */
-	private containerObjectMap: ISharedMap = makeUnreachableCodePathProxy("containerObjectMap");
-	protected async initializingFirstTime(props?: any): Promise<void> {
-		await super.initializingFirstTime(props);
-		this.containerObjectMap = SharedMap.create(this.runtime, "containerObjectMap");
-		this.containerObjectMap.bindToContext();
-
-		this.registerLocallyCreatedObject({
-			type: "stressDataObject",
-			handle: this.handle,
-			tag: `datastore-0`,
-			stressDataObject: this,
-		});
-	}
-
-	protected async initializingFromExisting(): Promise<void> {
-		this.containerObjectMap = (await this.runtime.getChannel(
-			"containerObjectMap",
-		)) as any as ISharedMap;
-	}
-
-	/**
-	 * Objects created during staging mode that need to be registered in containerObjectMap
-	 * after staging mode exits. We defer the write to avoid it being rolled back on discard.
-	 */
-	private readonly _pendingContainerObjectRegistrations: ContainerObjects[] = [];
-
-	/**
-	 * Registers an object to the containerObjectMap if not already present.
-	 */
-	private registerToContainerObjectMap(obj: ContainerObjects): void {
-		if (obj.handle !== undefined) {
-			const handle = toFluidHandleInternal(obj.handle);
-			if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
-				this.containerObjectMap.set(handle.absolutePath, { tag: obj.tag, type: obj.type });
-			}
-		}
-	}
-
-	public registerLocallyCreatedObject(obj: ContainerObjects): void {
-		if (obj.handle !== undefined) {
-			if (this.inStagingMode()) {
-				// Defer registration until staging mode exits to avoid rollback on discard
-				this._pendingContainerObjectRegistrations.push(obj);
-			} else {
-				this.registerToContainerObjectMap(obj);
-			}
-		}
-		this._locallyCreatedObjects.push(obj);
 	}
 
 	private stageControls: StageControlsAlpha | undefined;
@@ -336,13 +175,6 @@ export class DefaultStressDataObject extends StressDataObject {
 			this.stageControls.discardChanges();
 		}
 		this.stageControls = undefined;
-
-		// Flush any pending containerObjectMap registrations that were deferred during staging mode.
-		// This happens after staging mode exits so the writes won't be rolled back.
-		for (const obj of this._pendingContainerObjectRegistrations) {
-			this.registerToContainerObjectMap(obj);
-		}
-		this._pendingContainerObjectRegistrations.length = 0;
 	}
 }
 

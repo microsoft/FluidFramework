@@ -65,7 +65,7 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
 	createDataStore: async (state, op) => {
 		const { handle } = await state.datastore.createDataStore(op.tag, op.asChild);
-		state.stateTracker.registerDatastore(op.tag);
+		state.stateTracker.registerDatastore(op.tag, handle);
 		if (op.storeHandle) {
 			state.datastore.storeHandleInRoot(op.tag, handle);
 		}
@@ -77,12 +77,18 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 			state.datastore.storeHandleInRoot(op.tag, handle);
 		}
 	},
-	uploadBlob: async (state, op) =>
+	uploadBlob: async (state, op) => {
 		// this will hang if we are offline due to disconnect, so we don't wait for blob upload
 		// this could potentially cause problems with replay if the blob upload doesn't finish
 		// before its handle is used. this hasn't been seen in practice, but nothing but timing and
 		// the fact that we assume local server is fast prevents it.
-		void state.datastore.uploadBlob(op.tag, state.random.string(state.random.integer(1, 16))),
+		const blobPromise = state.datastore.uploadBlob(
+			op.tag,
+			state.random.string(state.random.integer(1, 16)),
+		);
+		// Register blob when upload completes (fire-and-forget to avoid hanging on disconnect)
+		void blobPromise.then((handle) => state.stateTracker.registerBlob(op.tag, handle));
+	},
 	DDSModelOp: DDSModelOpReducer,
 	orderSequentially: orderSequentiallyReducer,
 });

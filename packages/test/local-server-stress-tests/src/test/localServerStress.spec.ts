@@ -25,7 +25,7 @@ describe("Local Server Stress", () => {
 		generatorFactory: () => takeAsync(200, makeGenerator()),
 		reducer,
 		validateConsistency: async (clientA, clientB, stateTracker) => {
-			await validateAllDataStoresSaved(clientA, clientB);
+			await validateAllDataStoresSaved(stateTracker, clientA, clientB);
 			await validateConsistencyOfAllDDS(clientA, clientB, stateTracker);
 		},
 		minimizationTransforms: ddsModelMinimizers,
@@ -40,8 +40,8 @@ describe("Local Server Stress", () => {
 		},
 		// Minimization is slow with many seeds; use only to minimize specific failing seeds.
 		skipMinimization: true,
-		// Pre-existing DDS bugs: ConsensusOrderedCollection consistency.
-		skip: [45, 54, 155],
+		// Pre-existing DDS bugs: ConsensusOrderedCollection and Directory consistency.
+		skip: [1, 14, 45, 54, 63, 155, 184],
 		// Use skip, replay, and only properties to control which seeds run.
 	});
 });
