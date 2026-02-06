@@ -7,18 +7,24 @@ import { writeFile } from "node:fs/promises";
 
 import chalk from "picocolors";
 
+import type { Opaque } from "type-fest";
+
 import { defaultLogger } from "../common/logging";
 
 const { log } = defaultLogger;
 
-export enum TaskCacheOutcome {
-	CacheHitInitial = "cacheHitInitial",
-	CacheHitRecheck = "cacheHitRecheck",
-	CacheMiss = "cacheMiss",
-	NonIncremental = "nonIncremental",
-	Failed = "failed",
-	NotRun = "notRun",
-}
+export const TaskCacheOutcome = {
+	CacheHitInitial: "cacheHitInitial",
+	CacheHitRecheck: "cacheHitRecheck",
+	CacheMiss: "cacheMiss",
+	NonIncremental: "nonIncremental",
+	Failed: "failed",
+	NotRun: "notRun",
+} as const;
+
+export type TaskCacheOutcome = (typeof TaskCacheOutcome)[keyof typeof TaskCacheOutcome];
+
+export type Seconds = Opaque<number, "Seconds">;
 
 export interface TaskMetricRecord {
 	taskName: string;
@@ -28,8 +34,8 @@ export interface TaskMetricRecord {
 	outcome: TaskCacheOutcome;
 	isIncremental: boolean;
 	supportsRecheck: boolean;
-	execTimeSeconds: number;
-	queueWaitSeconds: number;
+	execTimeSeconds: Seconds;
+	queueWaitSeconds: Seconds;
 	worker: boolean;
 }
 
@@ -40,7 +46,7 @@ interface ExecutableBreakdown {
 	miss: number;
 	nonIncremental: number;
 	failed: number;
-	totalExecTimeSeconds: number;
+	totalExecTimeSeconds: Seconds;
 }
 
 export interface BuildMetricsSummary {
@@ -87,10 +93,10 @@ export class BuildMetrics {
 				miss: 0,
 				nonIncremental: 0,
 				failed: 0,
-				totalExecTimeSeconds: 0,
+				totalExecTimeSeconds: 0 as Seconds,
 			};
 			eb.total++;
-			eb.totalExecTimeSeconds += r.execTimeSeconds;
+			eb.totalExecTimeSeconds = (eb.totalExecTimeSeconds + r.execTimeSeconds) as Seconds;
 
 			switch (r.outcome) {
 				case TaskCacheOutcome.CacheHitInitial: {
@@ -286,7 +292,7 @@ function formatPercent(ratio: number): string {
 	return `${(ratio * 100).toFixed(1)}%`;
 }
 
-function formatTime(seconds: number): string {
+function formatTime(seconds: Seconds): string {
 	const unit = (u: string): string => chalk.dim(u);
 	let text: string;
 	if (seconds === 0) {

@@ -20,7 +20,7 @@ import {
 } from "../../../common/utils";
 import type { BuildContext } from "../../buildContext";
 import type { BuildPackage } from "../../buildGraph";
-import { TaskCacheOutcome } from "../../buildMetrics";
+import { type Seconds, TaskCacheOutcome } from "../../buildMetrics";
 import { BuildResult, summarizeBuildResult } from "../../buildResult";
 import {
 	type GitIgnoreSetting,
@@ -185,8 +185,8 @@ export abstract class LeafTask extends Task {
 			outcome,
 			isIncremental: this.isIncremental,
 			supportsRecheck: this.recheckLeafIsUpToDate,
-			execTimeSeconds: startTime !== undefined ? (Date.now() - startTime) / 1000 : 0,
-			queueWaitSeconds: this.lastQueueWaitTime,
+			execTimeSeconds: (startTime !== undefined ? (Date.now() - startTime) / 1000 : 0) as Seconds,
+			queueWaitSeconds: this.lastQueueWaitTime as Seconds,
 			worker: worker ?? false,
 		});
 	}
