@@ -31,14 +31,6 @@ export interface SelectedChannel {
 }
 
 /**
- * Per-client cache entry for a resolved channel.
- */
-interface ResolvedChannel {
-	channel: IChannel;
-	datastore: StressDataObject;
-}
-
-/**
  * Resolved container object (datastore or blob).
  */
 export interface ResolvedContainerObject {
@@ -58,9 +50,6 @@ export interface ResolvedContainerObject {
  * Also tracks container object (datastore/blob) handle paths for
  * cross-client discovery without relying on a Fluid SharedMap.
  *
- * Caches resolved IChannel and StressDataObject instances per client
- * to avoid repeated expensive async resolution on every operation.
- *
  * Should be created fresh for each test seed.
  */
 export class ContainerStateTracker {
@@ -78,12 +67,6 @@ export class ContainerStateTracker {
 	>();
 
 	/**
-	 * Per-client cache of resolved channels.
-	 * Key: "clientTag:datastoreTag:channelTag"
-	 */
-	private readonly resolvedChannelCache = new Map<string, ResolvedChannel>();
-
-	/**
 	 * Maps object tag to its handle absolute path and type.
 	 * Stores all registered datastores and blobs.
 	 */
@@ -91,12 +74,6 @@ export class ContainerStateTracker {
 		string,
 		{ absolutePath: string; type: "stressDataObject" | "blob" }
 	>();
-
-	/**
-	 * Per-client cache of resolved container objects.
-	 * Key: "clientTag:objectTag"
-	 */
-	private readonly resolvedObjectCache = new Map<string, ResolvedContainerObject>();
 
 	/**
 	 * Registers a new datastore with its root directory channel and handle path.
@@ -169,12 +146,6 @@ export class ContainerStateTracker {
 		client: Client,
 		tag: string,
 	): Promise<ResolvedContainerObject | undefined> {
-		const cacheKey = `${client.tag}:${tag}`;
-		const cached = this.resolvedObjectCache.get(cacheKey);
-		if (cached !== undefined) {
-			return cached;
-		}
-
 		const pathEntry = this.objectPaths.get(tag);
 		if (pathEntry === undefined) {
 			return undefined;
@@ -201,15 +172,13 @@ export class ContainerStateTracker {
 			return undefined;
 		}
 
-		const resolved: ResolvedContainerObject = {
+		return {
 			type: pathEntry.type,
 			tag,
 			handle,
 			stressDataObject:
 				pathEntry.type === "stressDataObject" ? maybe?.StressDataObject : undefined,
 		};
-		this.resolvedObjectCache.set(cacheKey, resolved);
-		return resolved;
 	}
 
 	/**
@@ -236,7 +205,6 @@ export class ContainerStateTracker {
 		datastore: StressDataObject,
 		datastoreTag: `datastore-${number}`,
 	): Promise<{ tag: string; handle: IFluidHandle }[]> {
-		// Resolve channels for this datastore
 		const channelNames = this.getChannelNames(datastoreTag);
 		const handles: { tag: string; handle: IFluidHandle }[] = [];
 		for (const name of channelNames) {
@@ -246,7 +214,6 @@ export class ContainerStateTracker {
 			}
 		}
 
-		// Add all resolvable container objects
 		const containerObjects = await this.resolveAllContainerObjects(client);
 		for (const obj of containerObjects) {
 			handles.push({ tag: obj.tag, handle: obj.handle });
@@ -256,40 +223,25 @@ export class ContainerStateTracker {
 	}
 
 	/**
-	 * Resolves a specific channel for a given client, using the cache when available.
-	 * Uses the state tracker's object paths to resolve the datastore instead of
-	 * getContainerObjects().
+	 * Resolves a specific channel for a given client.
 	 * Returns undefined if the channel cannot be resolved (e.g. not yet attached on this client).
 	 */
 	async resolveChannel(
 		client: Client,
 		datastoreTag: `datastore-${number}`,
 		channelTag: string,
-	): Promise<ResolvedChannel | undefined> {
-		const cacheKey = `${client.tag}:${datastoreTag}:${channelTag}`;
-		const cached = this.resolvedChannelCache.get(cacheKey);
-		if (cached !== undefined) {
-			return cached;
-		}
-
-		// Resolve the datastore for this client using stored paths
+	): Promise<{ channel: IChannel; datastore: StressDataObject } | undefined> {
 		const dsObj = await this.resolveContainerObject(client, datastoreTag);
 		if (dsObj?.stressDataObject === undefined) {
 			return undefined;
 		}
 
-		// Resolve the specific channel directly by name
 		const channel = await dsObj.stressDataObject.StressDataObject.getChannel(channelTag);
 		if (channel === undefined) {
 			return undefined;
 		}
 
-		const resolved: ResolvedChannel = {
-			channel,
-			datastore: dsObj.stressDataObject,
-		};
-		this.resolvedChannelCache.set(cacheKey, resolved);
-		return resolved;
+		return { channel, datastore: dsObj.stressDataObject };
 	}
 
 	/**
@@ -299,9 +251,6 @@ export class ContainerStateTracker {
 	 * (datastoreTag, channelTag) of that type, and resolves just that channel
 	 * on the given client. Retries with different candidates if the chosen
 	 * channel is not yet available on this client.
-	 *
-	 * This avoids the O(datastores x channels) cost of scanning all channels
-	 * on every operation.
 	 */
 	async selectChannelForOperation(client: Client, random: IRandom): Promise<SelectedChannel> {
 		const channelTypes = Array.from(this.channelsByType.keys());
@@ -358,7 +307,6 @@ export class ContainerStateTracker {
 			}
 		}
 
-		// This should be unreachable since we always have at least the root channel on datastore-0
 		throw new Error("no resolvable channel found across any type");
 	}
 
