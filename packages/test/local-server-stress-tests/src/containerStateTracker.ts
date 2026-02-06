@@ -24,19 +24,44 @@ export interface SelectedChannel {
 }
 
 /**
+ * Per-client cache entry for a resolved channel.
+ */
+interface ResolvedChannel {
+	channel: IChannel;
+	datastore: StressDataObject;
+}
+
+/**
  * Tracks container state in memory for stress tests.
  *
  * Maintains a mapping of datastores to their channels and channel types,
  * enabling global type-first channel selection without repeatedly querying
- * the system under test for channel type metadata.
+ * the system under test for channel discovery or type metadata.
+ *
+ * Also caches resolved IChannel and StressDataObject instances per client
+ * to avoid repeated expensive async resolution on every operation.
  *
  * Should be created fresh for each test seed.
  */
 export class ContainerStateTracker {
 	/**
-	 * Maps datastoreTag → (channelTag → channelType)
+	 * Maps datastoreTag to (channelTag to channelType)
 	 */
 	private readonly channelsByDatastore = new Map<`datastore-${number}`, Map<string, string>>();
+
+	/**
+	 * Inverse index: channelType to list of (datastoreTag, channelTag) pairs
+	 */
+	private readonly channelsByType = new Map<
+		string,
+		{ datastoreTag: `datastore-${number}`; channelTag: string }[]
+	>();
+
+	/**
+	 * Per-client cache of resolved channels.
+	 * Key: "clientTag:datastoreTag:channelTag"
+	 */
+	private readonly resolvedChannelCache = new Map<string, ResolvedChannel>();
 
 	/**
 	 * Registers a new datastore with its root directory channel.
@@ -44,7 +69,9 @@ export class ContainerStateTracker {
 	registerDatastore(tag: `datastore-${number}`): void {
 		const directoryDdsModel = ddsModelMap.get("https://graph.microsoft.com/types/directory");
 		assert(directoryDdsModel !== undefined, "directory DDS model must exist");
-		this.channelsByDatastore.set(tag, new Map([["root", directoryDdsModel.factory.type]]));
+		const channelType = directoryDdsModel.factory.type;
+		this.channelsByDatastore.set(tag, new Map([["root", channelType]]));
+		this.addToTypeIndex(channelType, tag, "root");
 	}
 
 	/**
@@ -58,6 +85,7 @@ export class ContainerStateTracker {
 		const channelMap = this.channelsByDatastore.get(datastoreTag);
 		assert(channelMap !== undefined, `datastore ${datastoreTag} must be registered`);
 		channelMap.set(channelTag, channelType);
+		this.addToTypeIndex(channelType, datastoreTag, channelTag);
 	}
 
 	/**
@@ -69,65 +97,136 @@ export class ContainerStateTracker {
 	}
 
 	/**
+	 * Resolves a specific channel for a given client, using the cache when available.
+	 * Returns undefined if the channel cannot be resolved (e.g. not yet attached on this client).
+	 */
+	async resolveChannel(
+		client: Client,
+		datastoreTag: `datastore-${number}`,
+		channelTag: string,
+	): Promise<ResolvedChannel | undefined> {
+		const cacheKey = `${client.tag}:${datastoreTag}:${channelTag}`;
+		const cached = this.resolvedChannelCache.get(cacheKey);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		// Resolve the datastore for this client
+		const globalObjects = await client.entryPoint.getContainerObjects();
+		const dsEntry = globalObjects.find(
+			(e) => e.type === "stressDataObject" && e.tag === datastoreTag,
+		);
+		if (dsEntry?.type !== "stressDataObject") {
+			return undefined;
+		}
+
+		// Resolve the specific channel
+		const channels = await dsEntry.stressDataObject.StressDataObject.getChannels();
+		const channel = channels.find((c) => c.id === channelTag);
+		if (channel === undefined) {
+			return undefined;
+		}
+
+		const resolved: ResolvedChannel = {
+			channel,
+			datastore: dsEntry.stressDataObject,
+		};
+		this.resolvedChannelCache.set(cacheKey, resolved);
+
+		// Also cache any other channels we resolved along the way
+		for (const ch of channels) {
+			const otherKey = `${client.tag}:${datastoreTag}:${ch.id}`;
+			if (!this.resolvedChannelCache.has(otherKey)) {
+				this.resolvedChannelCache.set(otherKey, {
+					channel: ch,
+					datastore: dsEntry.stressDataObject,
+				});
+			}
+		}
+
+		return resolved;
+	}
+
+	/**
 	 * Selects a channel for an operation using global type-first selection.
 	 *
-	 * Picks a channel type first across all datastores, then picks a channel
-	 * of that type. This ensures even distribution across DDS types regardless
-	 * of how many channels of each type exist.
+	 * Picks a channel type first from the in-memory registry, then picks a
+	 * (datastoreTag, channelTag) of that type, and resolves just that channel
+	 * on the given client. Retries with different candidates if the chosen
+	 * channel is not yet available on this client.
 	 *
-	 * Uses in-memory type metadata to classify channels by type, but resolves
-	 * actual channel availability from the client to handle not-yet-attached channels.
+	 * This avoids the O(datastores x channels) cost of scanning all channels
+	 * on every operation.
 	 */
 	async selectChannelForOperation(client: Client, random: IRandom): Promise<SelectedChannel> {
-		const globalObjects = await client.entryPoint.getContainerObjects();
-		const availableDatastores = globalObjects.filter((v) => v.type === "stressDataObject");
+		const channelTypes = Array.from(this.channelsByType.keys());
+		assert(channelTypes.length > 0, "at least one channel type must be registered");
+		const selectedType = random.pick(channelTypes);
+		const candidates = this.channelsByType.get(selectedType);
+		assert(candidates !== undefined && candidates.length > 0, "candidates must exist");
 
-		// Collect actually-available channels, using in-memory state for type classification
-		interface ChannelEntry {
-			channel: IChannel;
-			channelType: string;
-			datastoreTag: `datastore-${number}`;
-			datastore: StressDataObject;
+		// Shuffle candidates to try them in random order
+		const shuffled = [...candidates];
+		for (let i = shuffled.length - 1; i > 0; i--) {
+			const j = random.integer(0, i);
+			[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
 		}
-		const channelsByType = new Map<string, ChannelEntry[]>();
 
-		for (const dsEntry of availableDatastores) {
-			assert(dsEntry.type === "stressDataObject", "expected stressDataObject");
-			const dsTag = dsEntry.tag;
-			const datastore = dsEntry.stressDataObject;
-			const channels = await datastore.StressDataObject.getChannels();
-			for (const ch of channels) {
-				// Use in-memory type if available, fall back to channel attributes
-				const channelType = this.getChannelType(dsTag, ch.id) ?? ch.attributes.type;
-				const entry: ChannelEntry = {
-					channel: ch,
-					channelType,
-					datastoreTag: dsTag,
-					datastore,
+		// Try each candidate until we find one that resolves
+		for (const candidate of shuffled) {
+			const resolved = await this.resolveChannel(
+				client,
+				candidate.datastoreTag,
+				candidate.channelTag,
+			);
+			if (resolved !== undefined) {
+				return {
+					client,
+					datastore: resolved.datastore,
+					datastoreTag: candidate.datastoreTag,
+					channel: resolved.channel,
+					channelTag: candidate.channelTag,
 				};
-				const existing = channelsByType.get(channelType);
-				if (existing !== undefined) {
-					existing.push(entry);
-				} else {
-					channelsByType.set(channelType, [entry]);
+			}
+		}
+
+		// If no candidate of the selected type resolved, fall back to trying all types
+		for (const [type, typeCandidates] of this.channelsByType) {
+			if (type === selectedType) {
+				continue;
+			}
+			for (const candidate of typeCandidates) {
+				const resolved = await this.resolveChannel(
+					client,
+					candidate.datastoreTag,
+					candidate.channelTag,
+				);
+				if (resolved !== undefined) {
+					return {
+						client,
+						datastore: resolved.datastore,
+						datastoreTag: candidate.datastoreTag,
+						channel: resolved.channel,
+						channelTag: candidate.channelTag,
+					};
 				}
 			}
 		}
 
-		// Pick a type first, then a channel of that type
-		const channelTypes = Array.from(channelsByType.keys());
-		assert(channelTypes.length > 0, "at least one channel type must be available");
-		const selectedType = random.pick(channelTypes);
-		const entriesOfType = channelsByType.get(selectedType);
-		assert(entriesOfType !== undefined, "channels of selected type must exist");
-		const selected = random.pick(entriesOfType);
+		// This should be unreachable since we always have at least the root channel on datastore-0
+		throw new Error("no resolvable channel found across any type");
+	}
 
-		return {
-			client,
-			datastore: selected.datastore,
-			datastoreTag: selected.datastoreTag,
-			channel: selected.channel,
-			channelTag: selected.channel.id,
-		};
+	private addToTypeIndex(
+		channelType: string,
+		datastoreTag: `datastore-${number}`,
+		channelTag: string,
+	): void {
+		const existing = this.channelsByType.get(channelType);
+		if (existing !== undefined) {
+			existing.push({ datastoreTag, channelTag });
+		} else {
+			this.channelsByType.set(channelType, [{ datastoreTag, channelTag }]);
+		}
 	}
 }

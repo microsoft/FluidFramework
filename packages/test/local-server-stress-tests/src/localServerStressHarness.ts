@@ -715,8 +715,9 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 	const generatorFactory: () => AsyncGenerator<TOperation, LocalServerStressState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | typeof done> => {
-			// Pick a channel using the in-memory state tracker for type-first selection
-			// (type metadata lookup is in-memory; channel/datastore discovery still requires async resolution).
+			// Pick a channel using the in-memory state tracker for type-first selection.
+			// Channel type metadata and candidate selection is fully in-memory;
+			// resolved IChannel instances are cached per client to avoid repeated async resolution.
 			const client = state.random.pick(state.clients);
 			const selected = await state.stateTracker.selectChannelForOperation(
 				client,
@@ -748,19 +749,18 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 		assert(hasSelectedClientSpec(operation), "operation should have been given a client");
 		const client = state.clients.find((c) => c.tag === operation.clientTag);
 		assert(client !== undefined);
-		const globalObjects = await client.entryPoint.getContainerObjects();
-		const entry = globalObjects.find((e) => e.tag === operation.datastoreTag);
-		assert(entry?.type === "stressDataObject");
-		const datastore = entry.stressDataObject;
-		const channels = await datastore.StressDataObject.getChannels();
-		const channel = channels.find((c) => c.id === operation.channelTag);
-		assert(channel !== undefined, "channel must exist");
+		const resolved = await state.stateTracker.resolveChannel(
+			client,
+			operation.datastoreTag,
+			operation.channelTag,
+		);
+		assert(resolved !== undefined, "channel must be resolvable");
 		await runInStateWithClient(
 			state,
 			client,
-			datastore,
+			resolved.datastore,
 			operation.datastoreTag,
-			channel,
+			resolved.channel,
 			async () => {
 				await model.reducer(state, operation as TOperation);
 			},
