@@ -4,6 +4,7 @@
  */
 
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	FluidClientVersion,
 	FormatValidatorNoOp,
@@ -19,8 +20,8 @@ import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
 import { toStoredSchema } from "../toStoredSchema.js";
-import { TreeViewConfigurationAlpha } from "./configuration.js";
 
+import { TreeViewConfigurationAlpha } from "./configuration.js";
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 

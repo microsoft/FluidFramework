@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { asAlpha } from "../../api.js";
 import {
 	type Revertible,
 	rootFieldKey,
@@ -31,6 +32,22 @@ import {
 	createTreeCheckout,
 	type SharedTreeChange,
 } from "../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
+import {
+	getInnerNode,
+	SchemaFactory,
+	toUpgradeSchema,
+	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type InsertableField,
+	type InsertableTreeFieldFromImplicitField,
+	type TransactionResult,
+	type TreeBranch,
+} from "../../simple-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
+import { brand } from "../../util/index.js";
 import {
 	TestTreeProviderLite,
 	buildTestForest,
@@ -43,22 +60,6 @@ import {
 	testRevisionTagCodec,
 	viewCheckout,
 } from "../utils.js";
-import { brand } from "../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import {
-	getInnerNode,
-	SchemaFactory,
-	toUpgradeSchema,
-	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-	type InsertableField,
-	type InsertableTreeFieldFromImplicitField,
-	type TreeBranch,
-} from "../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
-import { asAlpha } from "../../api.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -773,14 +774,71 @@ describe("sharedTreeView", () => {
 
 		itView("statuses are reported correctly", ({ view }) => {
 			assert.equal(view.checkout.transaction.isInProgress(), false);
-			view.checkout.transaction.start();
-			assert.equal(view.checkout.transaction.isInProgress(), true);
-			view.checkout.transaction.start();
-			assert.equal(view.checkout.transaction.isInProgress(), true);
-			view.checkout.transaction.commit();
-			assert.equal(view.checkout.transaction.isInProgress(), true);
-			view.checkout.transaction.abort();
+			view.runTransaction(() => {
+				assert.equal(view.checkout.transaction.isInProgress(), true);
+				view.runTransaction(() => {
+					assert.equal(view.checkout.transaction.isInProgress(), true);
+				});
+				assert.equal(view.checkout.transaction.isInProgress(), true);
+				return { rollback: true };
+			});
 			assert.equal(view.checkout.transaction.isInProgress(), false);
+		});
+
+		it("rejects async transactions within synchronous transactions", async () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+
+			let transactionPromise: Promise<TransactionResult> | undefined;
+			const expectedError = validateUsageError(
+				/An asynchronous transaction cannot be started while a synchronous transaction is in progress./,
+			);
+			assert.throws(
+				() =>
+					view.runTransaction(() => {
+						transactionPromise = view.runTransactionAsync(async () => {});
+					}),
+				expectedError,
+			);
+
+			await assert.rejects(
+				transactionPromise ?? assert.fail("Expected transactionPromise to be assigned"),
+				expectedError,
+			);
+		});
+
+		it("handles async transactions within async transactions", async () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+
+			await view.runTransactionAsync(async () => {
+				view.root.insertAtEnd("A");
+				await view.runTransactionAsync(async () => {
+					view.root.insertAtEnd("B");
+				});
+			});
+
+			assert.deepEqual(view.root, ["A", "B"]);
+		});
+
+		it("handles synchronous transactions within async transactions", async () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+
+			await view.runTransactionAsync(async () => {
+				view.root.insertAtEnd("A");
+				view.runTransaction(() => {
+					view.root.insertAtEnd("B");
+				});
+			});
+
+			assert.deepEqual(view.root, ["A", "B"]);
 		});
 	});
 
@@ -1462,7 +1520,7 @@ describe("sharedTreeView", () => {
 			assert.equal(callCount, 1);
 		});
 
-		it("can provide an enricher for a fast transaction that is about to be applied", () => {
+		it("can provide an enricher for a synchronous transaction that is about to be applied", () => {
 			const { view1, view1Revertibles } = setup([{ id: "A" }]);
 			view1.root.removeAt(0);
 
@@ -1495,7 +1553,7 @@ describe("sharedTreeView", () => {
 			assert.equal(callCount, 1);
 		});
 
-		it("can provide an enricher a for fast transaction that has just been applied", () => {
+		it("can provide an enricher a for synchronous transaction that has just been applied", () => {
 			const { view1, view1Revertibles } = setup([{ id: "A" }]);
 			view1.root.removeAt(0);
 
@@ -1549,6 +1607,138 @@ describe("sharedTreeView", () => {
 				forks: 1,
 				applied: 1,
 			});
+		});
+
+		it("can provide an enricher for an async unrebased transaction that is about to be applied", async () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("beforeChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 0);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 0,
+					forks: 0,
+					applied: 0,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			await view1.runTransactionAsync(async () => {
+				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
+				// TODO AD#57584: Use such an operation here when one is available
+				view1.root.insertAtEnd({ id: "B" });
+				view1.root.insertAtEnd({ id: "C" });
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for an async unrebased transaction that has just been applied", async () => {
+			const { view1, view1Revertibles } = setup([{ id: "A" }]);
+			view1.root.removeAt(0);
+
+			let callCount = 0;
+			view1.checkout.mainBranch.events.on("afterChange", (change) => {
+				callCount += 1;
+				assert.equal(change.type, "append");
+				assert.equal(change.newCommits.length, 1);
+				const commit = change.newCommits[0];
+				view1.checkout.resetEnrichmentStats();
+				const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+				assertEnrichmentCount(enriched[0], 0);
+				assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+					batches: 1,
+					diffs: 0,
+					commitsEnriched: 1,
+					refreshers: 0,
+					forks: 0,
+					applied: 0,
+				});
+			});
+
+			assert.equal(view1Revertibles.length, 1);
+			await view1.runTransactionAsync(async () => {
+				// There is currently no operation that can be done in a transaction that would lead to a refresher being needed on a transaction commit
+				// TODO AD#57584: Use such an operation here when one is available
+				view1.root.insertAtEnd({ id: "B" });
+				view1.root.insertAtEnd({ id: "C" });
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for an async rebased transaction that is about to be applied", async () => {
+			const { provider, view1, view2 } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
+			view2.root.removeAt(2);
+			view2.root.removeAt(0);
+
+			let callCount = 0;
+			await view1.runTransactionAsync(async () => {
+				view1.root[0].id = "a"; // Will require a refresher
+				view1.root[1].id = "b";
+				provider.synchronizeMessages();
+				view1.root[2].id = "c"; // Will require a refresher
+
+				view1.checkout.mainBranch.events.on("beforeChange", (change) => {
+					callCount += 1;
+					assert.equal(change.type, "append");
+					assert.equal(change.newCommits.length, 1);
+					const commit = change.newCommits[0];
+					view1.checkout.resetEnrichmentStats();
+					const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+					assertEnrichmentCount(enriched[0], 2);
+					assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+						batches: 1,
+						diffs: 1,
+						commitsEnriched: 1,
+						refreshers: 2,
+						forks: 1,
+						applied: 1,
+					});
+				});
+			});
+			assert.equal(callCount, 1);
+		});
+
+		it("can provide an enricher for an async rebased transaction that has just been applied", async () => {
+			const { provider, view1, view2 } = setup([{ id: "A" }, { id: "B" }, { id: "C" }]);
+			view2.root.removeAt(2);
+			view2.root.removeAt(0);
+
+			let callCount = 0;
+			await view1.runTransactionAsync(async () => {
+				view1.root[0].id = "a"; // Will require a refresher
+				view1.root[1].id = "b";
+				provider.synchronizeMessages();
+				view1.root[2].id = "c"; // Will require a refresher
+
+				view1.checkout.mainBranch.events.on("afterChange", (change) => {
+					callCount += 1;
+					assert.equal(change.type, "append");
+					assert.equal(change.newCommits.length, 1);
+					const commit = change.newCommits[0];
+					view1.checkout.resetEnrichmentStats();
+					const enriched = view1.checkout.enrich(commit.parent ?? assert.fail(), [commit]);
+					assertEnrichmentCount(enriched[0], 2);
+					assert.deepEqual(view1.checkout.getEnrichmentStats(), {
+						batches: 1,
+						diffs: 1,
+						commitsEnriched: 1,
+						refreshers: 2,
+						forks: 1,
+						applied: 1,
+					});
+				});
+			});
+			assert.equal(callCount, 1);
 		});
 
 		it("delays diff computation if no refresher is needed", () => {

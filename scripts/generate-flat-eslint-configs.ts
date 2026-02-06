@@ -774,7 +774,14 @@ async function findLegacyConfigs(
 	sharedConfigs: SharedConfigTarget[],
 ): Promise<PackageTarget[]> {
 	const results: PackageTarget[] = [];
-	const topDirs = ["packages", "experimental", "examples", "azure", "tools"]; // exclude common/build and server from traversal
+	const topDirs = [
+		"packages",
+		"experimental",
+		"examples",
+		"azure",
+		"tools",
+		"server/routerlicious",
+	]; // exclude common/build and server from traversal
 
 	// Build a map of directory paths that have shared configs
 	const sharedConfigDirs = new Set<string>();

@@ -8,13 +8,13 @@ import { strict as assert } from "node:assert";
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	type ISummaryBlob,
 	type ISummaryTree,
 	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
@@ -44,6 +44,13 @@ import type {
 	ModularChangeset,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { EncodedEditManager } from "../../shared-tree-core/editManagerFormatV1toV4.js";
+import {
+	EditManagerSummarizer,
+	stringKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/editManagerSummarizer.js";
 import {
 	EditManagerFormatVersion,
 	SharedTreeSummaryFormatVersion,
@@ -57,7 +64,13 @@ import {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
+import {
+	summarizablesTreeKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/summaryTypes.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
+import { mockSerializer } from "../mockSerializer.js";
 import {
 	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
@@ -67,19 +80,6 @@ import {
 } from "../utils.js";
 
 import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
-import { mockSerializer } from "../mockSerializer.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { EncodedEditManager } from "../../shared-tree-core/editManagerFormatV1toV4.js";
-import {
-	EditManagerSummarizer,
-	stringKey,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../shared-tree-core/editManagerSummarizer.js";
-import {
-	summarizablesTreeKey,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../shared-tree-core/summaryTypes.js";
 
 const enableSchemaValidation = true;
 
@@ -686,7 +686,7 @@ describe("SharedTreeCore", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.transaction.start();
+			tree.transaction.start(false);
 			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree.kernel);
 			assert.equal(enricher.enrichmentLog.length, 0);
@@ -718,7 +718,7 @@ describe("SharedTreeCore", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.transaction.start();
+			tree.transaction.start(false);
 			changeTree(tree.kernel);
 			tree.transaction.abort();
 			assert.equal(enricher.enrichmentLog.length, 0);

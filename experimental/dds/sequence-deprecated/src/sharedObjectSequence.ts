@@ -35,6 +35,7 @@ export class SharedObjectSequenceClass<T> extends SharedSequence<T> {
 		super(document, id, attributes, SharedObjectSequenceFactory.segmentFromSpec as any);
 	}
 
+	// eslint-disable-next-line jsdoc/require-description -- Deprecated
 	/**
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.

@@ -42,6 +42,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 		packageVersion: pkgVersion,
 	};
 
+	// eslint-disable-next-line jsdoc/require-description -- Deprecated
 	/**
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
@@ -55,6 +56,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 		throw new Error(`Unrecognized IJSONObject`);
 	}
 
+	// eslint-disable-next-line jsdoc/require-description -- Deprecated
 	/**
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
@@ -63,6 +65,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 		return SharedObjectSequenceFactory.Type;
 	}
 
+	// eslint-disable-next-line jsdoc/require-description -- Deprecated
 	/**
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
@@ -88,6 +91,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
 		return sharedSeq;
 	}
 
+	// eslint-disable-next-line jsdoc/require-description -- Deprecated
 	/**
 	 * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
@@ -121,6 +125,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 		packageVersion: pkgVersion,
 	};
 
+	// eslint-disable-next-line jsdoc/require-description -- Deprecated
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
@@ -134,6 +139,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 		throw new Error(`Unrecognized IJSONObject`);
 	}
 
+	// eslint-disable-next-line jsdoc/require-description -- Deprecated
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
@@ -142,6 +148,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 		return SharedNumberSequenceFactory.Type;
 	}
 
+	// eslint-disable-next-line jsdoc/require-description -- Deprecated
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}
@@ -167,6 +174,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
 		return sharedSeq;
 	}
 
+	// eslint-disable-next-line jsdoc/require-description -- Deprecated
 	/**
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}

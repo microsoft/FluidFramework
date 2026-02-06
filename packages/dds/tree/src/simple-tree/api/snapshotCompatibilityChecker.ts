@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as semver from "semver-ts";
 import { assert, transformMapValues } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { selectVersionRoundedDown } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import * as semver from "semver-ts";
+
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { toInitialSchema } from "../toStoredSchema.js";
-import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { createTreeSchema } from "../treeSchema.js";
+
+import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {
@@ -398,7 +400,7 @@ export function checkSchemaCompatibilitySnapshots(
 	const compatibilityErrors: string[] = [];
 
 	function updatableError(message: string): void {
-		assert(mode === "test", "updatableError should only be called in test mode");
+		assert(mode === "test", 0xcc6 /* updatableError should only be called in test mode */);
 		compatibilityErrors.push(
 			`${message} If this is expected, checkSchemaCompatibilitySnapshots can be rerun in "update" mode to update the snapshot.`,
 		);
@@ -512,7 +514,7 @@ export function checkSchemaCompatibilitySnapshots(
 			if (selectedMinVersionForCollaborationSnapshot === undefined) {
 				assert(
 					compatibilityErrors.length > 0,
-					"expected compatibility errors for missing min collab version snapshot",
+					0xcc7 /* expected compatibility errors for missing min collab version snapshot */,
 				);
 			} else {
 				// Collaboration with this version is expected to work.

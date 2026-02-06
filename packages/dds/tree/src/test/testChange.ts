@@ -5,6 +5,8 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
 import { type IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import {
 	AnchorSet,
@@ -21,7 +23,6 @@ import {
 	emptyDelta,
 } from "../core/index.js";
 import { type JsonCompatibleReadOnly, type RecursiveReadonly, brand } from "../util/index.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 export interface NonEmptyTestChange {
 	/**
@@ -193,7 +194,7 @@ function toDelta({ change }: TaggedChange<TestChange>): DeltaFieldMap {
 				// We represent the intentions as a list if node offsets in some imaginary field "testIntentions".
 				// This is purely for the sake of testing.
 				brand("testIntentions"),
-				change.intentions.map((i) => ({ count: i })),
+				{ marks: change.intentions.map((i) => ({ count: i })) },
 			],
 		]);
 	}
@@ -333,7 +334,7 @@ export function asDelta(intentions: number[]): DeltaRoot {
 	return intentions.length === 0
 		? emptyDelta
 		: {
-				fields: new Map([[rootKey, intentions.map((i) => ({ count: i }))]]),
+				fields: new Map([[rootKey, { marks: intentions.map((i) => ({ count: i })) }]]),
 			};
 }
 

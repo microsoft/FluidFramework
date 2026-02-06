@@ -11,6 +11,9 @@ const config: Linter.Config[] = [
 	// This package is test-only and only has src/test/tsconfig.json (no root tsconfig.json).
 	// Override the base config's parserOptions to only use the test tsconfig.
 	{
+		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
+		// This is a test-only package without a root tsconfig.json, so typescript-eslint's
+		// projectService can't auto-discover the project configuration.
 		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 		languageOptions: {
 			parserOptions: {

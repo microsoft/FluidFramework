@@ -3,24 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	SchemaFactory,
-	type AllowedTypes,
-	type booleanSchema,
-	type numberSchema,
-	type stringSchema,
-	type TreeNode,
-} from "../../../simple-tree/index.js";
-import type {
-	areSafelyAssignable,
-	requireAssignableTo,
-	requireTrue,
-} from "../../../util/index.js";
-import {
-	objectSchema,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../simple-tree/node-kinds/index.js";
-
+import type { TreeValue } from "../../../core/index.js";
 import type {
 	InsertableTypedNode,
 	NodeBuilderData,
@@ -31,8 +14,23 @@ import type {
 	TreeNodeSchemaClass,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNodeSchema.js";
-
-import type { TreeValue } from "../../../core/index.js";
+import {
+	SchemaFactory,
+	type AllowedTypes,
+	type booleanSchema,
+	type numberSchema,
+	type stringSchema,
+	type TreeNode,
+} from "../../../simple-tree/index.js";
+import {
+	objectSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../simple-tree/node-kinds/index.js";
+import type {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+} from "../../../util/index.js";
 
 // TreeNodeSchemaCore constructor variance
 {
@@ -48,17 +46,10 @@ import type { TreeValue } from "../../../core/index.js";
 	>;
 	type Combo = S1 | S2;
 	// Ensure that two schema with different TConstructorExtra behave contravariantly
-	type Extra = Combo extends TreeNodeSchemaClass<
-		string,
-		NodeKind,
-		TreeNode,
-		0,
-		false,
-		unknown,
-		infer R
-	>
-		? R
-		: "Nope";
+	type Extra =
+		Combo extends TreeNodeSchemaClass<string, NodeKind, TreeNode, 0, false, unknown, infer R>
+			? R
+			: "Nope";
 	type _check = requireTrue<areSafelyAssignable<Extra, 2>>;
 }
 

@@ -11,6 +11,7 @@ const config: Linter.Config[] = [
 	{
 		rules: {
 			"import-x/no-deprecated": "off", // This package uses deprecated APIs by design.
+			"jsdoc/require-description": "off",
 			"@typescript-eslint/no-use-before-define": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 		},
