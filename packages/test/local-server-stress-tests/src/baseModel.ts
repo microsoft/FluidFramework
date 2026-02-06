@@ -105,7 +105,6 @@ export function makeGenerator<T extends BaseOperation>(
 		state.client.container.attachState === AttachState.Detached &&
 		detachedOpCount >= creationPhaseOps;
 
-
 	const asyncGenerator = createWeightedAsyncGeneratorWithDynamicWeights<
 		StressOperations | T,
 		LocalServerStressState
