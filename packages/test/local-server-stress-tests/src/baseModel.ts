@@ -65,12 +65,14 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
 	createDataStore: async (state, op) => {
 		const { handle } = await state.datastore.createDataStore(op.tag, op.asChild);
+		state.stateTracker.registerDatastore(op.tag);
 		if (op.storeHandle) {
 			state.datastore.storeHandleInRoot(op.tag, handle);
 		}
 	},
 	createChannel: async (state, op) => {
 		const handle = state.datastore.createChannel(op.tag, op.channelType);
+		state.stateTracker.registerChannel(state.datastoreTag, op.tag, op.channelType);
 		if (op.storeHandle) {
 			state.datastore.storeHandleInRoot(op.tag, handle);
 		}

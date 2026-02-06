@@ -46,7 +46,7 @@ export interface CreateDataStore {
 	type: "createDataStore";
 	asChild: boolean;
 	tag: `datastore-${number}`;
-	/** Whether to store handle in default datastore's root (for attachment) */
+	/** Whether to store handle in the current datastore's root, increasing likelihood of collaborative reachability */
 	storeHandle: boolean;
 }
 
@@ -54,7 +54,7 @@ export interface CreateChannel {
 	type: "createChannel";
 	channelType: string;
 	tag: `channel-${number}`;
-	/** Whether to store handle in default datastore's root (for attachment) */
+	/** Whether to store handle in the current datastore's root, increasing likelihood of collaborative reachability */
 	storeHandle: boolean;
 }
 
@@ -188,8 +188,8 @@ export class StressDataObject extends DataObject {
 	}
 
 	/**
-	 * Stores a handle in this datastore's root directory, making the target
-	 * reachable from the attached graph and collaboratively available to all clients.
+	 * Stores a handle in this datastore's root directory, increasing the
+	 * likelihood that the target is collaboratively reachable by other clients.
 	 */
 	public storeHandleInRoot(key: string, handle: IFluidHandle): void {
 		this.root.set(key, handle);
