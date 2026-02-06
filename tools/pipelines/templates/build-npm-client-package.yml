@@ -245,7 +245,7 @@ extends:
                 displayName: Parameters
                 inputs:
                   targetType: inline
-                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   script: |
                     # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
                     # even in an error case
@@ -374,7 +374,7 @@ extends:
                   WORKING_DIRECTORY: '${{ parameters.buildDirectory }}'
                 inputs:
                   targetType: filePath
-                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   filePath: $(Build.SourcesDirectory)/scripts/pack-build-output.sh
 
               - task: CopyFiles@2
@@ -393,7 +393,7 @@ extends:
                       STAGING_PATH: $(Build.ArtifactStagingDirectory)
                     inputs:
                       targetType: filePath
-                      workingDirectory: '${{ parameters.buildDirectory }}'
+                      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                       filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
 
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
@@ -437,7 +437,7 @@ extends:
                         displayName: List report.json
                         inputs:
                           targetType: inline
-                          workingDirectory: '${{ parameters.buildDirectory }}'
+                          workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                           script: |
                             set -eu -o pipefail
                             echo "Build Directory is ${{ parameters.buildDirectory }}";
@@ -490,7 +490,7 @@ extends:
                   displayName: Reset lockfile
                   inputs:
                     targetType: inline
-                    workingDirectory: '${{ parameters.buildDirectory }}'
+                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                     script: |
                       set -eu -o pipefail
                       git checkout HEAD -- pnpm-lock.yaml
@@ -500,7 +500,7 @@ extends:
                   displayName: Prune pnpm store
                   inputs:
                     targetType: inline
-                    workingDirectory: '${{ parameters.buildDirectory }}'
+                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                     script: |
                       set -eu -o pipefail
                       pnpm store prune
@@ -671,7 +671,7 @@ extends:
                 condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                 inputs:
                   targetType: 'inline'
-                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   script: |
                     set -eu -o pipefail
                     test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
@@ -681,7 +681,7 @@ extends:
                 condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
                 inputs:
                   targetType: 'inline'
-                  workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc/report'
                   script: |
                     set -eu -o pipefail
                     sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
@@ -713,7 +713,7 @@ extends:
                   ADO_CI_BUILD_DEFINITION_ID_PR: 11
                 inputs:
                   targetType: inline
-                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                   script: |
                     set -eu -o pipefail
                     echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
