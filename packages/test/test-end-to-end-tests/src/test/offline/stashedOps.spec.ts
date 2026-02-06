@@ -2229,8 +2229,8 @@ describeCompat(
 				assert.strictEqual(counter1.value, incrementValue);
 			},
 		);
-
-		itExpects(
+		for(let i = 0; i < 20; i++) {
+		itExpects.only(
 			`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
 				// All containers close: contianer1, container2, container3
@@ -2251,9 +2251,9 @@ describeCompat(
 				},
 			],
 			async function () {
-				if (provider.driver.type !== "local") {
-					this.skip();
-				}
+				// if (provider.driver.type !== "local") {
+				// 	this.skip();
+				// }
 				const incrementValue = 3;
 				const pendingLocalState = await generatePendingState(
 					testContainerConfig_noSummarizer,
@@ -2263,7 +2263,7 @@ describeCompat(
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
 						// Include an ID Allocation op to get coverage of the special logic around these ops as well
 						// AB#26984: Actually don't, because the ID Compressor is hitting "Ranges finalized out of order" for this test
-						// getIdCompressor(counter)?.generateCompressedId();
+						getIdCompressor(counter)?.generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);
@@ -2364,7 +2364,7 @@ describeCompat(
 				);
 			},
 		);
-
+	}
 		itExpects(
 			`Single-Threaded Forks: Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
 			[
