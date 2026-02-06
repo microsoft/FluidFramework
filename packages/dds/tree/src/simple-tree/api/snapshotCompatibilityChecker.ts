@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, transformMapValues } from "@fluidframework/core-utils/internal";
+import { assert, fail, transformMapValues } from "@fluidframework/core-utils/internal";
 import { selectVersionRoundedDown } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import * as semver from "semver-ts";
@@ -362,6 +362,11 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 *
 	 * It is recommended that "assert" mode be used in automated tests to verify schema compatibility,
 	 * and "update" mode only be used manually to update snapshots when making schema or version changes.
+	 *
+	 * @privateRemarks
+	 * Modes we might want to add in the future:
+	 * - normalize: update the latest snapshot (or maybe all of them) to the latest encoded format.
+	 * - some mode like assert but returns information instead of throwing.
 	 */
 	readonly mode: "assert" | "update";
 }
@@ -483,6 +488,8 @@ export function snapshotSchemaCompatibility(
 		mode,
 		minVersionForCollaboration,
 		snapshotUnchangedVersions,
+		rejectVersionsWithNoSchemaChange,
+		rejectSchemaChangesWithNoVersionChange,
 	} = options;
 
 	const validateVersion =
@@ -517,96 +524,152 @@ export function snapshotSchemaCompatibility(
 
 	const compatibilityErrors: string[] = [];
 
-	function updatableError(message: string): void {
-		assert(mode === "assert", 0xcc6 /* updatableError should only be called in assert mode */);
-		compatibilityErrors.push(
-			`${message} If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update the snapshot.`,
-		);
-	}
+	const contextNotes: string[] = [];
 
-	if (snapshotUnchangedVersions === true) {
-		if (mode === "update") {
-			checker.writeSchemaSnapshot(currentVersion, currentEncodedForSnapshotting);
-			snapshots.set(currentVersion, currentViewSchema);
-		} else {
-			const currentRead = snapshots.get(currentVersion);
-			if (currentRead === undefined) {
-				updatableError(
-					`No snapshot found for version ${JSON.stringify(currentVersion)}: snapshotUnchangedVersions is true, so every version must be snapshotted.`,
-				);
-			} else if (
-				JSON.stringify(exportCompatibilitySchemaSnapshot(currentRead)) !==
-				JSON.stringify(currentEncodedForSnapshotting)
-			) {
-				updatableError(
-					`Snapshot for current version ${JSON.stringify(currentVersion)} is out of date.`,
-				);
-			}
-		}
-	} else {
-		const entries = [...snapshots];
-		const latestSnapshot = entries[entries.length - 1];
-		if (latestSnapshot === undefined) {
-			if (mode === "update") {
-				checker.writeSchemaSnapshot(currentVersion, currentEncodedForSnapshotting);
-				snapshots.set(currentVersion, currentViewSchema);
-			} else {
-				updatableError(`No snapshots found.`);
-			}
-		} else {
-			if (versionComparer(latestSnapshot[0], currentVersion) <= 0) {
-				// Check to see if schema in snapshot is the same as the latest existing snapshot.
-				const oldString = JSON.stringify(exportCompatibilitySchemaSnapshot(latestSnapshot[1]));
-				const currentString = JSON.stringify(currentEncodedForSnapshotting);
-				if (oldString !== currentString) {
-					// Schema has changed: must create new snapshot.
-					if (mode === "update") {
-						checker.writeSchemaSnapshot(currentVersion, currentEncodedForSnapshotting);
-						snapshots.set(currentVersion, currentViewSchema);
-					} else {
-						updatableError(
-							`Snapshot for current version ${JSON.stringify(currentVersion)} is out of date: schema has changed since latest existing snapshot version ${JSON.stringify(latestSnapshot[0])}.`,
-						);
-					}
-				}
-			} else {
-				throw new UsageError(
-					`Current version ${JSON.stringify(currentVersion)} is less than latest existing snapshot version ${JSON.stringify(latestSnapshot[0])}: version is expected to increase monotonically.`,
-				);
-			}
-		}
+	function errorWithContext(message: string): Error {
+		return new Error(
+			[
+				"Schema compatibility check failed:",
+				message,
+				`Snapshots in: ${JSON.stringify(options.snapshotDirectory)}`,
+				`Snapshots exist for versions: ${JSON.stringify([...snapshots.keys()], undefined, 2)}.`,
+				...contextNotes,
+			].join("\n"),
+		);
 	}
 
 	const compatibilityMap = transformMapValues(snapshots, (snapshot) =>
 		getCompatibility(currentViewSchema, snapshot),
 	);
 
-	let selectedMinVersionForCollaborationSnapshot:
-		| undefined
-		| readonly [string, CombinedSchemaCompatibilityStatus];
+	// Either:
+	// - false: no update needed
+	// - the updateError message (update in update mode, error otherwise)
+	// - an error if the update is disallowed by the flags
+	let wouldUpdate: false | string | Error;
 
-	if (snapshotUnchangedVersions === true) {
-		const minSnapshot = compatibilityMap.get(minVersionForCollaboration);
-		if (minSnapshot === undefined) {
-			compatibilityErrors.push(
-				`Using snapshotUnchangedVersions: a snapshot of the exact minVersionForCollaboration ${JSON.stringify(minVersionForCollaboration)} is required. No snapshot found.`,
-			);
+	// Set wouldUpdate
+	{
+		const latestSnapshot = [...snapshots][snapshots.size - 1];
+		if (latestSnapshot === undefined) {
+			wouldUpdate = `No snapshots found.`;
 		} else {
-			selectedMinVersionForCollaborationSnapshot = [minVersionForCollaboration, minSnapshot];
-		}
-	} else {
-		selectedMinVersionForCollaborationSnapshot = selectVersionRoundedDown(
-			minVersionForCollaboration,
-			compatibilityMap,
-			versionComparer,
-		);
-		if (selectedMinVersionForCollaborationSnapshot === undefined) {
-			compatibilityErrors.push(
-				`No snapshot found with version less than or equal to minVersionForCollaboration ${JSON.stringify(minVersionForCollaboration)}.`,
-			);
+			const latestCompatibility =
+				compatibilityMap.get(latestSnapshot[0]) ?? fail("missing compatibilityMap entry");
+
+			const schemaChange = !latestCompatibility.currentViewOfSnapshotDocument.isEquivalent;
+			const versionChange = versionComparer(latestSnapshot[0], currentVersion) !== 0;
+
+			if (rejectVersionsWithNoSchemaChange === true && versionChange && !schemaChange) {
+				wouldUpdate = errorWithContext(
+					`Rejecting version change (${JSON.stringify(latestSnapshot[0])} to ${JSON.stringify(currentVersion)}) due to rejectVersionsWithNoSchemaChange being set.`,
+				);
+			} else if (
+				rejectSchemaChangesWithNoVersionChange === true &&
+				schemaChange &&
+				!versionChange
+			) {
+				wouldUpdate = errorWithContext(
+					`Rejecting schema change without version change due to existing  non-equivalent snapshot for version (${JSON.stringify(latestSnapshot[0])} due to rejectSchemaChangesWithNoVersionChange being set.`,
+				);
+			} else if (snapshotUnchangedVersions === true) {
+				const currentRead = snapshots.get(currentVersion);
+				if (currentRead === undefined) {
+					wouldUpdate = `No snapshot found for version ${JSON.stringify(currentVersion)}: snapshotUnchangedVersions is true, so every version must be snapshotted.`;
+				} else if (
+					JSON.stringify(exportCompatibilitySchemaSnapshot(currentRead)) ===
+					JSON.stringify(currentEncodedForSnapshotting)
+				) {
+					wouldUpdate = false;
+				} else {
+					wouldUpdate = `Snapshot for current version ${JSON.stringify(currentVersion)} is out of date.`;
+				}
+			} else {
+				if (versionComparer(latestSnapshot[0], currentVersion) <= 0) {
+					wouldUpdate = schemaChange
+						? `Snapshot for current version ${JSON.stringify(currentVersion)} is out of date: schema has changed since latest existing snapshot version ${JSON.stringify(latestSnapshot[0])}.`
+						: false;
+				} else {
+					wouldUpdate = errorWithContext(
+						`Current version ${JSON.stringify(currentVersion)} is less than latest existing snapshot version ${JSON.stringify(latestSnapshot[0])}: version is expected to increase monotonically.`,
+					);
+				}
+			}
+
+			if (!schemaChange && (snapshotUnchangedVersions !== true || !versionChange)) {
+				// eslint-disable-next-line unicorn/no-lonely-if
+				if (
+					JSON.stringify(exportCompatibilitySchemaSnapshot(latestSnapshot[1])) !==
+					JSON.stringify(currentEncodedForSnapshotting)
+				) {
+					// Schema are compatibility wise equivalent, but differ in some way (excluding json formatting).
+					// TODO: add a "normalize" mode, which do an update only in this case (or maybe even normalize json formatting as well and just always rewrite when !schemaChange)
+					// This would be useful to minimize diffs from future schema changes.
+					// This would be particularly useful if adding a second version of the format used in the snapshots.
+				}
+			}
 		}
 	}
 
+	if (wouldUpdate !== false) {
+		if (wouldUpdate instanceof Error) {
+			throw wouldUpdate;
+		}
+		if (mode === "update") {
+			checker.writeSchemaSnapshot(currentVersion, currentEncodedForSnapshotting);
+			// Update so errors below will reflect the new snapshot.
+			compatibilityMap.set(
+				currentVersion,
+				getCompatibility(currentViewSchema, currentViewSchema),
+			);
+		} else {
+			compatibilityErrors.push(
+				`${wouldUpdate} If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.`,
+			);
+
+			// This case could update compatibilityMap as well, but it would hide some information about how the existing snapshot might be incompatible with the proposed new one.
+			// This lost information could be annoying if the user's intention was not to edit the schema (which is what we assume in assert mode),
+			// especially once we produce more detailed error messages that can help users understand what changed in the schema.
+		}
+	}
+
+	// Add compatibilityErrors and contextNotes as needed regarding minVersionForCollaboration.
+	// This is only done when minVersionForCollaboration is not the current version to avoid extra noise in "assert" mode
+	// (which is the only case that could error when minVersionForCollaboration === currentVersion).
+	if (minVersionForCollaboration !== currentVersion) {
+		if (snapshotUnchangedVersions === true) {
+			const minSnapshot = compatibilityMap.get(minVersionForCollaboration);
+			if (minSnapshot === undefined) {
+				compatibilityErrors.push(
+					`Using snapshotUnchangedVersions: a snapshot of the exact minVersionForCollaboration ${JSON.stringify(minVersionForCollaboration)} is required. No snapshot found.`,
+				);
+			}
+		} else {
+			const selectedMinVersionForCollaborationSnapshot = selectVersionRoundedDown(
+				minVersionForCollaboration,
+				compatibilityMap,
+				versionComparer,
+			);
+			if (selectedMinVersionForCollaborationSnapshot === undefined) {
+				compatibilityErrors.push(
+					`No snapshot found with version less than or equal to minVersionForCollaboration ${JSON.stringify(minVersionForCollaboration)}.`,
+				);
+			} else {
+				// Add an entry to ensure that the version which spans from before until after the cutoff for collaboration is included in the compatibility checks.
+				compatibilityMap.set(
+					minVersionForCollaboration,
+					selectedMinVersionForCollaborationSnapshot[1],
+				);
+				contextNotes.push(
+					`Due to snapshotUnchangedVersions being false and minVersionForCollaboration (${JSON.stringify(minVersionForCollaboration)}) not having an exact snapshot, the last snapshot before that version (which is ${JSON.stringify(
+						selectedMinVersionForCollaborationSnapshot[0],
+					)}) is being also being checked as if it is version ${JSON.stringify(minVersionForCollaboration)}.`,
+				);
+			}
+		}
+	}
+
+	// Compare all snapshots against the current schema, using the compatibilityMap.
 	for (const [snapshotVersion, compatibility] of compatibilityMap) {
 		// Current should be able to view all versions.
 		if (!compatibility.currentViewOfSnapshotDocument.canUpgrade) {
@@ -615,59 +678,41 @@ export function snapshotSchemaCompatibility(
 			);
 		}
 
-		if (versionComparer(snapshotVersion, currentVersion) === 0) {
+		const versionComparisonToCurrent = versionComparer(snapshotVersion, currentVersion);
+		if (versionComparisonToCurrent === 0) {
 			if (currentVersion !== snapshotVersion) {
-				throw new UsageError(
+				throw errorWithContext(
 					`Snapshot version ${JSON.stringify(snapshotVersion)} is semantically equal but not string equal to current version ${JSON.stringify(currentVersion)}: this is not supported.`,
 				);
 			}
-			if (
-				compatibility.currentViewOfSnapshotDocument.isEquivalent === false ||
-				compatibility.snapshotViewOfCurrentDocument.isEquivalent === false
-			) {
-				compatibilityErrors.push(
-					`Current version ${JSON.stringify(snapshotVersion)} expected to be equivalent to its snapshot.`,
+			if (compatibility.currentViewOfSnapshotDocument.isEquivalent === false) {
+				assert(
+					wouldUpdate !== false,
+					"there should have been an error for the snapshot being out of date",
 				);
 			}
-		} else if (versionComparer(snapshotVersion, currentVersion) < 0) {
-			if (selectedMinVersionForCollaborationSnapshot === undefined) {
-				assert(
-					compatibilityErrors.length > 0,
-					0xcc7 /* expected compatibility errors for missing min collab version snapshot */,
-				);
-			} else {
-				// Collaboration with this version is expected to work.
-				if (
-					versionComparer(snapshotVersion, selectedMinVersionForCollaborationSnapshot[0]) >= 0
-				) {
-					// Check that the historical version can view documents from the current version, since collaboration with this one is expected to work.
-					if (!compatibility.snapshotViewOfCurrentDocument.canView) {
-						const message = `Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected minVersionForCollaboration snapshot version being ${JSON.stringify(selectedMinVersionForCollaborationSnapshot[0])}.`;
-						compatibilityErrors.push(
-							selectedMinVersionForCollaborationSnapshot[0] === minVersionForCollaboration
-								? message
-								: `${message} The specified minVersionForCollaboration is ${JSON.stringify(minVersionForCollaboration)} which was rounded down to an existing snapshot.`,
-						);
-					}
-				} else {
-					// This is the case where the historical version is less than the minimum version for collaboration.
-					// No additional validation is needed here currently, since forwards document compat from these versions is already tested above (since it applies to all snapshots).
+		} else if (versionComparisonToCurrent < 0) {
+			// Collaboration with this version is expected to work.
+			if (versionComparer(snapshotVersion, minVersionForCollaboration) >= 0) {
+				// Check that the historical version can view documents from the current version, since collaboration with this one is expected to work.
+				if (!compatibility.snapshotViewOfCurrentDocument.canView) {
+					compatibilityErrors.push(
+						`Historical version ${JSON.stringify(snapshotVersion)} cannot view documents from ${JSON.stringify(currentVersion)}: these versions are expected to be able to collaborate due to the selected minVersionForCollaboration ${JSON.stringify(minVersionForCollaboration)}.`,
+					);
 				}
+			} else {
+				// This is the case where the historical version is less than the minimum version for collaboration.
+				// No additional validation is needed here currently, since forwards document compat from these versions is already tested above (since it applies to all snapshots).
 			}
 		} else {
-			throw new UsageError(
-				`Unexpected comparison result between snapshot version ${JSON.stringify(snapshotVersion)} and app version ${JSON.stringify(currentVersion)}.`,
+			compatibilityErrors.push(
+				`Snapshot exists for version ${JSON.stringify(snapshotVersion)} which is greater than the current version ${JSON.stringify(currentVersion)}. This is not supported.`,
 			);
 		}
 	}
 
 	if (compatibilityErrors.length > 0) {
-		throw new Error(
-			`Schema compatibility check failed:
-${compatibilityErrors.map((e) => ` - ${e}`).join("\n")}
-Snapshots in: ${JSON.stringify(options.snapshotDirectory)}.
-Snapshots exist for versions: ${JSON.stringify([...snapshots.keys()], undefined, 2)}.`,
-		);
+		throw errorWithContext(compatibilityErrors.map((e) => ` - ${e}`).join("\n"));
 	}
 }
 
@@ -761,6 +806,11 @@ export function getCompatibility(
 	const forwardsCompatibilityStatus = checkCompatibility(
 		currentViewSchema,
 		previousViewSchema,
+	);
+
+	assert(
+		backwardsCompatibilityStatus.isEquivalent === forwardsCompatibilityStatus.isEquivalent,
+		"equality should be symmetric",
 	);
 
 	return {
