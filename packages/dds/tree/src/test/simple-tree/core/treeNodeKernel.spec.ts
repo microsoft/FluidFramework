@@ -151,7 +151,7 @@ describe("array move events", () => {
 	describeHydration("move operations", (init) => {
 		const MyArray = schemaFactory.array("myArray", schemaFactory.number);
 
-		it("move within array emits single nodeChanged event", () => {
+		it("move within array", () => {
 			const myArray = init(MyArray, [1, 2, 3]);
 
 			let nodeChangedCount = 0;
@@ -180,7 +180,7 @@ describe("array move events", () => {
 			);
 		});
 
-		it("cross-field move emits nodeChanged on both source and destination arrays", () => {
+		it("cross-field move", () => {
 			const MyParent = schemaFactory.object("myParent", {
 				array1: MyArray,
 				array2: MyArray,
