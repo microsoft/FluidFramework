@@ -88,16 +88,18 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 });
 
 /**
- * Threshold for the "datastore creation phase": the first N operations before attach
- * prioritize creating datastores so they exist before channels are created in them.
+ * End threshold for the "datastore creation phase": operations with detached op count
+ * below this value prioritize creating datastores so they exist before channels are created.
+ * The datastore creation phase spans detached ops [0, datastoreCreationPhaseEndOp).
  */
-const datastoreCreationPhaseOps = 10;
+const datastoreCreationPhaseEndOp = 10;
 
 /**
- * Threshold for the "channel creation phase": after datastores are created,
- * the next N operations prioritize creating channels across available datastores.
+ * End threshold for the "channel creation phase": after the datastore creation phase,
+ * operations with detached op count below this value prioritize creating channels.
+ * The channel creation phase spans detached ops [datastoreCreationPhaseEndOp, channelCreationPhaseEndOp).
  */
-const channelCreationPhaseOps = 20;
+const channelCreationPhaseEndOp = 20;
 
 export function makeGenerator<T extends BaseOperation>(
 	additional: DynamicAsyncWeights<T, LocalServerStressState> = [],
@@ -111,7 +113,7 @@ export function makeGenerator<T extends BaseOperation>(
 	 */
 	const isDetachedDatastoreCreationPhase = (state: LocalServerStressState): boolean =>
 		state.client.container.attachState === AttachState.Detached &&
-		detachedOpCount < datastoreCreationPhaseOps;
+		detachedOpCount < datastoreCreationPhaseEndOp;
 
 	/**
 	 * Returns true if we're in the detached "channel creation phase".
@@ -119,8 +121,8 @@ export function makeGenerator<T extends BaseOperation>(
 	 */
 	const isDetachedChannelCreationPhase = (state: LocalServerStressState): boolean =>
 		state.client.container.attachState === AttachState.Detached &&
-		detachedOpCount >= datastoreCreationPhaseOps &&
-		detachedOpCount < channelCreationPhaseOps;
+		detachedOpCount >= datastoreCreationPhaseEndOp &&
+		detachedOpCount < channelCreationPhaseEndOp;
 
 	/**
 	 * Returns true if we're in the detached "DDS ops phase" (prioritize DDS operations).
@@ -128,7 +130,7 @@ export function makeGenerator<T extends BaseOperation>(
 	 */
 	const isDetachedDdsOpsPhase = (state: LocalServerStressState): boolean =>
 		state.client.container.attachState === AttachState.Detached &&
-		detachedOpCount >= channelCreationPhaseOps;
+		detachedOpCount >= channelCreationPhaseEndOp;
 
 	const asyncGenerator = createWeightedAsyncGeneratorWithDynamicWeights<
 		StressOperations | T,

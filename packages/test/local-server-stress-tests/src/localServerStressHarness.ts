@@ -113,7 +113,7 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 interface SelectedClientSpec {
 	clientTag: `client-${number}`;
 	datastoreTag: `datastore-${number}`;
-	channelTag: `channel-${number}`;
+	channelTag: "root" | `channel-${number}`;
 }
 
 /**
@@ -715,8 +715,8 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 	const generatorFactory: () => AsyncGenerator<TOperation, LocalServerStressState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | typeof done> => {
-			// Pick a channel using the in-memory state tracker (avoids async calls to system under test)
-			// and make it available for DDS model generators and the subsequent reducer.
+			// Pick a channel using the in-memory state tracker for type-first selection
+			// (type metadata lookup is in-memory; channel/datastore discovery still requires async resolution).
 			const client = state.random.pick(state.clients);
 			const selected = await state.stateTracker.selectChannelForOperation(
 				client,
@@ -736,7 +736,7 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 						...baseOp,
 						clientTag: client.tag,
 						datastoreTag: selected.datastoreTag,
-						channelTag: selected.channelTag as `channel-${number}`,
+						channelTag: selected.channelTag as "root" | `channel-${number}`,
 					} satisfies SelectedClientSpec);
 		};
 	};
