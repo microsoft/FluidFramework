@@ -12240,9 +12240,6 @@ importers:
       '@langchain/core':
         specifier: ^0.3.78
         version: 0.3.78(openai@5.12.2(ws@8.18.0)(zod@3.25.76))
-      zod:
-        specifier: ^3.25.32
-        version: 3.25.76
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
