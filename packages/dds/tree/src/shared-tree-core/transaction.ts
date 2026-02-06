@@ -337,7 +337,7 @@ export class SquashingTransactionStack<
 						[startHead, sourcePath],
 						[branch.getHead(), targetPath],
 					);
-					assert(ancestor !== undefined, "branches must be related");
+					assert(ancestor !== undefined, 0xcce /* branches must be related */);
 
 					const transactionSteps: GraphCommit<TChange>[] = [];
 					findAncestor(
@@ -367,7 +367,7 @@ export class SquashingTransactionStack<
 							if (transactionSteps.length > 0) {
 								assert(
 									transactionRevision !== undefined,
-									"Expected transaction revision in the presence of transaction steps",
+									0xccf /* Expected transaction revision in the presence of transaction steps */,
 								);
 								for (const commit of transactionSteps) {
 									assert(
@@ -398,7 +398,7 @@ export class SquashingTransactionStack<
 									);
 									assert(
 										rebased.newSourceHead.revision === transactionRevision,
-										"The transaction commit should be rebased to the tip",
+										0xcd0 /* The transaction commit should be rebased to the tip */,
 									);
 									this.branch.apply(rebased.newSourceHead);
 									viewUpdate = rebased.sourceChange;
