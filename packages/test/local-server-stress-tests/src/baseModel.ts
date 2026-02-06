@@ -250,9 +250,12 @@ export function makeGenerator<T extends BaseOperation>(
 	]);
 
 	return async (state) => {
+		// Capture attach state before generating the operation so phase selection
+		// uses the pre-increment detachedOpCount value.
+		const wasDetached = state.client.container.attachState === AttachState.Detached;
 		const result = await asyncGenerator(state);
-		// Track detached operation count for phasing (increment AFTER generating op)
-		if (state.client.container.attachState === AttachState.Detached) {
+		// Track detached operation count for phasing after the operation is generated.
+		if (wasDetached) {
 			detachedOpCount++;
 		}
 		return result;
