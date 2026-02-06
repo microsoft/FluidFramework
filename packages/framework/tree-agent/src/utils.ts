@@ -215,86 +215,64 @@ export function unqualifySchema(schemaIdentifier: string): string {
 
 /**
  * Resolves short name collisions by appending counters to colliding short names.
- * @param identifiers - An array of full unmodified schema identifiers to be converted to unique short names.
- * @returns An array of unique, collision-resolved short names (preserving length and index order as input)
  *
  * @remarks
  * When multiple different identifiers produce the same short name, the first occurrence keeps its original short name,
  * and subsequent occurrences get a counter appended starting at `_2`.
  * Identical full identifiers (same schema) always map to the same friendly name.
  * Non-colliding identifiers keep their original short name.
- * The algorithm ensures collision-resolved names don't conflict with other existing short names.
  * Examples:
  * - If only `"scope.Foo"` and `"scope2.Foo"` exist, they resolve to `["Foo", "Foo_2"]`.
- * - If `"scope.Foo"`, `"scope2.Foo"`, and `"scope3.Foo_2"` all exist, they resolve to `["Foo", "Foo_3", "Foo_2"]` (indices preserved).
+ * - If `"scope.Foo"`, `"scope2.Foo"`, and `"scope3.Foo_2"` all exist, they resolve to `["Foo", "Foo_2", "Foo_2_2"]` (first-come-first-served).
  * - If `"scope.Foo"` appears twice (same identifier), both resolve to `["Foo", "Foo"]`.
+ */
+export class IdentifierCollisionResolver {
+	/**
+	 * The set of all friendly names that have been assigned so far.
+	 */
+	private readonly assignedFriendlyNames = new Set<string>();
+
+	/**
+	 * Cache of full identifier to assigned friendly name, so identical identifiers always resolve the same way.
+	 */
+	private readonly friendlyNameCache = new Map<string, string>();
+
+	/**
+	 * Resolves a full schema identifier to a unique friendly name.
+	 * The first identifier to claim a short name keeps it; subsequent collisions get `_2`, `_3`, etc.
+	 */
+	public resolve(identifier: string): string {
+		const cached = this.friendlyNameCache.get(identifier);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		let name = unqualifySchema(identifier);
+		if (this.assignedFriendlyNames.has(name)) {
+			let counter = 2;
+			while (this.assignedFriendlyNames.has(`${name}_${counter}`)) {
+				counter++;
+			}
+			name = `${name}_${counter}`;
+		}
+		this.assignedFriendlyNames.add(name);
+		this.friendlyNameCache.set(identifier, name);
+		return name;
+	}
+}
+
+/**
+ * Resolves short name collisions by appending counters to colliding short names.
+ * @param identifiers - An array of full unmodified schema identifiers to be converted to unique short names.
+ * @returns An array of unique, collision-resolved short names (preserving length and index order as input)
  */
 export function mapToFriendlyIdentifiers<T extends readonly string[]>(
 	identifiers: T,
 ): string[] & { length: T["length"] } {
-	// Count how many unique identifiers map to each short name
-	const uniqueIdentifiersByShortName = new Map<string, Set<string>>();
-	for (const identifier of identifiers) {
-		const shortName = unqualifySchema(identifier);
-		const identifiersForShortName = uniqueIdentifiersByShortName.get(shortName) ?? new Set();
-		identifiersForShortName.add(identifier);
-		uniqueIdentifiersByShortName.set(shortName, identifiersForShortName);
-	}
-
-	// Also track all short names that exist (for avoiding conflicts when generating suffixes)
-	const allShortNames = new Set<string>();
-	for (const identifier of identifiers) {
-		allShortNames.add(unqualifySchema(identifier));
-	}
-
-	const result: string[] = [];
-	const assignedNames = new Map<string, string>(); // full identifier -> assigned friendly name
-	const shortNameCounter = new Map<string, number>(); // Track which suffix we're on for each short name
-
-	// Assign collision-resolved names, iterating in the same order as identifiers
-	for (const identifier of identifiers) {
-		// If we've already assigned a name to this exact identifier, reuse it
-		const existingName = assignedNames.get(identifier);
-		if (existingName !== undefined) {
-			result.push(existingName);
-			continue;
-		}
-
-		const shortName = unqualifySchema(identifier);
-		const uniqueIdentifiers = uniqueIdentifiersByShortName.get(shortName);
-		assert(
-			uniqueIdentifiers !== undefined,
-			"Expected short name to have been counted in first pass",
-		);
-
-		if (uniqueIdentifiers.size === 1) {
-			// No collision (only one unique identifier maps to this short name)
-			result.push(shortName);
-			assignedNames.set(identifier, shortName);
-		} else {
-			// Collision detected (multiple unique identifiers map to this short name)
-			const currentCounter = shortNameCounter.get(shortName);
-			if (currentCounter === undefined) {
-				// First occurrence of this colliding name - keep original
-				shortNameCounter.set(shortName, 1);
-				result.push(shortName);
-				assignedNames.set(identifier, shortName);
-			} else {
-				// Subsequent occurrence - append counter starting from _2
-				let counter = currentCounter + 1;
-				let candidateName = `${shortName}_${counter}`;
-				while (allShortNames.has(candidateName)) {
-					counter += 1;
-					candidateName = `${shortName}_${counter}`;
-				}
-				shortNameCounter.set(shortName, counter);
-				result.push(candidateName);
-				assignedNames.set(identifier, candidateName);
-			}
-		}
-	}
-
-	return result as string[] & { length: T["length"] };
+	const resolver = new IdentifierCollisionResolver();
+	return identifiers.map((id) => resolver.resolve(id)) as string[] & {
+		length: T["length"];
+	};
 }
 
 /**

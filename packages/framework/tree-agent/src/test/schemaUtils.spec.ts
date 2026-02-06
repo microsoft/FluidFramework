@@ -313,12 +313,12 @@ describe("resolveShortNameCollisions", () => {
 		assert.equal(result[2], "Bar");
 	});
 
-	it("skips suffix values that conflict with existing short names", () => {
+	it("handles suffix collisions with later natural names", () => {
 		const input = ["scope1.Foo", "scope2.Foo", "scope3.Foo_2"];
 		const result = mapToFriendlyIdentifiers(input);
 		assert.equal(result[0], "Foo");
-		assert.equal(result[1], "Foo_3");
-		assert.equal(result[2], "Foo_2");
+		assert.equal(result[1], "Foo_2");
+		assert.equal(result[2], "Foo_2_2");
 	});
 
 	it("identical full identifiers map to the same friendly name", () => {
