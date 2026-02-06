@@ -24,7 +24,8 @@ describe(`Do not allow \`-\` following JSDoc/TSDoc tags (eslint ${eslintVersion}
 			},
 		});
 
-		const eslint = new ESLintClass(eslintOptions);
+		// Cast to any because CompatESLintOptions is a union type that works for both ESLint 8 and 9
+		const eslint = new ESLintClass(eslintOptions as any);
 		const fileToLint = path.join(getTestCasesDir(), "no-hyphen-after-jsdoc-tag", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		assert.equal(results.length, 1, "Expected a single result for linting a single file.");

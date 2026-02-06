@@ -11,12 +11,12 @@
  * Enabling `noUncheckedIndexedAccess` will disable these checks.
  */
 
-import type { Rule } from "eslint";
-import type { Scope } from "eslint";
+import type { Rule, Scope } from "eslint";
 import type { TSESTree } from "@typescript-eslint/utils";
 import type { ParserServicesWithTypeInformation } from "@typescript-eslint/utils";
 import type * as ts from "typescript";
-import { SyntaxKind, TypeFlags } from "typescript";
+import { SyntaxKind, TypeFlags, IndexKind } from "typescript";
+import type { RuleContextWithParserServices } from "../eslint-compat-types.js";
 
 export const rule: Rule.RuleModule = {
 	meta: {
@@ -28,10 +28,11 @@ export const rule: Rule.RuleModule = {
 		schema: [],
 	},
 	create(context: Rule.RuleContext) {
+		// Cast to compatibility type that includes methods from both ESLint 8 and 9
+		const contextWithServices = context as unknown as RuleContextWithParserServices;
 		// ESLint 9+ uses context.sourceCode.parserServices, earlier versions use context.parserServices
 		const parserServices =
-			(context.sourceCode as any)?.parserServices ??
-			((context as any).parserServices as ParserServicesWithTypeInformation | undefined);
+			contextWithServices.sourceCode.parserServices ?? contextWithServices.parserServices;
 
 		// Check if we have the necessary TypeScript services
 		if (!parserServices || !parserServices.program || !parserServices.esTreeNodeToTSNodeMap) {
@@ -46,12 +47,15 @@ export const rule: Rule.RuleModule = {
 		}
 
 		// Helper to get scope in both ESLint 8 and 9
-		// In ESLint 9, getScope requires a node argument
+		// ESLint 9 moved getScope to sourceCode.getScope(node), ESLint 8 uses context.getScope()
 		const getScope = (node: Rule.Node): Scope.Scope => {
-			if ((context.sourceCode as any)?.getScope) {
-				return (context.sourceCode as any).getScope(node);
+			// Check if getScope exists on context (ESLint 8)
+			if (typeof contextWithServices.getScope === "function") {
+				return contextWithServices.getScope();
 			}
-			return (context as any).getScope();
+			// ESLint 9: use sourceCode.getScope(node)
+			// Cast to any because Rule.Node and ESTree.Node are incompatible between versions
+			return contextWithServices.sourceCode.getScope(node as any);
 		};
 
 		// Main function to run on every member access (e.g., obj.a or obj["a"])
@@ -218,8 +222,8 @@ function isIndexSignatureType(
 			typeChecker.isTupleType(type) ||
 			// Check for ReadonlyArray
 			type.symbol?.escapedName === "ReadonlyArray" ||
-			(typeChecker.getIndexTypeOfType(type, 1 as any) &&
-				!typeChecker.getIndexTypeOfType(type, 0 as any)) ||
+			(typeChecker.getIndexTypeOfType(type, IndexKind.Number) &&
+				!typeChecker.getIndexTypeOfType(type, IndexKind.String)) ||
 			type.getProperty("length") !== undefined;
 
 		if (isArrayLike) {
@@ -247,8 +251,8 @@ function isIndexSignatureType(
 		}
 
 		// Check index signatures
-		const stringIndexType = typeChecker.getIndexTypeOfType(type, 0 as any);
-		const numberIndexType = typeChecker.getIndexTypeOfType(type, 1 as any);
+		const stringIndexType = typeChecker.getIndexTypeOfType(type, IndexKind.String);
+		const numberIndexType = typeChecker.getIndexTypeOfType(type, IndexKind.Number);
 		if (!stringIndexType && !numberIndexType) return false;
 
 		const propName =
@@ -317,28 +321,24 @@ function isUndefinableIndexSignatureType(
 		}
 
 		// Check both string and number index signatures
-		const stringIndexType = typeChecker.getIndexTypeOfType(type, 0 as any);
-		const numberIndexType = typeChecker.getIndexTypeOfType(type, 1 as any);
+		const stringIndexType = typeChecker.getIndexTypeOfType(type, IndexKind.String);
+		const numberIndexType = typeChecker.getIndexTypeOfType(type, IndexKind.Number);
 
-		const isStringIndexUndefinable =
-			stringIndexType &&
-			(stringIndexType.flags & TypeFlags.Undefined ||
-				((stringIndexType as any).isUnion &&
-					(stringIndexType as any).isUnion() &&
-					(stringIndexType as any).types.some(
-						(t: ts.Type) => t.flags & TypeFlags.Undefined,
-					)));
+		// Helper to check if a type is a union containing undefined
+		const isUndefinableUnion = (indexType: ts.Type | undefined): boolean => {
+			if (!indexType) return false;
+			if (indexType.flags & TypeFlags.Undefined) return true;
+			// Check if it's a UnionType with undefined
+			const unionType = indexType as ts.UnionType;
+			return (
+				typeof unionType.isUnion === "function" &&
+				unionType.isUnion() &&
+				Array.isArray(unionType.types) &&
+				unionType.types.some((t: ts.Type) => t.flags & TypeFlags.Undefined)
+			);
+		};
 
-		const isNumberIndexUndefinable =
-			numberIndexType &&
-			(numberIndexType.flags & TypeFlags.Undefined ||
-				((numberIndexType as any).isUnion &&
-					(numberIndexType as any).isUnion() &&
-					(numberIndexType as any).types.some(
-						(t: ts.Type) => t.flags & TypeFlags.Undefined,
-					)));
-
-		return isStringIndexUndefinable || isNumberIndexUndefinable;
+		return isUndefinableUnion(stringIndexType) || isUndefinableUnion(numberIndexType);
 	} catch (e) {
 		// If there's any error in type checking, assume it might be undefinable
 		return true;
@@ -363,7 +363,8 @@ function propertyHasBeenChecked(
 
 	while (current) {
 		if (
-			(current as any).optional || // Check for optional chaining (?.)
+			// Check for optional chaining (?.) - TSESTree nodes can have an optional property
+			("optional" in current && (current as { optional?: boolean }).optional) ||
 			current.type === "ChainExpression" || // Check for nullish coalescing operator (??)
 			current.type === "TSNonNullExpression" // Check for non-null assertion (!)
 		) {
@@ -475,7 +476,8 @@ function isUndefinedNode(node: TSESTree.Node): boolean {
 /**
  * Helper to safely validate that a value is an AST node
  */
-function isNode(node: any): node is TSESTree.Node {
+function isNode(node: unknown): node is TSESTree.Node {
+	// Parameter is 'unknown' to serve as a type guard for unchecked values
 	return (
 		node !== null &&
 		node !== undefined &&
@@ -701,13 +703,21 @@ function findContainingBlock(
  * Resolves the value of a variable by checking its declarations in the scope chain.
  * Handles both literal values and identifier references recursively.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getKeyValue(node: TSESTree.Node, context: Rule.RuleContext): any {
+	// Return type must be 'any' because property keys can be various literal types
 	if (node.type === "Literal") return node.value;
 	if (node.type === "Identifier") {
-		// ESLint 9 requires node argument for getScope
-		let scope: Scope.Scope = (context.sourceCode as any)?.getScope
-			? (context.sourceCode as any).getScope(node as unknown as Rule.Node)
-			: (context as any).getScope();
+		// ESLint 9 moved getScope to sourceCode.getScope(node), ESLint 8 uses context.getScope()
+		const contextWithServices = context as unknown as RuleContextWithParserServices;
+		let scope: Scope.Scope;
+		if (typeof contextWithServices.getScope === "function") {
+			// ESLint 8
+			scope = contextWithServices.getScope();
+		} else {
+			// ESLint 9 - Cast to any because Rule.Node and ESTree.Node are incompatible between versions
+			scope = contextWithServices.sourceCode.getScope(node as any);
+		}
 		while (scope) {
 			const variable = scope.variables.find((v) => v.name === node.name);
 			if (variable) {
@@ -763,7 +773,10 @@ function checkElseBlockAssignsKey(
 	 * @returns true if the key is assigned to the base object in this subtree,
 	 * false otherwise. The traversal stops when an assignment is found.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const traverseNode = (node: any): boolean => {
+		// Parameter must be 'any' because this function handles partially-typed AST child nodes
+		// that may not satisfy the full TSESTree.Node type but have the necessary properties
 		if (
 			node.type === "AssignmentExpression" &&
 			node.left.type === "MemberExpression" &&

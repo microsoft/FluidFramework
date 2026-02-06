@@ -11,6 +11,12 @@
 import * as path from "node:path";
 import type { ESLint } from "eslint";
 import { plugin } from "../../lib/index.js";
+import type {
+	CompatESLintOptions,
+	CompatRulesRecord,
+	CompatParserOptions,
+	CompatPlugin,
+} from "../../lib/eslint-compat-types.js";
 
 // Support testing against different ESLint versions using npm aliases
 const eslintPackage = process.env.ESLINT_PACKAGE || "eslint";
@@ -18,9 +24,9 @@ const eslintVersion = parseInt(require(`${eslintPackage}/package.json`).version.
 const { ESLint: ESLintClass } = require(eslintPackage) as { ESLint: typeof ESLint };
 
 interface ConfigInput {
-	rules: Record<string, any>;
-	parserOptions?: Record<string, any>;
-	extraPlugins?: Record<string, any>;
+	rules: Partial<CompatRulesRecord>;
+	parserOptions?: CompatParserOptions;
+	extraPlugins?: Record<string, CompatPlugin>;
 }
 
 /**
@@ -29,7 +35,7 @@ interface ConfigInput {
  * @param config - Configuration object
  * @returns ESLint options object
  */
-function createESLintConfig(config: ConfigInput): any {
+function createESLintConfig(config: ConfigInput): CompatESLintOptions {
 	const { rules, extraPlugins, parserOptions: customParserOptions } = config;
 
 	const parser = "@typescript-eslint/parser";
@@ -42,7 +48,7 @@ function createESLintConfig(config: ConfigInput): any {
 	};
 	const pluginName = "@fluid-internal/fluid";
 
-	const eslintOptions: any = {
+	const eslintOptions: CompatESLintOptions = {
 		overrideConfigFile: eslintVersion >= 9 ? true : undefined,
 	};
 
@@ -59,7 +65,8 @@ function createESLintConfig(config: ConfigInput): any {
 					[pluginName]: plugin,
 					...extraPlugins,
 				},
-				rules,
+				// Cast needed: CompatRulesRecord is a flexible type compatible with both versions
+				rules: rules as any,
 			},
 		];
 	} else {
@@ -68,7 +75,8 @@ function createESLintConfig(config: ConfigInput): any {
 			parser,
 			parserOptions,
 			plugins: [pluginName],
-			rules,
+			// Cast needed: CompatRulesRecord is a flexible type compatible with both versions
+			rules: rules as any,
 		};
 		eslintOptions.useEslintrc = false;
 		eslintOptions.plugins = {
@@ -81,9 +89,9 @@ function createESLintConfig(config: ConfigInput): any {
 }
 
 interface ESLintInstanceConfig {
-	rules?: Record<string, any>;
-	parserOptions?: Record<string, any>;
-	plugins?: Record<string, any>;
+	rules?: Partial<CompatRulesRecord>;
+	parserOptions?: CompatParserOptions;
+	plugins?: Record<string, CompatPlugin>;
 }
 
 /**
@@ -92,11 +100,20 @@ interface ESLintInstanceConfig {
  * @param rulesOrConfig - Either rules object or full config object with rules/parserOptions/plugins
  * @returns Configured ESLint instance
  */
-function createESLintInstance(rulesOrConfig: Record<string, any> | ESLintInstanceConfig): ESLint {
-	const config: ESLintInstanceConfig =
-		typeof rulesOrConfig === "object" && "rules" in rulesOrConfig
-			? rulesOrConfig
-			: { rules: rulesOrConfig };
+function createESLintInstance(
+	rulesOrConfig: Partial<CompatRulesRecord> | ESLintInstanceConfig,
+): ESLint {
+	// Check if this is a full config object (has rules, parserOptions, or plugins properties)
+	// or just a rules object
+	let config: ESLintInstanceConfig;
+	if (
+		typeof rulesOrConfig === "object" &&
+		("rules" in rulesOrConfig || "parserOptions" in rulesOrConfig || "plugins" in rulesOrConfig)
+	) {
+		config = rulesOrConfig as ESLintInstanceConfig;
+	} else {
+		config = { rules: rulesOrConfig as Partial<CompatRulesRecord> };
+	}
 
 	const eslintOptions = createESLintConfig({
 		rules: config.rules ?? {},
@@ -104,7 +121,8 @@ function createESLintInstance(rulesOrConfig: Record<string, any> | ESLintInstanc
 		extraPlugins: config.plugins,
 	});
 
-	return new ESLintClass(eslintOptions);
+	// Cast to any because CompatESLintOptions is a union type that works for both ESLint 8 and 9
+	return new ESLintClass(eslintOptions as any);
 }
 
 /**

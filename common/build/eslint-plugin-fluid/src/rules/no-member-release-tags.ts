@@ -43,7 +43,8 @@ function errorLoggerHelper(
 	context: Rule.RuleContext,
 ): void {
 	const sourceCode = context.sourceCode;
-	const comments = sourceCode.getCommentsBefore(node as any);
+	// Cast required: getCommentsBefore accepts Rule.Node but we have TSESTree node types
+	const comments = sourceCode.getCommentsBefore(node as unknown as Rule.Node);
 
 	comments.forEach((comment) => {
 		// ESLint trims the asterisk of the comment while TSDocParser expects the original format of the comment block.
@@ -53,12 +54,26 @@ function errorLoggerHelper(
 			 * `node` object has different structure based on the AST scope type.
 			 * Class Expression needs an extra traversal of the `parent` object in order to access the `name` of its parent
 			 */
-			const keyName = (node.key as any).name;
+			// Key can be Identifier, PrivateIdentifier, or other expression types - all have name or value
+			const keyName =
+				"name" in node.key
+					? (node.key as TSESTree.Identifier | TSESTree.PrivateIdentifier).name
+					: "value" in node.key
+						? String((node.key as TSESTree.Literal).value)
+						: "<unknown>";
 			const keyLine = node.key.loc.start.line;
-			const parent: any = node.parent;
-			const grandparent: any = parent?.parent;
-			const greatGrandparent: any = grandparent?.parent;
-			const containerName = grandparent?.id?.name ?? greatGrandparent?.id?.name;
+			const parent = node.parent;
+			const grandparent = parent.parent;
+			const greatGrandparent = grandparent.parent;
+			// Extract container name from nodes that have an identifier (class/interface declarations)
+			const getNodeName = (n: TSESTree.Node | undefined): string | undefined => {
+				if (!n) return undefined;
+				if ("id" in n && n.id && "name" in n.id) {
+					return (n.id as TSESTree.Identifier).name;
+				}
+				return undefined;
+			};
+			const containerName = getNodeName(grandparent) ?? getNodeName(greatGrandparent);
 
 			context.report({
 				node: node as unknown as Rule.Node,
@@ -80,6 +95,7 @@ export const rule: Rule.RuleModule = {
 			releaseTagOnMember: "Release tag on member class / interface found.",
 		},
 	},
+	// Return type must be 'any' because ESLint's NodeListener type is incompatible with TSESTree node types
 	create(context: Rule.RuleContext): any {
 		/**
 		 * Available AST node types

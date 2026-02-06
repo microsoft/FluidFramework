@@ -1,8 +1,8 @@
 {
 	"extends": "../../../build-common/tsconfig.node16.json",
 	"compilerOptions": {
-		"rootDir": ".",
-		"outDir": "../../lib/test",
+		"rootDir": "..",
+		"outDir": "../../lib",
 		"declaration": true,
 		"declarationMap": true,
 		"sourceMap": true,

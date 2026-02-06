@@ -4,7 +4,7 @@
  */
 
 import * as path from "path";
-import type { Rule } from "eslint";
+import type { JSSyntaxElement, Rule } from "eslint";
 import type { TSESTree } from "@typescript-eslint/utils";
 import { Project } from "ts-morph";
 
@@ -104,7 +104,9 @@ export const rule: Rule.RuleModule = {
 			importWithRestrictedTag: "Import with restricted tag found.",
 		},
 	},
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	create(context: Rule.RuleContext): any {
+		// Return type must be 'any' because ESLint's NodeListener type is incompatible with TSESTree node types
 		const options =
 			(context.options[0] as { tags?: string[]; exceptions?: Record<string, string[]> }) ||
 			{};
@@ -117,7 +119,7 @@ export const rule: Rule.RuleModule = {
 			tsConfigPath = path.resolve(context.getCwd(), context.parserOptions.project as string);
 		} else {
 			context.report({
-				node: null as any,
+				node: null as unknown as JSSyntaxElement, // ESLint requires a node but we're reporting a global configuration error
 				message:
 					"A 'tsconfig.json' file is required but was not found in the ESLint config under parserOptions.project.",
 			});
@@ -132,8 +134,8 @@ export const rule: Rule.RuleModule = {
 				// For each item being imported
 				node.specifiers.forEach((specifier) => {
 					if (specifier.type === "ImportSpecifier") {
-						// Name of imported item
-						const importedName = (specifier.imported as any).name;
+						// Name of imported item - imported is always an Identifier in ImportSpecifier
+						const importedName = (specifier.imported as TSESTree.Identifier).name;
 
 						const importedFilePath = resolveImportPath(
 							(specifier.parent as TSESTree.ImportDeclaration).source.value,

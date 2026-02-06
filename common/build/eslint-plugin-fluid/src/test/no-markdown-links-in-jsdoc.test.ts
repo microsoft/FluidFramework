@@ -21,7 +21,8 @@ describe(`Do not allow Markdown links in JSDoc/TSDoc comments (eslint ${eslintVe
 			},
 		});
 
-		const eslint = new ESLintClass(eslintOptions);
+		// Cast to any because CompatESLintOptions is a union type that works for both ESLint 8 and 9
+		const eslint = new ESLintClass(eslintOptions as any);
 		const fileToLint = path.join(getTestCasesDir(), "no-markdown-links-in-jsdoc", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		assert.equal(results.length, 1, "Expected a single result for linting a single file.");
