@@ -180,7 +180,7 @@ function makeMarkEffectDecoder(
 	function decodeMoveIn(encoded: Encoded.MoveIn, context: FieldChangeEncodingContext): Attach {
 		const { id, revision } = encoded;
 		const mark: Attach = {
-			type: "Insert",
+			type: "Attach",
 			id,
 			revision: decodeRevision(revision, context.baseContext),
 		};
@@ -213,7 +213,7 @@ function makeMarkEffectDecoder(
 		): Attach {
 			const { id, revision } = encoded;
 			const mark: Attach = {
-				type: "Insert",
+				type: "Attach",
 				id,
 			};
 
@@ -343,7 +343,7 @@ function decodeDetach(
 	}
 
 	const mark: Mutable<Detach> = {
-		type: "Remove",
+		type: "Detach",
 		revision,
 		id: localId,
 	};
@@ -545,13 +545,13 @@ function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): 
 	}
 
 	switch (mark.type) {
-		case "Insert": {
+		case "Attach": {
 			const attachId = getAttachedRootId(mark);
 			count = context.isDetachId(attachId, count).length;
 			count = context.getCellIdForMove(attachId, count).length;
 			break;
 		}
-		case "Remove": {
+		case "Detach": {
 			count = context.isAttachId(getDetachedRootId(mark), count).length;
 			break;
 		}
@@ -630,7 +630,7 @@ function encodeMarkEffectV2(
 ): Encoded.MarkEffect {
 	const type = mark.type;
 	switch (type) {
-		case "Insert": {
+		case "Attach": {
 			const attachId = getAttachedRootId(mark);
 			const isMove = context.isDetachId(attachId, 1).value;
 
@@ -663,7 +663,7 @@ function encodeMarkEffectV2(
 				},
 			};
 		}
-		case "Remove": {
+		case "Detach": {
 			const encodedIdOverride =
 				mark.cellRename === undefined
 					? undefined

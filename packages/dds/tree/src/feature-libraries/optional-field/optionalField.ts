@@ -178,17 +178,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const detachId = getEffectiveDetachId(newChange);
 		const rebasedDetachId = getEffectiveDetachId(rebased);
 
-		if (detachId !== undefined && !areEqualChangeAtomIdOpts(detachId, rebasedDetachId)) {
-			nodeManager.removeDetach(detachId, 1);
+		if (!areEqualChangeAtomIdOpts(detachId, rebasedDetachId)) {
+			if (detachId !== undefined) {
+				nodeManager.removeDetach(detachId, 1);
+			}
+			if (rebasedDetachId !== undefined) {
+				nodeManager.addDetach(rebasedDetachId, 1);
+			}
 		}
-
-		if (
-			rebasedDetachId !== undefined &&
-			!areEqualChangeAtomIdOpts(rebasedDetachId, detachId)
-		) {
-			nodeManager.addDetach(rebasedDetachId, 1);
-		}
-
 		return rebased;
 	},
 

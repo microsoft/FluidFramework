@@ -54,39 +54,26 @@ export interface NoopMark {
 export interface HasRevisionTag {
 	/**
 	 * The revision this mark is part of.
-	 * Only set for marks in fields which are a composition of multiple revisions.
 	 */
 	revision?: RevisionTag;
 }
 
 /**
  * Moves detached roots into cells.
- * The specific content being moved in is determined by the IDs of the cells this mark targets.
- * Always brings about the desired outcome: the content is in the targeted cells.
  *
- * Rebasing this mark never causes it to insert/restore a different set of nodes.
- * Rebasing this mark never causes it to fill a different set of cells
+ * Rebasing this mark never causes it to attach a different set of nodes.
+ * Rebasing this mark never causes it to attach nodes in different cells
  * (though the way those cells are identified may change).
- *
- * Carries a `MoveId` in case it is rebased over the content being moved out, in which case this mark
- * will transform into a pair of returns which will move the content back into this cell.
  */
 export interface Attach extends HasMoveId, HasRevisionTag {
-	type: "Insert";
+	readonly type: "Attach";
 
 	// XXX: Use this ID as main ID when serializing
 	/**
+	 * See {@link Detach.detachCellId}.
 	 * This field should only be used if the attach is a pin.
 	 */
-	detachCellId?: ChangeAtomId;
-}
-
-export interface HasMoveFields extends HasMoveId, HasRevisionTag {
-	/**
-	 * Used when this mark represents the beginning or end of a chain of moves within a changeset.
-	 * If this mark is the start of the chain, this is the ID of the end mark of the chain, and vice-versa if this is the end of the chain.
-	 */
-	finalEndpoint?: ChangeAtomId;
+	readonly detachCellId?: ChangeAtomId;
 }
 
 /**
@@ -98,19 +85,22 @@ export interface HasMoveFields extends HasMoveId, HasRevisionTag {
  * Rebasing this mark can cause it to clear a different set of cells.
  */
 export interface Detach extends HasRevisionTag {
-	readonly type: "Remove";
+	readonly type: "Detach";
 	readonly id: ChangesetLocalId;
 
 	/**
 	 * The ID the cell should be set to when this detach is applied.
 	 * If not set, this the same as the detach ID.
+	 * Note that this does not affect the ID associated with the detached node.
+	 * This is ignored when `cellRename` is set.
+	 *
 	 * This applies to the cell where the node is being detached from,
 	 * or the last cell the node occupied if it is already detached.
 	 *
 	 * This field is used to represent the composition of a pin and a detach.
 	 * The composition will be the second detach but with the pin's detachId as detachCellId.
 	 */
-	detachCellId?: ChangeAtomId;
+	readonly detachCellId?: ChangeAtomId;
 
 	/**
 	 * When set, this represents a rename of this cell to be applied after the detach.
@@ -128,11 +118,11 @@ export interface Detach extends HasRevisionTag {
  *
  * Only ever targets empty cells.
  *
- * Occurs when a MoveIn is composed with a MoveOut.
+ * Occurs when an Attach is composed with a Detach.
  * TODO: Use Rename when an Insert/Revive is composed with a Remove.
  */
 export interface Rename {
-	type: "Rename";
+	readonly type: "Rename";
 	readonly idOverride: CellId;
 }
 

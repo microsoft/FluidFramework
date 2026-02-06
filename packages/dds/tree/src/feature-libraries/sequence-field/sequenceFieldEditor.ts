@@ -93,7 +93,7 @@ export const sequenceFieldEditor = {
 		moveId: ChangesetLocalId,
 	): Changeset => {
 		const mark: CellMark<Attach> = {
-			type: "Insert",
+			type: "Attach",
 			id: moveId,
 			count,
 			cellId,
@@ -107,7 +107,7 @@ export const sequenceFieldEditor = {
 		id: ChangesetLocalId,
 		revision: RevisionTag | undefined,
 	): Changeset =>
-		count === 0 ? [] : markAtIndex(index, { type: "Remove", count, id, revision }),
+		count === 0 ? [] : markAtIndex(index, { type: "Detach", count, id, revision }),
 
 	revive: (
 		index: number,
@@ -117,7 +117,7 @@ export const sequenceFieldEditor = {
 	): Changeset => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
 		const mark: CellMark<Attach> = {
-			type: "Insert",
+			type: "Attach",
 			id: detachEvent.localId,
 			count,
 			cellId: detachEvent,
@@ -135,14 +135,14 @@ export const sequenceFieldEditor = {
 		revision: RevisionTag | undefined,
 	): Changeset {
 		const moveIn: Mark = {
-			type: "Insert",
+			type: "Attach",
 			id: detachCellId,
 			count,
 			cellId: attachCellId,
 			revision,
 		};
 		const moveOut: Mark = {
-			type: "Remove",
+			type: "Detach",
 			id: detachCellId,
 			count,
 			revision,
@@ -157,7 +157,7 @@ export const sequenceFieldEditor = {
 		revision: RevisionTag,
 	): Changeset {
 		const moveOut: Mark = {
-			type: "Remove",
+			type: "Detach",
 			id: detachCellId,
 			count,
 			revision,
@@ -173,7 +173,7 @@ export const sequenceFieldEditor = {
 		revision: RevisionTag,
 	): Changeset {
 		const moveIn: Mark = {
-			type: "Insert",
+			type: "Attach",
 			id: moveId,
 			count,
 			cellId: attachCellId,
@@ -191,7 +191,7 @@ export const sequenceFieldEditor = {
 		revision: RevisionTag | undefined,
 	): Changeset {
 		const moveOut: CellMark<Detach> = {
-			type: "Remove",
+			type: "Detach",
 			id: attachCellId.localId,
 			cellRename: detachCellId,
 			count,
@@ -199,7 +199,7 @@ export const sequenceFieldEditor = {
 		};
 
 		const returnTo: CellMark<Attach> = {
-			type: "Insert",
+			type: "Attach",
 			id: attachCellId.localId,
 			count,
 			cellId: attachCellId,

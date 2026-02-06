@@ -137,7 +137,7 @@ export function testRebase(): void {
 				{ count: 2 },
 				Mark.modify(child3),
 			];
-			const deletion = [{ count: 2 }, Mark.remove(3, brand(0))];
+			const deletion = [{ count: 2 }, Mark.detach(3, brand(0))];
 			const actual = rebase(mods, deletion, tag1);
 			const expected = [
 				Mark.modify(child1),
@@ -151,20 +151,20 @@ export function testRebase(): void {
 
 		it("insert ↷ remove", () => {
 			const insert = [
-				Mark.insert(1, brand(1)),
+				Mark.attach(1, brand(1)),
 				Mark.skip(2),
-				Mark.insert(1, brand(2)),
+				Mark.attach(1, brand(2)),
 				Mark.skip(6),
-				Mark.insert(1, brand(3)),
+				Mark.attach(1, brand(3)),
 			];
 			const deletion = Change.remove(1, 3, tag1);
 			const actual = rebase(insert, deletion);
 			const expected = [
-				Mark.insert(1, brand(1)),
+				Mark.attach(1, brand(1)),
 				Mark.skip(1),
-				Mark.insert(1, brand(2)),
+				Mark.attach(1, brand(2)),
 				Mark.skip(4),
-				Mark.insert(1, brand(3)),
+				Mark.attach(1, brand(3)),
 			];
 			checkDeltaEquality(actual, expected);
 		});
@@ -208,15 +208,15 @@ export function testRebase(): void {
 
 		it("remove ↷ overlapping remove", () => {
 			// Removes ---DEFGH--
-			const removeA = [{ count: 3 }, Mark.remove(5, brand(0))];
+			const removeA = [{ count: 3 }, Mark.detach(5, brand(0))];
 			// Removes --CD-F-HI
 			const removeB = [
 				{ count: 2 },
-				Mark.remove(2, brand(0)),
+				Mark.detach(2, brand(0)),
 				{ count: 1 },
-				Mark.remove(1, brand(2)),
+				Mark.detach(1, brand(2)),
 				{ count: 1 },
-				Mark.remove(2, brand(3)),
+				Mark.detach(2, brand(3)),
 			];
 			const actual = rebase(removeA, removeB, tag1);
 			// Removes --dEfGh--
@@ -224,11 +224,11 @@ export function testRebase(): void {
 			const expected = [
 				{ count: 2 },
 				Mark.tomb(tag1, brand(0), 1),
-				Mark.onEmptyCell({ revision: tag1, localId: brand(1) }, Mark.remove(1, brand(0))),
-				Mark.remove(1, brand(1)),
-				Mark.onEmptyCell({ revision: tag1, localId: brand(2) }, Mark.remove(1, brand(2))),
-				Mark.remove(1, brand(3)),
-				Mark.onEmptyCell({ revision: tag1, localId: brand(3) }, Mark.remove(1, brand(4))),
+				Mark.onEmptyCell({ revision: tag1, localId: brand(1) }, Mark.detach(1, brand(0))),
+				Mark.detach(1, brand(1)),
+				Mark.onEmptyCell({ revision: tag1, localId: brand(2) }, Mark.detach(1, brand(2))),
+				Mark.detach(1, brand(3)),
+				Mark.onEmptyCell({ revision: tag1, localId: brand(3) }, Mark.detach(1, brand(4))),
 				Mark.tomb(tag1, brand(4), 1),
 			];
 			assertChangesetsEqual(actual, expected);
@@ -244,7 +244,7 @@ export function testRebase(): void {
 			const expected = [
 				Mark.tomb(tag1, brand(0), 2),
 				Mark.skip(1),
-				Mark.remove(2, brand(0), { revision: tag2 }),
+				Mark.detach(2, brand(0), { revision: tag2 }),
 			];
 			assertChangesetsEqual(actual, expected);
 		});
@@ -256,7 +256,7 @@ export function testRebase(): void {
 			const removeB = Change.remove(3, 2, tag1);
 			const actual = rebase(removeA, removeB);
 			const expected = [
-				Mark.remove(2, brand(0), { revision: tag2 }),
+				Mark.detach(2, brand(0), { revision: tag2 }),
 				Mark.skip(1),
 				Mark.tomb(tag1, brand(0), 2),
 			];
@@ -288,11 +288,11 @@ export function testRebase(): void {
 			// Removes --CD-F-HI
 			const deletion = [
 				{ count: 2 },
-				Mark.remove(2, brand(0)),
+				Mark.detach(2, brand(0)),
 				{ count: 1 },
-				Mark.remove(1, brand(2)),
+				Mark.detach(1, brand(2)),
 				{ count: 1 },
-				Mark.remove(2, brand(3)),
+				Mark.detach(2, brand(3)),
 			];
 			const actual = rebase(move, deletion, tag1);
 			// Moves --dEfGh--
@@ -325,32 +325,32 @@ export function testRebase(): void {
 		it("remove ↷ insert", () => {
 			// Removes A-CD-E
 			const deletion = [
-				Mark.remove(1, brand(0)),
+				Mark.detach(1, brand(0)),
 				Mark.skip(1),
-				Mark.remove(2, brand(1)),
+				Mark.detach(2, brand(1)),
 				Mark.skip(1),
-				Mark.remove(1, brand(3)),
+				Mark.detach(1, brand(3)),
 			];
 			// Inserts between C and D
 			const insert = Change.insert(3, 1, tag1, { localId: brand(2), revision: tag1 });
 			const expected = [
-				Mark.remove(1, brand(0)),
+				Mark.detach(1, brand(0)),
 				Mark.skip(1),
-				Mark.remove(1, brand(1)),
+				Mark.detach(1, brand(1)),
 				Mark.skip(1), // <- insert
-				Mark.remove(1, brand(2)),
+				Mark.detach(1, brand(2)),
 				Mark.skip(1),
-				Mark.remove(1, brand(3)),
+				Mark.detach(1, brand(3)),
 			];
 			const actual = rebase(deletion, insert);
 			assertChangesetsEqual(actual, expected);
 		});
 
 		it("insert ↷ insert", () => {
-			const insertA = [Mark.insert(1, brand(1)), Mark.skip(2), Mark.insert(1, brand(2))];
+			const insertA = [Mark.attach(1, brand(1)), Mark.skip(2), Mark.attach(1, brand(2))];
 			const insertB = Change.insert(1, 1, tag1, { localId: brand(3), revision: tag1 });
 			const actual = rebase(insertA, insertB);
-			const expected = [Mark.insert(1, brand(1)), Mark.skip(3), Mark.insert(1, brand(2))];
+			const expected = [Mark.attach(1, brand(1)), Mark.skip(3), Mark.attach(1, brand(2))];
 			assertChangesetsEqual(actual, expected);
 		});
 
@@ -402,32 +402,32 @@ export function testRebase(): void {
 		it("remove ↷ revive", () => {
 			// Removes A-CD-E
 			const deletion = [
-				Mark.remove(1, brand(0)),
+				Mark.detach(1, brand(0)),
 				Mark.skip(1),
-				Mark.remove(2, brand(1)),
+				Mark.detach(2, brand(1)),
 				Mark.skip(1),
-				Mark.remove(1, brand(3)),
+				Mark.detach(1, brand(3)),
 			];
 			// Revives content between C and D
 			const revive = Change.revive(3, 1, { revision: tag1, localId: brand(0) }, tag1);
 			const expected = [
-				Mark.remove(1, brand(0)),
+				Mark.detach(1, brand(0)),
 				Mark.skip(1),
-				Mark.remove(1, brand(1)),
+				Mark.detach(1, brand(1)),
 				Mark.skip(1),
-				Mark.remove(1, brand(2)),
+				Mark.detach(1, brand(2)),
 				Mark.skip(1),
-				Mark.remove(1, brand(3)),
+				Mark.detach(1, brand(3)),
 			];
 			const actual = rebase(deletion, revive);
 			assertChangesetsEqual(actual, expected);
 		});
 
 		it("insert ↷ revive", () => {
-			const insert = [Mark.insert(1, brand(1)), Mark.skip(2), Mark.insert(1, brand(2))];
+			const insert = [Mark.attach(1, brand(1)), Mark.skip(2), Mark.attach(1, brand(2))];
 			const revive = Change.revive(1, 1, { revision: tag1, localId: brand(0) }, tag1);
 			const actual = rebase(insert, revive);
-			const expected = [Mark.insert(1, brand(1)), Mark.skip(3), Mark.insert(1, brand(2))];
+			const expected = [Mark.attach(1, brand(1)), Mark.skip(3), Mark.attach(1, brand(2))];
 			assertChangesetsEqual(actual, expected);
 		});
 
@@ -733,11 +733,11 @@ export function testRebase(): void {
 		// });
 
 		it("remove ↷ move", () => {
-			const deletion = [Mark.skip(2), Mark.remove(2, brand(0))];
+			const deletion = [Mark.skip(2), Mark.detach(2, brand(0))];
 			const move = Change.move(1, 3, 0, tag1);
 			const expected = [
 				Mark.skip(1),
-				Mark.remove(2, brand(0)),
+				Mark.detach(2, brand(0)),
 				Mark.skip(1),
 				Mark.tomb(tag1, brand(0), 3),
 			];
@@ -871,7 +871,7 @@ export function testRebase(): void {
 			});
 
 			const revive = [
-				Mark.remove(1, brand(2), { cellId: { revision: tag1, localId: brand(0) } }),
+				Mark.detach(1, brand(2), { cellId: { revision: tag1, localId: brand(0) } }),
 			];
 
 			const rebased = rebase(modify, revive, tag2);
@@ -885,7 +885,7 @@ export function testRebase(): void {
 		it("rebasing over transient adds tombstones", () => {
 			const insert = Change.insert(0, 1, tag2);
 			const transient = [
-				Mark.remove(2, brand(2), { cellId: { localId: brand(0), revision: tag1 } }),
+				Mark.detach(2, brand(2), { cellId: { localId: brand(0), revision: tag1 } }),
 			];
 			const rebased = rebase(insert, transient, tag1, {
 				metadata: rebaseRevisionMetadataFromInfo(
@@ -895,7 +895,7 @@ export function testRebase(): void {
 				),
 			});
 			const expected = [
-				Mark.insert(1, { localId: brand(0), revision: tag2 }, { revision: tag2 }),
+				Mark.attach(1, { localId: brand(0), revision: tag2 }, { revision: tag2 }),
 				Mark.tomb(tag1, brand(2), 2),
 			];
 
@@ -1119,7 +1119,7 @@ export function testRebase(): void {
 		});
 
 		it("remove ↷ move with multiple destinations", () => {
-			const del = [Mark.remove(2, brand(0))];
+			const del = [Mark.detach(2, brand(0))];
 			const move = [
 				Mark.moveOut(2, brand(0)),
 				{ count: 1 },
@@ -1132,25 +1132,25 @@ export function testRebase(): void {
 			const expected = [
 				Mark.tomb(tag1, brand(0), 2),
 				{ count: 1 },
-				Mark.remove(1, brand(0)),
+				Mark.detach(1, brand(0)),
 				{ count: 1 },
-				Mark.remove(1, brand(1)),
+				Mark.detach(1, brand(1)),
 			];
 			assertChangesetsEqual(rebased, expected);
 		});
 
 		it("insert ↷ insert within remove", () => {
 			const insertAndRemove = [
-				Mark.remove(1, brand(0)),
-				Mark.insert(1, brand(1)),
-				Mark.remove(1, brand(2)),
+				Mark.detach(1, brand(0)),
+				Mark.attach(1, brand(1)),
+				Mark.detach(1, brand(2)),
 			];
 
-			const insert = [{ count: 1 }, Mark.insert(1, brand(0))];
+			const insert = [{ count: 1 }, Mark.attach(1, brand(0))];
 			const rebased = rebase(insert, insertAndRemove);
 			const expected = [
 				Mark.tomb(tag1, brand(0)),
-				Mark.insert(1, { localId: brand(0) }),
+				Mark.attach(1, { localId: brand(0) }),
 				Mark.skip(1),
 				Mark.tomb(tag1, brand(2)),
 			];
@@ -1162,16 +1162,16 @@ export function testRebase(): void {
 			// and consider the cell it inserts into to be before the cell emptied by A
 			// Although B and C's inserts appear to be at adjacent positions when rebasing C over B,
 			// we should use C's tombstones to deduce that it must come after B.
-			const removeA = [Mark.remove(1, brand(0))];
-			const insertB = [Mark.insert(1, brand(0))];
-			const insertC = [{ count: 1 }, Mark.insert(1, brand(0))];
+			const removeA = [Mark.detach(1, brand(0))];
+			const insertB = [Mark.attach(1, brand(0))];
+			const insertC = [{ count: 1 }, Mark.attach(1, brand(0))];
 
 			const c2 = rebase(insertC, removeA, tag1);
 			const c3 = rebase(c2, insertB, tag2);
 			const expected = [
 				{ count: 1 }, // Insert B
 				Mark.tomb(tag1), // Remove A
-				Mark.insert(1, { localId: brand(0) }),
+				Mark.attach(1, { localId: brand(0) }),
 			];
 			assertChangesetsEqual(c3, expected);
 		});
@@ -1196,7 +1196,7 @@ export function testRebase(): void {
 				const expected = [
 					Mark.tomb(tag2),
 					Mark.tomb(tag1, brand(0), 2),
-					Mark.insert(1, { localId: brand(0), revision: tag3 }, { revision: tag3 }),
+					Mark.attach(1, { localId: brand(0), revision: tag3 }, { revision: tag3 }),
 					Mark.tomb(tag2, brand(1)),
 				];
 				assertChangesetsEqual(rebased, expected);

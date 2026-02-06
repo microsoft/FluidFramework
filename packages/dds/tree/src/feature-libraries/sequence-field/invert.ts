@@ -110,12 +110,11 @@ function invertMark(
 				return [invertNodeChangeOrSkip(mark.count, mark.changes, mark.idOverride)];
 			}
 		}
-		case "Remove": {
+		case "Detach": {
 			assert(mark.revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
 			const outputId = getOutputCellId(mark);
 			const inputId = getInputCellId(mark);
-			assert(inputId === undefined, "Unexpected remove of detached node");
-
+			assert(inputId === undefined, "Unexpected detach of detached node");
 			const attachId = { revision: isRollback ? mark.revision : revision, localId: mark.id };
 			crossFieldManager.invertDetach(
 				{ revision: mark.revision, localId: mark.id },
@@ -125,7 +124,7 @@ function invertMark(
 			);
 
 			const inverse: Mark = {
-				type: "Insert",
+				type: "Attach",
 				id: mark.id,
 				cellId: outputId,
 				count: mark.count,
@@ -133,7 +132,7 @@ function invertMark(
 			};
 			return [inverse];
 		}
-		case "Insert": {
+		case "Attach": {
 			return invertInsert(mark, revision, crossFieldManager, isRollback);
 		}
 		default: {
@@ -173,7 +172,7 @@ function invertInsertSegment(
 	const detachId = invertAttachId(getAttachedRootId(mark), revision, isRollback, detachEntry);
 
 	const removeMark: Mutable<CellMark<Detach>> = {
-		type: "Remove",
+		type: "Detach",
 		count: mark.count,
 		id: detachId.localId,
 		revision: detachId.revision,

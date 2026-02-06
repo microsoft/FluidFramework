@@ -84,7 +84,7 @@ export function testEditor(): void {
 			);
 			const expected: Changeset = [
 				{ count: 42 },
-				Mark.insert(2, { localId: id, revision }, { revision }),
+				Mark.attach(2, { localId: id, revision }, { revision }),
 			];
 			assert.deepEqual(actual, expected);
 		});
@@ -92,7 +92,7 @@ export function testEditor(): void {
 		it("remove", () => {
 			const revision = mintRevisionTag();
 			const actual = sequenceFieldEditor.remove(42, 3, id, revision);
-			const expected: Changeset = [{ count: 42 }, Mark.remove(3, id, { revision })];
+			const expected: Changeset = [{ count: 42 }, Mark.detach(3, id, { revision })];
 			assert.deepEqual(actual, expected);
 		});
 	});

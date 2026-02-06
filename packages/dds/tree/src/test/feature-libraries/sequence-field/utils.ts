@@ -171,7 +171,7 @@ function normalizeMoveIds(change: Changeset): Changeset {
 			case NoopMarkType: {
 				return effect;
 			}
-			case "Insert": {
+			case "Attach": {
 				const atom = normalizeAtom(
 					{ revision: effect.revision, localId: effect.id },
 					NodeMoveType.Detach,
@@ -182,7 +182,7 @@ function normalizeMoveIds(change: Changeset): Changeset {
 					revision: atom.revision,
 				};
 			}
-			case "Remove": {
+			case "Detach": {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, NodeMoveType.Attach);
 				const normalized: Mutable<Detach> = { ...effect };
