@@ -10,8 +10,15 @@ import { DocNodeKind, TSDocParser } from "@microsoft/tsdoc";
 import { getBlockComments } from "./tsdoc-utils.js";
 
 interface HyphenPatternMatch {
-	startIndex: number; // Starting character index of the hyphen pattern (inclusive).
-	endIndex: number; // Ending character index of the hyphen pattern (exclusive).
+	/**
+	 * Starting character index of the hyphen pattern (inclusive).
+	 */
+	startIndex: number;
+
+	/**
+	 * Ending character index of the hyphen pattern (exclusive).
+	 */
+	endIndex: number;
 }
 
 const parser = new TSDocParser();
