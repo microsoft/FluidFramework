@@ -2229,8 +2229,7 @@ describeCompat(
 				assert.strictEqual(counter1.value, incrementValue);
 			},
 		);
-		for(let i = 0; i < 20; i++) {
-		itExpects.only(
+		itExpects(
 			`Parallel Forks: Closes (ForkedContainerError and DuplicateBatchError) when hydrating twice and submitting in parallel (via Counter DDS)`,
 			[
 				// All containers close: contianer1, container2, container3
@@ -2251,9 +2250,6 @@ describeCompat(
 				},
 			],
 			async function () {
-				// if (provider.driver.type !== "local") {
-				// 	this.skip();
-				// }
 				const incrementValue = 3;
 				const pendingLocalState = await generatePendingState(
 					testContainerConfig_noSummarizer,
@@ -2364,7 +2360,6 @@ describeCompat(
 				);
 			},
 		);
-	}
 		itExpects(
 			`Single-Threaded Forks: Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
 			[
