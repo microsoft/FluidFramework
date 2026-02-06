@@ -224,45 +224,95 @@ export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 export interface FieldChangeEncodingContext {
 	readonly baseContext: ChangeEncodingContext;
 
-	// Should only be used during encoding.
+	/**
+	 * A map from root ID to node ID, containing all roots which were last detached from this field.
+	 * The field must encode these root node changes.
+	 * This is only needed when encoding to a ModularChangeFormat older than v3,
+	 * as in those versions, changes to root nodes were represented in the field they were last detached from.
+	 * This should only be used during encoding.
+	 */
 	readonly rootNodeChanges: ChangeAtomIdBTree<NodeId>;
 
-	// Should only be used during encoding.
+	/**
+	 * A map from input context root ID to output context root ID, containing all roots which were last detached from this field.
+	 * The field must encode these renames.
+	 * This is only needed when encoding to a ModularChangeFormat older than v3,
+	 * as in those versions, root node renames were represented in the field they were last detached from.
+	 * This should only be used during encoding.
+	 */
 	readonly rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
 
-	// Should only be used during encoding.
+	// This should only be called during encoding.
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
 
-	// Should only be used during encoding.
+	/**
+	 * Returns the input context root ID from an output context root ID.
+	 * This is only needed for encoding to sequence field format v3 and older.
+	 * This should only be called during encoding.
+	 */
 	getInputRootId(
 		outputRootId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId | undefined>;
 
-	// Should only be used during encoding.
+	/**
+	 * Returns the input context root ID from an output context root ID.
+	 * This is only needed for encoding to sequence field format v3 and older.
+	 * This should only be called during encoding.
+	 */
 	isAttachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
 
-	// Should only be used during encoding.
+	/**
+	 * Returns whether `id` is used as a detach ID in this changeset.
+	 * This is only needed for encoding to sequence field format v3 and older.
+	 * This should only be called during encoding.
+	 */
 	isDetachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
 
-	// Should only be used during encoding.
+	/**
+	 * Returns the detach cell ID for the attach associated with `moveId`.
+	 * If there is no associated detach cell ID, or the ID is the same as `moveId`,
+	 * this will return undefined.
+	 * This is only needed for encoding to sequence field format v3 and older.
+	 * This should only be called during encoding.
+	 */
 	getCellIdForMove(
 		moveId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId | undefined>;
 
-	// Should only be used during decoding.
+	// This should only be called during decoding.
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 
-	// Should only be used during decoding.
+	/**
+	 * Must be called for each root node changeset encoded in this field.
+	 * This is only needed when encoding to a ModularChangeFormat older than v3,
+	 * as in those versions, changes to root node were represented in the field they were last detached from.
+	 * This should only be called during decoding.
+	 */
 	decodeRootNodeChange(detachId: ChangeAtomId, encodedNode: EncodedNodeChangeset): void;
 
-	// Should only be used during decoding.
+	/**
+	 * Must be called for each root node rename encoded in this field.
+	 * This is only needed when encoding to a ModularChangeFormat older than v3,
+	 * as in those versions, root node renames were represented in the field they were last detached from.
+	 * This should only be called during decoding.
+	 */
 	decodeRootRename(oldId: ChangeAtomId, newId: ChangeAtomId, count: number): void;
 
-	// Should only be used during decoding.
+	/**
+	 * Must be called for each node which has its detach location changed to this field.
+	 * The node may be either detached by this change, or already detached in this change's input context.
+	 * This is only needed when encoding to a ModularChangeFormat older than v3,
+	 * as in those versions, root node locations were represented in the field they were last detached from.
+	 * This should only be called during decoding.
+	 */
 	decodeMoveAndDetach(detachId: ChangeAtomId, count: number): void;
 
-	// Should only be used during decoding.
+	/**
+	 * Generates a new ChangeAtomId which has not been used in this changeset.
+	 * This is only needed for decoding optional field format v2 and older.
+	 * This should only be called during decoding.
+	 */
 	generateId(): ChangeAtomId;
 }
