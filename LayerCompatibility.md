@@ -103,6 +103,10 @@ Layer compatibility policy describes specific **support windows** between layers
 
 These support windows determine how much version drift is acceptable between layers in your application. Applications should use this to plan their upgrade strategy and ensure layers remain compatible. They should coordinate updates across repositories and deployment boundaries to stay within the support windows.
 
+### Enforcement
+
+These support windows are enforced through the compatibility validation system described in [Layer Boundaries and Validation](#layer-boundaries-and-validation) section. If any incompatibility is detected, an error will be thrown as described in the [Error Handling](#error-handling) section.
+
 ### Implementation Details
 
 These support windows are enforced through the compatibility validation system described in earlier sections. The specific policy values are defined in `LayerCompatibilityPolicyWindowMonths` in
