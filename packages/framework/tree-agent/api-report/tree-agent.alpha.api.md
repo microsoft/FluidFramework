@@ -116,9 +116,6 @@ export type InferTypeFactory<T> = T extends FunctionDef<readonly Arg[], infer Re
 export type InferZod<T> = T extends FunctionDef<infer Args extends readonly Arg<z.ZodTypeAny>[], infer Return extends z.ZodTypeAny, any> ? (...args: InferArgsZod<Args>) => z.infer<Return> : never;
 
 // @alpha
-export const instanceOfsTypeFactory: WeakMap<TypeFactoryInstanceOf, ObjectNodeSchema<string, RestrictiveStringRecord<ImplicitFieldSchema_2>, boolean, unknown>>;
-
-// @alpha
 export function isTypeFactoryType(value: unknown): value is TypeFactoryType;
 
 // @alpha
