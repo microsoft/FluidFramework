@@ -566,7 +566,17 @@ export class UnhydratedSequenceField
 					const removed = mapTrees.splice(sourceIndex, count);
 					// Adjust destination index if it comes after the source
 					const adjustedDest = destIndex > sourceIndex ? destIndex - count : destIndex;
-					mapTrees.splice(adjustedDest, 0, ...removed);
+					if (removed.length < 1000) {
+						// For "smallish arrays" (`1000` is not empirically derived), the `splice` function is appropriate...
+						mapTrees.splice(adjustedDest, 0, ...removed);
+					} else {
+						// ...but we avoid using `splice` + spread for very large arrays since there is a limit on how many elements can be spread (too many will overflow the stack).
+						return [
+							...mapTrees.slice(0, adjustedDest),
+							...removed,
+							...mapTrees.slice(adjustedDest),
+						];
+					}
 				});
 			} else {
 				// Cross-field move: remove from source, insert into destination
