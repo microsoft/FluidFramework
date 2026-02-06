@@ -563,9 +563,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		// Set connectionFetchPending BEFORE emitting connect, so that handlers
 		// checking isConnectionFetchPending see the correct value synchronously.
-		if (needsFetch) {
-			this.connectionFetchPending = true;
-		}
+		// Always reset to false first, then set to true if needed, to handle the case
+		// where a disconnect happened during a previous fetch and reconnection doesn't need a fetch.
+		this.connectionFetchPending = needsFetch;
 
 		this.emit(
 			"connect",

@@ -137,7 +137,7 @@ describe("Storage fetch wait for Connected state", () => {
 	const documentId = "storageFetchWaitTest";
 	const documentLoadUrl = `https://localhost/${documentId}`;
 
-	it("Read connection is not Connected while storage fetch is blocked", async () => {
+	it("Read connection stays in CatchingUp state while storage fetch is pending", async () => {
 		// Setup: Create server and initial container
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
@@ -169,13 +169,15 @@ describe("Storage fetch wait for Connected state", () => {
 			blockUntilResolved: fetchDeferred.promise,
 		});
 
-		// Load existing container with tracking factory
+		// Load existing container with tracking factory.
+		// loadExistingContainer may not resolve while the fetch is blocked (the load-time
+		// "cached" fetch is also intercepted by the tracking factory), so use .then() to
+		// capture the container reference as soon as it becomes available.
 		const loadProps: ILoaderProps = {
 			...loaderProps,
 			documentServiceFactory: trackingFactory,
 		};
 
-		// Start loading - this will block on the fetch
 		const loadPromise = loadExistingContainer({
 			...loadProps,
 			request: { url: documentLoadUrl },
@@ -194,17 +196,29 @@ describe("Storage fetch wait for Connected state", () => {
 			"Storage fetch should not have completed yet",
 		);
 
-		// KEY VALIDATION: Capture state right before resolving fetch
-		// This is the critical point - container should NOT be connected while fetch is pending
-		const connectionStateBeforeFetchResolved = containerRef.current?.connectionState;
-
-		// The key assertion: container is NOT Connected while fetch is blocked
-		// Note: container might be undefined if load hasn't returned yet, or in CatchingUp state
+		// KEY VALIDATION right before resolving fetch:
+		// Container should NOT be Connected while fetch is pending.
+		// The container might still be loading (containerRef undefined) or in CatchingUp state.
 		assert.notStrictEqual(
-			connectionStateBeforeFetchResolved,
+			containerRef.current?.connectionState,
 			ConnectionState.Connected,
-			"Container should not be Connected while storage fetch is pending",
+			"Container must not be Connected while storage fetch is pending",
 		);
+
+		// If the container has loaded, validate additional properties
+		if (containerRef.current !== undefined) {
+			assert.strictEqual(
+				containerRef.current.connectionState,
+				ConnectionState.CatchingUp,
+				"Container should be in CatchingUp state while storage fetch is pending",
+			);
+			// Validate this is a read connection (not write) - deltaManager.active is false for read
+			assert.strictEqual(
+				containerRef.current.deltaManager.active,
+				false,
+				"Connection should be read-only (deltaManager.active === false)",
+			);
+		}
 
 		// Now resolve the deferred to allow the fetch to complete
 		fetchDeferred.resolve();
@@ -222,12 +236,18 @@ describe("Storage fetch wait for Connected state", () => {
 			ConnectionState.Connected,
 			"Container should be in Connected state after fetch completes",
 		);
+		// Validate the connection is read-only
+		assert.strictEqual(
+			loadedContainer.deltaManager.active,
+			false,
+			"Connection should be read-only (deltaManager.active === false)",
+		);
 
 		loadedContainer.close();
 		await deltaConnectionServer.webSocketServer.close();
 	});
 
-	it("Opt-out flag allows container to connect without waiting for storage fetch", async () => {
+	it("Opt-out flag bypasses storage fetch wait and connects immediately", async () => {
 		// Setup
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
@@ -243,7 +263,8 @@ describe("Storage fetch wait for Connected state", () => {
 		await waitForContainerConnection(createContainer);
 		createContainer.close();
 
-		// Load with opt-out flag - container should connect without waiting for storage fetch
+		// Load with opt-out flag - the DisableStorageFetchWait config flag should cause the
+		// container to transition to Connected state without waiting for storage fetch completion
 		const loadProps: ILoaderProps = {
 			...loaderProps,
 			configProvider: configProvider({
@@ -265,11 +286,18 @@ describe("Storage fetch wait for Connected state", () => {
 			"Container should reach Connected state with opt-out flag",
 		);
 
+		// Validate this is a read connection
+		assert.strictEqual(
+			loadedContainer.deltaManager.active,
+			false,
+			"Connection should be read-only (deltaManager.active === false)",
+		);
+
 		loadedContainer.close();
 		await deltaConnectionServer.webSocketServer.close();
 	});
 
-	it("fetch_end event occurs before connected event (event ordering)", async () => {
+	it("Storage fetch completes before the connected event fires", async () => {
 		// Setup
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
@@ -354,7 +382,7 @@ describe("Storage fetch wait for Connected state", () => {
 		await deltaConnectionServer.webSocketServer.close();
 	});
 
-	it("Container can disconnect and reconnect successfully", async () => {
+	it("Storage fetch wait applies correctly after disconnect and reconnect", async () => {
 		// Setup
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
@@ -370,39 +398,49 @@ describe("Storage fetch wait for Connected state", () => {
 		await waitForContainerConnection(initialContainer);
 		initialContainer.close();
 
-		// Load container (no blocking needed for this test)
+		// Load container and verify initial connection
 		const loadedContainer = await loadExistingContainer({
 			...loaderProps,
 			request: { url: documentLoadUrl },
 		});
-
 		await waitForContainerConnection(loadedContainer);
 
+		// Validate initial state before disconnect
 		assert.strictEqual(
 			loadedContainer.connectionState,
 			ConnectionState.Connected,
 			"Container should be Connected initially",
 		);
+		assert.strictEqual(
+			loadedContainer.deltaManager.active,
+			false,
+			"Connection should be read-only (deltaManager.active === false)",
+		);
 
 		// Disconnect
 		loadedContainer.disconnect();
-
 		assert.strictEqual(
 			loadedContainer.connectionState,
 			ConnectionState.Disconnected,
 			"Container should be Disconnected after disconnect()",
 		);
 
-		// Reconnect
+		// Reconnect - the storage fetch wait should apply again on the new connection
 		loadedContainer.connect();
 
-		// Wait for reconnection
+		// After calling connect(), should go through EstablishingConnection -> CatchingUp -> Connected
+		// The storage fetch wait feature means it will stay in CatchingUp until the fetch completes
 		await waitForContainerConnection(loadedContainer);
 
 		assert.strictEqual(
 			loadedContainer.connectionState,
 			ConnectionState.Connected,
-			"Container should be Connected after reconnect",
+			"Container should reach Connected state after reconnect",
+		);
+		assert.strictEqual(
+			loadedContainer.deltaManager.active,
+			false,
+			"Connection should remain read-only after reconnect (deltaManager.active === false)",
 		);
 
 		loadedContainer.close();
