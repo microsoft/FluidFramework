@@ -93,9 +93,7 @@ Cross-client compatibility implies that clients within a supported set of versio
 
 ### Motivation
 
-1. **Rolling upgrades**: During version upgrades, there is an unavoidable transition window when clients running different versions must coexist and collaborate. This compatibility ensures users can continue working together seamlessly, whether or not their application instance has been updated yet.
-
-2. **Multi-application ecosystems**: Different applications with different deployment schedules may host the same Fluid content. In such ecosystems, all applications integrating Fluid-based experiences must coordinate to respect the cross-client compatibility window. This avoids requiring all applications to be on exactly the same version, which would be impractical.
+See [Fluid Framework Cross-Client Compatibility](./CrossClientCompat.md) for motivation and other details about cross-client compatibility.
 
 ### Architecture diagram
 
