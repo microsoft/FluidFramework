@@ -179,5 +179,57 @@ describe("array move events", () => {
 				`treeChanged should fire exactly once, but fired ${treeChangedCount} times`,
 			);
 		});
+
+		it("cross-field move emits nodeChanged on both source and destination arrays", () => {
+			const MyParent = schemaFactory.object("myParent", {
+				array1: MyArray,
+				array2: MyArray,
+			});
+			const parent = init(MyParent, { array1: [1, 2, 3], array2: [4, 5] });
+
+			let array1NodeChangedCount = 0;
+			let array1TreeChangedCount = 0;
+			let array2NodeChangedCount = 0;
+			let array2TreeChangedCount = 0;
+
+			TreeBeta.on(parent.array1, "nodeChanged", () => {
+				array1NodeChangedCount++;
+			});
+			TreeBeta.on(parent.array1, "treeChanged", () => {
+				array1TreeChangedCount++;
+			});
+			TreeBeta.on(parent.array2, "nodeChanged", () => {
+				array2NodeChangedCount++;
+			});
+			TreeBeta.on(parent.array2, "treeChanged", () => {
+				array2TreeChangedCount++;
+			});
+
+			// Move element at index 0 from array2 to the end of array1
+			parent.array1.moveToEnd(0, parent.array2);
+
+			assert.deepEqual([...parent.array1], [1, 2, 3, 4]);
+			assert.deepEqual([...parent.array2], [5]);
+			assert.equal(
+				array1NodeChangedCount,
+				1,
+				`destination array nodeChanged should fire exactly once, but fired ${array1NodeChangedCount} times`,
+			);
+			assert.equal(
+				array1TreeChangedCount,
+				1,
+				`destination array treeChanged should fire exactly once, but fired ${array1TreeChangedCount} times`,
+			);
+			assert.equal(
+				array2NodeChangedCount,
+				1,
+				`source array nodeChanged should fire exactly once, but fired ${array2NodeChangedCount} times`,
+			);
+			assert.equal(
+				array2TreeChangedCount,
+				1,
+				`source array treeChanged should fire exactly once, but fired ${array2TreeChangedCount} times`,
+			);
+		});
 	});
 });

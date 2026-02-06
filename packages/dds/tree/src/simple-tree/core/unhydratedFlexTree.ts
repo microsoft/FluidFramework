@@ -560,11 +560,6 @@ export class UnhydratedSequenceField
 		},
 		move: (sourceIndex, count, destIndex, source?): void => {
 			const sourceField = source ?? this;
-			for (let i = sourceIndex; i < sourceIndex + count; i++) {
-				const child = sourceField.children[i];
-				assert(child !== undefined, "Unexpected sparse array in move source");
-			}
-
 			if (sourceField === this) {
 				// Within-field move: do both operations in a single edit to emit only one event
 				this.edit((mapTrees) => {

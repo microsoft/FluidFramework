@@ -1120,11 +1120,10 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 				);
 			}
 
-			// destinationField is unhydrated since we're in the else branch of isHydrated() check
-			if (!(destinationField instanceof UnhydratedSequenceField)) {
-				// This should never happen due to the isHydrated() check above
-				throw new UsageError("Expected unhydrated destination field");
-			}
+			assert(
+				destinationField instanceof UnhydratedSequenceField,
+				"destinationField should be unhydrated since we're in the else branch of isHydrated() check",
+			);
 
 			// Use native move which handles the operation atomically for within-field moves
 			// to ensure only a single event is emitted per affected field.
