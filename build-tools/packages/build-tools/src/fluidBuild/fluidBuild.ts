@@ -130,9 +130,14 @@ async function main(): Promise<void> {
 		failureSummary = buildGraph.taskFailureSummary;
 
 		// Build cache metrics
-		buildGraph.buildMetrics.printSummary();
-		if (commonOptions.verbose) {
-			buildGraph.buildMetrics.printVerboseDetails();
+		const extendedMetrics = ["true", "1"].includes(
+			process.env.FLUID_BUILD_EXTENDED_METRICS_DISPLAY?.toLowerCase() ?? "",
+		);
+		if (extendedMetrics) {
+			buildGraph.buildMetrics.printSummary();
+			if (commonOptions.verbose) {
+				buildGraph.buildMetrics.printVerboseDetails();
+			}
 		}
 		if (options.metricsFile) {
 			try {
