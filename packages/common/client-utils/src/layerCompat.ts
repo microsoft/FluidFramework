@@ -10,8 +10,11 @@
 export type FluidLayer = "loader" | "driver" | "runtime" | "dataStore";
 
 /**
- * The policy for compatibility windows (in months) that a layer uses to validate compatibility with another layer.
+ * The policy for compatibility windows that a layer uses to validate compatibility with another layer.
  * The other layer must be within this window relative to the layer to be compatible.
+ * Note that the policy is defined in terms of months, but the actual compatibility check is done using generations.
+ * Generations are updated every 1+ months depending on the release cadence so they are mostly 1-to-1 with months,
+ * but they are always higher than months since releases are not exactly every month.
  *
  * IMPORTANT: When changing these policy values, update the documentation in "Layer Compatibility Policy" section of
  * LayerCompatibility.md at the root of the repository.
@@ -20,27 +23,27 @@ export type FluidLayer = "loader" | "driver" | "runtime" | "dataStore";
  */
 export const LayerCompatibilityPolicyWindowMonths = {
 	/**
-	 * Driver is compatible with Loader versions up to 12 months older.
+	 * Driver is compatible with Loader versions up to 12 months (or generations) older.
 	 */
 	DriverLoader: 12,
 	/**
-	 * Loader is compatible with Driver versions up to 3 months older.
+	 * Loader is compatible with Driver versions up to 3 months (or generations) older.
 	 */
 	LoaderDriver: 3,
 	/**
-	 * Runtime is compatible with Loader versions up to 12 months older.
+	 * Runtime is compatible with Loader versions up to 12 months (or generations) older.
 	 */
 	RuntimeLoader: 12,
 	/**
-	 * Loader is compatible with Runtime versions up to 3 months older.
+	 * Loader is compatible with Runtime versions up to 3 months (or generations) older.
 	 */
 	LoaderRuntime: 3,
 	/**
-	 * Runtime is compatible with DataStore versions up to 3 months older.
+	 * Runtime is compatible with DataStore versions up to 3 months (or generations) older.
 	 */
 	RuntimeDataStore: 3,
 	/**
-	 * DataStore is compatible with Runtime versions up to 3 months older.
+	 * DataStore is compatible with Runtime versions up to 3 months (or generations) older.
 	 */
 	DataStoreRuntime: 3,
 } as const;
