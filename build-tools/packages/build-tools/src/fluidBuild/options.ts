@@ -34,6 +34,7 @@ interface FastBuildOptions extends IPackageMatchedOptions {
 	 * When a worker is finished with a task, if this is exceeded, a new worker is spawned.
 	 */
 	workerMemoryLimit: number;
+	metricsFile?: string;
 }
 
 // defaults
@@ -79,6 +80,7 @@ Options:
   -f --force                Force build and ignore dependency check on matched packages (all if package regexp is not specified)
   -? --help                 Print this message
      --install              Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
+     --metricsFile <path>   Write build cache metrics JSON to the specified file
      --workerMemoryLimitMB  Memory limit for worker threads in MiB
   -r --rebuild              Clean and build on matched packages (all if package regexp is not specified)
      --reinstall            Same as --uninstall --install.
@@ -263,6 +265,16 @@ export function parseOptions(argv: string[]): void {
 			} else {
 				errorLog("Missing argument for --workerMemoryLimitMB");
 			}
+			error = true;
+			break;
+		}
+
+		if (arg === "--metricsFile") {
+			if (i !== process.argv.length - 1) {
+				options.metricsFile = process.argv[++i];
+				continue;
+			}
+			errorLog("Missing argument for --metricsFile");
 			error = true;
 			break;
 		}

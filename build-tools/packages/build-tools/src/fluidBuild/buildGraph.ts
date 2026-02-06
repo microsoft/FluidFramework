@@ -14,6 +14,7 @@ import { defaultLogger } from "../common/logging";
 import type { Package } from "../common/npmPackage";
 import type { Timer } from "../common/timer";
 import type { BuildContext } from "./buildContext";
+import { BuildMetrics } from "./buildMetrics";
 import { BuildResult, summarizeBuildResult } from "./buildResult";
 import { FileHashCache } from "./fileHashCache";
 import type { IFluidBuildConfig } from "./fluidBuildConfig";
@@ -48,6 +49,7 @@ class TaskStats {
 class BuildGraphContext implements BuildContext {
 	public readonly fileHashCache = new FileHashCache();
 	public readonly taskStats = new TaskStats();
+	public readonly buildMetrics = new BuildMetrics();
 	public readonly failedTaskLines: string[] = [];
 	public readonly fluidBuildConfig: IFluidBuildConfig;
 	public readonly repoRoot: string;
@@ -573,6 +575,10 @@ export class BuildGraph {
 		} finally {
 			this.context.workerPool?.reset();
 		}
+	}
+
+	public get buildMetrics(): BuildMetrics {
+		return this.context.buildMetrics;
 	}
 
 	public get numSkippedTasks(): number {

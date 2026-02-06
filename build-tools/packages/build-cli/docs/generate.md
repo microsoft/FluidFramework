@@ -22,16 +22,13 @@ Tags asserts by replacing their message with a unique numerical value.
 
 ```
 USAGE
-  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--validate] [--requireTagged] [--concurrency <value>]
-    [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
-    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
-    <value>...]
+  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--branch <value> [--changed |
+    [--all | --dir <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... |
+    --skipScope <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
-  --requireTagged        Error if changes would be made instead of making them.
-  --validate             Validate that asserts are well-formed such that future tagging will not fail.
 
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
