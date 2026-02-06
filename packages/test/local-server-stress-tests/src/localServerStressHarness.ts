@@ -113,7 +113,7 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 interface SelectedClientSpec {
 	clientTag: `client-${number}`;
 	datastoreTag: `datastore-${number}`;
-	channelTag: "root" | `channel-${number}`;
+	channelTag: `channel-${number}`;
 }
 
 /**
@@ -177,7 +177,11 @@ export interface LocalServerStressModel<TOperation extends BaseOperation> {
 	 * necessarily have the same set of ops applied).
 	 * @throws An informative error if the clients don't have equivalent data.
 	 */
-	validateConsistency: (clientA: Client, clientB: Client) => void | Promise<void>;
+	validateConsistency: (
+		clientA: Client,
+		clientB: Client,
+		stateTracker: ContainerStateTracker,
+	) => void | Promise<void>;
 
 	/**
 	 * An array of transforms used during fuzz test minimization to reduce test
@@ -518,11 +522,15 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 				(await frozenContainer.getEntryPoint()) ?? {};
 			assert(DefaultStressDataObject !== undefined, "must have entrypoint");
 
-			await validateConsistencyOfAllDDS(removed, {
-				container: frozenContainer,
-				entryPoint: DefaultStressDataObject,
-				tag: `client-${Number.NaN}`,
-			});
+			await validateConsistencyOfAllDDS(
+				removed,
+				{
+					container: frozenContainer,
+					entryPoint: DefaultStressDataObject,
+					tag: `client-${Number.NaN}`,
+				},
+				state.stateTracker,
+			);
 
 			frozenContainer.dispose();
 			removed.container.dispose();
@@ -674,7 +682,7 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 				await synchronizeClients([validationClient, ...connectedClients]);
 				for (const client of connectedClients) {
 					try {
-						await model.validateConsistency(client, validationClient);
+						await model.validateConsistency(client, validationClient, state.stateTracker);
 					} catch (error: unknown) {
 						if (error instanceof Error) {
 							error.message = `Comparing client ${client.tag} vs client ${validationClient.tag}\n${error.message}`;
@@ -737,7 +745,7 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 						...baseOp,
 						clientTag: client.tag,
 						datastoreTag: selected.datastoreTag,
-						channelTag: selected.channelTag as "root" | `channel-${number}`,
+						channelTag: selected.channelTag as `channel-${number}`,
 					} satisfies SelectedClientSpec);
 		};
 	};
@@ -1079,7 +1087,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 			}
 			await synchronizeClients([validationClient, ...clients]);
 			for (const client of clients) {
-				await model.validateConsistency(client, validationClient);
+				await model.validateConsistency(client, validationClient, state.stateTracker);
 			}
 			return;
 		}

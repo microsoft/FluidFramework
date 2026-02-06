@@ -105,42 +105,17 @@ export class StressDataObject extends DataObject {
 	}
 
 	/**
-	 * this map is special, and doesn't participate in stress. it hold data
-	 * about the name of channels which have been created. these created channel
-	 * may or may not be attached and be available
+	 * Resolves a single channel by name from this datastore's runtime.
+	 * Returns undefined if the channel is not yet attached or available.
 	 */
-	private channelNameMap: ISharedMap = makeUnreachableCodePathProxy("channelNameMap");
-	protected async initializingFirstTime(props?: any): Promise<void> {
-		this.channelNameMap = SharedMap.create(this.runtime, "channelNameMap");
-		this.channelNameMap.bindToContext();
-		this.channelNameMap.set("root", this.root.attributes.type);
-	}
-
-	public async getChannels(): Promise<IChannel[]> {
-		const channels: IChannel[] = [];
-		for (const [name] of this.channelNameMap.entries()) {
-			// similar to container objects, the entries in this map
-			// can appear before the underlying channel is attached,
-			// so getting the channel can fail, and we need to try
-			// to get all channel each time, as we have no way to
-			// observer when a channel moves from detached to attached,
-			// especially on remove clients/
-			const channel = await timeoutAwait(this.runtime.getChannel(name), {
-				errorMsg: `Timed out waiting for channel: ${name}`,
-			}).catch(() => undefined);
-			if (channel !== undefined) {
-				channels.push(channel);
-			}
-		}
-		return channels;
+	public async getChannel(name: string): Promise<IChannel | undefined> {
+		return timeoutAwait(this.runtime.getChannel(name), {
+			errorMsg: `Timed out waiting for channel: ${name}`,
+		}).catch(() => undefined);
 	}
 
 	protected async hasInitialized(): Promise<void> {
 		this.defaultStressObject = await this.getDefaultStressDataObject();
-
-		this.channelNameMap = (await this.runtime.getChannel(
-			"channelNameMap",
-		)) as any as ISharedMap;
 	}
 
 	public get attached(): boolean {
@@ -158,7 +133,6 @@ export class StressDataObject extends DataObject {
 
 	public createChannel(tag: `channel-${number}`, type: string): IFluidHandle {
 		const channel = this.runtime.createChannel(tag, type);
-		this.channelNameMap.set(tag, type);
 		return channel.handle;
 	}
 

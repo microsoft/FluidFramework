@@ -97,6 +97,21 @@ export class ContainerStateTracker {
 	}
 
 	/**
+	 * Returns all registered channel names for a given datastore.
+	 */
+	getChannelNames(datastoreTag: `datastore-${number}`): string[] {
+		const channelMap = this.channelsByDatastore.get(datastoreTag);
+		return channelMap !== undefined ? Array.from(channelMap.keys()) : [];
+	}
+
+	/**
+	 * Returns all registered datastore tags.
+	 */
+	getDatastoreTags(): `datastore-${number}`[] {
+		return Array.from(this.channelsByDatastore.keys());
+	}
+
+	/**
 	 * Resolves a specific channel for a given client, using the cache when available.
 	 * Returns undefined if the channel cannot be resolved (e.g. not yet attached on this client).
 	 */
@@ -120,9 +135,8 @@ export class ContainerStateTracker {
 			return undefined;
 		}
 
-		// Resolve the specific channel
-		const channels = await dsEntry.stressDataObject.StressDataObject.getChannels();
-		const channel = channels.find((c) => c.id === channelTag);
+		// Resolve the specific channel directly by name
+		const channel = await dsEntry.stressDataObject.StressDataObject.getChannel(channelTag);
 		if (channel === undefined) {
 			return undefined;
 		}
@@ -132,18 +146,6 @@ export class ContainerStateTracker {
 			datastore: dsEntry.stressDataObject,
 		};
 		this.resolvedChannelCache.set(cacheKey, resolved);
-
-		// Also cache any other channels we resolved along the way
-		for (const ch of channels) {
-			const otherKey = `${client.tag}:${datastoreTag}:${ch.id}`;
-			if (!this.resolvedChannelCache.has(otherKey)) {
-				this.resolvedChannelCache.set(otherKey, {
-					channel: ch,
-					datastore: dsEntry.stressDataObject,
-				});
-			}
-		}
-
 		return resolved;
 	}
 
