@@ -15,7 +15,9 @@ import {
 } from "@fluid-tools/benchmark";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 
-import type { ForestSummarizer } from "../../../feature-libraries/index.js";
+import { FluidClientVersion } from "../../../codec/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import type { TreeCheckout } from "../../../shared-tree/index.js";
 import { TreeViewConfiguration } from "../../../simple-tree/index.js";
 import { configureBenchmarkHooks } from "../../utils.js";
 
@@ -24,6 +26,25 @@ import {
 	Root,
 	setupForestForIncrementalSummarization,
 } from "./forestSummarizerTestUtils.js";
+
+function updateItems(
+	checkout: TreeCheckout,
+	itemCount: number,
+	summarySequenceNumber: number,
+): void {
+	const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
+	const root = view.root;
+	// Simulate 10% of items changing (not timed)
+	// Update the summary field which will cause the entire BarItem subtree to be re-summarized
+	for (let i = 0; i < itemCount; i++) {
+		if (i % 10 === 0) {
+			const item = root.barArray.at(i);
+			if (item !== undefined) {
+				item.summary = `Updated summary ${summarySequenceNumber}`;
+			}
+		}
+	}
+}
 
 describe("Forest Summarizer benchmarks", () => {
 	// Scale test parameters based on performance testing mode
@@ -36,114 +57,130 @@ describe("Forest Summarizer benchmarks", () => {
 			const benchmarkType =
 				itemCount >= 100 ? BenchmarkType.Measurement : BenchmarkType.Perspective;
 
-			// Non-incremental: Full summarization without handle reuse
-			let baselineSummarizer: ForestSummarizer;
-			benchmark({
-				type: benchmarkType,
-				title: `Initial summary with ${itemCount} items`,
-				before: () => {
-					const { forestSummarizer } = setupForestForIncrementalSummarization(
-						createInitialBoard(itemCount),
-					);
-					baselineSummarizer = forestSummarizer;
-				},
-				benchmarkFn: () => {
-					baselineSummarizer.summarize({
-						stringify: JSON.stringify,
-						incrementalSummaryContext: {
-							summarySequenceNumber: 0,
-							latestSummarySequenceNumber: -1,
-							summaryPath: "",
-						},
-					});
-				},
-			});
-
-			// Incremental with no changes
-			let incrementalSummarizer: ForestSummarizer;
-			benchmark({
-				type: benchmarkType,
-				title: `Incremental summary with ${itemCount} unchanged items`,
-				before: () => {
-					const { forestSummarizer } = setupForestForIncrementalSummarization(
-						createInitialBoard(itemCount),
-					);
-					incrementalSummarizer = forestSummarizer;
-					// First summary to establish baseline (not measured)
-					const incrementalSummaryContext: IExperimentalIncrementalSummaryContext = {
-						summarySequenceNumber: 0,
-						latestSummarySequenceNumber: -1,
-						summaryPath: "",
-					};
-					incrementalSummarizer.summarize({
-						stringify: JSON.stringify,
-						incrementalSummaryContext,
-					});
-				},
-				benchmarkFn: () => {
-					const incrementalSummaryContext: IExperimentalIncrementalSummaryContext = {
-						summarySequenceNumber: 10,
-						latestSummarySequenceNumber: 0,
-						summaryPath: "",
-					};
-					incrementalSummarizer.summarize({
-						stringify: JSON.stringify,
-						incrementalSummaryContext,
-					});
-				},
-			});
-
-			// Incremental with 10% changes
-			benchmark({
-				type: benchmarkType,
-				title: `Incremental summary with ${itemCount} items (10%) changed`,
-				benchmarkFnCustom: async (state) => {
-					const { checkout, forestSummarizer } = setupForestForIncrementalSummarization(
-						createInitialBoard(itemCount),
-					);
-					// First summary to establish baseline (not timed)
-					forestSummarizer.summarize({
-						stringify: JSON.stringify,
-						incrementalSummaryContext: {
-							summarySequenceNumber: 0,
-							latestSummarySequenceNumber: -1,
-							summaryPath: "",
-						},
+			describe("Regular summaries", () => {
+				// Baseline summary
+				const { forestSummarizer: baselineSummarizer, checkout: baseLineCheckout } =
+					setupForestForIncrementalSummarization(createInitialBoard(itemCount), {
+						jsonValidator: FormatValidatorBasic,
+						minVersionForCollab: FluidClientVersion.v2_73, // Pre incremental summarization
 					});
 
-					// Create view once before the loop
-					const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
-					const root = view.root;
-
-					let summarySequenceNumber = 10;
-					let running: boolean;
-					do {
-						// Simulate 10% of items changing (not timed)
-						// Update the summary field which will cause the entire BarItem subtree to be re-summarized
-						for (let i = 0; i < itemCount; i++) {
-							if (i % 10 === 0) {
-								const item = root.barArray.at(i);
-								if (item !== undefined) {
-									item.summary = `Updated summary ${summarySequenceNumber}`;
-								}
-							}
-						}
-
-						const incrementalSummaryContext: IExperimentalIncrementalSummaryContext = {
-							summarySequenceNumber,
-							latestSummarySequenceNumber: summarySequenceNumber - 10,
-							summaryPath: "",
-						};
-						// Only time the actual summary operation
-						running = state.timeBatch(() => {
-							forestSummarizer.summarize({
-								stringify: JSON.stringify,
-								incrementalSummaryContext,
-							});
+				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: 0,
+					latestSummarySequenceNumber: -1,
+					summaryPath: "",
+				};
+				benchmark({
+					type: benchmarkType,
+					title: `Baseline summary with ${itemCount} items`,
+					benchmarkFn: () => {
+						baselineSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: incrementalSummaryContext1,
 						});
-						summarySequenceNumber += 10;
-					} while (running);
-				},
+					},
+				});
+
+				// Baseline summary with no changes
+				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber + 10,
+					latestSummarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber,
+					summaryPath: "",
+				};
+				benchmark({
+					type: benchmarkType,
+					title: `Baseline summary with ${itemCount} unchanged items`,
+					benchmarkFn: () => {
+						baselineSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: incrementalSummaryContext2,
+						});
+					},
+				});
+
+				// Baseline summary with 10% changes
+				const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: incrementalSummaryContext2.summarySequenceNumber + 10,
+					latestSummarySequenceNumber: incrementalSummaryContext2.summarySequenceNumber,
+					summaryPath: "",
+				};
+				benchmark({
+					type: benchmarkType,
+					title: `Baseline summary with ${itemCount} items (10% changed)`,
+					benchmarkFn: () => {
+						updateItems(
+							baseLineCheckout,
+							itemCount,
+							incrementalSummaryContext3.summarySequenceNumber,
+						);
+						baselineSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: incrementalSummaryContext3,
+						});
+					},
+				});
+			});
+
+			describe("Incremental summaries", () => {
+				// Incremental summary
+				const { forestSummarizer: incrementalSummarizer, checkout: incrementalCheckout } =
+					setupForestForIncrementalSummarization(createInitialBoard(itemCount));
+
+				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: 0,
+					latestSummarySequenceNumber: -1,
+					summaryPath: "",
+				};
+
+				benchmark({
+					type: benchmarkType,
+					title: `Incremental summary with ${itemCount} items`,
+					benchmarkFn: () => {
+						incrementalSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: incrementalSummaryContext1,
+						});
+					},
+				});
+
+				// Incremental with no changes
+				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber + 10,
+					latestSummarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber,
+					summaryPath: "",
+				};
+				benchmark({
+					type: benchmarkType,
+					title: `Incremental summary with ${itemCount} unchanged items`,
+					benchmarkFn: () => {
+						incrementalSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: incrementalSummaryContext2,
+						});
+					},
+				});
+
+				// Incremental summary with 10% changes
+				const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: incrementalSummaryContext2.summarySequenceNumber + 10,
+					latestSummarySequenceNumber: incrementalSummaryContext2.summarySequenceNumber,
+					summaryPath: "",
+				};
+				benchmark({
+					type: benchmarkType,
+					title: `Incremental summary with ${itemCount} items (10% changed)`,
+					benchmarkFn: () => {
+						updateItems(
+							incrementalCheckout,
+							itemCount,
+							incrementalSummaryContext3.summarySequenceNumber,
+						);
+						incrementalSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: incrementalSummaryContext3,
+						});
+					},
+				});
 			});
 		}
 	});
@@ -179,97 +216,136 @@ describe("Forest Summarizer benchmarks", () => {
 			const benchmarkType =
 				itemCount >= 100 ? BenchmarkType.Measurement : BenchmarkType.Perspective;
 
-			// Initial (full) summary size
-			benchmarkCustom({
-				type: benchmarkType,
-				title: `Non-incremental summary size with ${itemCount} items`,
-				run: async (reporter) => {
-					const { forestSummarizer } = setupForestForIncrementalSummarization(
-						createInitialBoard(itemCount),
-					);
-					const summaryTree = forestSummarizer.summarize({
-						stringify: JSON.stringify,
-						incrementalSummaryContext: {
-							summarySequenceNumber: 0,
-							latestSummarySequenceNumber: -1,
-							summaryPath: "",
-						},
+			describe("Regular summaries", () => {
+				// Non-incremental: Full summarization without handle reuse
+				const { forestSummarizer: baselineSummarizer, checkout: baseLineCheckout } =
+					setupForestForIncrementalSummarization(createInitialBoard(itemCount), {
+						jsonValidator: FormatValidatorBasic,
+						minVersionForCollab: FluidClientVersion.v2_73, // Pre incremental summarization
 					});
-					measureSummarySize(summaryTree, reporter);
-				},
+
+				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: 0,
+					latestSummarySequenceNumber: -1,
+					summaryPath: "",
+				};
+				benchmarkCustom({
+					type: benchmarkType,
+					title: `Baseline summary with ${itemCount} items`,
+					run: (reporter) => {
+						const summaryTree = baselineSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: incrementalSummaryContext1,
+						});
+						measureSummarySize(summaryTree, reporter);
+					},
+				});
+
+				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber + 10,
+					latestSummarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber,
+					summaryPath: "",
+				};
+				// Baseline summary with no changes
+				benchmarkCustom({
+					type: benchmarkType,
+					title: `Baseline summary with ${itemCount} unchanged items`,
+					run: (reporter) => {
+						const summaryTree = baselineSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: incrementalSummaryContext2,
+						});
+						measureSummarySize(summaryTree, reporter);
+					},
+				});
+
+				const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: incrementalSummaryContext2.summarySequenceNumber + 10,
+					latestSummarySequenceNumber: incrementalSummaryContext2.summarySequenceNumber,
+					summaryPath: "",
+				};
+				// Baseline summary with 10% changes
+				benchmarkCustom({
+					type: benchmarkType,
+					title: `Baseline summary with ${itemCount} items (10% changed)`,
+					run: (reporter) => {
+						updateItems(
+							baseLineCheckout,
+							itemCount,
+							incrementalSummaryContext3.summarySequenceNumber,
+						);
+						const summaryTree = baselineSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: incrementalSummaryContext3,
+						});
+						measureSummarySize(summaryTree, reporter);
+					},
+				});
 			});
 
-			// Incremental summary size with no changes
-			benchmarkCustom({
-				type: benchmarkType,
-				title: `Incremental summary size with ${itemCount} unchanged items`,
-				run: async (reporter) => {
-					const { forestSummarizer } = setupForestForIncrementalSummarization(
-						createInitialBoard(itemCount),
-					);
-					// First summary to establish baseline
-					forestSummarizer.summarize({
-						stringify: JSON.stringify,
-						incrementalSummaryContext: {
-							summarySequenceNumber: 0,
-							latestSummarySequenceNumber: -1,
-							summaryPath: "",
-						},
-					});
-					// Second summary (incremental, no changes) - this is what we measure
-					const summaryTree = forestSummarizer.summarize({
-						stringify: JSON.stringify,
-						incrementalSummaryContext: {
-							summarySequenceNumber: 10,
-							latestSummarySequenceNumber: 0,
-							summaryPath: "",
-						},
-					});
-					measureSummarySize(summaryTree, reporter);
-				},
-			});
+			describe("Incremental summaries", () => {
+				// Incremental: Full summarization without handle reuse
+				const { forestSummarizer: incrementalSummarizer, checkout: incrementalCheckout } =
+					setupForestForIncrementalSummarization(createInitialBoard(itemCount));
 
-			// Incremental summary size with 10% changes
-			benchmarkCustom({
-				type: benchmarkType,
-				title: `Incremental summary size with ${itemCount} items (10% changed)`,
-				run: async (reporter) => {
-					const { checkout, forestSummarizer } = setupForestForIncrementalSummarization(
-						createInitialBoard(itemCount),
-					);
-					// First summary to establish baseline
-					forestSummarizer.summarize({
-						stringify: JSON.stringify,
-						incrementalSummaryContext: {
-							summarySequenceNumber: 0,
-							latestSummarySequenceNumber: -1,
-							summaryPath: "",
-						},
-					});
+				const incrementalSummaryContext1: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: 0,
+					latestSummarySequenceNumber: -1,
+					summaryPath: "",
+				};
 
-					// Make 10% of items change
-					const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
-					const root = view.root;
-					for (let i = 0; i < itemCount; i++) {
-						if (i % 10 === 0) {
-							const item = root.barArray.at(i);
-							if (item !== undefined) {
-								item.summary = `Updated summary 10`;
-							}
-						}
-					}
+				benchmarkCustom({
+					type: benchmarkType,
+					title: `Incremental summary with ${itemCount} items`,
+					run: (reporter) => {
+						const summaryTree = incrementalSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: incrementalSummaryContext1,
+						});
+						measureSummarySize(summaryTree, reporter);
+					},
+				});
 
-					// Second summary (incremental, 10% changes) - this is what we measure
-					const summaryTree = forestSummarizer.summarize({
-						stringify: JSON.stringify,
-						incrementalSummaryContext: {
-							summarySequenceNumber: 10,
-							latestSummarySequenceNumber: 0,
-							summaryPath: "",
-						},
-					});
-					measureSummarySize(summaryTree, reporter);
-				},
+				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber + 10,
+					latestSummarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber,
+					summaryPath: "",
+				};
+				// Incremental with no changes
+				benchmarkCustom({
+					type: benchmarkType,
+					title: `Incremental summary with ${itemCount} unchanged items`,
+					run: (reporter) => {
+						const summaryTree = incrementalSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: incrementalSummaryContext2,
+						});
+						measureSummarySize(summaryTree, reporter);
+					},
+				});
+
+				const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: incrementalSummaryContext2.summarySequenceNumber + 10,
+					latestSummarySequenceNumber: incrementalSummaryContext2.summarySequenceNumber,
+					summaryPath: "",
+				};
+				benchmarkCustom({
+					type: benchmarkType,
+					title: `Incremental summary with ${itemCount} items (10% changed)`,
+					run: (reporter) => {
+						// Incremental summary with 10% changes
+						updateItems(
+							incrementalCheckout,
+							itemCount,
+							incrementalSummaryContext3.summarySequenceNumber,
+						);
+						const summaryTree = incrementalSummarizer.summarize({
+							stringify: JSON.stringify,
+							incrementalSummaryContext: incrementalSummaryContext3,
+						});
+						measureSummarySize(summaryTree, reporter);
+					},
+				});
 			});
 		}
 	});
