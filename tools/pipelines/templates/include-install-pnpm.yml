@@ -55,7 +55,7 @@ steps:
   condition: or(succeeded(), canceled())
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
     # workspace-concurrency 0 means use use the CPU core count. This is better than the default (4) for larger agents.
     script: |
       set -eu -o pipefail
