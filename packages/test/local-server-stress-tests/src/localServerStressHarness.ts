@@ -719,9 +719,7 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 			// (so that we can recover the channel from serialized data)
 			const client = state.random.pick(state.clients);
 			const globalObjects = await client.entryPoint.getContainerObjects();
-			const datastoreEntries = globalObjects.filter(
-				(v) => v.type === "stressDataObject",
-			);
+			const datastoreEntries = globalObjects.filter((v) => v.type === "stressDataObject");
 
 			// Collect all channels across all datastores, grouped by type globally
 			interface ChannelEntry {
@@ -753,10 +751,7 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 			const channelTypes = Array.from(channelsByType.keys());
 			const selectedType = state.random.pick(channelTypes);
 			const entriesOfSelectedType = channelsByType.get(selectedType);
-			assert(
-				entriesOfSelectedType !== undefined,
-				"channels of selected type must exist",
-			);
+			assert(entriesOfSelectedType !== undefined, "channels of selected type must exist");
 			const selected = state.random.pick(entriesOfSelectedType);
 			const baseOp = await runInStateWithClient(
 				state,
