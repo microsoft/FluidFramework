@@ -19,10 +19,7 @@ import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
 import { fluidHandleTypeName } from "./prompt.js";
 import { getExposedProperties, type PropertyDef } from "./propertyBinding.js";
-import {
-	instanceOfsTypeFactory,
-	renderTypeFactoryTypeScript,
-} from "./renderTypeFactoryTypeScript.js";
+import { renderTypeFactoryTypeScript } from "./renderTypeFactoryTypeScript.js";
 import { instanceOfs, renderZodTypeScript } from "./renderZodTypeScript.js";
 import type { TypeFactoryOptional, TypeFactoryType } from "./treeAgentTypes.js";
 import { isTypeFactoryType } from "./treeAgentTypes.js";
@@ -544,6 +541,6 @@ function ensureNoMemberConflicts(
  */
 function renderType(type: z.ZodTypeAny | TypeFactoryType, indentLevel: number = 0): string {
 	return isTypeFactoryType(type)
-		? renderTypeFactoryTypeScript(type, getFriendlyName, instanceOfsTypeFactory, indentLevel)
+		? renderTypeFactoryTypeScript(type, getFriendlyName, indentLevel)
 		: renderZodTypeScript(type, getFriendlyName, instanceOfs);
 }
