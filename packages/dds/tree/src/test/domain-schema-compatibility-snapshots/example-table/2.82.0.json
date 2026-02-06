@@ -3,7 +3,7 @@
   "root": {
     "kind": 1,
     "simpleAllowedTypes": {
-      "com.fluidframework.table<test>.TableRoot": {
+      "com.fluidframework.tableV2<test>.TableRoot": {
         "isStaged": false
       }
     }
@@ -32,7 +32,7 @@
         "allowUnknownOptionalFields": false
       }
     },
-    "com.fluidframework.table<test>.Row.cells": {
+    "com.fluidframework.tableV2<test>.Row.cells": {
       "record": {
         "kind": 4,
         "simpleAllowedTypes": {
@@ -65,7 +65,7 @@
         "allowUnknownOptionalFields": false
       }
     },
-    "com.fluidframework.table<test>.Row": {
+    "com.fluidframework.tableV2<test>.Row": {
       "object": {
         "kind": 2,
         "fields": {
@@ -81,7 +81,7 @@
           "cells": {
             "kind": 1,
             "simpleAllowedTypes": {
-              "com.fluidframework.table<test>.Row.cells": {
+              "com.fluidframework.tableV2<test>.Row.cells": {
                 "isStaged": false
               }
             },
@@ -100,11 +100,11 @@
         "allowUnknownOptionalFields": true
       }
     },
-    "com.fluidframework.table<test>.Table.rows": {
+    "com.fluidframework.tableV2<test>.Table.rows": {
       "array": {
         "kind": 1,
         "simpleAllowedTypes": {
-          "com.fluidframework.table<test>.Row": {
+          "com.fluidframework.tableV2<test>.Row": {
             "isStaged": false
           }
         }
@@ -127,7 +127,7 @@
         "allowUnknownOptionalFields": false
       }
     },
-    "com.fluidframework.table<test>.Column": {
+    "com.fluidframework.tableV2<test>.Column": {
       "object": {
         "kind": 2,
         "fields": {
@@ -153,24 +153,24 @@
         "allowUnknownOptionalFields": true
       }
     },
-    "com.fluidframework.table<test>.Table.columns": {
+    "com.fluidframework.tableV2<test>.Table.columns": {
       "array": {
         "kind": 1,
         "simpleAllowedTypes": {
-          "com.fluidframework.table<test>.Column": {
+          "com.fluidframework.tableV2<test>.Column": {
             "isStaged": false
           }
         }
       }
     },
-    "com.fluidframework.table<test>.Table": {
+    "com.fluidframework.tableV2<test>.Table": {
       "object": {
         "kind": 2,
         "fields": {
           "rows": {
             "kind": 1,
             "simpleAllowedTypes": {
-              "com.fluidframework.table<test>.Table.rows": {
+              "com.fluidframework.tableV2<test>.Table.rows": {
                 "isStaged": false
               }
             },
@@ -179,7 +179,7 @@
           "columns": {
             "kind": 1,
             "simpleAllowedTypes": {
-              "com.fluidframework.table<test>.Table.columns": {
+              "com.fluidframework.tableV2<test>.Table.columns": {
                 "isStaged": false
               }
             },
@@ -189,14 +189,14 @@
         "allowUnknownOptionalFields": false
       }
     },
-    "com.fluidframework.table<test>.TableRoot": {
+    "com.fluidframework.tableV2<test>.TableRoot": {
       "object": {
         "kind": 2,
         "fields": {
           "table": {
             "kind": 1,
             "simpleAllowedTypes": {
-              "com.fluidframework.table<test>.Table": {
+              "com.fluidframework.tableV2<test>.Table": {
                 "isStaged": false
               }
             },
