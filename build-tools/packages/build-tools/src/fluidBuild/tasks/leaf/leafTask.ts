@@ -176,11 +176,7 @@ export abstract class LeafTask extends Task {
 	protected get useWorker(): boolean {
 		return false;
 	}
-	private recordMetric(
-		outcome: TaskCacheOutcome,
-		startTime?: number,
-		worker?: boolean,
-	): void {
+	private recordMetric(outcome: TaskCacheOutcome, startTime?: number, worker?: boolean): void {
 		this.node.context.buildMetrics.recordTask({
 			taskName: this.taskName ?? this.command,
 			packageName: this.node.pkg.name,

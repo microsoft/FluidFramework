@@ -172,8 +172,7 @@ export class BuildMetrics {
 		if (s.byExecutable.length > 0) {
 			log("  By executable:");
 			for (const eb of s.byExecutable) {
-				const cachedPct =
-					eb.total > 0 ? formatPercent(eb.cached / eb.total) : "0%";
+				const cachedPct = eb.total > 0 ? formatPercent(eb.cached / eb.total) : "0%";
 				log(
 					`    ${eb.executable}: ${eb.total} tasks, ${eb.cached} cached (${cachedPct}), ${eb.miss} miss [${eb.totalExecTimeSeconds.toFixed(1)}s]`,
 				);
@@ -215,9 +214,7 @@ export class BuildMetrics {
 		}
 
 		// Failed tasks
-		const failed = this.records.filter(
-			(r) => r.outcome === TaskCacheOutcome.Failed,
-		);
+		const failed = this.records.filter((r) => r.outcome === TaskCacheOutcome.Failed);
 		if (failed.length > 0) {
 			log(`  Failed (${failed.length} tasks):`);
 			for (const r of failed) {
