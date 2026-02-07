@@ -27,7 +27,7 @@ describe("schema", () => {
 		snapshotSchemaCompatibility({
 			snapshotDirectory,
 			fileSystem: { ...fs, ...path },
-			version: "2.0.0",
+			nextReleaseVersion: "2.0.0",
 			schema: config,
 			minVersionForCollaboration: "2.0.0",
 			mode: regenerateSnapshots ? "update" : "assert",

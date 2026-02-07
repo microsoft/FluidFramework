@@ -9,7 +9,7 @@ import path from "node:path";
 
 import { toPropTreeNode } from "@fluidframework/react/alpha";
 import { render } from "@testing-library/react";
-import { checkSchemaCompatibilitySnapshots } from "fluid-framework/alpha";
+import { snapshotSchemaCompatibility } from "fluid-framework/alpha";
 import globalJsdom from "global-jsdom";
 import * as React from "react";
 
@@ -36,14 +36,14 @@ describe("inventoryApp", () => {
 		);
 		// This app does not actually support a stable document format, so the versions used here are arbitrary.
 		// Despite this, testing the schema for compatibility issues is a useful example of how apps should do this,
-		// and testing the checkSchemaCompatibilitySnapshots API.
-		checkSchemaCompatibilitySnapshots({
+		// and testing the snapshotSchemaCompatibility API.
+		snapshotSchemaCompatibility({
 			snapshotDirectory,
 			fileSystem: { ...fs, ...path },
-			version: "1.0.0",
+			nextReleaseVersion: "1.0.0",
 			schema: treeConfiguration,
 			minVersionForCollaboration: "1.0.0",
-			mode: regenerateSnapshots ? "update" : "test",
+			mode: regenerateSnapshots ? "update" : "assert",
 		});
 	});
 
