@@ -227,6 +227,19 @@ export interface CombinedSchemaCompatibilityStatus {
 	 * How a {@link TreeView} using the snapshotted schema would report its compatibility with a document created with the current schema.
 	 */
 	readonly snapshotViewOfCurrentDocument: Omit<SchemaCompatibilityStatus, "canInitialize">;
+
+	/**
+	 * True if and only if the schema have identical compatibility.
+	 * @remarks
+	 * This includes producing the equivalent stored schema (which currentViewOfSnapshotDocument and snapshotViewOfCurrentDocument also measure)
+	 * as well as equivalent compatibility with potential future schema changes beyond just those in these two schema.
+	 *
+	 * This includes compatibility with all potential future schema changes.
+	 * For example two schema different only in compatibility with future optional fields via allow unknown optional fields or staged schema
+	 * would be considered non-equivalent, even though they are forwards and backwards compatible with each other, and both status above report them as equivalent
+	 * since they would produce the same stored schema upon schema upgrade.
+	 */
+	readonly identicalCompatibility: boolean;
 }
 
 /**
@@ -515,7 +528,7 @@ export function snapshotSchemaCompatibility(
 
 	if (mode !== "assert" && mode !== "update") {
 		throw new UsageError(
-			`Invalid mode: ${JSON.stringify(mode)}. Must be either "test" or "update".`,
+			`Invalid mode: ${JSON.stringify(mode)}. Must be either "assert" or "update".`,
 		);
 	}
 
@@ -532,7 +545,7 @@ export function snapshotSchemaCompatibility(
 				"Schema compatibility check failed:",
 				message,
 				`Snapshots in: ${JSON.stringify(options.snapshotDirectory)}`,
-				`Snapshots exist for versions: ${JSON.stringify([...snapshots.keys()], undefined, 2)}.`,
+				`Snapshots exist for versions: ${JSON.stringify([...snapshots.keys()], undefined, "\t")}.`,
 				...contextNotes,
 			].join("\n"),
 		);
@@ -557,7 +570,7 @@ export function snapshotSchemaCompatibility(
 			const latestCompatibility =
 				compatibilityMap.get(latestSnapshot[0]) ?? fail("missing compatibilityMap entry");
 
-			const schemaChange = !latestCompatibility.currentViewOfSnapshotDocument.isEquivalent;
+			const schemaChange = !latestCompatibility.identicalCompatibility;
 			const versionChange = versionComparer(latestSnapshot[0], currentVersion) !== 0;
 
 			if (rejectVersionsWithNoSchemaChange === true && versionChange && !schemaChange) {
@@ -685,7 +698,7 @@ export function snapshotSchemaCompatibility(
 					`Snapshot version ${JSON.stringify(snapshotVersion)} is semantically equal but not string equal to current version ${JSON.stringify(currentVersion)}: this is not supported.`,
 				);
 			}
-			if (compatibility.currentViewOfSnapshotDocument.isEquivalent === false) {
+			if (compatibility.identicalCompatibility === false) {
 				assert(
 					wouldUpdate !== false,
 					"there should have been an error for the snapshot being out of date",
@@ -737,7 +750,7 @@ export class SnapshotCompatibilityChecker {
 			`${snapshotName}.json`,
 		);
 		this.ensureSnapshotDirectoryExists();
-		this.fileSystemMethods.writeFileSync(fullPath, JSON.stringify(snapshot, undefined, 2), {
+		this.fileSystemMethods.writeFileSync(fullPath, JSON.stringify(snapshot, undefined, "\t"), {
 			encoding: "utf8",
 		});
 	}
@@ -813,8 +826,21 @@ export function getCompatibility(
 		"equality should be symmetric",
 	);
 
+	// This relies on exportCompatibilitySchemaSnapshot being well normalized, and not differing for non-significant changes.
+	const identicalCompatibility =
+		JSON.stringify(exportCompatibilitySchemaSnapshot(currentViewSchema)) ===
+		JSON.stringify(exportCompatibilitySchemaSnapshot(previousViewSchema));
+
+	if (identicalCompatibility) {
+		assert(
+			backwardsCompatibilityStatus.isEquivalent,
+			"identicalCompatibility should have equivalent stored schema",
+		);
+	}
+
 	return {
 		currentViewOfSnapshotDocument: backwardsCompatibilityStatus,
 		snapshotViewOfCurrentDocument: forwardsCompatibilityStatus,
+		identicalCompatibility,
 	};
 }
