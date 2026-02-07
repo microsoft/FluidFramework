@@ -235,8 +235,13 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 	 * Clean up resources associated with this storage service.
 	 */
 	public dispose(): void {
-		this.blobCache?.clear();
-		this.snapshotTreeCache?.clear();
+		// Use removeByPrefix to only remove entries belonging to this document
+		// (keyed as `${this.id}:...`). The blobCache and snapshotTreeCache are
+		// shared across all documents via the factory, so clear() would wipe
+		// cached data for other active documents.
+		const prefix = `${this.id}:`;
+		this.blobCache?.removeByPrefix(prefix);
+		this.snapshotTreeCache?.removeByPrefix(prefix);
 		this.blobsShaCache.clear();
 	}
 }

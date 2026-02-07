@@ -68,4 +68,20 @@ describe("InMemoryCache", () => {
 		assert.equal(await cache.get("key2"), undefined, "key2 should be removed");
 		assert.equal(await cache.get("key3"), undefined, "key3 should be removed");
 	});
+
+	it("removeByPrefix removes only entries with matching prefix", async () => {
+		cache = new InMemoryCache<number>();
+
+		await cache.put("doc1:blob1", 1);
+		await cache.put("doc1:blob2", 2);
+		await cache.put("doc2:blob1", 3);
+		await cache.put("doc2:blob2", 4);
+
+		cache.removeByPrefix("doc1:");
+
+		assert.equal(await cache.get("doc1:blob1"), undefined, "doc1:blob1 should be removed");
+		assert.equal(await cache.get("doc1:blob2"), undefined, "doc1:blob2 should be removed");
+		assert.equal(await cache.get("doc2:blob1"), 3, "doc2:blob1 should remain");
+		assert.equal(await cache.get("doc2:blob2"), 4, "doc2:blob2 should remain");
+	});
 });
