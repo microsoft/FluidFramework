@@ -403,10 +403,14 @@ export function rebaseChangeOverChanges<TChange>(
 		getRevInfoFromTaggedChanges([...changesToRebaseOver, changeToRebase]),
 	);
 
-	return changesToRebaseOver.reduce(
-		(a, b) => mapTaggedChange(changeToRebase, changeRebaser.rebase(a, b, revisionMetadata)),
-		changeToRebase,
-	).change;
+	let result = changeToRebase;
+	for (const b of changesToRebaseOver) {
+		result = mapTaggedChange(
+			changeToRebase,
+			changeRebaser.rebase(result, b, revisionMetadata),
+		);
+	}
+	return result.change;
 }
 
 // TODO: Deduplicate

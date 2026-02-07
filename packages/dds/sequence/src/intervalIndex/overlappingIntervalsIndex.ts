@@ -17,7 +17,7 @@ import {
 } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
-import { type SequenceIntervalIndex } from "./intervalIndex.js";
+import type { SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
  * @legacy @beta
@@ -168,6 +168,8 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 }
 
 /**
+ * Creates an overlapping intervals index for the provided SharedString.
+ *
  * @legacy @beta
  */
 export function createOverlappingIntervalsIndex(

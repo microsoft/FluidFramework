@@ -246,12 +246,16 @@ export const Change = {
 	/** Helpers for making high-level composite operations */
 
 	/**
-	 * @returns a change that deletes the supplied part of the tree.
+	 * Deletes a range of nodes from the tree.
+	 *
+	 * @returns A change that deletes the supplied part of the tree.
 	 */
 	delete: (stableRange: StableRange): Change => Change.detach(stableRange),
 
 	/**
-	 * @returns changes that insert 'nodes' into the specified location in the tree.
+	 * Inserts nodes into the tree at the specified location.
+	 *
+	 * @returns The changes that insert 'nodes' into the specified location in the tree.
 	 */
 	insertTree: (nodes: BuildNode | TreeNodeSequence<BuildNode>, destination: StablePlace): Change[] => {
 		const build = Change.build(nodes, 0);
@@ -259,7 +263,9 @@ export const Change = {
 	},
 
 	/**
-	 * @returns changes that moves the specified content to a new location in the tree.
+	 * Moves nodes from one location to another in the tree.
+	 *
+	 * @returns The changes that moves the specified content to a new location in the tree.
 	 */
 	move: (source: StableRange, destination: StablePlace): Change[] => {
 		const detach = Change.detach(source, 0);
@@ -348,6 +354,8 @@ export interface StableRange {
  */
 export const StablePlace = {
 	/**
+	 * Creates a stable place representing the location directly before a node.
+	 *
 	 * @returns The location directly before `node`.
 	 */
 	before: (node: NodeData<NodeId> | NodeId): StablePlace => ({
@@ -355,6 +363,8 @@ export const StablePlace = {
 		referenceSibling: getNodeId(node),
 	}),
 	/**
+	 * Creates a stable place representing the location directly after a node.
+	 *
 	 * @returns The location directly after `node`.
 	 */
 	after: (node: NodeData<NodeId> | NodeId): StablePlace => ({
@@ -362,6 +372,8 @@ export const StablePlace = {
 		referenceSibling: getNodeId(node),
 	}),
 	/**
+	 * Creates a stable place representing the location at the start of a trait.
+	 *
 	 * @returns The location at the start of `trait`.
 	 */
 	atStartOf: (trait: TraitLocation): StablePlace => ({
@@ -369,6 +381,8 @@ export const StablePlace = {
 		referenceTrait: trait,
 	}),
 	/**
+	 * Creates a stable place representing the location at the end of a trait.
+	 *
 	 * @returns The location at the end of `trait`.
 	 */
 	atEndOf: (trait: TraitLocation): StablePlace => ({
@@ -407,7 +421,9 @@ export const StableRange = {
 		},
 	}),
 	/**
-	 * @returns a `StableRange` which contains only the provided `node`.
+	 * Creates a `StableRange` which contains only the provided `node`.
+	 *
+	 * @remarks
 	 * Both the start and end `StablePlace` objects used to anchor this `StableRange` are in terms of the passed in node.
 	 */
 	only: (node: NodeData<NodeId> | NodeId): StableRange => ({
@@ -415,7 +431,9 @@ export const StableRange = {
 		end: StablePlace.after(node),
 	}),
 	/**
-	 * @returns a `StableRange` which contains everything in the trait.
+	 * Creates a `StableRange` which contains everything in the trait.
+	 *
+	 * @remarks
 	 * This is anchored using the provided `trait`, and is independent of the actual contents of the trait:
 	 * it does not use sibling anchoring.
 	 */

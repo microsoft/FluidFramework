@@ -8,7 +8,7 @@ import { tsCompile } from "../tsCompile";
 
 const { log, errorLog: error } = defaultLogger;
 
-function printUsage() {
+function printUsage(): void {
 	log(
 		`
 Runs tsc using arguments given in an environment where local package.json "type" property is overridden. This enables single package to support both CommonJS and ESM.
@@ -24,12 +24,12 @@ Example: fluid-tsc commonjs --project tsconfig.cjs.json
 	);
 }
 
-async function main() {
+async function main(): Promise<void> {
 	const firstArg = process.argv[2];
 
 	if (firstArg === "-?" || firstArg === "--help") {
 		printUsage();
-		process.exit(0);
+		return;
 	}
 
 	if (firstArg !== "commonjs" && firstArg !== "module") {
@@ -45,12 +45,15 @@ async function main() {
 	);
 	// In watch mode, there is no result code and the process must be left to continue running.
 	if (result !== undefined) {
+		// eslint-disable-next-line unicorn/no-process-exit -- CLI entrypoint: return tsc result code to caller
 		process.exit(result);
 	}
 }
 
-main().catch((e) => {
+// eslint-disable-next-line unicorn/prefer-top-level-await -- top-level await requires ESM; this package emits CommonJS
+main().catch((e): void => {
 	error(`Unexpected error. ${e.message}`);
 	error(e.stack);
+	// eslint-disable-next-line unicorn/no-process-exit -- CLI entrypoint: exit with error code on unhandled exception
 	process.exit(1);
 });

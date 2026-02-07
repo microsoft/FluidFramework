@@ -4,15 +4,23 @@
  */
 
 import { strict as assert, fail } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
+import {
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
+	Tree,
+	type TreeCheckout,
+} from "../../shared-tree/index.js";
 import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -28,6 +36,12 @@ import {
 	toUpgradeSchema,
 	SchemaFactoryBeta,
 } from "../../simple-tree/index.js";
+import type { Mutable } from "../../util/index.js";
+import { brand } from "../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { fieldJsonCursor } from "../json/index.js";
+import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
+import { testDocumentIndependentView } from "../testTrees.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
@@ -37,19 +51,6 @@ import {
 	validateViewConsistency,
 	type TreeStoredContentStrict,
 } from "../utils.js";
-import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
-import {
-	ForestTypeExpensiveDebug,
-	ForestTypeReference,
-	Tree,
-	type TreeCheckout,
-} from "../../shared-tree/index.js";
-import type { Mutable } from "../../util/index.js";
-import { brand } from "../../util/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
-import { testDocumentIndependentView } from "../testTrees.js";
-import { fieldJsonCursor } from "../json/index.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -1113,6 +1114,180 @@ describe("SchematizingSimpleTreeView", () => {
 
 				stack.unsubscribe();
 			});
+		});
+	});
+
+	describe("transaction labels", () => {
+		it("exposes label via CommitMetadataAlpha during commitApplied", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const testLabel = "testLabel";
+			const runTransactionResult = view.runTransaction(
+				() => {
+					view.root.content = 0;
+				},
+				{ label: testLabel },
+			);
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [testLabel]);
+		});
+
+		it("CommitMetadataAlpha.label is undefined for unlabeled transactions", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const runTransactionResult = view.runTransaction(() => {
+				view.root.content = 0;
+			});
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+			assert.equal(view.root.content, 0);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [undefined]);
+		});
+
+		it("exposes the correct labels for multiple transactions", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const testLabel1 = "testLabel1";
+			const runTransactionResult1 = view.runTransaction(
+				() => {
+					view.root.content = 0;
+				},
+				{ label: testLabel1 },
+			);
+
+			// run second transaction with no label
+			const runTransactionResult2 = view.runTransaction(() => {
+				view.root.content = 1;
+			});
+
+			const testLabel3 = "testLabel3";
+			const runTransactionResult3 = view.runTransaction(
+				() => {
+					view.root.content = 2;
+				},
+				{ label: testLabel3 },
+			);
+			// Check that transactions were applied.
+			assert.equal(runTransactionResult1.success, true);
+			assert.equal(runTransactionResult2.success, true);
+			assert.equal(runTransactionResult3.success, true);
+
+			// Check that correct label was exposed.
+			assert.deepEqual(labels, [testLabel1, undefined, testLabel3]);
+		});
+
+		it("nested transactions only expose outer label", () => {
+			const view = getTestObjectView();
+
+			const labels: unknown[] = [];
+
+			view.checkout.events.on("changed", (meta) => {
+				labels.push(meta.label);
+			});
+
+			const outerLabel = "outerLabel";
+			const innerLabel1 = "innerLabel1";
+			const innerLabel2 = "innerLabel2";
+
+			const runTransactionResult = view.runTransaction(
+				() => {
+					view.root.content = 1;
+
+					// Nested transaction with different label
+					view.runTransaction(
+						() => {
+							view.root.content = 2;
+						},
+						{ label: innerLabel1 },
+					);
+
+					view.root.content = 3;
+
+					// Another nested transaction with different label
+					view.runTransaction(
+						() => {
+							view.root.content = 4;
+						},
+						{ label: innerLabel2 },
+					);
+				},
+				{ label: outerLabel },
+			);
+
+			// Check that transaction was applied.
+			assert.equal(runTransactionResult.success, true);
+			assert.equal(view.root.content, 4);
+
+			// Check that only the outer label was exposed, not the inner labels
+			assert.deepEqual(labels, [outerLabel]);
+		});
+
+		it("separate views maintain independent transaction labels", () => {
+			const view1 = getTestObjectView();
+			const view2 = getTestObjectView();
+
+			const labels1: unknown[] = [];
+			const labels2: unknown[] = [];
+
+			view1.checkout.events.on("changed", (meta) => {
+				labels1.push(meta.label);
+			});
+
+			view2.checkout.events.on("changed", (meta) => {
+				labels2.push(meta.label);
+			});
+
+			const label1 = "view1Label";
+			const label2 = "view2Label";
+
+			// Start a transaction in view1 with label1
+			view1.runTransaction(
+				() => {
+					view1.root.content = 1;
+
+					// Nested transaction in view2 with label2 (within view1's transaction)
+					view2.runTransaction(
+						() => {
+							view2.root.content = 100;
+						},
+						{ label: label2 },
+					);
+
+					view1.root.content = 2;
+				},
+				{ label: label1 },
+			);
+
+			// Check that view1 only shows its label
+			assert.deepEqual(labels1, [label1]);
+
+			// Check that view2 shows its own label (not view1's label)
+			assert.deepEqual(labels2, [label2]);
 		});
 	});
 });

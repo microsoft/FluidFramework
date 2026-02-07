@@ -4,21 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { Tree } from "../../../shared-tree/index.js";
 import {
 	TreeNode,
 	inPrototypeChain,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/core/treeNode.js";
-
 import {
 	typeNameSymbol,
 	typeSchemaSymbol,
 	type TreeNodeSchema,
 	SchemaFactory,
 } from "../../../simple-tree/index.js";
-import { Tree } from "../../../shared-tree/index.js";
 
 describe("simple-tree core types", () => {
 	describe("TreeNode", () => {

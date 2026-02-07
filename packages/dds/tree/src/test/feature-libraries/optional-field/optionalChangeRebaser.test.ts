@@ -6,7 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
-import type { CrossFieldManager } from "../../../feature-libraries/index.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
@@ -19,6 +20,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
+import type { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
 	DefaultRevisionReplacer,
 	type FieldChangeDelta,
@@ -31,18 +33,22 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
-	type OptionalChangeset,
 	optionalChangeRebaser,
 	optionalFieldEditor,
 	optionalFieldIntoDelta,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/optional-field/index.js";
+} from "../../../feature-libraries/optional-field/optionalField.js";
+import type {
+	OptionalChangeset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import {
 	brand,
 	forEachInNestedMap,
 	idAllocatorFromMaxId,
 	setInNestedMap,
 } from "../../../util/index.js";
+import { ChangesetWrapper } from "../../changesetWrapper.js";
 import {
 	type ChildStateGenerator,
 	type FieldStateTree,
@@ -56,15 +62,14 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 // since OptionalChangeset is not generic over the child changeset type.
 // Search this file for "as any" and "as NodeChangeset"
 import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 import {
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
 } from "../../utils.js";
-import { TestNodeId } from "../../testNodeId.js";
+
 import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
-import { ChangesetWrapper } from "../../changesetWrapper.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -227,12 +232,15 @@ function rebaseComposedWrapped(
 	change: TaggedChange<WrappedChangeset>,
 	...baseChanges: TaggedChange<WrappedChangeset>[]
 ): WrappedChangeset {
-	const composed =
-		baseChanges.length === 0
-			? makeAnonChange(ChangesetWrapper.create(Change.empty()))
-			: baseChanges.reduce((change1, change2) =>
-					makeAnonChange(composeWrapped(change1, change2)),
-				);
+	let composed: TaggedChange<WrappedChangeset>;
+	if (baseChanges.length === 0) {
+		composed = makeAnonChange(ChangesetWrapper.create(Change.empty()));
+	} else {
+		composed = baseChanges[0];
+		for (let i = 1; i < baseChanges.length; i++) {
+			composed = makeAnonChange(composeWrapped(composed, baseChanges[i]));
+		}
+	}
 
 	return rebaseWrapped(change, composed, metadata);
 }
@@ -549,7 +557,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	});
 }
 
-export function testRebaserAxioms() {
+export function testRebaserAxioms(): void {
 	describe("Rebaser Axioms", () => {
 		describe("Using valid edits from an undefined field", () => {
 			runSingleEditRebaseAxiomSuite({ content: undefined });

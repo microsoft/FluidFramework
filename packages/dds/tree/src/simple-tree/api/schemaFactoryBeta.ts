@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { RestrictiveStringRecord } from "../../util/index.js";
+// eslint-disable-next-line unused-imports/no-unused-imports, import-x/no-duplicates -- This import prevents a large number of type references in the API reports from showing up as *_2.
+import type { RestrictiveStringRecord as _RestrictiveStringRecord } from "../../util/index.js";
 import {
 	AnnotatedAllowedTypesInternal,
 	createSchemaUpgrade,
@@ -19,7 +22,17 @@ import {
 	type TreeNodeSchemaNonClass,
 	type WithType,
 } from "../core/index.js";
-
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
+/* eslint-disable unused-imports/no-unused-imports, import-x/no-duplicates -- These imports prevent a large number of type references in the API reports from showing up as *_2. */
+import type {
+	FieldProps as _FieldProps,
+	FieldSchemaAlpha as _FieldSchemaAlpha,
+	FieldPropsAlpha as _FieldPropsAlpha,
+	FieldKind as _FieldKind,
+	ImplicitFieldSchema as _ImplicitFieldSchema,
+} from "../fieldSchema.js";
+import type { LeafSchema as _LeafSchema } from "../leafNodeSchema.js";
+/* eslint-enable unused-imports/no-unused-imports, import-x/no-duplicates */
 import {
 	objectSchema,
 	recordSchema,
@@ -28,6 +41,9 @@ import {
 	type TreeObjectNode,
 	type TreeRecordNode,
 } from "../node-kinds/index.js";
+// eslint-disable-next-line unused-imports/no-unused-imports -- This import prevents a large number of type references in the API reports from showing up as *_2.
+import type { SimpleLeafNodeSchema as _SimpleLeafNodeSchema } from "../simpleSchema.js";
+
 import {
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
@@ -45,20 +61,6 @@ import type {
 	UnannotateAllowedTypeUnsafe,
 	Unenforced,
 } from "./typesUnsafe.js";
-
-// These imports prevent a large number of type references in the API reports from showing up as *_2.
-/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
-import type {
-	FieldProps,
-	FieldSchemaAlpha,
-	FieldPropsAlpha,
-	FieldKind,
-	ImplicitFieldSchema,
-} from "../fieldSchema.js";
-import type { LeafSchema } from "../leafNodeSchema.js";
-import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
-import type { RestrictiveStringRecord } from "../../util/index.js";
-/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 
 /**
  * Stateless APIs exposed via {@link SchemaFactoryBeta} as both instance properties and as statics.
@@ -260,7 +262,7 @@ export class SchemaFactoryBeta<
 	> {
 		return objectSchema(scoped<TScope, TName, Name>(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
-			...(options ?? {}),
+			...options,
 		});
 	}
 

@@ -128,9 +128,7 @@ export interface AnchorEvents {
 	 *
 	 * Compare to {@link AnchorEvents.childrenChanged} which is emitted in the middle of the batch/delta-visit.
 	 */
-	childrenChangedAfterBatch(arg: {
-		changedFields: ReadonlySet<FieldKey>;
-	}): void;
+	childrenChangedAfterBatch(arg: { changedFields: ReadonlySet<FieldKey> }): void;
 
 	/**
 	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
@@ -1005,7 +1003,7 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 	/**
 	 * Event emitter for this anchor.
 	 */
-	public readonly events = createEmitter<AnchorEvents>(() => this.considerDispose());
+	public readonly events = createEmitter<AnchorEvents>(this.considerDispose.bind(this));
 
 	/**
 	 * PathNode arrays are kept sorted the PathNode's parentIndex for efficient search.
@@ -1210,6 +1208,7 @@ class PathNode extends ReferenceCountedBase implements AnchorNode {
 function binaryFind(sorted: readonly PathNode[], index: number): PathNode | undefined {
 	// Try guessing the list is not sparse as a starter:
 	const guess = sorted[index];
+	// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 	if (guess !== undefined && guess.parentIndex === index) {
 		return guess;
 	}

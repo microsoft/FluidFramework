@@ -3,21 +3,32 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
+import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import type {
 	FieldKey,
 	FieldKindIdentifier,
 	RevisionInfo,
 	RevisionMetadataSource,
 } from "../../../core/index.js";
-import type {
-	ChangeAtomIdBTree,
-	CrossFieldManager,
-	FieldChangeHandler,
-	FieldChangeMap,
-	ModularChangeFamily,
-	ModularChangeset,
-	NodeId,
+import {
+	type ChangeAtomIdBTree,
+	type CrossFieldManager,
+	type FieldChangeHandler,
+	type FieldChangeMap,
+	type ModularChangeFamily,
+	type ModularChangeset,
+	newChangeAtomIdBTree,
+	type NodeId,
 } from "../../../feature-libraries/index.js";
+import {
+	getChangeHandler,
+	getParentFieldId,
+	normalizeFieldId,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	newCrossFieldKeyTable,
 	type CrossFieldKeyTable,
@@ -31,17 +42,8 @@ import {
 	type Mutable,
 	brand,
 	idAllocatorFromMaxId,
-	newTupleBTree,
 } from "../../../util/index.js";
-import {
-	getChangeHandler,
-	getParentFieldId,
-	normalizeFieldId,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 
 export const Change = {
 	build,
@@ -73,9 +75,9 @@ export function assertEqual<T>(actual: T, expected: T): void {
 function empty(): ModularChangeset {
 	return {
 		fieldChanges: new Map(),
-		nodeChanges: newTupleBTree(),
-		nodeToParent: newTupleBTree(),
-		nodeAliases: newTupleBTree(),
+		nodeChanges: newChangeAtomIdBTree(),
+		nodeToParent: newChangeAtomIdBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 		crossFieldKeys: newCrossFieldKeyTable(),
 	};
 }
@@ -111,8 +113,8 @@ interface BuildArgs {
 }
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
-	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
-	const nodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
+	const nodeChanges = newChangeAtomIdBTree<NodeChangeset>();
+	const nodeToParent = newChangeAtomIdBTree<FieldId>();
 	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
 
 	const idAllocator = idAllocatorFromMaxId();
@@ -132,7 +134,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 		fieldChanges,
 		nodeToParent,
 		crossFieldKeys,
-		nodeAliases: newTupleBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 		maxId: brand(args.maxId ?? idAllocator.getMaxId()),
 	};
 
@@ -160,22 +162,20 @@ function fieldChangeMapFromDescription(
 			field: field.fieldKey,
 		};
 
-		const fieldChangeset = field.children.reduce(
-			(change: unknown, nodeDescription: NodeChangesetDescription) =>
-				addNodeToField(
-					family,
-					change,
-					nodeDescription,
-					fieldId,
-					changeHandler,
-					nodes,
-					nodeToParent,
-					crossFieldKeys,
-					idAllocator,
-				),
-
-			field.changeset,
-		);
+		let fieldChangeset: unknown = field.changeset;
+		for (const nodeDescription of field.children) {
+			fieldChangeset = addNodeToField(
+				family,
+				fieldChangeset,
+				nodeDescription,
+				fieldId,
+				changeHandler,
+				nodes,
+				nodeToParent,
+				crossFieldKeys,
+				idAllocator,
+			);
+		}
 
 		for (const { key, count } of changeHandler.getCrossFieldKeys(fieldChangeset)) {
 			crossFieldKeys.set(key, count, fieldId);
@@ -270,6 +270,6 @@ export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 		...changeset,
 		nodeToParent: brand(updatedNodeToParent),
 		crossFieldKeys: updatedCrossFieldKeys,
-		nodeAliases: newTupleBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 	};
 }

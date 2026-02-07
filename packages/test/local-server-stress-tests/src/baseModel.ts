@@ -7,10 +7,8 @@ import * as path from "node:path";
 
 import {
 	type AsyncGenerator,
-	type AsyncWeights,
 	type BaseOperation,
 	combineReducersAsync,
-	createWeightedAsyncGenerator,
 	done,
 	isOperationType,
 	type MinimizationTransform,
@@ -28,7 +26,11 @@ import {
 	type OrderSequentially,
 } from "./ddsOperations";
 import { _dirname } from "./dirname.cjs";
-import { type LocalServerStressState } from "./localServerStressHarness";
+import {
+	createWeightedAsyncGeneratorWithDynamicWeights,
+	type DynamicAsyncWeights,
+} from "./dynamicWeightGenerator.js";
+import type { LocalServerStressState } from "./localServerStressHarness";
 import type { StressDataObjectOperations } from "./stressDataObject.js";
 
 export type StressOperations = StressDataObjectOperations | DDSModelOp | OrderSequentially;
@@ -76,9 +78,9 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 });
 
 export function makeGenerator<T extends BaseOperation>(
-	additional: AsyncWeights<T, LocalServerStressState> = [],
+	additional: DynamicAsyncWeights<T, LocalServerStressState> = [],
 ): AsyncGenerator<StressOperations | T, LocalServerStressState> {
-	const asyncGenerator = createWeightedAsyncGenerator<
+	const asyncGenerator = createWeightedAsyncGeneratorWithDynamicWeights<
 		StressOperations | T,
 		LocalServerStressState
 	>([

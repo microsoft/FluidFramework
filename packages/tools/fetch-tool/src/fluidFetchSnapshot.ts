@@ -245,7 +245,9 @@ async function saveSnapshot(
 					if (!paramActualFormatting) {
 						decoded = JSON.stringify(JSON.parse(decoded), undefined, 2);
 					}
-				} catch (e) {}
+				} catch (e) {
+					// TODO: document why we are ignoring the error here
+				}
 				fs.writeFileSync(`${outDir}/decoded/${item.filename}.json`, decoded);
 			} else {
 				// Write out same data for tree decoded or not, except for formatting
@@ -383,6 +385,7 @@ export async function fluidFetchSnapshot(
 		if (version === undefined) {
 			console.log("No snapshot tree");
 		} else {
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 			if (blobsToDump === undefined) {
 				blobsToDump = await fetchBlobsFromVersion(storage, version);
 			}

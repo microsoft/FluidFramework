@@ -76,6 +76,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 	}
 
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ?? could change behavior for falsy values
 		const id = versionId ? versionId : this.id;
 		const commits = await PerformanceEvent.timedExecAsync(
 			this.logger,

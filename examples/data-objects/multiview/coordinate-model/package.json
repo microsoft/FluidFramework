@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-coordinate-model",
-	"version": "2.81.0",
+	"version": "2.83.0",
 	"private": true,
 	"description": "Coordinate model for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -44,7 +44,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.62.0",
+		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",

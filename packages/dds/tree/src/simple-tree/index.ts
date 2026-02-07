@@ -197,6 +197,10 @@ export {
 	checkCompatibility,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
+	checkSchemaCompatibilitySnapshots,
+	type SnapshotFileSystem,
+	type SchemaCompatibilitySnapshotsOptions,
+	createCustomizedFluidFrameworkScopedFactory,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -263,6 +267,8 @@ export {
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
 	type TreeRecordNode,
+	type ArrayPlaceAnchor,
+	createArrayInsertionAnchor,
 } from "./node-kinds/index.js";
 export {
 	unhydratedFlexTreeFromInsertable,

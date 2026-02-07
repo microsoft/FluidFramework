@@ -5,7 +5,7 @@
 ```ts
 
 // @alpha
-export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string, type: T];
+export type Arg<T extends z.ZodTypeAny | TypeFactoryType = z.ZodTypeAny | TypeFactoryType> = readonly [name: string, type: T];
 
 // @alpha
 export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg] ? [Single[1]] : T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]] ? [Head[1], ...ArgsTuple<Tail>] : never;
@@ -17,7 +17,7 @@ export type AsynchronousEditor<TSchema extends ImplicitFieldSchema> = (tree: Vie
 export type BindableSchema = TreeNodeSchema<string, NodeKind.Object> | TreeNodeSchema<string, NodeKind.Record> | TreeNodeSchema<string, NodeKind.Array> | TreeNodeSchema<string, NodeKind.Map>;
 
 // @alpha
-export function buildFunc<const Return extends z.ZodTypeAny, const Args extends readonly Arg[], const Rest extends z.ZodTypeAny | null = null>(def: {
+export function buildFunc<const Return extends z.ZodTypeAny | TypeFactoryType, const Args extends readonly Arg[], const Rest extends z.ZodTypeAny | TypeFactoryType | null = null>(def: {
     description?: string;
     returns: Return;
     rest?: Rest;
@@ -53,19 +53,23 @@ export type ExposableKeys<T> = {
 
 // @alpha
 export interface ExposedMethods {
-    // (undocumented)
-    expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends BindableSchema & Ctor<Record<K, Infer<Z>>> & IExposedMethods, Z extends FunctionDef<any, any, any>>(schema: S, methodName: K, zodFunction: Z): void;
+    expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends BindableSchema & Ctor<Record<K, InferZod<Z>>> & IExposedMethods, Z extends FunctionDef<readonly Arg<z.ZodTypeAny>[], z.ZodTypeAny, z.ZodTypeAny | null>>(schema: S, methodName: K, zodFunction: Z): void;
+    expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends BindableSchema & Ctor & IExposedMethods, Z extends FunctionDef<readonly Arg<TypeFactoryType>[], TypeFactoryType, TypeFactoryType | null>>(schema: S, methodName: K, tfFunction: Z): void;
     instanceOf<T extends TreeNodeSchemaClass>(schema: T): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>>;
 }
 
 // @alpha
 export interface ExposedProperties {
-    // (undocumented)
     exposeProperty<S extends BindableSchema & Ctor, K extends string & ExposableKeys<InstanceType<S>>, TZ extends ZodTypeAny>(schema: S, name: K, def: {
         schema: TZ;
         description?: string;
     } & ReadOnlyRequirement<InstanceType<S>, K> & TypeMatchOrError<InstanceType<S>[K], infer<TZ>>): void;
-    // (undocumented)
+    exposeProperty<S extends BindableSchema & Ctor, K extends string & ExposableKeys<InstanceType<S>>>(schema: S, name: K, def: {
+        schema: TypeFactoryType;
+        description?: string;
+        readOnly?: boolean;
+    }): void;
+    exposeProperty<S extends BindableSchema & Ctor, K extends string & ExposableKeys<InstanceType<S>>>(schema: S, name: K, tfType: TypeFactoryType): void;
     instanceOf<T extends TreeNodeSchemaClass>(schema: T): ZodType<InstanceType<T>, ZodTypeDef, InstanceType<T>>;
 }
 
@@ -76,34 +80,43 @@ export const exposeMethodsSymbol: unique symbol;
 export const exposePropertiesSymbol: unique symbol;
 
 // @alpha
-export interface FunctionDef<Args extends readonly Arg[], Return extends z.ZodTypeAny, Rest extends z.ZodTypeAny | null = null> {
-    // (undocumented)
+export interface FunctionDef<Args extends readonly Arg[], Return extends z.ZodTypeAny | TypeFactoryType, Rest extends z.ZodTypeAny | TypeFactoryType | null = null> {
     args: Args;
-    // (undocumented)
     description?: string;
-    // (undocumented)
     rest?: Rest;
-    // (undocumented)
     returns: Return;
 }
 
 // @alpha
 export interface IExposedMethods {
-    // (undocumented)
     [exposeMethodsSymbol](methods: ExposedMethods): void;
 }
 
 // @alpha
 export interface IExposedProperties {
-    // (undocumented)
     [exposePropertiesSymbol]?(properties: ExposedProperties): void;
 }
 
 // @alpha
 export type IfEquals<X, Y, A = true, B = false> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? A : B;
 
+// @alpha @deprecated
+export type Infer<T> = T extends FunctionDef<readonly Arg[], infer Return, any> ? Return extends z.ZodTypeAny ? InferZod<T> : InferTypeFactory<T> : never;
+
 // @alpha
-export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest> ? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>> : never;
+export type InferArgsZod<Args extends readonly Arg<z.ZodTypeAny>[]> = Args extends readonly [
+infer Head extends Arg<z.ZodTypeAny>,
+...infer Tail extends readonly Arg<z.ZodTypeAny>[]
+] ? [z.infer<Head[1]>, ...InferArgsZod<Tail>] : [];
+
+// @alpha
+export type InferTypeFactory<T> = T extends FunctionDef<readonly Arg[], infer Return, any> ? (...args: any[]) => any : never;
+
+// @alpha
+export type InferZod<T> = T extends FunctionDef<infer Args extends readonly Arg<z.ZodTypeAny>[], infer Return extends z.ZodTypeAny, any> ? (...args: InferArgsZod<Args>) => z.infer<Return> : never;
+
+// @alpha
+export function isTypeFactoryType(value: unknown): value is TypeFactoryType;
 
 // @alpha
 export const llmDefault: unique symbol;
@@ -120,15 +133,15 @@ export type MethodKeys<T> = {
 
 // @alpha
 export class PropertyDef {
-    constructor(name: string, description: string | undefined, schema: ZodTypeAny, readOnly: boolean);
-    // (undocumented)
+    constructor(
+    name: string,
+    description: string | undefined,
+    schema: ZodTypeAny | TypeFactoryType,
+    readOnly: boolean);
     readonly description: string | undefined;
-    // (undocumented)
     readonly name: string;
-    // (undocumented)
     readonly readOnly: boolean;
-    // (undocumented)
-    readonly schema: ZodTypeAny;
+    readonly schema: ZodTypeAny | TypeFactoryType;
 }
 
 // @alpha
@@ -182,6 +195,165 @@ export type SynchronousEditor<TSchema extends ImplicitFieldSchema> = (tree: View
 
 // @alpha
 export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranchAlpha;
+
+// @alpha
+export const typeFactory: {
+    string(): TypeFactoryString;
+    number(): TypeFactoryNumber;
+    boolean(): TypeFactoryBoolean;
+    date(): TypeFactoryDate;
+    void(): TypeFactoryVoid;
+    undefined(): TypeFactoryUndefined;
+    null(): TypeFactoryNull;
+    unknown(): TypeFactoryUnknown;
+    array(element: TypeFactoryType): TypeFactoryArray;
+    promise(innerType: TypeFactoryType): TypeFactoryPromise;
+    object(shape: Record<string, TypeFactoryType>): TypeFactoryObject;
+    record(keyType: TypeFactoryType, valueType: TypeFactoryType): TypeFactoryRecord;
+    map(keyType: TypeFactoryType, valueType: TypeFactoryType): TypeFactoryMap;
+    tuple(items: readonly TypeFactoryType[], rest?: TypeFactoryType): TypeFactoryTuple;
+    union(options: readonly TypeFactoryType[]): TypeFactoryUnion;
+    intersection(types: readonly TypeFactoryType[]): TypeFactoryIntersection;
+    literal(value: string | number | boolean): TypeFactoryLiteral;
+    optional(innerType: TypeFactoryType): TypeFactoryOptional;
+    readonly(innerType: TypeFactoryType): TypeFactoryReadonly;
+    function(parameters: readonly TypeFactoryFunctionParameter[], returnType: TypeFactoryType, restParameter?: TypeFactoryFunctionParameter): TypeFactoryFunction;
+    instanceOf<T extends TreeNodeSchemaClass_2>(schema: T): TypeFactoryInstanceOf;
+};
+
+// @alpha
+export interface TypeFactoryArray extends TypeFactoryType {
+    readonly element: TypeFactoryType;
+    readonly _kind: "array";
+}
+
+// @alpha
+export interface TypeFactoryBoolean extends TypeFactoryType {
+    readonly _kind: "boolean";
+}
+
+// @alpha
+export interface TypeFactoryDate extends TypeFactoryType {
+    readonly _kind: "date";
+}
+
+// @alpha
+export interface TypeFactoryFunction extends TypeFactoryType {
+    readonly _kind: "function";
+    readonly parameters: readonly TypeFactoryFunctionParameter[];
+    readonly restParameter?: TypeFactoryFunctionParameter;
+    readonly returnType: TypeFactoryType;
+}
+
+// @alpha
+export type TypeFactoryFunctionParameter = readonly [name: string, type: TypeFactoryType];
+
+// @alpha
+export interface TypeFactoryInstanceOf extends TypeFactoryType {
+    readonly _kind: "instanceof";
+    readonly schema: ObjectNodeSchema;
+}
+
+// @alpha
+export interface TypeFactoryIntersection extends TypeFactoryType {
+    readonly _kind: "intersection";
+    readonly types: readonly TypeFactoryType[];
+}
+
+// @alpha
+export interface TypeFactoryLiteral extends TypeFactoryType {
+    readonly _kind: "literal";
+    readonly value: string | number | boolean;
+}
+
+// @alpha
+export interface TypeFactoryMap extends TypeFactoryType {
+    readonly keyType: TypeFactoryType;
+    readonly _kind: "map";
+    readonly valueType: TypeFactoryType;
+}
+
+// @alpha
+export interface TypeFactoryNull extends TypeFactoryType {
+    readonly _kind: "null";
+}
+
+// @alpha
+export interface TypeFactoryNumber extends TypeFactoryType {
+    readonly _kind: "number";
+}
+
+// @alpha
+export interface TypeFactoryObject extends TypeFactoryType {
+    readonly _kind: "object";
+    readonly shape: Record<string, TypeFactoryType>;
+}
+
+// @alpha
+export interface TypeFactoryOptional extends TypeFactoryType {
+    readonly innerType: TypeFactoryType;
+    readonly _kind: "optional";
+}
+
+// @alpha
+export interface TypeFactoryPromise extends TypeFactoryType {
+    readonly innerType: TypeFactoryType;
+    readonly _kind: "promise";
+}
+
+// @alpha
+export interface TypeFactoryReadonly extends TypeFactoryType {
+    readonly innerType: TypeFactoryType;
+    readonly _kind: "readonly";
+}
+
+// @alpha
+export interface TypeFactoryRecord extends TypeFactoryType {
+    readonly keyType: TypeFactoryType;
+    readonly _kind: "record";
+    readonly valueType: TypeFactoryType;
+}
+
+// @alpha
+export interface TypeFactoryString extends TypeFactoryType {
+    readonly _kind: "string";
+}
+
+// @alpha
+export interface TypeFactoryTuple extends TypeFactoryType {
+    readonly items: readonly TypeFactoryType[];
+    readonly _kind: "tuple";
+    readonly rest?: TypeFactoryType;
+}
+
+// @alpha
+export interface TypeFactoryType {
+    readonly _kind: TypeFactoryTypeKind;
+}
+
+// @alpha
+export type TypeFactoryTypeKind = "string" | "number" | "boolean" | "void" | "undefined" | "null" | "unknown" | "date" | "promise" | "array" | "object" | "record" | "map" | "tuple" | "union" | "intersection" | "literal" | "optional" | "readonly" | "function" | "instanceof";
+
+// @alpha
+export interface TypeFactoryUndefined extends TypeFactoryType {
+    readonly _kind: "undefined";
+}
+
+// @alpha
+export interface TypeFactoryUnion extends TypeFactoryType {
+    readonly _kind: "union";
+    readonly options: readonly TypeFactoryType[];
+}
+
+// @alpha
+export interface TypeFactoryUnknown extends TypeFactoryType {
+    readonly _kind: "unknown";
+}
+
+// @alpha
+export interface TypeFactoryVoid extends TypeFactoryType {
+    readonly _kind: "void";
+}
 
 // @alpha
 export type TypeMatchOrError<Expected, Received> = [Received] extends [Expected] ? unknown : {
