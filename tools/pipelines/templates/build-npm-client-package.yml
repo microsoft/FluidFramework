@@ -380,7 +380,7 @@ extends:
               - task: CopyFiles@2
                 displayName: Copy build_output_archive to artifact staging directory
                 inputs:
-                  sourceFolder: ${{ parameters.buildDirectory }}/build_output_archive
+                  sourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/build_output_archive
                   targetFolder: $(Build.ArtifactStagingDirectory)/build_output_archive
 
               # Pack
@@ -394,7 +394,7 @@ extends:
                     inputs:
                       targetType: filePath
                       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                      filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
+                      filePath: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/scripts/pack-packages.sh
 
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
@@ -458,7 +458,7 @@ extends:
                             set -eu -o pipefail
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
-                            ls -la '$(Build.SourcesDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                            ls -la '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
                             npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
@@ -638,7 +638,7 @@ extends:
 
               - script: |
                   echo "Extracting build output archive contents..."
-                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
+                  tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
                 displayName: Extract Build Output Contents
 
               # Set variable startTest if everything is good so far and we'll start running tests,
@@ -754,7 +754,7 @@ extends:
                 # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
                 # used in a few places in the pipeline to push custom telemetry to Kusto.
                 - name: absolutePathToTelemetryGenerator
-                  value: $(Build.SourcesDirectory)/tools/telemetry-generator
+                  value: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/tools/telemetry-generator
                   readonly: true
                 # We already run CodeQL in the main build job, so we don't need to run it again here.
                 # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
@@ -791,7 +791,7 @@ extends:
 
                 - script: |
                     echo "Extracting build output archive contents..."
-                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Build.SourcesDirectory)
+                    tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
                   displayName: Extract Build Output Contents
 
                 # Test
