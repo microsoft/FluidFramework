@@ -667,7 +667,9 @@ export function snapshotSchemaCompatibility(
 				compatibilityErrors.push(
 					`No snapshot found with version less than or equal to minVersionForCollaboration ${JSON.stringify(minVersionForCollaboration)}.`,
 				);
-			} else {
+			} else if (
+				selectedMinVersionForCollaborationSnapshot[0] !== minVersionForCollaboration
+			) {
 				// Add an entry to ensure that the version which spans from before until after the cutoff for collaboration is included in the compatibility checks.
 				compatibilityMap.set(
 					minVersionForCollaboration,

@@ -115,7 +115,7 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	it("checkCompatibility: allowUnknownOptionalFields", () => {
-		const factory = new SchemaFactoryBeta("assert");
+		const factory = new SchemaFactoryBeta("test");
 
 		// Point2D is constructed with allowUnknownOptionalFields, so it can read Point3D trees
 		// even though it does not know about the optional field `z`.
@@ -152,7 +152,7 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	it("checkCompatibility: staged schema", () => {
-		const factory = new SchemaFactoryBeta("assert");
+		const factory = new SchemaFactoryBeta("test");
 		const oldSchema = factory.optional(
 			factory.types([numberSchema, factory.staged(stringSchema)]),
 		);
@@ -240,8 +240,7 @@ Snapshots in: "/workspaces/FluidFramework/packages/dds/tree/src/test/schemaSnaps
 Snapshots exist for versions: [
 	"1.0.0",
 	"2.0.0"
-].
-Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.0.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.0.0".`),
+].`),
 			);
 
 			assert.throws(
@@ -263,8 +262,7 @@ Snapshots in: "${testSrcPath}/schemaSnapshots/point"
 Snapshots exist for versions: [
 	"1.0.0",
 	"2.0.0"
-].
-Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.0.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.0.0".`),
+].`),
 			);
 
 			assert.throws(
@@ -283,8 +281,7 @@ Snapshots in: "/workspaces/FluidFramework/packages/dds/tree/src/test/schemaSnaps
 Snapshots exist for versions: [
 	"1.0.0",
 	"2.0.0"
-].
-Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.0.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.0.0".`),
+].`),
 			);
 
 			// Avoids all the above tested issues, and matches saved snapshot, so should pass
@@ -433,8 +430,7 @@ Snapshots in: "dir"
 Snapshots exist for versions: [
 	"1.0.0",
 	"2.0.0"
-].
-Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.0.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.0.0".`),
+].`),
 			);
 
 			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json", "3.0.0.json"]);
@@ -699,8 +695,7 @@ Snapshots in: "dir"
 Snapshots exist for versions: [
 	"1",
 	"2"
-].
-Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1") not having an exact snapshot, the last snapshot before that version (which is "1") is being also being checked as if it is version "1".`,
+].`,
 				),
 			);
 
@@ -727,6 +722,9 @@ Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1"
 			// Confirm no snapshots were created during the failed test above since it was in test mode.
 			assert.deepEqual([...snapshots.keys()], ["1.json", "2.json", "3.json"]);
 		});
+
+		// TODO: test minVersionForCollaboration between two existing snapshots, when that matters and causes an error.
+		// TODO: test reject flags
 	});
 
 	it("getCompatibility", () => {
