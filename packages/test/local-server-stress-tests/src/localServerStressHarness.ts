@@ -741,7 +741,7 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 						...baseOp,
 						clientTag: client.tag,
 						datastoreTag: selected.datastoreTag,
-						channelTag: selected.channelTag as `channel-${number}`,
+						channelTag: selected.channelTag,
 					} satisfies SelectedClientSpec);
 		};
 	};

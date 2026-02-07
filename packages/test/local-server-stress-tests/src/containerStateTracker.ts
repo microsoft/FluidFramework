@@ -27,7 +27,7 @@ export interface SelectedChannel {
 	datastore: StressDataObject;
 	datastoreTag: `datastore-${number}`;
 	channel: IChannel;
-	channelTag: string;
+	channelTag: `channel-${number}`;
 }
 
 /**
@@ -35,7 +35,7 @@ export interface SelectedChannel {
  */
 export interface ResolvedContainerObject {
 	type: "stressDataObject" | "blob";
-	tag: string;
+	tag: `datastore-${number}` | `blob-${number}`;
 	handle: IFluidHandle;
 	stressDataObject?: StressDataObject;
 }
@@ -56,14 +56,17 @@ export class ContainerStateTracker {
 	/**
 	 * Maps datastoreTag to (channelTag to channelType)
 	 */
-	private readonly channelsByDatastore = new Map<`datastore-${number}`, Map<string, string>>();
+	private readonly channelsByDatastore = new Map<
+		`datastore-${number}`,
+		Map<`channel-${number}`, string>
+	>();
 
 	/**
 	 * Inverse index: channelType to list of (datastoreTag, channelTag) pairs
 	 */
 	private readonly channelsByType = new Map<
 		string,
-		{ datastoreTag: `datastore-${number}`; channelTag: string }[]
+		{ datastoreTag: `datastore-${number}`; channelTag: `channel-${number}` }[]
 	>();
 
 	/**
@@ -71,7 +74,7 @@ export class ContainerStateTracker {
 	 * Stores all registered datastores and blobs.
 	 */
 	private readonly objectPaths = new Map<
-		string,
+		`datastore-${number}` | `blob-${number}`,
 		{ absolutePath: string; type: "stressDataObject" | "blob" }
 	>();
 
@@ -82,8 +85,11 @@ export class ContainerStateTracker {
 		const directoryDdsModel = ddsModelMap.get("https://graph.microsoft.com/types/directory");
 		assert(directoryDdsModel !== undefined, "directory DDS model must exist");
 		const channelType = directoryDdsModel.factory.type;
-		this.channelsByDatastore.set(tag, new Map([["root", channelType]]));
-		this.addToTypeIndex(channelType, tag, "root");
+		// Every datastore has a root directory channel. It doesn't follow the channel-N naming
+		// convention, but that's harmless since tags are only used for informational tracking.
+		const rootChannelTag = "root" as `channel-${number}`;
+		this.channelsByDatastore.set(tag, new Map([[rootChannelTag, channelType]]));
+		this.addToTypeIndex(channelType, tag, rootChannelTag);
 		this.objectPaths.set(tag, {
 			absolutePath: toFluidHandleInternal(handle).absolutePath,
 			type: "stressDataObject",
@@ -105,7 +111,7 @@ export class ContainerStateTracker {
 	 */
 	registerChannel(
 		datastoreTag: `datastore-${number}`,
-		channelTag: string,
+		channelTag: `channel-${number}`,
 		channelType: string,
 	): void {
 		const channelMap = this.channelsByDatastore.get(datastoreTag);
@@ -118,14 +124,17 @@ export class ContainerStateTracker {
 	 * Gets the channel type for a given channel from the in-memory registry.
 	 * Returns undefined if the channel is not registered.
 	 */
-	getChannelType(datastoreTag: `datastore-${number}`, channelTag: string): string | undefined {
+	getChannelType(
+		datastoreTag: `datastore-${number}`,
+		channelTag: `channel-${number}`,
+	): string | undefined {
 		return this.channelsByDatastore.get(datastoreTag)?.get(channelTag);
 	}
 
 	/**
 	 * Returns all registered channel names for a given datastore.
 	 */
-	getChannelNames(datastoreTag: `datastore-${number}`): string[] {
+	getChannelNames(datastoreTag: `datastore-${number}`): `channel-${number}`[] {
 		const channelMap = this.channelsByDatastore.get(datastoreTag);
 		return channelMap !== undefined ? Array.from(channelMap.keys()) : [];
 	}
@@ -144,7 +153,7 @@ export class ContainerStateTracker {
 	 */
 	async resolveContainerObject(
 		client: Client,
-		tag: string,
+		tag: `datastore-${number}` | `blob-${number}`,
 	): Promise<ResolvedContainerObject | undefined> {
 		const pathEntry = this.objectPaths.get(tag);
 		if (pathEntry === undefined) {
@@ -229,7 +238,7 @@ export class ContainerStateTracker {
 	async resolveChannel(
 		client: Client,
 		datastoreTag: `datastore-${number}`,
-		channelTag: string,
+		channelTag: `channel-${number}`,
 	): Promise<{ channel: IChannel; datastore: StressDataObject } | undefined> {
 		const dsObj = await this.resolveContainerObject(client, datastoreTag);
 		if (dsObj?.stressDataObject === undefined) {
@@ -313,7 +322,7 @@ export class ContainerStateTracker {
 	private addToTypeIndex(
 		channelType: string,
 		datastoreTag: `datastore-${number}`,
-		channelTag: string,
+		channelTag: `channel-${number}`,
 	): void {
 		const existing = this.channelsByType.get(channelType);
 		if (existing !== undefined) {

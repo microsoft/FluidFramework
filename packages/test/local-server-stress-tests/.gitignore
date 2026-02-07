@@ -50,3 +50,6 @@ nyc
 # Generated modules
 intel_modules/
 temp_modules/
+
+# Stress test failure/success result files
+src/test/results/
