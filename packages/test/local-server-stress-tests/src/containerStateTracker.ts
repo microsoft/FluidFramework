@@ -4,15 +4,10 @@
  */
 
 import type { IRandom } from "@fluid-private/stochastic-test-utils";
-import type {
-	IFluidHandle,
-	IFluidLoadable,
-	FluidObject,
-} from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
-import { timeoutAwait } from "@fluidframework/test-utils/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
 import type { Client } from "./localServerStressHarness.js";
@@ -148,7 +143,7 @@ export class ContainerStateTracker {
 
 	/**
 	 * Resolves a container object (datastore or blob) by tag for a given client.
-	 * Uses the stored absolute path and resolveHandle to find the object.
+	 * Uses the stored absolute path and the client's resolveByAbsolutePath method.
 	 * Returns undefined if the object is not yet available on this client.
 	 */
 	async resolveContainerObject(
@@ -160,33 +155,17 @@ export class ContainerStateTracker {
 			return undefined;
 		}
 
-		const containerRuntime = client.entryPoint.containerRuntimeForTest;
-		const resp = await timeoutAwait(
-			containerRuntime.resolveHandle({
-				url: pathEntry.absolutePath,
-				headers: { [RuntimeHeaders.wait]: false },
-			}),
-			{
-				errorMsg: `Timed out waiting for client to resolveHandle: ${pathEntry.absolutePath}`,
-			},
-		);
-
-		if (resp.status !== 200) {
-			return undefined;
-		}
-
-		const maybe: FluidObject<IFluidLoadable & StressDataObject> | undefined = resp.value;
-		const handle = maybe?.IFluidLoadable?.handle;
-		if (handle === undefined) {
+		const resolved = await client.entryPoint.resolveByAbsolutePath(pathEntry.absolutePath);
+		if (resolved === undefined) {
 			return undefined;
 		}
 
 		return {
 			type: pathEntry.type,
 			tag,
-			handle,
+			handle: resolved.handle,
 			stressDataObject:
-				pathEntry.type === "stressDataObject" ? maybe?.StressDataObject : undefined,
+				pathEntry.type === "stressDataObject" ? resolved.stressDataObject : undefined,
 		};
 	}
 

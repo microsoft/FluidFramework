@@ -16,14 +16,18 @@ import {
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import-x/no-deprecated
 import type { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandle,
+	FluidObject,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 // eslint-disable-next-line import-x/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
-import { asLegacyAlpha } from "@fluidframework/runtime-utils/internal";
+import { RuntimeHeaders, asLegacyAlpha } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
@@ -64,7 +68,7 @@ export type StressDataObjectOperations =
 	| ExitStagingMode;
 
 export class StressDataObject extends DataObject {
-	public static readonly alias = "default";
+	public static readonly defaultInstanceAlias = "default";
 
 	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory({
 		type: "StressDataObject",
@@ -83,12 +87,58 @@ export class StressDataObject extends DataObject {
 	}
 
 	/**
-	 * Exposes the container runtime for handle resolution by the state tracker.
+	 * Cache of resolved objects by absolute path.
+	 * Since resolution is local (no network round-trips), caching avoids
+	 * repeated async work when the same path is resolved multiple times.
 	 */
-	// eslint-disable-next-line import-x/no-deprecated
-	get containerRuntimeForTest(): IContainerRuntimeWithResolveHandle_Deprecated {
+	private readonly resolvedObjectCache = new Map<
+		string,
+		{ handle: IFluidHandle; stressDataObject?: StressDataObject }
+	>();
+
+	/**
+	 * Resolves a container object by its absolute handle path.
+	 * Uses a local cache to avoid repeated async resolution for the same path.
+	 * Returns undefined if the object is not yet available (e.g. not attached).
+	 */
+	public async resolveByAbsolutePath(
+		absolutePath: string,
+	): Promise<{ handle: IFluidHandle; stressDataObject?: StressDataObject } | undefined> {
+		const cached = this.resolvedObjectCache.get(absolutePath);
+		if (cached !== undefined) {
+			return cached;
+		}
+
 		// eslint-disable-next-line import-x/no-deprecated
-		return this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
+		const containerRuntime =
+			// eslint-disable-next-line import-x/no-deprecated
+			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
+		const resp = await timeoutAwait(
+			containerRuntime.resolveHandle({
+				url: absolutePath,
+				headers: { [RuntimeHeaders.wait]: false },
+			}),
+			{
+				errorMsg: `Timed out waiting to resolveHandle: ${absolutePath}`,
+			},
+		);
+
+		if (resp.status !== 200) {
+			return undefined;
+		}
+
+		const maybe: FluidObject<IFluidLoadable & StressDataObject> | undefined = resp.value;
+		const handle = maybe?.IFluidLoadable?.handle;
+		if (handle === undefined) {
+			return undefined;
+		}
+
+		const result = {
+			handle,
+			stressDataObject: maybe?.StressDataObject,
+		};
+		this.resolvedObjectCache.set(absolutePath, result);
+		return result;
 	}
 
 	/**
@@ -199,7 +249,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 				],
 				provideEntryPoint: async (rt) => {
 					const aliasedDefault = await rt.getAliasedDataStoreEntryPoint(
-						StressDataObject.alias,
+						StressDataObject.defaultInstanceAlias,
 					);
 					assert(aliasedDefault !== undefined, "default must exist");
 
@@ -220,7 +270,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 
 			if (!existing) {
 				const ds = await runtime.createDataStore(StressDataObject.factory.type);
-				await ds.trySetAlias(StressDataObject.alias);
+				await ds.trySetAlias(StressDataObject.defaultInstanceAlias);
 			}
 
 			return runtime;
