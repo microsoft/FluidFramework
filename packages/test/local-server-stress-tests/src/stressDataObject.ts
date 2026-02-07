@@ -206,11 +206,16 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 					return aliasedDefault.get();
 				},
 			});
+			// id compressor isn't made available via the interface right now.
+			// We could revisit exposing the safe part of its API (IIdCompressor, not IIdCompressorCore) in a way
+			// that would avoid this instanceof check, but most customers shouldn't really have a need for it.
 			assert(runtime instanceof ContainerRuntime, "Expected to create a ContainerRuntime");
 			assert(
 				runtime.idCompressor !== undefined,
 				"IdCompressor should be enabled by stress test options.",
 			);
+			// Forcing the cluster size to a low value makes it more likely to generate staging mode scenarios with more
+			// interesting interleaving of id allocation ops and normal ops.
 			modifyClusterSize(runtime.idCompressor, 2);
 
 			if (!existing) {
