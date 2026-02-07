@@ -371,11 +371,11 @@ extends:
               - task: Bash@3
                 displayName: Archive Build Output Content
                 env:
-                  WORKING_DIRECTORY: '${{ parameters.buildDirectory }}'
+                  WORKING_DIRECTORY: '.'
                 inputs:
                   targetType: filePath
                   workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                  filePath: $(Build.SourcesDirectory)/scripts/pack-build-output.sh
+                  filePath: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/scripts/pack-build-output.sh
 
               - task: CopyFiles@2
                 displayName: Copy build_output_archive to artifact staging directory
