@@ -275,8 +275,10 @@ const FormattedTextEditorView = React.forwardRef<
 			if (source !== "user" || isUpdating.current) return;
 			isUpdating.current = true;
 
-			// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit
-			TreeAlpha.branch(root)?.runTransaction(() => {
+			// Wrap all tree mutations in a transaction so they undo/redo as one atomic unit.
+			// If the node is not part of a branch (e.g. unhydrated), apply edits directly.
+			const branch = TreeAlpha.branch(root);
+			const applyDelta = (): void => {
 				// Helper to count Unicode codepoints in a string
 				const codepointCount = (s: string): number => [...s].length;
 
@@ -319,7 +321,12 @@ const FormattedTextEditorView = React.forwardRef<
 						cpPos += codepointCount(op.insert);
 					}
 				}
-			});
+			};
+			if (branch === undefined) {
+				applyDelta();
+			} else {
+				branch.runTransaction(applyDelta);
+			}
 
 			isUpdating.current = false;
 		});
