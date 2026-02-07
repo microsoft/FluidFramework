@@ -3347,41 +3347,16 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		}
 	}
 
-	private areSameNodes(
-		baseDetachId: ChangeAtomId,
-		newAttachId: ChangeAtomId,
-		count: number,
-	): RangeQueryResult<boolean> {
-		const renamedDetachEntry = firstAttachIdFromDetachId(
-			this.table.composedRootNodes,
-			baseDetachId,
-			count,
-		);
-
-		const isReattachOfSameNodes = areEqualChangeAtomIds(renamedDetachEntry.value, newAttachId);
-		return { ...renamedDetachEntry, value: isReattachOfSameNodes };
-	}
-
 	public composeDetachAttach(
 		baseDetachId: ChangeAtomId,
 		newAttachId: ChangeAtomId,
 		count: number,
 		composeToPin: boolean,
 	): void {
-		const areSameEntry = this.areSameNodes(baseDetachId, newAttachId, count);
-
-		const countToProcess = areSameEntry.length;
-		if (areSameEntry.value) {
-			// These nodes have been moved back to their original location, so the composed changeset should not have any renames for them.
-			// Note that deleting the rename from `this.table.composedRootNodes` would change the result of this method
-			// if it were rerun due to the field being invalidated, so we instead record that the rename should be deleted later.
-			this.table.renamesToDelete.set(baseDetachId, countToProcess, true);
-		}
-
 		if (composeToPin) {
 			this.table.movedCrossFieldKeys.set(
 				{ target: NodeMoveType.Detach, ...newAttachId },
-				countToProcess,
+				count,
 				this.fieldId,
 			);
 
@@ -3390,7 +3365,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				// So we remove `baseDetachId` unless that is equal to the pin's detach ID.
 				this.table.removedCrossFieldKeys.set(
 					{ target: NodeMoveType.Detach, ...baseDetachId },
-					countToProcess,
+					count,
 					true,
 				);
 			}
@@ -3400,28 +3375,20 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			// Here we make sure that the composed change has the correct location (this field) for the attach ID.
 			this.table.movedCrossFieldKeys.set(
 				{ target: NodeMoveType.Attach, ...newAttachId },
-				countToProcess,
+				count,
 				this.fieldId,
 			);
 		} else {
 			this.table.removedCrossFieldKeys.set(
 				{ target: NodeMoveType.Detach, ...baseDetachId },
-				countToProcess,
+				count,
 				true,
 			);
 
 			this.table.removedCrossFieldKeys.set(
 				{ target: NodeMoveType.Attach, ...newAttachId },
-				countToProcess,
+				count,
 				true,
-			);
-		}
-
-		if (countToProcess < count) {
-			this.composeAttachDetach(
-				offsetChangeAtomId(baseDetachId, countToProcess),
-				offsetChangeAtomId(newAttachId, countToProcess),
-				count - countToProcess,
 			);
 		}
 	}
