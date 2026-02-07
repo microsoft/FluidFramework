@@ -118,11 +118,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		// Note that composition ignores rebase version, and so will create node detaches even when we are supporting collaboration with older clients.
 		// Therefore, in rebase version 1 we must rebase node detach as if it were a clear, matching the behavior of older clients.
-		const hasLegacyNodeDetach =
+		const hasNodeDetachTreatedAsClear =
 			newChange.nodeDetach !== undefined && rebaseVersion < 2 && !isPin(newChange);
 
 		if (overDetach !== undefined) {
-			const nodeDetach = hasLegacyNodeDetach ? undefined : newChange.nodeDetach;
+			const nodeDetach = hasNodeDetachTreatedAsClear ? undefined : newChange.nodeDetach;
 			nodeManager.rebaseOverDetach(overDetach, 1, nodeDetach, rebasedChild);
 		}
 
@@ -153,7 +153,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
-		if (hasLegacyNodeDetach && overDetach !== undefined) {
+		if (hasNodeDetachTreatedAsClear && overDetach !== undefined) {
 			// In order to emulate the rebasing behavior of older clients,
 			// we convert the node detach to a clear.
 			const valueReplace: Mutable<Replace> = {
@@ -168,7 +168,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			rebased.valueReplace = valueReplace;
 		} else if (newChange.valueReplace !== undefined) {
 			const isEmpty =
-				overDetach !== undefined || overChange.valueReplace !== undefined
+				overDetach !== undefined || overAttach !== undefined
 					? overAttach === undefined
 					: newChange.valueReplace.isEmpty;
 
@@ -217,6 +217,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		if (valueReplace !== undefined) {
 			updated.valueReplace = valueReplace;
+		}
+
+		if (change.nodeDetach !== undefined) {
+			updated.nodeDetach = replacer.getUpdatedAtomId(change.nodeDetach);
 		}
 
 		return updated;
