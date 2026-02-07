@@ -723,8 +723,243 @@ Snapshots exist for versions: [
 			assert.deepEqual([...snapshots.keys()], ["1.json", "2.json", "3.json"]);
 		});
 
-		// TODO: test minVersionForCollaboration between two existing snapshots, when that matters and causes an error.
-		// TODO: test reject flags
+		it("snapshotUnchangedVersions", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem] = inMemorySnapshotFileSystem();
+
+			snapshotSchemaCompatibility({
+				nextReleaseVersion: "1.0.0",
+				schema: new TreeViewConfiguration({ schema: [] }),
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "update",
+				snapshotDirectory,
+				snapshotUnchangedVersions: true,
+			});
+
+			assert.throws(
+				() =>
+					snapshotSchemaCompatibility({
+						nextReleaseVersion: "2.0.0",
+						schema: new TreeViewConfiguration({ schema: [] }),
+						fileSystem,
+						minVersionForCollaboration: "1.0.0",
+						mode: "assert",
+						snapshotDirectory,
+						snapshotUnchangedVersions: true,
+					}),
+				validateError(`Schema compatibility check failed:
+ - No snapshot found for version "2.0.0": snapshotUnchangedVersions is true, so every version must be snapshotted. If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
+Snapshots in: "dir"
+Snapshots exist for versions: [
+	"1.0.0"
+].`),
+			);
+
+			assert.throws(
+				() =>
+					snapshotSchemaCompatibility({
+						nextReleaseVersion: "2.0.0",
+						schema: new TreeViewConfiguration({ schema: [] }),
+						fileSystem,
+						minVersionForCollaboration: "1.5.0",
+						mode: "assert",
+						snapshotDirectory,
+						snapshotUnchangedVersions: true,
+					}),
+				validateError(`Schema compatibility check failed:
+ - No snapshot found for version "2.0.0": snapshotUnchangedVersions is true, so every version must be snapshotted. If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
+ - Using snapshotUnchangedVersions: a snapshot of the exact minVersionForCollaboration "1.5.0" is required. No snapshot found.
+Snapshots in: "dir"
+Snapshots exist for versions: [
+	"1.0.0"
+].`),
+			);
+		});
+
+		it("minVersionForCollaboration between snapshots", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem] = inMemorySnapshotFileSystem();
+
+			snapshotSchemaCompatibility({
+				nextReleaseVersion: "1.0.0",
+				schema: new TreeViewConfiguration({ schema: [] }),
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "update",
+				snapshotDirectory,
+			});
+
+			snapshotSchemaCompatibility({
+				nextReleaseVersion: "2.0.0",
+				schema: new TreeViewConfiguration({ schema: [] }),
+				fileSystem,
+				minVersionForCollaboration: "1.5.0",
+				mode: "assert",
+				snapshotDirectory,
+			});
+
+			assert.throws(
+				() =>
+					snapshotSchemaCompatibility({
+						nextReleaseVersion: "2.0.0",
+						schema: new TreeViewConfiguration({ schema: [] }),
+						fileSystem,
+						minVersionForCollaboration: "1.5.0",
+						mode: "assert",
+						snapshotDirectory,
+						snapshotUnchangedVersions: true,
+					}),
+				validateError(`Schema compatibility check failed:
+ - No snapshot found for version "2.0.0": snapshotUnchangedVersions is true, so every version must be snapshotted. If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
+ - Using snapshotUnchangedVersions: a snapshot of the exact minVersionForCollaboration "1.5.0" is required. No snapshot found.
+Snapshots in: "dir"
+Snapshots exist for versions: [
+	"1.0.0"
+].`),
+			);
+
+			assert.throws(
+				() =>
+					snapshotSchemaCompatibility({
+						nextReleaseVersion: "2.0.0",
+						schema: new TreeViewConfiguration({ schema: [SchemaFactory.number] }),
+						fileSystem,
+						minVersionForCollaboration: "1.5.0",
+						mode: "assert",
+						snapshotDirectory,
+					}),
+				validateError(`Schema compatibility check failed:
+ - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "1.0.0". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
+ - Historical version "1.5.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.5.0".
+Snapshots in: "dir"
+Snapshots exist for versions: [
+	"1.0.0"
+].
+Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.5.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.5.0".`),
+			);
+
+			snapshotSchemaCompatibility({
+				nextReleaseVersion: "2.0.0",
+				schema: new TreeViewConfiguration({ schema: [SchemaFactory.number] }),
+				fileSystem,
+				minVersionForCollaboration: "2.0.0",
+				mode: "update",
+				snapshotDirectory,
+			});
+
+			assert.throws(
+				() =>
+					snapshotSchemaCompatibility({
+						nextReleaseVersion: "2.0.0",
+						schema: new TreeViewConfiguration({ schema: [SchemaFactory.number] }),
+						fileSystem,
+						minVersionForCollaboration: "1.5.0",
+						mode: "update",
+						snapshotDirectory,
+					}),
+				validateError(`Schema compatibility check failed:
+ - Historical version "1.5.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.5.0".
+Snapshots in: "dir"
+Snapshots exist for versions: [
+	"1.0.0",
+	"2.0.0"
+].
+Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.5.0") not having an exact snapshot, the last snapshot before that version (which is "1.0.0") is being also being checked as if it is version "1.5.0".`),
+			);
+		});
+
+		it("rejectVersionsWithNoSchemaChange", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+
+			snapshotSchemaCompatibility({
+				nextReleaseVersion: "1.0.0",
+				schema: new TreeViewConfiguration({ schema: [] }),
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "update",
+				snapshotDirectory,
+				rejectVersionsWithNoSchemaChange: true,
+			});
+
+			assert.throws(
+				() =>
+					snapshotSchemaCompatibility({
+						nextReleaseVersion: "2.0.0",
+						schema: new TreeViewConfiguration({ schema: [] }),
+						fileSystem,
+						minVersionForCollaboration: "1.0.0",
+						mode: "assert",
+						snapshotDirectory,
+						rejectVersionsWithNoSchemaChange: true,
+					}),
+				validateError(`Schema compatibility check failed:
+Rejecting version change ("1.0.0" to "2.0.0") due to rejectVersionsWithNoSchemaChange being set.
+Snapshots in: "dir"
+Snapshots exist for versions: [
+	"1.0.0"
+].`),
+			);
+
+			assert.deepEqual([...snapshots.keys()], ["1.0.0.json"]);
+
+			snapshotSchemaCompatibility({
+				nextReleaseVersion: "2.0.0",
+				schema: new TreeViewConfiguration({ schema: [SchemaFactory.number] }),
+				fileSystem,
+				minVersionForCollaboration: "2.0.0",
+				mode: "update",
+				snapshotDirectory,
+				rejectVersionsWithNoSchemaChange: true,
+			});
+
+			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json"]);
+		});
+
+		it("rejectSchemaChangesWithNoVersionChange", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem] = inMemorySnapshotFileSystem();
+
+			snapshotSchemaCompatibility({
+				nextReleaseVersion: "1.0.0",
+				schema: new TreeViewConfiguration({ schema: [] }),
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "update",
+				snapshotDirectory,
+				rejectSchemaChangesWithNoVersionChange: true,
+			});
+
+			assert.throws(
+				() =>
+					snapshotSchemaCompatibility({
+						nextReleaseVersion: "1.0.0",
+						schema: new TreeViewConfiguration({ schema: [SchemaFactory.number] }),
+						fileSystem,
+						minVersionForCollaboration: "1.0.0",
+						mode: "update",
+						snapshotDirectory,
+						rejectSchemaChangesWithNoVersionChange: true,
+					}),
+				validateError(`Schema compatibility check failed:
+Rejecting schema change without version change due to existing  non-equivalent snapshot for version ("1.0.0" due to rejectSchemaChangesWithNoVersionChange being set.
+Snapshots in: "dir"
+Snapshots exist for versions: [
+	"1.0.0"
+].`),
+			);
+
+			snapshotSchemaCompatibility({
+				nextReleaseVersion: "2.0.0",
+				schema: new TreeViewConfiguration({ schema: [SchemaFactory.number] }),
+				fileSystem,
+				minVersionForCollaboration: "2.0.0",
+				mode: "update",
+				snapshotDirectory,
+				rejectSchemaChangesWithNoVersionChange: true,
+			});
+		});
 	});
 
 	it("getCompatibility", () => {
