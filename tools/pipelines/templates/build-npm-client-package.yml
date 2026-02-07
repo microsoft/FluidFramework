@@ -413,7 +413,7 @@ extends:
                   - task: CopyFiles@2
                     displayName: Copy bundle size files to artifact staging directory
                     inputs:
-                      sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+                      sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
                   # At this point we want to publish the artifact with the bundle size analysis,
