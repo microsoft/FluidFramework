@@ -197,9 +197,9 @@ describe("snapshotCompatibilityChecker", () => {
 			// This test is included in the docs for snapshotSchemaCompatibility, and should be kept in sync with it.
 			it("schema compatibility", () => {
 				snapshotSchemaCompatibility({
-					nextReleaseVersion: pkgVersion,
 					schema: config,
 					fileSystem: { ...fs, ...path },
+					nextReleaseVersion: pkgVersion,
 					minVersionForCollaboration: "2.0.0",
 					mode: process.argv.includes("--snapshot") ? "update" : "assert",
 					snapshotDirectory,

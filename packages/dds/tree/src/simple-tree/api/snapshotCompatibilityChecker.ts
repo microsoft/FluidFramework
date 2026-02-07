@@ -468,12 +468,12 @@ export interface SnapshotSchemaCompatibilityOptions {
  * 			"../../../src/test/schema-snapshots",
  * 		);
  * 		snapshotSchemaCompatibility({
- * 			snapshotDirectory,
+ * 			schema: config,
  * 			fileSystem: { ...fs, ...path },
- * 			version: packageVersion,
- * 			schema: treeViewConfiguration,
+ * 			nextReleaseVersion: pkgVersion,
  * 			minVersionForCollaboration: "2.0.0",
- * 			mode: regenerateSnapshots ? "update" : "test",
+ * 			mode: process.argv.includes("--snapshot") ? "update" : "assert",
+ * 			snapshotDirectory,
  * 		});
  * 	});
  * });
