@@ -212,7 +212,13 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 		}
 		this.connectMap.clear();
 
-		// Clear orderers and topic maps
+		// Close all orderers before clearing the map
+		const closePromises: Promise<void>[] = [];
+		for (const orderer of this.orderers.values()) {
+			closePromises.push(orderer.close());
+		}
+		// Best-effort: don't let individual close failures prevent cleanup
+		Promise.all(closePromises).catch(() => {});
 		this.orderers.clear();
 		this.topicMap.clear();
 

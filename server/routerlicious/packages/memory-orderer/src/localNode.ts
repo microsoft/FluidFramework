@@ -334,14 +334,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 	}
 
 	/**
-	 * Removes an orderer from the order map. Called when an orderer is closed.
-	 */
-	public removeOrderer(tenantId: string, documentId: string): void {
-		const fullId = `${tenantId}/${documentId}`;
-		this.orderMap.delete(fullId);
-	}
-
-	/**
 	 * Closes the node and cleans up all resources.
 	 */
 	public async close(): Promise<void> {

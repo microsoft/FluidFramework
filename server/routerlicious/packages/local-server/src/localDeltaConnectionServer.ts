@@ -148,6 +148,8 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 	) {}
 
 	public async close() {
+		// Note: These are closed sequentially because later resources may depend on earlier ones.
+		// If any close() throws, subsequent resources will not be cleaned up.
 		await this.webSocketServer.close();
 		await this.ordererManager.close();
 		this.pubsub.close();

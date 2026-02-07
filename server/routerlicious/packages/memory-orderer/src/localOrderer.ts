@@ -145,6 +145,10 @@ export class LocalOrderer implements IOrderer {
 			scribeContext,
 			deliContext,
 			moiraContext,
+			// Note: This is a shallow merge. Nested objects in serviceConfiguration will fully
+			// replace the corresponding objects from DefaultServiceConfiguration rather than
+			// being deep-merged. Callers that need to override nested properties should spread
+			// the nested defaults themselves.
 			{ ...DefaultServiceConfiguration, ...serviceConfiguration },
 		);
 	}

@@ -87,6 +87,9 @@ export class Socket<T> extends EventEmitter {
 
 		this.sendScheduled = true;
 		setImmediate(() => {
+			if (this.closed) {
+				return;
+			}
 			debug(`Sending ${this.pending.length} messages`);
 			this.sendBuffers(this.pending);
 			this.pending = [];
