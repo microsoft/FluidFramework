@@ -721,7 +721,7 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 		return async (state): Promise<TOperation | typeof done> => {
 			// Pick a channel using the in-memory state tracker for type-first selection.
 			// Channel type metadata and candidate selection is fully in-memory;
-			// resolved IChannel instances are cached per client to avoid repeated async resolution.
+			// resolved objects are cached per-entrypoint in StressDataObject.resolvedObjectCache.
 			const client = state.random.pick(state.clients);
 			const selected = await state.stateTracker.selectChannelForOperation(
 				client,

@@ -97,6 +97,18 @@ export class StressDataObject extends DataObject {
 	>();
 
 	/**
+	 * Pre-populates the resolved object cache for a known path.
+	 * Call this after creating an object locally to avoid an async resolution round-trip
+	 * the next time this path is accessed on the creating client.
+	 */
+	public cacheResolvedObject(
+		absolutePath: string,
+		entry: { handle: IFluidHandle; stressDataObject?: StressDataObject },
+	): void {
+		this.resolvedObjectCache.set(absolutePath, entry);
+	}
+
+	/**
 	 * Resolves a container object by its absolute handle path.
 	 * Uses a local cache to avoid repeated async resolution for the same path.
 	 * Returns undefined if the object is not yet available (e.g. not attached).

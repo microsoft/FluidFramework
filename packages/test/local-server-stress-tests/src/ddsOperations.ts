@@ -221,11 +221,33 @@ export const validateConsistencyOfAllDDS = async (
 	};
 	const aMap = await buildChannelMap(clientA);
 	const bMap = await buildChannelMap(clientB);
-	// Use intersection-based comparison: only compare channels both clients can resolve.
-	// This handles the case where the state tracker knows about more objects than a specific
-	// client can resolve (e.g. frozen container loaded from pending state).
-	const commonKeys = [...aMap.keys()].filter((key) => bMap.has(key));
-	for (const key of commonKeys) {
+
+	// After synchronization, all attached channels should resolve on all connected clients.
+	// Strict key-set equality catches real divergence where one client is missing a channel.
+	const aKeys = new Set(aMap.keys());
+	const bKeys = new Set(bMap.keys());
+	const missingFromB: string[] = [];
+	for (const key of aKeys) {
+		if (!bKeys.has(key)) {
+			missingFromB.push(key);
+		}
+	}
+	const missingFromA: string[] = [];
+	for (const key of bKeys) {
+		if (!aKeys.has(key)) {
+			missingFromA.push(key);
+		}
+	}
+
+	if (missingFromA.length > 0 || missingFromB.length > 0) {
+		throw new Error(
+			`DDS channel set mismatch between clients ${clientA.tag} and ${clientB.tag}: ` +
+				`missing from ${clientA.tag}: [${missingFromA.join(", ")}]; ` +
+				`missing from ${clientB.tag}: [${missingFromB.join(", ")}]`,
+		);
+	}
+
+	for (const key of aKeys) {
 		const aChannel = aMap.get(key);
 		const bChannel = bMap.get(key);
 		assert(aChannel !== undefined, "channel must exist");

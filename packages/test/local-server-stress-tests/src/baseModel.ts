@@ -14,6 +14,8 @@ import {
 	type MinimizationTransform,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
 import {
@@ -32,6 +34,7 @@ import {
 } from "./dynamicWeightGenerator.js";
 import type { LocalServerStressState } from "./localServerStressHarness";
 import type { StressDataObjectOperations } from "./stressDataObject.js";
+import { StressDataObject } from "./stressDataObject.js";
 
 export type StressOperations = StressDataObjectOperations | DDSModelOp | OrderSequentially;
 
@@ -60,12 +63,24 @@ const orderSequentiallyReducer = async (
 	}
 };
 
+// Note: The state tracker does not participate in staging mode rollback. If a createDataStore
+// or createChannel op runs during staging mode and is later discarded, the tracker retains
+// "phantom" entries for those objects. This is harmless: resolution attempts for phantom entries
+// return undefined and are filtered out, but no correctness issues result.
 export const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
 	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
 	createDataStore: async (state, op) => {
 		const { handle } = await state.datastore.createDataStore(op.tag, op.asChild);
 		state.stateTracker.registerDatastore(op.tag, handle);
+		// Eagerly cache the newly created datastore on the creating client so
+		// subsequent resolve calls skip async resolution.
+		const entryPoint = await handle.get();
+		const sdo = (entryPoint as FluidObject<StressDataObject>)?.StressDataObject;
+		state.datastore.cacheResolvedObject(toFluidHandleInternal(handle).absolutePath, {
+			handle,
+			stressDataObject: sdo,
+		});
 		if (op.storeHandle) {
 			state.datastore.storeHandleInRoot(op.tag, handle);
 		}
@@ -86,8 +101,11 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 			op.tag,
 			state.random.string(state.random.integer(1, 16)),
 		);
-		// Register blob when upload completes (fire-and-forget to avoid hanging on disconnect)
-		void blobPromise.then((handle) => state.stateTracker.registerBlob(op.tag, handle));
+		// Register blob when upload completes (fire-and-forget to avoid hanging on disconnect).
+		// Attach a rejection handler to avoid unhandled promise rejections if upload fails.
+		void blobPromise
+			.then((handle) => state.stateTracker.registerBlob(op.tag, handle))
+			.catch(() => {});
 	},
 	DDSModelOp: DDSModelOpReducer,
 	orderSequentially: orderSequentiallyReducer,
