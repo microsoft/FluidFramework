@@ -4,7 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
+import { FluidClientVersion } from "../../../../codec/index.js";
 import {
 	makeFieldBatchCodec,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -18,10 +21,9 @@ import {
 	cursorForJsonableTreeField,
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
-import { FluidClientVersion } from "../../../../codec/index.js";
 import { ajvValidator } from "../../../codec/index.js";
-import { testIdCompressor } from "../../../utils.js";
 import { testTrees } from "../../../cursorTestSuite.js";
+import { testIdCompressor } from "../../../utils.js";
 
 describe("makeFieldBatchCodec", () => {
 	// Use the first simple test tree from the test suite
@@ -60,6 +62,31 @@ describe("makeFieldBatchCodec", () => {
 
 			const encoded = codec.encode([input], context);
 			assert.equal(encoded.version, FieldBatchFormatVersion.v2);
+		});
+
+		it("can decode both formats when encoding either", () => {
+			const codec1 = makeFieldBatchCodec({
+				jsonValidator: ajvValidator,
+				minVersionForCollab: FluidClientVersion.v2_0,
+			});
+			const codec2 = makeFieldBatchCodec({
+				jsonValidator: ajvValidator,
+				minVersionForCollab: FluidClientVersion.v2_74,
+			});
+
+			const context = {
+				encodeType: TreeCompressionStrategy.Uncompressed,
+				originatorId: testIdCompressor.localSessionId,
+				idCompressor: testIdCompressor,
+			};
+
+			const encoded1 = codec1.encode([], context);
+			const encoded2 = codec2.encode([], context);
+
+			assert.deepEqual(codec1.decode(encoded1, context), []);
+			assert.deepEqual(codec1.decode(encoded2, context), []);
+			assert.deepEqual(codec2.decode(encoded1, context), []);
+			assert.deepEqual(codec2.decode(encoded2, context), []);
 		});
 	});
 

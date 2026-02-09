@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type VersionBumpType, bumpVersionScheme } from "@fluid-tools/version-tools";
+import { bumpVersionScheme, type VersionBumpType } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
 import type { Machine } from "jssm";
 

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/shared-tree-demo",
-	"version": "2.81.0",
+	"version": "2.83.0",
 	"private": true,
 	"description": "A shared tree demo using react and odsp client",
 	"homepage": "https://fluidframework.com",
@@ -47,7 +47,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@types/node": "^18.19.0",
+		"@types/node": "~20.19.30",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
 		"dotenv-webpack": "^7.0.3",

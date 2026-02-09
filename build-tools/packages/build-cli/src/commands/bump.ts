@@ -4,25 +4,22 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import { confirm } from "@inquirer/prompts";
-import { Flags } from "@oclif/core";
-import chalk from "picocolors";
-import * as semver from "semver";
-
-import { FluidRepo, MonoRepo, type Package } from "@fluidframework/build-tools";
-
 import {
+	bumpVersionScheme,
+	detectVersionScheme,
 	type InterdependencyRange,
+	isInterdependencyRange,
 	RangeOperators,
 	type ReleaseVersion,
 	type VersionChangeType,
 	type VersionScheme,
 	WorkspaceRanges,
-	bumpVersionScheme,
-	detectVersionScheme,
-	isInterdependencyRange,
 } from "@fluid-tools/version-tools";
+import { FluidRepo, MonoRepo, type Package } from "@fluidframework/build-tools";
+import { confirm } from "@inquirer/prompts";
+import { Flags } from "@oclif/core";
+import chalk from "picocolors";
+import * as semver from "semver";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
 import { getDefaultInterdependencyRange } from "../config.js";

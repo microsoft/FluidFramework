@@ -90,14 +90,6 @@ module.exports = {
 		},
 
 		{
-			label: "Deps in pnpm overrides should use caret dependency ranges",
-			dependencyTypes: ["pnpmOverrides"],
-			dependencies: ["**"],
-			packages: ["**"],
-			range: "^",
-		},
-
-		{
 			label: "Must use exact dependency ranges",
 			dependencies: ["sort-package-json"],
 			packages: ["**"],
@@ -121,6 +113,14 @@ module.exports = {
 			],
 			packages: ["**"],
 			range: "~",
+		},
+
+		{
+			label: "Deps in pnpm overrides should use caret dependency ranges",
+			dependencyTypes: ["pnpmOverrides"],
+			dependencies: ["**"],
+			packages: ["**"],
+			range: "^",
 		},
 
 		{
@@ -167,6 +167,15 @@ module.exports = {
 			isIgnored: true,
 			packages: ["**"],
 			dependencies: ["@fluidframework/eslint-config-fluid"],
+		},
+
+		{
+			// TODO: This can be removed once biome is fully upgraded to 2.x
+			label: "Ignore @biomejs/biome in pnpm overrides",
+			isIgnored: true,
+			packages: ["build-tools-release-group-root"],
+			dependencies: ["@biomejs/biome"],
+			dependencyTypes: ["pnpmOverrides"],
 		},
 
 		{

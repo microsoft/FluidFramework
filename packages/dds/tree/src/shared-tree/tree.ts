@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { Context } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeNode,
@@ -22,7 +23,6 @@ import {
 	SchematizingSimpleTreeView,
 } from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
-import { Context } from "../feature-libraries/index.js";
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
@@ -467,7 +467,7 @@ function runTransactionInCheckout<TResult>(
 	transaction: () => TResult | typeof rollback,
 	preconditions: readonly TransactionConstraint[],
 ): TResult | typeof rollback {
-	checkout.transaction.start();
+	checkout.transaction.start(false);
 	addConstraintsToTransaction(checkout, false, preconditions);
 
 	let result: ReturnType<typeof transaction>;

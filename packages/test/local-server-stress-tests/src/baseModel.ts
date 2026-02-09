@@ -7,10 +7,8 @@ import * as path from "node:path";
 
 import {
 	type AsyncGenerator,
-	type AsyncWeights,
 	type BaseOperation,
 	combineReducersAsync,
-	createWeightedAsyncGenerator,
 	done,
 	isOperationType,
 	type MinimizationTransform,
@@ -28,6 +26,10 @@ import {
 	type OrderSequentially,
 } from "./ddsOperations";
 import { _dirname } from "./dirname.cjs";
+import {
+	createWeightedAsyncGeneratorWithDynamicWeights,
+	type DynamicAsyncWeights,
+} from "./dynamicWeightGenerator.js";
 import type { LocalServerStressState } from "./localServerStressHarness";
 import type { StressDataObjectOperations } from "./stressDataObject.js";
 
@@ -75,10 +77,35 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 	orderSequentially: orderSequentiallyReducer,
 });
 
+/**
+ * Threshold for the "creation phase": the first N operations before attach
+ * prioritize creating datastores and channels.
+ */
+const creationPhaseOps = 7;
+
 export function makeGenerator<T extends BaseOperation>(
-	additional: AsyncWeights<T, LocalServerStressState> = [],
+	additional: DynamicAsyncWeights<T, LocalServerStressState> = [],
 ): AsyncGenerator<StressOperations | T, LocalServerStressState> {
-	const asyncGenerator = createWeightedAsyncGenerator<
+	// Track operation count for phasing during detached state
+	let detachedOpCount = 0;
+
+	/**
+	 * Returns true if we're in the detached "creation phase" (prioritize creating datastores/channels).
+	 * This is the first few operations while detached, before the DDS ops phase.
+	 */
+	const isDetachedCreationPhase = (state: LocalServerStressState): boolean =>
+		state.client.container.attachState === AttachState.Detached &&
+		detachedOpCount < creationPhaseOps;
+
+	/**
+	 * Returns true if we're in the detached "DDS ops phase" (prioritize DDS operations).
+	 * This is after the creation phase but still detached.
+	 */
+	const isDetachedDdsOpsPhase = (state: LocalServerStressState): boolean =>
+		state.client.container.attachState === AttachState.Detached &&
+		detachedOpCount >= creationPhaseOps;
+
+	const asyncGenerator = createWeightedAsyncGeneratorWithDynamicWeights<
 		StressOperations | T,
 		LocalServerStressState
 	>([
@@ -89,7 +116,16 @@ export function makeGenerator<T extends BaseOperation>(
 				asChild: state.random.bool(),
 				tag: state.tag("datastore"),
 			}),
-			1,
+			// High weight during detached creation phase, zero during detached DDS ops phase, low otherwise
+			(state) => {
+				if (isDetachedCreationPhase(state)) {
+					return 20;
+				}
+				if (isDetachedDdsOpsPhase(state)) {
+					return 0;
+				}
+				return 1;
+			},
 		],
 		[
 			async (state) => ({
@@ -106,7 +142,16 @@ export function makeGenerator<T extends BaseOperation>(
 				channelType: state.random.pick([...ddsModelMap.keys()]),
 				tag: state.tag("channel"),
 			}),
-			5,
+			// High weight during detached creation phase, zero during detached DDS ops phase, low otherwise
+			(state) => {
+				if (isDetachedCreationPhase(state)) {
+					return 20;
+				}
+				if (isDetachedDdsOpsPhase(state)) {
+					return 0;
+				}
+				return 5;
+			},
 		],
 		[
 			async () => ({
@@ -127,7 +172,16 @@ export function makeGenerator<T extends BaseOperation>(
 				state.client.entryPoint.inStagingMode() &&
 				state.client.container.attachState !== AttachState.Detached,
 		],
-		[DDSModelOpGenerator, 100],
+		[
+			DDSModelOpGenerator,
+			// Zero weight during detached creation phase, otherwise high weight
+			(state) => {
+				if (isDetachedCreationPhase(state)) {
+					return 0;
+				}
+				return 100;
+			},
+		],
 		[
 			async (state) => {
 				const operations: DDSModelOp[] = [];
@@ -152,7 +206,17 @@ export function makeGenerator<T extends BaseOperation>(
 		],
 	]);
 
-	return async (state) => asyncGenerator(state);
+	return async (state) => {
+		// Capture attach state before generating the operation so phase selection
+		// uses the pre-increment detachedOpCount value.
+		const wasDetached = state.client.container.attachState === AttachState.Detached;
+		const op = await asyncGenerator(state);
+		// Track detached operation count for phasing after the operation is generated.
+		if (wasDetached) {
+			detachedOpCount++;
+		}
+		return op;
+	};
 }
 export const saveFailures = { directory: path.join(_dirname, "../src/test/results") };
 export const saveSuccesses = { directory: path.join(_dirname, "../src/test/results") };

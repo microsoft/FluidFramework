@@ -8,15 +8,15 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
 import {
-	type InterdependencyRange,
-	type ReleaseVersion,
 	detectVersionScheme,
 	getVersionRange,
+	type InterdependencyRange,
 	isInterdependencyRange,
 	isInternalVersionRange,
 	isPrereleaseVersion,
 	isRangeOperator,
 	isWorkspaceRange,
+	type ReleaseVersion,
 } from "@fluid-tools/version-tools";
 import { type Logger, MonoRepo, Package, type PackageJson } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
@@ -36,7 +36,7 @@ import {
 	type PackageWithKind,
 	selectAndFilterPackages,
 } from "../filter.js";
-import { type ReleaseGroup, type ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
+import { isReleaseGroup, type ReleaseGroup, type ReleasePackage } from "../releaseGroups.js";
 import type { DependencyUpdateType } from "./bump.js";
 import { zip } from "./collections.js";
 import type { Context, VersionDetails } from "./context.js";

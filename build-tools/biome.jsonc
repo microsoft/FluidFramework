@@ -1,18 +1,24 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"extends": ["../biome.jsonc"],
-	"organizeImports": {
-		"enabled": true
+	"extends": "//",
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
 	},
 	"formatter": {
 		"enabled": true
 	},
 	"files": {
-		"ignore": [
-			"packages/build-tools/src/test/data/biome/empty.jsonc",
-			"packages/build-tools/src/test/data/biome2/**",
-			// Test fixtures for space-indented JSON detection - Biome would convert spaces to tabs
-			"**/test/data/spaces/_package.json"
+		"includes": [
+			"**",
+			"!**/packages/build-tools/src/test/data/biome/empty.jsonc",
+			// Biome 1.x test data - these configs use Biome 1.x syntax that Biome 2.x can't parse
+			"!**/packages/build-tools/src/test/data/biome/**",
+			// Test fixture that must use space indentation (not tabs) for indentation detection tests
+			"!**/test/data/spaces/**"
 		]
 	}
 }

@@ -12,8 +12,8 @@ import { ApiLevel, BaseCommand, knownApiLevels } from "../../library/index.js";
 import { readPackageJson, readTsConfig } from "../../library/package.js";
 
 import {
-	type Node10CompatExportData,
 	getTypesPathFromPackage,
+	type Node10CompatExportData,
 	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 } from "../../library/packageExports.js";
 import type { CommandLogger } from "../../logging.js";

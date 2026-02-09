@@ -32,7 +32,11 @@ import {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { idAllocatorFromMaxId, readAndParseSnapshotBlob } from "../../util/index.js";
+import {
+	idAllocatorFromMaxId,
+	readAndParseSnapshotBlob,
+	type JsonCompatibleReadOnly,
+} from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
@@ -41,27 +45,27 @@ import {
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import {
 	clientVersionToForestFormatVersion,
 	type ForestCodec,
 	makeForestSummarizerCodec,
 } from "./codec.js";
+import { ForestFormatVersion } from "./formatCommon.js";
 import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
 } from "./incrementalSummaryBuilder.js";
 import {
-	minVersionToForestSummaryFormatVersion,
-	getForestRootSummaryContentKey,
-} from "./summaryTypes.js";
-import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import { ForestFormatVersion } from "./formatCommon.js";
-import {
 	ForestSummaryFormatVersion,
 	forestSummaryKey,
 	supportedForestSummaryFormatVersions,
 } from "./summaryFormatCommon.js";
+import {
+	minVersionToForestSummaryFormatVersion,
+	getForestRootSummaryContentKey,
+} from "./summaryTypes.js";
 
 /**
  * Provides methods for summarizing and loading a forest.
@@ -211,7 +215,12 @@ export class ForestSummarizer
 		// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 		// forest summary format.
 		const fields = this.codec.decode(
-			await readAndParseSnapshotBlob(forestSummaryRootContentKey, services, parse),
+			(await readAndParseSnapshotBlob(
+				forestSummaryRootContentKey,
+				services,
+				parse,
+				// TODO: this type cast assumes there are no handles, which should probably be enforced at runtime or the need for this cast should be removed altogether.
+			)) as JsonCompatibleReadOnly,
 			{
 				...this.encoderContext,
 				incrementalEncoderDecoder: this.incrementalSummaryBuilder,
@@ -230,7 +239,10 @@ export class ForestSummarizer
 				id: buildId,
 				trees: chunked,
 			});
-			fieldChanges.push([fieldKey, [{ count: chunked.topLevelLength, attach: buildId }]]);
+			fieldChanges.push([
+				fieldKey,
+				{ marks: [{ count: chunked.topLevelLength, attach: buildId }] },
+			]);
 		}
 
 		assert(this.forest.isEmpty, 0x797 /* forest must be empty */);

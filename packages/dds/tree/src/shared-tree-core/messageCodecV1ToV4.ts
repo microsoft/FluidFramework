@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type TAnySchema, Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { TAnySchema } from "@sinclair/typebox";
 
 import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import type {
@@ -14,11 +14,12 @@ import type {
 	RevisionTag,
 } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { JsonCompatibleReadOnlySchema } from "../util/index.js";
 
-import { Message } from "./messageFormatV1ToV4.js";
-import type { DecodedMessage } from "./messageTypes.js";
 import type { MessageEncodingContext } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
+import { Message } from "./messageFormatV1ToV4.js";
+import type { DecodedMessage } from "./messageTypes.js";
 
 export function makeV1ToV4CodecWithVersion<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,
@@ -43,12 +44,12 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 > {
 	return withSchemaValidation<
 		DecodedMessage<TChangeset>,
-		TAnySchema,
+		TAnySchema | typeof JsonCompatibleReadOnlySchema,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
 		MessageEncodingContext
 	>(
-		Message(changeCodec.encodedSchema ?? Type.Any()),
+		Message(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema),
 		{
 			encode: (decoded: DecodedMessage<TChangeset>, context: MessageEncodingContext) => {
 				assert(decoded.type === "commit", 0xc68 /* Only commit messages are supported */);

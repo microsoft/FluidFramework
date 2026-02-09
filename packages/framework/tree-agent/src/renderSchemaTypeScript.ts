@@ -17,11 +17,9 @@ import { z } from "zod";
 
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
+import { fluidHandleTypeName } from "./prompt.js";
 import { getExposedProperties, type PropertyDef } from "./propertyBinding.js";
-import {
-	instanceOfsTypeFactory,
-	renderTypeFactoryTypeScript,
-} from "./renderTypeFactoryTypeScript.js";
+import { renderTypeFactoryTypeScript } from "./renderTypeFactoryTypeScript.js";
 import { instanceOfs, renderZodTypeScript } from "./renderZodTypeScript.js";
 import type { TypeFactoryOptional, TypeFactoryType } from "./treeAgentTypes.js";
 import { isTypeFactoryType } from "./treeAgentTypes.js";
@@ -478,8 +476,11 @@ function renderLeaf(leafKind: ValueSchema): string {
 		case ValueSchema.Null: {
 			return "null";
 		}
+		case ValueSchema.FluidHandle: {
+			return fluidHandleTypeName;
+		}
 		default: {
-			throw new Error(`Unsupported leaf kind ${NodeKind[leafKind]}.`);
+			throw new Error(`Unsupported leaf kind.`);
 		}
 	}
 }
@@ -540,6 +541,6 @@ function ensureNoMemberConflicts(
  */
 function renderType(type: z.ZodTypeAny | TypeFactoryType, indentLevel: number = 0): string {
 	return isTypeFactoryType(type)
-		? renderTypeFactoryTypeScript(type, getFriendlyName, instanceOfsTypeFactory, indentLevel)
+		? renderTypeFactoryTypeScript(type, getFriendlyName, indentLevel)
 		: renderZodTypeScript(type, getFriendlyName, instanceOfs);
 }

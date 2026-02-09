@@ -5,12 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { getView, TestTreeProviderLite } from "../../utils.js";
-import {
-	type FlexTreeNode,
-	AnchorTreeIndex,
-	isTreeValue,
-} from "../../../feature-libraries/index.js";
 import {
 	forEachNode,
 	type AnchorNode,
@@ -19,17 +13,23 @@ import {
 	type ITreeSubscriptionCursor,
 	type TreeValue,
 } from "../../../core/index.js";
-import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
+import {
+	type FlexTreeNode,
+	AnchorTreeIndex,
+	isTreeValue,
+} from "../../../feature-libraries/index.js";
+import { getOrCreateHydratedFlexTreeNode } from "../../../feature-libraries/index.js";
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
+import { Tree } from "../../../shared-tree/index.js";
 import {
 	getInnerNode,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeNode,
 } from "../../../simple-tree/index.js";
-import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
-import { Tree } from "../../../shared-tree/index.js";
-import { getOrCreateHydratedFlexTreeNode } from "../../../feature-libraries/index.js";
 import { getOrCreateNodeFromInnerNode } from "../../../simple-tree/index.js";
+import { brand, disposeSymbol, getOrCreate } from "../../../util/index.js";
+import { getView, TestTreeProviderLite } from "../../utils.js";
 
 function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): string {
 	cursor.enterField(fieldKey);

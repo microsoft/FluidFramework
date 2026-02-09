@@ -4,8 +4,10 @@
  */
 
 import { debugAssert } from "@fluidframework/core-utils/internal";
-import type { FlexTreeNode } from "./flexTreeTypes.js";
+
 import type { FieldKey } from "../../core/index.js";
+
+import type { FlexTreeNode } from "./flexTreeTypes.js";
 
 /*
  * This file sets up a static observation tracking system.

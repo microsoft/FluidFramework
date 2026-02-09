@@ -4,13 +4,14 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { rootFieldKey } from "../../core/index.js";
-import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
-import { TestAnchor } from "../testAnchor.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
+import { TestAnchor } from "../testAnchor.js";
+import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
 
 const enableSchemaValidation = true;
 
@@ -218,9 +219,9 @@ describe("Repair Data", () => {
 			const anchorB = TestAnchor.fromValue(view1.checkout.forest, "B");
 
 			// remove in first tree in a transaction
-			view1.checkout.transaction.start();
+			view1.checkout.transaction.start(false);
 			view1.root.removeAt(0);
-			view1.checkout.transaction.start();
+			view1.checkout.transaction.start(false);
 			view1.root.removeAt(0);
 			assert.equal(anchorA.treeStatus, TreeStatus.Removed);
 			assert.equal(anchorB.treeStatus, TreeStatus.Removed);

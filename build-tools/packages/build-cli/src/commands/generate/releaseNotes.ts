@@ -19,11 +19,11 @@ import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,
 	DEFAULT_CHANGESET_PATH,
-	UNKNOWN_SECTION,
 	difference,
 	fluidCustomChangeSetMetadataDefaults,
 	groupBySection,
 	loadChangesets,
+	UNKNOWN_SECTION,
 } from "../../library/index.js";
 
 import { addHeadingLinks, stripSoftBreaks } from "../../library/markdown.js";

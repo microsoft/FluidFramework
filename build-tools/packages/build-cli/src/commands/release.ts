@@ -5,9 +5,9 @@
 
 import { strict as assert } from "node:assert";
 import {
-	type VersionBumpType,
 	bumpVersionScheme,
 	detectVersionScheme,
+	type VersionBumpType,
 } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
 import type { Config } from "@oclif/core";
@@ -28,7 +28,7 @@ import {
 } from "../handlers/index.js";
 import { PromptWriter } from "../instructionalPromptWriter.js";
 // eslint-disable-next-line import-x/no-deprecated
-import { MonoRepoKind, getDefaultBumpTypeForBranch } from "../library/index.js";
+import { getDefaultBumpTypeForBranch, MonoRepoKind } from "../library/index.js";
 import { FluidReleaseMachine } from "../machines/index.js";
 import { getRunPolicyCheckDefault } from "../repoConfig.js";
 import { StateMachineCommand } from "../stateMachineCommand.js";

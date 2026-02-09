@@ -19,6 +19,7 @@ import {
 	brand,
 	brandedNumberType,
 	brandedStringType,
+	comparePartialStrings,
 } from "../../util/index.js";
 import type { RevertibleAlpha } from "../revertible.js";
 
@@ -46,6 +47,9 @@ export const StableIdSchema = Type.String();
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.
+ * @remarks
+ * Always a real number (never `NaN` or +/- `Infinity`).
+ *
  * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
  * but they are unique when qualified by the revision of the change they are used in.
  */
@@ -122,9 +126,29 @@ export function taggedOptAtomId(
 	return taggedAtomId(id, revision);
 }
 
-export function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {
+export function offsetChangeAtomId<T extends ChangeAtomId>(id: T, offset: number): T {
 	return { ...id, localId: brand(id.localId + offset) };
 }
+
+// #region These comparison functions are used instead of e.g. `compareNumbers` as a performance optimization
+
+export function compareChangesetLocalIds(a: ChangesetLocalId, b: ChangesetLocalId): number {
+	return a - b; // No need to consider `NaN` or `Infinity` since ChangesetLocalId is always a real number
+}
+
+export function comparePartialChangesetLocalIds(
+	a: ChangesetLocalId | undefined,
+	b: ChangesetLocalId | undefined,
+): number {
+	if (a === undefined) {
+		return b === undefined ? 0 : -1;
+	} else if (b === undefined) {
+		return 1;
+	}
+	return compareChangesetLocalIds(a, b);
+}
+
+// #endregion
 
 /**
  * A node in a graph of commits. A commit's parent is the commit on which it was based.
@@ -204,6 +228,12 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	getRevertible(
 		onDisposed?: (revertible: RevertibleAlpha) => void,
 	): RevertibleAlpha | undefined;
+
+	/**
+	 * Optional label provided by the user when commit was created.
+	 * This can be used by undo/redo to group or classify edits.
+	 */
+	readonly label?: unknown;
 }
 
 /**
@@ -225,6 +255,11 @@ export interface RemoteChangeMetadata extends CommitMetadata {
 	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
 	 */
 	readonly getRevertible?: undefined;
+	/**
+	 * Label provided by the user when commit was created.
+	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
+	 */
+	readonly label?: undefined;
 }
 
 /**
@@ -255,12 +290,14 @@ export function mintCommit<TChange>(
 
 export type ChangeAtomIdRangeMap<V> = RangeMap<ChangeAtomId, V>;
 
-export function newChangeAtomIdRangeMap<V>(): ChangeAtomIdRangeMap<V> {
-	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds);
+export function newChangeAtomIdRangeMap<V>(
+	offsetValue?: (value: V, offset: number) => V,
+): ChangeAtomIdRangeMap<V> {
+	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds, offsetValue);
 }
 
 export function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number {
-	const cmp = compareRevisions(a.revision, b.revision);
+	const cmp = comparePartialRevisions(a.revision, b.revision);
 	if (cmp !== 0) {
 		return cmp * Number.POSITIVE_INFINITY;
 	}
@@ -268,19 +305,20 @@ export function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number 
 	return a.localId - b.localId;
 }
 
-export function compareRevisions(
+/**
+ * Compares two {@link RevisionTag}s to form a strict total ordering.
+ * @remarks This function tolerates arbitrary strings, not just the string "root".
+ * It sorts as follows: `undefined` \< `string` \< `number`
+ */
+export function comparePartialRevisions(
 	a: RevisionTag | undefined,
 	b: RevisionTag | undefined,
 ): number {
-	if (a === undefined) {
-		return b === undefined ? 0 : -1;
-	} else if (b === undefined) {
-		return 1;
-	} else if (a < b) {
+	if (typeof a === "number") {
+		return typeof b === "number" ? a - b : 1;
+	} else if (typeof b === "number") {
 		return -1;
-	} else if (a > b) {
-		return 1;
 	}
 
-	return 0;
+	return comparePartialStrings(a, b);
 }

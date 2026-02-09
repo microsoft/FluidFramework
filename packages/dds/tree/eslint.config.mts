@@ -26,22 +26,12 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
-			"import-x/order": "off",
 			"jsdoc/require-description": "warn",
-			"unicorn/no-await-expression-member": "off",
 			"unicorn/no-null": "off",
-			"unicorn/prefer-export-from": "off",
-			"unicorn/text-encoding-identifier-case": "off",
 		},
 	},
 	{
 		files: ["src/test/**/*"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./src/test/tsconfig.json"],
-			},
-		},
 		rules: {
 			"@typescript-eslint/no-unused-vars": ["off"],
 			"@typescript-eslint/explicit-function-return-type": "off",

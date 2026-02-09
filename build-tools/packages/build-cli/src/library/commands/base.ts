@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { type IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { Command, Flags, type Interfaces } from "@oclif/core";
 
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
-
-import { type IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
 import type { CommandLogger } from "../../logging.js";
 import { Context } from "../context.js";
 import { indentString } from "../text.js";

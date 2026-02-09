@@ -126,6 +126,8 @@ const npmCmd =
 	process.platform.includes("win") && !process.platform.includes("darwin") ? "npm.cmd" : "npm";
 
 /**
+ * Resolves a version range or alias to a specific version number.
+ *
  * @internal
  */
 export function resolveVersion(requested: string, installed: boolean): string {
@@ -211,6 +213,8 @@ async function ensureModulePath(version: string, modulePath: string): Promise<vo
 }
 
 /**
+ * Ensures the requested package version is installed locally.
+ *
  * @internal
  */
 export async function ensureInstalled(
@@ -335,6 +339,8 @@ export async function ensureInstalled(
 }
 
 /**
+ * Checks if a requested version is installed and returns its path.
+ *
  * @internal
  */
 export function checkInstalled(requested: string): { version: string; modulePath: string } {
@@ -350,6 +356,8 @@ export function checkInstalled(requested: string): { version: string; modulePath
 }
 
 /**
+ * Dynamically loads a package from the specified module path.
+ *
  * @internal
  */
 export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
@@ -631,6 +639,8 @@ function internalSchema(
 }
 
 /**
+ * Checks if the given version has the SparseMatrix moved to sequence-deprecated.
+ *
  * @internal
  */
 export function versionHasMovedSparsedMatrix(version: string): boolean {
@@ -641,6 +651,8 @@ export function versionHasMovedSparsedMatrix(version: string): boolean {
 }
 
 /**
+ * Converts a version string to a numeric value for comparison purposes.
+ *
  * @internal
  */
 export function versionToComparisonNumber(version: string): number {
