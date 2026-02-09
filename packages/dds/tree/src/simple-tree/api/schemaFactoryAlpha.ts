@@ -10,7 +10,6 @@ import type {
 	ImplicitAllowedTypes,
 	WithType,
 } from "../core/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
 // These imports prevent a large number of type references in the API reports from showing up as *_2.
 /* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 import type {
@@ -18,6 +17,7 @@ import type {
 	FieldSchemaAlpha,
 	FieldPropsAlpha,
 	FieldKind,
+	ImplicitFieldSchema,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
@@ -392,4 +392,14 @@ export class SchemaFactoryAlpha<
 	>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner> {
 		return new SchemaFactoryAlpha(scoped<TScope, TName, T>(this, name));
 	}
+
+	/**
+	 * {@inheritdoc SchemaStatics.withDefault}
+	 */
+	public readonly withDefault = schemaStatics.withDefault;
+
+	/**
+	 * {@inheritdoc SchemaStatics.withDefault}
+	 */
+	public static readonly withDefault = schemaStatics.withDefault;
 }
