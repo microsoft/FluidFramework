@@ -21,9 +21,9 @@ import {
 import type { UnionToIntersection } from "./util/index.js";
 
 /**
- * Utilities for creating extensible schema unions.
+ * Utilities for creating extensible unions using a node.
  * @remarks
- * Use {@link ExtensibleSchemaUnion.extensibleSchemaUnion} to create the union schema.
+ * Use {@link ExtensibleUnionNode.createSchema} to create the union schema.
  *
  * Unlike a schema union created using {@link SchemaStaticsBeta.staged | staged} allowed types, this union allows for unknown future types to exist in addition to the known types.
  * This allows for faster roll-outs of new types without waiting for old clients to be updated to be aware of them.
@@ -35,29 +35,29 @@ import type { UnionToIntersection } from "./util/index.js";
  *
  * @example
  * ```typescript
- * const sf = new SchemaFactoryBeta("extensibleSchemaUnionExample.items");
+ * const sf = new SchemaFactoryBeta("extensibleUnionNodeExample.items");
  * class ItemA extends sf.object("A", { x: sf.string }) {}
  * class ItemB extends sf.object("B", { x: sf.number }) {}
  *
- * class AnyItem extends ExtensibleSchemaUnion.extensibleSchemaUnion(
+ * class AnyItem extends ExtensibleUnionNode.createSchema(
  * 	[ItemA, ItemB], // Future versions may add more members here
  * 	sf,
  * 	"ExtensibleUnion",
  * ) {}
  * // Instances of the union are created using `create`.
  * const anyItem = AnyItem.create(new ItemA({ x: "hello" }));
- * // Reading the content from the union is done via `child`,
+ * // Reading the content from the union is done via the `union` property,
  * // which can be `undefined` to handle the case where a future version of this schema allows a type unknown to the current version.
- * const childNode: ItemA | ItemB | undefined = anyItem.child;
+ * const childNode: ItemA | ItemB | undefined = anyItem.union;
  * // To determine which member of the union was present, its schema can be inspected:
  * const aSchema = Tree.schema(childNode ?? assert.fail("No child"));
  * assert.equal(aSchema, ItemA);
  * ```
  * @alpha
  */
-export namespace ExtensibleSchemaUnion {
+export namespace ExtensibleUnionNode {
 	/**
-	 * Members for classes created by {@link ExtensibleSchemaUnion.extensibleSchemaUnion}.
+	 * Members for classes created by {@link ExtensibleUnionNode.createSchema}.
 	 * @alpha
 	 */
 	export interface Members<T> {
@@ -65,11 +65,11 @@ export namespace ExtensibleSchemaUnion {
 		 * The child wrapped by this node, which is has one of the type allowed by the union,
 		 * or `undefined` if the type is one which was added to the union by a future version of this schema.
 		 */
-		readonly child: T | undefined;
+		readonly union: T | undefined;
 	}
 
 	/**
-	 * Statics for classes created by {@link ExtensibleSchemaUnion.extensibleSchemaUnion}.
+	 * Statics for classes created by {@link ExtensibleUnionNode.createSchema}.
 	 * @alpha
 	 */
 	export interface Statics<T extends readonly TreeNodeSchema[]> {
@@ -86,11 +86,11 @@ export namespace ExtensibleSchemaUnion {
 	 * Create an extensible schema union which currently supports the types in `types`,
 	 * but tolerates collaboration with future versions that may include additional types.
 	 * @remarks
-	 * See {@link ExtensibleSchemaUnion} for an example use.
+	 * See {@link ExtensibleUnionNode} for an example use.
 	 * @alpha
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	export function extensibleSchemaUnion<
+	export function createSchema<
 		const T extends readonly TreeNodeSchema[],
 		const TScope extends string,
 		const TName extends string,
@@ -101,13 +101,13 @@ export namespace ExtensibleSchemaUnion {
 		}
 		const schemaFactory = createCustomizedFluidFrameworkScopedFactory(
 			inputSchemaFactory,
-			"extensibleSchemaUnion",
+			"extensibleUnionNode",
 		);
 		class Union
 			extends schemaFactory.object(name, record, { allowUnknownOptionalFields: true })
 			implements Members<TreeNodeFromImplicitAllowedTypes<T>>
 		{
-			public get child(): TreeNodeFromImplicitAllowedTypes<T> | undefined {
+			public get union(): TreeNodeFromImplicitAllowedTypes<T> | undefined {
 				for (const [_key, child] of TreeAlpha.children(this)) {
 					return child as TreeNodeFromImplicitAllowedTypes<T>;
 				}
