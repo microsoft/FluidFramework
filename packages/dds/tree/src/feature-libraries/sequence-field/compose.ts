@@ -206,8 +206,6 @@ function composeMarksIgnoreChild(
 		const detachId = getDetachedRootId(baseMark);
 		const attachId = getAttachedRootId(newMark);
 
-		// Note that we cannot assert that this returns true,
-		// as it may not be until a second pass that MCF can tell that this is a reattach of the same node.
 		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count, true);
 
 		// The composition has no net effect but we preserve the second change's intention to pin the nodes here.
