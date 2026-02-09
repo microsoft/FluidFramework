@@ -38,7 +38,7 @@ importers:
         version: link:packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
-        version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)
+        version: 0.63.0(@types/node@20.19.30)(encoding@0.1.13)
       '@fluid-tools/markdown-magic':
         specifier: workspace:~
         version: link:tools/markdown-magic
@@ -93,6 +93,9 @@ importers:
       puppeteer:
         specifier: ^23.6.0
         version: 23.10.3(typescript@5.4.5)
+      repopo:
+        specifier: ^0.9.0
+        version: 0.9.0(@types/node@20.19.30)(sort-package-json@2.15.1)
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2
@@ -19931,6 +19934,25 @@ packages:
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
 
+  '@tylerbu/cli-api@0.10.1':
+    resolution: {integrity: sha512-tLg5AZTocH/AOPT+5bHrk8BYv1K+MXo+pa17aMn/3nPt6YknKE4qXxNb7u9SRxH6llRcxIkx8mjYa+TYOARhzg==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      consola: ^3.4.0
+    peerDependenciesMeta:
+      consola:
+        optional: true
+
+  '@tylerbu/fundamentals@0.3.0':
+    resolution: {integrity: sha512-ZnY3QzrSOBenWJPT7n8qS8FXb6CP6KMj8zS2Pd+beRh0UnDElpVXsWK8inBgslfhnon/S+JP0ovRbisupnvZKA==}
+    engines: {node: '>=18.0.0'}
+
+  '@tylerbu/lilconfig-loader-ts@0.1.3':
+    resolution: {integrity: sha512-9GcvIXzOE+Lk7xLN1oicRCfnaAstAdbdUenY7dYDLUIdBmVtWIljvT2A7Gw1rrEvG8olV2hrfyMCgYNE5uxXHw==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      lilconfig: ^3.1.3
+
   '@tylerbu/markdown-magic@2.4.0-tylerbu-1':
     resolution: {integrity: sha512-p8nG2uH2+tQMGtT2Tam4gdJuJwuOdJdSA73LlNmRG+8dcxSNXkiwADyd/to6gY/oZOuNB5sJahBho5fLmxLI3Q==}
     hasBin: true
@@ -21712,6 +21734,10 @@ packages:
   connected-domain@1.0.0:
     resolution: {integrity: sha512-lHlohUiJxlpunvDag2Y0pO20bnvarMjnrdciZeuJUqRwrf/5JHNhdpiPIr5GQ8IkqrFj5TDMQwcCjblGo1oeuA==}
 
+  consola@3.4.2:
+    resolution: {integrity: sha512-5IKcdX0nnYavi6G7TtOhwkYzyjfJlatbjMjuLSfE2kYT5pMDOilZ4OvMhi637CcDICTmz3wARPoyhqyX1Y+XvA==}
+    engines: {node: ^14.18.0 || >=16.10.0}
+
   console-control-strings@1.1.0:
     resolution: {integrity: sha512-ty/fTekppD2fIwRvnZAVdeOiGd1c7YXEixbgJTNzqcxJWKQnjJ/V1bNEEE6hygpM3WjwHFUVK6HTjWSzV4a8sQ==}
 
@@ -22086,6 +22112,9 @@ packages:
     resolution: {integrity: sha512-8QmQKqEASLd5nx0U1B1okLElbUuuttJ/AnYmRXbbbGDWh6uS208EjD4Xqq/I9wK7u0v6O08XhTWnt5XtEbR6Dg==}
     engines: {node: '>= 0.4'}
 
+  defu@6.1.4:
+    resolution: {integrity: sha512-mEQCMmwJu317oSz8CwdIOdwf3xMif1ttiM8LTufzc3g6kR+9Pe236twL8j3IYT1F7GfRgGcW6MWxzZjLIkuHIg==}
+
   degenerator@5.0.1:
     resolution: {integrity: sha512-TllpMR/t0M5sqCXfj85i4XaAzxmS5tVA16dqvdkMwGmzI+dXLXnw3J+3Vdv7VKw+ThlTMboK6i9rnZ6Nntj5CQ==}
     engines: {node: '>= 14'}
@@ -22310,6 +22339,10 @@ packages:
 
   effect@3.19.11:
     resolution: {integrity: sha512-UTEj3c1s41Ha3uzSPKKvFBZaDjZ8ez00Q2NYWVm2mKh2LXeX8j6LTg1HcQHnmdUhOjr79KHmhVWYB/zbegLO1A==}
+
+  effection@4.0.2:
+    resolution: {integrity: sha512-O8WMGP10nPuJDwbNGILcaCNWS+CvDYjcdsUSD79nWZ+WtUQ8h1MEV7JJwCSZCSeKx8+TdEaZ/8r6qPTR2o/o8w==}
+    engines: {node: '>= 16'}
 
   ejs@3.1.10:
     resolution: {integrity: sha512-UeJmFfOrAQS8OJWPZ4qtgHyWExa088/MtK5UEyoJGFH67cDEXkZSviOiKRCZ4Xij0zxI3JECgYs3oKx+AizQBA==}
@@ -24301,6 +24334,9 @@ packages:
   jsonfile@6.1.0:
     resolution: {integrity: sha512-5dgndWOriYSm5cnYaJNhalLNDKOqFwyDB/rr1E9ZsGciGvKPs8R2xYGCacuf3z6K1YKDz182fd+fY3cn3pMqXQ==}
 
+  jsonfile@6.2.0:
+    resolution: {integrity: sha512-FGuPw30AdOIUTRMC2OMRtQV+jkVj2cfPqSeWXv1NEAJ1qZ5zb1X6z1mFhbfOB/iy3ssJCD+3KuZ8r8C3uVFlAg==}
+
   jsonify@0.0.1:
     resolution: {integrity: sha512-2/Ki0GcmuqSrgFyelQq9M05y7PS0mEwuIzrf3f1fPqkVDVRvZrPZtVSMHxdgo8Aq0sxAOb/cr2aqqA3LeWHVPg==}
 
@@ -24846,6 +24882,9 @@ packages:
   methods@1.1.2:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
     engines: {node: '>= 0.6'}
+
+  microdiff@1.5.0:
+    resolution: {integrity: sha512-Drq+/THMvDdzRYrK0oxJmOKiC24ayUV8ahrt8l3oRK51PWt6gdtrIGrlIH3pT/lFh1z93FbAcidtsHcWbnRz8Q==}
 
   micromark-core-commonmark@2.0.2:
     resolution: {integrity: sha512-FKjQKbxd1cibWMM1P9N+H8TwlgGgSkWZMmfuVucLCHaYqeSvJ0hFeHsIa65pA2nYbes0f8LDHPMrd9X7Ujxg9w==}
@@ -25767,6 +25806,9 @@ packages:
     resolution: {integrity: sha512-Vj7sf++t5pBD637NSfkxpHSMfWaeig5+DKWLhcqIYx6mWQz5hdJTGDVMQiJcw1ZYkhs7AazKDGpRVji1LJCZUQ==}
     engines: {node: '>=18'}
 
+  pathe@2.0.3:
+    resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
+
   pathval@1.1.1:
     resolution: {integrity: sha512-Dp6zGqpTdETdR63lehJYPeIOqpiNBNtc7BpWSLrOje7UaIsE5aY92r/AunQA7rsXvet3lrJ3JnZX29UPTKXyKQ==}
 
@@ -26466,6 +26508,16 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  repopo@0.9.0:
+    resolution: {integrity: sha512-JJW/PFfDiFuBo+3FOo02O2f7GMuCGbMfp4GId1s3zuAKKh98102buL7cjzo5048AwEa/H6UZmaKnSIMqzRDGvg==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+    peerDependencies:
+      sort-package-json: '*'
+    peerDependenciesMeta:
+      sort-package-json:
+        optional: true
+
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
     engines: {node: '>=0.10.0'}
@@ -26509,6 +26561,9 @@ packages:
 
   resolve-pkg-maps@1.0.0:
     resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
+
+  resolve-workspace-root@2.0.1:
+    resolution: {integrity: sha512-nR23LHAvaI6aHtMg6RWoaHpdR4D881Nydkzi2CixINyg9T00KgaJdJI6Vwty+Ps8WLxZHuxsS0BseWjxSA4C+w==}
 
   resolve.exports@2.0.3:
     resolution: {integrity: sha512-OcXjMsGdhL4XnbShKpAcSqPMzQoYkYyhbEaeSko47MjRP9NfEQMhZkXL1DoFlt9LWQn4YttrdnV6X2OiyzBi+A==}
@@ -30381,6 +30436,81 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@fluid-tools/build-cli@0.63.0(@types/node@20.19.30)(encoding@0.1.13)':
+    dependencies:
+      '@andrewbranch/untar.js': 1.0.3
+      '@fluid-tools/build-infrastructure': 0.63.0(@types/node@20.19.30)
+      '@fluid-tools/version-tools': 0.63.0(@types/node@20.19.30)
+      '@fluidframework/build-tools': 0.63.0(@types/node@20.19.30)
+      '@fluidframework/bundle-size-tools': 0.63.0
+      '@inquirer/prompts': 8.0.2(@types/node@20.19.30)
+      '@microsoft/api-extractor': 7.55.1(@types/node@20.19.30)
+      '@oclif/core': 4.8.0
+      '@oclif/plugin-autocomplete': 3.2.39
+      '@oclif/plugin-commands': 4.1.38
+      '@oclif/plugin-help': 6.2.36
+      '@oclif/plugin-not-found': 3.2.73(@types/node@20.19.30)
+      '@octokit/core': 7.0.6
+      '@octokit/rest': 22.0.1
+      '@rushstack/node-core-library': 5.19.0(@types/node@20.19.30)
+      async: 3.2.6
+      azure-devops-node-api: 11.2.0
+      change-case: 5.4.4
+      danger: 13.0.5(encoding@0.1.13)
+      date-fns: 3.6.0
+      debug: 4.4.3(supports-color@8.1.1)
+      execa: 5.1.1
+      fflate: 0.8.2
+      fs-extra: 11.3.2
+      github-slugger: 2.0.0
+      globby: 11.1.0
+      gray-matter: 4.0.3
+      human-id: 4.1.3
+      issue-parser: 7.0.1
+      json5: 2.2.3
+      jssm: 5.104.2
+      jszip: 3.10.1
+      latest-version: 9.0.0
+      lilconfig: 3.1.3
+      mdast: 3.0.0
+      mdast-util-heading-range: 4.0.0
+      mdast-util-to-string: 4.0.0
+      minimatch: 10.1.1
+      npm-check-updates: 16.14.20
+      oclif: 4.22.52(@types/node@20.19.30)
+      picocolors: 1.1.1
+      prettier: 3.2.5
+      prompts: 2.4.2
+      read-pkg-up: 7.0.1
+      remark: 15.0.1
+      remark-gfm: 4.0.1
+      remark-github: 12.0.0
+      remark-github-beta-blockquote-admonitions: 3.1.1
+      remark-toc: 9.0.0
+      replace-in-file: 7.2.0
+      resolve.exports: 2.0.3
+      semver: 7.7.3
+      simple-git: 3.30.0
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 7.1.2
+      table: 6.9.0
+      ts-morph: 22.0.0
+      unist-util-visit: 5.0.0
+      xml2js: 0.6.2
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - bluebird
+      - bufferutil
+      - encoding
+      - esbuild
+      - react-devtools-core
+      - supports-color
+      - uglify-js
+      - utf-8-validate
+      - webpack-cli
+
   '@fluid-tools/build-cli@0.63.0(@types/node@20.19.30)(encoding@0.1.13)(webpack-cli@5.1.4)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
@@ -30672,6 +30802,20 @@ snapshots:
       - react-devtools-core
       - supports-color
       - utf-8-validate
+
+  '@fluidframework/bundle-size-tools@0.63.0':
+    dependencies:
+      azure-devops-node-api: 11.2.0
+      fflate: 0.8.2
+      jszip: 3.10.1
+      msgpack-lite: 0.1.26
+      typescript: 5.4.5
+      webpack: 5.103.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
 
   '@fluidframework/bundle-size-tools@0.63.0(webpack-cli@5.1.4)':
     dependencies:
@@ -33529,6 +33673,33 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@tylerbu/cli-api@0.10.1(consola@3.4.2)':
+    dependencies:
+      '@oclif/core': 4.8.0
+      '@tylerbu/fundamentals': 0.3.0
+      '@tylerbu/lilconfig-loader-ts': 0.1.3(lilconfig@3.1.3)
+      debug: 4.4.3(supports-color@8.1.1)
+      detect-indent: 7.0.2
+      jsonfile: 6.2.0
+      lilconfig: 3.1.3
+      pathe: 2.0.3
+      picocolors: 1.1.1
+      semver: 7.7.3
+      simple-git: 3.30.0
+      sort-package-json: 2.15.1
+      strip-ansi: 7.1.2
+    optionalDependencies:
+      consola: 3.4.2
+    transitivePeerDependencies:
+      - supports-color
+
+  '@tylerbu/fundamentals@0.3.0': {}
+
+  '@tylerbu/lilconfig-loader-ts@0.1.3(lilconfig@3.1.3)':
+    dependencies:
+      jiti: 2.6.1
+      lilconfig: 3.1.3
+
   '@tylerbu/markdown-magic@2.4.0-tylerbu-1':
     dependencies:
       '@technote-space/doctoc': 2.6.4
@@ -34300,7 +34471,7 @@ snapshots:
 
   '@vvago/vale@3.12.0':
     dependencies:
-      axios: 1.13.2(debug@4.4.3)
+      axios: 1.13.2
       rimraf: 5.0.10
       tar: 6.2.1
       unzipper: 0.10.14
@@ -34747,6 +34918,14 @@ snapshots:
   axios@0.30.2(debug@4.4.3):
     dependencies:
       follow-redirects: 1.15.11(debug@4.4.3)
+      form-data: 4.0.5
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
+  axios@1.13.2:
+    dependencies:
+      follow-redirects: 1.15.11
       form-data: 4.0.5
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -35510,6 +35689,8 @@ snapshots:
 
   connected-domain@1.0.0: {}
 
+  consola@3.4.2: {}
+
   console-control-strings@1.1.0: {}
 
   console-table-printer@2.14.6:
@@ -35914,6 +36095,8 @@ snapshots:
       has-property-descriptors: 1.0.2
       object-keys: 1.1.1
 
+  defu@6.1.4: {}
+
   degenerator@5.0.1:
     dependencies:
       ast-types: 0.13.4
@@ -36130,6 +36313,8 @@ snapshots:
     dependencies:
       '@standard-schema/spec': 1.0.0
       fast-check: 3.23.2
+
+  effection@4.0.2: {}
 
   ejs@3.1.10:
     dependencies:
@@ -36973,6 +37158,8 @@ snapshots:
   flatted@3.3.3: {}
 
   fn.name@1.1.0: {}
+
+  follow-redirects@1.15.11: {}
 
   follow-redirects@1.15.11(debug@4.3.7):
     optionalDependencies:
@@ -38682,6 +38869,12 @@ snapshots:
     optionalDependencies:
       graceful-fs: 4.2.11
 
+  jsonfile@6.2.0:
+    dependencies:
+      universalify: 2.0.1
+    optionalDependencies:
+      graceful-fs: 4.2.11
+
   jsonify@0.0.1: {}
 
   jsonlines@0.1.1: {}
@@ -39374,6 +39567,8 @@ snapshots:
   merge2@1.4.1: {}
 
   methods@1.1.2: {}
+
+  microdiff@1.5.0: {}
 
   micromark-core-commonmark@2.0.2:
     dependencies:
@@ -40553,6 +40748,8 @@ snapshots:
 
   path-type@6.0.0: {}
 
+  pathe@2.0.3: {}
+
   pathval@1.1.1: {}
 
   pause-stream@0.0.11:
@@ -41456,6 +41653,34 @@ snapshots:
       glob: 8.1.0
       yargs: 17.7.2
 
+  repopo@0.9.0(@types/node@20.19.30)(sort-package-json@2.15.1):
+    dependencies:
+      '@fluid-tools/build-infrastructure': 0.63.0(@types/node@20.19.30)
+      '@oclif/core': 4.8.0
+      '@oclif/plugin-help': 6.2.36
+      '@rushstack/node-core-library': 5.19.0(@types/node@20.19.30)
+      '@tylerbu/cli-api': 0.10.1(consola@3.4.2)
+      '@tylerbu/fundamentals': 0.3.0
+      consola: 3.4.2
+      defu: 6.1.4
+      effection: 4.0.2
+      jsonfile: 6.2.0
+      microdiff: 1.5.0
+      pathe: 2.0.3
+      picocolors: 1.1.1
+      picomatch: 4.0.3
+      resolve-workspace-root: 2.0.1
+      simple-git: 3.30.0
+      tinyglobby: 0.2.15
+    optionalDependencies:
+      sort-package-json: 2.15.1
+    transitivePeerDependencies:
+      - '@types/node'
+      - bufferutil
+      - react-devtools-core
+      - supports-color
+      - utf-8-validate
+
   require-directory@2.1.1: {}
 
   require-from-string@2.0.2: {}
@@ -41490,6 +41715,8 @@ snapshots:
   resolve-from@5.0.0: {}
 
   resolve-pkg-maps@1.0.0: {}
+
+  resolve-workspace-root@2.0.1: {}
 
   resolve.exports@2.0.3: {}
 
@@ -42529,7 +42756,7 @@ snapshots:
       schema-utils: 4.3.3
       serialize-javascript: 6.0.2
       terser: 5.37.0
-      webpack: 5.103.0(webpack-cli@5.1.4)
+      webpack: 5.103.0
 
   terser@5.37.0:
     dependencies:
@@ -43558,6 +43785,38 @@ snapshots:
       wildcard: 2.0.1
 
   webpack-sources@3.3.3: {}
+
+  webpack@5.103.0:
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.8
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.15.0
+      acorn-import-phases: 1.0.4(acorn@8.15.0)
+      browserslist: 4.28.1
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.18.3
+      es-module-lexer: 1.5.4
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.1
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 4.3.3
+      tapable: 2.3.0
+      terser-webpack-plugin: 5.3.15(webpack@5.103.0)
+      watchpack: 2.4.4
+      webpack-sources: 3.3.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
 
   webpack@5.103.0(webpack-cli@5.1.4):
     dependencies:
