@@ -599,13 +599,6 @@ export const typeFactory = {
 			_kind: "instanceof",
 			schema,
 		};
-		instanceOfsTypeFactory.set(instanceOfType, schema);
 		return instanceOfType;
 	},
 };
-
-/**
- * A lookup from type factory instanceOf types to their corresponding ObjectNodeSchema.
- * @alpha
- */
-export const instanceOfsTypeFactory = new WeakMap<TypeFactoryInstanceOf, ObjectNodeSchema>();
