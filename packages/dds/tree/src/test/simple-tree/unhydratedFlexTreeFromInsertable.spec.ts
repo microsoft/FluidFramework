@@ -1279,7 +1279,7 @@ TreeNodeSchema have significant object identity and thus the exact same object m
 		assert.throws(
 			() => unhydratedFlexTreeFromInsertable(testData, TestSchema),
 			validateUsageError(`Expected insertable for one of ["test.a" (name: "TestSchema")], got node with schema "test.b" (name: "TestSchema2").
-Nodes are valid insertable objects, but only if their schema the same.`),
+Nodes are valid insertable objects, but only if their schema are the same.`),
 		);
 	});
 

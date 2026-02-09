@@ -76,7 +76,7 @@ export function unhydratedFlexTreeFromInsertable<TIn extends InsertableContent |
 /**
  * Throw a usage error with a helpful message about `schema` not being in `allowedTypes` for insertable content.
  */
-export function allowedTypesInsertableSchemaError(
+function allowedTypesInsertableSchemaError(
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 	schema: TreeNodeSchema,
 ): never {
@@ -95,12 +95,12 @@ TreeNodeSchema have significant object identity and thus the exact same object m
 	}
 	throw new UsageError(
 		`Expected insertable for one of ${quotedAllowedTypesWithNames(allowedTypes)}, got node with schema ${quotedSchemaIdentifierWithName(schema)}.
-Nodes are valid insertable objects, but only if their schema the same.`,
+Nodes are valid insertable objects, but only if their schema are the same.`,
 	);
 }
 
 /**
- * Gets the a description of a schema for use in error messages.
+ * Gets a description of a schema for use in error messages.
  */
 function quotedSchemaIdentifierWithName(schema: TreeNodeSchema): string {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
@@ -108,7 +108,7 @@ function quotedSchemaIdentifierWithName(schema: TreeNodeSchema): string {
 }
 
 /**
- * Gets the a description of a schema for use in error messages.
+ * Gets a description of an allowedTypes for use in error messages.
  */
 function quotedAllowedTypesWithNames(allowedTypes: Iterable<TreeNodeSchema>): string {
 	return `[${[...allowedTypes].map(quotedSchemaIdentifierWithName).join(", ")}]`;
