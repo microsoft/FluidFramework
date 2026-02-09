@@ -102,7 +102,7 @@ async function generateConfig(filePath: string, config: FlatConfigArray): Promis
 	}
 
 	// Remove tsconfigRootDir since it varies by environment (it's set to process.cwd())
-	if (cleanConfig.languageOptions?.parserOptions?.tsconfigRootDir) {
+	if (typeof cleanConfig.languageOptions?.parserOptions === "object") {
 		delete cleanConfig.languageOptions.parserOptions.tsconfigRootDir;
 	}
 
