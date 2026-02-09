@@ -3,10 +3,6 @@
 	// Scripts run via tsx which handles ESM/CJS interop automatically.
 	"extends": "../build-common/tsconfig.base.json",
 	"compilerOptions": {
-		// Override target for modern Node.js features (import.meta, etc.)
-		// "target": "ES2022",
-		// "lib": ["ES2022"],
-
 		// Enable Node.js types - base config sets "types": [] which excludes all @types packages
 		"types": ["node"],
 
