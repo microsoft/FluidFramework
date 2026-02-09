@@ -22,7 +22,7 @@
 		"noEmit": true,
 
 		// ESLint plugin types violate this often which affects our own configs
-		"exactOptionalPropertyTypes": false
+		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["scripts/**/*", "library/**/*", "*.mts"]
+	"include": ["scripts/**/*", "library/**/*", "*.mts"],
 }
