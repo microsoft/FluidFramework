@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { independentView } from "../../../shared-tree/index.js";
@@ -60,7 +63,9 @@ describe("simple-tree configuration", () => {
 			schema: [Feet, Meters],
 			preventAmbiguity: false,
 		});
-		const view = independentView(config, { idCompressor: createIdCompressor() });
+		const view = independentView(config, {
+			idCompressor: createIdCompressor(SerializationVersion.V3),
+		});
 		// This is invalid since it is ambiguous which type of node is being constructed:
 		// view.initialize({ length: 5 });
 		// To work, an explicit type can be provided by using an {@link Unhydrated} Node:
@@ -81,7 +86,9 @@ describe("simple-tree configuration", () => {
 			schema: [Feet, Meters],
 			preventAmbiguity: true,
 		});
-		const view = independentView(config, { idCompressor: createIdCompressor() });
+		const view = independentView(config, {
+			idCompressor: createIdCompressor(SerializationVersion.V3),
+		});
 		// This now works, since the field is sufficient to determine this is a `Meters` node.
 		view.initialize({ meters: 5 });
 	});
