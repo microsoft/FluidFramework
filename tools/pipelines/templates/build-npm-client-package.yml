@@ -812,7 +812,7 @@ extends:
                   displayName: 'npm run test:copyresults'
                   inputs:
                     command: custom
-                    workingDir: '${{ parameters.buildDirectory }}'
+                    workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                     customCommand: 'run test:copyresults'
 
                 - ${{ if contains(test.name, 'tinylicious') }}:
