@@ -58,7 +58,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
     // (undocumented)
     clientId: string;
-    // @deprecated (undocumented)
+    // @deprecated
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
     protected readonly dataStoreRuntime: MockFluidDataStoreRuntime;
@@ -71,7 +71,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
     // (undocumented)
-    finalizeIdRange(range: IdCreationRange): void;
+    finalizeIdRange(range: unknown): void;
     flush(): void;
     flushSomeMessages(numMessages: number): void;
     // (undocumented)
@@ -112,7 +112,6 @@ export class MockContainerRuntimeFactory {
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
     protected getFirstMessageToProcess(): ISequencedDocumentMessage;
-    // (undocumented)
     getMinSeq(): number;
     // (undocumented)
     protected lastProcessedMessage: ISequencedDocumentMessage | undefined;
@@ -338,7 +337,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    idCompressor: IIdCompressorCore & IIdCompressor;
+    idCompressor: IIdCompressor;
     // (undocumented)
     IFluidDataStoreRegistry: IFluidDataStoreRegistry;
     // (undocumented)
@@ -383,7 +382,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
         logger?: ITelemetryBaseLogger;
-        idCompressor?: IIdCompressor & IIdCompressorCore;
+        idCompressor?: IIdCompressor;
         attachState?: AttachState;
         registry?: readonly IChannelFactory[];
         minVersionForCollab?: MinimumVersionForCollab;
@@ -449,7 +448,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+    idCompressor: IIdCompressor | undefined;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
@@ -460,7 +459,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     readonly isReadOnly: () => boolean;
     // (undocumented)
     readonly loader: ILoader;
-    // @deprecated (undocumented)
+    // @deprecated
     get local(): boolean;
     set local(local: boolean);
     // (undocumented)

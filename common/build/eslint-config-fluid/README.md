@@ -39,13 +39,13 @@ Or in your npm scripts:
 
 **Note:** ESLint 8.x flat config support was experimental. We recommend upgrading to ESLint 9 for the best experience.
 
-## Package Structure
+### Modular Structure
 
-The config is organized into a modular structure for maintainability:
+The flat config is organized into a modular structure for maintainability:
 
 ```
 eslint-config-fluid/
-├── flat.mts                    # Main entry point
+├── flat.mts                    # Main entry point (~30 lines)
 ├── library/
 │   ├── constants.mts           # Shared constants (ignores, file patterns, import restrictions)
 │   ├── settings.mts            # Plugin settings (import-x, jsdoc)
@@ -55,10 +55,17 @@ eslint-config-fluid/
 │   │   ├── recommended.mts     # Rules for recommended config (unicorn, type safety)
 │   │   └── strict.mts          # Rules for strict config (jsdoc requirements, explicit access)
 │   └── configs/
-│       ├── base.mts            # Base config with all plugins
+│       ├── base.mts            # Base config builder with all plugins
 │       ├── overrides.mts       # Shared overrides (test files, React, JS files)
-│       └── factory.mts         # Config definitions and factory functions
+│       └── factory.mts         # Config factory functions
 ```
+
+This structure ensures:
+
+- No single file exceeds ~250 lines
+- Single source of truth for constants and settings
+- Each module has a single responsibility
+- Easy to understand and maintain
 
 ## Configurations
 

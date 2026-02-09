@@ -142,7 +142,9 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	}
 
 	/**
-	 * @returns the current view of the tree, including the result of changes applied so far during an edit.
+	 * Gets the current view of the tree, including the result of changes applied so far during an edit.
+	 *
+	 * @remarks
 	 * Note that any external edits (from other clients) will not added to view while there is a `currentEdit`.
 	 */
 	public get currentView(): TreeView {
@@ -150,7 +152,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	}
 
 	/**
-	 * @returns true iff there is an open edit.
+	 * Whether there is currently an open edit operation.
 	 */
 	public hasOpenEdit(): boolean {
 		return this.currentEdit !== undefined;
@@ -371,7 +373,9 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	}
 
 	/**
-	 * @returns the {@link EditStatus} of the current edit.
+	 * Gets the {@link EditStatus} of the current edit.
+	 *
+	 * @remarks
 	 * Has no side effects.
 	 * Can only be called if an edit is open.
 	 */

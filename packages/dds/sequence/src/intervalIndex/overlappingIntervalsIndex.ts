@@ -168,6 +168,8 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 }
 
 /**
+ * Creates an overlapping intervals index for the provided SharedString.
+ *
  * @legacy @beta
  */
 export function createOverlappingIntervalsIndex(

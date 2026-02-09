@@ -4,19 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	unhydratedFlexTreeFromInsertable,
-} from "../../../simple-tree/index.js";
-import { SharedTree } from "../../../treeFactory.js";
-import { getView } from "../../utils.js";
 import { Tree } from "../../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
 import {
 	createFieldSchema,
 	FieldKind,
@@ -24,9 +18,14 @@ import {
 	type ConstantFieldProvider,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/fieldSchema.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	unhydratedFlexTreeFromInsertable,
+} from "../../../simple-tree/index.js";
+import { SharedTree } from "../../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
+import { getView } from "../../utils.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -119,20 +118,14 @@ describe("simple-tree tree", () => {
 	it("custom identifier copied from tree", () => {
 		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
 		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
-		const treeSrc = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+		const treeSrc = factory.create(new MockFluidDataStoreRuntime(), "tree");
 
 		const view = treeSrc.viewWith(config);
 		view.initialize({});
 		const idFromInitialize = Tree.shortId(view.root);
 		assert(typeof idFromInitialize === "number");
 
-		const treeDst = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+		const treeDst = factory.create(new MockFluidDataStoreRuntime(), "tree");
 
 		const viewDst = treeDst.viewWith(config);
 		viewDst.initialize({});
@@ -146,10 +139,7 @@ describe("simple-tree tree", () => {
 	it("viewWith twice errors", () => {
 		class Empty extends schema.object("Empty", {}) {}
 		const config = new TreeViewConfiguration({ schema: Empty });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 
 		const view = tree.viewWith(config);
 		assert.throws(

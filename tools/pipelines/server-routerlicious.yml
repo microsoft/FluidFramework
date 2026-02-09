@@ -56,6 +56,7 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - common/build/eslint-config-fluid
     - fluidBuild.config.cjs
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
@@ -84,6 +85,7 @@ pr:
   paths:
     include:
     - .prettierignore
+    - common/build/eslint-config-fluid
     - fluidBuild.config.cjs
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml

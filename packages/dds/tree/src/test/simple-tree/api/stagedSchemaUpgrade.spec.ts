@@ -4,8 +4,22 @@
  */
 
 import { strict as assert } from "node:assert";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
+
+import { FluidClientVersion } from "../../../codec/index.js";
+import { storedEmptyFieldSchema } from "../../../core/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import {
+	independentInitializedView,
+	independentView,
+	TreeAlpha,
+	type ViewContent,
+} from "../../../shared-tree/index.js";
 import {
 	extractPersistedSchema,
 	SchemaCompatibilityTester,
@@ -16,16 +30,6 @@ import {
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
-import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
-import { storedEmptyFieldSchema } from "../../../core/index.js";
-import {
-	independentInitializedView,
-	independentView,
-	TreeAlpha,
-	type ViewContent,
-} from "../../../shared-tree/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { FluidClientVersion } from "../../../codec/index.js";
 
 // Some documentation links to this file on GitHub: renaming it may break those links.
 
@@ -166,7 +170,7 @@ describe("staged schema upgrade", () => {
 		});
 
 		// TODO: this is a legacy API: we need a stable alternative.
-		const idCompressor = createIdCompressor();
+		const idCompressor = createIdCompressor(SerializationVersion.V3);
 
 		const content: ViewContent = {
 			tree: TreeAlpha.exportCompressed(viewA.root, {

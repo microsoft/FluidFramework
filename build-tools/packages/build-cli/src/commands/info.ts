@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Flags } from "@oclif/core";
-import { type ColumnUserConfig, table } from "table";
-
 import type { Package } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
 import * as changeCase from "change-case";
+import { type ColumnUserConfig, table } from "table";
 import { releaseGroupFlag } from "../flags.js";
 // eslint-disable-next-line import-x/no-deprecated
 import { BaseCommand, isMonoRepoKind } from "../library/index.js";

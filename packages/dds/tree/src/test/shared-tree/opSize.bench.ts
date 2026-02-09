@@ -10,7 +10,6 @@ import {
 	benchmarkCustom,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -20,8 +19,6 @@ import {
 
 import type { Value } from "../../core/index.js";
 import { Tree, type ITreePrivate } from "../../shared-tree/index.js";
-import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
-import { DefaultTestSharedTreeKind } from "../utils.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -29,6 +26,8 @@ import {
 	type ITree,
 	type TreeView,
 } from "../../simple-tree/index.js";
+import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
+import { DefaultTestSharedTreeKind } from "../utils.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
@@ -52,9 +51,7 @@ class Parent extends schemaFactory.array("Test:Opsize-Bench-Root", Child) {}
  */
 function createConnectedTree(): ITreePrivate {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({
-		idCompressor: createIdCompressor(),
-	});
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({});
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const tree = DefaultTestSharedTreeKind.getFactory().create(dataStoreRuntime, "tree");
 	tree.connect({
@@ -291,22 +288,22 @@ describe("Op Size", () => {
 	let currentBenchmarkName = "";
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
+	interface ITreeWithSubmitLocalMessage {
+		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void;
+	}
+
 	function registerOpListener(
 		tree: ITreePrivate,
 		resultArray: ISequencedDocumentMessage[],
 	): void {
 		// TODO: better way to hook this up. Needs to detect local ops exactly once.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const oldSubmitLocalMessage = (tree as any).submitLocalMessage.bind(tree);
-		function submitLocalMessage(
-			content: ISequencedDocumentMessage,
-			localOpMetadata: unknown = undefined,
-		): void {
-			resultArray.push(content);
+		const treeInternal = tree as unknown as ITreeWithSubmitLocalMessage;
+		const oldSubmitLocalMessage = treeInternal.submitLocalMessage.bind(tree);
+		function submitLocalMessage(content: unknown, localOpMetadata?: unknown): void {
+			resultArray.push(content as ISequencedDocumentMessage);
 			oldSubmitLocalMessage(content, localOpMetadata);
 		}
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(tree as any).submitLocalMessage = submitLocalMessage;
+		treeInternal.submitLocalMessage = submitLocalMessage;
 	}
 
 	const getOperationsStats = (

@@ -4,34 +4,6 @@
 
 ```ts
 
-// @beta @legacy
-export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
-
-// @beta @legacy
-export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
-
-// @beta @legacy
-export function createSessionId(): SessionId;
-
-// @beta @legacy
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
-
-// @beta @legacy
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
-
-// @beta @legacy
-export interface IdCreationRange {
-    // (undocumented)
-    readonly ids?: {
-        readonly firstGenCount: number;
-        readonly count: number;
-        readonly requestedClusterSize: number;
-        readonly localIdRanges: [genCount: number, count: number][];
-    };
-    // (undocumented)
-    readonly sessionId: SessionId;
-}
-
 // @public
 export interface IIdCompressor {
     decompress(id: SessionSpaceCompressedId): StableId;
@@ -44,35 +16,19 @@ export interface IIdCompressor {
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
 
-// @beta @legacy
-export interface IIdCompressorCore {
-    beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
-    finalizeCreationRange(range: IdCreationRange): void;
-    serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
-    serialize(withSession: false): SerializedIdCompressorWithNoSession;
-    takeNextCreationRange(): IdCreationRange;
-    takeUnfinalizedCreationRange(): IdCreationRange;
-}
-
 // @public
 export type OpSpaceCompressedId = number & {
     readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
 };
 
 // @beta @legacy
-export type SerializedIdCompressor = string & {
-    readonly _serializedIdCompressor: "8c73c57c-1cf4-4278-8915-6444cb4f6af5";
+export const SerializationVersion: {
+    readonly V2: 2;
+    readonly V3: 3;
 };
 
 // @beta @legacy
-export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
-    readonly _noLocalState: "3aa2e1e8-cc28-4ea7-bc1a-a11dc3f26dfb";
-};
-
-// @beta @legacy
-export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & {
-    readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
-};
+export type SerializationVersion = (typeof SerializationVersion)[keyof typeof SerializationVersion];
 
 // @public
 export type SessionId = StableId & {

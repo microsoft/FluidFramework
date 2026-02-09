@@ -37,7 +37,7 @@ import { globalIgnores } from "../constants.mjs";
 import { importXSettings, jsdocSettings } from "../settings.mjs";
 import { baseRules, eslintCommentsRecommendedRules } from "../rules/base.mjs";
 
-export type FlatConfigArray = Linter.Config[];
+export type FlatConfigArray = readonly Readonly<Linter.Config>[];
 
 /**
  * Base configuration array.

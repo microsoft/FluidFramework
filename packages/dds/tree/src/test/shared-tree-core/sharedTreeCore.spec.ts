@@ -8,7 +8,6 @@ import { strict as assert } from "node:assert";
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	type ISummaryBlob,
 	type ISummaryTree,
@@ -36,6 +35,7 @@ import {
 	type GraphCommit,
 	type RevisionTag,
 	rootFieldKey,
+	type TaggedChange,
 } from "../../core/index.js";
 import type {
 	DefaultChangeset,
@@ -43,11 +43,18 @@ import type {
 	ModularChangeset,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { EncodedEditManager } from "../../shared-tree-core/editManagerFormatV1toV4.js";
+import {
+	EditManagerSummarizer,
+	stringKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/editManagerSummarizer.js";
 import {
 	EditManagerFormatVersion,
 	SharedTreeSummaryFormatVersion,
 	summarizablesMetadataKey,
-	type ChangeEnricherReadonlyCheckout,
+	type ChangeEnricher,
 	type EditManager,
 	type ResubmitMachine,
 	type SharedTreeCore,
@@ -56,7 +63,13 @@ import {
 	type SummaryElementParser,
 	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { brand, disposeSymbol } from "../../util/index.js";
+import {
+	summarizablesTreeKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/summaryTypes.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import { brand } from "../../util/index.js";
+import { mockSerializer } from "../mockSerializer.js";
 import {
 	chunkFromJsonableTrees,
 	createTestUndoRedoStacks,
@@ -66,19 +79,6 @@ import {
 } from "../utils.js";
 
 import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
-import { mockSerializer } from "../mockSerializer.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { EncodedEditManager } from "../../shared-tree-core/editManagerFormatV1toV4.js";
-import {
-	EditManagerSummarizer,
-	stringKey,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../shared-tree-core/editManagerSummarizer.js";
-import {
-	summarizablesTreeKey,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../shared-tree-core/summaryTypes.js";
 
 const enableSchemaValidation = true;
 
@@ -266,7 +266,7 @@ describe("SharedTreeCore", () => {
 	});
 
 	it("evicts trunk commits behind the minimum sequence number", () => {
-		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const runtime = new MockFluidDataStoreRuntime();
 		const sharedObject = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		factory.createContainerRuntime(runtime);
@@ -293,7 +293,7 @@ describe("SharedTreeCore", () => {
 	});
 
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
-		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const runtime = new MockFluidDataStoreRuntime();
 		const sharedObject = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		factory.createContainerRuntime(runtime);
@@ -355,12 +355,8 @@ describe("SharedTreeCore", () => {
 	 */
 	it("Can rebase and process edits to detached portions of the tree", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor(),
-		});
-		const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor(),
-		});
+		const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 		const factory = new SharedTreeTestFactory(() => {});
 
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -417,16 +413,16 @@ describe("SharedTreeCore", () => {
 	});
 
 	it("Tolerates aborting an outer transaction", async () => {
-		const provider = new TestTreeProviderLite(2);
-		const view1 = provider.trees[0].viewWith(
+		const enricher = new TestTreeProviderLite(2);
+		const view1 = enricher.trees[0].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
 			}),
 		);
 		view1.initialize(["A", "B"]);
-		provider.synchronizeMessages();
-		const view2 = provider.trees[1].viewWith(
+		enricher.synchronizeMessages();
+		const view2 = enricher.trees[1].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
@@ -446,46 +442,46 @@ describe("SharedTreeCore", () => {
 			return Tree.runTransaction.rollback;
 		});
 
-		provider.synchronizeMessages();
+		enricher.synchronizeMessages();
 		assert.deepEqual([...root1], ["A", "B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
 		// Make additional changes to ensure that all changes from the previous transactions were flushed
 		// and that future edits that require refreshers work as expected.
 		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-			provider.trees[0].kernel.checkout.events,
+			enricher.trees[0].kernel.checkout.events,
 		);
 		Tree.runTransaction(root1, () => {
 			root1.insertAtEnd("C");
 		});
-		provider.synchronizeMessages();
+		enricher.synchronizeMessages();
 		assert.deepEqual([...root1], ["A", "B", "C"]);
 		assert.deepEqual([...root2], ["A", "B", "C"]);
 
 		(undoStack.pop() ?? assert.fail("Expected undo")).revert();
-		provider.synchronizeMessages();
+		enricher.synchronizeMessages();
 		assert.deepEqual([...root1], ["A", "B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
 		// This redo operation requires a refresher.
 		(redoStack.pop() ?? assert.fail("Expected redo")).revert();
-		provider.synchronizeMessages();
+		enricher.synchronizeMessages();
 		assert.deepEqual([...root1], ["A", "B", "C"]);
 		assert.deepEqual([...root2], ["A", "B", "C"]);
 		unsubscribe();
 	});
 
 	it("Tolerates aborting an inner transaction", async () => {
-		const provider = new TestTreeProviderLite(2);
-		const view1 = provider.trees[0].viewWith(
+		const enricher = new TestTreeProviderLite(2);
+		const view1 = enricher.trees[0].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
 			}),
 		);
 		view1.initialize(["A", "B"]);
-		provider.synchronizeMessages();
-		const view2 = provider.trees[1].viewWith(
+		enricher.synchronizeMessages();
+		const view2 = enricher.trees[1].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
@@ -508,7 +504,7 @@ describe("SharedTreeCore", () => {
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
-		provider.synchronizeMessages();
+		enricher.synchronizeMessages();
 
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["B"]);
@@ -516,23 +512,23 @@ describe("SharedTreeCore", () => {
 		// Make additional changes to ensure that all changes from the previous transactions were flushed
 		// and that future edits that require refreshers work as expected.
 		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
-			provider.trees[0].kernel.checkout.events,
+			enricher.trees[0].kernel.checkout.events,
 		);
 		Tree.runTransaction(root1, () => {
 			root1.insertAtEnd("C");
 		});
-		provider.synchronizeMessages();
+		enricher.synchronizeMessages();
 		assert.deepEqual([...root1], ["B", "C"]);
 		assert.deepEqual([...root2], ["B", "C"]);
 
 		(undoStack.pop() ?? assert.fail("Expected undo")).revert();
-		provider.synchronizeMessages();
+		enricher.synchronizeMessages();
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["B"]);
 
 		// This redo operation requires a refresher.
 		(redoStack.pop() ?? assert.fail("Expected redo")).revert();
-		provider.synchronizeMessages();
+		enricher.synchronizeMessages();
 		assert.deepEqual([...root1], ["B", "C"]);
 		assert.deepEqual([...root2], ["B", "C"]);
 		unsubscribe();
@@ -591,35 +587,42 @@ describe("SharedTreeCore", () => {
 			readonly output: T;
 		}
 
-		class MockChangeEnricher<T extends object> implements ChangeEnricherReadonlyCheckout<T> {
-			public isDisposed = false;
+		class MockChangeEnricher<T extends object> implements ChangeEnricher<T> {
+			// These counters are used to verify that the commit enricher does not perform unnecessary work
+			public enriched = 0;
+			public applied = 0;
+			public calls = 0;
+
 			public enrichmentLog: Enrichment<T>[] = [];
 
-			public fork(): never {
-				// SharedTreeCore should never call fork on a change enricher
-				throw new Error("Unexpected use of fork");
+			public resetCounters(): void {
+				this.enriched = 0;
+				this.applied = 0;
+				this.calls = 0;
 			}
 
-			public updateChangeEnrichments(input: T): T {
-				assert.equal(this.isDisposed, false);
-				const output = { ...input };
-				this.enrichmentLog.push({ input, output });
-				return output;
-			}
-
-			public [disposeSymbol](): void {
-				assert.equal(this.isDisposed, false);
-				this.isDisposed = true;
+			public enrich(context: GraphCommit<T>, commits: readonly TaggedChange<T>[]): T[] {
+				this.calls++;
+				const enriched: T[] = [];
+				for (const { change } of commits) {
+					const output = { ...change };
+					this.enrichmentLog.push({ input: change, output });
+					enriched.push(output);
+					this.enriched++;
+				}
+				return enriched;
 			}
 		}
 
 		it("notifies the ResubmitMachine of submitted and sequenced commits", () => {
+			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine);
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
+			const tree = createTreeSharedObject([], {
+				enricher,
+				resubmitMachine: machine,
 			});
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			tree.connect({
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -639,11 +642,12 @@ describe("SharedTreeCore", () => {
 		it("enriches commits on first submit", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine, enricher);
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
+			const tree = createTreeSharedObject([], {
+				enricher,
+				resubmitMachine: machine,
 			});
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			tree.connect({
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -660,73 +664,63 @@ describe("SharedTreeCore", () => {
 		it("enriches transactions on first submit", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine, enricher);
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
+			const tree = createTreeSharedObject([], {
+				enricher,
+				resubmitMachine: machine,
 			});
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			tree.connect({
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.transaction.start();
+			tree.transaction.start(false);
 			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree.kernel);
+			assert.equal(enricher.enrichmentLog.length, 0);
+			changeTree(tree.kernel);
+			assert.equal(enricher.enrichmentLog.length, 0);
+			tree.transaction.commit();
 			assert.equal(enricher.enrichmentLog.length, 1);
+			assert.equal(machine.submissionLog.length, 1);
 			assert.equal(
 				enricher.enrichmentLog[0].input,
 				tree.transaction.activeBranch.getHead().change,
 			);
-			changeTree(tree.kernel);
-			assert.equal(enricher.enrichmentLog.length, 2);
-			assert.equal(
-				enricher.enrichmentLog[1].input,
-				tree.transaction.activeBranch.getHead().change,
-			);
-			tree.transaction.commit();
-			assert.equal(enricher.enrichmentLog.length, 2);
-			assert.equal(machine.submissionLog.length, 1);
-			assert.notEqual(
-				machine.submissionLog[0],
-				tree.transaction.activeBranch.getHead().change,
-			);
+			assert.equal(enricher.enrichmentLog[0].output, machine.submissionLog[0].change);
 		});
 
 		it("handles aborted outer transaction", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine, enricher);
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
+			const tree = createTreeSharedObject([], {
+				enricher,
+				resubmitMachine: machine,
 			});
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			tree.connect({
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.transaction.start();
-			assert.equal(enricher.enrichmentLog.length, 0);
+			tree.transaction.start(false);
 			changeTree(tree.kernel);
-			assert.equal(enricher.enrichmentLog.length, 1);
-			assert.equal(
-				enricher.enrichmentLog[0].input,
-				tree.transaction.activeBranch.getHead().change,
-			);
 			tree.transaction.abort();
-			assert.equal(enricher.enrichmentLog.length, 1);
+			assert.equal(enricher.enrichmentLog.length, 0);
 			assert.equal(machine.submissionLog.length, 0);
 		});
 
 		it("update commit enrichments on re-submit", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine, enricher);
-			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
+			const tree = createTreeSharedObject([], {
+				enricher,
+				resubmitMachine: machine,
 			});
+			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			const runtime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			tree.connect({
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),

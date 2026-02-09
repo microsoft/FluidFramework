@@ -21,6 +21,7 @@ import {
 import {
 	type CodecTree,
 	type CodecWriteOptions,
+	type CodecWriteOptionsBeta,
 	DependentFormatVersion,
 	FluidClientVersion,
 	FormatValidatorNoOp,
@@ -98,24 +99,22 @@ import {
 	type SimpleAllowedTypeAttributes,
 	type SchemaType,
 } from "../simple-tree/index.js";
-
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
-import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
-import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
 import {
-	brand,
 	type Breakable,
 	breakingClass,
 	type JsonCompatible,
 	throwIfBroken,
 } from "../util/index.js";
+
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	getCodecTreeForChangeFormat,
-	type SharedTreeChangeFormatVersion,
+	SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -296,7 +295,6 @@ export class SharedTreeKernel
 				throw error;
 			},
 		);
-		const changeEnricher = new SharedTreeReadonlyChangeEnricher(forest, schema, removedRoots);
 		super(
 			breaker,
 			sharedObject,
@@ -311,8 +309,6 @@ export class SharedTreeKernel
 			idCompressor,
 			schema,
 			defaultSchemaPolicy,
-			undefined,
-			changeEnricher,
 		);
 
 		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
@@ -328,6 +324,7 @@ export class SharedTreeKernel
 			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
 		});
 
+		this.registerSharedBranchForEditing("main", this.checkout);
 		this.registerCheckout("main", this.checkout);
 
 		this.view = {
@@ -344,35 +341,6 @@ export class SharedTreeKernel
 
 	private registerCheckout(branchId: BranchId, checkout: TreeCheckout): void {
 		this.checkouts.set(branchId, checkout);
-		const enricher = this.getCommitEnricher(branchId);
-		checkout.transaction.events.on("started", () => {
-			if (this.sharedObject.isAttached()) {
-				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				enricher.startTransaction();
-			}
-		});
-
-		checkout.transaction.events.on("aborting", () => {
-			if (this.sharedObject.isAttached()) {
-				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				enricher.abortTransaction();
-			}
-		});
-		checkout.transaction.events.on("committing", () => {
-			if (this.sharedObject.isAttached()) {
-				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				enricher.commitTransaction();
-			}
-		});
-		checkout.events.on("beforeBatch", (event) => {
-			if (
-				event.type === "append" &&
-				this.sharedObject.isAttached() &&
-				checkout.transaction.isInProgress()
-			) {
-				enricher.addTransactionCommits(event.newCommits);
-			}
-		});
 	}
 
 	public exportVerbose(): VerboseTree | undefined {
@@ -440,13 +408,7 @@ export class SharedTreeKernel
 	private checkoutBranch(branchId: BranchId): TreeCheckout {
 		const checkout = this.checkout.branch();
 		checkout.switchBranch(this.getSharedBranch(branchId));
-		const enricher = new SharedTreeReadonlyChangeEnricher(
-			checkout.forest,
-			checkout.storedSchema,
-			checkout.removedRoots,
-		);
-
-		this.registerSharedBranchForEditing(branchId, enricher);
+		this.registerSharedBranchForEditing(branchId, checkout);
 		this.registerCheckout(branchId, checkout);
 		return checkout;
 	}
@@ -588,23 +550,14 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- intentional comparison
-export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs([
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v3),
-		brand<SharedTreeChangeFormatVersion>(3),
-	],
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v4),
-		brand<SharedTreeChangeFormatVersion>(4),
-	],
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.vSharedBranches),
-		brand<SharedTreeChangeFormatVersion>(4),
-	],
-	[
-		brand<EditManagerFormatVersion>(EditManagerFormatVersion.v6),
-		brand<SharedTreeChangeFormatVersion>(5),
-	],
+export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs<
+	EditManagerFormatVersion,
+	SharedTreeChangeFormatVersion
+>([
+	[EditManagerFormatVersion.v3, SharedTreeChangeFormatVersion.v3],
+	[EditManagerFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
+	[EditManagerFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
+	[EditManagerFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 ]);
 
 /**
@@ -613,23 +566,14 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
-export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs([
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v3),
-		brand<SharedTreeChangeFormatVersion>(3),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v4),
-		brand<SharedTreeChangeFormatVersion>(4),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.vSharedBranches),
-		brand<SharedTreeChangeFormatVersion>(4),
-	],
-	[
-		brand<MessageFormatVersion>(MessageFormatVersion.v6),
-		brand<SharedTreeChangeFormatVersion>(5),
-	],
+export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
+	MessageFormatVersion,
+	SharedTreeChangeFormatVersion
+>([
+	[MessageFormatVersion.v3, SharedTreeChangeFormatVersion.v3],
+	[MessageFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
+	[MessageFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
+	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 ]);
 
 function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab): CodecTree {
@@ -669,7 +613,7 @@ export function getCodecTreeForSharedTreeFormat(
  * Configuration options for SharedTree.
  * @beta @input
  */
-export type SharedTreeOptionsBeta = ForestOptions;
+export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
 
 /**
  * Configuration options for SharedTree with alpha features.

@@ -104,6 +104,7 @@ import {
 	createIdCompressor,
 	createSessionId,
 	deserializeIdCompressor,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 import {
 	FlushMode,
@@ -1151,14 +1152,16 @@ export class ContainerRuntime
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
 				return deserializeIdCompressor(
 					pendingLocalState.pendingIdCompressorState,
+					SerializationVersion.V2,
 					compressorLogger,
 				);
 			} else if (serializedIdCompressor === undefined) {
-				return createIdCompressor(compressorLogger);
+				return createIdCompressor(SerializationVersion.V2, compressorLogger);
 			} else {
 				return deserializeIdCompressor(
 					serializedIdCompressor,
 					createSessionId(),
+					SerializationVersion.V2,
 					compressorLogger,
 				);
 			}
@@ -2872,6 +2875,7 @@ export class ContainerRuntime
 			}
 			case ConnectionState.CatchingUp: {
 				assert(
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58523 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 					this.getConnectionState !== undefined &&
 						this.getConnectionState() === ConnectionState.CatchingUp,
 					0xc8d /* connection state mismatch between getConnectionState and setConnectionStatus notification */,

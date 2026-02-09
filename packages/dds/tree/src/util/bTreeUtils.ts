@@ -3,51 +3,81 @@
  * Licensed under the MIT License.
  */
 
-import { BTree } from "@tylerbu/sorted-btree-es6";
+import { debugAssert } from "@fluidframework/core-utils/internal";
+import { BTree, defaultComparator, type DefaultComparable } from "@tylerbu/sorted-btree-es6";
 
 import { brand, type Brand } from "./brand.js";
 
-export type TupleBTree<K, V> = Brand<BTree<K, V>, "TupleBTree">;
+/**
+ * A BTree which uses tuples (arrays) as the key.
+ * @remarks All keys must be the same length.
+ */
+export type TupleBTree<K extends readonly DefaultComparable[], V> = Brand<
+	BTree<K, V>,
+	"TupleBTree"
+>;
 
-export function newTupleBTree<K extends readonly unknown[], V>(
+/**
+ * Create a new {@link TupleBTree}.
+ * @param comparator - Either a single {@link TupleComparator | comparator} for all pairs of elements in the tuple or a {@link TupleComparators | tuple of comparators} that compares each pair of corresponding elements individually.
+ * @param entries - Optional initial entries for the btree.
+ */
+export function newTupleBTree<const K extends readonly DefaultComparable[], V>(
+	comparator: (a: K, b: K) => number,
 	entries?: [K, V][],
 ): TupleBTree<K, V> {
-	return brand(new BTree<K, V>(entries, compareTuples));
+	return brand(new BTree<K, V>(entries, comparator));
 }
 
-// This assumes that the arrays are the same length.
-function compareTuples(arrayA: readonly unknown[], arrayB: readonly unknown[]): number {
-	for (let i = 0; i < arrayA.length; i++) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const a = arrayA[i] as any;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const b = arrayB[i] as any;
+/** A comparator which can compare any pair of corresponding elements in the key of a {@link TupleBTree} */
+type TupleComparator<T extends DefaultComparable> = (a: T, b: T) => number;
 
-		// Less-than and greater-than always return false if either value is undefined,
-		// so we handle undefined separately, treating it as less than all other values.
-		if (a === undefined && b !== undefined) {
-			return -1;
-		} else if (b === undefined && a !== undefined) {
-			return 1;
-		} else if (a < b) {
-			return -1;
-		} else if (a > b) {
-			return 1;
+/**
+ * A list of comparators for a {@link TupleBTree}.
+ * @remarks For each comparator _C_ at index _i_, C compares the pair of corresponding elements at index _i_ in the key of the btree.
+ */
+type TupleComparators<T extends readonly DefaultComparable[]> = {
+	[P in keyof T]: TupleComparator<T[P]>;
+};
+
+/**
+ * Compares two tuples (arrays) element by element.
+ * @param a - The first tuple to compare.
+ * @param b - The second tuple to compare.
+ * @returns The comparison of the first pair of elements at the same index that differ, or 0 if all elements are equal.
+ * @remarks The tuples must be the same length and have the same type of elements in the same order.
+ */
+export function createTupleComparator<const K extends readonly DefaultComparable[]>(
+	compare: TupleComparator<K[number]> | TupleComparators<K> = defaultComparator,
+): (a: K, b: K) => number {
+	return (a: K, b: K): number => {
+		debugAssert(
+			() => a.length === b.length || "compareTuples requires arrays of the same length",
+		);
+		const comparators = typeof compare === "function" ? undefined : compare;
+		for (let i = 0; i < a.length; i++) {
+			const comparator = comparators?.[i] ?? (compare as TupleComparator<K[number]>);
+			const result = comparator(a[i], b[i]);
+			if (result !== 0) {
+				return result;
+			}
 		}
-	}
-
-	return 0;
+		return 0;
+	};
 }
 
-export function mergeTupleBTrees<K extends readonly unknown[], V>(
-	tree1: TupleBTree<K, V> | undefined,
+/**
+ * Merge the entries of two {@link TupleBTree}s.
+ * @param tree1 - The first btree.
+ * @param tree2 - The second btree.
+ * This always returns a new btree and does not modify either input.
+ * @param preferLeft - If true, colliding keys will use the value from `tree1`, otherwise the value from `tree2` is used.
+ */
+export function mergeTupleBTrees<const K extends readonly DefaultComparable[], V>(
+	tree1: TupleBTree<K, V>,
 	tree2: TupleBTree<K, V> | undefined,
 	preferLeft = true,
 ): TupleBTree<K, V> {
-	if (tree1 === undefined) {
-		return tree2 === undefined ? newTupleBTree<K, V>() : brand(tree2.clone());
-	}
-
 	const result: TupleBTree<K, V> = brand(tree1.clone());
 	if (tree2 === undefined) {
 		return result;

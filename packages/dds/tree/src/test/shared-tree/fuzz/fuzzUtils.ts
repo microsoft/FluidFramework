@@ -8,10 +8,13 @@ import { join as pathJoin } from "node:path";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
-import type { SessionId } from "@fluidframework/id-compressor";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
 	deserializeIdCompressor,
+	type IIdCompressorCore,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 
 import {
@@ -24,13 +27,16 @@ import {
 	forEachNodeInSubtree,
 	moveToDetachedField,
 } from "../../../core/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import type {
 	ITreeCheckout,
 	SchematizingSimpleTreeView,
 	TreeCheckout,
 } from "../../../shared-tree/index.js";
-import { testSrcPath } from "../../testSrcPath.cjs";
-import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
+import type {
+	SharedTreeOptionsInternal,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../shared-tree/sharedTree.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -39,15 +45,11 @@ import {
 	type ViewableTree,
 	type NodeBuilderData,
 } from "../../../simple-tree/index.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-
-import type {
-	SharedTreeOptionsInternal,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../shared-tree/sharedTree.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import type { FuzzView } from "./fuzzEditGenerators.js";
 import type { ISharedTree } from "../../../treeFactory.js";
+import { testSrcPath } from "../../testSrcPath.cjs";
+import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
+
+import type { FuzzView } from "./fuzzEditGenerators.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode" as string, {
@@ -146,7 +148,9 @@ export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuz
 	return node as unknown as typeof fuzzFieldSchema;
 }
 
-export function nodeSchemaFromTreeSchema(treeSchema: typeof fuzzFieldSchema) {
+export function nodeSchemaFromTreeSchema(
+	treeSchema: typeof fuzzFieldSchema,
+): typeof FuzzNode | undefined {
 	const nodeSchema = [...treeSchema.allowedTypeSet].find(
 		(treeNodeSchema) => treeNodeSchema.identifier === "treeFuzz.node",
 	) as typeof FuzzNode | undefined;
@@ -171,7 +175,7 @@ export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 	}
 }
 
-export const FuzzTestOnCreate = (tree: ViewableTree) => {
+export const FuzzTestOnCreate = (tree: ViewableTree): void => {
 	const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
 	view.initialize(populatedInitialState);
 	view.dispose();
@@ -205,7 +209,7 @@ export function validateAnchors(
 	anchors: ReadonlyMap<Anchor, [UpPath, Value]>,
 	checkPaths: boolean,
 	tolerateLostAnchors = true,
-) {
+): void {
 	const cursor = view.forest.allocateCursor();
 	for (const [anchor, [path, value]] of anchors) {
 		const result = view.forest.tryMoveCursorToNode(anchor, cursor);
@@ -252,12 +256,16 @@ export const successesDirectory = pathJoin(testSrcPath, "shared-tree/fuzz/succes
 export const createOrDeserializeCompressor = (
 	sessionId: SessionId,
 	summary?: FuzzSerializedIdCompressor,
-) => {
+): IIdCompressor & IIdCompressorCore => {
 	return summary === undefined
-		? createIdCompressor(sessionId)
+		? createIdCompressor(sessionId, SerializationVersion.V3)
 		: summary.withSession
-			? deserializeIdCompressor(summary.serializedCompressor)
-			: deserializeIdCompressor(summary.serializedCompressor, sessionId);
+			? deserializeIdCompressor(summary.serializedCompressor, SerializationVersion.V3)
+			: deserializeIdCompressor(
+					summary.serializedCompressor,
+					sessionId,
+					SerializationVersion.V3,
+				);
 };
 
 export const deterministicIdCompressorFactory: (

@@ -51,7 +51,7 @@ class TextNode
  * and provide a centralized place where validation could be added in the future if desired.
  * Additionally using this function consistently will make any refactors to support alternative character boundaries easier.
  */
-function charactersFromString(value: string): Iterable<string> {
+export function charactersFromString(value: string): Iterable<string> {
 	// Uses the string as an iterable of characters, so utf-16 surrogate pairs get grouped together correctly.
 	// Might be nice to call isWellFormed or toWellFormed here (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toWellFormed)
 	// But those are not widely supported yet.

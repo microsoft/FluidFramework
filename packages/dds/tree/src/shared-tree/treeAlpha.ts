@@ -3,17 +3,43 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	assert,
 	debugAssert,
 	fail,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import {
+	FluidClientVersion,
+	type ICodecOptions,
+	type CodecWriteOptions,
+	FormatValidatorNoOp,
+} from "../codec/index.js";
+import { EmptyKey, type FieldKey, type ITreeCursorSynchronous } from "../core/index.js";
+import {
+	cursorForMapTreeField,
+	defaultSchemaPolicy,
+	isTreeValue,
+	makeFieldBatchCodec,
+	mapTreeFromCursor,
+	TreeCompressionStrategy,
+	type FieldBatch,
+	type FieldBatchEncodingContext,
+	type LocalNodeIdentifier,
+	type FlexTreeSequenceField,
+	type FlexTreeNode,
+	type Observer,
+	withObservation,
+} from "../feature-libraries/index.js";
 import {
 	asIndex,
 	getKernel,
@@ -62,31 +88,9 @@ import {
 	type TreeBranchAlpha,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
-import {
-	FluidClientVersion,
-	type ICodecOptions,
-	type CodecWriteOptions,
-	FormatValidatorNoOp,
-} from "../codec/index.js";
-import { EmptyKey, type FieldKey, type ITreeCursorSynchronous } from "../core/index.js";
-import {
-	cursorForMapTreeField,
-	defaultSchemaPolicy,
-	isTreeValue,
-	makeFieldBatchCodec,
-	mapTreeFromCursor,
-	TreeCompressionStrategy,
-	type FieldBatch,
-	type FieldBatchEncodingContext,
-	type LocalNodeIdentifier,
-	type FlexTreeSequenceField,
-	type FlexTreeNode,
-	type Observer,
-	withObservation,
-} from "../feature-libraries/index.js";
+
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	return getIdentifierFromNode(node, "uncompressed");
@@ -858,7 +862,7 @@ export const TreeAlpha: TreeAlpha = {
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
 		// If none provided, create a compressor which will not compress anything.
-		const idCompressor = options.idCompressor ?? createIdCompressor();
+		const idCompressor = options.idCompressor ?? createIdCompressor(SerializationVersion.V3);
 
 		// Grabbing an existing stored schema from the node is important to ensure that unknown optional fields can be preserved.
 		// Note that if the node is unhydrated, this can result in all staged allowed types being included in the schema, which might be undesired.
@@ -889,7 +893,7 @@ export const TreeAlpha: TreeAlpha = {
 			// TODO: reevaluate how staged schema should behave in schema import/export APIs before stabilizing this.
 			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
 			tree: compressedData,
-			idCompressor: options.idCompressor ?? createIdCompressor(),
+			idCompressor: options.idCompressor ?? createIdCompressor(SerializationVersion.V3),
 		};
 		const view = independentInitializedView(config, options, content);
 		return TreeBeta.clone<TSchema>(view.root);

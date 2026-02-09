@@ -4,13 +4,18 @@
  */
 
 import { assert, debugAssert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
 // This import is required for intellisense in @link doc comments on mouseover in VSCode.
 // eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
-import type { TreeAlpha } from "../../shared-tree/index.js";
+import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import {
 	type JsonCompatibleReadOnlyObject,
 	type RestrictiveStringRecord,
@@ -32,6 +37,17 @@ import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../core/index.js";
 import {
+	FieldKind,
+	type FieldSchema,
+	type ImplicitFieldSchema,
+	// This import prevents a large number of FieldProps references in the API reports from showing up as FieldProps_2.
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+	type FieldProps,
+	createFieldSchema,
+	type DefaultProvider,
+	getDefaultProvider,
+} from "../fieldSchema.js";
+import {
 	booleanSchema,
 	handleSchema,
 	nullSchema,
@@ -51,24 +67,10 @@ import {
 	type TreeMapNode,
 	type TreeObjectNode,
 } from "../node-kinds/index.js";
-import {
-	FieldKind,
-	type FieldSchema,
-	type ImplicitFieldSchema,
-	// This import prevents a large number of FieldProps references in the API reports from showing up as FieldProps_2.
-	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
-	type FieldProps,
-	createFieldSchema,
-	type DefaultProvider,
-	getDefaultProvider,
-} from "../fieldSchema.js";
-
-import type { System_Unsafe } from "./typesUnsafe.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import { unhydratedFlexTreeFromInsertable } from "../unhydratedFlexTreeFromInsertable.js";
+
 import { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
+import type { System_Unsafe } from "./typesUnsafe.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -967,7 +969,7 @@ export function scoped<
  * The identifiers allocated by this will never be compressed to Short Ids.
  * Using this is only better than creating fully random V4 UUIDs because it reduces the entropy making it possible for things like text compression to work slightly better.
  */
-const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
+const globalIdentifierAllocator: IIdCompressor = createIdCompressor(SerializationVersion.V3);
 
 /**
  * Additional information to provide to Node Schema creation.

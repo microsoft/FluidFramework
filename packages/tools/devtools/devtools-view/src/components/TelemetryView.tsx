@@ -41,6 +41,7 @@ import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
 
 import { SplitPane } from "./SplitPane.cjs";
 import { Waiting } from "./Waiting.js";
+import { ScreenReaderAnnouncement } from "./utility-components/index.js";
 
 /**
  * Set the default displayed size to 100.
@@ -89,6 +90,7 @@ export function TelemetryView(): React.ReactElement {
 	const [maxEventsToDisplay, setMaxEventsToDisplay] =
 		React.useState<number>(DEFAULT_PAGE_SIZE);
 	const [selectedIndex, setSelectedIndex] = React.useState<number | undefined>();
+	const [refreshStatusMessage, setRefreshStatusMessage] = React.useState("");
 
 	React.useEffect(() => {
 		/**
@@ -170,6 +172,9 @@ export function TelemetryView(): React.ReactElement {
 		const remainingBuffer = bufferedEvents.slice(newEvents.length);
 		setBufferedEvents(remainingBuffer);
 		usageLogger?.sendTelemetryEvent({ eventName: "RefreshTelemetryButtonClicked" });
+		setRefreshStatusMessage("Telemetry events refreshed");
+		// Clear the message after a delay so subsequent clicks trigger a new announcement
+		setTimeout(() => setRefreshStatusMessage(""), 1000);
 	};
 
 	return (
@@ -196,6 +201,7 @@ export function TelemetryView(): React.ReactElement {
 						Refresh
 					</Button>
 				</div>
+				<ScreenReaderAnnouncement message={refreshStatusMessage} />
 			</div>
 			{telemetryEvents === undefined ? (
 				<Waiting label={"Waiting for Telemetry events"} />

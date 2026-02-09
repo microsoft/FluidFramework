@@ -1,5 +1,13 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+Dependency updates only.
+
 ## 2.80.0
 
 Dependency updates only.
@@ -50,9 +58,20 @@ ESLINT_USE_FLAT_CONFIG=true eslint .
 
 - `@eslint/eslintrc` (FlatCompat no longer needed)
 
-### Native ESLint 9 Flat Config
+### Native ESLint 9 Flat Config (No FlatCompat)
 
-The flat config implementation uses native ESLint 9 flat config format, importing plugins directly without `FlatCompat`.
+The flat config implementation uses native ESLint 9 flat config format, importing plugins directly without `FlatCompat`. This provides cleaner configuration and better compatibility with ESLint 9.
+
+#### Flat Config Exports
+
+The `flat.mts` module exports four configurations:
+
+- `recommended` - The recommended configuration for most projects
+- `strict` - Stricter rules for production code
+- `minimalDeprecated` - Minimal configuration (deprecated, use recommended)
+- `strictBiome` - Strict configuration with Biome formatter compatibility
+
+#### Modular Structure
 
 The configuration is organized into a modular structure under `library/`:
 

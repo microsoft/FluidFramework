@@ -4,23 +4,25 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
-	type TreeNodeSchema,
-	SchemaFactory,
-	SchemaFactoryAlpha,
-} from "../../../simple-tree/index.js";
-import { independentView } from "../../../shared-tree/index.js";
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import { independentView } from "../../../shared-tree/index.js";
 import {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	checkUnion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/configuration.js";
+import {
+	type TreeNodeSchema,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+} from "../../../simple-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -61,7 +63,9 @@ describe("simple-tree configuration", () => {
 			schema: [Feet, Meters],
 			preventAmbiguity: false,
 		});
-		const view = independentView(config, { idCompressor: createIdCompressor() });
+		const view = independentView(config, {
+			idCompressor: createIdCompressor(SerializationVersion.V3),
+		});
 		// This is invalid since it is ambiguous which type of node is being constructed:
 		// view.initialize({ length: 5 });
 		// To work, an explicit type can be provided by using an {@link Unhydrated} Node:
@@ -82,7 +86,9 @@ describe("simple-tree configuration", () => {
 			schema: [Feet, Meters],
 			preventAmbiguity: true,
 		});
-		const view = independentView(config, { idCompressor: createIdCompressor() });
+		const view = independentView(config, {
+			idCompressor: createIdCompressor(SerializationVersion.V3),
+		});
 		// This now works, since the field is sufficient to determine this is a `Meters` node.
 		view.initialize({ meters: 5 });
 	});

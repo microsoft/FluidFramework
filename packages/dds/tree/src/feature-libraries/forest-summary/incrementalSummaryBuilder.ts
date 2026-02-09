@@ -3,9 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
+
+import type { ITreeCursorSynchronous } from "../../core/index.js";
+import type { SummaryElementStringifier } from "../../shared-tree-core/index.js";
 import {
 	brand,
 	setInNestedMap,
@@ -20,13 +28,7 @@ import type {
 	IncrementalEncodingPolicy,
 	TreeChunk,
 } from "../chunked-forest/index.js";
-import type { ITreeCursorSynchronous } from "../../core/index.js";
-import { SummaryType } from "@fluidframework/driver-definitions";
-import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import { LoggingError } from "@fluidframework/telemetry-utils/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SummaryElementStringifier } from "../../shared-tree-core/index.js";
+
 import { summaryContentBlobKey } from "./summaryFormatV3.js";
 
 /**
@@ -274,9 +276,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	public async load(args: {
 		services: IChannelStorageService;
-		readAndParseChunk: <T extends JsonCompatible<IFluidHandle>>(
-			chunkBlobPath: string,
-		) => Promise<T>;
+		readAndParseChunk: (chunkBlobPath: string) => Promise<JsonCompatible<IFluidHandle>>;
 	}): Promise<void> {
 		const forestTree = args.services.getSnapshotTree?.();
 		// Snapshot tree should be available when loading forest's contents. However, it is an optional function
@@ -301,8 +301,9 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 						`SharedTree: Cannot find contents for incremental chunk ${chunkContentsPath}`,
 					);
 				}
-				const chunkContents =
-					await args.readAndParseChunk<EncodedFieldBatch>(chunkContentsPath);
+				const chunkContents = (await args.readAndParseChunk(
+					chunkContentsPath,
+				)) as EncodedFieldBatch; // TODO: this should use a codec to validate the data instead of just type casting.
 				this.loadedChunksMap.set(chunkReferenceId, {
 					encodedContents: chunkContents,
 					summaryPath: chunkSubTreePath,

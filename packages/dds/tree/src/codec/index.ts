@@ -10,6 +10,7 @@ export {
 	type ICodecFamily,
 	type ICodecOptions,
 	type CodecWriteOptions,
+	type CodecWriteOptionsBeta,
 	type IDecoder,
 	type IEncoder,
 	type IJsonCodec,
@@ -29,6 +30,7 @@ export {
 	jsonableCodecTree,
 	extractJsonValidator,
 	type CodecName,
+	eraseEncodedType,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,

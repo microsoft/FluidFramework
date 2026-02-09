@@ -17,7 +17,6 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
@@ -57,7 +56,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public storage: IRuntimeStorageService = undefined as any;
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
 	public IFluidHandleContext: IFluidHandleContext = undefined as any;
-	public idCompressor: IIdCompressorCore & IIdCompressor = undefined as any;
+	public idCompressor: IIdCompressor = undefined as any;
 	public readonly gcThrowOnTombstoneUsage = false;
 	public readonly gcTombstoneEnforcementAllowed = false;
 
