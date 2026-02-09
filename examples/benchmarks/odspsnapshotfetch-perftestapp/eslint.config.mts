@@ -14,6 +14,13 @@ const config: Linter.Config[] = [
 			"import-x/no-extraneous-dependencies": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

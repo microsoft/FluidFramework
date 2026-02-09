@@ -28,6 +28,13 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unused-expressions": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

@@ -15,6 +15,13 @@ const config: Linter.Config[] = [
 			"no-case-declarations": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

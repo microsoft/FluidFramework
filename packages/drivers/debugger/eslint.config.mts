@@ -17,6 +17,13 @@ const config: Linter.Config[] = [
 			"no-inner-declarations": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

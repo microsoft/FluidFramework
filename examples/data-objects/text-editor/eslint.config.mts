@@ -44,6 +44,13 @@ const config: Linter.Config[] = [
 			"react/prop-types": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

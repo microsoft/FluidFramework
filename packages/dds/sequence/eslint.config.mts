@@ -17,6 +17,13 @@ const config: Linter.Config[] = [
 			"prefer-arrow-callback": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

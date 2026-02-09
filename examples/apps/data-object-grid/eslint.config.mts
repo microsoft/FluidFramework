@@ -17,6 +17,13 @@ const config: Linter.Config[] = [
 			"import-x/no-unassigned-import": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

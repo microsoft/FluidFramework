@@ -67,6 +67,13 @@ const config: Linter.Config[] = [
 	{
 		ignores: ["src/index.d.ts"],
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

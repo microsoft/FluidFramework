@@ -12,6 +12,13 @@ const config: Linter.Config[] = [
 	{
 		ignores: ["test-d"],
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

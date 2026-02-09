@@ -37,6 +37,13 @@ const config: Linter.Config[] = [
 			'import-x/no-unused-modules': 'off',
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

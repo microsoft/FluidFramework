@@ -28,6 +28,13 @@ const config: Linter.Config[] = [
 			"unicorn/prevent-abbreviations": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

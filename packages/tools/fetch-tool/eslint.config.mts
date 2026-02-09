@@ -37,6 +37,13 @@ const config: Linter.Config[] = [
 			],
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

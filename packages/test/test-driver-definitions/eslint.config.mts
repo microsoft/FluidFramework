@@ -12,6 +12,13 @@ const config: Linter.Config[] = [
 		files: ["*.spec.ts", "src/test/**"],
 		rules: {},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

@@ -25,6 +25,13 @@ const config: Linter.Config[] = [
 			"unicorn/consistent-function-scoping": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

@@ -6,6 +6,15 @@
 import type { Linter } from "eslint";
 import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
 
-const config: Linter.Config[] = [...recommended];
+const config: Linter.Config[] = [
+	...recommended,
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
+];
 
 export default config;

@@ -13,6 +13,13 @@ const config: Linter.Config[] = [
 			"unicorn/numeric-separators-style": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

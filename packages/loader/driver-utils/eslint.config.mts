@@ -21,6 +21,13 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

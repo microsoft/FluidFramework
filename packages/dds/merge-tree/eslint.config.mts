@@ -18,6 +18,13 @@ const config: Linter.Config[] = [
 			"unicorn/no-useless-spread": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

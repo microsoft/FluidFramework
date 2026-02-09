@@ -16,6 +16,13 @@ const config: Linter.Config[] = [
 			"no-bitwise": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

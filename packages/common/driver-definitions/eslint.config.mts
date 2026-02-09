@@ -13,6 +13,13 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/consistent-indexed-object-style": "off",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;

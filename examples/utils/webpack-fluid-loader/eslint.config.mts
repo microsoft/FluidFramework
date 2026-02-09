@@ -17,6 +17,13 @@ const config: Linter.Config[] = [
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		},
 	},
+	{
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
+	},
 ];
 
 export default config;
