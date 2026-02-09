@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal";
 import type {
@@ -27,10 +26,10 @@ import { instanceOfs, renderZodTypeScript } from "./renderZodTypeScript.js";
 import type { TypeFactoryOptional, TypeFactoryType } from "./treeAgentTypes.js";
 import { isTypeFactoryType } from "./treeAgentTypes.js";
 import {
+	IdentifierCollisionResolver,
 	getFriendlyName,
 	isNamedSchema,
 	llmDefault,
-	mapToFriendlyIdentifiers,
 	unqualifySchema,
 	filterIterable,
 } from "./utils.js";
@@ -81,16 +80,9 @@ export function renderSchemaTypeScript(
 	let hasHelperMethods = false;
 
 	// Resolve short name collisions for all named schemas
-	const namedIdentifiers = [...filterIterable(definitions.keys(), isNamedSchema)];
-	const collisionResolvedNames = mapToFriendlyIdentifiers(namedIdentifiers);
-
-	for (const [i, identifier] of namedIdentifiers.entries()) {
-		const resolvedName = collisionResolvedNames[i];
-		assert(
-			resolvedName !== undefined,
-			"Collision resolved name should exist for each identifier.",
-		);
-		friendlyNames.set(identifier, resolvedName);
+	const resolver = new IdentifierCollisionResolver();
+	for (const identifier of filterIterable(definitions.keys(), isNamedSchema)) {
+		friendlyNames.set(identifier, resolver.resolve(identifier));
 	}
 
 	const declarations: string[] = [];

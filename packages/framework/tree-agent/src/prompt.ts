@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { oob } from "@fluidframework/core-utils/internal";
 import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
 import type { ImplicitFieldSchema, TreeMapNode, TreeNodeSchema } from "@fluidframework/tree";
 import type { ReadableField } from "@fluidframework/tree/alpha";
@@ -12,7 +12,12 @@ import { normalizeFieldSchema } from "@fluidframework/tree/internal";
 
 import type { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
-import { getFriendlyName, communize, findSchemas, mapToFriendlyIdentifiers } from "./utils.js";
+import {
+	IdentifierCollisionResolver,
+	getFriendlyName,
+	communize,
+	findSchemas,
+} from "./utils.js";
 
 /**
  * Produces a "system" prompt for the tree agent, based on the provided subtree.
@@ -29,17 +34,10 @@ export function getPrompt(args: {
 	// Inspect the schema to determine what kinds of nodes are possible - this will affect how much information we need to include in the prompt.
 	const rootTypes = [...normalizeFieldSchema(schema).allowedTypeSet];
 	const allSchemas = findSchemas(schema);
-	const schemasArray = [...allSchemas];
-	const schemaIdentifiers = schemasArray.map((s) => s.identifier);
-	const collisionResolvedIdentifiersArray = mapToFriendlyIdentifiers(schemaIdentifiers);
+	const resolver = new IdentifierCollisionResolver();
 	const collisionResolvedNames = new Map<TreeNodeSchema, string>();
-	for (const [i, schemaNode] of schemasArray.entries()) {
-		const resolvedName = collisionResolvedIdentifiersArray[i];
-		assert(
-			resolvedName !== undefined,
-			"Expected collision resolved name to exist for each schema",
-		);
-		collisionResolvedNames.set(schemaNode, resolvedName);
+	for (const schemaNode of allSchemas) {
+		collisionResolvedNames.set(schemaNode, resolver.resolve(schemaNode.identifier));
 	}
 
 	const rootTypeUnion = `${rootTypes.map((t) => collisionResolvedNames.get(t) ?? getFriendlyName(t)).join(" | ")}`;

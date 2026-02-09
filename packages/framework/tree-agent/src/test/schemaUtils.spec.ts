@@ -12,7 +12,7 @@ import {
 	unqualifySchema,
 	findSchemas,
 	isNamedSchema,
-	mapToFriendlyIdentifiers,
+	IdentifierCollisionResolver,
 } from "../utils.js";
 
 const sf = new SchemaFactoryAlpha("test.scope");
@@ -24,6 +24,15 @@ class NamedStringRecord extends sf.record("NamedStringRecord", sf.string) {}
 // Schema objects with invalid typescript type characters.
 class InvalidCharacters extends sf.object("Test-Object!", { value: sf.string }) {}
 class LeadingDigit extends sf.object("1TestObject", { value: sf.string }) {}
+
+function mapToFriendlyIdentifiers<T extends readonly string[]>(
+	identifiers: T,
+): string[] & { length: T["length"] } {
+	const resolver = new IdentifierCollisionResolver();
+	return identifiers.map((id) => resolver.resolve(id)) as string[] & {
+		length: T["length"];
+	};
+}
 
 describe("getFriendlyName", () => {
 	it("returns the name for a named object schema", () => {
@@ -284,7 +293,7 @@ describe("findNamedSchemas", () => {
 	});
 });
 
-describe("resolveShortNameCollisions", () => {
+describe("IdentifierCollisionResolver", () => {
 	it("returns array with same length as input", () => {
 		const input = ["scope1.Foo", "scope1.Bar", "scope1.Baz"];
 		const result = mapToFriendlyIdentifiers(input);

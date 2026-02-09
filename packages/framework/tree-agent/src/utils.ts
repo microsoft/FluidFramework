@@ -222,8 +222,7 @@ export function unqualifySchema(schemaIdentifier: string): string {
  * Identical full identifiers (same schema) always map to the same friendly name.
  * Non-colliding identifiers keep their original short name.
  * Examples:
- * - If only `"scope.Foo"` and `"scope2.Foo"` exist, they resolve to `["Foo", "Foo_2"]`.
- * - If `"scope.Foo"`, `"scope2.Foo"`, and `"scope3.Foo_2"` all exist, they resolve to `["Foo", "Foo_2", "Foo_2_2"]` (first-come-first-served).
+ * - If `"scope.Foo"`, `"scope2.Foo"`, `"scope3.Foo"` and `"scope3.Foo_2"` all exist, they resolve to `["Foo", "Foo_2", "Foo_3", "Foo_2_2"]` (first-come-first-served).
  * - If `"scope.Foo"` appears twice (same identifier), both resolve to `["Foo", "Foo"]`.
  */
 export class IdentifierCollisionResolver {
@@ -242,37 +241,19 @@ export class IdentifierCollisionResolver {
 	 * The first identifier to claim a short name keeps it; subsequent collisions get `_2`, `_3`, etc.
 	 */
 	public resolve(identifier: string): string {
-		const cached = this.friendlyNameCache.get(identifier);
-		if (cached !== undefined) {
-			return cached;
-		}
-
-		let name = unqualifySchema(identifier);
-		if (this.assignedFriendlyNames.has(name)) {
-			let counter = 2;
-			while (this.assignedFriendlyNames.has(`${name}_${counter}`)) {
-				counter++;
+		return getOrCreate(this.friendlyNameCache, identifier, () => {
+			let name = unqualifySchema(identifier);
+			if (this.assignedFriendlyNames.has(name)) {
+				let counter = 2;
+				while (this.assignedFriendlyNames.has(`${name}_${counter}`)) {
+					counter++;
+				}
+				name = `${name}_${counter}`;
 			}
-			name = `${name}_${counter}`;
-		}
-		this.assignedFriendlyNames.add(name);
-		this.friendlyNameCache.set(identifier, name);
-		return name;
+			this.assignedFriendlyNames.add(name);
+			return name;
+		});
 	}
-}
-
-/**
- * Resolves short name collisions by appending counters to colliding short names.
- * @param identifiers - An array of full unmodified schema identifiers to be converted to unique short names.
- * @returns An array of unique, collision-resolved short names (preserving length and index order as input)
- */
-export function mapToFriendlyIdentifiers<T extends readonly string[]>(
-	identifiers: T,
-): string[] & { length: T["length"] } {
-	const resolver = new IdentifierCollisionResolver();
-	return identifiers.map((id) => resolver.resolve(id)) as string[] & {
-		length: T["length"];
-	};
 }
 
 /**
