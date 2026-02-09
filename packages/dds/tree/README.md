@@ -167,15 +167,15 @@ See the documentation for [TreeNode](https://fluidframework.com/docs/api/fluid-f
 
 ### Why is the only type TypeScript will let me provide as content for my field `undefined`?
 
-An optional field allows `undefined` or what ever types the [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) for the field permit.
-If the allowed types are getting reduced to `never` only `undefined will remain.
+An optional field allows `undefined` or whatever types the [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) for the field permit.
+If the allowed types are getting reduced to `never` only `undefined` will remain.
 See below for why this might happen.
 
 ### Why is my insertable content getting typed as `never`?
 
-This is a common problem when working with [Input](https://fluidframework.com/docs/api/tree/input-typealias) types due to the contravariance (see the linked documentation for details).
+This is a common problem when working with [Input](https://fluidframework.com/docs/api/fluid-framework/input-typealias) types due to the contravariance (see the linked documentation for details).
 
-This is mostly commonly a symptom of the schema having insufficiently specific types for the schema.
+This is most commonly a symptom of the schema having insufficiently specific types for the schema.
 This most commonly happens when declaring a constant for part of a schema which is then used later when building the full schema.
 For example it fails if you do:
 
@@ -185,7 +185,7 @@ class Holder extends schemaFactory.object("Holder", { item: itemTypes }) {}
 const holder = new Holder({ item: new ItemA({ a: 42 }) }); // Type 'ItemA' is not assignable to type 'never'.ts(2322)
 ```
 
-This can be fixed by capturing a more specific type for the schema: 
+This can be fixed by capturing a more specific type for the schema:
 
 ```typescript
 const itemTypes = [ItemA, ItemB] as const; // Fixed
