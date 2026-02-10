@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { ExtensibleUnionNode } from "../extensibleSchemaUnion.js";
+import { ExtensibleUnionNode } from "../extensibleUnionNode.js";
 import { Tree } from "../shared-tree/index.js";
 import {
 	checkSchemaCompatibilitySnapshots,
