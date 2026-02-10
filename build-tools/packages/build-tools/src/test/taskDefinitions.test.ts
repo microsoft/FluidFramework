@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 import type { PackageJson } from "../common/npmPackage";
 import {
-	type TaskDefinitionsOnDisk,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
+	type TaskDefinitionsOnDisk,
 } from "../fluidBuild/fluidTaskDefinitions";
 
 describe("Task Definitions", () => {
