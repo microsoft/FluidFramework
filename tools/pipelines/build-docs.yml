@@ -172,6 +172,7 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
+            # TODO: Update to be a path relative to $(Pipeline.Workspace)
             buildDirectory: $(Build.SourcesDirectory)/docs
 
         - task: Bash@3
@@ -296,6 +297,7 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
+            # TODO: Update to be a path relative to $(Pipeline.Workspace)
             buildDirectory: $(Build.SourcesDirectory)/docs
 
         - task: Bash@3

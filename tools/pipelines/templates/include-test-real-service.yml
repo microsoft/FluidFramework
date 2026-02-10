@@ -236,6 +236,7 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
+            # TODO: Make sure this is a path relative to $(Pipeline.Workspace)
             buildDirectory: ${{ variables.pipelineHostPath }}
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
