@@ -221,7 +221,7 @@ extends:
             steps:
               # Setup
               - checkout: self
-                path: ${{ parameters.buildDirectory }}
+                path: $(FluidFrameworkDirectory)
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'

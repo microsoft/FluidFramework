@@ -34,7 +34,7 @@ stages:
     displayName: Run checks
     steps:
     - checkout: self
-      path: ${{ parameters.buildDirectory }}
+      path: $(FluidFrameworkDirectory)
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
