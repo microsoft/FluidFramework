@@ -87,32 +87,25 @@ export class StressDataObject extends DataObject {
 	}
 
 	/**
-	 * Static cache of resolved objects by absolute path, shared across all instances.
-	 * Since resolution is local (no network round-trips), caching avoids
-	 * repeated async work when the same path is resolved multiple times.
+	 * Per-instance cache of resolved objects by absolute path.
+	 * Each StressDataObject instance belongs to a specific client's container runtime,
+	 * so caching must be per-instance to avoid returning handles from one client's
+	 * runtime to another client (handles are not interchangeable across clients).
 	 */
-	private static readonly resolvedObjectCache = new Map<
+	private readonly resolvedObjectCache = new Map<
 		string,
 		{ handle: IFluidHandle; stressDataObject?: StressDataObject }
 	>();
 
 	/**
-	 * Clears the static resolved object cache. Call between test runs to avoid
-	 * stale entries from previous tests.
-	 */
-	public static clearCache(): void {
-		StressDataObject.resolvedObjectCache.clear();
-	}
-
-	/**
 	 * Resolves a container object by its absolute handle path.
-	 * Uses a static cache to avoid repeated async resolution for the same path.
+	 * Uses a per-instance cache to avoid repeated async resolution for the same path.
 	 * Returns undefined if the object is not yet available (e.g. not attached).
 	 */
 	public async resolveByAbsolutePath(
 		absolutePath: string,
 	): Promise<{ handle: IFluidHandle; stressDataObject?: StressDataObject } | undefined> {
-		const cached = StressDataObject.resolvedObjectCache.get(absolutePath);
+		const cached = this.resolvedObjectCache.get(absolutePath);
 		if (cached !== undefined) {
 			return cached;
 		}
@@ -145,7 +138,7 @@ export class StressDataObject extends DataObject {
 			handle,
 			stressDataObject: maybe?.StressDataObject,
 		};
-		StressDataObject.resolvedObjectCache.set(absolutePath, result);
+		this.resolvedObjectCache.set(absolutePath, result);
 		return result;
 	}
 
