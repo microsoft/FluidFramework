@@ -842,7 +842,6 @@ extends:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}
             buildDirectory: ${{ parameters.buildDirectory }}
-            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
       # Capture pipeline stage results
       - ${{ if eq(parameters.telemetry, true) }}:
