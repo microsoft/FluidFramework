@@ -198,7 +198,6 @@ extends:
               # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
 
-
       # Install / Build / Test Stage
       - stage: build
         displayName: Build Stage
@@ -394,7 +393,7 @@ extends:
                     inputs:
                       targetType: filePath
                       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                      filePath: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/scripts/pack-packages.sh
+                      filePath: ${{ variables.FluidFrameworkDirectory }}/scripts/pack-packages.sh
 
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
@@ -458,7 +457,7 @@ extends:
                             set -eu -o pipefail
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
-                            ls -la '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                            ls -la '${{ variables.FluidFrameworkDirectory }}/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
                             npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
