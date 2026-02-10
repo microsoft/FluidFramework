@@ -544,28 +544,17 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 
 	/**
 	 * Get additional config files to track for this task from the task definition.
-	 * These files will be included in the input files tracked by the done file.
-	 *
-	 * @returns the list of absolute paths to additional config files
+	 * @returns absolute paths to additional config files
 	 */
 	protected getAdditionalConfigFiles(): string[] {
 		if (this.taskName === undefined) {
 			return [];
 		}
 
-		const additionalConfigs = this.node.getAdditionalConfigFiles(this.taskName);
-
-		if (additionalConfigs.length === 0) {
-			return [];
-		}
-
-		// Convert relative paths to absolute paths
-		// Replace ${repoRoot} token with actual repository root path
 		const repoRoot = this.node.context.repoRoot;
-		return additionalConfigs.map((relPath) => {
-			const pathWithRepoRoot = replaceRepoRootToken(relPath, repoRoot);
-			return this.getPackageFileFullPath(pathWithRepoRoot);
-		});
+		return this.node.getAdditionalConfigFiles(this.taskName).map((configPath) =>
+			this.getPackageFileFullPath(replaceRepoRootToken(configPath, repoRoot)),
+		);
 	}
 
 	/**
@@ -640,6 +629,18 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		return false;
 	}
 
+	/**
+	 * Get all input files for done file tracking, including additional config files.
+	 */
+	private async getAllInputFiles(): Promise<string[]> {
+		const srcFiles = await this.getInputFiles();
+		const additionalConfigFiles = this.getAdditionalConfigFiles();
+		if (additionalConfigFiles.length === 0) {
+			return srcFiles;
+		}
+		return [...srcFiles, ...additionalConfigFiles];
+	}
+
 	protected async getDoneFileContent(): Promise<string | undefined> {
 		if (this.useHashes) {
 			return this.getHashDoneFileContent();
@@ -649,12 +650,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		// Note: timestamps may signal change without meaningful content modification (e.g., git
 		// operations, file copies). Override useHashes to return true to use content hashes instead.
 		try {
-			const srcFiles = await this.getInputFiles();
-			const additionalConfigFiles = this.getAdditionalConfigFiles();
-
-			// Include additional config files in the input files
-			const allSrcFiles = [...srcFiles, ...additionalConfigFiles];
-
+			const allSrcFiles = await this.getAllInputFiles();
 			const dstFiles = await this.getOutputFiles();
 			const srcTimesP = Promise.all(
 				allSrcFiles
@@ -691,12 +687,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 		};
 
 		try {
-			const srcFiles = await this.getInputFiles();
-			const additionalConfigFiles = this.getAdditionalConfigFiles();
-
-			// Include additional config files in the input files
-			const allSrcFiles = [...srcFiles, ...additionalConfigFiles];
-
+			const allSrcFiles = await this.getAllInputFiles();
 			const dstFiles = await this.getOutputFiles();
 			const srcHashesP = Promise.all(allSrcFiles.map(mapHash));
 			const dstHashesP = Promise.all(dstFiles.map(mapHash));
@@ -707,11 +698,10 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			srcHashes.sort(sortByName);
 			dstHashes.sort(sortByName);
 
-			const output = JSON.stringify({
+			return JSON.stringify({
 				srcHashes,
 				dstHashes,
 			});
-			return output;
 		} catch (e: any) {
 			this.traceError(`error calculating file hashes: ${e.message}`);
 			this.traceTrigger("failed to get file hash");

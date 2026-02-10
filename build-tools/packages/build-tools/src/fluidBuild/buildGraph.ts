@@ -79,9 +79,6 @@ export class BuildPackage {
 	// This field shouldn't be used directly, use getTaskDefinition instead
 	private readonly _taskDefinitions: TaskDefinitions;
 
-	// Cache for additional config files lookups
-	private readonly _additionalConfigFilesCache = new Map<string, readonly string[]>();
-
 	constructor(
 		public readonly context: BuildGraphContext,
 		public readonly pkg: Package,
@@ -150,19 +147,9 @@ export class BuildPackage {
 
 	/**
 	 * Get additional config files specified in the task definition for incremental tracking.
-	 * @param taskName - The task name to get additional config files for
-	 * @returns Array of additional config file paths relative to the package directory
 	 */
 	public getAdditionalConfigFiles(taskName: string): readonly string[] {
-		const cached = this._additionalConfigFilesCache.get(taskName);
-		if (cached !== undefined) {
-			return cached;
-		}
-
-		const config = this.getTaskDefinition(taskName);
-		const result = config?.files?.additionalConfigFiles ?? [];
-		this._additionalConfigFilesCache.set(taskName, result);
-		return result;
+		return this.getTaskDefinition(taskName)?.files?.additionalConfigFiles ?? [];
 	}
 
 	private createTask(taskName: string, pendingInitDep: Task[]): Task | undefined {

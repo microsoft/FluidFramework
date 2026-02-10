@@ -17,7 +17,6 @@ export class EsLintTask extends TscDependentTask {
 			}
 		}
 
-		// Return only the local config file
 		return [this._configFileFullPath];
 	}
 
