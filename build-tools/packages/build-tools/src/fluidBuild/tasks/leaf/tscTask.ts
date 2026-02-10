@@ -4,13 +4,13 @@
  */
 
 import * as assert from "node:assert";
-import { type BigIntStats, type Stats, existsSync, lstatSync } from "node:fs";
+import { type BigIntStats, existsSync, lstatSync, type Stats } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import isEqual from "lodash.isequal";
 import type * as tsTypes from "typescript";
 
-import { type TscUtil, getTscUtils } from "../../tscUtils";
+import { getTscUtils, type TscUtil } from "../../tscUtils";
 import { getInstalledPackageVersion } from "../taskUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
@@ -36,7 +36,7 @@ export class TscTask extends LeafTask {
 	private _sourceStats: (Stats | BigIntStats)[] | undefined;
 	private _tscUtils: TscUtil | undefined;
 
-	private getTscUtils() {
+	private getTscUtils(): TscUtil {
 		if (this._tscUtils) {
 			return this._tscUtils;
 		}
@@ -44,7 +44,7 @@ export class TscTask extends LeafTask {
 		return this._tscUtils;
 	}
 
-	protected get executionCommand() {
+	protected get executionCommand(): string {
 		const parsedCommandLine = this.parsedCommandLine;
 		if (parsedCommandLine?.options.build) {
 			// https://github.com/microsoft/TypeScript/issues/57780
@@ -56,12 +56,12 @@ export class TscTask extends LeafTask {
 		}
 		return this.command;
 	}
-	protected get isIncremental() {
+	protected get isIncremental(): boolean {
 		const config = this.readTsConfig();
-		return config?.options.incremental;
+		return config?.options.incremental ?? false;
 	}
 
-	protected async checkLeafIsUpToDate() {
+	protected async checkLeafIsUpToDate(): Promise<boolean> {
 		const parsedCommandLine = this.parsedCommandLine;
 		if (parsedCommandLine?.options.build) {
 			return this.checkReferencesIsUpToDate(
@@ -73,7 +73,10 @@ export class TscTask extends LeafTask {
 		return this.checkTscIsUpToDate();
 	}
 
-	private async checkReferencesIsUpToDate(checkDir: string[], checkedProjects: Set<string>) {
+	private async checkReferencesIsUpToDate(
+		checkDir: string[],
+		checkedProjects: Set<string>,
+	): Promise<boolean> {
 		for (const dir of checkDir) {
 			if (checkedProjects.has(dir)) {
 				continue;
@@ -94,7 +97,7 @@ export class TscTask extends LeafTask {
 		return true;
 	}
 
-	private async checkTscIsUpToDate(checkedProjects?: Set<string>) {
+	private async checkTscIsUpToDate(checkedProjects?: Set<string>): Promise<boolean> {
 		const config = this.readTsConfig();
 		if (!config) {
 			this.traceTrigger("unable to read ts config");
@@ -219,7 +222,7 @@ export class TscTask extends LeafTask {
 		return this.checkTsConfig(tsBuildInfoFileDirectory, tsBuildInfo, config);
 	}
 
-	private remapSrcDeclFile(fullPath: string, config: tsTypes.ParsedCommandLine) {
+	private remapSrcDeclFile(fullPath: string, config: tsTypes.ParsedCommandLine): string {
 		if (!this._sourceStats) {
 			this._sourceStats = config ? config.fileNames.map((v) => lstatSync(v)) : [];
 		}
@@ -237,7 +240,7 @@ export class TscTask extends LeafTask {
 		tsBuildInfoFileDirectory: string,
 		tsBuildInfo: ITsBuildInfo,
 		options: tsTypes.ParsedCommandLine,
-	) {
+	): boolean {
 		const configFileFullPath = this.configFileFullPath;
 		if (!configFileFullPath) {
 			assert.fail();
@@ -269,7 +272,7 @@ export class TscTask extends LeafTask {
 		return true;
 	}
 
-	private readTsConfig() {
+	private readTsConfig(): tsTypes.ParsedCommandLine | undefined {
 		if (this._tsConfig == undefined) {
 			const parsedCommand = this.parsedCommandLine;
 			if (!parsedCommand) {
@@ -315,11 +318,11 @@ export class TscTask extends LeafTask {
 
 		return this._tsConfig;
 	}
-	protected get recheckLeafIsUpToDate() {
+	protected get recheckLeafIsUpToDate(): boolean {
 		return true;
 	}
 
-	private get configFileFullPath() {
+	private get configFileFullPath(): string | undefined {
 		if (this._tsConfigFullPath === undefined) {
 			const parsedCommand = this.parsedCommandLine;
 			if (!parsedCommand) {
@@ -334,7 +337,7 @@ export class TscTask extends LeafTask {
 		return this._tsConfigFullPath;
 	}
 
-	private get parsedCommandLine() {
+	private get parsedCommandLine(): tsTypes.ParsedCommandLine | undefined {
 		const parsedCommand = this.getTscUtils().parseCommandLine(this.command);
 		if (!parsedCommand) {
 			this.traceError(`ts fail to parse command line ${this.command}`);
@@ -342,7 +345,7 @@ export class TscTask extends LeafTask {
 		return parsedCommand;
 	}
 
-	private get tsBuildInfoFileName() {
+	private get tsBuildInfoFileName(): string | undefined {
 		const configFileFullPath = this.configFileFullPath;
 		if (!configFileFullPath) {
 			return undefined;
@@ -355,7 +358,7 @@ export class TscTask extends LeafTask {
 		return `${configFileParsed.name}${configFileParsed.ext}.tsbuildinfo`;
 	}
 
-	private getTsBuildInfoFileFromConfig() {
+	private getTsBuildInfoFileFromConfig(): string | undefined {
 		const options = this.readTsConfig();
 		if (!options || !options.options.incremental) {
 			return undefined;
@@ -387,7 +390,7 @@ export class TscTask extends LeafTask {
 		options: tsTypes.ParsedCommandLine,
 		directory: string,
 		fileName: string,
-	) {
+	): string {
 		if (options.options.outDir) {
 			if (options.options.rootDir) {
 				const relative = path.relative(options.options.rootDir, directory);
@@ -398,7 +401,7 @@ export class TscTask extends LeafTask {
 		return path.join(directory, fileName);
 	}
 
-	private get tsBuildInfoFileFullPath() {
+	private get tsBuildInfoFileFullPath(): string | undefined {
 		if (this._tsBuildInfoFullPath === undefined) {
 			const infoFile = this.getTsBuildInfoFileFromConfig();
 			if (infoFile) {
@@ -412,7 +415,7 @@ export class TscTask extends LeafTask {
 		return this._tsBuildInfoFullPath;
 	}
 
-	protected getVsCodeErrorMessages(errorMessages: string) {
+	protected getVsCodeErrorMessages(errorMessages: string): string {
 		const lines = errorMessages.split("\n");
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
@@ -449,12 +452,12 @@ export class TscTask extends LeafTask {
 		return this._tsBuildInfo;
 	}
 
-	protected async markExecDone() {
+	protected async markExecDone(): Promise<void> {
 		// force reload
 		this._tsBuildInfo = undefined;
 	}
 
-	protected get useWorker() {
+	protected get useWorker(): boolean {
 		// TODO: Worker doesn't implement all mode.  This is not comprehensive filtering yet.
 		const parsed = this.parsedCommandLine;
 		return (
@@ -467,11 +470,11 @@ export class TscTask extends LeafTask {
 
 // Base class for tasks that are dependent on a tsc compile
 export abstract class TscDependentTask extends LeafWithDoneFileTask {
-	protected get recheckLeafIsUpToDate() {
+	protected get recheckLeafIsUpToDate(): boolean {
 		return true;
 	}
 
-	protected async getDoneFileContent() {
+	protected async getDoneFileContent(): Promise<string | undefined> {
 		try {
 			const tsBuildInfoFiles: ITsBuildInfo[] = [];
 			const tscTasks = [...this.getDependentLeafTasks()].filter(

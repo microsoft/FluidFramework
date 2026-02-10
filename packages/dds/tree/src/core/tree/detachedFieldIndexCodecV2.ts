@@ -5,15 +5,15 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import type { CodecAndSchema, IJsonCodec } from "../../codec/index.js";
 import type { EncodedRevisionTag, RevisionTagCodec, RevisionTag } from "../rebase/index.js";
 
+import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
+import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
 import { StableOrFinalRevisionTag } from "./detachedFieldIndexFormatV2.js";
 import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
-import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
-import { isStableId } from "@fluidframework/id-compressor/internal";
-import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(

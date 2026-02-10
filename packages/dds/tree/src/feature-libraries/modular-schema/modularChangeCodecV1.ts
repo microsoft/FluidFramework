@@ -30,8 +30,8 @@ import {
 	type Mutable,
 	brand,
 	idAllocatorFromMaxId,
-	newTupleBTree,
 } from "../../util/index.js";
+import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import {
 	type FieldBatchCodec,
 	type TreeChunk,
@@ -64,7 +64,6 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -364,7 +363,7 @@ export function decodeDetachedNodes(
 		});
 	};
 
-	const map: ModularChangeset["builds"] = newTupleBTree();
+	const map: ModularChangeset["builds"] = newChangeAtomIdBTree();
 	// eslint-disable-next-line unicorn/no-array-for-each -- Codec internals: minimizing changes to serialization logic
 	encoded.builds.forEach((build) => {
 		// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
@@ -396,7 +395,9 @@ export function encodeRevisionInfos(
 ): EncodedRevisionInfo[] | undefined {
 	if (context.revision !== undefined) {
 		assert(
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Using optional chaining here would change behavior: `revisions[0]?.rollbackOf === undefined` is true when revisions[0] is undefined, but this check requires revisions[0] to be defined. As currently written, such a change would be safe because context.revision is included in the check and from a couple lines above is confirmed not undefined. But this more verbose form is clearer.
 			revisions.length === 1 &&
+				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 				revisions[0] !== undefined &&
 				revisions[0].revision === context.revision &&
 				revisions[0].rollbackOf === undefined,
@@ -525,9 +526,9 @@ export function decodeChange(
 ): Mutable<ModularChangeset> {
 	const decoded: Mutable<ModularChangeset> = {
 		fieldChanges: new Map(),
-		nodeChanges: newTupleBTree(),
-		nodeToParent: newTupleBTree(),
-		nodeAliases: newTupleBTree(),
+		nodeChanges: newChangeAtomIdBTree(),
+		nodeToParent: newChangeAtomIdBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 		crossFieldKeys: newCrossFieldKeyTable(),
 	};
 

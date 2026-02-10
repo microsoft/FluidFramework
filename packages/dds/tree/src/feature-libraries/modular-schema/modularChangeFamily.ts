@@ -4,8 +4,9 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { BTree } from "@tylerbu/sorted-btree-es6";
+import { lt } from "semver-ts";
 
 import {
 	FluidClientVersion,
@@ -45,6 +46,8 @@ import {
 	type DeltaDetachedNodeRename,
 	mapTaggedChange,
 	type RevisionReplacer,
+	comparePartialRevisions,
+	comparePartialChangesetLocalIds,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -55,12 +58,20 @@ import {
 	idAllocatorFromState,
 	type RangeQueryResult,
 	getOrCreate,
-	newTupleBTree,
 	mergeTupleBTrees,
 	type TupleBTree,
 	RangeMap,
 	balancedReduce,
+	newTupleBTree,
+	compareStrings,
+	createTupleComparator,
 } from "../../util/index.js";
+import {
+	getFromChangeAtomIdMap,
+	newChangeAtomIdBTree,
+	setInChangeAtomIdMap,
+	type ChangeAtomIdBTree,
+} from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
 import {
@@ -75,6 +86,7 @@ import {
 	NodeAttachState,
 	type RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
+import type { FlexFieldKind } from "./fieldKind.js";
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import type { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
@@ -91,13 +103,6 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
-import type { FlexFieldKind } from "./fieldKind.js";
-import {
-	getFromChangeAtomIdMap,
-	setInChangeAtomIdMap,
-	type ChangeAtomIdBTree,
-} from "../changeAtomIdBTree.js";
-import { lt } from "semver-ts";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -481,6 +486,7 @@ export class ModularChangeFamily
 				setInChangeAtomIdMap(composedNodes, nodeId, nodeChangeset);
 			}
 
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 			if (nodeChangeset.fieldChanges === undefined) {
 				nodeChangeset.fieldChanges = new Map();
 			}
@@ -731,7 +737,7 @@ export class ModularChangeFamily
 			revisionForInvert,
 		);
 
-		const invertedNodes: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
+		const invertedNodes = newChangeAtomIdBTree<NodeChangeset>();
 		change.change.nodeChanges.forEachPair(([revision, localId], nodeChangeset) => {
 			invertedNodes.set(
 				[revision, localId],
@@ -896,12 +902,12 @@ export class ModularChangeFamily
 			newChange: change,
 			baseChange: over.change,
 			baseFieldToContext: new Map(),
-			baseToRebasedNodeId: newTupleBTree(),
+			baseToRebasedNodeId: newChangeAtomIdBTree(),
 			rebasedFields: new Set(),
 			rebasedNodeToParent: brand(change.nodeToParent.clone()),
 			rebasedCrossFieldKeys: change.crossFieldKeys.clone(),
 			nodeIdPairs: [],
-			affectedBaseFields: newTupleBTree(),
+			affectedBaseFields: newFieldIdKeyBTree(),
 			fieldsWithUnattachedChild: new Set(),
 		};
 
@@ -1039,15 +1045,6 @@ export class ModularChangeFamily
 
 			// This field has no changes in the new changeset, otherwise it would have been added to
 			// `crossFieldTable.baseFieldToContext` when processing fields with both base and new changes.
-			const rebaseChild = (
-				child: NodeId | undefined,
-				baseChild: NodeId | undefined,
-				stateChange: NodeAttachState | undefined,
-			): NodeId | undefined => {
-				assert(child === undefined, 0x9c3 /* There should be no new changes in this field */);
-				return undefined;
-			};
-
 			const handler = getChangeHandler(this.fieldKinds, baseFieldChange.fieldKind);
 			const fieldChange: FieldChange = {
 				...baseFieldChange,
@@ -1063,7 +1060,7 @@ export class ModularChangeFamily
 			const rebasedField: unknown = handler.rebaser.rebase(
 				fieldChange.change,
 				baseFieldChange.change,
-				rebaseChild,
+				noNewChangesRebaseChild,
 				genId,
 				new RebaseManager(crossFieldTable, baseFieldChange, fieldId),
 				metadata,
@@ -1373,7 +1370,7 @@ export class ModularChangeFamily
 		const change = nodeChangeFromId(crossFieldTable.newChange.nodeChanges, newId);
 		const over = nodeChangeFromId(crossFieldTable.baseChange.nodeChanges, baseId);
 
-		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map();
+		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map<FieldKey, FieldChange>();
 
 		const fieldChanges =
 			change.fieldChanges !== undefined && over.fieldChanges !== undefined
@@ -1530,8 +1527,11 @@ export class ModularChangeFamily
 	}
 
 	public getRevisions(change: ModularChangeset): Set<RevisionTag | undefined> {
+		if (change.revisions === undefined || change.revisions.length === 0) {
+			return new Set([undefined]);
+		}
 		const aggregated: Set<RevisionTag | undefined> = new Set();
-		for (const revInfo of change.revisions ?? [{ revision: undefined }]) {
+		for (const revInfo of change.revisions) {
 			aggregated.add(revInfo.revision);
 		}
 		return aggregated;
@@ -1559,7 +1559,7 @@ export class ModularChangeFamily
 			nodeToParent: updatedNodeToParent,
 
 			// We've updated all references to old node IDs, so we no longer need an alias table.
-			nodeAliases: newTupleBTree(),
+			nodeAliases: newChangeAtomIdBTree(),
 			crossFieldKeys: replaceCrossFieldKeyTableRevisions(
 				change.crossFieldKeys,
 				replacer,
@@ -1771,7 +1771,7 @@ function replaceCrossFieldKeyTableRevisions(
 	const updated: CrossFieldKeyTable = newCrossFieldKeyTable();
 	for (const entry of table.entries()) {
 		const key = entry.start;
-		const updatedKey: CrossFieldKey = replacer.getUpdatedAtomId(key);
+		const updatedKey: CrossFieldKey = replacer.getUpdatedAtomId(key, entry.length);
 
 		const field = entry.value;
 		const normalizedFieldId = normalizeFieldId(field, nodeAliases);
@@ -1796,7 +1796,7 @@ function replaceIdMapRevisions<T>(
 	replacer: RevisionReplacer,
 	valueMapper: (value: T) => T = (value) => value,
 ): ChangeAtomIdBTree<T> {
-	const updated: ChangeAtomIdBTree<T> = newTupleBTree();
+	const updated = newChangeAtomIdBTree<T>();
 	for (const [[revision, localId], value] of map.entries()) {
 		const newAtom = replacer.getUpdatedAtomId({ revision, localId });
 		updated.set([newAtom.revision, newAtom.localId], valueMapper(value));
@@ -1827,20 +1827,23 @@ function composeBuildsDestroysAndRefreshers(
 	// care to support at this time.
 	const allBuilds: ChangeAtomIdBTree<TreeChunk> = brand(
 		mergeTupleBTrees(
-			change1.builds ?? newTupleBTree(),
-			change2.builds ?? newTupleBTree(),
+			change1.builds ?? newChangeAtomIdBTree(),
+			change2.builds ?? newChangeAtomIdBTree(),
 			true,
 		),
 	);
 
 	const allDestroys: ChangeAtomIdBTree<number> = brand(
-		mergeTupleBTrees(change1.destroys ?? newTupleBTree(), change2.destroys ?? newTupleBTree()),
+		mergeTupleBTrees(
+			change1.destroys ?? newChangeAtomIdBTree(),
+			change2.destroys ?? newChangeAtomIdBTree(),
+		),
 	);
 
 	const allRefreshers: ChangeAtomIdBTree<TreeChunk> = brand(
 		mergeTupleBTrees(
-			change1.refreshers ?? newTupleBTree(),
-			change2.refreshers ?? newTupleBTree(),
+			change1.refreshers ?? newChangeAtomIdBTree(),
+			change2.refreshers ?? newChangeAtomIdBTree(),
 			true,
 		),
 	);
@@ -1909,23 +1912,26 @@ export function* relevantRemovedRoots(
 	yield* relevantRemovedRootsFromFields(change.fieldChanges, change.nodeChanges, fieldKinds);
 }
 
+function* relevantRemovedRootsFromNode(
+	node: NodeId,
+	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): Iterable<DeltaDetachedNodeId> {
+	const nodeChangeset = nodeChangeFromId(nodeChanges, node);
+	if (nodeChangeset.fieldChanges !== undefined) {
+		yield* relevantRemovedRootsFromFields(nodeChangeset.fieldChanges, nodeChanges, fieldKinds);
+	}
+}
+
 function* relevantRemovedRootsFromFields(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): Iterable<DeltaDetachedNodeId> {
+	const delegate = (node: NodeId): Iterable<DeltaDetachedNodeId> =>
+		relevantRemovedRootsFromNode(node, nodeChanges, fieldKinds);
 	for (const [_, fieldChange] of change) {
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
-		const delegate = function* (node: NodeId): Iterable<DeltaDetachedNodeId> {
-			const nodeChangeset = nodeChangeFromId(nodeChanges, node);
-			if (nodeChangeset.fieldChanges !== undefined) {
-				yield* relevantRemovedRootsFromFields(
-					nodeChangeset.fieldChanges,
-					nodeChanges,
-					fieldKinds,
-				);
-			}
-		};
 		yield* handler.relevantRemovedRoots(fieldChange.change, delegate);
 	}
 }
@@ -1947,7 +1953,7 @@ export function updateRefreshers(
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 	requireRefreshers: boolean = true,
 ): ModularChangeset {
-	const refreshers: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
+	const refreshers = newChangeAtomIdBTree<TreeChunk>();
 	const chunkLengths: Map<RevisionTag | undefined, BTree<number, number>> = new Map();
 
 	if (change.builds !== undefined) {
@@ -2108,7 +2114,7 @@ function intoDeltaImpl(
 				return deltaFromNodeChange(nodeChange, nodeChanges, fieldKinds, global, rename);
 			},
 		);
-		if (fieldChanges !== undefined && fieldChanges.length > 0) {
+		if (fieldChanges !== undefined && fieldChanges.marks.length > 0) {
 			delta.set(field, fieldChanges);
 		}
 		for (const c of fieldGlobal ?? []) {
@@ -2240,7 +2246,7 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	readonly fieldsWithUnattachedChild: Set<FieldChange>;
 }
 
-type FieldIdKey = [RevisionTag | undefined, ChangesetLocalId | undefined, FieldKey];
+type FieldIdKey = readonly [RevisionTag | undefined, ChangesetLocalId | undefined, FieldKey];
 
 interface RebaseFieldContext {
 	baseChange: FieldChange;
@@ -2266,13 +2272,13 @@ function newComposeTable(
 		newChange,
 		fieldToContext: new Map(),
 		newFieldToBaseField: new Map(),
-		newToBaseNodeId: newTupleBTree(),
+		newToBaseNodeId: newChangeAtomIdBTree(),
 		composedNodes: new Set(),
 		composedNodeToParent,
 		pendingCompositions: {
 			nodeIdsToCompose: [],
-			affectedBaseFields: newTupleBTree(),
-			affectedNewFields: newTupleBTree(),
+			affectedBaseFields: newFieldIdKeyBTree(),
+			affectedNewFields: newFieldIdKeyBTree(),
 		},
 	};
 }
@@ -2630,10 +2636,10 @@ function makeModularChangeset(props?: {
 }): ModularChangeset {
 	const p = props ?? { maxId: -1 };
 	const changeset: Mutable<ModularChangeset> = {
-		fieldChanges: p.fieldChanges ?? new Map(),
-		nodeChanges: p.nodeChanges ?? newTupleBTree(),
-		nodeToParent: p.nodeToParent ?? newTupleBTree(),
-		nodeAliases: p.nodeAliases ?? newTupleBTree(),
+		fieldChanges: p.fieldChanges ?? new Map<FieldKey, FieldChange>(),
+		nodeChanges: p.nodeChanges ?? newChangeAtomIdBTree(),
+		nodeToParent: p.nodeToParent ?? newChangeAtomIdBTree(),
+		nodeAliases: p.nodeAliases ?? newChangeAtomIdBTree(),
 		crossFieldKeys: p.crossFieldKeys ?? newCrossFieldKeyTable(),
 	};
 
@@ -2722,7 +2728,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		// This content will be added to a GlobalEditDescription whose lifetime exceeds the scope of this function.
 		content.referenceAdded();
 
-		const builds: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
+		const builds = newChangeAtomIdBTree<TreeChunk>();
 		builds.set([revision, firstId], content);
 
 		return {
@@ -2752,8 +2758,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		const modularChange = buildModularChangesetFromField({
 			path: field,
 			fieldChange: { fieldKind, change },
-			nodeChanges: newTupleBTree(),
-			nodeToParent: newTupleBTree(),
+			nodeChanges: newChangeAtomIdBTree(),
+			nodeToParent: newChangeAtomIdBTree(),
 			crossFieldKeys: newCrossFieldKeyTable(),
 			idAllocator: this.idAllocator,
 			localCrossFieldKeys,
@@ -2784,8 +2790,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 								fieldKind: change.fieldKind,
 								change: change.change,
 							},
-							nodeChanges: newTupleBTree(),
-							nodeToParent: newTupleBTree(),
+							nodeChanges: newChangeAtomIdBTree(),
+							nodeToParent: newChangeAtomIdBTree(),
 							crossFieldKeys: newCrossFieldKeyTable(),
 							idAllocator: this.idAllocator,
 							localCrossFieldKeys: getChangeHandler(
@@ -2823,8 +2829,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 				buildModularChangesetFromNode({
 					path,
 					nodeChange,
-					nodeChanges: newTupleBTree(),
-					nodeToParent: newTupleBTree(),
+					nodeChanges: newChangeAtomIdBTree(),
+					nodeToParent: newChangeAtomIdBTree(),
 					crossFieldKeys: newCrossFieldKeyTable(),
 					idAllocator: this.idAllocator,
 					revision,
@@ -2844,8 +2850,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 				buildModularChangesetFromNode({
 					path,
 					nodeChange,
-					nodeChanges: newTupleBTree(),
-					nodeToParent: newTupleBTree(),
+					nodeChanges: newChangeAtomIdBTree(),
+					nodeToParent: newChangeAtomIdBTree(),
 					crossFieldKeys: newCrossFieldKeyTable(),
 					idAllocator: this.idAllocator,
 					revision,
@@ -3178,6 +3184,19 @@ function hasConflicts(change: ModularChangeset): boolean {
 	return (change.constraintViolationCount ?? 0) > 0;
 }
 
+/**
+ * A rebaseChild callback for fields with no new changes.
+ * Asserts that there are no new changes and returns undefined.
+ */
+function noNewChangesRebaseChild(
+	child: NodeId | undefined,
+	_baseChild: NodeId | undefined,
+	_stateChange: NodeAttachState | undefined,
+): NodeId | undefined {
+	assert(child === undefined, 0x9c3 /* There should be no new changes in this field */);
+	return undefined;
+}
+
 interface ModularChangesetContent {
 	fieldChanges: FieldChangeMap;
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
@@ -3189,3 +3208,13 @@ interface ModularChangesetContent {
 function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
 }
+
+function newFieldIdKeyBTree<V>(): TupleBTree<FieldIdKey, V> {
+	return newTupleBTree(compareFieldIdKeys);
+}
+
+const compareFieldIdKeys = createTupleComparator([
+	comparePartialRevisions,
+	comparePartialChangesetLocalIds,
+	compareStrings<FieldKey>,
+]);

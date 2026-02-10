@@ -5,6 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	getConfigForMinVersionForCollab,
 	lowestMinVersionForCollab,
@@ -34,17 +35,10 @@ import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import {
-	type EncodedFieldBatch,
-	validVersions,
-	FieldBatchFormatVersion,
-	EncodedFieldBatchV1,
-	EncodedFieldBatchV2,
-} from "./format.js";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import { EncodedFieldBatch, validVersions, FieldBatchFormatVersion } from "./format.js";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
-import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode.js";
 import { schemaCompressedEncodeV1, schemaCompressedEncodeV2 } from "./schemaBasedEncode.js";
+import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode.js";
 
 /**
  * Reference ID for a chunk that is incrementally encoded.
@@ -157,18 +151,15 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 	let schemaCompressedEncodeFn:
 		| typeof schemaCompressedEncodeV1
 		| typeof schemaCompressedEncodeV2;
-	let encodedFieldBatchType: typeof EncodedFieldBatchV1 | typeof EncodedFieldBatchV2;
 	switch (writeVersion) {
 		case unbrand(FieldBatchFormatVersion.v1): {
 			uncompressedEncodeFn = uncompressedEncodeV1;
 			schemaCompressedEncodeFn = schemaCompressedEncodeV1;
-			encodedFieldBatchType = EncodedFieldBatchV1;
 			break;
 		}
 		case unbrand(FieldBatchFormatVersion.v2): {
 			uncompressedEncodeFn = uncompressedEncodeV2;
 			schemaCompressedEncodeFn = schemaCompressedEncodeV2;
-			encodedFieldBatchType = EncodedFieldBatchV2;
 			break;
 		}
 		default: {
@@ -176,7 +167,10 @@ export function makeFieldBatchCodec(options: CodecWriteOptions): FieldBatchCodec
 		}
 	}
 
-	return makeVersionedValidatedCodec(options, validVersions, encodedFieldBatchType, {
+	// Both the encode and decode logic here support both v1 and v2, as does `validVersions` and `EncodedFieldBatch`.
+	// This makes this use of makeVersionedValidatedCodec atypical as it is a single call being used to make a codec that supports all versions,
+	// instead of one call per version, then using another utility to select between them based on version.
+	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
 		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 			for (const cursor of data) {
 				assert(

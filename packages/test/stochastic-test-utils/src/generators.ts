@@ -109,7 +109,8 @@ export function take<T, TState>(
 }
 
 /**
- * @returns a deterministic generator that always returns the items of `contents` in order.
+ * Creates a deterministic generator that yields the items of `contents` in order.
+ *
  * @internal
  */
 export function generatorFromArray<T, TAdditionalState>(
@@ -367,7 +368,8 @@ export function takeAsync<T, TState>(
 }
 
 /**
- * @returns a deterministic generator that always returns the items of `contents` in order.
+ * Creates a deterministic async generator that yields the items of `contents` in order.
+ *
  * @internal
  */
 export function asyncGeneratorFromArray<T, TAdditionalState>(

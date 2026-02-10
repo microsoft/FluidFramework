@@ -4,6 +4,9 @@
  */
 
 import type { ErasedType } from "@fluidframework/core-interfaces";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+
+import { allowUnused } from "../../simple-tree/index.js";
 import {
 	type Brand,
 	brand,
@@ -21,8 +24,6 @@ import type {
 	requireTrue,
 	Values,
 } from "../../util/index.js";
-import { allowUnused } from "../../simple-tree/index.js";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 // These tests currently just cover the type checking, so its all compile time.
 

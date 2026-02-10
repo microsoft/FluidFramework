@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// TODO: Fix prefer-nullish-coalescing and prefer-optional-chain lint violations
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/prefer-optional-chain */
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
@@ -24,7 +27,6 @@ import type { IFluidSerializer } from "@fluidframework/shared-object-base/intern
 import {
 	SharedObject,
 	ValueType,
-	bindHandles,
 	parseHandles,
 } from "@fluidframework/shared-object-base/internal";
 import {
@@ -1211,14 +1213,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			throw new Error("Undefined and null keys are not supported");
 		}
 		const previousOptimisticLocalValue = this.getOptimisticValue(key);
-
-		const detachedBind =
-			this.mc.config.getBoolean("Fluid.Directory.AllowDetachedResolve") ?? false;
-		if (detachedBind) {
-			// Create a local value and serialize it.
-			// AB#47081: This will be removed once we can validate that it is no longer needed.
-			bindHandles(value, this.directory.handle);
-		}
 
 		// If we are not attached, don't submit the op.
 		if (!this.directory.isAttached()) {

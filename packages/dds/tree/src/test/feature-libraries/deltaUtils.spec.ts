@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
 import type {
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
@@ -14,7 +16,6 @@ import type {
 } from "../../core/index.js";
 import { mapRootChanges } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
-import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { chunkFromJsonTrees, chunkToMapTreeField } from "../utils.js";
 
 const nodeX = chunkFromJsonTrees(["X"]);
@@ -27,13 +28,15 @@ describe("DeltaUtils", () => {
 			const nestedCursorInsert = new Map<FieldKey, DeltaFieldChanges>([
 				[
 					fooField,
-					[
-						{ count: 42 },
-						{
-							count: 1,
-							attach: detachId,
-						},
-					],
+					{
+						marks: [
+							{ count: 42 },
+							{
+								count: 1,
+								attach: detachId,
+							},
+						],
+					},
 				],
 			]);
 			const input: DeltaRoot = {
@@ -41,12 +44,14 @@ describe("DeltaUtils", () => {
 				fields: new Map<FieldKey, DeltaFieldChanges>([
 					[
 						fooField,
-						[
-							{
-								count: 1,
-								fields: nestedCursorInsert,
-							},
-						],
+						{
+							marks: [
+								{
+									count: 1,
+									fields: nestedCursorInsert,
+								},
+							],
+						},
 					],
 				]),
 				global: [{ id: detachId, fields: nestedCursorInsert }],
@@ -56,13 +61,15 @@ describe("DeltaUtils", () => {
 			const nestedMapTreeInsert = new Map<FieldKey, DeltaFieldChanges>([
 				[
 					fooField,
-					[
-						{ count: 42 },
-						{
-							count: 1,
-							attach: detachId,
-						},
-					],
+					{
+						marks: [
+							{ count: 42 },
+							{
+								count: 1,
+								attach: detachId,
+							},
+						],
+					},
 				],
 			]);
 			const expected: DeltaRoot<MapTree[]> = {
@@ -70,12 +77,14 @@ describe("DeltaUtils", () => {
 				fields: new Map<FieldKey, DeltaFieldChanges>([
 					[
 						fooField,
-						[
-							{
-								count: 1,
-								fields: nestedMapTreeInsert,
-							},
-						],
+						{
+							marks: [
+								{
+									count: 1,
+									fields: nestedMapTreeInsert,
+								},
+							],
+						},
 					],
 				]),
 				global: [{ id: detachId, fields: nestedMapTreeInsert }],

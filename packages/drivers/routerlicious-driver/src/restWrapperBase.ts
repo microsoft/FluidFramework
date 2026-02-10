@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { AxiosRequestConfig, AxiosRequestHeaders } from "./axios.cjs";
 import type { QueryStringType } from "./queryStringUtils.js";
+import type { RequestConfig, RequestHeaders } from "./request.cjs";
 import { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {
@@ -16,6 +16,8 @@ export abstract class RestWrapper {
 	) {}
 
 	/**
+	 * Performs an HTTP GET request to the specified URL.
+	 *
 	 * @param url - Relative or absolute request url.(should not contain any query params)
 	 * @param queryString - query params to be appended to the request url
 	 * @param headers - headers
@@ -24,15 +26,15 @@ export abstract class RestWrapper {
 	public async get<T>(
 		url: string,
 		queryString?: QueryStringType,
-		headers?: AxiosRequestHeaders,
+		headers?: RequestHeaders,
 		additionalOptions?: Partial<
 			Omit<
-				AxiosRequestConfig,
+				RequestConfig,
 				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
-		const options: AxiosRequestConfig = {
+		const options: RequestConfig = {
 			...additionalOptions,
 			baseURL: this.baseurl,
 			headers,
@@ -46,6 +48,8 @@ export abstract class RestWrapper {
 	}
 
 	/**
+	 * Performs an HTTP POST request to the specified URL.
+	 *
 	 * @param url - Relative or absolute request url.(should not contain any query params)
 	 * @param requestBody - requestBody
 	 * @param queryString - query params to be appended to the request url
@@ -56,15 +60,15 @@ export abstract class RestWrapper {
 		url: string,
 		requestBody: any,
 		queryString?: QueryStringType,
-		headers?: AxiosRequestHeaders,
+		headers?: RequestHeaders,
 		additionalOptions?: Partial<
 			Omit<
-				AxiosRequestConfig,
+				RequestConfig,
 				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
-		const options: AxiosRequestConfig = {
+		const options: RequestConfig = {
 			...additionalOptions,
 			baseURL: this.baseurl,
 			data: requestBody,
@@ -79,6 +83,8 @@ export abstract class RestWrapper {
 	}
 
 	/**
+	 * Performs an HTTP DELETE request to the specified URL.
+	 *
 	 * @param url - Relative or absolute request url.(should not contain any query params)
 	 * @param queryString - query params to be appended to the request url
 	 * @param headers - headers
@@ -87,15 +93,15 @@ export abstract class RestWrapper {
 	public async delete<T>(
 		url: string,
 		queryString?: QueryStringType,
-		headers?: AxiosRequestHeaders,
+		headers?: RequestHeaders,
 		additionalOptions?: Partial<
 			Omit<
-				AxiosRequestConfig,
+				RequestConfig,
 				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
-		const options: AxiosRequestConfig = {
+		const options: RequestConfig = {
 			...additionalOptions,
 			baseURL: this.baseurl,
 			headers,
@@ -109,6 +115,8 @@ export abstract class RestWrapper {
 	}
 
 	/**
+	 * Performs an HTTP PATCH request to the specified URL.
+	 *
 	 * @param url - Relative or absolute request url.(should not contain any query params)
 	 * @param requestBody - requestBody
 	 * @param queryString - query params to be appended to the request url
@@ -119,15 +127,15 @@ export abstract class RestWrapper {
 		url: string,
 		requestBody: any,
 		queryString?: QueryStringType,
-		headers?: AxiosRequestHeaders,
+		headers?: RequestHeaders,
 		additionalOptions?: Partial<
 			Omit<
-				AxiosRequestConfig,
+				RequestConfig,
 				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
-		const options: AxiosRequestConfig = {
+		const options: RequestConfig = {
 			...additionalOptions,
 			baseURL: this.baseurl,
 			data: requestBody,
@@ -142,7 +150,7 @@ export abstract class RestWrapper {
 	}
 
 	protected abstract request<T>(
-		options: AxiosRequestConfig,
+		options: RequestConfig,
 		statusCode: number,
 		addNetworkCallProps?: boolean,
 	): Promise<IR11sResponse<T>>;

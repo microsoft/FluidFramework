@@ -1,14 +1,17 @@
-/* eslint-disable */
-/**
- * GENERATED FILE - DO NOT EDIT DIRECTLY.
- * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
  */
+
 import type { Linter } from "eslint";
 import { strict } from "../../../common/build/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...strict,
 	{
+		// Override @typescript-eslint/parser to use explicit project list instead of projectService.
+		// This package has non-standard test directories (mocha/, jest/, types/) that
+		// typescript-eslint's projectService can't auto-discover.
 		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 		languageOptions: {
 			parserOptions: {

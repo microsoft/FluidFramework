@@ -129,6 +129,8 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	}
 
 	/**
+	 * Inserts items at the specified position in the sequence.
+	 *
 	 * @param pos - The position to insert the items at.
 	 * @param items - The items to insert.
 	 * @param props - Optional. Properties to set on the inserted items.
@@ -139,6 +141,8 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	}
 
 	/**
+	 * Removes items from the sequence in the specified range.
+	 *
 	 * @param start - The inclusive start of the range to remove
 	 * @param end - The exclusive end of the range to remove
 	 */
@@ -171,6 +175,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 		this.walkSegments(
 			(segment: ISegment) => {
 				if (SubSequence.is(segment)) {
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (firstSegment === undefined) {
 						firstSegment = segment;
 					}

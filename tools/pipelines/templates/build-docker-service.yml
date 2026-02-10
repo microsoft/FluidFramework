@@ -592,7 +592,6 @@ extends:
           tagName: ${{ parameters.tagName }}
           isReleaseGroup: ${{ parameters.isReleaseGroup }}
           buildDirectory: ${{ parameters.buildDirectory }}
-          buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
 
     - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
       - stage: publish_docker_official
@@ -609,10 +608,9 @@ extends:
         - template: /tools/pipelines/templates/include-publish-docker-service-steps.yml@self
           parameters:
             environment: container-registry-public
-            # $(containerRegistryConnection) and $(containerRegistryUrl) come from the container-registry-info variable
-            # group and need to be specified as runtime variables (variables from variable groups apparently are never
+            # $(containerRegistryUrl) comes from the container-registry-info variable
+            # group and needs to be specified as a runtime variable (variables from variable groups apparently are never
             # available "statically" at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
-            containerRegistry: $(containerRegistryConnection)
             containerRegistryUrl: $(containerRegistryUrl)
             containerTag: $(containerTag)
             containerName: public/${{ parameters.containerName }}

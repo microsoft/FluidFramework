@@ -20,12 +20,12 @@ const updateTabForId = (id: string): void => {
 };
 
 const render = (model: IInventoryListAppModel): void => {
-	const appDiv = document.getElementById("app") as HTMLDivElement;
+	const appDiv = document.querySelector("#app") as HTMLDivElement;
 	ReactDOM.unmountComponentAtNode(appDiv);
 	ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
 
 	// The DebugView is just for demo purposes, in case we want to access internal state or have debug controls.
-	const debugDiv = document.getElementById("debug") as HTMLDivElement;
+	const debugDiv = document.querySelector("#debug") as HTMLDivElement;
 	ReactDOM.unmountComponentAtNode(debugDiv);
 	ReactDOM.render(
 		React.createElement(DebugView, {
@@ -48,7 +48,7 @@ async function start(): Promise<void> {
 		model = createResponse.model;
 		id = await createResponse.attach();
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		model = await modelLoader.loadExisting(id);
 	}
 
@@ -56,4 +56,8 @@ async function start(): Promise<void> {
 	updateTabForId(id);
 }
 
-start().catch((error) => console.error(error));
+try {
+	await start();
+} catch (error) {
+	console.error("Error starting tree comparison app:", error);
+}

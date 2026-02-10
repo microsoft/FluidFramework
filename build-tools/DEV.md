@@ -113,16 +113,15 @@ The following dependencies are pinned to older major versions because newer vers
 
 #### API/Structure Breaking Changes
 
-16. **eslint** - Pinned to `~8.57.0`
-    - Latest: `~9.x`
-    - Issue: Version 9 uses flat config system incompatible with existing configuration
-    - Error: `ESLint configuration is invalid: Unexpected top-level property "__esModule"`
-    - Used in: `build-cli` (devDependency)
+16. **eslint** - Upgraded to `^9.x` ✅
+    - Latest: `^9.x`
+    - Previously pinned to `~8.57.0` due to flat config migration required
+    - **Note**: Successfully migrated to ESLint 9 flat config system
 
-17. **eslint-config-oclif** - Pinned to `^5.x`
-    - Latest: `^6.x`
-    - Issue: Version 6 requires ESLint 9
-    - Used in: `build-cli`, `version-tools` (devDependency)
+17. **eslint-config-oclif** - Removed ✅
+    - Previously used `eslint-config-oclif@^5.x` and `eslint-config-oclif-typescript@^3.x`
+    - **Note**: Permanently removed. The oclif ESLint configs don't provide oclif-specific rules—they're general Node.js/TypeScript style configs (XO-based) that conflict with `@fluidframework/eslint-config-fluid`. The v6 config redefines the `@typescript-eslint` plugin causing ESLint errors.
+    - Oclif-specific overrides (default exports, etc.) are handled in per-package `eslint.config.mts` files.
 
 18. **npm-check-updates** - Pinned to `^16.x`
     - Latest: `^19.x`
@@ -130,3 +129,15 @@ The following dependencies are pinned to older major versions because newer vers
     - Issue: Version 17+ changed internal module structure and removed exported types
     - Error: `Cannot find module 'npm-check-updates/build/src/types/IndexType.js'` and type errors
     - Used in: `build-cli`
+
+### Linked Dependency: ESLint Config
+
+The `@fluidframework/eslint-config-fluid` package is referenced using `link:../common/build/eslint-config-fluid` because the package exists in the root FluidFramework workspace but build-tools is a separate pnpm workspace. When using `link:` protocol, transitive dependencies are **not** automatically installed.
+
+To work around this limitation, the root `package.json` includes a `postinstall` script that runs `pnpm install` inside the linked eslint-config-fluid directory, ensuring its dependencies are available:
+
+```json
+"postinstall": "pnpm install --dir ../common/build/eslint-config-fluid"
+```
+
+This approach keeps the dependency list clean while ensuring all ESLint plugins and parsers required by the shared config are installed. Once `eslint-config-fluid` is published to npm and consumed via a normal version specifier instead of `link:`, this postinstall hook can be removed.

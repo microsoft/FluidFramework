@@ -9,7 +9,7 @@ import { Spinner } from "picospinner";
 import { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
-import { type BuildGraph } from "./buildGraph";
+import type { BuildGraph } from "./buildGraph";
 import { BuildResult } from "./buildResult";
 import { commonOptions } from "./commonOptions";
 import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
@@ -21,7 +21,7 @@ const { log, errorLog: error, warning: warn } = defaultLogger;
 
 parseOptions(process.argv);
 
-async function main() {
+async function main(): Promise<void> {
 	const timer = new Timer(commonOptions.timer);
 	const resolvedRoot = await getResolvedFluidRoot(true);
 	const fluidConfig = getFluidBuildConfig(resolvedRoot, false);
@@ -44,6 +44,7 @@ async function main() {
 	const matched = repo.setMatched(options);
 	if (!matched) {
 		error("No package matched");
+		// eslint-disable-next-line unicorn/no-process-exit -- exit with error code when no packages match the filter
 		process.exit(-4);
 	}
 
@@ -51,6 +52,7 @@ async function main() {
 	if (options.uninstall) {
 		if (!(await repo.uninstall())) {
 			error(`uninstall failed`);
+			// eslint-disable-next-line unicorn/no-process-exit -- exit with error code when uninstall operation fails
 			process.exit(-8);
 		}
 		timer.time("Uninstall completed", true);
@@ -65,7 +67,7 @@ async function main() {
 			if (errorStep) {
 				warn(`Skipping ${errorStep} after uninstall`);
 			}
-			process.exit(0);
+			return;
 		}
 	}
 
@@ -74,6 +76,7 @@ async function main() {
 		log("Installing packages");
 		if (!(await repo.install())) {
 			error(`Install failed`);
+			// eslint-disable-next-line unicorn/no-process-exit -- exit with error code when package installation fails
 			process.exit(-5);
 		}
 		timer.time("Install completed", true);
@@ -94,6 +97,7 @@ async function main() {
 		} catch (e: unknown) {
 			spinner.stop();
 			error((e as Error).message);
+			// eslint-disable-next-line unicorn/no-process-exit -- exit with error code when build graph creation fails
 			process.exit(-11);
 		}
 		spinner.succeed("Build graph created.");
@@ -102,6 +106,7 @@ async function main() {
 		// Check install
 		if (!(await buildGraph.checkInstall())) {
 			error("Dependency not installed. Use --install to fix.");
+			// eslint-disable-next-line unicorn/no-process-exit -- exit with error code when required dependencies are missing
 			process.exit(-10);
 		}
 		timer.time("Check install completed");
@@ -141,10 +146,11 @@ async function main() {
 	if (failureSummary !== "") {
 		log(`\n${failureSummary}`);
 	}
+	// eslint-disable-next-line unicorn/no-process-exit -- CLI entrypoint: return build result code to caller
 	process.exit(exitCode);
 }
 
-function buildResultString(buildResult: BuildResult) {
+function buildResultString(buildResult: BuildResult): string {
 	switch (buildResult) {
 		case BuildResult.Success:
 			return chalk.greenBright("succeeded");
@@ -155,7 +161,10 @@ function buildResultString(buildResult: BuildResult) {
 	}
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await -- top-level await requires ESM; this package emits CommonJS
 main().catch((e) => {
 	error(`Unexpected error. ${e.message}`);
 	error(e.stack);
+	// eslint-disable-next-line unicorn/no-process-exit -- exit with error code on unhandled exception
+	process.exit(1);
 });

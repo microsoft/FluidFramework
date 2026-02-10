@@ -24,6 +24,7 @@ import "simplemde/dist/simplemde.min.css";
  * Data object storing the data to back a SimpleMDE editor.  Primarily just a SharedString.
  */
 export class SmdeDataObject extends EventEmitter implements IFluidLoadable {
+	// eslint-disable-next-line @typescript-eslint/await-thenable -- known limitation
 	public static async load(
 		runtime: IFluidDataStoreRuntime,
 		existing: boolean,

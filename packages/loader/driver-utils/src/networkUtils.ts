@@ -3,29 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryErrorEventExt } from "@fluidframework/telemetry-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type {
+	ITelemetryErrorEventExt,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { OnlineStatus, canRetryOnError, isOnline } from "./network.js";
 
 /**
+ * Logs a network failure with additional context about online status and retry capability for the provided event.
+ *
  * @internal
  */
 export function logNetworkFailure(
 	logger: ITelemetryLoggerExt,
 	event: ITelemetryErrorEventExt,
-	error?: any,
+	error?: unknown,
 ): void {
 	const newEvent = { ...event };
 
-	const errorOnlineProp = error?.online;
+	// TODO: better typing
+	const errorOnlineProp = (error as { online?: unknown })?.online;
 	newEvent.online =
 		typeof errorOnlineProp === "string" ? errorOnlineProp : OnlineStatus[isOnline()];
 
 	if (typeof navigator === "object" && navigator !== null) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any -- TODO: use a real type
 		const nav = navigator as any;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const connection = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
 		if (connection !== null && typeof connection === "object") {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			newEvent.connectionType = connection.type;
 		}
 	}

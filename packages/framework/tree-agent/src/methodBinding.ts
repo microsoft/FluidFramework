@@ -4,11 +4,10 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { TreeNodeSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
+import type { TreeNodeSchema } from "@fluidframework/tree";
 import { NodeKind } from "@fluidframework/tree";
-import type { z } from "zod";
 
-import { instanceOf } from "./renderZodTypeScript.js";
+import type { TypeFactoryType } from "./treeAgentTypes.js";
 
 /**
  * A utility type that extracts the method keys from a given type.
@@ -62,7 +61,10 @@ export function getExposedMethods(schemaClass: BindableSchema): {
  * A type that represents a function argument.
  * @alpha
  */
-export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string, type: T];
+export type Arg<T extends TypeFactoryType = TypeFactoryType> = readonly [
+	name: string,
+	type: T,
+];
 
 /**
  * A function definition interface that describes the structure of a function.
@@ -70,12 +72,24 @@ export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string,
  */
 export interface FunctionDef<
 	Args extends readonly Arg[],
-	Return extends z.ZodTypeAny,
-	Rest extends z.ZodTypeAny | null = null,
+	Return extends TypeFactoryType,
+	Rest extends TypeFactoryType | null = null,
 > {
+	/**
+	 * Optional description of the function.
+	 */
 	description?: string;
+	/**
+	 * The function's parameters.
+	 */
 	args: Args;
+	/**
+	 * Optional rest parameter type.
+	 */
 	rest?: Rest;
+	/**
+	 * The function's return type.
+	 */
 	returns: Return;
 }
 
@@ -83,15 +97,15 @@ export interface FunctionDef<
  * A class that implements the FunctionDef interface.
  */
 export class FunctionWrapper
-	implements FunctionDef<readonly Arg[], z.ZodTypeAny, z.ZodTypeAny | null>
+	implements FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>
 {
 	public constructor(
 		public readonly name: string,
 		public readonly description: string | undefined,
 		public readonly args: readonly Arg[],
 		// eslint-disable-next-line @rushstack/no-new-null
-		public readonly rest: z.ZodTypeAny | null,
-		public readonly returns: z.ZodTypeAny,
+		public readonly rest: TypeFactoryType | null,
+		public readonly returns: TypeFactoryType,
 	) {}
 }
 
@@ -110,9 +124,9 @@ export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Sing
  * @alpha
  */
 export function buildFunc<
-	const Return extends z.ZodTypeAny,
+	const Return extends TypeFactoryType,
 	const Args extends readonly Arg[],
-	const Rest extends z.ZodTypeAny | null = null,
+	const Rest extends TypeFactoryType | null = null,
 >(
 	def: { description?: string; returns: Return; rest?: Rest },
 	...args: Args
@@ -126,32 +140,18 @@ export function buildFunc<
 }
 
 /**
- * A utility type that infers the return type of a function definition.
- * @alpha
- */
-export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest>
-	? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>>
-	: never;
-
-/**
  * An interface for exposing methods of schema classes to an agent.
  * @alpha
  */
 export interface ExposedMethods {
+	/**
+	 * Expose a method with type factory types.
+	 */
 	expose<
 		const K extends string & keyof MethodKeys<InstanceType<S>>,
-		S extends BindableSchema & Ctor<Record<K, Infer<Z>>> & IExposedMethods,
-		Z extends FunctionDef<any, any, any>,
-	>(schema: S, methodName: K, zodFunction: Z): void;
-
-	/**
-	 * Create a Zod schema for a SharedTree schema class.
-	 * @remarks
-	 * Use it to "wrap" schema types that are referenced as arguments or return types when exposing methods (with {@link ExposedMethods.expose}).
-	 */
-	instanceOf<T extends TreeNodeSchemaClass>(
-		schema: T,
-	): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>>;
+		S extends BindableSchema & Ctor & IExposedMethods,
+		Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>,
+	>(schema: S, methodName: K, tfFunction: Z): void;
 }
 
 /**
@@ -175,6 +175,9 @@ export const exposeMethodsSymbol: unique symbol = Symbol("run");
  * @alpha
  */
 export interface IExposedMethods {
+	/**
+	 * Static method that exposes methods of this schema class to an agent.
+	 */
 	[exposeMethodsSymbol](methods: ExposedMethods): void;
 }
 
@@ -186,8 +189,8 @@ class ExposedMethodsI implements ExposedMethods {
 
 	public expose<
 		const K extends string & keyof MethodKeys<InstanceType<S>>,
-		S extends BindableSchema & Ctor<Record<K, Infer<Z>>> & IExposedMethods,
-		Z extends FunctionDef<readonly Arg[], z.ZodTypeAny, z.ZodTypeAny | null>,
+		S extends BindableSchema & Ctor & IExposedMethods,
+		Z extends FunctionDef<readonly Arg[], TypeFactoryType, TypeFactoryType | null>,
 	>(schema: S, methodName: K, functionDef: Z): void {
 		if (schema !== this.schemaClass) {
 			throw new Error('Must expose methods on the "this" object');
@@ -200,13 +203,6 @@ class ExposedMethodsI implements ExposedMethods {
 			functionDef.rest ?? null,
 			functionDef.returns,
 		);
-	}
-
-	public instanceOf<T extends TreeNodeSchemaClass>(
-		schema: T,
-	): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>> {
-		this.referencedTypes.add(schema);
-		return instanceOf(schema);
 	}
 
 	public static getExposedMethods(schemaClass: BindableSchema): {

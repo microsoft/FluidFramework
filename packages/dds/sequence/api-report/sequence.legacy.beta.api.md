@@ -54,7 +54,7 @@ export abstract class BaseSegment implements ISegment {
     abstract readonly type: string;
 }
 
-// @beta @legacy (undocumented)
+// @beta @legacy
 export function createOverlappingIntervalsIndex(sharedString: ISharedString): ISequenceOverlappingIntervalsIndex;
 
 // @beta @legacy (undocumented)

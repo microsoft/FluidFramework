@@ -10,10 +10,10 @@ import chalk from "picocolors";
 
 import {
 	BaseCommand,
-	type Repository,
 	createPullRequest,
 	getCommitInfo,
 	pullRequestExists,
+	type Repository,
 } from "../../library/index.js";
 
 interface CleanupBranch {
