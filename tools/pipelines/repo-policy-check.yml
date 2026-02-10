@@ -62,6 +62,8 @@ extends:
       jobs:
       - job: run_policy_check
         steps:
+        - checkout: self
+          path: ${{ variables.FluidFrameworkDirectory }}
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
