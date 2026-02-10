@@ -26,21 +26,28 @@ set -eu -o pipefail
 if [ "$BUILD_REASON" = "Schedule" ]; then
     : "${CRON_SCHEDULE_NAME:?CRON_SCHEDULE_NAME is required for scheduled builds}"
 
-    if [[ "$CRON_SCHEDULE_NAME" == *"PR build"* ]]; then
+    # Use project to determine intended mode from schedule name.
+    # If the schedule is intended for public (IS_PUBLIC=True), run as public.
+    # If the schedule is intended for internal (!IS_PUBLIC), run as internal.
+    # Then check if the schedule name matches - if not, skip.
+    if [ "$IS_PUBLIC" = "True" ]; then
         MODE="public"
+        # Verify this is the public schedule
+        if [[ "$CRON_SCHEDULE_NAME" != *"PR"* ]]; then
+            echo "Skipping: Internal builds schedule running in public project"
+            echo "##vso[task.setvariable variable=shouldRun;isoutput=true]false"
+            echo "##vso[task.setvariable variable=runMode;isoutput=true]$MODE"
+            exit 0
+        fi
     else
         MODE="internal"
-    fi
-
-    # Check if project matches schedule mode
-    if [ "$MODE" = "public" ] && [ "$IS_PUBLIC" != "True" ]; then
-        echo "Skipping: Public builds schedule running in internal project"
-        echo "##vso[task.setvariable variable=shouldRun;isoutput=true]false"
-        exit 0
-    elif [ "$MODE" = "internal" ] && [ "$IS_PUBLIC" = "True" ]; then
-        echo "Skipping: Internal builds schedule running in public project"
-        echo "##vso[task.setvariable variable=shouldRun;isoutput=true]false"
-        exit 0
+        # Verify this is the internal schedule
+        if [[ "$CRON_SCHEDULE_NAME" != *"internal"* ]]; then
+            echo "Skipping: Public builds schedule running in internal project"
+            echo "##vso[task.setvariable variable=shouldRun;isoutput=true]false"
+            echo "##vso[task.setvariable variable=runMode;isoutput=true]$MODE"
+            exit 0
+        fi
     fi
 else
     # Manual run - use project to determine mode

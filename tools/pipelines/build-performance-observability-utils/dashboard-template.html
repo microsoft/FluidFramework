@@ -154,8 +154,14 @@
             }
             // Multi-mode: fetch data from JSON files
             const [prResult, internalResult] = await Promise.allSettled([
-                fetch('data/public-data.json').then(r => r.ok ? r.json() : null),
-                fetch('data/internal-data.json').then(r => r.ok ? r.json() : null)
+                fetch('data/public-data.json').then(r => {
+                    if (!r.ok) return null;
+                    return r.json().catch(e => { console.error('Failed to parse public data JSON:', e); return null; });
+                }),
+                fetch('data/internal-data.json').then(r => {
+                    if (!r.ok) return null;
+                    return r.json().catch(e => { console.error('Failed to parse internal data JSON:', e); return null; });
+                })
             ]);
             if (prResult.status === 'fulfilled' && prResult.value) {
                 dashboardData.public = prResult.value;

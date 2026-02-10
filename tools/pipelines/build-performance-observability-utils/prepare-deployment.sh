@@ -54,7 +54,13 @@ if [ "$HTTP_CODE" = "000" ]; then
     echo "Error: curl failed (network or connectivity issue)"
     rm -f "$FETCH_OUTPUT"
 elif [ "$HTTP_CODE" = "200" ] && [ -s "$FETCH_OUTPUT" ]; then
-    echo "Successfully fetched $OTHER_FILE (HTTP $HTTP_CODE, $(wc -c < "$FETCH_OUTPUT") bytes)"
+    # Validate fetched file is valid JSON (ASWA may return HTML error pages with 200)
+    if ! jq empty "$FETCH_OUTPUT" 2>/dev/null; then
+        echo "Warning: Fetched $OTHER_FILE is not valid JSON (possibly an HTML error page). Discarding."
+        rm -f "$FETCH_OUTPUT"
+    else
+        echo "Successfully fetched $OTHER_FILE (HTTP $HTTP_CODE, $(wc -c < "$FETCH_OUTPUT") bytes)"
+    fi
 else
     echo "HTTP $HTTP_CODE - fetch failed or empty response"
     rm -f "$FETCH_OUTPUT"

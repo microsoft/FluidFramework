@@ -55,6 +55,15 @@ fi
 AVG_DURATION=$(jq '.summary.avgDuration' "$DATA_FILE")
 CHANGE_PERIOD=$(jq ".$CHANGE_FIELD" "$DATA_FILE")
 
+if [ "$AVG_DURATION" = "null" ] || [ -z "$AVG_DURATION" ]; then
+    echo "Warning: Could not extract avgDuration from data file"
+    exit 0
+fi
+if [ "$CHANGE_PERIOD" = "null" ] || [ -z "$CHANGE_PERIOD" ]; then
+    echo "Warning: Could not extract $CHANGE_FIELD from data file"
+    exit 0
+fi
+
 echo ""
 echo "Key metrics:"
 echo "  Average duration: ${AVG_DURATION} minutes"

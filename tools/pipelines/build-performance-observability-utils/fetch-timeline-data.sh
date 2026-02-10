@@ -85,8 +85,8 @@ export ADO_API_TOKEN ORG PROJECT
 for BUILD_ID in $BUILD_IDS; do
     count=$((count + 1))
 
-    # Start background job
-    fetch_timeline "$BUILD_ID" "$OUTPUT_DIR/metrics/timelines/timeline_${BUILD_ID}.json" "$ERRORS_FILE" &
+    # Start background job (each job writes errors to its own file to avoid concurrent writes)
+    fetch_timeline "$BUILD_ID" "$OUTPUT_DIR/metrics/timelines/timeline_${BUILD_ID}.json" "$ERRORS_FILE.${BUILD_ID}" &
 
     # Limit concurrent jobs
     if (( count % PARALLEL_JOBS == 0 )); then
@@ -97,6 +97,10 @@ done
 
 wait  # Wait for remaining jobs
 
+# Merge individual error files into one
+cat "$ERRORS_FILE".* 2>/dev/null > "$ERRORS_FILE" || true
+rm -f "$ERRORS_FILE".*
+
 # Report any errors
 SUCCESS_COUNT=$(find "$OUTPUT_DIR/metrics/timelines" -name "*.json" | wc -l | tr -d ' ')
 ERROR_COUNT=$(wc -l < "$ERRORS_FILE" | tr -d ' ')
@@ -106,4 +110,9 @@ echo "Timeline data fetched: $SUCCESS_COUNT successful, $ERROR_COUNT failed"
 if [ "$ERROR_COUNT" -gt 0 ]; then
     echo "Warning: Some timeline fetches failed:"
     cat "$ERRORS_FILE"
+fi
+
+if [ "$SUCCESS_COUNT" -eq 0 ] && [ "$TOTAL_COUNT" -gt 0 ]; then
+    echo "Error: All timeline fetches failed"
+    exit 1
 fi

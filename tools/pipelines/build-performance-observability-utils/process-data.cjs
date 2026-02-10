@@ -72,7 +72,8 @@ function filterBuilds(builds, mode) {
 		try {
 			const params = JSON.parse(build.parameters);
 			return params["system.pullRequest.targetBranch"] === "main";
-		} catch {
+		} catch (e) {
+			console.warn(`Warning: Could not parse parameters for build ${build.id}: ${e.message}`);
 			return false;
 		}
 	});
@@ -105,25 +106,31 @@ function calcSummary(builds) {
 	};
 }
 
-// Calculate percentage change over a period (comparing most recent day to N days ago)
+// Calculate percentage change over a period using calendar days.
+// Compares the average duration of the last N calendar days vs the period before that.
+// This aligns with the client-side calculation in dashboard-template.html.
 function calcPeriodChange(durationTrend, days) {
 	if (!durationTrend || durationTrend.length === 0) return 0;
 
-	// durationTrend is sorted by date ascending, so reverse to get most recent first
-	const sorted = [...durationTrend].sort((a, b) => b.date.localeCompare(a.date));
+	// Calculate the cutoff date (N days ago from today)
+	const cutoffDate = new Date();
+	cutoffDate.setDate(cutoffDate.getDate() - days);
+	const cutoffDateStr = cutoffDate.toISOString().split("T")[0];
 
-	const latestAvg = sorted[0]?.avgDuration;
-	if (latestAvg === undefined || latestAvg === null) return 0;
+	const recentBuilds = durationTrend.filter((d) => d.date >= cutoffDateStr);
+	const previousBuilds = durationTrend.filter((d) => d.date < cutoffDateStr);
 
-	// Get the average from N days ago (or oldest available if less than N days)
-	const idx = Math.min(days - 1, sorted.length - 1);
-	if (idx < 0) return 0;
+	if (recentBuilds.length === 0 || previousBuilds.length === 0) return 0;
 
-	const olderAvg = sorted[idx]?.avgDuration;
-	if (!olderAvg || olderAvg === 0) return 0;
+	const recentAvg =
+		recentBuilds.reduce((sum, d) => sum + d.avgDuration, 0) / recentBuilds.length;
+	const previousAvg =
+		previousBuilds.reduce((sum, d) => sum + d.avgDuration, 0) / previousBuilds.length;
+
+	if (previousAvg === 0) return 0;
 
 	// Calculate percentage change: ((new - old) / old) * 100
-	return ((latestAvg - olderAvg) / olderAvg) * 100;
+	return ((recentAvg - previousAvg) / previousAvg) * 100;
 }
 
 // Calculate duration trend (min, average, max per day)
@@ -338,7 +345,14 @@ function processRawData(rawData, mode) {
 	const project = mode === "public" ? "public" : "internal";
 
 	// Filter and process builds
-	const filteredBuilds = filterBuilds(rawData.builds || [], mode);
+	if (!rawData.builds || !Array.isArray(rawData.builds)) {
+		console.error(
+			"Error: Input data does not contain a 'builds' array. Received keys:",
+			Object.keys(rawData),
+		);
+		process.exit(1);
+	}
+	const filteredBuilds = filterBuilds(rawData.builds, mode);
 	const processedBuilds = filteredBuilds
 		.map((b) => processBuild(b, project))
 		.filter((b) => b.duration !== null);
@@ -392,7 +406,13 @@ function main() {
 		process.exit(1);
 	}
 
-	const rawData = JSON.parse(fs.readFileSync(inputFile, "utf8"));
+	let rawData;
+	try {
+		rawData = JSON.parse(fs.readFileSync(inputFile, "utf8"));
+	} catch (e) {
+		console.error(`Error: Failed to parse input file '${inputFile}': ${e.message}`);
+		process.exit(1);
+	}
 	const processedData = processRawData(rawData, mode);
 	const output = JSON.stringify(processedData);
 	fs.writeFileSync(outputFile, output);

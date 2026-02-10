@@ -53,20 +53,29 @@ OUTPUT_FILE="$OUTPUT_DIR/metrics/builds-raw.json"
 if [ "$MODE" = "public" ]; then
     # Fetch PR builds with reasonFilter and statusFilter
     echo "Fetching last $BUILD_COUNT PR builds (reason=pullRequest, succeeded/partiallySucceeded, completed)..."
-    curl -sL --max-time 60 -u ":$ADO_API_TOKEN" \
-        "https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds?definitions=$BUILD_DEF_ID&reasonFilter=pullRequest&resultFilter=succeeded,partiallySucceeded&statusFilter=completed&\$top=$BUILD_COUNT&api-version=7.1" \
-        -o "$OUTPUT_FILE"
+    URL="https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds?definitions=$BUILD_DEF_ID&reasonFilter=pullRequest&resultFilter=succeeded,partiallySucceeded&statusFilter=completed&\$top=$BUILD_COUNT&api-version=7.1"
 else
     # Fetch internal builds from main branch
     echo "Fetching last $BUILD_COUNT internal builds (branch=main, succeeded/partiallySucceeded, completed)..."
-    curl -sL --max-time 60 -u ":$ADO_API_TOKEN" \
-        "https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds?definitions=$BUILD_DEF_ID&branchName=refs/heads/main&resultFilter=succeeded,partiallySucceeded&statusFilter=completed&\$top=$BUILD_COUNT&api-version=7.1" \
-        -o "$OUTPUT_FILE"
+    URL="https://dev.azure.com/$ORG/$PROJECT/_apis/build/builds?definitions=$BUILD_DEF_ID&branchName=refs/heads/main&resultFilter=succeeded,partiallySucceeded&statusFilter=completed&\$top=$BUILD_COUNT&api-version=7.1"
+fi
+
+HTTP_CODE=$(curl -sL --max-time 60 -w "%{http_code}" -u ":$ADO_API_TOKEN" \
+    "$URL" -o "$OUTPUT_FILE")
+
+if [ "$HTTP_CODE" != "200" ]; then
+    echo "Error: API returned HTTP $HTTP_CODE"
+    exit 1
 fi
 
 # Validate JSON response
 if ! jq empty "$OUTPUT_FILE" 2>/dev/null; then
     echo "Error: Response is not valid JSON. Response saved to '$OUTPUT_FILE'."
+    exit 1
+fi
+
+if ! jq -e '.value' "$OUTPUT_FILE" >/dev/null 2>&1; then
+    echo "Error: Response does not contain expected '.value' array. Possible auth failure or wrong project."
     exit 1
 fi
 

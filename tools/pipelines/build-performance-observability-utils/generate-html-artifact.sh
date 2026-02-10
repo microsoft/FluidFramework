@@ -38,33 +38,14 @@ fi
 if [ -f "$DATA_FILE" ]; then
     echo "Found data file: $DATA_FILE ($(wc -c < "$DATA_FILE") bytes)"
 else
-    echo "Warning: Data file not found: $DATA_FILE"
+    echo "Error: Data file not found: $DATA_FILE"
+    echo "Cannot generate standalone dashboard without data."
+    exit 1
 fi
 
 # Inject standalone mode variables into the template to only display the relevant view
 export UTILS_DIR STANDALONE_FILE DATA_FILE MODE
-node << 'NODESCRIPT'
-const fs = require('fs');
-
-const templatePath = process.env.UTILS_DIR + '/dashboard-template.html';
-const outputPath = process.env.STANDALONE_FILE;
-const dataFile = process.env.DATA_FILE;
-const mode = process.env.MODE;
-
-let html = fs.readFileSync(templatePath, 'utf8');
-
-// Read data file content
-const data = fs.existsSync(dataFile) ? fs.readFileSync(dataFile, 'utf8').trim() : 'null';
-
-// Replace the placeholder comments with actual variables
-html = html.replace(
-    "        // const STANDALONE_MODE = 'public'; // or 'internal'\n        // const INLINED_DATA = {...};",
-    `        const STANDALONE_MODE = '${mode}';\n        const INLINED_DATA = ${data};`
-);
-
-fs.writeFileSync(outputPath, html, 'utf8');
-console.log('Standalone HTML generated successfully');
-NODESCRIPT
+node "$UTILS_DIR/generate-standalone-html.cjs"
 
 echo "Generated standalone dashboard: $STANDALONE_FILE"
 echo "File size: $(wc -c < "$STANDALONE_FILE") bytes"
