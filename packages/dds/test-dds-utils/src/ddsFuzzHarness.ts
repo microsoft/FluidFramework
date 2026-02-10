@@ -1487,13 +1487,16 @@ async function loadDetached<TChannelFactory extends IChannelFactory>(
 }
 
 function finalizeAllocatedIds(client: {
-	dataStoreRuntime: { idCompressor?: IIdCompressorCore };
+	dataStoreRuntime: { idCompressor?: IIdCompressor };
 }): void {
 	const compressor = client.dataStoreRuntime.idCompressor;
 	if (compressor !== undefined) {
-		const range = compressor.takeNextCreationRange();
+		// Safe cast: In test scenarios, idCompressor is always created with createIdCompressor which returns
+		// the full IIdCompressor & IIdCompressorCore type, so we know it has the internal methods.
+		const compressorCore = compressor as IIdCompressor & IIdCompressorCore;
+		const range = compressorCore.takeNextCreationRange();
 		if (range.ids !== undefined) {
-			compressor.finalizeCreationRange(range);
+			compressorCore.finalizeCreationRange(range);
 		}
 	}
 }

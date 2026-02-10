@@ -38,6 +38,7 @@ import {
 	type IFileSnapshot,
 } from "@fluidframework/replay-driver/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
+import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	type ITelemetryLoggerExt,
 	createChildLogger,
@@ -949,9 +950,10 @@ async function assertDdsEqual(
 
 	for (let row = 0; row < matrix1.rowCount; row++) {
 		for (let col = 0; col < matrix1.colCount; col++) {
+			const serializer = new FluidSerializer(dataStoreRuntime);
 			strict.deepStrictEqual(
-				JSON.stringify(matrix1.getCell(row, col)),
-				JSON.stringify(matrix2.getCell(row, col)),
+				serializer.stringify(matrix1.getCell(row, col), matrix1.IFluidLoadable.handle),
+				serializer.stringify(matrix2.getCell(row, col), matrix1.IFluidLoadable.handle),
 			);
 		}
 	}
