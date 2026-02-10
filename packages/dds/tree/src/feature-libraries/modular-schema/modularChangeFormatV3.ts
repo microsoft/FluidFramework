@@ -13,6 +13,7 @@ import {
 	EncodedNodeChangeset,
 	EncodedRevisionInfo,
 } from "./modularChangeFormatV1.js";
+import { EncodedNoChangeConstraint } from "./modularChangeFormatV2.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
@@ -40,7 +41,7 @@ const EncodedRootNodes = Type.Optional(
 
 export type EncodedRootNodes = Static<typeof EncodedRootNodes>;
 
-export const EncodedModularChangeset = Type.Object(
+export const EncodedModularChangesetV3 = Type.Object(
 	{
 		maxId: Type.Optional(ChangesetLocalIdSchema),
 		fieldChanges: EncodedFieldChangeMap,
@@ -56,8 +57,11 @@ export const EncodedModularChangeset = Type.Object(
 		 * The number of constraints within this changeset that are violated.
 		 */
 		violations: Type.Optional(Type.Number({ minimum: 0, multipleOf: 1 })),
+
+		/** Global no change constraint that gets violated whenever the changeset is rebased */
+		noChangeConstraint: Type.Optional(EncodedNoChangeConstraint),
 	},
 	noAdditionalProps,
 );
 
-export type EncodedModularChangeset = Static<typeof EncodedModularChangeset>;
+export type EncodedModularChangesetV3 = Static<typeof EncodedModularChangesetV3>;

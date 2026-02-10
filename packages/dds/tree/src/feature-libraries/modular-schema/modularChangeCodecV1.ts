@@ -399,7 +399,7 @@ function decodeNodeChangesetFromJson(
 	return decodedChange;
 }
 
-function decodeDetachedNodes(
+export function decodeDetachedNodes(
 	encoded: EncodedBuilds | undefined,
 	context: ChangeEncodingContext,
 	revisionTagCodec: IJsonCodec<
@@ -448,7 +448,7 @@ function decodeDetachedNodes(
 	return map;
 }
 
-function decodeRevisionInfos(
+export function decodeRevisionInfos(
 	revisions: readonly EncodedRevisionInfo[] | undefined,
 	context: ChangeEncodingContext,
 	revisionTagCodec: IJsonCodec<
@@ -628,7 +628,7 @@ export function encodeChange(
 	return encoded;
 }
 
-function encodeRevisionInfos(
+export function encodeRevisionInfos(
 	revisions: readonly RevisionInfo[],
 	context: ChangeEncodingContext,
 	revisionTagCodec: IJsonCodec<
@@ -666,7 +666,7 @@ function encodeRevisionInfos(
 	return encodedRevisions;
 }
 
-function encodeDetachedNodes(
+export function encodeDetachedNodes(
 	detachedNodes: ChangeAtomIdBTree<TreeChunk> | undefined,
 	context: ChangeEncodingContext,
 	revisionTagCodec: IJsonCodec<

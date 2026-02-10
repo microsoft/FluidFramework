@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail, oob } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import {
@@ -18,12 +18,9 @@ import {
 	type ChangeAtomId,
 	type ChangeAtomIdRangeMap,
 	type ChangeEncodingContext,
-	type ChangesetLocalId,
 	type EncodedRevisionTag,
 	type FieldKey,
 	type FieldKindIdentifier,
-	type ITreeCursorSynchronous,
-	type RevisionInfo,
 	type RevisionTag,
 } from "../../core/index.js";
 import {
@@ -39,18 +36,20 @@ import {
 } from "../../util/index.js";
 import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
-import {
-	chunkFieldSingle,
-	defaultChunkPolicy,
-	type FieldBatchCodec,
-	type TreeChunk,
-} from "../chunked-forest/index.js";
+import type { FieldBatchCodec } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import { genericFieldKind } from "./genericFieldKind.js";
-import { getFieldChangesetCodecs, getMoveIdToCellId } from "./modularChangeCodecV1.js";
+import {
+	decodeDetachedNodes,
+	decodeRevisionInfos,
+	encodeDetachedNodes,
+	encodeRevisionInfos,
+	getFieldChangesetCodecs,
+	getMoveIdToCellId,
+} from "./modularChangeCodecV1.js";
 import {
 	addNodeRename,
 	getFirstAttachField,
@@ -59,15 +58,12 @@ import {
 	type FieldIdKey,
 } from "./modularChangeFamily.js";
 import type {
-	EncodedBuilds,
-	EncodedBuildsArray,
 	EncodedFieldChange,
 	EncodedFieldChangeMap,
 	EncodedNodeChangeset,
-	EncodedRevisionInfo,
 } from "./modularChangeFormatV1.js";
 import {
-	EncodedModularChangeset,
+	EncodedModularChangesetV3,
 	type EncodedRenames,
 	type EncodedRootNodes,
 } from "./modularChangeFormatV3.js";
@@ -86,8 +82,8 @@ import {
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
-	EncodedModularChangeset,
-	EncodedModularChangeset,
+	EncodedModularChangesetV3,
+	EncodedModularChangesetV3,
 	ChangeEncodingContext
 >;
 
@@ -345,95 +341,6 @@ export function makeModularChangeCodecV3(
 		return decodedChange;
 	}
 
-	function encodeDetachedNodes(
-		detachedNodes: ChangeAtomIdBTree<TreeChunk> | undefined,
-		context: ChangeEncodingContext,
-	): EncodedBuilds | undefined {
-		if (detachedNodes === undefined) {
-			return undefined;
-		}
-
-		const treesToEncode: ITreeCursorSynchronous[] = [];
-		const buildsArray: EncodedBuildsArray = [];
-
-		let buildsForRevision:
-			| [[ChangesetLocalId, number][], EncodedRevisionTag]
-			| [[ChangesetLocalId, number][]]
-			| undefined;
-
-		for (const [[revision, id], chunk] of detachedNodes.entries()) {
-			const encodedRevision = encodeRevisionOpt(revisionTagCodec, revision, context);
-
-			if (buildsForRevision === undefined || buildsForRevision[1] !== encodedRevision) {
-				if (buildsForRevision !== undefined) {
-					buildsArray.push(buildsForRevision);
-				}
-
-				buildsForRevision = encodedRevision === undefined ? [[]] : [[], encodedRevision];
-			}
-
-			treesToEncode.push(chunk.cursor());
-			const treeIndexInBatch = treesToEncode.length - 1;
-			buildsForRevision?.[0].push([id, treeIndexInBatch]);
-		}
-
-		if (buildsForRevision !== undefined) {
-			buildsArray.push(buildsForRevision);
-		}
-
-		return buildsArray.length === 0
-			? undefined
-			: {
-					builds: buildsArray,
-					trees: fieldsCodec.encode(treesToEncode, {
-						encodeType: chunkCompressionStrategy,
-						schema: context.schema,
-						originatorId: context.originatorId,
-						idCompressor: context.idCompressor,
-					}),
-				};
-	}
-
-	function decodeDetachedNodes(
-		encoded: EncodedBuilds | undefined,
-		context: ChangeEncodingContext,
-	): ChangeAtomIdBTree<TreeChunk> | undefined {
-		if (encoded === undefined || encoded.builds.length === 0) {
-			return undefined;
-		}
-
-		const chunks = fieldsCodec.decode(encoded.trees, {
-			encodeType: chunkCompressionStrategy,
-			originatorId: context.originatorId,
-			idCompressor: context.idCompressor,
-		});
-		const getChunk = (index: number): TreeChunk => {
-			assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);
-			return chunkFieldSingle(chunks[index] ?? oob(), {
-				policy: defaultChunkPolicy,
-				idCompressor: context.idCompressor,
-			});
-		};
-
-		const map: ModularChangeset["builds"] = newTupleBTree();
-		for (const build of encoded.builds) {
-			// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
-			const revision =
-				build[1] === undefined ? context.revision : revisionTagCodec.decode(build[1], context);
-
-			const decodedChunks: [ChangesetLocalId, TreeChunk][] = build[0].map(([i, n]) => [
-				i,
-				getChunk(n),
-			]);
-
-			for (const [id, chunk] of decodedChunks) {
-				map.set([revision, id], chunk);
-			}
-		}
-
-		return map;
-	}
-
 	type ChangeAtomMappingQuery = (
 		id: ChangeAtomId,
 		count: number,
@@ -442,62 +349,6 @@ export function makeModularChangeCodecV3(
 	type ChangeAtomIdRangeQuery = (id: ChangeAtomId, count: number) => RangeQueryResult<boolean>;
 	type NodeEncoder = (nodeId: NodeId) => EncodedNodeChangeset;
 	type NodeDecoder = (encoded: EncodedNodeChangeset, fieldId: NodeLocation) => NodeId;
-
-	function encodeRevisionInfos(
-		revisions: readonly RevisionInfo[],
-		context: ChangeEncodingContext,
-	): EncodedRevisionInfo[] | undefined {
-		if (context.revision !== undefined) {
-			assert(
-				revisions.length === 1 &&
-					revisions[0] !== undefined &&
-					revisions[0].revision === context.revision &&
-					revisions[0].rollbackOf === undefined,
-				0x964 /* A tagged change should only contain the tagged revision */,
-			);
-
-			return undefined;
-		}
-
-		const encodedRevisions = [];
-		for (const revision of revisions) {
-			const encodedRevision: Mutable<EncodedRevisionInfo> = {
-				revision: revisionTagCodec.encode(revision.revision, context),
-			};
-
-			if (revision.rollbackOf !== undefined) {
-				encodedRevision.rollbackOf = revisionTagCodec.encode(revision.rollbackOf, context);
-			}
-
-			encodedRevisions.push(encodedRevision);
-		}
-
-		return encodedRevisions;
-	}
-
-	function decodeRevisionInfos(
-		revisions: readonly EncodedRevisionInfo[] | undefined,
-		context: ChangeEncodingContext,
-	): RevisionInfo[] | undefined {
-		if (revisions === undefined) {
-			return context.revision === undefined ? undefined : [{ revision: context.revision }];
-		}
-
-		const decodedRevisions = [];
-		for (const revision of revisions) {
-			const decodedRevision: Mutable<RevisionInfo> = {
-				revision: revisionTagCodec.decode(revision.revision, context),
-			};
-
-			if (revision.rollbackOf !== undefined) {
-				decodedRevision.rollbackOf = revisionTagCodec.decode(revision.rollbackOf, context);
-			}
-
-			decodedRevisions.push(decodedRevision);
-		}
-
-		return decodedRevisions;
-	}
 
 	function decodeRootTable(
 		encodedRoots: EncodedRootNodes | undefined,
@@ -582,12 +433,12 @@ export function makeModularChangeCodecV3(
 
 			// Destroys only exist in rollback changesets, which are never sent.
 			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
-			const encoded: EncodedModularChangeset = {
+			const encoded: EncodedModularChangesetV3 = {
 				maxId: change.maxId,
 				revisions:
 					change.revisions === undefined
 						? undefined
-						: encodeRevisionInfos(change.revisions, context),
+						: encodeRevisionInfos(change.revisions, context, revisionTagCodec),
 				fieldChanges: encodeFieldChangesForJson(
 					change.fieldChanges,
 					undefined,
@@ -601,15 +452,31 @@ export function makeModularChangeCodecV3(
 				),
 				rootNodes: encodeRootNodesForJson(change.rootNodes.nodeChanges, context, encodeNode),
 				nodeRenames: encodeRenamesForJson(change.rootNodes.oldToNewId, context),
-				builds: encodeDetachedNodes(change.builds, context),
-				refreshers: encodeDetachedNodes(change.refreshers, context),
+				builds: encodeDetachedNodes(
+					change.builds,
+					context,
+					revisionTagCodec,
+					fieldsCodec,
+					chunkCompressionStrategy,
+				),
+				refreshers: encodeDetachedNodes(
+					change.refreshers,
+					context,
+					revisionTagCodec,
+					fieldsCodec,
+					chunkCompressionStrategy,
+				),
 				violations: change.constraintViolationCount,
 			};
+
+			if (change.noChangeConstraint !== undefined) {
+				encoded.noChangeConstraint = change.noChangeConstraint;
+			}
 
 			return encoded;
 		},
 
-		decode: (encodedChange: EncodedModularChangeset, context) => {
+		decode: (encodedChange: EncodedModularChangesetV3, context) => {
 			const idAllocator = idAllocatorFromMaxId(encodedChange.maxId);
 			const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
 			const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newTupleBTree();
@@ -667,17 +534,37 @@ export function makeModularChangeCodecV3(
 			};
 
 			if (encodedChange.builds !== undefined) {
-				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
+				decoded.builds = decodeDetachedNodes(
+					encodedChange.builds,
+					context,
+					revisionTagCodec,
+					fieldsCodec,
+					chunkCompressionStrategy,
+				);
 			}
 			if (encodedChange.refreshers !== undefined) {
-				decoded.refreshers = decodeDetachedNodes(encodedChange.refreshers, context);
+				decoded.refreshers = decodeDetachedNodes(
+					encodedChange.refreshers,
+					context,
+					revisionTagCodec,
+					fieldsCodec,
+					chunkCompressionStrategy,
+				);
 			}
 
 			if (encodedChange.violations !== undefined) {
 				decoded.constraintViolationCount = encodedChange.violations;
 			}
 
-			const decodedRevInfos = decodeRevisionInfos(encodedChange.revisions, context);
+			if (encodedChange.noChangeConstraint !== undefined) {
+				decoded.noChangeConstraint = encodedChange.noChangeConstraint;
+			}
+
+			const decodedRevInfos = decodeRevisionInfos(
+				encodedChange.revisions,
+				context,
+				revisionTagCodec,
+			);
 			if (decodedRevInfos !== undefined) {
 				decoded.revisions = decodedRevInfos;
 			}
@@ -689,7 +576,7 @@ export function makeModularChangeCodecV3(
 	};
 
 	return withSchemaValidation(
-		EncodedModularChangeset,
+		EncodedModularChangesetV3,
 		modularChangeCodec,
 		codecOptions.jsonValidator,
 	);
@@ -706,23 +593,6 @@ function getChangeHandler(
 	const handler = fieldKinds.get(fieldKind)?.kind.changeHandler;
 	assert(handler !== undefined, 0x9c1 /* Unknown field kind */);
 	return handler;
-}
-
-function encodeRevisionOpt(
-	revisionCodec: IJsonCodec<
-		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
-		ChangeEncodingContext
-	>,
-	revision: RevisionTag | undefined,
-	context: ChangeEncodingContext,
-): EncodedRevisionTag | undefined {
-	if (revision === undefined) {
-		return undefined;
-	}
-
-	return revision === context.revision ? undefined : revisionCodec.encode(revision, context);
 }
 
 function getFieldToRoots(rootTable: RootNodeTable): FieldRootMap {
