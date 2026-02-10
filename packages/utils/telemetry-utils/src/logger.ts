@@ -679,6 +679,10 @@ export class PerformanceEvent {
 		} catch (error) {
 			perfEvent.cancel(undefined, error);
 			throw error;
+		} finally {
+			// Scope-bound cleanup: ensure performance marks are always cleared,
+			// even if cancel() was called (which doesn't create a measure).
+			perfEvent.clearPerformanceMarks();
 		}
 	}
 
@@ -718,6 +722,10 @@ export class PerformanceEvent {
 		} catch (error) {
 			perfEvent.cancel(undefined, error);
 			throw error;
+		} finally {
+			// Scope-bound cleanup: ensure performance marks are always cleared,
+			// even if cancel() was called (which doesn't create a measure).
+			perfEvent.clearPerformanceMarks();
 		}
 	}
 
@@ -780,7 +788,21 @@ export class PerformanceEvent {
 		if (this.startMark !== undefined && this.event) {
 			const endMark = `${this.event.eventName}-end`;
 			window.performance.mark(endMark);
-			window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);
+			window.performance.measure(this.event.eventName, this.startMark, endMark);
+			window.performance.clearMarks(this.startMark);
+			window.performance.clearMarks(endMark);
+			window.performance.clearMeasures(this.event.eventName);
+			this.startMark = undefined;
+		}
+	}
+
+	/**
+	 * Clears any remaining performance marks from the Performance API.
+	 * Safe to call regardless of event state — ensures no orphaned entries accumulate.
+	 */
+	private clearPerformanceMarks(): void {
+		if (this.startMark !== undefined) {
+			window.performance.clearMarks(this.startMark);
 			this.startMark = undefined;
 		}
 	}
@@ -789,6 +811,9 @@ export class PerformanceEvent {
 		if (this.markers.cancel !== undefined) {
 			this.reportEvent("cancel", { category: this.markers.cancel, ...props }, error);
 		}
+
+		// Clean up orphaned performance marks to prevent accumulation
+		this.clearPerformanceMarks();
 
 		// To prevent the event from being reported again later
 		this.event = undefined;
