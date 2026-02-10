@@ -101,6 +101,11 @@ async function generateConfig(filePath: string, config: FlatConfigArray): Promis
 		delete cleanConfig.languageOptions.globals;
 	}
 
+	// Remove tsconfigRootDir since it varies by environment (it's set to process.cwd())
+	if (typeof cleanConfig.languageOptions?.parserOptions === "object") {
+		delete cleanConfig.languageOptions.parserOptions.tsconfigRootDir;
+	}
+
 	// Convert numeric severities to string equivalents in rules
 	if (cleanConfig.rules) {
 		for (const [ruleName, ruleConfig] of Object.entries(cleanConfig.rules)) {
