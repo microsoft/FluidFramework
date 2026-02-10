@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { TreeNodeSchema } from "@fluidframework/tree";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 
 import {
@@ -25,13 +26,17 @@ class NamedStringRecord extends sf.record("NamedStringRecord", sf.string) {}
 class InvalidCharacters extends sf.object("Test-Object!", { value: sf.string }) {}
 class LeadingDigit extends sf.object("1TestObject", { value: sf.string }) {}
 
-function mapToFriendlyIdentifiers<T extends readonly string[]>(
-	identifiers: T,
-): string[] & { length: T["length"] } {
+/**
+ * Creates a named object schema with the given scope and name.
+ * The resulting schema has identifier `"${scope}.${name}"`.
+ */
+function createSchema(scope: string, name: string): TreeNodeSchema {
+	return new SchemaFactoryAlpha(scope).object(name, {});
+}
+
+function resolveAll(schemas: TreeNodeSchema[]): string[] {
 	const resolver = new IdentifierCollisionResolver();
-	return identifiers.map((id) => resolver.resolve(id)) as string[] & {
-		length: T["length"];
-	};
+	return schemas.map((s) => resolver.resolve(s));
 }
 
 describe("getFriendlyName", () => {
@@ -295,60 +300,80 @@ describe("findNamedSchemas", () => {
 
 describe("IdentifierCollisionResolver", () => {
 	it("returns array with same length as input", () => {
-		const input = ["scope1.Foo", "scope1.Bar", "scope1.Baz"];
-		const result = mapToFriendlyIdentifiers(input);
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope1", "Bar"),
+			createSchema("scope1", "Baz"),
+		];
+		const result = resolveAll(input);
 		assert.equal(result.length, input.length);
 	});
 
 	it("preserves non-colliding names", () => {
-		const input = ["scope1.Foo", "scope1.Bar", "scope1.Baz"];
-		const result = mapToFriendlyIdentifiers(input);
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope1", "Bar"),
+			createSchema("scope1", "Baz"),
+		];
+		const result = resolveAll(input);
 		assert.deepEqual(result, ["Foo", "Bar", "Baz"]);
 	});
 
 	it("resolves three-way collisions: first keeps original, rest get suffixes", () => {
-		const input = ["scope1.Foo", "scope2.Foo", "scope3.Foo"];
-		const result = mapToFriendlyIdentifiers(input);
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope2", "Foo"),
+			createSchema("scope3", "Foo"),
+		];
+		const result = resolveAll(input);
 		assert.equal(result[0], "Foo");
 		assert.equal(result[1], "Foo_2");
 		assert.equal(result[2], "Foo_3");
 	});
 
 	it("handles mixed colliding and non-colliding names", () => {
-		const input = ["scope1.Foo", "scope2.Foo", "scope1.Bar"];
-		const result = mapToFriendlyIdentifiers(input);
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope2", "Foo"),
+			createSchema("scope1", "Bar"),
+		];
+		const result = resolveAll(input);
 		assert.equal(result[0], "Foo");
 		assert.equal(result[1], "Foo_2");
 		assert.equal(result[2], "Bar");
 	});
 
 	it("handles suffix collisions with later natural names", () => {
-		const input = ["scope1.Foo", "scope2.Foo", "scope3.Foo_2"];
-		const result = mapToFriendlyIdentifiers(input);
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope2", "Foo"),
+			createSchema("scope3", "Foo_2"),
+		];
+		const result = resolveAll(input);
 		assert.equal(result[0], "Foo");
 		assert.equal(result[1], "Foo_2");
 		assert.equal(result[2], "Foo_2_2");
 	});
 
 	it("identical full identifiers map to the same friendly name", () => {
-		const input = ["scope.Foo", "scope.Foo"];
-		const result = mapToFriendlyIdentifiers(input);
+		const schema = createSchema("scope", "Foo");
+		const result = resolveAll([schema, schema]);
 		assert.equal(result[0], "Foo");
 		assert.equal(result[1], "Foo");
 	});
 
 	it("multi-level scope collisions: first keeps original, rest get suffixes", () => {
 		const input = [
-			"outer1.inner1.Foo",
-			"outer2.inner1.Foo",
-			"outer1.inner2.Foo",
-			"outer2.inner2.Foo",
-			"outer1.inner1.Bar",
-			"outer2.inner1.Bar",
-			"outer1.inner2.Bar",
-			"outer2.inner2.Bar",
+			createSchema("outer1.inner1", "Foo"),
+			createSchema("outer2.inner1", "Foo"),
+			createSchema("outer1.inner2", "Foo"),
+			createSchema("outer2.inner2", "Foo"),
+			createSchema("outer1.inner1", "Bar"),
+			createSchema("outer2.inner1", "Bar"),
+			createSchema("outer1.inner2", "Bar"),
+			createSchema("outer2.inner2", "Bar"),
 		];
-		const result = mapToFriendlyIdentifiers(input);
+		const result = resolveAll(input);
 		assert.equal(result[0], "Foo");
 		assert.equal(result[1], "Foo_2");
 		assert.equal(result[2], "Foo_3");
@@ -359,10 +384,26 @@ describe("IdentifierCollisionResolver", () => {
 		assert.equal(result[7], "Bar_4");
 	});
 
-	it("handles names that already have numeric suffixes", () => {
-		const input = ["scope1.Foo_2", "scope2.Foo_2"];
-		const result = mapToFriendlyIdentifiers(input);
-		assert.equal(result[0], "Foo_2");
-		assert.equal(result[1], "Foo_2_2");
+	it("handles unnamed (inline) schemas", () => {
+		const unnamedArray = sf.array(sf.string);
+		const unnamedMap = sf.map(sf.string);
+		const unnamedRecord = sf.record(sf.string);
+		const nestedArrayOfMaps = sf.array(sf.map(TestObject));
+		const nestedMapOfRecords = sf.map(sf.record(sf.number));
+		const nestedRecordOfArrays = sf.record(sf.array(sf.string));
+		const result = resolveAll([
+			unnamedArray,
+			unnamedMap,
+			unnamedRecord,
+			nestedArrayOfMaps,
+			nestedMapOfRecords,
+			nestedRecordOfArrays,
+		]);
+		assert.equal(result[0], "string[]");
+		assert.equal(result[1], "Map<string, string>");
+		assert.equal(result[2], "Record<string, string>");
+		assert.equal(result[3], "Map<string, TestObject>[]");
+		assert.equal(result[4], "Map<string, Record<string, number>>");
+		assert.equal(result[5], "Record<string, string[]>");
 	});
 });

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { getSimpleSchema, walkFieldSchema } from "@fluidframework/tree/internal";
+import type { TreeNodeSchema } from "@fluidframework/tree";
+import { walkFieldSchema } from "@fluidframework/tree/internal";
 import type { ImplicitFieldSchema, SimpleTreeSchema } from "@fluidframework/tree/internal";
 
 import type { BindableSchema } from "./methodBinding.js";
@@ -33,9 +34,12 @@ function buildPromptSchemaDescription(
 	rootSchema: ImplicitFieldSchema,
 ): SchemaTypeScriptRenderResult {
 	const bindableSchemas = new Map<string, BindableSchema>();
+	const allSchemas = new Map<string, TreeNodeSchema>();
 
 	walkFieldSchema(rootSchema, {
 		node: (node) => {
+			allSchemas.set(node.identifier, node);
+
 			if (isBindableSchema(node)) {
 				bindableSchemas.set(node.identifier, node);
 
@@ -56,6 +60,5 @@ function buildPromptSchemaDescription(
 		},
 	});
 
-	const simpleTreeSchema = getSimpleSchema(rootSchema);
-	return renderSchemaTypeScript(simpleTreeSchema.definitions, bindableSchemas);
+	return renderSchemaTypeScript(allSchemas, bindableSchemas);
 }

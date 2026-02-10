@@ -237,12 +237,12 @@ export class IdentifierCollisionResolver {
 	private readonly friendlyNameCache = new Map<string, string>();
 
 	/**
-	 * Resolves a full schema identifier to a unique friendly name.
-	 * The first identifier to claim a short name keeps it; subsequent collisions get `_2`, `_3`, etc.
+	 * Resolves a schema to a unique friendly name.
+	 * The first schema to claim a short name keeps it; subsequent collisions get `_2`, `_3`, etc.
 	 */
-	public resolve(identifier: string): string {
-		return getOrCreate(this.friendlyNameCache, identifier, () => {
-			let name = unqualifySchema(identifier);
+	public resolve(schema: TreeNodeSchema): string {
+		return getOrCreate(this.friendlyNameCache, schema.identifier, () => {
+			let name = getFriendlyName(schema);
 			if (this.assignedFriendlyNames.has(name)) {
 				let counter = 2;
 				while (this.assignedFriendlyNames.has(`${name}_${counter}`)) {

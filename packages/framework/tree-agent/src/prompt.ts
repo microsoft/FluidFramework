@@ -37,7 +37,7 @@ export function getPrompt(args: {
 	const resolver = new IdentifierCollisionResolver();
 	const collisionResolvedNames = new Map<TreeNodeSchema, string>();
 	for (const schemaNode of allSchemas) {
-		collisionResolvedNames.set(schemaNode, resolver.resolve(schemaNode.identifier));
+		collisionResolvedNames.set(schemaNode, resolver.resolve(schemaNode));
 	}
 
 	const rootTypeUnion = `${rootTypes.map((t) => collisionResolvedNames.get(t) ?? getFriendlyName(t)).join(" | ")}`;
