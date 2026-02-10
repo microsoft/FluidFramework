@@ -33,6 +33,8 @@ stages:
   - job:
     displayName: Run checks
     steps:
+    - checkout: self
+      path: ${{ parameters.buildDirectory }}
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self

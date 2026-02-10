@@ -81,15 +81,10 @@ extends:
             script: |
               set -eu -o pipefail
               echo "
-                Variables (template):
+                Variables:
                   consistentSourcesDirectory=${{ variables.consistentSourcesDirectory }}
                   FluidFrameworkDirectory=${{ variables.FluidFrameworkDirectory }}
                   FFPipelineHostDirectory=${{ variables.FFPipelineHostDirectory }}
-
-                Variables (macro):
-                  consistentSourcesDirectory=$(consistentSourcesDirectory)
-                  FluidFrameworkDirectory=$(FluidFrameworkDirectory)
-                  FFPipelineHostDirectory=$(FFPipelineHostDirectory)
               "
         - checkout: self
           path: ${{ variables.FluidFrameworkDirectory }}
