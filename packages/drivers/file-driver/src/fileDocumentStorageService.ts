@@ -139,9 +139,13 @@ export interface ISnapshotWriterStorage extends IDocumentStorageService {
 }
 
 /**
+ * Constructor type for creating {@link @fluidframework/driver-definitions#IDocumentStorageService} instances.
+ *
  * @internal
  */
 export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
+
+// eslint-disable-next-line jsdoc/require-description -- TODO: add documentation
 /**
  * @internal
  */

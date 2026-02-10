@@ -50,7 +50,7 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 	}
 
 	public getUpdatedAtomId<T extends ChangeAtomId>(id: T, count: number = 1): T {
-		assert(count >= 1, "Count must be at least 1");
+		assert(count >= 1, 0xcc9 /* Count must be at least 1 */);
 		if (this.isObsolete(id.revision)) {
 			const updated: Mutable<T> = { ...id, revision: this.updatedRevision };
 			let continuingOutputId: ChangesetLocalId | undefined;
@@ -75,14 +75,14 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 					if (continuingOutputId === undefined) {
 						updated.localId = newLocalId;
 					} else if (newLocalId !== continuingOutputId) {
-						fail("TODO: Handle non-contiguous ranges");
+						fail(0xcca /* TODO: Handle non-contiguous ranges */);
 					}
 					continuingOutputId = offsetChangesetLocalId(newLocalId, prior.length);
 				} else {
 					if (continuingOutputId === undefined) {
 						updated.localId = prior.value;
 					} else if (prior.value !== continuingOutputId) {
-						fail("TODO: Handle non-contiguous ranges");
+						fail(0xccb /* TODO: Handle non-contiguous ranges */);
 					}
 					continuingOutputId = offsetChangesetLocalId(prior.value, prior.length);
 				}

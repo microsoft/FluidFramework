@@ -504,27 +504,6 @@ export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 }
 
 /**
- * Type with a name describing what it is.
- * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
- */
-export interface Named<TName> {
-	readonly name: TName;
-}
-
-/**
- * Order {@link Named} objects by their name.
- */
-export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
-	if (a.name < b.name) {
-		return -1;
-	}
-	if (a.name > b.name) {
-		return 1;
-	}
-	return 0;
-}
-
-/**
  * Placeholder for `Symbol.dispose`.
  * @privateRemarks
  * TODO: replace this with `Symbol.dispose` when it is available or make it a valid polyfill.
@@ -573,10 +552,57 @@ export function capitalize<S extends string>(s: S): Capitalize<S> {
 }
 
 /**
- * Compares strings lexically to form a strict partial ordering.
+ * Compares two numbers to form a strict total ordering.
+ * @remarks NaN is treated as less than all other numbers and equal to itself.
+ * Infinity is considered equal to itself.
  */
+export function compareNumbers<T extends number>(a: T, b: T): number {
+	if (Number.isNaN(a)) {
+		return Number.isNaN(b) ? 0 : -1;
+	} else if (Number.isNaN(b)) {
+		return 1;
+	} else if (a === b) {
+		return 0; // Infinity - Infinity = NaN (not 0), so use explicit comparison
+	}
+	return a - b;
+}
+
+/**
+ * Compares two numbers to form a strict total ordering while allowing for `undefined` values.
+ * @remarks `undefined` is considered less than any number and equal to itself.
+ * NaN is treated as less than all other numbers (but greater than undefined) and equal to itself.
+ */
+export function comparePartialNumbers<T extends number>(
+	a: T | undefined,
+	b: T | undefined,
+): number {
+	if (a === undefined) {
+		return b === undefined ? 0 : -1;
+	} else if (b === undefined) {
+		return 1;
+	}
+	return compareNumbers(a, b);
+}
+
+/** Compares two strings lexically to form a strict total ordering. */
 export function compareStrings<T extends string>(a: T, b: T): number {
 	return a > b ? 1 : a === b ? 0 : -1;
+}
+
+/**
+ * Compares two strings lexically to form a strict total ordering while allowing for `undefined` values.
+ * @remarks `undefined` is considered less than any string and equal to itself.
+ */
+export function comparePartialStrings<T extends string>(
+	a: T | undefined,
+	b: T | undefined,
+): number {
+	if (a === undefined) {
+		return b === undefined ? 0 : -1;
+	} else if (b === undefined) {
+		return 1;
+	}
+	return compareStrings(a, b);
 }
 
 /**

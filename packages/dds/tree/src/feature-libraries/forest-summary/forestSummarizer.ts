@@ -37,6 +37,11 @@ import {
 	readAndParseSnapshotBlob,
 	type JsonCompatibleReadOnly,
 } from "../../util/index.js";
+import {
+	idAllocatorFromMaxId,
+	readAndParseSnapshotBlob,
+	type JsonCompatibleReadOnly,
+} from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
@@ -219,6 +224,7 @@ export class ForestSummarizer
 				forestSummaryRootContentKey,
 				services,
 				parse,
+				// TODO: this type cast assumes there are no handles, which should probably be enforced at runtime or the need for this cast should be removed altogether.
 			)) as JsonCompatibleReadOnly,
 			{
 				...this.encoderContext,

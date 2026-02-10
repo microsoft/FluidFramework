@@ -65,6 +65,31 @@ describe("fieldBatchCodecBuilder", () => {
 			assert(encoded !== null && typeof encoded === "object" && "version" in encoded);
 			assert.equal(encoded.version, FieldBatchFormatVersion.v2);
 		});
+
+		it("can decode both formats when encoding either", () => {
+			const codec1 = makeFieldBatchCodec({
+				jsonValidator: ajvValidator,
+				minVersionForCollab: FluidClientVersion.v2_0,
+			});
+			const codec2 = makeFieldBatchCodec({
+				jsonValidator: ajvValidator,
+				minVersionForCollab: FluidClientVersion.v2_74,
+			});
+
+			const context = {
+				encodeType: TreeCompressionStrategy.Uncompressed,
+				originatorId: testIdCompressor.localSessionId,
+				idCompressor: testIdCompressor,
+			};
+
+			const encoded1 = codec1.encode([], context);
+			const encoded2 = codec2.encode([], context);
+
+			assert.deepEqual(codec1.decode(encoded1, context), []);
+			assert.deepEqual(codec1.decode(encoded2, context), []);
+			assert.deepEqual(codec2.decode(encoded1, context), []);
+			assert.deepEqual(codec2.decode(encoded2, context), []);
+		});
 	});
 
 	describe("TreeCompressionStrategy.CompressedIncremental", () => {

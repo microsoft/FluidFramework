@@ -18,6 +18,12 @@
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			}
+		},
+		"./policy": {
+			"default": {
+				"types": "./lib/library/repoPolicyCheck/index.d.ts",
+				"default": "./lib/library/repoPolicyCheck/index.js"
+			}
 		}
 	},
 	"main": "lib/index.js",
@@ -56,7 +62,7 @@
 		"postpack": "npm run clean:manifest",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
-		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.*js\""
+		"test:mocha": "mocha --forbid-only"
 	},
 	"c8": {
 		"all": true,
