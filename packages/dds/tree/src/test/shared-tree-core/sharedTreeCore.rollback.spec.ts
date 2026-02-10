@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -24,7 +25,9 @@ function setupTree() {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory({
 		flushMode: FlushMode.TurnBased,
 	});
-	const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+		idCompressor: createIdCompressor(),
+	});
 
 	const factory = new SharedTreeTestFactory(() => {});
 
@@ -141,6 +144,7 @@ describe("SharedTreeCore rollback", () => {
 
 		// Client 1
 		const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
 			clientId: "1",
 		});
 		const containerRuntime1 =
@@ -156,6 +160,7 @@ describe("SharedTreeCore rollback", () => {
 
 		// Client 2
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
 			clientId: "2",
 		});
 		const containerRuntime2 =

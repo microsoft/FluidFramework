@@ -5,10 +5,7 @@
 
 import { assert, debugAssert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import {
-	createIdCompressor,
-	SerializationVersion,
-} from "@fluidframework/id-compressor/internal";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -969,7 +966,7 @@ export function scoped<
  * The identifiers allocated by this will never be compressed to Short Ids.
  * Using this is only better than creating fully random V4 UUIDs because it reduces the entropy making it possible for things like text compression to work slightly better.
  */
-const globalIdentifierAllocator: IIdCompressor = createIdCompressor(SerializationVersion.V3);
+const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
 
 /**
  * Additional information to provide to Node Schema creation.

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
@@ -118,14 +119,20 @@ describe("simple-tree tree", () => {
 	it("custom identifier copied from tree", () => {
 		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
 		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
-		const treeSrc = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const treeSrc = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 
 		const view = treeSrc.viewWith(config);
 		view.initialize({});
 		const idFromInitialize = Tree.shortId(view.root);
 		assert(typeof idFromInitialize === "number");
 
-		const treeDst = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const treeDst = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 
 		const viewDst = treeDst.viewWith(config);
 		viewDst.initialize({});
@@ -139,7 +146,10 @@ describe("simple-tree tree", () => {
 	it("viewWith twice errors", () => {
 		class Empty extends schema.object("Empty", {}) {}
 		const config = new TreeViewConfiguration({ schema: Empty });
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 
 		const view = tree.viewWith(config);
 		assert.throws(
