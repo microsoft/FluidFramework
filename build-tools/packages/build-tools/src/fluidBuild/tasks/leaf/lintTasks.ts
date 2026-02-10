@@ -9,7 +9,7 @@ import { TscDependentTask } from "./tscTask";
 export class EsLintTask extends TscDependentTask {
 	private _configFileFullPath: string | undefined;
 
-	protected getTaskSpecificConfigFiles(): string[] {
+	protected get taskSpecificConfigFiles(): string[] {
 		if (!this._configFileFullPath) {
 			this._configFileFullPath = getEsLintConfigFilePath(this.package.directory);
 			if (!this._configFileFullPath) {

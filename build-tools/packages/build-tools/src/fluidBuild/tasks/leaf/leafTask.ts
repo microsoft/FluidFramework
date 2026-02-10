@@ -549,7 +549,11 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 * @returns the list of absolute paths to additional config files
 	 */
 	protected getAdditionalConfigFiles(): string[] {
-		const additionalConfigs = this.node.getAdditionalConfigFiles(this.taskName ?? "");
+		if (this.taskName === undefined) {
+			return [];
+		}
+
+		const additionalConfigs = this.node.getAdditionalConfigFiles(this.taskName);
 
 		if (additionalConfigs.length === 0) {
 			return [];
