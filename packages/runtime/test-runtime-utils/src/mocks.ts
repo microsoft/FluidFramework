@@ -48,11 +48,9 @@ import {
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import {
+import type {
 	IIdCompressorCore,
 	IdCreationRange,
-	SerializationVersion,
-	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
@@ -253,15 +251,12 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return deltaConnection;
 	}
 
-	public finalizeIdRange(range: unknown): void {
+	public finalizeIdRange(range: IdCreationRange): void {
 		assert(
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
 		);
-		// Cast to access internal API
-		(this.dataStoreRuntime.idCompressor as unknown as IIdCompressorCore).finalizeCreationRange(
-			range as IdCreationRange,
-		);
+		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
 	}
 
 	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
@@ -458,10 +453,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	private generateIdAllocationOp(): IInternalMockRuntimeMessage | undefined {
-		// Cast to access internal API
-		const idRange = (
-			this.dataStoreRuntime.idCompressor as unknown as IIdCompressorCore
-		)?.takeNextCreationRange();
+		const idRange = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
 		if (idRange?.ids !== undefined) {
 			const allocationOp: IMockContainerRuntimeIdAllocationMessage = {
 				type: "idAllocation",
@@ -876,7 +868,7 @@ export class MockFluidDataStoreRuntime
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
 		logger?: ITelemetryBaseLogger;
-		idCompressor?: IIdCompressor;
+		idCompressor?: IIdCompressor & IIdCompressorCore;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
 		minVersionForCollab?: MinimumVersionForCollab;
@@ -895,7 +887,7 @@ export class MockFluidDataStoreRuntime
 			childLoggerProps.logger = logger;
 		}
 		this.logger = createChildLogger(childLoggerProps);
-		this.idCompressor = overrides?.idCompressor ?? createIdCompressor(SerializationVersion.V3);
+		this.idCompressor = overrides?.idCompressor;
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 
 		const registry = overrides?.registry;
@@ -945,7 +937,7 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
-	public idCompressor: IIdCompressor | undefined;
+	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
 

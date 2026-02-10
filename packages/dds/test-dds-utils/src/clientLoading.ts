@@ -6,7 +6,6 @@
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
-	IIdCompressorCore,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
@@ -71,7 +70,7 @@ export function createLoadData(
 	client: Client<IChannelFactory>,
 	withSession: boolean,
 ): ClientLoadData {
-	const compressor = client.dataStoreRuntime.idCompressor as unknown as IIdCompressorCore;
+	const compressor = client.dataStoreRuntime.idCompressor;
 	return {
 		minimumSequenceNumber: client.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber,
 		summaries: {
@@ -96,7 +95,7 @@ export function createLoadDataFromStashData(
 	client: Client<IChannelFactory>,
 	stashData: ClientStashData,
 ): ClientLoadData {
-	const compressor = client.dataStoreRuntime.idCompressor as unknown as IIdCompressorCore;
+	const compressor = client.dataStoreRuntime.idCompressor;
 	return {
 		minimumSequenceNumber: stashData.minimumSequenceNumber,
 		summaries: {
