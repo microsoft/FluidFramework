@@ -514,6 +514,12 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(v
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes, options: Required<TreeSchemaEncodingOptions>): JsonTreeSchema;
 
+// @beta
+export const getPresence: (fluidContainer: IFluidContainer_2<ContainerSchema_2>) => Presence;
+
+// @alpha
+export const getPresenceAlpha: typeof getPresenceAlpha_2;
+
 // @alpha
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema<SchemaType.View>;
 

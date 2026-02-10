@@ -83,6 +83,30 @@ export * from "@fluidframework/tree/alpha";
 // ---------------------------------------------------------------
 // #region Custom re-exports
 
+import {
+	// eslint-disable-next-line import-x/no-deprecated -- TODO#59157: relocating to fluid-static
+	getPresence as getPresenceDeprecated,
+	// eslint-disable-next-line import-x/no-deprecated -- TODO#59157: relocating to fluid-static
+	getPresenceAlpha as getPresenceAlphaDeprecated,
+	// eslint-disable-next-line import-x/no-internal-modules -- presence has no /internal export, which would be allowed
+} from "@fluidframework/presence/alpha";
+
+/**
+ * {@inheritdoc @fluidframework/presence#getPresence}
+ *
+ * @beta
+ */
+// eslint-disable-next-line unicorn/prefer-export-from, import-x/no-deprecated -- TODO#59157: relocating to fluid-static
+export const getPresence = getPresenceDeprecated;
+
+/**
+ * {@inheritdoc @fluidframework/presence#getPresenceAlpha}
+ *
+ * @alpha
+ */
+// eslint-disable-next-line unicorn/prefer-export-from, import-x/no-deprecated -- TODO#59157: relocating to fluid-static
+export const getPresenceAlpha = getPresenceAlphaDeprecated;
+
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";
 import {

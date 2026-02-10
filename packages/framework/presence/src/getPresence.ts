@@ -15,7 +15,7 @@ import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
 import type {
-	ExtensionCompatibilityDetails,
+	ExtensionCompatibilityDetails as getPresenceAlphaDeprecated,
 	FluidDataStoreContextInternal,
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -23,7 +23,7 @@ import type {
 import { pkgVersion } from "./packageVersion.js";
 import type { Presence, PresenceWithNotifications } from "./presence.js";
 import type { PresenceExtensionInterface } from "./presenceManager.js";
-import { createPresenceManager } from "./presenceManager.js";
+import { createPresenceManager as getPresenceDeprecated } from "./presenceManager.js";
 import type { SignalMessages } from "./protocol.js";
 import type { ExtensionHost, ExtensionRuntimeProperties } from "./runtimeTypes.js";
 
@@ -31,7 +31,7 @@ const presenceCompatibility = {
 	generation: 1,
 	version: pkgVersion,
 	capabilities: new Set([]),
-} as const satisfies ExtensionCompatibilityDetails;
+} as const satisfies getPresenceAlphaDeprecated;
 
 /**
  * Minimal compatible package version.
@@ -41,7 +41,7 @@ const presenceCompatibility = {
  */
 const minimalCompatiblePackageVersion = "2.71.0";
 
-function assertCompatibilityInvariants(compatibility: ExtensionCompatibilityDetails): void {
+function assertCompatibilityInvariants(compatibility: getPresenceAlphaDeprecated): void {
 	assert(
 		compatibility.generation === presenceCompatibility.generation,
 		0xc97 /* Presence compatibility generation mismatch. */,
@@ -82,7 +82,7 @@ class ContainerPresenceManager
 	private readonly manager: PresenceExtensionInterface;
 
 	public constructor(host: ExtensionHost) {
-		this.interface = this.manager = createPresenceManager({
+		this.interface = this.manager = getPresenceDeprecated({
 			...host,
 			submitSignal: (message) => {
 				host.submitAddressedSignal([], message);
@@ -94,7 +94,7 @@ class ContainerPresenceManager
 		ourExistingInstantiation: Readonly<
 			ExtensionInstantiationResult<PresenceWithNotifications, ExtensionRuntimeProperties, []>
 		>,
-		newCompatibilityRequest: ExtensionCompatibilityDetails,
+		newCompatibilityRequest: getPresenceAlphaDeprecated,
 	): never {
 		assert(
 			ourExistingInstantiation.compatibility === presenceCompatibility,
@@ -161,6 +161,8 @@ const ContainerPresenceFactory = {
  * @returns the {@link Presence}
  *
  * @beta
+ *
+ * @deprecated Import from `fluid-framework/beta` instead. The export to be removed in 2.100.0 release.
  */
 export const getPresence: (fluidContainer: IFluidContainer) => Presence = getPresenceAlpha;
 
@@ -170,6 +172,8 @@ export const getPresence: (fluidContainer: IFluidContainer) => Presence = getPre
  * @returns the {@link PresenceWithNotifications}
  *
  * @alpha
+ *
+ * @deprecated Import from `fluid-framework/alpha` instead. The export to be removed in 2.100.0 release.
  */
 export function getPresenceAlpha(fluidContainer: IFluidContainer): PresenceWithNotifications {
 	assert(
