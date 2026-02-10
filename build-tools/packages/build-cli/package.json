@@ -18,6 +18,12 @@
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			}
+		},
+		"./policy": {
+			"default": {
+				"types": "./lib/library/repoPolicyCheck/index.d.ts",
+				"default": "./lib/library/repoPolicyCheck/index.js"
+			}
 		}
 	},
 	"main": "lib/index.js",
