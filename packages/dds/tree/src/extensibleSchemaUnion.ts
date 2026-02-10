@@ -62,7 +62,7 @@ export namespace ExtensibleUnionNode {
 	 */
 	export interface Members<T> {
 		/**
-		 * The child wrapped by this node, which is has one of the type allowed by the union,
+		 * The child wrapped by this node has one of the types allowed by the union,
 		 * or `undefined` if the type is one which was added to the union by a future version of this schema.
 		 */
 		readonly union: T | undefined;
