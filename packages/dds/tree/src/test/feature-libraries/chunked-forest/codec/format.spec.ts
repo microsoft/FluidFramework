@@ -17,6 +17,7 @@ describe("chunked-forest-format", () => {
 
 	it("EncodedFieldBatch", () => {
 		// Capture the json schema for the format as a snapshot, so any change to what schema is allowed shows up in this tests.
+		// TODO: ClientVersionDispatchingCodecBuilder should provide a friendly way to snapshot all its codecs.
 		takeJsonSnapshot(Union([EncodedFieldBatchV1, EncodedFieldBatchV2]));
 	});
 });
