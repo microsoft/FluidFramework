@@ -111,7 +111,7 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 export function convertSummaryIntoContainerSnapshot(
 	createNewSummary: ISummaryTree,
 ): IOdspSummaryPayload {
-	if (!isCombinedAppAndProtocolSummary(createNewSummary)) {
+	if (!isCombinedAppAndProtocolSummary(createNewSummary, ".history")) {
 		throw new Error("App and protocol summary required for create new path!!");
 	}
 	const appSummary = createNewSummary.tree[".app"];

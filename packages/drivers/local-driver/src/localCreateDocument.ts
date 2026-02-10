@@ -28,7 +28,7 @@ export async function createDocument(
 	const id = pathArr[pathArr.length - 1]!;
 	const documentStorage = (localDeltaConnectionServer as LocalDeltaConnectionServer)
 		.documentStorage;
-	if (!isCombinedAppAndProtocolSummary(summary)) {
+	if (!isCombinedAppAndProtocolSummary(summary, ".history")) {
 		throw new Error("Protocol and App Summary required in the full summary");
 	}
 	const protocolSummary = summary.tree[".protocol"];

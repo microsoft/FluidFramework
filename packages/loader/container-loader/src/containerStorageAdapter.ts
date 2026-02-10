@@ -33,6 +33,11 @@ import type {
 	ISerializedStateManagerDocumentStorageService,
 	SerializedSnapshotInfo,
 } from "./serializedStateManager.js";
+import {
+	HistoryTreeStorageService,
+	type IHistoryCheckpointInfo,
+	type ISnapshotHistoryOptions,
+} from "./snapshotHistory.js";
 import { convertSnapshotInfoToSnapshot } from "./utils.js";
 
 /**
@@ -76,6 +81,8 @@ export class ContainerStorageAdapter
 	 */
 	private readonly blobContents: { [id: string]: ArrayBufferLike } = {};
 
+	private _historyStorageService: HistoryTreeStorageService | undefined;
+
 	/**
 	 * An adapter that ensures we're using detachedBlobStorage up until we connect to a real service, and then
 	 * after connecting to a real service augments it with retry and combined summary tree enforcement.
@@ -85,6 +92,9 @@ export class ContainerStorageAdapter
 	 * @param addProtocolSummaryIfMissing - a callback to permit the container to inspect the summary we're about to
 	 * upload, and fix it up with a protocol tree if needed
 	 * @param enableSummarizeProtocolTree - Enable uploading a protocol summary. Note: preference is given to service policy's "summarizeProtocolTree" before this value.
+	 * @param historyOptions - Configuration for the snapshot history feature
+	 * @param getSequenceNumber - Callback to get the current sequence number
+	 * @param initialCheckpoints - Checkpoints parsed from the loaded snapshot's .history/index
 	 */
 	public constructor(
 		detachedBlobStorage: MemoryDetachedBlobStorage | undefined,
@@ -94,8 +104,19 @@ export class ContainerStorageAdapter
 			| undefined,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 		private readonly enableSummarizeProtocolTree: boolean | undefined,
+		private readonly historyOptions?: ISnapshotHistoryOptions,
+		private readonly getSequenceNumber?: () => number,
+		private readonly initialCheckpoints?: IHistoryCheckpointInfo[],
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
+	}
+
+	/**
+	 * The history storage service, if snapshot history is enabled.
+	 * Used by the container to expose the SnapshotHistoryManager.
+	 */
+	public get historyStorageService(): HistoryTreeStorageService | undefined {
+		return this._historyStorageService;
 	}
 
 	disposed: boolean = false;
@@ -115,10 +136,24 @@ export class ContainerStorageAdapter
 			this.logger,
 		));
 
+		// Insert HistoryTreeStorageService between retriable and protocol layers.
+		// Upload flow: Runtime → ProtocolTree → HistoryTree → Retriable → Driver
+		let innerStorage: IDocumentStorageService & IDisposable = retriableStorage;
+		if (this.historyOptions !== undefined && this.getSequenceNumber !== undefined) {
+			const historyStorage = new HistoryTreeStorageService(
+				retriableStorage,
+				this.historyOptions,
+				this.getSequenceNumber,
+				this.initialCheckpoints ?? [],
+			);
+			this._historyStorageService = historyStorage;
+			innerStorage = historyStorage;
+		}
+
 		// A storage service wrapper which intercept calls to uploadSummaryWithContext and ensure they include
 		// the protocol summary, provided single-commit summary is enabled.
 		this._storageService = new ProtocolTreeStorageService(
-			retriableStorage,
+			innerStorage,
 			(...props) => {
 				this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
 				return this.addProtocolSummaryIfMissing(...props);
@@ -148,6 +183,14 @@ export class ContainerStorageAdapter
 		for (const [id, value] of snapshotBlobs.entries()) {
 			this.blobContents[id] ??= value;
 		}
+	}
+
+	/**
+	 * Initializes history checkpoints from the loaded snapshot's .history/index blob.
+	 * Called after the snapshot is loaded but before the first summary upload.
+	 */
+	public initializeHistoryCheckpoints(checkpoints: IHistoryCheckpointInfo[]): void {
+		this._historyStorageService?.initializeCheckpoints(checkpoints);
 	}
 
 	public clearPendingState(): void {

@@ -135,7 +135,7 @@ export class OdspDocumentServiceFactoryCore
 			throw new Error("A new or existing file must be specified to create container!");
 		}
 
-		if (isCombinedAppAndProtocolSummary(createNewSummary)) {
+		if (isCombinedAppAndProtocolSummary(createNewSummary, ".history")) {
 			const documentAttributes = getDocAttributesFromProtocolSummary(
 				createNewSummary.tree[".protocol"],
 			);

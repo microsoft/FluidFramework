@@ -258,7 +258,7 @@ export const getISnapshotFromSerializedContainer = (
 	detachedContainerSnapshot: ISummaryTree,
 ): ISnapshot => {
 	assert(
-		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
+		isCombinedAppAndProtocolSummary(detachedContainerSnapshot, ".history"),
 		0x8e6 /* Protocol and App summary trees should be present */,
 	);
 	const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"];
@@ -363,7 +363,7 @@ export function getDetachedContainerStateFromSerializedContainer(
 	if (isPendingDetachedContainerState(parsedContainerState)) {
 		return parsedContainerState;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
+	} else if (isCombinedAppAndProtocolSummary(parsedContainerState, ".history")) {
 		const snapshot = getISnapshotFromSerializedContainer(parsedContainerState);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,

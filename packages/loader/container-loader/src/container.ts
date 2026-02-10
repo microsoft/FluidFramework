@@ -154,6 +154,11 @@ import {
 	SerializedStateManager,
 } from "./serializedStateManager.js";
 import {
+	type ISnapshotHistoryOptions,
+	SnapshotHistoryManager,
+	parseHistoryIndex,
+} from "./snapshotHistory.js";
+import {
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
@@ -680,6 +685,18 @@ export class Container
 	}
 
 	/**
+	 * Returns the snapshot history manager if the feature is enabled and the storage
+	 * service has been connected, or undefined otherwise.
+	 */
+	public get snapshotHistory(): SnapshotHistoryManager | undefined {
+		const historyService = this.storageAdapter.historyStorageService;
+		if (historyService === undefined) {
+			return undefined;
+		}
+		return new SnapshotHistoryManager(historyService);
+	}
+
+	/**
 	 * Returns true if container is dirty.
 	 * Which means data loss if container is closed at that same moment
 	 * Most likely that happens when there is no network connection to Relay Service
@@ -938,7 +955,7 @@ export class Container
 		const addProtocolSummaryIfMissing = (
 			summaryTree: ISummaryTree,
 		): CombinedAppAndProtocolSummary =>
-			isCombinedAppAndProtocolSummary(summaryTree) === true
+			isCombinedAppAndProtocolSummary(summaryTree, ".history") === true
 				? summaryTree
 				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
 
@@ -947,6 +964,21 @@ export class Container
 		const enableSummarizeProtocolTree = this.mc.config.getBoolean(
 			"Fluid.Container.summarizeProtocolTree2",
 		);
+
+		// Snapshot history configuration
+		const enableSnapshotHistory =
+			this.mc.config.getBoolean("Fluid.Container.enableSnapshotHistory") === true;
+		const historyOptions: ISnapshotHistoryOptions | undefined = enableSnapshotHistory
+			? {
+					enabled: true,
+					maxAge:
+						this.mc.config.getNumber("Fluid.Container.snapshotHistoryMaxAge") ?? 86400000,
+					minTimeBetweenCheckpoints:
+						this.mc.config.getNumber("Fluid.Container.snapshotHistoryMinTime") ?? 1800000,
+					minOpsBetweenCheckpoints:
+						this.mc.config.getNumber("Fluid.Container.snapshotHistoryMinOps") ?? 1000,
+				}
+			: undefined;
 
 		this.detachedBlobStorage =
 			this.attachState === AttachState.Attached
@@ -959,6 +991,8 @@ export class Container
 			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
 			enableSummarizeProtocolTree,
+			historyOptions,
+			() => this._deltaManager.lastSequenceNumber,
 		);
 
 		const offlineLoadEnabled =
@@ -1617,6 +1651,13 @@ export class Container
 		} = await this.serializedStateManager.fetchSnapshot(specifiedVersion, pendingLocalState);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
+
+		// Parse history checkpoints from the loaded snapshot (if present) and
+		// initialize the HistoryTreeStorageService before the first summary upload.
+		const initialCheckpoints = await parseHistoryIndex(baseSnapshotTree, async (id) =>
+			this.storageAdapter.readBlob(id),
+		);
+		this.storageAdapter.initializeHistoryCheckpoints(initialCheckpoints);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
 		const lastProcessedSequenceNumber =
