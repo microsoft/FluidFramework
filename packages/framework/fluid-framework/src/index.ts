@@ -104,8 +104,13 @@ export const getPresence = getPresenceDeprecated;
  *
  * @alpha
  */
-// eslint-disable-next-line unicorn/prefer-export-from, import-x/no-deprecated -- TODO#59157: relocating to fluid-static
-export const getPresenceAlpha = getPresenceAlphaDeprecated;
+export const getPresenceAlpha: (
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- complicated redeclaration required to satisfy api-extractor
+	fluidContainer: import("@fluidframework/fluid-static").IFluidContainer,
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- complicated redeclaration required to satisfy api-extractor
+) => import("@fluidframework/presence/alpha").PresenceWithNotifications =
+	// eslint-disable-next-line import-x/no-deprecated -- TODO#59157: relocating to fluid-static
+	getPresenceAlphaDeprecated;
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";

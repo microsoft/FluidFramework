@@ -518,7 +518,7 @@ export function getJsonSchema(schema: ImplicitAllowedTypes, options: Required<Tr
 export const getPresence: (fluidContainer: IFluidContainer_2<ContainerSchema_2>) => Presence;
 
 // @alpha
-export const getPresenceAlpha: typeof getPresenceAlpha_2;
+export const getPresenceAlpha: (fluidContainer: IFluidContainer_2) => PresenceWithNotifications;
 
 // @alpha
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema<SchemaType.View>;
