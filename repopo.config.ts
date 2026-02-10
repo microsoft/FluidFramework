@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fromFluidHandlers, makePolicy, type RepopoConfig } from "repopo";
-import { policyHandlers } from "@fluid-tools/build-cli/policy";
+import { fromFluidHandlers, policy, type RepopoConfig } from "repopo";
+import { policyHandlers } from "./build-tools/packages/build-cli/src/library/repoPolicyCheck/index.js";
 
 /**
  * Handlers that are fully disabled via ".*" exclusion in the original config.
@@ -177,13 +177,13 @@ const activeHandlers = policyHandlers.filter((h) => !disabledHandlers.has(h.name
 // Convert FF handlers to repopo policy definitions
 const fluidPolicies = fromFluidHandlers(activeHandlers);
 
-// Map each converted policy to a makePolicy() call with per-handler exclusions
+// Map each converted policy to a policy() call with per-handler exclusions
 const policies = fluidPolicies.map((policyDef) => {
 	const exclusions = handlerExclusions[policyDef.name];
 	if (exclusions !== undefined && exclusions.length > 0) {
-		return makePolicy(policyDef, undefined, { excludeFiles: exclusions });
+		return policy(policyDef, { exclude: exclusions });
 	}
-	return makePolicy(policyDef);
+	return policy(policyDef);
 });
 
 const config: RepopoConfig = {
