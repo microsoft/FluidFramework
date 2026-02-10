@@ -270,6 +270,14 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 		return this._connectionState;
 	}
 
+	public override dispose(): void {
+		this.catchUpMonitor?.dispose();
+		this.catchUpMonitor = undefined;
+		this.storageFetchMonitor?.dispose();
+		this.storageFetchMonitor = undefined;
+		super.dispose();
+	}
+
 	public connectionStateChanged(
 		value: ConnectionState,
 		oldState: ConnectionState,
@@ -294,7 +302,6 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 						this.storageFetchMonitor = new StorageFetchMonitor(
 							this.deltaManager,
 							this.onStorageFetchComplete,
-							false,
 						);
 					}
 				} else {

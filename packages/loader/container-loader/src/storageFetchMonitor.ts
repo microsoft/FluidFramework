@@ -12,6 +12,10 @@ type StorageFetchCompleteListener = () => void;
 /**
  * Monitors DeltaManager for storage fetch completion.
  * Used to delay Connected state until we know the true latest sequence number.
+ *
+ * This monitor is only created when a storage fetch is actually pending
+ * (i.e., `isConnectionFetchPending` is true). If no fetch is pending,
+ * the caller should skip creating a monitor entirely.
  */
 export class StorageFetchMonitor implements IDisposable {
 	private fetchComplete: boolean = false;
@@ -27,18 +31,8 @@ export class StorageFetchMonitor implements IDisposable {
 	constructor(
 		private readonly deltaManager: IEventProvider<IDeltaManagerInternalEvents>,
 		private readonly listener: StorageFetchCompleteListener,
-		fetchAlreadyComplete: boolean,
 	) {
-		if (fetchAlreadyComplete) {
-			this.fetchComplete = true;
-			queueMicrotask(() => {
-				if (!this._disposed) {
-					this.listener();
-				}
-			});
-		} else {
-			this.deltaManager.on("storageFetchComplete", this.fetchCompleteHandler);
-		}
+		this.deltaManager.on("storageFetchComplete", this.fetchCompleteHandler);
 	}
 
 	/**

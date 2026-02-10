@@ -172,6 +172,20 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	private pending: ISequencedDocumentMessage[] = [];
 	private fetchReason: string | undefined;
+	/**
+	 * Tracks whether a storage fetch triggered by a new connection is pending.
+	 * Set to true before emitting the "connect" event so that ConnectionStateHandler
+	 * sees the correct value synchronously. Reset to false in two cases:
+	 * 1. When the fetch completes (in fetchMissingDeltasCore's finally block)
+	 * 2. When a new connection is established and no fetch is needed (connectHandler)
+	 *
+	 * Cross-connection note: If a disconnect happens while a fetch is in progress and
+	 * reconnection triggers a new connectionFetchPending=true, the old fetch's completion
+	 * in the finally block will emit storageFetchComplete for the new connection. This is
+	 * acceptable because: (a) the old fetch already updated lastKnownSeqNumber, (b)
+	 * processPendingOps triggers a follow-up fetch if still behind, and (c) the
+	 * CatchUpMonitor still gates on lastKnownSeqNumber vs lastSequenceNumber.
+	 */
 	private connectionFetchPending: boolean = false;
 
 	// A boolean used to assert that ops are not being sent while processing another op.

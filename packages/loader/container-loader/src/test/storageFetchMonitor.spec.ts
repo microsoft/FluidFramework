@@ -34,48 +34,21 @@ describe("StorageFetchMonitor", () => {
 	it("Calls listener when storageFetchComplete event is emitted", () => {
 		let fetchComplete = false;
 
-		monitor = new StorageFetchMonitor(
-			mockDeltaManager,
-			() => {
-				fetchComplete = true;
-			},
-			false, // fetchAlreadyComplete
-		);
+		monitor = new StorageFetchMonitor(mockDeltaManager, () => {
+			fetchComplete = true;
+		});
 
 		assert(!fetchComplete, "Listener should not be called yet");
 		mockDeltaManager.emitStorageFetchComplete();
 		assert(fetchComplete, "Listener should be called after storageFetchComplete event");
 	});
 
-	it("Calls listener via queueMicrotask when fetchAlreadyComplete is true", async () => {
-		let fetchComplete = false;
-
-		monitor = new StorageFetchMonitor(
-			mockDeltaManager,
-			() => {
-				fetchComplete = true;
-			},
-			true, // fetchAlreadyComplete
-		);
-
-		// Listener should not be called synchronously
-		assert(!fetchComplete, "Listener should not be called synchronously");
-
-		// Wait for microtask to execute
-		await Promise.resolve();
-		assert(fetchComplete, "Listener should be called via queueMicrotask");
-	});
-
 	it("Only calls listener once even if event fires multiple times", () => {
 		let callCount = 0;
 
-		monitor = new StorageFetchMonitor(
-			mockDeltaManager,
-			() => {
-				callCount++;
-			},
-			false,
-		);
+		monitor = new StorageFetchMonitor(mockDeltaManager, () => {
+			callCount++;
+		});
 
 		mockDeltaManager.emitStorageFetchComplete();
 		assert.equal(callCount, 1, "Listener should be called once");
@@ -87,13 +60,9 @@ describe("StorageFetchMonitor", () => {
 	it("Dispose removes listener and sets disposed flag", () => {
 		let fetchComplete = false;
 
-		monitor = new StorageFetchMonitor(
-			mockDeltaManager,
-			() => {
-				fetchComplete = true;
-			},
-			false,
-		);
+		monitor = new StorageFetchMonitor(mockDeltaManager, () => {
+			fetchComplete = true;
+		});
 
 		monitor.dispose();
 
@@ -110,7 +79,7 @@ describe("StorageFetchMonitor", () => {
 	});
 
 	it("Dispose is idempotent", () => {
-		monitor = new StorageFetchMonitor(mockDeltaManager, () => {}, false);
+		monitor = new StorageFetchMonitor(mockDeltaManager, () => {});
 
 		monitor.dispose();
 		assert(monitor.disposed, "Should be disposed after first dispose()");
@@ -120,34 +89,13 @@ describe("StorageFetchMonitor", () => {
 		assert(monitor.disposed, "Should still be disposed after second dispose()");
 	});
 
-	it("Does not subscribe to event when fetchAlreadyComplete is true", () => {
-		monitor = new StorageFetchMonitor(mockDeltaManager, () => {}, true);
+	it("Subscribes to storageFetchComplete event on construction", () => {
+		monitor = new StorageFetchMonitor(mockDeltaManager, () => {});
 
 		assert.equal(
 			mockDeltaManager.listenerCount("storageFetchComplete"),
-			0,
-			"Should not add listener when fetch already complete",
+			1,
+			"Should add listener on construction",
 		);
-	});
-
-	it("Does not call listener if disposed before microtask executes", async () => {
-		let fetchComplete = false;
-
-		monitor = new StorageFetchMonitor(
-			mockDeltaManager,
-			() => {
-				fetchComplete = true;
-			},
-			true, // fetchAlreadyComplete - triggers microtask path
-		);
-
-		// Dispose immediately, before microtask can execute
-		monitor.dispose();
-
-		// Wait for microtask to execute
-		await Promise.resolve();
-
-		// Listener should not have been called because we disposed before the microtask ran
-		assert(!fetchComplete, "Listener should not be called after dispose");
 	});
 });
