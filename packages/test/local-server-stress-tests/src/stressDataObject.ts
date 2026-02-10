@@ -87,36 +87,32 @@ export class StressDataObject extends DataObject {
 	}
 
 	/**
-	 * Cache of resolved objects by absolute path.
+	 * Static cache of resolved objects by absolute path, shared across all instances.
 	 * Since resolution is local (no network round-trips), caching avoids
 	 * repeated async work when the same path is resolved multiple times.
 	 */
-	private readonly resolvedObjectCache = new Map<
+	private static readonly resolvedObjectCache = new Map<
 		string,
 		{ handle: IFluidHandle; stressDataObject?: StressDataObject }
 	>();
 
 	/**
-	 * Pre-populates the resolved object cache for a known path.
-	 * Call this after creating an object locally to avoid an async resolution round-trip
-	 * the next time this path is accessed on the creating client.
+	 * Clears the static resolved object cache. Call between test runs to avoid
+	 * stale entries from previous tests.
 	 */
-	public cacheResolvedObject(
-		absolutePath: string,
-		entry: { handle: IFluidHandle; stressDataObject?: StressDataObject },
-	): void {
-		this.resolvedObjectCache.set(absolutePath, entry);
+	public static clearCache(): void {
+		StressDataObject.resolvedObjectCache.clear();
 	}
 
 	/**
 	 * Resolves a container object by its absolute handle path.
-	 * Uses a local cache to avoid repeated async resolution for the same path.
+	 * Uses a static cache to avoid repeated async resolution for the same path.
 	 * Returns undefined if the object is not yet available (e.g. not attached).
 	 */
 	public async resolveByAbsolutePath(
 		absolutePath: string,
 	): Promise<{ handle: IFluidHandle; stressDataObject?: StressDataObject } | undefined> {
-		const cached = this.resolvedObjectCache.get(absolutePath);
+		const cached = StressDataObject.resolvedObjectCache.get(absolutePath);
 		if (cached !== undefined) {
 			return cached;
 		}
@@ -149,7 +145,7 @@ export class StressDataObject extends DataObject {
 			handle,
 			stressDataObject: maybe?.StressDataObject,
 		};
-		this.resolvedObjectCache.set(absolutePath, result);
+		StressDataObject.resolvedObjectCache.set(absolutePath, result);
 		return result;
 	}
 
