@@ -552,9 +552,11 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		}
 
 		const repoRoot = this.node.context.repoRoot;
-		return this.node.getAdditionalConfigFiles(this.taskName).map((configPath) =>
-			this.getPackageFileFullPath(replaceRepoRootToken(configPath, repoRoot)),
-		);
+		return this.node
+			.getAdditionalConfigFiles(this.taskName)
+			.map((configPath) =>
+				this.getPackageFileFullPath(replaceRepoRootToken(configPath, repoRoot)),
+			);
 	}
 
 	/**
