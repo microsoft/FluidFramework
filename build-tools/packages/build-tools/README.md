@@ -172,7 +172,7 @@ module.exports = {
    tasks: {
       "eslint": {
          files: {
-            additionalConfigFiles: ["${repoRoot}/.eslintrc.cjs", "${repoRoot}/common/eslint-config.json"]
+            additionalConfigFiles: ["${repoRoot}/common/build/eslint-config-fluid/flat.mts"]
          }
       }
    }
@@ -199,7 +199,7 @@ In this example:
 - The global configuration uses `${repoRoot}` to reference files at the repository root, eliminating the need for relative paths like `../../`
 - The `${repoRoot}` token works the same for all packages regardless of their depth in the directory structure
 - A specific package extends this list by adding `.eslintrc.local.json` using the `"..."` syntax
-- The task will rebuild if any of these files change, in addition to the `.eslintrc.*` file that eslint automatically discovers
+- The task will rebuild if any of these files change, in addition to the `eslint.config.mts` file that eslint automatically discovers
 
 The `"..."` syntax works the same way as for task dependencies - it includes the inherited configuration from the global definition. Without `"..."`, the package-level configuration completely replaces the global configuration.
 

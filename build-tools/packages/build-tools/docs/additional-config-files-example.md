@@ -5,12 +5,11 @@ This document demonstrates how to use the `additionalConfigFiles` feature to tra
 ## Problem
 
 You have a monorepo with:
-- A root-level `.eslintrc.cjs` that all packages inherit from
-- A shared `common/eslint-config.json` that multiple packages use
-- Package-specific `.eslintrc.json` files
+- A shared ESLint config at `common/build/eslint-config-fluid/flat.mts` that all packages inherit from
+- Package-specific `eslint.config.mts` files
 - Packages at various depths in the directory structure (e.g., `packages/foo`, `packages/bar/baz`, etc.)
 
-When you modify the root or shared config files, you want packages to automatically rebuild their `eslint` task to pick up the changes, but you don't want to hardcode different relative paths like `../../` or `../../../` for each package depth.
+When you modify the shared config files, you want packages to automatically rebuild their `eslint` task to pick up the changes, but you don't want to hardcode different relative paths like `../../` or `../../../` for each package depth.
 
 ## Solution
 
@@ -27,8 +26,7 @@ module.exports = {
         // Use ${repoRoot} token to reference files at the repository root
         // This works for all packages regardless of directory depth
         additionalConfigFiles: [
-          "${repoRoot}/.eslintrc.cjs",
-          "${repoRoot}/common/build/eslint-config.json"
+          "${repoRoot}/common/build/eslint-config-fluid/flat.mts"
         ]
       }
     }
@@ -64,10 +62,9 @@ If a specific package needs to track additional config files, it can extend the 
 ```
 
 This package will track:
-- `${repoRoot}/.eslintrc.cjs` (from global, resolves to absolute path)
-- `${repoRoot}/common/build/eslint-config.json` (from global, resolves to absolute path)
+- `${repoRoot}/common/build/eslint-config-fluid/flat.mts` (from global, resolves to absolute path)
 - `.eslintrc.local.json` (added by package, relative to package directory)
-- Plus the `.eslintrc.*` file that eslint task handler automatically discovers
+- Plus the `eslint.config.mts` file that the eslint task handler automatically discovers
 
 ### Package-Level Override
 
@@ -93,13 +90,13 @@ This package will ONLY track `${repoRoot}/.eslintrc.special.json` (no "..." mean
 
 ## How It Works
 
-1. The `EsLintTask` handler automatically discovers and tracks the package's `.eslintrc.*` file
+1. The `EsLintTask` handler automatically discovers and tracks the package's `eslint.config.mts` file
 2. The `additionalConfigFiles` property adds extra files to track
 3. The `${repoRoot}` token is replaced with the absolute path to the repository root before resolving the path
 4. When any tracked file changes, the task is marked as out-of-date and will re-run
 5. File paths can be:
    - Relative to the package directory (e.g., `.eslintrc.local.json` or `../../config.json`)
-   - Using the `${repoRoot}` token (e.g., `${repoRoot}/.eslintrc.cjs`)
+   - Using the `${repoRoot}` token (e.g., `${repoRoot}/common/build/eslint-config-fluid/flat.mts`)
 
 ## Use Cases
 
@@ -125,8 +122,8 @@ This package will ONLY track `${repoRoot}/.eslintrc.special.json` (no "..." mean
     "api-extractor:commonjs": {
       "files": {
         "additionalConfigFiles": [
-          "${repoRoot}/api-extractor-base.json",
-          "${repoRoot}/api-extractor-lint.json"
+          "${repoRoot}/common/build/build-common/api-extractor-base.json",
+          "${repoRoot}/common/build/build-common/api-extractor-lint.json"
         ]
       }
     }
@@ -142,9 +139,8 @@ This package will ONLY track `${repoRoot}/.eslintrc.special.json` (no "..." mean
     "eslint": {
       "files": {
         "additionalConfigFiles": [
-          "${repoRoot}/.eslintrc.cjs",
-          "${repoRoot}/.eslintignore",
-          "${repoRoot}/common/eslint-rules/custom-rules.json"
+          "${repoRoot}/common/build/eslint-config-fluid/flat.mts",
+          "${repoRoot}/common/build/eslint-config-fluid/index.js"
         ]
       }
     }

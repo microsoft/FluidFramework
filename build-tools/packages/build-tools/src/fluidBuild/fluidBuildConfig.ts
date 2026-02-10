@@ -22,9 +22,14 @@ const REPO_ROOT_REGEX = /\$\{repoRoot\}/g;
 
 /**
  * Replace the {@link REPO_ROOT_TOKEN} in a path or glob with the actual repository root path.
+ *
+ * @remarks
+ * The repo root is normalized to forward slashes and trailing separators are removed, so the
+ * result is safe for globbing libraries (fast-glob treats backslashes as escape characters).
  */
 export function replaceRepoRootToken(pathOrGlob: string, repoRoot: string): string {
-	return pathOrGlob.replace(REPO_ROOT_REGEX, repoRoot);
+	const normalized = repoRoot.replace(/\\/g, "/").replace(/\/+$/, "");
+	return pathOrGlob.replace(REPO_ROOT_REGEX, normalized);
 }
 
 /**

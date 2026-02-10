@@ -110,7 +110,28 @@ describe("Repo Root Token", () => {
 
 		it("handles repo root with trailing slash", () => {
 			const result = replaceRepoRootToken("${repoRoot}/config.json", "/home/user/repo/");
-			assert.strictEqual(result, "/home/user/repo//config.json");
+			assert.strictEqual(result, "/home/user/repo/config.json");
+		});
+
+		it("normalizes Windows backslashes to forward slashes", () => {
+			const result = replaceRepoRootToken("${repoRoot}/.eslintrc.cjs", "C:\\Users\\dev\\repo");
+			assert.strictEqual(result, "C:/Users/dev/repo/.eslintrc.cjs");
+		});
+
+		it("normalizes Windows backslashes in replaceRepoRootTokens", () => {
+			const result = replaceRepoRootTokens(
+				["${repoRoot}/.eslintrc.cjs", "${repoRoot}/common/**/*.ts"],
+				"C:\\Users\\dev\\repo",
+			);
+			assert.deepStrictEqual(result, [
+				"C:/Users/dev/repo/.eslintrc.cjs",
+				"C:/Users/dev/repo/common/**/*.ts",
+			]);
+		});
+
+		it("normalizes Windows repo root with trailing backslash", () => {
+			const result = replaceRepoRootToken("${repoRoot}/config.json", "C:\\Users\\dev\\repo\\");
+			assert.strictEqual(result, "C:/Users/dev/repo/config.json");
 		});
 	});
 });
