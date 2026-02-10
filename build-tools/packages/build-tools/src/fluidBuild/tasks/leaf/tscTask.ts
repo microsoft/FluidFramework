@@ -483,7 +483,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 		if (this._configFileFullPaths === undefined) {
 			this._configFileFullPaths = [
 				...this.taskSpecificConfigFiles,
-				...this.getAdditionalConfigFiles(),
+				...this.additionalConfigFiles,
 			];
 		}
 
@@ -535,6 +535,11 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 
 	/**
 	 * Config files specific to this task type (e.g., .eslintrc for eslint, package.json for generate-entrypoints).
+	 *
+	 * @remarks
+	 * Ideally, implementations should include any parent or extended configs (e.g., configs referenced
+	 * via `extends`). Some task implementations (like biome) do this, but others (like eslint) currently
+	 * only track the local config file.
 	 */
 	protected abstract get taskSpecificConfigFiles(): string[];
 	protected abstract getToolVersion(): Promise<string>;

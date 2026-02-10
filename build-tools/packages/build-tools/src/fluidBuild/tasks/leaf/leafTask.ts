@@ -546,7 +546,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 * Get additional config files to track for this task from the task definition.
 	 * @returns absolute paths to additional config files
 	 */
-	protected getAdditionalConfigFiles(): string[] {
+	protected get additionalConfigFiles(): string[] {
 		if (this.taskName === undefined) {
 			return [];
 		}
@@ -634,7 +634,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 	 */
 	private async getAllInputFiles(): Promise<string[]> {
 		const srcFiles = await this.getInputFiles();
-		const additionalConfigFiles = this.getAdditionalConfigFiles();
+		const additionalConfigFiles = this.additionalConfigFiles;
 		if (additionalConfigFiles.length === 0) {
 			return srcFiles;
 		}
