@@ -20,8 +20,8 @@ export type ForestFormatVersion = Values<typeof ForestFormatVersion>;
 
 export const validVersions = new Set([...Object.values(ForestFormatVersion)]);
 
-export const FormatCommon = (
-	version: ForestFormatVersion,
+export const FormatCommon = <const TVersion extends ForestFormatVersion>(
+	version: TVersion,
 	// Return type is intentionally derived.
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
@@ -33,4 +33,6 @@ export const FormatCommon = (
 		},
 		{ additionalProperties: false },
 	);
-export type Format = Static<ReturnType<typeof FormatCommon>>;
+export type Format<TVersion extends ForestFormatVersion = ForestFormatVersion> = Static<
+	ReturnType<typeof FormatCommon<TVersion>>
+>;
