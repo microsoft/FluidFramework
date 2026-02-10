@@ -37,7 +37,7 @@ export interface IHistoryCheckpointInfo {
 	timestamp: number;
 	/** Loading group ID for delay-loading this checkpoint */
 	groupId: string;
-	/** If true, checkpoint is exempt from age-based retention */
+	/** If true, checkpoint is exempt from age-based retention. Not yet used; future-proofs the format. */
 	pinned?: boolean;
 }
 
@@ -57,14 +57,14 @@ const historyGroupIdPrefix = "fluid-history-";
 /**
  * Creates a group ID for a checkpoint at the given sequence number.
  */
-function checkpointGroupId(seqNum: number): string {
+function checkpointGroupId(seqNum: number): `${typeof historyGroupIdPrefix}${number}` {
 	return `${historyGroupIdPrefix}${seqNum}`;
 }
 
 /**
  * Creates the checkpoint subtree key name.
  */
-function checkpointKey(seqNum: number): string {
+function checkpointKey(seqNum: number): `${typeof checkpointPrefix}${number}` {
 	return `${checkpointPrefix}${seqNum}`;
 }
 
