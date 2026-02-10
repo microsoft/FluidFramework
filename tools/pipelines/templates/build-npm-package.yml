@@ -257,6 +257,9 @@ extends:
                       TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
+                      consistentSourcesDirectory=${{ variables.consistentSourcesDirectory }}
+                      FluidFrameworkDirectory=${{ variables.FluidFrameworkDirectory }}
+                      FFPipelineHostDirectory=${{ variables.FFPipelineHostDirectory }}
                       pathToTelemetryGenerator=$(pathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
 
