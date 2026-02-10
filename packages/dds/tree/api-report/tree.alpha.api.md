@@ -713,6 +713,17 @@ export enum KeyEncodingOptions {
     usePropertyKeys = "usePropertyKeys"
 }
 
+// @alpha @sealed
+export class LabelTree<T = unknown> {
+    constructor(label: T, children?: readonly LabelTree<T>[]);
+    readonly children: readonly LabelTree<T>[];
+    forEach(callbackfn: (value: T) => void): void;
+    has(label: T): boolean;
+    readonly label: T;
+    get size(): number;
+    values(): IterableIterator<T>;
+}
+
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
@@ -732,6 +743,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
     readonly isLocal: true;
     readonly label?: unknown;
+    readonly labels?: LabelTree;
 }
 
 // @public @sealed
@@ -902,6 +914,7 @@ export interface RemoteChangeMetadata extends CommitMetadata {
     readonly getRevertible?: undefined;
     readonly isLocal: false;
     readonly label?: undefined;
+    readonly labels?: undefined;
 }
 
 // @alpha

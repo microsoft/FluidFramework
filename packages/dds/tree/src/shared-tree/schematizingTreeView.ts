@@ -329,6 +329,7 @@ export class SchematizingSimpleTreeView<
 		this.ensureUndisposed();
 		const { checkout } = this;
 
+		checkout.pushLabelFrame(params?.label);
 		checkout.transaction.start(isAsync);
 
 		// Validate preconditions before running the transaction callback.
@@ -354,6 +355,7 @@ export class SchematizingSimpleTreeView<
 		)?.value;
 
 		if (rollback === true) {
+			checkout.popLabelFrame(false);
 			checkout.transaction.abort();
 			return value === undefined
 				? { success: false }
@@ -367,6 +369,7 @@ export class SchematizingSimpleTreeView<
 			transactionCallbackStatus?.preconditionsOnRevert,
 		);
 
+		checkout.popLabelFrame(true);
 		checkout.runWithTransactionLabel(() => {
 			checkout.transaction.commit();
 		}, params?.label);

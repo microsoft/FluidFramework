@@ -163,4 +163,6 @@ export {
 
 export { cloneWithReplacements } from "./cloneWithReplacements.js";
 
+export { LabelTree } from "./labelTree.js";
+
 export { readAndParseSnapshotBlob } from "./readSnapshotBlob.js";

@@ -37,7 +37,7 @@ import {
 	SchemaFactoryBeta,
 } from "../../simple-tree/index.js";
 import type { Mutable } from "../../util/index.js";
-import { brand } from "../../util/index.js";
+import { LabelTree, brand } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "../json/index.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
@@ -1288,6 +1288,121 @@ describe("SchematizingSimpleTreeView", () => {
 
 			// Check that view2 shows its own label (not view1's label)
 			assert.deepEqual(labels2, [label2]);
+		});
+
+		it("composes a LabelTree from nested transaction labels", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: LabelTree | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.runTransaction(
+						() => {
+							view.runTransaction(
+								() => {
+									view.root.content = 1;
+								},
+								{ label: "deep" },
+							);
+						},
+						{ label: "middle1" },
+					);
+					view.runTransaction(
+						() => {
+							view.root.content = 2;
+						},
+						{ label: "middle2" },
+					);
+				},
+				{ label: "outer" },
+			);
+
+			assert(receivedLabels !== undefined, "labels should be defined");
+			assert.equal(receivedLabels.label, "outer");
+			assert.equal(receivedLabels.children.length, 2);
+			assert.equal(receivedLabels.children[0]?.label, "middle1");
+			assert.equal(receivedLabels.children[0]?.children.length, 1);
+			assert.equal(receivedLabels.children[0]?.children[0]?.label, "deep");
+			assert.equal(receivedLabels.children[1]?.label, "middle2");
+			assert.equal(receivedLabels.children[1]?.children.length, 0);
+			assert.equal(receivedLabels.has("outer"), true);
+			assert.equal(receivedLabels.has("middle1"), true);
+			assert.equal(receivedLabels.has("deep"), true);
+			assert.equal(receivedLabels.has("middle2"), true);
+			assert.equal(receivedLabels.size, 4);
+		});
+
+		it("creates a single-node LabelTree for a non-nested labeled transaction", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: LabelTree | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.root.content = 42;
+				},
+				{ label: "single" },
+			);
+
+			assert(receivedLabels !== undefined, "labels should be defined");
+			assert.equal(receivedLabels.label, "single");
+			assert.equal(receivedLabels.children.length, 0);
+			assert.equal(receivedLabels.size, 1);
+		});
+
+		it("labels is undefined when no label is provided", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: LabelTree | undefined | null = null;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(() => {
+				view.root.content = 99;
+			});
+
+			assert.equal(receivedLabels, undefined);
+		});
+
+		it("inner labels are surfaced with undefined root when outer transaction has no label", () => {
+			const view = getTestObjectView();
+
+			let receivedLabels: LabelTree | undefined;
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal) {
+					receivedLabels = meta.labels;
+				}
+			});
+
+			view.runTransaction(() => {
+				view.runTransaction(
+					() => {
+						view.root.content = 1;
+					},
+					{ label: "inner" },
+				);
+			});
+
+			// When outer has no label but inner labels exist, a LabelTree with
+			// undefined root is created to surface the inner labels.
+			assert(receivedLabels !== undefined, "labels should be defined");
+			assert.equal(receivedLabels.label, undefined);
+			assert.equal(receivedLabels.children.length, 1);
+			assert.equal(receivedLabels.children[0].label, "inner");
 		});
 	});
 });

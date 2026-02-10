@@ -350,7 +350,7 @@ export type {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlyObject,
 } from "./util/index.js";
-export { cloneWithReplacements } from "./util/index.js";
+export { cloneWithReplacements, LabelTree } from "./util/index.js";
 
 import * as InternalTypes from "./internalTypes.js";
 /**

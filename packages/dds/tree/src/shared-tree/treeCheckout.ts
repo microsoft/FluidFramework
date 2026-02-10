@@ -96,9 +96,11 @@ import {
 import {
 	Breakable,
 	disposeSymbol,
+	getLast,
 	getOrCreate,
 	hasSome,
 	type JsonCompatibleReadOnly,
+	LabelTree,
 	type WithBreakable,
 } from "../util/index.js";
 
@@ -396,6 +398,24 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 */
 	private transactionLabel?: unknown;
 
+	/**
+	 * Composed label tree auto-built from nested transaction labels.
+	 *
+	 * @remarks
+	 * Set by {@link TreeCheckout.popLabelFrame} when the outermost transaction frame is popped.
+	 * Cleared by {@link TreeCheckout.runWithTransactionLabel} after the commit event is emitted.
+	 */
+	private transactionLabels?: LabelTree;
+
+	/**
+	 * Stack of label frames for composing a {@link LabelTree} from nested transactions.
+	 *
+	 * @remarks
+	 * Each frame tracks the label for that nesting level and the {@link LabelTree} children
+	 * accumulated from completed inner transactions.
+	 */
+	private readonly labelFrameStack: { label: unknown; children: LabelTree[] }[] = [];
+
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
@@ -448,6 +468,61 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	/**
+	 * Pushes a new label frame for a transaction nesting level.
+	 *
+	 * @param label - The label for this transaction frame.
+	 *
+	 * @remarks
+	 * Called at the start of each transaction (including nested ones) to track the label
+	 * for that nesting level. When the transaction completes, {@link TreeCheckout.popLabelFrame}
+	 * composes the labels into a {@link LabelTree}.
+	 */
+	public pushLabelFrame(label: unknown): void {
+		this.labelFrameStack.push({ label, children: [] });
+	}
+
+	/**
+	 * Pops a label frame and composes the label tree.
+	 *
+	 * @param committed - Whether the transaction was committed (true) or aborted (false).
+	 *
+	 * @remarks
+	 * When a transaction commits, the label and accumulated children from inner transactions
+	 * are composed into a {@link LabelTree} node. That node is added as a child of the parent
+	 * frame (if nested) or set as {@link TreeCheckout.transactionLabels} (if outermost).
+	 *
+	 * When a transaction aborts, the frame is simply discarded.
+	 */
+	public popLabelFrame(committed: boolean): void {
+		const frame = this.labelFrameStack.pop();
+		if (frame === undefined) {
+			return;
+		}
+
+		if (!committed) {
+			return;
+		}
+
+		const parent = getLast(this.labelFrameStack);
+		if (frame.label !== undefined) {
+			const node = new LabelTree(frame.label, frame.children);
+			if (parent === undefined) {
+				// Outermost level — set the composed tree for the commit metadata.
+				this.transactionLabels = node;
+			} else {
+				parent.children.push(node);
+			}
+		} else if (parent !== undefined) {
+			// No label at this level — promote children to parent.
+			parent.children.push(...frame.children);
+		} else if (frame.children.length > 0) {
+			// Outermost level with no label but inner labels exist —
+			// surface them under an undefined root.
+			this.transactionLabels = new LabelTree(undefined, frame.children);
+		}
+	}
+
+	/**
 	 * Helper method for {@link SchematizingSimpleTreeView.runTransaction} to properly clear transaction labels once the function completes.
 	 *
 	 * @remarks
@@ -472,6 +547,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			return fn(this.transactionLabel as TLabel);
 		} finally {
 			this.transactionLabel = undefined;
+			this.transactionLabels = undefined;
 		}
 	}
 
@@ -614,6 +690,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 					label: this.transactionLabel,
+					labels: this.transactionLabels,
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);

@@ -14,6 +14,7 @@ import { Type } from "@sinclair/typebox";
 import {
 	type Brand,
 	type JsonCompatibleReadOnly,
+	type LabelTree,
 	type NestedMap,
 	RangeMap,
 	brand,
@@ -234,6 +235,17 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	 * This can be used by undo/redo to group or classify edits.
 	 */
 	readonly label?: unknown;
+
+	/**
+	 * A label tree auto-composed from nested transaction labels.
+	 * Each nesting level that provides a {@link RunTransactionParams.label | label} contributes
+	 * a node, with inner transaction labels becoming children of outer ones.
+	 *
+	 * @remarks
+	 * This is only defined when the outermost transaction has a label.
+	 * This can be used by undo/redo to hierarchically group or classify edits.
+	 */
+	readonly labels?: LabelTree;
 }
 
 /**
@@ -260,6 +272,11 @@ export interface RemoteChangeMetadata extends CommitMetadata {
 	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
 	 */
 	readonly label?: undefined;
+	/**
+	 * A label tree auto-composed from nested transaction labels.
+	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
+	 */
+	readonly labels?: undefined;
 }
 
 /**
