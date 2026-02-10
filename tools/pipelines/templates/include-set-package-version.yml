@@ -107,7 +107,7 @@ steps:
     inputs:
       targetType: 'filePath'
       workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-      filePath: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/scripts/update-package-version.sh
+      filePath: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/scripts/update-package-version.sh
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.
