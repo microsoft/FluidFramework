@@ -1264,7 +1264,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 		assert.throws(
 			() => unhydratedFlexTreeFromInsertable(testData, TestSchema),
-			validateUsageError(`A node with schema "test.a" (name: "TestSchema2") was provided where a node with this identifier is allowed, but the actual schema required ("test.a" (name: "TestSchema")) is not the same schema object.
+			validateUsageError(`A node with schema "test.a" (name: "TestSchema2") was provided where a node with that identifier is allowed, but the actual schema required ("test.a" (name: "TestSchema")) is not the same schema object.
 TreeNodeSchema have significant object identity and thus the exact same object must be used as the schema when defining what nodes are allowed and when constructing the node to use.`),
 		);
 	});
@@ -1278,8 +1278,8 @@ TreeNodeSchema have significant object identity and thus the exact same object m
 
 		assert.throws(
 			() => unhydratedFlexTreeFromInsertable(testData, TestSchema),
-			validateUsageError(`Expected insertable for one of ["test.a" (name: "TestSchema")], got node with schema "test.b" (name: "TestSchema2").
-Nodes are valid insertable objects, but only if their schema are the same.`),
+			validateUsageError(`Expected insertable for one of ["test.a" (name: "TestSchema")]. Got node with schema "test.b" (name: "TestSchema2").
+Nodes are valid insertable objects, but only if their schema are in the allowed list.`),
 		);
 	});
 
