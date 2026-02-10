@@ -1525,7 +1525,7 @@ export interface SimpleFieldSchema<Type extends SchemaType = SchemaType> {
         readonly custom?: undefined;
         readonly description?: undefined;
     });
-    readonly persistedMetadata?: JsonCompatibleReadOnly | undefined;
+    readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
     readonly simpleAllowedTypes: ReadonlyMap<string, SimpleAllowedTypeAttributes<Type>>;
 }
 
@@ -1555,7 +1555,7 @@ export interface SimpleNodeSchemaBaseAlpha<out Type extends SchemaType, out TNod
         readonly custom?: undefined;
         readonly description?: undefined;
     });
-    readonly persistedMetadata: JsonCompatibleReadOnly | undefined;
+    readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 }
 
 // @alpha @sealed

@@ -67,11 +67,11 @@ describe("fieldBatchCodecBuilder", () => {
 		});
 
 		it("can decode both formats when encoding either", () => {
-			const codec1 = makeFieldBatchCodec({
+			const codec1 = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_0,
 			});
-			const codec2 = makeFieldBatchCodec({
+			const codec2 = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_74,
 			});

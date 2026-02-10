@@ -12,8 +12,8 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
-import { JsonCompatibleReadOnlySchema } from "../util/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { JsonCompatibleReadOnlySchema } from "../util/index.js";
 
 import type { MessageEncodingContext } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
