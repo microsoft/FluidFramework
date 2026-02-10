@@ -73,6 +73,24 @@ extends:
       jobs:
       - job: run_policy_check
         steps:
+        - task: Bash@3
+          displayName: Variables
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+            script: |
+              set -eu -o pipefail
+              echo "
+                Variables (template):
+                  consistentSourcesDirectory=${{ variables.consistentSourcesDirectory }}
+                  FluidFrameworkDirectory=${{ variables.FluidFrameworkDirectory }}
+                  FFPipelineHostDirectory=${{ variables.FFPipelineHostDirectory }}
+
+                Variables (macro):
+                  consistentSourcesDirectory=$(consistentSourcesDirectory)
+                  FluidFrameworkDirectory=$(FluidFrameworkDirectory)
+                  FFPipelineHostDirectory=$(FFPipelineHostDirectory)
+              "
         - checkout: self
           path: ${{ variables.FluidFrameworkDirectory }}
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
