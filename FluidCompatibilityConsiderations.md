@@ -93,7 +93,7 @@ Cross-client compatibility implies that clients within a supported set of versio
 
 ### Motivation
 
-See [Fluid Framework Cross-Client Compatibility](./CrossClientCompat.md) for motivation and other details about cross-client compatibility.
+See [Fluid Framework Cross-Client Compatibility](./CrossClientCompatibility.md) for motivation and other details about cross-client compatibility.
 
 ### Architecture diagram
 

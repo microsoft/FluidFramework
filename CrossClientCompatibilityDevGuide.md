@@ -61,7 +61,7 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 };
 ```
 
-> **Note on `"2.0.0-defaults"`:** This is a special version string (considered less than `"2.0.0"` by `semver`) used as the default when a customer does not explicitly set `minVersionForCollab`. It exists to distinguish the unspecified case from an explicit `"2.0.0"` setting. Some options (e.g., `explicitSchemaControl`) use a threshold of `"2.0.0"` rather than `"2.0.0-defaults"`, meaning they only activate when the customer _explicitly_ sets `minVersionForCollab` to `"2.0.0"` or higher. See `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts) more information.
+> **Note on `"2.0.0-defaults"`:** This is a special version string (considered less than `"2.0.0"` by `semver`) used as the default when a customer does not explicitly set `minVersionForCollab`. It exists to distinguish the unspecified case from an explicit `"2.0.0"` setting. Some options (e.g., `explicitSchemaControl`) use a threshold of `"2.0.0"` rather than `"2.0.0-defaults"`, meaning they only activate when the customer _explicitly_ sets `minVersionForCollab` to `"2.0.0"` or higher. See `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts) for more information.
 
 ### Unsafe Configuration Prevention
 
@@ -102,7 +102,7 @@ Add a mechanism to enable/disable your change:
 
 1. **Add a property** corresponding to the container runtime option to `IDocumentSchemaFeatures` in [documentSchema.ts](./packages/runtime/container-runtime/src/summary/documentSchema.ts).
 
-1. **Update `documentSchemaSupportedConfigs`** to include the property added in step 2. It should be instantiated as one of the `IProperty` classes (e.g., `TrueOrUndefined`). Although unlikely, you may need to define a new class.
+1. **Update `documentSchemaSupportedConfigs`** to include the property added in the previous bullet. It should be instantiated as one of the `IProperty` classes (e.g., `TrueOrUndefined`). Although unlikely, you may need to define a new class.
 
 1. **Update the `desiredSchema.runtime` definition** to include your new property. Follow existing patterns in [documentSchema.ts](./packages/runtime/container-runtime/src/summary/documentSchema.ts) for reference.
 
@@ -122,7 +122,7 @@ In [containerCompatibility.ts](./packages/runtime/container-runtime/src/containe
 
 ### 4. File an ADO item to remove the container runtime option
 
-Since the policy's maximum compatibility promise is N/N-2, we will eventually not require a mechanism to disable certain features. However, some features (e.g., `enableRuntimeIdCompressor`) may never be enabled by default — in those cases, the enable/disable mechanism is kept indefinitely. Other features (e.g., `enableGroupedBatching`) are intended to eventually be a non-optional part of Fluid. If your change is the latter, file an ADO item to eventually remove the container runtime option entirely. This should be an ADO item because:
+Since the policy's maximum compatibility promise is N/N-1, we will eventually not require a mechanism to disable certain features. However, some features (e.g., `enableRuntimeIdCompressor`) may never be enabled by default — in those cases, the enable/disable mechanism is kept indefinitely. Other features (e.g., `enableGroupedBatching`) are intended to eventually be a non-optional part of Fluid. If your change is the latter, file an ADO item to eventually remove the container runtime option entirely. This should be an ADO item because:
 
 - It will likely be years before the policy allows removal of the mechanism.
 - There is not currently a strong process/timeline for when this will be ready. More information will be added in the future when appropriate.

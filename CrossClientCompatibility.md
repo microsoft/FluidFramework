@@ -45,11 +45,11 @@ As an application developer, you need to manage your Fluid version upgrades care
 
 ### Configuring Cross-Client Compatibility
 
-For the best results, we encourage you use the "proper configurations" for cross-client compatibility. In this case, the proper configurations would be setting the `minVersionForCollab` property (defined in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts)). `minVersionForCollab` represents the minimum Fluid runtime version allowed to collaborate in a document. It will automatically disable any features that prevent safe cross-client collaboration for clients that are at least the version specified.
+For the best results, we encourage you to use the "proper configurations" for cross-client compatibility. In this case, the proper configurations would be setting the `minVersionForCollab` property (defined in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts)). `minVersionForCollab` represents the minimum Fluid runtime version allowed to collaborate in a document. It will automatically disable any features that prevent safe cross-client collaboration for clients that are at least the version specified.
 
 For example, if you want to ensure collaboration between N/N-1 clients, the proper configuration for `minVersionForCollab` would be the latest minor release corresponding to the N-1 major version series.
 
-We recommend to maintain `minVersionForCollab` at the latest version of Fluid that your users are saturated on. This will ensure:
+We recommend maintaining `minVersionForCollab` at the latest version of Fluid that your users are saturated on. This will ensure:
 1. Older and newer clients can collaborate with each other safely.
 1. Your application can leverage new Fluid features as soon as they become safe for cross-client collaboration.
 
@@ -74,4 +74,4 @@ The following are errors and telemetry warnings you may see during and following
 
 ## Developer Guide
 
-The developer guide that focuses on mechanics and internals for layer compatibility is described [here](./CrossClientCompatibilityDevGuide.md).
+The developer guide that focuses on mechanics and internals for cross-client compatibility is described [here](./CrossClientCompatibilityDevGuide.md).
