@@ -89,13 +89,13 @@ function allowedTypesInsertableSchemaError(
 	const expected = map.get(schema.identifier);
 	if (expected !== undefined) {
 		throw new UsageError(
-			`A node with schema ${quotedSchemaIdentifierWithName(schema)} was provided where a node with this identifier is allowed, but the actual schema required (${quotedSchemaIdentifierWithName(expected)}) is not the same schema object.
+			`A node with schema ${quotedSchemaIdentifierWithName(schema)} was provided where a node with that identifier is allowed, but the actual schema required (${quotedSchemaIdentifierWithName(expected)}) is not the same schema object.
 TreeNodeSchema have significant object identity and thus the exact same object must be used as the schema when defining what nodes are allowed and when constructing the node to use.`,
 		);
 	}
 	throw new UsageError(
-		`Expected insertable for one of ${quotedAllowedTypesWithNames(allowedTypes)}, got node with schema ${quotedSchemaIdentifierWithName(schema)}.
-Nodes are valid insertable objects, but only if their schema are the same.`,
+		`Expected insertable for one of ${quotedAllowedTypesWithNames(allowedTypes)}. Got node with schema ${quotedSchemaIdentifierWithName(schema)}.
+Nodes are valid insertable objects, but only if their schema are in the allowed list.`,
 	);
 }
 
@@ -127,7 +127,7 @@ export function unhydratedFlexTreeFromInsertableNode(
 		if (inner === undefined) {
 			// The node is already hydrated, meaning that it already got inserted into the tree previously
 			throw new UsageError(
-				`A node may not be inserted into the tree more than once. Node in question has schema ${quotedSchemaIdentifierWithName(kernel.schema)}`,
+				`A node with schema ${quotedSchemaIdentifierWithName(kernel.schema)} was inserted into the tree more than once. This is not supported.`,
 			);
 		} else {
 			if (!allowedTypes.has(kernel.schema)) {
