@@ -8,7 +8,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IIdCompressor,
 	createIdCompressor,
-	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 
 import {
@@ -214,9 +213,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
 	const breaker = new Breakable("independentView");
 	const idCompressor: IIdCompressor =
-		options?.idCompressor ??
-		options?.content?.idCompressor ??
-		createIdCompressor(SerializationVersion.V3);
+		options?.idCompressor ?? options?.content?.idCompressor ?? createIdCompressor();
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 

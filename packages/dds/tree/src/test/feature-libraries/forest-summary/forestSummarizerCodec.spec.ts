@@ -33,8 +33,6 @@ import {
 import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/formatCommon.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { FormatV2 } from "../../../feature-libraries/forest-summary/formatV2.js";
 import {
 	FieldBatchFormatVersion,
 	TreeCompressionStrategy,
@@ -89,87 +87,91 @@ const malformedData: [string, unknown][] = [
  * which coded version is expected to encode to this exact data (if any)
  * ][]
  */
-const validData: [string, FieldSet, FormatV2 | undefined, ForestFormatVersion | undefined][] =
+const validData: [
+	string,
+	FieldSet,
+	FormatV1 | FormatV2 | undefined,
+	ForestFormatVersion | undefined,
+][] = [
 	[
-		[
-			"no entry v1",
-			new Map(),
-			{
-				version: ForestFormatVersion.v1,
-				keys: [],
-				fields: fieldBatchCodecOld.encode([], context),
-			},
-			ForestFormatVersion.v1,
-		],
-		[
-			"single entry v1",
-			new Map([[rootFieldKey, testFieldChunk.cursor()]]),
-			{
-				version: ForestFormatVersion.v1,
-				keys: [rootFieldKey],
-				fields: fieldBatchCodecOld.encode([testFieldChunk.cursor()], context),
-			},
-			ForestFormatVersion.v1,
-		],
-		[
-			"new field batch in v1",
-			new Map([[rootFieldKey, testFieldChunk.cursor()]]),
-			{
-				version: ForestFormatVersion.v1,
-				keys: [rootFieldKey],
-				fields: fieldBatchCodecCurrent.encode([testFieldChunk.cursor()], context),
-			},
-			undefined,
-		],
-		[
-			"multiple entries v1",
-			new Map([
-				[rootFieldKey, testFieldChunk.cursor()],
-				[brand("X"), testFieldChunk.cursor()],
-			]),
-			undefined,
-			ForestFormatVersion.v1,
-		],
-		[
-			"no entry v2",
-			new Map(),
-			{
-				version: ForestFormatVersion.v2,
-				keys: [],
-				fields: fieldBatchCodecCurrent.encode([], context),
-			},
-			ForestFormatVersion.v2,
-		],
-		[
-			"single entry v2",
-			new Map([[rootFieldKey, testFieldChunk.cursor()]]),
-			{
-				version: ForestFormatVersion.v2,
-				keys: [rootFieldKey],
-				fields: fieldBatchCodecCurrent.encode([testFieldChunk.cursor()], context),
-			},
-			ForestFormatVersion.v2,
-		],
-		[
-			"old field batch in v2",
-			new Map([[rootFieldKey, testFieldChunk.cursor()]]),
-			{
-				version: ForestFormatVersion.v2,
-				keys: [rootFieldKey],
-				fields: fieldBatchCodecOld.encode([testFieldChunk.cursor()], context),
-			},
-			undefined,
-		],
-		[
-			"multiple entries v2",
-			new Map([
-				[rootFieldKey, testFieldChunk.cursor()],
-				[brand("X"), testFieldChunk.cursor()],
-			]),
-			undefined,
-			ForestFormatVersion.v2,
-		],
-	];
+		"no entry v1",
+		new Map(),
+		{
+			version: ForestFormatVersion.v1,
+			keys: [],
+			fields: fieldBatchCodecOld.encode([], context),
+		},
+		ForestFormatVersion.v1,
+	],
+	[
+		"single entry v1",
+		new Map([[rootFieldKey, testFieldChunk.cursor()]]),
+		{
+			version: ForestFormatVersion.v1,
+			keys: [rootFieldKey],
+			fields: fieldBatchCodecOld.encode([testFieldChunk.cursor()], context),
+		},
+		ForestFormatVersion.v1,
+	],
+	[
+		"new field batch in v1",
+		new Map([[rootFieldKey, testFieldChunk.cursor()]]),
+		{
+			version: ForestFormatVersion.v1,
+			keys: [rootFieldKey],
+			fields: fieldBatchCodecCurrent.encode([testFieldChunk.cursor()], context),
+		},
+		undefined,
+	],
+	[
+		"multiple entries v1",
+		new Map([
+			[rootFieldKey, testFieldChunk.cursor()],
+			[brand("X"), testFieldChunk.cursor()],
+		]),
+		undefined,
+		ForestFormatVersion.v1,
+	],
+	[
+		"no entry v2",
+		new Map(),
+		{
+			version: ForestFormatVersion.v2,
+			keys: [],
+			fields: fieldBatchCodecCurrent.encode([], context),
+		},
+		ForestFormatVersion.v2,
+	],
+	[
+		"single entry v2",
+		new Map([[rootFieldKey, testFieldChunk.cursor()]]),
+		{
+			version: ForestFormatVersion.v2,
+			keys: [rootFieldKey],
+			fields: fieldBatchCodecCurrent.encode([testFieldChunk.cursor()], context),
+		},
+		ForestFormatVersion.v2,
+	],
+	[
+		"old field batch in v2",
+		new Map([[rootFieldKey, testFieldChunk.cursor()]]),
+		{
+			version: ForestFormatVersion.v2,
+			keys: [rootFieldKey],
+			fields: fieldBatchCodecOld.encode([testFieldChunk.cursor()], context),
+		},
+		undefined,
+	],
+	[
+		"multiple entries v2",
+		new Map([
+			[rootFieldKey, testFieldChunk.cursor()],
+			[brand("X"), testFieldChunk.cursor()],
+		]),
+		undefined,
+		ForestFormatVersion.v2,
+	],
+];
 
 describe("ForestSummarizerCodec", () => {
 	describe("encodes and decodes valid data.", () => {
@@ -219,7 +221,7 @@ describe("ForestSummarizerCodec", () => {
 						context,
 					),
 				validateUsageError(
-					/Unsupported version 2.5 encountered while decoding data. Supported versions for this data are: 1, 2./,
+					/Unsupported version 2\.5 encountered while decoding data. Supported versions for this data are: 1, 2\./,
 				),
 			);
 		});
@@ -227,25 +229,9 @@ describe("ForestSummarizerCodec", () => {
 		it("invalid nested version", () => {
 			// Create a properly encoded forest, then modify the nested version to be invalid
 			const encoded = fieldBatchCodecOld.encode([], context);
-			fieldBatchCodecOld.decode(encoded, context);
-
-			const x = (validData[0] ?? assert.fail())[2] ?? assert.fail();
-
-			fieldBatchCodecOld.decode(x.fields, context);
-			codecCurrent.decode(x, context);
-
-			const y = {
-				version: ForestFormatVersion.v1,
-				keys: [],
-				fields: fieldBatchCodecOld.encode([], context),
-			};
-
-			assert.deepEqual(x, y);
-
-			codecCurrent.decode(y, context);
-
 			assert(typeof encoded === "object" && encoded !== null);
 			const invalidFields = { ...encoded, version: 2.5 };
+
 			assert.throws(
 				() =>
 					codecCurrent.decode(
@@ -256,7 +242,7 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateAssertionError("Data being decoded should validate"),
+				validateUsageError(/Unsupported version 2\.5 encountered while decoding data/),
 			);
 		});
 

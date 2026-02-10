@@ -3,7 +3,7 @@
   "root": {
     "kind": 1,
     "simpleAllowedTypes": {
-      "com.fluidframework.extensibleSchemaUnion<extensibleSchemaUnion-example>.ExtensibleUnion": {
+      "com.fluidframework.extensibleUnionNode<extensibleUnionNode-example>.ExtensibleUnion": {
         "isStaged": false
       }
     }
@@ -21,7 +21,7 @@
         "leafKind": 1
       }
     },
-    "com.fluidframework.extensibleSchemaUnion<extensibleSchemaUnion-example>.ExtensibleUnion": {
+    "com.fluidframework.extensibleUnionNode<extensibleUnionNode-example>.ExtensibleUnion": {
       "object": {
         "kind": 2,
         "fields": {
