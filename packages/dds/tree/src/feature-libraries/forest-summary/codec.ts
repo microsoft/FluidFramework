@@ -9,7 +9,6 @@ import {
 	getConfigForMinVersionForCollab,
 	lowestMinVersionForCollab,
 } from "@fluidframework/runtime-utils/internal";
-import { Type } from "@sinclair/typebox";
 
 import {
 	ClientVersionDispatchingCodecBuilder,
@@ -18,7 +17,6 @@ import {
 	type IJsonCodec,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
-import { brand, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { brand, type JsonCompatibleReadOnly } from "../../util/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 

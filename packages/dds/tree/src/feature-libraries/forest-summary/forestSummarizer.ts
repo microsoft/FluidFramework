@@ -37,11 +37,6 @@ import {
 	readAndParseSnapshotBlob,
 	type JsonCompatibleReadOnly,
 } from "../../util/index.js";
-import {
-	idAllocatorFromMaxId,
-	readAndParseSnapshotBlob,
-	type JsonCompatibleReadOnly,
-} from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
