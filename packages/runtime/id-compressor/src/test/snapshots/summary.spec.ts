@@ -8,6 +8,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import path from "node:path";
 
 import { type SessionId, createIdCompressor } from "../../index.js";
+import { SerializationVersion } from "../../types/index.js";
 import { modifyClusterSize } from "../idCompressorTestUtilities.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -85,73 +86,77 @@ describe("snapshot tests", () => {
 	const client1 = "403f1e16-5265-4074-8507-417d99a05ee9" as SessionId;
 	const client2 = "4b02675a-5a81-428d-b7b7-d8c33a16bfde" as SessionId;
 
-	useSnapshotDirectory();
+	for (const version of [SerializationVersion.V2, SerializationVersion.V3]) {
+		describe(`version ${version}`, () => {
+			useSnapshotDirectory(`v${version}`);
 
-	it("empty compressor summary", () => {
-		const compressor = createIdCompressor(client1);
-		const summary = compressor.serialize(false);
+			it("empty compressor summary", () => {
+				const compressor = createIdCompressor(client1, version);
+				const summary = compressor.serialize(false);
 
-		takeSnapshot(summary);
-	});
+				takeSnapshot(summary);
+			});
 
-	it("compressor with finalized range from one client", () => {
-		const compressor = createIdCompressor(client1);
-		const compressor2 = createIdCompressor(client2);
-		for (let i = 0; i < 10; i++) {
-			compressor.generateCompressedId();
-		}
-		const idRange = compressor.takeNextCreationRange();
-		compressor.finalizeCreationRange(idRange);
-		const summary = compressor.serialize(false);
-		const summary2 = compressor2.serialize(false);
+			it("compressor with finalized range from one client", () => {
+				const compressor = createIdCompressor(client1, version);
+				const compressor2 = createIdCompressor(client2, version);
+				for (let i = 0; i < 10; i++) {
+					compressor.generateCompressedId();
+				}
+				const idRange = compressor.takeNextCreationRange();
+				compressor.finalizeCreationRange(idRange);
+				const summary = compressor.serialize(false);
+				const summary2 = compressor2.serialize(false);
 
-		takeSnapshot(summary);
-		takeSnapshot(summary2, "-client2");
-	});
+				takeSnapshot(summary);
+				takeSnapshot(summary2, "-client2");
+			});
 
-	it("compressors with finalized ranges from two clients", () => {
-		const compressor = createIdCompressor(client1);
-		const compressor2 = createIdCompressor(client2);
+			it("compressors with finalized ranges from two clients", () => {
+				const compressor = createIdCompressor(client1, version);
+				const compressor2 = createIdCompressor(client2, version);
 
-		for (let i = 0; i < 10; i++) {
-			compressor.generateCompressedId();
-			compressor2.generateCompressedId();
-		}
-		const idRange = compressor.takeNextCreationRange();
-		const idRange2 = compressor2.takeNextCreationRange();
+				for (let i = 0; i < 10; i++) {
+					compressor.generateCompressedId();
+					compressor2.generateCompressedId();
+				}
+				const idRange = compressor.takeNextCreationRange();
+				const idRange2 = compressor2.takeNextCreationRange();
 
-		compressor.finalizeCreationRange(idRange);
-		compressor2.finalizeCreationRange(idRange);
-		compressor.finalizeCreationRange(idRange2);
-		compressor2.finalizeCreationRange(idRange2);
+				compressor.finalizeCreationRange(idRange);
+				compressor2.finalizeCreationRange(idRange);
+				compressor.finalizeCreationRange(idRange2);
+				compressor2.finalizeCreationRange(idRange2);
 
-		const summary = compressor.serialize(false);
-		const summary2 = compressor2.serialize(false);
+				const summary = compressor.serialize(false);
+				const summary2 = compressor2.serialize(false);
 
-		takeSnapshot(summary);
-		takeSnapshot(summary2, "-client2");
-	});
+				takeSnapshot(summary);
+				takeSnapshot(summary2, "-client2");
+			});
 
-	it("expansion semantics", () => {
-		const compressor = createIdCompressor(client1);
-		const compressor2 = createIdCompressor(client2);
-		modifyClusterSize(compressor, 2);
-		compressor.generateCompressedId();
-		const idRange = compressor.takeNextCreationRange();
-		compressor.finalizeCreationRange(idRange);
-		compressor2.finalizeCreationRange(idRange);
+			it("expansion semantics", () => {
+				const compressor = createIdCompressor(client1, version);
+				const compressor2 = createIdCompressor(client2, version);
+				modifyClusterSize(compressor, 2);
+				compressor.generateCompressedId();
+				const idRange = compressor.takeNextCreationRange();
+				compressor.finalizeCreationRange(idRange);
+				compressor2.finalizeCreationRange(idRange);
 
-		for (let i = 0; i < 3; i++) {
-			compressor.generateCompressedId();
-		}
+				for (let i = 0; i < 3; i++) {
+					compressor.generateCompressedId();
+				}
 
-		const expansionIdRange = compressor.takeNextCreationRange();
-		compressor.finalizeCreationRange(expansionIdRange);
-		compressor2.finalizeCreationRange(expansionIdRange);
-		const summary = compressor.serialize(false);
-		const summary2 = compressor2.serialize(false);
+				const expansionIdRange = compressor.takeNextCreationRange();
+				compressor.finalizeCreationRange(expansionIdRange);
+				compressor2.finalizeCreationRange(expansionIdRange);
+				const summary = compressor.serialize(false);
+				const summary2 = compressor2.serialize(false);
 
-		takeSnapshot(summary);
-		takeSnapshot(summary2, "-client2");
-	});
+				takeSnapshot(summary);
+				takeSnapshot(summary2, "-client2");
+			});
+		});
+	}
 });

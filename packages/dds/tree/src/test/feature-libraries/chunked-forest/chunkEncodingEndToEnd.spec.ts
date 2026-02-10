@@ -8,7 +8,10 @@ import { strict as assert } from "node:assert";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { SessionId } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
@@ -97,7 +100,7 @@ const options: CodecWriteOptions = {
 
 const fieldBatchCodec = makeFieldBatchCodec(options);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
-const idCompressor = createIdCompressor(sessionId);
+const idCompressor = createIdCompressor(sessionId, SerializationVersion.V3);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
 const context: FieldBatchEncodingContext = {
