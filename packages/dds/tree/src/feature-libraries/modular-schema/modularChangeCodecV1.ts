@@ -803,7 +803,7 @@ function getOrAddInFieldRootMap(map: FieldRootMap, fieldId: FieldId): FieldRootC
 	return newRootChanges;
 }
 
-function getMoveIdToCellId(
+export function getMoveIdToCellId(
 	change: ModularChangeset,
 	fieldKinds: FieldKindConfiguration,
 	fieldToRoot: FieldRootMap,
