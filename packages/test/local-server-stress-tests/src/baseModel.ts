@@ -14,8 +14,6 @@ import {
 	type MinimizationTransform,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import type { FluidObject } from "@fluidframework/core-interfaces";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
 import {
@@ -34,7 +32,6 @@ import {
 } from "./dynamicWeightGenerator.js";
 import type { LocalServerStressState } from "./localServerStressHarness";
 import type { StressDataObjectOperations } from "./stressDataObject.js";
-import { StressDataObject } from "./stressDataObject.js";
 
 export type StressOperations = StressDataObjectOperations | DDSModelOp | OrderSequentially;
 
@@ -73,14 +70,6 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 	createDataStore: async (state, op) => {
 		const { handle } = await state.datastore.createDataStore(op.tag, op.asChild);
 		state.stateTracker.registerDatastore(op.tag, handle);
-		// Eagerly cache the newly created datastore on the creating client's entrypoint so
-		// subsequent resolve calls via ContainerStateTracker skip async resolution.
-		const resolvedEntryPoint = await handle.get();
-		const sdo = (resolvedEntryPoint as FluidObject<StressDataObject>)?.StressDataObject;
-		state.client.entryPoint.cacheResolvedObject(toFluidHandleInternal(handle).absolutePath, {
-			handle,
-			stressDataObject: sdo,
-		});
 		if (op.storeHandle) {
 			state.datastore.storeHandleInRoot(op.tag, handle);
 		}
@@ -112,18 +101,19 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 });
 
 /**
- * End threshold for the "datastore creation phase": operations with detached op count
- * below this value prioritize creating datastores so they exist before channels are created.
- * The datastore creation phase spans detached ops [0, datastoreCreationPhaseEndOp).
+ * Absolute op-count threshold marking the end of the "datastore creation phase".
+ * Operations 0 through datastoreCreationPhaseEnd-1 prioritize creating datastores
+ * so they exist before channels are created in them.
  */
-const datastoreCreationPhaseEndOp = 10;
+const datastoreCreationPhaseEnd = 10;
 
 /**
- * End threshold for the "channel creation phase": after the datastore creation phase,
- * operations with detached op count below this value prioritize creating channels.
- * The channel creation phase spans detached ops [datastoreCreationPhaseEndOp, channelCreationPhaseEndOp).
+ * Absolute op-count threshold marking the end of the "channel creation phase".
+ * Operations datastoreCreationPhaseEnd through channelCreationPhaseEnd-1 prioritize
+ * creating channels across available datastores. After this threshold, DDS operations
+ * are prioritized.
  */
-const channelCreationPhaseEndOp = 20;
+const channelCreationPhaseEnd = 20;
 
 export function makeGenerator<T extends BaseOperation>(
 	additional: DynamicAsyncWeights<T, LocalServerStressState> = [],
@@ -137,7 +127,7 @@ export function makeGenerator<T extends BaseOperation>(
 	 */
 	const isDetachedDatastoreCreationPhase = (state: LocalServerStressState): boolean =>
 		state.client.container.attachState === AttachState.Detached &&
-		detachedOpCount < datastoreCreationPhaseEndOp;
+		detachedOpCount < datastoreCreationPhaseEnd;
 
 	/**
 	 * Returns true if we're in the detached "channel creation phase".
@@ -145,8 +135,8 @@ export function makeGenerator<T extends BaseOperation>(
 	 */
 	const isDetachedChannelCreationPhase = (state: LocalServerStressState): boolean =>
 		state.client.container.attachState === AttachState.Detached &&
-		detachedOpCount >= datastoreCreationPhaseEndOp &&
-		detachedOpCount < channelCreationPhaseEndOp;
+		detachedOpCount >= datastoreCreationPhaseEnd &&
+		detachedOpCount < channelCreationPhaseEnd;
 
 	/**
 	 * Returns true if we're in the detached "DDS ops phase" (prioritize DDS operations).
@@ -154,7 +144,7 @@ export function makeGenerator<T extends BaseOperation>(
 	 */
 	const isDetachedDdsOpsPhase = (state: LocalServerStressState): boolean =>
 		state.client.container.attachState === AttachState.Detached &&
-		detachedOpCount >= channelCreationPhaseEndOp;
+		detachedOpCount >= channelCreationPhaseEnd;
 
 	const asyncGenerator = createWeightedAsyncGeneratorWithDynamicWeights<
 		StressOperations | T,

@@ -139,11 +139,7 @@ export class StressDataObject extends DataObject {
 			return undefined;
 		}
 
-		// resp.value may be a datastore entrypoint (with StressDataObject) or a blob handle
-		// (without StressDataObject), so use FluidObject<IFluidLoadable> without requiring StressDataObject.
-		const maybe:
-			| (FluidObject<IFluidLoadable> & Partial<Pick<StressDataObject, "StressDataObject">>)
-			| undefined = resp.value;
+		const maybe: FluidObject<IFluidLoadable & StressDataObject> | undefined = resp.value;
 		const handle = maybe?.IFluidLoadable?.handle;
 		if (handle === undefined) {
 			return undefined;
