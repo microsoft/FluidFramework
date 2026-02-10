@@ -65,13 +65,13 @@ extends:
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: .
+            buildDirectory: ${{ variables.FluidFrameworkDirectory }}
 
         - task: Bash@3
           displayName: Install root dependencies
           inputs:
             targetType: 'inline'
-            workingDirectory: .
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
             script: |
               set -eu -o pipefail
               # We only need to install the root dependencies
