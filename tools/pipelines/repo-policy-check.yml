@@ -19,6 +19,17 @@ variables:
 - name: pnpmStorePath
   value: $(Pipeline.Workspace)/.pnpm-store
 - group: ado-feeds
+# ADO changes the value of Build.SourcesDirectory depending on whether 1 vs. many repositories are checked out.
+# Using 's' is consistent with the behavior when multiple repositories are checked out and allows for more
+# consistent build scripts.
+# A relative path is required in some places (like "checkout" steps). To get the absolute path, concatenate it
+# with the predefined variable "Pipeline.Workspace", e.g.: '$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}'
+- name: consistentSourcesDirectory
+  value: 's'
+- name: FluidFrameworkDirectory
+  value: '${{ variables.consistentSourcesDirectory }}/FluidFramework'
+- name: FFPipelineHostDirectory
+  value: '${{ variables.consistentSourcesDirectory }}/ff_pipeline_host'
 
 # The `resources` specify the location and version of the 1ES PT.
 resources:

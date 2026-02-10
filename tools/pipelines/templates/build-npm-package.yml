@@ -257,9 +257,9 @@ extends:
                       TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
-                      consistentSourcesDirectory=$(variables.consistentSourcesDirectory)
-                      FluidFrameworkDirectory=$(variables.FluidFrameworkDirectory)
-                      FFPipelineHostDirectory=$(variables.FFPipelineHostDirectory)
+                      consistentSourcesDirectory=$(consistentSourcesDirectory)
+                      FluidFrameworkDirectory=$(FluidFrameworkDirectory)
+                      FFPipelineHostDirectory=$(FFPipelineHostDirectory)
                       pathToTelemetryGenerator=$(pathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
 
@@ -467,7 +467,7 @@ extends:
                     inputs:
                       targetType: filePath
                       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                      filePath: $(Pipeline.Workspace)/$(variables.FluidFrameworkDirectory)/scripts/pack-packages.sh
+                      filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-packages.sh
 
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
@@ -531,7 +531,7 @@ extends:
                             set -eu -o pipefail
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
-                            ls -la '$(Pipeline.Workspace)/$(variables.FluidFrameworkDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                            ls -la '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
                             npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
