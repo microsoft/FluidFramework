@@ -244,7 +244,7 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				validateUsageError(/Unsupported version 2.5 encountered while decoding data/),
+				validateUsageError(/Unsupported version 2\.5 encountered while decoding data/),
 			);
 		});
 
