@@ -73,11 +73,11 @@ export const reducer = combineReducersAsync<StressOperations, LocalServerStressS
 	createDataStore: async (state, op) => {
 		const { handle } = await state.datastore.createDataStore(op.tag, op.asChild);
 		state.stateTracker.registerDatastore(op.tag, handle);
-		// Eagerly cache the newly created datastore on the creating client so
-		// subsequent resolve calls skip async resolution.
-		const entryPoint = await handle.get();
-		const sdo = (entryPoint as FluidObject<StressDataObject>)?.StressDataObject;
-		state.datastore.cacheResolvedObject(toFluidHandleInternal(handle).absolutePath, {
+		// Eagerly cache the newly created datastore on the creating client's entrypoint so
+		// subsequent resolve calls via ContainerStateTracker skip async resolution.
+		const resolvedEntryPoint = await handle.get();
+		const sdo = (resolvedEntryPoint as FluidObject<StressDataObject>)?.StressDataObject;
+		state.client.entryPoint.cacheResolvedObject(toFluidHandleInternal(handle).absolutePath, {
 			handle,
 			stressDataObject: sdo,
 		});
