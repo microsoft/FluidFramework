@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SharedTree } from "@fluidframework/tree/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
 import type { DataObjectTypes, TreeDataObject } from "../data-objects/index.js";
 
@@ -18,7 +19,7 @@ import {
  * @typeParam TDataObject - The concrete TreeDataObject implementation.
  * @typeParam TDataObjectTypes - The input types for the DataObject
  *
- * @legacy @beta
+ * @internal
  */
 export class TreeDataObjectFactory<
 	TDataObject extends TreeDataObject<TDataObjectTypes>,
@@ -33,10 +34,14 @@ export class TreeDataObjectFactory<
 		// If the user did not specify a SharedTree factory, add it to the shared objects.
 		if (
 			!newProps.sharedObjects.some(
-				(sharedObject) => sharedObject.type === SharedTree.getFactory().type,
+				(sharedObject) =>
+					sharedObject.type ===
+					(SharedTree as unknown as ISharedObjectKind<ITree>).getFactory().type,
 			)
 		) {
-			newProps.sharedObjects.push(SharedTree.getFactory());
+			newProps.sharedObjects.push(
+				(SharedTree as unknown as ISharedObjectKind<ITree>).getFactory(),
+			);
 		}
 
 		super(newProps);

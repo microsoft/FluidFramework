@@ -6,9 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
+import type { ITree } from "../../../index.js";
 import { Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
@@ -34,7 +36,7 @@ class NodeMap extends schema.map("NoteMap", schema.string) {}
 class NodeList extends schema.array("NoteList", schema.string) {}
 class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
-const factory = SharedTree.getFactory();
+const factory = (SharedTree as unknown as ISharedObjectKind<ITree>).getFactory();
 
 describe("simple-tree tree", () => {
 	it("ListRoot", () => {

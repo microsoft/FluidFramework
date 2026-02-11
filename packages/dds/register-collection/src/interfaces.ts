@@ -14,7 +14,7 @@ import {
  *
  * Extends the base IChannelFactory to return a more definite type of IConsensusRegisterCollection
  * Use for the runtime to create and load distributed data structure by type name of each channel.
- * @legacy @beta
+ * @internal
  * @deprecated Use `IChannelFactory<IConsensusRegisterCollection>`.
  */
 export type IConsensusRegisterCollectionFactory =

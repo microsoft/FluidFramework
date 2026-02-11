@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockHandle,
@@ -31,7 +32,9 @@ describe("SharedArray", () => {
 
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
-		factory = SharedArrayBuilder<number>().getFactory();
+		factory = (
+			SharedArrayBuilder<number>() as unknown as ISharedObjectKind<ISharedArray<number>>
+		).getFactory();
 		sharedArray = factory.create(dataStoreRuntime, "sharedArray");
 		testData = [1, 2, 3, 4];
 		expectedSharedArray = testData;
@@ -168,7 +171,11 @@ describe("SharedArray", () => {
 			const mockHandle = new MockHandle({});
 
 			beforeEach(() => {
-				handleFactory = SharedArrayBuilder<IFluidHandle>().getFactory();
+				handleFactory = (
+					SharedArrayBuilder<IFluidHandle>() as unknown as ISharedObjectKind<
+						ISharedArray<IFluidHandle>
+					>
+				).getFactory();
 				sharedArrayIFluidHandle = handleFactory.create(
 					dataStoreRuntime,
 					"sharedArrayIFluidHandle",

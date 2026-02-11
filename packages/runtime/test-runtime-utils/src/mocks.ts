@@ -192,7 +192,7 @@ export interface IInternalMockRuntimeMessage {
  * Mock implementation of IContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
- * @legacy @beta
+ * @internal
  */
 export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	public clientId: string;
@@ -544,7 +544,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
  * processes them when asked.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeFactoryForReconnection.
- * @legacy @beta
+ * @internal
  */
 export class MockContainerRuntimeFactory {
 	public sequenceNumber = 0;
@@ -857,7 +857,7 @@ const attachStatesToComparableNumbers = {
 
 /**
  * Mock implementation of IRuntime for testing that does nothing
- * @legacy @beta
+ * @internal
  * @sealed
  */
 export class MockFluidDataStoreRuntime

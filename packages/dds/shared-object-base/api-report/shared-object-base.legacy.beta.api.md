@@ -13,6 +13,19 @@ export interface IFluidSerializer {
 }
 
 // @beta @legacy
+export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
+    bindToContext(): void;
+}
+
+// @beta @legacy
+export interface ISharedObjectEvents extends IErrorEvent {
+    // @eventProperty
+    (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // @eventProperty
+    (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @beta @legacy
 export function makeHandlesSerializable(value: unknown, serializer: IFluidSerializer, bind: IFluidHandle): unknown;
 
 // @beta @legacy

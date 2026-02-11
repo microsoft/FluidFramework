@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactoryForReconnection,
@@ -28,7 +29,9 @@ describe("SharedArray", () => {
 
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
-		factory = SharedArrayBuilder<number>().getFactory();
+		factory = (
+			SharedArrayBuilder<number>() as unknown as ISharedObjectKind<ISharedArray<number>>
+		).getFactory();
 		sharedArray = factory.create(dataStoreRuntime, "sharedArray");
 		testDataOne = [1, 2];
 		testDataTwo = [3, 4];

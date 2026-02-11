@@ -4,16 +4,6 @@
 
 ```ts
 
-// @beta @sealed @legacy
-export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
-    static readonly Attributes: IChannelAttributes;
-    get attributes(): IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedDirectory>;
-    static readonly Type = "https://graph.microsoft.com/types/directory";
-    get type(): string;
-}
-
 // @beta @deprecated @legacy
 export interface ICreateInfo {
     ccIds: string[];
@@ -101,16 +91,6 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 export interface IValueChanged {
     readonly key: string;
     readonly previousValue: any;
-}
-
-// @beta @sealed @legacy
-export class MapFactory implements IChannelFactory<ISharedMap> {
-    static readonly Attributes: IChannelAttributes;
-    get attributes(): IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap>;
-    static readonly Type = "https://graph.microsoft.com/types/map";
-    get type(): string;
 }
 
 // @beta @legacy

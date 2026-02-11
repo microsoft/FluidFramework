@@ -8,11 +8,13 @@
 import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import {
 	MockFluidDataStoreRuntime,
 	validateTypeError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import type { ITree } from "../../../index.js";
 import {
 	allowUnused,
 	type ValidateRecursiveSchema,
@@ -124,10 +126,10 @@ describe("SchemaFactory Recursive methods", () => {
 
 			const config = new TreeViewConfiguration({ schema: Box });
 
-			const tree = SharedTree.create(
+			const tree = (SharedTree as unknown as ISharedObjectKind<ITree>).create(
 				new MockFluidDataStoreRuntime({
 					idCompressor: createIdCompressor(),
-					registry: [SharedTree.getFactory()],
+					registry: [(SharedTree as unknown as ISharedObjectKind<ITree>).getFactory()],
 				}),
 				"tree",
 			);

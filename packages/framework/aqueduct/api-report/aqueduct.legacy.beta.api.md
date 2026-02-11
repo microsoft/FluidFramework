@@ -58,23 +58,6 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
 }
 
 // @beta @legacy
-export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
-    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects?: readonly IChannelFactory[], optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
-    constructor(props: DataObjectFactoryProps<TObj, I>);
-}
-
-// @beta @legacy
-export interface DataObjectFactoryProps<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> {
-    readonly ctor: new (props: IDataObjectProps<I>) => TObj;
-    readonly optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>;
-    readonly policies?: Partial<IFluidDataStorePolicies>;
-    readonly registryEntries?: NamedFluidDataStoreRegistryEntries;
-    readonly runtimeClass?: typeof FluidDataStoreRuntime;
-    readonly sharedObjects?: readonly IChannelFactory[];
-    readonly type: string;
-}
-
-// @beta @legacy
 export interface DataObjectTypes {
     Events?: IEvent;
     InitialState?: any;
@@ -116,39 +99,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
     request(req: IRequest): Promise<IResponse>;
     protected readonly runtime: IFluidDataStoreRuntime;
-}
-
-// @beta @legacy
-export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry> {
-    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects?: readonly IChannelFactory[], optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
-    constructor(props: DataObjectFactoryProps<TObj, I>);
-    createChildInstance(parentContext: IFluidDataStoreContext, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
-    createInstance(runtime: IContainerRuntimeBase, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
-    // (undocumented)
-    protected createInstanceCore(context: IFluidDataStoreContextDetached, initialState?: I["InitialState"]): Promise<TObj>;
-    createInstanceWithDataStore(containerRuntime: IContainerRuntimeBase, initialState?: I["InitialState"], packagePath?: readonly string[], loadingGroupId?: string): Promise<[TObj, IDataStore]>;
-    // (undocumented)
-    protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: readonly string[], initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
-    createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
-    // @deprecated
-    createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: I["InitialState"]): Promise<TObj>;
-    get IFluidDataStoreFactory(): this;
-    get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
-    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
-    get registryEntry(): NamedFluidDataStoreRegistryEntry;
-    readonly type: string;
-}
-
-// @beta @legacy
-export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TDataObjectTypes> {
-    // (undocumented)
-    initializeInternal(existing: boolean): Promise<void>;
-    protected get tree(): ITree_2;
-}
-
-// @beta @legacy
-export class TreeDataObjectFactory<TDataObject extends TreeDataObject<TDataObjectTypes>, TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
-    constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>);
 }
 
 ```

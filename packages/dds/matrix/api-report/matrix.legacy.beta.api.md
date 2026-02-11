@@ -44,21 +44,6 @@ export const SharedMatrix: ISharedObjectKind<ISharedMatrix<any>> & SharedObjectK
 // @beta @legacy
 export type SharedMatrix<T = any> = ISharedMatrix<T>;
 
-// @beta @deprecated @legacy
-export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
-    // (undocumented)
-    static readonly Attributes: IChannelAttributes;
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): ISharedMatrix & IChannel;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMatrix & IChannel>;
-    // (undocumented)
-    static Type: string;
-    // (undocumented)
-    get type(): string;
-}
-
 // (No @packageDocumentation comment for this package)
 
 ```

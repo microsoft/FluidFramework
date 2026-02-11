@@ -116,7 +116,7 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
 
 // @beta @legacy
-export function configuredSharedTreeBetaLegacy(options: SharedTreeOptionsBeta): ISharedObjectKind<ITree> & SharedObjectKind<ITree>;
+export function configuredSharedTreeBetaLegacy(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
 
 // @beta
 export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;

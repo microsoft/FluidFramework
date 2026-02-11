@@ -145,7 +145,7 @@ async function createDataObject<
  * registry entries, and the runtime class to use for the data object.
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
- * @legacy @beta
+ * @internal
  */
 export interface DataObjectFactoryProps<
 	TObj extends PureDataObject<I>,
@@ -197,7 +197,7 @@ export interface DataObjectFactoryProps<
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
- * @legacy @beta
+ * @internal
  */
 export class PureDataObjectFactory<
 	TObj extends PureDataObject<I>,

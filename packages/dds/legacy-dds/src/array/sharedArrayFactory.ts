@@ -11,7 +11,6 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	createSharedObjectKind,
-	type ISharedObjectKind,
 	type SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 
@@ -70,8 +69,7 @@ export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
  * Entrypoint for {@link ISharedArray} creation.
  * @legacy @beta
  */
-export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> &
-	SharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> =
+export const SharedArray: SharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> =
 	createSharedObjectKind<ISharedArray<SerializableTypeForSharedArray>>(SharedArrayFactory);
 
 /**
@@ -80,7 +78,7 @@ export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForShar
  */
 export const SharedArrayBuilder = <
 	T extends SerializableTypeForSharedArray,
->(): ISharedObjectKind<ISharedArray<T>> & SharedObjectKind<ISharedArray<T>> => {
+>(): SharedObjectKind<ISharedArray<T>> => {
 	const factory = SharedArrayFactory<T>;
 	return createSharedObjectKind<ISharedArray<T>>(factory);
 };

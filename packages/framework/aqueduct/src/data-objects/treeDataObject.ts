@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type {
+	ISharedObject,
+	ISharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
@@ -57,7 +60,7 @@ const uninitializedErrorString =
  * }
  * ```
  *
- * @legacy @beta
+ * @internal
  */
 export abstract class TreeDataObject<
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
@@ -97,7 +100,7 @@ export abstract class TreeDataObject<
 		} else {
 			const sharedTree = this.runtime.createChannel(
 				treeChannelId,
-				SharedTree.getFactory().type,
+				(SharedTree as unknown as ISharedObjectKind<ITree>).getFactory().type,
 			) as unknown as ITree;
 			(sharedTree as unknown as ISharedObject).bindToContext();
 
