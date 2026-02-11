@@ -98,6 +98,7 @@
 		"eslint": "~9.39.1",
 		"eslint-config-prettier": "~10.1.8",
 		"eslint-plugin-unicorn": "~62.0.0",
+		"jiti": "^2.6.1",
 		"typescript-eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^2.6.2",
