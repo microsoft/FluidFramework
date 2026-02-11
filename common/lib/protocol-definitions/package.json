@@ -112,7 +112,11 @@
 		"commentsOverrides": [
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
 		],
-		"onlyBuiltDependencies": ["core-js", "sharp", "unrs-resolver"],
+		"onlyBuiltDependencies": [
+			"core-js",
+			"sharp",
+			"unrs-resolver"
+		],
 		"peerDependencyComments": [
 			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."
 		],
