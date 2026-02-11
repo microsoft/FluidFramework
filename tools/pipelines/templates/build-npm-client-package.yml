@@ -830,8 +830,8 @@ extends:
                           PACKAGE_PATH="packages/test/test-end-to-end-tests"
                         fi
 
-                        PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/$PACKAGE_PATH/tinylicious.log;
-                        if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
+                        PATH_TO_TINYLICIOUS_LOG="$(Build.SourcesDirectory)/$PACKAGE_PATH/tinylicious.log";
+                        if [ -f "$PATH_TO_TINYLICIOUS_LOG" ] ; then
                           echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
                           echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
                         else
