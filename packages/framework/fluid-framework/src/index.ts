@@ -82,6 +82,7 @@ export * from "@fluidframework/tree/alpha";
 // #endregion Basic re-exports
 // ---------------------------------------------------------------
 // #region Custom re-exports
+/* eslint-disable import-x/order */
 
 import {
 	// eslint-disable-next-line import-x/no-deprecated -- TODO#59157: relocating to fluid-static
@@ -161,6 +162,7 @@ export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKi
 	return originalConfiguredSharedTree(options);
 }
 
+/* eslint-enable import-x/order */
 // #endregion Custom re-exports
 // #endregion
 
