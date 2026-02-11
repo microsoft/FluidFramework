@@ -222,32 +222,8 @@ export const validateConsistencyOfAllDDS = async (
 	const aMap = await buildChannelMap(clientA);
 	const bMap = await buildChannelMap(clientB);
 
-	// After synchronization, all attached channels should resolve on all connected clients.
-	// Strict key-set equality catches real divergence where one client is missing a channel.
-	const aKeys = new Set(aMap.keys());
-	const bKeys = new Set(bMap.keys());
-	const missingFromB: string[] = [];
-	for (const key of aKeys) {
-		if (!bKeys.has(key)) {
-			missingFromB.push(key);
-		}
-	}
-	const missingFromA: string[] = [];
-	for (const key of bKeys) {
-		if (!aKeys.has(key)) {
-			missingFromA.push(key);
-		}
-	}
-
-	if (missingFromA.length > 0 || missingFromB.length > 0) {
-		throw new Error(
-			`DDS channel set mismatch between clients ${clientA.tag} and ${clientB.tag}: ` +
-				`missing from ${clientA.tag}: [${missingFromA.join(", ")}]; ` +
-				`missing from ${clientB.tag}: [${missingFromB.join(", ")}]`,
-		);
-	}
-
-	for (const key of aKeys) {
+	assert(aMap.size === bMap.size, "channel maps should be the same size");
+	for (const key of aMap.keys()) {
 		const aChannel = aMap.get(key);
 		const bChannel = bMap.get(key);
 		assert(aChannel !== undefined, "channel must exist");
