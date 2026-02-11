@@ -3,7 +3,7 @@
 "@fluidframework/presence": minor
 "__section": deprecation
 ---
-getPresence is being relocated to fluid-framework package away from @fluidframework/presence
+getPresence is being relocated from @fluidframework/presence to the fluid-framework package
 
 To prepare, make changes following this pattern:
 ```diff
