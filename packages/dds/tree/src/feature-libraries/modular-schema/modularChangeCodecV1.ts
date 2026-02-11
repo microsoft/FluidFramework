@@ -9,7 +9,6 @@ import type { TAnySchema } from "@sinclair/typebox";
 import {
 	type ICodecOptions,
 	type IJsonCodec,
-	type IMultiFormatCodec,
 	type SchemaValidationFunction,
 	extractJsonValidator,
 	withSchemaValidation,
@@ -72,7 +71,7 @@ type ModularChangeCodec = IJsonCodec<
 	ChangeEncodingContext
 >;
 
-type FieldCodec = IMultiFormatCodec<
+type FieldCodec = IJsonCodec<
 	FieldChangeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
@@ -132,7 +131,7 @@ export function encodeFieldChangesForJsonI(
 			fieldChange.fieldKind,
 			fieldChangesetCodecs,
 		);
-		const encodedChange = codec.json.encode(fieldChange.change, context);
+		const encodedChange = codec.encode(fieldChange.change, context);
 		if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
 			fail(0xb1f /* Encoded change didn't pass schema validation. */);
 		}
@@ -225,7 +224,7 @@ export function decodeFieldChangesFromJson(
 			},
 		};
 
-		const fieldChangeset = codec.json.decode(field.change, fieldContext);
+		const fieldChangeset = codec.decode(field.change, fieldContext);
 
 		const crossFieldKeys = getChangeHandler(fieldKinds, field.fieldKind).getCrossFieldKeys(
 			fieldChangeset,
@@ -597,8 +596,8 @@ export function getFieldChangesetCodecs(
 		const codec = kind.changeHandler.codecsFactory(revisionTagCodec).resolve(formatVersion);
 		return {
 			codec,
-			compiledSchema: codec.json.encodedSchema
-				? extractJsonValidator(codecOptions.jsonValidator).compile(codec.json.encodedSchema)
+			compiledSchema: codec.encodedSchema
+				? extractJsonValidator(codecOptions.jsonValidator).compile(codec.encodedSchema)
 				: undefined,
 		};
 	};
