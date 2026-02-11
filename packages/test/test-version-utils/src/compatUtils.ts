@@ -121,7 +121,8 @@ function createGetDataStoreFactoryFunction(
 	}
 
 	const registryMapping = {};
-	for (const value of Object.values(api.dds)) {
+	for (const ddsEntry of Object.values(api.dds)) {
+		const value = ddsEntry as { getFactory?(): IChannelFactory };
 		/**
 		 * Skip dds that may not be available in this version of the api.
 		 * Not all versions have all dds. See {@link PackageToInstall} for details.
@@ -129,7 +130,8 @@ function createGetDataStoreFactoryFunction(
 		if (value?.getFactory === undefined) {
 			continue;
 		}
-		registryMapping[value.getFactory().type] = value.getFactory();
+		const factory = value.getFactory();
+		registryMapping[factory.type] = factory;
 	}
 
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {

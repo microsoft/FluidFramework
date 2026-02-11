@@ -5,12 +5,14 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEventProvider, IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
-import type {
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/legacy";
-import { MapFactory, type ISharedMap, type IValueChanged } from "@fluidframework/map/legacy";
+// eslint-disable-next-line import-x/no-internal-modules -- @internal type used in example
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- @internal type used in example
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
+// eslint-disable-next-line import-x/no-internal-modules -- @internal type used in example
+import { MapFactory } from "@fluidframework/map/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/legacy";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,

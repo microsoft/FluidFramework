@@ -4,11 +4,9 @@
  */
 
 import { type IPactMap, PactMap } from "@fluid-experimental/pact-map";
-import {
-	DataObject,
-	DataObjectFactory,
-	type IDataObjectProps,
-} from "@fluidframework/aqueduct/legacy";
+// eslint-disable-next-line import-x/no-internal-modules -- @internal type used in example
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, type IDataObjectProps } from "@fluidframework/aqueduct/legacy";
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";

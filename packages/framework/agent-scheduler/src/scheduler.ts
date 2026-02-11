@@ -471,8 +471,7 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
 }
 
 /**
- * @legacy
- * @beta
+ * @internal
  */
 export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 	public static readonly type = "_scheduler";

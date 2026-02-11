@@ -9,7 +9,9 @@ import {
 	positionToRowCol,
 	rowColToPosition,
 } from "@fluid-experimental/sequence-deprecated";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+// eslint-disable-next-line import-x/no-internal-modules -- @internal type used in example
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26904: `sequence` internals used in examples
