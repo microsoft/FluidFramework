@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -21,8 +20,9 @@ import type {
 	IRevertible,
 	ISharedArray,
 } from "../../index.js";
-import { SharedArrayBuilder, SharedArrayRevertible } from "../../index.js";
+import { SharedArrayRevertible } from "../../index.js";
 import {
+	getSharedArrayFactory,
 	verifyEventsEmitted,
 	verifyEntries,
 	getRandomInt,
@@ -39,9 +39,7 @@ describe("SharedArray", () => {
 
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
-		factory = (
-			SharedArrayBuilder<number>() as unknown as ISharedObjectKind<ISharedArray<number>>
-		).getFactory();
+		factory = getSharedArrayFactory<number>();
 		sharedArray = factory.create(dataStoreRuntime, "sharedArray");
 		testData = [1, 2, 3, 4];
 		expectedSharedArray = testData;
@@ -566,11 +564,7 @@ describe("SharedArray in connected state with a remote SharedArray with IFluidHa
 	// const mockHandle = new MockHandle({});
 
 	beforeEach(async () => {
-		factory = (
-			SharedArrayBuilder<IFluidHandle>() as unknown as ISharedObjectKind<
-				ISharedArray<IFluidHandle>
-			>
-		).getFactory();
+		factory = getSharedArrayFactory<IFluidHandle>();
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 

@@ -32,16 +32,9 @@ export class TreeDataObjectFactory<
 		};
 
 		// If the user did not specify a SharedTree factory, add it to the shared objects.
-		if (
-			!newProps.sharedObjects.some(
-				(sharedObject) =>
-					sharedObject.type ===
-					(SharedTree as unknown as ISharedObjectKind<ITree>).getFactory().type,
-			)
-		) {
-			newProps.sharedObjects.push(
-				(SharedTree as unknown as ISharedObjectKind<ITree>).getFactory(),
-			);
+		const sharedTreeFactory = (SharedTree as unknown as ISharedObjectKind<ITree>).getFactory();
+		if (!newProps.sharedObjects.some((so) => so.type === sharedTreeFactory.type)) {
+			newProps.sharedObjects.push(sharedTreeFactory);
 		}
 
 		super(newProps);

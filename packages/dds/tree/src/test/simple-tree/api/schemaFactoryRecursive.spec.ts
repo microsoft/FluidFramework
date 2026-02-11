@@ -126,10 +126,11 @@ describe("SchemaFactory Recursive methods", () => {
 
 			const config = new TreeViewConfiguration({ schema: Box });
 
-			const tree = (SharedTree as unknown as ISharedObjectKind<ITree>).create(
+			const sharedTreeKind = SharedTree as unknown as ISharedObjectKind<ITree>;
+			const tree = sharedTreeKind.create(
 				new MockFluidDataStoreRuntime({
 					idCompressor: createIdCompressor(),
-					registry: [(SharedTree as unknown as ISharedObjectKind<ITree>).getFactory()],
+					registry: [sharedTreeKind.getFactory()],
 				}),
 				"tree",
 			);

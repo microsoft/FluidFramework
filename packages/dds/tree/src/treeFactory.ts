@@ -136,7 +136,7 @@ export function configuredSharedTreeBeta(
 }
 
 /**
- * {@link configuredSharedTreeBeta} including the legacy `ISharedObjectKind` type.
+ * {@link configuredSharedTreeBeta} for the legacy API surface.
  * @privateRemarks
  * This is given a different export name (with legacy appended) to avoid the need to do the special reexport with different types from the fluid-framework package.
  * @legacy @beta

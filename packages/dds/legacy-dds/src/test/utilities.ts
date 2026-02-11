@@ -6,9 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
-import type { ISharedArray } from "../index.js";
+import type { ISharedArray, SerializableTypeForSharedArray } from "../index.js";
+import { SharedArrayBuilder } from "../index.js";
 
 /**
  * Verifies that two arrays contain the same entries.
@@ -54,6 +57,20 @@ export function fillEntries(sharedArray: ISharedArray<number>, entries: number[]
 		sharedArray.insert(index, entry);
 		index++;
 	}
+}
+
+/**
+ * Creates a channel factory for `SharedArray` by casting through the `@internal` `ISharedObjectKind` type.
+ *
+ * @remarks This is needed because `SharedArrayBuilder` returns `SharedObjectKind` (the public type)
+ * which does not expose `getFactory()`. The `ISharedObjectKind` type (now `@internal`) provides that method.
+ */
+export function getSharedArrayFactory<
+	T extends SerializableTypeForSharedArray,
+>(): IChannelFactory<ISharedArray<T>> {
+	return (
+		SharedArrayBuilder<T>() as unknown as ISharedObjectKind<ISharedArray<T>>
+	).getFactory();
 }
 
 /**

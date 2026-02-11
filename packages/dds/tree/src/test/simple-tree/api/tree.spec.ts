@@ -7,8 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreRuntime,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import type { ITree } from "../../../index.js";
 import { Tree } from "../../../shared-tree/index.js";
