@@ -124,7 +124,7 @@ describe("connectionManager", () => {
 			message: "whatever",
 			canRetry: true,
 		});
-		await Promise.resolve(); // So we get the promise rejection that calls closeHandler
+		await clock.tickAsync(0); // Flush effection's microtask scheduling so we get the promise rejection that calls closeHandler
 
 		// Assert
 		assert(

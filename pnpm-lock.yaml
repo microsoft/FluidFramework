@@ -12531,6 +12531,9 @@ importers:
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
+      effection:
+        specifier: ^4.0.0
+        version: 4.0.2
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -22270,6 +22273,10 @@ packages:
 
   effect@3.19.11:
     resolution: {integrity: sha512-UTEj3c1s41Ha3uzSPKKvFBZaDjZ8ez00Q2NYWVm2mKh2LXeX8j6LTg1HcQHnmdUhOjr79KHmhVWYB/zbegLO1A==}
+
+  effection@4.0.2:
+    resolution: {integrity: sha512-O8WMGP10nPuJDwbNGILcaCNWS+CvDYjcdsUSD79nWZ+WtUQ8h1MEV7JJwCSZCSeKx8+TdEaZ/8r6qPTR2o/o8w==}
+    engines: {node: '>= 16'}
 
   ejs@3.1.10:
     resolution: {integrity: sha512-UeJmFfOrAQS8OJWPZ4qtgHyWExa088/MtK5UEyoJGFH67cDEXkZSviOiKRCZ4Xij0zxI3JECgYs3oKx+AizQBA==}
@@ -36041,6 +36048,8 @@ snapshots:
     dependencies:
       '@standard-schema/spec': 1.0.0
       fast-check: 3.23.2
+
+  effection@4.0.2: {}
 
   ejs@3.1.10:
     dependencies:
