@@ -817,11 +817,20 @@ extends:
                     displayName: Upload tinylicious log
                     condition: always()
                     continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
+                    env:
+                      TEST_NAME: '${{ test.name }}'
                     inputs:
                       targetType: inline
                       script: |
                         set -eu -o pipefail
-                        PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
+                        # Determine package path based on test type
+                        if [[ "$TEST_NAME" == *"stress"* ]]; then
+                          PACKAGE_PATH="packages/test/test-service-load"
+                        else
+                          PACKAGE_PATH="packages/test/test-end-to-end-tests"
+                        fi
+
+                        PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/$PACKAGE_PATH/tinylicious.log;
                         if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
                           echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
                           echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
