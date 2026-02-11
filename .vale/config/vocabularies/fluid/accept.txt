@@ -12,6 +12,7 @@ enum
 Enum
 openable
 Datastore
+DDS
 DDSes
 accessor
 accessors
