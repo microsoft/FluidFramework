@@ -13,7 +13,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 
 /**
  * Events emitted by {@link ISharedObject}.
- * @internal
+ * @legacy @beta
  */
 export interface ISharedObjectEvents extends IErrorEvent {
 	/**
@@ -53,6 +53,9 @@ export interface ISharedObjectEvents extends IErrorEvent {
 
 /**
  * Base interface for shared objects from which other interfaces extend.
+ * @remarks
+ * This interface is not intended to be implemented outside this repository:
+ * implementers should migrate to using an existing implementation instead.
  * @privateRemarks
  * Implemented by {@link SharedObjectCore}.
  *
@@ -62,7 +65,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
  * Additionally the docs here need to define what a shared object is, not just claim this interface is for them.
  * If the intention is that the "shared object" concept `IFluidLoadable` mentions is only ever implemented by this interface then even more concept unification should be done.
  * If not then more clarity is needed on what this interface specifically is, what the other "shared object" concept means and how they relate.
- * @internal
+ * @legacy @beta
  */
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
 	extends IChannel,
