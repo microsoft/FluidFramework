@@ -24,8 +24,8 @@ export default tseslint.config(
 	{
 		plugins: {
 			"@rushstack": rushstackPlugin,
-			import: importPlugin,
-			unicorn: unicornPlugin,
+			"import": importPlugin,
+			"unicorn": unicornPlugin,
 		},
 		languageOptions: {
 			parserOptions: {
