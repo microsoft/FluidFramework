@@ -338,7 +338,7 @@ export function makeCodecFamily<TDecoded, TContext>(
 
 	return {
 		resolve(
-			formatVersion: number,
+			formatVersion: FormatVersion,
 		): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
 			const codec = codecs.get(formatVersion);
 			assert(codec !== undefined, 0x5e6 /* Requested coded for unsupported format. */);
