@@ -5,9 +5,17 @@
 
 import { strict as assert } from "node:assert";
 
+import type { TreeNodeSchema } from "@fluidframework/tree";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 
-import { getFriendlyName, unqualifySchema, findSchemas, isNamedSchema } from "../utils.js";
+import {
+	getFriendlyName,
+	unqualifySchema,
+	findSchemas,
+	isNamedSchema,
+	IdentifierCollisionResolver,
+	reservedTypeNames,
+} from "../utils.js";
 
 const sf = new SchemaFactoryAlpha("test.scope");
 class TestObject extends sf.object("TestObject", { value: sf.string }) {}
@@ -18,6 +26,19 @@ class NamedStringRecord extends sf.record("NamedStringRecord", sf.string) {}
 // Schema objects with invalid typescript type characters.
 class InvalidCharacters extends sf.object("Test-Object!", { value: sf.string }) {}
 class LeadingDigit extends sf.object("1TestObject", { value: sf.string }) {}
+
+/**
+ * Creates a named object schema with the given scope and name.
+ * The resulting schema has identifier `"${scope}.${name}"`.
+ */
+function createSchema(scope: string, name: string): TreeNodeSchema {
+	return new SchemaFactoryAlpha(scope).object(name, {});
+}
+
+function resolveAll(schemas: TreeNodeSchema[]): string[] {
+	const resolver = new IdentifierCollisionResolver();
+	return schemas.map((s) => resolver.resolve(s));
+}
 
 describe("getFriendlyName", () => {
 	it("returns the name for a named object schema", () => {
@@ -275,5 +296,143 @@ describe("findNamedSchemas", () => {
 		}
 		assert.ok(!identifiers.includes("string"));
 		assert.ok(!identifiers.includes("number"));
+	});
+});
+
+describe("IdentifierCollisionResolver", () => {
+	it("returns array with same length as input", () => {
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope1", "Bar"),
+			createSchema("scope1", "Baz"),
+		];
+		const result = resolveAll(input);
+		assert.equal(result.length, input.length);
+	});
+
+	it("preserves non-colliding names", () => {
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope1", "Bar"),
+			createSchema("scope1", "Baz"),
+		];
+		const result = resolveAll(input);
+		assert.deepEqual(result, ["Foo", "Bar", "Baz"]);
+	});
+
+	it("resolves three-way collisions: first keeps original, rest get suffixes", () => {
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope2", "Foo"),
+			createSchema("scope3", "Foo"),
+		];
+		const result = resolveAll(input);
+		assert.equal(result[0], "Foo");
+		assert.equal(result[1], "Foo_2");
+		assert.equal(result[2], "Foo_3");
+	});
+
+	it("handles mixed colliding and non-colliding names", () => {
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope2", "Foo"),
+			createSchema("scope1", "Bar"),
+		];
+		const result = resolveAll(input);
+		assert.equal(result[0], "Foo");
+		assert.equal(result[1], "Foo_2");
+		assert.equal(result[2], "Bar");
+	});
+
+	it("handles suffix collisions with later natural names", () => {
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope2", "Foo"),
+			createSchema("scope3", "Foo_2"),
+		];
+		const result = resolveAll(input);
+		assert.equal(result[0], "Foo");
+		assert.equal(result[1], "Foo_2");
+		assert.equal(result[2], "Foo_2_2");
+	});
+
+	it("identical full identifiers map to the same friendly name", () => {
+		const schema = createSchema("scope", "Foo");
+		const result = resolveAll([schema, schema]);
+		assert.equal(result[0], "Foo");
+		assert.equal(result[1], "Foo");
+	});
+
+	it("multi-level scope collisions: first keeps original, rest get suffixes", () => {
+		const input = [
+			createSchema("outer1.inner1", "Foo"),
+			createSchema("outer2.inner1", "Foo"),
+			createSchema("outer1.inner2", "Foo"),
+			createSchema("outer2.inner2", "Foo"),
+			createSchema("outer1.inner1", "Bar"),
+			createSchema("outer2.inner1", "Bar"),
+			createSchema("outer1.inner2", "Bar"),
+			createSchema("outer2.inner2", "Bar"),
+		];
+		const result = resolveAll(input);
+		assert.equal(result[0], "Foo");
+		assert.equal(result[1], "Foo_2");
+		assert.equal(result[2], "Foo_3");
+		assert.equal(result[3], "Foo_4");
+		assert.equal(result[4], "Bar");
+		assert.equal(result[5], "Bar_2");
+		assert.equal(result[6], "Bar_3");
+		assert.equal(result[7], "Bar_4");
+	});
+
+	it("suffixes names that collide with reserved primitives starting at _1", () => {
+		const input = [createSchema("scope1", "null"), createSchema("scope2", "null")];
+		const result = resolveAll(input);
+		assert.equal(result[0], "null_1");
+		assert.equal(result[1], "null_2");
+	});
+
+	it("suffixes all reserved primitive names", () => {
+		for (const name of reservedTypeNames) {
+			const input = [createSchema("scope1", name), createSchema("scope2", name)];
+			const result = resolveAll(input);
+			assert.equal(result[0], `${name}_1`, `First ${name} should get _1 suffix`);
+			assert.equal(result[1], `${name}_2`, `Second ${name} should get _2 suffix`);
+		}
+	});
+
+	it("handles primitive name collisions with existing suffixed names", () => {
+		const input = [
+			createSchema("scope1", "null_1"),
+			createSchema("scope2", "null"),
+			createSchema("scope3", "null"),
+		];
+		const result = resolveAll(input);
+		assert.equal(result[0], "null_1");
+		assert.equal(result[1], "null_2", "First null skips _1 (taken) and gets _2");
+		assert.equal(result[2], "null_3");
+	});
+
+	it("handles unnamed (inline) schemas", () => {
+		const unnamedArray = sf.array(sf.string);
+		const unnamedMap = sf.map(sf.string);
+		const unnamedRecord = sf.record(sf.string);
+		const nestedArrayOfMaps = sf.array(sf.map(TestObject));
+		const nestedMapOfRecords = sf.map(sf.record(sf.number));
+		const nestedRecordOfArrays = sf.record(sf.array(sf.string));
+		const result = resolveAll([
+			unnamedArray,
+			unnamedMap,
+			unnamedRecord,
+			nestedArrayOfMaps,
+			nestedMapOfRecords,
+			nestedRecordOfArrays,
+		]);
+		assert.equal(result[0], "string[]");
+		assert.equal(result[1], "Map<string, string>");
+		assert.equal(result[2], "Record<string, string>");
+		assert.equal(result[3], "Map<string, TestObject>[]");
+		assert.equal(result[4], "Map<string, Record<string, number>>");
+		assert.equal(result[5], "Record<string, string[]>");
 	});
 });

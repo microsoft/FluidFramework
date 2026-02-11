@@ -310,6 +310,102 @@ type MapWithProperty = Map<string, string> & {
 		`,
 		);
 	});
+
+	it("handles schemas with reserved primitive names", () => {
+		const sf1 = new SchemaFactory("scope1");
+		const sf2 = new SchemaFactory("scope2");
+
+		class Null1 extends sf1.object("null", { value: sf1.number }) {}
+		class Null2 extends sf2.object("null", { value: sf2.number }) {}
+		class String1 extends sf1.object("string", { label: sf1.string }) {}
+
+		class TestObject extends sf.object("PrimitiveNameContainer", {
+			n1: Null1,
+			n2: Null2,
+			s1: String1,
+		}) {}
+
+		const view = independentView(new TreeViewConfiguration({ schema: TestObject }));
+		view.initialize({
+			n1: { value: 1 },
+			n2: { value: 2 },
+			s1: { label: "hi" },
+		});
+
+		const schema = getSimpleSchema(view.schema);
+		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
+
+		// User schemas named "null" get suffixed to avoid conflict with the primitive null type
+		assert.ok(schemaText.includes("interface null_1 {"), "First null gets _1");
+		assert.ok(schemaText.includes("interface null_2 {"), "Second null gets _2");
+		// User schema named "string" gets suffixed to avoid conflict with the primitive string type
+		assert.ok(schemaText.includes("interface string_1 {"), "string gets _1");
+		// The built-in primitive types are still used inline (not declared as named types)
+		assert.ok(!schemaText.includes("type null ="), "Built-in null is not declared");
+		assert.ok(!schemaText.includes("type string ="), "Built-in string is not declared");
+		// References to the suffixed names appear in the container interface
+		assert.ok(schemaText.includes("n1: null_1;"), "Field references null_1");
+		assert.ok(schemaText.includes("n2: null_2;"), "Field references null_2");
+		assert.ok(schemaText.includes("s1: string_1;"), "Field references string_1");
+	});
+
+	it("handles schema short name collisions", () => {
+		const sf1 = new SchemaFactory("scope1");
+		const sf2 = new SchemaFactory("scope2");
+		const sf3 = new SchemaFactory("scope3");
+
+		// Three "Foo" schemas from different scopes collide
+		class Foo1 extends sf1.object("Foo", { value: sf1.number }) {}
+		class Foo2 extends sf2.object("Foo", { value: sf2.number }) {}
+		class Foo3 extends sf3.object("Foo", { value: sf3.number }) {}
+		// "Bar" is unique — no collision
+		class Bar extends sf1.object("Bar", { value: sf1.number }) {}
+		// Two "Foo_1" schemas collide with each other
+		class Foo_1A extends sf1.object("Foo_1", { value: sf1.number }) {}
+		class Foo_1B extends sf2.object("Foo_1", { value: sf2.number }) {}
+		// Natural "Foo_2" conflicts with the counter-generated "Foo_2" from Foo collisions
+		class NaturalFoo2 extends sf3.object("Foo_2", { value: sf3.number }) {}
+
+		class TestObject extends sf.object("Container", {
+			foo1: Foo1,
+			foo2: Foo2,
+			foo3: Foo3,
+			bar: Bar,
+			foo1A: Foo_1A,
+			foo1B: Foo_1B,
+			naturalFoo2: NaturalFoo2,
+		}) {}
+
+		const view = independentView(new TreeViewConfiguration({ schema: TestObject }));
+		view.initialize({
+			foo1: { value: 1 },
+			foo2: { value: 2 },
+			foo3: { value: 3 },
+			bar: { value: 4 },
+			foo1A: { value: 5 },
+			foo1B: { value: 6 },
+			naturalFoo2: { value: 7 },
+		});
+
+		const schema = getSimpleSchema(view.schema);
+		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
+
+		// Three "Foo" collisions: first keeps name, subsequent get _2, _3
+		assert.ok(schemaText.includes("interface Foo {"), "First Foo keeps original name");
+		assert.ok(schemaText.includes("interface Foo_2 {"), "Second Foo gets _2");
+		assert.ok(schemaText.includes("interface Foo_3 {"), "Third Foo gets _3");
+		// Non-colliding name keeps original
+		assert.ok(schemaText.includes("interface Bar {"), "Unique Bar keeps original name");
+		assert.ok(!schemaText.includes("interface Bar_2"), "Bar should not have collision suffix");
+		// Two "Foo_1" collisions
+		assert.ok(schemaText.includes("interface Foo_1 {"), "First Foo_1 keeps original name");
+		assert.ok(schemaText.includes("interface Foo_1_2"), "Second Foo_1 gets _2");
+		// Natural "Foo_2" conflicts with counter-generated "Foo_2"
+		assert.ok(
+			schemaText.includes("interface Foo_2_2"),
+			"Natural Foo_2 becomes Foo_2_2 since Foo_2 was taken",
+		);
+	});
 });
 
 function getDomainSchemaString<TSchema extends ImplicitFieldSchema>(
