@@ -16,7 +16,15 @@ import type { Listenable } from "fluid-framework";
  * Interface for undo/redo stack operations.
  */
 export interface UndoRedo {
+	/**
+	 * Reverts the most recent change. Only valid to call when {@link canUndo} returns true.
+	 * @throws Error if there is nothing to undo.
+	 */
 	undo(): void;
+	/**
+	 * Reapplies the most recently undone change. Only valid to call when {@link canRedo} returns true.
+	 * @throws Error if there is nothing to redo.
+	 */
 	redo(): void;
 	dispose(): void;
 	canUndo(): boolean;
@@ -60,11 +68,21 @@ export class UndoRedoStacks implements UndoRedo {
 	}
 
 	public undo(): void {
-		this.undoStack.pop()?.revert();
+		const revertible = this.undoStack.pop();
+		if (revertible === undefined) {
+			throw new Error("Cannot undo: undo stack is empty.");
+		}
+		revertible.revert();
+		this.notifyListeners();
 	}
 
 	public redo(): void {
-		this.redoStack.pop()?.revert();
+		const revertible = this.redoStack.pop();
+		if (revertible === undefined) {
+			throw new Error("Cannot redo: redo stack is empty.");
+		}
+		revertible.revert();
+		this.notifyListeners();
 	}
 
 	public dispose(): void {
