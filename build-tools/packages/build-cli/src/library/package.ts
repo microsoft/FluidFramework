@@ -533,7 +533,9 @@ export async function setVersion(
 				],
 				options,
 			],
-			["pnpm", ["-r", "run", "build:genver"], options],
+			// If no packages use `packageVersion.ts` then none will have the build:genver script,
+			// so use --if-present to avoid errors in that case in versions of pnpm where this is an error (versions >= 10.28.1).
+			["pnpm", ["-r", "--if-present", "run", "build:genver"], options],
 		);
 	} else {
 		options = {
