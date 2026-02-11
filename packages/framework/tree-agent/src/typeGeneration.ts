@@ -36,27 +36,31 @@ function buildPromptSchemaDescription(
 	const bindableSchemas = new Map<string, BindableSchema>();
 	const allSchemas = new Set<TreeNodeSchema>();
 
-	walkFieldSchema(rootSchema, {
-		node: (node) => {
-			if (isBindableSchema(node)) {
-				bindableSchemas.set(node.identifier, node);
+	walkFieldSchema(
+		rootSchema,
+		{
+			node: (node) => {
+				if (isBindableSchema(node)) {
+					bindableSchemas.set(node.identifier, node);
 
-				const exposedMethods = getExposedMethods(node);
-				for (const referenced of exposedMethods.referencedTypes) {
-					if (isBindableSchema(referenced)) {
-						bindableSchemas.set(referenced.identifier, referenced);
+					const exposedMethods = getExposedMethods(node);
+					for (const referenced of exposedMethods.referencedTypes) {
+						if (isBindableSchema(referenced)) {
+							bindableSchemas.set(referenced.identifier, referenced);
+						}
+					}
+
+					const exposedProperties = getExposedProperties(node);
+					for (const referenced of exposedProperties.referencedTypes) {
+						if (isBindableSchema(referenced)) {
+							bindableSchemas.set(referenced.identifier, referenced);
+						}
 					}
 				}
-
-				const exposedProperties = getExposedProperties(node);
-				for (const referenced of exposedProperties.referencedTypes) {
-					if (isBindableSchema(referenced)) {
-						bindableSchemas.set(referenced.identifier, referenced);
-					}
-				}
-			}
+			},
 		},
-	}, allSchemas);
+		allSchemas,
+	);
 
 	return renderSchemaTypeScript(allSchemas, bindableSchemas);
 }
