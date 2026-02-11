@@ -6,7 +6,9 @@
 import { strict as assert } from "node:assert";
 import type { Package } from "@fluidframework/build-tools";
 import { type Command, Flags, ux } from "@oclif/core";
-import async from "async";
+import { run } from "effection";
+
+import { processWithConcurrency } from "./concurrency.js";
 import {
 	type PackageFilterOptions,
 	type PackageKind,
@@ -150,24 +152,37 @@ export abstract class PackageCommand<
 			}
 		}
 
+		// Capture `this` for use inside the generator function.
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const self = this;
+
 		try {
-			// eslint-disable-next-line import-x/no-named-as-default-member -- async.mapLimit is the idiomatic usage
-			await async.mapLimit(packages, this.flags.concurrency, async (pkg: PackageWithKind) => {
-				started += 1;
-				updateStatus();
-				try {
-					await this.processPackage(pkg, pkg.kind);
-					succeeded += 1;
-				} catch (error: unknown) {
-					const errorString = `Error updating ${pkg.name}: '${error}'\nStack: ${
-						(error as Error).stack
-					}`;
-					errors.push(errorString);
-					this.verbose(errorString);
-				} finally {
-					finished += 1;
-					updateStatus();
-				}
+			await run(function* () {
+				yield* processWithConcurrency(
+					packages,
+					self.flags.concurrency,
+					(pkg) => self.processPackage(pkg, pkg.kind),
+					{
+						onStart: () => {
+							started += 1;
+							updateStatus();
+						},
+						onSuccess: () => {
+							succeeded += 1;
+						},
+						onError: (_pkg, error) => {
+							const errorString = `Error updating ${_pkg.name}: '${error}'\nStack: ${
+								(error as Error).stack
+							}`;
+							errors.push(errorString);
+							self.verbose(errorString);
+						},
+						onFinish: () => {
+							finished += 1;
+							updateStatus();
+						},
+					},
+				);
 			});
 		} finally {
 			// Stop the spinner if needed.
