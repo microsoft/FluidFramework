@@ -87,6 +87,8 @@ export class StartpointInRangeIndex implements IStartpointInRangeIndex {
 	}
 }
 /**
+ * Creates a startpoint-in-range index for the provided SharedString.
+ *
  * @internal
  */
 export function createStartpointInRangeIndex(

@@ -14,7 +14,7 @@ export type ConsensusRegisterCollection<T> = IConsensusRegisterCollection<T>;
 export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
-    protected applyStashedOp(): void;
+    protected applyStashedOp(content: unknown): void;
     // (undocumented)
     keys(): string[];
     protected loadCore(storage: IChannelStorageService): Promise<void>;

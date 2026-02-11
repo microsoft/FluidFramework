@@ -19,15 +19,19 @@ export type TypeFactoryTypeKind =
 	| "undefined"
 	| "null"
 	| "unknown"
+	| "date"
+	| "promise"
 	| "array"
 	| "object"
 	| "record"
 	| "map"
 	| "tuple"
 	| "union"
+	| "intersection"
 	| "literal"
 	| "optional"
 	| "readonly"
+	| "function"
 	| "instanceof";
 
 /**
@@ -53,15 +57,19 @@ const validTypeKinds: ReadonlySet<TypeFactoryTypeKind> = new Set<TypeFactoryType
 	"undefined",
 	"null",
 	"unknown",
+	"date",
+	"promise",
 	"array",
 	"object",
 	"record",
 	"map",
 	"tuple",
 	"union",
+	"intersection",
 	"literal",
 	"optional",
 	"readonly",
+	"function",
 	"instanceof",
 ]);
 
@@ -110,6 +118,17 @@ export interface TypeFactoryBoolean extends TypeFactoryType {
 	 * {@inheritDoc TypeFactoryType._kind}
 	 */
 	readonly _kind: "boolean";
+}
+
+/**
+ * Represents a Date type in the type factory system.
+ * @alpha
+ */
+export interface TypeFactoryDate extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
+	readonly _kind: "date";
 }
 
 /**
@@ -171,6 +190,21 @@ export interface TypeFactoryArray extends TypeFactoryType {
 	 * The type of elements in the array.
 	 */
 	readonly element: TypeFactoryType;
+}
+
+/**
+ * Represents a Promise type in the type factory system.
+ * @alpha
+ */
+export interface TypeFactoryPromise extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
+	readonly _kind: "promise";
+	/**
+	 * The type that the Promise resolves to.
+	 */
+	readonly innerType: TypeFactoryType;
 }
 
 /**
@@ -261,6 +295,21 @@ export interface TypeFactoryUnion extends TypeFactoryType {
 }
 
 /**
+ * Represents an intersection type in the type factory system.
+ * @alpha
+ */
+export interface TypeFactoryIntersection extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
+	readonly _kind: "intersection";
+	/**
+	 * The types to intersect.
+	 */
+	readonly types: readonly TypeFactoryType[];
+}
+
+/**
  * Represents a literal type (specific string, number, or boolean value) in the type factory system.
  * @alpha
  */
@@ -303,6 +352,35 @@ export interface TypeFactoryReadonly extends TypeFactoryType {
 	 * The inner type that is readonly.
 	 */
 	readonly innerType: TypeFactoryType;
+}
+
+/**
+ * Represents a function parameter as a tuple of [name, type].
+ * @alpha
+ */
+export type TypeFactoryFunctionParameter = readonly [name: string, type: TypeFactoryType];
+
+/**
+ * Represents a function type in the type factory system.
+ * @alpha
+ */
+export interface TypeFactoryFunction extends TypeFactoryType {
+	/**
+	 * {@inheritDoc TypeFactoryType._kind}
+	 */
+	readonly _kind: "function";
+	/**
+	 * The function parameters.
+	 */
+	readonly parameters: readonly TypeFactoryFunctionParameter[];
+	/**
+	 * The function return type.
+	 */
+	readonly returnType: TypeFactoryType;
+	/**
+	 * Optional rest parameter for variable-length argument lists.
+	 */
+	readonly restParameter?: TypeFactoryFunctionParameter;
 }
 
 /**
@@ -350,6 +428,14 @@ export const typeFactory = {
 	},
 
 	/**
+	 * Create a Date type.
+	 * @alpha
+	 */
+	date(): TypeFactoryDate {
+		return { _kind: "date" };
+	},
+
+	/**
 	 * Create a void type.
 	 * @alpha
 	 */
@@ -387,6 +473,14 @@ export const typeFactory = {
 	 */
 	array(element: TypeFactoryType): TypeFactoryArray {
 		return { _kind: "array", element };
+	},
+
+	/**
+	 * Create a Promise type.
+	 * @alpha
+	 */
+	promise(innerType: TypeFactoryType): TypeFactoryPromise {
+		return { _kind: "promise", innerType };
 	},
 
 	/**
@@ -440,6 +534,19 @@ export const typeFactory = {
 	},
 
 	/**
+	 * Create an intersection type.
+	 * @alpha
+	 */
+	intersection(types: readonly TypeFactoryType[]): TypeFactoryIntersection {
+		if (types.length === 0) {
+			throw new UsageError(
+				"typeFactory.intersection requires at least one type. Empty intersections are not valid TypeScript types.",
+			);
+		}
+		return { _kind: "intersection", types };
+	},
+
+	/**
 	 * Create a literal type.
 	 * @alpha
 	 */
@@ -464,6 +571,20 @@ export const typeFactory = {
 	},
 
 	/**
+	 * Create a function type.
+	 * @alpha
+	 */
+	function(
+		parameters: readonly TypeFactoryFunctionParameter[],
+		returnType: TypeFactoryType,
+		restParameter?: TypeFactoryFunctionParameter,
+	): TypeFactoryFunction {
+		return restParameter === undefined
+			? { _kind: "function", parameters, returnType }
+			: { _kind: "function", parameters, returnType, restParameter };
+	},
+
+	/**
 	 * Create an instanceOf type for a SharedTree schema class.
 	 * @alpha
 	 */
@@ -478,13 +599,6 @@ export const typeFactory = {
 			_kind: "instanceof",
 			schema,
 		};
-		instanceOfsTypeFactory.set(instanceOfType, schema);
 		return instanceOfType;
 	},
 };
-
-/**
- * A lookup from type factory instanceOf types to their corresponding ObjectNodeSchema.
- * @alpha
- */
-export const instanceOfsTypeFactory = new WeakMap<TypeFactoryInstanceOf, ObjectNodeSchema>();

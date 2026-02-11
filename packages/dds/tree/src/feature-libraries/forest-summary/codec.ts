@@ -9,6 +9,7 @@ import {
 	getConfigForMinVersionForCollab,
 	lowestMinVersionForCollab,
 } from "@fluidframework/runtime-utils/internal";
+import { Type } from "@sinclair/typebox";
 
 import {
 	type CodecTree,
@@ -18,21 +19,23 @@ import {
 	makeVersionedValidatedCodec,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../../util/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
-import {
-	ForestFormatVersion,
-	validVersions,
-	type Format,
-	FormatCommon,
-} from "./formatCommon.js";
-import { brand } from "../../util/index.js";
+import { ForestFormatVersion, validVersions, type Format } from "./formatCommon.js";
+import { FormatV1 } from "./formatV1.js";
+import { FormatV2 } from "./formatV2.js";
 
 /**
  * Uses field cursors
  */
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
-export type ForestCodec = IJsonCodec<FieldSet, Format, Format, FieldBatchEncodingContext>;
+export type ForestCodec = IJsonCodec<
+	FieldSet,
+	Format,
+	JsonCompatibleReadOnly,
+	FieldBatchEncodingContext
+>;
 
 /**
  * Convert a MinimumVersionForCollab to a ForestFormatVersion.
@@ -56,7 +59,10 @@ export function makeForestSummarizerCodec(
 ): ForestCodec {
 	const inner = fieldBatchCodec;
 	const writeVersion = clientVersionToForestFormatVersion(options.minVersionForCollab);
-	const formatSchema = FormatCommon(writeVersion);
+	const formatSchema = Type.Union([FormatV1, FormatV2]);
+	// Both the encode and decode logic here support both v1 and v2, as does `validVersions` and `formatSchema`.
+	// This makes this use of makeVersionedValidatedCodec atypical as it is a single call being used to make a codec that supports all versions,
+	// instead of one call per version, then using another utility to select between them based on version.
 	return makeVersionedValidatedCodec(options, validVersions, formatSchema, {
 		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
 			const keys: FieldKey[] = [];

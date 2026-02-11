@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 
 import {
@@ -26,15 +27,16 @@ import {
 	prefixFieldPath,
 	prefixPath,
 } from "../feature-libraries/index.js";
-import { brand } from "../util/index.js";
-import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	booleanSchema,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
 } from "../simple-tree/index.js";
-import { JsonAsTree } from "../jsonDomainSchema.js";
+import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
+
+import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
 
 const sf = new SchemaFactory("Cursor Test Suite");
 
@@ -465,7 +467,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 								const jsonableClone = jsonableTreeFromCursor(cursor);
 								// Check jsonable objects are actually json compatible
 								const text = JSON.stringify(jsonableClone);
-								const parsed = JSON.parse(text);
+								const parsed = JSON.parse(text) as JsonCompatibleReadOnly;
 								assert.deepEqual(parsed, jsonableClone);
 							});
 

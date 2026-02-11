@@ -9,11 +9,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { PostUpdateAction } from "./internalTypes.js";
 import { revealOpaqueJson } from "./internalUtils.js";
 import type { Attendee, AttendeesEvents, AttendeeId, Presence } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
+import type { PostUpdateAction } from "./statesManagerTypes.js";
 import { TimerManager } from "./timerManager.js";
 import type { AnyWorkspace, StatesWorkspaceSchema } from "./types.js";
 
@@ -223,8 +223,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			this.staleConnectionTimer.setTimeout(this.resolveStaleConnections.bind(this), 30_000);
 
 			this.selfAttendee.setConnected();
-			// TODO: AB#56686: self-Attendee never announced as Connected - Emit this event once there are tests in place
-			// this.events.emit("attendeeConnected", this.selfAttendee);
+			this.events.emit("attendeeConnected", this.selfAttendee);
 		}
 	}
 

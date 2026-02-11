@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType, type ISummaryBlob } from "@fluidframework/driver-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";

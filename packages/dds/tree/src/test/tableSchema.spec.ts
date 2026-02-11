@@ -4,8 +4,15 @@
  */
 
 import { strict as assert, fail } from "node:assert";
+
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
+import {
+	asAlpha,
+	configuredSharedTree,
+	FluidClientVersion,
+	FormatValidatorBasic,
+} from "../index.js";
 import { Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
 	allowUnused,
@@ -14,19 +21,29 @@ import {
 	SchemaFactoryAlpha,
 	SchemaFactoryBeta,
 	TreeBeta,
+	TreeViewConfiguration,
 	type ConciseTree,
 	type TreeNode,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
+// We have to use disable twice this rule here and below, otherwise this rule gets in conflict with itself and ends up flagging imports as wrong, then flagging
+// the fixes made to resolve the error as wrong and demands the changes it demanded be reverted.
+// eslint-disable-next-line import-x/order
 import type {
 	areSafelyAssignable,
 	JsonCompatibleReadOnly,
 	requireFalse,
 	requireTrue,
 } from "../util/index.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
+// eslint-disable-next-line import-x/order
 // eslint-disable-next-line import-x/no-internal-modules
 import { describeHydration } from "./simple-tree/utils.js";
+import {
+	takeJsonSnapshot,
+	testSchemaCompatibilitySnapshots,
+	useSnapshotDirectory,
+} from "./snapshots/index.js";
+import { createTestUndoRedoStacks, TestTreeProviderLite } from "./utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
@@ -67,6 +84,14 @@ class Table extends TableSchema.table({
 }) {}
 
 describe("TableFactory unit tests", () => {
+	it("compatibility", () => {
+		// There is not a single fixed table schema, but instead a collection of utilities that generate table schemas.
+		// Therefore, we cannot directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of TableSchema.table
+		// which is what this test does.
+		const currentViewSchema = new TreeViewConfiguration({ schema: Table });
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.82.0", "example-table");
+	});
+
 	/**
 	 * Compares a tree with an expected "concise" tree representation.
 	 * Fails if they are not equivalent.
@@ -2018,6 +2043,472 @@ describe("TableFactory unit tests", () => {
 			Tree.on(table.rows, "nodeChanged", () => {
 				// Respond to the change.
 			});
+		});
+	});
+
+	describe("Prevents orphan cells", () => {
+		it("column removal does not orphan cells from concurrently added rows", () => {
+			// Create a provider with minimum version support for noChange constraints
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree1 = provider.trees[0];
+			const view = asAlpha(tree1.viewWith(config));
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [],
+				}),
+			);
+			provider.synchronizeMessages();
+
+			const table = view.root;
+			const fork = view.fork();
+			const branchTable = fork.root;
+			const tree2 = provider.trees[1];
+			const view2 = asAlpha(tree2.viewWith(config));
+
+			// Remove a column on the branch - this adds a constraint to detect concurrent row additions
+			branchTable.removeColumns(["column-0"]);
+			assert.equal(branchTable.columns.length, 0);
+
+			// Concurrently add a row with a cell under the column being removed.
+			// Without the constraint, this would create an orphaned cell (a cell under a non-existent column).
+			view2.root.insertRows({
+				rows: [{ id: "row-0", cells: { "column-0": { value: "Hello" } } }],
+			});
+			provider.synchronizeMessages();
+			assert.equal(table.rows.length, 1);
+			assert.equal(table.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
+
+			// The column removal is dropped because it would orphan the newly added cell
+			fork.rebaseOnto(view);
+			assert.equal(branchTable.columns.length, 1);
+			assert.equal(branchTable.columns[0].id, "column-0");
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
+		});
+
+		it("undo of insertColumns is dropped when it would orphan cells in subsequently added rows", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(Table.create({ columns: [], rows: [] }));
+			// Insert a column - this adds a revert constraint to detect row additions before undo
+			view.root.insertColumns({
+				columns: [{ id: "column-0", props: {} }],
+			});
+			const revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			assert.equal(view.root.columns.length, 1);
+
+			// Add a row with a cell in the new column.
+			// Without the constraint, undoing the column insertion would orphan this cell.
+			view.root.insertRows({
+				rows: [{ id: "row-0", cells: { "column-0": { value: "Hello" } } }],
+			});
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
+
+			revertible.revert();
+
+			// The revert is dropped because it would orphan the cell - column and cell remain
+			assert.equal(view.root.columns.length, 1);
+			assert.equal(view.root.rows.length, 1);
+			assert.equal(view.root.columns[0].id, "column-0");
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
+
+			unsubscribe();
+		});
+
+		it("insertRows is dropped when concurrently removed column would orphan its cells", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [],
+				}),
+			);
+
+			const table = view.root;
+			const fork = view.fork();
+			const branchTable = fork.root;
+
+			// Insert a row with a cell on the branch - this adds a constraint on the column
+			branchTable.insertRows({
+				rows: [{ id: "row-0", cells: { "column-0": { value: "Hello" } } }],
+			});
+			assert.equal(branchTable.rows.length, 1);
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
+
+			// Concurrently remove the column. Without the constraint, the row's cell would be orphaned.
+			table.removeColumns(["column-0"]);
+			assert.equal(table.columns.length, 0);
+
+			// Row insertion is dropped because its cell would be orphaned
+			fork.rebaseOnto(view);
+			assert.equal(branchTable.rows.length, 0);
+		});
+
+		it("undo of removeRows is dropped when column removal would orphan the restored row's cells", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree1 = provider.trees[0];
+			const view = asAlpha(tree1.viewWith(config));
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: { "column-0": new Cell({ value: "Hello" }) },
+						}),
+					],
+				}),
+			);
+			provider.synchronizeMessages();
+
+			const table = view.root;
+			const fork = view.fork();
+			const branchTable = fork.root;
+			const tree2 = provider.trees[1];
+			const view2 = asAlpha(tree2.viewWith(config));
+
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
+
+			// Remove the row (which has a cell) - this adds a revert constraint on the column
+			branchTable.removeRows(["row-0"]);
+			assert.equal(branchTable.rows.length, 0);
+			const revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+
+			// Row should be restored on the branch
+			assert.equal(branchTable.rows.length, 1);
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
+
+			// Concurrently remove the column. Without the constraint, undoing row removal would orphan its cell.
+			view2.root.removeColumns(["column-0"]);
+			provider.synchronizeMessages();
+			assert.equal(table.columns.length, 0);
+
+			// The undo is dropped because restoring the row would create an orphaned cell
+			fork.rebaseOnto(view);
+			assert.equal(branchTable.rows.length, 0);
+
+			unsubscribe();
+		});
+
+		it("setCell is dropped when concurrently removed column would orphan the cell", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree1 = provider.trees[0];
+			const view = asAlpha(tree1.viewWith(config));
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [new Row({ id: "row-0", cells: {} })],
+				}),
+			);
+			provider.synchronizeMessages();
+
+			const table = view.root;
+			const fork = view.fork();
+			const branchTable = fork.root;
+			const tree2 = provider.trees[1];
+			const view2 = asAlpha(tree2.viewWith(config));
+
+			// Set a cell on the branch - this adds a constraint on the column
+			branchTable.setCell({
+				key: { row: "row-0", column: "column-0" },
+				cell: new Cell({ value: "test" }),
+			});
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "test");
+
+			// Concurrently remove the column. Without the constraint, the cell would be orphaned.
+			view2.root.removeColumns(["column-0"]);
+			provider.synchronizeMessages();
+			assert.equal(table.columns.length, 0);
+
+			// setCell is dropped because the cell would be orphaned under the removed column
+			fork.rebaseOnto(view);
+			assert.equal(branchTable.columns.length, 0);
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" }), undefined);
+		});
+
+		it("undo of removeCell is dropped when column removal would orphan the restored cell", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree1 = provider.trees[0];
+			const view = asAlpha(tree1.viewWith(config));
+			view.initialize(
+				Table.create({
+					columns: [new Column({ id: "column-0", props: {} })],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: { "column-0": new Cell({ value: "initial" }) },
+						}),
+					],
+				}),
+			);
+			provider.synchronizeMessages();
+
+			const table = view.root;
+			const fork = view.fork();
+			const branchTable = fork.root;
+			const tree2 = provider.trees[1];
+			const view2 = asAlpha(tree2.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
+
+			// Remove a cell on the branch - this adds a revert constraint on the column
+			branchTable.removeCell({ row: "row-0", column: "column-0" });
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" }), undefined);
+			const revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+
+			// Cell should be restored on the branch
+			assert.equal(
+				branchTable.getCell({ row: "row-0", column: "column-0" })?.value,
+				"initial",
+			);
+
+			// Concurrently remove the column. Without the constraint, undoing cell removal would orphan the cell.
+			view2.root.removeColumns(["column-0"]);
+			provider.synchronizeMessages();
+			assert.equal(table.columns.length, 0);
+
+			// The undo is dropped because restoring the cell would orphan it under the removed column
+			fork.rebaseOnto(view);
+			assert.equal(branchTable.columns.length, 0);
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" }), undefined);
+
+			unsubscribe();
+		});
+
+		it("undo of insertColumns is dropped when it would orphan cells inserted via setCell", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree = provider.trees[0];
+			const view = asAlpha(tree.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+			view.initialize(
+				Table.create({
+					columns: [],
+					rows: [{ id: "row-0", cells: {} }],
+				}),
+			);
+
+			// Insert a column - this adds a revert constraint to detect cell insertions/replacements before undo
+			view.root.insertColumns({
+				columns: [{ id: "column-0", props: {} }],
+			});
+			const revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			assert.equal(view.root.columns.length, 1);
+
+			// Set a cell in the new column
+			// Without the constraint, undoing the column insertion would orphan this cell
+			view.root.setCell({
+				key: { row: "row-0", column: "column-0" },
+				cell: new Cell({ value: "Hello" }),
+			});
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
+
+			revertible.revert();
+
+			// The revert is dropped because it would orphan the cell - column and cell remain
+			assert.equal(view.root.columns.length, 1);
+			assert.equal(view.root.columns[0].id, "column-0");
+			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
+
+			unsubscribe();
+		});
+
+		it("removeColumns is dropped when concurrently set cell would create orphaned cells", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree1 = provider.trees[0];
+			const view = asAlpha(tree1.viewWith(config));
+			view.initialize(
+				Table.create({
+					columns: [{ id: "column-0", props: {} }],
+					rows: [{ id: "row-0", cells: {} }],
+				}),
+			);
+			provider.synchronizeMessages();
+			const table = view.root;
+
+			const fork = view.fork();
+			const branchTable = fork.root;
+
+			const tree2 = provider.trees[1];
+			const view2 = asAlpha(tree2.viewWith(config));
+
+			// Remove a column on the branch - this adds a constraint to detect concurrent cell insertions/replacements
+			branchTable.removeColumns(["column-0"]);
+			assert.equal(branchTable.columns.length, 0);
+
+			// Concurrently insert a cell in the column being removed via setCell.
+			// Without the constraint, this is the cell that would be orphaned by the column removal.
+			view2.root.setCell({
+				key: { row: "row-0", column: "column-0" },
+				cell: new Cell({ value: "Hello" }),
+			});
+			provider.synchronizeMessages();
+			assert.equal(table.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
+
+			// The column removal is dropped because it would orphan the cell
+			fork.rebaseOnto(view);
+			assert.equal(branchTable.columns.length, 1);
+			assert.equal(branchTable.columns[0].id, "column-0");
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
+		});
+
+		it("undo of setCell is dropped when column removal would orphan the restored cell", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				}).getFactory(),
+			);
+
+			const config = new TreeViewConfiguration({
+				schema: Table,
+				enableSchemaValidation: true,
+			});
+			const tree1 = provider.trees[0];
+			const view = asAlpha(tree1.viewWith(config));
+			view.initialize(
+				Table.create({
+					columns: [{ id: "column-0", props: {} }],
+					rows: [{ id: "row-0", cells: { "column-0": { value: "initial" } } }],
+				}),
+			);
+			provider.synchronizeMessages();
+			const table = view.root;
+
+			const fork = view.fork();
+			const branchTable = fork.root;
+
+			const tree2 = provider.trees[1];
+			const view2 = asAlpha(tree2.viewWith(config));
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
+
+			// Replace a cell on the branch - this adds a revert constraint on the column
+			branchTable.setCell({
+				key: { row: "row-0", column: "column-0" },
+				cell: new Cell({ value: "updated" }),
+			});
+			assert.equal(
+				branchTable.getCell({ row: "row-0", column: "column-0" })?.value,
+				"updated",
+			);
+			const revertible = undoStack.pop();
+			assert(revertible !== undefined, "Missing revertible");
+			revertible.revert();
+
+			// Cell should be restored to initial value on the branch
+			assert.equal(
+				branchTable.getCell({ row: "row-0", column: "column-0" })?.value,
+				"initial",
+			);
+
+			// Concurrently remove the column. Without the constraint, undoing setCell would restore a cell under a removed column.
+			view2.root.removeColumns(["column-0"]);
+			provider.synchronizeMessages();
+			assert.equal(table.columns.length, 0);
+
+			// The undo is dropped because it would restore a cell for a non-existent column
+			fork.rebaseOnto(view);
+			assert.equal(branchTable.columns.length, 0);
+			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" }), undefined);
+
+			unsubscribe();
 		});
 	});
 });

@@ -1091,7 +1091,11 @@ export class PartialSequenceLengths {
 		refSeq,
 		localSeq,
 		seglen,
-	}: { refSeq: number; localSeq: number; seglen: number }): void {
+	}: {
+		refSeq: number;
+		localSeq: number;
+		seglen: number;
+	}): void {
 		assert(
 			this.unsequencedRecords !== undefined,
 			0xabb /* Local adjustment computed without partials */,

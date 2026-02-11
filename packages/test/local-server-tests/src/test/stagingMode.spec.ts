@@ -396,7 +396,7 @@ function assertNotConsistent(
 }
 
 /**
- * @returns Whether the given client has received an edit from some client (including itself) with the given prefix.
+ * Whether the given client has received an edit from some client (including itself) with the given prefix.
  */
 function hasEdit(client: Client, prefix: string): boolean {
 	return Object.keys(client.dataObject.enumerateDataSynchronous()).some((k) =>

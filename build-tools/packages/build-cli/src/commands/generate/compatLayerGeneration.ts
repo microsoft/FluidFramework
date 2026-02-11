@@ -8,13 +8,12 @@ import { Flags } from "@oclif/core";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
 import {
+	checkPackageCompatLayerGeneration,
 	DEFAULT_GENERATION_DIR,
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
-	checkPackageCompatLayerGeneration,
 	deleteCompatLayerGenerationFile,
 	writePackageCompatLayerGeneration,
-	// eslint-disable-next-line import/no-internal-modules
 } from "../../library/compatLayerGeneration.js";
 
 /**

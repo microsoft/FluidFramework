@@ -38,8 +38,6 @@ resources:
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
-- name: testWorkspace
-  value: $(Pipeline.Workspace)/test
 - name: testPackage
   value: "@fluid-private/test-end-to-end-tests"
   readonly: true
@@ -59,7 +57,6 @@ stages:
       stageDisplayName: e2e - local server
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:local:report:full
       cacheCompatVersionsInstalls: true
@@ -76,7 +73,6 @@ stages:
       stageDisplayName: e2e - tinylicious
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:tinylicious:report:full
       cacheCompatVersionsInstalls: true
@@ -98,7 +94,6 @@ stages:
       stageDisplayName: e2e - docker
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       continueOnError: true
       timeoutInMinutes: 360
@@ -110,8 +105,8 @@ stages:
           flags: --compatVersion=0
         - name: N-1
           flags: --compatVersion=-1
-        - name: LTS
-          flags: --compatVersion=LTS
+        - name: Oldest-Compatible-Version
+          flags: --compatVersion=OCV
         - name: Cross-Client
           flags: --compatVersion=CROSS_CLIENT
       cacheCompatVersionsInstalls: true
@@ -138,7 +133,6 @@ stages:
       stageDisplayName: e2e - AFR
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 360
       continueOnError: true
@@ -152,8 +146,8 @@ stages:
           flags: --compatVersion=0
         - name: N-1
           flags: --compatVersion=-1
-        - name: LTS
-          flags: --compatVersion=LTS
+        - name: Oldest-Compatible-Version
+          flags: --compatVersion=OCV
         - name: Cross-Client
           flags: --compatVersion=CROSS_CLIENT
       cacheCompatVersionsInstalls: true
@@ -172,7 +166,6 @@ stages:
       odspTenantType: prod
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
       timeoutInMinutes: 360
       continueOnError: true
