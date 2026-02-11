@@ -34,8 +34,31 @@ export default tseslint.config(
 			},
 		},
 		rules: {
+			// Rules from the shared config that are referenced by inline eslint-disable comments.
+			"@rushstack/no-new-null": "error",
+			"@typescript-eslint/no-non-null-assertion": "error",
+			"default-case": "error",
+			"import/no-internal-modules": "error",
+			"no-bitwise": "error",
+			"no-new-func": "error",
+			"no-restricted-syntax": [
+				"error",
+				{
+					selector: "ExportAllDeclaration",
+					message:
+						"Exporting * is not permitted. You should export only named items you intend to export.",
+				},
+			],
+			"unicorn/error-message": "error",
+			"unicorn/no-thenable": "error",
+
 			// This package is being deprecated, so it's okay to use deprecated APIs.
 			"@typescript-eslint/no-deprecated": "off",
+			"import/no-deprecated": "off",
+
+			// This package uses node's events APIs.
+			// This should probably be reconsidered, but until then we will leave an exception for it here.
+			"import/no-nodejs-modules": ["error", { allow: ["events"] }],
 
 			// This package has been deprecated. The following rules have a significant number of
 			// violations that will not be fixed here.
@@ -55,6 +78,16 @@ export default tseslint.config(
 			"@typescript-eslint/no-misused-promises": "off",
 			"@typescript-eslint/no-redundant-type-constituents": "off",
 			"@typescript-eslint/prefer-nullish-coalescing": "off",
+			"unicorn/text-encoding-identifier-case": "off",
+			"unicorn/prefer-node-protocol": "off",
+			"unicorn/prefer-code-point": "off",
+		},
+	},
+	{
+		files: ["src/test/**"],
+		rules: {
+			// It's fine for tests to use node.js modules.
+			"import/no-nodejs-modules": "off",
 		},
 	},
 );
