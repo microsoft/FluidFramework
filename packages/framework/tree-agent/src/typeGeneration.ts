@@ -38,8 +38,6 @@ function buildPromptSchemaDescription(
 
 	walkFieldSchema(rootSchema, {
 		node: (node) => {
-			allSchemas.add(node);
-
 			if (isBindableSchema(node)) {
 				bindableSchemas.set(node.identifier, node);
 
@@ -58,7 +56,7 @@ function buildPromptSchemaDescription(
 				}
 			}
 		},
-	});
+	}, allSchemas);
 
 	return renderSchemaTypeScript(allSchemas, bindableSchemas);
 }
