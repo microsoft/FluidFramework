@@ -41,9 +41,6 @@ const config: Linter.Config[] = [
 		},
 	},
 
-	// Prettier config - disables rules that conflict with prettier (must be last in extends)
-	eslintConfigPrettier,
-
 	// TypeScript parser and project configuration
 	{
 		languageOptions: {
@@ -82,6 +79,10 @@ const config: Linter.Config[] = [
 			"import-x/no-nodejs-modules": "off",
 		},
 	},
+
+	// Prettier config - disables rules that conflict with prettier. Must be last so
+	// no subsequent config objects can re-enable formatting rules.
+	eslintConfigPrettier,
 ];
 
 export default config;
