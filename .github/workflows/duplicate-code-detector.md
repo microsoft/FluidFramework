@@ -8,7 +8,9 @@ permissions:
   contents: read
   issues: read
   pull-requests: read
-engine: codex
+engine:
+  model: gpt-5.2
+  id: copilot
 tools:
   serena: ["go"]
 safe-outputs:
@@ -54,8 +56,8 @@ Activate the project in Serena:
 
 Identify and analyze modified files:
 - Determine files changed in the recent commits
-- **ONLY analyze .go and .cjs files** - exclude all other file types
-- **Exclude JavaScript files except .cjs** from analysis (files matching patterns: `*.js`, `*.mjs`, `*.jsx`, `*.ts`, `*.tsx`)
+- **ONLY analyze .ts and .cjs files** - exclude all other file types
+- **Exclude JavaScript files except .cjs** from analysis (files matching patterns: `*.js`, `*.mjs`, `*.jsx`)
 - **Exclude test files** from analysis (files matching patterns: `*_test.go`, `*.test.js`, `*.test.cjs`, `*.spec.js`, `*.spec.cjs`, `*.test.ts`, `*.spec.ts`, `*_test.py`, `test_*.py`, or located in directories named `test`, `tests`, `__tests__`, or `spec`)
 - **Exclude workflow files** from analysis (files under `.github/workflows/*`)
 - Use `get_symbols_overview` to understand file structure
@@ -129,7 +131,7 @@ Create separate issues for each distinct duplication pattern found (maximum 3 pa
 
 - Standard boilerplate code (imports, exports, etc.)
 - Test setup/teardown code (acceptable duplication in tests)
-- **JavaScript files except .cjs** (files matching: `*.js`, `*.mjs`, `*.jsx`, `*.ts`, `*.tsx`)
+- **JavaScript files except .cjs** (files matching: `*.js`, `*.mjs`, `*.jsx`)
 - **All test files** (files matching: `*_test.go`, `*.test.js`, `*.test.cjs`, `*.spec.js`, `*.spec.cjs`, `*.test.ts`, `*.spec.ts`, `*_test.py`, `test_*.py`, or in `test/`, `tests/`, `__tests__/`, `spec/` directories)
 - **All workflow files** (files under `.github/workflows/*`)
 - Configuration files with similar structure
@@ -138,10 +140,10 @@ Create separate issues for each distinct duplication pattern found (maximum 3 pa
 
 ### Analysis Depth
 
-- **File Type Restriction**: ONLY analyze .go and .cjs files - ignore all other file types
-- **Primary Focus**: All .go and .cjs files changed in the current push (excluding test files and workflow files)
-- **Secondary Analysis**: Check for duplication with existing .go and .cjs codebase (excluding test files and workflow files)
-- **Cross-Reference**: Look for patterns across .go and .cjs files in the repository
+- **File Type Restriction**: ONLY analyze .ts and .cjs files - ignore all other file types
+- **Primary Focus**: All .ts and .cjs files changed in the current push (excluding test files and workflow files)
+- **Secondary Analysis**: Check for duplication with existing .ts and .cjs codebase (excluding test files and workflow files)
+- **Cross-Reference**: Look for patterns across .ts and .cjs files in the repository
 - **Historical Context**: Consider if duplication is new or existing
 
 ## Issue Template
