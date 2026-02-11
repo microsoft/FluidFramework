@@ -11,6 +11,7 @@ import {
 	type Logger,
 	type Package,
 	type PackageJson,
+	TscUtils,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
@@ -28,11 +29,9 @@ import {
 	SyntaxKind,
 } from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand.js";
-import type { PackageSelectionDefault } from "../../flags.js";
 import {
 	ApiLevel,
 	ensureDevDependencyExists,
-	knownApiLevels,
 	unscopedPackageNameString,
 } from "../../library/index.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
@@ -59,13 +58,17 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	static readonly description = "Generates type tests for a package or group of packages.";
 
 	static readonly flags = {
-		entrypoint: Flags.custom<ApiLevel>({
-			// Temporary alias for back-compat
-			aliases: ["level"],
-			deprecateAliases: true,
+		entrypoint: Flags.string({
 			description:
-				'What entrypoint to generate tests for. Use "public" for the default entrypoint. If this flag is provided it will override the typeValidation.entrypoint setting in the package\'s package.json.',
-			options: knownApiLevels,
+				'What entrypoint to generate tests for. Use "public" or "" for the default entrypoint. If this flag is provided it will override the typeValidation.entrypoint setting in the package\'s package.json.',
+		}),
+		// Temporary support for back-compat
+		level: Flags.custom<"public">({
+			deprecated: true,
+			description:
+				"Deprecated - use entrypoint flag instead. What API level to generate tests for. If this flag is provided it will override the typeValidation.entrypoint setting in the package's package.json.",
+			// Limit to "public" as that is the only remaining use
+			options: ["public"],
 		})(),
 		outDir: Flags.directory({
 			description: "Where to emit the type tests file.",
@@ -89,13 +92,20 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		...PackageCommand.flags,
 	} as const;
 
-	protected defaultSelection = "dir" as PackageSelectionDefault;
+	protected defaultSelection = "dir" as const;
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		const { entrypoint: entrypointFlag, outDir, outFile, skipVersionOutput } = this.flags;
+		const {
+			entrypoint: entrypointFlag,
+			level,
+			outDir,
+			outFile,
+			skipVersionOutput,
+		} = this.flags;
 		const pkgJson: PackageWithTypeTestSettings = pkg.packageJson;
-		const entrypoint: ApiLevel =
+		const entrypoint =
 			entrypointFlag ??
+			level ??
 			pkgJson.typeValidation?.entrypoint ??
 			defaultTypeValidationConfig.entrypoint;
 		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
@@ -138,13 +148,25 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// statements into the type test file, we need to use the previous version name.
 		previousPackageJson.name = previousPackageName;
 
-		const { typesPath: previousTypesPathRelative, entrypointUsed: previousEntrypoint } =
-			getTypesPathWithFallback(previousPackageJson, entrypoint, this.logger, fallbackLevel);
+		// Note this assumes that tsconfig found includes test output file, but
+		// does not do any check to confirm that.
+		const conditions = getCustomConditionsFromTsConfig(
+			path.dirname(typeTestOutputFile),
+			this.logger,
+		);
+
+		const { typesPath: previousTypesPathRelative, entrypointSpec } = getTypesPathWithFallback(
+			previousPackageJson,
+			entrypoint,
+			conditions,
+			this.logger,
+			fallbackLevel,
+		);
 		const previousTypesPath = path.resolve(
 			path.join(previousBasePath, previousTypesPathRelative),
 		);
 		this.verbose(
-			`Found ${previousEntrypoint} type definitions for ${currentPackageJson.name}: ${previousTypesPath}`,
+			`Found ${entrypointSpec} type definitions for ${currentPackageJson.name}: ${previousTypesPath}`,
 		);
 
 		const previousFile = loadTypesSourceFile(previousTypesPath);
@@ -160,12 +182,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const buildToolsPackageName = "@fluidframework/build-tools";
 		const buildToolsImport = `import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "${buildToolsPackageName}";`;
 
-		// Public API levels are always imported from the primary entrypoint, but everything else is imported from the
-		// /internal entrypoint. This is consistent with our policy for code within the repo - all non-public APIs are
-		// imported from the /internal entrypoint for consistency
-		const previousImport = `import type * as old from "${previousPackageName}${
-			previousEntrypoint === ApiLevel.public ? "" : `/${ApiLevel.internal}`
-		}";`;
+		const previousImport = `import type * as old from "${previousPackageName}${entrypointSpec}";`;
 		const imports =
 			buildToolsPackageName < previousPackageName
 				? [buildToolsImport, previousImport]
@@ -208,7 +225,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 ${imports.join("\n")}
 
-import type * as current from "../../index.js";
+import type * as current from "${currentPackageJson.name}${entrypointSpec}";
 
 declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 `,
@@ -232,28 +249,44 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  */
 function getTypesPathWithFallback(
 	packageJson: PackageJson,
-	entrypoint: ApiLevel,
+	entrypoint: string,
+	conditions: readonly string[],
 	log: Logger,
-	fallbackEntrypoint?: ApiLevel,
-): { typesPath: string; entrypointUsed: ApiLevel } {
-	let chosenEntrypoint: ApiLevel = entrypoint;
+	fallbackEntrypoint?: "public",
+): { typesPath: string; entrypointSpec: string } {
+	// The entrypoint spec is the suffix added to the package name in the import statement.
+	// For example, if entrypoint is "beta" then the import would be from "<PACKAGE>/beta"
+	// and the entrypointSpec would be "/beta".
+	// If entrypoint is "public" or "" then the import would be from "<PACKAGE>" and the
+	// entrypointSpec would be "".
+	const entrypointSpec = entrypoint === "public" ? "" : entrypoint ? `/${entrypoint}` : "";
 	// First try the requested paths, but fall back to public otherwise if configured.
-	let typesPath: string | undefined = getTypesPathFromPackage(packageJson, entrypoint, log);
-
-	if (typesPath === undefined) {
-		// Try the public types if configured to do so. If public types are found adjust the level accordingly.
-		typesPath =
-			fallbackEntrypoint === undefined
-				? undefined
-				: getTypesPathFromPackage(packageJson, fallbackEntrypoint, log);
-		chosenEntrypoint = fallbackEntrypoint ?? entrypoint;
-		if (typesPath === undefined) {
-			throw new Error(
-				`${packageJson.name}: No type definitions found for "${chosenEntrypoint}" API level.`,
-			);
-		}
+	const preferredTypesPath = getTypesPathFromPackage(
+		packageJson,
+		entrypointSpec,
+		conditions,
+		log,
+	);
+	if (preferredTypesPath !== undefined) {
+		return { typesPath: preferredTypesPath, entrypointSpec };
 	}
-	return { typesPath: typesPath, entrypointUsed: chosenEntrypoint };
+
+	if (fallbackEntrypoint === undefined || entrypointSpec === "") {
+		// No fallback or public already checked.
+		throw new Error(
+			`${packageJson.name}: No type definitions found for "${entrypoint}" entrypoint.`,
+		);
+	}
+
+	// Try the public types since configured to do so.
+	const publicTypesPath = getTypesPathFromPackage(packageJson, "", conditions, log);
+	if (publicTypesPath !== undefined) {
+		return { typesPath: publicTypesPath, entrypointSpec: "" };
+	}
+
+	throw new Error(
+		`${packageJson.name}: No type definitions found for "${entrypoint}" or "" (public) entrypoints.`,
+	);
 }
 
 /**
@@ -276,6 +309,45 @@ function getTypeTestFilePath(pkg: Package, outDir: string, outFile: string): str
 				)
 			: outFile,
 	);
+}
+
+/**
+ * Reads the tsconfig.json that covers files in the given directory and extracts
+ * any `customConditions` from the resolved compiler options.
+ *
+ * @param directory - The directory to search from for a tsconfig.json.
+ * @param log - A logger to use.
+ * @returns The customConditions array from the resolved tsconfig, or an empty array if none found.
+ */
+function getCustomConditionsFromTsConfig(directory: string, log: Logger): string[] {
+	const tscUtils = TscUtils.getTscUtils(directory);
+	const tsLib = tscUtils.tsLib;
+
+	const configFile = tsLib.findConfigFile(directory, tsLib.sys.fileExists);
+	if (configFile === undefined) {
+		log.verbose(`No TS config found from ${directory}`);
+		return [];
+	}
+
+	const configFileContent = tscUtils.readConfigFile(configFile);
+	if (configFileContent === undefined) {
+		log.verbose(`Error reading TS config at ${configFile}`);
+		return [];
+	}
+
+	const parsedConfig = tsLib.parseJsonConfigFileContent(
+		configFileContent,
+		tsLib.sys,
+		path.dirname(configFile),
+		/* existingOptions */ undefined,
+		configFile,
+	);
+
+	const conditions = parsedConfig.options.customConditions ?? [];
+	if (conditions.length > 0) {
+		log.verbose(`Found customConditions in ${configFile}: ${conditions.join(", ")}`);
+	}
+	return conditions;
 }
 
 /**

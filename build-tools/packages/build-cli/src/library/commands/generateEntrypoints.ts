@@ -189,6 +189,7 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 		promises.push(generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutput, this.logger));
 
 		if (node10TypeCompat) {
+			this.logger.info(`Generating Node10 entrypoints...`);
 			promises.push(
 				generateNode10TypeEntrypoints(mapNode10CompatExportPathToData, this.logger),
 			);
@@ -341,7 +342,10 @@ function getOutputConfiguration(
 
 	if (node10TypeCompat) {
 		// /internal export may be supported without API level generation; so
-		// add query for such path for Node10 type compat generation.
+		// add query for such path (assuming index.d.ts is main entrypoint)
+		// for Node10 type compat generation.
+		// Use "flub generate node10Entrypoints" to generate more complete
+		// Node10 entrypoints handling broader configurations.
 		const dirPath = pathPrefix.replace(/\/[^/]*$/, "");
 		const internalPathRegex = new RegExp(`${dirPath}\\/index\\.d\\.?[cm]?ts$`);
 		mapQueryPathToApiTagLevel.set(internalPathRegex, undefined);
@@ -623,12 +627,10 @@ async function createEntrypointFile({
 	await fs.writeFile(filePath, content, "utf8");
 }
 
-async function generateNode10TypeEntrypoints(
+export async function generateNode10TypeEntrypoints(
 	mapExportPathToData: ReadonlyMap<string, Node10CompatExportData>,
 	log: CommandLogger,
 ): Promise<void> {
-	log.info(`Generating Node10 entrypoints...`);
-
 	/**
 	 * List of out file save promises. Used to collect generated file save
 	 * promises so we can await them all at once.

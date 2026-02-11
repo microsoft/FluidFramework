@@ -7,7 +7,6 @@ import path from "node:path";
 
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 import * as resolve from "resolve.exports";
-import { ApiLevel } from "./apiLevel.js";
 
 /**
  * Properties for an "exports" leaf entry block in package.json.
@@ -72,6 +71,15 @@ function valueOfFirstKeyMatching<TValue>(
 // Some common "exports" conditions
 const typesExportCondition = "types";
 const defaultExportCondition = "default";
+const importExportCondition = "import";
+const requireExportCondition = "require";
+
+const node10AllowedConditions = new Set([
+	defaultExportCondition,
+	importExportCondition,
+	typesExportCondition,
+	requireExportCondition,
+]);
 
 /**
  * Performs a depth first search of exports conditions looking for "types" constrained
@@ -153,6 +161,13 @@ function findTypesPathsMatching<TOutKey>(
  * @param logger - optional Logger
  * @returns object with mapKeyToOutput, map of ApiTags to output paths, and
  * mapNode10CompatExportPathToData, map of compat file path to Node16 path.
+ *
+ * @remarks
+ * Only "types" constrained exports are considered. TypeScript will also support inferring
+ * a .d.ts file from a .js file when there is no explicit "types" constrained export. Our
+ * packages do use that simpler specification but so far only in a case that doesn't
+ * require this to resolve the path. (Doesn't yet need to generate Node10 compatible
+ * entrypoints.)
  */
 export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 	packageJson: Pick<PackageJson, "exports">,
@@ -235,6 +250,20 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
 				const node10TypeExportPath = exportPath.replace(/(?:\.([cm]?)js)?$/, ".d.$1ts");
 				// Nothing needed when export path already matches internal path.
 				if (path.resolve(node10TypeExportPath) !== path.resolve(relPath)) {
+					// Filter out any exports with custom conditions. Those are
+					// only available with Node16 resolution when specifying
+					// conditions which cannot be done within Node10.
+					const nonStandardConditions = conditions.filter(
+						(condition) => !node10AllowedConditions.has(condition),
+					);
+					if (nonStandardConditions.length > 0) {
+						logger?.info(
+							`Skipping Node10 compatibility export path "${node10TypeExportPath}" for "${exportPath}" per condition(s) ${nonStandardConditions.join(
+								", ",
+							)}.`,
+						);
+						continue;
+					}
 					mapNode10CompatExportPathToData.set(node10TypeExportPath, {
 						relPath,
 						isTypeOnly,
@@ -254,7 +283,7 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
  * This implementation uses resolve.exports to resolve the path to types for a level.
  *
  * @param packageJson - The package.json object to check for types paths.
- * @param level - An API level to get types paths for.
+ * @param entrypointSpec - An entrypoint specification (path that trails package name) to get types paths for.
  * @returns A package relative path to the types.
  *
  * @remarks
@@ -271,13 +300,14 @@ export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
  */
 export function getTypesPathFromPackage(
 	packageJson: PackageJson,
-	level: ApiLevel,
+	entrypointSpec: string,
+	conditions: readonly string[],
 	log: Logger,
 ): string | undefined {
 	if (packageJson.exports === undefined) {
 		log.verbose(`${packageJson.name}: No export map found.`);
 		// Use types/typings field only when the public API level is used and no exports field is found
-		if (level === ApiLevel.public) {
+		if (entrypointSpec === "") {
 			log.verbose(`${packageJson.name}: Using the types/typings field value.`);
 			return packageJson.types ?? packageJson.typings;
 		}
@@ -286,15 +316,17 @@ export function getTypesPathFromPackage(
 	}
 
 	// Package has an export map, so map the requested API level to an entrypoint and check the exports conditions.
-	const entrypoint = level === ApiLevel.public ? "." : `./${level}`;
+	const entrypoint = `.${entrypointSpec}`;
 
 	// resolve.exports sets some conditions by default, so the ones we supply supplement the defaults. For clarity the
 	// applied conditions are noted in comments.
 	let typesPath: string | undefined;
 	try {
 		// First try to resolve with the "import" condition, assuming the package is either ESM-only or dual-format.
-		// conditions: ["default", "types", "import", "node"]
-		const exports = resolve.exports(packageJson, entrypoint, { conditions: ["types"] });
+		// conditions: ["default", "types", "import", "node", ...additional conditions]
+		const exports = resolve.exports(packageJson, entrypoint, {
+			conditions: ["types", ...conditions],
+		});
 
 		// resolve.exports returns a `Exports.Output | void` type, though the documentation isn't clear under what
 		// conditions `void` would be the return type vs. just throwing an exception. Since the types say exports could be
@@ -316,9 +348,9 @@ export function getTypesPathFromPackage(
 		// If nothing is found when using the "import" condition, try the "require" condition. It may be possible to do this
 		// in a single call to resolve.exports, but the documentation is a little unclear. This seems a safe, if inelegant
 		// solution.
-		// conditions: ["default", "types", "require", "node"]
+		// conditions: ["default", "types", "require", "node", ...additional conditions]
 		const exports = resolve.exports(packageJson, entrypoint, {
-			conditions: ["types"],
+			conditions: ["types", ...conditions],
 			require: true,
 		});
 		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
