@@ -15,6 +15,7 @@ import { generateEditTypesForPrompt } from "./typeGeneration.js";
 import {
 	IdentifierCollisionResolver,
 	getFriendlyName,
+	isNamedSchema,
 	communize,
 	findSchemas,
 } from "./utils.js";
@@ -41,10 +42,12 @@ export function getPrompt(args: {
 	const allSchemas = findSchemas(schema);
 	const resolver = new IdentifierCollisionResolver();
 	for (const schemaNode of allSchemas) {
-		resolver.resolve(schemaNode);
+		if (isNamedSchema(schemaNode.identifier)) {
+			resolver.resolve(schemaNode);
+		}
 	}
 
-	const rootTypeUnion = `${rootTypes.map((t) => resolver.resolve(t) ?? getFriendlyName(t)).join(" | ")}`;
+	const rootTypeUnion = `${rootTypes.map((t) => (isNamedSchema(t.identifier) ? resolver.resolve(t) : getFriendlyName(t))).join(" | ")}`;
 	let nodeTypeUnion: string | undefined;
 	let hasArrays = false;
 	let hasMaps = false;

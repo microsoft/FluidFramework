@@ -16,15 +16,15 @@ import type { SimpleLeafNodeSchema } from "@fluidframework/tree/internal";
 
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
-import { fluidHandleTypeName } from "./prompt.js";
 import { getExposedProperties, type PropertyDef } from "./propertyBinding.js";
 import { renderTypeFactoryTypeScript } from "./renderTypeFactoryTypeScript.js";
 import type { TypeFactoryOptional, TypeFactoryType } from "./treeAgentTypes.js";
 import { isTypeFactoryType } from "./treeAgentTypes.js";
 import {
 	IdentifierCollisionResolver,
+	fluidHandleTypeName,
 	getFriendlyName,
-	isNamedSchema,
+	isInlineSchema,
 	llmDefault,
 } from "./utils.js";
 
@@ -73,16 +73,18 @@ export function renderSchemaTypeScript(
 	const allSchemas = [...definitions];
 	let hasHelperMethods = false;
 
-	// Resolve short name collisions
+	// Resolve short name collisions (skip inline schemas and leaf primitives — they are rendered inline)
 	const resolver = new IdentifierCollisionResolver();
 	for (const schema of allSchemas) {
-		resolver.resolve(schema);
+		if (!isInlineSchema(schema.identifier) && schema.kind !== NodeKind.Leaf) {
+			resolver.resolve(schema);
+		}
 	}
 
 	const declarations: string[] = [];
 	for (const schema of allSchemas) {
 		const identifier = schema.identifier;
-		if (!isNamedSchema(identifier)) {
+		if (isInlineSchema(identifier) || schema.kind === NodeKind.Leaf) {
 			continue;
 		}
 		const friendlyName = resolver.resolve(schema);
@@ -330,7 +332,7 @@ export function renderSchemaTypeScript(
 	}
 
 	function renderTypeReference(schema: TreeNodeSchema): TypeExpression {
-		if (isNamedSchema(schema.identifier)) {
+		if (!isInlineSchema(schema.identifier) && schema.kind !== NodeKind.Leaf) {
 			return {
 				precedence: TypePrecedence.Object,
 				text: resolver.resolve(schema),

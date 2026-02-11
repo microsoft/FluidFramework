@@ -311,6 +311,44 @@ type MapWithProperty = Map<string, string> & {
 		);
 	});
 
+	it("handles schemas with reserved primitive names", () => {
+		const sf1 = new SchemaFactory("scope1");
+		const sf2 = new SchemaFactory("scope2");
+
+		class Null1 extends sf1.object("null", { value: sf1.number }) {}
+		class Null2 extends sf2.object("null", { value: sf2.number }) {}
+		class String1 extends sf1.object("string", { label: sf1.string }) {}
+
+		class TestObject extends sf.object("PrimitiveNameContainer", {
+			n1: Null1,
+			n2: Null2,
+			s1: String1,
+		}) {}
+
+		const view = independentView(new TreeViewConfiguration({ schema: TestObject }));
+		view.initialize({
+			n1: { value: 1 },
+			n2: { value: 2 },
+			s1: { label: "hi" },
+		});
+
+		const schema = getSimpleSchema(view.schema);
+		const { schemaText } = generateEditTypesForPrompt(view.schema, schema);
+
+		// User schemas named "null" get suffixed to avoid conflict with the primitive null type
+		assert.ok(schemaText.includes("interface null_1 {"), "First null gets _1");
+		assert.ok(schemaText.includes("interface null_2 {"), "Second null gets _2");
+		// User schema named "string" gets suffixed to avoid conflict with the primitive string type
+		assert.ok(schemaText.includes("interface string_1 {"), "string gets _1");
+		// The built-in primitive types are still used inline (not declared as named types)
+		assert.ok(!schemaText.includes("type null ="), "Built-in null is not declared");
+		assert.ok(!schemaText.includes("type string ="), "Built-in string is not declared");
+		// References to the suffixed names appear in the container interface
+		assert.ok(schemaText.includes("n1: null_1;"), "Field references null_1");
+		assert.ok(schemaText.includes("n2: null_2;"), "Field references null_2");
+		assert.ok(schemaText.includes("s1: string_1;"), "Field references string_1");
+	});
+
 	it("handles schema short name collisions", () => {
 		const sf1 = new SchemaFactory("scope1");
 		const sf2 = new SchemaFactory("scope2");

@@ -148,7 +148,7 @@ export function constructNode(schema: TreeNodeSchema, value: InsertableContent):
  * @remarks If the schema is an inlined array, map, or record type, then it has no name and this function will return a string representation of the type (e.g., `"MyNode[]"` or `"Map<string, MyNode>"`).
  */
 export function getFriendlyName(schema: TreeNodeSchema): string {
-	if (schema.kind === NodeKind.Leaf || isNamedSchema(schema.identifier)) {
+	if (schema.kind === NodeKind.Leaf || !isInlineSchema(schema.identifier)) {
 		return unqualifySchema(schema.identifier);
 	}
 
@@ -170,6 +170,13 @@ export function getFriendlyName(schema: TreeNodeSchema): string {
 }
 
 /**
+ * Returns true if the schema identifier represents an inlined (anonymous) array, map, or record schema.
+ */
+export function isInlineSchema(schemaIdentifier: string): boolean {
+	return /(?:Array|Map|Record)<\["(.*)"]>/.exec(schemaIdentifier) !== null;
+}
+
+/**
  * Returns true if the schema identifier represents a named schema (object, named array, named map, or named record).
  * @remarks This does not include primitive schemas or inlined array/map/record schemas.
  */
@@ -182,7 +189,7 @@ export function isNamedSchema(schemaIdentifier: string): boolean {
 		return false;
 	}
 
-	return /(?:Array|Map|Record)<\["(.*)"]>/.exec(schemaIdentifier) === null;
+	return !isInlineSchema(schemaIdentifier);
 }
 
 /**
@@ -214,6 +221,23 @@ export function unqualifySchema(schemaIdentifier: string): string {
 }
 
 /**
+ * The type name used for handles in generated TypeScript.
+ */
+export const fluidHandleTypeName = "_OpaqueHandle";
+
+/**
+ * Type names that are reserved in the generated TypeScript output.
+ * User-defined schemas whose short names match these will be suffixed to avoid conflicts.
+ */
+export const reservedTypeNames = new Set([
+	"string",
+	"number",
+	"boolean",
+	"null",
+	fluidHandleTypeName,
+]);
+
+/**
  * Resolves short name collisions by appending counters to colliding short names.
  *
  * @remarks
@@ -221,9 +245,11 @@ export function unqualifySchema(schemaIdentifier: string): string {
  * and subsequent occurrences get a counter appended starting at `_2`.
  * Identical full identifiers (same schema) always map to the same friendly name.
  * Non-colliding identifiers keep their original short name.
+ * Names that collide with {@link reservedTypeNames} are always suffixed starting at `_1`.
  * Examples:
  * - If `"scope.Foo"`, `"scope2.Foo"`, `"scope3.Foo"` and `"scope3.Foo_2"` all exist, they resolve to `["Foo", "Foo_2", "Foo_3", "Foo_2_2"]` (first-come-first-served).
  * - If `"scope.Foo"` appears twice (same identifier), both resolve to `["Foo", "Foo"]`.
+ * - If `"scope1.null"` and `"scope2.null"` exist, they resolve to `["null_1", "null_2"]` because `null` is a reserved primitive name.
  */
 export class IdentifierCollisionResolver {
 	/**
@@ -239,11 +265,18 @@ export class IdentifierCollisionResolver {
 	/**
 	 * Resolves a schema to a unique friendly name.
 	 * The first schema to claim a short name keeps it; subsequent collisions get `_2`, `_3`, etc.
+	 * Names that match a reserved primitive type are always suffixed starting at `_1`.
 	 */
 	public resolve(schema: TreeNodeSchema): string {
 		return getOrCreate(this.friendlyNameCache, schema.identifier, () => {
 			let name = getFriendlyName(schema);
-			if (this.assignedFriendlyNames.has(name)) {
+			if (reservedTypeNames.has(name)) {
+				let counter = 1;
+				while (this.assignedFriendlyNames.has(`${name}_${counter}`)) {
+					counter++;
+				}
+				name = `${name}_${counter}`;
+			} else if (this.assignedFriendlyNames.has(name)) {
 				let counter = 2;
 				while (this.assignedFriendlyNames.has(`${name}_${counter}`)) {
 					counter++;

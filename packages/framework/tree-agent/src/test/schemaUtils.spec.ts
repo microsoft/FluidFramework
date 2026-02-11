@@ -14,6 +14,7 @@ import {
 	findSchemas,
 	isNamedSchema,
 	IdentifierCollisionResolver,
+	reservedTypeNames,
 } from "../utils.js";
 
 const sf = new SchemaFactoryAlpha("test.scope");
@@ -382,6 +383,34 @@ describe("IdentifierCollisionResolver", () => {
 		assert.equal(result[5], "Bar_2");
 		assert.equal(result[6], "Bar_3");
 		assert.equal(result[7], "Bar_4");
+	});
+
+	it("suffixes names that collide with reserved primitives starting at _1", () => {
+		const input = [createSchema("scope1", "null"), createSchema("scope2", "null")];
+		const result = resolveAll(input);
+		assert.equal(result[0], "null_1");
+		assert.equal(result[1], "null_2");
+	});
+
+	it("suffixes all reserved primitive names", () => {
+		for (const name of reservedTypeNames) {
+			const input = [createSchema("scope1", name), createSchema("scope2", name)];
+			const result = resolveAll(input);
+			assert.equal(result[0], `${name}_1`, `First ${name} should get _1 suffix`);
+			assert.equal(result[1], `${name}_2`, `Second ${name} should get _2 suffix`);
+		}
+	});
+
+	it("handles primitive name collisions with existing suffixed names", () => {
+		const input = [
+			createSchema("scope1", "null_1"),
+			createSchema("scope2", "null"),
+			createSchema("scope3", "null"),
+		];
+		const result = resolveAll(input);
+		assert.equal(result[0], "null_1");
+		assert.equal(result[1], "null_2", "First null skips _1 (taken) and gets _2");
+		assert.equal(result[2], "null_3");
 	});
 
 	it("handles unnamed (inline) schemas", () => {
