@@ -52,8 +52,7 @@ export function getPrompt(args: {
 	let exampleObjectName: string | undefined;
 	for (const s of allSchemas) {
 		if (s.kind !== NodeKind.Leaf) {
-			const friendlyName =
-				resolver.resolve(s);
+			const friendlyName = resolver.resolve(s);
 			nodeTypeUnion =
 				nodeTypeUnion === undefined ? friendlyName : `${nodeTypeUnion} | ${friendlyName}`;
 		}
@@ -68,8 +67,7 @@ export function getPrompt(args: {
 				break;
 			}
 			case NodeKind.Object: {
-				exampleObjectName ??=
-					resolver.resolve(s);
+				exampleObjectName ??= resolver.resolve(s);
 				break;
 			}
 			case NodeKind.Leaf: {
@@ -317,7 +315,7 @@ ${
 		? ""
 		: `\nThe application supplied the following additional instructions: ${domainHints}`
 }
-The current state of \`context.root\` (a \`${field === undefined ? "undefined" : (resolver.resolve(Tree.schema(field)))}\`) is:
+The current state of \`context.root\` (a \`${field === undefined ? "undefined" : resolver.resolve(Tree.schema(field))}\`) is:
 
 \`\`\`JSON
 ${stringifyTree(field, resolver)}
