@@ -1535,6 +1535,18 @@ export class ModularChangeFamily
 		}
 	}
 
+	private isFieldChangeEmpty<T>(
+		handler: FieldChangeHandler<T>,
+		fieldChange: FieldChange,
+		prunedFieldChangeset: T,
+	): boolean {
+		return (
+			handler.isEmpty(prunedFieldChangeset) &&
+			fieldChange.fieldShallowChangeConstraint === undefined &&
+			fieldChange.fieldShallowChangeConstraintOnRevert === undefined
+		);
+	}
+
 	private pruneFieldMap(
 		changeset: FieldChangeMap | undefined,
 		nodeMap: ChangeAtomIdBTree<NodeChangeset>,
@@ -1551,12 +1563,7 @@ export class ModularChangeFamily
 				this.pruneNodeChange(nodeId, nodeMap),
 			);
 
-			// Keep field if it has changes OR constraints
-			if (
-				!handler.isEmpty(prunedFieldChangeset) ||
-				fieldChange.fieldShallowChangeConstraint !== undefined ||
-				fieldChange.fieldShallowChangeConstraintOnRevert !== undefined
-			) {
+			if (!this.isFieldChangeEmpty(handler, fieldChange, prunedFieldChangeset)) {
 				prunedChangeset.set(field, { ...fieldChange, change: brand(prunedFieldChangeset) });
 			}
 		}
