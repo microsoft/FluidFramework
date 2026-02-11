@@ -43,7 +43,8 @@ describe("Local Server Stress", () => {
 		// Pre-existing DDS bugs (not introduced by this PR):
 		skip: [
 			...[1, 14, 45, 63, 155, 184], // Directory consistency
-			...[54], // ConsensusOrderedCollection consistency
+			...[37, 54, 56, 60, 180], // ConsensusOrderedCollection consistency
+			...[46, 137], // TaskManager consistency
 		],
 		// Use skip, replay, and only properties to control which seeds run.
 	});

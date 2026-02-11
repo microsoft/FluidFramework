@@ -79,7 +79,7 @@ export class ContainerStateTracker {
 	registerDatastore(tag: `datastore-${number}`, handle: IFluidHandle): void {
 		const directoryDdsModel = ddsModelMap.get("https://graph.microsoft.com/types/directory");
 		assert(directoryDdsModel !== undefined, "directory DDS model must exist");
-		const channelType = directoryDdsModel.factory.type;
+		const channelType = directoryDdsModel.factory.attributes.type;
 		// Every datastore has a root directory channel. It doesn't follow the channel-N naming
 		// convention, but that's harmless since tags are only used for informational tracking.
 		const rootChannelTag = "root" as `channel-${number}`;
@@ -243,41 +243,12 @@ export class ContainerStateTracker {
 	async selectChannelForOperation(client: Client, random: IRandom): Promise<SelectedChannel> {
 		const channelTypes = Array.from(this.channelsByType.keys());
 		assert(channelTypes.length > 0, "at least one channel type must be registered");
-		const selectedType = random.pick(channelTypes);
-		const candidates = this.channelsByType.get(selectedType);
-		assert(candidates !== undefined && candidates.length > 0, "candidates must exist");
+		random.shuffle(channelTypes);
 
-		// Shuffle candidates to try them in random order
-		const shuffled = [...candidates];
-		for (let i = shuffled.length - 1; i > 0; i--) {
-			const j = random.integer(0, i);
-			[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-		}
-
-		// Try each candidate until we find one that resolves
-		for (const candidate of shuffled) {
-			const resolved = await this.resolveChannel(
-				client,
-				candidate.datastoreTag,
-				candidate.channelTag,
-			);
-			if (resolved !== undefined) {
-				return {
-					client,
-					datastore: resolved.datastore,
-					datastoreTag: candidate.datastoreTag,
-					channel: resolved.channel,
-					channelTag: candidate.channelTag,
-				};
-			}
-		}
-
-		// If no candidate of the selected type resolved, fall back to trying all types
-		for (const [type, typeCandidates] of this.channelsByType) {
-			if (type === selectedType) {
-				continue;
-			}
-			for (const candidate of typeCandidates) {
+		for (const type of channelTypes) {
+			const candidates = [...(this.channelsByType.get(type) ?? [])];
+			random.shuffle(candidates);
+			for (const candidate of candidates) {
 				const resolved = await this.resolveChannel(
 					client,
 					candidate.datastoreTag,

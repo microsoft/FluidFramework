@@ -60,10 +60,6 @@ const orderSequentiallyReducer = async (
 	}
 };
 
-// Note: The state tracker does not participate in staging mode rollback. If a createDataStore
-// or createChannel op runs during staging mode and is later discarded, the tracker retains
-// "phantom" entries for those objects. This is harmless: resolution attempts for phantom entries
-// return undefined and are filtered out, but no correctness issues result.
 export const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
 	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
