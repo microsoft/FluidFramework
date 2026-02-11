@@ -29,7 +29,7 @@ function isHexadecimalCharacter(charCode: number): boolean {
 
 /**
  * Generate a random session ID
- * @internal
+ * @legacy @beta
  */
 export function createSessionId(): SessionId {
 	return assertIsStableId(v4()) as SessionId;
