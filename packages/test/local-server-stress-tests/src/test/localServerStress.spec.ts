@@ -42,9 +42,8 @@ describe("Local Server Stress", () => {
 		skipMinimization: true,
 		// Pre-existing DDS bugs (not introduced by this PR):
 		skip: [
-			...[1, 14, 45, 63, 155, 184], // Directory consistency
-			...[37, 54, 56, 60, 180], // ConsensusOrderedCollection consistency
-			...[46, 137], // TaskManager consistency
+			...[37, 56, 60, 63, 180], // ConsensusOrderedCollection: data divergence between live clients
+			...[46], // TaskManager: live-client consistency bug (queue state diverges)
 		],
 		// Use skip, replay, and only properties to control which seeds run.
 	});

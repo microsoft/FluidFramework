@@ -193,6 +193,7 @@ export const validateConsistencyOfAllDDS = async (
 	clientA: Client,
 	clientB: Client,
 	stateTracker: ContainerStateTracker,
+	skipChannelTypes?: ReadonlySet<string>,
 ): Promise<void> => {
 	const buildChannelMap = async (client: Client): Promise<Map<string, IChannel>> => {
 		/**
@@ -228,6 +229,9 @@ export const validateConsistencyOfAllDDS = async (
 		const bChannel = bMap.get(key);
 		assert(aChannel !== undefined, "channel must exist");
 		assert(aChannel.attributes.type === bChannel?.attributes.type, "channel types must match");
+		if (skipChannelTypes?.has(aChannel.attributes.type) === true) {
+			continue;
+		}
 		const model = ddsModelMap.get(aChannel.attributes.type);
 		assert(model !== undefined, "model must exist");
 		try {

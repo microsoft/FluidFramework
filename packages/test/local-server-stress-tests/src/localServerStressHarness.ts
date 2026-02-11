@@ -78,6 +78,18 @@ import { validateConsistencyOfAllDDS } from "./ddsOperations.js";
 import { createRuntimeFactory, StressDataObject } from "./stressDataObject.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
+/**
+ * DDS types whose in-memory state depends on quorum membership events (e.g.,
+ * `removeMember`). Frozen containers don't process quorum events, so these
+ * DDSs cannot be reliably validated between a frozen container and a live
+ * client. TaskManager is the primary example: its `applyStashedOp` is a no-op
+ * and its disconnect/removeMember handlers modify `taskQueues` outside the op
+ * stream.
+ */
+const quorumDependentDdsTypes: ReadonlySet<string> = new Set([
+	"https://graph.microsoft.com/types/task-manager",
+]);
+
 export interface Client {
 	container: ContainerAlpha;
 	tag: `client-${number}`;
@@ -526,6 +538,14 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 					tag: `client-${Number.NaN}`,
 				},
 				state.stateTracker,
+				// Skip quorum-dependent DDSs when validating frozen containers.
+				// Frozen containers don't process quorum events (e.g., removeMember),
+				// so DDSs like TaskManager whose state depends on quorum membership
+				// will inevitably diverge from the live client. Additionally,
+				// TaskManager's applyStashedOp is intentionally a no-op, meaning the
+				// frozen container is not expected to reproduce the live client's
+				// in-memory state.
+				quorumDependentDdsTypes,
 			);
 
 			frozenContainer.dispose();
