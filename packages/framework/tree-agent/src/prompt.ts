@@ -52,7 +52,8 @@ export function getPrompt(args: {
 	let exampleObjectName: string | undefined;
 	for (const s of allSchemas) {
 		if (s.kind !== NodeKind.Leaf) {
-			const friendlyName = resolver.resolve(s) ?? fail("All schemas should resolve to a friendly name");
+			const friendlyName =
+				resolver.resolve(s) ?? fail("All schemas should resolve to a friendly name");
 			nodeTypeUnion =
 				nodeTypeUnion === undefined ? friendlyName : `${nodeTypeUnion} | ${friendlyName}`;
 		}
@@ -67,7 +68,8 @@ export function getPrompt(args: {
 				break;
 			}
 			case NodeKind.Object: {
-				exampleObjectName ??= resolver.resolve(s) ?? fail("All schemas should resolve to a friendly name");
+				exampleObjectName ??=
+					resolver.resolve(s) ?? fail("All schemas should resolve to a friendly name");
 				break;
 			}
 			case NodeKind.Leaf: {
@@ -315,7 +317,7 @@ ${
 		? ""
 		: `\nThe application supplied the following additional instructions: ${domainHints}`
 }
-The current state of \`context.root\` (a \`${field === undefined ? "undefined" : resolver.resolve(Tree.schema(field)) ?? fail("all schemas should resolve to a friendly name")}\`) is:
+The current state of \`context.root\` (a \`${field === undefined ? "undefined" : (resolver.resolve(Tree.schema(field)) ?? fail("all schemas should resolve to a friendly name"))}\`) is:
 
 \`\`\`JSON
 ${stringifyTree(field, resolver)}
