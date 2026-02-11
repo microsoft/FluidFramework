@@ -6,6 +6,9 @@ permissions:
   contents: read
   issues: read
   pull-requests: read
+engine:
+   model: gpt-5.2
+   id: copilot
 imports:
 - github/gh-aw/.github/workflows/shared/reporting.md@94662b1dee8ce96c876ba9f33b3ab8be32de82a4
 safe-outputs:
@@ -90,9 +93,7 @@ If **files were changed**, proceed to Phase 2.
 
 Before simplifying, review the project's coding standards from relevant documentation:
 
-- For Go projects: Check `AGENTS.md`, `DEVGUIDE.md`, or similar files
 - For JavaScript/TypeScript: Look for `CLAUDE.md`, style guides, or coding conventions
-- For Python: Check for style guides, PEP 8 adherence, or project-specific conventions
 
 **Key Standards to Apply:**
 
@@ -100,22 +101,8 @@ For **JavaScript/TypeScript** projects:
 - Use ES modules with proper import sorting and extensions
 - Prefer `function` keyword over arrow functions for top-level functions
 - Use explicit return type annotations for top-level functions
-- Follow proper React component patterns with explicit Props types
-- Use proper error handling patterns (avoid try/catch when possible)
+- Use proper error handling patterns
 - Maintain consistent naming conventions
-
-For **Go** projects:
-- Use `any` instead of `interface{}`
-- Follow console formatting for CLI output
-- Use semantic type aliases for domain concepts
-- Prefer small, focused files (200-500 lines ideal)
-- Use table-driven tests with descriptive names
-
-For **Python** projects:
-- Follow PEP 8 style guide
-- Use type hints for function signatures
-- Prefer explicit over implicit code
-- Use list/dict comprehensions where they improve clarity (not complexity)
 
 ### 2.2 Simplification Principles
 
@@ -188,19 +175,22 @@ Use the **edit** tool to modify files:
 
 ## Phase 3: Validate Changes
 
-### 3.1 Run Tests
+### 3.1 Check Build
 
-After making simplifications, run the project's test suite to ensure no functionality was broken:
+Verify the project still builds successfully:
 
 ```bash
-# For Go projects
-make test-unit
+pnpm install
 
-# For JavaScript/TypeScript projects
-npm test
+pnpm run build:fast
+```
 
-# For Python projects
-pytest
+### 3.2 Run Tests
+
+After making simplifications and ensuring the build still works, run the project's test suite to ensure no functionality was broken:
+
+```bash
+pnpm run test
 ```
 
 If tests fail:
@@ -209,38 +199,18 @@ If tests fail:
 - Adjust simplifications to preserve behavior
 - Re-run tests until they pass
 
-### 3.2 Run Linters
+### 3.3 Run Linters and formatting
 
 Ensure code style is consistent:
 
 ```bash
-# For Go projects
-make lint
+pnpm run lint
 
-# For JavaScript/TypeScript projects
-npm run lint
-
-# For Python projects
-flake8 . || pylint .
+pnpm run format --fix
 ```
 
 Fix any linting issues introduced by the simplifications.
 
-### 3.3 Check Build
-
-Verify the project still builds successfully:
-
-```bash
-# For Go projects
-make build
-
-# For JavaScript/TypeScript projects
-npm run build
-
-# For Python projects
-# (typically no build step, but check imports)
-python -m py_compile changed_files.py
-```
 
 ## Phase 4: Create Pull Request
 
@@ -298,9 +268,9 @@ Recent changes from:
 
 ### Testing
 
-- ✅ All tests pass (`make test-unit`)
-- ✅ Linting passes (`make lint`)
-- ✅ Build succeeds (`make build`)
+- ✅ Build succeeds
+- ✅ All tests pass
+- ✅ Linting passes
 - ✅ No functional changes - behavior is identical
 
 ### Review Focus
