@@ -34,11 +34,11 @@ function buildPromptSchemaDescription(
 	rootSchema: ImplicitFieldSchema,
 ): SchemaTypeScriptRenderResult {
 	const bindableSchemas = new Map<string, BindableSchema>();
-	const allSchemas = new Map<string, TreeNodeSchema>();
+	const allSchemas = new Set<TreeNodeSchema>();
 
 	walkFieldSchema(rootSchema, {
 		node: (node) => {
-			allSchemas.set(node.identifier, node);
+			allSchemas.add(node);
 
 			if (isBindableSchema(node)) {
 				bindableSchemas.set(node.identifier, node);

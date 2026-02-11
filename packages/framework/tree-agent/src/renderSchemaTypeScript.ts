@@ -4,7 +4,7 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { TreeNodeSchema } from "@fluidframework/tree";
+import type { FieldSchema, TreeNodeSchema } from "@fluidframework/tree";
 import {
 	ArrayNodeSchema,
 	MapNodeSchema,
@@ -12,7 +12,7 @@ import {
 	RecordNodeSchema,
 } from "@fluidframework/tree/alpha";
 import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal";
-import type { SimpleFieldSchema, SimpleLeafNodeSchema } from "@fluidframework/tree/internal";
+import type { SimpleLeafNodeSchema } from "@fluidframework/tree/internal";
 
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
@@ -26,7 +26,6 @@ import {
 	getFriendlyName,
 	isNamedSchema,
 	llmDefault,
-	unqualifySchema,
 } from "./utils.js";
 
 interface BoundMembers {
@@ -68,24 +67,25 @@ export interface SchemaTypeScriptRenderResult {
  * Converts schema metadata into TypeScript declarations suitable for prompt inclusion.
  */
 export function renderSchemaTypeScript(
-	definitions: ReadonlyMap<string, TreeNodeSchema>,
+	definitions: Iterable<TreeNodeSchema>,
 	bindableSchemas: Map<string, BindableSchema>,
 ): SchemaTypeScriptRenderResult {
-	const friendlyNames = new Map<string, string>();
+	const allSchemas = [...definitions];
 	let hasHelperMethods = false;
 
 	// Resolve short name collisions
 	const resolver = new IdentifierCollisionResolver();
-	for (const schema of definitions.values()) {
-		friendlyNames.set(schema.identifier, resolver.resolve(schema));
+	for (const schema of allSchemas) {
+		resolver.resolve(schema);
 	}
 
 	const declarations: string[] = [];
-	for (const [identifier, schema] of definitions) {
+	for (const schema of allSchemas) {
+		const identifier = schema.identifier;
 		if (!isNamedSchema(identifier)) {
 			continue;
 		}
-		const friendlyName = friendlyNames.get(identifier) ?? unqualifySchema(identifier);
+		const friendlyName = resolver.resolve(schema);
 		const rendered = renderNamedSchema(identifier, friendlyName, schema);
 		if (rendered === undefined) {
 			continue;
@@ -165,7 +165,7 @@ export function renderSchemaTypeScript(
 		name: string,
 		schema: ArrayNodeSchema,
 	): RenderResult {
-		const elementTypes = renderAllowedTypes(schema.simpleAllowedTypes.keys());
+		const elementTypes = renderAllowedTypes(schema.childTypes);
 		const base = `${formatExpression(elementTypes)}[]`;
 		const binding = renderBindingIntersection(definition);
 		return {
@@ -179,7 +179,7 @@ export function renderSchemaTypeScript(
 		name: string,
 		schema: MapNodeSchema,
 	): RenderResult {
-		const valueType = renderAllowedTypes(schema.simpleAllowedTypes.keys());
+		const valueType = renderAllowedTypes(schema.childTypes);
 		const base = `Map<string, ${valueType.text}>`;
 		const binding = renderBindingIntersection(definition);
 		return {
@@ -193,7 +193,7 @@ export function renderSchemaTypeScript(
 		name: string,
 		schema: RecordNodeSchema,
 	): RenderResult {
-		const valueType = renderAllowedTypes(schema.simpleAllowedTypes.keys());
+		const valueType = renderAllowedTypes(schema.childTypes);
 		const base = `Record<string, ${valueType.text}>`;
 		const binding = renderBindingIntersection(definition);
 		return {
@@ -202,7 +202,7 @@ export function renderSchemaTypeScript(
 		};
 	}
 
-	function renderFieldLine(name: string, field: SimpleFieldSchema): string[] {
+	function renderFieldLine(name: string, field: FieldSchema): string[] {
 		const { comment, optional, type } = describeField(field);
 		const lines: string[] = [];
 		if (comment !== undefined && comment !== "") {
@@ -214,12 +214,12 @@ export function renderSchemaTypeScript(
 		return lines;
 	}
 
-	function describeField(field: SimpleFieldSchema): {
+	function describeField(field: FieldSchema): {
 		comment?: string;
 		optional: boolean;
 		type: string;
 	} {
-		const allowedTypes = renderAllowedTypes(field.simpleAllowedTypes.keys());
+		const allowedTypes = renderAllowedTypes(field.allowedTypeSet);
 		const type = formatExpression(allowedTypes);
 		const optional = field.kind !== FieldKind.Required;
 		const customMetadata = field.metadata.custom as
@@ -310,10 +310,10 @@ export function renderSchemaTypeScript(
 		};
 	}
 
-	function renderAllowedTypes(allowedTypes: Iterable<string>): TypeExpression {
+	function renderAllowedTypes(allowedTypes: Iterable<TreeNodeSchema>): TypeExpression {
 		const expressions: TypeExpression[] = [];
-		for (const identifier of allowedTypes) {
-			expressions.push(renderTypeReference(identifier));
+		for (const schema of allowedTypes) {
+			expressions.push(renderTypeReference(schema));
 		}
 		if (expressions.length === 0) {
 			return { precedence: TypePrecedence.Object, text: "never" };
@@ -329,18 +329,11 @@ export function renderSchemaTypeScript(
 		};
 	}
 
-	function renderTypeReference(identifier: string): TypeExpression {
-		const schema = definitions.get(identifier);
-		if (schema === undefined) {
+	function renderTypeReference(schema: TreeNodeSchema): TypeExpression {
+		if (isNamedSchema(schema.identifier)) {
 			return {
 				precedence: TypePrecedence.Object,
-				text: friendlyNames.get(identifier) ?? unqualifySchema(identifier),
-			};
-		}
-		if (isNamedSchema(identifier)) {
-			return {
-				precedence: TypePrecedence.Object,
-				text: friendlyNames.get(identifier) ?? unqualifySchema(identifier),
+				text: resolver.resolve(schema),
 			};
 		}
 		return renderInlineSchema(schema);
@@ -384,7 +377,7 @@ ${members}
 	}
 
 	function renderInlineArray(schema: ArrayNodeSchema): TypeExpression {
-		const elementTypes = renderAllowedTypes(schema.simpleAllowedTypes.keys());
+		const elementTypes = renderAllowedTypes(schema.childTypes);
 		return {
 			precedence: TypePrecedence.Object,
 			text: `${formatExpression(elementTypes)}[]`,
@@ -392,7 +385,7 @@ ${members}
 	}
 
 	function renderInlineMap(schema: MapNodeSchema): TypeExpression {
-		const valueType = renderAllowedTypes(schema.simpleAllowedTypes.keys());
+		const valueType = renderAllowedTypes(schema.childTypes);
 		return {
 			precedence: TypePrecedence.Object,
 			text: `Map<string, ${valueType.text}>`,
@@ -400,7 +393,7 @@ ${members}
 	}
 
 	function renderInlineRecord(schema: RecordNodeSchema): TypeExpression {
-		const valueType = renderAllowedTypes(schema.simpleAllowedTypes.keys());
+		const valueType = renderAllowedTypes(schema.childTypes);
 		return {
 			precedence: TypePrecedence.Object,
 			text: `Record<string, ${valueType.text}>`,

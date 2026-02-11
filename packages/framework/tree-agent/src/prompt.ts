@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, oob } from "@fluidframework/core-utils/internal";
+import { oob } from "@fluidframework/core-utils/internal";
 import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
 import type { ImplicitFieldSchema, TreeMapNode } from "@fluidframework/tree";
 import type { ReadableField } from "@fluidframework/tree/alpha";
@@ -53,7 +53,7 @@ export function getPrompt(args: {
 	for (const s of allSchemas) {
 		if (s.kind !== NodeKind.Leaf) {
 			const friendlyName =
-				resolver.resolve(s) ?? fail("All schemas should resolve to a friendly name");
+				resolver.resolve(s);
 			nodeTypeUnion =
 				nodeTypeUnion === undefined ? friendlyName : `${nodeTypeUnion} | ${friendlyName}`;
 		}
@@ -69,7 +69,7 @@ export function getPrompt(args: {
 			}
 			case NodeKind.Object: {
 				exampleObjectName ??=
-					resolver.resolve(s) ?? fail("All schemas should resolve to a friendly name");
+					resolver.resolve(s);
 				break;
 			}
 			case NodeKind.Leaf: {
@@ -317,7 +317,7 @@ ${
 		? ""
 		: `\nThe application supplied the following additional instructions: ${domainHints}`
 }
-The current state of \`context.root\` (a \`${field === undefined ? "undefined" : (resolver.resolve(Tree.schema(field)) ?? fail("all schemas should resolve to a friendly name"))}\`) is:
+The current state of \`context.root\` (a \`${field === undefined ? "undefined" : (resolver.resolve(Tree.schema(field)))}\`) is:
 
 \`\`\`JSON
 ${stringifyTree(field, resolver)}
