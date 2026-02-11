@@ -27,9 +27,7 @@ import {
 	withSchemaValidation,
 	type FormatVersion,
 	type CodecWriteOptions,
-	type IMultiFormatCodec,
 	type CodecName,
-	ensureBinaryEncoding,
 	type CodecTree,
 } from "../codec.js";
 
@@ -164,7 +162,7 @@ export function makeVersionDispatchingCodec<TDecoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	options: ICodecOptions & { writeVersion: FormatVersion },
 ): IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext> {
-	const writeCodec = family.resolve(options.writeVersion).json;
+	const writeCodec = family.resolve(options.writeVersion);
 	const supportedVersions = new Set(family.getSupportedFormats());
 	return makeVersionedCodec(supportedVersions, options, {
 		encode(data, context): Versioned {
@@ -172,7 +170,7 @@ export function makeVersionDispatchingCodec<TDecoded, TContext>(
 		},
 		decode(data: Versioned, context) {
 			const codec = family.resolve(data.version);
-			return codec.json.decode(data, context);
+			return codec.decode(data, context);
 		},
 	});
 }
@@ -183,10 +181,9 @@ export function makeVersionDispatchingCodec<TDecoded, TContext>(
  * The codec should not perform its own schema validation.
  * The schema validation gets added when normalizing to {@link NormalizedCodecVersion}.
  */
-export type CodecAndSchema<TDecoded, TContext = void> = { readonly schema: TSchema } & (
-	| IMultiFormatCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>
-	| IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>
-);
+export type CodecAndSchema<TDecoded, TContext = void> = {
+	readonly schema: TSchema;
+} & IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>;
 
 /**
  * A codec alongside its format version and schema.
@@ -271,13 +268,11 @@ function normalizeCodecVersion<
 		options: TBuildOptions,
 	): IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext> => {
 		const built = codecBuilder(options);
-		// We currently don't expose or use binary formats, but someday we might.
-		const multiFormat = ensureBinaryEncoding<TDecoded, TContext, VersionedJson>(built);
 		return makeVersionedValidatedCodec(
 			options,
 			new Set([codecVersion.formatVersion]),
 			built.schema,
-			multiFormat.json,
+			built,
 		);
 	};
 

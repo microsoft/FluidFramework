@@ -11,7 +11,6 @@ import {
 	eraseEncodedType,
 	type ICodecOptions,
 	type IJsonCodec,
-	type IMultiFormatCodec,
 	withSchemaValidation,
 } from "../codec/index.js";
 import type {
@@ -38,7 +37,7 @@ export interface EditManagerEncodingContext {
 }
 
 export function makeSharedBranchesCodecWithVersion<TChangeset>(
-	changeCodec: IMultiFormatCodec<
+	changeCodec: IJsonCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
@@ -59,7 +58,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	EditManagerEncodingContext
 > {
 	const format = EncodedEditManager(
-		changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema,
+		changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema,
 	) as TUnsafe<EncodedEditManager<TChangeset>>;
 
 	const codec: IJsonCodec<
