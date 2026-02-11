@@ -296,6 +296,30 @@ export class ConsensusOrderedCollection<T = any>
 		this.data.loadFrom(content2);
 	}
 
+	/**
+	 * When a new client connects after loading from snapshot + ops, it may
+	 * have items in jobTracking that belong to clients no longer in the
+	 * quorum. This happens because the new client processes historical
+	 * acquire ops (which add items to jobTracking) but never receives the
+	 * removeMember quorum events for clients that left before it joined.
+	 * Without this scrub, those items would be stuck in jobTracking forever,
+	 * causing state divergence with clients that did process the removeMember
+	 * events.
+	 */
+	protected onConnect(): void {
+		this.scrubJobTrackingByQuorum();
+	}
+
+	private scrubJobTrackingByQuorum(): void {
+		const quorum = this.runtime.getQuorum();
+		for (const [acquireId, { value, clientId }] of this.jobTracking) {
+			if (clientId !== undefined && quorum.getMember(clientId) === undefined) {
+				this.jobTracking.delete(acquireId);
+				this.data.add(value);
+			}
+		}
+	}
+
 	protected onDisconnect(): void {
 		for (const [, { value, clientId }] of this.jobTracking) {
 			if (clientId === this.runtime.clientId) {
