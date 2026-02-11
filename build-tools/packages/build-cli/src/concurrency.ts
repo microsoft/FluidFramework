@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type Operation, type Task, call, spawn } from "effection";
+import { call, type Operation, spawn, type Task } from "effection";
 
 /**
  * Callbacks for tracking progress of concurrent processing.

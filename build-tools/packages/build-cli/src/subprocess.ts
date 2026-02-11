@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type Operation, call, ensure } from "effection";
+import { call, ensure, type Operation } from "effection";
 import type { ExecaChildProcess, ExecaReturnValue, Options } from "execa";
 import execa from "execa";
 
