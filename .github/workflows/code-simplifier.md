@@ -206,7 +206,7 @@ Ensure code style is consistent:
 ```bash
 pnpm run lint
 
-pnpm run format --fix
+pnpm run format:repo
 ```
 
 Fix any linting issues introduced by the simplifications.
