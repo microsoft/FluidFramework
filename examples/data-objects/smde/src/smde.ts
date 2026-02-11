@@ -6,7 +6,9 @@
 import { EventEmitter } from "@fluid-example/example-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
-import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/legacy";
+// eslint-disable-next-line import-x/no-internal-modules
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import { FluidObjectHandle } from "@fluidframework/datastore/legacy";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
 import { ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import {

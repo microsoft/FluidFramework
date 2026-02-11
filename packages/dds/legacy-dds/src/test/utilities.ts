@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedArray, SerializableTypeForSharedArray } from "../index.js";
 import { SharedArrayBuilder } from "../index.js";

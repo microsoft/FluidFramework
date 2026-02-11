@@ -44,7 +44,7 @@ export type EditingResult = FailedEditingResult | ValidEditingResult;
 
 /**
  * Basic result of applying a transaction.
- * @alpha
+ * @internal
  */
 export interface EditingResultBase {
 	/**
@@ -92,7 +92,7 @@ export interface FailedEditingResult extends EditingResultBase {
 
 /**
  * Result of applying a valid transaction.
- * @alpha
+ * @internal
  */
 export interface ValidEditingResult extends EditingResultBase {
 	/**
@@ -119,7 +119,7 @@ export type TransactionState = SucceedingTransactionState | FailingTransactionSt
 
 /**
  * The state of a transaction that has not encountered an error.
- * @alpha
+ * @internal
  */
 export interface SucceedingTransactionState {
 	/**
@@ -431,7 +431,7 @@ export interface GenericTransactionPolicy {
  *
  * No data outside the Transaction is modified by Transaction:
  * the results from `close` must be used to actually submit an `Edit`.
- * @alpha
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace TransactionInternal {
@@ -835,7 +835,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * The kinds of failures that a transaction might encounter.
-	 * @alpha
+	 * @internal
 	 */
 	export enum FailureKind {
 		/**
@@ -878,7 +878,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * A failure encountered by a transaction.
-	 * @alpha
+	 * @internal
 	 */
 	export type Failure =
 		| UnusedDetachedSequenceFailure
@@ -893,7 +893,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * Error returned when a transaction is closed while there is an unused detached sequence.
-	 * @alpha
+	 * @internal
 	 */
 	export interface UnusedDetachedSequenceFailure {
 		/**
@@ -908,7 +908,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * Error thrown when a transaction encounters a build operation using an already in use DetachedSequenceID.
-	 * @alpha
+	 * @internal
 	 */
 	export interface DetachedSequenceIdAlreadyInUseFailure {
 		/**
@@ -927,7 +927,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * Error thrown when a transaction tries to operate on an unknown DetachedSequenceID
-	 * @alpha
+	 * @internal
 	 */
 	export interface DetachedSequenceNotFoundFailure {
 		/**
@@ -946,7 +946,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * Error thrown when a build uses a duplicated NodeId
-	 * @alpha
+	 * @internal
 	 */
 	export interface DuplicateIdInBuildFailure {
 		/**
@@ -965,7 +965,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * Error thrown when a build node ID is already used in the current state
-	 * @alpha
+	 * @internal
 	 */
 	export interface IdAlreadyInUseFailure {
 		/**
@@ -984,7 +984,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * Error thrown when a change is attempted on an unknown NodeId
-	 * @alpha
+	 * @internal
 	 */
 	export interface UnknownIdFailure {
 		/**
@@ -1003,7 +1003,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * Error thrown when an insert change uses an invalid Place
-	 * @alpha
+	 * @internal
 	 */
 	export interface BadPlaceFailure {
 		/**
@@ -1026,7 +1026,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * Error thrown when a detach operation is given an invalid or malformed Range
-	 * @alpha
+	 * @internal
 	 */
 	export interface BadRangeFailure {
 		/**
@@ -1049,7 +1049,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * Error thrown when a constraint fails to apply
-	 * @alpha
+	 * @internal
 	 */
 	export interface ConstraintViolationFailure {
 		/**
@@ -1068,7 +1068,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * The details of what kind of constraint was violated and caused a ConstraintViolationFailure error to occur
-	 * @alpha
+	 * @internal
 	 */
 	export type ConstraintViolationResult =
 		| {
@@ -1090,7 +1090,7 @@ export namespace TransactionInternal {
 
 	/**
 	 * Enum of possible kinds of constraint violations that can be encountered
-	 * @alpha
+	 * @internal
 	 */
 	export enum ConstraintViolationKind {
 		/**

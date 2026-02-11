@@ -3,16 +3,19 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import-x/no-internal-modules */
+
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions/legacy";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { IChannel } from "@fluidframework/datastore-definitions/legacy";
 import { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/legacy";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils/legacy";
+} from "@fluidframework/test-runtime-utils/internal";
 
 export function create<T>(factory: IChannelFactory<T>): {
 	channel: T & IChannel;

@@ -4,7 +4,9 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+// eslint-disable-next-line import-x/no-internal-modules
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject } from "@fluidframework/aqueduct/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26903: `cell` internals used in examples
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import { SharedString } from "@fluidframework/sequence/legacy";

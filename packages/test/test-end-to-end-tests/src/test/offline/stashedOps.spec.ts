@@ -55,7 +55,10 @@ import type {
 	ISequenceIntervalCollection,
 	SharedString,
 } from "@fluidframework/sequence/internal";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	type ISharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -145,7 +148,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[counterId, SharedCounter.getFactory()],
 		[directoryId, SharedDirectory.getFactory()],
 		[treeId, SharedTree.getFactory()],
-		[arrayId, SharedArray.getFactory()],
+		[arrayId, (SharedArray as unknown as ISharedObjectKind<any>).getFactory()],
 		[signalId, SharedSignal.getFactory()],
 	];
 

@@ -16,7 +16,8 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/legacy";
 import { assert } from "@fluidframework/core-utils/legacy";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
+// eslint-disable-next-line import-x/no-internal-modules
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,

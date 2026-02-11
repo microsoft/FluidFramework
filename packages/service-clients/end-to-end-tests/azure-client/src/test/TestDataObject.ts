@@ -6,10 +6,9 @@
 import type { SignalListener } from "@fluid-experimental/data-objects";
 import { EventEmitter } from "@fluid-internal/client-utils";
 // eslint-disable-next-line import-x/no-internal-modules -- TODO consider a test exposure to avoid /internal
-import { createDataObjectKind } from "@fluidframework/aqueduct/internal";
+import { createDataObjectKind, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	DataObject,
-	DataObjectFactory,
 	type IDataObjectProps,
 } from "@fluidframework/aqueduct/legacy";
 import type { IErrorEvent, IFluidHandle } from "@fluidframework/core-interfaces";

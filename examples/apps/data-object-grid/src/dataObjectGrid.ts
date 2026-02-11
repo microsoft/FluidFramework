@@ -4,7 +4,9 @@
  */
 
 import type { EventEmitter } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+// eslint-disable-next-line import-x/no-internal-modules
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject } from "@fluidframework/aqueduct/legacy";
 import type { Serializable } from "@fluidframework/datastore-definitions/legacy";
 import type React from "react";
 import type { Layout } from "react-grid-layout";

@@ -4,7 +4,9 @@
  */
 
 import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+// eslint-disable-next-line import-x/no-internal-modules
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject } from "@fluidframework/aqueduct/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import { AppState } from "./state.js";

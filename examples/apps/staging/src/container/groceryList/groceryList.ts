@@ -10,9 +10,13 @@ import type {
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/legacy";
-import { type ISharedMap, type IValueChanged, MapFactory } from "@fluidframework/map/legacy";
+// eslint-disable-next-line import-x/no-internal-modules
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+// eslint-disable-next-line import-x/no-internal-modules
+import { MapFactory } from "@fluidframework/map/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/legacy";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,

@@ -14,7 +14,7 @@ import { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
 /**
  * A revertible change
  *
- * @alpha
+ * @internal
  */
 export interface IRevertible {
 	/**
@@ -34,7 +34,7 @@ export interface IRevertible {
  * This interface is typically implemented by a stack which may optionally aggregate multiple
  * changes into one operation.
  *
- * @alpha
+ * @internal
  */
 export interface IUndoConsumer {
 	/**
@@ -47,7 +47,7 @@ export interface IUndoConsumer {
  * A shared tree undo redo handler that will add revertible local tree changes to the provided
  * undo redo stack manager
  *
- * @alpha
+ * @internal
  */
 export class SharedTreeUndoRedoHandler {
 	constructor(private readonly stackManager: IUndoConsumer) {}

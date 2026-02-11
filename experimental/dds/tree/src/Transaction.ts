@@ -17,7 +17,7 @@ import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
 
 /**
  * An event emitted by a `Transaction` to indicate a state change. See {@link TransactionEvents} for event argument information.
- * @alpha
+ * @internal
  */
 export enum TransactionEvent {
 	/**
@@ -28,7 +28,7 @@ export enum TransactionEvent {
 
 /**
  * Events which may be emitted by `Transaction`
- * @alpha
+ * @internal
  */
 export interface TransactionEvents extends IErrorEvent {
 	(event: TransactionEvent.ViewChange, listener: (before: TreeView, after: TreeView) => void);
@@ -37,7 +37,7 @@ export interface TransactionEvents extends IErrorEvent {
 /**
  * Buffers changes to be applied to an isolated view of a `SharedTree` over time before applying them directly to the tree itself as a
  * single edit
- * @alpha
+ * @internal
  */
 export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	/** The view of the tree when this transaction was created */

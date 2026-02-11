@@ -11,7 +11,7 @@
  * A 128-bit Universally Unique IDentifier. Represented here
  * with a string of the form xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx,
  * where x is a lowercase hex digit.
- * @alpha
+ * @internal
  */
 export type UuidString = string & {
 	readonly UuidString: '9d40d0ae-90d9-44b1-9482-9f55d59d5465';
@@ -19,7 +19,7 @@ export type UuidString = string & {
 
 /**
  * An identifier associated with a session for the purpose of attributing its created content to some user/entity.
- * @alpha
+ * @internal
  */
 export type AttributionId = UuidString;
 
@@ -41,7 +41,7 @@ export type SessionId = StableId & {
 
 /**
  * Edit identifier
- * @alpha
+ * @internal
  */
 export type EditId = UuidString & { readonly EditId: '56897beb-53e4-4e66-85da-4bf5cd5d0d49' };
 
@@ -51,7 +51,7 @@ export type EditId = UuidString & { readonly EditId: '56897beb-53e4-4e66-85da-4b
  * Within a given Edit, any DetachedSequenceId must be a source at most once, and a destination at most once.
  * If used as a source, it must be after it is used as a destination.
  * If this is violated, the Edit is considered malformed.
- * @alpha
+ * @internal
  */
 export type DetachedSequenceId = number & {
 	readonly DetachedSequenceId: 'f7d7903a-194e-45e7-8e82-c9ef4333577d';
@@ -59,7 +59,7 @@ export type DetachedSequenceId = number & {
 
 /**
  * An identifier (UUID) that has been shortened by a distributed compression algorithm.
- * @alpha
+ * @internal
  */
 export type CompressedId = FinalCompressedId | LocalCompressedId;
 
@@ -73,7 +73,7 @@ export type InternedStringId = number & {
 
 /**
  * A brand for identity types that are unique within a particular session (SharedTree instance).
- * @alpha
+ * @internal
  */
 export interface SessionUnique {
 	readonly SessionUnique: 'cea55054-6b82-4cbf-ad19-1fa645ea3b3e';
@@ -83,7 +83,7 @@ export interface SessionUnique {
  * A compressed ID that has been normalized into "session space" (see `IdCompressor` for more).
  * Consumer-facing APIs and data structures should use session-space IDs as their lifetime and equality is stable and tied to the
  * compressor that produced them.
- * @alpha
+ * @internal
  */
 export type SessionSpaceCompressedId = CompressedId & SessionUnique;
 
@@ -101,7 +101,7 @@ export type OpSpaceCompressedId = CompressedId & {
  * A compressed ID that is local to a document. Stable across all revisions of a document starting from the one in which it was created.
  * It should not be persisted outside of the history as it can only be decompressed in the context of the originating document.
  * If external persistence is needed (e.g. by a client), a StableId should be used instead.
- * @alpha
+ * @internal
  */
 export type FinalCompressedId = number & {
 	readonly FinalCompressedId: '5d83d1e2-98b7-4e4e-a889-54c855cfa73d';
@@ -114,14 +114,14 @@ export type FinalCompressedId = number & {
  * A compressed ID that is local to a session (can only be decompressed when paired with a SessionId).
  * It should not be persisted outside of the history as it can only be decompressed in the context of the originating session.
  * If external persistence is needed (e.g. by a client), a StableId should be used instead.
- * @alpha
+ * @internal
  */
 export type LocalCompressedId = number & {
 	readonly LocalCompressedId: '6fccb42f-e2a4-4243-bd29-f13d12b9c6d1';
 } & SessionUnique; // Same brand as CompressedId, as local IDs are always locally normalized
 
 /**
- * @alpha
+ * @internal
  */
 export interface NodeIdBrand {
 	readonly NodeId: 'e53e7d6b-c8b9-431a-8805-4843fc639342';
@@ -130,7 +130,7 @@ export interface NodeIdBrand {
 /**
  * Node identifier.
  * Identifies a node within a document.
- * @alpha
+ * @internal
  */
 export type NodeId = number & SessionSpaceCompressedId & NodeIdBrand;
 
@@ -145,7 +145,7 @@ export type OpSpaceNodeId = number & OpSpaceCompressedId & NodeIdBrand;
 /**
  * Globally unique node identifier.
  * Uniquely identifies a node within and across documents. Can be used across SharedTree instances.
- * @alpha
+ * @internal
  */
 export type StableNodeId = string & {
 	readonly StableNodeId: 'a0843b38-699d-4bb2-aa7a-16c502a71151';
@@ -154,7 +154,7 @@ export type StableNodeId = string & {
 /**
  * Definition.
  * A full (Uuid) persistable definition.
- * @alpha
+ * @internal
  */
 export type Definition = UuidString & {
 	readonly Definition: 'c0ef9488-2a78-482d-aeed-37fba996354c';
@@ -163,7 +163,7 @@ export type Definition = UuidString & {
 /**
  * Definition.
  * A full (Uuid) persistable label for a trait.
- * @alpha
+ * @internal
  */
 export type TraitLabel = UuidString & {
 	readonly TraitLabel: '613826ed-49cc-4df3-b2b8-bfc6866af8e3';
