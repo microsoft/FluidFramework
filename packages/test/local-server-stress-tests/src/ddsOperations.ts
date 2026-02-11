@@ -203,14 +203,14 @@ export const validateConsistencyOfAllDDS = async (
 		const channelMap = new Map<string, IChannel>();
 		const containerObjects = await stateTracker.resolveAllContainerObjects(client);
 		for (const entry of containerObjects) {
-			if (entry.type !== "stressDataObject" || entry.stressDataObject === undefined) {
+			if (entry.type !== "stressDataObject" || entry.datastore === undefined) {
 				continue;
 			}
-			if (entry.stressDataObject.attached === true) {
+			if (entry.datastore.attached === true) {
 				const dsTag = entry.tag as `datastore-${number}`;
 				const channelNames = stateTracker.getChannelNames(dsTag);
 				for (const name of channelNames) {
-					const channel = await entry.stressDataObject.StressDataObject.getChannel(name);
+					const channel = await entry.datastore.getChannel(name);
 					if (channel?.isAttached() === true) {
 						channelMap.set(`${entry.tag}/${channel.id}`, channel);
 					}

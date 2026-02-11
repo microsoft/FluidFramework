@@ -16,12 +16,12 @@ export const validateAllDataStoresSaved = async (
 		assert(client.container.isDirty === false, `[${client.tag}] Container is dirty!`);
 		const containerObjects = await stateTracker.resolveAllContainerObjects(client);
 		for (const entry of containerObjects) {
-			if (entry.type !== "stressDataObject" || entry.stressDataObject === undefined) {
+			if (entry.type !== "stressDataObject" || entry.datastore === undefined) {
 				continue;
 			}
 			assert(
-				entry.stressDataObject.isDirty === false,
-				`[${client.tag}] DataObject ${entry.stressDataObject.id} is dirty!`,
+				entry.datastore.isDirty === false,
+				`[${client.tag}] DataObject ${entry.datastore.id} is dirty!`,
 			);
 		}
 	}

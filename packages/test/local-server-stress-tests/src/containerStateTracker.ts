@@ -32,7 +32,7 @@ export interface ResolvedContainerObject {
 	type: "stressDataObject" | "blob";
 	tag: `datastore-${number}` | `blob-${number}`;
 	handle: IFluidHandle;
-	stressDataObject?: StressDataObject;
+	datastore?: StressDataObject;
 }
 
 /**
@@ -164,8 +164,7 @@ export class ContainerStateTracker {
 			type: pathEntry.type,
 			tag,
 			handle: resolved.handle,
-			stressDataObject:
-				pathEntry.type === "stressDataObject" ? resolved.stressDataObject : undefined,
+			datastore: pathEntry.type === "stressDataObject" ? resolved.stressDataObject : undefined,
 		};
 	}
 
@@ -220,16 +219,16 @@ export class ContainerStateTracker {
 		channelTag: `channel-${number}`,
 	): Promise<{ channel: IChannel; datastore: StressDataObject } | undefined> {
 		const dsObj = await this.resolveContainerObject(client, datastoreTag);
-		if (dsObj?.stressDataObject === undefined) {
+		if (dsObj?.datastore === undefined) {
 			return undefined;
 		}
 
-		const channel = await dsObj.stressDataObject.StressDataObject.getChannel(channelTag);
+		const channel = await dsObj.datastore.getChannel(channelTag);
 		if (channel === undefined) {
 			return undefined;
 		}
 
-		return { channel, datastore: dsObj.stressDataObject };
+		return { channel, datastore: dsObj.datastore };
 	}
 
 	/**
