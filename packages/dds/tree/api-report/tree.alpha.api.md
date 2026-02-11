@@ -1487,7 +1487,7 @@ export interface TransactionResultSuccess<TSuccessValue> {
     value: TSuccessValue;
 }
 
-// @public @sealed @system
+// @public @sealed
 export interface Tree extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
     readonly runTransaction: RunTransaction;
@@ -1496,7 +1496,7 @@ export interface Tree extends TreeNodeApi {
 // @public
 export const Tree: Tree;
 
-// @alpha @sealed @system
+// @alpha @sealed
 export interface TreeAlpha {
     branch(node: TreeNode): TreeBranchAlpha | undefined;
     child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
@@ -1551,7 +1551,7 @@ export const TreeArrayNode: {
     readonly spread: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 };
 
-// @beta @sealed @system
+// @beta @sealed
 export interface TreeBeta {
     clone<const TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
     create<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
