@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { oob } from "@fluidframework/core-utils/internal";
+import { fail, oob } from "@fluidframework/core-utils/internal";
 import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
-import type { ImplicitFieldSchema, TreeMapNode, TreeNodeSchema } from "@fluidframework/tree";
+import type { ImplicitFieldSchema, TreeMapNode } from "@fluidframework/tree";
 import type { ReadableField } from "@fluidframework/tree/alpha";
 import { getSimpleSchema } from "@fluidframework/tree/alpha";
 import { normalizeFieldSchema } from "@fluidframework/tree/internal";
@@ -35,19 +35,18 @@ export function getPrompt(args: {
 	const rootTypes = [...normalizeFieldSchema(schema).allowedTypeSet];
 	const allSchemas = findSchemas(schema);
 	const resolver = new IdentifierCollisionResolver();
-	const collisionResolvedNames = new Map<TreeNodeSchema, string>();
 	for (const schemaNode of allSchemas) {
-		collisionResolvedNames.set(schemaNode, resolver.resolve(schemaNode));
+		resolver.resolve(schemaNode);
 	}
 
-	const rootTypeUnion = `${rootTypes.map((t) => collisionResolvedNames.get(t) ?? getFriendlyName(t)).join(" | ")}`;
+	const rootTypeUnion = `${rootTypes.map((t) => resolver.resolve(t) ?? getFriendlyName(t)).join(" | ")}`;
 	let nodeTypeUnion: string | undefined;
 	let hasArrays = false;
 	let hasMaps = false;
 	let exampleObjectName: string | undefined;
 	for (const s of allSchemas) {
 		if (s.kind !== NodeKind.Leaf) {
-			const friendlyName = collisionResolvedNames.get(s) ?? getFriendlyName(s);
+			const friendlyName = resolver.resolve(s) ?? fail("All schemas should resolve to a friendly name");
 			nodeTypeUnion =
 				nodeTypeUnion === undefined ? friendlyName : `${nodeTypeUnion} | ${friendlyName}`;
 		}
@@ -62,7 +61,7 @@ export function getPrompt(args: {
 				break;
 			}
 			case NodeKind.Object: {
-				exampleObjectName ??= collisionResolvedNames.get(s) ?? getFriendlyName(s);
+				exampleObjectName ??= resolver.resolve(s) ?? fail("All schemas should resolve to a friendly name");
 				break;
 			}
 			// No default
@@ -297,10 +296,10 @@ ${
 		? ""
 		: `\nThe application supplied the following additional instructions: ${domainHints}`
 }
-The current state of \`context.root\` (a \`${field === undefined ? "undefined" : (collisionResolvedNames.get(Tree.schema(field)) ?? getFriendlyName(Tree.schema(field)))}\`) is:
+The current state of \`context.root\` (a \`${field === undefined ? "undefined" : resolver.resolve(Tree.schema(field)) ?? fail("all schemas should resolve to a friendly name")}\`) is:
 
 \`\`\`JSON
-${stringifyTree(field, collisionResolvedNames)}
+${stringifyTree(field, resolver)}
 \`\`\``;
 	return prompt;
 }
@@ -311,8 +310,9 @@ ${stringifyTree(field, collisionResolvedNames)}
  */
 export function stringifyTree(
 	tree: ReadableField<ImplicitFieldSchema>,
-	collisionResolvedNames?: Map<TreeNodeSchema, string>,
+	collisionResolver?: IdentifierCollisionResolver,
 ): string {
+	const resolver = collisionResolver ?? new IdentifierCollisionResolver();
 	const typeReplacementKey = "_e944da5a5fd04ea2b8b2eb6109e089ed";
 	const indexReplacementKey = "_27bb216b474d45e6aaee14d1ec267b96";
 	const mapReplacementKey = "_a0d98d22a1c644539f07828d3f064d71";
@@ -325,8 +325,7 @@ export function stringifyTree(
 				const schema = Tree.schema(node);
 				switch (schema.kind) {
 					case NodeKind.Object: {
-						const friendlyName =
-							collisionResolvedNames?.get(schema) ?? getFriendlyName(schema);
+						const friendlyName = resolver.resolve(schema);
 						return {
 							[typeReplacementKey]: friendlyName,
 							[indexReplacementKey]: index,
