@@ -73,14 +73,14 @@ const historyGroupIdPrefix = "fluid-history-";
 /**
  * Creates a group ID for a checkpoint at the given sequence number.
  */
-function checkpointGroupId(seqNum: number): `${typeof historyGroupIdPrefix}${number}` {
+function checkpointGroupId(seqNum: number): `fluid-history-${number}` {
 	return `${historyGroupIdPrefix}${seqNum}`;
 }
 
 /**
  * Creates the checkpoint subtree key name.
  */
-function checkpointKey(seqNum: number): `${typeof checkpointPrefix}${number}` {
+function checkpointKey(seqNum: number): `cp-${number}` {
 	return `${checkpointPrefix}${seqNum}`;
 }
 
