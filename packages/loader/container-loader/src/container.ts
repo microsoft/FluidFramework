@@ -2643,6 +2643,12 @@ export interface ContainerAlpha extends IContainer {
 	 * @returns serialized blob that can be passed to Loader.resolve()
 	 */
 	getPendingLocalState(): Promise<string>;
+
+	/**
+	 * Access to snapshot history checkpoints, if the feature is enabled.
+	 * Use this to list, look up, and load historical checkpoint snapshots.
+	 */
+	readonly snapshotHistory: SnapshotHistoryManager | undefined;
 }
 
 /**

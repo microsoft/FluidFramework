@@ -18,6 +18,7 @@ export enum ConnectionState {
 // @alpha @sealed @legacy
 export interface ContainerAlpha extends IContainer {
     getPendingLocalState(): Promise<string>;
+    readonly snapshotHistory: SnapshotHistoryManager | undefined;
 }
 
 // @beta @legacy
@@ -72,6 +73,21 @@ export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerPr
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
+}
+
+// @alpha
+export interface IHistoryCheckpointData {
+    blobContents: Map<string, ArrayBuffer>;
+    seqNum: number;
+    snapshotTree: ISnapshotTree;
+}
+
+// @alpha
+export interface IHistoryCheckpointInfo {
+    groupId: string;
+    pinned?: boolean;
+    seqNum: number;
+    timestamp: number;
 }
 
 // @beta @legacy
@@ -233,6 +249,18 @@ export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IReh
 
 // @beta @legacy
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
+
+// @alpha @sealed
+export class SnapshotHistoryManager {
+    constructor(storageService: {
+        getCheckpoints(): IHistoryCheckpointInfo[];
+        getSnapshot: IDocumentStorageService["getSnapshot"];
+    });
+    getCheckpoint(seqNum: number): IHistoryCheckpointInfo | undefined;
+    getCheckpoints(): IHistoryCheckpointInfo[];
+    getClosestCheckpoint(seqNum: number): IHistoryCheckpointInfo | undefined;
+    loadCheckpoint(checkpoint: IHistoryCheckpointInfo): Promise<IHistoryCheckpointData>;
+}
 
 // @alpha @legacy
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";

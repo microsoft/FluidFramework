@@ -8,8 +8,11 @@ import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitio
 import type {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotTree,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Configuration options for the snapshot history feature.
@@ -28,7 +31,7 @@ export interface ISnapshotHistoryOptions {
 
 /**
  * Metadata for a single history checkpoint.
- * @internal
+ * @alpha
  */
 export interface IHistoryCheckpointInfo {
 	/** Sequence number at time of checkpoint */
@@ -39,6 +42,19 @@ export interface IHistoryCheckpointInfo {
 	groupId: string;
 	/** If true, checkpoint is exempt from age-based retention. Not yet used; future-proofs the format. */
 	pinned?: boolean;
+}
+
+/**
+ * Data returned from loading a historical checkpoint snapshot.
+ * @alpha
+ */
+export interface IHistoryCheckpointData {
+	/** Sequence number at time of checkpoint */
+	seqNum: number;
+	/** The checkpoint subtree (has .app and .protocol children) */
+	snapshotTree: ISnapshotTree;
+	/** Blob data for the checkpoint's loading group */
+	blobContents: Map<string, ArrayBuffer>;
 }
 
 /**
@@ -317,10 +333,15 @@ export async function parseHistoryIndex(
 
 /**
  * Read-side API for accessing snapshot history checkpoints.
- * @internal
+ * @alpha @sealed
  */
 export class SnapshotHistoryManager {
-	constructor(private readonly storageService: HistoryTreeStorageService) {}
+	constructor(
+		private readonly storageService: {
+			getCheckpoints(): IHistoryCheckpointInfo[];
+			getSnapshot: IDocumentStorageService["getSnapshot"];
+		},
+	) {}
 
 	/**
 	 * Returns all available checkpoint metadata (sync, no network call).
@@ -352,5 +373,44 @@ export class SnapshotHistoryManager {
 			return undefined;
 		}
 		return findLatestCheckpoint(candidates);
+	}
+
+	/**
+	 * Loads the snapshot data for a historical checkpoint via the driver's getSnapshot API.
+	 * @param checkpoint - The checkpoint to load (from getCheckpoints / getCheckpoint / getClosestCheckpoint)
+	 * @returns The checkpoint's snapshot tree and blob contents
+	 */
+	public async loadCheckpoint(
+		checkpoint: IHistoryCheckpointInfo,
+	): Promise<IHistoryCheckpointData> {
+		const getSnapshot = this.storageService.getSnapshot;
+		if (getSnapshot === undefined) {
+			throw new UsageError("loadCheckpoint requires a driver that supports getSnapshot");
+		}
+
+		const snapshot: ISnapshot = await getSnapshot({
+			loadingGroupIds: [checkpoint.groupId],
+		});
+
+		const cpKey = checkpointKey(checkpoint.seqNum);
+		const historyTree = snapshot.snapshotTree.trees[historyTreeName];
+		if (historyTree === undefined) {
+			throw new UsageError(
+				`Snapshot for loading group "${checkpoint.groupId}" does not contain a .history tree`,
+			);
+		}
+
+		const cpTree = historyTree.trees[cpKey];
+		if (cpTree === undefined) {
+			throw new UsageError(
+				`Snapshot for loading group "${checkpoint.groupId}" does not contain checkpoint "${cpKey}"`,
+			);
+		}
+
+		return {
+			seqNum: checkpoint.seqNum,
+			snapshotTree: cpTree,
+			blobContents: snapshot.blobContents,
+		};
 	}
 }

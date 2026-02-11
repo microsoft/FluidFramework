@@ -58,6 +58,7 @@ export { PendingLocalStateStore } from "./pendingLocalStateStore.js";
 export {
 	type ISnapshotHistoryOptions,
 	type IHistoryCheckpointInfo,
+	type IHistoryCheckpointData,
 	HistoryTreeStorageService,
 	SnapshotHistoryManager,
 	parseHistoryIndex,

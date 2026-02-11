@@ -7,12 +7,12 @@ import { strict as assert } from "assert";
 
 import type { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
+	asLegacyAlpha,
 	createDetachedContainer,
 	loadExistingContainer,
 	loadSummarizerContainerAndMakeSummary,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import type { SnapshotHistoryManager } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
 import type { LocalResolver } from "@fluidframework/local-driver/internal";
@@ -121,8 +121,7 @@ describe("Snapshot History", () => {
 			request: { url },
 		});
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const history = (container2 as any).snapshotHistory as SnapshotHistoryManager | undefined;
+		const history = asLegacyAlpha(container2).snapshotHistory;
 		assert(history !== undefined, "Snapshot history should be available");
 
 		const checkpoints = history.getCheckpoints();
@@ -174,8 +173,7 @@ describe("Snapshot History", () => {
 			request: { url },
 		});
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const history = (container2 as any).snapshotHistory as SnapshotHistoryManager | undefined;
+		const history = asLegacyAlpha(container2).snapshotHistory;
 		assert(history === undefined, "Snapshot history should not be available when disabled");
 
 		container.dispose();
@@ -219,8 +217,7 @@ describe("Snapshot History", () => {
 			request: { url },
 		});
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const history = (container2 as any).snapshotHistory as SnapshotHistoryManager | undefined;
+		const history = asLegacyAlpha(container2).snapshotHistory;
 		assert(history !== undefined, "Snapshot history should be available");
 
 		const checkpoints = history.getCheckpoints();
@@ -273,8 +270,7 @@ describe("Snapshot History", () => {
 			request: { url },
 		});
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const history = (container2 as any).snapshotHistory as SnapshotHistoryManager | undefined;
+		const history = asLegacyAlpha(container2).snapshotHistory;
 		assert(history !== undefined, "Snapshot history should be available");
 
 		const checkpoints = history.getCheckpoints();
@@ -312,6 +308,128 @@ describe("Snapshot History", () => {
 			after.seqNum,
 			cp2.seqNum,
 			"Should return last checkpoint for seqNum after all",
+		);
+
+		container.dispose();
+		container2.dispose();
+	});
+
+	it("loadCheckpoint returns snapshot data for a checkpoint", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const { loaderProps, codeDetails, urlResolver } = createLoader({
+			deltaConnectionServer,
+		});
+
+		const { container, entryPoint, url } = await createAttachAndSeedSummary(
+			loaderProps,
+			codeDetails,
+			urlResolver,
+		);
+
+		// Make edits and trigger summary with history enabled
+		entryPoint.root.set("key1", "value1");
+		const summaryResult = await loadSummarizerContainerAndMakeSummary({
+			...loaderProps,
+			configProvider: historyConfigProvider,
+			request: { url },
+		});
+		assert(summaryResult.success, "History summary should succeed");
+
+		// Load from new snapshot
+		const container2 = await loadExistingContainer({
+			...loaderProps,
+			configProvider: historyConfigProvider,
+			request: { url },
+		});
+
+		const history = asLegacyAlpha(container2).snapshotHistory;
+		assert(history !== undefined, "Snapshot history should be available");
+
+		const checkpoints = history.getCheckpoints();
+		assert(checkpoints.length >= 1, "Should have at least 1 checkpoint");
+
+		const cpData = await history.loadCheckpoint(checkpoints[0]);
+		assert.strictEqual(cpData.seqNum, checkpoints[0].seqNum, "seqNum should match");
+		assert(cpData.snapshotTree !== undefined, "Should have a snapshot tree");
+		assert(
+			cpData.snapshotTree.trees[".app"] !== undefined,
+			"Checkpoint should have .app subtree",
+		);
+		assert(
+			cpData.snapshotTree.trees[".protocol"] !== undefined,
+			"Checkpoint should have .protocol subtree",
+		);
+		assert(cpData.blobContents.size > 0, "Checkpoint should have blob contents");
+
+		container.dispose();
+		container2.dispose();
+	});
+
+	it("loadCheckpoint with multiple checkpoints loads distinct data", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const { loaderProps, codeDetails, urlResolver } = createLoader({
+			deltaConnectionServer,
+		});
+
+		const { container, entryPoint, url } = await createAttachAndSeedSummary(
+			loaderProps,
+			codeDetails,
+			urlResolver,
+		);
+
+		// First history summary
+		entryPoint.root.set("round1-key", "round1-value");
+		const result1 = await loadSummarizerContainerAndMakeSummary({
+			...loaderProps,
+			configProvider: historyConfigProvider,
+			request: { url },
+		});
+		assert(result1.success, "First history summary should succeed");
+
+		// Second history summary
+		entryPoint.root.set("round2-key", "round2-value");
+		const result2 = await loadSummarizerContainerAndMakeSummary({
+			...loaderProps,
+			configProvider: historyConfigProvider,
+			request: { url },
+		});
+		assert(result2.success, "Second history summary should succeed");
+
+		// Load and verify
+		const container2 = await loadExistingContainer({
+			...loaderProps,
+			configProvider: historyConfigProvider,
+			request: { url },
+		});
+
+		const history = asLegacyAlpha(container2).snapshotHistory;
+		assert(history !== undefined, "Snapshot history should be available");
+
+		const checkpoints = history.getCheckpoints();
+		assert(checkpoints.length === 2, `Expected 2 checkpoints, got ${checkpoints.length}`);
+
+		const cpData1 = await history.loadCheckpoint(checkpoints[0]);
+		const cpData2 = await history.loadCheckpoint(checkpoints[1]);
+
+		assert.strictEqual(cpData1.seqNum, checkpoints[0].seqNum, "First seqNum should match");
+		assert.strictEqual(cpData2.seqNum, checkpoints[1].seqNum, "Second seqNum should match");
+		assert(cpData1.seqNum !== cpData2.seqNum, "Checkpoints should have different seqNums");
+
+		assert(
+			cpData1.snapshotTree.trees[".app"] !== undefined,
+			"First checkpoint should have .app subtree",
+		);
+		assert(
+			cpData1.snapshotTree.trees[".protocol"] !== undefined,
+			"First checkpoint should have .protocol subtree",
+		);
+		assert(
+			cpData2.snapshotTree.trees[".app"] !== undefined,
+			"Second checkpoint should have .app subtree",
+		);
+		assert(
+			cpData2.snapshotTree.trees[".protocol"] !== undefined,
+			"Second checkpoint should have .protocol subtree",
 		);
 
 		container.dispose();
