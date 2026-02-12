@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Utilities for interacting with ADO APIs to fetch build data.
+ */
+
 import { getAzureDevopsApi } from "@fluidframework/bundle-size-tools";
 import type { IBuildApi } from "azure-devops-node-api/BuildApi.js";
 import type { Build, Timeline } from "azure-devops-node-api/interfaces/BuildInterfaces.js";

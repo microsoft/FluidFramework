@@ -254,10 +254,10 @@ describe("buildPerf processData", () => {
 			expect(calcPeriodChange([], 3)).to.equal(0);
 		});
 
-		it("returns 0 when no recent or previous data", () => {
+		it("returns 0 when only one data point (no previous period)", () => {
 			const trend: DurationTrendPoint[] = [
 				{
-					date: "2020-01-01",
+					date: "2024-06-10",
 					minDuration: 80,
 					avgDuration: 90,
 					maxDuration: 100,
@@ -265,20 +265,16 @@ describe("buildPerf processData", () => {
 					maxBuildId: 2,
 				},
 			];
-			// All data is in the past, nothing is "recent"
+			// Single point falls in "recent" window, no previous data to compare
 			expect(calcPeriodChange(trend, 3)).to.equal(0);
 		});
 
 		it("calculates positive change correctly", () => {
-			const now = new Date();
-			const yesterday = new Date(now);
-			yesterday.setDate(yesterday.getDate() - 1);
-			const lastWeek = new Date(now);
-			lastWeek.setDate(lastWeek.getDate() - 10);
-
+			// Uses fixed dates — cutoff is derived from latest date in data (2024-06-10)
+			// With days=3, cutoff is 2024-06-07, so 2024-06-10 is recent, 2024-06-01 is previous
 			const trend: DurationTrendPoint[] = [
 				{
-					date: lastWeek.toISOString().split("T")[0]!,
+					date: "2024-06-01",
 					minDuration: 80,
 					avgDuration: 100,
 					maxDuration: 120,
@@ -286,7 +282,7 @@ describe("buildPerf processData", () => {
 					maxBuildId: 2,
 				},
 				{
-					date: yesterday.toISOString().split("T")[0]!,
+					date: "2024-06-10",
 					minDuration: 100,
 					avgDuration: 120,
 					maxDuration: 140,

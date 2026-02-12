@@ -9,5 +9,4 @@
 export const BUILD_PERF_CONFIG = {
 	githubRepo: "microsoft/FluidFramework",
 	org: "fluidframework",
-	adoApiVersion: "7.1",
 } as const;

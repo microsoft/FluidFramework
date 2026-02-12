@@ -102,9 +102,7 @@
             internal: { recent: { sort: { column: 'date', direction: 'desc' }, page: 1 }, longest: { sort: { column: 'duration', direction: 'desc' }, page: 1 } }
         };
         const itemsPerPage = 5;
-        // Standalone mode variables (injected by generate-html-artifact.sh)
-        // const STANDALONE_MODE = 'public'; // or 'internal'
-        // const INLINED_DATA = {...};
+        /* __INJECT_STANDALONE_DATA__ */
         const colors = {
             public: { primary: 'rgba(66, 165, 245, 1)', background: 'rgba(66, 165, 245, 0.1)', tasks: ['rgba(76, 175, 80, 0.8)', 'rgba(66, 165, 245, 0.8)', 'rgba(255, 167, 38, 0.8)', 'rgba(171, 71, 188, 0.8)', 'rgba(38, 166, 154, 0.8)', 'rgba(236, 64, 122, 0.8)'] },
             internal: { primary: 'rgba(21, 101, 192, 1)', background: 'rgba(21, 101, 192, 0.1)', tasks: ['rgba(27, 94, 32, 0.8)', 'rgba(21, 101, 192, 0.8)', 'rgba(230, 81, 0, 0.8)', 'rgba(106, 27, 154, 0.8)', 'rgba(0, 105, 92, 0.8)', 'rgba(183, 28, 28, 0.8)'] }

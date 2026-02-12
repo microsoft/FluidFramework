@@ -22,7 +22,7 @@ export interface AdoBuildRecord {
 }
 
 /**
- * A raw ADO timeline record.
+ * A single ADO build timeline record (one task).
  */
 export interface AdoTimelineRecord {
 	id: string;
@@ -34,7 +34,7 @@ export interface AdoTimelineRecord {
 }
 
 /**
- * A raw ADO timeline.
+ * All ADO build timeline records for a single build.
  */
 export interface AdoTimeline {
 	records: AdoTimelineRecord[];

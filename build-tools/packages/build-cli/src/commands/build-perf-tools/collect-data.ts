@@ -136,7 +136,7 @@ export default class BuildPerfCollectCommand extends BaseCommand<
 		this.log("");
 		this.log("--- Step 3: Processing data ---");
 		const generatedAt = new Date().toISOString();
-		const processedData = processRawData(builds, timelines, mode, generatedAt);
+		const processedData = processRawData(builds, timelines, mode, generatedAt, flags.org);
 
 		// Write output
 		const outputFile =

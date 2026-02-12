@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Processes raw ADO build data into aggregated metrics for build performance dashboards.
+ */
+
 import { BUILD_PERF_CONFIG } from "./config.js";
 import type {
 	AdoBuildRecord,
@@ -56,29 +60,43 @@ export function getSourceText(build: AdoBuildRecord): string {
 
 /**
  * Build source URL (GitHub PR or commit).
+ *
+ * @param build - The build record.
+ * @param githubRepo - GitHub repo slug (e.g. "microsoft/FluidFramework"). Defaults to BUILD_PERF_CONFIG.githubRepo.
  */
-export function getSourceUrl(build: AdoBuildRecord): string | null {
+export function getSourceUrl(
+	build: AdoBuildRecord,
+	githubRepo: string = BUILD_PERF_CONFIG.githubRepo,
+): string | null {
 	const branch = build.sourceBranch || "";
 	if (branch.startsWith("refs/pull/")) {
 		const prNum = branch.split("/")[2];
-		return prNum ? `https://github.com/${BUILD_PERF_CONFIG.githubRepo}/pull/${prNum}` : null;
+		return prNum ? `https://github.com/${githubRepo}/pull/${prNum}` : null;
 	}
 	if (build.sourceVersion) {
-		return `https://github.com/${BUILD_PERF_CONFIG.githubRepo}/commit/${build.sourceVersion}`;
+		return `https://github.com/${githubRepo}/commit/${build.sourceVersion}`;
 	}
 	return null;
 }
 
 /**
  * Build ADO build URL.
+ *
+ * @param build - The build record.
+ * @param project - The ADO project name.
+ * @param org - The ADO organization name. Defaults to BUILD_PERF_CONFIG.org.
  */
-export function getBuildUrl(build: AdoBuildRecord, project: string): string {
-	return `https://dev.azure.com/${BUILD_PERF_CONFIG.org}/${project}/_build/results?buildId=${build.id}`;
+export function getBuildUrl(
+	build: AdoBuildRecord,
+	project: string,
+	org: string = BUILD_PERF_CONFIG.org,
+): string {
+	return `https://dev.azure.com/${org}/${project}/_build/results?buildId=${build.id}`;
 }
 
 /**
  * Filter builds for public mode (PR builds targeting main).
- * Internal mode returns all builds unfiltered.
+ * Internal mode returns all builds (they are already filtered by the query).
  */
 export function filterBuilds(builds: AdoBuildRecord[], mode: BuildPerfMode): AdoBuildRecord[] {
 	if (mode !== "public") return builds;
@@ -96,7 +114,12 @@ export function filterBuilds(builds: AdoBuildRecord[], mode: BuildPerfMode): Ado
 /**
  * Process a raw build record into the display format.
  */
-export function processBuild(build: AdoBuildRecord, project: string): ProcessedBuild {
+export function processBuild(
+	build: AdoBuildRecord,
+	project: string,
+	org?: string,
+	githubRepo?: string,
+): ProcessedBuild {
 	const duration = calcDurationMins(build.startTime, build.finishTime);
 	return {
 		id: build.id,
@@ -104,8 +127,8 @@ export function processBuild(build: AdoBuildRecord, project: string): ProcessedB
 		result: build.result,
 		duration,
 		source: getSourceText(build),
-		sourceUrl: getSourceUrl(build),
-		url: getBuildUrl(build, project),
+		sourceUrl: getSourceUrl(build, githubRepo),
+		url: getBuildUrl(build, project, org),
 	};
 }
 
@@ -131,7 +154,13 @@ export function calcSummary(builds: ProcessedBuild[]): BuildSummary {
 export function calcPeriodChange(durationTrend: DurationTrendPoint[], days: number): number {
 	if (!durationTrend || durationTrend.length === 0) return 0;
 
-	const cutoffDate = new Date();
+	// Derive cutoff from the latest date in the data, not the system clock.
+	// This makes the calculation deterministic and resilient to pipeline delays.
+	const latestDate = durationTrend.reduce(
+		(max, d) => (d.date > max ? d.date : max),
+		durationTrend[0].date,
+	);
+	const cutoffDate = new Date(latestDate);
 	cutoffDate.setDate(cutoffDate.getDate() - days);
 	const cutoffDateStr = cutoffDate.toISOString().split("T")[0];
 
@@ -397,12 +426,14 @@ export function processRawData(
 	timelines: Record<string, AdoTimeline>,
 	mode: BuildPerfMode,
 	generatedAt?: string,
+	org?: string,
+	githubRepo?: string,
 ): ProcessedDataOutput {
 	const project = mode === "public" ? "public" : "internal";
 
 	const filteredBuilds = filterBuilds(builds, mode);
 	const processedBuilds = filteredBuilds
-		.map((b) => processBuild(b, project))
+		.map((b) => processBuild(b, project, org, githubRepo))
 		.filter((b): b is ProcessedBuild & { duration: number } => b.duration !== null);
 
 	const { stagePerformance, stageTaskBreakdown } = processTimelines(timelines);

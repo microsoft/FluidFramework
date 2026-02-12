@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Generates HTML dashboard files for build performance observability.
+ */
+
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -37,11 +41,17 @@ export function generateStandaloneHtml(
 	// Sanitize for safe embedding in <script> tag: escape </script> sequences
 	const sanitizedData = dataJson.replace(/<\//g, "<\\/");
 
-	// Replace the placeholder comments with actual variables
-	html = html.replace(
-		"        // const STANDALONE_MODE = 'public'; // or 'internal'\n        // const INLINED_DATA = {...};",
-		`        const STANDALONE_MODE = '${mode}';\n        const INLINED_DATA = ${sanitizedData};`,
-	);
+	// Replace the placeholder token with actual variables
+	const placeholder = "/* __INJECT_STANDALONE_DATA__ */";
+	const injection = `const STANDALONE_MODE = '${mode}';\n        const INLINED_DATA = ${sanitizedData};`;
+
+	if (!html.includes(placeholder)) {
+		throw new Error(
+			`Template placeholder "${placeholder}" not found in ${templatePath}. Was the template reformatted?`,
+		);
+	}
+
+	html = html.replace(placeholder, injection);
 
 	return html;
 }
