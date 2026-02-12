@@ -126,7 +126,6 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, type IConnectionArgs } from "./deltaManager.js";
-import { EffectionScope } from "./structuredConcurrency.js";
 import type { ILoaderServices } from "./loader.js";
 import { RelativeLoader } from "./loader.js";
 import {
@@ -154,6 +153,7 @@ import {
 	type IPendingDetachedContainerState,
 	SerializedStateManager,
 } from "./serializedStateManager.js";
+import { EffectionScope } from "./structuredConcurrency.js";
 import {
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,

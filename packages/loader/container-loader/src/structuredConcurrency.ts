@@ -38,8 +38,11 @@ export class EffectionScope {
 	}
 
 	public addCleanup(cleanup: CleanupFn): void {
+		// Task is intentionally spawned into the scope's lifetime; awaiting it would
+		// block forever (it calls suspend()). The scope owns the task and tears it down on close().
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this.scope.run(function* () {
-			yield* ensure(function* () {
+			yield* ensure(() => {
 				cleanup();
 			});
 			yield* suspend();
@@ -94,6 +97,9 @@ export class EffectionTimer {
 		if (this.task === undefined) {
 			return;
 		}
+		// We only need to initiate the halt; the scope's structured concurrency
+		// guarantees proper teardown regardless of whether we await the result.
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this.task.halt();
 		this.task = undefined;
 	}
@@ -128,7 +134,7 @@ export function createScopedAbortController(scope: EffectionScope): AbortControl
  * @param delayMs - Delay in milliseconds.
  * @returns Promise that resolves after delay or rejects on scope cancellation.
  */
-export function createScopedDelay(scope: EffectionScope, delayMs: number): Promise<void> {
+export async function createScopedDelay(scope: EffectionScope, delayMs: number): Promise<void> {
 	return new Promise<void>((resolve, reject) => {
 		const timeoutId = setTimeout(resolve, delayMs);
 		scope.addCleanup(() => {
