@@ -73,16 +73,20 @@ export namespace ExtensibleUnionNode {
 		readonly union: T | undefined;
 
 		/**
-		 * Returns true, unless this node is in a invalid state.
+		 * Returns true, unless this node is in an invalid state.
 		 * @remarks
-		 * Invalid in this context means that the internal implementation details of this node have had their invariants violated.
+		 * A well behaved application should not need this API.
+		 * If an application is hitting errors when accessing {@link ExtensibleUnionNode.members.union},
+		 * this API can be used to help detect and recover from the invalid state which causes those errors (for example by replacing the invalid nodes with new ones).
+		 *
+		 * In this context "invalid" means that the internal implementation details of this node have had their invariants violated.
 		 * This can happen when:
 		 * - Using weakly typed construction APIs like {@link TreeBeta.importConcise} or {@link TreeBeta.importVerbose} to construct an invalid state directly.
 		 * Using such APIs, even when not creating invalid nodes, is not supported for this schema,
 		 * since doing so requires knowing the implementation details of this node which are subject to change.
 		 * - By editing a document using a different client using a different schema for this node.
 		 * - Violating the TypeScript types to directly manipulate the node internals.
-		 * - A bug in this node's implementation.
+		 * - A bug in this node's implementation (possibly in a different client) corrupted the node.
 		 * - Corruption of the document this node is contained in.
 		 *
 		 * @privateRemarks
