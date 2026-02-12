@@ -27,6 +27,8 @@ trigger: none
 pr: none
 
 variables:
+  # Provides ado-feeds-primary-registry for pnpm install
+  - group: ado-feeds
   # Number of recent builds to fetch
   - name: buildCount
     value: 500
