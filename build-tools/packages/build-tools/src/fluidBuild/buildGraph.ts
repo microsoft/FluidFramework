@@ -363,6 +363,25 @@ export class BuildPackage {
 			}
 			return newDeps.concat(getTaskNames());
 		};
+
+		// Collect named subtasks of group tasks, partitioned by whether the parent
+		// group has explicit (non-default) configuration. A task can be a subtask of
+		// multiple groups (since getScriptTask returns cached instances), so we track
+		// both sets to handle that correctly: default 'after' is only skipped for a
+		// subtask if it appears in an explicit group and NOT in any default group.
+		const subtasksOfExplicitGroups = new Set<Task>();
+		const subtasksOfDefaultGroups = new Set<Task>();
+		for (const task of this.tasks) {
+			if (task.taskName !== undefined) {
+				const config = this.getTaskDefinition(task.taskName);
+				if (config !== undefined && !config.isDefault) {
+					task.collectNamedSubTasks(subtasksOfExplicitGroups);
+				} else if (config?.isDefault) {
+					task.collectNamedSubTasks(subtasksOfDefaultGroups);
+				}
+			}
+		}
+
 		const finalizeTask = (task: Task): void => {
 			assert.notStrictEqual(task.taskName, undefined);
 
@@ -394,14 +413,17 @@ export class BuildPackage {
 				// dependencies via initializeDependentLeafTasks. Applying the default "^*"
 				// would incorrectly make them depend on ALL upstream tasks (e.g. check:biome)
 				// instead of just what the parent specifies (e.g. "api").
-				if (taskConfig.isDefault && task.parentTask?.taskName !== undefined) {
-					const parentConfig = this.getTaskDefinition(task.parentTask.taskName);
-					if (parentConfig !== undefined && !parentConfig.isDefault) {
-						traceTaskDepTask(
-							`Skipping default after for ${task.nameColored}: parent ${task.parentTask.nameColored} has explicit config`,
-						);
-						return;
-					}
+				// A task is only skipped if ALL its parent groups have explicit config (i.e.
+				// it's not also a subtask of any group with default config).
+				if (
+					taskConfig.isDefault &&
+					subtasksOfExplicitGroups.has(task) &&
+					!subtasksOfDefaultGroups.has(task)
+				) {
+					traceTaskDepTask(
+						`Skipping default after for ${task.nameColored}: all parent groups have explicit config`,
+					);
+					return;
 				}
 
 				const after = expandStar(taskConfig.after, getAfterStarTaskNames);

@@ -21,8 +21,13 @@ export class GroupTask extends Task {
 		private readonly sequential: boolean = false,
 	) {
 		super(node, command, context, taskName);
-		for (const sub of subTasks) {
-			sub.parentTask = this;
+	}
+
+	public override collectNamedSubTasks(set: Set<Task>): void {
+		for (const sub of this.subTasks) {
+			if (sub.taskName !== undefined) {
+				set.add(sub);
+			}
 		}
 	}
 

@@ -29,13 +29,10 @@ export abstract class Task {
 	private _transitiveDependentLeafTasks: LeafTask[] | undefined | null;
 
 	/**
-	 * Reference to the parent GroupTask, if this task is a subtask of one.
-	 * Used by {@link BuildPackage.finalizeDependentTasks} to skip default 'after'
-	 * dependencies for subtasks whose parent group has explicit configuration,
-	 * since those subtasks inherit the parent's dependencies via
-	 * {@link GroupTask.initializeDependentLeafTasks}.
+	 * Collects named subtasks into the provided set.
+	 * Overridden by GroupTask to add its named subtasks.
 	 */
-	public parentTask?: Task;
+	public collectNamedSubTasks(_set: Set<Task>): void {}
 
 	public static createTaskQueue(): AsyncPriorityQueue<TaskExec> {
 		return priorityQueue(async (taskExec: TaskExec) => {
