@@ -31,7 +31,7 @@ import unicornPlugin from "eslint-plugin-unicorn";
 import unusedImportsPlugin from "eslint-plugin-unused-imports";
 import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
-import type { Linter } from "eslint";
+import type { ESLint, Linter } from "eslint";
 
 import { globalIgnores } from "../constants.mjs";
 import { importXSettings, jsdocSettings } from "../settings.mjs";
@@ -59,17 +59,22 @@ export const baseConfig: FlatConfigArray = [
 	// eslint:recommended
 	eslintJs.configs.recommended,
 	// @typescript-eslint/recommended-type-checked and stylistic-type-checked
-	...tseslint.configs.recommendedTypeChecked,
-	...tseslint.configs.stylisticTypeChecked,
+	// Type assertions needed: typescript-eslint's PluginFlatConfig.languageOptions lacks the
+	// string index signature that ESLint core's LanguageOptions requires.
+	...(tseslint.configs.recommendedTypeChecked as Linter.Config[]),
+	...(tseslint.configs.stylisticTypeChecked as Linter.Config[]),
 	// import-x/recommended and import-x/typescript
-	importXPlugin.flatConfigs.recommended,
-	importXPlugin.flatConfigs.typescript,
+	// Type assertions needed: same PluginFlatConfig incompatibility as typescript-eslint above.
+	importXPlugin.flatConfigs.recommended as Linter.Config,
+	importXPlugin.flatConfigs.typescript as Linter.Config,
 	// Base config with all plugins and custom rules
 	{
 		plugins: {
 			"@eslint-community/eslint-comments": eslintCommentsPlugin,
 			"@fluid-internal/fluid": fluidPlugin,
-			"@rushstack": rushstackPlugin,
+			// Type assertion needed: @rushstack/eslint-plugin's type declarations haven't been
+			// updated to match ESLint 9's Plugin interface.
+			"@rushstack": rushstackPlugin as unknown as ESLint.Plugin,
 			"jsdoc": jsdocPlugin,
 			"promise": promisePlugin,
 			"tsdoc": tsdocPlugin,
@@ -110,5 +115,5 @@ export const baseConfig: FlatConfigArray = [
 		},
 	},
 	// Prettier disables conflicting rules - must come after custom rules
-	prettierConfig,
+	prettierConfig as Linter.Config,
 ];
