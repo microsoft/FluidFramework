@@ -43,6 +43,18 @@ describe("extensibleUnionNode", () => {
 		assert.equal(aSchema, ItemA);
 	});
 
+	// Other cases covered as part of other tests, since they are non-trivial to produce those cases for minimal tests.
+	it("isValid: known type case", () => {
+		const sf = new SchemaFactoryBeta("extensibleUnionNodeExample.items");
+		class AnyItem extends ExtensibleUnionNode.createSchema(
+			[sf.string],
+			sf,
+			"ExtensibleUnion",
+		) {}
+		const anyItem = AnyItem.create("hello");
+		assert(anyItem.isValid());
+	});
+
 	// Test that this packages doesn't make any schema changes.
 	it("compatibility", () => {
 		// Test schema compatibility for an example schema using extensibleUnionNode.
@@ -122,7 +134,7 @@ describe("extensibleUnionNode", () => {
 		allowUnused<requireAssignableTo<Parameters<typeof AUnion.create>[0], never>>();
 	});
 
-	it("empty data case", () => {
+	it("invalid data cases", () => {
 		const factory = new SchemaFactoryBeta("test");
 		class A extends factory.object("A", {}) {}
 		class B extends factory.object("B", {}) {}
@@ -131,7 +143,7 @@ describe("extensibleUnionNode", () => {
 		// Create a malformed ExtensibleUnionNode with no children.
 		const missingChild = TreeBeta.importConcise(Union, {});
 		assert(!missingChild.isValid());
-		assert.throws(() => missingChild.union);
+		assert.throws(() => missingChild.union, validateUsageError(/invalid state/));
 
 		// Create a malformed ExtensibleUnionNode with two children.
 		const a = TreeBeta.exportConcise(Union.create(new A({})));
@@ -143,6 +155,7 @@ describe("extensibleUnionNode", () => {
 			...b,
 		});
 		assert(!twoChildren.isValid());
+		assert.throws(() => twoChildren.union, validateUsageError(/invalid state/));
 	});
 
 	it("export to import", () => {
@@ -238,6 +251,7 @@ describe("extensibleUnionNode", () => {
 			keys: KeyEncodingOptions.knownStoredKeys,
 		});
 
+		assert(importUnknown.isValid());
 		assert.equal(importUnknown.union, 2);
 	});
 });
