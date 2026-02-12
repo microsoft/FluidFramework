@@ -56,12 +56,12 @@ import type { UnionToIntersection } from "./util/index.js";
  * const aSchema = Tree.schema(childNode ?? assert.fail("No child"));
  * assert.equal(aSchema, ItemA);
  * ```
- * @alpha
+ * @beta
  */
 export namespace ExtensibleUnionNode {
 	/**
 	 * Members for classes created by {@link ExtensibleUnionNode.createSchema}.
-	 * @alpha
+	 * @beta
 	 */
 	export interface Members<T> {
 		/**
@@ -99,7 +99,7 @@ export namespace ExtensibleUnionNode {
 
 	/**
 	 * Statics for classes created by {@link ExtensibleUnionNode.createSchema}.
-	 * @alpha
+	 * @beta
 	 */
 	export interface Statics<T extends readonly TreeNodeSchema[]> {
 		/**
@@ -116,7 +116,7 @@ export namespace ExtensibleUnionNode {
 	 * but tolerates collaboration with future versions that may include additional types.
 	 * @remarks
 	 * See {@link ExtensibleUnionNode} for an example use.
-	 * @alpha
+	 * @beta
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	export function createSchema<
