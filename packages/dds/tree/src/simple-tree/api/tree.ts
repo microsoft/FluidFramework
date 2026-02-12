@@ -196,7 +196,7 @@ export interface TreeContextAlpha {
 	 *
 	 * @remarks
 	 * If `runTransaction` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
 	 *
 	 * If `runTransaction` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransaction` does nothing additional).
 	 * The transaction will always succeed.
@@ -209,7 +209,7 @@ export interface TreeContextAlpha {
 	 * @param transaction - The function to run as the body of the transaction.
 	 * @remarks
 	 * If `runTransaction` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:2) | access to more transaction capabilities} if so.
 	 *
 	 * If `runTransaction` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransaction` does nothing additional).
 	 * The transaction will always succeed.
@@ -227,7 +227,7 @@ export interface TreeContextAlpha {
 	 *
 	 * @remarks
 	 * If `runTransactionAsync` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransactionAsync:1) | access to more transaction capabilities} if so.
 	 *
 	 * If `runTransactionAsync` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransactionAsync` does nothing additional).
 	 * The transaction will always succeed.
@@ -240,7 +240,7 @@ export interface TreeContextAlpha {
 	 * @param transaction - The function to run as the body of the transaction.
 	 * @remarks
 	 * If `runTransactionAsync` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransactionAsync:2) | access to more transaction capabilities} if so.
 	 *
 	 * If `runTransactionAsync` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransactionAsync` does nothing additional).
 	 * The transaction will always succeed.
