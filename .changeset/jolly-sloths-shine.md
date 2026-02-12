@@ -5,7 +5,7 @@
 ---
 New beta ExtensibleUnionNode API
 
-The new `ExtensibleUnionNode` API allows for creation of unions which can tolerate future additions not yet know to the current code.
+The new `ExtensibleUnionNode` API allows for creation of unions which can tolerate future additions not yet known to the current code.
 
  ```typescript
  const sf = new SchemaFactoryBeta("extensibleUnionNodeExample.items");
