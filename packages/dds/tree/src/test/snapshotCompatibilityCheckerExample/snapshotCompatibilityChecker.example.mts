@@ -6,8 +6,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { checkSchemaCompatibilitySnapshots } from "../../index.js";
-// import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/beta";
+import { snapshotSchemaCompatibility } from "../../index.js";
+// import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
 
 // The TreeViewConfiguration the application uses, which contains the application's schema.
 import { treeViewConfiguration } from "./schema.js";
@@ -26,13 +26,13 @@ describe("schema", () => {
 			import.meta.dirname,
 			"../../../src/test/snapshotCompatibilityCheckerExample/schema-snapshots",
 		);
-		checkSchemaCompatibilitySnapshots({
+		snapshotSchemaCompatibility({
 			snapshotDirectory,
 			fileSystem: { ...fs, ...path },
 			version: packageVersion,
-			schema: treeViewConfiguration,
 			minVersionForCollaboration: "2.0.0",
-			mode: regenerateSnapshots ? "update" : "test",
+			schema: treeViewConfiguration,
+			mode: regenerateSnapshots ? "update" : "assert",
 		});
 	});
 });

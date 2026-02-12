@@ -132,8 +132,8 @@ export interface ITree {
  */
 export interface ISnapshotTree {
 	id?: string;
-	blobs: { [path: string]: string };
-	trees: { [path: string]: ISnapshotTree };
+	blobs: Record<string, string>;
+	trees: Record<string, ISnapshotTree>;
 
 	/**
 	 * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
@@ -154,7 +154,7 @@ export interface ISnapshotTree {
  */
 export interface ISnapshotTreeEx extends ISnapshotTree {
 	id: string;
-	trees: { [path: string]: ISnapshotTreeEx };
+	trees: Record<string, ISnapshotTreeEx>;
 }
 
 /**

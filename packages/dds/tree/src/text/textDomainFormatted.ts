@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey } from "../core/index.js";
+import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	enumFromStrings,
 	eraseSchemaDetails,
@@ -83,25 +84,44 @@ class TextNode
 		length: number,
 		format: Partial<FormattedTextAsTree.CharacterFormat>,
 	): void {
-		for (let i = startIndex; i < startIndex + length; i++) {
-			const atom = this.content[i];
-			if (atom === undefined) {
-				throw new UsageError("Index out of bounds while formatting text range.");
-			}
-			for (const [key, value] of Object.entries(format) as [
-				keyof FormattedTextAsTree.CharacterFormat,
-				unknown,
-			][]) {
-				// Object.entries should only return string keyed enumerable own properties.
-				// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
-				assert(typeof key === "string", 0xcc8 /* Object.entries returned a non-string key. */);
-				const f = FormattedTextAsTree.CharacterFormat.fields.get(key);
-				if (f === undefined) {
-					throw new UsageError(`Unknown format key: ${key}`);
+		const branch = TreeAlpha.branch(this);
+
+		const applyFormatting = (): void => {
+			for (let i = startIndex; i < startIndex + length; i++) {
+				const atom = this.content[i];
+				if (atom === undefined) {
+					throw new UsageError("Index out of bounds while formatting text range.");
 				}
-				// Ensures that if the input is a node, it is cloned before being inserted into the tree.
-				atom.format[key] = TreeBeta.clone(TreeBeta.create(f, value as never)) as never;
+				for (const [key, value] of Object.entries(format) as [
+					keyof FormattedTextAsTree.CharacterFormat,
+					unknown,
+				][]) {
+					// Object.entries should only return string keyed enumerable own properties.
+					// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
+					assert(
+						typeof key === "string",
+						0xcc8 /* Object.entries returned a non-string key. */,
+					);
+					const f = FormattedTextAsTree.CharacterFormat.fields.get(key);
+					if (f === undefined) {
+						throw new UsageError(`Unknown format key: ${key}`);
+					}
+					// Ensures that if the input is a node, it is cloned before being inserted into the tree.
+					atom.format[key] = TreeBeta.clone(TreeBeta.create(f, value as never)) as never;
+				}
 			}
+		};
+
+		if (branch === undefined) {
+			// If this node does not have a corresponding branch, then it is unhydrated.
+			// I.e., it is not part of a collaborative session yet.
+			// Therefore, we don't need to run the edits as a transaction.
+			applyFormatting();
+		} else {
+			// Wrap all formatting operations in a single transaction for atomicity.
+			branch.runTransaction(() => {
+				applyFormatting();
+			});
 		}
 	}
 }

@@ -773,7 +773,7 @@ export const shortCodeMap = {
 	"0x5dd": "cannot group ops with metadata",
 	"0x5df": "Summarize should not be called when not tracking the summary",
 	"0x5e0": "Used route should always be an absolute route",
-	"0x5e6": "Requested coded for unsupported format.",
+	"0x5e6": "Requested codec for unsupported format.",
 	"0x5ea": "Tried to encode unsupported fieldKind",
 	"0x5f6": "Summarizer must not have locally pending changes.",
 	"0x5f7": "can only append padding segment",
@@ -1925,5 +1925,8 @@ export const shortCodeMap = {
 	"0xcca": "TODO: Handle non-contiguous ranges",
 	"0xccb": "TODO: Handle non-contiguous ranges",
 	"0xccc": "Only write ops should be stashed",
-	"0xccd": "Transaction did not complete"
+	"0xccd": "Transaction did not complete",
+	"0xcce": "branches must be related",
+	"0xccf": "Expected transaction revision in the presence of transaction steps",
+	"0xcd0": "The transaction commit should be rebased to the tip"
 };
