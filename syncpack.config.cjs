@@ -223,8 +223,7 @@ module.exports = {
 				"@fluidframework/build-common",
 				"@fluidframework/build-tools",
 				"@fluidframework/common-utils",
-				// Temporarily disabled while eslint-config-fluid is part of the client release group
-				// "@fluidframework/eslint-config-fluid",
+				"@fluidframework/eslint-config-fluid",
 				"@fluidframework/protocol-definitions",
 				"@fluidframework/test-tools",
 			],

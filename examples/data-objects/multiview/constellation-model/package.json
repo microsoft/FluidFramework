@@ -47,7 +47,7 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "~9.0.0",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",

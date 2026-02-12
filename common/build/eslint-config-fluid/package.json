@@ -1,7 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "2.90.0",
-	"private": true,
+	"version": "9.0.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,7 +14,6 @@
 	"scripts": {
 		"build": "npm run print-configs && npm run prettier",
 		"build:readme:disabled": "markdown-magic --files \"**/*.md\"",
-		"clean": "rimraf --glob dist \"**/*.build.log\"",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
@@ -87,8 +85,5 @@
 			"esbuild",
 			"unrs-resolver"
 		]
-	},
-	"typeValidation": {
-		"disabled": true
 	}
 }
