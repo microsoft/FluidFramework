@@ -14,7 +14,7 @@ Usage should look something like:
 import fs from "node:fs";
 import path from "node:path";
 
-import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/beta";
+import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
 
 // The TreeViewConfiguration the application uses, which contains the application's schema.
 import { treeViewConfiguration } from "./schema.js";
@@ -31,16 +31,17 @@ describe("schema", () => {
 		// This will depend on how your application organizes its test data.
 		const snapshotDirectory = path.join(
 			import.meta.dirname,
-			"../../../src/test/schema-snapshots",
+			"../../../src/test/snapshotCompatibilityCheckerExample/schema-snapshots",
 		);
-		checkSchemaCompatibilitySnapshots({
+		snapshotSchemaCompatibility({
 			snapshotDirectory,
 			fileSystem: { ...fs, ...path },
 			version: packageVersion,
-			schema: treeViewConfiguration,
 			minVersionForCollaboration: "2.0.0",
-			mode: regenerateSnapshots ? "update" : "test",
+			schema: treeViewConfiguration,
+			mode: regenerateSnapshots ? "update" : "assert",
 		});
 	});
 });
+
 ```

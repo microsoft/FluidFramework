@@ -485,7 +485,7 @@ export interface SnapshotSchemaCompatibilityOptions {
  * but it would be nice to better unify how we do that versioning and format validation with our codecs.
  *
  * See snapshotCompatibilityChecker.example.mts for the large example included above.
- * @alpha
+ * @beta
  */
 export function snapshotSchemaCompatibility(
 	options: SnapshotSchemaCompatibilityOptions,
