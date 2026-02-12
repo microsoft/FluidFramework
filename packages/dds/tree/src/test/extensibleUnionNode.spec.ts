@@ -5,16 +5,22 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+
 import { ExtensibleUnionNode } from "../extensibleUnionNode.js";
-import { Tree } from "../shared-tree/index.js";
+import { Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
+	allowUnused,
 	checkSchemaCompatibilitySnapshots,
+	KeyEncodingOptions,
 	SchemaFactoryBeta,
+	TreeBeta,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
+import type { requireAssignableTo } from "../util/index.js";
 
 import { testSchemaCompatibilitySnapshots } from "./snapshots/index.js";
-import { inMemorySnapshotFileSystem } from "./utils.js";
+import { inMemorySnapshotFileSystem, TestTreeProviderLite } from "./utils.js";
 
 describe("extensibleUnionNode", () => {
 	it("examples", () => {
@@ -108,5 +114,130 @@ describe("extensibleUnionNode", () => {
 			mode: "test",
 			snapshotDirectory,
 		});
+	});
+
+	it("empty case union", () => {
+		const factory = new SchemaFactoryBeta("test");
+		class AUnion extends ExtensibleUnionNode.createSchema([], factory, "ExtensibleUnion") {}
+		allowUnused<requireAssignableTo<Parameters<typeof AUnion.create>[0], never>>();
+	});
+
+	it("empty data case", () => {
+		const factory = new SchemaFactoryBeta("test");
+		class A extends factory.object("A", {}) {}
+		class B extends factory.object("B", {}) {}
+		class Union extends ExtensibleUnionNode.createSchema([A, B], factory, "ExtensibleUnion") {}
+
+		// Create a malformed ExtensibleUnionNode with no children.
+		const missingChild = TreeBeta.importConcise(Union, {});
+		assert(!missingChild.isValid());
+		assert.throws(() => missingChild.union);
+
+		// Create a malformed ExtensibleUnionNode with two children.
+		const a = TreeBeta.exportConcise(Union.create(new A({})));
+		const b = TreeBeta.exportConcise(Union.create(new B({})));
+		assert(typeof a === "object");
+		assert(typeof b === "object");
+		const twoChildren = TreeBeta.importConcise(Union, {
+			...a,
+			...b,
+		});
+		assert(!twoChildren.isValid());
+	});
+
+	it("export to import", () => {
+		const factory = new SchemaFactoryBeta("test");
+		class Union extends ExtensibleUnionNode.createSchema(
+			[SchemaFactoryBeta.string],
+			factory,
+			"ExtensibleUnion",
+		) {}
+
+		const original = Union.create("x");
+
+		const exported = TreeAlpha.exportVerbose(original, {
+			keys: KeyEncodingOptions.allStoredKeys,
+		});
+
+		const importKnown = TreeAlpha.importVerbose(Union, exported, {
+			keys: KeyEncodingOptions.knownStoredKeys,
+		});
+
+		assert.equal(importKnown.union, "x");
+		class UnionUnknown extends ExtensibleUnionNode.createSchema(
+			[],
+			factory,
+			"ExtensibleUnion",
+		) {}
+
+		assert.throws(() => {
+			TreeAlpha.importVerbose(UnionUnknown, exported, {
+				// We disallow (including at compile time) allStoredKeys for imports: there is no way for this to be lossless currently:
+				keys: KeyEncodingOptions.knownStoredKeys,
+			});
+		}, validateUsageError(
+			`Field "com.fluidframework.leaf.string" is not defined in the schema "com.fluidframework.extensibleUnionNode<test>.ExtensibleUnion".`,
+		));
+	});
+
+	it("runtime cross version collab", () => {
+		const provider = new TestTreeProviderLite(2);
+		const [treeBefore, treeAfter] = provider.trees;
+
+		const factory = new SchemaFactoryBeta("test");
+
+		class AUnion extends ExtensibleUnionNode.createSchema(
+			[SchemaFactoryBeta.string],
+			factory,
+			"ExtensibleUnion",
+		) {}
+		class ABUnion extends ExtensibleUnionNode.createSchema(
+			[SchemaFactoryBeta.string, SchemaFactoryBeta.number],
+			factory,
+			"ExtensibleUnion",
+		) {}
+
+		const viewBefore = treeBefore.viewWith(new TreeViewConfiguration({ schema: AUnion }));
+		const viewAfter = treeAfter.viewWith(new TreeViewConfiguration({ schema: ABUnion }));
+
+		// Test initialization and schema upgrades collab as expected
+		viewBefore.initialize(AUnion.create("A"));
+		provider.synchronizeMessages();
+		assert(viewAfter.compatibility.canView === false);
+		viewAfter.upgradeSchema();
+		assert.equal(viewAfter.root.union, "A");
+
+		// Do an edit to introduce a type the before view does not know about
+		viewAfter.root = ABUnion.create(2);
+		provider.synchronizeMessages();
+		assert.equal(viewBefore.root.union, undefined);
+
+		// Capture this node with unknown contents in a clone to test the contents are preserved in it.
+		// This is more testing that clone works in this case as a bit of an integration test.
+		const cloneUnknown = TreeBeta.clone<typeof AUnion>(viewBefore.root);
+		assert.equal(cloneUnknown.union, undefined);
+
+		// Overwrite the root with something not equal to the clone so we can tell if the clone applied correctly.
+		viewAfter.root = ABUnion.create("y");
+		provider.synchronizeMessages();
+
+		// Set root to clone
+		assert.equal(viewBefore.root.union, "y");
+		viewBefore.root = cloneUnknown;
+		provider.synchronizeMessages();
+		assert.equal(viewAfter.root.union, 2); // From clone
+
+		// Since this test has produced a node in the unknown configuration (which is hard to do in a simple test),
+		// as part of this test,
+		// test exporting with unknown entry, and importing where field is known
+		const exportUnknown = TreeAlpha.exportVerbose(cloneUnknown, {
+			keys: KeyEncodingOptions.allStoredKeys,
+		});
+
+		const importUnknown = TreeAlpha.importVerbose(ABUnion, exportUnknown, {
+			keys: KeyEncodingOptions.knownStoredKeys,
+		});
+
+		assert.equal(importUnknown.union, 2);
 	});
 });

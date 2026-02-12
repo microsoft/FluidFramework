@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { TreeAlpha, Tree } from "./shared-tree/index.js";
 import type {
 	TreeNodeSchema,
@@ -15,6 +17,7 @@ import type {
 import {
 	createCustomizedFluidFrameworkScopedFactory,
 	eraseSchemaDetailsSubclassable,
+	getInnerNode,
 	SchemaFactory,
 	TreeBeta,
 } from "./simple-tree/index.js";
@@ -64,8 +67,30 @@ export namespace ExtensibleUnionNode {
 		/**
 		 * The child wrapped by this node has one of the types allowed by the union,
 		 * or `undefined` if the type is one which was added to the union by a future version of this schema.
+		 *
+		 * @throws if {@link isValid} is false.
 		 */
 		readonly union: T | undefined;
+
+		/**
+		 * Returns true, unless this node is in a invalid state.
+		 * @remarks
+		 * Invalid in this context means that the internal implementation details of this node have had their invariants violated.
+		 * This can happen when:
+		 * - Using weakly typed construction APIs like {@link TreeBeta.importConcise} or {@link TreeBeta.importVerbose} to construct an invalid state directly.
+		 * Using such APIs, even when not creating invalid nodes, is not supported for this schema,
+		 * since doing so requires knowing the implementation details of this node which are subject to change.
+		 * - By editing a document using a different client using a different schema for this node.
+		 * - Violating the TypeScript types to directly manipulate the node internals.
+		 * - A bug in this node's implementation.
+		 * - Corruption of the document this node is contained in.
+		 *
+		 * @privateRemarks
+		 * We could support {@link TreeBeta.exportVerbose} using {@link KeyEncodingOptions.allStoredKeys}
+		 * then {@link TreeBeta.importVerbose} with {@link KeyEncodingOptions.knownStoredKeys}.
+		 * However, even this will error (but will not produce an invalid node) if there is a node of an unknown type in the union.
+		 */
+		isValid(): boolean;
 	}
 
 	/**
@@ -103,15 +128,28 @@ export namespace ExtensibleUnionNode {
 			inputSchemaFactory,
 			"extensibleUnionNode",
 		);
+
 		class Union
 			extends schemaFactory.object(name, record, { allowUnknownOptionalFields: true })
 			implements Members<TreeNodeFromImplicitAllowedTypes<T>>
 		{
 			public get union(): TreeNodeFromImplicitAllowedTypes<T> | undefined {
+				if (!this.isValid()) {
+					throw new UsageError(
+						`This ExtensibleUnionNode (${Union.identifier}) is in an invalid state. It must have been edited by another client using a different schema or been directly imported or constructed in an invalid state.`,
+					);
+				}
 				for (const [_key, child] of TreeAlpha.children(this)) {
 					return child as TreeNodeFromImplicitAllowedTypes<T>;
 				}
 				return undefined;
+			}
+
+			public isValid(): boolean {
+				// Use inner node, since it includes populated fields even when they are unknown.
+				const inner = getInnerNode(this);
+				// Fields only includes non-empty fields, so this is what we need to check the one child invariant.
+				return [...inner.fields].length === 1;
 			}
 
 			public static create<TThis extends TreeNodeSchema>(
