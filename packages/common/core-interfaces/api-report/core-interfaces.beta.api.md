@@ -5,6 +5,13 @@
 ```ts
 
 // @public
+export class BrandedType<out Brand> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected constructor();
+    protected readonly brand: (dummy: never) => Brand;
+}
+
+// @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 // @public @sealed

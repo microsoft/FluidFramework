@@ -5,7 +5,7 @@
 
 import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
 import type {
-	InternalUtilityTypes,
+	InternalCoreInterfacesUtilityTypes,
 	JsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
@@ -37,10 +37,10 @@ import { initialLocalClientConnectionId } from "./mockEphemeralRuntime.js";
  * Use to compile-time assert types of two variables are identical.
  */
 export function assertIdenticalTypes<T, U>(
-	_actual: T & InternalUtilityTypes.IfSameType<T, U>,
-	_expected: U & InternalUtilityTypes.IfSameType<T, U>,
-): InternalUtilityTypes.IfSameType<T, U> {
-	return undefined as InternalUtilityTypes.IfSameType<T, U>;
+	_actual: T & InternalCoreInterfacesUtilityTypes.IfSameType<T, U>,
+	_expected: U & InternalCoreInterfacesUtilityTypes.IfSameType<T, U>,
+): InternalCoreInterfacesUtilityTypes.IfSameType<T, U> {
+	return undefined as InternalCoreInterfacesUtilityTypes.IfSameType<T, U>;
 }
 
 /**

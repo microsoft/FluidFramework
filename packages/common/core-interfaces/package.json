@@ -83,6 +83,7 @@
 		"check:exports:cjs:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json",
 		"check:exports:cjs:legacy.alpha": "api-extractor run --config api-extractor/api-extractor-lint-legacy.alpha.cjs.json",
 		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
+		"check:exports:esm:internal/exposedUtilityTypes": "api-extractor run --config api-extractor/api-extractor-lint-internal-exposedUtilityTypes.esm.json",
 		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
 		"check:exports:esm:legacy.alpha": "api-extractor run --config api-extractor/api-extractor-lint-legacy.alpha.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
