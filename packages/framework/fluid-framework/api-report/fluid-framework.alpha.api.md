@@ -153,9 +153,6 @@ export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
-export function checkSchemaCompatibilitySnapshots(options: SchemaCompatibilitySnapshotsOptions): void;
-
-// @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
     clone: boolean;
     value: unknown;
@@ -1346,17 +1343,6 @@ export interface RunTransactionParams {
     readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
-// @alpha @input
-export interface SchemaCompatibilitySnapshotsOptions {
-    readonly fileSystem: SnapshotFileSystem;
-    readonly minVersionForCollaboration: string;
-    readonly mode: "test" | "update";
-    readonly schema: TreeViewConfiguration;
-    readonly snapshotDirectory: string;
-    readonly snapshotUnchangedVersions?: true;
-    readonly version: string;
-}
-
 // @public @sealed
 export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
@@ -1599,6 +1585,23 @@ export interface SnapshotFileSystem {
     writeFileSync(file: string, data: string, options: {
         encoding: "utf8";
     }): void;
+}
+
+// @alpha
+export function snapshotSchemaCompatibility(options: SnapshotSchemaCompatibilityOptions): void;
+
+// @alpha @input
+export interface SnapshotSchemaCompatibilityOptions {
+    readonly fileSystem: SnapshotFileSystem;
+    readonly minVersionForCollaboration: string;
+    readonly mode: "assert" | "update";
+    readonly rejectSchemaChangesWithNoVersionChange?: true;
+    readonly rejectVersionsWithNoSchemaChange?: true;
+    readonly schema: TreeViewConfiguration;
+    readonly snapshotDirectory: string;
+    readonly snapshotUnchangedVersions?: true;
+    readonly version: string;
+    readonly versionComparer?: (a: string, b: string) => number;
 }
 
 // @beta @system

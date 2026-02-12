@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { ExtensibleUnionNode } from "../extensibleUnionNode.js";
 import { Tree } from "../shared-tree/index.js";
 import {
-	checkSchemaCompatibilitySnapshots,
+	snapshotSchemaCompatibility,
 	SchemaFactoryBeta,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
@@ -68,7 +68,7 @@ describe("extensibleUnionNode", () => {
 		const a = ExtensibleUnionNode.createSchema([A], factory, "ExtensibleUnion");
 
 		// Create the initial snapshot.
-		checkSchemaCompatibilitySnapshots({
+		snapshotSchemaCompatibility({
 			version: "1.0.0",
 			schema: new TreeViewConfiguration({ schema: a }),
 			fileSystem,
@@ -79,7 +79,7 @@ describe("extensibleUnionNode", () => {
 
 		const b = ExtensibleUnionNode.createSchema([A, B], factory, "ExtensibleUnion");
 
-		checkSchemaCompatibilitySnapshots({
+		snapshotSchemaCompatibility({
 			version: "2.0.0",
 			schema: new TreeViewConfiguration({ schema: b }),
 			fileSystem,
@@ -90,7 +90,7 @@ describe("extensibleUnionNode", () => {
 
 		const c = ExtensibleUnionNode.createSchema([A, B, C], factory, "ExtensibleUnion");
 
-		checkSchemaCompatibilitySnapshots({
+		snapshotSchemaCompatibility({
 			version: "3.0.0",
 			schema: new TreeViewConfiguration({ schema: c }),
 			fileSystem,
@@ -100,12 +100,12 @@ describe("extensibleUnionNode", () => {
 		});
 
 		// c is compatible to collaborate with 1 and 2.
-		checkSchemaCompatibilitySnapshots({
+		snapshotSchemaCompatibility({
 			version: "3.0.0",
 			schema: new TreeViewConfiguration({ schema: c }),
 			fileSystem,
 			minVersionForCollaboration: "1.0.0",
-			mode: "test",
+			mode: "assert",
 			snapshotDirectory,
 		});
 	});
