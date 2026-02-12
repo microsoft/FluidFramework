@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { Flags } from "@oclif/core";
@@ -56,6 +56,7 @@ export default class BuildPerfHtmlCommand extends BaseCommand<typeof BuildPerfHt
 		const { flags } = this;
 		const mode = flags.mode as BuildPerfMode;
 
+		mkdirSync(flags.outputDir, { recursive: true });
 		const standaloneFile = path.join(flags.outputDir, "dashboard.html");
 
 		this.log("==========================================");

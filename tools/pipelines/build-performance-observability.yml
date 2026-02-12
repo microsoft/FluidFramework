@@ -122,7 +122,7 @@ extends:
           env:
             MODE: $(runMode)
             DATA_DIR: $(Build.ArtifactStagingDirectory)/data
-            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
+            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)/dashboard
           inputs:
             targetType: 'inline'
             script: |
@@ -138,7 +138,7 @@ extends:
             publishLocation: pipeline
           - output: pipelineArtifact
             displayName: Publish HTML dashboard artifact
-            targetPath: $(Build.ArtifactStagingDirectory)/dashboard.html
+            targetPath: $(Build.ArtifactStagingDirectory)/dashboard
             artifactName: dashboard
             publishLocation: pipeline
 
