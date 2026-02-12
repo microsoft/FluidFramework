@@ -34,7 +34,7 @@
 	"scripts": {
 		"build": "fluid-build --task build",
 		"build:compile": "fluid-build --task compile",
-		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" \"src/test/**/fixtures/**/*\" lib",
+		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" \"src/test/**/fixtures/**/*\" \"src/library/buildPerf/templates/*\" lib",
 		"build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc",
@@ -216,6 +216,9 @@
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/build-cli/<%- commandPath %>",
 		"topicSeparator": " ",
 		"topics": {
+			"build-perf-tools": {
+				"description": "Build performance observability commands for collecting, processing, and analyzing build metrics."
+			},
 			"bump": {
 				"description": "Bump the version of packages, release groups, and their dependencies."
 			},

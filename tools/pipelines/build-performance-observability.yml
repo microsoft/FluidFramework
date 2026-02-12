@@ -7,10 +7,6 @@
 # When run from the "internal" project: collects internal build metrics
 
 parameters:
-- name: publishToASWA
-  displayName: Publish dashboard to Azure Static Web Apps
-  type: boolean
-  default: false
 - name: forceAlertFailure
   displayName: Force threshold failure (for testing)
   type: boolean
@@ -18,20 +14,9 @@ parameters:
 
 name: $(Build.BuildId)
 
-# Both schedules run in both projects (public and internal), but each schedule
-# only completes in one of the projects (the other project will skip early).
-# - 2 AM UTC: PR build metrics - runs in public, skips in internal
-# - 3 AM UTC: Internal build metrics - runs in internal, skips in public
-# This is done to avoid a race condition if both runs try to update the ASWA at the same time.
 schedules:
 - cron: "0 2 * * *"
-  displayName: Daily PR build metrics collection
-  branches:
-    include:
-    - main
-  always: true
-- cron: "0 3 * * *"
-  displayName: Daily internal build metrics collection
+  displayName: Daily build metrics collection
   branches:
     include:
     - main
@@ -42,8 +27,6 @@ trigger: none
 pr: none
 
 variables:
-  # Contains keys to upload dashboard to ASWA
-  - group: build-perf-dashboard-vars
   # Number of recent builds to fetch
   - name: buildCount
     value: 500
@@ -51,8 +34,11 @@ variables:
   - name: organization
     value: fluidframework
   # Mode: public = PR builds, internal = internal builds
-  - name: isPublicProject
-    value: ${{ eq(variables['System.TeamProject'], 'public') }}
+  - name: runMode
+    ${{ if eq(variables['System.TeamProject'], 'public') }}:
+      value: public
+    ${{ else }}:
+      value: internal
   # Build definition IDs
   - name: publicPRBuildDefinitionId
     value: 11
@@ -98,163 +84,92 @@ extends:
         os: windows
 
     stages:
-    - stage: collect_and_deploy_metrics
-      displayName: Collect Build Metrics and Deploy Dashboard
+    - stage: collect_metrics
+      displayName: Collect Build Metrics
       jobs:
-      # Build job: checkout, fetch data, prepare dashboard
-      - job: prepare
-        displayName: Prepare Dashboard
+      - job: collect
+        displayName: Collect and Process Metrics
         steps:
         - checkout: self
           clean: true
 
-        # Determine if we should skip the remainder of the pipeline
-        # This happens if we are running from the cron schedule and the run was intended
-        # for the other project (public vs internal).
-        - task: Bash@3
-          name: detect
-          displayName: Detect run mode
-          env:
-            IS_PUBLIC: $(isPublicProject)
-            BUILD_REASON: $(Build.Reason)
-            CRON_SCHEDULE_NAME: $(Build.CronSchedule.DisplayName)
-          inputs:
-            targetType: 'filePath'
-            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/detect-run-mode.sh'
+        - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)
 
+        # Collect build data, fetch timelines, and process into aggregated metrics
         - task: Bash@3
-          displayName: Fetch build data
-          condition: eq(variables['detect.shouldRun'], 'true')
+          displayName: Collect build data and generate metrics
           env:
             ADO_API_TOKEN: $(System.AccessToken)
+            ORG: $(organization)
+            PROJECT: $(targetProject)
+            MODE: $(runMode)
+            BUILD_COUNT: $(buildCount)
             PR_BUILD_DEF_ID: $(publicPRBuildDefinitionId)
             INTERNAL_BUILD_DEF_ID: $(internalBuildDefinitionId)
-            BUILD_COUNT: $(buildCount)
-            ORG: $(organization)
-            PROJECT: $(targetProject)
-            MODE: $(detect.runMode)
-            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
-          inputs:
-            targetType: 'filePath'
-            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/fetch-build-data.sh'
-
-        - task: Bash@3
-          displayName: Fetch timeline data for builds
-          condition: eq(variables['detect.shouldRun'], 'true')
-          env:
-            ADO_API_TOKEN: $(System.AccessToken)
-            ORG: $(organization)
-            PROJECT: $(targetProject)
             PARALLEL_JOBS: $(parallelJobs)
-            MODE: $(detect.runMode)
-            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
+            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)/data
           inputs:
-            targetType: 'filePath'
-            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/fetch-timeline-data.sh'
-
-        - task: Bash@3
-          displayName: Generate data JSON
-          condition: eq(variables['detect.shouldRun'], 'true')
-          env:
-            MODE: $(detect.runMode)
-            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
-          inputs:
-            targetType: 'filePath'
-            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/generate-data-json.sh'
-
-        - task: Bash@3
-          displayName: Prepare deployment data
-          condition: eq(variables['detect.shouldRun'], 'true')
-          env:
-            ASWA_HOSTNAME: $(ASWA_HOSTNAME)
-            MODE: $(detect.runMode)
-            OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
-            SOURCE_DIR: $(Build.SourcesDirectory)
-            DEPLOY_DIR: $(Build.ArtifactStagingDirectory)/deploy
-          inputs:
-            targetType: 'filePath'
-            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/prepare-deployment.sh'
+            targetType: 'inline'
+            script: |
+              flub build-perf-tools collect-data
 
         - task: Bash@3
           displayName: Generate HTML dashboard artifact
-          condition: eq(variables['detect.shouldRun'], 'true')
           env:
-            MODE: $(detect.runMode)
+            MODE: $(runMode)
+            INPUT_DIR: $(Build.ArtifactStagingDirectory)/data
             OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
-            SOURCE_DIR: $(Build.SourcesDirectory)
           inputs:
-            targetType: 'filePath'
-            filePath: '$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/generate-html-artifact.sh'
+            targetType: 'inline'
+            script: |
+              flub build-perf-tools generate-html
 
         templateContext:
           outputParentDirectory: $(Build.ArtifactStagingDirectory)
           outputs:
           - output: pipelineArtifact
-            displayName: Publish dashboard artifact
-            condition: eq(variables['detect.shouldRun'], 'true')
-            targetPath: $(Build.ArtifactStagingDirectory)/deploy
-            artifactName: deploy
+            displayName: Publish data artifact
+            targetPath: $(Build.ArtifactStagingDirectory)/data
+            artifactName: data
             publishLocation: pipeline
           - output: pipelineArtifact
             displayName: Publish HTML dashboard artifact
-            condition: eq(variables['detect.shouldRun'], 'true')
             targetPath: $(Build.ArtifactStagingDirectory)/dashboard.html
             artifactName: dashboard
             publishLocation: pipeline
 
-      # Release job: deploy to Azure Static Web Apps
-      - job: deploy_to_aswa
-        displayName: Deploy to Azure Static Web Apps
-        dependsOn: prepare
-        condition: and(eq(dependencies.prepare.outputs['detect.shouldRun'], 'true'), eq('${{ parameters.publishToASWA }}', 'true'))
-        templateContext:
-          # Required for AzureStaticWebApp task which is classified as a release task
-          type: releaseJob
-          isProduction: false
-          inputs:
-          - input: pipelineArtifact
-            artifactName: deploy
-            targetPath: $(Build.ArtifactStagingDirectory)/deploy
-        steps:
-        - task: AzureStaticWebApp@0
-          displayName: Deploy to Azure Static Web Apps
-          inputs:
-            skip_app_build: true
-            skip_api_build: true
-            cwd: $(Build.ArtifactStagingDirectory)
-            app_location: 'deploy'
-            output_location: ''
-            azure_static_web_apps_api_token: $(ASWA_DEPLOYMENT_TOKEN)
-
     - stage: alert_on_thresholds
       displayName: Check Thresholds
-      dependsOn: collect_and_deploy_metrics
-      condition: succeeded('collect_and_deploy_metrics')
+      dependsOn: collect_metrics
+      condition: succeeded('collect_metrics')
       jobs:
       - job: check_thresholds
         displayName: Check Performance Thresholds
-        variables:
-          runMode: $[stageDependencies.collect_and_deploy_metrics.prepare.outputs['detect.runMode']]
-          shouldRun: $[stageDependencies.collect_and_deploy_metrics.prepare.outputs['detect.shouldRun']]
-        condition: eq(variables['shouldRun'], 'true')
         templateContext:
           inputs:
           - input: pipelineArtifact
-            artifactName: deploy
-            targetPath: $(Build.ArtifactStagingDirectory)/deploy
+            artifactName: data
+            targetPath: $(Build.ArtifactStagingDirectory)/data
         steps:
         - checkout: self
           clean: true
 
+        - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)
+
         - task: Bash@3
           name: checkThresholds
           displayName: Check performance thresholds
+          env:
+            MODE: $(runMode)
+            INPUT_DIR: $(Build.ArtifactStagingDirectory)/data
+            AVG_DURATION_THRESHOLD: $(avgDurationThreshold)
+            CHANGE_PERIOD_THRESHOLD: $(changePeriodThreshold)
+            FORCE_FAILURE: ${{ parameters.forceAlertFailure }}
           inputs:
             targetType: 'inline'
             script: |
-              export MODE="$(runMode)"
-              export INPUT_DIR="$(Build.ArtifactStagingDirectory)/deploy/data"
-              export AVG_DURATION_THRESHOLD="$(avgDurationThreshold)"
-              export CHANGE_PERIOD_THRESHOLD="$(changePeriodThreshold)"
-              export FORCE_FAILURE="${{ parameters.forceAlertFailure }}"
-              bash "$(Build.SourcesDirectory)/tools/pipelines/build-performance-observability-utils/check-thresholds.sh"
+              flub build-perf-tools check-thresholds

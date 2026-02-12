@@ -3,38 +3,46 @@
  * Licensed under the MIT License.
  */
 
+import { BUILD_PERF_CONFIG } from "./config.js";
+import type {
+	AdoBuildRecord,
+	AdoTimeline,
+	BuildPerfMode,
+	BuildSummary,
+	DurationTrendPoint,
+	ProcessedBuild,
+	ProcessedDataOutput,
+	StageDurationTrend,
+	StagePerformance,
+	TaskDurationTrend,
+} from "./types.js";
+
 /**
- * Pre-processes raw ADO build and timeline data into aggregated dashboard metrics.
- * This runs during the pipeline to reduce payload size from ~300MB to ~50KB.
- *
- * Usage: node process-data.cjs <input-raw.json> <output-processed.json> <mode>
- *   mode: "public" or "internal"
+ * Parse an ADO timestamp string into a Date object.
  */
-
-const fs = require("fs");
-
-// Configuration
-const config = {
-	githubRepo: "microsoft/FluidFramework",
-	org: "fluidframework",
-};
-
-// Parse ADO timestamp to Date object
-function parseAdoTime(timestamp) {
+export function parseAdoTime(timestamp: string | undefined | null): Date | null {
 	if (!timestamp) return null;
 	return new Date(timestamp);
 }
 
-// Calculate duration in minutes between two timestamps
-function calcDurationMins(startTime, finishTime) {
+/**
+ * Calculate duration in minutes between two timestamps.
+ */
+export function calcDurationMins(
+	startTime: string | undefined,
+	finishTime: string | undefined,
+): number | null {
 	const start = parseAdoTime(startTime);
 	const finish = parseAdoTime(finishTime);
 	if (!start || !finish) return null;
-	return (finish - start) / (1000 * 60);
+	return (finish.getTime() - start.getTime()) / (1000 * 60);
 }
 
-// Extract source display text from build
-function getSourceText(build) {
+/**
+ * Extract source display text from a build record.
+ * Returns PR number for PR builds, short commit hash otherwise.
+ */
+export function getSourceText(build: AdoBuildRecord): string {
 	const branch = build.sourceBranch || "";
 	if (branch.startsWith("refs/pull/")) {
 		const prNum = branch.split("/")[2];
@@ -46,73 +54,83 @@ function getSourceText(build) {
 	return branch.substring(0, 30) || "N/A";
 }
 
-// Build source URL (GitHub PR or commit)
-function getSourceUrl(build) {
+/**
+ * Build source URL (GitHub PR or commit).
+ */
+export function getSourceUrl(build: AdoBuildRecord): string | null {
 	const branch = build.sourceBranch || "";
 	if (branch.startsWith("refs/pull/")) {
 		const prNum = branch.split("/")[2];
-		return prNum ? `https://github.com/${config.githubRepo}/pull/${prNum}` : null;
+		return prNum ? `https://github.com/${BUILD_PERF_CONFIG.githubRepo}/pull/${prNum}` : null;
 	}
 	if (build.sourceVersion) {
-		return `https://github.com/${config.githubRepo}/commit/${build.sourceVersion}`;
+		return `https://github.com/${BUILD_PERF_CONFIG.githubRepo}/commit/${build.sourceVersion}`;
 	}
 	return null;
 }
 
-// Build ADO build URL
-function getBuildUrl(build, project) {
-	return `https://dev.azure.com/${config.org}/${project}/_build/results?buildId=${build.id}`;
+/**
+ * Build ADO build URL.
+ */
+export function getBuildUrl(build: AdoBuildRecord, project: string): string {
+	return `https://dev.azure.com/${BUILD_PERF_CONFIG.org}/${project}/_build/results?buildId=${build.id}`;
 }
 
-// Filter builds for public mode (PR builds targeting main)
-function filterBuilds(builds, mode) {
+/**
+ * Filter builds for public mode (PR builds targeting main).
+ * Internal mode returns all builds unfiltered.
+ */
+export function filterBuilds(builds: AdoBuildRecord[], mode: BuildPerfMode): AdoBuildRecord[] {
 	if (mode !== "public") return builds;
 	return builds.filter((build) => {
 		if (!build.parameters) return false;
 		try {
-			const params = JSON.parse(build.parameters);
+			const params = JSON.parse(build.parameters) as Record<string, string>;
 			return params["system.pullRequest.targetBranch"] === "main";
-		} catch (e) {
-			console.warn(`Warning: Could not parse parameters for build ${build.id}: ${e.message}`);
+		} catch {
 			return false;
 		}
 	});
 }
 
-// Process raw build data into display format
-function processBuild(build, project) {
+/**
+ * Process a raw build record into the display format.
+ */
+export function processBuild(build: AdoBuildRecord, project: string): ProcessedBuild {
 	const duration = calcDurationMins(build.startTime, build.finishTime);
 	return {
 		id: build.id,
 		startTime: build.startTime,
 		result: build.result,
-		duration: duration,
+		duration,
 		source: getSourceText(build),
 		sourceUrl: getSourceUrl(build),
 		url: getBuildUrl(build, project),
 	};
 }
 
-// Calculate summary statistics
-function calcSummary(builds) {
+/**
+ * Calculate summary statistics from processed builds.
+ */
+export function calcSummary(builds: ProcessedBuild[]): BuildSummary {
 	const validBuilds = builds.filter((b) => b.duration !== null);
 	const succeeded = builds.filter((b) => b.result === "succeeded").length;
-	const totalDuration = validBuilds.reduce((sum, b) => sum + b.duration, 0);
+	const totalDuration = validBuilds.reduce((sum, b) => sum + (b.duration ?? 0), 0);
 	return {
 		totalBuilds: builds.length,
-		succeeded: succeeded,
+		succeeded,
 		successRate: builds.length > 0 ? (succeeded * 100) / builds.length : 0,
 		avgDuration: validBuilds.length > 0 ? totalDuration / validBuilds.length : 0,
 	};
 }
 
-// Calculate percentage change over a period using calendar days.
-// Compares the average duration of the last N calendar days vs the period before that.
-// This aligns with the client-side calculation in dashboard-template.html.
-function calcPeriodChange(durationTrend, days) {
+/**
+ * Calculate percentage change over a period using calendar days.
+ * Compares the average duration of the last N calendar days vs the previous period.
+ */
+export function calcPeriodChange(durationTrend: DurationTrendPoint[], days: number): number {
 	if (!durationTrend || durationTrend.length === 0) return 0;
 
-	// Calculate the cutoff date (N days ago from today)
 	const cutoffDate = new Date();
 	cutoffDate.setDate(cutoffDate.getDate() - days);
 	const cutoffDateStr = cutoffDate.toISOString().split("T")[0];
@@ -129,19 +147,22 @@ function calcPeriodChange(durationTrend, days) {
 
 	if (previousAvg === 0) return 0;
 
-	// Calculate percentage change: ((new - old) / old) * 100
 	return ((recentAvg - previousAvg) / previousAvg) * 100;
 }
 
-// Calculate duration trend (min, average, max per day)
-function calcDurationTrend(builds) {
-	const validBuilds = builds.filter((b) => b.startTime && b.duration !== null);
-	const byDate = {};
-	validBuilds.forEach((b) => {
+/**
+ * Calculate duration trend (min, average, max per day).
+ */
+export function calcDurationTrend(builds: ProcessedBuild[]): DurationTrendPoint[] {
+	const validBuilds = builds.filter(
+		(b) => b.startTime && b.duration !== null,
+	) as (ProcessedBuild & { duration: number })[];
+	const byDate: Record<string, { duration: number; id: number }[]> = {};
+	for (const b of validBuilds) {
 		const date = b.startTime.split("T")[0];
 		if (!byDate[date]) byDate[date] = [];
 		byDate[date].push({ duration: b.duration, id: b.id });
-	});
+	}
 	return Object.entries(byDate)
 		.map(([date, buildInfos]) => {
 			const durations = buildInfos.map((b) => b.duration);
@@ -161,66 +182,77 @@ function calcDurationTrend(builds) {
 		.sort((a, b) => a.date.localeCompare(b.date));
 }
 
-// Process timeline data to extract stage metrics
-function processTimelines(timelines) {
-	const stageData = {};
-	const stageTasksData = {};
+/**
+ * Process timeline data to extract stage and task metrics.
+ */
+export function processTimelines(timelines: Record<string, AdoTimeline>): {
+	stagePerformance: StagePerformance[];
+	stageTaskBreakdown: Record<string, StagePerformance[]>;
+} {
+	const stageData: Record<string, number[]> = {};
+	const stageTasksData: Record<string, Record<string, number[]>> = {};
 
-	Object.values(timelines || {}).forEach((timeline) => {
-		if (!timeline || !timeline.records) return;
+	for (const timeline of Object.values(timelines)) {
+		if (!timeline?.records) continue;
 
 		const stages = timeline.records.filter(
 			(r) => r.type === "Stage" && r.startTime && r.finishTime,
 		);
 
-		stages.forEach((stage) => {
+		for (const stage of stages) {
 			const duration = calcDurationMins(stage.startTime, stage.finishTime);
-			if (duration === null) return;
+			if (duration === null) continue;
 
 			if (!stageData[stage.name]) stageData[stage.name] = [];
 			stageData[stage.name].push(duration);
 
-			// Find tasks (phases) for this stage
 			const tasks = timeline.records.filter(
 				(r) => r.type === "Phase" && r.parentId === stage.id && r.startTime && r.finishTime,
 			);
 
 			if (!stageTasksData[stage.name]) stageTasksData[stage.name] = {};
-			tasks.forEach((task) => {
+			for (const task of tasks) {
 				const taskDuration = calcDurationMins(task.startTime, task.finishTime);
-				if (taskDuration === null) return;
+				if (taskDuration === null) continue;
 				if (!stageTasksData[stage.name][task.name]) stageTasksData[stage.name][task.name] = [];
 				stageTasksData[stage.name][task.name].push(taskDuration);
-			});
-		});
-	});
+			}
+		}
+	}
 
-	// Calculate averages
 	const stagePerformance = Object.entries(stageData).map(([name, durations]) => ({
 		name,
 		avgDuration: durations.reduce((a, b) => a + b, 0) / durations.length,
 	}));
 
-	const stageTaskBreakdown = {};
-	Object.entries(stageTasksData).forEach(([stageName, tasks]) => {
+	const stageTaskBreakdown: Record<string, StagePerformance[]> = {};
+	for (const [stageName, tasks] of Object.entries(stageTasksData)) {
 		stageTaskBreakdown[stageName] = Object.entries(tasks).map(([taskName, durations]) => ({
 			name: taskName,
 			avgDuration: durations.reduce((a, b) => a + b, 0) / durations.length,
 		}));
-	});
+	}
 
 	return { stagePerformance, stageTaskBreakdown };
 }
 
-// Calculate stage duration trend over time (for stacked bar chart)
-function calcStageDurationTrend(builds, timelines) {
-	const byDate = {};
+/**
+ * Calculate stage duration trend over time (for stacked bar chart).
+ */
+export function calcStageDurationTrend(
+	builds: AdoBuildRecord[],
+	timelines: Record<string, AdoTimeline>,
+): StageDurationTrend {
+	const byDate: Record<
+		string,
+		{ stages: Record<string, number[]>; buildCount: number; buildIds: number[] }
+	> = {};
 
-	builds.forEach((build) => {
-		if (!build.startTime || !build.id) return;
+	for (const build of builds) {
+		if (!build.startTime || !build.id) continue;
 		const date = build.startTime.split("T")[0];
 		const timeline = timelines[build.id];
-		if (!timeline || !timeline.records) return;
+		if (!timeline?.records) continue;
 
 		const stages = timeline.records.filter(
 			(r) => r.type === "Stage" && r.startTime && r.finishTime,
@@ -230,54 +262,67 @@ function calcStageDurationTrend(builds, timelines) {
 		byDate[date].buildCount++;
 		byDate[date].buildIds.push(build.id);
 
-		stages.forEach((stage) => {
+		for (const stage of stages) {
 			const duration = calcDurationMins(stage.startTime, stage.finishTime);
-			if (duration === null) return;
+			if (duration === null) continue;
 			if (!byDate[date].stages[stage.name]) byDate[date].stages[stage.name] = [];
 			byDate[date].stages[stage.name].push(duration);
-		});
-	});
+		}
+	}
 
-	// Calculate average duration per stage per date, filter out days with no stage data
 	const dates = Object.keys(byDate)
 		.sort()
 		.filter((date) => Object.keys(byDate[date].stages).length > 0);
-	const allStages = new Set();
-	dates.forEach((date) => {
-		Object.keys(byDate[date].stages).forEach((stage) => allStages.add(stage));
-	});
+	const allStages = new Set<string>();
+	for (const date of dates) {
+		for (const stage of Object.keys(byDate[date].stages)) {
+			allStages.add(stage);
+		}
+	}
 
-	const stageNames = Array.from(allStages).sort();
+	const stageNames = [...allStages].sort();
 	const trendData = dates.map((date) => {
-		const entry = { date, buildCount: byDate[date].buildCount, buildIds: byDate[date].buildIds };
-		stageNames.forEach((stage) => {
+		const entry: Record<string, unknown> = {
+			date,
+			buildCount: byDate[date].buildCount,
+			buildIds: byDate[date].buildIds,
+		};
+		for (const stage of stageNames) {
 			const durations = byDate[date].stages[stage] || [];
 			entry[stage] =
 				durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
-		});
+		}
 		return entry;
 	});
 
 	return { trendData, stageNames };
 }
 
-// Calculate task duration trend over time (for stacked bar chart)
-function calcTaskDurationTrend(builds, timelines) {
-	const byDate = {};
+/**
+ * Calculate task duration trend over time (for stacked bar chart).
+ * Returns top 10 tasks by average duration.
+ */
+export function calcTaskDurationTrend(
+	builds: AdoBuildRecord[],
+	timelines: Record<string, AdoTimeline>,
+): TaskDurationTrend {
+	const byDate: Record<
+		string,
+		{ tasks: Record<string, number[]>; buildCount: number; buildIds: number[] }
+	> = {};
 
-	builds.forEach((build) => {
-		if (!build.startTime || !build.id) return;
+	for (const build of builds) {
+		if (!build.startTime || !build.id) continue;
 		const date = build.startTime.split("T")[0];
 		const timeline = timelines[build.id];
-		if (!timeline || !timeline.records) return;
+		if (!timeline?.records) continue;
 
 		const stages = timeline.records.filter((r) => r.type === "Stage" && r.id);
-		const stageIdMap = {};
-		stages.forEach((s) => {
+		const stageIdMap: Record<string, string> = {};
+		for (const s of stages) {
 			stageIdMap[s.id] = s.name;
-		});
+		}
 
-		// Find tasks (phases) within stages
 		const tasks = timeline.records.filter(
 			(r) =>
 				r.type === "Phase" &&
@@ -291,90 +336,90 @@ function calcTaskDurationTrend(builds, timelines) {
 		byDate[date].buildCount++;
 		byDate[date].buildIds.push(build.id);
 
-		tasks.forEach((task) => {
+		for (const task of tasks) {
 			const duration = calcDurationMins(task.startTime, task.finishTime);
-			if (duration === null) return;
-			const taskKey = stageIdMap[task.parentId] + " › " + task.name;
+			if (duration === null) continue;
+			const taskKey = `${stageIdMap[task.parentId!]} \u203A ${task.name}`;
 			if (!byDate[date].tasks[taskKey]) byDate[date].tasks[taskKey] = [];
 			byDate[date].tasks[taskKey].push(duration);
-		});
-	});
+		}
+	}
 
-	// Calculate average duration per task per date, filter out days with no task data
 	const dates = Object.keys(byDate)
 		.sort()
 		.filter((date) => Object.keys(byDate[date].tasks).length > 0);
-	const allTasks = new Set();
-	dates.forEach((date) => {
-		Object.keys(byDate[date].tasks).forEach((task) => allTasks.add(task));
-	});
+	const allTasks = new Set<string>();
+	for (const date of dates) {
+		for (const task of Object.keys(byDate[date].tasks)) {
+			allTasks.add(task);
+		}
+	}
 
 	// Sort tasks by overall average duration (descending) and take top 10
-	const taskAvgs = {};
-	Array.from(allTasks).forEach((task) => {
-		let total = 0,
-			count = 0;
-		dates.forEach((date) => {
+	const taskAvgs: Record<string, number> = {};
+	for (const task of allTasks) {
+		let total = 0;
+		let count = 0;
+		for (const date of dates) {
 			const durations = byDate[date].tasks[task] || [];
-			durations.forEach((d) => {
+			for (const d of durations) {
 				total += d;
 				count++;
-			});
-		});
+			}
+		}
 		taskAvgs[task] = count > 0 ? total / count : 0;
-	});
-	const taskNames = Array.from(allTasks)
-		.sort((a, b) => taskAvgs[b] - taskAvgs[a])
-		.slice(0, 10);
+	}
+	const taskNames = [...allTasks].sort((a, b) => taskAvgs[b] - taskAvgs[a]).slice(0, 10);
 
 	const trendData = dates.map((date) => {
-		const entry = { date, buildCount: byDate[date].buildCount, buildIds: byDate[date].buildIds };
-		taskNames.forEach((task) => {
+		const entry: Record<string, unknown> = {
+			date,
+			buildCount: byDate[date].buildCount,
+			buildIds: byDate[date].buildIds,
+		};
+		for (const task of taskNames) {
 			const durations = byDate[date].tasks[task] || [];
 			entry[task] =
 				durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
-		});
+		}
 		return entry;
 	});
 
 	return { trendData, taskNames };
 }
 
-// Main processing function
-function processRawData(rawData, mode) {
+/**
+ * Main processing function. Transforms raw ADO build and timeline data
+ * into aggregated dashboard metrics.
+ */
+export function processRawData(
+	builds: AdoBuildRecord[],
+	timelines: Record<string, AdoTimeline>,
+	mode: BuildPerfMode,
+	generatedAt?: string,
+): ProcessedDataOutput {
 	const project = mode === "public" ? "public" : "internal";
 
-	// Filter and process builds
-	if (!rawData.builds || !Array.isArray(rawData.builds)) {
-		console.error(
-			"Error: Input data does not contain a 'builds' array. Received keys:",
-			Object.keys(rawData),
-		);
-		process.exit(1);
-	}
-	const filteredBuilds = filterBuilds(rawData.builds, mode);
+	const filteredBuilds = filterBuilds(builds, mode);
 	const processedBuilds = filteredBuilds
 		.map((b) => processBuild(b, project))
-		.filter((b) => b.duration !== null);
+		.filter((b): b is ProcessedBuild & { duration: number } => b.duration !== null);
 
-	// Process timeline data
-	const { stagePerformance, stageTaskBreakdown } = processTimelines(rawData.timelines);
-	const stageDurationTrend = calcStageDurationTrend(filteredBuilds, rawData.timelines || {});
-	const taskDurationTrend = calcTaskDurationTrend(filteredBuilds, rawData.timelines || {});
+	const { stagePerformance, stageTaskBreakdown } = processTimelines(timelines);
+	const stageDurationTrend = calcStageDurationTrend(filteredBuilds, timelines);
+	const taskDurationTrend = calcTaskDurationTrend(filteredBuilds, timelines);
 
-	// Sort for recent and longest builds
 	const sortedByDate = [...processedBuilds].sort(
-		(a, b) => new Date(b.startTime) - new Date(a.startTime),
+		(a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
 	);
 	const sortedByDuration = [...processedBuilds].sort((a, b) => b.duration - a.duration);
 
-	// Calculate duration trend and period changes
 	const durationTrend = calcDurationTrend(processedBuilds);
 	const change3Day = calcPeriodChange(durationTrend, 3);
 	const change7Day = calcPeriodChange(durationTrend, 7);
 
 	return {
-		generatedAt: rawData.generatedAt,
+		generatedAt: generatedAt ?? new Date().toISOString(),
 		summary: calcSummary(processedBuilds),
 		durationTrend,
 		change3Day,
@@ -387,35 +432,3 @@ function processRawData(rawData, mode) {
 		taskDurationTrend,
 	};
 }
-
-// CLI entry point
-function main() {
-	const args = process.argv.slice(2);
-	if (args.length < 3) {
-		console.error(
-			"Usage: node process-data.cjs <input-raw.json> <output-processed.json> <mode>",
-		);
-		console.error("  mode: 'public' or 'internal'");
-		process.exit(1);
-	}
-
-	const [inputFile, outputFile, mode] = args;
-
-	if (mode !== "public" && mode !== "internal") {
-		console.error("Error: mode must be 'public' or 'internal'");
-		process.exit(1);
-	}
-
-	let rawData;
-	try {
-		rawData = JSON.parse(fs.readFileSync(inputFile, "utf8"));
-	} catch (e) {
-		console.error(`Error: Failed to parse input file '${inputFile}': ${e.message}`);
-		process.exit(1);
-	}
-	const processedData = processRawData(rawData, mode);
-	const output = JSON.stringify(processedData);
-	fs.writeFileSync(outputFile, output);
-}
-
-main();
