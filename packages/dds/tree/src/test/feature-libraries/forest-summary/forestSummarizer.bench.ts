@@ -99,7 +99,7 @@ describe("Forest Summarizer benchmarks", () => {
 				let baselineSummarizer: ForestSummarizer;
 				benchmark({
 					type: benchmarkType,
-					title: `baseline for (${itemCount} items)`,
+					title: `baseline: incremental summary for (${itemCount} items)`,
 					before: () => {
 						const { forestSummarizer } = setupForestForIncrementalSummarization(
 							createInitialBoard(itemCount),
