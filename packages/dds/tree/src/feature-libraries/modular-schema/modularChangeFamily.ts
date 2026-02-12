@@ -349,6 +349,7 @@ export class ModularChangeFamily
 			change2,
 			crossFieldTable.composedRootNodes,
 			crossFieldTable.composedRenames,
+			crossFieldTable.deletedRenames,
 		);
 
 		return {
@@ -360,6 +361,7 @@ export class ModularChangeFamily
 				change1.crossFieldKeys,
 				change2.crossFieldKeys,
 				crossFieldTable.removedCrossFieldKeys,
+				crossFieldTable.addedCrossFieldKeys,
 			),
 			rootNodes: composedRoots,
 		};
@@ -2674,6 +2676,8 @@ function newComposeTable(
 		movedNodeToParent: newChangeAtomIdBTree(),
 		composedRootNodes,
 		composedRenames: newChangeAtomIdTransform(),
+		deletedRenames: newChangeAtomIdRangeMap(),
+		addedCrossFieldKeys: newCrossFieldRangeTable(),
 		removedCrossFieldKeys,
 		pendingCompositions,
 	};
@@ -2697,7 +2701,9 @@ interface ComposeTable {
 	readonly movedNodeToParent: ChangeAtomIdBTree<NodeLocation>;
 	readonly composedRootNodes: RootNodeTable;
 	readonly composedRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
+	readonly deletedRenames: ChangeAtomIdRangeMap<true>;
 	readonly removedCrossFieldKeys: CrossFieldRangeTable<boolean>;
+	readonly addedCrossFieldKeys: CrossFieldRangeTable<FieldId>;
 	readonly pendingCompositions: PendingCompositions;
 }
 
@@ -3323,14 +3329,23 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 	): void {
 		if (composeToPin) {
 			if (!areEqualChangeAtomIds(baseDetachId, newAttachId)) {
-				// XXX: Does the pin need to have both IDs? Or should it just use `baseDetachId`?
-				// The pin will have `newAttachId` as both its detach and attach ID.
-				// So we remove `baseDetachId` unless that is equal to the pin's detach ID.
+				// The pin will have `baseDetachId` as both its detach and attach ID.
+				// So we remove `newAttachId` unless that is equal to the pin's detach ID.
 				this.table.removedCrossFieldKeys.set(
-					{ target: NodeMoveType.Detach, ...baseDetachId },
+					{ target: NodeMoveType.Attach, ...newAttachId },
 					count,
 					true,
 				);
+
+				// We also add `baseDetachId` as an attach ID.
+				this.table.addedCrossFieldKeys.set(
+					{ target: NodeMoveType.Attach, ...baseDetachId },
+					count,
+					this.fieldId,
+				);
+
+				// We remove any rename from `baseDetachId`.
+				this.table.deletedRenames.set(baseDetachId, count, true);
 			}
 		} else {
 			this.table.removedCrossFieldKeys.set(
@@ -4349,11 +4364,16 @@ function composeCrossFieldKeyTables(
 	table1: CrossFieldKeyTable,
 	table2: CrossFieldKeyTable,
 	removedCrossFieldKeys: CrossFieldRangeTable<boolean>,
+	addedCrossFieldKeys: CrossFieldRangeTable<FieldId>,
 ): CrossFieldKeyTable {
 	const composedTable = RangeMap.union(table1, table2);
 
 	for (const entry of removedCrossFieldKeys.entries()) {
 		composedTable.delete(entry.start, entry.length);
+	}
+
+	for (const entry of addedCrossFieldKeys.entries()) {
+		composedTable.set(entry.start, entry.length, entry.value);
 	}
 
 	return composedTable;
@@ -4465,11 +4485,15 @@ function composeOutputDetachLocation(
 	}
 }
 
+/**
+ * This assumes that `composedRoots` starts with the renames from `change1`.
+ */
 function composeRootRenames(
 	change1: ModularChangeset,
 	change2: ModularChangeset,
 	composedRoots: RootNodeTable,
 	composedRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
+	deletedRenames: ChangeAtomIdRangeMap<true>,
 ): void {
 	for (const entry of composedRenames.entries()) {
 		// XXX: Detach location
@@ -4491,6 +4515,10 @@ function composeRootRenames(
 			renameEntry.value,
 			renameEntry.length,
 		);
+	}
+
+	for (const entry of deletedRenames.entries()) {
+		deleteNodeRenameFrom(composedRoots, entry.start, entry.length);
 	}
 }
 

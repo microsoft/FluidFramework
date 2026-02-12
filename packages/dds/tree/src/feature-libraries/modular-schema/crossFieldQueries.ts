@@ -111,7 +111,7 @@ export interface ComposeNodeManager {
 	 * @param baseDetachId - The ID of the detach in the base changeset.
 	 * @param newAttachId - The ID of the attach in the new changeset.
 	 * @param count - The number of nodes being detached then attached.
-	 * @param convertToPin - Should be set to true if the composed change will include a detach and attach with `newAttachId`.
+	 * @param convertToPin - Should be set to true if the composed change will include a detach and attach with `baseDetachId`.
 	 * Otherwise the composed change should not include either `baseDetachId` or `newAttachId`.
 	 */
 	composeDetachAttach(

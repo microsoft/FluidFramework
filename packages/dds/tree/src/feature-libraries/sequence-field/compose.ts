@@ -196,8 +196,9 @@ function composeMarksIgnoreChild(
 
 		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count, true);
 
-		// The composition has no net effect but we preserve the second change's intention to pin the nodes here.
-		const composedMark = { ...newMark };
+		// The composition has no net effect but we preserve the intention to pin the nodes here.
+		// We use the ID from the first mark.
+		const composedMark = { ...newMark, id: baseMark.id, revision: baseMark.revision };
 		delete composedMark.cellId;
 		return composedMark;
 	}
