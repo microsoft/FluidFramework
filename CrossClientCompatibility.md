@@ -37,7 +37,7 @@ The Fluid Framework guarantees cross-client compatibility between adjacent major
 
 **Enforcement:** Incompatible clients will be blocked from collaborating on a document and shown a clear error message.
 
-**Example:** If the most recent public major release (N) is 4.0, a client running 4.0 is cross-client compatible with 3.x clients by default, but not with 2.x or older clients.
+**Example:** If the most recent public major release (N) is 4.0, a client running 4.x is cross-client compatible with 3.x clients by default, but not with 2.x or older clients.
 
 ## What This Means for An Application
 
