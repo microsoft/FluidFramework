@@ -40,7 +40,7 @@ describe("inventoryApp", () => {
 		snapshotSchemaCompatibility({
 			snapshotDirectory,
 			fileSystem: { ...fs, ...path },
-			nextReleaseVersion: "1.0.0",
+			version: "1.0.0",
 			schema: treeConfiguration,
 			minVersionForCollaboration: "1.0.0",
 			mode: regenerateSnapshots ? "update" : "assert",

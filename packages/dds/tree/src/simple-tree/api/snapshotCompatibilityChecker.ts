@@ -275,15 +275,9 @@ export interface SnapshotSchemaCompatibilityOptions {
 	readonly schema: TreeViewConfiguration;
 
 	/**
-	 * The version of the next release of the application or library.
+	 * The version which will be associated with this version of the schema.
 	 * @remarks
-	 * Can use any format supported by {@link SnapshotSchemaCompatibilityOptions.versionComparer}.
-	 * Only compared against the version from previous snapshots (taken from this version when they were created by setting `mode` to "update") and the `minVersionForCollaboration`.
-	 *
-	 * Typically `minVersionForCollaboration` should be set to the oldest version currently in use, so it's helpful to use a version which can be easily measured to tell if clients are still using it.
-	 * It is also important that this version increases with every new version of the application or library that is released (and thus might persist content which needs to be supported).
-	 *
-	 * Often the easiest way to ensure this is to simply use the version of the package or application itself, and set the `minVersionForCollaboration` based on telemetry about which versions are still in use.
+	 * Often the easiest way to ensure this is to simply use the next version which will be released for the package or application itself, and set the `minVersionForCollaboration` based on telemetry about which versions are still in use.
 	 * To do this, it is recommended that this version be programmatically derived from the application version rather than hard coded inline.
 	 * For example, reading it from the `package.json` or some other source of truth can be done to ensure it is kept up to date, and thus snapshots always have the correct version.
 	 * The version used should typically be the _next_ production version (whose formats must be supported long term) that will be released (but is not yet released).
@@ -292,13 +286,18 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * If incorrectly versioned snapshots were committed accidentally, rename the snapshot files to have the correct version, and restore the old files from, version control.
 	 *
 	 * It is possible to use a different versioning scheme, for example one specific to the schema in question.
-	 * This can be done robustly as long as care is taken to ensure the version increases such that every released version has a unique `nextReleaseVersion` (and therefore unique snapshot),
+	 * This can be done robustly as long as care is taken to ensure the version increases such that every released version has a unique `version` (and therefore unique snapshot),
 	 * and `minVersionForCollaboration` is set appropriately using the same versioning scheme.
 	 * {@link SnapshotSchemaCompatibilityOptions.rejectVersionsWithNoSchemaChange} and
 	 * {@link SnapshotSchemaCompatibilityOptions.rejectSchemaChangesWithNoVersionChange}
 	 * can be used to help enforce the expected relationship between version changes and schema changes in such cases.
+	 *
+	 * Can use any format supported by {@link SnapshotSchemaCompatibilityOptions.versionComparer}.
+	 * Only compared against the version from previous snapshots (taken from this version when they were created by setting `mode` to "update") and the `minVersionForCollaboration`.
+	 *
+	 * Typically `minVersionForCollaboration` should be set to the oldest version currently in use, so it's helpful to use a version which can be easily measured to tell if clients are still using it.
 	 */
-	readonly nextReleaseVersion: string;
+	readonly version: string;
 
 	/**
 	 * The minimum version that the current version is expected to be able to collaborate with.
@@ -317,7 +316,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 *
 	 * This is the same approach used by {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
-	 * and this corresponds to whatever versioning scheme is used with {@link SnapshotSchemaCompatibilityOptions.nextReleaseVersion}.
+	 * and this corresponds to whatever versioning scheme is used with {@link SnapshotSchemaCompatibilityOptions.version}.
 	 */
 	readonly minVersionForCollaboration: string;
 
@@ -354,7 +353,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * When true, it is an error if a schema change occurs without a corresponding version change.
 	 * @remarks
 	 * This disables overwriting existing snapshots.
-	 * This option is recommended if the {@link SnapshotSchemaCompatibilityOptions.nextReleaseVersion} is not automatically updated ahead of releasing a version which must be supported.
+	 * This option is recommended if the {@link SnapshotSchemaCompatibilityOptions.version} is not automatically updated ahead of releasing a version which must be supported.
 	 * If updating the snapshot is still desired, the preceding one which needs to be overwritten can be manually deleted before running the update.
 	 *
 	 * This option does not impact the behavior of assert mode (other than impacting what error is given).
@@ -470,7 +469,7 @@ export interface SnapshotSchemaCompatibilityOptions {
  * 		snapshotSchemaCompatibility({
  * 			schema: config,
  * 			fileSystem: { ...fs, ...path },
- * 			nextReleaseVersion: pkgVersion,
+ * 			version: pkgVersion,
  * 			minVersionForCollaboration: "2.0.0",
  * 			mode: process.argv.includes("--snapshot") ? "update" : "assert",
  * 			snapshotDirectory,
@@ -496,7 +495,7 @@ export function snapshotSchemaCompatibility(
 		options.fileSystem,
 	);
 	const {
-		nextReleaseVersion: currentVersion,
+		version: currentVersion,
 		schema: currentViewSchema,
 		mode,
 		minVersionForCollaboration,

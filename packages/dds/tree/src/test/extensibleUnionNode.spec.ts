@@ -69,7 +69,7 @@ describe("extensibleUnionNode", () => {
 
 		// Create the initial snapshot.
 		snapshotSchemaCompatibility({
-			nextReleaseVersion: "1.0.0",
+			version: "1.0.0",
 			schema: new TreeViewConfiguration({ schema: a }),
 			fileSystem,
 			minVersionForCollaboration: "1.0.0",
@@ -80,7 +80,7 @@ describe("extensibleUnionNode", () => {
 		const b = ExtensibleUnionNode.createSchema([A, B], factory, "ExtensibleUnion");
 
 		snapshotSchemaCompatibility({
-			nextReleaseVersion: "2.0.0",
+			version: "2.0.0",
 			schema: new TreeViewConfiguration({ schema: b }),
 			fileSystem,
 			minVersionForCollaboration: "1.0.0",
@@ -91,7 +91,7 @@ describe("extensibleUnionNode", () => {
 		const c = ExtensibleUnionNode.createSchema([A, B, C], factory, "ExtensibleUnion");
 
 		snapshotSchemaCompatibility({
-			nextReleaseVersion: "3.0.0",
+			version: "3.0.0",
 			schema: new TreeViewConfiguration({ schema: c }),
 			fileSystem,
 			minVersionForCollaboration: "1.0.0",
@@ -101,7 +101,7 @@ describe("extensibleUnionNode", () => {
 
 		// c is compatible to collaborate with 1 and 2.
 		snapshotSchemaCompatibility({
-			nextReleaseVersion: "3.0.0",
+			version: "3.0.0",
 			schema: new TreeViewConfiguration({ schema: c }),
 			fileSystem,
 			minVersionForCollaboration: "1.0.0",

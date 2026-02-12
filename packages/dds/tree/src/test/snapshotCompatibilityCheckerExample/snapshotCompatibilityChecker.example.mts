@@ -29,7 +29,7 @@ describe("schema", () => {
 		snapshotSchemaCompatibility({
 			snapshotDirectory,
 			fileSystem: { ...fs, ...path },
-			nextReleaseVersion: packageVersion, // maybe name this nextReleaseVersion
+			version: packageVersion,
 			minVersionForCollaboration: "2.0.0",
 			schema: treeViewConfiguration,
 			mode: regenerateSnapshots ? "update" : "assert",

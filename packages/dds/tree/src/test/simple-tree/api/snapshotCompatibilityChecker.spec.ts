@@ -199,7 +199,7 @@ describe("snapshotCompatibilityChecker", () => {
 				snapshotSchemaCompatibility({
 					schema: config,
 					fileSystem: { ...fs, ...path },
-					nextReleaseVersion: pkgVersion,
+					version: pkgVersion,
 					minVersionForCollaboration: "2.0.0",
 					mode: process.argv.includes("--snapshot") ? "update" : "assert",
 					snapshotDirectory,
@@ -226,7 +226,7 @@ describe("snapshotCompatibilityChecker", () => {
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "2.0.0",
+						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: Point2D }), // Using the schema from v1 as v2, so should fail
 						fileSystem: nodeFileSystem,
 						minVersionForCollaboration: "1.0.0",
@@ -246,7 +246,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "2.0.0",
+						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: [] }), // Schema invalid for all versions, so should fail
 						fileSystem: nodeFileSystem,
 						minVersionForCollaboration: "1.0.0",
@@ -268,7 +268,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "2.0.0",
+						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: Point3D }),
 						fileSystem: nodeFileSystem,
 						minVersionForCollaboration: "1.0.0", // Due to not using allowUnknownOptionalFields, these cannot collaborate, so should fail
@@ -286,7 +286,7 @@ Snapshots exist for versions: [
 
 			// Avoids all the above tested issues, and matches saved snapshot, so should pass
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "2.0.0",
+				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: Point3D }),
 				fileSystem: nodeFileSystem,
 				minVersionForCollaboration: "2.0.0",
@@ -328,7 +328,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "1.0.0",
+						version: "1.0.0",
 						schema: new TreeViewConfiguration({ schema: Point1 }),
 						fileSystem,
 						minVersionForCollaboration: "1.0.0",
@@ -348,7 +348,7 @@ Snapshots exist for versions: [].`,
 
 			// Update, as directed by the error message, to create the initial snapshot.
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "1.0.0",
+				version: "1.0.0",
 				schema: new TreeViewConfiguration({ schema: Point1 }),
 				fileSystem,
 				minVersionForCollaboration: "1.0.0",
@@ -362,7 +362,7 @@ Snapshots exist for versions: [].`,
 			// Now that the snapshot exists, test should pass.
 			// This would be the first state the app author would commit, and would be released as 1.0.0.
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "1.0.0",
+				version: "1.0.0",
 				schema: new TreeViewConfiguration({ schema: Point1 }),
 				fileSystem,
 				minVersionForCollaboration: "1.0.0",
@@ -376,7 +376,7 @@ Snapshots exist for versions: [].`,
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "1.0.0",
+						version: "1.0.0",
 						schema: new TreeViewConfiguration({ schema: Point2 }),
 						fileSystem,
 						minVersionForCollaboration: "1.0.0",
@@ -393,7 +393,7 @@ Snapshots exist for versions: [
 
 			// If the change was desired, a new snapshot can be taken to include it in 2.0.0:
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "2.0.0",
+				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: Point2 }),
 				fileSystem,
 				minVersionForCollaboration: "1.0.0",
@@ -404,7 +404,7 @@ Snapshots exist for versions: [
 			assert.deepEqual([...snapshots.keys()], ["1.0.0.json", "2.0.0.json"]);
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "2.0.0",
+				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: Point2 }),
 				fileSystem,
 				minVersionForCollaboration: "1.0.0",
@@ -417,7 +417,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "3.0.0",
+						version: "3.0.0",
 						schema: new TreeViewConfiguration({ schema: Point3 }),
 						fileSystem,
 						minVersionForCollaboration: "1.0.0",
@@ -438,7 +438,7 @@ Snapshots exist for versions: [
 			// In this case the developer is ok with dropping support for collaboration with 1.0.0,
 			// so they update minVersionForCollaboration to 2.0.0 acknowledging the break.
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "3.0.0",
+				version: "3.0.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2.0.0",
@@ -448,7 +448,7 @@ Snapshots exist for versions: [
 
 			// If they go to publish patch or minor versions, the snapshots should not need updating (since  snapshotUnchangedVersions is false) as confirmed by this test:
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "3.1.0",
+				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2.0.0",
@@ -460,7 +460,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "3.1.0",
+						version: "3.1.0",
 						schema: new TreeViewConfiguration({ schema: Point3 }),
 						fileSystem,
 						minVersionForCollaboration: "2.0.0",
@@ -480,7 +480,7 @@ Snapshots exist for versions: [
 
 			// Here we confirm that even when running update, no new snapshot is taken if the schema is unchanged and snapshotUnchangedVersions is false.
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "3.1.0",
+				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2.0.0",
@@ -492,7 +492,7 @@ Snapshots exist for versions: [
 
 			// But if snapshotUnchangedVersions is true, a new snapshot is taken even though the schema is unchanged.
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "3.1.0",
+				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2.0.0",
@@ -508,7 +508,7 @@ Snapshots exist for versions: [
 
 			// Confirm that tests pass with "assert" mode and snapshotUnchangedVersions true.
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "3.1.0",
+				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2.0.0",
@@ -522,7 +522,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "3.1.0",
+						version: "3.1.0",
 						schema: new TreeViewConfiguration({ schema: Point3 }),
 						fileSystem,
 						minVersionForCollaboration: "2.1.0",
@@ -543,7 +543,7 @@ Snapshots exist for versions: [
 
 			// Final sanity check that everything is left in a good state.
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "3.1.0",
+				version: "3.1.0",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2.1.0",
@@ -559,7 +559,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "3.1.0x",
+						version: "3.1.0x",
 						schema: new TreeViewConfiguration({ schema: [] }),
 						fileSystem,
 						minVersionForCollaboration: "2.1.0",
@@ -572,7 +572,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "3.1.0",
+						version: "3.1.0",
 						schema: new TreeViewConfiguration({ schema: [] }),
 						fileSystem,
 						minVersionForCollaboration: "2.1",
@@ -587,7 +587,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "3.1.0",
+						version: "3.1.0",
 						schema: new TreeViewConfiguration({ schema: [] }),
 						fileSystem,
 						minVersionForCollaboration: "3.1.1",
@@ -602,7 +602,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "1.0.0-beta",
+						version: "1.0.0-beta",
 						schema: new TreeViewConfiguration({ schema: [] }),
 						fileSystem,
 						minVersionForCollaboration: "1.0.0",
@@ -647,7 +647,7 @@ Snapshots exist for versions: [
 			}) {}
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "1",
+				version: "1",
 				schema: new TreeViewConfiguration({ schema: Point1 }),
 				fileSystem,
 				minVersionForCollaboration: "1",
@@ -657,7 +657,7 @@ Snapshots exist for versions: [
 			});
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "1.5",
+				version: "1.5",
 				schema: new TreeViewConfiguration({ schema: Point1 }),
 				fileSystem,
 				minVersionForCollaboration: "1",
@@ -667,7 +667,7 @@ Snapshots exist for versions: [
 			});
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "2",
+				version: "2",
 				schema: new TreeViewConfiguration({ schema: Point2 }),
 				fileSystem,
 				minVersionForCollaboration: "1",
@@ -679,7 +679,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "3",
+						version: "3",
 						schema: new TreeViewConfiguration({ schema: Point3 }),
 						fileSystem,
 						minVersionForCollaboration: "1",
@@ -700,7 +700,7 @@ Snapshots exist for versions: [
 			);
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "3",
+				version: "3",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2",
@@ -710,7 +710,7 @@ Snapshots exist for versions: [
 			});
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "4",
+				version: "4",
 				schema: new TreeViewConfiguration({ schema: Point3 }),
 				fileSystem,
 				minVersionForCollaboration: "2",
@@ -728,7 +728,7 @@ Snapshots exist for versions: [
 			const [fileSystem] = inMemorySnapshotFileSystem();
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "1.0.0",
+				version: "1.0.0",
 				schema: new TreeViewConfiguration({ schema: [] }),
 				fileSystem,
 				minVersionForCollaboration: "1.0.0",
@@ -740,7 +740,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "2.0.0",
+						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: [] }),
 						fileSystem,
 						minVersionForCollaboration: "1.0.0",
@@ -759,7 +759,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "2.0.0",
+						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: [] }),
 						fileSystem,
 						minVersionForCollaboration: "1.5.0",
@@ -782,7 +782,7 @@ Snapshots exist for versions: [
 			const [fileSystem] = inMemorySnapshotFileSystem();
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "1.0.0",
+				version: "1.0.0",
 				schema: new TreeViewConfiguration({ schema: [] }),
 				fileSystem,
 				minVersionForCollaboration: "1.0.0",
@@ -791,7 +791,7 @@ Snapshots exist for versions: [
 			});
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "2.0.0",
+				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: [] }),
 				fileSystem,
 				minVersionForCollaboration: "1.5.0",
@@ -802,7 +802,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "2.0.0",
+						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: [] }),
 						fileSystem,
 						minVersionForCollaboration: "1.5.0",
@@ -822,7 +822,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "2.0.0",
+						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: [SchemaFactory.number] }),
 						fileSystem,
 						minVersionForCollaboration: "1.5.0",
@@ -840,7 +840,7 @@ Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.
 			);
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "2.0.0",
+				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: [SchemaFactory.number] }),
 				fileSystem,
 				minVersionForCollaboration: "2.0.0",
@@ -851,7 +851,7 @@ Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "2.0.0",
+						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: [SchemaFactory.number] }),
 						fileSystem,
 						minVersionForCollaboration: "1.5.0",
@@ -874,7 +874,7 @@ Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.
 			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "1.0.0",
+				version: "1.0.0",
 				schema: new TreeViewConfiguration({ schema: [] }),
 				fileSystem,
 				minVersionForCollaboration: "1.0.0",
@@ -886,7 +886,7 @@ Due to snapshotUnchangedVersions being false and minVersionForCollaboration ("1.
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "2.0.0",
+						version: "2.0.0",
 						schema: new TreeViewConfiguration({ schema: [] }),
 						fileSystem,
 						minVersionForCollaboration: "1.0.0",
@@ -905,7 +905,7 @@ Snapshots exist for versions: [
 			assert.deepEqual([...snapshots.keys()], ["1.0.0.json"]);
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "2.0.0",
+				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: [SchemaFactory.number] }),
 				fileSystem,
 				minVersionForCollaboration: "2.0.0",
@@ -922,7 +922,7 @@ Snapshots exist for versions: [
 			const [fileSystem] = inMemorySnapshotFileSystem();
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "1.0.0",
+				version: "1.0.0",
 				schema: new TreeViewConfiguration({ schema: [] }),
 				fileSystem,
 				minVersionForCollaboration: "1.0.0",
@@ -934,7 +934,7 @@ Snapshots exist for versions: [
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({
-						nextReleaseVersion: "1.0.0",
+						version: "1.0.0",
 						schema: new TreeViewConfiguration({ schema: [SchemaFactory.number] }),
 						fileSystem,
 						minVersionForCollaboration: "1.0.0",
@@ -951,7 +951,7 @@ Snapshots exist for versions: [
 			);
 
 			snapshotSchemaCompatibility({
-				nextReleaseVersion: "2.0.0",
+				version: "2.0.0",
 				schema: new TreeViewConfiguration({ schema: [SchemaFactory.number] }),
 				fileSystem,
 				minVersionForCollaboration: "2.0.0",
