@@ -68,7 +68,7 @@ export namespace ExtensibleUnionNode {
 		 * The child wrapped by this node has one of the types allowed by the union,
 		 * or `undefined` if the type is one which was added to the union by a future version of this schema.
 		 *
-		 * @throws if {@link isValid} is false.
+		 * @throws if {@link ExtensibleUnionNode.Members.isValid} is false.
 		 */
 		readonly union: T | undefined;
 
@@ -76,12 +76,12 @@ export namespace ExtensibleUnionNode {
 		 * Returns true, unless this node is in an invalid state.
 		 * @remarks
 		 * A well behaved application should not need this API.
-		 * If an application is hitting errors when accessing {@link ExtensibleUnionNode.members.union},
+		 * If an application is hitting errors when accessing {@link ExtensibleUnionNode.Members.union},
 		 * this API can be used to help detect and recover from the invalid state which causes those errors (for example by replacing the invalid nodes with new ones).
 		 *
 		 * In this context "invalid" means that the internal implementation details of this node have had their invariants violated.
 		 * This can happen when:
-		 * - Using weakly typed construction APIs like {@link TreeBeta.importConcise} or {@link TreeBeta.importVerbose} to construct an invalid state directly.
+		 * - Using weakly typed construction APIs like {@link (TreeBeta:interface).importConcise} or {@link (TreeAlpha:interface).importVerbose} to construct an invalid state directly.
 		 * Using such APIs, even when not creating invalid nodes, is not supported for this schema,
 		 * since doing so requires knowing the implementation details of this node which are subject to change.
 		 * - By editing a document using a different client using a different schema for this node.
@@ -90,8 +90,8 @@ export namespace ExtensibleUnionNode {
 		 * - Corruption of the document this node is contained in.
 		 *
 		 * @privateRemarks
-		 * We could support {@link TreeBeta.exportVerbose} using {@link KeyEncodingOptions.allStoredKeys}
-		 * then {@link TreeBeta.importVerbose} with {@link KeyEncodingOptions.knownStoredKeys}.
+		 * We could support {@link (TreeBeta:interface).exportVerbose} using {@link KeyEncodingOptions.allStoredKeys}
+		 * then {@link (TreeAlpha:interface).importVerbose} with {@link KeyEncodingOptions.knownStoredKeys}.
 		 * However, even this will error (but will not produce an invalid node) if there is a node of an unknown type in the union.
 		 */
 		isValid(): boolean;
