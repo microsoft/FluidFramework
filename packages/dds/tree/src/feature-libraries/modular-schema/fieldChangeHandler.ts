@@ -76,12 +76,6 @@ export interface FieldChangeHandler<
 	 */
 	getCrossFieldKeys(change: TChangeset): CrossFieldKeyRange[];
 
-	// XXX: Document
-	getDetachCellIds(
-		change: TChangeset,
-		rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
-	): { detachId: ChangeAtomId; cellId: ChangeAtomId; count: number }[];
-
 	createEmpty(): TChangeset;
 }
 
@@ -245,12 +239,24 @@ export interface FieldChangeEncodingContext {
 	// This should only be called during encoding.
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
 
+	// XXX: Update comment
 	/**
 	 * Returns the input context root ID from an output context root ID.
 	 * This is only needed for encoding to sequence field format v3 and older.
 	 * This should only be called during encoding.
 	 */
 	getInputRootId(
+		outputRootId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId | undefined>;
+
+	// XXX: Update comment
+	/**
+	 * Returns the output context root ID from an input context root ID.
+	 * This is only needed for encoding to sequence field format v3 and older.
+	 * This should only be called during encoding.
+	 */
+	getOutputRootId(
 		outputRootId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId | undefined>;
@@ -268,18 +274,6 @@ export interface FieldChangeEncodingContext {
 	 * This should only be called during encoding.
 	 */
 	isDetachId(id: ChangeAtomId, count: number): RangeQueryResult<boolean>;
-
-	/**
-	 * Returns the detach cell ID for the attach associated with `moveId`.
-	 * If there is no associated detach cell ID, or the ID is the same as `moveId`,
-	 * this will return undefined.
-	 * This is only needed for encoding to sequence field format v3 and older.
-	 * This should only be called during encoding.
-	 */
-	getCellIdForMove(
-		moveId: ChangeAtomId,
-		count: number,
-	): RangeQueryResult<ChangeAtomId | undefined>;
 
 	// This should only be called during decoding.
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;

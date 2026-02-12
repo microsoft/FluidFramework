@@ -50,7 +50,6 @@ import {
 	encodeDetachedNodes,
 	encodeRevisionInfos,
 	getFieldChangesetCodecs,
-	getMoveIdToCellId,
 } from "./modularChangeCodecV1.js";
 import {
 	addNodeRename,
@@ -134,10 +133,10 @@ export function makeModularChangeCodecV3(
 		fieldToRoots: FieldRootMap,
 		context: ChangeEncodingContext,
 		encodeNode: NodeEncoder,
-		getInputDetachId: ChangeAtomMappingQuery,
+		getInputRootId: ChangeAtomMappingQuery,
+		getOutputRootId: ChangeAtomMappingQuery,
 		isAttachId: ChangeAtomIdRangeQuery,
 		isDetachId: ChangeAtomIdRangeQuery,
-		getCellIdForMove: ChangeAtomMappingQuery,
 	): EncodedFieldChangeMap {
 		const encodedFields: EncodedFieldChangeMap = [];
 
@@ -151,10 +150,10 @@ export function makeModularChangeCodecV3(
 				rootRenames: rootChanges?.renames ?? newChangeAtomIdTransform(),
 
 				encodeNode,
-				getInputRootId: getInputDetachId,
+				getInputRootId,
+				getOutputRootId,
 				isAttachId,
 				isDetachId,
-				getCellIdForMove,
 
 				decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 				decodeRootNodeChange: () => fail("Should not be called during encoding"),
@@ -188,9 +187,9 @@ export function makeModularChangeCodecV3(
 		context: ChangeEncodingContext,
 		encodeNode: NodeEncoder,
 		getInputDetachId: ChangeAtomMappingQuery,
+		getOutputDetachId: ChangeAtomMappingQuery,
 		isAttachId: ChangeAtomIdRangeQuery,
 		isDetachId: ChangeAtomIdRangeQuery,
-		getCellIdForMove: ChangeAtomMappingQuery,
 	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
 		// Note: revert constraints are ignored for now because they would only be needed if we supported reverting changes made by peers.
@@ -204,9 +203,9 @@ export function makeModularChangeCodecV3(
 				context,
 				encodeNode,
 				getInputDetachId,
+				getOutputDetachId,
 				isAttachId,
 				isDetachId,
-				getCellIdForMove,
 			);
 		}
 
@@ -276,9 +275,9 @@ export function makeModularChangeCodecV3(
 
 				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
 				getInputRootId: () => fail("Should not query during decoding"),
+				getOutputRootId: () => fail("Should not query during decoding"),
 				isAttachId: () => fail("Should not query during decoding"),
 				isDetachId: () => fail("Should not query during decoding"),
-				getCellIdForMove: () => fail("Should not query during decoding"),
 
 				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId =>
 					decodeNode(encodedNode, { field: fieldId }),
@@ -389,6 +388,8 @@ export function makeModularChangeCodecV3(
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
 			const fieldToRoots = getFieldToRoots(change.rootNodes);
+
+			// XXX: Bundle FieldChangeEncodingContext utilities, and deduplicated with v1 codec.
 			const isAttachId = (id: ChangeAtomId, count: number): RangeQueryResult<boolean> => {
 				const attachEntry = getFirstAttachField(change.crossFieldKeys, id, count);
 				return { ...attachEntry, value: attachEntry.value !== undefined };
@@ -411,11 +412,12 @@ export function makeModularChangeCodecV3(
 				return change.rootNodes.newToOldId.getFirst(id, count);
 			};
 
-			const moveIdToCellId = getMoveIdToCellId(change, fieldKinds, fieldToRoots);
-			const getCellIdForMove = (
+			const getOutputDetachId = (
 				id: ChangeAtomId,
 				count: number,
-			): RangeQueryResult<ChangeAtomId | undefined> => moveIdToCellId.getFirst(id, count);
+			): RangeQueryResult<ChangeAtomId | undefined> => {
+				return change.rootNodes.oldToNewId.getFirst(id, count);
+			};
 
 			const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
 				// TODO: Handle node aliasing.
@@ -428,9 +430,9 @@ export function makeModularChangeCodecV3(
 					context,
 					encodeNode,
 					getInputDetachId,
+					getOutputDetachId,
 					isAttachId,
 					isDetachId,
-					getCellIdForMove,
 				);
 			};
 
@@ -449,9 +451,9 @@ export function makeModularChangeCodecV3(
 					context,
 					encodeNode,
 					getInputDetachId,
+					getOutputDetachId,
 					isAttachId,
 					isDetachId,
-					getCellIdForMove,
 				),
 				rootNodes: encodeRootNodesForJson(change.rootNodes.nodeChanges, context, encodeNode),
 				nodeRenames: encodeRenamesForJson(change.rootNodes.oldToNewId, context),

@@ -255,7 +255,7 @@ function addMovedMarkEffect(mark: Mark, effect: Detach): Mark {
 	} else if (isRename(mark) && isDetach(effect)) {
 		const result = { ...effect, count: mark.count };
 		if (!areEqualChangeAtomIds(mark.idOverride, getDetachedRootId(effect))) {
-			result.detachCellId = mark.idOverride;
+			result.cellRename = mark.idOverride;
 		}
 		return result;
 	} else if (isTombstone(mark)) {
@@ -410,10 +410,6 @@ function separateEffectsForMove(
 				id: mark.id,
 			};
 
-			if (mark.detachCellId !== undefined) {
-				follows.detachCellId = mark.detachCellId;
-			}
-
 			const remains: Attach = {
 				type: "Attach",
 				id: mark.id,
@@ -438,8 +434,7 @@ function moveRebasedChanges(
 	newDetach: Detach | undefined,
 ): void {
 	const newId = newDetach === undefined ? undefined : getDetachedRootId(newDetach);
-	const detachCellId = newDetach?.detachCellId;
-	moveEffects.rebaseOverDetach(baseId, count, newId, nodeChange, detachCellId);
+	moveEffects.rebaseOverDetach(baseId, count, newId, nodeChange);
 }
 
 function rebaseNodeChange(
@@ -504,10 +499,6 @@ function getMovedEffect(
 	assert(entry.length === count, 0x6f3 /* Expected effect to cover entire mark */);
 	const detachId = entry.value?.detachId;
 	if (detachId === undefined) {
-		assert(
-			entry.value?.cellRename === undefined,
-			"Cell detach should be accompanied by node detach",
-		);
 		return undefined;
 	}
 
@@ -516,9 +507,6 @@ function getMovedEffect(
 		revision: detachId.revision,
 		id: detachId.localId,
 	};
-	if (entry.value?.cellRename !== undefined) {
-		detach.detachCellId = entry.value.cellRename;
-	}
 
 	return detach;
 }

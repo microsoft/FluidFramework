@@ -1160,11 +1160,7 @@ describe("ModularChangeFamily integration", () => {
 						{ revision: tag2, localId: brand(4) },
 					),
 					MarkMaker.skip(1),
-					MarkMaker.detach(
-						1,
-						{ revision: tag2, localId: brand(4) },
-						{ detachCellId: { revision: tag2, localId: brand(2) } },
-					),
+					MarkMaker.detach(1, { revision: tag2, localId: brand(4) }),
 					MarkMaker.skip(1),
 					MarkMaker.attach(1, { revision: tag2, localId: brand(5) }, { id: brand(4) }),
 				]),
@@ -1283,7 +1279,7 @@ describe("ModularChangeFamily integration", () => {
 			const expected = Change.build(
 				{ family, maxId: 1, revisions: [{ revision: tag2 }] },
 				Change.field(fieldA, sequenceIdentifier, [
-					MarkMaker.moveOut(1, moveId, { detachCellId }),
+					MarkMaker.moveOut(1, detachCellId),
 					MarkMaker.moveIn(1, moveId),
 				]),
 			);
@@ -1635,9 +1631,7 @@ describe("ModularChangeFamily integration", () => {
 					maxId: 3,
 					revisions: [{ revision: tag1 }, { revision: tag2 }],
 				},
-				Change.field(fieldA, sequenceIdentifier, [
-					MarkMaker.detach(1, id2, { detachCellId: id1 }),
-				]),
+				Change.field(fieldA, sequenceIdentifier, [MarkMaker.detach(1, id1)]),
 				Change.field(fieldB, sequenceIdentifier, [
 					MarkMaker.rename(
 						1,
@@ -1739,9 +1733,7 @@ describe("ModularChangeFamily integration", () => {
 				},
 
 				Change.field(fieldA, sequenceIdentifier, [
-					MarkMaker.detach(1, detachId, {
-						detachCellId,
-					}),
+					MarkMaker.detach(1, detachCellId, {}),
 					MarkMaker.skip(1),
 					MarkMaker.rename(
 						1,
@@ -1855,7 +1847,6 @@ describe("ModularChangeFamily integration", () => {
 						1,
 						{ revision: tag2, localId: brand(3) },
 						{
-							detachCellId: { revision: tag1, localId: brand(0) },
 							cellRename: { revision: tag2, localId: brand(1) }, // XXX: Is this correct?
 						},
 					),
@@ -1946,7 +1937,7 @@ describe("ModularChangeFamily integration", () => {
 					detachedMoves: [{ detachId, count: 1, newLocation: fieldAId }],
 				},
 				Change.field(fieldA, sequenceIdentifier, [
-					MarkMaker.detach(1, detachId, { detachCellId: cellId1 }),
+					MarkMaker.detach(1, cellId1),
 					MarkMaker.rename(1, cellId2, detachId),
 				]),
 			);
@@ -1977,7 +1968,7 @@ describe("ModularChangeFamily integration", () => {
 					revisions: [{ revision: tag1 }, { revision: tag2 }],
 				},
 				Change.field(fieldA, sequenceIdentifier, [
-					MarkMaker.detach(1, attachId, { detachCellId: cellId1 }),
+					MarkMaker.detach(1, cellId1),
 					MarkMaker.attach(1, cellId2, { revision: attachId.revision, id: attachId.localId }),
 				]),
 			);
@@ -2529,8 +2520,7 @@ describe("Encoding", () => {
 		return Change.build(
 			{ family, maxId: 5, revisions },
 			Change.field(fieldA, sequenceIdentifier, [
-				MarkMaker.detach(1, detachId3, {
-					detachCellId: detachId1,
+				MarkMaker.detach(1, detachId1, {
 					cellRename: detachId3,
 				}),
 				MarkMaker.rename(1, attachId1, detachId2),

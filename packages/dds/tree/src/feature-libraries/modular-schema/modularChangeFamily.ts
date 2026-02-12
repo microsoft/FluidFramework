@@ -89,7 +89,6 @@ import {
 	NodeMoveType,
 	type DetachedNodeEntry,
 	type InvertNodeManager,
-	type RebaseDetachedNodeEntry,
 	type RebaseNodeManager,
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
@@ -299,15 +298,12 @@ export class ModularChangeFamily
 			affectedBaseFields: newFieldIdKeyBTree(),
 		};
 
-		const movedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
 		const removedCrossFieldKeys: CrossFieldRangeTable<boolean> = newCrossFieldRangeTable();
 
 		const composedRoots = composeRootTables(
 			change1,
 			change2,
 			composedNodeToParent,
-			movedCrossFieldKeys,
-			removedCrossFieldKeys,
 			pendingCompositions,
 		);
 
@@ -315,7 +311,6 @@ export class ModularChangeFamily
 			change1,
 			change2,
 			composedRoots,
-			movedCrossFieldKeys,
 			removedCrossFieldKeys,
 			pendingCompositions,
 		);
@@ -339,10 +334,6 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
-		for (const entry of crossFieldTable.renamesToDelete.entries()) {
-			deleteNodeRenameFrom(crossFieldTable.composedRootNodes, entry.start, entry.length);
-		}
-
 		for (const [nodeId, location] of crossFieldTable.movedNodeToParent.entries()) {
 			// Moved nodes are from change2.
 			// If there is a corresponding node in change1, then composedNodeToParent will already have the correct entry,
@@ -353,6 +344,13 @@ export class ModularChangeFamily
 			}
 		}
 
+		composeRootRenames(
+			change1,
+			change2,
+			crossFieldTable.composedRootNodes,
+			crossFieldTable.composedRenames,
+		);
+
 		return {
 			fieldChanges: composedFields,
 			nodeChanges: composedNodeChanges,
@@ -361,7 +359,6 @@ export class ModularChangeFamily
 			crossFieldKeys: composeCrossFieldKeyTables(
 				change1.crossFieldKeys,
 				change2.crossFieldKeys,
-				crossFieldTable.movedCrossFieldKeys,
 				crossFieldTable.removedCrossFieldKeys,
 			),
 			rootNodes: composedRoots,
@@ -2607,7 +2604,7 @@ interface RebaseTable {
 	readonly rebaseVersion: RebaseVersion;
 
 	// Entries are keyed on attach ID
-	readonly entries: CrossFieldMap<RebaseDetachedNodeEntry>;
+	readonly entries: CrossFieldMap<DetachedNodeEntry>;
 	readonly baseChange: ModularChangeset;
 	readonly newChange: ModularChangeset;
 
@@ -2659,7 +2656,6 @@ function newComposeTable(
 	baseChange: ModularChangeset,
 	newChange: ModularChangeset,
 	composedRootNodes: RootNodeTable,
-	movedCrossFieldKeys: CrossFieldKeyTable,
 	removedCrossFieldKeys: CrossFieldRangeTable<boolean>,
 	pendingCompositions: PendingCompositions,
 ): ComposeTable {
@@ -2668,7 +2664,7 @@ function newComposeTable(
 			baseChange.rebaseVersion,
 			newChange.rebaseVersion,
 		) as RebaseVersion,
-		entries: newDetachedEntryMap(),
+		movedNodeIds: newChangeAtomIdRangeMap(),
 		baseChange,
 		newChange,
 		fieldToContext: new Map(),
@@ -2677,9 +2673,8 @@ function newComposeTable(
 		composedNodes: new Set(),
 		movedNodeToParent: newChangeAtomIdBTree(),
 		composedRootNodes,
-		movedCrossFieldKeys,
+		composedRenames: newChangeAtomIdTransform(),
 		removedCrossFieldKeys,
-		renamesToDelete: newChangeAtomIdRangeMap(),
 		pendingCompositions,
 	};
 }
@@ -2688,7 +2683,7 @@ interface ComposeTable {
 	readonly rebaseVersion: RebaseVersion;
 
 	// Entries are keyed on detach ID
-	readonly entries: ChangeAtomIdRangeMap<DetachedNodeEntry>;
+	readonly movedNodeIds: ChangeAtomIdRangeMap<NodeId>;
 	readonly baseChange: ModularChangeset;
 	readonly newChange: ModularChangeset;
 
@@ -2701,9 +2696,8 @@ interface ComposeTable {
 	readonly composedNodes: Set<NodeChangeset>;
 	readonly movedNodeToParent: ChangeAtomIdBTree<NodeLocation>;
 	readonly composedRootNodes: RootNodeTable;
-	readonly movedCrossFieldKeys: CrossFieldKeyTable;
+	readonly composedRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
 	readonly removedCrossFieldKeys: CrossFieldRangeTable<boolean>;
-	readonly renamesToDelete: ChangeAtomIdRangeMap<boolean>;
 	readonly pendingCompositions: PendingCompositions;
 }
 
@@ -2800,7 +2794,7 @@ class InvertNodeManagerI implements InvertNodeManager {
 	public invertAttach(
 		attachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<DetachedNodeEntry> {
+	): RangeQueryResult<NodeId | undefined> {
 		let countToProcess = count;
 
 		const detachIdEntry = firstDetachIdFromAttachId(
@@ -2811,22 +2805,22 @@ class InvertNodeManagerI implements InvertNodeManager {
 
 		countToProcess = detachIdEntry.length;
 
-		const detachEntry = getFirstFieldForCrossFieldKey(
+		const detachEntry = getFirstFieldForDetach(
 			this.table.change,
-			{ target: NodeMoveType.Detach, ...detachIdEntry.value },
+			detachIdEntry.value,
 			countToProcess,
 		);
 		countToProcess = detachEntry.length;
 
-		let result: RangeQueryResult<DetachedNodeEntry>;
+		let result: RangeQueryResult<NodeId | undefined>;
 		if (detachEntry.value === undefined) {
 			// This node is detached in the input context of the original change.
-			const nodeIdEntry = rangeQueryChangeAtomIdMap(
+			result = rangeQueryChangeAtomIdMap(
 				this.table.change.rootNodes.nodeChanges,
 				detachIdEntry.value,
 				countToProcess,
 			);
-			countToProcess = nodeIdEntry.length;
+			countToProcess = result.length;
 
 			const detachLocationEntry = this.table.change.rootNodes.detachLocations.getFirst(
 				detachIdEntry.value,
@@ -2852,20 +2846,13 @@ class InvertNodeManagerI implements InvertNodeManager {
 				);
 			}
 
-			result = {
-				value: {
-					nodeChange: nodeIdEntry.value,
-					detachId: detachIdEntry.value,
-				},
-				length: countToProcess,
-			};
+			result = { ...result, length: countToProcess };
 		} else {
-			const moveEntry = this.table.entries.getFirst(attachId, countToProcess);
-			result = { ...moveEntry, value: { nodeChange: moveEntry.value } };
+			result = this.table.entries.getFirst(attachId, countToProcess);
 		}
 
-		if (result.value?.nodeChange !== undefined) {
-			setInChangeAtomIdMap(this.table.invertedNodeToParent, result.value.nodeChange, {
+		if (result.value !== undefined) {
+			setInChangeAtomIdMap(this.table.invertedNodeToParent, result.value, {
 				field: this.fieldId,
 			});
 		}
@@ -2883,7 +2870,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 	public getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<RebaseDetachedNodeEntry | undefined> {
+	): RangeQueryResult<DetachedNodeEntry | undefined> {
 		let countToProcess = count;
 
 		const detachEntry = firstDetachIdFromAttachId(
@@ -2946,7 +2933,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		count: number,
 		newDetachId: ChangeAtomId | undefined,
 		nodeChange: NodeId | undefined,
-		cellRename?: ChangeAtomId,
 	): void {
 		let countToProcess = count;
 		const attachIdEntry = firstAttachIdFromDetachId(
@@ -2957,9 +2943,9 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		const baseAttachId = attachIdEntry.value;
 		countToProcess = attachIdEntry.length;
 
-		const attachFieldEntry = getFirstFieldForCrossFieldKey(
+		const attachFieldEntry = getFirstFieldForAttach(
 			this.table.baseChange,
-			{ ...baseAttachId, target: NodeMoveType.Attach },
+			baseAttachId,
 			countToProcess,
 		);
 		countToProcess = attachFieldEntry.length;
@@ -2976,7 +2962,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			setInCrossFieldMap(this.table.entries, baseAttachId, countToProcess, {
 				nodeChange,
 				detachId: newDetachId,
-				cellRename,
 			});
 
 			if (nodeChange !== undefined || newDetachId !== undefined) {
@@ -3089,7 +3074,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 
 		countToProcess = moveEntry.length;
 		if (moveEntry.value !== undefined) {
-			return { ...moveEntry, value: moveEntry.value.cellRename ?? moveEntry.value.detachId };
+			return { ...moveEntry, value: moveEntry.value.detachId };
 		}
 
 		return this.table.newChange.rootNodes.oldToNewId.getFirst(inputId, countToProcess);
@@ -3133,49 +3118,37 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 	public getNewChangesForBaseDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<DetachedNodeEntry | undefined> {
+	): RangeQueryResult<NodeId | undefined> {
 		let countToProcess = count;
 
-		const baseAttachEntry = getFirstFieldForCrossFieldKey(
+		const baseAttachEntry = getFirstFieldForAttach(
 			this.table.baseChange,
-			{ target: NodeMoveType.Attach, ...baseDetachId },
+			baseDetachId,
 			countToProcess,
 		);
 
 		countToProcess = baseAttachEntry.length;
 
-		let result: RangeQueryResult<DetachedNodeEntry | undefined>;
+		let result: RangeQueryResult<NodeId | undefined>;
 		if (baseAttachEntry.value === undefined) {
 			// The detached nodes are still detached in the new change's input context.
-			const rootEntry = rangeQueryChangeAtomIdMap(
+			result = rangeQueryChangeAtomIdMap(
 				this.table.newChange.rootNodes.nodeChanges,
 				baseDetachId,
 				countToProcess,
 			);
 
-			countToProcess = rootEntry.length;
-
-			const newRenameEntry = this.table.newChange.rootNodes.oldToNewId.getFirst(
-				baseDetachId,
-				countToProcess,
-			);
-
-			countToProcess = newRenameEntry.length;
-
-			result = {
-				value: { nodeChange: rootEntry.value, detachId: newRenameEntry.value },
-				length: countToProcess,
-			};
+			countToProcess = result.length;
 		} else {
 			// The base detach was part of a move.
 			// We check if we've previously seen a node change at the move destination.
-			const entry = this.table.entries.getFirst(baseDetachId, countToProcess);
-			result = { value: entry.value, length: entry.length };
+			result = this.table.movedNodeIds.getFirst(baseDetachId, countToProcess);
+			countToProcess = result.length;
 		}
 
 		// TODO: Consider moving this to a separate method so that this method can be side-effect free.
-		if (result.value?.nodeChange !== undefined) {
-			setInChangeAtomIdMap(this.table.movedNodeToParent, result.value.nodeChange, {
+		if (result.value !== undefined) {
+			setInChangeAtomIdMap(this.table.movedNodeToParent, result.value, {
 				field: this.fieldId,
 			});
 		}
@@ -3190,22 +3163,28 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 	): void {
 		let countToProcess = count;
 
+		const newAttachIdEntry = firstAttachIdFromDetachId(
+			this.table.newChange.rootNodes,
+			newDetachId,
+			countToProcess,
+		);
+		countToProcess = newAttachIdEntry.length;
+
 		const newAttachEntry = getFirstAttachField(
 			this.table.newChange.crossFieldKeys,
-			newDetachId,
+			newAttachIdEntry.value,
 			countToProcess,
 		);
 
 		countToProcess = newAttachEntry.length;
 
-		// Both changes can have the same ID if they came from inverse changesets.
-		// If the new detach is part of a move,
-		// then both input changesets contain the attach cross-field key for this ID.
+		// Both changes can have the same ID if they came from inverse changesets
 		// The new attach may still exist in the composed changeset so we do not remove it here.
 		// The new attach will typically cancel with a base detach,
 		// in which case the cross-field key will be removed in `composeDetachAttach`.
 		const hasNewAttachWithBaseAttachId =
-			areEqualChangeAtomIds(baseAttachId, newDetachId) && newAttachEntry.value !== undefined;
+			newAttachEntry.value !== undefined &&
+			areEqualChangeAtomIds(baseAttachId, newAttachIdEntry.value);
 
 		if (!hasNewAttachWithBaseAttachId) {
 			this.table.removedCrossFieldKeys.set(
@@ -3241,14 +3220,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 			// These nodes were detached in the base change's input context,
 			// so the net effect of the two changes is a rename.
-			appendNodeRename(
-				this.table.composedRootNodes,
-				baseAttachId,
-				newDetachId,
-				baseDetachEntry.length,
-				this.table.baseChange.rootNodes,
-				baseDetachLocationEntry.value ?? this.fieldId,
-			);
+			this.table.composedRenames.set(baseAttachId, baseDetachEntry.length, newDetachId);
 
 			this.table.removedCrossFieldKeys.set(
 				{ ...newDetachId, target: NodeMoveType.Detach },
@@ -3257,28 +3229,15 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			);
 		} else {
 			// The base change moves these nodes.
-			const prevEntry =
-				this.table.entries.getFirst(baseAttachId, baseDetachEntry.length).value ?? {};
+			this.table.composedRenames.set(baseAttachId, countToProcess, newDetachId);
 
-			this.table.entries.set(baseAttachId, baseDetachEntry.length, {
-				...prevEntry,
-				detachId: newDetachId,
-			});
-
-			// The new detach will replace the base detach, so we remove the key for the base detach, unless they have the same ID.
 			if (!areEqualChangeAtomIds(baseAttachId, newDetachId)) {
 				this.table.removedCrossFieldKeys.set(
-					{ ...baseAttachId, target: NodeMoveType.Detach },
+					{ ...newDetachId, target: NodeMoveType.Detach },
 					countToProcess,
 					true,
 				);
 			}
-
-			this.table.movedCrossFieldKeys.set(
-				{ ...newDetachId, target: NodeMoveType.Detach },
-				countToProcess,
-				baseDetachEntry.value,
-			);
 
 			this.invalidateBaseFields([baseDetachEntry.value]);
 		}
@@ -3330,8 +3289,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		if (detachFields.length > 0) {
 			// The base attach is part of a move in the base changeset.
-			const prevEntry = this.table.entries.getFirst(baseDetachId, 1).value ?? {};
-			this.table.entries.set(baseDetachId, 1, { ...prevEntry, nodeChange: newChanges });
+			this.table.movedNodeIds.set(baseDetachId, 1, newChanges);
 
 			if (newChanges !== undefined) {
 				this.invalidateBaseFields(detachFields);
@@ -3364,13 +3322,8 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		composeToPin: boolean,
 	): void {
 		if (composeToPin) {
-			this.table.movedCrossFieldKeys.set(
-				{ target: NodeMoveType.Detach, ...newAttachId },
-				count,
-				this.fieldId,
-			);
-
 			if (!areEqualChangeAtomIds(baseDetachId, newAttachId)) {
+				// XXX: Does the pin need to have both IDs? Or should it just use `baseDetachId`?
 				// The pin will have `newAttachId` as both its detach and attach ID.
 				// So we remove `baseDetachId` unless that is equal to the pin's detach ID.
 				this.table.removedCrossFieldKeys.set(
@@ -3379,15 +3332,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 					true,
 				);
 			}
-
-			// Note that while change2 should already have this key, change1 may have a rollback for the same ID in a different location.
-			// In that case, change1's attach should be canceled out by a detach from change2.
-			// Here we make sure that the composed change has the correct location (this field) for the attach ID.
-			this.table.movedCrossFieldKeys.set(
-				{ target: NodeMoveType.Attach, ...newAttachId },
-				count,
-				this.fieldId,
-			);
 		} else {
 			this.table.removedCrossFieldKeys.set(
 				{ target: NodeMoveType.Detach, ...baseDetachId },
@@ -4031,6 +3975,36 @@ function getFieldsForCrossFieldKey(
 		.map(({ value: fieldId }) => normalizeFieldId(fieldId, changeset.nodeAliases));
 }
 
+function getFirstFieldForAttach(
+	changeset: ModularChangeset,
+	attachId: ChangeAtomId,
+	count: number,
+): RangeQueryResult<FieldId | undefined> {
+	return getFirstFieldForCrossFieldKey(
+		changeset,
+		{
+			...attachId,
+			target: NodeMoveType.Attach,
+		},
+		count,
+	);
+}
+
+function getFirstFieldForDetach(
+	changeset: ModularChangeset,
+	attachId: ChangeAtomId,
+	count: number,
+): RangeQueryResult<FieldId | undefined> {
+	return getFirstFieldForCrossFieldKey(
+		changeset,
+		{
+			...attachId,
+			target: NodeMoveType.Detach,
+		},
+		count,
+	);
+}
+
 function getFirstFieldForCrossFieldKey(
 	changeset: ModularChangeset,
 	key: CrossFieldKey,
@@ -4042,6 +4016,24 @@ function getFirstFieldForCrossFieldKey(
 	}
 
 	return { ...result, value: normalizeFieldId(result.value, changeset.nodeAliases) };
+}
+
+export function getNewRootIdFromOldRootId(
+	changeset: ModularChangeset,
+	oldId: ChangeAtomId,
+	count: number,
+): RangeQueryResult<ChangeAtomId> {
+	const entry = changeset.rootNodes.oldToNewId.getFirst(oldId, count);
+	return { ...entry, value: entry.value ?? oldId };
+}
+
+export function getOldRootIdFromNewRootId(
+	changeset: ModularChangeset,
+	newId: ChangeAtomId,
+	count: number,
+): RangeQueryResult<ChangeAtomId> {
+	const entry = changeset.rootNodes.newToOldId.getFirst(newId, count);
+	return { ...entry, value: entry.value ?? newId };
 }
 
 function normalizeNodeLocation(
@@ -4356,13 +4348,9 @@ function composeRevInfos(
 function composeCrossFieldKeyTables(
 	table1: CrossFieldKeyTable,
 	table2: CrossFieldKeyTable,
-	movedCrossFieldKeys: CrossFieldKeyTable,
 	removedCrossFieldKeys: CrossFieldRangeTable<boolean>,
 ): CrossFieldKeyTable {
 	const composedTable = RangeMap.union(table1, table2);
-	for (const entry of movedCrossFieldKeys.entries()) {
-		composedTable.set(entry.start, entry.length, entry.value);
-	}
 
 	for (const entry of removedCrossFieldKeys.entries()) {
 		composedTable.delete(entry.start, entry.length);
@@ -4375,25 +4363,11 @@ function composeRootTables(
 	change1: ModularChangeset,
 	change2: ModularChangeset,
 	composedNodeToParent: ChangeAtomIdBTree<NodeLocation>,
-	movedCrossFieldKeys: CrossFieldKeyTable,
-	removedCrossFieldKeys: CrossFieldRangeTable<boolean>,
 	pendingCompositions: PendingCompositions,
 ): RootNodeTable {
+	// Composition of renames is handled later, in `composeRootRenames`.
+	// TODO: Refactor to avoid leaving composed rename tables in an unfinished state.
 	const composedTable = cloneRootTable(change1.rootNodes);
-
-	for (const renameEntry of change2.rootNodes.oldToNewId.entries()) {
-		composeRename(
-			change1,
-			change2,
-			composedTable,
-			renameEntry.start,
-			renameEntry.value,
-			renameEntry.length,
-			movedCrossFieldKeys,
-			removedCrossFieldKeys,
-			pendingCompositions,
-		);
-	}
 
 	for (const [[revision2, id2], nodeId2] of change2.rootNodes.nodeChanges.entries()) {
 		const detachId2 = { revision: revision2, localId: id2 };
@@ -4491,71 +4465,53 @@ function composeOutputDetachLocation(
 	}
 }
 
-function composeRename(
+function composeRootRenames(
 	change1: ModularChangeset,
+	change2: ModularChangeset,
+	composedRoots: RootNodeTable,
+	composedRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
+): void {
+	for (const entry of composedRenames.entries()) {
+		// XXX: Detach location
+		appendNodeRename(
+			composedRoots,
+			entry.start,
+			entry.value,
+			entry.length,
+			change1.rootNodes,
+			undefined,
+		);
+	}
+
+	for (const renameEntry of change2.rootNodes.oldToNewId.entries()) {
+		composeRename(
+			change2,
+			composedRoots,
+			renameEntry.start,
+			renameEntry.value,
+			renameEntry.length,
+		);
+	}
+}
+
+function composeRename(
 	change2: ModularChangeset,
 	mergedTable: RootNodeTable,
 	oldId: ChangeAtomId,
 	newId: ChangeAtomId,
 	count: number,
-	movedCrossFieldKeys: CrossFieldKeyTable,
-	removedCrossFieldKeys: CrossFieldRangeTable<boolean>,
-	pendingCompositions: PendingCompositions,
 ): void {
-	let countToProcess = count;
-	const detachEntry = getFirstDetachField(change1.crossFieldKeys, oldId, countToProcess);
-	countToProcess = detachEntry.length;
-
-	if (detachEntry.value === undefined) {
-		// `change1` may also have a rename to `renameEntry.value`, in which case it must refer to a different node.
-		// That node must have been attached by `change1` and detached by `change2`.
-		// The final rename for that node will be created in `composeAttachDetach`.
-		// We delete any such rename for now to avoid colliding with the rename currently being processed.
-		deleteNodeRenameTo(mergedTable, newId, countToProcess);
-
-		// The nodes were detached before `change`, so we append this rename.
-		appendNodeRename(
-			mergedTable,
-			oldId,
-			newId,
-			countToProcess,
-			change1.rootNodes,
-			change2.rootNodes.detachLocations.getFirst(oldId, countToProcess).value,
-		);
-	} else {
-		// `change1` detached these nodes,
-		// so we invalidate the detach location so that the detach's ID can be replaced with the new ID.
-		pendingCompositions.affectedBaseFields.set(fieldIdKeyFromFieldId(detachEntry.value), true);
-
-		if (!areEqualChangeAtomIds(oldId, newId)) {
-			// `change1`'s detach will be replaced by `change2`'s detach, so we update the cross-field keys.
-			removedCrossFieldKeys.set(
-				{ ...oldId, target: NodeMoveType.Detach },
-				countToProcess,
-				true,
-			);
-		}
-
-		movedCrossFieldKeys.set(
-			{ ...newId, target: NodeMoveType.Detach },
-			countToProcess,
-			detachEntry.value,
-		);
-	}
-
-	if (countToProcess < count) {
-		composeRename(
-			change1,
-			change2,
-			mergedTable,
-			offsetChangeAtomId(oldId, countToProcess),
-			offsetChangeAtomId(newId, countToProcess),
-			count - countToProcess,
-			movedCrossFieldKeys,
-			removedCrossFieldKeys,
-			pendingCompositions,
-		);
-	}
+	// XXX: Cleanup detachLocation if nodes are now attached in input context.
+	// XXX: Use change1's detachLocation if it has one.
+	// The nodes were detached before `change`, so we append this rename.
+	appendNodeRename(
+		mergedTable,
+		oldId,
+		newId,
+		count,
+		mergedTable,
+		change2.rootNodes.detachLocations.getFirst(oldId, count).value,
+	);
 }
 
 export function cloneRootTable(table: RootNodeTable): RootNodeTable {
@@ -4691,12 +4647,32 @@ export function getFirstDetachField(
 	return table.getFirst({ target: NodeMoveType.Detach, ...id }, count);
 }
 
+function getDetachFieldForAttach(
+	table: CrossFieldKeyTable,
+	roots: RootNodeTable,
+	attachId: ChangeAtomId,
+	count: number,
+): RangeQueryResult<FieldId | undefined> {
+	const renameEntry = firstDetachIdFromAttachId(roots, attachId, count);
+	return getFirstDetachField(table, renameEntry.value, renameEntry.length);
+}
+
 export function getFirstAttachField(
 	table: CrossFieldKeyTable,
 	id: ChangeAtomId,
 	count: number,
 ): RangeQueryResult<FieldId | undefined> {
 	return table.getFirst({ target: NodeMoveType.Attach, ...id }, count);
+}
+
+function getAttachFieldForDetach(
+	table: CrossFieldKeyTable,
+	roots: RootNodeTable,
+	detachId: ChangeAtomId,
+	count: number,
+): RangeQueryResult<FieldId | undefined> {
+	const renameEntry = firstAttachIdFromDetachId(roots, detachId, count);
+	return getFirstAttachField(table, renameEntry.value, renameEntry.length);
 }
 
 export function addNodeRename(
@@ -5038,9 +5014,11 @@ function validateAttach(
 	const buildEntry = hasBuildForIdRange(changeset.builds, attachId, count);
 	countProcessed = buildEntry.length;
 
-	const detachEntry = changeset.crossFieldKeys.getFirst(
-		{ ...attachId, target: NodeMoveType.Detach },
-		countProcessed,
+	const detachEntry = getDetachFieldForAttach(
+		changeset.crossFieldKeys,
+		changeset.rootNodes,
+		attachId,
+		count,
 	);
 	countProcessed = detachEntry.length;
 

@@ -7,7 +7,6 @@ import { assert, unreachableCase, fail } from "@fluidframework/core-utils/intern
 
 import {
 	areEqualChangeAtomIdOpts,
-	areEqualChangeAtomIds,
 	type ChangeAtomId,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -22,15 +21,7 @@ import type {
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import type { NodeRangeQueryFunc } from "./moveEffectTable.js";
-import type {
-	CellMark,
-	Changeset,
-	Detach,
-	Mark,
-	MarkEffect,
-	MarkList,
-	NoopMark,
-} from "./types.js";
+import type { CellMark, Changeset, Mark, MarkEffect, MarkList, NoopMark } from "./types.js";
 import {
 	CellOrder,
 	areEqualCellIds,
@@ -125,7 +116,7 @@ function composeMarksIgnoreChild(
 	if (isNoopMark(baseMark)) {
 		return newMark;
 	} else if (isNoopMark(newMark)) {
-		return updateBaseMarkId(moveEffects, baseMark);
+		return baseMark;
 	}
 
 	if (isRename(baseMark) && isRename(newMark)) {
@@ -142,7 +133,7 @@ function composeMarksIgnoreChild(
 		return { ...newMark, cellId: baseMark.cellId };
 	} else if (isRename(newMark)) {
 		assert(isDetach(baseMark), 0x9f2 /* Unexpected mark type */);
-		return updateBaseMarkId(moveEffects, { ...baseMark, cellRename: newMark.idOverride });
+		return { ...baseMark, cellRename: newMark.idOverride };
 	}
 
 	if (!markHasCellEffect(baseMark)) {
@@ -159,11 +150,9 @@ function composeMarksIgnoreChild(
 			baseMark.count,
 		);
 
-		const pinId = getAttachedRootId(baseMark);
 		return newMark.type === "Detach"
 			? {
 					...newMark,
-					detachCellId: baseMark.detachCellId ?? pinId,
 					cellRename: getDetachOutputCellId(newMark),
 				}
 			: newMark;
@@ -178,10 +167,9 @@ function composeMarksIgnoreChild(
 			);
 
 			const composed = { cellId: baseMark.cellId, ...newMark };
-			delete composed.detachCellId;
 			return composed;
 		}
-		return updateBaseMarkId(moveEffects, baseMark);
+		return baseMark;
 	} else if (areInputCellsEmpty(baseMark)) {
 		assert(isDetach(newMark), 0x71c /* Unexpected mark type */);
 		assert(isAttach(baseMark), 0x71d /* Expected generative mark */);
@@ -211,33 +199,8 @@ function composeMarksIgnoreChild(
 		// The composition has no net effect but we preserve the second change's intention to pin the nodes here.
 		const composedMark = { ...newMark };
 		delete composedMark.cellId;
-		const baseDetachCellId = baseMark.detachCellId ?? detachId;
-		if (!areEqualChangeAtomIds(baseDetachCellId, attachId)) {
-			composedMark.detachCellId = baseDetachCellId;
-		}
-
 		return composedMark;
 	}
-}
-
-function updateBaseMarkId(moveEffects: ComposeNodeManager, baseMark: Mark): Mark {
-	if (isDetach(baseMark)) {
-		const baseDetachId = getDetachedRootId(baseMark);
-		const updatedDetachId = getUpdatedDetachId(moveEffects, baseMark);
-		if (
-			updatedDetachId !== undefined &&
-			!areEqualChangeAtomIds(updatedDetachId, baseDetachId)
-		) {
-			return {
-				...baseMark,
-				revision: updatedDetachId.revision,
-				id: updatedDetachId.localId,
-				detachCellId: baseMark.detachCellId ?? baseDetachId,
-			};
-		}
-	}
-
-	return baseMark;
 }
 
 function createNoopMark(
@@ -433,14 +396,5 @@ function getMovedChangesFromMark(
 		return undefined;
 	}
 
-	return moveEffects.getNewChangesForBaseDetach(getDetachedRootId(markEffect), 1).value
-		?.nodeChange;
-}
-
-function getUpdatedDetachId(
-	manager: ComposeNodeManager,
-	mark: CellMark<Detach>,
-): ChangeAtomId | undefined {
-	return manager.getNewChangesForBaseDetach(getDetachedRootId(mark), mark.count).value
-		?.detachId;
+	return moveEffects.getNewChangesForBaseDetach(getDetachedRootId(markEffect), 1).value;
 }

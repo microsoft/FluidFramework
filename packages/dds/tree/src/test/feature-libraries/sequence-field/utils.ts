@@ -804,10 +804,7 @@ function newInvertManager(): TestInvertManager {
 			this.isInvalidated = true;
 		},
 
-		invertAttach(
-			attachId: ChangeAtomId,
-			count: number,
-		): RangeQueryResult<DetachedNodeEntry | undefined> {
+		invertAttach(attachId: ChangeAtomId, count: number): RangeQueryResult<NodeId | undefined> {
 			throw new Error("Function not implemented.");
 		},
 	};
@@ -822,7 +819,7 @@ function newComposeManager(): TestComposeManager {
 		getNewChangesForBaseDetach(
 			baseDetachId: ChangeAtomId,
 			count: number,
-		): RangeQueryResult<DetachedNodeEntry | undefined> {
+		): RangeQueryResult<NodeId | undefined> {
 			throw new Error("Not implemented");
 		},
 

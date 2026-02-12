@@ -79,11 +79,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				change.valueReplace.src,
 				revision,
 				isRollback,
-				attachEntry.value?.detachId,
+				undefined, // XXX: Check this
 			);
 
-			if (attachEntry.value?.nodeChange !== undefined) {
-				inverted.childChange = attachEntry.value.nodeChange;
+			if (attachEntry.value !== undefined) {
+				inverted.childChange = attachEntry.value;
 			}
 
 			// TODO: Always use nodeDetach instead of valueReplace if not supporting older client versions.
@@ -271,16 +271,17 @@ function composeNodeDetaches(
 ): ChangeAtomId | undefined {
 	const detach1 = getEffectiveDetachId(change1);
 	if (detach1 !== undefined) {
-		const newDetachId = nodeManager.getNewChangesForBaseDetach(detach1, 1).value?.detachId;
-		if (newDetachId !== undefined) {
-			// change2 either renames or detaches this node (the latter case implying that change1 reattaches/moves it).
-			// In either case, the composition ends with the node detached by `newDetachId`.
-			// Note that even if change2 detaches the node with a location-targeting detach (e.g. an optional field clear),
-			// the composition should still have a node-targeting detach.
-			// This is because change1 must attach the node in the location targeted by the detach,
-			// and rebasing does not affect attaches, although that could change if slice moves are implemented.
-			return newDetachId;
-		}
+		// const newDetachId = nodeManager.getNewChangesForBaseDetach(detach1, 1).value?.detachId;
+		// if (newDetachId !== undefined) {
+		// XXX: This logic is still correct?
+		// change2 either renames or detaches this node (the latter case implying that change1 reattaches/moves it).
+		// In either case, the composition ends with the node detached by `newDetachId`.
+		// Note that even if change2 detaches the node with a location-targeting detach (e.g. an optional field clear),
+		// the composition should still have a node-targeting detach.
+		// This is because change1 must attach the node in the location targeted by the detach,
+		// and rebasing does not affect attaches, although that could change if slice moves are implemented.
+		// return newDetachId;
+		// }
 	}
 
 	if (change1.nodeDetach !== undefined) {
@@ -359,7 +360,7 @@ function getComposedChildChanges(
 			? change1.valueReplace?.src === undefined
 				? change2.childChange
 				: undefined
-			: nodeManager.getNewChangesForBaseDetach(detachId1, 1).value?.nodeChange;
+			: nodeManager.getNewChangesForBaseDetach(detachId1, 1).value;
 
 	let composedChildChange: NodeId | undefined;
 	if (change1.childChange !== undefined || childChangesFromChange2 !== undefined) {
@@ -526,7 +527,6 @@ export const optionalChangeHandler: FieldChangeHandler<
 
 	createEmpty: () => ({}),
 	getCrossFieldKeys,
-	getDetachCellIds: (_change) => [],
 };
 
 function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {

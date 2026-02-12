@@ -65,10 +65,7 @@ export interface InvertNodeManager {
 	 * @param attachId - The ID of the attach to invert.
 	 * @param count - The number of nodes being attached.
 	 */
-	invertAttach(
-		attachId: ChangeAtomId,
-		count: number,
-	): RangeQueryResult<DetachedNodeEntry | undefined>;
+	invertAttach(attachId: ChangeAtomId, count: number): RangeQueryResult<NodeId | undefined>;
 }
 
 export interface ComposeNodeManager {
@@ -81,7 +78,7 @@ export interface ComposeNodeManager {
 	getNewChangesForBaseDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<DetachedNodeEntry | undefined>;
+	): RangeQueryResult<NodeId | undefined>;
 
 	/**
 	 * Must be called by a field kind when composing an attach in the base changeset with a detach in the new changeset.
@@ -137,7 +134,7 @@ export interface RebaseNodeManager {
 	getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<RebaseDetachedNodeEntry | undefined>;
+	): RangeQueryResult<DetachedNodeEntry | undefined>;
 
 	// XXX: It's not clear if this must be called even when newDetachId and nodeChange are undefined.
 	// XXX: It's not clear if it's okay to call this once with a newDetachId then once with a nodeChange.
@@ -188,9 +185,4 @@ export interface RebaseNodeManager {
 export interface DetachedNodeEntry {
 	nodeChange?: NodeId;
 	detachId?: ChangeAtomId;
-}
-
-export interface RebaseDetachedNodeEntry extends DetachedNodeEntry {
-	// This is only needed for sequence field to implement detach cell IDs.
-	cellRename?: ChangeAtomId;
 }

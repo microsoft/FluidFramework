@@ -46,6 +46,7 @@ const context: FieldChangeEncodingContext = {
 	baseContext,
 	encodeNode: (node) => TestNodeId.encode(node, baseContext),
 	getInputRootId: (id, count) => ({ start: id, value: id, length: count }),
+	getOutputRootId: (id, count) => ({ start: id, value: id, length: count }),
 	isAttachId: (id, count) => ({
 		start: id,
 		value: false,
@@ -55,11 +56,6 @@ const context: FieldChangeEncodingContext = {
 		start: id,
 		value: false,
 		length: count,
-	}),
-	getCellIdForMove: (id, count) => ({
-		start: id,
-		length: count,
-		value: undefined,
 	}),
 	decodeNode: (node) => TestNodeId.decode(node, baseContext),
 	rootNodeChanges: newChangeAtomIdBTree(),
