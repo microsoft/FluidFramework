@@ -577,41 +577,24 @@ export function snapshotSchemaCompatibility(
 					`Rejecting version change (${JSON.stringify(latestSnapshot[0])} to ${JSON.stringify(currentVersion)}) due to rejectVersionsWithNoSchemaChange being set.`,
 				);
 			} else if (
-				JSON.stringify(exportCompatibilitySchemaSnapshot(currentRead)) !==
-				JSON.stringify(currentEncodedForSnapshotting)
+				rejectSchemaChangesWithNoVersionChange === true &&
+				schemaChange &&
+				!versionChange
 			) {
-				updatableError(
-					`Snapshot for current version ${JSON.stringify(currentVersion)} is out of date.`,
+				wouldUpdate = errorWithContext(
+					`Rejecting schema change without version change due to existing  non-equivalent snapshot for version (${JSON.stringify(latestSnapshot[0])} due to rejectSchemaChangesWithNoVersionChange being set.`,
 				);
-			}
-		}
-	}
-	else
-	{
-		const entries = [...snapshots];
-		const latestSnapshot = entries[entries.length - 1];
-		if (latestSnapshot === undefined) {
-			if (mode === "update") {
-				checker.writeSchemaSnapshot(currentVersion, currentEncodedForSnapshotting);
-				snapshots.set(currentVersion, currentViewSchema);
-			} else {
-				updatableError(`No snapshots found.`);
-			}
-		} else {
-			if (semver.lte(latestSnapshot[0], currentVersion)) {
-				// Check to see if schema in snapshot is the same as the latest existing snapshot.
-				const oldString = JSON.stringify(exportCompatibilitySchemaSnapshot(latestSnapshot[1]));
-				const currentString = JSON.stringify(currentEncodedForSnapshotting);
-				if (oldString !== currentString) {
-					// Schema has changed: must create new snapshot.
-					if (mode === "update") {
-						checker.writeSchemaSnapshot(currentVersion, currentEncodedForSnapshotting);
-						snapshots.set(currentVersion, currentViewSchema);
-					} else {
-						updatableError(
-							`Snapshot for current version ${JSON.stringify(currentVersion)} is out of date: schema has changed since latest existing snapshot version ${JSON.stringify(latestSnapshot[0])}.`,
-						);
-					}
+			} else if (snapshotUnchangedVersions === true) {
+				const currentRead = snapshots.get(currentVersion);
+				if (currentRead === undefined) {
+					wouldUpdate = `No snapshot found for version ${JSON.stringify(currentVersion)}: snapshotUnchangedVersions is true, so every version must be snapshotted.`;
+				} else if (
+					JSON.stringify(exportCompatibilitySchemaSnapshot(currentRead)) ===
+					JSON.stringify(currentEncodedForSnapshotting)
+				) {
+					wouldUpdate = false;
+				} else {
+					wouldUpdate = `Snapshot for current version ${JSON.stringify(currentVersion)} is out of date.`;
 				}
 			} else {
 				if (versionComparer(latestSnapshot[0], currentVersion) <= 0) {
