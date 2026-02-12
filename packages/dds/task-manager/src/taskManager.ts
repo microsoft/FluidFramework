@@ -73,6 +73,13 @@ function assertIsTaskManagerOperation(op: unknown): asserts op is ITaskManagerOp
 const snapshotFileName = "header";
 
 /**
+ * Sentinel value used as localOpMetadata for stashed ops resubmitted via applyStashedOp.
+ * This distinguishes stashed ops from normal local ops so the opWatcher handlers
+ * skip latestPendingOps tracking (which doesn't apply to rehydrated stashed ops).
+ */
+const stashedOpMetadata = -1;
+
+/**
  * Placeholder clientId for detached scenarios.
  */
 const placeholderClientId = "placeholder";
@@ -150,7 +157,7 @@ export class TaskManagerClass
 		this.opWatcher.on(
 			"volunteer",
 			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
-				if (local) {
+				if (local && messageId !== stashedOpMetadata) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
 					assert(latestPendingOps !== undefined, 0xc3c /* No pending ops for task */);
 					const pendingOp = latestPendingOps.shift();
@@ -171,7 +178,7 @@ export class TaskManagerClass
 		this.opWatcher.on(
 			"abandon",
 			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
-				if (local) {
+				if (local && messageId !== stashedOpMetadata) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
 					assert(latestPendingOps !== undefined, 0xc3e /* No pending ops for task */);
 					const pendingOp = latestPendingOps.shift();
@@ -193,7 +200,7 @@ export class TaskManagerClass
 		this.opWatcher.on(
 			"complete",
 			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
-				if (local) {
+				if (local && messageId !== stashedOpMetadata) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
 					assert(latestPendingOps !== undefined, 0xc40 /* No pending ops for task */);
 					const pendingOp = latestPendingOps.shift();
@@ -679,6 +686,13 @@ export class TaskManagerClass
 	 */
 	protected reSubmitCore(content: unknown, localOpMetadata: number): void {
 		assertIsTaskManagerOperation(content);
+
+		// Stashed ops (from applyStashedOp) aren't tracked in latestPendingOps,
+		// so just skip resubmission.
+		if (localOpMetadata === stashedOpMetadata) {
+			return;
+		}
+
 		const pendingOps = this.latestPendingOps.get(content.taskId);
 		assert(pendingOps !== undefined, 0xc42 /* No pending ops for task on resubmit attempt */);
 		const pendingOpIndex = pendingOps.findIndex(
@@ -887,10 +901,10 @@ export class TaskManagerClass
 	}
 
 	protected applyStashedOp(content: unknown): void {
-		// We don't apply any stashed ops since during the rehydration process. Since we lose any assigned tasks
-		// during rehydration we cannot be assigned any tasks. Additionally, without the in-memory state of the
-		// previous dds, we also cannot re-volunteer based on a previous subscribeToTask() call. Since we are
-		// unable to be assigned to any tasks, there is no reason to process abandon/complete ops either.
+		assertIsTaskManagerOperation(content);
+		// Resubmit the op so it can be matched on ack. Use stashedOpMetadata so the
+		// opWatcher handlers skip latestPendingOps tracking for these resubmitted ops.
+		this.submitLocalMessage(content, stashedOpMetadata);
 	}
 
 	/**
@@ -901,6 +915,12 @@ export class TaskManagerClass
 			typeof localOpMetadata === "number",
 			0xc45 /* Expect localOpMetadata to be a number */,
 		);
+
+		// Stashed ops aren't tracked in latestPendingOps; nothing to roll back.
+		if (localOpMetadata === stashedOpMetadata) {
+			return;
+		}
+
 		assertIsTaskManagerOperation(content);
 		const latestPendingOps = this.latestPendingOps.get(content.taskId);
 		assert(latestPendingOps !== undefined, 0xc46 /* No pending ops when trying to rollback */);
