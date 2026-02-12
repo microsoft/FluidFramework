@@ -22,6 +22,7 @@ export type {
 	TreeBranch,
 	TreeBranchAlpha,
 	TreeBranchEvents,
+	TreeContextAlpha,
 	ITreeAlpha,
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
@@ -164,6 +165,7 @@ export {
 	type TransactionResultExt,
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
+	type WithValue,
 	rollback,
 } from "./transactionTypes.js";
 

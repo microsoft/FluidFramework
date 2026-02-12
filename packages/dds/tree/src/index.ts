@@ -305,6 +305,8 @@ export {
 	type SchemaCompatibilitySnapshotsOptions,
 	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
+	type WithValue,
+	type TreeContextAlpha,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

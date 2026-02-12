@@ -11,6 +11,9 @@ import type {
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 } from "../../core/index.js";
+// This is referenced by doc comments.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { TreeStatus } from "../../feature-libraries/index.js";
 import type {
 	// This is referenced by doc comments.
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
@@ -35,6 +38,7 @@ import type {
 	TransactionResult,
 	TransactionResultExt,
 	VoidTransactionCallbackStatus,
+	WithValue,
 } from "./transactionTypes.js";
 import type { VerboseTree } from "./verboseTree.js";
 
@@ -176,6 +180,86 @@ export interface TreeBranch extends IDisposable {
 }
 
 /**
+ * Context for a tree node which provides additional context-aware APIs.
+ * @alpha
+ */
+export interface TreeContextAlpha {
+	/**
+	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * It may return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
+	 * @returns A result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
+	 *
+	 * - A "success" flag indicating whether the transaction was successful or not.
+	 * - The success or failure value as returned by the transaction function.
+	 *
+	 * @remarks
+	 * If `runTransaction` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether the returned context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
+	 *
+	 * If `runTransaction` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransaction` does nothing additional).
+	 * The transaction will always succeed.
+	 */
+	runTransaction<TValue>(
+		transaction: () => WithValue<TValue>,
+	): TransactionResultExt<TValue, TValue>;
+	/**
+	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * @remarks
+	 * If `runTransaction` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether the returned context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
+	 *
+	 * If `runTransaction` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransaction` does nothing additional).
+	 * The transaction will always succeed.
+	 */
+	runTransaction(transaction: () => void): TransactionResult;
+	/**
+	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * It may return a {@link WithValue | value }, which will be returned by the `runTransactionAsync` call.
+	 * @returns A promise that resolves to a result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
+	 *
+	 * - A "success" flag indicating whether the transaction was successful or not.
+	 * - The success or failure value as returned by the transaction function.
+	 *
+	 * @remarks
+	 * If `runTransactionAsync` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether the returned context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
+	 *
+	 * If `runTransactionAsync` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransactionAsync` does nothing additional).
+	 * The transaction will always succeed.
+	 */
+	runTransactionAsync<TValue>(
+		transaction: () => Promise<WithValue<TValue>>,
+	): Promise<TransactionResultExt<TValue, TValue>>;
+	/**
+	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * @remarks
+	 * If `runTransactionAsync` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether the returned context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
+	 *
+	 * If `runTransactionAsync` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransactionAsync` does nothing additional).
+	 * The transaction will always succeed.
+	 */
+	runTransactionAsync(transaction: () => Promise<void>): Promise<TransactionResult>;
+
+	/**
+	 * True if this context is associated with a {@link TreeBranchAlpha | branch} and false if it is associated with an {@link TreeStatus.New | unhydrated } node.
+	 * @remarks If this returns true, the context can be safely inferred or cast to {@link TreeBranchAlpha} to access additional branch-specific APIs.
+	 * @example
+	 * ```typescript
+	 * const context = tree.context(someNode);
+	 * if (context.isBranch()) {
+	 *   context.fork(); // `fork` is a method on TreeBranchAlpha, so this is only accessible if `context` is a branch context.
+	 * }
+	 * ```
+	 */
+	isBranch(): this is TreeBranchAlpha;
+}
+
+/**
  * {@link TreeBranch} with alpha-level APIs.
  * @remarks
  * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
@@ -183,7 +267,7 @@ export interface TreeBranch extends IDisposable {
  * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranchAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
  */
-export interface TreeBranchAlpha extends TreeBranch {
+export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	/**
 	 * Events for the branch
 	 */

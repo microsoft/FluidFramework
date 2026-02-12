@@ -201,6 +201,8 @@ export {
 	type SnapshotFileSystem,
 	type SchemaCompatibilitySnapshotsOptions,
 	createCustomizedFluidFrameworkScopedFactory,
+	type TreeContextAlpha,
+	type WithValue,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
