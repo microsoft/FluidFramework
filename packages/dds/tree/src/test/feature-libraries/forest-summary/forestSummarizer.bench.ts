@@ -120,6 +120,11 @@ describe("Forest Summarizer benchmarks", () => {
 				});
 
 				let unchangedSummarizer: ForestSummarizer;
+				const unchangedContext1: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: 0,
+					latestSummarySequenceNumber: -1,
+					summaryPath: "",
+				};
 				benchmark({
 					type: benchmarkType,
 					title: `unchanged for (${itemCount} items)`,
@@ -129,11 +134,6 @@ describe("Forest Summarizer benchmarks", () => {
 						);
 						unchangedSummarizer = forestSummarizer;
 						// First summary to establish baseline (not measured)
-						const unchangedContext1: IExperimentalIncrementalSummaryContext = {
-							summarySequenceNumber: 0,
-							latestSummarySequenceNumber: -1,
-							summaryPath: "",
-						};
 						unchangedSummarizer.summarize({
 							stringify: JSON.stringify,
 							incrementalSummaryContext: unchangedContext1,
@@ -142,7 +142,7 @@ describe("Forest Summarizer benchmarks", () => {
 					benchmarkFn: () => {
 						const unchangedContext2: IExperimentalIncrementalSummaryContext = {
 							summarySequenceNumber: 10,
-							latestSummarySequenceNumber: 0,
+							latestSummarySequenceNumber: unchangedContext1.summarySequenceNumber,
 							summaryPath: "",
 						};
 						unchangedSummarizer.summarize({
@@ -153,6 +153,11 @@ describe("Forest Summarizer benchmarks", () => {
 				});
 
 				let someChangedSummarizer: ForestSummarizer;
+				const someChangedContext1: IExperimentalIncrementalSummaryContext = {
+					summarySequenceNumber: 0,
+					latestSummarySequenceNumber: -1,
+					summaryPath: "",
+				};
 				benchmark({
 					type: benchmarkType,
 					title: `10% changes for (${itemCount} items)`,
@@ -162,11 +167,6 @@ describe("Forest Summarizer benchmarks", () => {
 						);
 						someChangedSummarizer = forestSummarizer;
 						// First summary to establish baseline (not measured)
-						const someChangedContext1: IExperimentalIncrementalSummaryContext = {
-							summarySequenceNumber: 0,
-							latestSummarySequenceNumber: -1,
-							summaryPath: "",
-						};
 						someChangedSummarizer.summarize({
 							stringify: JSON.stringify,
 							incrementalSummaryContext: someChangedContext1,
@@ -177,7 +177,7 @@ describe("Forest Summarizer benchmarks", () => {
 					benchmarkFn: () => {
 						const someChangedContext2: IExperimentalIncrementalSummaryContext = {
 							summarySequenceNumber: 10,
-							latestSummarySequenceNumber: 0,
+							latestSummarySequenceNumber: someChangedContext1.summarySequenceNumber,
 							summaryPath: "",
 						};
 						someChangedSummarizer.summarize({
@@ -279,7 +279,7 @@ describe("Forest Summarizer benchmarks", () => {
 					run: (reporter) => {
 						const unchangedContext2: IExperimentalIncrementalSummaryContext = {
 							summarySequenceNumber: 10,
-							latestSummarySequenceNumber: 0,
+							latestSummarySequenceNumber: unchangedContext1.summarySequenceNumber,
 							summaryPath: "",
 						};
 						const summaryTree = unchangedSummarizer.summarize({
@@ -311,7 +311,7 @@ describe("Forest Summarizer benchmarks", () => {
 					run: (reporter) => {
 						const someChangedContext2: IExperimentalIncrementalSummaryContext = {
 							summarySequenceNumber: 10,
-							latestSummarySequenceNumber: 0,
+							latestSummarySequenceNumber: someChangedContext1.summarySequenceNumber,
 							summaryPath: "",
 						};
 						const summaryTree = someChangedSummarizer.summarize({
