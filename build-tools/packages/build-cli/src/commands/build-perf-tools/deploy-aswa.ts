@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { execSync } from "node:child_process";
 import { copyFileSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
@@ -13,14 +14,14 @@ import type { BuildPerfMode } from "../../library/buildPerf/types.js";
 import { BaseCommand } from "../../library/index.js";
 
 /**
- * Prepare deployment package for Azure Static Web App dashboard.
- * Copies generated data and static files, and fetches the other mode's data from the live site.
+ * Deploy the build performance dashboard to Azure Static Web Apps.
+ * Prepares a deployment package (data files, HTML template, config) and deploys it using the SWA CLI.
  */
 export default class BuildPerfDeployCommand extends BaseCommand<
 	typeof BuildPerfDeployCommand
 > {
 	static readonly description =
-		"Prepare deployment package for Azure Static Web App dashboard.";
+		"Deploy the build performance dashboard to Azure Static Web Apps.";
 
 	static readonly flags = {
 		mode: Flags.string({
@@ -34,14 +35,14 @@ export default class BuildPerfDeployCommand extends BaseCommand<
 			env: "ASWA_HOSTNAME",
 			required: true,
 		}),
-		outputDir: Flags.directory({
-			description: "Directory containing generated data files.",
-			env: "OUTPUT_DIR",
+		deploymentToken: Flags.string({
+			description: "Azure Static Web Apps deployment token.",
+			env: "SWA_DEPLOYMENT_TOKEN",
 			required: true,
 		}),
-		deployDir: Flags.directory({
-			description: "Directory to create deployment package in.",
-			env: "DEPLOY_DIR",
+		dataDir: Flags.directory({
+			description: "Directory containing generated data files (public-data.json / internal-data.json).",
+			env: "DATA_DIR",
 			required: true,
 		}),
 		...BaseCommand.flags,
@@ -49,9 +50,9 @@ export default class BuildPerfDeployCommand extends BaseCommand<
 
 	static readonly examples = [
 		{
-			description: "Prepare deployment package for public mode.",
+			description: "Deploy dashboard for public mode.",
 			command:
-				"<%= config.bin %> <%= command.id %> --mode public --aswaHostname myapp.azurestaticapps.net --outputDir ./output --deployDir ./deploy",
+				"<%= config.bin %> <%= command.id %> --mode public --aswaHostname myapp.azurestaticapps.net --dataDir ./data --deploymentToken $SWA_TOKEN",
 		},
 	];
 
@@ -59,25 +60,26 @@ export default class BuildPerfDeployCommand extends BaseCommand<
 		const { flags } = this;
 		const mode = flags.mode as BuildPerfMode;
 
-		this.log("==========================================");
-		this.log(`Preparing deployment package (${mode} mode)`);
-		this.log("==========================================");
+		// Use a temp deploy directory
+		const deployDir = path.join(flags.dataDir, ".deploy");
+		mkdirSync(path.join(deployDir, "data"), { recursive: true });
 
-		// Create deployment directory
-		mkdirSync(path.join(flags.deployDir, "data"), { recursive: true });
+		this.log("==========================================");
+		this.log(`Deploying dashboard to ASWA (${mode} mode)`);
+		this.log("==========================================");
 
 		// Copy our generated data file
 		let otherFile: string;
 		if (mode === "public") {
 			copyFileSync(
-				path.join(flags.outputDir, "public-data.json"),
-				path.join(flags.deployDir, "data/public-data.json"),
+				path.join(flags.dataDir, "public-data.json"),
+				path.join(deployDir, "data/public-data.json"),
 			);
 			otherFile = "internal-data.json";
 		} else {
 			copyFileSync(
-				path.join(flags.outputDir, "internal-data.json"),
-				path.join(flags.deployDir, "data/internal-data.json"),
+				path.join(flags.dataDir, "internal-data.json"),
+				path.join(deployDir, "data/internal-data.json"),
 			);
 			otherFile = "public-data.json";
 		}
@@ -85,7 +87,7 @@ export default class BuildPerfDeployCommand extends BaseCommand<
 		// Try to fetch the other mode's data from the live site
 		this.log(`Fetching existing ${otherFile} from dashboard...`);
 		const fetchUrl = `https://${flags.aswaHostname}/data/${otherFile}`;
-		const fetchOutput = path.join(flags.deployDir, "data", otherFile);
+		const fetchOutput = path.join(deployDir, "data", otherFile);
 
 		this.log(`Fetching from: ${fetchUrl}`);
 		try {
@@ -95,7 +97,6 @@ export default class BuildPerfDeployCommand extends BaseCommand<
 
 			if (response.ok) {
 				const text = await response.text();
-				// Validate the response is valid JSON (ASWA may return HTML error pages with 200)
 				try {
 					JSON.parse(text);
 					writeFileSync(fetchOutput, text, "utf8");
@@ -112,29 +113,38 @@ export default class BuildPerfDeployCommand extends BaseCommand<
 				this.log(
 					`Note: Could not fetch ${otherFile} (first deployment or other mode hasn't run yet)`,
 				);
-				this.log(
-					"      The dashboard will show 'No data available' for that tab until the other pipeline runs.",
-				);
 			}
 		} catch (err) {
 			this.warning(`Failed to fetch ${otherFile}: ${err}`);
-			this.log(
-				"Note: Could not fetch other mode's data. Dashboard will show 'No data available' for that tab.",
-			);
 		}
 
 		// Copy static web app files from bundled templates
 		copyFileSync(
 			path.join(TEMPLATES_DIR, "staticwebapp-template.config.json"),
-			path.join(flags.deployDir, "staticwebapp.config.json"),
+			path.join(deployDir, "staticwebapp.config.json"),
 		);
 		copyFileSync(
 			path.join(TEMPLATES_DIR, "dashboard-template.html"),
-			path.join(flags.deployDir, "index.html"),
+			path.join(deployDir, "index.html"),
 		);
 
+		this.log("");
 		this.log("Deployment package contents:");
-		this.logDeployContents(flags.deployDir);
+		this.logDeployContents(deployDir);
+
+		// Deploy using the SWA CLI
+		this.log("");
+		this.log("Deploying to Azure Static Web Apps...");
+		try {
+			execSync(
+				`npx --yes @azure/static-web-apps-cli deploy ${deployDir} --deployment-token ${flags.deploymentToken}`,
+				{ stdio: "inherit" },
+			);
+			this.log("");
+			this.log(`Dashboard deployed to https://${flags.aswaHostname}`);
+		} catch (err) {
+			this.error(`SWA deployment failed: ${err}`);
+		}
 	}
 
 	private logDeployContents(dir: string, prefix = ""): void {

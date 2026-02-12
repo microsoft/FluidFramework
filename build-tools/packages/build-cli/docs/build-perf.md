@@ -85,32 +85,33 @@ _See code: [src/commands/build-perf-tools/collect-data.ts](https://github.com/mi
 
 ## `flub build-perf-tools deploy-aswa`
 
-Prepare deployment package for Azure Static Web App dashboard.
+Deploy the build performance dashboard to Azure Static Web Apps.
 
 ```
 USAGE
-  $ flub build-perf-tools deploy-aswa --mode public|internal --aswaHostname <value> --outputDir <value> --deployDir <value> [-v |
-    --quiet]
+  $ flub build-perf-tools deploy-aswa --mode public|internal --aswaHostname <value> --deploymentToken <value>
+    --dataDir <value> [-v | --quiet]
 
 FLAGS
-  --aswaHostname=<value>  (required) [env: ASWA_HOSTNAME] Hostname of the Azure Static Web App.
-  --deployDir=<value>     (required) [env: DEPLOY_DIR] Directory to create deployment package in.
-  --mode=<option>         (required) [env: MODE] Pipeline mode: "public" or "internal".
-                          <options: public|internal>
-  --outputDir=<value>     (required) [env: OUTPUT_DIR] Directory containing generated data files.
+  --aswaHostname=<value>     (required) [env: ASWA_HOSTNAME] Hostname of the Azure Static Web App.
+  --dataDir=<value>          (required) [env: DATA_DIR] Directory containing generated data files
+                             (public-data.json / internal-data.json).
+  --deploymentToken=<value>  (required) [env: SWA_DEPLOYMENT_TOKEN] Azure Static Web Apps deployment token.
+  --mode=<option>            (required) [env: MODE] Pipeline mode: "public" or "internal".
+                             <options: public|internal>
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Prepare deployment package for Azure Static Web App dashboard.
+  Deploy the build performance dashboard to Azure Static Web Apps.
 
 EXAMPLES
-  Prepare deployment package for public mode.
+  Deploy dashboard for public mode.
 
-    $ flub build-perf-tools deploy-aswa --mode public --aswaHostname myapp.azurestaticapps.net --outputDir ./output --deployDir \
-      ./deploy
+    $ flub build-perf-tools deploy-aswa --mode public --aswaHostname myapp.azurestaticapps.net --dataDir ./data \
+      --deploymentToken $SWA_TOKEN
 ```
 
 _See code: [src/commands/build-perf-tools/deploy-aswa.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/build-perf-tools/deploy-aswa.ts)_
