@@ -470,7 +470,7 @@ function getWriteVersion<T extends CodecVersionBase>(
 			const selectedMinVersionForCollab = selected.minVersionForCollab;
 			if (selectedMinVersionForCollab === "none") {
 				throw new UsageError(
-					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it is has minVersionForCollab "none". Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it has minVersionForCollab "none". Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
 			} else if (gt(selectedMinVersionForCollab, options.minVersionForCollab)) {
 				throw new UsageError(
