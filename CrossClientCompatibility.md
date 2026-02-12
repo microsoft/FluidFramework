@@ -45,7 +45,7 @@ As an application developer, you need to manage your Fluid version upgrades care
 
 ### Configuring Cross-Client Compatibility
 
-For the best results, we encourage you to use the "proper configurations" for cross-client compatibility. In this case, the proper configurations would be setting the `minVersionForCollab` property (defined in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts)). `minVersionForCollab` represents the minimum Fluid runtime version allowed to collaborate in a document. It will automatically disable any features that prevent safe cross-client collaboration for clients that are at least the version specified.
+For the best results, we encourage you to set the `minVersionForCollab` property (defined in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts)). `minVersionForCollab` represents the minimum Fluid runtime version allowed to collaborate in a document. It will automatically disable any features that prevent safe cross-client collaboration for clients that are at least the version specified.
 
 For example, if you want to ensure collaboration between N/N-1 clients, the proper configuration for `minVersionForCollab` would be the latest minor release corresponding to the N-1 major version series.
 
