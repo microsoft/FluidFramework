@@ -24,7 +24,7 @@ FLAGS
   --changePeriodThreshold=<value>  (required) [env: CHANGE_PERIOD_THRESHOLD] Maximum acceptable percentage change over
                                    the relevant period (3 days for public, 7 days for internal).
   --forceFailure                   [env: FORCE_FAILURE] Force a failure (for testing notifications).
-  --inputDir=<value>               (required) [env: INPUT_DIR] Directory containing the data JSON files.
+  --inputDir=<value>               (required) [env: DATA_DIR] Directory containing the data JSON files.
   --mode=<option>                  (required) [env: MODE] Pipeline mode: "public" (PR builds) or "internal".
                                    <options: public|internal>
 
@@ -124,7 +124,7 @@ USAGE
   $ flub build-perf-tools generate-html --mode public|internal --inputDir <value> --outputDir <value> [-v | --quiet]
 
 FLAGS
-  --inputDir=<value>   (required) [env: INPUT_DIR] Directory containing the data JSON files (public-data.json /
+  --inputDir=<value>   (required) [env: DATA_DIR] Directory containing the data JSON files (public-data.json /
                        internal-data.json).
   --mode=<option>      (required) [env: MODE] Pipeline mode: "public" or "internal".
                        <options: public|internal>

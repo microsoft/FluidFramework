@@ -121,7 +121,7 @@ extends:
           displayName: Generate HTML dashboard artifact
           env:
             MODE: $(runMode)
-            INPUT_DIR: $(Build.ArtifactStagingDirectory)/data
+            DATA_DIR: $(Build.ArtifactStagingDirectory)/data
             OUTPUT_DIR: $(Build.ArtifactStagingDirectory)
           inputs:
             targetType: 'inline'
@@ -167,7 +167,7 @@ extends:
           displayName: Check performance thresholds
           env:
             MODE: $(runMode)
-            INPUT_DIR: $(Build.ArtifactStagingDirectory)/data
+            DATA_DIR: $(Build.ArtifactStagingDirectory)/data
             AVG_DURATION_THRESHOLD: $(avgDurationThreshold)
             CHANGE_PERIOD_THRESHOLD: $(changePeriodThreshold)
             FORCE_FAILURE: ${{ parameters.forceAlertFailure }}

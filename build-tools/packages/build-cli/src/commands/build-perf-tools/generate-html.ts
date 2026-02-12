@@ -33,7 +33,7 @@ export default class BuildPerfHtmlCommand extends BaseCommand<typeof BuildPerfHt
 		}),
 		inputDir: Flags.directory({
 			description: "Directory containing the data JSON files (public-data.json / internal-data.json).",
-			env: "INPUT_DIR",
+			env: "DATA_DIR",
 			required: true,
 		}),
 		outputDir: Flags.directory({
