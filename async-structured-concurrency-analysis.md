@@ -46,6 +46,11 @@ removeListener bookkeeping, and AbortController propagation.
 | Timer usage | 20 across 6 files |
 | **Effection Benefit** | **`*****`** |
 
+> **Note (2026-02-11):** While this package has the highest potential benefit, its sheer complexity
+> (132 async functions, 964 awaits, deeply nested subsystems) makes it a poor candidate for early
+> adoption. The risk of regressions across summarization, GC, and blob management is high. Priority
+> is lowered until the effection patterns are well-established in simpler packages.
+
 **Why:** This is the most complex async package in the entire workspace. It manages summarization
 (RunningSummarizer, SummaryManager), garbage collection with session timers, blob management,
 PendingStateManager, and data store lifecycles. It has hand-rolled cleanup arrays
