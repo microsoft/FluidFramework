@@ -4,7 +4,7 @@
 ---
 Added `TreeAlpha.context(node)` to provide context-aware APIs for any SharedTree node, plus a new `TreeContextAlpha` surface for transactions and branch checks.
 
-This release introduces a node-scoped context that works for nodes inserted into the tree as well as new, uninserted nodes.
+This release introduces a node-scoped context that works for nodes inserted into the tree as well as new nodes that are not yet inserted.
 The new `TreeContextAlpha` interface exposes `runTransaction` / `runTransactionAsync` and an `isBranch()` type guard.
 `TreeBranchAlpha` now extends `TreeContextAlpha`, so you can keep using branch APIs when available.
 
