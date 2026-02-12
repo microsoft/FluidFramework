@@ -1217,12 +1217,12 @@ export interface SnapshotSchemaCompatibilityOptions {
     readonly fileSystem: SnapshotFileSystem;
     readonly minVersionForCollaboration: string;
     readonly mode: "assert" | "update";
-    readonly nextReleaseVersion: string;
     readonly rejectSchemaChangesWithNoVersionChange?: true;
     readonly rejectVersionsWithNoSchemaChange?: true;
     readonly schema: TreeViewConfiguration;
     readonly snapshotDirectory: string;
     readonly snapshotUnchangedVersions?: true;
+    readonly version: string;
     readonly versionComparer?: (a: string, b: string) => number;
 }
 
