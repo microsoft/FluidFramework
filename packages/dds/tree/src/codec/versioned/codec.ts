@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert } from "@fluidframework/core-utils/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	getConfigForMinVersionForCollabIterable,
-	type ConfigMapEntry,
+	lowestMinVersionForCollab,
 	type MinimumMinorSemanticVersion,
 	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
@@ -179,6 +179,14 @@ export interface CodecVersionBase<
 	T = unknown,
 	TFormatVersion extends FormatVersion = FormatVersion,
 > {
+	/**
+	 * When "none" the codec never be selected as a write version unless via override.
+	 * @remarks
+	 * It may still be used for decode if this format is encountered.
+	 * "none" should be used for unstable codec versions (with string FormatVersions),
+	 * as well as previously stabilized formats where we prefer to use encode to something else in all cases.
+	 */
+	readonly minVersionForCollab: MinimumVersionForCollab | "none";
 	readonly formatVersion: TFormatVersion;
 	readonly codec: T;
 }
@@ -225,11 +233,8 @@ export interface NormalizedCodecVersion<
  * @remarks
  * Produced by {@link ClientVersionDispatchingCodecBuilder.applyOptions}.
  */
-export interface EvaluatedCodecVersion<
-	TDecoded,
-	TContext,
-	TFormatVersion extends FormatVersion,
-> extends CodecVersionBase<
+interface EvaluatedCodecVersion<TDecoded, TContext, TFormatVersion extends FormatVersion>
+	extends CodecVersionBase<
 		IJsonCodec<TDecoded, VersionedJson, JsonCompatibleReadOnly, TContext>,
 		TFormatVersion
 	> {}
@@ -264,6 +269,7 @@ function normalizeCodecVersion<
 	};
 
 	return {
+		minVersionForCollab: codecVersion.minVersionForCollab,
 		formatVersion: codecVersion.formatVersion,
 		codec,
 	};
@@ -282,10 +288,12 @@ export class ClientVersionDispatchingCodecBuilder<
 	TFormatVersion extends FormatVersion,
 	TBuildOptions extends CodecWriteOptions,
 > {
-	public readonly registry: ReadonlyMap<
-		MinimumVersionForCollab,
-		NormalizedCodecVersion<TDecoded, TContext, TFormatVersion, TBuildOptions>
-	>;
+	public readonly registry: readonly NormalizedCodecVersion<
+		TDecoded,
+		TContext,
+		TFormatVersion,
+		TBuildOptions
+	>[];
 
 	/**
 	 * Use {@link ClientVersionDispatchingCodecBuilder.build} to create an instance of this class.
@@ -298,9 +306,7 @@ export class ClientVersionDispatchingCodecBuilder<
 		/**
 		 * The registry of codecs which this builder can use to encode and decode data.
 		 */
-		inputRegistry: ConfigMapEntry<
-			CodecVersion<TDecoded, TContext, TFormatVersion, TBuildOptions>
-		>,
+		inputRegistry: readonly CodecVersion<TDecoded, TContext, TFormatVersion, TBuildOptions>[],
 	) {
 		type Normalized = NormalizedCodecVersion<
 			TDecoded,
@@ -308,17 +314,40 @@ export class ClientVersionDispatchingCodecBuilder<
 			TFormatVersion,
 			TBuildOptions
 		>;
-		const normalizedRegistry = new Map<MinimumVersionForCollab, Normalized>();
+		const normalizedRegistry: Normalized[] = [];
+		const formats: Set<FormatVersion> = new Set();
+		const versions: Set<string> = new Set();
 
-		for (const [minVersionForCollab, codec] of Object.entries(inputRegistry) as Iterable<
-			[
-				MinimumVersionForCollab,
-				CodecVersion<TDecoded, TContext, TFormatVersion, TBuildOptions>,
-			]
-		>) {
+		for (const codec of inputRegistry) {
+			debugAssert(
+				() =>
+					!formats.has(codec.formatVersion) ||
+					`duplicate codec format ${name} ${codec.formatVersion}`,
+			);
+			debugAssert(
+				() =>
+					codec.minVersionForCollab !== undefined ||
+					typeof codec.formatVersion !== "string" ||
+					`unstable format ${JSON.stringify(codec.formatVersion)} (with string formats) must not have a minVersionForCollab in ${name}`,
+			);
+			formats.add(codec.formatVersion);
 			const normalizedCodec = normalizeCodecVersion(codec);
-			normalizedRegistry.set(minVersionForCollab, normalizedCodec);
+			normalizedRegistry.push(normalizedCodec);
+			if (codec.minVersionForCollab !== "none") {
+				debugAssert(
+					() =>
+						!versions.has(codec.minVersionForCollab) ||
+						`Codec ${name} has multiple entries for version ${JSON.stringify(codec.minVersionForCollab)}`,
+				);
+				versions.add(codec.minVersionForCollab);
+			}
 		}
+
+		debugAssert(
+			() =>
+				versions.has(lowestMinVersionForCollab) ||
+				`Codec ${name} is missing entry for lowestMinVersionForCollab`,
+		);
 
 		this.registry = normalizedRegistry;
 	}
@@ -331,18 +360,12 @@ export class ClientVersionDispatchingCodecBuilder<
 	 */
 	public applyOptions(
 		options: TBuildOptions,
-	): [MinimumVersionForCollab, EvaluatedCodecVersion<TDecoded, TContext, TFormatVersion>][] {
-		return Array.from(
-			this.registry,
-			([version, codec]) =>
-				[
-					version,
-					{
-						formatVersion: codec.formatVersion,
-						codec: codec.codec(options),
-					},
-				] as const,
-		);
+	): EvaluatedCodecVersion<TDecoded, TContext, TFormatVersion>[] {
+		return this.registry.map((codec) => ({
+			minVersionForCollab: codec.minVersionForCollab,
+			formatVersion: codec.formatVersion,
+			codec: codec.codec(options),
+		}));
 	}
 
 	/**
@@ -356,7 +379,7 @@ export class ClientVersionDispatchingCodecBuilder<
 		const fromFormatVersion = new Map<
 			FormatVersion,
 			EvaluatedCodecVersion<TDecoded, TContext, TFormatVersion>
-		>(applied.map(([_version, codec]) => [codec.formatVersion, codec]));
+		>(applied.map((codec) => [codec.formatVersion, codec]));
 		return {
 			encode: (data: TDecoded, context: TContext): JsonCompatibleReadOnly => {
 				return writeVersion.codec.encode(data, context);
@@ -377,7 +400,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 
 	public getCodecTree(clientVersion: MinimumVersionForCollab): CodecTree {
 		// TODO: add support for children codecs.
-		const selected = getConfigForMinVersionForCollabIterable(clientVersion, this.registry);
+		const selected = getWriteVersionNoOverrides(this.registry, clientVersion);
 		return {
 			name: this.name,
 			version: selected.formatVersion,
@@ -395,7 +418,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 	public static build<
 		Name extends CodecName,
 		Entry extends CodecVersion<unknown, unknown, FormatVersion, never>,
-	>(name: Name, inputRegistry: ConfigMapEntry<Entry>) {
+	>(name: Name, inputRegistry: readonly Entry[]) {
 		type TDecoded2 =
 			Entry extends CodecVersion<infer D, unknown, FormatVersion, never> ? D : never;
 		type TContext2 =
@@ -404,18 +427,24 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			Entry extends CodecVersion<unknown, unknown, infer F, never> ? F : never;
 		type TBuildOptions2 =
 			Entry extends CodecVersion<unknown, unknown, FormatVersion, infer B> ? B : never;
-		const builder = new ClientVersionDispatchingCodecBuilder(
-			name,
-			inputRegistry as ConfigMapEntry<unknown> as ConfigMapEntry<
-				CodecVersion<
-					TDecoded2,
-					// If it does not matter what context is provided, undefined is fine, so allow it to be omitted.
-					unknown extends TContext2 ? void : TContext2,
-					TFormatVersion2,
-					TBuildOptions2
-				>
-			>,
-		);
+
+		type CodecFinal = CodecVersion<
+			TDecoded2,
+			// If it does not matter what context is provided, undefined is fine, so allow it to be omitted.
+			unknown extends TContext2 ? void : TContext2,
+			TFormatVersion2,
+			TBuildOptions2
+		>;
+
+		const input = inputRegistry as readonly unknown[] as readonly CodecFinal[];
+
+		const builder = new ClientVersionDispatchingCodecBuilder<
+			Name,
+			TDecoded2,
+			unknown extends TContext2 ? void : TContext2,
+			TFormatVersion2,
+			TBuildOptions2
+		>(name, input);
 		return builder;
 	}
 }
@@ -428,39 +457,51 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 function getWriteVersion<T extends CodecVersionBase>(
 	name: CodecName,
 	options: CodecWriteOptions,
-	versions: readonly [MinimumMinorSemanticVersion | MinimumVersionForCollab, T][],
+	versions: readonly T[],
 ): T {
 	if (options.writeVersionOverrides?.has(name) === true) {
 		const selectedFormatVersion = options.writeVersionOverrides.get(name);
-		const selected = versions.find(
-			([_v, codec]) => codec.formatVersion === selectedFormatVersion,
-		);
+		const selected = versions.find((codec) => codec.formatVersion === selectedFormatVersion);
 		if (selected === undefined) {
 			throw new UsageError(
-				`Codec "${name}" does not support requested format version ${selectedFormatVersion}. Supported versions are: ${versionList(versions)}.`,
+				`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)}. Supported versions are: ${versionList(versions)}.`,
 			);
 		} else if (options.allowPossiblyIncompatibleWriteVersionOverrides !== true) {
-			const selectedMinVersionForCollab = selected[0];
-			// Currently all versions must specify a minVersionForCollab, so undefined is not expected here.
-			// TODO: It should be possible to have a version which would never be automatically selected for write (and thus does not have or need a minVersionForCollab), but can be selected via override.
-			// Use-cases for this include experimental versions not yet stable, and discontinued or intermediate versions which are mainly being kept for read compatibility but still support writing (perhaps for round-trip testing).
-			// For now, this check should never pass, and there is no way to create such a version yet.
-			if (selectedMinVersionForCollab === undefined) {
+			const selectedMinVersionForCollab = selected.minVersionForCollab;
+			if (selectedMinVersionForCollab === "none") {
 				throw new UsageError(
-					`Codec "${name}" does not support requested format version ${selectedFormatVersion} because it does not specify a minVersionForCollab. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it is has minVersionForCollab "none". Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
 			} else if (gt(selectedMinVersionForCollab, options.minVersionForCollab)) {
 				throw new UsageError(
-					`Codec "${name}" does not support requested format version ${selectedFormatVersion} because it is only compatible back to client version ${selectedMinVersionForCollab} and the requested oldest compatible client was ${options.minVersionForCollab}. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it is only compatible back to client version ${selectedMinVersionForCollab} and the requested oldest compatible client was ${options.minVersionForCollab}. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
 			}
 		}
 
-		return selected[1];
+		return selected;
 	}
+
+	return getWriteVersionNoOverrides(versions, options.minVersionForCollab);
+}
+
+/**
+ * Selects which format should be used when writing data, without consider overrides.
+ */
+function getWriteVersionNoOverrides<T extends CodecVersionBase>(
+	versions: readonly T[],
+	minVersionForCollab: MinimumVersionForCollab,
+): T {
+	const stableVersions: [MinimumMinorSemanticVersion | MinimumVersionForCollab, T][] = [];
+	for (const version of versions) {
+		if (version.minVersionForCollab !== "none") {
+			stableVersions.push([version.minVersionForCollab, version]);
+		}
+	}
+
 	const result: T = getConfigForMinVersionForCollabIterable(
-		options.minVersionForCollab,
-		versions,
+		minVersionForCollab,
+		stableVersions,
 	);
 	return result;
 }
@@ -468,11 +509,6 @@ function getWriteVersion<T extends CodecVersionBase>(
 /**
  * Formats a list of versions for use in UsageErrors.
  */
-function versionList(
-	versions: readonly [
-		MinimumMinorSemanticVersion | MinimumVersionForCollab,
-		CodecVersionBase,
-	][],
-): string {
-	return `${Array.from(versions, ([_v, codec]) => codec.formatVersion).join(", ")}`;
+function versionList(versions: readonly CodecVersionBase[]): string {
+	return JSON.stringify(Array.from(versions, (codec) => codec.formatVersion));
 }
