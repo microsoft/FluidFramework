@@ -180,13 +180,13 @@ export interface CodecVersionBase<
 	TFormatVersion extends FormatVersion = FormatVersion,
 > {
 	/**
-	 * When "none" the codec never be selected as a write version unless via override.
+	 * When `undefined` the codec never be selected as a write version unless via override.
 	 * @remarks
-	 * It may still be used for decode if this format is encountered.
-	 * "none" should be used for unstable codec versions (with string FormatVersions),
-	 * as well as previously stabilized formats where we prefer to use encode to something else in all cases.
+	 * This format will be used for decode if data in it needs to be decoded, regardless of `minVersionForCollab`.
+	 * `undefined` should be used for unstable codec versions (with string FormatVersions),
+	 * as well as previously stabilized formats that are discontinued (meaning we always prefer to use some other format for encoding).
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab | "none";
+	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 	readonly formatVersion: TFormatVersion;
 	readonly codec: T;
 }
@@ -297,6 +297,11 @@ export class ClientVersionDispatchingCodecBuilder<
 
 	/**
 	 * Use {@link ClientVersionDispatchingCodecBuilder.build} to create an instance of this class.
+	 * @remarks
+	 * Inputs to this are assumed to be constants in the code controlled by the developers of this package,
+	 * and constructed at least once during tests.
+	 * Because of this, the validation of these inputs done with debugAssert should be sufficient,
+	 * and using debugAssert avoids bloating the bundle size for production users.
 	 */
 	private constructor(
 		/**
@@ -316,7 +321,7 @@ export class ClientVersionDispatchingCodecBuilder<
 		>;
 		const normalizedRegistry: Normalized[] = [];
 		const formats: Set<FormatVersion> = new Set();
-		const versions: Set<string> = new Set();
+		const versions: Set<string | undefined> = new Set();
 
 		for (const codec of inputRegistry) {
 			debugAssert(
@@ -326,14 +331,14 @@ export class ClientVersionDispatchingCodecBuilder<
 			);
 			debugAssert(
 				() =>
-					codec.minVersionForCollab !== undefined ||
+					codec.minVersionForCollab === undefined ||
 					typeof codec.formatVersion !== "string" ||
-					`unstable format ${JSON.stringify(codec.formatVersion)} (with string formats) must not have a minVersionForCollab in ${name}`,
+					`unstable format ${JSON.stringify(codec.formatVersion)} (string formats) must not have a minVersionForCollab in ${name}`,
 			);
 			formats.add(codec.formatVersion);
 			const normalizedCodec = normalizeCodecVersion(codec);
 			normalizedRegistry.push(normalizedCodec);
-			if (codec.minVersionForCollab !== "none") {
+			if (codec.minVersionForCollab !== undefined) {
 				debugAssert(
 					() =>
 						!versions.has(codec.minVersionForCollab) ||
@@ -468,9 +473,9 @@ function getWriteVersion<T extends CodecVersionBase>(
 			);
 		} else if (options.allowPossiblyIncompatibleWriteVersionOverrides !== true) {
 			const selectedMinVersionForCollab = selected.minVersionForCollab;
-			if (selectedMinVersionForCollab === "none") {
+			if (selectedMinVersionForCollab === undefined) {
 				throw new UsageError(
-					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it has minVersionForCollab "none". Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it has minVersionForCollab undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
 			} else if (gt(selectedMinVersionForCollab, options.minVersionForCollab)) {
 				throw new UsageError(
@@ -494,7 +499,7 @@ function getWriteVersionNoOverrides<T extends CodecVersionBase>(
 ): T {
 	const stableVersions: [MinimumMinorSemanticVersion | MinimumVersionForCollab, T][] = [];
 	for (const version of versions) {
-		if (version.minVersionForCollab !== "none") {
+		if (version.minVersionForCollab !== undefined) {
 			stableVersions.push([version.minVersionForCollab, version]);
 		}
 	}

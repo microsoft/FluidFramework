@@ -18,7 +18,7 @@ describe("schema snapshots", () => {
 	for (const schemaFormat of schemaCodecBuilder.registry) {
 		for (const { name, schemaData } of testTrees) {
 			it(`${name} - schema v${schemaFormat.formatVersion}`, () => {
-				assert(schemaFormat.minVersionForCollab !== "none");
+				assert(schemaFormat.minVersionForCollab !== undefined);
 				const encoded = schemaFormat
 					.codec({
 						jsonValidator: FormatValidatorBasic,

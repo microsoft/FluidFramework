@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { nonProductionConditionalsIncluded } from "@fluidframework/core-utils/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	validateAssertionError,
@@ -62,7 +63,7 @@ describe("versioned Codecs", () => {
 				codec: () => codecV2,
 			},
 			{
-				minVersionForCollab: "none",
+				minVersionForCollab: undefined,
 				formatVersion: "X",
 				codec: codecVX,
 			},
@@ -123,7 +124,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 						writeVersionOverrides: new Map([["Test", "X"]]),
 					}),
 				validateUsageError(
-					`Codec "Test" does not support requested format version "X" because it is has minVersionForCollab "none". Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "Test" does not support requested format version "X" because it has minVersionForCollab undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				),
 			);
 
@@ -139,6 +140,85 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 					`Codec "Test" does not support requested format version "1". Supported versions are: [1,2,"X"].`,
 				),
 			);
+		});
+
+		it("good builds", () => {
+			ClientVersionDispatchingCodecBuilder.build("Test", [
+				{
+					minVersionForCollab: lowestMinVersionForCollab,
+					formatVersion: 1,
+					codec: codecV1,
+				},
+			]);
+		});
+
+		it("bad builds", () => {
+			// Build asserts are debugAsserts, so only test them when those are enabled.
+			if (nonProductionConditionalsIncluded()) {
+				assert.throws(
+					() =>
+						ClientVersionDispatchingCodecBuilder.build("Test", [
+							{
+								minVersionForCollab: lowestMinVersionForCollab,
+								formatVersion: "1",
+								codec: codecV1,
+							},
+						]),
+					validateAssertionError(
+						`Debug assert failed: unstable format "1" (string formats) must not have a minVersionForCollab in Test`,
+					),
+				);
+
+				assert.throws(
+					() =>
+						ClientVersionDispatchingCodecBuilder.build("Test", [
+							{
+								minVersionForCollab: undefined,
+								formatVersion: 1,
+								codec: codecV1,
+							},
+						]),
+					validateAssertionError(
+						"Debug assert failed: Codec Test is missing entry for lowestMinVersionForCollab",
+					),
+				);
+
+				assert.throws(
+					() =>
+						ClientVersionDispatchingCodecBuilder.build("Test", [
+							{
+								minVersionForCollab: lowestMinVersionForCollab,
+								formatVersion: 1,
+								codec: codecV1,
+							},
+							{
+								minVersionForCollab: lowestMinVersionForCollab,
+								formatVersion: 2,
+								codec: codecV1,
+							},
+						]),
+					validateAssertionError(
+						`Debug assert failed: Codec Test has multiple entries for version "1.0.0"`,
+					),
+				);
+
+				assert.throws(
+					() =>
+						ClientVersionDispatchingCodecBuilder.build("Test", [
+							{
+								minVersionForCollab: lowestMinVersionForCollab,
+								formatVersion: 1,
+								codec: codecV1,
+							},
+							{
+								minVersionForCollab: undefined,
+								formatVersion: 1,
+								codec: codecV1,
+							},
+						]),
+					validateAssertionError(`Debug assert failed: duplicate codec format Test 1`),
+				);
+			}
 		});
 	});
 });
