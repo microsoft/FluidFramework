@@ -3336,17 +3336,27 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 					count,
 					true,
 				);
-
-				// We also add `baseDetachId` as an attach ID.
-				this.table.addedCrossFieldKeys.set(
-					{ target: NodeMoveType.Attach, ...baseDetachId },
-					count,
-					this.fieldId,
-				);
-
-				// We remove any rename from `baseDetachId`.
-				this.table.deletedRenames.set(baseDetachId, count, true);
 			}
+
+			// We add `baseDetachId` as an attach ID.
+			this.table.addedCrossFieldKeys.set(
+				{ target: NodeMoveType.Attach, ...baseDetachId },
+				count,
+				this.fieldId,
+			);
+
+			// In the case where `baseDetachId` is part of a rollback of a move in change2,
+			// change2 will also have a detach with `baseDetachId`.
+			// We make sure that `baseDetachId` is registered in this field in the composed change.
+			// In other cases, this line is unnecessary but harmless.
+			this.table.addedCrossFieldKeys.set(
+				{ target: NodeMoveType.Detach, ...baseDetachId },
+				count,
+				this.fieldId,
+			);
+
+			// We remove any rename from `baseDetachId`, since it is now reattached with the same ID.
+			this.table.deletedRenames.set(baseDetachId, count, true);
 		} else {
 			this.table.removedCrossFieldKeys.set(
 				{ target: NodeMoveType.Detach, ...baseDetachId },
