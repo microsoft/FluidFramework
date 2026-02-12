@@ -389,6 +389,21 @@ export class BuildPackage {
 			}
 
 			if (taskConfig.after.length !== 0) {
+				// Don't apply default 'after' dependencies (e.g. ^*) to subtasks of group
+				// tasks that have explicit configuration. These subtasks inherit the parent's
+				// dependencies via initializeDependentLeafTasks. Applying the default "^*"
+				// would incorrectly make them depend on ALL upstream tasks (e.g. check:biome)
+				// instead of just what the parent specifies (e.g. "api").
+				if (taskConfig.isDefault && task.parentTask?.taskName !== undefined) {
+					const parentConfig = this.getTaskDefinition(task.parentTask.taskName);
+					if (parentConfig !== undefined && !parentConfig.isDefault) {
+						traceTaskDepTask(
+							`Skipping default after for ${task.nameColored}: parent ${task.parentTask.nameColored} has explicit config`,
+						);
+						return;
+					}
+				}
+
 				const after = expandStar(taskConfig.after, getAfterStarTaskNames);
 				traceTaskDepTask(
 					`Expanding ${taskConfig.isDefault ? "default " : ""}after: ${

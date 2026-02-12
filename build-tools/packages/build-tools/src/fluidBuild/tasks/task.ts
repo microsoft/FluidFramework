@@ -27,6 +27,16 @@ export interface TaskExec {
 export abstract class Task {
 	private dependentTasks?: Task[];
 	private _transitiveDependentLeafTasks: LeafTask[] | undefined | null;
+
+	/**
+	 * Reference to the parent GroupTask, if this task is a subtask of one.
+	 * Used by {@link BuildPackage.finalizeDependentTasks} to skip default 'after'
+	 * dependencies for subtasks whose parent group has explicit configuration,
+	 * since those subtasks inherit the parent's dependencies via
+	 * {@link GroupTask.initializeDependentLeafTasks}.
+	 */
+	public parentTask?: Task;
+
 	public static createTaskQueue(): AsyncPriorityQueue<TaskExec> {
 		return priorityQueue(async (taskExec: TaskExec) => {
 			const waitTime = (Date.now() - taskExec.queueTime) / 1000;

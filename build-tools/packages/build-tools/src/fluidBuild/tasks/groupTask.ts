@@ -21,6 +21,9 @@ export class GroupTask extends Task {
 		private readonly sequential: boolean = false,
 	) {
 		super(node, command, context, taskName);
+		for (const sub of subTasks) {
+			sub.parentTask = this;
+		}
 	}
 
 	public initializeDependentLeafTasks(): void {
