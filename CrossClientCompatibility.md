@@ -32,7 +32,7 @@ The Fluid Framework guarantees cross-client compatibility between adjacent major
 
 | Version Combination | Compatibility |
 |---------------------|---------------|
-| **N / N-1** (adjacent major versions) | ✅ Fully compatible by default. No special action required. |
+| **N / N-1** (adjacent major versions) | ✅ Fully compatible. No special action required. |
 | **N / N-2 or older** | ❌ Not supported. These clients cannot collaborate. |
 
 **Enforcement:** Incompatible clients will be blocked from collaborating on a document and shown a clear error message.
