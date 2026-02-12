@@ -147,7 +147,7 @@ function createBarItem(id: number): BarItem {
 		data: `Data for item ${id}`,
 		summary: `Summary for item ${id}`,
 		nested: new Level1({
-			description: `Description for item ${id}`,
+			description: `Description Description Description Description Description Description Description Description Description Description ${id}`,
 			nested: new Level2({
 				metadata: `Metadata for item ${id}`,
 				nested: new Level3({
