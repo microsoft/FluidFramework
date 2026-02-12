@@ -21,8 +21,6 @@ import {
 	makeModularChangeCodecFamily,
 	ModularChangeFamily,
 	type DefaultChangeset,
-	type FieldKindConfiguration,
-	type ModularChangeFormatVersion,
 	type ModularChangeset,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -32,7 +30,6 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type { CodecWriteOptions } from "../../../index.js";
-import { brand } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import type { BoundFieldChangeRebaser } from "../../exhaustiveRebaserUtils.js";
 import { defaultRevInfosFromChanges, testRevisionTagCodec } from "../../utils.js";
@@ -50,15 +47,8 @@ const codecOptions: CodecWriteOptions = {
 	minVersionForCollab: currentVersion,
 };
 
-const fieldKindConfiguration: FieldKindConfiguration =
-	fieldKindConfigurations.get(brand(5)) ?? assert.fail("Field kind configuration not found");
-assert(
-	fieldKindConfigurations.get(6 as ModularChangeFormatVersion) === undefined,
-	"There's a newer configuration. It probably should be used.",
-);
-
 const codec = makeModularChangeCodecFamily(
-	new Map([[1, fieldKindConfiguration]]),
+	fieldKindConfigurations,
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,

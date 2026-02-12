@@ -40,11 +40,8 @@ export function makeModularChangeCodecFamily(
 	return makeCodecFamily(
 		Array.from(fieldKindConfigurations.entries(), ([version, fieldKinds]) => {
 			switch (version) {
-				case 1:
-				case 2:
 				case 3:
-				case 4:
-				case 6: {
+				case 4: {
 					return [
 						version,
 						makeModularChangeCodecV1(
