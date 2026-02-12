@@ -12,7 +12,7 @@ import type { BuildPerfMode } from "./types.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * Directory containing the bundled template files (dashboard-template.html, staticwebapp config).
+ * Directory containing the bundled template files (dashboard-template.html).
  */
 export const TEMPLATES_DIR = path.resolve(__dirname, "templates");
 
