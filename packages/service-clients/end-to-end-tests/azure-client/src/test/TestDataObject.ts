@@ -7,10 +7,7 @@ import type { SignalListener } from "@fluid-experimental/data-objects";
 import { EventEmitter } from "@fluid-internal/client-utils";
 // eslint-disable-next-line import-x/no-internal-modules -- TODO consider a test exposure to avoid /internal
 import { createDataObjectKind, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import {
-	DataObject,
-	type IDataObjectProps,
-} from "@fluidframework/aqueduct/legacy";
+import { DataObject, type IDataObjectProps } from "@fluidframework/aqueduct/legacy";
 import type { IErrorEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/legacy";
 import type { Jsonable } from "@fluidframework/datastore-definitions/legacy";
