@@ -236,7 +236,7 @@ describe("snapshotCompatibilityChecker", () => {
 				validateError(`Schema compatibility check failed:
  - Snapshot for current version "2.0.0" is out of date: schema has changed since latest existing snapshot version "2.0.0". If this is expected, snapshotSchemaCompatibility can be rerun in "update" mode to update or create the snapshot.
  - Current version "2.0.0" cannot upgrade documents from "2.0.0".
-Snapshots in: "/workspaces/FluidFramework/packages/dds/tree/src/test/schemaSnapshots/point"
+Snapshots in: "${testSrcPath}/schemaSnapshots/point"
 Snapshots exist for versions: [
 	"1.0.0",
 	"2.0.0"
@@ -277,7 +277,7 @@ Snapshots exist for versions: [
 					}),
 				validateError(`Schema compatibility check failed:
  - Historical version "1.0.0" cannot view documents from "2.0.0": these versions are expected to be able to collaborate due to the selected minVersionForCollaboration "1.0.0".
-Snapshots in: "/workspaces/FluidFramework/packages/dds/tree/src/test/schemaSnapshots/point"
+Snapshots in: "${testSrcPath}/schemaSnapshots/point"
 Snapshots exist for versions: [
 	"1.0.0",
 	"2.0.0"
