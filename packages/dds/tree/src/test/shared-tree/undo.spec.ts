@@ -103,7 +103,7 @@ const testCases: {
 				parentIndex: 0,
 			};
 
-			actedOn.transaction.start();
+			actedOn.transaction.start(false);
 			const listField = actedOn.editor.sequenceField({
 				parent: listNode,
 				field: brand(""),
@@ -124,7 +124,7 @@ const testCases: {
 				parentIndex: 0,
 			};
 
-			actedOn.transaction.start();
+			actedOn.transaction.start(false);
 			actedOn.editor.move({ parent: listNode, field: brand("") }, 0, 1, rootField, 1);
 			remove(actedOn, 0, 1);
 			actedOn.transaction.commit();
@@ -431,7 +431,7 @@ describe("Undo and redo", () => {
 			const tree = createCheckout(["A", "B"], attached);
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-			tree.transaction.start();
+			tree.transaction.start(false);
 			tree.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.editor.sequenceField(rootField).remove(0, 1);
 			tree.transaction.commit();
@@ -718,6 +718,7 @@ describe("Undo and redo", () => {
 					const latestGroup = undoGroups[undoGroups.length - 1];
 					if (
 						label !== undefined &&
+						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58522 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 						latestGroup !== undefined &&
 						label === latestGroup.label
 					) {

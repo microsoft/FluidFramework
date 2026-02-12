@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree-agent-langchain",
-	"version": "2.82.0",
+	"version": "2.83.0",
 	"description": "LangChain integration helpers for @fluidframework/tree-agent",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -112,8 +112,7 @@
 	"dependencies": {
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree-agent": "workspace:~",
-		"@langchain/core": "^0.3.78",
-		"zod": "^3.25.32"
+		"@langchain/core": "^0.3.78"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",

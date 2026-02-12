@@ -18,6 +18,12 @@
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			}
+		},
+		"./policy": {
+			"default": {
+				"types": "./lib/library/repoPolicyCheck/index.d.ts",
+				"default": "./lib/library/repoPolicyCheck/index.js"
+			}
 		}
 	},
 	"main": "lib/index.js",
@@ -47,8 +53,8 @@
 		"clean": "rimraf --glob dist lib oclif.manifest.json \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"clean:manifest": "rimraf --glob oclif.manifest.json",
 		"compile": "fluid-build . --task compile",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check --write .",
 		"lint": "npm run eslint",
@@ -56,7 +62,7 @@
 		"postpack": "npm run clean:manifest",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
-		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.*js\""
+		"test:mocha": "mocha --forbid-only"
 	},
 	"c8": {
 		"all": true,

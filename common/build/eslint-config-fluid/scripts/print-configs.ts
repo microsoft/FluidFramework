@@ -96,9 +96,14 @@ async function generateConfig(filePath: string, config: FlatConfigArray): Promis
 	// Serialize and parse to create a clean copy without any circular references or non-serializable values
 	const cleanConfig = JSON.parse(JSON.stringify(resolvedConfig));
 
-	// Remove languageOptions which contains environment-specific paths and large globals
-	if (cleanConfig.languageOptions) {
-		delete cleanConfig.languageOptions;
+	// Remove globals from languageOptions (very large) but keep the rest (parserOptions, etc.)
+	if (cleanConfig.languageOptions?.globals) {
+		delete cleanConfig.languageOptions.globals;
+	}
+
+	// Remove tsconfigRootDir since it varies by environment (it's set to process.cwd())
+	if (typeof cleanConfig.languageOptions?.parserOptions === "object") {
+		delete cleanConfig.languageOptions.parserOptions.tsconfigRootDir;
 	}
 
 	// Convert numeric severities to string equivalents in rules
