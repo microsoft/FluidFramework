@@ -3,21 +3,14 @@
  * Licensed under the MIT License.
  */
 
-export { BUILD_PERF_CONFIG } from "./config.js";
 export type {
-	AdoBuildRecord,
-	AdoTimeline,
-	AdoTimelineRecord,
-	BuildPerfMode,
-	BuildSummary,
-	DurationTrendPoint,
-	ProcessedBuild,
-	ProcessedDataOutput,
-	StagePerformance,
-	StageDurationTrend,
-	TaskDurationTrend,
-	ThresholdResult,
-} from "./types.js";
+	AdoClientLogger,
+	FetchBuildsOptions,
+	FetchTimelinesOptions,
+} from "./adoClient.js";
+export { fetchBuilds, fetchTimelines } from "./adoClient.js";
+export { BUILD_PERF_CONFIG } from "./config.js";
+export { generateStandaloneHtml, TEMPLATES_DIR } from "./htmlGenerator.js";
 export {
 	calcDurationMins,
 	calcDurationTrend,
@@ -34,10 +27,17 @@ export {
 	processRawData,
 	processTimelines,
 } from "./processData.js";
-export { generateStandaloneHtml, TEMPLATES_DIR } from "./htmlGenerator.js";
-export { fetchBuilds, fetchTimelines } from "./adoClient.js";
 export type {
-	AdoClientLogger,
-	FetchBuildsOptions,
-	FetchTimelinesOptions,
-} from "./adoClient.js";
+	AdoBuildRecord,
+	AdoTimeline,
+	AdoTimelineRecord,
+	BuildPerfMode,
+	BuildSummary,
+	DurationTrendPoint,
+	ProcessedBuild,
+	ProcessedDataOutput,
+	StageDurationTrend,
+	StagePerformance,
+	TaskDurationTrend,
+	ThresholdResult,
+} from "./types.js";

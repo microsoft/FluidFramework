@@ -9,8 +9,8 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 
 import {
-	TEMPLATES_DIR,
 	generateStandaloneHtml,
+	TEMPLATES_DIR,
 } from "../../library/buildPerf/htmlGenerator.js";
 import type { BuildPerfMode } from "../../library/buildPerf/types.js";
 import { BaseCommand } from "../../library/index.js";
@@ -32,7 +32,8 @@ export default class BuildPerfHtmlCommand extends BaseCommand<typeof BuildPerfHt
 			options: ["public", "internal"],
 		}),
 		inputDir: Flags.directory({
-			description: "Directory containing the data JSON files (public-data.json / internal-data.json).",
+			description:
+				"Directory containing the data JSON files (public-data.json / internal-data.json).",
 			env: "DATA_DIR",
 			required: true,
 		}),

@@ -5,13 +5,13 @@
 
 import { getAzureDevopsApi } from "@fluidframework/bundle-size-tools";
 import type { IBuildApi } from "azure-devops-node-api/BuildApi.js";
+import type { Build, Timeline } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import {
 	BuildQueryOrder,
 	BuildReason,
 	BuildResult,
 	BuildStatus,
 } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
-import type { Build, Timeline } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import type { AdoBuildRecord, AdoTimeline, BuildPerfMode } from "./types.js";
 
 /**
