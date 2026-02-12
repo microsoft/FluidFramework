@@ -597,9 +597,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							originatorId: this.idCompressor.localSessionId,
 							revision,
 						};
-						const encodedChange = this.changeFamily.codecs
-							.resolve(4)
-							.json.encode(change, context);
+						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
 
 						assert(
 							commit.parent !== undefined,
@@ -666,7 +664,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			originatorId: this.idCompressor.localSessionId,
 			revision,
 		};
-		const decodedChange = this.changeFamily.codecs.resolve(4).json.decode(change, context);
+		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
 		this.applyChange(decodedChange, revision);
 	}
 

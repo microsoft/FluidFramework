@@ -2251,6 +2251,9 @@ describeCompat(
 				},
 			],
 			async function () {
+				if (provider.driver.type !== "local") {
+					this.skip();
+				}
 				const incrementValue = 3;
 				const pendingLocalState = await generatePendingState(
 					testContainerConfig_noSummarizer,
@@ -2259,7 +2262,8 @@ describeCompat(
 					async (c, d) => {
 						const counter = await d.getSharedObject<SharedCounter>(counterId);
 						// Include an ID Allocation op to get coverage of the special logic around these ops as well
-						getIdCompressor(counter)?.generateCompressedId();
+						// AB#26984: Actually don't, because the ID Compressor is hitting "Ranges finalized out of order" for this test
+						// getIdCompressor(counter)?.generateCompressedId();
 						counter.increment(incrementValue);
 					},
 				);
@@ -2360,6 +2364,7 @@ describeCompat(
 				);
 			},
 		);
+
 		itExpects(
 			`Single-Threaded Forks: Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
 			[

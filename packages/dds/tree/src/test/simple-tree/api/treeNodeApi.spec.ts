@@ -3251,10 +3251,7 @@ describe("treeNodeApi", () => {
 
 				const content2 = { x: new C({}) as TreeNode as B };
 				TreeAlpha.tagContentSchema(A, content2);
-				assert.throws(
-					() => new A(content2),
-					validateUsageError(/Invalid schema for this context/),
-				);
+				assert.throws(() => new A(content2), validateUsageError(/Expected insertable for/));
 			});
 		});
 
