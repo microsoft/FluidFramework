@@ -188,14 +188,15 @@ export interface TreeContextAlpha {
 	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param transaction - The function to run as the body of the transaction.
 	 * It may return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
-	 * @returns A result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
+	 * @returns A {@link TransactionResultExt | result object}.
+	 * It includes the following:
 	 *
 	 * - A "success" flag indicating whether the transaction was successful or not.
 	 * - The success or failure value as returned by the transaction function.
 	 *
 	 * @remarks
 	 * If `runTransaction` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether the returned context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
 	 *
 	 * If `runTransaction` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransaction` does nothing additional).
 	 * The transaction will always succeed.
@@ -208,7 +209,7 @@ export interface TreeContextAlpha {
 	 * @param transaction - The function to run as the body of the transaction.
 	 * @remarks
 	 * If `runTransaction` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether the returned context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
 	 *
 	 * If `runTransaction` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransaction` does nothing additional).
 	 * The transaction will always succeed.
@@ -218,14 +219,15 @@ export interface TreeContextAlpha {
 	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param transaction - The function to run as the body of the transaction.
 	 * It may return a {@link WithValue | value }, which will be returned by the `runTransactionAsync` call.
-	 * @returns A promise that resolves to a result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
+	 * @returns A promise that resolves to a {@link TransactionResultExt | result object}.
+	 * It includes the following:
 	 *
 	 * - A "success" flag indicating whether the transaction was successful or not.
 	 * - The success or failure value as returned by the transaction function.
 	 *
 	 * @remarks
 	 * If `runTransactionAsync` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether the returned context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
 	 *
 	 * If `runTransactionAsync` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransactionAsync` does nothing additional).
 	 * The transaction will always succeed.
@@ -238,7 +240,7 @@ export interface TreeContextAlpha {
 	 * @param transaction - The function to run as the body of the transaction.
 	 * @remarks
 	 * If `runTransactionAsync` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
-	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether the returned context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha | access to more transaction capabilities} if so.
 	 *
 	 * If `runTransactionAsync` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransactionAsync` does nothing additional).
 	 * The transaction will always succeed.
@@ -297,12 +299,12 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	/**
 	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param transaction - The function to run as the body of the transaction.
-	 * It should return a status object of {@link TransactionCallbackStatus | TransactionCallbackStatus } type.
+	 * It should return a {@link TransactionCallbackStatus | status object }.
 	 * It includes a "rollback" property which may be returned as true at any point during the transaction. This will
 	 * abort the transaction and discard any changes it made so far.
 	 * "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
 	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
+	 * @returns A {@link TransactionResultExt | result object}. It includes the following:
 	 *
 	 * - A "success" flag indicating whether the transaction was successful or not.
 	 * - The success or failure value as returned by the transaction function.
@@ -337,12 +339,13 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * @param transaction - The function to run as the body of the transaction. It may return the following:
 	 *
 	 * - Nothing to indicate that the body of the transaction has successfully run.
-	 * - A status object of {@link VoidTransactionCallbackStatus | VoidTransactionCallbackStatus } type. It includes a "rollback" property which
+	 * - A {@link VoidTransactionCallbackStatus | status object }.
+	 * It includes a "rollback" property which
 	 * may be returned as true at any point during the transaction. This will abort the transaction and discard any changes it made so
 	 * far. "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
 	 *
 	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A result object of {@link TransactionResult | TransactionResult} type. It includes a "success" flag indicating whether the
+	 * @returns A {@link TransactionResult | result object}. It includes a "success" flag indicating whether the
 	 * transaction was successful or not.
 	 *
 	 * @remarks
@@ -373,12 +376,12 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	/**
 	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param transaction - The function to run as the body of the transaction.
-	 * It should return a promise that resolves to a status object of {@link TransactionCallbackStatus | TransactionCallbackStatus } type.
+	 * It should return a promise that resolves to a {@link TransactionCallbackStatus | status object }.
 	 * It includes a "rollback" property which may be returned as true at any point during the transaction. This will
 	 * abort the transaction and discard any changes it made so far.
 	 * "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
 	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A promise that resolves to a result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
+	 * @returns A promise that resolves to a {@link TransactionResultExt | result object}. It includes the following:
 	 *
 	 * - A "success" flag indicating whether the transaction was successful or not.
 	 * - The success or failure value as returned by the transaction function.
@@ -416,12 +419,12 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * @param transaction - The function to run as the body of the transaction. It must return a promise that can resolve to any of the following:
 	 *
 	 * - Nothing to indicate that the body of the transaction has successfully run.
-	 * - A status object of {@link VoidTransactionCallbackStatus | VoidTransactionCallbackStatus } type. It includes a "rollback" property which
+	 * - A {@link VoidTransactionCallbackStatus | status object }. It includes a "rollback" property which
 	 * may be returned as true at any point during the transaction. This will abort the transaction and discard any changes it made so
 	 * far. "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
 	 *
 	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A promise that resolves to a result object of {@link TransactionResult | TransactionResult} type. It includes a "success" flag indicating whether the
+	 * @returns A promise that resolves to a {@link TransactionResult | result object}. It includes a "success" flag indicating whether the
 	 * transaction was successful or not. The promise will reject if the constraints are not met or something unexpected happens.
 	 *
 	 * @remarks

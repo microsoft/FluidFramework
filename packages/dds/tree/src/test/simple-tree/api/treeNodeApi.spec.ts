@@ -3822,7 +3822,8 @@ describe("treeNodeApi", () => {
 				const context = TreeAlpha.context(obj);
 				context.runTransaction(() => (obj.n = 4)); // Transaction with no return value
 				const value = context.runTransaction(() => ({ value: obj.n })); // Transaction with return value
-				assert.equal(obj.n, value);
+				assert.ok(value.success);
+				assert.equal(obj.n, value.value);
 			}
 		});
 
@@ -3835,7 +3836,8 @@ describe("treeNodeApi", () => {
 					obj.n = 4; // Transaction with no return value
 				});
 				const value = await context.runTransactionAsync(async () => ({ value: obj.n })); // Transaction with return value
-				assert.equal(obj.n, value);
+				assert.ok(value.success);
+				assert.equal(obj.n, value.value);
 			}
 		});
 	});

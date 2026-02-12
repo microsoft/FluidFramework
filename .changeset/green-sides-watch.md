@@ -4,7 +4,9 @@
 ---
 Added `TreeAlpha.context(node)` to provide context-aware APIs for any SharedTree node, plus a new `TreeContextAlpha` surface for transactions and branch checks.
 
-This release introduces a node-scoped context that works for both hydrated and unhydrated nodes. The new `TreeContextAlpha` interface exposes `runTransaction` / `runTransactionAsync` and an `isBranch()` type guard. `TreeBranchAlpha` now extends `TreeContextAlpha`, so you can keep using branch APIs when available.
+This release introduces a node-scoped context that works for nodes inserted into the tree as well as new, uninserted nodes.
+The new `TreeContextAlpha` interface exposes `runTransaction` / `runTransactionAsync` and an `isBranch()` type guard.
+`TreeBranchAlpha` now extends `TreeContextAlpha`, so you can keep using branch APIs when available.
 
 ### Migration
 If you previously used `TreeAlpha.branch(node)` to discover a branch, switch to `TreeAlpha.context(node)` and check `isBranch()`:
@@ -19,7 +21,8 @@ if (context.isBranch()) {
 }
 ```
 
-`TreeAlpha.branch(node)` is now deprecated; prefer the context API above.
+`TreeAlpha.branch(node)` is now deprecated.
+Prefer the context API above.
 
 ### New transaction entry point
 You can now run transactions from a node context, regardless of whether the node is hydrated:
@@ -36,7 +39,7 @@ const result = context.runTransaction(() => {
 const resultWithValue = context.runTransaction(() => ({ value: node.count }));
 ```
 
-For async work:
+For asynchronous work:
 
 ```ts
 const result = await context.runTransactionAsync(async () => {
