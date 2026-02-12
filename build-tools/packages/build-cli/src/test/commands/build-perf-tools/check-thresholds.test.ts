@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { runCommand } from "@oclif/test";
 import { expect } from "chai";
 import { afterEach, beforeEach, describe, it } from "mocha";
-import { rimrafSync } from "rimraf";
 
 import type { ProcessedDataOutput } from "../../../library/buildPerf/types.js";
 
@@ -45,7 +44,7 @@ describe("flub build-perf-tools check-thresholds", () => {
 	});
 
 	afterEach(() => {
-		rimrafSync(tempDir);
+		rmSync(tempDir, { recursive: true, force: true });
 	});
 
 	it("passes when thresholds are not exceeded", async () => {
@@ -95,7 +94,7 @@ describe("flub build-perf-tools check-thresholds", () => {
 			{ root: import.meta.url },
 		);
 
-		expect(error).to.not.be.undefined;
+		expect(error).to.not.equal(undefined);
 		expect(error?.message).to.include("Thresholds exceeded");
 	});
 
@@ -118,7 +117,7 @@ describe("flub build-perf-tools check-thresholds", () => {
 			{ root: import.meta.url },
 		);
 
-		expect(error).to.not.be.undefined;
+		expect(error).to.not.equal(undefined);
 		expect(error?.message).to.include("Thresholds exceeded");
 	});
 
@@ -142,7 +141,7 @@ describe("flub build-perf-tools check-thresholds", () => {
 			{ root: import.meta.url },
 		);
 
-		expect(error).to.not.be.undefined;
+		expect(error).to.not.equal(undefined);
 		expect(error?.message).to.include("Thresholds exceeded");
 	});
 
@@ -167,6 +166,6 @@ describe("flub build-perf-tools check-thresholds", () => {
 		);
 
 		// Should pass - no error
-		expect(error).to.be.undefined;
+		expect(error).to.equal(undefined);
 	});
 });

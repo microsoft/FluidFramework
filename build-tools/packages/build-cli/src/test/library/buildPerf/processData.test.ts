@@ -45,7 +45,7 @@ function makeBuild(overrides: Partial<AdoBuildRecord> = {}): AdoBuildRecord {
 function makeProcessedBuild(
 	overrides: Partial<ProcessedBuild> = {},
 ): ProcessedBuild & { duration: number } {
-	return {
+	const result = {
 		id: 1000,
 		startTime: "2024-06-01T10:00:00Z",
 		result: "succeeded",
@@ -54,18 +54,19 @@ function makeProcessedBuild(
 		sourceUrl: "https://github.com/microsoft/FluidFramework/pull/12345",
 		url: "https://dev.azure.com/fluidframework/public/_build/results?buildId=1000",
 		...overrides,
-	} as ProcessedBuild & { duration: number };
+	};
+	return result as ProcessedBuild & { duration: number };
 }
 
 describe("buildPerf processData", () => {
 	describe("parseAdoTime", () => {
 		it("returns null for null/undefined input", () => {
-			expect(parseAdoTime(null)).to.be.null;
-			expect(parseAdoTime(undefined)).to.be.null;
+			expect(parseAdoTime(null)).to.equal(null);
+			expect(parseAdoTime(undefined)).to.equal(null);
 		});
 
 		it("returns null for empty string", () => {
-			expect(parseAdoTime("")).to.be.null;
+			expect(parseAdoTime("")).to.equal(null);
 		});
 
 		it("parses a valid ISO timestamp", () => {
@@ -77,8 +78,8 @@ describe("buildPerf processData", () => {
 
 	describe("calcDurationMins", () => {
 		it("returns null for missing start or finish", () => {
-			expect(calcDurationMins(undefined, "2024-06-01T11:00:00Z")).to.be.null;
-			expect(calcDurationMins("2024-06-01T10:00:00Z", undefined)).to.be.null;
+			expect(calcDurationMins(undefined, "2024-06-01T11:00:00Z")).to.equal(null);
+			expect(calcDurationMins("2024-06-01T10:00:00Z", undefined)).to.equal(null);
 		});
 
 		it("calculates correct duration in minutes", () => {
@@ -146,7 +147,7 @@ describe("buildPerf processData", () => {
 				sourceBranch: "refs/heads/main",
 				sourceVersion: undefined,
 			});
-			expect(getSourceUrl(build)).to.be.null;
+			expect(getSourceUrl(build)).to.equal(null);
 		});
 	});
 
@@ -378,7 +379,7 @@ describe("buildPerf processData", () => {
 			expect(stagePerformance[0]!.name).to.equal("Build");
 			expect(stagePerformance[0]!.avgDuration).to.equal(30);
 
-			const buildTasks = stageTaskBreakdown["Build"]!;
+			const buildTasks = stageTaskBreakdown.Build!;
 			expect(buildTasks).to.have.length(1);
 			expect(buildTasks[0]!.name).to.equal("Compile");
 			expect(buildTasks[0]!.avgDuration).to.equal(20);
