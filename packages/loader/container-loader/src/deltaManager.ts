@@ -56,10 +56,7 @@ import type {
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
 import { ThrottlingWarning } from "./error.js";
-import {
-	EffectionScope,
-	createScopedAbortController,
-} from "./structuredConcurrency.js";
+import { EffectionScope, createScopedAbortController } from "./structuredConcurrency.js";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
