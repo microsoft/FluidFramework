@@ -126,6 +126,7 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, type IConnectionArgs } from "./deltaManager.js";
+import { EffectionScope } from "./structuredConcurrency.js";
 import type { ILoaderServices } from "./loader.js";
 import { RelativeLoader } from "./loader.js";
 import {
@@ -531,6 +532,8 @@ export class Container
 	}
 
 	private readonly storageAdapter: ContainerStorageAdapter;
+
+	private readonly _effectionScope = new EffectionScope();
 
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
 	private service: IDocumentService | undefined;
@@ -995,6 +998,12 @@ export class Container
 				}
 			};
 			document.addEventListener("visibilitychange", this.visibilityEventHandler);
+			// Register scope-based safety-net cleanup for the DOM listener
+			this._effectionScope.addCleanup(() => {
+				if (this.visibilityEventHandler !== undefined) {
+					document.removeEventListener("visibilitychange", this.visibilityEventHandler);
+				}
+			});
 		}
 	}
 
@@ -1076,6 +1085,9 @@ export class Container
 
 			this.emit("closed", error);
 
+			// Close the scope — triggers safety-net cleanup (e.g. DOM listeners).
+			this._effectionScope.close().catch(() => {});
+
 			if (this.visibilityEventHandler !== undefined) {
 				document.removeEventListener("visibilitychange", this.visibilityEventHandler);
 			}
@@ -1132,6 +1144,9 @@ export class Container
 			}
 
 			this.emit("disposed", error);
+
+			// Close the scope — triggers safety-net cleanup (e.g. DOM listeners).
+			this._effectionScope.close().catch(() => {});
 
 			this.removeAllListeners();
 			if (this.visibilityEventHandler !== undefined) {
