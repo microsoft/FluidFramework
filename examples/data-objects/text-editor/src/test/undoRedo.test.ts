@@ -52,32 +52,30 @@ function createMockRevertible(): Revertible {
 }
 
 describe("UndoRedoStacks", () => {
-	it("undo() notifies listeners", () => {
+	it("commit, undo, and redo notify listeners", () => {
 		const { listenable, fireCommit } = createMockListenable();
 		const stacks = new UndoRedoStacks(listenable);
+
+		let notifyCount = 0;
+		stacks.onStateChange(() => {
+			notifyCount++;
+		});
+
+		// Adding a change notifies
 		fireCommit(CommitKind.Default, createMockRevertible());
+		assert.equal(notifyCount, 1);
 
-		let notified = false;
-		stacks.onStateChange(() => {
-			notified = true;
-		});
+		// Undo notifies
 		stacks.undo();
+		assert.equal(notifyCount, 2);
 
-		assert.equal(notified, true);
-	});
-
-	it("redo() notifies listeners", () => {
-		const { listenable, fireCommit } = createMockListenable();
-		const stacks = new UndoRedoStacks(listenable);
+		// Set up redo stack (also notifies)
 		fireCommit(CommitKind.Undo, createMockRevertible());
+		assert.equal(notifyCount, 3);
 
-		let notified = false;
-		stacks.onStateChange(() => {
-			notified = true;
-		});
+		// Redo notifies
 		stacks.redo();
-
-		assert.equal(notified, true);
+		assert.equal(notifyCount, 4);
 	});
 
 	it("canUndo/canRedo reflect stack state", () => {
