@@ -14,12 +14,12 @@ import type { JsonCompatible } from "./utils.js";
 /**
  * Reads and parses a snapshot blob from storage service.
  */
-export const readAndParseSnapshotBlob = async <T extends JsonCompatible<IFluidHandle>>(
+export const readAndParseSnapshotBlob = async (
 	blobPath: string,
 	service: IChannelStorageService,
 	parse: SummaryElementParser,
-): Promise<T> => {
+): Promise<JsonCompatible<IFluidHandle>> => {
 	const treeBuffer = await service.readBlob(blobPath);
 	const treeBufferString = bufferToString(treeBuffer, "utf8");
-	return parse(treeBufferString) as T;
+	return parse(treeBufferString) as JsonCompatible<IFluidHandle>;
 };
