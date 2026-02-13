@@ -7,45 +7,6 @@
 // @beta @legacy
 export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
 
-// @beta @legacy
-export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
-    protected constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, data: IOrderedCollection<T>);
-    acquire(callback: ConsensusCallback<T>): Promise<boolean>;
-    add(value: T): Promise<void>;
-    // (undocumented)
-    protected applyStashedOp(content: unknown): void;
-    // (undocumented)
-    protected complete(acquireId: string): Promise<void>;
-    // (undocumented)
-    protected completeCore(acquireId: string): void;
-    // (undocumented)
-    protected isActive(): boolean;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    protected onDisconnect(): void;
-    protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
-    // (undocumented)
-    protected release(acquireId: string): void;
-    // (undocumented)
-    protected releaseCore(acquireId: string): void;
-    // @sealed
-    protected rollback(content: unknown, localOpMetadata: unknown): void;
-    // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
-}
-
-// @beta @legacy
-export const ConsensusQueue: ISharedObjectKind<IConsensusOrderedCollection<any>> & SharedObjectKind<IConsensusOrderedCollection<any>>;
-
-// @beta @legacy
-export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;
-
-// @beta @legacy
-export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-}
-
 // @beta @legacy (undocumented)
 export enum ConsensusResult {
     // (undocumented)

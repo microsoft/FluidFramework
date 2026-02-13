@@ -10,13 +10,13 @@ import { NodeData } from './persisted-types/index.js';
 
 /**
  * An object which can generate node IDs and convert node IDs between compressed and stable variants
- * @alpha
+ * @internal
  */
 export interface NodeIdContext extends NodeIdGenerator, NodeIdConverter {}
 
 /**
  * An object which can generate node IDs
- * @alpha
+ * @internal
  */
 export interface NodeIdGenerator {
 	/**
@@ -35,7 +35,7 @@ export interface NodeIdGenerator {
 
 /**
  * An object which can convert node IDs between compressed and stable variants
- * @alpha
+ * @internal
  */
 export interface NodeIdConverter {
 	/**

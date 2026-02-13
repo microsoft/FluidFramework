@@ -122,7 +122,7 @@ interface IConsensusRegisterCollectionInternalEvents {
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
- * @legacy @beta
+ * @internal
  */
 export class ConsensusRegisterCollection<T>
 	extends SharedObject<IConsensusRegisterCollectionEvents>
