@@ -2251,9 +2251,6 @@ describeCompat(
 				},
 			],
 			async function () {
-				if (provider.driver.type !== "local") {
-					this.skip();
-				}
 				const incrementValue = 3;
 				const pendingLocalState = await generatePendingState(
 					testContainerConfig_noSummarizer,

@@ -326,11 +326,30 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		const remainingCapacity = lastCluster.capacity - lastCluster.count;
-		if (lastCluster.baseLocalId - lastCluster.count !== rangeBaseLocal) {
-			throw rangeFinalizationError(
-				lastCluster.baseLocalId - lastCluster.count,
-				rangeBaseLocal,
-			);
+		const expectedRangeBaseLocal = lastCluster.baseLocalId - lastCluster.count;
+
+		// Check if we're trying to re-finalize a range that was already finalized.
+		// This can happen in a fork scenario where multiple containers load from the same
+		// pending state, both having the same local session ID, and both try to finalize
+		// the same range from their stashed ops.
+		//
+		// Validation criteria for a fork scenario (all must be true):
+		// 1. Range is out of sequence (rangeBaseLocal > expected)
+		// 2. Must be for the local session (forked containers share the same session ID)
+		// 3. The range must overlap with already-finalized IDs (not just out of sequence)
+		if (
+			rangeBaseLocal > expectedRangeBaseLocal &&
+			isLocal &&
+			rangeBaseLocal <= lastCluster.baseLocalId
+		) {
+			// This range overlaps with IDs that were already finalized from stashed ops.
+			// This is expected in a fork scenario - skip it and let the higher-level
+			// fork detection (via batchId mechanism) handle the error appropriately.
+			return;
+		}
+
+		if (rangeBaseLocal !== expectedRangeBaseLocal) {
+			throw rangeFinalizationError(expectedRangeBaseLocal, rangeBaseLocal);
 		}
 
 		if (remainingCapacity >= count) {
