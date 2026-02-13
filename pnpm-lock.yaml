@@ -7368,8 +7368,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/tree
       '@tylerbu/sorted-btree-es6':
-        specifier: ^1.8.0
-        version: 1.8.0
+        specifier: ^2.1.1
+        version: 2.1.1
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -12814,8 +12814,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       '@tylerbu/sorted-btree-es6':
-        specifier: ^1.8.0
-        version: 1.8.0
+        specifier: ^2.1.1
+        version: 2.1.1
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
@@ -13169,8 +13169,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       '@tylerbu/sorted-btree-es6':
-        specifier: ^1.8.0
-        version: 1.8.0
+        specifier: ^2.1.1
+        version: 2.1.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0

@@ -74,7 +74,7 @@ export function createTupleComparator<const K extends readonly DefaultComparable
  * @param tree2 - The second btree.
  * This always returns a new btree and does not modify either input.
  * @param preferLeft - If true, colliding keys will use the value from `tree1`, otherwise the value from `tree2` is used.
-  */
+ */
 export function mergeTupleBTrees<const K extends readonly DefaultComparable[], V>(
 	tree1: TupleBTree<K, V>,
 	tree2: TupleBTree<K, V> | undefined,
