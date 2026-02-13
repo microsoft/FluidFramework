@@ -180,7 +180,7 @@ export interface CodecVersionBase<
 	TFormatVersion extends FormatVersion = FormatVersion,
 > {
 	/**
-	 * When `undefined` the codec never be selected as a write version unless via override.
+	 * When `undefined` the codec will never be selected as a write version except via override.
 	 * @remarks
 	 * This format will be used for decode if data in it needs to be decoded, regardless of `minVersionForCollab`.
 	 * `undefined` should be used for unstable codec versions (with string FormatVersions),
