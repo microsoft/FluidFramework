@@ -3127,9 +3127,16 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 	): RangeQueryResult<NodeId | undefined> {
 		let countToProcess = count;
 
+		const newIdEntry = firstAttachIdFromDetachId(
+			this.table.baseChange.rootNodes,
+			baseDetachId,
+			count,
+		);
+		countToProcess = newIdEntry.length;
+
 		const baseAttachEntry = getFirstFieldForAttach(
 			this.table.baseChange,
-			baseDetachId,
+			newIdEntry.value,
 			countToProcess,
 		);
 
@@ -3140,7 +3147,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			// The detached nodes are still detached in the new change's input context.
 			result = rangeQueryChangeAtomIdMap(
 				this.table.newChange.rootNodes.nodeChanges,
-				baseDetachId,
+				newIdEntry.value,
 				countToProcess,
 			);
 
@@ -4612,13 +4619,6 @@ function invertRename(
 	newId: ChangeAtomId,
 	length: number,
 ): void {
-	for (const detachEntry of doesChangeDetachNodes(change.crossFieldKeys, newId, length)) {
-		assert(
-			!detachEntry.value,
-			"A changeset should not have a rename and detach for the same node.",
-		);
-	}
-
 	let countProcessed = length;
 	const outputDetachEntry = change.rootNodes.outputDetachLocations.getFirst(
 		newId,
@@ -4631,20 +4631,22 @@ function invertRename(
 
 	const attachEntry = getFirstAttachField(change.crossFieldKeys, newId, countProcessed);
 	countProcessed = attachEntry.length;
-	if (attachEntry.value === undefined) {
-		addNodeRename(
-			invertedRoots,
-			newId,
-			oldId,
-			countProcessed,
-			outputDetachEntry.value ?? inputDetachEntry.value,
-		);
-
+	if (
+		attachEntry.value === undefined &&
+		outputDetachEntry.value !== undefined &&
+		inputDetachEntry.value !== undefined
+	) {
 		// The original change moves the detached node, so the inverse should also record a move back to the original location.
-		if (outputDetachEntry.value !== undefined && inputDetachEntry.value !== undefined) {
-			invertedRoots.outputDetachLocations.set(oldId, countProcessed, inputDetachEntry.value);
-		}
+		invertedRoots.outputDetachLocations.set(oldId, countProcessed, inputDetachEntry.value);
 	}
+
+	addNodeRename(
+		invertedRoots,
+		newId,
+		oldId,
+		countProcessed,
+		outputDetachEntry.value ?? inputDetachEntry.value,
+	);
 
 	if (countProcessed < length) {
 		invertRename(
