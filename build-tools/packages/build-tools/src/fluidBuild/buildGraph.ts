@@ -365,10 +365,12 @@ export class BuildPackage {
 		};
 
 		// Collect named subtasks of group tasks, partitioned by whether the parent
-		// group has explicit (non-default) configuration. A task can be a subtask of
-		// multiple groups (since getScriptTask returns cached instances), so we track
-		// both sets to handle that correctly: default 'after' is only skipped for a
-		// subtask if it appears in an explicit group and NOT in any default group.
+		// group has explicit (non-default) configuration. We intentionally iterate all
+		// tasks: collectNamedSubTasks is a no-op on Task and only GroupTask contributes.
+		// A task can be a subtask of multiple groups (since getScriptTask returns
+		// cached instances), so we track both sets to handle that correctly: default
+		// 'after' is only skipped for a subtask if it appears in an explicit group and
+		// NOT in any default group.
 		const subtasksOfExplicitGroups = new Set<Task>();
 		const subtasksOfDefaultGroups = new Set<Task>();
 		for (const task of this.tasks) {
