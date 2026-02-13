@@ -54,6 +54,7 @@ import {
 	cursorForJsonableTreeField,
 	DefaultRevisionReplacer,
 	fieldKindConfigurations,
+	ModularChangeFormatVersion,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,
@@ -1498,18 +1499,18 @@ describe("ModularChangeFamily", () => {
 			],
 		};
 
-		makeEncodingTestSuite(
-			family.codecs,
-			encodingTestDataForAllVersions,
-			assertEquivalent,
-			[3, 4],
-		);
-		makeEncodingTestSuite(family.codecs, encodingTestDataV5AndUp, assertEquivalent, [5]);
+		makeEncodingTestSuite(family.codecs, encodingTestDataForAllVersions, assertEquivalent, [
+			ModularChangeFormatVersion.v3,
+			ModularChangeFormatVersion.v4,
+		]);
+		makeEncodingTestSuite(family.codecs, encodingTestDataV5AndUp, assertEquivalent, [
+			ModularChangeFormatVersion.v5,
+		]);
 		makeEncodingTestSuite(
 			family.codecs,
 			encodingTestDataV5AndUp,
 			(a, b) => assertModularChangesetsEqualIgnoreRebaseVersion(a, b, fieldKinds),
-			[101],
+			[ModularChangeFormatVersion.vDetachedRoots],
 		);
 	});
 

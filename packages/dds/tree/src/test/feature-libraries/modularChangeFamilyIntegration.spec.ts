@@ -34,6 +34,7 @@ import {
 	DefaultRevisionReplacer,
 	FieldKinds as defaultFieldKinds,
 	fieldKindConfigurations,
+	ModularChangeFormatVersion,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
@@ -2693,7 +2694,7 @@ describe("Encoding", () => {
 		family.codecs,
 		encodingTestData,
 		assertModularChangesetsEqualIgnoreRebaseVersion,
-		[101],
+		[ModularChangeFormatVersion.vDetachedRoots],
 	);
 });
 
