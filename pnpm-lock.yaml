@@ -7371,8 +7371,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/tree
       '@tylerbu/sorted-btree-es6':
-        specifier: ^1.8.0
-        version: 1.8.0
+        specifier: ^2.1.1
+        version: 2.1.1
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -9672,8 +9672,8 @@ importers:
         specifier: ^0.34.13
         version: 0.34.13
       '@tylerbu/sorted-btree-es6':
-        specifier: ^1.8.0
-        version: 1.8.0
+        specifier: ^2.1.1
+        version: 2.1.1
       '@types/ungap__structured-clone':
         specifier: ^1.2.0
         version: 1.2.0
@@ -12811,8 +12811,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       '@tylerbu/sorted-btree-es6':
-        specifier: ^1.8.0
-        version: 1.8.0
+        specifier: ^2.1.1
+        version: 2.1.1
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
@@ -13166,8 +13166,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       '@tylerbu/sorted-btree-es6':
-        specifier: ^1.8.0
-        version: 1.8.0
+        specifier: ^2.1.1
+        version: 2.1.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -19937,6 +19937,9 @@ packages:
 
   '@tylerbu/sorted-btree-es6@1.8.0':
     resolution: {integrity: sha512-qkwgE0G5OGn7F+1fMkFZLwyjc99xCy4kmQ8p7N0Jj540HD6xU0jTPjcqELogH4f5YGMPXLqd8sQ7uOYC0QRBeg==}
+
+  '@tylerbu/sorted-btree-es6@2.1.1':
+    resolution: {integrity: sha512-M0EHlEW9Aaz0P8NT/pC1E6wAfuWY7TpvF4U1Ha3wE87KEhiiahnFbHbzmwGsLxm7ma70A/L94cu5pqvickF2nw==}
 
   '@types/argparse@1.0.38':
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
@@ -33507,6 +33510,8 @@ snapshots:
       - supports-color
 
   '@tylerbu/sorted-btree-es6@1.8.0': {}
+
+  '@tylerbu/sorted-btree-es6@2.1.1': {}
 
   '@types/argparse@1.0.38': {}
 
