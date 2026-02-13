@@ -76,8 +76,10 @@ export {
 	type ObservationResults,
 	type TreeIdentifierUtils,
 	independentView,
+	type IndependentViewOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
+	type CreateIndependentTreeAlphaOptions,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
@@ -294,13 +296,13 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
-	checkSchemaCompatibilitySnapshots,
+	snapshotSchemaCompatibility,
 	type SnapshotFileSystem,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
-	type SchemaCompatibilitySnapshotsOptions,
+	type SnapshotSchemaCompatibilityOptions,
 	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
 } from "./simple-tree/index.js";
@@ -317,6 +319,7 @@ export { persistedToSimpleSchema } from "./shared-tree/index.js";
 export {
 	type ICodecOptions,
 	type CodecWriteOptions,
+	type CodecWriteOptionsBeta,
 	FluidClientVersion,
 	type FormatValidator,
 	FormatValidatorNoOp,
@@ -368,3 +371,4 @@ export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
 export { TextAsTree, FormattedTextAsTree } from "./text/index.js";
+export { ExtensibleUnionNode } from "./extensibleUnionNode.js";

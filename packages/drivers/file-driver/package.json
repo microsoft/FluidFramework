@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/file-driver",
-	"version": "2.82.0",
+	"version": "2.83.0",
 	"description": "A driver that reads/write from/to local file storage.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -78,7 +78,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@fluidframework/file-driver-previous": "npm:@fluidframework/file-driver@2.81.0",
+		"@fluidframework/file-driver-previous": "npm:@fluidframework/file-driver@2.82.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/node": "~20.19.30",
 		"concurrently": "^9.2.1",

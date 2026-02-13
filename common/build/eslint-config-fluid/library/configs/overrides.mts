@@ -54,7 +54,17 @@ export const useProjectService = {
 	files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 	languageOptions: {
 		parserOptions: {
+			// Explicitly clear any inherited project setting to avoid conflicts with projectService.
+			// Newer typescript-eslint versions error if both project and projectService are enabled.
+			project: null,
 			projectService: true,
+			// Set tsconfigRootDir to the current working directory so the parser can locate tsconfig
+			// files unambiguously. Without this, typescript-eslint tries to auto-detect the root by
+			// inspecting the call stack for the nearest eslint.config file. In this monorepo the
+			// shared config lives in a different directory than the consuming packages, and VS Code's
+			// TypeScript project service can accumulate multiple candidate roots as files from
+			// different packages are visited, leading to "multiple candidate TSConfigRootDirs" errors.
+			tsconfigRootDir: process.cwd(),
 		},
 	},
 } as const satisfies Linter.Config;
@@ -64,12 +74,6 @@ export const useProjectService = {
  */
 export const testProjectConfig = {
 	files: ["src/test/**", ...testFilePatterns],
-	languageOptions: {
-		parserOptions: {
-			projectService: false,
-			project: ["./tsconfig.json", "./src/test/tsconfig.json"],
-		},
-	},
 	rules: {
 		"@typescript-eslint/no-invalid-this": "off",
 		"@typescript-eslint/unbound-method": "off",
@@ -86,7 +90,11 @@ export const testProjectConfig = {
 		"import-x/no-internal-modules": [
 			"error",
 			{
-				allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*", ...permittedImports],
+				// Any and all `@fluid*` import paths are allowed in test files.
+				// Preferably, external (alpha/beta/public) entrypoints are used
+				// for clarity where testing is somewhat whitebox versus validating
+				// customer experience.
+				allow: ["@fluid*/**", ...permittedImports],
 			},
 		],
 		"import-x/no-extraneous-dependencies": ["error", { devDependencies: true }],
