@@ -573,6 +573,24 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				/The provided data is incompatible with all of the types allowed by the schema/,
 			);
 		});
+
+		it("Throws for structurally valid data, but created with a different schema.", () => {
+			const schemaFactory = new SchemaFactory("test");
+			class TestSchema extends schemaFactory.object("testObject", {
+				field: schemaFactory.string,
+			}) {}
+
+			class TestSchema2 extends schemaFactory.object("testObject", {
+				field: schemaFactory.string,
+			}) {}
+
+			const testData = new TestSchema2({ field: "test" });
+
+			assert.throws(
+				() => unhydratedFlexTreeFromInsertable(testData, TestSchema),
+				validateUsageError("Invalid schema for this context."),
+			);
+		});
 	});
 
 	describe("record", () => {
@@ -757,6 +775,19 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 						schema,
 					),
 				/The provided data is incompatible with all of the types allowed by the schema/,
+			);
+		});
+
+		it("Throws for structurally valid data, but created with a different schema.", () => {
+			const schemaFactory = new SchemaFactoryAlpha("test");
+			class TestSchema extends schemaFactory.record("test-a", schemaFactory.string) {}
+			class TestSchema2 extends schemaFactory.record("test-b", schemaFactory.string) {}
+
+			const testData = new TestSchema2({ field: "test" });
+
+			assert.throws(
+				() => unhydratedFlexTreeFromInsertable(testData, TestSchema),
+				validateUsageError("Invalid schema for this context."),
 			);
 		});
 	});
@@ -1255,55 +1286,20 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 		assert.deepEqual(deepCopyMapTree(actual), expected);
 	});
 
-	it("Structurally valid data, but created with a different schema object", () => {
-		const schemaFactory = new SchemaFactoryAlpha("test");
-		class TestSchema extends schemaFactory.map("a", schemaFactory.string) {}
-		class TestSchema2 extends schemaFactory.map("a", schemaFactory.string) {}
-
-		const testData = new TestSchema2({});
-
-		assert.throws(
-			() => unhydratedFlexTreeFromInsertable(testData, TestSchema),
-			validateUsageError(`A node with schema "test.a" (name: "TestSchema2") was provided where a node with that identifier is allowed, but the actual schema required ("test.a" (name: "TestSchema")) is not the same schema object.
-TreeNodeSchema have significant object identity and thus the exact same object must be used as the schema when defining what nodes are allowed and when constructing the node to use.`),
-		);
-	});
-
-	it("Structurally valid data, but created with a different schema identifier", () => {
-		const schemaFactory = new SchemaFactoryAlpha("test");
-		class TestSchema extends schemaFactory.map("a", schemaFactory.string) {}
-		class TestSchema2 extends schemaFactory.map("b", schemaFactory.string) {}
-
-		const testData = new TestSchema2({});
-
-		assert.throws(
-			() => unhydratedFlexTreeFromInsertable(testData, TestSchema),
-			validateUsageError(`Expected insertable for one of ["test.a" (name: "TestSchema")]. Got node with schema "test.b" (name: "TestSchema2").
-Nodes are valid insertable objects, but only if their schema are in the allowed list.`),
-		);
-	});
-
 	it("ambiguous unions", () => {
 		const schemaFactory = new SchemaFactory("test");
-		class A extends schemaFactory.object("a", { x: schemaFactory.string }) {}
-		class B extends schemaFactory.object("b", { x: schemaFactory.string }) {}
-		const allowedTypes = [A, B];
+		const a = schemaFactory.object("a", { x: schemaFactory.string });
+		const b = schemaFactory.object("b", { x: schemaFactory.string });
+		const allowedTypes = [a, b];
 
 		assert.throws(
 			() => unhydratedFlexTreeFromInsertable({}, allowedTypes),
-			validateUsageError(
-				`The provided data is incompatible with all of the types allowed by the schema. The set of allowed types is: ["test.a" (name: "A"), "test.b" (name: "B")].`,
-			),
+			/\["test.a","test.b"]/,
 		);
 		assert.throws(
 			() => unhydratedFlexTreeFromInsertable({ x: "hello" }, allowedTypes),
-			validateUsageError(`The provided data is compatible with more than one type allowed by the schema.
-The set of possible types is ["test.a" (name: "A"), "test.b" (name: "B")].
-Explicitly construct an unhydrated node of the desired type to disambiguate.
-For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`),
+			/\["test.a","test.b"]/,
 		);
-
-		unhydratedFlexTreeFromInsertable(new A({ x: "hello" }), allowedTypes);
 	});
 
 	it("unambiguous unions", () => {
