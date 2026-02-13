@@ -130,7 +130,7 @@ async function generateConfig(filePath: string, config: FlatConfigArray): Promis
 	// https://github.com/un-ts/eslint-plugin-import-x/blob/master/src/utils/resolve.ts).
 	// Using depth 2 is a nice compromise.
 	const sortedConfig = sortJson(cleanConfig, { indentSize: 4, depth: 2 });
-	const finalConfig = JSON.stringify(sortedConfig, null, 4);
+	const finalConfig = JSON.stringify(sortedConfig, null, "\t");
 
 	// Add a trailing newline to match preferred output formatting
 	return finalConfig + "\n";
