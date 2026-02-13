@@ -41,6 +41,11 @@ export default class GenerateNode10EntrypointsCommand extends BaseCommand<
 			);
 		}
 
-		await generateNode10TypeEntrypoints(mapNode10CompatExportPathToData, this.logger);
+		const commandLine = `flub generate node10Entrypoints${this.commandLineArgs()}`;
+		await generateNode10TypeEntrypoints(
+			mapNode10CompatExportPathToData,
+			commandLine,
+			this.logger,
+		);
 	}
 }
