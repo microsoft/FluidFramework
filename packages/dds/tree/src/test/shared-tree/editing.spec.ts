@@ -306,7 +306,7 @@ describe("Editing", () => {
 		it("can edit node created in same transaction", () => {
 			const tree1 = makeTreeFromJsonSequence([]);
 			const tree2 = tree1.branch();
-			tree2.transaction.start();
+			tree2.transaction.start(false);
 			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees([{}]));
 			const aEditor = tree2.editor.sequenceField({ parent: rootNode, field: brand("foo") });
 			aEditor.insert(0, chunkFromJsonTrees(["a"]));
