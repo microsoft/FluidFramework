@@ -27,6 +27,13 @@ export interface TaskExec {
 export abstract class Task {
 	private dependentTasks?: Task[];
 	private _transitiveDependentLeafTasks: LeafTask[] | undefined | null;
+
+	/**
+	 * Collects named subtasks into the provided set.
+	 * Overridden by GroupTask to add its named subtasks.
+	 */
+	public collectNamedSubTasks(_set: Set<Task>): void {}
+
 	public static createTaskQueue(): AsyncPriorityQueue<TaskExec> {
 		return priorityQueue(async (taskExec: TaskExec) => {
 			const waitTime = (Date.now() - taskExec.queueTime) / 1000;

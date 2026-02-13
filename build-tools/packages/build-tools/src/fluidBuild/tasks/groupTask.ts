@@ -23,6 +23,26 @@ export class GroupTask extends Task {
 		super(node, command, context, taskName);
 	}
 
+	/**
+	 * Collect all named subtasks to separate them from the unnamed tasks.
+	 *
+	 * A subtask has a name if it's created by invoking another script:
+	 * `concurrently npm:script npm:script2`
+	 *
+	 * It is an unnamed task if it is an inline execution, e.g.
+	 *   `concurrently 'node ./script.mjs' 'node ./script2.mjs'`
+	 *
+	 * Named subtasks participate in task-definition dependency processing.
+	 * Unnamed subtasks are command-only/internal and handled separately.
+	 */
+	public override collectNamedSubTasks(set: Set<Task>): void {
+		for (const sub of this.subTasks) {
+			if (sub.taskName !== undefined) {
+				set.add(sub);
+			}
+		}
+	}
+
 	public initializeDependentLeafTasks(): void {
 		// Push this task's dependencies to the leaves
 		this.addDependentLeafTasks(this.transitiveDependentLeafTask);
