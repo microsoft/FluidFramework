@@ -4,12 +4,15 @@
  */
 
 import { newChangeAtomIdTransform } from "../../../core/index.js";
-import type { GenericChangeset } from "../../../feature-libraries/index.js";
+import {
+	newChangeAtomIdBTree,
+	type GenericChangeset,
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeGenericChangeCodec } from "../../../feature-libraries/modular-schema/genericFieldKindCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
-import { brand, newTupleBTree } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
@@ -64,7 +67,7 @@ export function testSnapshots(): void {
 							}),
 							encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
 							decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
-							rootNodeChanges: newTupleBTree(),
+							rootNodeChanges: newChangeAtomIdBTree(),
 							rootRenames: newChangeAtomIdTransform(),
 							decodeRootNodeChange: () => {},
 							decodeRootRename: () => {},

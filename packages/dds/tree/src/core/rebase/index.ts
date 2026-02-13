@@ -32,7 +32,9 @@ export {
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
 	newChangeAtomIdTransform,
-	compareRevisions,
+	comparePartialRevisions,
+	compareChangesetLocalIds,
+	comparePartialChangesetLocalIds,
 } from "./types.js";
 export { RevisionTagCodec } from "./revisionTagCodec.js";
 export {

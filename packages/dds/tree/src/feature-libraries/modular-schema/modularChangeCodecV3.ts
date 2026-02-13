@@ -26,7 +26,6 @@ import {
 import {
 	brand,
 	idAllocatorFromMaxId,
-	newTupleBTree,
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
 	type Mutable,
@@ -34,7 +33,11 @@ import {
 	type RangeQueryResult,
 	type TupleBTree,
 } from "../../util/index.js";
-import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import {
+	newChangeAtomIdBTree,
+	setInChangeAtomIdMap,
+	type ChangeAtomIdBTree,
+} from "../changeAtomIdBTree.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
@@ -54,6 +57,7 @@ import {
 	addNodeRename,
 	getFirstAttachField,
 	getFirstDetachField,
+	newFieldIdKeyBTree,
 	newRootTable,
 	type FieldIdKey,
 } from "./modularChangeFamily.js";
@@ -144,7 +148,7 @@ export function makeModularChangeCodecV3(
 
 			const fieldContext: FieldChangeEncodingContext = {
 				baseContext: context,
-				rootNodeChanges: rootChanges?.nodeChanges ?? newTupleBTree(),
+				rootNodeChanges: rootChanges?.nodeChanges ?? newChangeAtomIdBTree(),
 				rootRenames: rootChanges?.renames ?? newChangeAtomIdTransform(),
 
 				encodeNode,
@@ -268,7 +272,7 @@ export function makeModularChangeCodecV3(
 
 			const fieldContext: FieldChangeEncodingContext = {
 				baseContext: context,
-				rootNodeChanges: newTupleBTree(),
+				rootNodeChanges: newChangeAtomIdBTree(),
 				rootRenames: newChangeAtomIdTransform(),
 
 				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
@@ -478,8 +482,8 @@ export function makeModularChangeCodecV3(
 
 		decode: (encodedChange: EncodedModularChangesetV3, context) => {
 			const idAllocator = idAllocatorFromMaxId(encodedChange.maxId);
-			const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
-			const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newTupleBTree();
+			const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newChangeAtomIdBTree();
+			const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newChangeAtomIdBTree();
 			const crossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
 			const rootNodes = newRootTable();
 
@@ -529,7 +533,7 @@ export function makeModularChangeCodecV3(
 					decodeNode,
 				),
 				nodeToParent,
-				nodeAliases: newTupleBTree(),
+				nodeAliases: newChangeAtomIdBTree(),
 				crossFieldKeys,
 			};
 
@@ -596,7 +600,7 @@ function getChangeHandler(
 }
 
 function getFieldToRoots(rootTable: RootNodeTable): FieldRootMap {
-	const fieldToRoots: FieldRootMap = newTupleBTree();
+	const fieldToRoots: FieldRootMap = newFieldIdKeyBTree();
 	for (const [[revision, localId], nodeId] of rootTable.nodeChanges.entries()) {
 		const detachId: ChangeAtomId = { revision, localId };
 		const fieldId = rootTable.detachLocations.getFirst(detachId, 1).value;
@@ -631,7 +635,7 @@ function getOrAddInFieldRootMap(map: FieldRootMap, fieldId: FieldId): FieldRootC
 	}
 
 	const newRootChanges: FieldRootChanges = {
-		nodeChanges: newTupleBTree(),
+		nodeChanges: newChangeAtomIdBTree(),
 		renames: newChangeAtomIdTransform(),
 	};
 	map.set(key, newRootChanges);

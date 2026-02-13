@@ -211,6 +211,7 @@ export {
 
 export {
 	type ChangeAtomIdBTree,
+	newChangeAtomIdBTree,
 	getFromChangeAtomIdMap,
 	setInChangeAtomIdMap,
 } from "./changeAtomIdBTree.js";

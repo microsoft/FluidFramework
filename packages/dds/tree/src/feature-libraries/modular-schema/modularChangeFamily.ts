@@ -52,6 +52,8 @@ import {
 	subtractChangeAtomIds,
 	makeChangeAtomId,
 	type RevisionReplacer,
+	comparePartialRevisions,
+	comparePartialChangesetLocalIds,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -62,17 +64,20 @@ import {
 	idAllocatorFromState,
 	type RangeQueryResult,
 	getOrCreate,
-	newTupleBTree,
 	mergeTupleBTrees,
 	type TupleBTree,
 	RangeMap,
 	balancedReduce,
+	compareStrings,
+	createTupleComparator,
 	type RangeQueryEntry,
 	type RangeQueryResultFragment,
+	newTupleBTree,
 } from "../../util/index.js";
 import {
 	getFromChangeAtomIdMap,
 	rangeQueryChangeAtomIdMap,
+	newChangeAtomIdBTree,
 	setInChangeAtomIdMap,
 	type ChangeAtomIdBTree,
 } from "../changeAtomIdBTree.js";
@@ -291,7 +296,7 @@ export class ModularChangeFamily
 
 		const pendingCompositions: PendingCompositions = {
 			nodeIdsToCompose: [],
-			affectedBaseFields: newTupleBTree(),
+			affectedBaseFields: newFieldIdKeyBTree(),
 		};
 
 		const movedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
@@ -815,7 +820,7 @@ export class ModularChangeFamily
 			revisionForInvert,
 		);
 
-		const invertedNodes: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
+		const invertedNodes = newChangeAtomIdBTree<NodeChangeset>();
 		change.change.nodeChanges.forEachPair(([revision, localId], nodeChangeset) => {
 			invertedNodes.set(
 				[revision, localId],
@@ -990,7 +995,7 @@ export class ModularChangeFamily
 		const idState: IdAllocationState = { maxId };
 		const genId: IdAllocator = idAllocatorFromState(idState);
 
-		const affectedBaseFields: TupleBTree<FieldIdKey, boolean> = newTupleBTree();
+		const affectedBaseFields: TupleBTree<FieldIdKey, boolean> = newFieldIdKeyBTree();
 		const nodesToRebase: [newChangeset: NodeId, baseChangeset: NodeId][] = [];
 
 		const rebasedNodeToParent: ChangeAtomIdBTree<NodeLocation> = brand(
@@ -1018,7 +1023,7 @@ export class ModularChangeFamily
 			baseFieldToContext: new Map(),
 			baseRoots: over.change.rootNodes,
 			rebasedRootNodes,
-			baseToRebasedNodeId: newTupleBTree(),
+			baseToRebasedNodeId: newChangeAtomIdBTree(),
 			rebasedFields: new Set(),
 			rebasedNodeToParent,
 			rebasedDetachLocations: newChangeAtomIdRangeMap(),
@@ -1247,7 +1252,7 @@ export class ModularChangeFamily
 			baseChange: baseFieldChange,
 			rebasedChange: rebasedFieldChange,
 			fieldId,
-			baseNodeIds: newTupleBTree(),
+			baseNodeIds: newChangeAtomIdBTree(),
 		};
 
 		if (baseNodeId !== undefined) {
@@ -1576,7 +1581,7 @@ export class ModularChangeFamily
 				newChange: fieldChange,
 				rebasedChange: rebasedFieldChange,
 				fieldId,
-				baseNodeIds: newTupleBTree(),
+				baseNodeIds: newChangeAtomIdBTree(),
 			});
 
 			crossFieldTable.rebasedFields.add(rebasedFieldChange);
@@ -1819,7 +1824,7 @@ export class ModularChangeFamily
 		fieldsWithRootMoves: TupleBTree<FieldIdKey, boolean>,
 		fieldsToRootChanges: TupleBTree<FieldIdKey, ChangeAtomId[]>,
 	): RootNodeTable {
-		const pruned: RootNodeTable = { ...roots, nodeChanges: newTupleBTree() };
+		const pruned: RootNodeTable = { ...roots, nodeChanges: newChangeAtomIdBTree() };
 		for (const [rootIdKey, nodeId] of roots.nodeChanges.entries()) {
 			const rootId: ChangeAtomId = { revision: rootIdKey[0], localId: rootIdKey[1] };
 			const hasDetachLocation = roots.detachLocations.getFirst(rootId, 1).value !== undefined;
@@ -1929,7 +1934,7 @@ export class ModularChangeFamily
 			rootNodes: replaceRootTableRevision(change.rootNodes, replacer, change.nodeAliases),
 
 			// We've updated all references to old node IDs, so we no longer need an alias table.
-			nodeAliases: newTupleBTree(),
+			nodeAliases: newChangeAtomIdBTree(),
 			crossFieldKeys: replaceCrossFieldKeyTableRevisions(
 				change.crossFieldKeys,
 				replacer,
@@ -2117,7 +2122,7 @@ function replaceIdMapRevisions<T>(
 	replacer: RevisionReplacer,
 	valueMapper: (value: T) => T = (value) => value,
 ): ChangeAtomIdBTree<T> {
-	const updated: ChangeAtomIdBTree<T> = newTupleBTree();
+	const updated = newChangeAtomIdBTree<T>();
 	for (const [[revision, localId], value] of map.entries()) {
 		const newAtom = replacer.getUpdatedAtomId({ revision, localId });
 		updated.set([newAtom.revision, newAtom.localId], valueMapper(value));
@@ -2148,20 +2153,23 @@ function composeBuildsDestroysAndRefreshers(
 	// care to support at this time.
 	const allBuilds: ChangeAtomIdBTree<TreeChunk> = brand(
 		mergeTupleBTrees(
-			change1.builds ?? newTupleBTree(),
-			change2.builds ?? newTupleBTree(),
+			change1.builds ?? newChangeAtomIdBTree(),
+			change2.builds ?? newChangeAtomIdBTree(),
 			true,
 		),
 	);
 
 	const allDestroys: ChangeAtomIdBTree<number> = brand(
-		mergeTupleBTrees(change1.destroys ?? newTupleBTree(), change2.destroys ?? newTupleBTree()),
+		mergeTupleBTrees(
+			change1.destroys ?? newChangeAtomIdBTree(),
+			change2.destroys ?? newChangeAtomIdBTree(),
+		),
 	);
 
 	const allRefreshers: ChangeAtomIdBTree<TreeChunk> = brand(
 		mergeTupleBTrees(
-			change1.refreshers ?? newTupleBTree(),
-			change2.refreshers ?? newTupleBTree(),
+			change1.refreshers ?? newChangeAtomIdBTree(),
+			change2.refreshers ?? newChangeAtomIdBTree(),
 			true,
 		),
 	);
@@ -2310,7 +2318,7 @@ export function updateRefreshers(
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 	requireRefreshers: boolean = true,
 ): ModularChangeset {
-	const refreshers: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
+	const refreshers = newChangeAtomIdBTree<TreeChunk>();
 	const chunkLengths: Map<RevisionTag | undefined, BTree<number, number>> = new Map();
 
 	if (change.builds !== undefined) {
@@ -2630,7 +2638,11 @@ interface RebaseTable {
 	readonly fieldsWithUnattachedChild: Set<FieldChange>;
 }
 
-export type FieldIdKey = [RevisionTag | undefined, ChangesetLocalId | undefined, FieldKey];
+export type FieldIdKey = readonly [
+	RevisionTag | undefined,
+	ChangesetLocalId | undefined,
+	FieldKey,
+];
 
 interface RebaseFieldContext {
 	baseChange: FieldChange;
@@ -2663,9 +2675,9 @@ function newComposeTable(
 		newChange,
 		fieldToContext: new Map(),
 		newFieldToBaseField: new Map(),
-		newToBaseNodeId: newTupleBTree(),
+		newToBaseNodeId: newChangeAtomIdBTree(),
 		composedNodes: new Set(),
-		movedNodeToParent: newTupleBTree(),
+		movedNodeToParent: newChangeAtomIdBTree(),
 		composedRootNodes,
 		movedCrossFieldKeys,
 		removedCrossFieldKeys,
@@ -3427,10 +3439,10 @@ function makeModularChangeset(props?: {
 	const changeset: Mutable<ModularChangeset> = {
 		rebaseVersion: p.rebaseVersion,
 		fieldChanges: p.fieldChanges ?? new Map<FieldKey, FieldChange>(),
-		nodeChanges: p.nodeChanges ?? newTupleBTree(),
+		nodeChanges: p.nodeChanges ?? newChangeAtomIdBTree(),
 		rootNodes: p.rootNodes ?? newRootTable(),
-		nodeToParent: p.nodeToParent ?? newTupleBTree(),
-		nodeAliases: p.nodeAliases ?? newTupleBTree(),
+		nodeToParent: p.nodeToParent ?? newChangeAtomIdBTree(),
+		nodeAliases: p.nodeAliases ?? newChangeAtomIdBTree(),
 		crossFieldKeys: p.crossFieldKeys ?? newCrossFieldRangeTable(),
 	};
 
@@ -3524,7 +3536,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		// This content will be added to a GlobalEditDescription whose lifetime exceeds the scope of this function.
 		content.referenceAdded();
 
-		const builds: ChangeAtomIdBTree<TreeChunk> = newTupleBTree();
+		const builds = newChangeAtomIdBTree<TreeChunk>();
 		builds.set([revision, firstId], content);
 
 		return {
@@ -3555,8 +3567,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			rebaseVersion: this.rebaseVersion,
 			path: field,
 			fieldChange: { fieldKind, change },
-			nodeChanges: newTupleBTree(),
-			nodeToParent: newTupleBTree(),
+			nodeChanges: newChangeAtomIdBTree(),
+			nodeToParent: newChangeAtomIdBTree(),
 			crossFieldKeys: newCrossFieldRangeTable(),
 			rootNodes: newRootTable(),
 			idAllocator: this.idAllocator,
@@ -3591,8 +3603,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 								fieldKind: change.fieldKind,
 								change: change.change,
 							},
-							nodeChanges: newTupleBTree(),
-							nodeToParent: newTupleBTree(),
+							nodeChanges: newChangeAtomIdBTree(),
+							nodeToParent: newChangeAtomIdBTree(),
 							crossFieldKeys: newCrossFieldRangeTable(),
 							rootNodes: newRootTable(),
 							idAllocator: this.idAllocator,
@@ -3632,8 +3644,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 					rebaseVersion: this.rebaseVersion,
 					path,
 					nodeChange,
-					nodeChanges: newTupleBTree(),
-					nodeToParent: newTupleBTree(),
+					nodeChanges: newChangeAtomIdBTree(),
+					nodeToParent: newChangeAtomIdBTree(),
 					crossFieldKeys: newCrossFieldRangeTable(),
 					rootNodes: newRootTable(),
 					idAllocator: this.idAllocator,
@@ -3655,8 +3667,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 					rebaseVersion: this.rebaseVersion,
 					path,
 					nodeChange,
-					nodeChanges: newTupleBTree(),
-					nodeToParent: newTupleBTree(),
+					nodeChanges: newChangeAtomIdBTree(),
+					nodeToParent: newChangeAtomIdBTree(),
 					crossFieldKeys: newCrossFieldRangeTable(),
 					rootNodes: newRootTable(),
 					idAllocator: this.idAllocator,
@@ -4146,7 +4158,7 @@ export function newRootTable(): RootNodeTable {
 	return {
 		newToOldId: newChangeAtomIdTransform(),
 		oldToNewId: newChangeAtomIdTransform(),
-		nodeChanges: newTupleBTree(),
+		nodeChanges: newChangeAtomIdBTree(),
 		detachLocations: newChangeAtomIdRangeMap(),
 		outputDetachLocations: newChangeAtomIdRangeMap(),
 	};
@@ -4877,7 +4889,7 @@ function getFieldsWithRootMoves(
 	roots: RootNodeTable,
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
 ): TupleBTree<FieldIdKey, boolean> {
-	const fields: TupleBTree<FieldIdKey, boolean> = newTupleBTree();
+	const fields: TupleBTree<FieldIdKey, boolean> = newFieldIdKeyBTree();
 	for (const { start: rootId, value: fieldId, length } of roots.detachLocations.entries()) {
 		let isRootMoved = false;
 		for (const renameEntry of roots.oldToNewId.getAll2(rootId, length)) {
@@ -4904,7 +4916,7 @@ function getFieldToRootChanges(
 	roots: RootNodeTable,
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
 ): TupleBTree<FieldIdKey, ChangeAtomId[]> {
-	const fields: TupleBTree<FieldIdKey, ChangeAtomId[]> = newTupleBTree();
+	const fields: TupleBTree<FieldIdKey, ChangeAtomId[]> = newFieldIdKeyBTree();
 	for (const rootIdKey of roots.nodeChanges.keys()) {
 		const rootId: ChangeAtomId = { revision: rootIdKey[0], localId: rootIdKey[1] };
 		const detachLocation = roots.detachLocations.getFirst(rootId, 1).value;
@@ -5123,3 +5135,13 @@ function validateFieldChanges(
 		}
 	}
 }
+
+export function newFieldIdKeyBTree<V>(): TupleBTree<FieldIdKey, V> {
+	return newTupleBTree(compareFieldIdKeys);
+}
+
+const compareFieldIdKeys = createTupleComparator([
+	comparePartialRevisions,
+	comparePartialChangesetLocalIds,
+	compareStrings<FieldKey>,
+]);

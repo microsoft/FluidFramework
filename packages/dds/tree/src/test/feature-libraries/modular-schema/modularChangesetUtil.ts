@@ -28,6 +28,7 @@ import {
 	defaultChunkPolicy,
 	fieldKinds as defaultFieldKinds,
 	jsonableTreeFromFieldCursor,
+	newChangeAtomIdBTree,
 	type ChangeAtomIdBTree,
 	type ComposeNodeManager,
 	type FieldChangeHandler,
@@ -73,7 +74,6 @@ import {
 	areAdjacentIntegerRanges,
 	brand,
 	idAllocatorFromMaxId,
-	newTupleBTree,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
@@ -155,8 +155,8 @@ function normalizeNodeIds(
 	const idAllocator = idAllocatorFromMaxId();
 
 	const idRemappings: ChangeAtomIdMap<NodeId> = new Map();
-	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
-	const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newTupleBTree();
+	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newChangeAtomIdBTree();
+	const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newChangeAtomIdBTree();
 	const crossFieldKeyTable: CrossFieldKeyTable = newCrossFieldRangeTable();
 
 	const remapNodeId = (nodeId: NodeId): NodeId => {
@@ -365,10 +365,10 @@ export function empty(): ModularChangeset {
 	return {
 		rebaseVersion: 1,
 		fieldChanges: new Map(),
-		nodeChanges: newTupleBTree(),
+		nodeChanges: newChangeAtomIdBTree(),
 		rootNodes: newRootTable(),
-		nodeToParent: newTupleBTree(),
-		nodeAliases: newTupleBTree(),
+		nodeToParent: newChangeAtomIdBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 		crossFieldKeys: newCrossFieldRangeTable(),
 	};
 }
@@ -563,8 +563,8 @@ interface BuildArgs {
 }
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
-	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
-	const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newTupleBTree();
+	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newChangeAtomIdBTree();
+	const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newChangeAtomIdBTree();
 	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
 
 	const idAllocator = idAllocatorFromMaxId();
@@ -609,7 +609,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 		rootNodes,
 		nodeToParent,
 		crossFieldKeys,
-		nodeAliases: newTupleBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 		maxId: brand(args.maxId ?? idAllocator.getMaxId()),
 	};
 
@@ -811,7 +811,7 @@ export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 		...changeset,
 		nodeToParent: brand(updatedNodeToParent),
 		crossFieldKeys: updatedCrossFieldKeys,
-		nodeAliases: newTupleBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 		rootNodes: updatedRootTable,
 	};
 }

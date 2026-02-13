@@ -30,7 +30,6 @@ import {
 import {
 	brand,
 	idAllocatorFromMaxId,
-	newTupleBTree,
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
 	type Mutable,
@@ -38,7 +37,11 @@ import {
 	type RangeQueryResult,
 	type TupleBTree,
 } from "../../util/index.js";
-import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import {
+	newChangeAtomIdBTree,
+	setInChangeAtomIdMap,
+	type ChangeAtomIdBTree,
+} from "../changeAtomIdBTree.js";
 import {
 	chunkFieldSingle,
 	defaultChunkPolicy,
@@ -58,6 +61,7 @@ import {
 	addNodeRename,
 	getFirstAttachField,
 	getFirstDetachField,
+	newFieldIdKeyBTree,
 	newRootTable,
 	normalizeFieldId,
 	validateChangeset,
@@ -186,7 +190,7 @@ function encodeFieldChangesForJson(
 
 		const fieldContext: FieldChangeEncodingContext = {
 			baseContext: context,
-			rootNodeChanges: rootChanges?.nodeChanges ?? newTupleBTree(),
+			rootNodeChanges: rootChanges?.nodeChanges ?? newChangeAtomIdBTree(),
 			rootRenames: rootChanges?.renames ?? newChangeAtomIdTransform(),
 
 			encodeNode,
@@ -307,7 +311,7 @@ function decodeFieldChangesFromJson(
 
 		const fieldContext: FieldChangeEncodingContext = {
 			baseContext: context,
-			rootNodeChanges: newTupleBTree(),
+			rootNodeChanges: newChangeAtomIdBTree(),
 			rootRenames: newChangeAtomIdTransform(),
 
 			encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
@@ -428,7 +432,7 @@ export function decodeDetachedNodes(
 		});
 	};
 
-	const map: ModularChangeset["builds"] = newTupleBTree();
+	const map: ModularChangeset["builds"] = newChangeAtomIdBTree();
 	// eslint-disable-next-line unicorn/no-array-for-each -- Codec internals: minimizing changes to serialization logic
 	encoded.builds.forEach((build) => {
 		// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
@@ -757,7 +761,7 @@ function getFieldToRoots(
 	rootTable: RootNodeTable,
 	aliases: ChangeAtomIdBTree<NodeId>,
 ): FieldRootMap {
-	const fieldToRoots: FieldRootMap = newTupleBTree();
+	const fieldToRoots: FieldRootMap = newFieldIdKeyBTree();
 	for (const [[revision, localId], nodeId] of rootTable.nodeChanges.entries()) {
 		const detachId: ChangeAtomId = { revision, localId };
 		const fieldId = rootTable.detachLocations.getFirst(detachId, 1).value;
@@ -796,7 +800,7 @@ function getOrAddInFieldRootMap(map: FieldRootMap, fieldId: FieldId): FieldRootC
 	}
 
 	const newRootChanges: FieldRootChanges = {
-		nodeChanges: newTupleBTree(),
+		nodeChanges: newChangeAtomIdBTree(),
 		renames: newChangeAtomIdTransform(),
 	};
 	map.set(key, newRootChanges);
@@ -869,8 +873,8 @@ export function decodeChange(
 	chunkCompressionStrategy: TreeCompressionStrategy,
 ): Mutable<ModularChangeset> {
 	const idAllocator = idAllocatorFromMaxId(encodedChange.maxId);
-	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
-	const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newTupleBTree();
+	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newChangeAtomIdBTree();
+	const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newChangeAtomIdBTree();
 	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
 	const rootNodes = newRootTable();
 
@@ -920,7 +924,7 @@ export function decodeChange(
 		nodeChanges,
 		rootNodes,
 		nodeToParent,
-		nodeAliases: newTupleBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 		crossFieldKeys,
 	};
 
