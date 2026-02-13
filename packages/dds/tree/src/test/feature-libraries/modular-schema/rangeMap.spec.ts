@@ -142,7 +142,8 @@ describe("RangeMap", () => {
 			const map = newRangeMap();
 
 			// Delete keys 3-6 from an empty map
-			map.delete(3, 4);
+			const deletedCount = map.delete(3, 4);
+			assert.equal(deletedCount, 0);
 
 			assert.deepEqual(map.entries(), []);
 		});
@@ -154,7 +155,8 @@ describe("RangeMap", () => {
 			map.set(2, 4, "a");
 
 			// Delete keys 3-6
-			map.delete(3, 4);
+			const deletedCount = map.delete(3, 4);
+			assert.equal(deletedCount, 3);
 
 			assert.deepEqual(map.entries(), [{ start: 2, length: 1, value: "a" }]);
 		});
@@ -172,7 +174,8 @@ describe("RangeMap", () => {
 			map.set(9, 4, "c");
 
 			// Delete keys 4-8
-			map.delete(4, 5);
+			const deletedCount = map.delete(4, 5);
+			assert.equal(deletedCount, 3);
 
 			assert.deepEqual(map.entries(), [
 				{ start: 2, length: 2, value: "a" },
@@ -190,7 +193,8 @@ describe("RangeMap", () => {
 			map.set(7, 3, "b");
 
 			// Delete keys 2-5
-			map.delete(2, 4);
+			const deletedCount = map.delete(2, 4);
+			assert.equal(deletedCount, 4);
 
 			assert.deepEqual(map.entries(), [{ start: 7, length: 3, value: "b" }]);
 		});
@@ -205,7 +209,8 @@ describe("RangeMap", () => {
 			map.set(7, 3, "b");
 
 			// Delete keys 4-6
-			map.delete(4, 3);
+			const deletedCount = map.delete(4, 3);
+			assert.equal(deletedCount, 2);
 
 			assert.deepEqual(map.entries(), [
 				{ start: 2, length: 2, value: "a" },
@@ -223,7 +228,8 @@ describe("RangeMap", () => {
 			map.set(7, 3, "b");
 
 			// Delete keys 5-8
-			map.delete(5, 4);
+			const deletedCount = map.delete(5, 4);
+			assert.equal(deletedCount, 3);
 
 			assert.deepEqual(map.entries(), [
 				{ start: 2, length: 3, value: "a" },
@@ -238,7 +244,8 @@ describe("RangeMap", () => {
 			map.set(2, 6, "a");
 
 			// Delete keys 4-6
-			map.delete(4, 3);
+			const deletedCount = map.delete(4, 3);
+			assert.equal(deletedCount, 3);
 
 			assert.deepEqual(map.entries(), [
 				{ start: 2, length: 2, value: "a" },
