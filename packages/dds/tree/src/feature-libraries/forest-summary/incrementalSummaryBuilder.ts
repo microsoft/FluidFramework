@@ -504,6 +504,15 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	}
 
 	/**
+	 * Clears the loaded chunks map to free memory after all chunks have been decoded.
+	 * This should be called after the forest load is complete and `codec.decode()` has
+	 * processed all chunks, since the raw encoded data is no longer needed.
+	 */
+	public clearLoadedChunks(): void {
+		this.loadedChunksMap.clear();
+	}
+
+	/**
 	 * {@link IncrementalEncoder.decodeIncrementalChunk}
 	 */
 	public decodeIncrementalChunk(
