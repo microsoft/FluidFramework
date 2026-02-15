@@ -67,6 +67,11 @@ steps:
       echo "Primary registry: ${NPM_REGISTRY}"
       pnpm config set -g workspace-concurrency 0
       pnpm config set registry "${NPM_REGISTRY}"
+      # Increase network resilience for CI environments where transient failures are common
+      pnpm config set fetch-retries 5
+      pnpm config set fetch-retry-mintimeout 30000
+      pnpm config set fetch-retry-maxtimeout 120000
+      pnpm config set network-timeout 120000
       if [ ${NPM_REGISTRY} == "https://registry.npmjs.org/" ]; then
         echo "##vso[task.setvariable variable=registryType]public"
       else
