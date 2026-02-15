@@ -360,7 +360,8 @@
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
 			"@fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation, so overriding it forces a version that meets peer dependency requirements is installed.",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
-			"axios pre-1.0 needs an override to stay current on a version with no reported CVEs. Caret dependencies aren't enough on a pre-1.0 package."
+			"axios pre-1.0 needs an override to stay current on a version with no reported CVEs. Caret dependencies aren't enough on a pre-1.0 package.",
+			"Security overrides: tar is overridden to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w, GHSA-34x7-hfp2-rc4v). axios@>=1.0.0 is overridden to address DoS via __proto__ (GHSA-43fc-jf86-j433)."
 		],
 		"overrides": {
 			"@biomejs/biome": "~2.3.11",
@@ -372,7 +373,9 @@
 			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
-			"axios@<0.30.0": "^0.30.0"
+			"axios@<0.30.0": "^0.30.0",
+			"axios@>=1.0.0": ">=1.13.5",
+			"tar": ">=7.5.7"
 		},
 		"peerDependencyComments": [
 			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876",
