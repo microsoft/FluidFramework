@@ -812,21 +812,23 @@ extends:
                     workingDir: '${{ parameters.buildDirectory }}'
                     customCommand: 'run test:copyresults'
 
-                - ${{ if contains(test.name, 'tinylicious') }}:
+                - ${{ if contains(test.name, 'realsvc:tinylicious') }}:
                   - task: Bash@3
-                    displayName: Upload tinylicious log
+                    displayName: Upload tinylicious log(s)
                     condition: always()
                     continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
                     inputs:
                       targetType: inline
                       script: |
                         set -eu -o pipefail
-                        PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
-                        if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
-                          echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
-                          echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
-                        else
-                          echo "##vso[task.logissue type=warning]Failed to upload tinylicious log file ('$PATH_TO_TINYLICIOUS_LOG' not found).";
+                        FOUND=0
+                        while IFS= read -r LOG; do
+                          echo "Found tinylicious log at '$LOG'. Uploading.";
+                          echo "##vso[task.uploadfile]$LOG";
+                          FOUND=1
+                        done < <(find "$(Build.SourcesDirectory)" -maxdepth 5 -name "tinylicious.log" -type f 2>/dev/null)
+                        if [ "$FOUND" -eq 0 ]; then
+                          echo "##vso[task.logissue type=warning]No tinylicious log files found.";
                         fi
 
                 # Process test result, include publishing and logging
