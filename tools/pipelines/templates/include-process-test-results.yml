@@ -16,6 +16,25 @@ parameters:
 steps:
   # Test - Upload results
   - ${{ each testResultDir in parameters.testResultDirs }}:
+    - task: Bash@3
+      name: checkTestResults_${{ replace(testResultDir, '/', '_') }}
+      displayName: Check for test results in ${{ testResultDir }}
+      inputs:
+        targetType: 'inline'
+        script: |
+          searchDir="$BUILD_DIRECTORY/$TEST_RESULT_DIR"
+          if [ -d "$searchDir" ] && find "$searchDir" -name '*junit-report.xml' 2>/dev/null | grep -q .; then
+            echo "Found test result files in $TEST_RESULT_DIR"
+            echo "##vso[task.setvariable variable=hasResults;isOutput=true]true"
+          else
+            echo "No test result files found in $TEST_RESULT_DIR. Skipping publish."
+            echo "##vso[task.setvariable variable=hasResults;isOutput=true]false"
+          fi
+      env:
+        BUILD_DIRECTORY: ${{ parameters.buildDirectory }}
+        TEST_RESULT_DIR: ${{ testResultDir }}
+      condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+
     - task: PublishTestResults@2
       displayName: Publish Test Results in ${{ testResultDir }}
       inputs:
@@ -23,4 +42,9 @@ steps:
         testResultsFiles: '**/*junit-report.xml'
         searchFolder: ${{ parameters.buildDirectory }}/${{ testResultDir }}
         mergeTestResults: false
-      condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+      condition: >-
+        and(
+          succeededOrFailed(),
+          eq(variables['startTest'], 'true'),
+          eq(variables['checkTestResults_${{ replace(testResultDir, '/', '_') }}.hasResults'], 'true')
+        )
