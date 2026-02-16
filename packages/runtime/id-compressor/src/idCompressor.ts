@@ -344,23 +344,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		const remainingCapacity = lastCluster.capacity - lastCluster.count;
-		const expectedRangeBaseLocal = lastCluster.baseLocalId - lastCluster.count;
-
-		// Check if we're trying to re-finalize a range that was already finalized.
-		// This can happen in a fork scenario where multiple containers load from the same
-		// pending state, both having the same local session ID, and both try to finalize
-		// the same range from their stashed ops.
-		//
-		// Validation criteria for allowing duplicate finalization (all must be true):
-		// 1. Range is out of sequence (rangeBaseLocal > expected)
-		// 2. Must be for the local session (forked containers share the same session ID)
-		// 3. The range must overlap with already-finalized IDs (not just out of sequence)
-		// 4. Must be processing stashed ops (not a programming error)
-		if (
-			rangeBaseLocal > expectedRangeBaseLocal &&
-			isLocal &&
-			rangeBaseLocal <= lastCluster.baseLocalId
-		) {
+		if (lastCluster.baseLocalId - lastCluster.count !== rangeBaseLocal) {
 			// Only allow silent return if we're processing stashed ops.
 			// Otherwise, this is a programming error (finalizing ranges twice or out of order).
 			if (this.isProcessingStashedOps) {
@@ -370,11 +354,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				return;
 			}
 			// Not processing stashed ops, so this is a programming error
-			throw rangeFinalizationError(expectedRangeBaseLocal, rangeBaseLocal);
-		}
-
-		if (rangeBaseLocal !== expectedRangeBaseLocal) {
-			throw rangeFinalizationError(expectedRangeBaseLocal, rangeBaseLocal);
+			throw rangeFinalizationError(
+				lastCluster.baseLocalId - lastCluster.count,
+				rangeBaseLocal,
+			);
 		}
 
 		if (remainingCapacity >= count) {
