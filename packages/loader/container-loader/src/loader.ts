@@ -391,10 +391,7 @@ export function createLoader(loaderProps: ILoaderProps): IHostLoader {
 				snapshot,
 			);
 		},
-		resolve: async (
-			request: IRequest,
-			pendingLocalState?: string,
-		): Promise<IContainer> => {
+		resolve: async (request: IRequest, pendingLocalState?: string): Promise<IContainer> => {
 			return resolveAndLoadContainer(services, mc, request, pendingLocalState);
 		},
 	};
@@ -403,4 +400,3 @@ export function createLoader(loaderProps: ILoaderProps): IHostLoader {
 
 	return loader;
 }
-
