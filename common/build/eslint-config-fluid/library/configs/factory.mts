@@ -29,14 +29,14 @@ import { strictRules, strictTsRules } from "../rules/strict.mjs";
 import {
 	dependConfig,
 	reactRecommendedOverride,
+	sharedConfigs,
 	testRecommendedOverride,
-	addSharedConfigs,
 } from "./overrides.mjs";
 
 /**
  * Minimal-deprecated configuration.
  */
-export const minimalDeprecatedConfig: FlatConfigArray = [
+export const minimalDeprecatedConfig = [
 	...baseConfig,
 	{
 		rules: minimalDeprecatedRules,
@@ -55,12 +55,12 @@ export const minimalDeprecatedConfig: FlatConfigArray = [
 		},
 	},
 	dependConfig,
-];
+] as const satisfies FlatConfigArray;
 
 /**
  * Recommended configuration.
  */
-export const recommendedConfig: FlatConfigArray = [
+export const recommendedConfig = [
 	...minimalDeprecatedConfig,
 	// unicorn/recommended rules (plugin already registered in base)
 	{
@@ -69,12 +69,12 @@ export const recommendedConfig: FlatConfigArray = [
 	{
 		rules: recommendedRules,
 	},
-];
+] as const satisfies FlatConfigArray;
 
 /**
  * Strict configuration.
  */
-export const strictConfig: FlatConfigArray = [
+export const strictConfig = [
 	...recommendedConfig,
 	{
 		rules: strictRules,
@@ -84,45 +84,47 @@ export const strictConfig: FlatConfigArray = [
 		files: ["**/*.ts", "**/*.tsx"],
 		rules: strictTsRules,
 	},
-];
+] as const satisfies FlatConfigArray;
 
 /**
  * Strict-biome configuration.
  */
-export const strictBiomeConfig: FlatConfigArray = [...strictConfig, biomeConfig];
+export const strictBiomeConfig = [...strictConfig, biomeConfig] as const satisfies FlatConfigArray;
 
 /**
- * Creates the final minimalDeprecated config with shared overrides.
+ * The final minimalDeprecated config with shared overrides.
  */
-export function createMinimalDeprecatedConfig(): FlatConfigArray {
-	return addSharedConfigs(minimalDeprecatedConfig);
-}
+export const fullMinimalDeprecatedConfig = [
+	...minimalDeprecatedConfig,
+	...sharedConfigs,
+] as const satisfies FlatConfigArray;
 
 /**
- * Creates the final recommended config with shared overrides.
+ * The final recommended config with shared overrides.
  */
-export function createRecommendedConfig(): FlatConfigArray {
-	return addSharedConfigs([
-		...recommendedConfig,
-		reactRecommendedOverride,
-		testRecommendedOverride,
-	]);
-}
+export const fullRecommendedConfig = [
+	...recommendedConfig,
+	reactRecommendedOverride,
+	testRecommendedOverride,
+	...sharedConfigs,
+] as const satisfies FlatConfigArray;
 
 /**
- * Creates the final strict config with shared overrides.
+ * The final strict config with shared overrides.
  */
-export function createStrictConfig(): FlatConfigArray {
-	return addSharedConfigs([...strictConfig, reactRecommendedOverride, testRecommendedOverride]);
-}
+export const fullStrictConfig = [
+	...strictConfig,
+	reactRecommendedOverride,
+	testRecommendedOverride,
+	...sharedConfigs,
+] as const satisfies FlatConfigArray;
 
 /**
- * Creates the final strictBiome config with shared overrides.
+ * The final strictBiome config with shared overrides.
  */
-export function createStrictBiomeConfig(): FlatConfigArray {
-	return addSharedConfigs([
-		...strictBiomeConfig,
-		reactRecommendedOverride,
-		testRecommendedOverride,
-	]);
-}
+export const fullStrictBiomeConfig = [
+	...strictBiomeConfig,
+	reactRecommendedOverride,
+	testRecommendedOverride,
+	...sharedConfigs,
+] as const satisfies FlatConfigArray;

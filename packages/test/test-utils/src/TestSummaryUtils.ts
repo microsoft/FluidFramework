@@ -63,7 +63,10 @@ async function getSummarizerBackCompat(container: IContainer): Promise<ISummariz
 	return response.value as ISummarizer;
 }
 
-/** @internal */
+// eslint-disable-next-line jsdoc/require-description -- TODO: add documentation
+/**
+ * @internal
+ */
 export async function createSummarizerCore(
 	container: IContainer,
 	loader: IHostLoader,

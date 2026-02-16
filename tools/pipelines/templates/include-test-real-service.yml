@@ -82,10 +82,6 @@ parameters:
   type: string
   default: true
 
-- name: tenantSetupPackage
-  type: string
-  default: '@ff-internal/trips-setup'
-
 # If true, skip publishing report files for test results.
 # Useful because our stress tests pipeline doesn't generate any test result files.
 - name: skipTestResultPublishing

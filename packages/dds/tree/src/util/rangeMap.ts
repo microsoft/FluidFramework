@@ -5,6 +5,8 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+// eslint-disable-next-line import-x/no-internal-modules
+import { union } from "@tylerbu/sorted-btree-es6/extended/union";
 
 /**
  * RangeMap represents a mapping from keys of type K to values of type V or undefined.
@@ -171,18 +173,22 @@ export class RangeMap<K, V> {
 	 *
 	 * @param start - The start of the range to delete (inclusive).
 	 * @param length - The length of the range to delete.
+	 * @returns The number of keys/value pairs deleted (integer between 0 and `length`, inclusive).
 	 */
-	public delete(start: K, length: number): void {
+	public delete(start: K, length: number): number {
+		let deleteCount = 0;
 		const lastDeleteKey = this.offsetKey(start, length - 1);
 		for (const { start: key, length: entryLength, value } of this.getIntersectingEntries(
 			start,
 			length,
 		)) {
+			deleteCount += entryLength;
 			this.tree.delete(key);
 			const lengthBefore = this.subtractKeys(start, key);
 			if (lengthBefore > 0) {
 				// A portion of this entry comes before the deletion range, so we reinsert that portion.
 				this.tree.set(key, { length: lengthBefore, value });
+				deleteCount -= lengthBefore;
 			}
 
 			const lastEntryKey = this.offsetKey(key, entryLength - 1);
@@ -195,8 +201,10 @@ export class RangeMap<K, V> {
 					length: lengthAfter,
 					value: this.offsetValue(value, difference),
 				});
+				deleteCount -= lengthAfter;
 			}
 		}
+		return deleteCount;
 	}
 
 	public clone(): RangeMap<K, V> {
@@ -218,12 +226,13 @@ export class RangeMap<K, V> {
 
 		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys, a.offsetValue);
 
-		// TODO: Is there a good pattern that lets us make `tree` readonly?
-		merged.tree = a.tree.clone();
-		for (const [key, value] of b.tree.entries()) {
-			// TODO: Handle key collisions
-			merged.tree.set(key, value);
-		}
+		merged.tree = union<BTree<K, RangeEntry<V>>, K, RangeEntry<V>>(
+			a.tree,
+			b.tree,
+			(_key, _val1, val2) => {
+				return val2;
+			},
+		);
 
 		return merged;
 	}
