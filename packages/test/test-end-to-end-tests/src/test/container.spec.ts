@@ -24,7 +24,7 @@ import {
 	ConnectionState,
 	type ContainerAlpha,
 	type ILoaderProps,
-	Loader,
+	createLoader,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -82,7 +82,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		}
 	});
 	before(async () => {
-		const loader = new Loader({
+		const loader = createLoader({
 			logger: provider.logger,
 			urlResolver: provider.urlResolver,
 			documentServiceFactory: provider.documentServiceFactory,
@@ -99,7 +99,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		props?: Partial<ILoaderProps>,
 		headers?: IRequestHeader,
 	): Promise<IContainer> {
-		const loader = new Loader({
+		const loader = createLoader({
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,
@@ -302,7 +302,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
 		const localTestObjectProvider = new TestObjectProvider(
-			Loader,
+			createLoader,
 			provider.driver,
 			runtimeFactory,
 		);
@@ -328,7 +328,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory());
 
 		const localTestObjectProvider = new TestObjectProvider(
-			Loader,
+			createLoader,
 			provider.driver,
 			runtimeFactory,
 		);
@@ -380,7 +380,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {});
 
 		const localTestObjectProvider = new TestObjectProvider(
-			Loader,
+			createLoader,
 			provider.driver,
 			runtimeFactory,
 		);

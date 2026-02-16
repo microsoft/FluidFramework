@@ -39,7 +39,6 @@ import { Container } from "./container.js";
 import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
-import type { IPendingContainerState } from "./serializedStateManager.js";
 import {
 	getAttachedContainerStateFromSerializedContainer,
 	tryParseCompatibleResolvedUrl,
@@ -226,103 +225,78 @@ export interface ILoaderServices {
 }
 
 /**
- * Manages Fluid resource loading
- * @legacy @beta
- *
- * @remarks The Loader class is deprecated and will be removed in a future release. Use the free-form functions instead (See issue #24450 for more details).
+ * Creates the loader services and monitoring context from loader properties.
+ * This is the core setup logic extracted from the Loader constructor.
+ * @param loaderProps - Properties for creating the loader services
+ * @param scopeLoader - Optional ILoader to inject into the scope for containers
  */
-export class Loader implements IHostLoader {
-	public readonly services: ILoaderServices;
-	private readonly mc: MonitoringContext;
+export function createLoaderServices(
+	loaderProps: ILoaderProps,
+	scopeLoader?: ILoader,
+): {
+	services: ILoaderServices;
+	mc: MonitoringContext;
+} {
+	const {
+		urlResolver,
+		documentServiceFactory,
+		codeLoader,
+		options,
+		scope,
+		logger,
+		configProvider,
+		protocolHandlerBuilder,
+	} = loaderProps;
 
-	constructor(loaderProps: ILoaderProps) {
-		const {
-			urlResolver,
-			documentServiceFactory,
-			codeLoader,
-			options,
-			scope,
-			logger,
-			configProvider,
-			protocolHandlerBuilder,
-		} = loaderProps;
+	const telemetryProps = {
+		loaderId: uuid(),
+		loaderVersion: pkgVersion,
+	};
 
-		const telemetryProps = {
-			loaderId: uuid(),
-			loaderVersion: pkgVersion,
-		};
+	const subMc = mixinMonitoringContext(
+		DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
+			all: telemetryProps,
+		}),
+		sessionStorageConfigProvider.value,
+		configProvider,
+	);
 
-		const subMc = mixinMonitoringContext(
-			DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
-				all: telemetryProps,
-			}),
-			sessionStorageConfigProvider.value,
-			configProvider,
-		);
+	const services: ILoaderServices = {
+		urlResolver,
+		documentServiceFactory,
+		codeLoader,
+		options: options ?? {},
+		scope:
+			options?.provideScopeLoader === false || scopeLoader === undefined
+				? { ...scope }
+				: { ...scope, ILoader: scopeLoader },
+		protocolHandlerBuilder,
+		subLogger: subMc.logger,
+	};
+	const mc = createChildMonitoringContext({
+		logger: services.subLogger,
+		namespace: "Loader",
+	});
 
-		this.services = {
-			urlResolver,
-			documentServiceFactory,
-			codeLoader,
-			options: options ?? {},
-			scope:
-				options?.provideScopeLoader === false ? { ...scope } : { ...scope, ILoader: this },
-			protocolHandlerBuilder,
-			subLogger: subMc.logger,
-		};
-		this.mc = createChildMonitoringContext({
-			logger: this.services.subLogger,
-			namespace: "Loader",
-		});
-	}
+	return { services, mc };
+}
 
-	public async createDetachedContainer(
-		codeDetails: IFluidCodeDetails,
-		createDetachedProps?: {
-			canReconnect?: boolean;
-			clientDetailsOverride?: IClientDetails;
-		},
-	): Promise<IContainer> {
-		return Container.createDetached(
-			{
-				...createDetachedProps,
-				...this.services,
-			},
-			codeDetails,
-		);
-	}
+/**
+ * Resolves a request and loads a container using the provided services and monitoring context.
+ * This is the resolve logic extracted from the Loader class.
+ */
+async function resolveAndLoadContainer(
+	services: ILoaderServices,
+	mc: MonitoringContext,
+	request: IRequest,
+	pendingLocalState?: string,
+): Promise<IContainer> {
+	const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
+	return PerformanceEvent.timedExecAsync(mc.logger, { eventName }, async () => {
+		const parsedPendingState =
+			getAttachedContainerStateFromSerializedContainer(pendingLocalState);
 
-	public async rehydrateDetachedContainerFromSnapshot(
-		snapshot: string,
-		createDetachedProps?: {
-			canReconnect?: boolean;
-			clientDetailsOverride?: IClientDetails;
-		},
-	): Promise<IContainer> {
-		return Container.rehydrateDetachedFromSnapshot(
-			{
-				...createDetachedProps,
-				...this.services,
-			},
-			snapshot,
-		);
-	}
-
-	public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
-		const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
-		return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
-			return this.resolveCore(
-				request,
-				getAttachedContainerStateFromSerializedContainer(pendingLocalState),
-			);
-		});
-	}
-
-	private async resolveCore(
-		request: IRequest,
-		pendingLocalState?: IPendingContainerState,
-	): Promise<Container> {
-		const resolvedAsFluid = await this.services.urlResolver.resolve(request);
+		const resolvedAsFluid = await services.urlResolver.resolve(request);
 		ensureResolvedUrlDefined(resolvedAsFluid);
 
 		// Parse URL into data stores
@@ -331,13 +305,13 @@ export class Loader implements IHostLoader {
 			throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
 		}
 
-		if (pendingLocalState !== undefined) {
-			const parsedPendingUrl = tryParseCompatibleResolvedUrl(pendingLocalState.url);
+		if (parsedPendingState !== undefined) {
+			const parsedPendingUrl = tryParseCompatibleResolvedUrl(parsedPendingState.url);
 			if (
 				parsedPendingUrl?.id !== parsed.id ||
 				parsedPendingUrl?.path.replace(/\/$/, "") !== parsed.path.replace(/\/$/, "")
 			) {
-				const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${pendingLocalState.url}`;
+				const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${parsedPendingState.url}`;
 				throw new Error(message);
 			}
 		}
@@ -348,30 +322,83 @@ export class Loader implements IHostLoader {
 		request.headers[LoaderHeader.version] =
 			parsed.version ?? request.headers[LoaderHeader.version];
 
-		return this.loadContainer(request, resolvedAsFluid, pendingLocalState);
-	}
-
-	private async loadContainer(
-		request: IRequest,
-		resolvedUrl: IResolvedUrl,
-		pendingLocalState?: IPendingContainerState,
-	): Promise<Container> {
 		return Container.load(
 			{
-				resolvedUrl,
+				resolvedUrl: resolvedAsFluid,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				loadMode: request.headers?.[LoaderHeader.loadMode],
-				pendingLocalState,
+				pendingLocalState: parsedPendingState,
 			},
 			{
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				canReconnect: request.headers?.[LoaderHeader.reconnect],
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-				...this.services,
+				...services,
 			},
 		);
-	}
+	});
 }
+
+/**
+ * Creates an IHostLoader instance from loader properties.
+ * This is the recommended replacement for the deprecated Loader class.
+ * @param loaderProps - Services and properties necessary for creating a loader
+ * @returns An IHostLoader that can create, rehydrate, and load containers
+ * @legacy @beta
+ */
+export function createLoader(loaderProps: ILoaderProps): IHostLoader {
+	// Create the loader object first so it can be referenced in scope (for provideScopeLoader)
+	const loader: IHostLoader = {
+		createDetachedContainer: undefined as unknown as IHostLoader["createDetachedContainer"],
+		rehydrateDetachedContainerFromSnapshot:
+			undefined as unknown as IHostLoader["rehydrateDetachedContainerFromSnapshot"],
+		resolve: undefined as unknown as IHostLoader["resolve"],
+	};
+
+	const { services, mc } = createLoaderServices(loaderProps, loader);
+
+	loader.createDetachedContainer = async (
+		codeDetails: IFluidCodeDetails,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Promise<IContainer> => {
+		return Container.createDetached(
+			{
+				...createDetachedProps,
+				...services,
+			},
+			codeDetails,
+		);
+	};
+
+	loader.rehydrateDetachedContainerFromSnapshot = async (
+		snapshot: string,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Promise<IContainer> => {
+		return Container.rehydrateDetachedFromSnapshot(
+			{
+				...createDetachedProps,
+				...services,
+			},
+			snapshot,
+		);
+	};
+
+	loader.resolve = async (
+		request: IRequest,
+		pendingLocalState?: string,
+	): Promise<IContainer> => {
+		return resolveAndLoadContainer(services, mc, request, pendingLocalState);
+	};
+
+	return loader;
+}
+

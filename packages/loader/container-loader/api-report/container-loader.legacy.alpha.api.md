@@ -157,23 +157,13 @@ export interface IScribeProtocolState {
 }
 
 // @beta @legacy
-export class Loader implements IHostLoader {
-    constructor(loaderProps: ILoaderProps);
-    // (undocumented)
-    createDetachedContainer(codeDetails: IFluidCodeDetails, createDetachedProps?: {
-        canReconnect?: boolean;
-        clientDetailsOverride?: IClientDetails;
-    }): Promise<IContainer>;
-    // (undocumented)
-    rehydrateDetachedContainerFromSnapshot(snapshot: string, createDetachedProps?: {
-        canReconnect?: boolean;
-        clientDetailsOverride?: IClientDetails;
-    }): Promise<IContainer>;
-    // (undocumented)
-    resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
-    // (undocumented)
-    readonly services: ILoaderServices;
-}
+export function createLoader(loaderProps: ILoaderProps): IHostLoader;
+
+// @beta @legacy
+export function createLoaderServices(loaderProps: ILoaderProps, scopeLoader?: ILoader): {
+    services: ILoaderServices;
+    mc: MonitoringContext;
+};
 
 // @beta @legacy
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;

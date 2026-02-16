@@ -11,7 +11,7 @@ import {
 	IContainer,
 	IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { createLoader } from "@fluidframework/container-loader/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
@@ -91,7 +91,7 @@ describe("Audience correctness", () => {
 		const urlResolver = new LocalResolver();
 
 		// Create container in first client
-		const loader = new Loader({
+		const loader = createLoader({
 			urlResolver,
 			documentServiceFactory,
 			codeLoader,

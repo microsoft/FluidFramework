@@ -10,7 +10,7 @@ import {
 	ContainerErrorTypes,
 	IContainer,
 } from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+import { ILoaderProps, createLoader } from "@fluidframework/container-loader/internal";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -38,7 +38,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	beforeEach("setup", async () => {
-		const loader = new Loader({
+		const loader = createLoader({
 			logger: provider.logger,
 			urlResolver: provider.urlResolver,
 			documentServiceFactory: provider.documentServiceFactory,
@@ -59,7 +59,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	async function loadContainer(props?: Partial<ILoaderProps>): Promise<IContainer> {
-		const loader = new Loader({
+		const loader = createLoader({
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,

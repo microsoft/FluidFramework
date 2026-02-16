@@ -11,11 +11,12 @@ import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
+	IHostLoader,
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { createLoader } from "@fluidframework/container-loader/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
@@ -100,12 +101,12 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 	let provider: ITestObjectProvider;
 	let request: IRequest;
-	let loader: Loader;
+	let loader: IHostLoader;
 
 	beforeEach("setup", function () {
 		provider = getTestObjectProvider();
 		request = provider.driver.createCreateNewRequest(provider.documentId);
-		loader = provider.makeTestLoader(testContainerConfig) as Loader;
+		loader = provider.makeTestLoader(testContainerConfig) as IHostLoader;
 	});
 
 	it("Create detached container", async () => {
@@ -888,12 +889,12 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 
 	let provider: ITestObjectProvider;
 	let request: IRequest;
-	let loader: Loader;
+	let loader: IHostLoader;
 
 	beforeEach("setup", () => {
 		provider = getTestObjectProvider();
 		request = provider.driver.createCreateNewRequest(provider.documentId);
-		loader = provider.makeTestLoader(testContainerConfig) as Loader;
+		loader = provider.makeTestLoader(testContainerConfig) as IHostLoader;
 	});
 
 	it("Retry attaching detached container", async () => {
@@ -919,7 +920,7 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 			IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
 		};
 		const codeLoader = new LocalCodeLoader([[provider.defaultCodeDetails, fluidExport]]);
-		const mockLoader = new Loader({
+		const mockLoader = createLoader({
 			urlResolver: provider.urlResolver,
 			documentServiceFactory,
 			codeLoader,

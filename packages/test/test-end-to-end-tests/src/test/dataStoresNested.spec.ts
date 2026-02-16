@@ -6,7 +6,7 @@
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { createLoader } from "@fluidframework/container-loader/internal";
 import {
 	ChannelCollectionFactory,
 	ISummarizer,
@@ -103,7 +103,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 		const registry = [];
 		// ADO:7302 We need another test object provider
 		provider = new TestObjectProvider(
-			Loader,
+			createLoader,
 			driver,
 			() =>
 				new TestContainerRuntimeFactory(

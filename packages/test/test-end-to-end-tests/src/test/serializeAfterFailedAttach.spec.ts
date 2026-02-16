@@ -7,8 +7,12 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+} from "@fluidframework/container-definitions/internal";
+import { createLoader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
@@ -74,13 +78,13 @@ describeCompat(
 		function createTestLoader(
 			provider: ITestObjectProvider,
 			documentServiceFactory?: IDocumentServiceFactory,
-		): Loader {
+		): IHostLoader {
 			const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
 				[sharedStringId, SharedString.getFactory()],
 				[sharedMapId, SharedMap.getFactory()],
 			]);
 			const codeLoader = new LocalCodeLoader([[codeDetails, factory]], {});
-			const testLoader = new Loader({
+			const testLoader = createLoader({
 				urlResolver: provider.urlResolver,
 				documentServiceFactory: documentServiceFactory ?? provider.documentServiceFactory,
 				codeLoader,

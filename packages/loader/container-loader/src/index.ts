@@ -29,7 +29,8 @@ export {
 	type IFluidModuleWithDetails,
 	type ILoaderProps,
 	type ILoaderServices,
-	Loader,
+	createLoader,
+	createLoaderServices,
 } from "./loader.js";
 export {
 	driverSupportRequirementsForLoader,

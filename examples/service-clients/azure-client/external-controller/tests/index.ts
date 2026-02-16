@@ -8,7 +8,7 @@ import {
 	IFluidModuleWithDetails,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/legacy";
-import { Loader } from "@fluidframework/container-loader/legacy";
+import { createLoader } from "@fluidframework/container-loader/legacy";
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
@@ -62,7 +62,7 @@ export async function getSessionStorageContainer(
 
 	const codeLoader = { load };
 
-	const loader = new Loader({
+	const loader = createLoader({
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,

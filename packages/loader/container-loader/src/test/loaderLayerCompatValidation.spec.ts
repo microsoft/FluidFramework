@@ -20,7 +20,9 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
 
-import { Loader } from "../loader.js";
+import type { IHostLoader } from "@fluidframework/container-definitions/internal";
+
+import { createLoader } from "../loader.js";
 import {
 	driverSupportRequirementsForLoader,
 	loaderCoreCompatDetails,
@@ -285,7 +287,7 @@ describe("Loader Layer compatibility", () => {
 			resolve: async () => resolvedUrl,
 		});
 
-		async function createAndAttachContainer(loader: Loader): Promise<void> {
+		async function createAndAttachContainer(loader: IHostLoader): Promise<void> {
 			const container = await loader.createDetachedContainer({ package: "none" });
 			await container.attach({ url: "none" });
 		}
@@ -293,7 +295,7 @@ describe("Loader Layer compatibility", () => {
 		for (const testCase of testCases) {
 			describe(`Validate ${testCase.layerType} Compatibility`, () => {
 				it(`Older ${testCase.layerType} is compatible`, async () => {
-					const loader = new Loader({
+					const loader = createLoader({
 						codeLoader: createTestCodeLoaderProxy(),
 						documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
 						urlResolver,
@@ -310,7 +312,7 @@ describe("Loader Layer compatibility", () => {
 						generation: testCase.layerSupportRequirements.minSupportedGeneration,
 						supportedFeatures: new Set(),
 					};
-					const loader = new Loader({
+					const loader = createLoader({
 						codeLoader: createTestCodeLoaderProxy(
 							testCase.layerType === "runtime" ? { layerCompatDetails } : {},
 						),
@@ -334,7 +336,7 @@ describe("Loader Layer compatibility", () => {
 						generation: layerGeneration,
 						supportedFeatures: new Set(),
 					};
-					const loader = new Loader({
+					const loader = createLoader({
 						codeLoader: createTestCodeLoaderProxy(
 							testCase.layerType === "runtime" ? { layerCompatDetails } : {},
 						),

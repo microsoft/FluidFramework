@@ -11,8 +11,7 @@ import {
 	ILoader,
 } from "@fluidframework/container-definitions/internal";
 import {
-	ILoaderProps,
-	Loader,
+	type ILoaderProps,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader/internal";
 import type { IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
@@ -458,7 +457,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 * and factory for TestFluidObject
 	 */
 	constructor(
-		private readonly LoaderConstructor: typeof Loader,
+		private readonly createLoaderFn: (props: ILoaderProps) => IHostLoader,
 		/**
 		 * {@inheritDoc ITestObjectProvider.driver}
 		 */
@@ -550,12 +549,12 @@ export class TestObjectProvider implements ITestObjectProvider {
 	public createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
-	): Loader {
+	): IHostLoader {
 		const logger = createMultiSinkLogger({
 			loggers: [this.logger, loaderProps?.logger],
 		});
 
-		const loader = new this.LoaderConstructor({
+		const loader = this.createLoaderFn({
 			...loaderProps,
 			logger,
 			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
@@ -652,7 +651,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.makeTestLoader}
 	 */
-	public makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader {
+	public makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader {
 		return this.createLoader(
 			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
 			testContainerConfig?.loaderProps,
@@ -784,8 +783,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	private useCreateApi: boolean = true;
 
 	constructor(
-		private readonly LoaderConstructorForCreating: typeof Loader,
-		private readonly LoaderConstructorForLoading: typeof Loader,
+		private readonly createLoaderFnForCreating: (props: ILoaderProps) => IHostLoader,
+		private readonly createLoaderFnForLoading: (props: ILoaderProps) => IHostLoader,
 		private readonly driverForCreating: ITestDriver,
 		private readonly driverForLoading: ITestDriver,
 		private readonly createFluidEntryPointForCreating: (
@@ -883,12 +882,12 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	private createLoaderForCreating(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
-	): Loader {
+	): IHostLoader {
 		const logger = createMultiSinkLogger({
 			loggers: [this.logger, loaderProps?.logger],
 		});
 
-		const loader = new this.LoaderConstructorForCreating({
+		const loader = this.createLoaderFnForCreating({
 			...loaderProps,
 			logger,
 			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
@@ -904,12 +903,12 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	private createLoaderForLoading(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
-	): Loader {
+	): IHostLoader {
 		const logger = createMultiSinkLogger({
 			loggers: [this.logger, loaderProps?.logger],
 		});
 
-		const loader = new this.LoaderConstructorForLoading({
+		const loader = this.createLoaderFnForLoading({
 			...loaderProps,
 			logger,
 			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
@@ -929,7 +928,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
 		forceUseCreateVersion = false,
-	): Loader {
+	): IHostLoader {
 		const useCreateVersion = forceUseCreateVersion === true || this.useCreateApi;
 		if (this.useCreateApi) {
 			// After we create the first loader, we can set this.useCreateApi to false.
@@ -1029,7 +1028,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.makeTestLoader}
 	 */
-	public makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader {
+	public makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader {
 		return this.createLoader(
 			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
 			testContainerConfig?.loaderProps,

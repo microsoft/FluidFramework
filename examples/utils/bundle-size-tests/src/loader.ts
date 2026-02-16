@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Loader } from "@fluidframework/container-loader/internal";
+import { createLoader } from "@fluidframework/container-loader/internal";
 
 export function apisToBundle(): void {
-	new Loader({
+	createLoader({
 		codeLoader: {} as any,
 		documentServiceFactory: {} as any,
 		urlResolver: {} as any,

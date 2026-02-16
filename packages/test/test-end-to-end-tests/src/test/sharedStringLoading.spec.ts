@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { createLoader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
@@ -63,7 +63,7 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 				const codeDetails = { package: "no-dynamic-pkg" };
 				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
-				const loader = new Loader({
+				const loader = createLoader({
 					urlResolver: provider.urlResolver,
 					documentServiceFactory: provider.documentServiceFactory,
 					codeLoader,
@@ -86,7 +86,7 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 				const codeDetails = { package: "no-dynamic-pkg" };
 				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
-				const loader = new Loader({
+				const loader = createLoader({
 					urlResolver: provider.urlResolver,
 					documentServiceFactory: provider.documentServiceFactory,
 					codeLoader,
@@ -135,7 +135,7 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				});
 
-				const loader = new Loader({
+				const loader = createLoader({
 					urlResolver: provider.urlResolver,
 					documentServiceFactory,
 					codeLoader,
@@ -170,7 +170,7 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 			const codeDetails = { package: "no-dynamic-pkg" };
 			const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
-			const loader = new Loader({
+			const loader = createLoader({
 				urlResolver: provider.urlResolver,
 				documentServiceFactory: provider.documentServiceFactory,
 				codeLoader,
@@ -214,7 +214,7 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 			const codeDetails = { package: "no-dynamic-pkg" };
 			const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
-			const loader = new Loader({
+			const loader = createLoader({
 				urlResolver: provider.urlResolver,
 				documentServiceFactory: provider.documentServiceFactory,
 				codeLoader,

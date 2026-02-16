@@ -17,7 +17,7 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
-	Loader as ContainerLoader,
+	createLoader,
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
@@ -101,7 +101,7 @@ describe("PropertyDDS summarizer", () => {
 		const registry = [[propertyDdsId, new PropertyTreeFactory()]] as ChannelFactoryRegistry;
 
 		objProvider = new TestObjectProvider(
-			ContainerLoader as any,
+			createLoader,
 			driver,
 			() =>
 				new TestContainerRuntimeFactory(

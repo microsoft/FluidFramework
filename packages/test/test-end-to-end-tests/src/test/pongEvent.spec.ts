@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { createLoader } from "@fluidframework/container-loader/internal";
 import {
 	ITestObjectProvider,
 	LoaderContainerTracker,
@@ -32,7 +32,7 @@ describe("Pong", () => {
 				this.skip();
 			}
 
-			const loader = new Loader({
+			const loader = createLoader({
 				logger: provider.logger,
 				urlResolver: provider.urlResolver,
 				documentServiceFactory: provider.documentServiceFactory,

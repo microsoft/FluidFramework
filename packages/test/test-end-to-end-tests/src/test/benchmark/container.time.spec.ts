@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+import { IFluidCodeDetails, IHostLoader } from "@fluidframework/container-definitions/internal";
+import { ILoaderProps, createLoader } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import {
@@ -23,14 +23,14 @@ const codeDetails: IFluidCodeDetails = { package: "test" };
 
 describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	let loader: Loader;
+	let loader: IHostLoader;
 	let fileName: string;
 	let containerUrl: IResolvedUrl;
 
 	const loaderContainerTracker = new LoaderContainerTracker();
 
-	function createLoader(props?: Partial<ILoaderProps>): Loader {
-		return new Loader({
+	function makeLoader(props?: Partial<ILoaderProps>): IHostLoader {
+		return createLoader({
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,
@@ -43,7 +43,7 @@ describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvi
 
 	before(async () => {
 		provider = getTestObjectProvider();
-		loader = createLoader();
+		loader = makeLoader();
 		loaderContainerTracker.add(loader);
 		const container = await loader.createDetachedContainer(codeDetails);
 
@@ -59,7 +59,7 @@ describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvi
 	benchmark({
 		title: "Create loader",
 		benchmarkFn: () => {
-			createLoader();
+			makeLoader();
 		},
 	});
 

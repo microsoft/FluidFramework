@@ -10,8 +10,9 @@ import { AttachState } from "@fluidframework/container-definitions";
 import type {
 	IContainer,
 	IFluidCodeDetails,
+	IHostLoader,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { createLoader } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
@@ -65,7 +66,7 @@ describeCompat(
 		const mapId2 = "mapId2";
 
 		let request: IRequest;
-		let loader: Loader;
+		let loader: IHostLoader;
 		const loaderContainerTracker = new LoaderContainerTracker();
 
 		const createTestStatementForAttachedDetached = (name: string, attached: boolean): string =>
@@ -97,7 +98,7 @@ describeCompat(
 			};
 		};
 
-		function createTestLoader(): Loader {
+		function createTestLoader(): IHostLoader {
 			const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
 				[mapId1, SharedMap.getFactory()],
 				[mapId2, SharedMap.getFactory()],
@@ -105,7 +106,7 @@ describeCompat(
 			const urlResolver = provider.urlResolver;
 			const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
 			const documentServiceFactory = provider.documentServiceFactory;
-			const testLoader = new Loader({
+			const testLoader = createLoader({
 				urlResolver,
 				documentServiceFactory,
 				codeLoader,
