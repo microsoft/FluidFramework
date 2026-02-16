@@ -129,7 +129,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@langchain/anthropic": "^0.3.24",
-		"@langchain/core": "^0.3.78",
+		"@langchain/core": "^0.3.80",
 		"@langchain/google-genai": "^0.2.16",
 		"@langchain/openai": "^0.6.12",
 		"@microsoft/api-extractor": "7.52.11",
