@@ -47,6 +47,8 @@ export interface IIdCompressor {
 // @beta @legacy
 export interface IIdCompressorCore {
     beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
+    beginStashedOpProcessing(): void;
+    endStashedOpProcessing(): void;
     finalizeCreationRange(range: IdCreationRange): void;
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;

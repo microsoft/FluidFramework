@@ -118,6 +118,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private telemetryEagerFinalIdCount = 0;
 	// The ongoing ghost session, if one exists.
 	private ongoingGhostSession?: { cluster?: IdCluster; ghostSessionId: SessionId } | undefined;
+	// Tracks whether we're currently processing stashed/saved ops where duplicate range finalization is expected
+	private isProcessingStashedOps = false;
 
 	// #endregion
 
@@ -209,6 +211,22 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		} finally {
 			this.ongoingGhostSession = undefined;
 		}
+	}
+
+	/**
+	 * {@inheritdoc IIdCompressorCore.beginStashedOpProcessing}
+	 */
+	public beginStashedOpProcessing(): void {
+		assert(!this.isProcessingStashedOps, 0x9d9 /* Already processing stashed ops. */);
+		this.isProcessingStashedOps = true;
+	}
+
+	/**
+	 * {@inheritdoc IIdCompressorCore.endStashedOpProcessing}
+	 */
+	public endStashedOpProcessing(): void {
+		assert(this.isProcessingStashedOps, 0x9da /* Not currently processing stashed ops. */);
+		this.isProcessingStashedOps = false;
 	}
 
 	private generateNextLocalId(): LocalCompressedId {
@@ -333,19 +351,26 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// pending state, both having the same local session ID, and both try to finalize
 		// the same range from their stashed ops.
 		//
-		// Validation criteria for a fork scenario (all must be true):
+		// Validation criteria for allowing duplicate finalization (all must be true):
 		// 1. Range is out of sequence (rangeBaseLocal > expected)
 		// 2. Must be for the local session (forked containers share the same session ID)
 		// 3. The range must overlap with already-finalized IDs (not just out of sequence)
+		// 4. Must be processing stashed ops (not a programming error)
 		if (
 			rangeBaseLocal > expectedRangeBaseLocal &&
 			isLocal &&
 			rangeBaseLocal <= lastCluster.baseLocalId
 		) {
-			// This range overlaps with IDs that were already finalized from stashed ops.
-			// This is expected in a fork scenario - skip it and let the higher-level
-			// fork detection (via batchId mechanism) handle the error appropriately.
-			return;
+			// Only allow silent return if we're processing stashed ops.
+			// Otherwise, this is a programming error (finalizing ranges twice or out of order).
+			if (this.isProcessingStashedOps) {
+				// This range overlaps with IDs that were already finalized from stashed ops.
+				// This is expected in a fork scenario - skip it and let the higher-level
+				// fork detection (via batchId mechanism) handle the error appropriately.
+				return;
+			}
+			// Not processing stashed ops, so this is a programming error
+			throw rangeFinalizationError(expectedRangeBaseLocal, rangeBaseLocal);
 		}
 
 		if (rangeBaseLocal !== expectedRangeBaseLocal) {
