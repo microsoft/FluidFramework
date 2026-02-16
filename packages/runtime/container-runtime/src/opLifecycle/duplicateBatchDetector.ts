@@ -24,6 +24,11 @@ export class DuplicateBatchDetector {
 	private readonly batchIdsBySeqNum = new Map<number, string>();
 
 	/**
+	 * Track the minimum sequence number currently stored to optimize clearOldBatchIds
+	 */
+	private minSeqNum: number = Infinity;
+
+	/**
 	 * Initialize from snapshot data if provided - otherwise initialize empty
 	 */
 	constructor(batchIdsFromSnapshot: [number, string][] | undefined) {
@@ -31,6 +36,9 @@ export class DuplicateBatchDetector {
 			for (const [seqNum, batchId] of batchIdsFromSnapshot) {
 				this.batchIdsBySeqNum.set(seqNum, batchId);
 				this.seqNumByBatchId.set(batchId, seqNum);
+				if (seqNum < this.minSeqNum) {
+					this.minSeqNum = seqNum;
+				}
 			}
 		}
 	}
@@ -76,6 +84,11 @@ export class DuplicateBatchDetector {
 		this.batchIdsBySeqNum.set(sequenceNumber, batchId);
 		this.seqNumByBatchId.set(batchId, sequenceNumber);
 
+		// Update minSeqNum if this is the new minimum
+		if (sequenceNumber < this.minSeqNum) {
+			this.minSeqNum = sequenceNumber;
+		}
+
 		return { duplicate: false };
 	}
 
@@ -84,12 +97,23 @@ export class DuplicateBatchDetector {
 	 * since the batch start has been processed by all clients, and local batches are deduped and the forked client would close.
 	 */
 	private clearOldBatchIds(msn: number): void {
+		// Early exit: if MSN hasn't passed our oldest entry, nothing to delete
+		if (msn <= this.minSeqNum) {
+			return;
+		}
+
+		let newMinSeqNum = Infinity;
+
 		for (const [sequenceNumber, batchId] of this.batchIdsBySeqNum) {
 			if (sequenceNumber < msn) {
 				this.batchIdsBySeqNum.delete(sequenceNumber);
 				this.seqNumByBatchId.delete(batchId);
+			} else if (sequenceNumber < newMinSeqNum) {
+				newMinSeqNum = sequenceNumber;
 			}
 		}
+
+		this.minSeqNum = newMinSeqNum;
 	}
 
 	/**
