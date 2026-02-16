@@ -6,7 +6,6 @@
 import type {
 	AttendeeId,
 	BroadcastControlSettings,
-	ClientConnectionId,
 	PresenceWithNotifications as Presence,
 	StatesWorkspace,
 	StatesWorkspaceSchema,
@@ -21,6 +20,18 @@ import type {
 	ValidatableValueDirectoryOrState,
 	ValidatableValueStructure,
 } from "@fluid-internal/presence-definitions/internal";
+import type { ClientRecord } from "@fluid-internal/presence-definitions/internal/workspace";
+import type {
+	ClientUpdateEntry,
+	PresenceStatesInternal,
+	RuntimeLocalUpdateOptions,
+	ValueElementMap,
+	ValueUpdateRecord,
+} from "@fluid-internal/presence-definitions/internal/workspace-runtime";
+import type {
+	LocalStateUpdateOptions,
+	StateDatastore,
+} from "@fluid-internal/presence-definitions/internal/workspace-states";
 import type { RecordEntryTypes } from "@fluid-internal/presence-utils";
 import {
 	getOrCreateRecord,
@@ -30,11 +41,6 @@ import {
 } from "@fluid-internal/presence-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type {
-	ClientRecord,
-	LocalStateUpdateOptions,
-	StateDatastore,
-} from "./stateDatastore.js";
 import { handleFromDatastore } from "./stateDatastore.js";
 
 /**
@@ -51,22 +57,6 @@ type MapSchemaElement<
 	Part extends keyof ReturnType<TSchema[keyof TSchema]>,
 	Keys extends keyof TSchema = keyof TSchema,
 > = ReturnType<TSchema[Keys]>[Part];
-
-/**
- * Miscellaneous options for local state updates
- */
-export interface RuntimeLocalUpdateOptions {
-	/**
-	 * The maximum time in milliseconds that this update is allowed to be
-	 * delayed before it must be sent to the service.
-	 */
-	allowableUpdateLatencyMs: number;
-
-	/**
-	 * Special option allowed for unicast notifications.
-	 */
-	targetClientId?: ClientConnectionId;
-}
 
 /**
  * Contract for `PresenceDatastoreManager` as required by States Workspaces ({@link PresenceStatesImpl}).
@@ -92,71 +82,6 @@ type MapEntries<TSchema extends StatesWorkspaceSchema> = PresenceSubSchemaFromWo
 	"manager"
 >;
 
-/**
- * ValueElementMap is a map of key to a map of clientId to ValueState.
- * It is not restricted to the schema of the map as it may receive updates from other clients
- * with managers that have not been registered locally. Each map node is responsible for keeping
- * all session's state to be able to pick arbitrary client to rebroadcast to others.
- *
- * This generic aspect makes some typing difficult. The loose typing is not broadcast to the
- * consumers that are expected to maintain their schema over multiple versions of clients.
- */
-export interface ValueElementMap<_TSchema extends StatesWorkspaceSchema> {
-	[key: string]: ClientRecord<ValidatableValueDirectoryOrState<unknown>>;
-}
-
-// An attempt to make the type more precise, but it is not working.
-// If the casting in support code is too much we could keep two references to the same
-// complete datastore, but with the respective types desired.
-// type ValueElementMap<TSchema extends PresenceStatesNodeSchema> =
-// 	| {
-// 			[Key in keyof TSchema & string]?: {
-// 				[AttendeeId: AttendeeId]: InternalTypes.ValueDirectoryOrState<MapSchemaElement<TSchema,"value",Key>>;
-// 			};
-// 	  }
-// 	| {
-// 			[key: string]: ClientRecord<InternalTypes.ValueDirectoryOrState<unknown>>;
-// 	  };
-// interface ValueElementMap<TValue> {
-// 	[Id: string]: ClientRecord<InternalTypes.ValueDirectoryOrState<TValue>>;
-// 	// Version with local packed in is convenient for map, but not for join broadcast to serialize simply.
-// 	// [Id: string]: {
-// 	// 	local: InternalTypes.ValueDirectoryOrState<TValue>;
-// 	// 	all: ClientRecord<InternalTypes.ValueDirectoryOrState<TValue>>;
-// 	// };
-// }
-
-/**
- * Data content of a datastore entry in update messages
- */
-export type ClientUpdateEntry = InternalTypes.ValueDirectoryOrState<unknown> & {
-	ignoreUnmonitored?: true;
-};
-
-interface ClientUpdateRecord {
-	[AttendeeId: AttendeeId]: ClientUpdateEntry;
-}
-
-interface ValueUpdateRecord {
-	[valueKey: string]: ClientUpdateRecord;
-}
-
-/**
- * Contract for Workspaces as required by `PresenceDatastoreManager`
- */
-export interface PresenceStatesInternal {
-	ensureContent<TSchemaAdditional extends StatesWorkspaceSchema>(
-		content: TSchemaAdditional,
-		controls: BroadcastControlSettings | undefined,
-	): AnyWorkspace<TSchemaAdditional>;
-	processUpdate(
-		received: number,
-		timeModifier: number,
-		remoteDatastore: ValueUpdateRecord,
-		senderConnectionId: ClientConnectionId,
-	): PostUpdateAction[];
-}
-
 function isValueDirectory<
 	T,
 	TValueState extends
@@ -171,6 +96,8 @@ function isValueDirectory<
 // function overloads
 /**
  * Non-validatable types
+ *
+ * @internal
  */
 export function mergeValueDirectory<
 	T,
@@ -184,6 +111,8 @@ export function mergeValueDirectory<
 ): TValueState | InternalTypes.ValueDirectory<T>;
 /**
  * Validatable base type with non-validatable update types
+ *
+ * @internal
  */
 export function mergeValueDirectory<
 	T,
@@ -198,6 +127,8 @@ export function mergeValueDirectory<
 ): TBaseState | ValidatableValueDirectory<T>;
 /**
  * Fully validatable types
+ *
+ * @internal
  */
 export function mergeValueDirectory<
 	T,
@@ -214,6 +145,8 @@ export function mergeValueDirectory<
  * This implementation uses the InternalTypes set of Value types but it is
  * agnostic so long as the validatable versions don't start requiring
  * properties.
+ *
+ * @internal
  */
 export function mergeValueDirectory<
 	T,
@@ -266,10 +199,12 @@ export function mergeValueDirectory<
  * @remarks
  * In the case of ignored unmonitored data, the client entries are not stored,
  * though the value keys will be populated and often remain empty.
+ *
+ * @internal
  */
 export function mergeUntrackedDatastore(
 	key: string,
-	remoteAllKnownState: ClientUpdateRecord,
+	remoteAllKnownState: ValueUpdateRecord[string],
 	datastore: ValueElementMap<StatesWorkspaceSchema>,
 	timeModifier: number,
 ): void {
@@ -515,6 +450,8 @@ class PresenceStatesImpl<TSchema extends StatesWorkspaceSchema>
 /**
  * Create a new Workspace using the DataStoreRuntime provided.
  * @param initialContent - The initial State objects to register.
+ *
+ * @internal
  */
 export function createPresenceStates<TSchema extends StatesWorkspaceSchema>(
 	runtime: PresenceRuntime,

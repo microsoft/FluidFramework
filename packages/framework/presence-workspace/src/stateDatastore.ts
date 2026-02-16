@@ -3,83 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	AttendeeId,
-	ClientConnectionId,
-	PresenceWithNotifications as Presence,
-} from "@fluid-internal/presence-definitions";
-import type {
-	InternalTypes,
-	ValidatableValueDirectoryOrState,
-	ValidatableValueStructure,
-} from "@fluid-internal/presence-definitions/internal";
-
-/**
- * Basic structure of set of {@link Attendee} records within Presence datastore
- *
- * @remarks
- * This is commonly exists per named state in State Managers.
- */
-export interface ClientRecord<TValue extends ValidatableValueDirectoryOrState<unknown>> {
-	// Caution: any particular item may or may not exist
-	// Typescript does not support absent keys without forcing type to also be undefined.
-	// See https://github.com/microsoft/TypeScript/issues/42810.
-	[AttendeeId: AttendeeId]: TValue;
-}
-
-// type StateDatastoreSchemaNode<
-// 	TValue extends InternalTypes.ValueDirectoryOrState<any> = InternalTypes.ValueDirectoryOrState<unknown>,
-// > = TValue extends InternalTypes.ValueDirectoryOrState<infer T> ? InternalTypes.ValueDirectoryOrState<T> : never;
-
-// export interface StateDatastoreSchema {
-// 	// This type is not precise. It may
-// 	// need to be replaced with StatesWorkspace schema pattern
-// 	// similar to what is commented out.
-// 	[key: string]: InternalTypes.ValueDirectoryOrState<unknown>;
-// 	// [key: string]: StateDatastoreSchemaNode;
-// }
-
-/**
- * Miscellaneous options for local state updates
- */
-export interface LocalStateUpdateOptions {
-	/**
-	 * When defined, this is the maximum time in milliseconds that this
-	 * update is allowed to be delayed before it must be sent to service.
-	 * When `undefined`, the callee may determine maximum delay.
-	 */
-	allowableUpdateLatencyMs: number | undefined;
-
-	/**
-	 * Special option allowed for unicast notifications.
-	 */
-	targetClientId?: ClientConnectionId;
-}
-
-/**
- * Contract for States Workspace to support State Manager access to
- * datastore and general internal presence knowledge.
- */
-export interface StateDatastore<
-	TKey extends string,
-	TLocalUpdateValue extends InternalTypes.ValueDirectoryOrState<unknown>,
-	TStoredValue extends
-		ValidatableValueDirectoryOrState<unknown> = ValidatableValueStructure<TLocalUpdateValue>,
-> {
-	readonly presence: Presence;
-	localUpdate(
-		key: TKey,
-		value: TLocalUpdateValue & {
-			ignoreUnmonitored?: true;
-		},
-		options: LocalStateUpdateOptions,
-	): void;
-	update(key: TKey, attendeeId: AttendeeId, value: TStoredValue): void;
-	knownValues(key: TKey): {
-		self: AttendeeId | undefined;
-		states: ClientRecord<TStoredValue>;
-	};
-}
+import type { InternalTypes } from "@fluid-internal/presence-definitions/internal";
+import type { StateDatastore } from "@fluid-internal/presence-definitions/internal/workspace-states";
 
 /**
  * Helper to get a handle from a datastore.
@@ -101,6 +26,8 @@ export function handleFromDatastore<
 
 /**
  * Helper to get the datastore back from its handle.
+ *
+ * @internal
  */
 export function datastoreFromHandle<
 	TKey extends string,

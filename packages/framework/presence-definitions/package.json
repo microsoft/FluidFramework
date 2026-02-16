@@ -26,6 +26,18 @@
 		"./internal": {
 			"import": "./lib/internal.js",
 			"require": "./dist/internal.js"
+		},
+		"./internal/workspace": {
+			"import": "./lib/workspace/workspaceTypes.js",
+			"require": "./dist/workspace/workspaceTypes.js"
+		},
+		"./internal/workspace-runtime": {
+			"import": "./lib/workspace-runtime/presenceStatesTypes.js",
+			"require": "./dist/workspace-runtime/presenceStatesTypes.js"
+		},
+		"./internal/workspace-states": {
+			"import": "./lib/workspace-states/stateDatastoreTypes.js",
+			"require": "./dist/workspace-states/stateDatastoreTypes.js"
 		}
 	},
 	"files": [
@@ -63,7 +75,7 @@
 		"test:mocha:cjs-disabled-while-no-tests": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm-disabled-while-no-tests": "mocha",
 		"test:mocha:verbose-disabled-while-no-tests": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
 		"typetests:gen-disabled": "flub generate typetests --dir . -v"
 	},
 	"c8": {

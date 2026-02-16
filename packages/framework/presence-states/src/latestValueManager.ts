@@ -24,6 +24,7 @@ import type {
 	PostUpdateAction,
 	ValueManager,
 } from "@fluid-internal/presence-definitions/internal";
+import type { StateDatastore } from "@fluid-internal/presence-definitions/internal/workspace-states";
 import type { FlattenUnionWithOptionals } from "@fluid-internal/presence-utils";
 import {
 	asDeeplyReadonly,
@@ -33,7 +34,6 @@ import {
 	OptionalBroadcastControl,
 	toOpaqueJson,
 } from "@fluid-internal/presence-utils";
-import type { StateDatastore } from "@fluid-internal/presence-workspace";
 import { datastoreFromHandle } from "@fluid-internal/presence-workspace";
 import type {
 	DeepReadonly,

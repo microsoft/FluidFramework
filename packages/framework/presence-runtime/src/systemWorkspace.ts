@@ -17,8 +17,8 @@ import type {
 	InternalTypes,
 	PostUpdateAction,
 } from "@fluid-internal/presence-definitions/internal";
+import type { PresenceStatesInternal } from "@fluid-internal/presence-definitions/internal/workspace-runtime";
 import { revealOpaqueJson, TimerManager } from "@fluid-internal/presence-utils";
-import type { PresenceStatesInternal } from "@fluid-internal/presence-workspace";
 import type { IAudience } from "@fluidframework/container-definitions";
 import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";

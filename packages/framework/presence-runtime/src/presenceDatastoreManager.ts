@@ -23,13 +23,13 @@ import type {
 	ValidatableValueDirectory,
 	ValidatableValueStructure,
 } from "@fluid-internal/presence-definitions/internal";
-import { objectEntries, TimerManager } from "@fluid-internal/presence-utils";
 import type {
 	ClientUpdateEntry,
 	PresenceStatesInternal,
 	RuntimeLocalUpdateOptions,
 	ValueElementMap,
-} from "@fluid-internal/presence-workspace";
+} from "@fluid-internal/presence-definitions/internal/workspace-runtime";
+import { objectEntries, TimerManager } from "@fluid-internal/presence-utils";
 import {
 	createPresenceStates,
 	mergeUntrackedDatastore,
