@@ -30,7 +30,6 @@ export {
 	type ILoaderProps,
 	type ILoaderServices,
 	createLoader,
-	createLoaderServices,
 } from "./loader.js";
 export {
 	driverSupportRequirementsForLoader,

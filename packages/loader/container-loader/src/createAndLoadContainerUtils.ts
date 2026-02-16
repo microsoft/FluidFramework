@@ -36,7 +36,7 @@ import { v4 as uuid } from "uuid";
 import { Container } from "./container.js";
 import { DebugLogger } from "./debugLogger.js";
 import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
-import { createLoaderServices } from "./loader.js";
+import { createLoaderServices, resolveAndLoadContainer } from "./loader.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 import type {
@@ -44,10 +44,6 @@ import type {
 	OnDemandSummaryResults,
 	SummarizeOnDemandResults,
 } from "./summarizerResultTypes.js";
-import {
-	getAttachedContainerStateFromSerializedContainer,
-	tryParseCompatibleResolvedUrl,
-} from "./utils.js";
 
 interface OnDemandSummarizeResultsPromises {
 	readonly summarySubmitted: Promise<SummarizeOnDemandResults["summarySubmitted"]>;
@@ -224,56 +220,7 @@ export async function loadExistingContainer(
 ): Promise<IContainer> {
 	const { services, mc } = createLoaderServices(loadExistingContainerProps);
 	const { request, pendingLocalState } = loadExistingContainerProps;
-
-	const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
-	return PerformanceEvent.timedExecAsync(mc.logger, { eventName }, async () => {
-		const parsedPendingState =
-			getAttachedContainerStateFromSerializedContainer(pendingLocalState);
-
-		const resolvedAsFluid = await services.urlResolver.resolve(request);
-		if (resolvedAsFluid === undefined) {
-			throw new Error(`Object is not a IResolveUrl.`);
-		}
-
-		// Parse URL into data stores
-		const parsed = tryParseCompatibleResolvedUrl(resolvedAsFluid.url);
-		if (parsed === undefined) {
-			throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
-		}
-
-		if (parsedPendingState !== undefined) {
-			const parsedPendingUrl = tryParseCompatibleResolvedUrl(parsedPendingState.url);
-			if (
-				parsedPendingUrl?.id !== parsed.id ||
-				parsedPendingUrl?.path.replace(/\/$/, "") !== parsed.path.replace(/\/$/, "")
-			) {
-				const message = `URL ${resolvedAsFluid.url} does not match pending state URL ${parsedPendingState.url}`;
-				throw new Error(message);
-			}
-		}
-
-		request.headers ??= {};
-		// If set in both query string and headers, use query string.  Also write the value from the query string into the header either way.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		request.headers[LoaderHeader.version] =
-			parsed.version ?? request.headers[LoaderHeader.version];
-
-		return Container.load(
-			{
-				resolvedUrl: resolvedAsFluid,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				version: request.headers?.[LoaderHeader.version] ?? undefined,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				loadMode: request.headers?.[LoaderHeader.loadMode],
-				pendingLocalState: parsedPendingState,
-			},
-			{
-				canReconnect: loadExistingContainerProps.allowReconnect,
-				clientDetailsOverride: loadExistingContainerProps.clientDetailsOverride,
-				...services,
-			},
-		);
-	});
+	return resolveAndLoadContainer(services, mc, request, pendingLocalState);
 }
 
 /**

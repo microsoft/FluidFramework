@@ -141,12 +141,6 @@ export interface IScribeProtocolState {
 export function createLoader(loaderProps: ILoaderProps): IHostLoader;
 
 // @beta @legacy
-export function createLoaderServices(loaderProps: ILoaderProps, scopeLoader?: ILoader): {
-    services: ILoaderServices;
-    mc: MonitoringContext;
-};
-
-// @beta @legacy
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
 
 // @beta @legacy

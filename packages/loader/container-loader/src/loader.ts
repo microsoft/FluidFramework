@@ -229,6 +229,7 @@ export interface ILoaderServices {
  * This is the core setup logic extracted from the Loader constructor.
  * @param loaderProps - Properties for creating the loader services
  * @param scopeLoader - Optional ILoader to inject into the scope for containers
+ * @internal
  */
 export function createLoaderServices(
 	loaderProps: ILoaderProps,
@@ -284,8 +285,9 @@ export function createLoaderServices(
 /**
  * Resolves a request and loads a container using the provided services and monitoring context.
  * This is the resolve logic extracted from the Loader class.
+ * @internal
  */
-async function resolveAndLoadContainer(
+export async function resolveAndLoadContainer(
 	services: ILoaderServices,
 	mc: MonitoringContext,
 	request: IRequest,
@@ -350,54 +352,54 @@ async function resolveAndLoadContainer(
  * @legacy @beta
  */
 export function createLoader(loaderProps: ILoaderProps): IHostLoader {
-	// Create the loader object first so it can be referenced in scope (for provideScopeLoader)
+	// Declare services/mc as mutable so they can be assigned after creating the loader object.
+	// The closures below capture these by reference, so they'll see the assigned values
+	// when actually invoked (which is always after this function returns).
+	let services: ILoaderServices;
+	let mc: MonitoringContext;
+
+	// Create the loader object first so it can be passed to createLoaderServices
+	// for injection into scope (when provideScopeLoader is enabled).
 	const loader: IHostLoader = {
-		createDetachedContainer: undefined as unknown as IHostLoader["createDetachedContainer"],
-		rehydrateDetachedContainerFromSnapshot:
-			undefined as unknown as IHostLoader["rehydrateDetachedContainerFromSnapshot"],
-		resolve: undefined as unknown as IHostLoader["resolve"],
-	};
-
-	const { services, mc } = createLoaderServices(loaderProps, loader);
-
-	loader.createDetachedContainer = async (
-		codeDetails: IFluidCodeDetails,
-		createDetachedProps?: {
-			canReconnect?: boolean;
-			clientDetailsOverride?: IClientDetails;
-		},
-	): Promise<IContainer> => {
-		return Container.createDetached(
-			{
-				...createDetachedProps,
-				...services,
+		createDetachedContainer: async (
+			codeDetails: IFluidCodeDetails,
+			createDetachedProps?: {
+				canReconnect?: boolean;
+				clientDetailsOverride?: IClientDetails;
 			},
-			codeDetails,
-		);
-	};
-
-	loader.rehydrateDetachedContainerFromSnapshot = async (
-		snapshot: string,
-		createDetachedProps?: {
-			canReconnect?: boolean;
-			clientDetailsOverride?: IClientDetails;
+		): Promise<IContainer> => {
+			return Container.createDetached(
+				{
+					...createDetachedProps,
+					...services,
+				},
+				codeDetails,
+			);
 		},
-	): Promise<IContainer> => {
-		return Container.rehydrateDetachedFromSnapshot(
-			{
-				...createDetachedProps,
-				...services,
+		rehydrateDetachedContainerFromSnapshot: async (
+			snapshot: string,
+			createDetachedProps?: {
+				canReconnect?: boolean;
+				clientDetailsOverride?: IClientDetails;
 			},
-			snapshot,
-		);
+		): Promise<IContainer> => {
+			return Container.rehydrateDetachedFromSnapshot(
+				{
+					...createDetachedProps,
+					...services,
+				},
+				snapshot,
+			);
+		},
+		resolve: async (
+			request: IRequest,
+			pendingLocalState?: string,
+		): Promise<IContainer> => {
+			return resolveAndLoadContainer(services, mc, request, pendingLocalState);
+		},
 	};
 
-	loader.resolve = async (
-		request: IRequest,
-		pendingLocalState?: string,
-	): Promise<IContainer> => {
-		return resolveAndLoadContainer(services, mc, request, pendingLocalState);
-	};
+	({ services, mc } = createLoaderServices(loaderProps, loader));
 
 	return loader;
 }
