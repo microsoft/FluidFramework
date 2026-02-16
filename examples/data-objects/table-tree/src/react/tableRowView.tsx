@@ -5,7 +5,6 @@
 
 import { TableRow, TableCell, Input, Button, Checkbox } from "@fluentui/react-components";
 import { Delete24Regular } from "@fluentui/react-icons";
-import { fail } from "@fluidframework/core-utils/internal";
 import { useTree } from "@fluidframework/react/alpha";
 import React, { type DragEvent } from "react";
 
@@ -47,7 +46,10 @@ export const TableRowView: React.FC<TableRowViewProps> = ({
 }) => {
 	useTree(table);
 
-	const row = table.getRow(rowIndex) ?? fail("Row not found");
+	const row = table.getRow(rowIndex);
+	if (row === undefined) {
+		throw new Error("Row not found");
+	}
 
 	return (
 		<TableRow
