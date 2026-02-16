@@ -44,7 +44,7 @@ describe("Forest Summarizer benchmarks", () => {
 			if (i % 10 === 0) {
 				const item = root.barArray.at(i);
 				if (item !== undefined) {
-					item.summary = `Updated summary 10`;
+					item.data = `Updated data 10`;
 				}
 			}
 		}

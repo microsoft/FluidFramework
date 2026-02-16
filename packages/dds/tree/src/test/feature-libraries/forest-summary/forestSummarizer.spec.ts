@@ -530,12 +530,12 @@ describe("ForestSummarizer", () => {
 					incrementalSummaryContext: incrementalSummaryContext2,
 				});
 
-				// At the root of the summary tree, there should be `itemsCount` number of summary tree nodes that
-				// support incremental summary - one for each item in the `Root::barArray`.
+				// At the root of the summary tree, there should be `itemsCount * 2` number of summary tree nodes that
+				// support incremental summary - two for each item in the `Root::barArray` (one for `data` and one for `nested`).
 				// Since nothing changed, all of them should be handles.
 				validateHandlesInForestSummary(summary2.summary, {
 					shouldContainHandle: true,
-					handleCount: itemsCount,
+					handleCount: itemsCount * 2,
 					lastSummary: summary1.summary,
 				});
 			});
@@ -574,24 +574,23 @@ describe("ForestSummarizer", () => {
 					incrementalSummaryContext: incrementalSummaryContext2,
 				});
 
-				// At the root of the summary tree, there should be `itemsCount` number of summary tree nodes that
-				// support incremental summary - one for each item in the `Root::barArray`.
+				// At the root of the summary tree, there should be `itemsCount * 2` number of summary tree nodes that
+				// support incremental summary - two for each item in the `Root::barArray` (one for `data` and one for `nested`).
 				// Since nothing changed, all of them should be handles.
 				validateHandlesInForestSummary(summary2.summary, {
 					shouldContainHandle: true,
-					handleCount: itemsCount,
+					handleCount: itemsCount * 2,
 					lastSummary: summary1.summary,
 				});
 
-				// Make changes to `BarItem::summary` in one of the `Root::barArray` entries. This will update one of the
-				// summary tree nodes at the root of the summary tree and the summary tree node under it as well - these
-				// will be re-summarized and not be handles anymore.
-				// So, there should be one less than `itemsCount` number of handles than the previous summary.
+				// Make changes to `BarItem::data` in one of the `Root::barArray` entries. This will update the
+				// `data` field's summary tree node, but the `nested` field will remain unchanged.
+				// So, there should be one less than `itemsCount * 2` handles (i.e., `itemsCount * 2 - 1`).
 				const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
 				const root = view.root;
 				const firstItem = root.barArray.at(0);
 				assert(firstItem !== undefined, "Could not find first item");
-				firstItem.summary = "Updated summary";
+				firstItem.data = "Updated data";
 
 				// Incremental summary context for the third summary. `latestSummarySequenceNumber` should
 				// be the `summarySequenceNumber` of the previous summary.
@@ -606,7 +605,7 @@ describe("ForestSummarizer", () => {
 				});
 				validateHandlesInForestSummary(summary3.summary, {
 					shouldContainHandle: true,
-					handleCount: itemsCount - 1,
+					handleCount: itemsCount * 2 - 1,
 					lastSummary: summary2.summary,
 				});
 			});
@@ -633,15 +632,14 @@ describe("ForestSummarizer", () => {
 					shouldContainHandle: false,
 				});
 
-				// Make changes to `BarItem::summary` in one of the `Root::barArray` entries. This will update one of the
-				// summary tree nodes at the root of the summary tree and the summary tree node under it as well - these
-				// will be re-summarized and not be handles anymore.
-				// So, there should be one less than `itemsCount` number of handles than the previous summary.
+				// Make changes to `BarItem::data` in one of the `Root::barArray` entries. This will update the
+				// `data` field's summary tree node, but the `nested` field will remain unchanged.
+				// So, there should be one less than `itemsCount * 2` handles (i.e., `itemsCount * 2 - 1`).
 				const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
 				const root = view.root;
 				const firstItem = root.barArray.at(0);
 				assert(firstItem !== undefined, "Could not find first item");
-				firstItem.summary = "Updated summary";
+				firstItem.data = "Updated data";
 
 				// Incremental summary context for the second summary. `latestSummarySequenceNumber` should
 				// be the `summarySequenceNumber` of the previous summary.
@@ -656,7 +654,7 @@ describe("ForestSummarizer", () => {
 				});
 				validateHandlesInForestSummary(summary2.summary, {
 					shouldContainHandle: true,
-					handleCount: itemsCount - 1,
+					handleCount: itemsCount * 2 - 1,
 					lastSummary: summary1.summary,
 				});
 
@@ -675,7 +673,7 @@ describe("ForestSummarizer", () => {
 				// paths must exist in the first summary tree and not the second.
 				validateHandlesInForestSummary(summary3.summary, {
 					shouldContainHandle: true,
-					handleCount: itemsCount - 1,
+					handleCount: itemsCount * 2 - 1,
 					lastSummary: summary1.summary,
 				});
 			});
@@ -710,15 +708,14 @@ describe("ForestSummarizer", () => {
 					await forestSummarizer2.load(mockStorage, JSON.parse);
 				});
 
-				// Make changes to `BarItem::summary` in one of the `Root::barArray` entries. This will update one of the
-				// summary tree nodes at the root of the summary tree and the summary tree node under it as well - these
-				// will be re-summarized and not be handles anymore.
-				// So, there should be one less than `itemsCount` number of handles than the previous summary.
+				// Make changes to `BarItem::data` in one of the `Root::barArray` entries. This will update the
+				// `data` field's summary tree node, but the `nested` field will remain unchanged.
+				// So, there should be one less than `itemsCount * 2` handles (i.e., `itemsCount * 2 - 1`).
 				const view = checkout2.viewWith(new TreeViewConfiguration({ schema: Root }));
 				const root = view.root;
 				const firstItem = root.barArray.at(0);
 				assert(firstItem !== undefined, "Could not find first item");
-				firstItem.summary = "Updated summary";
+				firstItem.data = "Updated data";
 
 				// Incremental summary context for the second summary. `latestSummarySequenceNumber` should
 				// be the `summarySequenceNumber` of the previous summary.
@@ -734,7 +731,7 @@ describe("ForestSummarizer", () => {
 				});
 				validateHandlesInForestSummary(summary2.summary, {
 					shouldContainHandle: true,
-					handleCount: itemsCount - 1,
+					handleCount: itemsCount * 2 - 1,
 					lastSummary: summary1.summary,
 				});
 			});
