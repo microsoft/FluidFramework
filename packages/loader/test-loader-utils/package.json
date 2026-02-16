@@ -78,10 +78,6 @@
 			"check:exports:esm:index": [
 				"...",
 				"build:esnext"
-			],
-			"check:exports:bundle-release-tags": [
-				"...",
-				"build:esnext"
 			]
 		}
 	},
