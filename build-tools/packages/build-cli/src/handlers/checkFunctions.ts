@@ -10,7 +10,14 @@ import { FluidRepo } from "@fluidframework/build-tools";
 import { confirm, rawlist } from "@inquirer/prompts";
 import execa from "execa";
 import type { Machine } from "jssm";
-
+import {
+	generateBumpDepsBranchName,
+	generateBumpDepsCommitMessage,
+	generateBumpVersionBranchName,
+	generateBumpVersionCommitMessage,
+	generateReleaseBranchName,
+	getReleaseSourceForReleaseGroup,
+} from "../library/branches.js";
 import {
 	checkPackagesCompatLayerGeneration,
 	DEFAULT_GENERATION_DIR,
@@ -19,18 +26,9 @@ import {
 	formatCompatLayerGenerationError,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../library/compatLayerGeneration.js";
-import {
-	generateBumpDepsBranchName,
-	generateBumpDepsCommitMessage,
-	generateBumpVersionBranchName,
-	generateBumpVersionCommitMessage,
-	generateReleaseBranchName,
-	getPreReleaseDependencies,
-	getReleaseSourceForReleaseGroup,
-	isReleased,
-} from "../library/index.js";
+import { getPreReleaseDependencies, isReleased } from "../library/package.js";
 import type { CommandLogger } from "../logging.js";
-import type { MachineState } from "../machines/index.js";
+import type { MachineState } from "../machines/types.js";
 import { isReleaseGroup, type ReleaseSource } from "../releaseGroups.js";
 import { getRunPolicyCheckDefault } from "../repoConfig.js";
 import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";

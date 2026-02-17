@@ -12,7 +12,7 @@ import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
 import { updateChangelogs } from "../../../library/changelogs.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { canonicalizeChangesets } from "../../../library/changesets.js";
-import { BaseCommandWithBuildProject } from "../../../library/index.js";
+import { BaseCommandWithBuildProject } from "../../../library/commands/base.js";
 
 /**
  * Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!

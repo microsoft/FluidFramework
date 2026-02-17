@@ -11,7 +11,8 @@ import { mkdirpSync } from "fs-extra";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
 import { filterPackages, parsePackageFilterFlags } from "../filter.js";
 import { filterFlags, releaseGroupFlag } from "../flags.js";
-import { BaseCommand, getTarballName } from "../library/index.js";
+import { BaseCommand } from "../library/commands/base.js";
+import { getTarballName } from "../library/package.js";
 import {
 	type Feed,
 	feeds,

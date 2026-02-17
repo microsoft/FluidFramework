@@ -6,7 +6,7 @@
 import chalk from "picocolors";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
-import { BaseCommand } from "../../library/index.js";
+import { BaseCommand } from "../../library/commands/base.js";
 import {
 	CheckCompatLayerGeneration,
 	CheckDependenciesInstalled,

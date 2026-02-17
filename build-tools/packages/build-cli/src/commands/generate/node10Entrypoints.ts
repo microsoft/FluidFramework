@@ -3,21 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	generateNode10TypeEntrypoints,
-	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../library/commands/generateEntrypoints.js";
-import { BaseCommand } from "../../library/index.js";
-// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-// eslint-disable-next-line import-x/no-internal-modules
+import { generateNode10TypeEntrypoints } from "../../library/commands/generateEntrypoints.js";
+import { BaseCommand } from "../../library/commands/base.js";
 import { readPackageJson } from "../../library/package.js";
-
-import {
-	queryTypesResolutionPathsFromPackageExports,
-	// AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../library/packageExports.js";
+import { queryTypesResolutionPathsFromPackageExports } from "../../library/packageExports.js";
 
 export default class GenerateNode10EntrypointsCommand extends BaseCommand<
 	typeof GenerateNode10EntrypointsCommand
