@@ -9,6 +9,7 @@ import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
 	SequenceInterval,
 	SequenceIntervalClass,
+	TransientSequenceInterval,
 	createTransientIntervalFromSequence,
 } from "../intervals/index.js";
 import type { ISharedSegmentSequence } from "../sequence.js";
@@ -72,7 +73,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 				});
 			}
 		} else {
-			const transientInterval: SequenceIntervalClass = createTransientIntervalFromSequence(
+			const transientInterval: TransientSequenceInterval = createTransientIntervalFromSequence(
 				start ?? "start",
 				end ?? "end",
 				this.sequence,

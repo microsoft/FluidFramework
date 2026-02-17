@@ -184,43 +184,35 @@ export interface SequenceInterval extends IInterval {
 	getIntervalId(): string;
 }
 
-export class SequenceIntervalClass
-	implements SequenceInterval, ISerializableInterval, IDisposable
-{
-	readonly #props: {
-		propertyManager?: PropertiesManager;
-		properties: PropertySet;
-	} = { properties: createMap<any>() };
+/**
+ * Lightweight interval for index queries (overlap, comparison).
+ * Has no Client dependency; cannot serialize or be disposed.
+ */
+export class TransientSequenceInterval implements SequenceInterval {
+	readonly #id: string;
+	readonly #properties: PropertySet = createMap<any>();
 
-	/**
-	 * {@inheritDoc ISerializableInterval.properties}
-	 */
-	public get properties(): Readonly<PropertySet> {
-		this.verifyNotDispose();
-		return this.#props.properties;
+	constructor(
+		id: string,
+		/**
+		 * Start endpoint of this interval.
+		 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
+		 */
+		public start: LocalReferencePosition,
+		/**
+		 * End endpoint of this interval.
+		 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
+		 */
+		public end: LocalReferencePosition,
+		public intervalType: IntervalType,
+		public readonly startSide: Side = Side.Before,
+		public readonly endSide: Side = Side.Before,
+	) {
+		this.#id = id;
 	}
 
-	public changeProperties(
-		props: PropertySet | undefined,
-		op?: ISequencedDocumentMessage,
-		rollback?: boolean,
-	) {
-		this.verifyNotDispose();
-		assert(this.client !== undefined, "client required for changeProperties" /* 0xbd6 */);
-
-		if (props !== undefined) {
-			this.#props.propertyManager ??= new PropertiesManager();
-			return this.#props.propertyManager.handleProperties(
-				{ props },
-				this.#props,
-				this.client.getCollabWindow().collaborating
-					? (op?.sequenceNumber ?? UnassignedSequenceNumber)
-					: UniversalSequenceNumber,
-				op?.minimumSequenceNumber ?? UniversalSequenceNumber,
-				this.client.getCollabWindow().collaborating,
-				rollback,
-			);
-		}
+	public get properties(): Readonly<PropertySet> {
+		return this.#properties;
 	}
 
 	/***/
@@ -237,149 +229,11 @@ export class SequenceIntervalClass
 		);
 	}
 
-	constructor(
-		private readonly client: Client | undefined,
-		private readonly id: string,
-		private readonly label: string,
-		/**
-		 * Start endpoint of this interval.
-		 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
-		 */
-		public start: LocalReferencePosition,
-		/**
-		 * End endpoint of this interval.
-		 * @remarks This endpoint can be resolved into a character position using the SharedString it's a part of.
-		 */
-		public end: LocalReferencePosition,
-		public intervalType: IntervalType,
-		props?: PropertySet,
-		public readonly startSide: Side = Side.Before,
-		public readonly endSide: Side = Side.Before,
-	) {
-		if (props) {
-			this.#props.properties = addProperties(this.#props.properties, props);
-		}
-	}
-	#disposed = false;
-	public get disposed() {
-		return this.#disposed;
-	}
-	public dispose(error?: Error): void {
-		if (this.#disposed) return;
-		this.#disposed = true;
-		if (this.client) {
-			this.client.removeLocalReferencePosition(this.start);
-			this.client.removeLocalReferencePosition(this.end);
-		}
-		this.removePositionChangeListeners();
-		this.#props.propertyManager = undefined;
-	}
-
-	private verifyNotDispose() {
-		if (this.#disposed) {
-			throw new LoggingError("Invalid interval access after dispose");
-		}
-	}
-
-	private callbacks?: Record<"beforePositionChange" | "afterPositionChange", () => void>;
-
 	/**
-	 * Subscribes to position change events on this interval if there are no current listeners.
+	 * {@inheritDoc ISerializableInterval.getIntervalId}
 	 */
-	public addPositionChangeListeners(
-		beforePositionChange: () => void,
-		afterPositionChange: () => void,
-	): void {
-		this.verifyNotDispose();
-		if (this.callbacks === undefined) {
-			this.callbacks = {
-				beforePositionChange,
-				afterPositionChange,
-			};
-
-			const startCbs = (this.start.callbacks ??= {});
-			const endCbs = (this.end.callbacks ??= {});
-			startCbs.beforeSlide = endCbs.beforeSlide = beforePositionChange;
-			startCbs.afterSlide = endCbs.afterSlide = afterPositionChange;
-		}
-	}
-
-	/**
-	 * Removes the currently subscribed position change listeners.
-	 */
-	public removePositionChangeListeners(): void {
-		if (this.callbacks) {
-			this.callbacks = undefined;
-			this.start.callbacks = undefined;
-			this.end.callbacks = undefined;
-		}
-	}
-
-	/**
-	 * {@inheritDoc ISerializableInterval.serialize}
-	 */
-	public serialize(): ISerializedInterval {
-		this.verifyNotDispose();
-
-		return this.serializeDelta({
-			props: this.properties,
-			includeEndpoints: true,
-		}) as ISerializedInterval;
-	}
-
-	public serializeDelta({
-		props,
-		includeEndpoints,
-	}: {
-		props: PropertySet | undefined;
-		includeEndpoints: boolean;
-	}): SerializedIntervalDelta {
-		this.verifyNotDispose();
-		assert(this.client !== undefined, "client required for serializeDelta");
-
-		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
-		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
-		const startPosition = includeEndpoints
-			? (startSegment?.endpointType ??
-				this.client.localReferencePositionToPosition(this.start))
-			: undefined;
-		const endPosition = includeEndpoints
-			? (endSegment?.endpointType ?? this.client.localReferencePositionToPosition(this.end))
-			: undefined;
-		return {
-			end: endPosition,
-			intervalType: this.intervalType,
-			sequenceNumber: this.client.getCurrentSeq(),
-			start: startPosition,
-			stickiness: this.stickiness,
-			startSide: includeEndpoints ? this.startSide : undefined,
-			endSide: includeEndpoints ? this.endSide : undefined,
-			properties: {
-				...props,
-				[reservedIntervalIdKey]: this.id,
-				[reservedRangeLabelsKey]: [this.label],
-			},
-		} satisfies SerializedIntervalDelta;
-	}
-
-	/**
-	 * {@inheritDoc IInterval.clone}
-	 */
-	public clone(): SequenceIntervalClass {
-		this.verifyNotDispose();
-		assert(this.client !== undefined, "client required for clone");
-
-		return new SequenceIntervalClass(
-			this.client,
-			this.id,
-			this.label,
-			this.start,
-			this.end,
-			this.intervalType,
-			this.properties,
-			this.startSide,
-			this.endSide,
-		);
+	public getIntervalId(): string {
+		return this.#id;
 	}
 
 	/**
@@ -450,10 +304,188 @@ export class SequenceIntervalClass
 	}
 
 	/**
-	 * {@inheritDoc ISerializableInterval.getIntervalId}
+	 * Whether this interval overlaps the provided numerical positions.
 	 */
-	public getIntervalId(): string {
-		return this.id;
+	public overlapsPos(_bstart: number, _bend: number): boolean {
+		throw new UsageError("overlapsPos requires a Client; use SequenceIntervalClass");
+	}
+
+	protected verifyNotDispose(): void {
+		// No-op: transient intervals are not disposable.
+	}
+}
+
+export class SequenceIntervalClass
+	extends TransientSequenceInterval
+	implements ISerializableInterval, IDisposable
+{
+	readonly #props: {
+		propertyManager?: PropertiesManager;
+		properties: PropertySet;
+	} = { properties: createMap<any>() };
+
+	/**
+	 * {@inheritDoc ISerializableInterval.properties}
+	 */
+	public override get properties(): Readonly<PropertySet> {
+		this.verifyNotDispose();
+		return this.#props.properties;
+	}
+
+	public changeProperties(
+		props: PropertySet | undefined,
+		op?: ISequencedDocumentMessage,
+		rollback?: boolean,
+	) {
+		this.verifyNotDispose();
+
+		if (props !== undefined) {
+			this.#props.propertyManager ??= new PropertiesManager();
+			return this.#props.propertyManager.handleProperties(
+				{ props },
+				this.#props,
+				this.client.getCollabWindow().collaborating
+					? (op?.sequenceNumber ?? UnassignedSequenceNumber)
+					: UniversalSequenceNumber,
+				op?.minimumSequenceNumber ?? UniversalSequenceNumber,
+				this.client.getCollabWindow().collaborating,
+				rollback,
+			);
+		}
+	}
+
+	constructor(
+		private readonly client: Client,
+		id: string,
+		private readonly label: string,
+		start: LocalReferencePosition,
+		end: LocalReferencePosition,
+		intervalType: IntervalType,
+		props?: PropertySet,
+		startSide: Side = Side.Before,
+		endSide: Side = Side.Before,
+	) {
+		super(id, start, end, intervalType, startSide, endSide);
+		if (props) {
+			this.#props.properties = addProperties(this.#props.properties, props);
+		}
+	}
+	#disposed = false;
+	public get disposed() {
+		return this.#disposed;
+	}
+	public dispose(error?: Error): void {
+		if (this.#disposed) return;
+		this.#disposed = true;
+		this.client.removeLocalReferencePosition(this.start);
+		this.client.removeLocalReferencePosition(this.end);
+		this.removePositionChangeListeners();
+		this.#props.propertyManager = undefined;
+	}
+
+	protected override verifyNotDispose() {
+		if (this.#disposed) {
+			throw new LoggingError("Invalid interval access after dispose");
+		}
+	}
+
+	private callbacks?: Record<"beforePositionChange" | "afterPositionChange", () => void>;
+
+	/**
+	 * Subscribes to position change events on this interval if there are no current listeners.
+	 */
+	public addPositionChangeListeners(
+		beforePositionChange: () => void,
+		afterPositionChange: () => void,
+	): void {
+		this.verifyNotDispose();
+		if (this.callbacks === undefined) {
+			this.callbacks = {
+				beforePositionChange,
+				afterPositionChange,
+			};
+
+			const startCbs = (this.start.callbacks ??= {});
+			const endCbs = (this.end.callbacks ??= {});
+			startCbs.beforeSlide = endCbs.beforeSlide = beforePositionChange;
+			startCbs.afterSlide = endCbs.afterSlide = afterPositionChange;
+		}
+	}
+
+	/**
+	 * Removes the currently subscribed position change listeners.
+	 */
+	public removePositionChangeListeners(): void {
+		if (this.callbacks) {
+			this.callbacks = undefined;
+			this.start.callbacks = undefined;
+			this.end.callbacks = undefined;
+		}
+	}
+
+	/**
+	 * {@inheritDoc ISerializableInterval.serialize}
+	 */
+	public serialize(): ISerializedInterval {
+		this.verifyNotDispose();
+
+		return this.serializeDelta({
+			props: this.properties,
+			includeEndpoints: true,
+		}) as ISerializedInterval;
+	}
+
+	public serializeDelta({
+		props,
+		includeEndpoints,
+	}: {
+		props: PropertySet | undefined;
+		includeEndpoints: boolean;
+	}): SerializedIntervalDelta {
+		this.verifyNotDispose();
+
+		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
+		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
+		const startPosition = includeEndpoints
+			? (startSegment?.endpointType ??
+				this.client.localReferencePositionToPosition(this.start))
+			: undefined;
+		const endPosition = includeEndpoints
+			? (endSegment?.endpointType ?? this.client.localReferencePositionToPosition(this.end))
+			: undefined;
+		return {
+			end: endPosition,
+			intervalType: this.intervalType,
+			sequenceNumber: this.client.getCurrentSeq(),
+			start: startPosition,
+			stickiness: this.stickiness,
+			startSide: includeEndpoints ? this.startSide : undefined,
+			endSide: includeEndpoints ? this.endSide : undefined,
+			properties: {
+				...props,
+				[reservedIntervalIdKey]: this.getIntervalId(),
+				[reservedRangeLabelsKey]: [this.label],
+			},
+		} satisfies SerializedIntervalDelta;
+	}
+
+	/**
+	 * {@inheritDoc IInterval.clone}
+	 */
+	public clone(): SequenceIntervalClass {
+		this.verifyNotDispose();
+
+		return new SequenceIntervalClass(
+			this.client,
+			this.getIntervalId(),
+			this.label,
+			this.start,
+			this.end,
+			this.intervalType,
+			this.properties,
+			this.startSide,
+			this.endSide,
+		);
 	}
 
 	/**
@@ -461,7 +493,6 @@ export class SequenceIntervalClass
 	 */
 	public union(b: SequenceIntervalClass) {
 		this.verifyNotDispose();
-		assert(this.client !== undefined, "client required for union");
 
 		const newStart = minReferencePosition(this.start, b.start);
 		const newEnd = maxReferencePosition(this.end, b.end);
@@ -498,9 +529,8 @@ export class SequenceIntervalClass
 	/**
 	 * Whether this interval overlaps the provided numerical positions.
 	 */
-	public overlapsPos(bstart: number, bend: number) {
+	public override overlapsPos(bstart: number, bend: number) {
 		this.verifyNotDispose();
-		assert(this.client !== undefined, "client required for overlapsPos");
 
 		const startPos = this.client.localReferencePositionToPosition(this.start);
 		const endPos = this.client.localReferencePositionToPosition(this.end);
@@ -511,7 +541,6 @@ export class SequenceIntervalClass
 		rebased: Record<"start" | "end", { segment: ISegment; offset: number }>,
 	) {
 		this.verifyNotDispose();
-		assert(this.client !== undefined, "client required for moveEndpointReferences");
 
 		const startRef = createPositionReferenceFromSegoff({
 			client: this.client,
@@ -550,7 +579,6 @@ export class SequenceIntervalClass
 		canSlideToEndpoint: boolean = false,
 	) {
 		this.verifyNotDispose();
-		assert(this.client !== undefined, "client required for modify");
 
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
@@ -613,7 +641,7 @@ export class SequenceIntervalClass
 
 		const newInterval = new SequenceIntervalClass(
 			this.client,
-			this.id,
+			this.getIntervalId(),
 			this.label,
 			startRef,
 			endRef,
@@ -812,7 +840,7 @@ export function createTransientIntervalFromSequence(
 	start: SequencePlace | undefined,
 	end: SequencePlace | undefined,
 	sequence: ISharedSegmentSequence<any>,
-): SequenceIntervalClass {
+): TransientSequenceInterval {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
 		end ?? "end",
@@ -852,14 +880,11 @@ export function createTransientIntervalFromSequence(
 	startLref.addProperties(rangeProp);
 	endLref.addProperties(rangeProp);
 
-	return new SequenceIntervalClass(
-		undefined,
+	return new TransientSequenceInterval(
 		uuid(),
-		"transient",
 		startLref,
 		endLref,
 		IntervalType.Transient,
-		undefined,
 		startSide,
 		endSide,
 	);

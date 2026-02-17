@@ -11,7 +11,7 @@ import {
 	RedBlackTree,
 } from "@fluidframework/merge-tree/internal";
 
-import { ISerializableInterval } from "./intervals/index.js";
+import { type IInterval, ISerializableInterval } from "./intervals/index.js";
 
 export interface AugmentedIntervalNode {
 	minmax: ISerializableInterval;
@@ -71,8 +71,10 @@ export class IntervalTree<T extends ISerializableInterval>
 	}
 
 	// TODO: toString()
-	public match(x: T) {
-		return this.intervals.gather(x, this);
+	public match(x: IInterval) {
+		// Safe: gather only passes x to matchNode/continueSubtree callbacks,
+		// which call overlaps() on stored nodes. overlaps() accepts IInterval.
+		return this.intervals.gather(x as unknown as T, this);
 	}
 
 	public matchNode(node: IntervalNode<T> | undefined, key: T) {
