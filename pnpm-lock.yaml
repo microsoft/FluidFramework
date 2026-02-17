@@ -15,7 +15,6 @@ overrides:
   oclif>@aws-sdk/client-cloudfront: npm:empty-npm-package@1.0.0
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
   axios@<0.30.0: ^0.30.0
-  axios@>=1.0.0: '>=1.13.5'
   tar: '>=7.5.7'
 
 pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
@@ -4550,7 +4549,7 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       axios:
-        specifier: '>=1.13.5'
+        specifier: ^1.8.4
         version: 1.13.5(debug@4.4.3)
       events_pkg:
         specifier: npm:events@^3.1.0
@@ -4701,7 +4700,7 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       axios:
-        specifier: '>=1.13.5'
+        specifier: ^1.8.4
         version: 1.13.5(debug@4.4.3)
       events_pkg:
         specifier: npm:events@^3.1.0
@@ -5516,7 +5515,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/utils/tool-utils
       axios:
-        specifier: '>=1.13.5'
+        specifier: ^1.8.4
         version: 1.13.5(debug@4.4.3)
       buffer:
         specifier: ^6.0.3
@@ -6858,7 +6857,7 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/shared-object-base
       axios:
-        specifier: '>=1.13.5'
+        specifier: ^1.8.4
         version: 1.13.5(debug@4.4.3)
       buffer:
         specifier: ^6.0.3
