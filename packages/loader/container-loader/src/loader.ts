@@ -346,10 +346,9 @@ export async function resolveAndLoadContainer(
 
 /**
  * Creates an IHostLoader instance from loader properties.
- * This is the recommended replacement for the deprecated Loader class.
  * @param loaderProps - Services and properties necessary for creating a loader
  * @returns An IHostLoader that can create, rehydrate, and load containers
- * @legacy @beta
+ * @internal
  */
 export function createLoader(loaderProps: ILoaderProps): IHostLoader {
 	// We need `loader` to exist before calling `createLoaderServices` so it can be

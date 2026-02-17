@@ -7,12 +7,11 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
-	IContainer,
-	IFluidCodeDetails,
-	IHostLoader,
-} from "@fluidframework/container-definitions/internal";
-import { createLoader } from "@fluidframework/container-loader/internal";
+	createDetachedContainer,
+	rehydrateDetachedContainer,
+} from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
@@ -48,14 +47,16 @@ describeCompat(
 		): Promise<{ container: IContainer; defaultDataStore: TestFluidObject }> {
 			const documentId = createDocumentId();
 			const request = provider.driver.createCreateNewRequest(documentId);
-			const loader = createTestLoader(
-				provider,
-				wrapObjectAndOverride<IDocumentServiceFactory>(provider.documentServiceFactory, {
-					createContainer: () => assert.fail("fail on attach"),
-				}),
-			);
 
-			const container: IContainer = await loader.createDetachedContainer(codeDetails);
+			const container: IContainer = await createDetachedContainer({
+				...getTestLoaderProps(
+					provider,
+					wrapObjectAndOverride<IDocumentServiceFactory>(provider.documentServiceFactory, {
+						createContainer: () => assert.fail("fail on attach"),
+					}),
+				),
+				codeDetails,
+			});
 			// Get the root dataStore from the detached container.
 			const defaultDataStore = (await container.getEntryPoint()) as TestFluidObject;
 
@@ -75,26 +76,25 @@ describeCompat(
 			};
 		}
 
-		function createTestLoader(
+		function getTestLoaderProps(
 			provider: ITestObjectProvider,
 			documentServiceFactory?: IDocumentServiceFactory,
-		): IHostLoader {
+		) {
 			const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
 				[sharedStringId, SharedString.getFactory()],
 				[sharedMapId, SharedMap.getFactory()],
 			]);
 			const codeLoader = new LocalCodeLoader([[codeDetails, factory]], {});
-			const testLoader = createLoader({
+			return {
 				urlResolver: provider.urlResolver,
 				documentServiceFactory: documentServiceFactory ?? provider.documentServiceFactory,
 				codeLoader,
 				logger: provider.logger,
 				configProvider: {
-					getRawConfig: (name) =>
+					getRawConfig: (name: string) =>
 						name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
 				},
-			});
-			return testLoader;
+			};
 		}
 
 		const createPeerDataStore = async (
@@ -119,10 +119,10 @@ describeCompat(
 
 				const snapshotTree = container.serialize();
 
-				const loader = createTestLoader(provider);
-
-				const rehydratedContainer =
-					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+				const rehydratedContainer = await rehydrateDetachedContainer({
+					...getTestLoaderProps(provider),
+					serializedState: snapshotTree,
+				});
 
 				if (attachAfterRehydrate) {
 					await rehydratedContainer.attach(provider.driver.createCreateNewRequest());
@@ -154,10 +154,10 @@ describeCompat(
 				// serialize and rehydrate
 				const snapshotTree = container.serialize();
 
-				const loader = createTestLoader(provider);
-
-				const rehydratedContainer =
-					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+				const rehydratedContainer = await rehydrateDetachedContainer({
+					...getTestLoaderProps(provider),
+					serializedState: snapshotTree,
+				});
 
 				if (attachAfterRehydrate) {
 					await rehydratedContainer.attach(provider.driver.createCreateNewRequest());
@@ -205,10 +205,10 @@ describeCompat(
 				// serialize and rehydrate
 				const snapshotTree = container.serialize();
 
-				const loader = createTestLoader(provider);
-
-				const rehydratedContainer =
-					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+				const rehydratedContainer = await rehydrateDetachedContainer({
+					...getTestLoaderProps(provider),
+					serializedState: snapshotTree,
+				});
 
 				if (attachAfterRehydrate) {
 					await rehydratedContainer.attach(provider.driver.createCreateNewRequest());
@@ -255,10 +255,10 @@ describeCompat(
 				// serialize and rehydrate
 				const snapshotTree = container.serialize();
 
-				const loader = createTestLoader(provider);
-
-				const rehydratedContainer =
-					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+				const rehydratedContainer = await rehydrateDetachedContainer({
+					...getTestLoaderProps(provider),
+					serializedState: snapshotTree,
+				});
 
 				if (attachAfterRehydrate) {
 					await rehydratedContainer.attach(provider.driver.createCreateNewRequest());

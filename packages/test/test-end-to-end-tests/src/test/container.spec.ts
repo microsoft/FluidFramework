@@ -24,7 +24,10 @@ import {
 	ConnectionState,
 	type ContainerAlpha,
 	type ILoaderProps,
+	createDetachedContainer,
 	createLoader,
+	loadExistingContainer,
+	type ICreateAndLoadContainerProps,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -82,13 +85,13 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		}
 	});
 	before(async () => {
-		const loader = createLoader({
+		const container = await createDetachedContainer({
 			logger: provider.logger,
 			urlResolver: provider.urlResolver,
 			documentServiceFactory: provider.documentServiceFactory,
 			codeLoader: new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
+			codeDetails,
 		});
-		const container = await loader.createDetachedContainer(codeDetails);
 		loaderContainerTracker.addContainer(container);
 		await container.attach(provider.driver.createCreateNewRequest("containerTest"));
 	});
@@ -96,10 +99,10 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		loaderContainerTracker.reset();
 	});
 	async function loadContainer(
-		props?: Partial<ILoaderProps>,
+		props?: Partial<ICreateAndLoadContainerProps>,
 		headers?: IRequestHeader,
 	): Promise<IContainer> {
-		const loader = createLoader({
+		const container = await loadExistingContainer({
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,
@@ -107,11 +110,10 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			codeLoader:
 				props?.codeLoader ??
 				new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
-		});
-
-		const container = await loader.resolve({
-			url: testRequest.url,
-			headers: { ...testRequest.headers, ...headers },
+			request: {
+				url: testRequest.url,
+				headers: { ...testRequest.headers, ...headers },
+			},
 		});
 		loaderContainerTracker.addContainer(container);
 		return container;

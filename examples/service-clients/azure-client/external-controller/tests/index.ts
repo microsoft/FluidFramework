@@ -8,7 +8,10 @@ import {
 	IFluidModuleWithDetails,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/legacy";
-import { createLoader } from "@fluidframework/container-loader/legacy";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/legacy";
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
@@ -62,11 +65,11 @@ export async function getSessionStorageContainer(
 
 	const codeLoader = { load };
 
-	const loader = createLoader({
+	const loaderProps = {
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,
-	});
+	};
 
 	let container: IContainer;
 	let attach: (() => Promise<void>) | undefined;
@@ -75,10 +78,13 @@ export async function getSessionStorageContainer(
 		// We're not actually using the code proposal (our code loader always loads the same module regardless of the
 		// proposal), but the IContainer will only give us a NullRuntime if there's no proposal.  So we'll use a fake
 		// proposal.
-		container = await loader.createDetachedContainer({ package: "", config: {} });
+		container = await createDetachedContainer({
+			...loaderProps,
+			codeDetails: { package: "", config: {} },
+		});
 		attach = async (): Promise<void> => container.attach({ url });
 	} else {
-		container = await loader.resolve({ url });
+		container = await loadExistingContainer({ ...loaderProps, request: { url } });
 	}
 
 	return { container, attach };

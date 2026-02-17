@@ -15,9 +15,6 @@ export enum ConnectionState {
 // @beta @legacy
 export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
 
-// @beta @legacy
-export function createLoader(loaderProps: ILoaderProps): IHostLoader;
-
 // @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
     // (undocumented)

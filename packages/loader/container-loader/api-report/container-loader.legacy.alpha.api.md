@@ -26,9 +26,6 @@ export function createDetachedContainer(createDetachedContainerProps: ICreateDet
 // @alpha @legacy
 export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>): IDocumentServiceFactory;
 
-// @beta @legacy
-export function createLoader(loaderProps: ILoaderProps): IHostLoader;
-
 // @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
     // (undocumented)

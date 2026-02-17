@@ -10,7 +10,11 @@ import {
 	ContainerErrorTypes,
 	IContainer,
 } from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, createLoader } from "@fluidframework/container-loader/internal";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+	type ICreateAndLoadContainerProps,
+} from "@fluidframework/container-loader/internal";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -38,16 +42,16 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	beforeEach("setup", async () => {
-		const loader = createLoader({
+		fileName = uuid();
+		const container = await createDetachedContainer({
 			logger: provider.logger,
 			urlResolver: provider.urlResolver,
 			documentServiceFactory: provider.documentServiceFactory,
 			codeLoader: new LocalCodeLoader([
 				[provider.defaultCodeDetails, new TestFluidObjectFactory([])],
 			]),
+			codeDetails: provider.defaultCodeDetails,
 		});
-		fileName = uuid();
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		loaderContainerTracker.addContainer(container);
 		await container.attach(provider.driver.createCreateNewRequest(fileName));
 		assert(container.resolvedUrl);
@@ -58,8 +62,11 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 		loaderContainerTracker.reset();
 	});
 
-	async function loadContainer(props?: Partial<ILoaderProps>): Promise<IContainer> {
-		const loader = createLoader({
+	async function loadContainer(
+		props?: Partial<ICreateAndLoadContainerProps>,
+	): Promise<IContainer> {
+		const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
+		const container = await loadExistingContainer({
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,
@@ -67,9 +74,8 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 			codeLoader:
 				props?.codeLoader ??
 				new LocalCodeLoader([[provider.defaultCodeDetails, new TestFluidObjectFactory([])]]),
+			request: { url: requestUrl },
 		});
-		const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
-		const container = await loader.resolve({ url: requestUrl });
 		loaderContainerTracker.addContainer(container);
 		return container;
 	}
