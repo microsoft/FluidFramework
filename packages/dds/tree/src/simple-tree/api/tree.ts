@@ -20,6 +20,9 @@ import type {
 	TreeAlpha,
 } from "../../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
+// This is referenced by doc comments.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { Unhydrated } from "../core/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -180,7 +183,7 @@ export interface TreeBranch extends IDisposable {
 }
 
 /**
- * Context for a tree node which provides additional context-aware APIs.
+ * Provides additional APIs that may be used to interact with a tree node or a tree node's SharedTree.
  * @alpha
  */
 export interface TreeContextAlpha {
@@ -192,18 +195,19 @@ export interface TreeContextAlpha {
 	 * It includes the following:
 	 *
 	 * - A "success" flag indicating whether the transaction was successful or not.
-	 * - The success or failure value as returned by the transaction function.
+	 * - The success or failure value as returned by `transaction`.
 	 *
 	 * @remarks
 	 * If `runTransaction` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
 	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
 	 *
-	 * If `runTransaction` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransaction` does nothing additional).
-	 * The transaction will always succeed.
+	 * If `runTransaction` is invoked on the context of an {@link Unhydrated | unhydrated } node or removed node,
+	 * it is equivalent to running the `transaction` delegate directly and the transaction will always succeed.
 	 */
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
 	): TransactionResultExt<TValue, TValue>;
+
 	/**
 	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param transaction - The function to run as the body of the transaction.
@@ -211,10 +215,11 @@ export interface TreeContextAlpha {
 	 * If `runTransaction` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
 	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:2) | access to more transaction capabilities} if so.
 	 *
-	 * If `runTransaction` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransaction` does nothing additional).
-	 * The transaction will always succeed.
+	 * If `runTransaction` is invoked on the context of an {@link Unhydrated | unhydrated } node or removed node,
+	 * it is equivalent to running the `transaction` delegate directly and the transaction will always succeed.
 	 */
 	runTransaction(transaction: () => void): TransactionResult;
+
 	/**
 	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param transaction - The function to run as the body of the transaction.
@@ -223,18 +228,19 @@ export interface TreeContextAlpha {
 	 * It includes the following:
 	 *
 	 * - A "success" flag indicating whether the transaction was successful or not.
-	 * - The success or failure value as returned by the transaction function.
+	 * - The success or failure value as returned by `transaction`.
 	 *
 	 * @remarks
 	 * If `runTransactionAsync` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
 	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransactionAsync:1) | access to more transaction capabilities} if so.
 	 *
-	 * If `runTransactionAsync` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransactionAsync` does nothing additional).
-	 * The transaction will always succeed.
+	 * If `runTransactionAsync` is invoked on the context of an {@link Unhydrated | unhydrated } node or removed node,
+	 * it is equivalent to running the `transaction` delegate directly and the transaction will always succeed.
 	 */
 	runTransactionAsync<TValue>(
 		transaction: () => Promise<WithValue<TValue>>,
 	): Promise<TransactionResultExt<TValue, TValue>>;
+
 	/**
 	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
 	 * @param transaction - The function to run as the body of the transaction.
@@ -242,19 +248,20 @@ export interface TreeContextAlpha {
 	 * If `runTransactionAsync` is invoked on the context of a {@link TreeStatus.InDocument | node in the document }, the transaction will be applied to the {@link TreeBranchAlpha | branch associated with that node}.
 	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransactionAsync:2) | access to more transaction capabilities} if so.
 	 *
-	 * If `runTransactionAsync` is invoked on the context of an {@link TreeStatus.New | unhydrated } node, it is equivalent to running the `transaction` delegate directly (i.e. `runTransactionAsync` does nothing additional).
-	 * The transaction will always succeed.
+	 * If `runTransactionAsync` is invoked on the context of an {@link Unhydrated | unhydrated } node or removed node,
+	 * it is equivalent to running the `transaction` delegate directly and the transaction will always succeed.
 	 */
 	runTransactionAsync(transaction: () => Promise<void>): Promise<TransactionResult>;
 
 	/**
-	 * True if this context is associated with a {@link TreeBranchAlpha | branch} and false if it is associated with an {@link TreeStatus.New | unhydrated } node.
+	 * True if this context is associated with a {@link TreeBranchAlpha | branch} and false if it is associated with an {@link Unhydrated | unhydrated } node.
 	 * @remarks If this returns true, the context can be safely inferred or cast to {@link TreeBranchAlpha} to access additional branch-specific APIs.
 	 * @example
 	 * ```typescript
 	 * const context = tree.context(someNode);
 	 * if (context.isBranch()) {
-	 *   context.fork(); // `fork` is a method on TreeBranchAlpha, so this is only accessible if `context` is a branch context.
+	 *   assert(context.hasRootSchema(MySchema)) // `hasRootSchema` is a method on TreeBranchAlpha, so this is only accessible if `context` is a branch context.
+	 *   context.root.foo = "bar"; // Edit the root of the SharedTree that `someNode` belongs to.
 	 * }
 	 * ```
 	 */
