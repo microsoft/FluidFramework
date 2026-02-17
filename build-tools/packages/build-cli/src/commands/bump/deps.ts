@@ -27,7 +27,6 @@ import { isDependencyUpdateType } from "../../library/bump.js";
 import { BaseCommand } from "../../library/commands/base.js";
 // eslint-disable-next-line import-x/no-deprecated
 import { MonoRepoKind } from "../../library/context.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { npmCheckUpdates, npmCheckUpdatesHomegrown } from "../../library/package.js";
 import { indentString } from "../../library/text.js";
 import type { ReleaseGroup } from "../../releaseGroups.js";

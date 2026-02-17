@@ -11,8 +11,6 @@ import {
 	type GitHubProps,
 	isPrApprovedByTeam,
 	isPrApprovedByUsers,
-	// We are slowly moving away from barrel files and these APIs are only used here.
-	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../library/githubRest.js";
 
 /**

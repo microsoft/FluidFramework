@@ -19,9 +19,7 @@ import {
 	removeSectionContent,
 	stripSoftBreaks,
 	updateTocLinks,
-	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../library/markdown.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { RELEASE_NOTES_TOC_LINK_TEXT } from "../../library/releaseNotes.js";
 
 /**

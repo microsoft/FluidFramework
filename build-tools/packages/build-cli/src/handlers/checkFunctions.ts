@@ -24,7 +24,6 @@ import {
 	DEFAULT_GENERATION_FILE_NAME,
 	DEFAULT_MINIMUM_COMPAT_WINDOW_MONTHS,
 	formatCompatLayerGenerationError,
-	// eslint-disable-next-line import-x/no-internal-modules
 } from "../library/compatLayerGeneration.js";
 import { getPreReleaseDependencies, isReleased } from "../library/package.js";
 import type { CommandLogger } from "../logging.js";

@@ -18,7 +18,6 @@ import {
 	feeds,
 	isFeed,
 	packagePublishesToFeed,
-	// eslint-disable-next-line import-x/no-internal-modules -- the policy-related stuff will eventually be moved into this package
 } from "../library/repoPolicyCheck/npmPackages.js";
 import { type PnpmListEntry, pnpmList } from "../pnpm.js";
 

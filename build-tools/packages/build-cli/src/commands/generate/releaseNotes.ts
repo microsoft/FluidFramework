@@ -24,9 +24,7 @@ import {
 	UNKNOWN_SECTION,
 } from "../../library/changesets.js";
 import { BaseCommand } from "../../library/commands/base.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { addHeadingLinks, stripSoftBreaks } from "../../library/markdown.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { RELEASE_NOTES_TOC_LINK_TEXT } from "../../library/releaseNotes.js";
 import { difference } from "../../library/sets.js";
 
