@@ -153,9 +153,7 @@ export function makeMessageCodecs<TChangeset>(
 			case unbrand(MessageFormatVersion.v4):
 			case unbrand(MessageFormatVersion.v6):
 			case unbrand(MessageFormatVersion.vConstraints): {
-				const changeCodec = changeCodecs.resolve(
-					dependentChangeFormatVersion.lookup(version),
-				).json;
+				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,
 					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version),
@@ -165,9 +163,7 @@ export function makeMessageCodecs<TChangeset>(
 				return [version, makeDiscontinuedCodecVersion(options, version, "2.74.0")];
 			}
 			case unbrand(MessageFormatVersion.vSharedBranches): {
-				const changeCodec = changeCodecs.resolve(
-					dependentChangeFormatVersion.lookup(version),
-				).json;
+				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,
 					makeSharedBranchesCodecWithVersion(changeCodec, revisionTagCodec, options, version),

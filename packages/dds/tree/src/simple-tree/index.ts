@@ -198,9 +198,9 @@ export {
 	checkCompatibility,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
-	checkSchemaCompatibilitySnapshots,
+	snapshotSchemaCompatibility,
 	type SnapshotFileSystem,
-	type SchemaCompatibilitySnapshotsOptions,
+	type SnapshotSchemaCompatibilityOptions,
 	createCustomizedFluidFrameworkScopedFactory,
 } from "./api/index.js";
 export type {

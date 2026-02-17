@@ -146,9 +146,6 @@ export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
-export function checkSchemaCompatibilitySnapshots(options: SchemaCompatibilitySnapshotsOptions): void;
-
-// @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
     clone: boolean;
     value: unknown;
@@ -274,10 +271,11 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
 // @alpha
 export function exportCompatibilitySchemaSnapshot(config: Pick<TreeViewConfiguration, "schema">): JsonCompatibleReadOnly;
 
-// @alpha
+// @beta
 export namespace ExtensibleUnionNode {
     export function createSchema<const T extends readonly TreeNodeSchema[], const TScope extends string, const TName extends string>(types: T, inputSchemaFactory: SchemaFactoryBeta<TScope>, name: TName): Statics<T> & TreeNodeSchemaCore_2<ScopedSchemaName_2<`com.fluidframework.extensibleUnionNode<${TScope}>`, TName>, NodeKind_2, false, unknown, never, unknown> & (new (data: InternalTreeNode_2) => Members<TreeNodeFromImplicitAllowedTypes<T>> & TreeNode_2 & WithType_2<ScopedSchemaName_2<`com.fluidframework.extensibleUnionNode<${TScope}>`, TName>, NodeKind_2, unknown>);
     export interface Members<T> {
+        isValid(): boolean;
         readonly union: T | undefined;
     }
     export interface Statics<T extends readonly TreeNodeSchema[]> {
@@ -986,17 +984,6 @@ export interface RunTransactionParams {
     readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
-// @alpha @input
-export interface SchemaCompatibilitySnapshotsOptions {
-    readonly fileSystem: SnapshotFileSystem;
-    readonly minVersionForCollaboration: string;
-    readonly mode: "test" | "update";
-    readonly schema: TreeViewConfiguration;
-    readonly snapshotDirectory: string;
-    readonly snapshotUnchangedVersions?: true;
-    readonly version: string;
-}
-
 // @public @sealed
 export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
@@ -1232,6 +1219,23 @@ export interface SnapshotFileSystem {
     writeFileSync(file: string, data: string, options: {
         encoding: "utf8";
     }): void;
+}
+
+// @alpha
+export function snapshotSchemaCompatibility(options: SnapshotSchemaCompatibilityOptions): void;
+
+// @alpha @input
+export interface SnapshotSchemaCompatibilityOptions {
+    readonly fileSystem: SnapshotFileSystem;
+    readonly minVersionForCollaboration: string;
+    readonly mode: "assert" | "update";
+    readonly rejectSchemaChangesWithNoVersionChange?: true;
+    readonly rejectVersionsWithNoSchemaChange?: true;
+    readonly schema: TreeViewConfiguration;
+    readonly snapshotDirectory: string;
+    readonly snapshotUnchangedVersions?: true;
+    readonly version: string;
+    readonly versionComparer?: (a: string, b: string) => number;
 }
 
 // @beta @system

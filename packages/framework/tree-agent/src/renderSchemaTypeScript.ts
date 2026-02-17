@@ -4,15 +4,15 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { FieldSchema, TreeNodeSchema } from "@fluidframework/tree";
+import {
+	ArrayNodeSchema,
+	MapNodeSchema,
+	ObjectNodeSchema,
+	RecordNodeSchema,
+} from "@fluidframework/tree/alpha";
 import { FieldKind, NodeKind, ValueSchema } from "@fluidframework/tree/internal";
-import type {
-	SimpleArrayNodeSchema,
-	SimpleFieldSchema,
-	SimpleMapNodeSchema,
-	SimpleNodeSchema,
-	SimpleObjectNodeSchema,
-	SimpleRecordNodeSchema,
-} from "@fluidframework/tree/internal";
+import type { SimpleLeafNodeSchema } from "@fluidframework/tree/internal";
 
 import type { BindableSchema, FunctionWrapper } from "./methodBinding.js";
 import { getExposedMethods } from "./methodBinding.js";
@@ -21,7 +21,12 @@ import { getExposedProperties, type PropertyDef } from "./propertyBinding.js";
 import { renderTypeFactoryTypeScript } from "./renderTypeFactoryTypeScript.js";
 import type { TypeFactoryOptional, TypeFactoryType } from "./treeAgentTypes.js";
 import { isTypeFactoryType } from "./treeAgentTypes.js";
-import { getFriendlyName, isNamedSchema, llmDefault, unqualifySchema } from "./utils.js";
+import {
+	IdentifierCollisionResolver,
+	getFriendlyName,
+	isNamedSchema,
+	llmDefault,
+} from "./utils.js";
 
 interface BoundMembers {
 	methods: Record<string, FunctionWrapper>;
@@ -62,24 +67,25 @@ export interface SchemaTypeScriptRenderResult {
  * Converts schema metadata into TypeScript declarations suitable for prompt inclusion.
  */
 export function renderSchemaTypeScript(
-	definitions: ReadonlyMap<string, SimpleNodeSchema>,
+	definitions: Iterable<TreeNodeSchema>,
 	bindableSchemas: Map<string, BindableSchema>,
 ): SchemaTypeScriptRenderResult {
-	const friendlyNames = new Map<string, string>();
+	const allSchemas = [...definitions];
 	let hasHelperMethods = false;
 
-	for (const identifier of definitions.keys()) {
-		if (isNamedSchema(identifier)) {
-			friendlyNames.set(identifier, unqualifySchema(identifier));
-		}
+	// Resolve short name collisions
+	const resolver = new IdentifierCollisionResolver();
+	for (const schema of allSchemas) {
+		resolver.resolve(schema);
 	}
 
 	const declarations: string[] = [];
-	for (const [identifier, schema] of definitions) {
+	for (const schema of allSchemas) {
+		const identifier = schema.identifier;
 		if (!isNamedSchema(identifier)) {
 			continue;
 		}
-		const friendlyName = friendlyNames.get(identifier) ?? unqualifySchema(identifier);
+		const friendlyName = resolver.resolve(schema);
 		const rendered = renderNamedSchema(identifier, friendlyName, schema);
 		if (rendered === undefined) {
 			continue;
@@ -104,37 +110,34 @@ export function renderSchemaTypeScript(
 	function renderNamedSchema(
 		identifier: string,
 		friendlyName: string,
-		schema: SimpleNodeSchema,
+		schema: TreeNodeSchema,
 	): RenderResult | undefined {
-		switch (schema.kind) {
-			case NodeKind.Object: {
-				return renderObjectDeclaration(identifier, friendlyName, schema);
-			}
-			case NodeKind.Array: {
-				return renderArrayDeclaration(identifier, friendlyName, schema);
-			}
-			case NodeKind.Map: {
-				return renderMapDeclaration(identifier, friendlyName, schema);
-			}
-			case NodeKind.Record: {
-				return renderRecordDeclaration(identifier, friendlyName, schema);
-			}
-			case NodeKind.Leaf: {
-				return {
-					declaration: `type ${friendlyName} = ${renderLeaf(schema.leafKind)};`,
-					description: schema.metadata?.description,
-				};
-			}
-			default: {
-				return undefined;
-			}
+		if (schema instanceof ObjectNodeSchema) {
+			return renderObjectDeclaration(identifier, friendlyName, schema);
 		}
+		if (schema instanceof ArrayNodeSchema) {
+			return renderArrayDeclaration(identifier, friendlyName, schema);
+		}
+		if (schema instanceof MapNodeSchema) {
+			return renderMapDeclaration(identifier, friendlyName, schema);
+		}
+		if (schema instanceof RecordNodeSchema) {
+			return renderRecordDeclaration(identifier, friendlyName, schema);
+		}
+		if (schema.kind === NodeKind.Leaf) {
+			const leafSchema = schema as unknown as SimpleLeafNodeSchema;
+			return {
+				declaration: `type ${friendlyName} = ${renderLeaf(leafSchema.leafKind)};`,
+				description: leafSchema.metadata?.description,
+			};
+		}
+		return undefined;
 	}
 
 	function renderObjectDeclaration(
 		definition: string,
 		name: string,
-		schema: SimpleObjectNodeSchema,
+		schema: ObjectNodeSchema,
 	): RenderResult {
 		const fieldLines: string[] = [];
 		const fieldNames = new Set<string>();
@@ -160,9 +163,9 @@ export function renderSchemaTypeScript(
 	function renderArrayDeclaration(
 		definition: string,
 		name: string,
-		schema: SimpleArrayNodeSchema,
+		schema: ArrayNodeSchema,
 	): RenderResult {
-		const elementTypes = renderAllowedTypes(schema.simpleAllowedTypes.keys());
+		const elementTypes = renderAllowedTypes(schema.childTypes);
 		const base = `${formatExpression(elementTypes)}[]`;
 		const binding = renderBindingIntersection(definition);
 		return {
@@ -174,9 +177,9 @@ export function renderSchemaTypeScript(
 	function renderMapDeclaration(
 		definition: string,
 		name: string,
-		schema: SimpleMapNodeSchema,
+		schema: MapNodeSchema,
 	): RenderResult {
-		const valueType = renderAllowedTypes(schema.simpleAllowedTypes.keys());
+		const valueType = renderAllowedTypes(schema.childTypes);
 		const base = `Map<string, ${valueType.text}>`;
 		const binding = renderBindingIntersection(definition);
 		return {
@@ -188,9 +191,9 @@ export function renderSchemaTypeScript(
 	function renderRecordDeclaration(
 		definition: string,
 		name: string,
-		schema: SimpleRecordNodeSchema,
+		schema: RecordNodeSchema,
 	): RenderResult {
-		const valueType = renderAllowedTypes(schema.simpleAllowedTypes.keys());
+		const valueType = renderAllowedTypes(schema.childTypes);
 		const base = `Record<string, ${valueType.text}>`;
 		const binding = renderBindingIntersection(definition);
 		return {
@@ -199,7 +202,7 @@ export function renderSchemaTypeScript(
 		};
 	}
 
-	function renderFieldLine(name: string, field: SimpleFieldSchema): string[] {
+	function renderFieldLine(name: string, field: FieldSchema): string[] {
 		const { comment, optional, type } = describeField(field);
 		const lines: string[] = [];
 		if (comment !== undefined && comment !== "") {
@@ -211,12 +214,12 @@ export function renderSchemaTypeScript(
 		return lines;
 	}
 
-	function describeField(field: SimpleFieldSchema): {
+	function describeField(field: FieldSchema): {
 		comment?: string;
 		optional: boolean;
 		type: string;
 	} {
-		const allowedTypes = renderAllowedTypes(field.simpleAllowedTypes.keys());
+		const allowedTypes = renderAllowedTypes(field.allowedTypeSet);
 		const type = formatExpression(allowedTypes);
 		const optional = field.kind !== FieldKind.Required;
 		const customMetadata = field.metadata.custom as
@@ -307,10 +310,10 @@ export function renderSchemaTypeScript(
 		};
 	}
 
-	function renderAllowedTypes(allowedTypes: Iterable<string>): TypeExpression {
+	function renderAllowedTypes(allowedTypes: Iterable<TreeNodeSchema>): TypeExpression {
 		const expressions: TypeExpression[] = [];
-		for (const identifier of allowedTypes) {
-			expressions.push(renderTypeReference(identifier));
+		for (const schema of allowedTypes) {
+			expressions.push(renderTypeReference(schema));
 		}
 		if (expressions.length === 0) {
 			return { precedence: TypePrecedence.Object, text: "never" };
@@ -326,47 +329,39 @@ export function renderSchemaTypeScript(
 		};
 	}
 
-	function renderTypeReference(identifier: string): TypeExpression {
-		const schema = definitions.get(identifier);
-		if (schema === undefined) {
+	function renderTypeReference(schema: TreeNodeSchema): TypeExpression {
+		if (isNamedSchema(schema.identifier)) {
 			return {
 				precedence: TypePrecedence.Object,
-				text: friendlyNames.get(identifier) ?? unqualifySchema(identifier),
-			};
-		}
-		if (isNamedSchema(identifier)) {
-			return {
-				precedence: TypePrecedence.Object,
-				text: friendlyNames.get(identifier) ?? unqualifySchema(identifier),
+				text: resolver.resolve(schema),
 			};
 		}
 		return renderInlineSchema(schema);
 	}
 
-	function renderInlineSchema(schema: SimpleNodeSchema): TypeExpression {
-		switch (schema.kind) {
-			case NodeKind.Object: {
-				return renderInlineObject(schema);
-			}
-			case NodeKind.Array: {
-				return renderInlineArray(schema);
-			}
-			case NodeKind.Map: {
-				return renderInlineMap(schema);
-			}
-			case NodeKind.Record: {
-				return renderInlineRecord(schema);
-			}
-			case NodeKind.Leaf: {
-				return { precedence: TypePrecedence.Object, text: renderLeaf(schema.leafKind) };
-			}
-			default: {
-				return { precedence: TypePrecedence.Object, text: "unknown" };
-			}
+	function renderInlineSchema(schema: TreeNodeSchema): TypeExpression {
+		if (schema instanceof ObjectNodeSchema) {
+			return renderInlineObject(schema);
 		}
+		if (schema instanceof ArrayNodeSchema) {
+			return renderInlineArray(schema);
+		}
+		if (schema instanceof MapNodeSchema) {
+			return renderInlineMap(schema);
+		}
+		if (schema instanceof RecordNodeSchema) {
+			return renderInlineRecord(schema);
+		}
+		if (schema.kind === NodeKind.Leaf) {
+			return {
+				precedence: TypePrecedence.Object,
+				text: renderLeaf((schema as unknown as SimpleLeafNodeSchema).leafKind),
+			};
+		}
+		return { precedence: TypePrecedence.Object, text: "unknown" };
 	}
 
-	function renderInlineObject(schema: SimpleObjectNodeSchema): TypeExpression {
+	function renderInlineObject(schema: ObjectNodeSchema): TypeExpression {
 		const fieldLines: string[] = [];
 		for (const [fieldName, fieldSchema] of schema.fields) {
 			fieldLines.push(...renderFieldLine(fieldName, fieldSchema));
@@ -381,24 +376,24 @@ ${members}
 		return { precedence: TypePrecedence.Object, text };
 	}
 
-	function renderInlineArray(schema: SimpleArrayNodeSchema): TypeExpression {
-		const elementTypes = renderAllowedTypes(schema.simpleAllowedTypes.keys());
+	function renderInlineArray(schema: ArrayNodeSchema): TypeExpression {
+		const elementTypes = renderAllowedTypes(schema.childTypes);
 		return {
 			precedence: TypePrecedence.Object,
 			text: `${formatExpression(elementTypes)}[]`,
 		};
 	}
 
-	function renderInlineMap(schema: SimpleMapNodeSchema): TypeExpression {
-		const valueType = renderAllowedTypes(schema.simpleAllowedTypes.keys());
+	function renderInlineMap(schema: MapNodeSchema): TypeExpression {
+		const valueType = renderAllowedTypes(schema.childTypes);
 		return {
 			precedence: TypePrecedence.Object,
 			text: `Map<string, ${valueType.text}>`,
 		};
 	}
 
-	function renderInlineRecord(schema: SimpleRecordNodeSchema): TypeExpression {
-		const valueType = renderAllowedTypes(schema.simpleAllowedTypes.keys());
+	function renderInlineRecord(schema: RecordNodeSchema): TypeExpression {
+		const valueType = renderAllowedTypes(schema.childTypes);
 		return {
 			precedence: TypePrecedence.Object,
 			text: `Record<string, ${valueType.text}>`,

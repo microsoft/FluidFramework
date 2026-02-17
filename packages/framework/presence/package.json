@@ -169,9 +169,6 @@
 				"^build:esnext",
 				"build:genver"
 			],
-			"check:exports:bundle-release-tags": [
-				"build:esnext"
-			],
 			"eslint": [
 				"api-extractor:esnext",
 				"^build:test:esm"
