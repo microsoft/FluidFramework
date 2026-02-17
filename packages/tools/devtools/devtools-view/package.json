@@ -118,7 +118,7 @@
 		"jiti": "^2.6.1",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"playwright": "^1.36.0",
+		"playwright": "^1.55.1",
 		"prop-types": "^15.8.1",
 		"rimraf": "^6.1.2",
 		"simple-git": "^3.19.1",
