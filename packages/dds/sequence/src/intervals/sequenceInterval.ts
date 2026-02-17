@@ -708,6 +708,41 @@ export function createPositionReferenceFromSegoff({
 	return createDetachedLocalReferencePosition(slidingPreference, refType);
 }
 
+/**
+ * Resolves a position to a {@link LocalReferencePosition} using an
+ * {@link ISharedSegmentSequence} (no Client or op context needed).
+ */
+export function resolvePositionRef(
+	sequence: ISharedSegmentSequence<any>,
+	pos: number | "start" | "end",
+	refType: ReferenceType,
+	slidingPreference: SlidingPreference,
+	canSlideToEndpoint?: boolean,
+): LocalReferencePosition {
+	if (pos === "start" || pos === "end") {
+		return sequence.createLocalReferencePosition(
+			pos,
+			undefined,
+			refType,
+			undefined,
+			slidingPreference,
+			canSlideToEndpoint,
+		);
+	}
+	const segoff = sequence.getContainingSegment(pos);
+	if (segoff?.segment !== undefined && segoff?.offset !== undefined) {
+		return sequence.createLocalReferencePosition(
+			segoff.segment,
+			segoff.offset,
+			refType,
+			undefined,
+			slidingPreference,
+			canSlideToEndpoint,
+		);
+	}
+	return createDetachedLocalReferencePosition(slidingPreference, refType);
+}
+
 function createPositionReference({
 	client,
 	pos,
@@ -769,21 +804,6 @@ function createPositionReference({
 	});
 }
 
-export function createTransientInterval(
-	start: SequencePlace | undefined,
-	end: SequencePlace | undefined,
-	client: Client,
-) {
-	return createSequenceInterval(
-		"transient",
-		uuid(),
-		start,
-		end,
-		client,
-		IntervalType.Transient,
-	);
-}
-
 /**
  * Creates a transient interval using an `ISharedSegmentSequence` instead of a `Client`.
  * This avoids coupling index classes to merge-tree internals.
@@ -805,47 +825,26 @@ export function createTransientIntervalFromSequence(
 		"start and end cannot be undefined because they were not passed in as undefined",
 	);
 
-	const startSlidingPreference = startReferenceSlidingPreference(
+	const startSlidingPref = startReferenceSlidingPreference(
 		startPos,
 		startSide,
 		endPos,
 		endSide,
 	);
-	const endSlidingPreference = endReferenceSlidingPreference(
+	const endSlidingPref = endReferenceSlidingPreference(startPos, startSide, endPos, endSide);
+
+	const startLref = resolvePositionRef(
+		sequence,
 		startPos,
-		startSide,
-		endPos,
-		endSide,
+		ReferenceType.Transient,
+		startSlidingPref,
 	);
-
-	const createRef = (
-		pos: number | "start" | "end",
-		slidingPreference: SlidingPreference,
-	): LocalReferencePosition => {
-		if (pos === "start" || pos === "end") {
-			return sequence.createLocalReferencePosition(
-				pos,
-				undefined,
-				ReferenceType.Transient,
-				undefined,
-				slidingPreference,
-			);
-		}
-		const segoff = sequence.getContainingSegment(pos);
-		if (segoff?.segment) {
-			return sequence.createLocalReferencePosition(
-				segoff.segment,
-				segoff.offset,
-				ReferenceType.Transient,
-				undefined,
-				slidingPreference,
-			);
-		}
-		return createDetachedLocalReferencePosition(slidingPreference, ReferenceType.Transient);
-	};
-
-	const startLref = createRef(startPos, startSlidingPreference);
-	const endLref = createRef(endPos, endSlidingPreference);
+	const endLref = resolvePositionRef(
+		sequence,
+		endPos,
+		ReferenceType.Transient,
+		endSlidingPref,
+	);
 
 	const rangeProp = {
 		[reservedRangeLabelsKey]: ["transient"],
@@ -917,6 +916,13 @@ export function createSequenceInterval(
 		endSide,
 	);
 
+	const endSlidingPreference = endReferenceSlidingPreference(
+		startPos,
+		startSide,
+		endPos,
+		endSide,
+	);
+
 	const startLref = createPositionReference({
 		client,
 		pos: startPos,
@@ -927,13 +933,6 @@ export function createSequenceInterval(
 		canSlideToEndpoint: canSlideToEndpoint && stickiness !== IntervalStickiness.NONE,
 		rollback,
 	});
-
-	const endSlidingPreference = endReferenceSlidingPreference(
-		startPos,
-		startSide,
-		endPos,
-		endSide,
-	);
 
 	const endLref = createPositionReference({
 		client,
