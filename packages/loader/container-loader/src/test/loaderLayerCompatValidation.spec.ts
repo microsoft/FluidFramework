@@ -10,7 +10,10 @@ import type {
 	ILayerCompatDetails,
 	ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
-import type { ICriticalContainerError } from "@fluidframework/container-definitions/internal";
+import type {
+	ICriticalContainerError,
+	IHostLoader,
+} from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import type { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
@@ -19,8 +22,6 @@ import {
 	isLayerIncompatibilityError,
 } from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
-
-import type { IHostLoader } from "@fluidframework/container-definitions/internal";
 
 import { createLoader } from "../loader.js";
 import {

@@ -390,7 +390,12 @@ export function createLoader(loaderProps: ILoaderProps): IHostLoader {
 			);
 		},
 		resolve: async (request: IRequest, pendingLocalState?: string): Promise<IContainer> => {
-			return resolveAndLoadContainer(servicesRef.services, servicesRef.mc, request, pendingLocalState);
+			return resolveAndLoadContainer(
+				servicesRef.services,
+				servicesRef.mc,
+				request,
+				pendingLocalState,
+			);
 		},
 	};
 

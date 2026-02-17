@@ -26,6 +26,9 @@ export function createDetachedContainer(createDetachedContainerProps: ICreateDet
 // @alpha @legacy
 export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>): IDocumentServiceFactory;
 
+// @beta @legacy
+export function createLoader(loaderProps: ILoaderProps): IHostLoader;
+
 // @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
     // (undocumented)
@@ -155,9 +158,6 @@ export interface IScribeProtocolState {
     // (undocumented)
     values: [string, ICommittedProposal][];
 }
-
-// @beta @legacy
-export function createLoader(loaderProps: ILoaderProps): IHostLoader;
 
 // @beta @legacy
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
