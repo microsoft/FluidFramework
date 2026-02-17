@@ -17,8 +17,7 @@ import {
 	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
-// NOTE: Changing this will rename the benchmark which will create a new chart on the dashboard
-const batchSize: number = 1000;
+const batchSize: number = 2;
 
 /**
  * Number of batches to process during setup to populate the DuplicateBatchDetector's tracked batch IDs.
