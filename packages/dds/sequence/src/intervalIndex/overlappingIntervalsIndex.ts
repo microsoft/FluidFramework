@@ -3,21 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Client,
-	SequencePlace,
-	endpointPosAndSide,
-} from "@fluidframework/merge-tree/internal";
+import { SequencePlace, endpointPosAndSide } from "@fluidframework/merge-tree/internal";
 
 import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
 	SequenceInterval,
 	SequenceIntervalClass,
-	createTransientInterval,
+	createTransientIntervalFromProvider,
 } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
-import type { SequenceIntervalIndex } from "./intervalIndex.js";
+import type { IIntervalReferenceProvider, SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
  * @legacy @beta
@@ -42,10 +38,10 @@ export interface ISequenceOverlappingIntervalsIndex extends SequenceIntervalInde
 
 export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsIndex {
 	protected readonly intervalTree = new IntervalTree<SequenceIntervalClass>();
-	protected readonly client: Client;
+	protected readonly provider: IIntervalReferenceProvider;
 
-	constructor(client: Client) {
-		this.client = client;
+	constructor(provider: IIntervalReferenceProvider) {
+		this.provider = provider;
 	}
 
 	public map(fn: (interval: SequenceInterval) => void) {
@@ -78,10 +74,10 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 				});
 			}
 		} else {
-			const transientInterval: SequenceIntervalClass = createTransientInterval(
+			const transientInterval: SequenceIntervalClass = createTransientIntervalFromProvider(
 				start ?? "start",
 				end ?? "end",
-				this.client,
+				this.provider,
 			);
 
 			if (start === undefined) {
@@ -152,7 +148,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 		) {
 			return [];
 		}
-		const transientInterval = createTransientInterval(start, end, this.client);
+		const transientInterval = createTransientIntervalFromProvider(start, end, this.provider);
 
 		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
 		return overlappingIntervalNodes.map((node) => node.key);
@@ -175,6 +171,5 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 export function createOverlappingIntervalsIndex(
 	sharedString: ISharedString,
 ): ISequenceOverlappingIntervalsIndex {
-	const client = (sharedString as unknown as { client: Client }).client;
-	return new OverlappingIntervalsIndex(client);
+	return new OverlappingIntervalsIndex(sharedString as unknown as IIntervalReferenceProvider);
 }

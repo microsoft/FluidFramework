@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
+import { PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import { SequenceInterval, createTransientInterval } from "../intervals/index.js";
+import { SequenceInterval, createTransientIntervalFromProvider } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
-import type { SequenceIntervalIndex } from "./intervalIndex.js";
+import type { IIntervalReferenceProvider, SequenceIntervalIndex } from "./intervalIndex.js";
 import {
 	HasComparisonOverride,
 	compareOverrideables,
@@ -31,7 +31,7 @@ export interface IStartpointInRangeIndex extends SequenceIntervalIndex {
 export class StartpointInRangeIndex implements IStartpointInRangeIndex {
 	private readonly intervalTree;
 
-	constructor(private readonly client: Client) {
+	constructor(private readonly provider: IIntervalReferenceProvider) {
 		this.intervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>(
 			(a: SequenceInterval, b: SequenceInterval) => {
 				const compareStartsResult = a.compareStart(b);
@@ -74,9 +74,13 @@ export class StartpointInRangeIndex implements IStartpointInRangeIndex {
 			return true;
 		};
 
-		const transientStartInterval = createTransientInterval(start, start, this.client);
+		const transientStartInterval = createTransientIntervalFromProvider(
+			start,
+			start,
+			this.provider,
+		);
 
-		const transientEndInterval = createTransientInterval(end, end, this.client);
+		const transientEndInterval = createTransientIntervalFromProvider(end, end, this.provider);
 
 		// Add comparison overrides to the transient intervals
 		(transientStartInterval as Partial<HasComparisonOverride>)[forceCompare] = -1;
@@ -94,6 +98,5 @@ export class StartpointInRangeIndex implements IStartpointInRangeIndex {
 export function createStartpointInRangeIndex(
 	sharedString: ISharedString,
 ): IStartpointInRangeIndex {
-	const client = (sharedString as unknown as { client: Client }).client;
-	return new StartpointInRangeIndex(client);
+	return new StartpointInRangeIndex(sharedString as unknown as IIntervalReferenceProvider);
 }

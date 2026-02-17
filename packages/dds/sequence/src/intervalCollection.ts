@@ -46,6 +46,7 @@ import {
 	OverlappingIntervalsIndex,
 	type IEndpointIndex,
 	type IIdIntervalIndex,
+	type IIntervalReferenceProvider,
 	type ISequenceOverlappingIntervalsIndex,
 	type SequenceIntervalIndex,
 } from "./intervalIndex/index.js";
@@ -154,9 +155,10 @@ export class LocalIntervalCollection {
 			previousInterval: SequenceIntervalClass,
 		) => void,
 	) {
-		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client);
+		const provider: IIntervalReferenceProvider = client;
+		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(provider);
 		this.idIntervalIndex = createIdIntervalIndex();
-		this.endIntervalIndex = new EndpointIndex(client);
+		this.endIntervalIndex = new EndpointIndex(provider);
 		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,

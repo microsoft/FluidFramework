@@ -3,7 +3,39 @@
  * Licensed under the MIT License.
  */
 
+import type {
+	ISegment,
+	LocalReferencePosition,
+	PropertySet,
+	ReferenceType,
+	SlidingPreference,
+} from "@fluidframework/merge-tree/internal";
+
 import type { SequenceInterval } from "../intervals/index.js";
+
+/**
+ * Structural interface for creating local reference positions from a position number.
+ * Both `Client` and `ISharedSegmentSequence` satisfy this interface structurally,
+ * allowing index classes and transient interval creation to avoid depending on `Client` directly.
+ *
+ * @internal
+ */
+export interface IIntervalReferenceProvider {
+	getContainingSegment(pos: number):
+		| {
+				segment: ISegment | undefined;
+				offset: number | undefined;
+		  }
+		| undefined;
+	createLocalReferencePosition(
+		segment: ISegment | "start" | "end",
+		offset: number | undefined,
+		refType: ReferenceType,
+		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
+	): LocalReferencePosition;
+}
 
 /**
  * Collection of intervals.

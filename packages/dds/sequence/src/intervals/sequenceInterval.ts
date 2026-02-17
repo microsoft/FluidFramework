@@ -35,6 +35,8 @@ import {
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import type { IIntervalReferenceProvider } from "../intervalIndex/index.js";
+
 import {
 	ISerializableInterval,
 	ISerializedInterval,
@@ -204,6 +206,7 @@ export class SequenceIntervalClass
 		rollback?: boolean,
 	) {
 		this.verifyNotDispose();
+		assert(this.client !== undefined, "client required for changeProperties" /* 0xbd6 */);
 
 		if (props !== undefined) {
 			this.#props.propertyManager ??= new PropertiesManager();
@@ -235,7 +238,7 @@ export class SequenceIntervalClass
 	}
 
 	constructor(
-		private readonly client: Client,
+		private readonly client: Client | undefined,
 		private readonly id: string,
 		private readonly label: string,
 		/**
@@ -264,8 +267,10 @@ export class SequenceIntervalClass
 	public dispose(error?: Error): void {
 		if (this.#disposed) return;
 		this.#disposed = true;
-		this.client.removeLocalReferencePosition(this.start);
-		this.client.removeLocalReferencePosition(this.end);
+		if (this.client) {
+			this.client.removeLocalReferencePosition(this.start);
+			this.client.removeLocalReferencePosition(this.end);
+		}
 		this.removePositionChangeListeners();
 		this.#props.propertyManager = undefined;
 	}
@@ -330,6 +335,7 @@ export class SequenceIntervalClass
 		includeEndpoints: boolean;
 	}): SerializedIntervalDelta {
 		this.verifyNotDispose();
+		assert(this.client !== undefined, "client required for serializeDelta");
 
 		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
 		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
@@ -361,6 +367,7 @@ export class SequenceIntervalClass
 	 */
 	public clone(): SequenceIntervalClass {
 		this.verifyNotDispose();
+		assert(this.client !== undefined, "client required for clone");
 
 		return new SequenceIntervalClass(
 			this.client,
@@ -454,6 +461,7 @@ export class SequenceIntervalClass
 	 */
 	public union(b: SequenceIntervalClass) {
 		this.verifyNotDispose();
+		assert(this.client !== undefined, "client required for union");
 
 		const newStart = minReferencePosition(this.start, b.start);
 		const newEnd = maxReferencePosition(this.end, b.end);
@@ -492,6 +500,7 @@ export class SequenceIntervalClass
 	 */
 	public overlapsPos(bstart: number, bend: number) {
 		this.verifyNotDispose();
+		assert(this.client !== undefined, "client required for overlapsPos");
 
 		const startPos = this.client.localReferencePositionToPosition(this.start);
 		const endPos = this.client.localReferencePositionToPosition(this.end);
@@ -502,6 +511,7 @@ export class SequenceIntervalClass
 		rebased: Record<"start" | "end", { segment: ISegment; offset: number }>,
 	) {
 		this.verifyNotDispose();
+		assert(this.client !== undefined, "client required for moveEndpointReferences");
 
 		const startRef = createPositionReferenceFromSegoff({
 			client: this.client,
@@ -540,6 +550,7 @@ export class SequenceIntervalClass
 		canSlideToEndpoint: boolean = false,
 	) {
 		this.verifyNotDispose();
+		assert(this.client !== undefined, "client required for modify");
 
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
@@ -770,6 +781,88 @@ export function createTransientInterval(
 		end,
 		client,
 		IntervalType.Transient,
+	);
+}
+
+/**
+ * Creates a transient interval using an {@link IIntervalReferenceProvider} instead of a `Client`.
+ * This avoids coupling index classes to merge-tree internals.
+ */
+export function createTransientIntervalFromProvider(
+	start: SequencePlace | undefined,
+	end: SequencePlace | undefined,
+	provider: IIntervalReferenceProvider,
+): SequenceIntervalClass {
+	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
+		start ?? "start",
+		end ?? "end",
+	);
+	assert(
+		startPos !== undefined &&
+			endPos !== undefined &&
+			startSide !== undefined &&
+			endSide !== undefined,
+		"start and end cannot be undefined because they were not passed in as undefined",
+	);
+
+	const startSlidingPreference = startReferenceSlidingPreference(
+		startPos,
+		startSide,
+		endPos,
+		endSide,
+	);
+	const endSlidingPreference = endReferenceSlidingPreference(
+		startPos,
+		startSide,
+		endPos,
+		endSide,
+	);
+
+	const createRef = (
+		pos: number | "start" | "end",
+		slidingPreference: SlidingPreference,
+	): LocalReferencePosition => {
+		if (pos === "start" || pos === "end") {
+			return provider.createLocalReferencePosition(
+				pos,
+				undefined,
+				ReferenceType.Transient,
+				undefined,
+				slidingPreference,
+			);
+		}
+		const segoff = provider.getContainingSegment(pos);
+		if (segoff?.segment) {
+			return provider.createLocalReferencePosition(
+				segoff.segment,
+				segoff.offset,
+				ReferenceType.Transient,
+				undefined,
+				slidingPreference,
+			);
+		}
+		return createDetachedLocalReferencePosition(slidingPreference, ReferenceType.Transient);
+	};
+
+	const startLref = createRef(startPos, startSlidingPreference);
+	const endLref = createRef(endPos, endSlidingPreference);
+
+	const rangeProp = {
+		[reservedRangeLabelsKey]: ["transient"],
+	};
+	startLref.addProperties(rangeProp);
+	endLref.addProperties(rangeProp);
+
+	return new SequenceIntervalClass(
+		undefined,
+		uuid(),
+		"transient",
+		startLref,
+		endLref,
+		IntervalType.Transient,
+		undefined,
+		startSide,
+		endSide,
 	);
 }
 
