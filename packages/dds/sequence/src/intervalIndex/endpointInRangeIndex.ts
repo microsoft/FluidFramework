@@ -5,10 +5,11 @@
 
 import { PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import { SequenceInterval, createTransientIntervalFromProvider } from "../intervals/index.js";
+import { SequenceInterval, createTransientIntervalFromSequence } from "../intervals/index.js";
+import type { ISharedSegmentSequence } from "../sequence.js";
 import { ISharedString } from "../sharedString.js";
 
-import type { IIntervalReferenceProvider, SequenceIntervalIndex } from "./intervalIndex.js";
+import type { SequenceIntervalIndex } from "./intervalIndex.js";
 import {
 	HasComparisonOverride,
 	compareOverrideables,
@@ -31,7 +32,7 @@ export interface IEndpointInRangeIndex extends SequenceIntervalIndex {
 export class EndpointInRangeIndex implements IEndpointInRangeIndex {
 	private readonly intervalTree;
 
-	constructor(private readonly provider: IIntervalReferenceProvider) {
+	constructor(private readonly sequence: ISharedSegmentSequence<any>) {
 		this.intervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>(
 			(a: SequenceInterval, b: SequenceInterval) => {
 				const compareEndsResult = a.compareEnd(b);
@@ -75,13 +76,13 @@ export class EndpointInRangeIndex implements IEndpointInRangeIndex {
 			return true;
 		};
 
-		const transientStartInterval = createTransientIntervalFromProvider(
+		const transientStartInterval = createTransientIntervalFromSequence(
 			start,
 			start,
-			this.provider,
+			this.sequence,
 		);
 
-		const transientEndInterval = createTransientIntervalFromProvider(end, end, this.provider);
+		const transientEndInterval = createTransientIntervalFromSequence(end, end, this.sequence);
 
 		// Add comparison overrides to the transient intervals
 		(transientStartInterval as Partial<HasComparisonOverride>)[forceCompare] = -1;
@@ -100,5 +101,5 @@ export class EndpointInRangeIndex implements IEndpointInRangeIndex {
 export function createEndpointInRangeIndex(
 	sharedString: ISharedString,
 ): IEndpointInRangeIndex {
-	return new EndpointInRangeIndex(sharedString as unknown as IIntervalReferenceProvider);
+	return new EndpointInRangeIndex(sharedString);
 }

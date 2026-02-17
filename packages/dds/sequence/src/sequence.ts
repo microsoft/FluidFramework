@@ -1024,7 +1024,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			(key: string, local: boolean) => {
 				const intervalCollection = this.intervalCollections.get(key);
 				if (!intervalCollection.attached) {
-					intervalCollection.attachGraph(this.client, key);
+					intervalCollection.attachGraph(this.client, key, this);
 				}
 				this.emit("createIntervalCollection", key, local, this);
 			},
@@ -1033,7 +1033,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		// Initialize existing SharedIntervalCollections
 		for (const key of this.intervalCollections.keys()) {
 			const intervalCollection = this.intervalCollections.get(key);
-			intervalCollection.attachGraph(this.client, key);
+			intervalCollection.attachGraph(this.client, key, this);
 		}
 	}
 

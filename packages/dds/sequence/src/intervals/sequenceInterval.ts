@@ -35,7 +35,7 @@ import {
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import type { IIntervalReferenceProvider } from "../intervalIndex/index.js";
+import type { ISharedSegmentSequence } from "../sequence.js";
 
 import {
 	ISerializableInterval,
@@ -785,13 +785,13 @@ export function createTransientInterval(
 }
 
 /**
- * Creates a transient interval using an {@link IIntervalReferenceProvider} instead of a `Client`.
+ * Creates a transient interval using an `ISharedSegmentSequence` instead of a `Client`.
  * This avoids coupling index classes to merge-tree internals.
  */
-export function createTransientIntervalFromProvider(
+export function createTransientIntervalFromSequence(
 	start: SequencePlace | undefined,
 	end: SequencePlace | undefined,
-	provider: IIntervalReferenceProvider,
+	sequence: ISharedSegmentSequence<any>,
 ): SequenceIntervalClass {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
@@ -823,7 +823,7 @@ export function createTransientIntervalFromProvider(
 		slidingPreference: SlidingPreference,
 	): LocalReferencePosition => {
 		if (pos === "start" || pos === "end") {
-			return provider.createLocalReferencePosition(
+			return sequence.createLocalReferencePosition(
 				pos,
 				undefined,
 				ReferenceType.Transient,
@@ -831,9 +831,9 @@ export function createTransientIntervalFromProvider(
 				slidingPreference,
 			);
 		}
-		const segoff = provider.getContainingSegment(pos);
+		const segoff = sequence.getContainingSegment(pos);
 		if (segoff?.segment) {
-			return provider.createLocalReferencePosition(
+			return sequence.createLocalReferencePosition(
 				segoff.segment,
 				segoff.offset,
 				ReferenceType.Transient,

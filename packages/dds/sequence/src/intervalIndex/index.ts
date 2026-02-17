@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { SequenceIntervalIndex, IIntervalReferenceProvider } from "./intervalIndex.js";
+export { SequenceIntervalIndex } from "./intervalIndex.js";
 export { IIdIntervalIndex, createIdIntervalIndex } from "./idIntervalIndex.js";
 export { IEndpointIndex, createEndpointIndex, EndpointIndex } from "./endpointIndex.js";
 export {

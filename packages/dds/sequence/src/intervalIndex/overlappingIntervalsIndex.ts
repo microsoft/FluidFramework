@@ -9,11 +9,12 @@ import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
 	SequenceInterval,
 	SequenceIntervalClass,
-	createTransientIntervalFromProvider,
+	createTransientIntervalFromSequence,
 } from "../intervals/index.js";
+import type { ISharedSegmentSequence } from "../sequence.js";
 import { ISharedString } from "../sharedString.js";
 
-import type { IIntervalReferenceProvider, SequenceIntervalIndex } from "./intervalIndex.js";
+import type { SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
  * @legacy @beta
@@ -38,11 +39,8 @@ export interface ISequenceOverlappingIntervalsIndex extends SequenceIntervalInde
 
 export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsIndex {
 	protected readonly intervalTree = new IntervalTree<SequenceIntervalClass>();
-	protected readonly provider: IIntervalReferenceProvider;
 
-	constructor(provider: IIntervalReferenceProvider) {
-		this.provider = provider;
-	}
+	constructor(protected readonly sequence: ISharedSegmentSequence<any>) {}
 
 	public map(fn: (interval: SequenceInterval) => void) {
 		this.intervalTree.map(fn);
@@ -74,10 +72,10 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 				});
 			}
 		} else {
-			const transientInterval: SequenceIntervalClass = createTransientIntervalFromProvider(
+			const transientInterval: SequenceIntervalClass = createTransientIntervalFromSequence(
 				start ?? "start",
 				end ?? "end",
-				this.provider,
+				this.sequence,
 			);
 
 			if (start === undefined) {
@@ -148,7 +146,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 		) {
 			return [];
 		}
-		const transientInterval = createTransientIntervalFromProvider(start, end, this.provider);
+		const transientInterval = createTransientIntervalFromSequence(start, end, this.sequence);
 
 		const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
 		return overlappingIntervalNodes.map((node) => node.key);
@@ -171,5 +169,5 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 export function createOverlappingIntervalsIndex(
 	sharedString: ISharedString,
 ): ISequenceOverlappingIntervalsIndex {
-	return new OverlappingIntervalsIndex(sharedString as unknown as IIntervalReferenceProvider);
+	return new OverlappingIntervalsIndex(sharedString);
 }

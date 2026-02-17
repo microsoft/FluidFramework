@@ -74,7 +74,7 @@ describe("findIntervalsWithStartpointInRange", () => {
 	beforeEach(() => {
 		client = new TestClient();
 		Array.from({ length: 100 }).forEach(() => client.insertTextLocal(0, "0123456789"));
-		startpointInRangeIndex = new StartpointInRangeIndex(client);
+		startpointInRangeIndex = new StartpointInRangeIndex(client as any);
 		createTestInterval = (p1: number, p2: number) =>
 			createTestSequenceInterval(client, p1, p2);
 	});

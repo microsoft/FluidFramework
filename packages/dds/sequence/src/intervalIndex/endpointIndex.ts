@@ -5,10 +5,11 @@
 
 import { RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import { createTransientIntervalFromProvider, SequenceInterval } from "../intervals/index.js";
+import { createTransientIntervalFromSequence, SequenceInterval } from "../intervals/index.js";
+import type { ISharedSegmentSequence } from "../sequence.js";
 import { ISharedString } from "../sharedString.js";
 
-import type { IIntervalReferenceProvider, SequenceIntervalIndex } from "./intervalIndex.js";
+import type { SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
  * @internal
@@ -30,14 +31,14 @@ export interface IEndpointIndex extends SequenceIntervalIndex {
 export class EndpointIndex implements IEndpointIndex {
 	private readonly endIntervalTree: RedBlackTree<SequenceInterval, SequenceInterval>;
 
-	constructor(private readonly provider: IIntervalReferenceProvider) {
+	constructor(private readonly sequence: ISharedSegmentSequence<any>) {
 		this.endIntervalTree = new RedBlackTree<SequenceInterval, SequenceInterval>((a, b) =>
 			a.compareEnd(b),
 		);
 	}
 
 	public previousInterval(pos: number): SequenceInterval | undefined {
-		const transientInterval = createTransientIntervalFromProvider(pos, pos, this.provider);
+		const transientInterval = createTransientIntervalFromSequence(pos, pos, this.sequence);
 		const rbNode = this.endIntervalTree.floor(transientInterval);
 		if (rbNode) {
 			return rbNode.data;
@@ -45,7 +46,7 @@ export class EndpointIndex implements IEndpointIndex {
 	}
 
 	public nextInterval(pos: number): SequenceInterval | undefined {
-		const transientInterval = createTransientIntervalFromProvider(pos, pos, this.provider);
+		const transientInterval = createTransientIntervalFromSequence(pos, pos, this.sequence);
 		const rbNode = this.endIntervalTree.ceil(transientInterval);
 		if (rbNode) {
 			return rbNode.data;
@@ -67,5 +68,5 @@ export class EndpointIndex implements IEndpointIndex {
  * @internal
  */
 export function createEndpointIndex(sharedString: ISharedString): IEndpointIndex {
-	return new EndpointIndex(sharedString as unknown as IIntervalReferenceProvider);
+	return new EndpointIndex(sharedString);
 }

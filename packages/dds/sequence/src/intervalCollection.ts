@@ -46,7 +46,6 @@ import {
 	OverlappingIntervalsIndex,
 	type IEndpointIndex,
 	type IIdIntervalIndex,
-	type IIntervalReferenceProvider,
 	type ISequenceOverlappingIntervalsIndex,
 	type SequenceIntervalIndex,
 } from "./intervalIndex/index.js";
@@ -62,6 +61,7 @@ import {
 	createSequenceInterval,
 	getSerializedProperties,
 } from "./intervals/index.js";
+import type { ISharedSegmentSequence } from "./sequence.js";
 
 export type ISerializedIntervalCollectionV1 = ISerializedInterval[];
 
@@ -149,16 +149,16 @@ export class LocalIntervalCollection {
 		private readonly client: Client,
 		private readonly label: string,
 		private readonly options: Partial<SequenceOptions>,
+		sequence: ISharedSegmentSequence<any>,
 		/** Callback invoked each time one of the endpoints of an interval slides. */
 		private readonly onPositionChange?: (
 			interval: SequenceIntervalClass,
 			previousInterval: SequenceIntervalClass,
 		) => void,
 	) {
-		const provider: IIntervalReferenceProvider = client;
-		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(provider);
+		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(sequence);
 		this.idIntervalIndex = createIdIntervalIndex();
-		this.endIntervalIndex = new EndpointIndex(provider);
+		this.endIntervalIndex = new EndpointIndex(sequence);
 		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,
@@ -1032,7 +1032,7 @@ export class IntervalCollection
 		return { start, end };
 	}
 
-	public attachGraph(client: Client, label: string) {
+	public attachGraph(client: Client, label: string, sequence: ISharedSegmentSequence<any>) {
 		if (this.attached) {
 			throw new LoggingError("Only supports one Sequence attach");
 		}
@@ -1059,6 +1059,7 @@ export class IntervalCollection
 			client,
 			label,
 			this.options,
+			sequence,
 			(interval, previousInterval) => this.emitChange(interval, previousInterval, true, true),
 		);
 		if (this.savedSerializedIntervals) {
