@@ -352,14 +352,12 @@ export async function resolveAndLoadContainer(
  * @legacy @beta
  */
 export function createLoader(loaderProps: ILoaderProps): IHostLoader {
-	// Declare services/mc as mutable so they can be assigned after creating the loader object.
-	// The closures below capture these by reference, so they'll see the assigned values
-	// when actually invoked (which is always after this function returns).
-	let services: ILoaderServices;
-	let mc: MonitoringContext;
+	// We need `loader` to exist before calling `createLoaderServices` so it can be
+	// injected into scope (for provideScopeLoader). The services ref is populated
+	// via Object.assign immediately after loader creation, before any method can be called.
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const servicesRef = {} as { services: ILoaderServices; mc: MonitoringContext };
 
-	// Create the loader object first so it can be passed to createLoaderServices
-	// for injection into scope (when provideScopeLoader is enabled).
 	const loader: IHostLoader = {
 		createDetachedContainer: async (
 			codeDetails: IFluidCodeDetails,
@@ -371,7 +369,7 @@ export function createLoader(loaderProps: ILoaderProps): IHostLoader {
 			return Container.createDetached(
 				{
 					...createDetachedProps,
-					...services,
+					...servicesRef.services,
 				},
 				codeDetails,
 			);
@@ -386,17 +384,18 @@ export function createLoader(loaderProps: ILoaderProps): IHostLoader {
 			return Container.rehydrateDetachedFromSnapshot(
 				{
 					...createDetachedProps,
-					...services,
+					...servicesRef.services,
 				},
 				snapshot,
 			);
 		},
 		resolve: async (request: IRequest, pendingLocalState?: string): Promise<IContainer> => {
-			return resolveAndLoadContainer(services, mc, request, pendingLocalState);
+			return resolveAndLoadContainer(servicesRef.services, servicesRef.mc, request, pendingLocalState);
 		},
 	};
 
-	({ services, mc } = createLoaderServices(loaderProps, loader));
+	// Populate servicesRef - this runs synchronously before any method can be called.
+	Object.assign(servicesRef, createLoaderServices(loaderProps, loader));
 
 	return loader;
 }

@@ -106,7 +106,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 	beforeEach("setup", function () {
 		provider = getTestObjectProvider();
 		request = provider.driver.createCreateNewRequest(provider.documentId);
-		loader = provider.makeTestLoader(testContainerConfig) as IHostLoader;
+		loader = provider.makeTestLoader(testContainerConfig);
 	});
 
 	it("Create detached container", async () => {
@@ -894,7 +894,7 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 	beforeEach("setup", () => {
 		provider = getTestObjectProvider();
 		request = provider.driver.createCreateNewRequest(provider.documentId);
-		loader = provider.makeTestLoader(testContainerConfig) as IHostLoader;
+		loader = provider.makeTestLoader(testContainerConfig);
 	});
 
 	it("Retry attaching detached container", async () => {
