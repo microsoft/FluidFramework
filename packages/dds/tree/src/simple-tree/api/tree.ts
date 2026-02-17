@@ -425,7 +425,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * @remarks
 	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status changes.
 	 * See {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution} for more guidance on how to change schema while maintaining compatibility.
-	 * Use {@link checkSchemaCompatibilitySnapshots} to write tests to validate that this compatibility behaves as desired across schema changes.
+	 * Use {@link snapshotSchemaCompatibility} to write tests to validate that this compatibility behaves as desired across schema changes.
 	 */
 	readonly compatibility: SchemaCompatibilityStatus;
 
