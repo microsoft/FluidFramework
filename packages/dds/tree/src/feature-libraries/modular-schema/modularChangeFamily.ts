@@ -3173,6 +3173,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		baseAttachId: ChangeAtomId,
 		newDetachId: ChangeAtomId,
 		count: number,
+		treatNewAsRedundantPin: boolean,
 	): void {
 		let countToProcess = count;
 
@@ -3199,7 +3200,14 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			newAttachEntry.value !== undefined &&
 			areEqualChangeAtomIds(baseAttachId, newAttachIdEntry.value);
 
-		if (!hasNewAttachWithBaseAttachId) {
+		if (treatNewAsRedundantPin) {
+			// This assumes that the new change has no rename as part of its pin.
+			this.table.removedCrossFieldKeys.set(
+				{ ...newDetachId, target: NodeMoveType.Attach },
+				countToProcess,
+				true,
+			);
+		} else if (!hasNewAttachWithBaseAttachId) {
 			this.table.removedCrossFieldKeys.set(
 				{ ...baseAttachId, target: NodeMoveType.Attach },
 				countToProcess,
@@ -3231,9 +3239,11 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			);
 			countToProcess = baseDetachLocationEntry.length;
 
-			// These nodes were detached in the base change's input context,
-			// so the net effect of the two changes is a rename.
-			this.table.composedRenames.set(baseAttachId, baseDetachEntry.length, newDetachId);
+			if (!treatNewAsRedundantPin) {
+				// These nodes were detached in the base change's input context,
+				// so the net effect of the two changes is a rename.
+				this.table.composedRenames.set(baseAttachId, baseDetachEntry.length, newDetachId);
+			}
 
 			this.table.removedCrossFieldKeys.set(
 				{ ...newDetachId, target: NodeMoveType.Detach },
@@ -3242,9 +3252,13 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			);
 		} else {
 			// The base change moves these nodes.
-			this.table.composedRenames.set(baseAttachId, countToProcess, newDetachId);
+			// XXX: Can this be combined with duplicated line in prior branch.
+			if (!treatNewAsRedundantPin) {
+				this.table.composedRenames.set(baseAttachId, countToProcess, newDetachId);
+			}
 
 			if (!areEqualChangeAtomIds(baseAttachId, newDetachId)) {
+				// XXX: Can this be merged with the duplicate line in the prior branch?
 				this.table.removedCrossFieldKeys.set(
 					{ ...newDetachId, target: NodeMoveType.Detach },
 					countToProcess,
@@ -3277,6 +3291,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				offsetChangeAtomId(baseAttachId, countToProcess),
 				offsetChangeAtomId(newDetachId, countToProcess),
 				remainingCount,
+				treatNewAsRedundantPin,
 			);
 		}
 	}

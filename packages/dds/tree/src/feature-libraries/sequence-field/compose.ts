@@ -141,6 +141,8 @@ function composeMarksIgnoreChild(
 
 		// `newMark` can be either a remove or another pin.
 		// A pin is treated as a detach and attach, so we call `composeAttachDetach` in either case.
+		const isNewRedundantPin = newMark.type !== "Detach";
+
 		moveEffects.composeAttachDetach(
 			getAttachedRootId(baseMark),
 			{
@@ -148,26 +150,31 @@ function composeMarksIgnoreChild(
 				localId: newMark.id,
 			},
 			baseMark.count,
+			isNewRedundantPin,
 		);
 
-		return newMark.type === "Detach"
-			? {
-					...newMark,
-					cellRename: getDetachOutputCellId(newMark),
-				}
-			: newMark;
+		if (!isNewRedundantPin) {
+			return {
+				...newMark,
+				cellRename: getDetachOutputCellId(newMark), // XXX: Why do we need this?
+			};
+		}
+
+		// When composing two pins, we use the ID of the first pin.
+		// This is because the second pin has no observable effect.
+		// Aftere rebasing over a move, the first pin's detach ID is observable as the output cell ID of the detach.
+		return baseMark;
 	} else if (!markHasCellEffect(newMark)) {
 		if (isAttach(newMark) && isAttach(baseMark)) {
-			// When composing two inserts, the second insert (which is a pin) should take precedence.
 			// We treat the pin as a detach and reattach.
 			moveEffects.composeAttachDetach(
 				getAttachedRootId(baseMark),
 				getAttachedRootId(newMark),
 				baseMark.count,
+				false,
 			);
 
-			const composed = { cellId: baseMark.cellId, ...newMark };
-			return composed;
+			return { cellId: baseMark.cellId, ...newMark };
 		}
 		return baseMark;
 	} else if (areInputCellsEmpty(baseMark)) {
@@ -181,6 +188,7 @@ function composeMarksIgnoreChild(
 			getAttachedRootId(baseMark),
 			getDetachedRootId(newMark),
 			baseMark.count,
+			false,
 		);
 
 		if (areEqualCellIds(getOutputCellId(newMark), baseMark.cellId)) {
