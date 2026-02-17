@@ -379,7 +379,7 @@ export interface LocalServerStressOptions {
 const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	defaultTestCount: 100,
 	detachedStartOptions: {
-		numOpsBeforeAttach: 20,
+		numOpsBeforeAttach: 100,
 	},
 	numberOfClients: 3,
 	clientJoinOptions: {
@@ -719,42 +719,54 @@ function mixinClientSelection<TOperation extends BaseOperation>(
 			// (so that we can recover the channel from serialized data)
 			const client = state.random.pick(state.clients);
 			const globalObjects = await client.entryPoint.getContainerObjects();
-			const entry = state.random.pick(
-				globalObjects.filter((v) => v.type === "stressDataObject"),
-			);
-			assert(entry?.type === "stressDataObject");
-			const datastore = entry.stressDataObject;
-			const channels = await datastore.StressDataObject.getChannels();
+			const datastoreEntries = globalObjects.filter((v) => v.type === "stressDataObject");
 
-			// Group channels by type to ensure uniform coverage across channel types
-			const channelsByType = new Map<string, IChannel[]>();
-			for (const ch of channels) {
-				const channelType = ch.attributes.type;
-				const existing = channelsByType.get(channelType);
-				if (existing !== undefined) {
-					existing.push(ch);
-				} else {
-					channelsByType.set(channelType, [ch]);
+			// Collect all channels across all datastores, grouped by type globally
+			interface ChannelEntry {
+				channel: IChannel;
+				datastore: StressDataObject;
+				datastoreTag: `datastore-${number}`;
+			}
+			const channelsByType = new Map<string, ChannelEntry[]>();
+			for (const dsEntry of datastoreEntries) {
+				assert(dsEntry.type === "stressDataObject");
+				const channels = await dsEntry.stressDataObject.StressDataObject.getChannels();
+				for (const ch of channels) {
+					const channelType = ch.attributes.type;
+					const entry: ChannelEntry = {
+						channel: ch,
+						datastore: dsEntry.stressDataObject,
+						datastoreTag: dsEntry.tag,
+					};
+					const existing = channelsByType.get(channelType);
+					if (existing !== undefined) {
+						existing.push(entry);
+					} else {
+						channelsByType.set(channelType, [entry]);
+					}
 				}
 			}
 
-			// First pick a channel type, then pick a channel of that type
+			// Pick a channel type globally, then pick a channel of that type
 			const channelTypes = Array.from(channelsByType.keys());
 			const selectedType = state.random.pick(channelTypes);
-			const channelsOfSelectedType = channelsByType.get(selectedType);
-			assert(channelsOfSelectedType !== undefined, "channels of selected type must exist");
-			const channel = state.random.pick(channelsOfSelectedType);
-			assert(channel !== undefined, "channel must exist");
-			const baseOp = await runInStateWithClient(state, client, datastore, channel, async () =>
-				baseGenerator(state),
+			const entriesOfSelectedType = channelsByType.get(selectedType);
+			assert(entriesOfSelectedType !== undefined, "channels of selected type must exist");
+			const selected = state.random.pick(entriesOfSelectedType);
+			const baseOp = await runInStateWithClient(
+				state,
+				client,
+				selected.datastore,
+				selected.channel,
+				async () => baseGenerator(state),
 			);
 			return baseOp === done
 				? done
 				: ({
 						...baseOp,
 						clientTag: client.tag,
-						datastoreTag: entry.tag,
-						channelTag: channel.id as `channel-${number}`,
+						datastoreTag: selected.datastoreTag,
+						channelTag: selected.channel.id as `channel-${number}`,
 					} satisfies SelectedClientSpec);
 		};
 	};
