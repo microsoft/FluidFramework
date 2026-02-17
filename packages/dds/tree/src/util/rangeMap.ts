@@ -5,8 +5,6 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
-// eslint-disable-next-line import-x/no-internal-modules
-import { union } from "@tylerbu/sorted-btree-es6/extended/union";
 
 /**
  * RangeMap represents a mapping from keys of type K to values of type V or undefined.
@@ -215,6 +213,7 @@ export class RangeMap<K, V> {
 
 	/**
 	 * Returns a new map which contains the entries from both input maps.
+	 * Whenever both maps contain entires for the same keys, the value from map `b` is used in the returned map.
 	 */
 	public static union<K, V>(a: RangeMap<K, V>, b: RangeMap<K, V>): RangeMap<K, V> {
 		assert(
@@ -224,15 +223,10 @@ export class RangeMap<K, V> {
 			0xaae /* Maps should have the same behavior */,
 		);
 
-		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys, a.offsetValue);
-
-		merged.tree = union<BTree<K, RangeEntry<V>>, K, RangeEntry<V>>(
-			a.tree,
-			b.tree,
-			(_key, _val1, val2) => {
-				return val2;
-			},
-		);
+		const merged = a.clone();
+		for (const entry of b.entries()) {
+			merged.set(entry.start, entry.length, entry.value);
+		}
 
 		return merged;
 	}
