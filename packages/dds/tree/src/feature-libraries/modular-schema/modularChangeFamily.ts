@@ -339,6 +339,17 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 		composedChange.change = brand(amendedChange);
+
+		// Recompute hasIntermediateShallowChanges after recomposition
+		const handler = getChangeHandler(this.fieldKinds, composedChange.fieldKind);
+
+		if (
+			(handler.containsShallowChanges(fieldChange1) ||
+				handler.containsShallowChanges(fieldChange2)) &&
+			!handler.containsShallowChanges(amendedChange)
+		) {
+			composedChange.hasIntermediateShallowChanges = true;
+		}
 	}
 
 	/**
@@ -603,6 +614,19 @@ export class ModularChangeFamily
 				change1.fieldShallowChangeConstraintOnRevert?.violated === true ||
 				change2.fieldShallowChangeConstraintOnRevert?.violated === true;
 			composedField.fieldShallowChangeConstraintOnRevert = { violated };
+		}
+
+		const hadIntermediateShallowChanges =
+			change1.hasIntermediateShallowChanges === true ||
+			change2.hasIntermediateShallowChanges === true ||
+			changeHandler.containsShallowChanges(change1Normalized) ||
+			changeHandler.containsShallowChanges(change2Normalized);
+
+		if (
+			hadIntermediateShallowChanges &&
+			!changeHandler.containsShallowChanges(composedChange)
+		) {
+			composedField.hasIntermediateShallowChanges = true;
 		}
 
 		crossFieldTable.fieldToContext.set(change1, {
@@ -1474,19 +1498,18 @@ export class ModularChangeFamily
 				);
 			}
 
-			if (
-				field.fieldShallowChangeConstraint !== undefined &&
-				!field.fieldShallowChangeConstraint.violated
-			) {
+			if (field.fieldShallowChangeConstraint !== undefined) {
 				const baseFieldChange = baseFields?.get(fieldKey);
-				if (
+				const isNowViolated =
 					baseFieldChange !== undefined &&
-					getChangeHandler(this.fieldKinds, field.fieldKind).containsShallowChanges(
+					(getChangeHandler(this.fieldKinds, field.fieldKind).containsShallowChanges(
 						baseFieldChange.change,
-					)
-				) {
-					field.fieldShallowChangeConstraint = { violated: true };
-					constraintState.violationCount += 1;
+					) ||
+						baseFieldChange.hasIntermediateShallowChanges === true);
+
+				if (field.fieldShallowChangeConstraint.violated !== isNowViolated) {
+					field.fieldShallowChangeConstraint = { violated: isNowViolated };
+					constraintState.violationCount += isNowViolated ? 1 : -1;
 				}
 			}
 		}

@@ -33,6 +33,7 @@ export const EncodedFieldChangeVConstraint = Type.Composite(
 		Type.Object(
 			{
 				fieldShallowChangeConstraint: Type.Optional(EncodedFieldShallowChangeConstraint),
+				hasIntermediateShallowChanges: Type.Optional(Type.Boolean()),
 			},
 			noAdditionalProps,
 		),

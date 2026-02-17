@@ -56,6 +56,9 @@ export function encodeFieldVConstraint(
 			violated: fieldChange.fieldShallowChangeConstraint.violated,
 		};
 	}
+	if (fieldChange.hasIntermediateShallowChanges === true) {
+		encodedField.hasIntermediateShallowChanges = true;
+	}
 	return encodedField;
 }
 
@@ -71,6 +74,9 @@ export function decodeFieldChangeVConstraint(
 		decodedField.fieldShallowChangeConstraint = {
 			violated: field.fieldShallowChangeConstraint.violated,
 		};
+	}
+	if (field.hasIntermediateShallowChanges === true) {
+		decodedField.hasIntermediateShallowChanges = true;
 	}
 	return decodedField;
 }

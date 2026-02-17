@@ -153,6 +153,13 @@ export interface FieldChange {
 	change: FieldChangeset;
 	fieldShallowChangeConstraint?: FieldShallowChangeConstraint;
 	fieldShallowChangeConstraintOnRevert?: FieldShallowChangeConstraint;
+	/**
+	 * True if this field has experienced shallow changes at some intermediate point
+	 * during composition that have since been cancelled out. Used during constraint
+	 * evaluation to ensure that no-shallow-change constraints are violated even when
+	 * the net composed change has no shallow changes.
+	 */
+	hasIntermediateShallowChanges?: boolean;
 }
 
 export type FieldChangeset = Brand<unknown, "FieldChangeset">;

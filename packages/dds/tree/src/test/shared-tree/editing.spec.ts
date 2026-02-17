@@ -31,6 +31,7 @@ import {
 	createTestUndoRedoStacks,
 	expectJsonTree,
 	expectNoRemovedRoots,
+	jsonTreeFromCheckout,
 	makeTreeFromJson,
 	moveWithin,
 	type TreeStoredContentStrict,
@@ -3555,6 +3556,133 @@ describe("Editing", () => {
 			expectJsonTree(branch, [{ foo: ["X", "A"] }]);
 			tree.merge(branch, false);
 			expectJsonTree(tree, [{ foo: ["X", "A"] }]);
+		});
+
+		it("is not spuriously violated when rebasing a prior change from the same client that makes a constrained change", () => {
+			const tree = makeTreeFromJsonSequence([{ foo: ["A", "B"], bar: [1, 2] }], {
+				codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+			});
+
+			// First, we'll add an X to foo. It should not trigger the noShallowChange constraint we will add in the next transaction
+			const branch = tree.branch();
+			branch.editor
+				.sequenceField({
+					parent: {
+						parent: rootNode,
+						parentField: brand("foo"),
+						parentIndex: 0,
+					},
+					field: brand(""),
+				})
+				.insert(0, chunkFromJsonTrees(["X"]));
+			expectJsonTree(branch, [{ foo: ["X", "A", "B"], bar: [1, 2] }]);
+
+			// Next, we'll add Y with a noShallowChange constraint on it
+			branch.transaction.start(false);
+			branch.editor.addShallowChangeConstraint({ parent: rootNode, field: brand("foo") });
+			branch.editor
+				.sequenceField({
+					parent: {
+						parent: rootNode,
+						parentField: brand("foo"),
+						parentIndex: 0,
+					},
+					field: brand(""),
+				})
+				.insert(1, chunkFromJsonTrees(["Y"]));
+			branch.transaction.commit();
+			expectJsonTree(branch, [{ foo: ["X", "Y", "A", "B"], bar: [1, 2] }]);
+
+			// We'll also add a Z afterwards, to make sure it doesn't trigger the constraint either.
+			branch.editor
+				.sequenceField({
+					parent: {
+						parent: rootNode,
+						parentField: brand("foo"),
+						parentIndex: 0,
+					},
+					field: brand(""),
+				})
+				.insert(1, chunkFromJsonTrees(["Z"]));
+			expectJsonTree(branch, [{ foo: ["X", "Z", "Y", "A", "B"], bar: [1, 2] }]);
+
+			// Now we'll make a concurrent edit on the main tree to a different field so that rebasing isnt a simple no-op, but we'll edit the bar field so we don't trip up the constraint on foo.
+			tree.editor
+				.sequenceField({
+					parent: {
+						parent: rootNode,
+						parentField: brand("bar"),
+						parentIndex: 0,
+					},
+					field: brand(""),
+				})
+				.insert(0, chunkFromJsonTrees([999]));
+			expectJsonTree(tree, [{ foo: ["A", "B"], bar: [999, 1, 2] }]);
+
+			branch.rebaseOnto(tree);
+			// When we rebase branch onto tree, we shouldn't encounter any constraint violations, so all changes should appear.
+			expectJsonTree(branch, [{ foo: ["X", "Z", "Y", "A", "B"], bar: [999, 1, 2] }]);
+		});
+
+		it("Order of rebasing operations test", () => {
+			// This tests how the order in which changes are sequenced can impact the no shallow change constraint.
+			// In this test, we have two branches that both insert "X" at index 1 with a no shallow change constraint on the root field and concurrently insert "Y" at index 0 on the main, then reverts the Y insert.
+			// Both branches should converge to the same result regardless of the order in which rebasing occurs.
+			// The "Y" insert is a shallow change that gets reverted, but the field experienced intermediate
+			// shallow changes, so the no-shallow-change constraint is violated in both cases.
+			const tree1 = makeTreeFromJsonSequence(["A", "B"], {
+				codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+			});
+			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
+				tree1.events,
+			);
+			const branch1 = tree1.branch();
+			branch1.transaction.start(false);
+			branch1.editor.addShallowChangeConstraint(rootField);
+			branch1.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
+			branch1.transaction.commit();
+			expectJsonTree(branch1, ["A", "X", "B"]);
+			tree1.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Y"]));
+			expectJsonTree(tree1, ["Y", "A", "B"]);
+			undoStack1.pop()?.revert();
+			expectJsonTree(branch1, ["A", "X", "B"]);
+			expectJsonTree(tree1, ["A", "B"]);
+			branch1.rebaseOnto(tree1);
+			// Even though the "Y" insert was reverted before the rebase, the field experienced intermediate
+			// shallow changes during composition, so the no-shallow-change constraint is violated.
+			expectJsonTree(branch1, ["A", "B"]);
+			expectJsonTree(tree1, ["A", "B"]);
+
+			const tree2 = makeTreeFromJsonSequence(["A", "B"], {
+				codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+			});
+			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
+				tree2.events,
+			);
+			const branch2 = tree2.branch();
+			branch2.transaction.start(false);
+			branch2.editor.addShallowChangeConstraint(rootField);
+			branch2.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["X"]));
+			branch2.transaction.commit();
+			expectJsonTree(branch2, ["A", "X", "B"]);
+			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["Y"]));
+			expectJsonTree(tree2, ["Y", "A", "B"]);
+
+			branch2.rebaseOnto(tree2);
+			expectJsonTree(branch2, ["Y", "A", "B"]);
+			expectJsonTree(tree2, ["Y", "A", "B"]);
+			undoStack2.pop()?.revert();
+			expectJsonTree(branch2, ["Y", "A", "B"]);
+			expectJsonTree(tree2, ["A", "B"]);
+			branch2.rebaseOnto(tree2);
+			expectJsonTree(branch2, ["A", "B"]);
+			expectJsonTree(tree2, ["A", "B"]);
+
+			expectJsonTree(tree1, jsonTreeFromCheckout(tree2));
+			expectJsonTree(branch1, jsonTreeFromCheckout(branch2));
+
+			unsubscribe1();
+			unsubscribe2();
 		});
 	});
 
