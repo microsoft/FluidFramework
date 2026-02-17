@@ -23,6 +23,7 @@ import { createRoot } from "react-dom/client";
 
 import { FormattedMainView } from "./formatted/index.js";
 import { PlainTextMainView, QuillMainView as PlainQuillView } from "./plain/index.js";
+import { UndoRedoStacks, type UndoRedo } from "./undoRedo.js";
 
 /**
  * Get the Tinylicious endpoint URL, handling Codespaces port forwarding. Tinylicious only works for localhost,
@@ -159,21 +160,27 @@ async function initFluid(): Promise<DualUserViews> {
 const viewLabels = {
 	plainTextarea: {
 		description: "Plain Textarea",
-		component: (root: TextEditorRoot) => (
-			<PlainTextMainView root={toPropTreeNode(root.plainText)} />
-		),
+		component: (
+			root: TextEditorRoot,
+			_treeView: TreeView<typeof TextEditorRoot>,
+			_undoRedo?: UndoRedo,
+		) => <PlainTextMainView root={toPropTreeNode(root.plainText)} />,
 	},
 	plainQuill: {
 		description: "Plain Quill Editor",
-		component: (root: TextEditorRoot) => (
-			<PlainQuillView root={toPropTreeNode(root.plainText)} />
-		),
+		component: (
+			root: TextEditorRoot,
+			_treeView: TreeView<typeof TextEditorRoot>,
+			_undoRedo?: UndoRedo,
+		) => <PlainQuillView root={toPropTreeNode(root.plainText)} />,
 	},
 	formatted: {
 		description: "Formatted Quill Editor",
-		component: (root: TextEditorRoot) => (
-			<FormattedMainView root={toPropTreeNode(root.formattedText)} />
-		),
+		component: (
+			root: TextEditorRoot,
+			_treeView: TreeView<typeof TextEditorRoot>,
+			undoRedo?: UndoRedo,
+		) => <FormattedMainView root={toPropTreeNode(root.formattedText)} undoRedo={undoRedo} />,
 	},
 } as const;
 
@@ -183,9 +190,17 @@ const UserPanel: React.FC<{
 	viewType: ViewType;
 	treeView: TreeView<typeof TextEditorRoot>;
 }> = ({ label, color, viewType, treeView }) => {
+	// Create undo/redo stack for this user's tree view
+	const undoRedo = React.useMemo(() => new UndoRedoStacks(treeView.events), [treeView.events]);
+
+	// Cleanup on unmount
+	React.useEffect(() => {
+		return () => undoRedo.dispose();
+	}, [undoRedo]);
+
 	const renderView = (): JSX.Element => {
 		const root = treeView.root;
-		return viewLabels[viewType].component(root);
+		return viewLabels[viewType].component(root, treeView, undoRedo);
 	};
 
 	return (
