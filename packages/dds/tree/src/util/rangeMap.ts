@@ -5,6 +5,8 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+// eslint-disable-next-line import-x/no-internal-modules
+import { union } from "@tylerbu/sorted-btree-es6/extended/union";
 
 /**
  * RangeMap represents a mapping from keys of type K to values of type V or undefined.
@@ -224,12 +226,13 @@ export class RangeMap<K, V> {
 
 		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys, a.offsetValue);
 
-		// TODO: Is there a good pattern that lets us make `tree` readonly?
-		merged.tree = a.tree.clone();
-		for (const [key, value] of b.tree.entries()) {
-			// TODO: Handle key collisions
-			merged.tree.set(key, value);
-		}
+		merged.tree = union<BTree<K, RangeEntry<V>>, K, RangeEntry<V>>(
+			a.tree,
+			b.tree,
+			(_key, _val1, val2) => {
+				return val2;
+			},
+		);
 
 		return merged;
 	}

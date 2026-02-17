@@ -120,7 +120,7 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
  * Extensions to {@link (Tree:interface)} which are not yet stable.
  * @remarks
  * Use via the {@link (TreeBeta:variable)} singleton.
- * @system @sealed @beta
+ * @sealed @beta
  */
 export interface TreeBeta {
 	/**

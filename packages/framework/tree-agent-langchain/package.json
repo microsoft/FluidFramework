@@ -112,8 +112,7 @@
 	"dependencies": {
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree-agent": "workspace:~",
-		"@langchain/core": "^0.3.78",
-		"zod": "^3.25.32"
+		"@langchain/core": "^0.3.80"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",

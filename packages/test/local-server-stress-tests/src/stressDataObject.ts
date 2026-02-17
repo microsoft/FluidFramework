@@ -46,12 +46,16 @@ export interface CreateDataStore {
 	type: "createDataStore";
 	asChild: boolean;
 	tag: `datastore-${number}`;
+	/** Whether to store handle in the current datastore's root, increasing likelihood of collaborative reachability */
+	storeHandle: boolean;
 }
 
 export interface CreateChannel {
 	type: "createChannel";
 	channelType: string;
 	tag: `channel-${number}`;
+	/** Whether to store handle in the current datastore's root, increasing likelihood of collaborative reachability */
+	storeHandle: boolean;
 }
 
 export interface EnterStagingMode {
@@ -152,12 +156,16 @@ export class StressDataObject extends DataObject {
 		});
 	}
 
-	public createChannel(tag: `channel-${number}`, type: string): void {
-		this.runtime.createChannel(tag, type);
+	public createChannel(tag: `channel-${number}`, type: string): IFluidHandle {
+		const channel = this.runtime.createChannel(tag, type);
 		this.channelNameMap.set(tag, type);
+		return channel.handle;
 	}
 
-	public async createDataStore(tag: `datastore-${number}`, asChild: boolean): Promise<void> {
+	public async createDataStore(
+		tag: `datastore-${number}`,
+		asChild: boolean,
+	): Promise<{ handle: IFluidHandle }> {
 		const dataStore = await this.context.containerRuntime.createDataStore(
 			asChild
 				? [...this.context.packagePath, StressDataObject.factory.type]
@@ -172,10 +180,19 @@ export class StressDataObject extends DataObject {
 			tag,
 			stressDataObject: maybe.StressDataObject,
 		});
+		return { handle: dataStore.entryPoint };
 	}
 
 	public orderSequentially(act: () => void): void {
 		this.context.containerRuntime.orderSequentially(act);
+	}
+
+	/**
+	 * Stores a handle in this datastore's root directory, increasing the
+	 * likelihood that the target is collaboratively reachable by other clients.
+	 */
+	public storeHandleInRoot(key: string, handle: IFluidHandle): void {
+		this.root.set(key, handle);
 	}
 
 	public get isDirty(): boolean | undefined {
