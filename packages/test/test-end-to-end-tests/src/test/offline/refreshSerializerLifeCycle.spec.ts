@@ -47,6 +47,9 @@ const testConfigs = generatePairwiseOptions({
 	timeoutRefreshInLoadedContainer: [true, false],
 });
 
+const timeoutMs = 100;
+const realServiceTimeoutMs = 1000;
+
 describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider, apis) => {
 	const mapId = "map";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -70,7 +73,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 		};
 	};
 
-	const waitForSummary = async (container) => {
+	const waitForSummary = async (container): Promise<void> => {
 		await timeoutPromise((resolve, reject) => {
 			let summarized = false;
 			container.on("op", (op: { type: string }) => {
@@ -85,7 +88,10 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 		});
 	};
 
-	const createDataStoreWithGroupId = async (dataObject: ITestFluidObject, groupId: string) => {
+	const createDataStoreWithGroupId = async (
+		dataObject: ITestFluidObject,
+		groupId: string,
+	): Promise<ITestFluidObject> => {
 		const containerRuntime = dataObject.context.containerRuntime;
 		const packagePath = dataObject.context.packagePath;
 		const dataStore = await containerRuntime.createDataStore(packagePath, groupId);
@@ -93,7 +99,10 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 		return (await dataStore.entryPoint.get()) as ITestFluidObject;
 	};
 
-	const getDataStoreWithGroupId = async (dataObject: ITestFluidObject, groupId: string) => {
+	const getDataStoreWithGroupId = async (
+		dataObject: ITestFluidObject,
+		groupId: string,
+	): Promise<ITestFluidObject> => {
 		const handle = dataObject.root.get<IFluidHandle<ITestFluidObject>>(groupId);
 		assert(handle !== undefined, "groupId handle should exist");
 		const dataStore = await handle.get();
@@ -101,7 +110,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 	};
 
 	for (const testConfig of testConfigs) {
-		it.skip(`Snapshot refresh life cycle: ${JSON.stringify(
+		it(`Snapshot refresh life cycle: ${JSON.stringify(
 			testConfig ?? "undefined",
 		)}`, async () => {
 			const provider: ITestObjectProvider = getTestObjectProvider();
@@ -120,8 +129,8 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 					provider.driver.type === "local" ||
 					provider.driver.type === "t9s" ||
 					provider.driver.type === "tinylicious"
-						? 100
-						: 1000;
+						? timeoutMs
+						: realServiceTimeoutMs;
 			}
 			const getLatestSnapshotInfoP = new Deferred<void>();
 			const testContainerConfig = {
@@ -182,15 +191,15 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 
 			if (testConfig.savedOps) {
 				for (let k = 0; k < 10; k++) {
-					map.set(`${i}`, i++);
-					groupIdDataObject.root.set(`${j}`, j++);
+					map1.set(`${i}`, i++);
+					groupIdDataObject1.root.set(`${j}`, j++);
 				}
 				await waitForSummary(container1);
 				if (testConfig.timeoutRefreshInOriginalContainer) {
 					await timeoutPromise((resolve) => {
 						setTimeout(() => {
 							resolve();
-						}, 105);
+						}, snapshotRefreshTimeoutMs + 10);
 					});
 				}
 				await provider.ensureSynchronized();
@@ -214,7 +223,9 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			assert.ok(pendingOps);
 
 			if (testConfig.summaryWhileOffline) {
-				map.set(`${i}`, i++);
+				for (let k = 0; k < 10; k++) {
+					map.set(`${i}`, i++);
+				}
 				await waitForSummary(container);
 			}
 
@@ -247,7 +258,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 					await timeoutPromise((resolve) => {
 						setTimeout(() => {
 							resolve();
-						}, 105);
+						}, snapshotRefreshTimeoutMs + 10);
 					});
 				}
 			}

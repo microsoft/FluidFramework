@@ -139,20 +139,26 @@ export interface ISnapshotWriterStorage extends IDocumentStorageService {
 }
 
 /**
+ * Constructor type for creating {@link @fluidframework/driver-definitions#IDocumentStorageService} instances.
+ *
  * @internal
  */
 export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
+
+// eslint-disable-next-line jsdoc/require-description -- TODO: add documentation
 /**
  * @internal
  */
-export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(Base: TBase) =>
+export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
+	Base: TBase,
+): TBase & (new (...args: any[]) => ISnapshotWriterStorage) =>
 	class extends Base implements ISnapshotWriterStorage {
 		// Note: if variable name has same name as in base class, it overrides it!
 		public blobsWriter = new Map<string, ArrayBufferLike>();
 		public latestWriterTree?: ISnapshotTree;
 		public docId?: string;
 
-		public reset() {
+		public reset(): void {
 			this.blobsWriter = new Map<string, ArrayBufferLike>();
 			this.latestWriterTree = undefined;
 			this.docId = undefined;
@@ -245,7 +251,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 		}
 	};
 
-function removeNullTreeIds(tree: ITree) {
+function removeNullTreeIds(tree: ITree): void {
 	for (const node of tree.entries) {
 		if (node.type === TreeEntry.Tree) {
 			removeNullTreeIds(node.value);

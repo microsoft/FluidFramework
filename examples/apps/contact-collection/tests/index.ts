@@ -22,7 +22,9 @@ const getContactUrl = (contactId: string): string => {
  * requires making async calls.
  * @internal
  */
-export async function createContainerAndRenderInElement(element: HTMLDivElement) {
+export async function createContainerAndRenderInElement(
+	element: HTMLDivElement,
+): Promise<void> {
 	const sessionStorageModelLoader = new SessionStorageModelLoader<IContactCollectionAppModel>(
 		new StaticCodeLoader(new ContactCollectionContainerRuntimeFactory()),
 	);
@@ -57,7 +59,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 /**
  * For local testing we have two div's that we are rendering into independently.
  */
-async function setup() {
+async function setup(): Promise<void> {
 	const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
 	if (leftElement === null) {
 		throw new Error("sbs-left does not exist");

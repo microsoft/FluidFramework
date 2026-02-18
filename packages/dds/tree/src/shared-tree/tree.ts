@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { Context } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeNode,
@@ -22,13 +23,12 @@ import {
 	SchematizingSimpleTreeView,
 } from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
-import { Context } from "../feature-libraries/index.js";
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
  * @remarks
  * This type should only be used via the {@link (Tree:variable)} export.
- * @system @sealed @public
+ * @sealed @public
  */
 export interface Tree extends TreeNodeApi {
 	/**
@@ -407,16 +407,16 @@ export interface RunTransaction {
 
 // TODO: Add more constraint types here
 
+/** A type-safe helper to add a "rollback" property (as required by the `RunTransaction` interface) to a given object */
+function defineRollbackProperty<T extends object>(
+	target: T,
+): T & { rollback: typeof rollback } {
+	Reflect.defineProperty(target, "rollback", { value: rollback });
+	return target as T & { readonly rollback: typeof rollback };
+}
+
 /** Creates a copy of `runTransaction` with the `rollback` property added so as to satisfy the `RunTransaction` interface. */
 function createRunTransaction(): RunTransaction {
-	/** A type-safe helper to add a "rollback" property (as required by the `RunTransaction` interface) to a given object */
-	function defineRollbackProperty<T extends object>(
-		target: T,
-	): T & { rollback: typeof rollback } {
-		Reflect.defineProperty(target, "rollback", { value: rollback });
-		return target as T & { readonly rollback: typeof rollback };
-	}
-
 	return defineRollbackProperty(runTransaction.bind({}));
 }
 
@@ -467,7 +467,7 @@ function runTransactionInCheckout<TResult>(
 	transaction: () => TResult | typeof rollback,
 	preconditions: readonly TransactionConstraint[],
 ): TResult | typeof rollback {
-	checkout.transaction.start();
+	checkout.transaction.start(false);
 	addConstraintsToTransaction(checkout, false, preconditions);
 
 	let result: ReturnType<typeof transaction>;

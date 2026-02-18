@@ -215,21 +215,22 @@ export function breakingClass<Target extends abstract new (...args: any[]) => Wi
 	// Avoiding wrapping the constructor also avoids messing up the displayed name in the debugger.
 	const doNotWrap: Set<string | symbol> = new Set(["constructor"]);
 
-	let prototype: object | null = target.prototype;
+	let prototype: object | null = target.prototype as object;
 	while (prototype !== null) {
 		for (const key of Reflect.ownKeys(prototype)) {
 			if (!doNotWrap.has(key)) {
 				doNotWrap.add(key);
 				const descriptor = Reflect.getOwnPropertyDescriptor(prototype, key);
-				if (descriptor !== undefined) {
-					// Method
-					if (typeof descriptor.value === "function") {
-						if (!isBreaker(descriptor.value)) {
-							// This does not affect the original class, see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertyDescriptor
-							descriptor.value = breakingMethod(descriptor.value);
-							Object.defineProperty(DecoratedBreakable.prototype, key, descriptor);
-						}
-					}
+				// Method
+				if (
+					descriptor !== undefined &&
+					typeof descriptor.value === "function" &&
+					!isBreaker(descriptor.value)
+				) {
+					// This does not affect the original class, see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertyDescriptor
+					const method = descriptor.value as (...args: unknown[]) => unknown;
+					descriptor.value = breakingMethod(method);
+					Object.defineProperty(DecoratedBreakable.prototype, key, descriptor);
 				}
 			}
 		}

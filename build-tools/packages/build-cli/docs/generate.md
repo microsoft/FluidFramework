@@ -22,13 +22,16 @@ Tags asserts by replacing their message with a unique numerical value.
 
 ```
 USAGE
-  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--branch <value> [--changed |
-    [--all | --dir <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
-    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... |
-    --skipScope <value>...]
+  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--validate] [--requireTagged] [--concurrency <value>]
+    [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
+  --requireTagged        Error if changes would be made instead of making them.
+  --validate             Validate that asserts are well-formed such that future tagging will not fail.
 
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
@@ -140,34 +143,32 @@ _See code: [src/commands/generate/bundleStats.ts](https://github.com/microsoft/F
 
 ## `flub generate changelog`
 
-Generate a changelog for packages based on changesets.
+Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
 
 ```
 USAGE
-  $ flub generate changelog -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--version <value>]
-    [--install]
+  $ flub generate changelog -g <value> [-v | --quiet] [--version <value>]
 
 FLAGS
-  -g, --releaseGroup=<option>  (required) Name of a release group.
-                               <options: client|server|azure|build-tools|gitrest|historian>
-      --[no-]install           Update lockfiles by running 'npm install' automatically.
-      --version=<value>        The version for which to generate the changelog. If this is not provided, the version of
-                               the package according to package.json will be used.
+  -g, --releaseGroup=<value>  (required) The name of a release group.
+      --version=<value>       The version for which to generate the changelog. If this is not provided, the version of
+                              the package according to package.json will be used.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Generate a changelog for packages based on changesets.
+  Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!
+
+ALIASES
+  $ flub generate changelog
 
 EXAMPLES
   Generate changelogs for the client release group.
 
     $ flub generate changelog --releaseGroup client
 ```
-
-_See code: [src/commands/generate/changelog.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changelog.ts)_
 
 ## `flub generate changeset`
 
@@ -228,7 +229,7 @@ _See code: [src/commands/generate/changeset.ts](https://github.com/microsoft/Flu
 
 ## `flub generate compatLayerGeneration`
 
-Updates the generation and release date for layer compatibility.
+Updates the generation of a package for layer compatibility. To opt in a package, add an empty "fluidCompatMetadata" object to its package.json.
 
 ```
 USAGE
@@ -242,7 +243,7 @@ FLAGS
   --concurrency=<value>                [default: 25] The number of tasks to execute concurrently.
   --generationDir=<value>              [default: ./src] The directory where the generation file is located.
   --minimumCompatWindowMonths=<value>  [default: 3] The minimum compatibility window in months that is supported across
-                                       all Fluid layers.
+                                       all Fluid layers. Must be at least 1
   --outFile=<value>                    [default: layerGenerationState.ts] Output the results to this file.
 
 PACKAGE SELECTION FLAGS
@@ -275,7 +276,8 @@ PACKAGE FILTER FLAGS
                           excluded. Cannot be used with --scope.
 
 DESCRIPTION
-  Updates the generation and release date for layer compatibility.
+  Updates the generation of a package for layer compatibility. To opt in a package, add an empty "fluidCompatMetadata"
+  object to its package.json.
 ```
 
 _See code: [src/commands/generate/compatLayerGeneration.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/compatLayerGeneration.ts)_
@@ -443,10 +445,11 @@ Generates type tests for a package or group of packages.
 ```
 USAGE
   $ flub generate typetests [-v | --quiet] [--entrypoint public|alpha|beta|internal|legacyPublic|legacyBeta|legacyAlpha]
-    [--outDir <value>] [--outFile <value>] [--publicFallback] [--concurrency <value>] [--branch <value> [--changed |
-    [--all | --dir <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
-    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... |
-    --skipScope <value>...]
+    [--outDir <value>] [--outFile <value>] [--publicFallback] [--skipVersionOutput] [--concurrency <value>] [--branch
+    <value> [--changed | [--all | --dir <value>... | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -458,6 +461,9 @@ FLAGS
                          tests. The pattern '{@unscopedPackageName}' within the value will be replaced with the unscoped
                          name of this package in PascalCase.
   --publicFallback       Use the public entrypoint as a fallback if the requested entrypoint is not found.
+  --skipVersionOutput    [env: FLUB_TYPETEST_SKIP_VERSION_OUTPUT] Skip updating version information in generated type
+                         test files. When set, preserves existing version information instead of updating to current
+                         package versions.
 
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not

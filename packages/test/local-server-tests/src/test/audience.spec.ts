@@ -44,17 +44,23 @@ describe("Audience correctness", () => {
 	/**
 	 * Function to wait for a client with the given clientId to be added to the audience of the given container.
 	 */
-	async function waitForClientAdd(container: IContainer, clientId: string, errorMsg: string) {
+	async function waitForClientAdd(
+		container: IContainer,
+		clientId: string,
+		errorMsg: string,
+	): Promise<void> {
 		if (container.audience.getMember(clientId) === undefined) {
 			return timeoutPromise(
 				(resolve) => {
-					const listener = (newClientId: string) => {
+					const listener = (newClientId: string): void => {
 						if (newClientId === clientId) {
 							container.audience.off("addMember", listener);
 							resolve();
 						}
 					};
-					container.audience.on("addMember", (newClientId: string) => listener(newClientId));
+					container.audience.on("addMember", (newClientId: string): void =>
+						listener(newClientId),
+					);
 				},
 				// Wait for 2 seconds to get the client in audience. This wait is needed for a client to get added to its
 				// own audience and 2 seconds should be enough time. It it takes longer than this, we might need to

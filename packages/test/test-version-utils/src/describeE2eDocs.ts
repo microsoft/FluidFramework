@@ -193,6 +193,8 @@ export interface DescribeE2EDocInfo {
 }
 
 /**
+ * Type guard to check if document info is {@link DocumentMapInfo}.
+ *
  * @internal
  */
 export function isDocumentMapInfo(info: DocumentTypeInfo): info is DocumentMapInfo {
@@ -200,6 +202,8 @@ export function isDocumentMapInfo(info: DocumentTypeInfo): info is DocumentMapIn
 }
 
 /**
+ * Type guard to check if document info is {@link DocumentMultipleDataStoresInfo}.
+ *
  * @internal
  */
 export function isDocumentMultipleDataStoresInfo(
@@ -209,6 +213,8 @@ export function isDocumentMultipleDataStoresInfo(
 }
 
 /**
+ * Type guard to check if document info is {@link DocumentMatrixInfo}.
+ *
  * @internal
  */
 export function isDocumentMatrixInfo(info: DocumentTypeInfo): info is DocumentMatrixInfo {
@@ -216,6 +222,8 @@ export function isDocumentMatrixInfo(info: DocumentTypeInfo): info is DocumentMa
 }
 
 /**
+ * Type guard to check if document info is {@link DocumentMatrixPlainInfo}.
+ *
  * @internal
  */
 export function isDocumentMatrixPlainInfo(
@@ -225,6 +233,8 @@ export function isDocumentMatrixPlainInfo(
 }
 
 /**
+ * Asserts that document info matches the expected type.
+ *
  * @internal
  */
 export function assertDocumentTypeInfo(
@@ -308,6 +318,7 @@ function createE2EDocsDescribe(docTypes?: DescribeE2EDocInfo[]): DescribeE2EDocS
 
 	const d: DescribeE2EDocSuite = (title, tests, testType) => {
 		describe(
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string -- testType toString is expected to return meaningful string
 			`${testType} -`,
 			createE2EDocCompatSuite(
 				title,
@@ -461,6 +472,8 @@ export const describeE2EDocsMemory: DescribeE2EDocSuite =
 	createE2EDocsDescribeWithType("Memory benchmarks");
 
 /**
+ * Determines whether the current test run is a memory usage test.
+ *
  * @internal
  */
 export function isMemoryTest(): boolean {
@@ -484,6 +497,8 @@ export function isMemoryTest(): boolean {
 export const describeE2EDocRun: DescribeE2EDocSuite = createE2EDocsDescribeRun();
 
 /**
+ * Returns the benchmark type based on the test suite being run.
+ *
  * @internal
  */
 export const getCurrentBenchmarkType = (currentType: DescribeE2EDocSuite): BenchmarkType => {

@@ -441,9 +441,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	/**
 	 * Listen to {@link flushEventsEmitter} to know when to flush buffered events.
 	 */
-	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", () => {
-		this.flush();
-	});
+	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", this.flush.bind(this));
 
 	readonly #events = createEmitter<KernelEvents>();
 
@@ -486,7 +484,9 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		newSource: Listenable<KernelEvents> & HasListeners<KernelEvents>,
 	): void {
 		// Unsubscribe from the old source
-		this.#disposeSourceListeners.forEach((off) => off());
+		for (const off of this.#disposeSourceListeners.values()) {
+			off();
+		}
 		this.#disposeSourceListeners.clear();
 
 		this.#eventSource = newSource;
@@ -541,13 +541,16 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	): void {
 		this.#assertNotDisposed();
 		switch (eventName) {
-			case "childrenChangedAfterBatch":
+			case "childrenChangedAfterBatch": {
 				assert(arg !== undefined, 0xc50 /* childrenChangedAfterBatch should have arg */);
 				return this.#handleChildrenChangedAfterBatch(arg.changedFields);
-			case "subtreeChangedAfterBatch":
+			}
+			case "subtreeChangedAfterBatch": {
 				return this.#handleSubtreeChangedAfterBatch();
-			default:
+			}
+			default: {
 				unreachableCase(eventName);
+			}
 		}
 	}
 
@@ -603,7 +606,9 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		);
 
 		this.#disposeOnFlushListener();
-		this.#disposeSourceListeners.forEach((off) => off());
+		for (const off of this.#disposeSourceListeners.values()) {
+			off();
+		}
 		this.#disposeSourceListeners.clear();
 
 		this.#childrenChangedBuffer.clear();

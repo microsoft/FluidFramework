@@ -6,6 +6,9 @@
 /**
  * Base configuration from which all of our exported configs extends.
  */
+const {
+	configs: { recommended: eslintRecommended },
+} = require("@eslint/js");
 module.exports = {
 	env: {
 		browser: true,
@@ -19,6 +22,8 @@ module.exports = {
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/recommended-type-checked",
 		"plugin:@typescript-eslint/stylistic-type-checked",
+		// NOTE: eslint-plugin-depend is ESM-only and cannot be loaded via legacy config.
+		// It is configured directly in flat.mts for flat config consumers.
 		// import-x/recommended is the combination of import-x/errors and import-x/warnings
 		"plugin:import-x/recommended",
 		"plugin:import-x/typescript",
@@ -36,6 +41,8 @@ module.exports = {
 		sourceType: "module",
 		project: "./tsconfig.json",
 	},
+	// NOTE: eslint-plugin-depend is ESM-only and cannot be loaded via legacy config.
+	// It is configured directly in flat.mts for flat config consumers.
 	plugins: ["import-x", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
@@ -45,9 +52,8 @@ module.exports = {
 
 		/**
 		 * Disallow `-` immediately following a JSDoc/TSDoc tag (e.g. `@deprecated - foo`).
-		 * FIXME: https://dev.azure.com/fluidframework/internal/_workitems/edit/29535
 		 */
-		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "off",
+		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "error",
 
 		/**
 		 * Disallow file path based links in JSDoc/TSDoc comments.
@@ -134,7 +140,11 @@ module.exports = {
 			},
 		],
 
+		// NOTE: eslint-plugin-depend is ESM-only and cannot be loaded via legacy config.
+		// The depend/ban-dependencies rule is configured in flat.mts for flat config consumers.
+
 		// #region eslint-plugin-import-x
+		// Note: Additional import-x settings are in the `settings` section below
 
 		"import-x/no-default-export": "error",
 		"import-x/no-deprecated": "off",
@@ -151,8 +161,16 @@ module.exports = {
 		"import-x/order": [
 			"error",
 			{
-				"newlines-between": "ignore",
-				"groups": [["builtin", "external", "internal", "parent", "sibling", "index"]],
+				"groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
+				"newlines-between": "always",
+				"alphabetize": {
+					order: "asc",
+					// Sorting is case-sensitive by default, which is the same as Biome. To avoid
+					// another huge set of changes to order things case-insensitively, we'll just
+					// use the rule with this config for now. This decision should be considered
+					// pragmatic and not a statement of preference, and we should revisit this.
+					caseInsensitive: false,
+				},
 			},
 		],
 
@@ -332,6 +350,9 @@ module.exports = {
 		},
 	],
 	settings: {
+		// #region eslint-plugin-import-x settings
+		// "import-x/internal-regex":
+		// 	"^(@fluidframework|@fluid-experimental|@fluid-example|@fluid-internal|@fluid-private|@fluid-tools|fluid-framework|tinylicious)/",
 		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
 		"import-x/parsers": {
 			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts", ".cts", ".mts"],
@@ -368,5 +389,6 @@ module.exports = {
 				],
 			},
 		},
+		// #endregion
 	},
 };

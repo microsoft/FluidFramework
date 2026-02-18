@@ -89,11 +89,11 @@
 		"unist-util-visit": "^5.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.7.3",
+		"@biomejs/biome": "^2.3.11",
 		"@fluid-internal/mocha-test-setup": "~2.60.0",
 		"@fluid-tools/markdown-magic": "file:../markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.60.0",
+		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "^6.1.0",
 		"@microsoft/api-extractor": "^7.52.11",
 		"@types/chai": "^5.2.1",
@@ -123,5 +123,11 @@
 				"^tsc"
 			]
 		}
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@biomejs/biome",
+			"unrs-resolver"
+		]
 	}
 }

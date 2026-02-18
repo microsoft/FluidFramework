@@ -4,9 +4,9 @@
  */
 
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
-import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
 
 import { type IFluidMountableView, MountableView } from "./mountableView/index.js";
 
@@ -15,8 +15,10 @@ const dataStoreId = "modelDataStore";
 /**
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use a real return type
 export type ViewCallback<T> = (fluidModel: T) => any;
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -39,11 +41,10 @@ export async function getDataStoreEntryPoint<T>(
  * @internal
  */
 export interface IFluidMountableViewEntryPoint {
-	getDefaultDataObject(): Promise<FluidObject>;
-	getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
+	getDefaultDataObject: () => Promise<FluidObject>;
+	getMountableDefaultView: (path?: string) => Promise<IFluidMountableView>;
 }
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * The ContainerViewRuntimeFactory is an example utility built to support binding a single model to a single view
  * within the container.  For more-robust implementation of binding views within the container, check out the examples
@@ -51,7 +52,6 @@ export interface IFluidMountableViewEntryPoint {
  * @internal
  */
 export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory {
-	/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 	constructor(
 		private readonly dataStoreFactory: IFluidDataStoreFactory,
 		viewCallback: ViewCallback<T>,
@@ -66,11 +66,15 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 			): Promise<IFluidMountableViewEntryPoint> => {
 				const entryPoint = await getDataStoreEntryPoint<T>(containerRuntime, dataStoreId);
 
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: Update `ViewCallback` to use a real return type
 				const view = viewCallback(entryPoint);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				let getMountableDefaultView = async () => view;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- TODO: Update `ViewCallback` to use a real return type
+				let getMountableDefaultView = async (): Promise<IFluidMountableView> => view;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- TODO: Update `ViewCallback` to use a real return type
 				if (MountableView.canMount(view)) {
-					getMountableDefaultView = async () => new MountableView(view);
+					getMountableDefaultView = async (): Promise<IFluidMountableView> =>
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- TODO: Update `ViewCallback` to use a real return type
+						new MountableView(view);
 				}
 
 				return {
@@ -85,7 +89,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 	 * Since we're letting the container define the default view it will respond with, it must do whatever setup
 	 * it requires to produce that default view.  We'll create a single data store of the specified type.
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataStore = await runtime.createDataStore(this.dataStoreFactory.type);
 		await dataStore.trySetAlias(dataStoreId);
 	}

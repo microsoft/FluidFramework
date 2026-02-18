@@ -32,14 +32,14 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	type InsertableContent,
 } from "../unhydratedFlexTreeFromInsertable.js";
+import type { InsertableField, UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
-import { createFromCursor } from "./create.js";
 import { conciseFromCursor, type ConciseTree } from "./conciseTree.js";
+import { createFromCursor } from "./create.js";
 import type { TreeEncodingOptions } from "./customTree.js";
-import { cursorFromVerbose } from "./verboseTree.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 import { treeNodeApi } from "./treeNodeApi.js";
-import type { InsertableField, UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
+import { cursorFromVerbose } from "./verboseTree.js";
 
 // Tests for this file are grouped with those for treeNodeApi.ts as that is where this functionality will eventually land,
 // and where most of the actual implementation is for much of it.
@@ -120,7 +120,7 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
  * Extensions to {@link (Tree:interface)} which are not yet stable.
  * @remarks
  * Use via the {@link (TreeBeta:variable)} singleton.
- * @system @sealed @beta
+ * @sealed @beta
  */
 export interface TreeBeta {
 	/**

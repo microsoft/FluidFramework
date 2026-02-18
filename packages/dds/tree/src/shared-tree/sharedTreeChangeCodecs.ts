@@ -5,6 +5,7 @@
 
 import { fail } from "@fluidframework/core-utils/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	type CodecTree,
 	type CodecWriteOptions,
@@ -22,7 +23,7 @@ import {
 	type TreeStoredSchema,
 } from "../core/index.js";
 import {
-	type ModularChangeFormatVersion,
+	ModularChangeFormatVersion,
 	type ModularChangeset,
 	type SchemaChange,
 	defaultSchemaPolicy,
@@ -31,10 +32,10 @@ import {
 	makeSchemaChangeCodecs,
 } from "../feature-libraries/index.js";
 import {
-	brand,
-	type Brand,
+	strictEnum,
 	type JsonCompatibleReadOnly,
 	type Mutable,
+	type Values,
 } from "../util/index.js";
 
 import {
@@ -56,12 +57,12 @@ export function makeSharedTreeChangeCodecFamily(
 			EncodedSharedTreeChange,
 			ChangeEncodingContext
 		>,
-	][] = Array.from(dependenciesForChangeFormat.entries()).map(
+	][] = [...dependenciesForChangeFormat.entries()].map(
 		([format, { modularChange, schemaChange }]) => [
 			format,
 			makeSharedTreeChangeCodec(
-				modularChangeCodecFamily.resolve(modularChange).json,
-				schemaChangeCodecs.resolve(schemaChange).json,
+				modularChangeCodecFamily.resolve(modularChange),
+				schemaChangeCodecs.resolve(schemaChange),
 				options,
 			),
 		],
@@ -74,7 +75,32 @@ interface ChangeFormatDependencies {
 	readonly schemaChange: SchemaFormatVersion;
 }
 
-export type SharedTreeChangeFormatVersion = Brand<3 | 4, "SharedTreeChangeFormatVersion">;
+/**
+ * The format version for `SharedTreeChange`.
+ */
+export const SharedTreeChangeFormatVersion = strictEnum("SharedTreeChangeFormatVersion", {
+	/**
+	 * Introduced prior to 2.0 and used beyond.
+	 * Reading capability must be maintained for backwards compatibility.
+	 * Writing capability needs to be maintained so long as {@link lowestMinVersionForCollab} is less than 2.2.0.
+	 */
+	v3: 3,
+	/**
+	 * Introduced in 2.2.0.
+	 * Was inadvertently made usable for writing in 2.43.0 (through configuredSharedTree) and remains available.
+	 * Reading capability must be maintained for backwards compatibility.
+	 * Writing capability could be dropped in favor of {@link SharedTreeChangeFormatVersion.v3},
+	 * but doing so would make the pattern of writable versions more complex and gain little
+	 * because the logic for this format is shared with {@link SharedTreeChangeFormatVersion.v3}.
+	 */
+	v4: 4,
+	/**
+	 * Introduced and made available for writing in 2.80.0
+	 * Adds support for "no change" constraints.
+	 */
+	v5: 5,
+});
+export type SharedTreeChangeFormatVersion = Values<typeof SharedTreeChangeFormatVersion>;
 
 /**
  * Defines for each SharedTree change format the corresponding dependent formats to use.
@@ -82,12 +108,22 @@ export type SharedTreeChangeFormatVersion = Brand<3 | 4, "SharedTreeChangeFormat
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for the dependent formats are not explicitly versioned.
  */
-export const dependenciesForChangeFormat: Map<
+export const dependenciesForChangeFormat = new Map<
 	SharedTreeChangeFormatVersion,
 	ChangeFormatDependencies
-> = new Map([
-	[brand(3), { modularChange: brand(3), schemaChange: brand(SchemaFormatVersion.v1) }],
-	[brand(4), { modularChange: brand(4), schemaChange: brand(SchemaFormatVersion.v1) }],
+>([
+	[
+		SharedTreeChangeFormatVersion.v3,
+		{ modularChange: ModularChangeFormatVersion.v3, schemaChange: SchemaFormatVersion.v1 },
+	],
+	[
+		SharedTreeChangeFormatVersion.v4,
+		{ modularChange: ModularChangeFormatVersion.v4, schemaChange: SchemaFormatVersion.v1 },
+	],
+	[
+		SharedTreeChangeFormatVersion.v5,
+		{ modularChange: ModularChangeFormatVersion.v5, schemaChange: SchemaFormatVersion.v1 },
+	],
 ]);
 
 export function getCodecTreeForChangeFormat(
@@ -149,15 +185,15 @@ function makeSharedTreeChangeCodec(
 				for (const decodedChange of change.changes) {
 					if (decodedChange.type === "data") {
 						const schemaAndPolicy =
-							updatedSchema !== undefined
-								? {
+							updatedSchema === undefined
+								? context.schema
+								: {
 										policy:
-											context.schema !== undefined
-												? context.schema.policy
-												: defaultSchemaPolicy,
+											context.schema === undefined
+												? defaultSchemaPolicy
+												: context.schema.policy,
 										schema: updatedSchema,
-									}
-								: context.schema;
+									};
 						changes.push({
 							data: modularChangeCodec.encode(decodedChange.innerChange, {
 								originatorId: context.originatorId,

@@ -123,7 +123,7 @@ export function generateCitmJson(
 	keyspaceMultiplier: number = 1,
 	maxSizeInBytes: number,
 	seed = 1,
-) {
+): CitmCatalog {
 	const random = makeRandom(seed);
 	const baseIdNumber = random.integer(100000000, 300000000);
 	let idNumberCounter = baseIdNumber;
@@ -248,7 +248,7 @@ export function generateCitmJson(
 
 	// 9. Create venueNames property
 	// (In the original JSON this always shows up as a static object.)
-	const venueNames = { PLEYEL_PLEYEL: "Salle Pleyel" };
+	const venueNames = { PLEYEL_PLEYEL: "Salle Pleyel" } as const;
 
 	// 10. Create each event object
 	const events: Record<string, Event> = {};
@@ -351,7 +351,7 @@ function generateEventAndPerformance(
 	const eventSubTopicIdSet = new Set<number>();
 	if (numTopicsToInclude > 0) {
 		let processedTopicIdCount = 0;
-		eventTopicIdSet.forEach((topicId) => {
+		for (const topicId of eventTopicIdSet) {
 			const topicSubTopicIds = topicSubTopics[`${topicId}`];
 			// This reserves atleast 1 subtopicId to be added for each topic id.
 			const unprocessedTopicIds = eventTopicIdSet.size - processedTopicIdCount;
@@ -374,7 +374,7 @@ function generateEventAndPerformance(
 				eventSubTopicIdSet.add(subTopicIdToAdd);
 			}
 			processedTopicIdCount++;
-		});
+		}
 	}
 
 	// All logo strings in the original follow this pattern. and have a 48.913% chance of being null
@@ -389,8 +389,8 @@ function generateEventAndPerformance(
 		name: ORIGINAL_EVENT_NAMES[random.integer(0, ORIGINAL_EVENT_NAMES.length - 1)],
 		subjectCode: null,
 		subtitle: null,
-		topicIds: Array.from(eventTopicIdSet),
-		subTopicIds: Array.from(eventSubTopicIdSet),
+		topicIds: [...eventTopicIdSet],
+		subTopicIds: [...eventSubTopicIdSet],
 	};
 
 	// eslint-disable-next-line no-param-reassign
@@ -423,7 +423,7 @@ function generateEventAndPerformance(
 		seatCategoryId: number;
 	}[] = [];
 	const availableAreaIds = Object.keys(areaNames);
-	prices.forEach((priceObject) => {
+	for (const priceObject of prices) {
 		const numAreaIdsToAdd = random.integer(1, Math.min(availableAreaIds.length, 16));
 		const areas = [];
 		for (let i = 0; i < numAreaIdsToAdd; i++) {
@@ -436,7 +436,7 @@ function generateEventAndPerformance(
 			areas,
 			seatCategoryId: priceObject.seatCategoryId,
 		});
-	});
+	}
 	const performance: Performance = {
 		eventId: event.id,
 		id: idNumberCounter,

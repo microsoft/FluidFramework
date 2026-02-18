@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ILayerCompatDetails,
-	ILayerCompatSupportRequirements,
+import {
+	generation,
+	LayerCompatibilityPolicyWindowMonths,
+	type ILayerCompatDetails,
+	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
@@ -14,10 +16,16 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	validateLayerCompatibility,
-	type ITelemetryLoggerExt,
+	type MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion } from "./packageVersion.js";
+
+/**
+ * The config key to disable strict loader layer compatibility check.
+ */
+export const disableStrictLoaderLayerCompatibilityCheckKey =
+	"Fluid.ContainerRuntime.DisableStrictLoaderLayerCompatibilityCheck";
 
 /**
  * The core compatibility details of the Runtime layer that is the same across all layer boundaries.
@@ -31,7 +39,7 @@ export const runtimeCoreCompatDetails = {
 	/**
 	 * The current generation of the Runtime layer.
 	 */
-	generation: 2,
+	generation,
 } as const;
 
 /**
@@ -52,10 +60,15 @@ export const runtimeCompatDetailsForLoader: ILayerCompatDetails = {
  */
 export const loaderSupportRequirementsForRuntime: ILayerCompatSupportRequirements = {
 	/**
-	 * Minimum generation that Loader must be at to be compatible with Runtime. Note that 0 is used here so
-	 * that Loader layers before the introduction of the layer compatibility enforcement are compatible.
+	 * Minimum generation that Loader must be at to be compatible with this Runtime. This is calculated
+	 * based on the LayerCompatibilityPolicyWindowMonths.RuntimeLoader value which defines how many months old can
+	 * the Loader layer be compared to the Runtime layer for them to still be considered compatible.
+	 * The minimum valid generation value is 0.
 	 */
-	minSupportedGeneration: 0,
+	minSupportedGeneration: Math.max(
+		0,
+		runtimeCoreCompatDetails.generation - LayerCompatibilityPolicyWindowMonths.RuntimeLoader,
+	),
 	/**
 	 * The features that the Loader must support to be compatible with Runtime.
 	 */
@@ -80,10 +93,16 @@ export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
  */
 export const dataStoreSupportRequirementsForRuntime: ILayerCompatSupportRequirements = {
 	/**
-	 * Minimum generation that DataStore must be at to be compatible with Runtime. Note that 0 is used here so
-	 * that DataStore layers before the introduction of the layer compatibility enforcement are compatible.
+	 * Minimum generation that DataStore must be at to be compatible with this Runtime. This is calculated
+	 * based on the LayerCompatibilityPolicyWindowMonths.RuntimeDataStore value which defines how many months old can
+	 * the DataStore layer be compared to the Runtime layer for them to still be considered compatible.
+	 * The minimum valid generation value is 0.
 	 */
-	minSupportedGeneration: 0,
+	minSupportedGeneration: Math.max(
+		0,
+		runtimeCoreCompatDetails.generation -
+			LayerCompatibilityPolicyWindowMonths.RuntimeDataStore,
+	),
 	/**
 	 * The features that the DataStore must support to be compatible with Runtime.
 	 */
@@ -97,8 +116,16 @@ export const dataStoreSupportRequirementsForRuntime: ILayerCompatSupportRequirem
 export function validateLoaderCompatibility(
 	maybeLoaderCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
-	logger: ITelemetryLoggerExt,
+	mc: MonitoringContext,
 ): void {
+	// By default, use strictCompatibilityCheck here - If the Loader doesn't provide compatibility details,
+	// assume it's a very old version and should be considered incompatible,
+	// since Loader can drift far from the Runtime causing issues.
+	// Can be disabled via config `disableStrictLoaderLayerCompatibilityCheckKey`.
+	const disableStrictLoaderLayerCompatibilityCheck = mc.config.getBoolean(
+		disableStrictLoaderLayerCompatibilityCheckKey,
+	);
+
 	validateLayerCompatibility(
 		"runtime",
 		"loader",
@@ -106,7 +133,8 @@ export function validateLoaderCompatibility(
 		loaderSupportRequirementsForRuntime,
 		maybeLoaderCompatDetailsForRuntime,
 		disposeFn,
-		logger,
+		mc,
+		disableStrictLoaderLayerCompatibilityCheck !== true /* strictCompatibilityCheck */,
 	);
 }
 
@@ -117,7 +145,7 @@ export function validateLoaderCompatibility(
 export function validateDatastoreCompatibility(
 	maybeDataStoreCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: () => void,
-	logger: ITelemetryLoggerExt,
+	mc: MonitoringContext,
 ): void {
 	validateLayerCompatibility(
 		"runtime",
@@ -126,6 +154,6 @@ export function validateDatastoreCompatibility(
 		dataStoreSupportRequirementsForRuntime,
 		maybeDataStoreCompatDetailsForRuntime,
 		disposeFn,
-		logger,
+		mc,
 	);
 }

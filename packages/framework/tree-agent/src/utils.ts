@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
@@ -32,13 +32,6 @@ export interface MapGetSet<K, V> {
 }
 
 /**
- * TBD
- */
-export function fail(message: string): never {
-	throw new Error(message);
-}
-
-/**
  * Map one iterable to another by transforming each element one at a time
  * @param iterable - the iterable to transform
  * @param map - the transformation function to run on each element of the iterable
@@ -52,6 +45,23 @@ export function* mapIterable<T, U>(
 ): IterableIterator<U> {
 	for (const t of iterable) {
 		yield map(t);
+	}
+}
+
+/**
+ * Filter an iterable, returning only elements that match the filter condition
+ * @param iterable - the iterable to filter
+ * @param filterCondition - the filter condition function to test each element
+ * @returns a new iterable of elements that pass the filter condition
+ */
+export function* filterIterable<T>(
+	iterable: Iterable<T>,
+	filterCondition: (t: T) => boolean,
+): IterableIterator<T> {
+	for (const t of iterable) {
+		if (filterCondition(t)) {
+			yield t;
+		}
 	}
 }
 
@@ -156,7 +166,7 @@ export function getFriendlyName(schema: TreeNodeSchema): string {
 			? `Record<string, (${childNames.join(" | ")})>`
 			: `Record<string, ${childNames[0]}>`;
 	}
-	fail("Unexpected node schema");
+	fail(0xcb7 /* Unexpected node schema */);
 }
 
 /**
@@ -176,17 +186,74 @@ export function isNamedSchema(schemaIdentifier: string): boolean {
 }
 
 /**
- * Returns the unqualified name of a schema (e.g. `"my.scope.MyNode"` returns `"MyNode"`).
- * @remarks This works by removing all characters before the last dot in the schema name.
- * If there is a dot in a user's schema name, this might produce unexpected results.
+ * Returns the unqualified, sanitized Typescript-safe name of a schema
+ * Examples:
+ * - `"my.scope.MyNode"` returns `"MyNode"`
+ * - `"my.scope.MyNode-2"` returns `"MyNode_2"`
+ * - `"my.scope.MyNode!"` returns `"MyNode_"`
+ * @remarks
+ * - Removes all characters before the last dot in the schema name.
+ * - Sanitizes the remainder into a valid Typescript identifier
+ * - If there is a dot in a user's schema name, this might produce unexpected results.
  */
 export function unqualifySchema(schemaIdentifier: string): string {
 	// Get the unqualified name by removing the scope (everything before the last dot).
 	const matches = /[^.]+$/.exec(schemaIdentifier);
-	if (matches === null) {
-		return schemaIdentifier; // Return the original name if it is unscoped.
+	const unqualifiedName = matches === null ? schemaIdentifier : matches[0];
+
+	let sanitizedName = unqualifiedName;
+
+	// Replace invalid characters with "_".
+	sanitizedName = sanitizedName.replace(/[^\w$]/g, "_");
+
+	// If the first character is a number, prefix it with "_".
+	if (!/^[$A-Z_a-z]/.test(sanitizedName)) {
+		sanitizedName = `_${sanitizedName}`;
 	}
-	return matches[0];
+	return sanitizedName;
+}
+
+/**
+ * Resolves short name collisions by appending counters to colliding short names.
+ *
+ * @remarks
+ * When multiple different identifiers produce the same short name, the first occurrence keeps its original short name,
+ * and subsequent occurrences get a counter appended starting at `_2`.
+ * Identical full identifiers (same schema) always map to the same friendly name.
+ * Non-colliding identifiers keep their original short name.
+ * Examples:
+ * - If `"scope.Foo"`, `"scope2.Foo"`, `"scope3.Foo"` and `"scope3.Foo_2"` all exist, they resolve to `["Foo", "Foo_2", "Foo_3", "Foo_2_2"]` (first-come-first-served).
+ * - If `"scope.Foo"` appears twice (same identifier), both resolve to `["Foo", "Foo"]`.
+ */
+export class IdentifierCollisionResolver {
+	/**
+	 * The set of all friendly names that have been assigned so far.
+	 */
+	private readonly assignedFriendlyNames = new Set<string>();
+
+	/**
+	 * Cache of full identifier to assigned friendly name, so identical identifiers always resolve the same way.
+	 */
+	private readonly friendlyNameCache = new Map<string, string>();
+
+	/**
+	 * Resolves a schema to a unique friendly name.
+	 * The first schema to claim a short name keeps it; subsequent collisions get `_2`, `_3`, etc.
+	 */
+	public resolve(schema: TreeNodeSchema): string {
+		return getOrCreate(this.friendlyNameCache, schema.identifier, () => {
+			let name = getFriendlyName(schema);
+			if (this.assignedFriendlyNames.has(name)) {
+				let counter = 2;
+				while (this.assignedFriendlyNames.has(`${name}_${counter}`)) {
+					counter++;
+				}
+				name = `${name}_${counter}`;
+			}
+			this.assignedFriendlyNames.add(name);
+			return name;
+		});
+	}
 }
 
 /**

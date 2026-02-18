@@ -71,9 +71,9 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import { type ISequenceIntervalCollection } from "./intervalCollection.js";
+import type { ISequenceIntervalCollection } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
-import { type SequenceOptions } from "./intervalCollectionMapInterfaces.js";
+import type { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 import {
 	SequenceDeltaEvent,
 	SequenceDeltaEventClass,
@@ -402,6 +402,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 						props[key] = r.segment.properties?.[key] ?? null;
 					}
 					if (
+						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58521 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 						lastAnnotate &&
 						lastAnnotate.pos2 === r.position &&
 						matchProperties(lastAnnotate.props, props)
@@ -961,6 +962,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
+	 * Processes a merge tree message for the sequence.
 	 *
 	 * @param message - Message with decoded and hydrated handles
 	 */

@@ -16,6 +16,8 @@ import type { BenchmarkResult } from "../ResultTypes";
 import { fail } from "../assert.js";
 import { Phase, runBenchmark } from "../runBenchmark";
 
+import { emitResultsMocha } from "./runnerUtilities";
+
 /**
  * This is wrapper for Mocha's it function that runs a performance benchmark.
  *
@@ -64,72 +66,92 @@ export function supportParentProcess<
 	const itFunction = args.only === true ? it.only : it;
 	const test = itFunction(args.title, async () => {
 		if (isParentProcess) {
-			// Instead of running the benchmark in this process, create a new process.
-			// See {@link isParentProcess} for why.
-			// Launch new process, with:
-			// - mocha filter to run only this test.
-			// - --parentProcess flag removed.
-			// - --childProcess flag added (so data will be returned via stdout as json)
+			await emitResultsMocha(async () => {
+				try {
+					// Instead of running the benchmark in this process, create a new process.
+					// See {@link isParentProcess} for why.
+					// Launch new process, with:
+					// - mocha filter to run only this test.
+					// - --parentProcess flag removed.
+					// - --childProcess flag added (so data will be returned via stdout as json)
 
-			// Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
-			const command = process.argv0 ?? fail("there must be a command");
+					// Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
+					const command = process.argv0 ?? fail("there must be a command");
 
-			// We expect all node-specific flags to be present in execArgv so they can be passed to the child process.
-			// At some point mocha was processing the expose-gc flag itself and not passing it here, unless explicitly
-			// put in mocha's --node-option flag.
-			const childArgs = [...process.execArgv, ...process.argv.slice(1)];
-			const processFlagIndex = childArgs.indexOf("--parentProcess");
-			childArgs[processFlagIndex] = "--childProcess";
+					// We expect all node-specific flags to be present in execArgv so they can be passed to the child process.
+					// At some point mocha was processing the expose-gc flag itself and not passing it here, unless explicitly
+					// put in mocha's --node-option flag.
+					const childArgs = [...process.execArgv, ...process.argv.slice(1)];
+					const processFlagIndex = childArgs.indexOf("--parentProcess");
+					childArgs[processFlagIndex] = "--childProcess";
 
-			// Remove arguments for any existing test filters.
-			for (const flag of ["--grep", "--fgrep"]) {
-				const flagIndex = childArgs.indexOf(flag);
-				if (flagIndex > 0) {
-					// Remove the flag, and the argument after it (all these flags take one argument)
-					childArgs.splice(flagIndex, 2);
+					// Remove arguments for any existing test filters.
+					for (const flag of ["--grep", "--fgrep"]) {
+						const flagIndex = childArgs.indexOf(flag);
+						if (flagIndex > 0) {
+							// Remove the flag, and the argument after it (all these flags take one argument)
+							childArgs.splice(flagIndex, 2);
+						}
+					}
+
+					// Add test filter so child process only run the current test.
+					childArgs.push("--fgrep", test.fullTitle());
+
+					// Remove arguments for debugging if they're present; in order to debug child processes we need
+					// to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
+					// of scope for now.
+					let inspectArgIndex: number = -1;
+					while (
+						(inspectArgIndex = childArgs.findIndex((x) =>
+							x.match(/^(--inspect|--debug).*/),
+						)) >= 0
+					) {
+						childArgs.splice(inspectArgIndex, 1);
+					}
+
+					// Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
+					const childProcess = await import("node:child_process");
+					const result = childProcess.spawnSync(command, childArgs, { encoding: "utf8" });
+
+					if (result.error) {
+						fail(`Child process reported an error: ${result.error.message}`);
+					}
+
+					if (result.stderr !== "") {
+						fail(`Child process logged errors: ${result.stderr}`);
+					}
+
+					// Find the json blob in the child's output.
+					const output =
+						result.stdout.split("\n").find((s) => s.startsWith("{")) ??
+						fail(`child process must output a json blob. Got:\n${result.stdout}`);
+
+					return { result: JSON.parse(output) as BenchmarkResult };
+				} catch (error) {
+					return {
+						result: { error: (error as Error).message },
+						exception: error as Error,
+					};
 				}
-			}
-
-			// Add test filter so child process only run the current test.
-			childArgs.push("--fgrep", test.fullTitle());
-
-			// Remove arguments for debugging if they're present; in order to debug child processes we need
-			// to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
-			// of scope for now.
-			let inspectArgIndex: number = -1;
-			while (
-				(inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >=
-				0
-			) {
-				childArgs.splice(inspectArgIndex, 1);
-			}
-
-			// Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
-			const childProcess = await import("node:child_process");
-			const result = childProcess.spawnSync(command, childArgs, { encoding: "utf8" });
-
-			if (result.error) {
-				fail(`Child process reported an error: ${result.error.message}`);
-			}
-
-			if (result.stderr !== "") {
-				fail(`Child process logged errors: ${result.stderr}`);
-			}
-
-			// Find the json blob in the child's output.
-			const output =
-				result.stdout.split("\n").find((s) => s.startsWith("{")) ??
-				fail(`child process must output a json blob. Got:\n${result.stdout}`);
-
-			test.emit("benchmark end", JSON.parse(output));
+			}, test);
 			return;
 		}
 
-		const stats = await args.run();
-		// Create and run a benchmark if we are in perfMode, else run the passed in function normally
-		if (isInPerformanceTestingMode) {
-			test.emit("benchmark end", stats);
-		}
+		// Only emit results in perfMode
+		await (isInPerformanceTestingMode
+			? emitResultsMocha(
+					async () =>
+						args.run().then(
+							(result) => ({ result }),
+							(error) => ({
+								result: { error: (error as Error).message },
+								exception: error as Error,
+							}),
+						),
+					test,
+			  )
+			: // In non-perf mode, just run the function without emitting
+			  args.run());
 	});
 	return test;
 }

@@ -5,8 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
+import type { ICodecOptions } from "../codec/index.js";
 import {
 	type ITreeCursorSynchronous,
 	type JsonableTree,
@@ -18,6 +20,7 @@ import {
 	TreeStoredSchemaRepository,
 	type TreeTypeSet,
 } from "../core/index.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
 	FieldKinds,
 	type FullSchemaPolicy,
@@ -38,9 +41,9 @@ import {
 	SchematizingSimpleTreeView,
 	type ForestOptions,
 } from "../shared-tree/index.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+// eslint-disable-next-line import-x/no-internal-modules
+import { isLazy } from "../simple-tree/core/index.js";
 import {
-	getStoredSchema,
 	numberSchema,
 	SchemaFactoryAlpha,
 	stringSchema,
@@ -59,15 +62,11 @@ import {
 	permissiveStoredSchemaGenerationOptions,
 	type TreeViewConfiguration,
 } from "../simple-tree/index.js";
+import { brand, Breakable } from "../util/index.js";
+
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
-import { brand, Breakable } from "../util/index.js";
-import type { Partial } from "@sinclair/typebox";
-// eslint-disable-next-line import-x/no-internal-modules
-import { isLazy } from "../simple-tree/core/index.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
-import { FormatValidatorBasic } from "../external-utilities/index.js";
-import type { ICodecOptions } from "../codec/index.js";
 
 interface TestSimpleTree {
 	readonly name: string;
@@ -239,15 +238,11 @@ const allTheFieldsName: TreeNodeSchemaIdentifier = brand("test.allTheFields");
 
 const library = {
 	nodeSchema: new Map([
-		[
-			brand(Minimal.identifier),
-			getStoredSchema(Minimal, restrictiveStoredSchemaGenerationOptions),
-		],
+		...toStoredSchema(
+			[Minimal, schemaStatics.number],
+			restrictiveStoredSchemaGenerationOptions,
+		).nodeSchema,
 		[allTheFieldsName, allTheFields],
-		[
-			brand(factory.number.identifier),
-			getStoredSchema(schemaStatics.number, restrictiveStoredSchemaGenerationOptions),
-		],
 	]),
 } satisfies Partial<TreeStoredSchema>;
 
@@ -316,7 +311,7 @@ export const testTrees: readonly TestTree[] = [
 	{
 		name: "node-with-identifier-field",
 		schemaData: toStoredSchema(HasIdentifierField, restrictiveStoredSchemaGenerationOptions),
-		treeFactory: (idCompressor?: IIdCompressor) => {
+		treeFactory: (idCompressor?: IIdCompressor): JsonableTree[] => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
 			return jsonableTreeFromFieldCursor(
@@ -328,7 +323,7 @@ export const testTrees: readonly TestTree[] = [
 	{
 		name: "identifier-field",
 		schemaData: toStoredSchema(factory.identifier, restrictiveStoredSchemaGenerationOptions),
-		treeFactory: (idCompressor?: IIdCompressor) => {
+		treeFactory: (idCompressor?: IIdCompressor): JsonableTree[] => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
 			return [{ type: brand(stringSchema.identifier), value: id }];

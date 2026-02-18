@@ -4,28 +4,32 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
-	SquashingTransactionStack,
-	SharedTreeBranch,
-	TransactionStack,
-	type OnPop,
-} from "../../shared-tree-core/index.js";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import {
+	findAncestor,
+	rootFieldKey,
+	type GraphCommit,
+	type RevisionTag,
+} from "../../core/index.js";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
-import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
 import {
-	findAncestor,
-	rootFieldKey,
-	tagChange,
-	type GraphCommit,
-	type RevisionTag,
-	type TaggedChange,
-} from "../../core/index.js";
+	SquashingTransactionStack,
+	SharedTreeBranch,
+	TransactionResult,
+	TransactionStack,
+} from "../../shared-tree-core/index.js";
 import { brand } from "../../util/index.js";
+import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
 
 describe("TransactionStacks", () => {
 	it("emit an event after starting a transaction", () => {
@@ -35,7 +39,7 @@ describe("TransactionStacks", () => {
 			assert.equal(transaction.isInProgress(), true);
 			started = true;
 		});
-		transaction.start();
+		transaction.start(false);
 		assert.equal(started, true);
 	});
 
@@ -46,7 +50,7 @@ describe("TransactionStacks", () => {
 			assert.equal(transaction.isInProgress(), true);
 			aborting = true;
 		});
-		transaction.start();
+		transaction.start(false);
 		transaction.abort();
 		assert.equal(aborting, true);
 	});
@@ -58,7 +62,7 @@ describe("TransactionStacks", () => {
 			assert.equal(transaction.isInProgress(), true);
 			committing = true;
 		});
-		transaction.start();
+		transaction.start(false);
 		transaction.commit();
 		assert.equal(committing, true);
 	});
@@ -66,9 +70,9 @@ describe("TransactionStacks", () => {
 	it("report whether or not a transaction is in progress", () => {
 		const transaction = new TransactionStack();
 		assert.equal(transaction.isInProgress(), false);
-		transaction.start();
+		transaction.start(false);
 		assert.equal(transaction.isInProgress(), true);
-		transaction.start();
+		transaction.start(false);
 		assert.equal(transaction.isInProgress(), true);
 		transaction.commit();
 		assert.equal(transaction.isInProgress(), true);
@@ -77,41 +81,144 @@ describe("TransactionStacks", () => {
 	});
 
 	it("run a function when a transaction begins", () => {
-		let invoked = false;
+		let invoked = 0;
 		const transaction = new TransactionStack((): void => {
-			invoked = true;
+			invoked += 1;
 			assert.equal(transaction.isInProgress(), false);
 		});
-		transaction.start();
-		assert.equal(invoked, true);
+		transaction.start(false);
+		assert.equal(invoked, 1);
+	});
+
+	it("run the top-level push function by default when a nested transaction begins", () => {
+		let invoked = 0;
+		const transaction = new TransactionStack((): void => {
+			invoked += 1;
+			assert.equal(transaction.isInProgress(), invoked > 1);
+		});
+		transaction.start(false);
+		assert.equal(invoked, 1);
+		transaction.start(false);
+		assert.equal(invoked, 2);
+		transaction.start(false);
+		assert.equal(invoked, 3);
+	});
+
+	it("run a provided nested push function when a nested transaction begins", () => {
+		let invokedOuter = 0;
+		let invokedInner1 = 0;
+		let invokedInner2 = 0;
+		const transaction: TransactionStack = new TransactionStack(() => {
+			invokedOuter += 1;
+			assert.equal(transaction.isInProgress(), false);
+			return {
+				onPush: () => {
+					invokedInner1 += 1;
+					assert.equal(transaction.isInProgress(), true);
+					return {
+						onPush: () => {
+							invokedInner2 += 1;
+							assert.equal(transaction.isInProgress(), true);
+						},
+					};
+				},
+			};
+		});
+		transaction.start(false);
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 0);
+		assert.equal(invokedInner2, 0);
+		transaction.start(false);
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 0);
+		transaction.start(false);
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 1);
+		transaction.start(false);
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 2);
+	});
+
+	it("run a provided nested pop function when a nested transaction ends", () => {
+		let invokedOuter = 0;
+		let invokedInner1 = 0;
+		let invokedInner2 = 0;
+		const transaction: TransactionStack = new TransactionStack(() => {
+			return {
+				onPop: () => {
+					invokedOuter += 1;
+					assert.equal(transaction.isInProgress(), false);
+				},
+				onPush: () => {
+					return {
+						onPop: () => {
+							invokedInner1 += 1;
+							assert.equal(transaction.isInProgress(), true);
+						},
+						onPush: () => {
+							return {
+								onPop: () => {
+									invokedInner2 += 1;
+									assert.equal(transaction.isInProgress(), true);
+								},
+							};
+						},
+					};
+				},
+			};
+		});
+		transaction.start(false);
+		transaction.start(false);
+		transaction.start(false);
+		transaction.commit();
+		assert.equal(invokedOuter, 0);
+		assert.equal(invokedInner1, 0);
+		assert.equal(invokedInner2, 1);
+		transaction.commit();
+		assert.equal(invokedOuter, 0);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 1);
+		transaction.commit();
+		assert.equal(invokedOuter, 1);
+		assert.equal(invokedInner1, 1);
+		assert.equal(invokedInner2, 1);
 	});
 
 	it("run a function when a transaction aborts", () => {
-		let invoked = false;
-		const transaction = new TransactionStack((): OnPop => {
-			return () => {
-				invoked = true;
-				assert.equal(transaction.isInProgress(), false);
+		let invoked = 0;
+		const transaction: TransactionStack = new TransactionStack(() => {
+			return {
+				onPop: (result) => {
+					invoked += 1;
+					assert.equal(result, TransactionResult.Abort);
+					assert.equal(transaction.isInProgress(), false);
+				},
 			};
 		});
-		transaction.start();
-		assert.equal(invoked, false);
+		transaction.start(false);
+		assert.equal(invoked, 0);
 		transaction.abort();
-		assert.equal(invoked, true);
+		assert.equal(invoked, 1);
 	});
 
 	it("run a function when a transaction commits", () => {
-		let invoked = false;
-		const transaction = new TransactionStack((): OnPop => {
-			return () => {
-				invoked = true;
-				assert.equal(transaction.isInProgress(), false);
+		let invoked = 0;
+		const transaction: TransactionStack = new TransactionStack(() => {
+			return {
+				onPop: (result) => {
+					invoked += 1;
+					assert.equal(result, TransactionResult.Commit);
+					assert.equal(transaction.isInProgress(), false);
+				},
 			};
 		});
-		transaction.start();
-		assert.equal(invoked, false);
+		transaction.start(false);
+		assert.equal(invoked, 0);
 		transaction.commit();
-		assert.equal(invoked, true);
+		assert.equal(invoked, 1);
 	});
 
 	it("throw an error if committing without starting a transaction", () => {
@@ -139,7 +246,10 @@ describe("TransactionStacks", () => {
 			() => transaction.isInProgress(),
 			validateAssertionError("Transactor is disposed"),
 		);
-		assert.throws(() => transaction.start(), validateAssertionError("Transactor is disposed"));
+		assert.throws(
+			() => transaction.start(false),
+			validateAssertionError("Transactor is disposed"),
+		);
 		assert.throws(
 			() => transaction.commit(),
 			validateAssertionError("Transactor is disposed"),
@@ -154,44 +264,51 @@ describe("TransactionStacks", () => {
 	it("abort all transactions when disposed", () => {
 		let aborted = 0;
 		const transaction = new TransactionStack(() => {
-			return () => {
-				aborted += 1;
+			return {
+				onPop: () => {
+					aborted += 1;
+				},
 			};
 		});
-		transaction.start();
-		transaction.start();
+		transaction.start(false);
+		transaction.start(false);
 		transaction.dispose();
 		assert.equal(aborted, 2);
+	});
+
+	it("throws when attempting to start an async transaction within a sync transaction", () => {
+		const transaction = new TransactionStack();
+		transaction.start(false);
+		assert.throws(
+			() => transaction.start(true),
+			validateUsageError(
+				/An asynchronous transaction cannot be started while a synchronous transaction is in progress./,
+			),
+		);
 	});
 });
 
 describe("SquashingTransactionStacks", () => {
 	it("squash transactions", () => {
 		const branch = createBranch();
-		let squashCount = 0;
-		const transaction = new SquashingTransactionStack(branch, (commits) => {
-			squashCount += 1;
-			return squash(commits);
-		});
+		const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 		assert.equal(transaction.activeBranch, branch);
-		transaction.start();
+		transaction.start(false);
 		assert.notEqual(transaction.activeBranch, branch);
 		editBranch(transaction.activeBranch, "B");
-		transaction.start();
+		transaction.start(false);
 		assert.notEqual(transaction.activeBranch, branch);
 		editBranch(transaction.activeBranch, "C");
 		transaction.commit();
-		assert.equal(squashCount, 0); // Squash should only be called for the outermost transaction commit
 		assert.notEqual(transaction.activeBranch, branch);
 		transaction.commit();
-		assert.equal(squashCount, 1);
 		assert.equal(transaction.activeBranch, branch);
 		assert.equal(edits(branch), 1); // Only one (squashed) commit should be on the branch after the initial commit, not two (unsquashed)
 	});
 
 	it("transfer events between active branches", () => {
 		const branch = createBranch();
-		const transaction = new SquashingTransactionStack(branch, squash);
+		const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 
 		let originalEventCount = 0;
 		transaction.branch.events.on("afterChange", () => {
@@ -208,11 +325,11 @@ describe("SquashingTransactionStacks", () => {
 		});
 
 		editBranch(transaction.activeBranch, "A"); // Original branch should be updated
-		transaction.start();
+		transaction.start(false);
 		editBranch(transaction.activeBranch, "B"); // Transaction branch should be updated
 		transaction.abort();
 		editBranch(transaction.activeBranch, "C"); // Original branch should be updated
-		transaction.start();
+		transaction.start(false);
 		editBranch(transaction.activeBranch, "D"); // Transaction branch should be updated
 		transaction.commit();
 		editBranch(transaction.activeBranch, "E"); // Original branch should be updated
@@ -223,14 +340,14 @@ describe("SquashingTransactionStacks", () => {
 
 	it("delegate edits to the active branch", () => {
 		const branch = createBranch();
-		const transaction = new SquashingTransactionStack(branch, squash);
+		const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 		const editor = transaction.activeBranchEditor; // We'll hold on to this editor across the transaction
 		assert.equal(edits(branch), 0);
 		assert.equal(transaction.activeBranch, branch);
 		edit(editor, "A");
 		assert.equal(edits(branch), 1);
 		assert.equal(transaction.activeBranch, branch);
-		transaction.start();
+		transaction.start(false);
 		edit(editor, "B");
 		assert.equal(edits(branch), 1);
 		assert.equal(edits(transaction.activeBranch), 2);
@@ -238,7 +355,7 @@ describe("SquashingTransactionStacks", () => {
 		edit(editor, "C");
 		assert.equal(edits(branch), 2);
 		assert.equal(transaction.activeBranch, branch);
-		transaction.start();
+		transaction.start(false);
 		edit(editor, "D");
 		assert.equal(edits(branch), 2);
 		assert.equal(edits(transaction.activeBranch), 3);
@@ -249,7 +366,10 @@ describe("SquashingTransactionStacks", () => {
 	});
 
 	type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
-	const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
+	const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
+		jsonValidator: FormatValidatorBasic,
+		minVersionForCollab: FluidClientVersion.v2_0,
+	});
 	const initialRevision = mintRevisionTag();
 
 	function createBranch(): DefaultBranch {
@@ -269,10 +389,6 @@ describe("SquashingTransactionStacks", () => {
 	function edit(editor: DefaultEditBuilder, value: string): void {
 		const content = chunkFromJsonableTrees([{ type: brand("TestValue"), value }]);
 		editor.valueField({ parent: undefined, field: rootFieldKey }).set(content);
-	}
-
-	function squash(commits: GraphCommit<DefaultChangeset>[]): TaggedChange<DefaultChangeset> {
-		return tagChange(defaultChangeFamily.rebaser.compose(commits), mintRevisionTag());
 	}
 
 	/** The number of commits on the given branch, not including the initial commit */

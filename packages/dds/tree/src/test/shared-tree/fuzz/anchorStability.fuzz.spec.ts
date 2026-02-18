@@ -15,6 +15,9 @@ import {
 } from "@fluid-private/test-dds-utils";
 
 import type { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
+import type { NodeBuilderData } from "../../../internalTypes.js";
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
 
 import {
@@ -34,9 +37,6 @@ import {
 	createOnCreate,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import type { NodeBuilderData } from "../../../internalTypes.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
 
 interface AnchorFuzzTestState extends FuzzTestState {
 	// Parallel array to `clients`: set in testStart
@@ -98,7 +98,7 @@ describe("Fuzz - anchor stability", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
 			const tree = viewFromState(initialState, initialState.clients[0]).checkout;
-			tree.transaction.start();
+			tree.transaction.start(false);
 			const initialJsonableTree = jsonableTreeFromForest(tree.forest);
 			initialState.initialJsonableTree = initialJsonableTree;
 			// These tests are hard coded to a single client, so this is fine.

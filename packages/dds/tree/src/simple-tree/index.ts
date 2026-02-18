@@ -76,6 +76,7 @@ export {
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	SchemaFactory,
+	scoped,
 	SchemaFactoryBeta,
 	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
@@ -160,7 +161,9 @@ export {
 	type SchemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
+	type TransactionConstraintAlpha,
 	type NodeInDocumentConstraint,
+	type NoChangeConstraint,
 	type RunTransactionParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -177,7 +180,6 @@ export {
 	allowUnused,
 	type FieldSchemaAlphaUnsafe,
 	getIdentifierFromNode,
-	type TreeSchema,
 	type ValidateRecursiveSchemaTemplate,
 	type FixRecursiveRecursionLimit,
 	schemaStatics,
@@ -189,6 +191,17 @@ export {
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	type SchemaFactory_base,
+	encodeSchemaCompatibilitySnapshot,
+	decodeSchemaCompatibilitySnapshot,
+	exportCompatibilitySchemaSnapshot,
+	importCompatibilitySchemaSnapshot,
+	checkCompatibility,
+	eraseSchemaDetails,
+	eraseSchemaDetailsSubclassable,
+	snapshotSchemaCompatibility,
+	type SnapshotFileSystem,
+	type SnapshotSchemaCompatibilityOptions,
+	createCustomizedFluidFrameworkScopedFactory,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -202,6 +215,7 @@ export type {
 	SimpleObjectFieldSchema,
 	SimpleRecordNodeSchema,
 	SimpleAllowedTypeAttributes,
+	SchemaType,
 } from "./simpleSchema.js";
 export {
 	type ImplicitFieldSchema,
@@ -244,6 +258,7 @@ export {
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
+	objectSchema,
 	isObjectNodeSchema,
 	type TreeObjectNode,
 	setField,
@@ -253,6 +268,8 @@ export {
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
 	type TreeRecordNode,
+	type ArrayPlaceAnchor,
+	createArrayInsertionAnchor,
 } from "./node-kinds/index.js";
 export {
 	unhydratedFlexTreeFromInsertable,
@@ -266,11 +283,9 @@ export {
 } from "./prepareForInsertion.js";
 export {
 	toStoredSchema,
-	getStoredSchema,
 	convertFieldKind,
 	toUpgradeSchema,
 	toInitialSchema,
-	convertField,
 	toUnhydratedSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	permissiveStoredSchemaGenerationOptions,
@@ -283,10 +298,5 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
-export {
-	encodeSimpleSchema,
-	decodeSimpleSchema,
-	exportCompatibilitySchemaSnapshot,
-	importCompatibilitySchemaSnapshot,
-	checkCompatibility,
-} from "./api/index.js";
+export { getUnhydratedContext } from "./createContext.js";
+export { type TreeSchema, createTreeSchema } from "./treeSchema.js";

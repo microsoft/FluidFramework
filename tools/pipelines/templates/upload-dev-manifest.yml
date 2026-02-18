@@ -54,7 +54,11 @@ jobs:
         scriptLocation: inlineScript
         inlineScript: |
           for file in upload_release_reports/*; do
-              az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite true --verbose
+              # Use 5 minute TTL for manifest files. This could be lengthened significantly
+              # for manifest files for a particular build (immutable) or for those for a particular
+              # release (updates with our release cycle), but using a shorter TTL for all risks only small
+              # perf losses while remaining simple.
+              az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $(STORAGE_ACCOUNT) --content-cache max-age=300 --auth-mode login --overwrite true --verbose
           done
           # Delete generate_release_reports and upload_release_reports folder
           rm -r generate_release_reports upload_release_reports

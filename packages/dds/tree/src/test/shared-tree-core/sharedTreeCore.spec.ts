@@ -8,12 +8,13 @@ import { strict as assert } from "node:assert";
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
+	type ISummaryBlob,
 	type ISummaryTree,
 	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
@@ -26,6 +27,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -34,6 +36,7 @@ import {
 	type GraphCommit,
 	type RevisionTag,
 	rootFieldKey,
+	type TaggedChange,
 } from "../../core/index.js";
 import type {
 	DefaultChangeset,
@@ -41,37 +44,57 @@ import type {
 	ModularChangeset,
 } from "../../feature-libraries/index.js";
 import { Tree } from "../../shared-tree/index.js";
-import type {
-	ChangeEnricherReadonlyCheckout,
-	EditManager,
-	ResubmitMachine,
-	SharedTreeCore,
-	Summarizable,
-	SummaryElementParser,
-	SummaryElementStringifier,
+// eslint-disable-next-line import-x/no-internal-modules
+import type { EncodedEditManager } from "../../shared-tree-core/editManagerFormatV1toV4.js";
+import {
+	EditManagerSummarizer,
+	stringKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/editManagerSummarizer.js";
+import {
+	EditManagerFormatVersion,
+	SharedTreeSummaryFormatVersion,
+	summarizablesMetadataKey,
+	type ChangeEnricher,
+	type EditManager,
+	type ResubmitMachine,
+	type SharedTreeCore,
+	type SharedTreeSummarizableMetadata,
+	type Summarizable,
+	type SummaryElementParser,
+	type SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { brand, disposeSymbol } from "../../util/index.js";
+import {
+	summarizablesTreeKey,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree-core/summaryTypes.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import { brand } from "../../util/index.js";
+import { mockSerializer } from "../mockSerializer.js";
 import {
 	chunkFromJsonableTrees,
+	createTestUndoRedoStacks,
 	SharedTreeTestFactory,
 	StringArray,
 	TestTreeProviderLite,
 } from "../utils.js";
 
 import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
-import { mockSerializer } from "../mockSerializer.js";
 
 const enableSchemaValidation = true;
 
 describe("SharedTreeCore", () => {
 	it("summarizes without indexes", async () => {
-		const tree = createTree([]);
+		const tree = createTree({ indexes: [] });
 		const { summary, stats } = tree.summarizeCore(mockSerializer);
 		assert(summary !== undefined);
 		assert(stats !== undefined);
 		assert.equal(stats.treeNodeCount, 3);
-		assert.equal(stats.blobNodeCount, 1); // EditManager is always summarized
+		// EditManager is always summarized. So, there should be 3 blobs
+		// 1. Tree's metadata blob
+		// 2. EditManager's content blob
+		// 3. EditManager's metadata blob
+		assert.equal(stats.blobNodeCount, 3);
 		assert.equal(stats.handleNodeCount, 0);
 	});
 
@@ -81,8 +104,8 @@ describe("SharedTreeCore", () => {
 			let loaded = false;
 			summarizable.on("loaded", () => (loaded = true));
 			const summarizables = [summarizable] as const;
-			const tree = createTree(summarizables);
-			const defaultSummary = createTree([]).summarizeCore(mockSerializer);
+			const tree = createTree({ indexes: summarizables });
+			const defaultSummary = createTree({ indexes: [] }).summarizeCore(mockSerializer);
 			await tree.loadCore(
 				MockSharedObjectServices.createFromSummary(defaultSummary.summary).objectStorage,
 			);
@@ -98,7 +121,7 @@ describe("SharedTreeCore", () => {
 				}
 			});
 			const summarizables = [summarizable] as const;
-			const tree = createTree(summarizables);
+			const tree = createTree({ indexes: summarizables });
 			const { summary } = tree.summarizeCore(mockSerializer);
 			await tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage);
 			assert.equal(loadedBlob, true);
@@ -112,7 +135,7 @@ describe("SharedTreeCore", () => {
 			let summarizedB = false;
 			summarizableB.on("summarizeAttached", () => (summarizedB = true));
 			const summarizables = [summarizableA, summarizableB] as const;
-			const tree = createTree(summarizables);
+			const tree = createTree({ indexes: summarizables });
 			const { summary, stats } = tree.summarizeCore(mockSerializer);
 			assert(summarizedA, "Expected summarizable A to summarize");
 			assert(summarizedB, "Expected summarizable B to summarize");
@@ -131,6 +154,114 @@ describe("SharedTreeCore", () => {
 				stats.treeNodeCount,
 				5,
 				"Expected summary stats to correctly count tree nodes",
+			);
+		});
+	});
+
+	describe("Summary metadata validation", () => {
+		it("writes metadata blob with version 2", async () => {
+			const tree = createTree({
+				indexes: [],
+			});
+			const { summary } = tree.summarizeCore(mockSerializer);
+			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const metadataContent = JSON.parse(
+				metadataBlob.content as string,
+			) as SharedTreeSummarizableMetadata;
+			assert.equal(
+				metadataContent.version,
+				SharedTreeSummaryFormatVersion.v2,
+				"Metadata version should be 2",
+			);
+		});
+
+		it("loads with metadata blob with version 2", async () => {
+			const tree = createTree({
+				indexes: [],
+			});
+			const { summary } = tree.summarizeCore(mockSerializer);
+			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const metadataContent = JSON.parse(
+				metadataBlob.content as string,
+			) as SharedTreeSummarizableMetadata;
+			assert.equal(
+				metadataContent.version,
+				SharedTreeSummaryFormatVersion.v2,
+				"Metadata version should be 2",
+			);
+
+			await assert.doesNotReject(
+				async () =>
+					tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage),
+				"Should load successfully with metadata version 1",
+			);
+		});
+
+		it("loads pre-versioning format with no metadata blob", async () => {
+			// Create data in v1 summary format. EditManager summary is needed because the SharedTreeCore
+			// creates an EditManagerSummarizer by default.
+			const editManagerDataV1: EncodedEditManager<unknown> = {
+				version: EditManagerFormatVersion.v3,
+				trunk: [],
+				branches: [],
+			};
+			const editManagerBlob: ISummaryBlob = {
+				type: SummaryType.Blob,
+				content: JSON.stringify(editManagerDataV1),
+			};
+			const sharedTreeSummary: ISummaryTree = {
+				type: SummaryType.Tree,
+				tree: {
+					[summarizablesTreeKey]: {
+						type: SummaryType.Tree,
+						tree: {
+							[EditManagerSummarizer.key]: {
+								type: SummaryType.Tree,
+								tree: {
+									[stringKey]: editManagerBlob,
+								},
+							},
+						},
+					},
+				},
+			};
+
+			const tree = createTree({
+				indexes: [],
+			});
+
+			// Should load successfully
+			await assert.doesNotReject(async () =>
+				tree.loadCore(
+					MockSharedObjectServices.createFromSummary(sharedTreeSummary).objectStorage,
+				),
+			);
+		});
+
+		it("fail to load with metadata blob with version > latest", async () => {
+			const tree = createTree({
+				indexes: [],
+			});
+			const { summary } = tree.summarizeCore(mockSerializer);
+
+			// Modify metadata to have version > latest
+			const metadataBlob: SummaryObject | undefined = summary.tree[summarizablesMetadataKey];
+			assert(metadataBlob !== undefined, "Metadata blob should exist");
+			assert.equal(metadataBlob.type, SummaryType.Blob, "Metadata should be a blob");
+			const modifiedMetadata: SharedTreeSummarizableMetadata = {
+				version: SharedTreeSummaryFormatVersion.vLatest + 1,
+			};
+			metadataBlob.content = JSON.stringify(modifiedMetadata);
+
+			// Should fail to load with version > latest
+			await assert.rejects(
+				async () =>
+					tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage),
+				validateUsageError(/Cannot read version/),
 			);
 		});
 	});
@@ -286,17 +417,17 @@ describe("SharedTreeCore", () => {
 		]);
 	});
 
-	it("Does not submit changes that were aborted in an outer transaction", async () => {
-		const provider = new TestTreeProviderLite(2);
-		const view1 = provider.trees[0].viewWith(
+	it("Tolerates aborting an outer transaction", async () => {
+		const enricher = new TestTreeProviderLite(2);
+		const view1 = enricher.trees[0].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
 			}),
 		);
 		view1.initialize(["A", "B"]);
-		provider.synchronizeMessages();
-		const view2 = provider.trees[1].viewWith(
+		enricher.synchronizeMessages();
+		const view2 = enricher.trees[1].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
@@ -316,31 +447,46 @@ describe("SharedTreeCore", () => {
 			return Tree.runTransaction.rollback;
 		});
 
-		provider.synchronizeMessages();
+		enricher.synchronizeMessages();
 		assert.deepEqual([...root1], ["A", "B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
-		// Make an additional change to ensure that all changes from the previous transactions were flushed
+		// Make additional changes to ensure that all changes from the previous transactions were flushed
+		// and that future edits that require refreshers work as expected.
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+			enricher.trees[0].kernel.checkout.events,
+		);
 		Tree.runTransaction(root1, () => {
 			root1.insertAtEnd("C");
 		});
-
-		provider.synchronizeMessages();
+		enricher.synchronizeMessages();
 		assert.deepEqual([...root1], ["A", "B", "C"]);
 		assert.deepEqual([...root2], ["A", "B", "C"]);
+
+		(undoStack.pop() ?? assert.fail("Expected undo")).revert();
+		enricher.synchronizeMessages();
+		assert.deepEqual([...root1], ["A", "B"]);
+		assert.deepEqual([...root2], ["A", "B"]);
+
+		// This redo operation requires a refresher.
+		(redoStack.pop() ?? assert.fail("Expected redo")).revert();
+		enricher.synchronizeMessages();
+		assert.deepEqual([...root1], ["A", "B", "C"]);
+		assert.deepEqual([...root2], ["A", "B", "C"]);
+		unsubscribe();
 	});
 
-	it("Does not submit changes that were aborted in an inner transaction", async () => {
-		const provider = new TestTreeProviderLite(2);
-		const view1 = provider.trees[0].viewWith(
+	it("Tolerates aborting an inner transaction", async () => {
+		const enricher = new TestTreeProviderLite(2);
+		const view1 = enricher.trees[0].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
 			}),
 		);
 		view1.initialize(["A", "B"]);
-		provider.synchronizeMessages();
-		const view2 = provider.trees[1].viewWith(
+		enricher.synchronizeMessages();
+		const view2 = enricher.trees[1].viewWith(
 			new TreeViewConfiguration({
 				schema: StringArray,
 				enableSchemaValidation,
@@ -363,19 +509,34 @@ describe("SharedTreeCore", () => {
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["A", "B"]);
 
-		provider.synchronizeMessages();
+		enricher.synchronizeMessages();
 
 		assert.deepEqual([...root1], ["B"]);
 		assert.deepEqual([...root2], ["B"]);
 
-		// Make an additional change to ensure that all changes from the previous transactions were flushed
+		// Make additional changes to ensure that all changes from the previous transactions were flushed
+		// and that future edits that require refreshers work as expected.
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+			enricher.trees[0].kernel.checkout.events,
+		);
 		Tree.runTransaction(root1, () => {
 			root1.insertAtEnd("C");
 		});
+		enricher.synchronizeMessages();
+		assert.deepEqual([...root1], ["B", "C"]);
+		assert.deepEqual([...root2], ["B", "C"]);
 
-		provider.synchronizeMessages();
+		(undoStack.pop() ?? assert.fail("Expected undo")).revert();
+		enricher.synchronizeMessages();
+		assert.deepEqual([...root1], ["B"]);
+		assert.deepEqual([...root2], ["B"]);
+
+		// This redo operation requires a refresher.
+		(redoStack.pop() ?? assert.fail("Expected redo")).revert();
+		enricher.synchronizeMessages();
+		assert.deepEqual([...root1], ["B", "C"]);
 		assert.deepEqual([...root2], ["B", "C"]);
-		assert.deepEqual([...root2], ["B", "C"]);
+		unsubscribe();
 	});
 
 	describe("commit enrichment", () => {
@@ -392,8 +553,8 @@ describe("SharedTreeCore", () => {
 			private prepareForResubmit(toResubmit: readonly GraphCommit<ModularChangeset>[]): void {
 				assert.equal(this.resubmitQueue.length, 0);
 				assert.equal(toResubmit.length, this.submissionLog.length);
-				this.resubmitQueue.push(...Array.from(toResubmit, (c) => ({ ...c, original: c })));
-				this.resubmissionLog.push(toResubmit.slice());
+				this.resubmitQueue.push(...[...toResubmit].map((c) => ({ ...c, original: c })));
+				this.resubmissionLog.push([...toResubmit]);
 			}
 
 			public getEnrichedCommit(
@@ -431,31 +592,40 @@ describe("SharedTreeCore", () => {
 			readonly output: T;
 		}
 
-		class MockChangeEnricher<T extends object> implements ChangeEnricherReadonlyCheckout<T> {
-			public isDisposed = false;
+		class MockChangeEnricher<T extends object> implements ChangeEnricher<T> {
+			// These counters are used to verify that the commit enricher does not perform unnecessary work
+			public enriched = 0;
+			public applied = 0;
+			public calls = 0;
+
 			public enrichmentLog: Enrichment<T>[] = [];
 
-			public fork(): never {
-				// SharedTreeCore should never call fork on a change enricher
-				throw new Error("Unexpected use of fork");
+			public resetCounters(): void {
+				this.enriched = 0;
+				this.applied = 0;
+				this.calls = 0;
 			}
 
-			public updateChangeEnrichments(input: T): T {
-				assert.equal(this.isDisposed, false);
-				const output = { ...input };
-				this.enrichmentLog.push({ input, output });
-				return output;
-			}
-
-			public [disposeSymbol](): void {
-				assert.equal(this.isDisposed, false);
-				this.isDisposed = true;
+			public enrich(context: GraphCommit<T>, commits: readonly TaggedChange<T>[]): T[] {
+				this.calls++;
+				const enriched: T[] = [];
+				for (const { change } of commits) {
+					const output = { ...change };
+					this.enrichmentLog.push({ input: change, output });
+					enriched.push(output);
+					this.enriched++;
+				}
+				return enriched;
 			}
 		}
 
 		it("notifies the ResubmitMachine of submitted and sequenced commits", () => {
+			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine);
+			const tree = createTreeSharedObject([], {
+				enricher,
+				resubmitMachine: machine,
+			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -479,7 +649,10 @@ describe("SharedTreeCore", () => {
 		it("enriches commits on first submit", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine, enricher);
+			const tree = createTreeSharedObject([], {
+				enricher,
+				resubmitMachine: machine,
+			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -500,7 +673,10 @@ describe("SharedTreeCore", () => {
 		it("enriches transactions on first submit", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine, enricher);
+			const tree = createTreeSharedObject([], {
+				enricher,
+				resubmitMachine: machine,
+			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -510,33 +686,29 @@ describe("SharedTreeCore", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.transaction.start();
+			tree.transaction.start(false);
 			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree.kernel);
+			assert.equal(enricher.enrichmentLog.length, 0);
+			changeTree(tree.kernel);
+			assert.equal(enricher.enrichmentLog.length, 0);
+			tree.transaction.commit();
 			assert.equal(enricher.enrichmentLog.length, 1);
+			assert.equal(machine.submissionLog.length, 1);
 			assert.equal(
 				enricher.enrichmentLog[0].input,
 				tree.transaction.activeBranch.getHead().change,
 			);
-			changeTree(tree.kernel);
-			assert.equal(enricher.enrichmentLog.length, 2);
-			assert.equal(
-				enricher.enrichmentLog[1].input,
-				tree.transaction.activeBranch.getHead().change,
-			);
-			tree.transaction.commit();
-			assert.equal(enricher.enrichmentLog.length, 2);
-			assert.equal(machine.submissionLog.length, 1);
-			assert.notEqual(
-				machine.submissionLog[0],
-				tree.transaction.activeBranch.getHead().change,
-			);
+			assert.equal(enricher.enrichmentLog[0].output, machine.submissionLog[0].change);
 		});
 
 		it("handles aborted outer transaction", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine, enricher);
+			const tree = createTreeSharedObject([], {
+				enricher,
+				resubmitMachine: machine,
+			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -546,23 +718,20 @@ describe("SharedTreeCore", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.transaction.start();
-			assert.equal(enricher.enrichmentLog.length, 0);
+			tree.transaction.start(false);
 			changeTree(tree.kernel);
-			assert.equal(enricher.enrichmentLog.length, 1);
-			assert.equal(
-				enricher.enrichmentLog[0].input,
-				tree.transaction.activeBranch.getHead().change,
-			);
 			tree.transaction.abort();
-			assert.equal(enricher.enrichmentLog.length, 1);
+			assert.equal(enricher.enrichmentLog.length, 0);
 			assert.equal(machine.submissionLog.length, 0);
 		});
 
 		it("update commit enrichments on re-submit", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTreeSharedObject([], machine, enricher);
+			const tree = createTreeSharedObject([], {
+				enricher,
+				resubmitMachine: machine,
+			});
 			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),

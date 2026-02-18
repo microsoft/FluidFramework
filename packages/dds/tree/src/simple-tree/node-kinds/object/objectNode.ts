@@ -4,8 +4,8 @@
  */
 
 import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	ObjectNodeStoredSchema,
@@ -26,7 +26,7 @@ import type {
 	JsonCompatibleReadOnlyObject,
 } from "../../../util/index.js";
 import { brand } from "../../../util/index.js";
-
+import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
 import {
 	CompatibilityLevel,
 	type TreeNodeSchema,
@@ -56,13 +56,6 @@ import {
 	getTreeNodeSchemaInitializedData,
 	getUnhydratedContext,
 } from "../../createContext.js";
-import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
-import type {
-	ObjectNodeSchema,
-	ObjectNodeSchemaInternalData,
-	ObjectNodeSchemaPrivate,
-} from "./objectNodeTypes.js";
-import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
 	type ImplicitFieldSchema,
 	getStoredKey,
@@ -78,7 +71,10 @@ import {
 	extractFieldProvider,
 	isConstant,
 } from "../../fieldSchema.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import { prepareForInsertion } from "../../prepareForInsertion.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
+import { convertFieldKind } from "../../toStoredSchema.js";
 import {
 	unhydratedFlexTreeFromInsertable,
 	unhydratedFlexTreeFromInsertableNode,
@@ -86,8 +82,12 @@ import {
 	type FactoryContentObject,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { convertFieldKind } from "../../toStoredSchema.js";
-import type { ObjectSchemaOptionsAlpha } from "../../api/index.js";
+
+import type {
+	ObjectNodeSchema,
+	ObjectNodeSchemaInternalData,
+	ObjectNodeSchemaPrivate,
+} from "./objectNodeTypes.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -189,24 +189,25 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-> = RestrictiveStringRecord<ImplicitFieldSchema> extends T
-	? { arbitraryKey: "arbitraryValue" } extends T
-		? // {} case
-			Record<string, never>
-		: // RestrictiveStringRecord<ImplicitFieldSchema> case
-			never
-	: FlattenKeys<
-			{
-				readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
-					T[Property & string]
-				>;
-			} & {
-				// Field does not have a known default, make it required:
-				readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
-					? Property
-					: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
-			}
-		>;
+> =
+	RestrictiveStringRecord<ImplicitFieldSchema> extends T
+		? { arbitraryKey: "arbitraryValue" } extends T
+			? // {} case
+				Record<string, never>
+			: // RestrictiveStringRecord<ImplicitFieldSchema> case
+				never
+		: FlattenKeys<
+				{
+					readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
+						T[Property & string]
+					>;
+				} & {
+					// Field does not have a known default, make it required:
+					readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
+						? Property
+						: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
+				}
+			>;
 
 /**
  * Maps from simple field keys ("property" keys) to information about the field.
@@ -373,8 +374,9 @@ export function setField(
 			break;
 		}
 
-		default:
+		default: {
 			fail(0xade /* invalid FieldKind */);
+		}
 	}
 }
 
@@ -709,10 +711,8 @@ function shallowCompatibilityTest(
 
 	// If the schema has a required key which is not present in the input object, reject it.
 	for (const [fieldKey, fieldSchema] of schema.fields) {
-		if (fieldSchema.requiresValue) {
-			if (getFieldProperty(data, fieldKey) === undefined) {
-				return CompatibilityLevel.None;
-			}
+		if (fieldSchema.requiresValue && getFieldProperty(data, fieldKey) === undefined) {
+			return CompatibilityLevel.None;
 		}
 	}
 

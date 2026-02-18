@@ -20,6 +20,8 @@ import {
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
+import { IDirectory } from "@fluidframework/map/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import { pkgVersion } from "../packageVersion.js";
@@ -28,10 +30,10 @@ describe("entryPoint compat", () => {
 	let provider: ITestObjectProvider;
 
 	class TestDataObject extends DataObject {
-		public get _root() {
+		public get _root(): IDirectory {
 			return this.root;
 		}
-		public get _context() {
+		public get _context(): IFluidDataStoreContext {
 			return this.context;
 		}
 	}

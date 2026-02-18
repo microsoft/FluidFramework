@@ -4,15 +4,22 @@
  */
 
 import { strict as assert } from "node:assert";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
+import { nonProductionConditionalsIncluded } from "@fluidframework/core-utils/internal";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { FluidClientVersion, Versioned } from "../../../codec/index.js";
+import {
+	ClientVersionDispatchingCodecBuilder,
+	type CodecAndSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../codec/versioned/codec.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { ClientVersionDispatchingCodecBuilder } from "../../../codec/versioned/codec.js";
 import { pkgVersion } from "../../../packageVersion.js";
-import { gt } from "semver-ts";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 describe("versioned Codecs", () => {
 	describe("ClientVersionDispatchingCodecBuilder", () => {
@@ -24,25 +31,43 @@ describe("versioned Codecs", () => {
 			version: 2;
 			value2: number;
 		}
-		const codecV1: IJsonCodec<number> = {
+		interface VX {
+			version: "X";
+			valueX: number;
+		}
+		const codecV1: CodecAndSchema<number> = {
 			encode: (x) => ({ version: 1, value1: x }),
 			decode: (x) => (x as unknown as V1).value1,
+			schema: Versioned,
 		};
-		const codecV2: IJsonCodec<number> = {
+		const codecV2: CodecAndSchema<number> = {
 			encode: (x) => ({ version: 2, value2: x }),
 			decode: (x) => (x as unknown as V2).value2,
+			schema: Versioned,
+		};
+		const codecVX: CodecAndSchema<number> = {
+			encode: (x) => ({ version: "X", valueX: x }),
+			decode: (x) => (x as unknown as VX).valueX,
+			schema: Versioned,
 		};
 
-		const family: ICodecFamily<number> = makeCodecFamily([
-			[1, codecV1],
-			[2, codecV2],
+		const builder = ClientVersionDispatchingCodecBuilder.build("Test", [
+			{
+				minVersionForCollab: lowestMinVersionForCollab,
+				formatVersion: 1,
+				codec: codecV1,
+			},
+			{
+				minVersionForCollab: FluidClientVersion.v2_43,
+				formatVersion: 2,
+				codec: () => codecV2,
+			},
+			{
+				minVersionForCollab: undefined,
+				formatVersion: "X",
+				codec: codecVX,
+			},
 		]);
-		const builder = new ClientVersionDispatchingCodecBuilder(
-			family,
-			(minVersionForCollab: MinimumVersionForCollab) =>
-				// Arbitrary version selection logic for test purposes. Versions greater than 5.0.0 get v2 codec.
-				gt(minVersionForCollab, "5.0.0") ? 2 : 1,
-		);
 
 		it("round trip", () => {
 			const codec1 = builder.build({
@@ -50,8 +75,7 @@ describe("versioned Codecs", () => {
 				jsonValidator: FormatValidatorBasic,
 			});
 			const codec2 = builder.build({
-				// We have to cast to a `MinimumVersionForCollab` because "6.0.0" is not a valid value for that type.
-				minVersionForCollab: "6.0.0" as MinimumVersionForCollab,
+				minVersionForCollab: "2.55.0",
 				jsonValidator: FormatValidatorBasic,
 			});
 			const v1 = codec1.encode(42);
@@ -65,9 +89,136 @@ describe("versioned Codecs", () => {
 
 			assert.throws(
 				() => codec1.decode({ version: 3, value2: 42 }),
-				validateUsageError(`Unsupported version 3 encountered while decoding data. Supported versions for this data are: 1, 2.
+				validateUsageError(`Unsupported version 3 encountered while decoding Test data. Supported versions for this data are: [1,2,"X"].
 The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`),
 			);
+		});
+
+		it("unstable version", () => {
+			const codecX = builder.build({
+				minVersionForCollab: "2.0.0",
+				jsonValidator: FormatValidatorBasic,
+				allowPossiblyIncompatibleWriteVersionOverrides: true,
+				writeVersionOverrides: new Map([["Test", "X"]]),
+			});
+			const codec2 = builder.build({
+				minVersionForCollab: "2.55.0",
+				jsonValidator: FormatValidatorBasic,
+			});
+			const vx = codecX.encode(42);
+			const v2 = codec2.encode(42);
+			assert.deepEqual(vx, { version: "X", valueX: 42 });
+			assert.deepEqual(v2, { version: 2, value2: 42 });
+			assert.equal(codecX.decode(vx), 42);
+			assert.equal(codecX.decode(v2), 42);
+			assert.equal(codec2.decode(vx), 42);
+			assert.equal(codec2.decode(v2), 42);
+		});
+
+		it("bad override", () => {
+			assert.throws(
+				() =>
+					builder.build({
+						minVersionForCollab: "2.0.0",
+						jsonValidator: FormatValidatorBasic,
+						writeVersionOverrides: new Map([["Test", "X"]]),
+					}),
+				validateUsageError(
+					`Codec "Test" does not support requested format version "X" because it has minVersionForCollab undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+				),
+			);
+
+			assert.throws(
+				() =>
+					builder.build({
+						minVersionForCollab: "2.0.0",
+						jsonValidator: FormatValidatorBasic,
+						allowPossiblyIncompatibleWriteVersionOverrides: true,
+						writeVersionOverrides: new Map([["Test", "1"]]),
+					}),
+				validateUsageError(
+					`Codec "Test" does not support requested format version "1". Supported versions are: [1,2,"X"].`,
+				),
+			);
+		});
+
+		it("good builds", () => {
+			ClientVersionDispatchingCodecBuilder.build("Test", [
+				{
+					minVersionForCollab: lowestMinVersionForCollab,
+					formatVersion: 1,
+					codec: codecV1,
+				},
+			]);
+		});
+
+		it("bad builds", () => {
+			// Build asserts are debugAsserts, so only test them when those are enabled.
+			if (nonProductionConditionalsIncluded()) {
+				assert.throws(
+					() =>
+						ClientVersionDispatchingCodecBuilder.build("Test", [
+							{
+								minVersionForCollab: lowestMinVersionForCollab,
+								formatVersion: "1",
+								codec: codecV1,
+							},
+						]),
+					validateAssertionError(
+						`Debug assert failed: unstable format "1" (string formats) must not have a minVersionForCollab in Test`,
+					),
+				);
+
+				assert.throws(
+					() =>
+						ClientVersionDispatchingCodecBuilder.build("Test", [
+							{
+								minVersionForCollab: undefined,
+								formatVersion: 1,
+								codec: codecV1,
+							},
+						]),
+					validateAssertionError(
+						"Debug assert failed: Codec Test is missing entry for lowestMinVersionForCollab",
+					),
+				);
+
+				assert.throws(
+					() =>
+						ClientVersionDispatchingCodecBuilder.build("Test", [
+							{
+								minVersionForCollab: lowestMinVersionForCollab,
+								formatVersion: 1,
+								codec: codecV1,
+							},
+							{
+								minVersionForCollab: lowestMinVersionForCollab,
+								formatVersion: 2,
+								codec: codecV1,
+							},
+						]),
+					validateAssertionError(
+						`Debug assert failed: Codec Test has multiple entries for version "1.0.0"`,
+					),
+				);
+
+				assert.throws(
+					() =>
+						ClientVersionDispatchingCodecBuilder.build("Test", [
+							{
+								minVersionForCollab: lowestMinVersionForCollab,
+								formatVersion: 1,
+								codec: codecV1,
+							},
+							{
+								minVersionForCollab: undefined,
+								formatVersion: 1,
+								codec: codecV1,
+							},
+						]),
+					validateAssertionError(`Debug assert failed: duplicate codec format Test 1`),
+				);
+			}
 		});
 	});
 });

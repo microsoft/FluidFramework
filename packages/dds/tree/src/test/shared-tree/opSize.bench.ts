@@ -10,8 +10,8 @@ import {
 	benchmarkCustom,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -20,8 +20,6 @@ import {
 
 import type { Value } from "../../core/index.js";
 import { Tree, type ITreePrivate } from "../../shared-tree/index.js";
-import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
-import { DefaultTestSharedTreeKind } from "../utils.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -29,6 +27,8 @@ import {
 	type ITree,
 	type TreeView,
 } from "../../simple-tree/index.js";
+import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
+import { DefaultTestSharedTreeKind } from "../utils.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
@@ -122,9 +122,10 @@ function createInitialTree(
 	childNodeByteSize: number,
 ): InsertableTreeNodeFromImplicitAllowedTypes<typeof Parent> {
 	const childNode = createTreeWithSize(childNodeByteSize);
-	const children: InsertableTreeNodeFromImplicitAllowedTypes<typeof Child>[] = new Array(
-		childNodes,
-	).fill(childNode);
+	const children: InsertableTreeNodeFromImplicitAllowedTypes<typeof Child>[] = Array.from(
+		{ length: childNodes },
+		() => childNode,
+	);
 	return children;
 }
 
@@ -257,7 +258,7 @@ const BENCHMARK_NODE_COUNT = 100;
 const sizes = [
 	{ percentile: 0.1, word: "small" },
 	{ percentile: 0.5, word: "medium" },
-	{ percentile: 1.0, word: "large" },
+	{ percentile: 1, word: "large" },
 ];
 
 const styles = [
@@ -290,22 +291,22 @@ describe("Op Size", () => {
 	let currentBenchmarkName = "";
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
+	interface ITreeWithSubmitLocalMessage {
+		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void;
+	}
+
 	function registerOpListener(
 		tree: ITreePrivate,
 		resultArray: ISequencedDocumentMessage[],
 	): void {
 		// TODO: better way to hook this up. Needs to detect local ops exactly once.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const oldSubmitLocalMessage = (tree as any).submitLocalMessage.bind(tree);
-		function submitLocalMessage(
-			content: ISequencedDocumentMessage,
-			localOpMetadata: unknown = undefined,
-		): void {
-			resultArray.push(content);
+		const treeInternal = tree as unknown as ITreeWithSubmitLocalMessage;
+		const oldSubmitLocalMessage = treeInternal.submitLocalMessage.bind(tree);
+		function submitLocalMessage(content: unknown, localOpMetadata?: unknown): void {
+			resultArray.push(content as ISequencedDocumentMessage);
 			oldSubmitLocalMessage(content, localOpMetadata);
 		}
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(tree as any).submitLocalMessage = submitLocalMessage;
+		treeInternal.submitLocalMessage = submitLocalMessage;
 	}
 
 	const getOperationsStats = (
@@ -330,9 +331,9 @@ describe("Op Size", () => {
 	};
 
 	const saveAndResetCurrentOps = () => {
-		currentTestOps.forEach((op) =>
-			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op),
-		);
+		for (const op of currentTestOps) {
+			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op);
+		}
 		currentTestOps.length = 0;
 	};
 
@@ -348,11 +349,11 @@ describe("Op Size", () => {
 	afterEach(function () {
 		if (this.currentTest?.isFailed() === false) {
 			// Currently tests can pass when no data is collected, so throw here in that case to ensure tests don't break and start collecting no data.
-			assert(currentTestOps.length !== 0);
+			assert(currentTestOps.length > 0);
 		}
-		currentTestOps.forEach((op) =>
-			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op),
-		);
+		for (const op of currentTestOps) {
+			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op);
+		}
 		currentTestOps.length = 0;
 	});
 

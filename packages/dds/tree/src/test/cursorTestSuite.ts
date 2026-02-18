@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 
 import {
@@ -26,15 +27,16 @@ import {
 	prefixFieldPath,
 	prefixPath,
 } from "../feature-libraries/index.js";
-import { brand } from "../util/index.js";
-import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	booleanSchema,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
 } from "../simple-tree/index.js";
-import { JsonAsTree } from "../jsonDomainSchema.js";
+import { brand, type JsonCompatibleReadOnly } from "../util/index.js";
+
+import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
 
 const sf = new SchemaFactory("Cursor Test Suite");
 
@@ -340,11 +342,11 @@ export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(c
 			cursorName: config.cursorName,
 			builders: {
 				withKeys:
-					config.builders.withKeys !== undefined
-						? // This is known to be non-null from check above, but typescript can't infer it.
+					config.builders.withKeys === undefined
+						? undefined
+						: // This is known to be non-null from check above, but typescript can't infer it.
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							(keys) => [0, config.builders.withKeys!(keys)]
-						: undefined,
+							(keys) => [0, config.builders.withKeys!(keys)],
 			},
 			cursorFactory: (data: [number, TData]): TCursor => {
 				const cursor = config.cursorFactory(data[1]);
@@ -430,13 +432,13 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 					return builder(root);
 				};
 
-	const parent = !extraRoot
-		? undefined
-		: {
+	const parent = extraRoot
+		? {
 				parent: undefined,
 				parentField: rootFieldKey,
 				parentIndex: 0,
-			};
+			}
+		: undefined;
 
 	return describe(`${cursorName} cursor implementation`, () => {
 		// Cursors have quite a few debugAsserts, so validate them with and without debug asserts enabled.
@@ -465,7 +467,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 								const jsonableClone = jsonableTreeFromCursor(cursor);
 								// Check jsonable objects are actually json compatible
 								const text = JSON.stringify(jsonableClone);
-								const parsed = JSON.parse(text);
+								const parsed = JSON.parse(text) as JsonCompatibleReadOnly;
 								assert.deepEqual(parsed, jsonableClone);
 							});
 

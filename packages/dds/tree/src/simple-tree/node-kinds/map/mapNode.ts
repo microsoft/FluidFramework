@@ -6,6 +6,7 @@
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { MapNodeStoredSchema } from "../../../core/index.js";
 import {
 	isTreeValue,
 	type FlexibleNodeContent,
@@ -13,8 +14,14 @@ import {
 	type FlexTreeOptionalField,
 	type OptionalFieldEditBuilder,
 } from "../../../feature-libraries/index.js";
-import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
-import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
+import {
+	brand,
+	count,
+	isReadonlyArray,
+	type JsonCompatibleReadOnlyObject,
+	type RestrictiveStringRecord,
+} from "../../../util/index.js";
+import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 import {
 	CompatibilityLevel,
 	getKernel,
@@ -43,29 +50,23 @@ import {
 	type TreeNodeSchemaPrivateData,
 	AnnotatedAllowedTypesInternal,
 } from "../../core/index.js";
+import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
+import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import { prepareForInsertion } from "../../prepareForInsertion.js";
+import type { SchemaType, SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 import {
 	unhydratedFlexTreeFromInsertable,
 	type FactoryContent,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { prepareForInsertion } from "../../prepareForInsertion.js";
-import {
-	brand,
-	count,
-	isReadonlyArray,
-	type JsonCompatibleReadOnlyObject,
-	type RestrictiveStringRecord,
-} from "../../../util/index.js";
-import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
+import { recordLikeDataToFlexContent } from "../common.js";
+
 import type {
 	MapNodeCustomizableSchema,
 	MapNodePojoEmulationSchema,
 	MapNodeSchema,
 } from "./mapNodeTypes.js";
-import { recordLikeDataToFlexContent } from "../common.js";
-import { MapNodeStoredSchema } from "../../../core/index.js";
-import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
-import type { SimpleAllowedTypeAttributes } from "../../simpleSchema.js";
 
 /**
  * A map of string keys to tree objects.
@@ -306,7 +307,10 @@ export function mapSchema<
 			return lazyAllowedTypesIdentifiers.value;
 		}
 
-		public static get simpleAllowedTypes(): ReadonlyMap<string, SimpleAllowedTypeAttributes> {
+		public static get simpleAllowedTypes(): ReadonlyMap<
+			string,
+			SimpleAllowedTypeAttributes<SchemaType.View>
+		> {
 			return lazySimpleAllowedTypes.value;
 		}
 

@@ -10,7 +10,6 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
-/* eslint-disable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag -- false positive AB#50920 */
 /**
  * Types of test drivers.
  * These values are replicated in {@link @fluid-private/test-version-utils#compatOptions.d.ts}. Ensure that any revisions here are also reflected in test-version-utils.
@@ -30,7 +29,6 @@ export type TestDriverTypes =
  * @internal
  */
 export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
-/* eslint-enable @fluid-internal/fluid/no-hyphen-after-jsdoc-tag */
 
 /**
  * Types of Odsp endpoints.

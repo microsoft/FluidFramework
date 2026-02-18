@@ -30,6 +30,7 @@ import {
 	type ISignalMessage,
 	type IClientDetails,
 	type IClientConfiguration,
+	type ISequencedDocumentSystemMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
@@ -188,6 +189,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private lastObservedSeqNumber: number = 0;
 	private lastProcessedSequenceNumber: number = 0;
 	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
+
+	/**
+	 * Map of clientId to the last observed message from that client. This is used to validate
+	 * that clientSequenceNumbers are always increasing for a given clientId.
+	 */
+	private readonly lastObservedMessageByClient = new Map<string, ISequencedDocumentMessage>();
 
 	/**
 	 * Count the number of noops sent by the client which may not be acked
@@ -661,6 +668,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			throw new Error("Delta manager is not attached");
 		}
 
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.deltaStorage === undefined) {
 			this.deltaStorage = await docService.connectToDeltaStorage();
 		}
@@ -864,6 +872,54 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
 	}
 
+	/**
+	 * Validates that the clientSequenceNumber for a given clientId is always increasing.
+	 * @param message - The message to validate.
+	 */
+	private validateClientSequenceNumberConsistency(message: ISequencedDocumentMessage): void {
+		// Once client leaves, we no longer need to track its last observed message as the client won't send messages.
+		if (message.type === MessageType.ClientLeave) {
+			const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
+			const clientId = JSON.parse(systemLeaveMessage.data) as string;
+			this.lastObservedMessageByClient.delete(clientId);
+		}
+
+		if (message.clientId === null) {
+			return;
+		}
+
+		const lastObservedClientMessage = this.lastObservedMessageByClient.get(message.clientId);
+		if (
+			lastObservedClientMessage !== undefined &&
+			message.clientSequenceNumber <= lastObservedClientMessage.clientSequenceNumber
+		) {
+			const messagePayloadToLog = (m: ISequencedDocumentMessage): string => {
+				return `${m.type}-${m.sequenceNumber}-${m.clientSequenceNumber}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
+			};
+			// This looks like a data corruption issue where the clientSequenceNumber for a given clientId is not
+			// increasing. The Fluid Service ensures that it only processes ops with contiguous increasing
+			// clientSequenceNumbers for a given clientId.
+			// So, if we see this error, it is likely a service issue.
+			// One example of this is if the service sequences the same op more than once. In this case, all the
+			// properties except the sequenceNumber will be the same.
+			// Note that we are not checking for gaps in clientSequenceNumber because very old clients may have gaps
+			// as per the op stream in the snapshot tests under test/snapshots/content.
+			const error = DataCorruptionError.create(
+				"Found two messages with non-increasing clientSequenceNumber for a given client. Likely to be a service issue",
+				"DeltaManager.validateClientSequenceNumberConsistency",
+				message,
+				{
+					clientId: this.connectionManager.clientId,
+					sequenceNumber: message.sequenceNumber,
+					message1: messagePayloadToLog(lastObservedClientMessage),
+					message2: messagePayloadToLog(message),
+				},
+			);
+			this.close(error);
+		}
+		this.lastObservedMessageByClient.set(message.clientId, message);
+	}
+
 	private enqueueMessages(
 		messages: ISequencedDocumentMessage[],
 		reason: string,
@@ -914,6 +970,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					duplicate++;
 				} else if (message.sequenceNumber !== prev + 1) {
 					gap++;
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (firstMissing === undefined) {
 						firstMissing = prev + 1;
 					}
@@ -1002,6 +1059,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					}
 				}
 			} else if (message.sequenceNumber === this.lastQueuedSequenceNumber + 1) {
+				this.validateClientSequenceNumberConsistency(message);
 				this.lastQueuedSequenceNumber = message.sequenceNumber;
 				this.previouslyProcessedMessage = message;
 				this._inbound.push(message);

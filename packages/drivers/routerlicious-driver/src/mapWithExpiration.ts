@@ -42,7 +42,7 @@ export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValu
 		return expired;
 	}
 
-	private clearExpiredEntries() {
+	private clearExpiredEntries(): void {
 		// forEach clears out any expired entries
 		this.forEach(() => {});
 	}
@@ -117,7 +117,7 @@ export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValu
 		return super[Symbol.iterator]();
 	}
 
-	valueOf() {
+	valueOf(): ReturnType<typeof Map.valueOf> {
 		this.clearExpiredEntries();
 		return super.valueOf();
 	}

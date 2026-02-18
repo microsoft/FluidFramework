@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import chalk from "picocolors";
+// eslint-disable-next-line import-x/no-named-as-default -- prompts default export is the intended API
 import prompts from "prompts";
 import stripAnsi from "strip-ansi";
-
-import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
 import {
@@ -21,12 +21,12 @@ import {
 } from "../../flags.js";
 import {
 	BaseCommand,
-	// eslint-disable-next-line import-x/no-deprecated
-	MonoRepoKind,
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
 	indentString,
 	isDependencyUpdateType,
+	// eslint-disable-next-line import-x/no-deprecated
+	MonoRepoKind,
 	npmCheckUpdates,
 } from "../../library/index.js";
 // eslint-disable-next-line import-x/no-internal-modules

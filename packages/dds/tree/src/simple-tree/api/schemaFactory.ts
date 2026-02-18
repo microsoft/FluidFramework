@@ -4,13 +4,15 @@
  */
 
 import { assert, debugAssert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
 // This import is required for intellisense in @link doc comments on mouseover in VSCode.
 // eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
-import type { TreeAlpha } from "../../shared-tree/index.js";
+import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import {
 	type JsonCompatibleReadOnlyObject,
 	type RestrictiveStringRecord,
@@ -32,6 +34,17 @@ import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../core/index.js";
 import {
+	FieldKind,
+	type FieldSchema,
+	type ImplicitFieldSchema,
+	// This import prevents a large number of FieldProps references in the API reports from showing up as FieldProps_2.
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+	type FieldProps,
+	createFieldSchema,
+	type DefaultProvider,
+	getDefaultProvider,
+} from "../fieldSchema.js";
+import {
 	booleanSchema,
 	handleSchema,
 	nullSchema,
@@ -51,36 +64,25 @@ import {
 	type TreeMapNode,
 	type TreeObjectNode,
 } from "../node-kinds/index.js";
-import {
-	FieldKind,
-	type FieldSchema,
-	type ImplicitFieldSchema,
-	// This import prevents a large number of FieldProps references in the API reports from showing up as FieldProps_2.
-	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
-	type FieldProps,
-	createFieldSchema,
-	type DefaultProvider,
-	getDefaultProvider,
-} from "../fieldSchema.js";
-
-import type { System_Unsafe } from "./typesUnsafe.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import { unhydratedFlexTreeFromInsertable } from "../unhydratedFlexTreeFromInsertable.js";
+
 import { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
+import type { System_Unsafe } from "./typesUnsafe.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
 export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 	switch (typeof value) {
-		case "boolean":
+		case "boolean": {
 			return booleanSchema;
-		case "number":
+		}
+		case "number": {
 			return numberSchema;
-		case "string":
+		}
+		case "string": {
 			return stringSchema;
+		}
 		case "object": {
 			if (value === null) {
 				return nullSchema;
@@ -88,8 +90,9 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 			assert(isFluidHandle(value), 0x87e /* invalid TreeValue */);
 			return handleSchema;
 		}
-		default:
+		default: {
 			unreachableCase(value);
+		}
 	}
 }
 
@@ -928,9 +931,7 @@ export function structuralName<const T extends string>(
 	allowedTypes: TreeNodeSchema | readonly TreeNodeSchema[],
 ): `${T}<${string}>` {
 	let inner: string;
-	if (!isReadonlyArray(allowedTypes)) {
-		return structuralName(collectionName, [allowedTypes]);
-	} else {
+	if (isReadonlyArray(allowedTypes)) {
 		const names = allowedTypes.map((t): string => {
 			// Ensure that lazy types (functions) don't slip through here.
 			assert(!isLazy(t), 0x83d /* invalid type provided */);
@@ -943,6 +944,8 @@ export function structuralName<const T extends string>(
 		// Using JSON is a simple way to accomplish this.
 		// The outer `[]` around the result were needed so that a single type name "Any" would not collide with the "any" case which used to exist.
 		inner = JSON.stringify(names);
+	} else {
+		return structuralName(collectionName, [allowedTypes]);
 	}
 	return `${collectionName}<${inner}>`;
 }

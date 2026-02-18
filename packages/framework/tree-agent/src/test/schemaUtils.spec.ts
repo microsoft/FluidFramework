@@ -3,19 +3,41 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/no-array-callback-reference */
-
 import { strict as assert } from "node:assert";
 
+import type { TreeNodeSchema } from "@fluidframework/tree";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 
-import { getFriendlyName, unqualifySchema, findSchemas, isNamedSchema } from "../utils.js";
+import {
+	getFriendlyName,
+	unqualifySchema,
+	findSchemas,
+	isNamedSchema,
+	IdentifierCollisionResolver,
+} from "../utils.js";
 
 const sf = new SchemaFactoryAlpha("test.scope");
 class TestObject extends sf.object("TestObject", { value: sf.string }) {}
 class NamedStringArray extends sf.array("NamedStringArray", sf.string) {}
 class NamedStringMap extends sf.map("NamedStringMap", sf.string) {}
 class NamedStringRecord extends sf.record("NamedStringRecord", sf.string) {}
+
+// Schema objects with invalid typescript type characters.
+class InvalidCharacters extends sf.object("Test-Object!", { value: sf.string }) {}
+class LeadingDigit extends sf.object("1TestObject", { value: sf.string }) {}
+
+/**
+ * Creates a named object schema with the given scope and name.
+ * The resulting schema has identifier `"${scope}.${name}"`.
+ */
+function createSchema(scope: string, name: string): TreeNodeSchema {
+	return new SchemaFactoryAlpha(scope).object(name, {});
+}
+
+function resolveAll(schemas: TreeNodeSchema[]): string[] {
+	const resolver = new IdentifierCollisionResolver();
+	return schemas.map((s) => resolver.resolve(s));
+}
 
 describe("getFriendlyName", () => {
 	it("returns the name for a named object schema", () => {
@@ -52,6 +74,10 @@ describe("getFriendlyName", () => {
 	it("handles arrays of object schemas", () => {
 		const ArrayOfObjects = sf.array(TestObject);
 		assert.equal(getFriendlyName(ArrayOfObjects), "TestObject[]");
+
+		// Object with invalid characters
+		const ArrayOfObjectsWithInvalidCharacters = sf.array(InvalidCharacters);
+		assert.equal(getFriendlyName(ArrayOfObjectsWithInvalidCharacters), "Test_Object_[]");
 	});
 
 	it("handles maps of array schemas", () => {
@@ -139,6 +165,25 @@ describe("getFriendlyName", () => {
 			getFriendlyName(OuterMap),
 			"Map<string, Record<string, Map<string, TestObject>>[]>",
 		);
+
+		// Object with invalid characters
+
+		const InnerMap2 = sf.map(InvalidCharacters);
+		const InnerRecord2 = sf.record(InnerMap2);
+		const InnerArray2 = sf.array(InnerRecord2);
+		const OuterMap2 = sf.map(InnerArray2);
+		assert.equal(
+			getFriendlyName(OuterMap2),
+			"Map<string, Record<string, Map<string, Test_Object_>>[]>",
+		);
+	});
+
+	it("sanitizes invalid characters to underscores.", () => {
+		assert.equal(getFriendlyName(InvalidCharacters), "Test_Object_");
+	});
+
+	it("prefixes an underscore when the name starts with an invalid character", () => {
+		assert.equal(getFriendlyName(LeadingDigit), "_1TestObject");
 	});
 });
 
@@ -149,6 +194,30 @@ describe("unqualifySchema", () => {
 
 	it("returns the original name when no scope is present", () => {
 		assert.equal(unqualifySchema("NoScopeName"), "NoScopeName");
+	});
+
+	it("sanitizes invalid characters to underscores.", () => {
+		// With strings
+		assert.equal(unqualifySchema("Test-Object"), "Test_Object");
+		assert.equal(unqualifySchema("Test Object"), "Test_Object");
+
+		// With schema identifiers from schemafactory,
+		assert.equal(unqualifySchema(InvalidCharacters.identifier), "Test_Object_");
+	});
+
+	it("prefixes an underscore when the name starts with an invalid character", () => {
+		// With strings
+		assert.equal(unqualifySchema("1TestObject"), "_1TestObject");
+		assert.equal(unqualifySchema("-TestObject"), "_TestObject");
+
+		// With schema identifiers from schemafactory,
+		assert.equal(unqualifySchema(LeadingDigit.identifier), "_1TestObject");
+	});
+
+	it("returns stable names for valid identifiers", () => {
+		assert.equal(unqualifySchema("TestObject"), "TestObject");
+		assert.equal(unqualifySchema("com.fluidframework.TestObject"), "TestObject");
+		assert.equal(unqualifySchema("ABC123_$"), "ABC123_$");
 	});
 });
 
@@ -229,4 +298,112 @@ describe("findNamedSchemas", () => {
 	});
 });
 
-/* eslint-enable unicorn/no-array-callback-reference */
+describe("IdentifierCollisionResolver", () => {
+	it("returns array with same length as input", () => {
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope1", "Bar"),
+			createSchema("scope1", "Baz"),
+		];
+		const result = resolveAll(input);
+		assert.equal(result.length, input.length);
+	});
+
+	it("preserves non-colliding names", () => {
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope1", "Bar"),
+			createSchema("scope1", "Baz"),
+		];
+		const result = resolveAll(input);
+		assert.deepEqual(result, ["Foo", "Bar", "Baz"]);
+	});
+
+	it("resolves three-way collisions: first keeps original, rest get suffixes", () => {
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope2", "Foo"),
+			createSchema("scope3", "Foo"),
+		];
+		const result = resolveAll(input);
+		assert.equal(result[0], "Foo");
+		assert.equal(result[1], "Foo_2");
+		assert.equal(result[2], "Foo_3");
+	});
+
+	it("handles mixed colliding and non-colliding names", () => {
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope2", "Foo"),
+			createSchema("scope1", "Bar"),
+		];
+		const result = resolveAll(input);
+		assert.equal(result[0], "Foo");
+		assert.equal(result[1], "Foo_2");
+		assert.equal(result[2], "Bar");
+	});
+
+	it("handles suffix collisions with later natural names", () => {
+		const input = [
+			createSchema("scope1", "Foo"),
+			createSchema("scope2", "Foo"),
+			createSchema("scope3", "Foo_2"),
+		];
+		const result = resolveAll(input);
+		assert.equal(result[0], "Foo");
+		assert.equal(result[1], "Foo_2");
+		assert.equal(result[2], "Foo_2_2");
+	});
+
+	it("identical full identifiers map to the same friendly name", () => {
+		const schema = createSchema("scope", "Foo");
+		const result = resolveAll([schema, schema]);
+		assert.equal(result[0], "Foo");
+		assert.equal(result[1], "Foo");
+	});
+
+	it("multi-level scope collisions: first keeps original, rest get suffixes", () => {
+		const input = [
+			createSchema("outer1.inner1", "Foo"),
+			createSchema("outer2.inner1", "Foo"),
+			createSchema("outer1.inner2", "Foo"),
+			createSchema("outer2.inner2", "Foo"),
+			createSchema("outer1.inner1", "Bar"),
+			createSchema("outer2.inner1", "Bar"),
+			createSchema("outer1.inner2", "Bar"),
+			createSchema("outer2.inner2", "Bar"),
+		];
+		const result = resolveAll(input);
+		assert.equal(result[0], "Foo");
+		assert.equal(result[1], "Foo_2");
+		assert.equal(result[2], "Foo_3");
+		assert.equal(result[3], "Foo_4");
+		assert.equal(result[4], "Bar");
+		assert.equal(result[5], "Bar_2");
+		assert.equal(result[6], "Bar_3");
+		assert.equal(result[7], "Bar_4");
+	});
+
+	it("handles unnamed (inline) schemas", () => {
+		const unnamedArray = sf.array(sf.string);
+		const unnamedMap = sf.map(sf.string);
+		const unnamedRecord = sf.record(sf.string);
+		const nestedArrayOfMaps = sf.array(sf.map(TestObject));
+		const nestedMapOfRecords = sf.map(sf.record(sf.number));
+		const nestedRecordOfArrays = sf.record(sf.array(sf.string));
+		const result = resolveAll([
+			unnamedArray,
+			unnamedMap,
+			unnamedRecord,
+			nestedArrayOfMaps,
+			nestedMapOfRecords,
+			nestedRecordOfArrays,
+		]);
+		assert.equal(result[0], "string[]");
+		assert.equal(result[1], "Map<string, string>");
+		assert.equal(result[2], "Record<string, string>");
+		assert.equal(result[3], "Map<string, TestObject>[]");
+		assert.equal(result[4], "Map<string, Record<string, number>>");
+		assert.equal(result[5], "Record<string, string[]>");
+	});
+});

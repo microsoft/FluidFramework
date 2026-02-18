@@ -63,12 +63,18 @@ async function getSummarizerBackCompat(container: IContainer): Promise<ISummariz
 	return response.value as ISummarizer;
 }
 
-/** @internal */
+// eslint-disable-next-line jsdoc/require-description -- TODO: add documentation
+/**
+ * @internal
+ */
 export async function createSummarizerCore(
 	container: IContainer,
 	loader: IHostLoader,
 	summaryVersion?: string,
-) {
+): Promise<{
+	container: IContainer;
+	summarizer: ISummarizer;
+}> {
 	const absoluteUrl = await container.getAbsoluteUrl("");
 	if (absoluteUrl === undefined) {
 		throw new Error("URL could not be resolved");

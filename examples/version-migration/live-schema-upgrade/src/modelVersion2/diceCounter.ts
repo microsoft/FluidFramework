@@ -43,7 +43,7 @@ export class DiceCounter extends DataObject implements IDiceCounter {
 	 * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
 	 * initialize the state of the DataObject.
 	 */
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		this._counter = SharedCounter.create(this.runtime, sharedCounterKey);
 		this.root.set(sharedCounterKey, this._counter.handle);
 	}
@@ -52,7 +52,7 @@ export class DiceCounter extends DataObject implements IDiceCounter {
 	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
 	 * DataObject, by registering an event listener for dice rolls.
 	 */
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		if (this._counter === undefined) {
 			// Get the existing counter if we didn't initialize it.
 			const sharedCounterHandle =
@@ -63,13 +63,13 @@ export class DiceCounter extends DataObject implements IDiceCounter {
 			this.count = this._counter.value;
 		}
 
-		this._counter.on("incremented", (incrementAmount: number, newValue: number) => {
+		this._counter.on("incremented", (incrementAmount: number, newValue: number): void => {
 			this.count = newValue;
 			this.emit("incremented");
 		});
 	}
 
-	public readonly increment = () => {
+	public readonly increment = (): void => {
 		assert(this._counter !== undefined, "this._counter should be defined");
 		this._counter.increment(1);
 	};

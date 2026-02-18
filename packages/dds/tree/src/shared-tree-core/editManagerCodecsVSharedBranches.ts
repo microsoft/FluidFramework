@@ -6,12 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import {
-	type ICodecOptions,
-	type IJsonCodec,
-	type IMultiFormatCodec,
-	withSchemaValidation,
-} from "../codec/index.js";
+import { type ICodecOptions, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
@@ -24,11 +19,11 @@ import {
 	type Mutable,
 } from "../util/index.js";
 
+import type { BranchId } from "./branch.js";
 import type { SharedBranchSummaryData, SummaryData } from "./editManager.js";
-import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
 import { decodeSharedBranch, encodeSharedBranch } from "./editManagerCodecsCommons.js";
 import type { EncodedSharedBranch } from "./editManagerFormatCommons.js";
-import type { BranchId } from "./branch.js";
+import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
@@ -36,7 +31,7 @@ export interface EditManagerEncodingContext {
 }
 
 export function makeSharedBranchesCodecWithVersion<TChangeset>(
-	changeCodec: IMultiFormatCodec<
+	changeCodec: IJsonCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
@@ -56,9 +51,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	JsonCompatibleReadOnly,
 	EditManagerEncodingContext
 > {
-	const format = EncodedEditManager(
-		changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema,
-	);
+	const format = EncodedEditManager(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
 
 	const codec: IJsonCodec<
 		SummaryData<TChangeset>,
@@ -78,7 +71,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				);
 				assert(
 					data.originator !== undefined,
-					"Cannot encode vSharedBranches summary without originator",
+					0xca5 /* Cannot encode vSharedBranches summary without originator */,
 				);
 				const json: Mutable<EncodedEditManager<TChangeset>> = {
 					main: mainBranch,

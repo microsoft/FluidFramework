@@ -28,12 +28,12 @@ import { InstalledPackage, type PackageToInstall } from "./testApi.js";
 // Assuming this file is in `lib`, so go to `..\node_modules\.legacy` as the install location
 const baseModulePath = fileURLToPath(new URL("../node_modules/.legacy", import.meta.url));
 const installedJsonPath = path.join(baseModulePath, "installed.json");
-const getModulePath = (version: string) => path.join(baseModulePath, version);
+const getModulePath = (version: string): string => path.join(baseModulePath, version);
 
 const resolutionCache = new Map<string, string>();
 
 // Increment the revision if we want to force installation (e.g. package list changed)
-const revision = 3;
+export const revision = 4;
 
 interface InstalledJson {
 	revision: number;
@@ -41,12 +41,12 @@ interface InstalledJson {
 }
 
 let cachedInstalledJson: InstalledJson | undefined;
-function writeAndUpdateInstalledJson(data: InstalledJson) {
+function writeAndUpdateInstalledJson(data: InstalledJson): void {
 	cachedInstalledJson = data;
 	writeFileSync(installedJsonPath, JSON.stringify(data, undefined, 2), { encoding: "utf8" });
 }
 
-async function ensureInstalledJson() {
+async function ensureInstalledJson(): Promise<void> {
 	if (existsSync(installedJsonPath)) {
 		return;
 	}
@@ -92,9 +92,9 @@ async function getInstalledJson(): Promise<InstalledJson> {
 	return cachedInstalledJson ?? (await readInstalledJsonLazy);
 }
 
-const isInstalled = async (version: string) =>
+const isInstalled = async (version: string): Promise<boolean> =>
 	(await getInstalledJson()).installed.includes(version);
-async function addInstalled(version: string) {
+async function addInstalled(version: string): Promise<void> {
 	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
@@ -108,7 +108,7 @@ async function addInstalled(version: string) {
 	}
 }
 
-async function removeInstalled(version: string) {
+async function removeInstalled(version: string): Promise<void> {
 	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
@@ -126,9 +126,11 @@ const npmCmd =
 	process.platform.includes("win") && !process.platform.includes("darwin") ? "npm.cmd" : "npm";
 
 /**
+ * Resolves a version range or alias to a specific version number.
+ *
  * @internal
  */
-export function resolveVersion(requested: string, installed: boolean) {
+export function resolveVersion(requested: string, installed: boolean): string {
 	const cachedVersion = resolutionCache.get(requested);
 	if (cachedVersion) {
 		return cachedVersion;
@@ -197,7 +199,7 @@ export function resolveVersion(requested: string, installed: boolean) {
 	}
 }
 
-async function ensureModulePath(version: string, modulePath: string) {
+async function ensureModulePath(version: string, modulePath: string): Promise<void> {
 	const release = await lock(baseModulePath, { retries: { forever: true } });
 	try {
 		console.log(`Installing version ${version} at ${modulePath}`);
@@ -211,6 +213,8 @@ async function ensureModulePath(version: string, modulePath: string) {
 }
 
 /**
+ * Ensures the requested package version is installed locally.
+ *
  * @internal
  */
 export async function ensureInstalled(
@@ -304,6 +308,7 @@ export async function ensureInstalled(
 								error instanceof Error
 									? `${error.message}\n${error.stack}`
 									: JSON.stringify(error);
+							// eslint-disable-next-line @typescript-eslint/no-base-to-string -- known limitation
 							reject(
 								new Error(
 									`Failed to install in ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
@@ -324,7 +329,9 @@ export async function ensureInstalled(
 		// Remove the `as any` cast once node typing is updated.
 		try {
 			(rmdirSync as any)(modulePath, { recursive: true });
-		} catch (ex) {}
+		} catch (ex) {
+			// TODO: document why we are ignoring the error here
+		}
 		throw new Error(`Unable to install version ${version}\n${e}`);
 	} finally {
 		release();
@@ -332,9 +339,11 @@ export async function ensureInstalled(
 }
 
 /**
+ * Checks if a requested version is installed and returns its path.
+ *
  * @internal
  */
-export function checkInstalled(requested: string) {
+export function checkInstalled(requested: string): { version: string; modulePath: string } {
 	const version = resolveVersion(requested, true);
 	const modulePath = getModulePath(version);
 	if (existsSync(modulePath)) {
@@ -347,6 +356,8 @@ export function checkInstalled(requested: string) {
 }
 
 /**
+ * Dynamically loads a package from the specified module path.
+ *
  * @internal
  */
 export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
@@ -628,6 +639,8 @@ function internalSchema(
 }
 
 /**
+ * Checks if the given version has the SparseMatrix moved to sequence-deprecated.
+ *
  * @internal
  */
 export function versionHasMovedSparsedMatrix(version: string): boolean {
@@ -638,6 +651,8 @@ export function versionHasMovedSparsedMatrix(version: string): boolean {
 }
 
 /**
+ * Converts a version string to a numeric value for comparison purposes.
+ *
  * @internal
  */
 export function versionToComparisonNumber(version: string): number {

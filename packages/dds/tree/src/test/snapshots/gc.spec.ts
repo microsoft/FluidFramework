@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -19,8 +19,8 @@ import {
 	TreeViewConfiguration,
 	type TreeView,
 } from "../../simple-tree/index.js";
-import { DefaultTestSharedTreeKind } from "../utils.js";
 import type { ISharedTree } from "../../treeFactory.js";
+import { DefaultTestSharedTreeKind } from "../utils.js";
 
 const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {
@@ -109,16 +109,15 @@ describe("Garbage Collection", () => {
 			// Get the handles that were last added.
 			const deletedHandles = root.handles;
 			// Get the routes of the handles.
-			const deletedHandleRoutes = Array.from(
-				deletedHandles,
-				(handle) => toFluidHandleInternal(handle).absolutePath,
+			const deletedHandleRoutes = new Set(
+				deletedHandles.map((handle) => toFluidHandleInternal(handle).absolutePath),
 			);
 
 			// Remove the last added handles.
 			root.handles.removeRange(0, lastElementIndex + 1);
 
 			this._expectedRoutes = this._expectedRoutes.filter(
-				(route) => !deletedHandleRoutes.includes(route),
+				(route) => !deletedHandleRoutes.has(route),
 			);
 			this.containerRuntimeFactory.processAllMessages();
 

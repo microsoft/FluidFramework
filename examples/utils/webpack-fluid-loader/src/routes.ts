@@ -200,7 +200,7 @@ const makeAfterMiddlewares = (
 		};
 	}
 
-	const isReady = async (req, res) => {
+	const isReady = async (req, res): Promise<boolean> => {
 		if (readyP !== undefined) {
 			let canContinue = false;
 			try {
@@ -209,7 +209,9 @@ const makeAfterMiddlewares = (
 				let toLog = error;
 				try {
 					toLog = JSON.stringify(error);
-				} catch {}
+				} catch {
+					// TODO: document why we are ignoring the error here
+				}
 				console.log(toLog);
 			}
 			if (!canContinue) {
@@ -334,7 +336,7 @@ const makeAfterMiddlewares = (
 };
 
 /**
- * @returns A portion of a webpack config needed to add support for the
+ * Creates the portion of a webpack config needed to add support for the
  * webpack-dev-server to use the webpack-fluid-loader.
  * @internal
  */
@@ -376,7 +378,7 @@ const fluid = (
 	res: express.Response,
 	baseDir: string,
 	options: RouteOptions,
-) => {
+): void => {
 	const documentId = req.params.id;
 	// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-var-requires
 	const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;

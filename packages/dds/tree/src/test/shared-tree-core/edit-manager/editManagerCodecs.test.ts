@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import type { SessionId } from "@fluidframework/id-compressor";
 
+import { DependentFormatVersion } from "../../../codec/index.js";
 import type { ChangeEncodingContext } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -18,13 +21,12 @@ import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
 	type EncodingTestData,
+	makeDiscontinuedEncodingTestSuite,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { strict as assert } from "node:assert";
-import { DependentFormatVersion } from "../../../codec/index.js";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 
@@ -199,7 +201,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 	},
 };
 
-export function testCodec() {
+export function testCodec(): void {
 	describe("Codec", () => {
 		const family = makeEditManagerCodecs(
 			TestChange.codecs,
@@ -209,20 +211,21 @@ export function testCodec() {
 				jsonValidator: FormatValidatorBasic,
 			},
 		);
-
 		// Versions 1 through 4 do not encode the summary originator ID.
-		makeEncodingTestSuite(
-			family,
-			testCases,
-			assertEquivalentSummaryDataIgnoreOriginator,
-			[EditManagerFormatVersion.v3, EditManagerFormatVersion.v4],
-			[EditManagerFormatVersion.v1, EditManagerFormatVersion.v2, EditManagerFormatVersion.v5],
-		);
+		makeEncodingTestSuite(family, testCases, assertEquivalentSummaryDataIgnoreOriginator, [
+			EditManagerFormatVersion.v3,
+			EditManagerFormatVersion.v4,
+			EditManagerFormatVersion.v6,
+		]);
+		makeDiscontinuedEncodingTestSuite(family, [
+			EditManagerFormatVersion.v1,
+			EditManagerFormatVersion.v2,
+			EditManagerFormatVersion.v5,
+		]);
 
 		makeEncodingTestSuite(family, testCases, undefined, [
 			EditManagerFormatVersion.vSharedBranches,
 		]);
-
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.
 	});

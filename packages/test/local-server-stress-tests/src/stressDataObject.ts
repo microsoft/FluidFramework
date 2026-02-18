@@ -27,7 +27,7 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // eslint-disable-next-line import-x/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { type StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
+import type { StageControlsAlpha } from "@fluidframework/runtime-definitions/internal";
 import {
 	RuntimeHeaders,
 	toFluidHandleInternal,
@@ -46,12 +46,16 @@ export interface CreateDataStore {
 	type: "createDataStore";
 	asChild: boolean;
 	tag: `datastore-${number}`;
+	/** Whether to store handle in the current datastore's root, increasing likelihood of collaborative reachability */
+	storeHandle: boolean;
 }
 
 export interface CreateChannel {
 	type: "createChannel";
 	channelType: string;
 	tag: `channel-${number}`;
+	/** Whether to store handle in the current datastore's root, increasing likelihood of collaborative reachability */
+	storeHandle: boolean;
 }
 
 export interface EnterStagingMode {
@@ -82,7 +86,7 @@ export class StressDataObject extends DataObject {
 		},
 	});
 
-	get StressDataObject() {
+	get StressDataObject(): StressDataObject {
 		return this;
 	}
 
@@ -112,7 +116,7 @@ export class StressDataObject extends DataObject {
 		this.channelNameMap.set("root", this.root.attributes.type);
 	}
 
-	public async getChannels() {
+	public async getChannels(): Promise<IChannel[]> {
 		const channels: IChannel[] = [];
 		for (const [name] of this.channelNameMap.entries()) {
 			// similar to container objects, the entries in this map
@@ -139,11 +143,11 @@ export class StressDataObject extends DataObject {
 		)) as any as ISharedMap;
 	}
 
-	public get attached() {
+	public get attached(): boolean {
 		return this.runtime.attachState !== AttachState.Detached;
 	}
 
-	public async uploadBlob(tag: `blob-${number}`, contents: string) {
+	public async uploadBlob(tag: `blob-${number}`, contents: string): Promise<void> {
 		const handle = await this.runtime.uploadBlob(stringToBuffer(contents, "utf-8"));
 		this.defaultStressObject.registerLocallyCreatedObject({
 			type: "newBlob",
@@ -152,12 +156,16 @@ export class StressDataObject extends DataObject {
 		});
 	}
 
-	public createChannel(tag: `channel-${number}`, type: string) {
-		this.runtime.createChannel(tag, type);
+	public createChannel(tag: `channel-${number}`, type: string): IFluidHandle {
+		const channel = this.runtime.createChannel(tag, type);
 		this.channelNameMap.set(tag, type);
+		return channel.handle;
 	}
 
-	public async createDataStore(tag: `datastore-${number}`, asChild: boolean) {
+	public async createDataStore(
+		tag: `datastore-${number}`,
+		asChild: boolean,
+	): Promise<{ handle: IFluidHandle }> {
 		const dataStore = await this.context.containerRuntime.createDataStore(
 			asChild
 				? [...this.context.packagePath, StressDataObject.factory.type]
@@ -172,10 +180,19 @@ export class StressDataObject extends DataObject {
 			tag,
 			stressDataObject: maybe.StressDataObject,
 		});
+		return { handle: dataStore.entryPoint };
 	}
 
-	public orderSequentially(act: () => void) {
+	public orderSequentially(act: () => void): void {
 		this.context.containerRuntime.orderSequentially(act);
+	}
+
+	/**
+	 * Stores a handle in this datastore's root directory, increasing the
+	 * likelihood that the target is collaboratively reachable by other clients.
+	 */
+	public storeHandleInRoot(key: string, handle: IFluidHandle): void {
+		this.root.set(key, handle);
 	}
 
 	public get isDirty(): boolean | undefined {
@@ -195,7 +212,7 @@ export type ContainerObjects =
 export class DefaultStressDataObject extends StressDataObject {
 	public static readonly alias = "default";
 
-	public get DefaultStressDataObject() {
+	public get DefaultStressDataObject(): this {
 		return this;
 	}
 
@@ -289,11 +306,31 @@ export class DefaultStressDataObject extends StressDataObject {
 		)) as any as ISharedMap;
 	}
 
-	public registerLocallyCreatedObject(obj: ContainerObjects) {
+	/**
+	 * Objects created during staging mode that need to be registered in containerObjectMap
+	 * after staging mode exits. We defer the write to avoid it being rolled back on discard.
+	 */
+	private readonly _pendingContainerObjectRegistrations: ContainerObjects[] = [];
+
+	/**
+	 * Registers an object to the containerObjectMap if not already present.
+	 */
+	private registerToContainerObjectMap(obj: ContainerObjects): void {
 		if (obj.handle !== undefined) {
 			const handle = toFluidHandleInternal(obj.handle);
 			if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
 				this.containerObjectMap.set(handle.absolutePath, { tag: obj.tag, type: obj.type });
+			}
+		}
+	}
+
+	public registerLocallyCreatedObject(obj: ContainerObjects): void {
+		if (obj.handle !== undefined) {
+			if (this.inStagingMode()) {
+				// Defer registration until staging mode exits to avoid rollback on discard
+				this._pendingContainerObjectRegistrations.push(obj);
+			} else {
+				this.registerToContainerObjectMap(obj);
 			}
 		}
 		this._locallyCreatedObjects.push(obj);
@@ -301,7 +338,7 @@ export class DefaultStressDataObject extends StressDataObject {
 
 	private stageControls: StageControlsAlpha | undefined;
 	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
-	public enterStagingMode() {
+	public enterStagingMode(): void {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,
 			"enterStagingMode must be defined",
@@ -317,7 +354,7 @@ export class DefaultStressDataObject extends StressDataObject {
 		return this.containerRuntimeExp.inStagingMode;
 	}
 
-	public exitStagingMode(commit: boolean) {
+	public exitStagingMode(commit: boolean): void {
 		assert(this.stageControls !== undefined, "must have staging mode controls");
 		if (commit) {
 			this.stageControls.commitChanges();
@@ -325,6 +362,13 @@ export class DefaultStressDataObject extends StressDataObject {
 			this.stageControls.discardChanges();
 		}
 		this.stageControls = undefined;
+
+		// Flush any pending containerObjectMap registrations that were deferred during staging mode.
+		// This happens after staging mode exits so the writes won't be rolled back.
+		for (const obj of this._pendingContainerObjectRegistrations) {
+			this.registerToContainerObjectMap(obj);
+		}
+		this._pendingContainerObjectRegistrations.length = 0;
 	}
 }
 

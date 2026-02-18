@@ -3,21 +3,52 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	type ErasedBaseType,
+	ErasedTypeImplementation,
+} from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	debugAssert,
 	fail,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	type ErasedBaseType,
-	ErasedTypeImplementation,
-} from "@fluidframework/core-interfaces/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
+import {
+	FluidClientVersion,
+	type ICodecOptions,
+	type CodecWriteOptions,
+	FormatValidatorNoOp,
+} from "../codec/index.js";
+import {
+	EmptyKey,
+	keyAsDetachedField,
+	rootFieldKey,
+	type DetachedField,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+} from "../core/index.js";
+import {
+	cursorForMapTreeField,
+	defaultSchemaPolicy,
+	isTreeValue,
+	makeFieldBatchCodec,
+	mapTreeFromCursor,
+	TreeCompressionStrategy,
+	type FieldBatch,
+	type FieldBatchEncodingContext,
+	type LocalNodeIdentifier,
+	type FlexTreeSequenceField,
+	type FlexTreeNode,
+	type Observer,
+	withObservation,
+	type FlexTreeHydratedContext,
+} from "../feature-libraries/index.js";
 import {
 	asIndex,
 	getKernel,
@@ -54,8 +85,6 @@ import {
 	isObjectNodeSchema,
 	isTreeNode,
 	toInitialSchema,
-	convertField,
-	toUnhydratedSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
 	type ConciseTree,
@@ -64,6 +93,7 @@ import {
 	borrowCursorFromTreeNodeOrValue,
 	contentSchemaSymbol,
 	type TreeNodeSchema,
+	getUnhydratedContext,
 	type TreeBranchAlpha,
 	type TreeView,
 	type TreeChangeEvents,
@@ -71,61 +101,32 @@ import {
 	SimpleContextSlot,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
-import {
-	FluidClientVersion,
-	type ICodecOptions,
-	type CodecWriteOptions,
-	FormatValidatorNoOp,
-} from "../codec/index.js";
-import {
-	EmptyKey,
-	keyAsDetachedField,
-	rootFieldKey,
-	type DetachedField,
-	type FieldKey,
-	type ITreeCursorSynchronous,
-} from "../core/index.js";
-import {
-	cursorForMapTreeField,
-	defaultSchemaPolicy,
-	isTreeValue,
-	makeFieldBatchCodec,
-	mapTreeFromCursor,
-	TreeCompressionStrategy,
-	type FieldBatch,
-	type FieldBatchEncodingContext,
-	type LocalNodeIdentifier,
-	type FlexTreeSequenceField,
-	type FlexTreeNode,
-	type Observer,
-	withObservation,
-	type FlexTreeHydratedContext,
-} from "../feature-libraries/index.js";
+
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
-	const nodeIdentifier = getIdentifierFromNode(node, "uncompressed");
-	if (typeof nodeIdentifier === "number") {
-		throw new TypeError("identifier should be uncompressed.");
-	}
-	return nodeIdentifier;
+	return getIdentifierFromNode(node, "uncompressed");
 };
 
 identifier.shorten = (branch: TreeBranch, nodeIdentifier: string): number | undefined => {
-	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
-		.nodeKeyManager;
+	assert(
+		branch instanceof SchematizingSimpleTreeView,
+		0xcac /* Unexpected branch implementation */,
+	);
+	const { nodeKeyManager } = branch;
 	const localNodeKey = nodeKeyManager.tryLocalizeNodeIdentifier(nodeIdentifier);
-	return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+	return localNodeKey === undefined ? undefined : extractFromOpaque(localNodeKey);
 };
 
 identifier.lengthen = (branch: TreeBranch, nodeIdentifier: number): string => {
-	const nodeKeyManager = (branch as SchematizingSimpleTreeView<ImplicitFieldSchema>)
-		.nodeKeyManager;
-	return nodeKeyManager.stabilizeNodeIdentifier(
-		nodeIdentifier as unknown as LocalNodeIdentifier,
+	assert(
+		branch instanceof SchematizingSimpleTreeView,
+		0xcad /* Unexpected branch implementation */,
 	);
+	const { nodeKeyManager } = branch;
+	const local = brand<LocalNodeIdentifier>(nodeIdentifier as SessionSpaceCompressedId);
+	return nodeKeyManager.stabilizeNodeIdentifier(local);
 };
 
 identifier.getShort = (node: TreeNode): number | undefined => {
@@ -363,64 +364,70 @@ function getOrCreateUnhydratedParent(
 // #endregion
 
 /**
- * A utility interface for retrieving or converting node identifiers.
- *
+ * A utility interface for manipulating node identifiers.
  * @remarks
  * This provides methods to:
  *
- * - Retrieve long or short identifiers from nodes
- *
- * - Convert between long identifiers and short identifiers
- *
- * - Generates long identifiers
+ * - Retrieve identifiers from nodes
+ * - Generate identifiers
+ * - Convert between short numeric identifiers and long string identifiers
  *
  * @alpha @sealed
  */
 export interface TreeIdentifierUtils {
 	/**
-	 * Returns the contents of a node's {@link SchemaFactory.identifier} field as a stable identifier.
-	 * If the identifier field does not exist, returns undefined.
+	 * Returns the identifier of a node.
+	 * @remarks
+	 * This returns the node's UUID if and only if it has exactly one {@link SchemaFactory.identifier | identifier field}.
+	 * If it has no identifier field, this returns undefined.
+	 * If it has more than one identifier field, this throws an error.
+	 * In that case, query the identifier fields directly instead.
 	 *
 	 * @param node - The TreeNode you want to get the identifier from,
 	 */
 	(node: TreeNode): string | undefined;
 
 	/**
-	 * Returns the shortened identifier as a number given long identifier known by the id compressor on the branch if possible.
-	 * Otherwise, it will return the original string identifier provided.
-	 * If the id does not exist, or is unknown by the id compressor, it returns undefined.
+	 * Returns the shortened identifier as a number given a UUID known by the id compressor on the branch.
+	 * @remarks
+	 * If the given string is not a valid identifier and/or was not generated by the SharedTree, this will return `undefined`.
 	 *
-	 * This method is the inverse of {@link TreeIdentifierUtils.lengthen}. If you shorten an identifier
-	 * and then immediately pass it to {@link TreeIdentifierUtils.lengthen}, you will get the original string back.
+	 * See {@link TreeIdentifierUtils.getShort} for additional details about shortened identifiers.
 	 *
-	 * @param branch - TreeBranch from where you get the idCompressor to do the decompression.
-	 * @param nodeIdentifier - the stable identifier that needs to be shortened.
+	 * This method is the inverse of {@link TreeIdentifierUtils.lengthen}.
+	 * If you shorten an identifier and then immediately pass it to {@link TreeIdentifierUtils.lengthen}, you will get the original string back.
+	 *
+	 * @param branch - The branch (and/or view) of the SharedTree that will perform the compression.
+	 * @param nodeIdentifier - the stable identifier to be shortened.
 	 */
 	shorten(branch: TreeBranch, nodeIdentifier: string): number | undefined;
 
 	/**
-	 * Returns the stable id as a string if the identifier is decompressible and known by the id compressor. Otherwise, it will throw an error.
+	 * Returns the stable id as a string if the identifier is decompressible and known by the id compressor.
+	 * @remarks
+	 * If the given number does not correspond to a valid identifier generated by the SharedTree, this will return `undefined`.
 	 *
-	 * This method is the inverse of {@link TreeIdentifierUtils.shorten}. If you lengthen an identifier
-	 * and then immediately pass it to {@link TreeIdentifierUtils.shorten}, you will get the original short identifier back.
+	 * This method is the inverse of {@link TreeIdentifierUtils.shorten}.
+	 * If you lengthen an identifier and then immediately pass it to {@link TreeIdentifierUtils.shorten}, you will get the original short identifier back.
 	 *
-	 * @param branch - TreeBranch from where you want to get the id compressor to do the decompression.
-	 * @param nodeIdentifier - The local identifier that needs to be expanded.
+	 * @param branch - The branch (and/or view) of the SharedTree that will perform the decompression.
+	 * @param nodeIdentifier - The local identifier to be lengthened.
 	 */
 	lengthen(branch: TreeBranch, nodeIdentifier: number): string;
 
 	/**
-	 * Returns the {@link SchemaFactory.identifier | identifier} of the given node in the most compressed form possible.
+	 * Returns the {@link TreeIdentifierUtils.shorten | shortened} form of the identifier {@link SchemaFactory.identifier | identifier} for the given node.
 	 * @remarks
 	 * If the node is {@link Unhydrated | hydrated} and its identifier is a valid UUID that was automatically generated by the SharedTree it is part of (or something else using the same {@link @fluidframework/id-compressor#IIdCompressor}), then this will return a process-unique integer corresponding to that identifier.
 	 * This is useful for performance-sensitive scenarios involving many nodes with identifiers that need to be compactly retained in memory or used for efficient lookup.
-	 * Note that automatically generated identifiers that were accessed before the node was hydrated will return the generated UUID, not the process-unique integer.
+	 * Note that automatically generated identifiers that were accessed before the node was hydrated will not yield a short identifier until after hydration.
 	 *
-	 * If the node's identifier is any other user-provided string, then this will return undefined.
+	 * If the node's identifier is any other user-provided string, then this will return `undefined`.
 	 *
 	 * If the node has no identifier (that is, it has no {@link SchemaFactory.identifier | identifier} field), then this returns `undefined`.
 	 *
 	 * If the node has more than one identifier, then this will throw an error.
+	 * In that case, retrieve the identifiers individually via their fields instead.
 	 *
 	 * The returned integer should not be serialized or preserved outside of the current process.
 	 * Its lifetime is that of the current in-memory instance of the FF container for this client, and it is not guaranteed to be unique or stable outside of that context.
@@ -429,10 +436,11 @@ export interface TreeIdentifierUtils {
 	getShort(node: TreeNode): number | undefined;
 
 	/**
-	 * Creates and returns a long identifier.
-	 * The long identifier is a compressible, stable identifier generated by the tree's ID compressor.
+	 * Creates a new identifier.
+	 * @remarks
+	 * The returned UUID string can be {@link TreeIdentifierUtils.shorten | shortened} for high-performance scenarios.
 	 *
-	 * @param branch - TreeBranch from where you want to get the id compressor to generate the identifier from.
+	 * @param branch - The branch (and/or view) of the SharedTree that will generate and manage the identifier.
 	 */
 	create(branch: TreeBranch): string;
 }
@@ -455,7 +463,7 @@ export interface TreeIdentifierUtils {
  * There should be a way to provide a source for defaulted identifiers for unhydrated node creation, either via these APIs or some way to add them to its output later.
  * If an option were added to these APIs, it could also be used to enable unknown optional fields.
  *
- * @system @sealed @alpha
+ * @sealed @alpha
  */
 export interface TreeAlpha {
 	/**
@@ -976,12 +984,12 @@ class NodeSubscription {
 					return;
 				}
 				const subscription = subscriptions.get(flexNode);
-				if (subscription !== undefined) {
-					// Already subscribed to this node.
-					subscription.keys = undefined; // Now subscribed to all keys.
-				} else {
+				if (subscription === undefined) {
 					const newSubscription = new NodeSubscription(invalidate, flexNode);
 					subscriptions.set(flexNode, newSubscription);
+				} else {
+					// Already subscribed to this node.
+					subscription.keys = undefined; // Now subscribed to all keys.
 				}
 			},
 			observeNodeField(flexNode: FlexTreeNode, key: FieldKey): void {
@@ -990,15 +998,15 @@ class NodeSubscription {
 					return;
 				}
 				const subscription = subscriptions.get(flexNode);
-				if (subscription !== undefined) {
+				if (subscription === undefined) {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					newSubscription.keys = new Set([key]);
+					subscriptions.set(flexNode, newSubscription);
+				} else {
 					// Already subscribed to this node: if not subscribed to all keys, subscribe to this one.
 					// TODO:Performance: due to how JavaScript set ordering works,
 					// it might be faster to check `has` and only add if not present in case the same field is viewed many times.
 					subscription.keys?.add(key);
-				} else {
-					const newSubscription = new NodeSubscription(invalidate, flexNode);
-					newSubscription.keys = new Set([key]);
-					subscriptions.set(flexNode, newSubscription);
 				}
 			},
 			observeParentOf(node: FlexTreeNode): void {
@@ -1170,7 +1178,7 @@ export const TreeAlpha: TreeAlpha = {
 		return createFromCursor(
 			schema,
 			cursor,
-			convertField(normalizeFieldSchema(schema), toUnhydratedSchema),
+			getUnhydratedContext(schema).flexContext.schema.rootFieldSchema,
 		);
 	},
 
@@ -1327,11 +1335,12 @@ export const TreeAlpha: TreeAlpha = {
 
 				return getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
 			}
-			case NodeKind.Map:
+			case NodeKind.Map: {
 				if (typeof propertyKey !== "string") {
 					// Map nodes only support string keys.
 					return undefined;
 				}
+			}
 			// Fall through
 			case NodeKind.Record:
 			case NodeKind.Object: {
