@@ -164,29 +164,29 @@ function validateHandlesInForestSummary(
  * Validates that the handle path exists in `summaryTree`.
  */
 function validateHandlePathExists(handle: string, summaryTree: ISummaryTree) {
-	/**
-	 * The handle path is split by "/" into pathParts where the first element should exist in the root
-	 * of the summary tree, the second element in the first element's subtree, and so on.
-	 */
-	const pathParts = handle.split("/").slice(1);
-	const currentPath = pathParts[0];
-	let found = false;
-	for (const [key, summaryObject] of Object.entries(summaryTree.tree)) {
-		if (key === currentPath) {
-			found = true;
-			if (pathParts.length > 1) {
+	// The handle path is split by "/" into pathParts where the first element should exist in the root
+	// of the summary tree, the second element in the first element's subtree, and so on.
+	const pathParts = handle.split("/");
+	assert.equal(pathParts[0], "");
+	assert(pathParts.length > 1, "");
+	let currentObject: SummaryObject = summaryTree;
+	for (const part of pathParts.slice(1)) {
+		if (currentObject.type === SummaryType.Tree) {
+			currentObject =
+				currentObject.tree[part] ??
+				assert.fail(`Handle path ${handle} not found in summary tree`);
+		} else {
 				assert(
-					summaryObject.type === SummaryType.Tree || summaryObject.type === SummaryType.Handle,
-					`Handle path ${currentPath} should be for a subtree or a handle`,
+				currentObject.type === SummaryType.Handle,
+				`Handle path ${handle} should be for a subtree or a handle`,
 				);
-				if (summaryObject.type === SummaryType.Tree) {
-					validateHandlePathExists(`/${pathParts.slice(1).join("/")}`, summaryObject);
-				}
-			}
-			break;
+			// This validation code currently can not validate paths that point inside a handle.
+			// Since it is currently not expected for this case to occur in these tests, fail to make sure we do not accidentally depend on this lack of validation.
+			assert.fail(
+				`Handle path ${handle} points inside a handle which is currently not supported by this validation code`,
+			);
 		}
 	}
-	assert(found, `Handle path ${currentPath} not found in summary tree`);
 }
 
 /**
