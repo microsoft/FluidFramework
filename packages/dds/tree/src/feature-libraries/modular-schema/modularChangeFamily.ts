@@ -2752,17 +2752,20 @@ class InvertNodeManagerI implements InvertNodeManager {
 		nodeChange: NodeId | undefined,
 		newAttachId: ChangeAtomId,
 	): void {
+		assert(areEqualChangeAtomIds(newAttachId, this.getInvertedMoveId(detachId)), "XXX");
+
+		const attachIdEntry = firstAttachIdFromDetachId(
+			this.table.change.rootNodes,
+			detachId,
+			count,
+		);
+
 		if (nodeChange !== undefined) {
 			assert(count === 1, "A node change should only affect one node");
 
-			const attachEntry = firstAttachIdFromDetachId(
-				this.table.change.rootNodes,
-				detachId,
-				count,
-			);
-
-			const attachFieldEntry = this.table.change.crossFieldKeys.getFirst(
-				{ target: NodeMoveType.Attach, ...attachEntry.value },
+			const attachFieldEntry = getFirstAttachField(
+				this.table.change.crossFieldKeys,
+				attachIdEntry.value,
 				count,
 			);
 
@@ -2770,28 +2773,37 @@ class InvertNodeManagerI implements InvertNodeManager {
 				assignRootChange(
 					this.table.invertedRoots,
 					this.table.invertedNodeToParent,
-					attachEntry.value,
+					attachIdEntry.value,
 					nodeChange,
 					this.fieldId,
 					this.table.change.rebaseVersion,
 				);
 			} else {
-				setInCrossFieldMap(this.table.entries, attachEntry.value, count, nodeChange);
+				setInCrossFieldMap(this.table.entries, attachIdEntry.value, count, nodeChange);
 				this.table.invalidatedFields.add(
 					fieldChangeFromId(this.table.change, attachFieldEntry.value),
 				);
 			}
 		}
 
-		if (!areEqualChangeAtomIds(detachId, newAttachId)) {
-			for (const entry of doesChangeAttachNodes(
-				this.table.change.crossFieldKeys,
-				detachId,
-				count,
-			)) {
-				if (!entry.value) {
-					this.table.attachToDetachId.set(newAttachId, count, detachId);
-					this.table.invertedRoots.detachLocations.set(detachId, count, this.fieldId);
+		for (const entry of doesChangeAttachNodes(
+			this.table.change.crossFieldKeys,
+			attachIdEntry.value,
+			count,
+		)) {
+			if (entry.value) {
+				if (!areEqualChangeAtomIds(attachIdEntry.value, newAttachId)) {
+					// XXX: This requires that the choice of inverse move IDs is specified by the contrat of `FieldChangeHandler.invert`.
+					this.table.attachToDetachId.set(
+						newAttachId,
+						count,
+						this.getInvertedMoveId(attachIdEntry.value),
+					);
+				}
+			} else {
+				this.table.invertedRoots.detachLocations.set(attachIdEntry.value, count, this.fieldId);
+				if (!areEqualChangeAtomIds(attachIdEntry.value, newAttachId)) {
+					this.table.attachToDetachId.set(newAttachId, count, attachIdEntry.value);
 				}
 			}
 		}
@@ -2863,6 +2875,12 @@ class InvertNodeManagerI implements InvertNodeManager {
 			});
 		}
 		return result;
+	}
+
+	private getInvertedMoveId(id: ChangeAtomId): ChangeAtomId {
+		return this.table.isRollback
+			? id
+			: { revision: this.table.invertRevision, localId: id.localId };
 	}
 }
 
