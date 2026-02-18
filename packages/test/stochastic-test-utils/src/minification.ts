@@ -8,6 +8,14 @@ import { makeRandom } from "./random.js";
 import { type SaveInfo, type AsyncGenerator, done } from "./types.js";
 
 /**
+ * Number of accepted minimization steps between call-site verifications.
+ * With stackTraceLimit=0 most of the time, we periodically verify the
+ * call site hasn't drifted by doing one replay with stackTraceLimit=1.
+ * 50 is well under the OOM threshold (hundreds of stacks-on replays).
+ */
+const WINDOW_SIZE = 50;
+
+/**
  * A function which takes in an operation and modifies it by reference to be more
  * minimal.
  *
@@ -39,9 +47,12 @@ export type MinimizationTransform<TOperation extends BaseOperation> = (op: TOper
  * @internal
  */
 export class FuzzTestMinimizer<TOperation extends BaseOperation> {
-	private initialError?: { message: string; op: BaseOperation };
+	private initialError?: { message: string; callSite: string; op: BaseOperation };
 	private readonly transforms: MinimizationTransform<TOperation>[];
 	private readonly random = makeRandom();
+	private checkpoint: string = "";
+	private acceptedSinceCheckpoint = 0;
+	private stacksOn = false;
 
 	constructor(
 		minimizationTransforms: MinimizationTransform<TOperation>[] | undefined,
@@ -54,35 +65,49 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 	}
 
 	async minimize(): Promise<TOperation[]> {
-		const firstError = await this.assertFails();
+		const originalStackTraceLimit = Error.stackTraceLimit;
+		try {
+			// Initial capture with stacks on to get precise call site
+			Error.stackTraceLimit = 1;
+			const firstError = await this.assertFails();
 
-		if (!firstError) {
-			throw new Error(
-				"Attempted to minimize fuzz test, but the original case didn't fail. " +
-					"This can happen if the original test failed at operation generation time rather than as part of a reducer. " +
-					"Use the `skipMinimization` option to skip minimization in this case.",
-			);
-		}
-
-		await this.tryDeleteEachOp();
-
-		if (this.transforms.length === 0) {
-			return this.operations;
-		}
-
-		for (let i = 0; i < this.numIterations; i += 1) {
-			await this.applyTransforms();
-			// some minimizations can only occur if two or more ops are modified
-			// at the same time
-			for (let j = 0; j < 50; j++) {
-				await this.applyNRandomTransforms(2);
-				await this.applyNRandomTransforms(3);
+			if (!firstError) {
+				throw new Error(
+					"Attempted to minimize fuzz test, but the original case didn't fail. " +
+						"This can happen if the original test failed at operation generation time rather than as part of a reducer. " +
+						"Use the `skipMinimization` option to skip minimization in this case.",
+				);
 			}
+
+			// Save initial checkpoint and switch to cheap mode (message-only comparison)
+			this.checkpoint = JSON.stringify(this.operations);
+			this.acceptedSinceCheckpoint = 0;
+			this.stacksOn = false;
+			Error.stackTraceLimit = 0;
+
+			await this.tryDeleteEachOp();
+
+			if (this.transforms.length === 0) {
+				return this.operations;
+			}
+
+			for (let i = 0; i < this.numIterations; i += 1) {
+				await this.applyTransforms();
+				// some minimizations can only occur if two or more ops are modified
+				// at the same time
+				for (let j = 0; j < 50; j++) {
+					await this.applyNRandomTransforms(2);
+					await this.applyNRandomTransforms(3);
+				}
+				tryGC();
+			}
+
+			await this.tryDeleteEachOp();
+
+			return this.operations;
+		} finally {
+			Error.stackTraceLimit = originalStackTraceLimit;
 		}
-
-		await this.tryDeleteEachOp();
-
-		return this.operations;
 	}
 
 	private async tryDeleteEachOp(): Promise<void> {
@@ -97,10 +122,13 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 				// don't remove attach ops, as it creates invalid scenarios
 				if (deletedOp.type === "attach" || !(await this.assertFails())) {
 					this.operations.splice(idx, 0, deletedOp);
+				} else if (!(await this.onStepAccepted())) {
+					break; // rolled back to checkpoint, restart pass
 				}
 
 				idx -= 1;
 			}
+			tryGC();
 		} while (this.operations.length !== previousLength);
 	}
 
@@ -152,6 +180,8 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 			for (const [op, idx] of originalOperations) {
 				this.operations[idx] = JSON.parse(op) as TOperation;
 			}
+		} else if (!(await this.onStepAccepted())) {
+			return; // rolled back to checkpoint
 		}
 	}
 
@@ -177,15 +207,88 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 					this.operations[opIdx] = JSON.parse(originalOp) as TOperation;
 					break;
 				}
+
+				if (!(await this.onStepAccepted())) {
+					return; // rolled back to checkpoint
+				}
 			}
 		}
 	}
 
 	/**
-	 * Returns whether or not the test still fails with the same error message.
+	 * Called after each accepted minimization step. Manages the rolling
+	 * validation window: runs with stackTraceLimit=0 most of the time,
+	 * and periodically verifies the call site hasn't drifted.
 	 *
-	 * We use the simple heuristic of verifying the error message is the same
-	 * to avoid dealing with transforms that would result in invalid ops
+	 * Returns false if the operations were rolled back to the last
+	 * checkpoint (caller should break out of its current loop).
+	 */
+	private async onStepAccepted(): Promise<boolean> {
+		this.acceptedSinceCheckpoint++;
+		if (this.acceptedSinceCheckpoint < WINDOW_SIZE) {
+			return true;
+		}
+
+		if (this.stacksOn) {
+			// Completed a stacks-on window — all steps were verified
+			this.checkpoint = JSON.stringify(this.operations);
+			this.acceptedSinceCheckpoint = 0;
+			this.stacksOn = false;
+			Error.stackTraceLimit = 0;
+			return true;
+		}
+
+		// Verify window boundary with one stacks-on replay
+		const matches = await this.verifyCallSite();
+		if (matches) {
+			this.checkpoint = JSON.stringify(this.operations);
+			this.acceptedSinceCheckpoint = 0;
+			return true;
+		}
+
+		// Drift detected — roll back and replay window with stacks on
+		const restored = JSON.parse(this.checkpoint) as TOperation[];
+		this.operations.length = 0;
+		this.operations.push(...restored);
+		this.stacksOn = true;
+		Error.stackTraceLimit = 1;
+		this.acceptedSinceCheckpoint = 0;
+		return false;
+	}
+
+	/**
+	 * Run a single replay with stackTraceLimit=1 and check whether the
+	 * call site matches the initial error's call site.
+	 */
+	private async verifyCallSite(): Promise<boolean> {
+		let lastOp: BaseOperation = { type: "___none___" };
+		const operationsIterator = this.operations[Symbol.iterator]();
+		const generator: AsyncGenerator<TOperation, unknown> = async () => {
+			const val = operationsIterator.next();
+			if (val.done === true) {
+				return done;
+			}
+			return (lastOp = val.value);
+		};
+		Error.stackTraceLimit = 1;
+		const errorInfo = await getErrorInfo(this.replayTest, generator);
+		Error.stackTraceLimit = 0;
+		tryGC();
+		if (errorInfo === undefined) {
+			return false;
+		}
+		return (
+			(errorInfo.callSite ?? errorInfo.message) === this.initialError!.callSite &&
+			this.initialError!.op.type === lastOp.type
+		);
+	}
+
+	/**
+	 * Returns whether or not the test still fails with the same error.
+	 *
+	 * When stacksOn is true (stackTraceLimit=1), comparison uses the
+	 * call-site string (file/line). When false (stackTraceLimit=0),
+	 * comparison uses error.message (cheaper, avoids OOM).
 	 */
 	private async assertFails(): Promise<boolean> {
 		let lastOp: BaseOperation = { type: "___none___" };
@@ -197,30 +300,75 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 			}
 			return (lastOp = val.value);
 		};
-		try {
-			await this.replayTest(generator);
+		// Extract the error identity immediately, so we don't retain the
+		// Error object or its stack frame scope chain across iterations.
+		const errorInfo = await getErrorInfo(this.replayTest, generator);
+		if (errorInfo === undefined) {
 			return false;
-		} catch (error: unknown) {
-			if (
-				error === undefined ||
-				!(error instanceof Error) ||
-				error instanceof ReducerPreconditionError ||
-				error.stack === undefined
-			) {
-				return false;
-			}
-
-			const message = extractMessage(error.stack);
-
-			if (this.initialError === undefined) {
-				this.initialError = { message, op: lastOp };
-				return true;
-			}
-
-			return (
-				message === this.initialError.message && this.initialError.op.type === lastOp.type
-			);
 		}
+
+		if (this.initialError === undefined) {
+			// Initial capture — callSite should be available (stackTraceLimit=1),
+			// fall back to message if stacks are somehow unavailable.
+			this.initialError = {
+				message: errorInfo.message,
+				callSite: errorInfo.callSite ?? errorInfo.message,
+				op: lastOp,
+			};
+			return true;
+		}
+
+		const actual = this.stacksOn
+			? (errorInfo.callSite ?? errorInfo.message)
+			: errorInfo.message;
+		const expected = this.stacksOn
+			? this.initialError.callSite
+			: this.initialError.message;
+		return actual === expected && this.initialError.op.type === lastOp.type;
+	}
+}
+
+/**
+ * Run a replay and return the error info if the test fails with a
+ * relevant error, or undefined if it passes / fails with an irrelevant error.
+ *
+ * This is deliberately a standalone function (not a method) so the caught Error
+ * goes out of scope as soon as we return. V8 stack frames hold references to
+ * the scope chain of each frame; isolating the catch here ensures those
+ * references become GC-eligible immediately.
+ */
+async function getErrorInfo<TOperation extends BaseOperation>(
+	replayTest: (generator: AsyncGenerator<TOperation, unknown>) => Promise<void>,
+	generator: AsyncGenerator<TOperation, unknown>,
+): Promise<{ message: string; callSite: string | undefined } | undefined> {
+	try {
+		await replayTest(generator);
+		return undefined;
+	} catch (error: unknown) {
+		if (
+			error === undefined ||
+			!(error instanceof Error) ||
+			error instanceof ReducerPreconditionError
+		) {
+			return undefined;
+		}
+		const callSite =
+			error.stack !== undefined && error.stack.includes("\n    at")
+				? extractMessage(error.stack)
+				: undefined;
+		return { message: error.message, callSite };
+	}
+}
+
+/**
+ * Request garbage collection if the --expose-gc flag is enabled.
+ * This helps prevent OOM during minimization by releasing memory
+ * from disposed test infrastructure between replay iterations.
+ */
+function tryGC(): void {
+	const g = globalThis as unknown as { gc?: () => void };
+	if (typeof g.gc === "function") {
+		g.gc();
 	}
 }
 
