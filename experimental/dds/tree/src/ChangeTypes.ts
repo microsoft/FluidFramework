@@ -13,7 +13,7 @@ import { ConstraintEffect, NodeData, Payload, Side, TreeNodeSequence } from './p
 
 /**
  * An object which may have traits with children of the given type underneath it
- * @internal
+ * @alpha
  */
 export interface HasVariadicTraits<TChild> {
 	readonly traits?: {
@@ -23,7 +23,7 @@ export interface HasVariadicTraits<TChild> {
 
 /**
  * The type of a Change
- * @internal
+ * @alpha
  */
 export enum ChangeType {
 	Insert,
@@ -45,14 +45,14 @@ export enum ChangeType {
  * ```typescript
  * Change.insert(sourceId, destination)
  * ```
- * @internal
+ * @alpha
  */
 export type Change = Insert | Detach | Build | SetValue | Constraint;
 
 /**
  * Node or a detached sequence of nodes (referred to by a detached sequence ID) for use in a Build change.
  * See `BuildTreeNode` for more.
- * @internal
+ * @alpha
  */
 export type BuildNode = BuildTreeNode | number;
 
@@ -63,7 +63,7 @@ export type BuildNode = BuildTreeNode | number;
  * BuildTreeNode can be observed. If `identifier` is not supplied, one will be generated for it in an especially efficient manner
  * that allows for compact storage and transmission and thus this property should be omitted if convenient.
  * See the SharedTree readme for more on the tree format.
- * @internal
+ * @alpha
  */
 export interface BuildTreeNode extends HasVariadicTraits<BuildNode> {
 	definition: string;
@@ -77,7 +77,7 @@ export interface BuildTreeNode extends HasVariadicTraits<BuildNode> {
  *
  * Valid if (transitively) all DetachedSequenceId are used according to their rules (use here counts as a destination),
  * and all Nodes' identifiers are previously unused.
- * @internal
+ * @alpha
  */
 export interface Build {
 	readonly destination: number;
@@ -88,7 +88,7 @@ export interface Build {
 /**
  * Inserts a sequence of nodes at the specified destination.
  * The source can be constructed either by a Build (used to insert new nodes) or a Detach (amounts to a "move" operation).
- * @internal
+ * @alpha
  */
 export interface Insert {
 	readonly destination: StablePlace;
@@ -101,7 +101,7 @@ export interface Insert {
  * If a destination is specified, the detached sequence is associated with that ID and held for possible reuse
  * by later changes in this same Edit (such as by an Insert).
  * A Detach without a destination is a deletion of the specified sequence, as is a Detach with a destination that is not used later.
- * @internal
+ * @alpha
  */
 export interface Detach {
 	readonly destination?: number;
@@ -111,7 +111,7 @@ export interface Detach {
 
 /**
  * Modifies the payload of a node.
- * @internal
+ * @alpha
  */
 export interface SetValue {
 	readonly nodeToModify: NodeId;
@@ -132,7 +132,7 @@ export interface SetValue {
  * non-semantic ways. It is processed in order like any other Change in an Edit. It can cause an edit to fail if the
  * various constraints are not met at the time of evaluation (ex: the parentNode has changed due to concurrent editing).
  * Does not modify the document.
- * @internal
+ * @alpha
  */
 export interface Constraint {
 	/**
@@ -190,7 +190,7 @@ export interface Constraint {
 
 // Note: Documentation of this constant is merged with documentation of the `Change` interface.
 /**
- * @internal
+ * @alpha
  */
 export const Change = {
 	build: (source: BuildNode | TreeNodeSequence<BuildNode>, destination: number): Build => ({
@@ -295,7 +295,7 @@ export const Change = {
  * StablePlace.before(node)
  * StablePlace.atStartOf(trait)
  * ```
- * @internal
+ * @alpha
  */
 export interface StablePlace {
 	/**
@@ -333,7 +333,7 @@ export interface StablePlace {
  * ```typescript
  * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
  * ```
- * @internal
+ * @alpha
  */
 export interface StableRange {
 	readonly start: StablePlace;
@@ -350,7 +350,7 @@ export interface StableRange {
 
 // Note: Documentation of this constant is merged with documentation of the `StablePlace` interface.
 /**
- * @internal
+ * @alpha
  */
 export const StablePlace = {
 	/**
@@ -393,7 +393,7 @@ export const StablePlace = {
 
 // Note: Documentation of this constant is merged with documentation of the `StableRange` interface.
 /**
- * @internal
+ * @alpha
  */
 export const StableRange = {
 	/**

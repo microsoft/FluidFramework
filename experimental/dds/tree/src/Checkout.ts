@@ -15,18 +15,17 @@ import { Change } from './ChangeTypes.js';
 import { RestOrArray, assertWithMessage, fail, unwrapRestOrArray } from './Common.js';
 import { newEditId } from './EditUtilities.js';
 import { SharedTreeEvent } from './EventTypes.js';
-import type { ISharedTree } from './ISharedTree.js';
 import { EditId } from './Identifiers.js';
 import { CachingLogViewer } from './LogViewer.js';
 import { RevisionView } from './RevisionView.js';
-import { EditCommittedHandler } from './SharedTree.js';
+import { EditCommittedHandler, SharedTree } from './SharedTree.js';
 import { EditingResult, GenericTransaction, TransactionInternal, ValidEditingResult } from './TransactionInternal.js';
 import { TreeView } from './TreeView.js';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.
- * @internal
+ * @alpha
  */
 export enum CheckoutEvent {
 	/**
@@ -38,7 +37,7 @@ export enum CheckoutEvent {
 
 /**
  * Events which may be emitted by `Checkout`. See {@link CheckoutEvent} for documentation of event semantics.
- * @internal
+ * @alpha
  */
 export interface ICheckoutEvents extends IErrorEvent {
 	(event: 'viewChange', listener: (before: TreeView, after: TreeView) => void);
@@ -46,7 +45,7 @@ export interface ICheckoutEvents extends IErrorEvent {
 
 /**
  * The result of validation of an Edit.
- * @internal
+ * @alpha
  */
 export enum EditValidationResult {
 	/**
@@ -80,7 +79,7 @@ export enum EditValidationResult {
  * Events emitted by `Checkout` are documented in {@link CheckoutEvent}.
  * Exceptions thrown during event handling will be emitted as error events, which are automatically surfaced as error events on the
  * `SharedTree` used at construction time.
- * @internal
+ * @alpha
  */
 export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
 	/**
@@ -105,7 +104,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	/**
 	 * The shared tree this checkout views/edits.
 	 */
-	public readonly tree: ISharedTree;
+	public readonly tree: SharedTree;
 
 	/**
 	 * `tree`'s log viewer as a CachingLogViewer if it is one, otherwise undefined.
@@ -126,7 +125,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 
 	public disposed: boolean = false;
 
-	protected constructor(tree: ISharedTree, currentView: RevisionView, onEditCommitted: EditCommittedHandler) {
+	protected constructor(tree: SharedTree, currentView: RevisionView, onEditCommitted: EditCommittedHandler) {
 		super((_event, error: unknown) => {
 			this.tree.emit('error', error);
 		});

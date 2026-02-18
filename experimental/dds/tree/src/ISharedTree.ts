@@ -25,7 +25,7 @@ import type {
 
 /**
  * A {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/README.md | distributed tree}.
- * @internal
+ * @alpha
  */
 export interface ISharedTree extends ISharedObject<ISharedTreeEvents>, NodeIdContext {
 	/**

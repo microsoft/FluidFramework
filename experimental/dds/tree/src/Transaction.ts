@@ -9,15 +9,15 @@ import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { Change } from './ChangeTypes.js';
 import { RestOrArray, unwrapRestOrArray } from './Common.js';
 import { newEditId } from './EditUtilities.js';
-import type { ISharedTree } from './ISharedTree.js';
 import { CachingLogViewer } from './LogViewer.js';
+import { SharedTree } from './SharedTree.js';
 import { GenericTransaction, TransactionInternal } from './TransactionInternal.js';
 import { TreeView } from './TreeView.js';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
 
 /**
  * An event emitted by a `Transaction` to indicate a state change. See {@link TransactionEvents} for event argument information.
- * @internal
+ * @alpha
  */
 export enum TransactionEvent {
 	/**
@@ -28,7 +28,7 @@ export enum TransactionEvent {
 
 /**
  * Events which may be emitted by `Transaction`
- * @internal
+ * @alpha
  */
 export interface TransactionEvents extends IErrorEvent {
 	(event: TransactionEvent.ViewChange, listener: (before: TreeView, after: TreeView) => void);
@@ -37,7 +37,7 @@ export interface TransactionEvents extends IErrorEvent {
 /**
  * Buffers changes to be applied to an isolated view of a `SharedTree` over time before applying them directly to the tree itself as a
  * single edit
- * @internal
+ * @alpha
  */
 export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	/** The view of the tree when this transaction was created */
@@ -49,7 +49,7 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	 * transaction.
 	 * @param tree - the `SharedTree` that this transaction applies changes to
 	 */
-	public constructor(public readonly tree: ISharedTree) {
+	public constructor(public readonly tree: SharedTree) {
 		super();
 		const { currentView } = tree;
 		this.transaction = new GenericTransaction(currentView, new TransactionInternal.Policy());
