@@ -274,16 +274,12 @@ export interface ISignalMessageBase {
 // @beta @legacy (undocumented)
 export interface ISnapshotTree {
     // (undocumented)
-    blobs: {
-        [path: string]: string;
-    };
+    blobs: Record<string, string>;
     groupId?: string;
     // (undocumented)
     id?: string;
     // (undocumented)
-    trees: {
-        [path: string]: ISnapshotTree;
-    };
+    trees: Record<string, ISnapshotTree>;
     unreferenced?: true;
 }
 
@@ -345,9 +341,7 @@ export interface ISummaryProposal {
 // @public
 export interface ISummaryTree {
     groupId?: string;
-    tree: {
-        [path: string]: SummaryObject;
-    };
+    tree: Record<string, SummaryObject>;
     // (undocumented)
     type: SummaryType.Tree;
     unreferenced?: true;
