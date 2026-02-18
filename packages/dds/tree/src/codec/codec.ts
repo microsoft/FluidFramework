@@ -510,13 +510,13 @@ export const FluidClientVersion = {
 	v2_80: "2.80.0",
 
 	/**
-	 * Fluid Framework Client 2.81 and newer.
+	 * Fluid Framework Client 2.90 and newer.
 	 * @remarks
-	 * New formats introduced in 2.81:
-	 * - EditManagerSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.81
-	 * - DetachedFieldIndexSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.81
+	 * New formats introduced in 2.90:
+	 * - EditManagerSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.90
+	 * - DetachedFieldIndexSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.90
 	 */
-	v2_81: "2.81.0",
+	v2_90: "2.90.0",
 } as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**

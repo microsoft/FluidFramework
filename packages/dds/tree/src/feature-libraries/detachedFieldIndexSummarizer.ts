@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 
 import { FluidClientVersion } from "../codec/index.js";
-
 import type { DetachedFieldIndex } from "../core/index.js";
 import {
 	type Summarizable,
@@ -26,6 +25,7 @@ import {
 	VersionedSummarizer,
 } from "../shared-tree-core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
+
 import { summaryContentBlobKey as summaryContentBlobKeyV1ToV2 } from "./detachedFieldIndexSummaryFormatV1ToV2.js";
 import { summaryContentBlobKey as summaryContentBlobKeyV3 } from "./detachedFieldIndexSummaryFormatV3.js";
 
@@ -66,7 +66,7 @@ function minVersionToDetachedFieldIndexSummaryFormatVersion(
 ): DetachedFieldIndexSummaryFormatVersion {
 	return getConfigForMinVersionForCollab(version, {
 		[lowestMinVersionForCollab]: DetachedFieldIndexSummaryFormatVersion.v2,
-		[FluidClientVersion.v2_81]: DetachedFieldIndexSummaryFormatVersion.v3,
+		[FluidClientVersion.v2_90]: DetachedFieldIndexSummaryFormatVersion.v3,
 	});
 }
 
