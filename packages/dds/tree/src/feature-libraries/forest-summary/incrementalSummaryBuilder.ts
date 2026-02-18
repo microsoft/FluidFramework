@@ -32,18 +32,6 @@ import type {
 import { summaryContentBlobKey } from "./summaryFormatV3.js";
 
 /**
- * State that tells whether a summary is currently being tracked.
- */
-export const ForestSummaryTrackingState = {
-	/** A summary is currently being tracked. */
-	Tracking: "Tracking",
-	/** A summary is ready to be tracked. */
-	ReadyToTrack: "ReadyToTrack",
-} as const;
-export type ForestSummaryTrackingState =
-	(typeof ForestSummaryTrackingState)[keyof typeof ForestSummaryTrackingState];
-
-/**
  * The properties of a chunk tracked during the loading process.
  * These are used to identify a chunk when it is decoded and recreate the tracking state
  * as it was when the summary that the client is loading from was generated.
@@ -146,17 +134,11 @@ export enum ForestIncrementalSummaryBehavior {
 
 /**
  * Validates that a summary is currently being tracked and that the tracked summary properties are defined.
- * @param forestSummaryState - The current state of the forest summary tracking.
  * @param trackedSummaryProperties - The properties of the tracked summary, which must be available.
  */
 function validateTrackingSummary(
-	forestSummaryState: ForestSummaryTrackingState,
 	trackedSummaryProperties: TrackedSummaryProperties | undefined,
 ): asserts trackedSummaryProperties is TrackedSummaryProperties {
-	assert(
-		forestSummaryState === ForestSummaryTrackingState.Tracking,
-		0xc22 /* Not tracking a summary */,
-	);
 	assert(
 		trackedSummaryProperties !== undefined,
 		0xc23 /* Tracked summary properties must be available when tracking a summary */,
@@ -165,17 +147,11 @@ function validateTrackingSummary(
 
 /**
  * Validates that a summary is ready to be tracked and that the tracked summary properties are undefined.
- * @param forestSummaryState - The current state of the forest summary tracking.
  * @param trackedSummaryProperties - The properties of the tracked summary, which must be undefined.
  */
 function validateReadyToTrackSummary(
-	forestSummaryState: ForestSummaryTrackingState,
 	trackedSummaryProperties: TrackedSummaryProperties | undefined,
 ): asserts trackedSummaryProperties is undefined {
-	assert(
-		forestSummaryState === ForestSummaryTrackingState.ReadyToTrack,
-		0xc24 /* Already tracking a summary */,
-	);
 	assert(
 		trackedSummaryProperties === undefined,
 		0xc25 /* Tracked summary properties must not be available when ready to track */,
@@ -235,19 +211,29 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	> = new Map();
 
 	/**
-	 * The state indicating whether a summary is currently being tracked or not.
+	 * True when encoding a summary, false otherwise.
+	 * @remarks
+	 * Exposed for testing purposes.
 	 */
-	public forestSummaryState: ForestSummaryTrackingState =
-		ForestSummaryTrackingState.ReadyToTrack;
-
+	public get isSummarizing(): boolean {
+		return this.trackedSummaryProperties !== undefined;
+	}
 	/**
 	 * The sequence number of the latest summary that was successful.
 	 */
 	private latestSummarySequenceNumber: number = -1;
 
 	/**
-	 * The current state of the summary being tracked.
-	 * This is undefined if no summary is currently being tracked.
+	 * The current state of the summary being "tracked".
+	 * @remarks
+	 * A summary being "tracked" means that a summary is being encoded.
+	 * This is undefined if no summary is currently being encoded.
+	 *
+	 * @privateRemarks
+	 * This has nothing to do which how content from a summary being loaded is tracked (thats written all in chunkTrackingPropertiesMap).
+	 * "Tracked" should probably be renamed to "encoded" or "summarizing" or something like that to avoid confusion.
+	 * Perhaps a better way to clarify this would be to not store this property on this object at all, and have it
+	 * only exist within the scope of the summary encoding (use an encoding specific object to accumulate any stat necessary during encode).
 	 */
 	private trackedSummaryProperties: TrackedSummaryProperties | undefined;
 
@@ -344,9 +330,8 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			return ForestIncrementalSummaryBehavior.SingleBlob;
 		}
 
-		validateReadyToTrackSummary(this.forestSummaryState, this.trackedSummaryProperties);
+		validateReadyToTrackSummary(this.trackedSummaryProperties);
 
-		this.forestSummaryState = ForestSummaryTrackingState.Tracking;
 		this.latestSummarySequenceNumber = incrementalSummaryContext.latestSummarySequenceNumber;
 		this.trackedSummaryProperties = {
 			summarySequenceNumber: incrementalSummaryContext.summarySequenceNumber,
@@ -368,7 +353,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
 	): ChunkReferenceId[] {
 		// Validate that a summary is currently being tracked and that the tracked summary properties are defined.
-		validateTrackingSummary(this.forestSummaryState, this.trackedSummaryProperties);
+		validateTrackingSummary(this.trackedSummaryProperties);
 
 		const chunkReferenceIds: ChunkReferenceId[] = [];
 		const chunks = this.getChunkAtCursor(cursor);
@@ -469,7 +454,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			return;
 		}
 
-		validateTrackingSummary(this.forestSummaryState, this.trackedSummaryProperties);
+		validateTrackingSummary(this.trackedSummaryProperties);
 
 		builder.addBlob(forestSummaryRootContentKey, forestSummaryRootContent);
 
@@ -499,7 +484,6 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			}
 		}
 
-		this.forestSummaryState = ForestSummaryTrackingState.ReadyToTrack;
 		this.trackedSummaryProperties = undefined;
 	}
 
