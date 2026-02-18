@@ -1136,9 +1136,9 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			// This block makes sure we still validate the encoded data schema for codecs following the latter
 			// pattern.
 			const jsonCodec =
-				codec.json.encodedSchema === undefined
-					? codec.json
-					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
+				codec.encodedSchema === undefined
+					? codec
+					: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
 					describe(
@@ -1156,16 +1156,6 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 							}
 						},
 					);
-				}
-			});
-
-			describe("can binary roundtrip", () => {
-				for (const [name, data, context] of successes) {
-					it(name, () => {
-						const encoded = codec.binary.encode(data, context);
-						const decoded = codec.binary.decode(encoded, context);
-						assertEquivalent(decoded, data);
-					});
 				}
 			});
 
@@ -1204,9 +1194,9 @@ export function makeDiscontinuedEncodingTestSuite(
 		describe(`${version} (discontinued)`, () => {
 			const codec = family.resolve(version);
 			const jsonCodec =
-				codec.json.encodedSchema === undefined
-					? codec.json
-					: withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic);
+				codec.encodedSchema === undefined
+					? codec
+					: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 			it("throws when encoding", () => {
 				assert.throws(
 					() => jsonCodec.encode({}, {}),

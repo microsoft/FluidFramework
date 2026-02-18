@@ -10,7 +10,6 @@ import {
 	withSchemaValidation,
 	type ICodecOptions,
 	type IJsonCodec,
-	type IMultiFormatCodec,
 	type SchemaValidationFunction,
 } from "../../codec/index.js";
 import {
@@ -91,7 +90,7 @@ type ModularChangeCodec = IJsonCodec<
 	ChangeEncodingContext
 >;
 
-type FieldCodec = IMultiFormatCodec<
+type FieldCodec = IJsonCodec<
 	FieldChangeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
@@ -164,7 +163,7 @@ export function makeModularChangeCodecV3(
 				generateId: () => fail("Should not be called during encoding"),
 			};
 
-			const encodedChange = codec.json.encode(fieldChange.change, fieldContext);
+			const encodedChange = codec.encode(fieldChange.change, fieldContext);
 			if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
 				fail(0xb1f /* Encoded change didn't pass schema validation. */);
 			}
@@ -294,7 +293,7 @@ export function makeModularChangeCodecV3(
 				}),
 			};
 
-			const fieldChangeset = codec.json.decode(field.change, fieldContext);
+			const fieldChangeset = codec.decode(field.change, fieldContext);
 
 			const crossFieldKeys = getChangeHandler(fieldKinds, field.fieldKind).getCrossFieldKeys(
 				fieldChangeset,
