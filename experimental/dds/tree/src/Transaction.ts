@@ -9,8 +9,8 @@ import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { Change } from './ChangeTypes.js';
 import { RestOrArray, unwrapRestOrArray } from './Common.js';
 import { newEditId } from './EditUtilities.js';
+import type { ISharedTree } from './ISharedTree.js';
 import { CachingLogViewer } from './LogViewer.js';
-import { SharedTree } from './SharedTree.js';
 import { GenericTransaction, TransactionInternal } from './TransactionInternal.js';
 import { TreeView } from './TreeView.js';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
@@ -49,7 +49,7 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	 * transaction.
 	 * @param tree - the `SharedTree` that this transaction applies changes to
 	 */
-	public constructor(public readonly tree: SharedTree) {
+	public constructor(public readonly tree: ISharedTree) {
 		super();
 		const { currentView } = tree;
 		this.transaction = new GenericTransaction(currentView, new TransactionInternal.Policy());

@@ -4,8 +4,9 @@
  */
 
 import { Checkout } from './Checkout.js';
+import type { ISharedTree } from './ISharedTree.js';
 import { RevisionView } from './RevisionView.js';
-import { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
+import { EditCommittedEventArguments } from './SharedTree.js';
 
 /**
  * Checkout that always stays up to date with the SharedTree.
@@ -17,7 +18,7 @@ export class EagerCheckout extends Checkout {
 	/**
 	 * @param tree - the tree
 	 */
-	public constructor(tree: SharedTree) {
+	public constructor(tree: ISharedTree) {
 		super(tree, tree.currentView, (args: EditCommittedEventArguments) => {
 			this.emitChange();
 		});

@@ -533,24 +533,24 @@ export const versionComparator = (versionA: string, versionB: string): number =>
  */
 export function setUpTestTree(idSource?: IdCompressor | SharedTree, expensiveValidation = false): TestTree {
 	const source = idSource ?? new IdCompressor(createSessionId(), reservedIdCount);
-	if (source instanceof SharedTree) {
-		assert(source.edits.length === 0, 0x669 /* tree must be a new SharedTree */);
-		const getNormalizer = () => getIdNormalizerFromSharedTree(source);
-		const contextWrapper = {
-			normalizeToOpSpace: (id: NodeId) => getNormalizer().normalizeToOpSpace(id),
-			normalizeToSessionSpace: (id: OpSpaceNodeId, sessionId: SessionId) =>
-				getNormalizer().normalizeToSessionSpace(id, sessionId),
-			get localSessionId() {
-				return getNormalizer().localSessionId;
-			},
-		};
-		const simpleTestTree = new SimpleTestTree(source, contextWrapper, expensiveValidation);
-		setTestTree(source, simpleTestTree);
-		return simpleTestTree;
+	if (source instanceof IdCompressor) {
+		const context = makeNodeIdContext(source);
+		return new SimpleTestTree(context, context, expensiveValidation);
 	}
 
-	const context = makeNodeIdContext(source);
-	return new SimpleTestTree(context, context, expensiveValidation);
+	assert(source.edits.length === 0, 0x669 /* tree must be a new SharedTree */);
+	const getNormalizer = () => getIdNormalizerFromSharedTree(source);
+	const contextWrapper = {
+		normalizeToOpSpace: (id: NodeId) => getNormalizer().normalizeToOpSpace(id),
+		normalizeToSessionSpace: (id: OpSpaceNodeId, sessionId: SessionId) =>
+			getNormalizer().normalizeToSessionSpace(id, sessionId),
+		get localSessionId() {
+			return getNormalizer().localSessionId;
+		},
+	};
+	const simpleTestTree = new SimpleTestTree(source, contextWrapper, expensiveValidation);
+	setTestTree(source, simpleTestTree);
+	return simpleTestTree;
 }
 
 /**

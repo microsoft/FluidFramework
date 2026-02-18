@@ -6,8 +6,10 @@
 import { bufferToString } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import type { IFluidLoadable } from '@fluidframework/core-interfaces/internal';
 import { assert } from '@fluidframework/core-utils/internal';
 import {
+	type IChannel,
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -26,6 +28,7 @@ import {
 	SharedObject,
 	createSingleBlobSummary,
 } from '@fluidframework/shared-object-base/internal';
+import type { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import {
 	IEventSampler,
 	ITelemetryLoggerPropertyBags,
@@ -49,6 +52,7 @@ import {
 } from './EditUtilities.js';
 import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes.js';
 import { revert } from './HistoryEditFactory.js';
+import type { ISharedTree } from './ISharedTree.js';
 import { convertEditIds } from './IdConversion.js';
 import {
 	AttributionId,
@@ -247,7 +251,7 @@ export class SharedTreeFactory implements IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		_channelAttributes: Readonly<IChannelAttributes>
-	): Promise<SharedTree> {
+	): Promise<ISharedTree> {
 		const sharedTree = this.createSharedTree(runtime, id);
 		await sharedTree.load(services);
 		return sharedTree;
@@ -258,19 +262,19 @@ export class SharedTreeFactory implements IChannelFactory {
 	 * @param runtime - data store runtime that owns the new SharedTree
 	 * @param id - optional name for the SharedTree
 	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
+	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
 		const sharedTree = this.createSharedTree(runtime, id);
 		sharedTree.initializeLocal();
 		return sharedTree;
 	}
 
-	private createSharedTree(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
+	private createSharedTree(runtime: IFluidDataStoreRuntime, id: string): SharedTreeClass {
 		const [writeFormat] = this.args;
 		switch (writeFormat) {
 			case WriteFormat.v0_0_2:
-				return new SharedTree(runtime, id, ...(this.args as SharedTreeArgs<WriteFormat.v0_0_2>));
+				return new SharedTreeClass(runtime, id, ...(this.args as SharedTreeArgs<WriteFormat.v0_0_2>));
 			case WriteFormat.v0_1_1:
-				return new SharedTree(runtime, id, ...(this.args as SharedTreeArgs<WriteFormat.v0_1_1>));
+				return new SharedTreeClass(runtime, id, ...(this.args as SharedTreeArgs<WriteFormat.v0_1_1>));
 			default:
 				fail('Unknown write format');
 		}
@@ -297,7 +301,7 @@ export interface EditCommittedEventArguments {
 	/** Whether or not this is a local edit. */
 	readonly local: boolean;
 	/** The tree the edit was committed on. Required for local edit events handled by SharedTreeUndoRedoHandler. */
-	readonly tree: SharedTree;
+	readonly tree: ISharedTree;
 }
 
 /**
@@ -310,7 +314,7 @@ export interface SequencedEditAppliedEventArguments {
 	/** Whether or not this was a local edit. */
 	readonly wasLocal: boolean;
 	/** The tree the edit was applied to. */
-	readonly tree: SharedTree;
+	readonly tree: ISharedTree;
 	/** The telemetry logger associated with sequenced edit application. */
 	readonly logger: ITelemetryLoggerExt;
 	/** The reconciliation path for the edit. See {@link ReconciliationPath} for details. */
@@ -386,44 +390,7 @@ const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
  * A {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/README.md | distributed tree}.
  * @internal
  */
-export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
-	/**
-	 * Create a new SharedTree. It will contain the default value (see initialTree).
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree {
-		return runtime.createChannel(id, SharedTreeFactory.Type) as SharedTree;
-	}
-
-	/**
-	 * Get a factory for SharedTree to register with the data store.
-	 * @param writeFormat - Determines the format version the SharedTree will write ops and summaries in.
-	 * This format may be updated to a newer (supported) version at runtime if a collaborating shared-tree
-	 * that was initialized with a newer write version connects to the session. Care must be taken when changing this value,
-	 * as a staged rollout must of occurred such that all collaborating clients must have the code to read at least the version
-	 * written.
-	 * See {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/docs/Write-Format.md | the write format documentation} for more information.
-	 * @param options - Configuration options for this tree
-	 * @returns A factory that creates `SharedTree`s and loads them from storage.
-	 */
-	public static getFactory(...args: SharedTreeArgs<WriteFormat.v0_0_2>): SharedTreeFactory;
-
-	public static getFactory(...args: SharedTreeArgs<WriteFormat.v0_1_1>): SharedTreeFactory;
-
-	/**
-	 * Get a factory for SharedTree to register with the data store, using the latest write version and default options.
-	 */
-	public static getFactory(): SharedTreeFactory;
-
-	public static getFactory(...args: SharedTreeArgs | []): SharedTreeFactory {
-		const [formatArg, options] = args;
-		const writeFormat = formatArg ?? WriteFormat.v0_1_1;
-		// 	On 0.1.1 documents, due to current code limitations, all clients MUST agree on the value of `summarizeHistory`.
-		//  Note that this means staged rollout changing this value should not be attempted.
-		//  It is possible to update shared-tree to correctly handle such a staged rollout, but that hasn't been implemented.
-		//  See the skipped test in SharedTreeFuzzTests.ts for more details on this issue.
-		return new SharedTreeFactory(writeFormat, options);
-	}
-
+export class SharedTreeClass extends SharedObject<ISharedTreeEvents> implements ISharedTree, NodeIdContext {
 	/**
 	 * The UUID used for attribution of nodes created by this SharedTree. All shared trees with a write format of 0.1.1 or
 	 * greater have a unique attribution ID which may be configured in the constructor. All other shared trees (i.e. those
@@ -449,7 +416,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 */
 	private idCompressor: IdCompressor;
 
-	private readonly idNormalizer: NodeIdNormalizer<OpSpaceNodeId> & { tree: SharedTree } = {
+	private readonly idNormalizer: NodeIdNormalizer<OpSpaceNodeId> & { tree: SharedTreeClass } = {
 		tree: this,
 		get localSessionId() {
 			return this.tree.idCompressor.localSessionId;
@@ -495,7 +462,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 	private readonly processEditResult = (editResult: EditStatus, editId: EditId): void => {
 		// TODO:#44859: Invalid results should be handled by the app
-		this.emit(SharedTree.eventFromEditResult(editResult), editId);
+		this.emit(SharedTreeClass.eventFromEditResult(editResult), editId);
 	};
 
 	private readonly processSequencedEditResult = ({
@@ -970,12 +937,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 *
 	 * - state of caches
 	 */
-	public equals(sharedTree: SharedTree): boolean {
+	public equals(sharedTree: ISharedTree): boolean {
 		if (!areRevisionViewsSemanticallyEqual(this.currentView, this, sharedTree.currentView, sharedTree)) {
 			return false;
 		}
 
-		return this.editLog.equals(sharedTree.editLog);
+		return this.editLog.equals((sharedTree as SharedTreeClass).editLog);
 	}
 
 	/**
@@ -1215,7 +1182,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @returns a list containing `EditId`s for all applied edits.
 	 */
 	public mergeEditsFrom(
-		other: SharedTree,
+		other: ISharedTree,
 		edits: Iterable<Edit<InternalizedChange>>,
 		stableIdRemapper?: (id: StableNodeId) => StableNodeId
 	): EditId[] {
@@ -1585,3 +1552,41 @@ function isUpdateRequired(oldVersion: string, newVersion: string): boolean {
 function isTreeNodeSequence(source: TreeNodeSequence<BuildNode> | BuildNode): source is TreeNodeSequence<BuildNode> {
 	return Array.isArray(source);
 }
+
+/**
+ * Defines the public API shape for the SharedTree entrypoint, including factory overloads.
+ * @internal
+ */
+export interface SharedTreeKind {
+	getFactory(...args: SharedTreeArgs<WriteFormat.v0_0_2>): SharedTreeFactory;
+	getFactory(...args: SharedTreeArgs<WriteFormat.v0_1_1>): SharedTreeFactory;
+	getFactory(): SharedTreeFactory;
+	create(runtime: IFluidDataStoreRuntime, id?: string): ISharedTree;
+	is(value: IFluidLoadable): value is IFluidLoadable & ISharedTree;
+}
+
+/**
+ * Entrypoint for {@link ISharedTree} creation.
+ * @internal
+ */
+// SharedObjectKind has a brand (ErasedType) that can't be satisfied by an object literal, so the cast is necessary.
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+export const SharedTree = {
+	getFactory(...args: SharedTreeArgs | []): SharedTreeFactory {
+		const [formatArg, options] = args;
+		const writeFormat = formatArg ?? WriteFormat.v0_1_1;
+		return new SharedTreeFactory(writeFormat, options);
+	},
+	create(runtime: IFluidDataStoreRuntime, id?: string): ISharedTree {
+		return runtime.createChannel(id, SharedTreeFactoryType) as ISharedTree;
+	},
+	is(value: IFluidLoadable): value is IFluidLoadable & ISharedTree {
+		return (value as IChannel).attributes?.type === SharedTreeFactoryType;
+	},
+} as SharedTreeKind & SharedObjectKind<ISharedTree>;
+
+/**
+ * Instance type alias for {@link (SharedTree:variable)}.
+ * @internal
+ */
+export type SharedTree = ISharedTree;

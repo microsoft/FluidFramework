@@ -15,10 +15,11 @@ import { Change } from './ChangeTypes.js';
 import { RestOrArray, assertWithMessage, fail, unwrapRestOrArray } from './Common.js';
 import { newEditId } from './EditUtilities.js';
 import { SharedTreeEvent } from './EventTypes.js';
+import type { ISharedTree } from './ISharedTree.js';
 import { EditId } from './Identifiers.js';
 import { CachingLogViewer } from './LogViewer.js';
 import { RevisionView } from './RevisionView.js';
-import { EditCommittedHandler, SharedTree } from './SharedTree.js';
+import { EditCommittedHandler } from './SharedTree.js';
 import { EditingResult, GenericTransaction, TransactionInternal, ValidEditingResult } from './TransactionInternal.js';
 import { TreeView } from './TreeView.js';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
@@ -104,7 +105,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	/**
 	 * The shared tree this checkout views/edits.
 	 */
-	public readonly tree: SharedTree;
+	public readonly tree: ISharedTree;
 
 	/**
 	 * `tree`'s log viewer as a CachingLogViewer if it is one, otherwise undefined.
@@ -125,7 +126,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 
 	public disposed: boolean = false;
 
-	protected constructor(tree: SharedTree, currentView: RevisionView, onEditCommitted: EditCommittedHandler) {
+	protected constructor(tree: ISharedTree, currentView: RevisionView, onEditCommitted: EditCommittedHandler) {
 		super((_event, error: unknown) => {
 			this.tree.emit('error', error);
 		});
