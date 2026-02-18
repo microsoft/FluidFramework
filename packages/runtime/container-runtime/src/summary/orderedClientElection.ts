@@ -690,7 +690,7 @@ export class OrderedClientElection
 		sequenceNumber: number,
 		forceSend: boolean = false,
 		reason?: string,
-		sampleable: boolean = false
+		sampleable: boolean = false,
 	): void {
 		if (this.recordPerformanceEvents || forceSend) {
 			this.logger.sendPerformanceEvent({
@@ -702,7 +702,7 @@ export class OrderedClientElection
 				isEligible: client === undefined ? false : this.isEligibleFn(client),
 				isSummarizerClient: client?.client.details.type === summarizerClientType,
 				reason,
-				sampleable
+				sampleable,
 			});
 		}
 	}

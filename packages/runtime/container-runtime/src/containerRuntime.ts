@@ -1763,7 +1763,7 @@ export class ContainerRuntime
 				gcOptions_gcGeneration: runtimeOptions.gcOptions[gcGenerationOptionName],
 			}),
 			// New sampleable property
-			sampleable: true
+			sampleable: true,
 		});
 
 		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
