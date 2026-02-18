@@ -33,6 +33,8 @@ import {
 import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/formatCommon.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV1 } from "../../../feature-libraries/forest-summary/formatV1.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FormatV2 } from "../../../feature-libraries/forest-summary/formatV2.js";
 import {
 	FieldBatchFormatVersion,
 	TreeCompressionStrategy,

@@ -116,7 +116,7 @@ export interface FieldBatchEncodingContext {
  */
 export type FieldBatchCodec = IJsonCodec<
 	FieldBatch,
-	JsonCompatibleReadOnly,
+	EncodedFieldBatch,
 	JsonCompatibleReadOnly,
 	FieldBatchEncodingContext
 >;

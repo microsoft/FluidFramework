@@ -14,7 +14,6 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	FieldBatchFormatVersion,
-	type EncodedFieldBatch,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/index.js";
 import {
@@ -44,7 +43,7 @@ describe("makeFieldBatchCodec", () => {
 				idCompressor: testIdCompressor,
 			};
 
-			const encoded = codec.encode([input], context) as EncodedFieldBatch;
+			const encoded = codec.encode([input], context);
 			assert.equal(encoded.version, FieldBatchFormatVersion.v1);
 		});
 
@@ -61,7 +60,7 @@ describe("makeFieldBatchCodec", () => {
 				idCompressor: testIdCompressor,
 			};
 
-			const encoded = codec.encode([input], context) as EncodedFieldBatch;
+			const encoded = codec.encode([input], context);
 			assert.equal(encoded.version, FieldBatchFormatVersion.v2);
 		});
 

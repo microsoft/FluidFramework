@@ -32,7 +32,7 @@ import { FormatV2 } from "./formatV2.js";
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
 export type ForestCodec = IJsonCodec<
 	FieldSet,
-	JsonCompatibleReadOnly,
+	Format,
 	JsonCompatibleReadOnly,
 	FieldBatchEncodingContext
 >;
