@@ -141,22 +141,21 @@ function composeMarksIgnoreChild(
 
 		// `newMark` can be either a remove or another pin.
 		// A pin is treated as a detach and attach, so we call `composeAttachDetach` in either case.
-		const isNewRedundantPin = newMark.type !== "Detach";
+		const isNewPin = newMark.type === "Attach";
+		const baseId = getAttachedRootId(baseMark);
+		moveEffects.composeAttachDetach(baseId, getMovedNodeId(newMark), baseMark.count, isNewPin);
 
-		moveEffects.composeAttachDetach(
-			getAttachedRootId(baseMark),
-			{
-				revision: newMark.revision,
-				localId: newMark.id,
-			},
-			baseMark.count,
-			isNewRedundantPin,
-		);
-
-		if (!isNewRedundantPin) {
+		if (!isNewPin) {
+			// `newMark` is a detach.
+			// The attach from the base pin cancels with the new detach,
+			// and we are left with the detach portion of the base pin, plus
+			// a rename to the output cell ID of the new detach.
 			return {
-				...newMark,
-				cellRename: getDetachOutputCellId(newMark), // XXX: Why do we need this?
+				type: "Detach",
+				id: baseId.localId,
+				revision: baseId.revision,
+				count: baseMark.count,
+				cellRename: getDetachOutputCellId(newMark),
 			};
 		}
 
