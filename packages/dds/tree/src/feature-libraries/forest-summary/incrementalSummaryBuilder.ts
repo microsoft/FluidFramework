@@ -132,26 +132,6 @@ export enum ForestIncrementalSummaryBehavior {
 	SingleBlob,
 }
 
-/**
- * Validates that a summary is currently being tracked and that the tracked summary properties are defined.
- * @param trackedSummaryProperties - The properties of the tracked summary, which must be available.
- */
-function validateTrackingSummary(
-	trackedSummaryProperties: TrackedSummaryProperties | undefined,
-): asserts trackedSummaryProperties is TrackedSummaryProperties {
-	assert(trackedSummaryProperties !== undefined, 0xc22 /* Not tracking a summary */);
-}
-
-/**
- * Validates that a summary is ready to be tracked and that the tracked summary properties are undefined.
- * @param trackedSummaryProperties - The properties of the tracked summary, which must be undefined.
- */
-function validateReadyToTrackSummary(
-	trackedSummaryProperties: TrackedSummaryProperties | undefined,
-): asserts trackedSummaryProperties is undefined {
-	assert(trackedSummaryProperties === undefined, 0xc24 /* Already tracking a summary */);
-}
-
 /* eslint-disable jsdoc/check-indentation */
 /**
  * Tracks and builds the incremental summary tree for a forest where chunks that support incremental encoding are
@@ -302,6 +282,15 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	}
 
 	/**
+	 * Asserts that a summary is currently being tracked and that the tracked summary properties are defined.
+	 * @returns The properties of the tracked summary.
+	 */
+	private requireTrackingSummary(): TrackedSummaryProperties {
+		assert(this.trackedSummaryProperties !== undefined, 0xc22 /* Not tracking a summary */);
+		return this.trackedSummaryProperties;
+	}
+
+	/**
 	 * Must be called when starting a new forest summary to track it.
 	 * @param fullTree - Whether the summary is a full tree summary. If true, the summary will not contain
 	 * any summary handles. All chunks must be summarized in full.
@@ -316,6 +305,11 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		stringify: SummaryElementStringifier;
 		builder: SummaryTreeBuilder;
 	}): ForestIncrementalSummaryBehavior {
+		assert(
+			this.trackedSummaryProperties === undefined,
+			0xc24 /* Already tracking a summary */,
+		);
+
 		const { fullTree, incrementalSummaryContext, stringify, builder } = args;
 		// If there is no incremental summary context, do not summarize incrementally. This happens in two scenarios:
 		// 1. When summarizing a detached container, i.e., the first ever summary.
@@ -323,8 +317,6 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		if (!this.enableIncrementalSummary || incrementalSummaryContext === undefined) {
 			return ForestIncrementalSummaryBehavior.SingleBlob;
 		}
-
-		validateReadyToTrackSummary(this.trackedSummaryProperties);
 
 		this.latestSummarySequenceNumber = incrementalSummaryContext.latestSummarySequenceNumber;
 		this.trackedSummaryProperties = {
@@ -347,7 +339,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
 	): ChunkReferenceId[] {
 		// Validate that a summary is currently being tracked and that the tracked summary properties are defined.
-		validateTrackingSummary(this.trackedSummaryProperties);
+		const trackedSummaryProperties = this.requireTrackingSummary();
 
 		const chunkReferenceIds: ChunkReferenceId[] = [];
 		const chunks = this.getChunkAtCursor(cursor);
@@ -362,12 +354,12 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				this.latestSummarySequenceNumber,
 				chunk,
 			);
-			if (previousChunkProperties !== undefined && !this.trackedSummaryProperties.fullTree) {
+			if (previousChunkProperties !== undefined && !trackedSummaryProperties.fullTree) {
 				chunkProperties = previousChunkProperties;
-				this.trackedSummaryProperties.parentSummaryBuilder.addHandle(
+				trackedSummaryProperties.parentSummaryBuilder.addHandle(
 					`${chunkProperties.referenceId}`,
 					SummaryType.Tree,
-					`${this.trackedSummaryProperties.latestSummaryBasePath}/${chunkProperties.summaryPath}`,
+					`${trackedSummaryProperties.latestSummaryBasePath}/${chunkProperties.summaryPath}`,
 				);
 			} else {
 				// Generate a new reference ID for the chunk.
@@ -377,23 +369,23 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				// for the chunk in its summary properties.
 				// This is done before encoding the chunk so that the summary path is updated correctly when encoding
 				// any incremental chunks that are under this chunk.
-				this.trackedSummaryProperties.chunkSummaryPath.push(newReferenceId);
+				trackedSummaryProperties.chunkSummaryPath.push(newReferenceId);
 
 				chunkProperties = {
 					referenceId: newReferenceId,
-					summaryPath: this.trackedSummaryProperties.chunkSummaryPath.join("/"),
+					summaryPath: trackedSummaryProperties.chunkSummaryPath.join("/"),
 				};
 
-				const parentSummaryBuilder = this.trackedSummaryProperties.parentSummaryBuilder;
+				const parentSummaryBuilder = trackedSummaryProperties.parentSummaryBuilder;
 				// Create a new summary builder for this chunk to build its summary tree which will be stored in the
 				// parent's summary tree under its reference ID.
 				// Before encoding the chunk, set the parent summary builder to this chunk's summary builder so that
 				// any incremental chunks in the subtree of this chunk will use that as their parent summary builder.
 				const chunkSummaryBuilder = new SummaryTreeBuilder();
-				this.trackedSummaryProperties.parentSummaryBuilder = chunkSummaryBuilder;
+				trackedSummaryProperties.parentSummaryBuilder = chunkSummaryBuilder;
 				chunkSummaryBuilder.addBlob(
 					summaryContentBlobKey,
-					this.trackedSummaryProperties.stringify(chunkEncoder(chunk)),
+					trackedSummaryProperties.stringify(chunkEncoder(chunk)),
 				);
 
 				// Add this chunk's summary tree to the parent's summary tree. The summary tree contains its encoded
@@ -404,13 +396,13 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				);
 
 				// Restore the parent summary builder and chunk summary path.
-				this.trackedSummaryProperties.parentSummaryBuilder = parentSummaryBuilder;
-				this.trackedSummaryProperties.chunkSummaryPath.pop();
+				trackedSummaryProperties.parentSummaryBuilder = parentSummaryBuilder;
+				trackedSummaryProperties.chunkSummaryPath.pop();
 			}
 
 			setInNestedMap(
 				this.chunkTrackingPropertiesMap,
-				this.trackedSummaryProperties.summarySequenceNumber,
+				trackedSummaryProperties.summarySequenceNumber,
 				chunk,
 				chunkProperties,
 			);
@@ -448,7 +440,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			return;
 		}
 
-		validateTrackingSummary(this.trackedSummaryProperties);
+		const trackedSummaryProperties = this.requireTrackingSummary();
 
 		builder.addBlob(forestSummaryRootContentKey, forestSummaryRootContent);
 
@@ -460,7 +452,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			this.latestSummarySequenceNumber,
 		);
 		const currentSummaryTrackingMap = this.chunkTrackingPropertiesMap.get(
-			this.trackedSummaryProperties.summarySequenceNumber,
+			trackedSummaryProperties.summarySequenceNumber,
 		);
 		if (latestSummaryTrackingMap !== undefined && currentSummaryTrackingMap !== undefined) {
 			for (const [chunk, chunkProperties] of latestSummaryTrackingMap.entries()) {
