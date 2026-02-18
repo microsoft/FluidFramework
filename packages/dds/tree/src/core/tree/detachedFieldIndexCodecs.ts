@@ -24,16 +24,18 @@ type BuildData = CodecWriteOptions & {
 
 export const detachedFieldIndexCodecBuilder = ClientVersionDispatchingCodecBuilder.build(
 	"DetachedFieldIndex",
-	{
-		[lowestMinVersionForCollab]: {
+	[
+		{
+			minVersionForCollab: lowestMinVersionForCollab,
 			formatVersion: DetachedFieldIndexFormatVersion.v1,
 			codec: (buildData: BuildData) =>
 				makeDetachedNodeToFieldCodecV1(buildData.revisionTagCodec, buildData.idCompressor),
 		},
-		[FluidClientVersion.v2_52]: {
+		{
+			minVersionForCollab: FluidClientVersion.v2_52,
 			formatVersion: DetachedFieldIndexFormatVersion.v2,
 			codec: (buildData: BuildData) =>
 				makeDetachedNodeToFieldCodecV2(buildData.revisionTagCodec, buildData.idCompressor),
 		},
-	},
+	],
 );
