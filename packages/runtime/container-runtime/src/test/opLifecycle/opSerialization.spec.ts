@@ -58,7 +58,7 @@ describe("opSerialization", () => {
 
 			const serialized = serializeOp(op);
 
-			assert.strictEqual(serialized, JSON.stringify(op));
+			assert.strictEqual(serialized.content, JSON.stringify(op));
 		});
 
 		it("should replace Fluid handles with their encoded form", () => {
@@ -104,7 +104,7 @@ describe("opSerialization", () => {
 			const serializedWithFunction = serializeOp(op);
 			const serializedWithJSONStringify = JSON.stringify(op);
 
-			assert.strictEqual(serializedWithFunction, serializedWithJSONStringify);
+			assert.strictEqual(serializedWithFunction.content, serializedWithJSONStringify);
 		});
 	});
 });

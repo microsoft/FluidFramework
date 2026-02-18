@@ -300,6 +300,9 @@ export abstract class SharedObjectCore<
 	 */
 	public async load(services: IChannelServices): Promise<void> {
 		this.services = services;
+		if (services.loadingFromPendingState !== true) {
+			this._isBoundToContext = true;
+		}
 		await this.loadCore(services.objectStorage);
 		this.attachDeltaHandler();
 		// For channels loading from pending state (never actually attached),

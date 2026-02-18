@@ -11,10 +11,12 @@ import { isSerializedHandle } from "@fluidframework/runtime-utils/internal";
  */
 export function findAllHandlePaths(input: unknown): Set<string> {
 	const toSearch = [input];
+	const visited = new Set<unknown>();
 	const found: Set<string> = new Set();
 	while (toSearch.length > 0) {
-		const obj = toSearch.shift();
-		if (typeof obj === "object" && obj !== null) {
+		const obj = toSearch.pop(); // O(1) vs shift() O(n)
+		if (typeof obj === "object" && obj !== null && !visited.has(obj)) {
+			visited.add(obj);
 			for (const value of Object.values(obj)) {
 				if (isSerializedHandle(value)) {
 					found.add(value.url);

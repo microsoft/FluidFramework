@@ -1062,9 +1062,6 @@ export abstract class FluidDataStoreContext
 	 * Get the summary required when attaching this context's DataStore.
 	 * Used for both Container Attach and DataStore Attach.
 	 */
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
-	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		assert(
 			this.channel !== undefined,
@@ -1392,6 +1389,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
 		return this.initialSnapshotDetailsP;
+	}
+
+	public getAttachSummary(): ISummaryTreeWithStats {
+		throw new Error("Cannot attach remote store");
 	}
 
 	/**

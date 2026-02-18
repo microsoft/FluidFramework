@@ -1701,7 +1701,7 @@ export class ChannelCollection
 			const [datastoreId, channelId, ...things] = (
 				path.startsWith("/") ? path.slice(1) : path
 			).split("/");
-			assert(things.length === 0, "these should never be");
+			assert(things.length === 0, "Handle paths deeper than datastoreId/channelId are not supported");
 
 			if (visitedDataStores.has(datastoreId)) continue;
 			visitedDataStores.add(datastoreId);
@@ -1709,11 +1709,7 @@ export class ChannelCollection
 			assert(context !== undefined, "must have context");
 			const summary = context.getAttachSummary();
 
-			if (this.contexts.isNotBound(datastoreId)) {
-				summaries ??= {};
-				summaries[datastoreId] = summary;
-				paths.push(...findAllHandlePaths(summary));
-			} else if (channelId) {
+			if (this.contexts.isNotBound(datastoreId) || channelId) {
 				summaries ??= {};
 				summaries[datastoreId] = summary;
 				paths.push(...findAllHandlePaths(summary));
