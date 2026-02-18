@@ -176,10 +176,10 @@ function validateHandlePathExists(handle: string, summaryTree: ISummaryTree) {
 				currentObject.tree[part] ??
 				assert.fail(`Handle path ${handle} not found in summary tree`);
 		} else {
-				assert(
+			assert(
 				currentObject.type === SummaryType.Handle,
 				`Handle path ${handle} should be for a subtree or a handle`,
-				);
+			);
 			// This validation code currently can not validate paths that point inside a handle.
 			// Since it is currently not expected for this case to occur in these tests, fail to make sure we do not accidentally depend on this lack of validation.
 			assert.fail(
