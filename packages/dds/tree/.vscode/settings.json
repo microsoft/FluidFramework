@@ -8,7 +8,7 @@
 	// "mochaExplorer.pruneFiles": true,
 	// Parallel testing disabled because of AB#59690.
 	// "mochaExplorer.parallel": true,
-	// We have moderatly high test setup overhead, so tons of jobs doesn't work well.
+	// We have moderately high test setup overhead, so tons of jobs doesn't work well.
 	// Less than 4 got slower results, and more did not offer any significant gains.
 	"mochaExplorer.jobs": 4,
 	"mochaExplorer.configFile": ".mocharc.cjs",
