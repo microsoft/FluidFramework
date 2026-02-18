@@ -4,20 +4,25 @@
  */
 
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type {
-	NodeKind,
-	TreeNodeSchemaClass,
-	ImplicitAllowedTypes,
-	WithType,
+import {
+	type NodeKind,
+	type TreeNodeSchemaClass,
+	type ImplicitAllowedTypes,
+	type WithType,
+	normalizeAllowedTypes,
 } from "../core/index.js";
 // These imports prevent a large number of type references in the API reports from showing up as *_2.
 /* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
-import type {
-	FieldProps,
-	FieldSchemaAlpha,
-	FieldPropsAlpha,
-	FieldKind,
-	ImplicitFieldSchema,
+import {
+	type FieldProps,
+	type FieldSchemaAlpha,
+	type FieldPropsAlpha,
+	type FieldKind,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type FieldSchema,
+	getDefaultProvider,
+	createFieldSchema,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
@@ -32,6 +37,7 @@ import {
 } from "../node-kinds/index.js";
 import type { SchemaType, SimpleObjectNodeSchema } from "../simpleSchema.js";
 import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
+import { unhydratedFlexTreeFromInsertableNode } from "../unhydratedFlexTreeFromInsertable.js";
 
 import {
 	defaultSchemaFactoryObjectOptions,
@@ -50,6 +56,86 @@ import type {
 } from "./typesUnsafe.js";
 import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
+
+/**
+ * Stateless APIs exposed via {@link SchemaFactoryBeta} as both instance properties and as statics.
+ * @see {@link SchemaStatics} for why this is useful.
+ * @system @sealed @alpha
+ */
+export interface SchemaStaticsAlpha {
+	/**
+	 * Creates a field schema with a default value.
+	 *
+	 * @param fieldSchema - The field schema to add a default to (e.g., `factory.required(factory.string)` or `factory.optional(factory.number)`)
+	 * @param defaultValue - The default value to use when the field is not provided. Can be a static value or a function that returns a value.
+	 *
+	 * @remarks
+	 * This function wraps an existing field schema and adds a default value provider to it.
+	 * The default value will be used when constructing nodes if the field is not explicitly provided or set to `undefined`.
+	 *
+	 * **Important**: Currently, only optional fields with defaults are recognized by the type system as optional in constructors.
+	 * Required fields with defaults will still require a value to be provided in the constructor at the type level,
+	 * even though a default will be used at runtime if `undefined` is explicitly passed.
+	 * This is a known limitation tracked by the TODO in objectNode.ts regarding `FieldHasDefault`.
+	 *
+	 * @example
+	 * ```typescript
+	 * const MySchema = factory.objectAlpha("MyObject", {
+	 *     // Optional fields with defaults - can be omitted in constructor
+	 *     name: factory.withDefault(factory.optional(factory.string), "untitled"),
+	 *     count: factory.withDefault(factory.optional(factory.number), 0),
+	 *     timestamp: factory.withDefault(factory.optional(factory.number), () => Date.now()),
+	 * });
+	 *
+	 * // Can construct with defaults:
+	 * const obj1 = new MySchema({}); // name="untitled", count=0, timestamp=now()
+	 * const obj2 = new MySchema({ name: "custom" }); // name="custom", count=0, timestamp=now()
+	 * const obj3 = new MySchema({ count: undefined }); // count=0 (default applied)
+	 * ```
+	 */
+	readonly withDefault: <
+		Kind extends FieldKind,
+		Types extends ImplicitAllowedTypes,
+		TCustomMetadata = unknown,
+	>(
+		fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>,
+		defaultValue:
+			| InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>
+			| (() => InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>),
+	) => FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
+}
+
+const withDefault = <
+	Kind extends FieldKind,
+	Types extends ImplicitAllowedTypes,
+	TCustomMetadata = unknown,
+>(
+	fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>,
+	defaultValue:
+		| InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>
+		| (() => InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>),
+): FieldSchemaAlpha<Kind, Types, TCustomMetadata> => {
+	const typedFieldSchema = fieldSchema as FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
+
+	const defaultProvider = getDefaultProvider(() => {
+		// if the default value is a function, call it to get the value, otherwise use it directly
+		const insertableValue =
+			typeof defaultValue === "function" ? (defaultValue as () => unknown)() : defaultValue;
+		const allowedTypeSet = normalizeAllowedTypes(typedFieldSchema.allowedTypes).evaluateSet();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return [unhydratedFlexTreeFromInsertableNode(insertableValue as any, allowedTypeSet)];
+	});
+
+	// create a new field schema with the default provider
+	return createFieldSchema(typedFieldSchema.kind, typedFieldSchema.allowedTypes, {
+		...typedFieldSchema.props,
+		defaultProvider,
+	});
+};
+
+const schemaStaticsAlpha: SchemaStaticsAlpha = {
+	withDefault,
+};
 
 /**
  * {@link SchemaFactory} with additional alpha APIs.
@@ -208,6 +294,16 @@ export class SchemaFactoryAlpha<
 	 * {@inheritDoc SchemaStatics.requiredRecursive}
 	 */
 	public override readonly requiredRecursive = schemaStatics.requiredRecursive;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.withDefault}
+	 */
+	public readonly withDefault = schemaStaticsAlpha.withDefault;
+
+	/**
+	 * {@inheritdoc SchemaStaticsAlpha.withDefault}
+	 */
+	public static readonly withDefault = schemaStaticsAlpha.withDefault;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
@@ -392,14 +488,4 @@ export class SchemaFactoryAlpha<
 	>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner> {
 		return new SchemaFactoryAlpha(scoped<TScope, TName, T>(this, name));
 	}
-
-	/**
-	 * {@inheritdoc SchemaStatics.withDefault}
-	 */
-	public readonly withDefault = schemaStatics.withDefault;
-
-	/**
-	 * {@inheritdoc SchemaStatics.withDefault}
-	 */
-	public static readonly withDefault = schemaStatics.withDefault;
 }

@@ -191,9 +191,9 @@ describe("withDefault", () => {
 				});
 
 				// Type system doesn't recognize required fields with defaults as optional in constructors
-				// Use type assertion to test runtime behavior when undefined is explicitly passed
+				// Use type assertion to test runtime behavior
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const obj1 = new TestSchema({ count: undefined } as any);
+				const obj1 = new TestSchema({} as any);
 				assert.equal(obj1.count, 42);
 
 				const obj2 = new TestSchema({ count: 100 });

@@ -5,7 +5,7 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import { normalizeAllowedTypes, type ImplicitAllowedTypes } from "../core/index.js";
+import type { ImplicitAllowedTypes } from "../core/index.js";
 import { FieldKind, getDefaultProvider, createFieldSchema } from "../fieldSchema.js";
 import type {
 	FieldProps,
@@ -13,7 +13,6 @@ import type {
 	DefaultProvider,
 	FieldPropsAlpha,
 	FieldSchemaAlpha,
-	InsertableTreeFieldFromImplicitField,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
@@ -23,7 +22,6 @@ import {
 	nullSchema,
 	handleSchema,
 } from "../leafNodeSchema.js";
-import { unhydratedFlexTreeFromInsertableNode } from "../unhydratedFlexTreeFromInsertable.js";
 
 import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 
@@ -230,37 +228,6 @@ export const schemaStatics = {
 	): FieldSchemaAlpha<FieldKind.Identifier, typeof stringSchema, TCustomMetadata> => {
 		return createFieldSchema(FieldKind.Identifier, stringSchema, props);
 	},
-	/**
-	 * Creates a field schema with a default value.
-	 *
-	 * @param fieldSchema - The field schema to add a default to (e.g., `factory.required(factory.string)` or `factory.optional(factory.number)`)
-	 * @param defaultValue - The default value to use when the field is not provided. Can be a static value or a function that returns a value.
-	 *
-	 * @remarks
-	 * This function wraps an existing field schema and adds a default value provider to it.
-	 * The default value will be used when constructing nodes if the field is not explicitly provided or set to `undefined`.
-	 *
-	 * **Important**: Currently, only optional fields with defaults are recognized by the type system as optional in constructors.
-	 * Required fields with defaults will still require a value to be provided in the constructor at the type level,
-	 * even though a default will be used at runtime if `undefined` is explicitly passed.
-	 * This is a known limitation tracked by the TODO in objectNode.ts regarding `FieldHasDefault`.
-	 *
-	 * @example
-	 * ```typescript
-	 * const MySchema = factory.objectAlpha("MyObject", {
-	 *     // Optional fields with defaults - can be omitted in constructor
-	 *     name: factory.withDefault(factory.optional(factory.string), "untitled"),
-	 *     count: factory.withDefault(factory.optional(factory.number), 0),
-	 *     timestamp: factory.withDefault(factory.optional(factory.number), () => Date.now()),
-	 * });
-	 *
-	 * // Can construct with defaults:
-	 * const obj1 = new MySchema({}); // name="untitled", count=0, timestamp=now()
-	 * const obj2 = new MySchema({ name: "custom" }); // name="custom", count=0, timestamp=now()
-	 * const obj3 = new MySchema({ count: undefined }); // count=0 (default applied)
-	 * ```
-	 */
-	withDefault,
 } as const;
 
 /**
@@ -281,36 +248,4 @@ function createFieldSchemaUnsafe<
 		allowedTypes as ImplicitAllowedTypes & Types,
 		props,
 	) as FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata>;
-}
-
-/**
- * {@inheritdoc SchemaStatics.withDefault}
- * @internal
- */
-function withDefault<
-	Kind extends FieldKind,
-	Types extends ImplicitAllowedTypes,
-	TCustomMetadata = unknown,
->(
-	fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>,
-	defaultValue:
-		| InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>
-		| (() => InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>),
-): FieldSchemaAlpha<Kind, Types, TCustomMetadata> {
-	const typedFieldSchema = fieldSchema as FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
-
-	const defaultProvider = getDefaultProvider(() => {
-		// if the default value is a function, call it to get the value, otherwise use it directly
-		const insertableValue =
-			typeof defaultValue === "function" ? (defaultValue as () => unknown)() : defaultValue;
-		const allowedTypeSet = normalizeAllowedTypes(typedFieldSchema.allowedTypes).evaluateSet();
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		return [unhydratedFlexTreeFromInsertableNode(insertableValue as any, allowedTypeSet)];
-	});
-
-	// create a new field schema with the default provider
-	return createFieldSchema(typedFieldSchema.kind, typedFieldSchema.allowedTypes, {
-		...typedFieldSchema.props,
-		defaultProvider,
-	});
 }
