@@ -4,12 +4,13 @@
 	// Also for unknown (but likely related reasons) this cannot be just "lib/test" which is used in the config.
 	// This is not limited to "spec.js" so that benchmarks are included (which will be run in correctness mode).
 	"mochaExplorer.files": ["lib/test/**/*.*js"],
-	// "pruneFiles" is disabled because it causesd "source-map-support/register" to give `Unknown file extension ".ts"` errors.
+	// "pruneFiles" is disabled because it breaks some imports.
 	// "mochaExplorer.pruneFiles": true,
-	"mochaExplorer.require": [
-		"node_modules/@fluid-internal/mocha-test-setup/dist/index.js",
-		"source-map-support/register",
-	],
+	// Parallel testing disabled because of AB#59690.
+	// "mochaExplorer.parallel": true,
+	// We have moderatly high test setup overhead, so tons of jobs doesn't work well.
+	// Less than 4 got slower results, and more did not offer any significant gains.
+	"mochaExplorer.jobs": 4,
 	"mochaExplorer.configFile": ".mocharc.cjs",
 	"mochaExplorer.timeout": 999999,
 	// This extension appears to invoke mocha programmatically, meaning that the enablement of this option in the common
