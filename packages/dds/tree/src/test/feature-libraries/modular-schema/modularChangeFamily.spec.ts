@@ -54,6 +54,8 @@ import {
 	cursorForJsonableTreeField,
 	DefaultRevisionReplacer,
 	fieldKindConfigurations,
+	newChangeAtomIdBTree,
+	ModularChangeFormatVersion,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,
@@ -74,7 +76,6 @@ import {
 	brand,
 	brandConst,
 	nestedMapFromFlatList,
-	newTupleBTree,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
@@ -483,13 +484,13 @@ describe("ModularChangeFamily", () => {
 		it("prioritizes earlier build entries when faced with duplicates", () => {
 			const change1: ModularChangeset = {
 				...Change.empty(),
-				builds: newTupleBTree([
+				builds: newChangeAtomIdBTree([
 					[[undefined as RevisionTag | undefined, brand(0)], node1Chunk],
 				]),
 			};
 			const change2: ModularChangeset = {
 				...Change.empty(),
-				builds: newTupleBTree([
+				builds: newChangeAtomIdBTree([
 					[
 						[undefined as RevisionTag | undefined, brand(0)],
 						treeChunkFromCursor(fieldJsonCursor([2])),
@@ -690,7 +691,7 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					builds: newTupleBTree([
+					builds: newChangeAtomIdBTree([
 						[[undefined, brand(0)], node1Chunk],
 						[[tag2, brand(0)], node1Chunk],
 					]),
@@ -701,7 +702,7 @@ describe("ModularChangeFamily", () => {
 			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					destroys: newTupleBTree([
+					destroys: newChangeAtomIdBTree([
 						[[tag1, brand(0)], 1],
 						[[undefined, brand(0)], 1],
 					]),
@@ -725,7 +726,7 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					destroys: newTupleBTree([
+					destroys: newChangeAtomIdBTree([
 						[[tag1, brand(0)], 1],
 						[[undefined, brand(0)], 1],
 					]),
@@ -736,7 +737,7 @@ describe("ModularChangeFamily", () => {
 			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					builds: newTupleBTree([
+					builds: newChangeAtomIdBTree([
 						[[undefined, brand(0)], node1Chunk],
 						[[tag2, brand(0)], node1Chunk],
 					]),
@@ -760,11 +761,11 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					builds: newTupleBTree([
+					builds: newChangeAtomIdBTree([
 						[[undefined, brand(0)], node1Chunk],
 						[[tag3, brand(0)], node1Chunk],
 					]),
-					destroys: newTupleBTree([
+					destroys: newChangeAtomIdBTree([
 						[[undefined, brand(1)], 1],
 						[[tag3, brand(1)], 1],
 					]),
@@ -775,11 +776,11 @@ describe("ModularChangeFamily", () => {
 			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					builds: newTupleBTree([
+					builds: newChangeAtomIdBTree([
 						[[undefined, brand(2)], node1Chunk],
 						[[tag3, brand(2)], node1Chunk],
 					]),
-					destroys: newTupleBTree([
+					destroys: newChangeAtomIdBTree([
 						[[undefined, brand(3)], 1],
 						[[tag3, brand(3)], 1],
 					]),
@@ -793,7 +794,7 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				builds: newTupleBTree([
+				builds: newChangeAtomIdBTree([
 					[[tag1 as RevisionTag | undefined, brand(0)], node1Chunk],
 					[[tag2, brand(2)], node1Chunk],
 					[
@@ -806,7 +807,7 @@ describe("ModularChangeFamily", () => {
 					],
 					[[tag3, brand(2)], node1Chunk],
 				]),
-				destroys: newTupleBTree([
+				destroys: newChangeAtomIdBTree([
 					[[tag1 as RevisionTag | undefined, brand(1)], 1],
 					[[tag2, brand(3)], 1],
 					[[tag3, brand(1)], 1],
@@ -822,7 +823,7 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					refreshers: newTupleBTree([
+					refreshers: newChangeAtomIdBTree([
 						[[tag3 as RevisionTag | undefined, brand(0)], node1Chunk],
 					]),
 				},
@@ -832,7 +833,7 @@ describe("ModularChangeFamily", () => {
 			const change2: TaggedChange<ModularChangeset> = tagChange(
 				{
 					...Change.empty(),
-					refreshers: newTupleBTree([
+					refreshers: newChangeAtomIdBTree([
 						[[undefined, brand(2)], node1Chunk],
 						[[tag3, brand(2)], node1Chunk],
 					]),
@@ -847,7 +848,7 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				refreshers: newTupleBTree([
+				refreshers: newChangeAtomIdBTree([
 					[[undefined, brand(2)], node1Chunk],
 					[[tag3, brand(0)], node1Chunk],
 					[[tag3, brand(2)], node1Chunk],
@@ -862,7 +863,7 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					refreshers: newTupleBTree([
+					refreshers: newChangeAtomIdBTree([
 						[[tag3 as RevisionTag | undefined, brand(0)], node1Chunk],
 					]),
 				},
@@ -872,7 +873,7 @@ describe("ModularChangeFamily", () => {
 			const change2: TaggedChange<ModularChangeset> = tagChange(
 				{
 					...Change.empty(),
-					refreshers: newTupleBTree([
+					refreshers: newChangeAtomIdBTree([
 						[[tag3 as RevisionTag | undefined, brand(0)], objectNode],
 					]),
 					revisions: [{ revision: tag2 }],
@@ -886,7 +887,9 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				refreshers: newTupleBTree([[[tag3 as RevisionTag | undefined, brand(0)], node1Chunk]]),
+				refreshers: newChangeAtomIdBTree([
+					[[tag3 as RevisionTag | undefined, brand(0)], node1Chunk],
+				]),
 				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
@@ -966,7 +969,7 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					builds: newTupleBTree([
+					builds: newChangeAtomIdBTree([
 						[[undefined, brand(0)], node1Chunk],
 						[[tag2, brand(1)], node1Chunk],
 					]),
@@ -980,7 +983,7 @@ describe("ModularChangeFamily", () => {
 
 			const expectedRollback: ModularChangeset = {
 				...Change.empty(),
-				destroys: newTupleBTree([
+				destroys: newChangeAtomIdBTree([
 					[[tag1 as RevisionTag | undefined, brand(0)], 1],
 					[[tag2, brand(1)], 1],
 				]),
@@ -1078,7 +1081,7 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					builds: newTupleBTree([
+					builds: newChangeAtomIdBTree([
 						[[undefined, brand(1)], node1Chunk],
 						[
 							[
@@ -1110,7 +1113,7 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					destroys: newTupleBTree([
+					destroys: newChangeAtomIdBTree([
 						[[undefined, brand(1)], 1],
 						[[tag2, brand(2)], 1],
 						[[tag2, brand(3)], 10],
@@ -1135,7 +1138,7 @@ describe("ModularChangeFamily", () => {
 			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					...Change.empty(),
-					refreshers: newTupleBTree([
+					refreshers: newChangeAtomIdBTree([
 						[[undefined, brand(1)], node1Chunk],
 						[[tag2, brand(2)], node1Chunk],
 						[[tag2, brand(3)], nodesChunk],
@@ -1244,14 +1247,14 @@ describe("ModularChangeFamily", () => {
 	// 			nested: [nodeId1],
 	// 		};
 
-	// 		const input: ModularChangeset = {
-	// 			...Change.empty(),
-	// 			nodeChanges: newTupleBTree([
-	// 				[[nodeId1.revision, nodeId1.localId], nodeChangeFromHasRemovedRootsRefs(changeB)],
-	// 				[[nodeId2.revision, nodeId2.localId], nodeChangeFromHasRemovedRootsRefs(changeC)],
-	// 			]),
-	// 			fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
-	// 		};
+	// const input: ModularChangeset = {
+	// 	...Change.empty(),
+	// 	nodeChanges: newChangeAtomIdBTree([
+	// 		[[nodeId1.revision, nodeId1.localId], nodeChangeFromHasRemovedRootsRefs(changeB)],
+	// 		[[nodeId2.revision, nodeId2.localId], nodeChangeFromHasRemovedRootsRefs(changeC)],
+	// 	]),
+	// 	fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
+	// };
 
 	// 		const actual = relevantRemovedRoots(input);
 	// 		assertEqual(actual, [a1, c1]);
@@ -1286,14 +1289,14 @@ describe("ModularChangeFamily", () => {
 		it("preserves relevant refreshers that are present in the input", () => {
 			const input: ModularChangeset = {
 				...Change.empty(),
-				refreshers: newTupleBTree([
+				refreshers: newChangeAtomIdBTree([
 					[[aMajor as RevisionTag | undefined, brand(2)], node2Chunk],
 				]),
 			};
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				refreshers: newTupleBTree([
+				refreshers: newChangeAtomIdBTree([
 					[[aMajor as RevisionTag | undefined, brand(2)], node2Chunk],
 				]),
 			};
@@ -1305,7 +1308,7 @@ describe("ModularChangeFamily", () => {
 		it("removes irrelevant refreshers that are present in the input", () => {
 			const input: ModularChangeset = {
 				...Change.empty(),
-				refreshers: newTupleBTree([
+				refreshers: newChangeAtomIdBTree([
 					[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
 					[[aMajor, brand(2)], node2Chunk],
 					[[bMajor, brand(1)], node3Chunk],
@@ -1321,12 +1324,16 @@ describe("ModularChangeFamily", () => {
 			assert.equal(nodesChunk.topLevelLength, 2);
 			const input: ModularChangeset = {
 				...Change.empty(),
-				builds: newTupleBTree([[[aMajor as RevisionTag | undefined, brand(3)], nodesChunk]]),
+				builds: newChangeAtomIdBTree([
+					[[aMajor as RevisionTag | undefined, brand(3)], nodesChunk],
+				]),
 			};
 
 			const expected: ModularChangeset = {
 				...Change.empty(),
-				builds: newTupleBTree([[[aMajor as RevisionTag | undefined, brand(3)], nodesChunk]]),
+				builds: newChangeAtomIdBTree([
+					[[aMajor as RevisionTag | undefined, brand(3)], nodesChunk],
+				]),
 			};
 
 			const withBuilds = updateRefreshers(input, getDetachedNode, [
@@ -1341,7 +1348,7 @@ describe("ModularChangeFamily", () => {
 
 				const expected: ModularChangeset = {
 					...Change.empty(),
-					refreshers: newTupleBTree([
+					refreshers: newChangeAtomIdBTree([
 						[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
 						[[aMajor, brand(2)], node2Chunk],
 						[[bMajor, brand(1)], node3Chunk],
@@ -1355,7 +1362,7 @@ describe("ModularChangeFamily", () => {
 			it("replaces outdated refreshers", () => {
 				const input: ModularChangeset = {
 					...Change.empty(),
-					refreshers: newTupleBTree([
+					refreshers: newChangeAtomIdBTree([
 						[[aMajor as RevisionTag | undefined, brand(1)], node2Chunk],
 						[[aMajor, brand(2)], node1Chunk],
 					]),
@@ -1363,7 +1370,7 @@ describe("ModularChangeFamily", () => {
 
 				const expected: ModularChangeset = {
 					...Change.empty(),
-					refreshers: newTupleBTree([
+					refreshers: newChangeAtomIdBTree([
 						[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
 						[[aMajor, brand(2)], node2Chunk],
 					]),
@@ -1376,7 +1383,7 @@ describe("ModularChangeFamily", () => {
 			it("does not add a refresher that is present in the builds", () => {
 				const input: ModularChangeset = {
 					...Change.empty(),
-					builds: newTupleBTree([
+					builds: newChangeAtomIdBTree([
 						[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
 						[[aMajor, brand(2)], node2Chunk],
 						[[bMajor, brand(1)], node3Chunk],
@@ -1385,7 +1392,7 @@ describe("ModularChangeFamily", () => {
 
 				const expected: ModularChangeset = {
 					...Change.empty(),
-					builds: newTupleBTree([
+					builds: newChangeAtomIdBTree([
 						[[aMajor as RevisionTag | undefined, brand(1)], node1Chunk],
 						[[aMajor, brand(2)], node2Chunk],
 						[[bMajor, brand(1)], node3Chunk],
@@ -1434,7 +1441,7 @@ describe("ModularChangeFamily", () => {
 					inlineRevision(
 						{
 							...buildChangeset([]),
-							builds: newTupleBTree([
+							builds: newChangeAtomIdBTree([
 								[[undefined, brand(1)], node1Chunk],
 								[[tag2, brand(2)], nodesChunk],
 							]),
@@ -1448,7 +1455,7 @@ describe("ModularChangeFamily", () => {
 					inlineRevision(
 						{
 							...buildChangeset([]),
-							refreshers: newTupleBTree([
+							refreshers: newChangeAtomIdBTree([
 								[[undefined, brand(1)], node1Chunk],
 								[[tag2, brand(2)], nodesChunk],
 							]),
@@ -1498,18 +1505,18 @@ describe("ModularChangeFamily", () => {
 			],
 		};
 
-		makeEncodingTestSuite(
-			family.codecs,
-			encodingTestDataForAllVersions,
-			assertEquivalent,
-			[3, 4],
-		);
-		makeEncodingTestSuite(family.codecs, encodingTestDataV5AndUp, assertEquivalent, [5]);
+		makeEncodingTestSuite(family.codecs, encodingTestDataForAllVersions, assertEquivalent, [
+			ModularChangeFormatVersion.v3,
+			ModularChangeFormatVersion.v4,
+		]);
+		makeEncodingTestSuite(family.codecs, encodingTestDataV5AndUp, assertEquivalent, [
+			ModularChangeFormatVersion.v5,
+		]);
 		makeEncodingTestSuite(
 			family.codecs,
 			encodingTestDataV5AndUp,
 			(a, b) => assertModularChangesetsEqualIgnoreRebaseVersion(a, b, fieldKinds),
-			[101],
+			[ModularChangeFormatVersion.vDetachedRoots],
 		);
 	});
 

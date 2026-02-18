@@ -7,88 +7,57 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "@fluidframework/tree/internal";
 
-import {
-	instanceOfsTypeFactory,
-	renderTypeFactoryTypeScript,
-} from "../renderTypeFactoryTypeScript.js";
-import { typeFactory as tf } from "../treeAgentTypes.js";
+import { renderTypeFactoryTypeScript } from "../renderTypeFactoryTypeScript.js";
+import { typeFactory as tf, type TypeFactoryType } from "../treeAgentTypes.js";
 
 const sf = new SchemaFactory("test");
 
 describe("renderTypeFactoryTypeScript", () => {
 	describe("primitive types", () => {
 		it("renders string type", () => {
-			const result = renderTypeFactoryTypeScript(
-				tf.string(),
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(tf.string(), () => "");
 			assert.equal(result, "string");
 		});
 
 		it("renders number type", () => {
-			const result = renderTypeFactoryTypeScript(
-				tf.number(),
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(tf.number(), () => "");
 			assert.equal(result, "number");
 		});
 
 		it("renders boolean type", () => {
-			const result = renderTypeFactoryTypeScript(
-				tf.boolean(),
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(tf.boolean(), () => "");
 			assert.equal(result, "boolean");
 		});
 
 		it("renders void type", () => {
-			const result = renderTypeFactoryTypeScript(tf.void(), () => "", instanceOfsTypeFactory);
+			const result = renderTypeFactoryTypeScript(tf.void(), () => "");
 			assert.equal(result, "void");
 		});
 
 		it("renders undefined type", () => {
-			const result = renderTypeFactoryTypeScript(
-				tf.undefined(),
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(tf.undefined(), () => "");
 			assert.equal(result, "undefined");
 		});
 
 		it("renders null type", () => {
-			const result = renderTypeFactoryTypeScript(tf.null(), () => "", instanceOfsTypeFactory);
+			const result = renderTypeFactoryTypeScript(tf.null(), () => "");
 			assert.equal(result, "null");
 		});
 
 		it("renders unknown type", () => {
-			const result = renderTypeFactoryTypeScript(
-				tf.unknown(),
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(tf.unknown(), () => "");
 			assert.equal(result, "unknown");
 		});
 	});
 
 	describe("array types", () => {
 		it("renders simple array", () => {
-			const result = renderTypeFactoryTypeScript(
-				tf.array(tf.string()),
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(tf.array(tf.string()), () => "");
 			assert.equal(result, "string[]");
 		});
 
 		it("renders nested array", () => {
-			const result = renderTypeFactoryTypeScript(
-				tf.array(tf.array(tf.number())),
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(tf.array(tf.array(tf.number())), () => "");
 			assert.equal(result, "number[][]");
 		});
 	});
@@ -99,7 +68,7 @@ describe("renderTypeFactoryTypeScript", () => {
 				name: tf.string(),
 				age: tf.number(),
 			});
-			const result = renderTypeFactoryTypeScript(objectType, () => "", instanceOfsTypeFactory);
+			const result = renderTypeFactoryTypeScript(objectType, () => "");
 			assert.equal(
 				result,
 				`{
@@ -110,11 +79,7 @@ describe("renderTypeFactoryTypeScript", () => {
 		});
 
 		it("renders empty object", () => {
-			const result = renderTypeFactoryTypeScript(
-				tf.object({}),
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(tf.object({}), () => "");
 			assert.equal(
 				result,
 				`{
@@ -127,7 +92,7 @@ describe("renderTypeFactoryTypeScript", () => {
 				name: tf.string(),
 				nickname: tf.optional(tf.string()),
 			});
-			const result = renderTypeFactoryTypeScript(objectType, () => "", instanceOfsTypeFactory);
+			const result = renderTypeFactoryTypeScript(objectType, () => "");
 			assert.equal(
 				result,
 				`{
@@ -141,17 +106,13 @@ describe("renderTypeFactoryTypeScript", () => {
 	describe("union types", () => {
 		it("renders simple union", () => {
 			const unionType = tf.union([tf.string(), tf.number()]);
-			const result = renderTypeFactoryTypeScript(unionType, () => "", instanceOfsTypeFactory);
+			const result = renderTypeFactoryTypeScript(unionType, () => "");
 			assert.equal(result, "string | number");
 		});
 
 		it("renders union with optional as union with undefined", () => {
 			const optionalType = tf.optional(tf.string());
-			const result = renderTypeFactoryTypeScript(
-				optionalType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(optionalType, () => "");
 			assert.equal(result, "string | undefined");
 		});
 	});
@@ -159,7 +120,7 @@ describe("renderTypeFactoryTypeScript", () => {
 	describe("record types", () => {
 		it("renders record type", () => {
 			const recordType = tf.record(tf.string(), tf.number());
-			const result = renderTypeFactoryTypeScript(recordType, () => "", instanceOfsTypeFactory);
+			const result = renderTypeFactoryTypeScript(recordType, () => "");
 			assert.equal(result, "Record<string, number>");
 		});
 	});
@@ -167,7 +128,7 @@ describe("renderTypeFactoryTypeScript", () => {
 	describe("map types", () => {
 		it("renders map type", () => {
 			const mapType = tf.map(tf.string(), tf.number());
-			const result = renderTypeFactoryTypeScript(mapType, () => "", instanceOfsTypeFactory);
+			const result = renderTypeFactoryTypeScript(mapType, () => "");
 			assert.equal(result, "Map<string, number>");
 		});
 	});
@@ -175,19 +136,19 @@ describe("renderTypeFactoryTypeScript", () => {
 	describe("tuple types", () => {
 		it("renders simple tuple", () => {
 			const tupleType = tf.tuple([tf.string(), tf.number()]);
-			const result = renderTypeFactoryTypeScript(tupleType, () => "", instanceOfsTypeFactory);
+			const result = renderTypeFactoryTypeScript(tupleType, () => "");
 			assert.equal(result, "[string, number]");
 		});
 
 		it("renders tuple with rest", () => {
 			const tupleType = tf.tuple([tf.string()], tf.number());
-			const result = renderTypeFactoryTypeScript(tupleType, () => "", instanceOfsTypeFactory);
+			const result = renderTypeFactoryTypeScript(tupleType, () => "");
 			assert.equal(result, "[string, ...number[]]");
 		});
 
 		it("renders tuple with optional element", () => {
 			const tupleType = tf.tuple([tf.string(), tf.optional(tf.number())]);
-			const result = renderTypeFactoryTypeScript(tupleType, () => "", instanceOfsTypeFactory);
+			const result = renderTypeFactoryTypeScript(tupleType, () => "");
 			assert.equal(result, "[string, number?]");
 		});
 	});
@@ -195,38 +156,26 @@ describe("renderTypeFactoryTypeScript", () => {
 	describe("literal types", () => {
 		it("renders string literal", () => {
 			const literalType = tf.literal("hello");
-			const result = renderTypeFactoryTypeScript(
-				literalType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(literalType, () => "");
 			assert.equal(result, '"hello"');
 		});
 
 		it("renders number literal", () => {
 			const literalType = tf.literal(42);
-			const result = renderTypeFactoryTypeScript(
-				literalType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(literalType, () => "");
 			assert.equal(result, "42");
 		});
 
 		it("renders boolean literal", () => {
 			const literalType = tf.literal(true);
-			const result = renderTypeFactoryTypeScript(
-				literalType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(literalType, () => "");
 			assert.equal(result, "true");
 		});
 	});
 
 	describe("date type", () => {
 		it("renders date type", () => {
-			const result = renderTypeFactoryTypeScript(tf.date(), () => "", instanceOfsTypeFactory);
+			const result = renderTypeFactoryTypeScript(tf.date(), () => "");
 			assert.equal(result, "Date");
 		});
 	});
@@ -234,21 +183,13 @@ describe("renderTypeFactoryTypeScript", () => {
 	describe("promise types", () => {
 		it("renders simple promise", () => {
 			const promiseType = tf.promise(tf.string());
-			const result = renderTypeFactoryTypeScript(
-				promiseType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(promiseType, () => "");
 			assert.equal(result, "Promise<string>");
 		});
 
 		it("renders nested promise", () => {
 			const promiseType = tf.promise(tf.promise(tf.number()));
-			const result = renderTypeFactoryTypeScript(
-				promiseType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(promiseType, () => "");
 			assert.equal(result, "Promise<Promise<number>>");
 		});
 
@@ -259,11 +200,7 @@ describe("renderTypeFactoryTypeScript", () => {
 					name: tf.string(),
 				}),
 			);
-			const result = renderTypeFactoryTypeScript(
-				promiseType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(promiseType, () => "");
 			assert.equal(
 				result,
 				`Promise<{
@@ -275,11 +212,7 @@ describe("renderTypeFactoryTypeScript", () => {
 
 		it("renders promise with union inner type", () => {
 			const promiseType = tf.promise(tf.union([tf.string(), tf.number()]));
-			const result = renderTypeFactoryTypeScript(
-				promiseType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(promiseType, () => "");
 			assert.equal(result, "Promise<string | number>");
 		});
 	});
@@ -290,11 +223,7 @@ describe("renderTypeFactoryTypeScript", () => {
 				tf.object({ name: tf.string() }),
 				tf.object({ age: tf.number() }),
 			]);
-			const result = renderTypeFactoryTypeScript(
-				intersectionType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(intersectionType, () => "");
 			assert.equal(
 				result,
 				`{
@@ -311,11 +240,7 @@ describe("renderTypeFactoryTypeScript", () => {
 				tf.object({ b: tf.number() }),
 				tf.object({ c: tf.boolean() }),
 			]);
-			const result = renderTypeFactoryTypeScript(
-				intersectionType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(intersectionType, () => "");
 			assert.equal(
 				result,
 				`{
@@ -333,11 +258,7 @@ describe("renderTypeFactoryTypeScript", () => {
 				tf.union([tf.string(), tf.number()]),
 				tf.object({ optional: tf.optional(tf.boolean()) }),
 			]);
-			const result = renderTypeFactoryTypeScript(
-				intersectionType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(intersectionType, () => "");
 			assert.equal(
 				result,
 				`(string | number) & {
@@ -351,7 +272,7 @@ describe("renderTypeFactoryTypeScript", () => {
 				tf.intersection([tf.object({ a: tf.string() }), tf.object({ b: tf.number() })]),
 				tf.string(),
 			]);
-			const result = renderTypeFactoryTypeScript(unionType, () => "", instanceOfsTypeFactory);
+			const result = renderTypeFactoryTypeScript(unionType, () => "");
 			// Note: Parentheses not required since & binds tighter than |
 			assert.equal(
 				result,
@@ -367,11 +288,7 @@ describe("renderTypeFactoryTypeScript", () => {
 	describe("function types", () => {
 		it("renders simple function", () => {
 			const functionType = tf.function([["arg", tf.string()]], tf.number());
-			const result = renderTypeFactoryTypeScript(
-				functionType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(functionType, () => "");
 			assert.equal(result, "(arg: string) => number");
 		});
 
@@ -383,11 +300,7 @@ describe("renderTypeFactoryTypeScript", () => {
 				],
 				tf.number(),
 			);
-			const result = renderTypeFactoryTypeScript(
-				functionType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(functionType, () => "");
 			assert.equal(result, "(x: number, y: number) => number");
 		});
 
@@ -399,11 +312,7 @@ describe("renderTypeFactoryTypeScript", () => {
 				],
 				tf.void(),
 			);
-			const result = renderTypeFactoryTypeScript(
-				functionType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(functionType, () => "");
 			assert.equal(result, "(required: string, optional?: number) => void");
 		});
 
@@ -412,21 +321,13 @@ describe("renderTypeFactoryTypeScript", () => {
 				"rest",
 				tf.number(),
 			]);
-			const result = renderTypeFactoryTypeScript(
-				functionType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(functionType, () => "");
 			assert.equal(result, "(first: string, ...rest: number[]) => void");
 		});
 
 		it("renders function with no parameters", () => {
 			const functionType = tf.function([], tf.string());
-			const result = renderTypeFactoryTypeScript(
-				functionType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(functionType, () => "");
 			assert.equal(result, "() => string");
 		});
 
@@ -435,11 +336,7 @@ describe("renderTypeFactoryTypeScript", () => {
 				[["id", tf.number()]],
 				tf.promise(tf.object({ name: tf.string() })),
 			);
-			const result = renderTypeFactoryTypeScript(
-				functionType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(functionType, () => "");
 			assert.equal(
 				result,
 				`(id: number) => Promise<{
@@ -452,11 +349,7 @@ describe("renderTypeFactoryTypeScript", () => {
 	describe("readonly types", () => {
 		it("renders readonly type", () => {
 			const readonlyType = tf.readonly(tf.string());
-			const result = renderTypeFactoryTypeScript(
-				readonlyType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(readonlyType, () => "");
 			assert.equal(result, "Readonly<string>");
 		});
 	});
@@ -465,14 +358,10 @@ describe("renderTypeFactoryTypeScript", () => {
 		it("renders instanceOf type using getFriendlyName", () => {
 			class MyClass extends sf.object("MyClass", {}) {}
 			const instanceOfType = tf.instanceOf(MyClass);
-			const result = renderTypeFactoryTypeScript(
-				instanceOfType,
-				(schema) => {
-					if (schema === MyClass) return "MyClass";
-					return "Unknown";
-				},
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(instanceOfType, (schema) => {
+				if (schema === MyClass) return "MyClass";
+				return "Unknown";
+			});
 			assert.equal(result, "MyClass");
 		});
 	});
@@ -488,11 +377,7 @@ describe("renderTypeFactoryTypeScript", () => {
 				),
 				metadata: tf.record(tf.string(), tf.union([tf.string(), tf.number()])),
 			});
-			const result = renderTypeFactoryTypeScript(
-				complexType,
-				() => "",
-				instanceOfsTypeFactory,
-			);
+			const result = renderTypeFactoryTypeScript(complexType, () => "");
 			assert.equal(
 				result,
 				`{
@@ -507,28 +392,11 @@ describe("renderTypeFactoryTypeScript", () => {
 	});
 
 	describe("error paths", () => {
-		it("throws UsageError for missing instanceof lookup", () => {
-			class MyClass extends sf.object("MyClass", {}) {}
-			const instanceOfType = tf.instanceOf(MyClass);
-			// Create an empty lookup that doesn't have the type
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-arguments
-			const emptyLookup = new WeakMap<any, any>();
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			assert.throws(
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-				() => renderTypeFactoryTypeScript(instanceOfType, () => "", emptyLookup),
-				/instanceof type not found in lookup/,
-			);
-		});
-
 		it("throws UsageError for unsupported type kind", () => {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-			const invalidType = { _kind: "invalid" } as any;
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			const invalidType = { _kind: "__invalid__" } as unknown as TypeFactoryType;
 			assert.throws(
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-				() => renderTypeFactoryTypeScript(invalidType, () => "", instanceOfsTypeFactory),
-				/Unsupported type when formatting helper types: invalid/,
+				() => renderTypeFactoryTypeScript(invalidType, () => ""),
+				/Unsupported type when formatting helper types: __invalid__/,
 			);
 		});
 
@@ -537,7 +405,7 @@ describe("renderTypeFactoryTypeScript", () => {
 			const invalidType = { _kind: "invalid" } as any;
 			try {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-				renderTypeFactoryTypeScript(invalidType, () => "", instanceOfsTypeFactory);
+				renderTypeFactoryTypeScript(invalidType, () => "");
 				assert.fail("Expected error to be thrown");
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			} catch (error: any) {

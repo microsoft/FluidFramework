@@ -390,28 +390,31 @@ export function testInvert(): void {
 		// 		Mark.moveIn(1, brand(2), { finalEndpoint: { localId: brand(0) } }),
 		// 	];
 
-		// 	const inverse = invert(moves, tag1);
-		// 	const expected = [
-		// 		Mark.returnTo(
-		// 			1,
-		// 			brand(0),
-		// 			{ revision: tag1, localId: brand(0) },
-		// 			{ finalEndpoint: { localId: brand(2), revision: tag1 }, revision: tagForInvert },
-		// 		),
-		// 		{ count: 1 },
-		// 		Mark.rename(
-		// 			1,
-		// 			{ revision: tag1, localId: brand(2) },
-		// 			{ revision: tag1, localId: brand(1) },
-		// 		),
-		// 		{ count: 1 },
-		// 		Mark.moveOut(1, brand(2), {
-		// 			changes: { ...childChange1, revision: tag1 },
-		// 			finalEndpoint: { localId: brand(0), revision: tag1 },
-		// 			idOverride: { revision: tag1, localId: brand(3) },
+		// const inverse = invert(moves, tag1);
+		// const expected = [
+		// 	Mark.returnTo(
+		// 		1,
+		// 		brand(0),
+		// 		{ revision: tag1, localId: brand(0) },
+		// 		{
+		// 			finalEndpoint: { localId: brand(2), revision: tagForInvert },
 		// 			revision: tagForInvert,
-		// 		}),
-		// 	];
+		// 		},
+		// 	),
+		// 	{ count: 1 },
+		// 	Mark.rename(
+		// 		1,
+		// 		{ revision: tag1, localId: brand(2) },
+		// 		{ revision: tag1, localId: brand(1) },
+		// 	),
+		// 	{ count: 1 },
+		// 	Mark.moveOut(1, brand(2), {
+		// 		changes: { ...childChange1, revision: tag1 },
+		// 		finalEndpoint: { localId: brand(0), revision: tagForInvert },
+		// 		idOverride: { revision: tag1, localId: brand(3) },
+		// 		revision: tagForInvert,
+		// 	}),
+		// ];
 
 		// 	assertChangesetsEqual(inverse, expected);
 		// });

@@ -65,30 +65,30 @@
 
 export function testSnapshots(): void {
 	describe("Snapshots", () => {
-		// 		const snapshotCompressor = createSnapshotCompressor();
-		// 		const changesets = generateTestChangesets(snapshotCompressor);
-		// 		const family = makeOptionalFieldCodecFamily(new RevisionTagCodec(snapshotCompressor));
-		// 		const baseContext = {
-		// 			originatorId: snapshotCompressor.localSessionId,
-		// 			revision: undefined,
-		// 			idCompressor: testIdCompressor,
-		// 		};
-		// 		for (const version of family.getSupportedFormats()) {
-		// 			describe(`version ${version}`, () => {
-		// 				const dir = path.join("optional-field", `V${version}`);
-		// 				useSnapshotDirectory(dir);
-		// 				const codec = family.resolve(version);
-		// 				for (const { name, change } of changesets) {
-		// 					it(name, () => {
-		// 						const encoded = codec.json.encode(change, {
-		// 							baseContext,
-		// 							encodeNode: (node) => TestNodeId.encode(node, baseContext),
-		// 							decodeNode: (node) => TestNodeId.decode(node, baseContext),
-		// 						});
-		// 						takeJsonSnapshot(encoded);
-		// 					});
-		// 				}
+		// const snapshotCompressor = createSnapshotCompressor();
+		// const changesets = generateTestChangesets(snapshotCompressor);
+		// const family = makeOptionalFieldCodecFamily(new RevisionTagCodec(snapshotCompressor));
+		// const baseContext = {
+		// 	originatorId: snapshotCompressor.localSessionId,
+		// 	revision: undefined,
+		// 	idCompressor: testIdCompressor,
+		// };
+		// for (const version of family.getSupportedFormats()) {
+		// 	describe(`version ${version}`, () => {
+		// 		const dir = path.join("optional-field", `V${version}`);
+		// 		useSnapshotDirectory(dir);
+		// 		const codec = family.resolve(version);
+		// 		for (const { name, change } of changesets) {
+		// 			it(name, () => {
+		// 				const encoded = codec.encode(change, {
+		// 					baseContext,
+		// 					encodeNode: (node) => TestNodeId.encode(node, baseContext),
+		// 					decodeNode: (node) => TestNodeId.decode(node, baseContext),
+		// 				});
+		// 				takeJsonSnapshot(encoded);
 		// 			});
 		// 		}
+		// 	});
+		// }
 	});
 }

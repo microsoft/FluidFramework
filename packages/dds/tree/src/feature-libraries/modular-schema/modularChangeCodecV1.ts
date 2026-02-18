@@ -11,7 +11,6 @@ import {
 	withSchemaValidation,
 	type ICodecOptions,
 	type IJsonCodec,
-	type IMultiFormatCodec,
 	type SchemaValidationFunction,
 } from "../../codec/index.js";
 import {
@@ -30,7 +29,6 @@ import {
 import {
 	brand,
 	idAllocatorFromMaxId,
-	newTupleBTree,
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
 	type Mutable,
@@ -38,7 +36,11 @@ import {
 	type RangeQueryResult,
 	type TupleBTree,
 } from "../../util/index.js";
-import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import {
+	newChangeAtomIdBTree,
+	setInChangeAtomIdMap,
+	type ChangeAtomIdBTree,
+} from "../changeAtomIdBTree.js";
 import {
 	chunkFieldSingle,
 	defaultChunkPolicy,
@@ -58,6 +60,7 @@ import {
 	addNodeRename,
 	getFirstAttachField,
 	getFirstDetachField,
+	newFieldIdKeyBTree,
 	newRootTable,
 	normalizeFieldId,
 	validateChangeset,
@@ -92,7 +95,7 @@ type ModularChangeCodec = IJsonCodec<
 	ChangeEncodingContext
 >;
 
-type FieldCodec = IMultiFormatCodec<
+type FieldCodec = IJsonCodec<
 	FieldChangeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
@@ -132,8 +135,8 @@ export function getFieldChangesetCodecs(
 		const codec = kind.changeHandler.codecsFactory(revisionTagCodec).resolve(formatVersion);
 		return {
 			codec,
-			compiledSchema: codec.json.encodedSchema
-				? extractJsonValidator(codecOptions.jsonValidator).compile(codec.json.encodedSchema)
+			compiledSchema: codec.encodedSchema
+				? extractJsonValidator(codecOptions.jsonValidator).compile(codec.encodedSchema)
 				: undefined,
 		};
 	};
@@ -186,7 +189,7 @@ function encodeFieldChangesForJson(
 
 		const fieldContext: FieldChangeEncodingContext = {
 			baseContext: context,
-			rootNodeChanges: rootChanges?.nodeChanges ?? newTupleBTree(),
+			rootNodeChanges: rootChanges?.nodeChanges ?? newChangeAtomIdBTree(),
 			rootRenames: rootChanges?.renames ?? newChangeAtomIdTransform(),
 
 			encodeNode,
@@ -202,7 +205,7 @@ function encodeFieldChangesForJson(
 			generateId: () => fail("Should not be called during encoding"),
 		};
 
-		const encodedChange = codec.json.encode(fieldChange.change, fieldContext);
+		const encodedChange = codec.encode(fieldChange.change, fieldContext);
 		if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
 			fail(0xb1f /* Encoded change didn't pass schema validation. */);
 		}
@@ -307,7 +310,7 @@ function decodeFieldChangesFromJson(
 
 		const fieldContext: FieldChangeEncodingContext = {
 			baseContext: context,
-			rootNodeChanges: newTupleBTree(),
+			rootNodeChanges: newChangeAtomIdBTree(),
 			rootRenames: newChangeAtomIdTransform(),
 
 			encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
@@ -343,7 +346,7 @@ function decodeFieldChangesFromJson(
 			}),
 		};
 
-		const fieldChangeset = codec.json.decode(field.change, fieldContext);
+		const fieldChangeset = codec.decode(field.change, fieldContext);
 
 		const crossFieldKeys = getChangeHandler(fieldKinds, field.fieldKind).getCrossFieldKeys(
 			fieldChangeset,
@@ -428,7 +431,7 @@ export function decodeDetachedNodes(
 		});
 	};
 
-	const map: ModularChangeset["builds"] = newTupleBTree();
+	const map: ModularChangeset["builds"] = newChangeAtomIdBTree();
 	// eslint-disable-next-line unicorn/no-array-for-each -- Codec internals: minimizing changes to serialization logic
 	encoded.builds.forEach((build) => {
 		// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
@@ -640,7 +643,9 @@ export function encodeRevisionInfos(
 ): EncodedRevisionInfo[] | undefined {
 	if (context.revision !== undefined) {
 		assert(
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Using optional chaining here would change behavior: `revisions[0]?.rollbackOf === undefined` is true when revisions[0] is undefined, but this check requires revisions[0] to be defined. As currently written, such a change would be safe because context.revision is included in the check and from a couple lines above is confirmed not undefined. But this more verbose form is clearer.
 			revisions.length === 1 &&
+				// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 				revisions[0] !== undefined &&
 				revisions[0].revision === context.revision &&
 				revisions[0].rollbackOf === undefined,
@@ -757,7 +762,7 @@ function getFieldToRoots(
 	rootTable: RootNodeTable,
 	aliases: ChangeAtomIdBTree<NodeId>,
 ): FieldRootMap {
-	const fieldToRoots: FieldRootMap = newTupleBTree();
+	const fieldToRoots: FieldRootMap = newFieldIdKeyBTree();
 	for (const [[revision, localId], nodeId] of rootTable.nodeChanges.entries()) {
 		const detachId: ChangeAtomId = { revision, localId };
 		const fieldId = rootTable.detachLocations.getFirst(detachId, 1).value;
@@ -796,7 +801,7 @@ function getOrAddInFieldRootMap(map: FieldRootMap, fieldId: FieldId): FieldRootC
 	}
 
 	const newRootChanges: FieldRootChanges = {
-		nodeChanges: newTupleBTree(),
+		nodeChanges: newChangeAtomIdBTree(),
 		renames: newChangeAtomIdTransform(),
 	};
 	map.set(key, newRootChanges);
@@ -869,8 +874,8 @@ export function decodeChange(
 	chunkCompressionStrategy: TreeCompressionStrategy,
 ): Mutable<ModularChangeset> {
 	const idAllocator = idAllocatorFromMaxId(encodedChange.maxId);
-	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
-	const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newTupleBTree();
+	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = newChangeAtomIdBTree();
+	const nodeToParent: ChangeAtomIdBTree<NodeLocation> = newChangeAtomIdBTree();
 	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldRangeTable();
 	const rootNodes = newRootTable();
 
@@ -920,7 +925,7 @@ export function decodeChange(
 		nodeChanges,
 		rootNodes,
 		nodeToParent,
-		nodeAliases: newTupleBTree(),
+		nodeAliases: newChangeAtomIdBTree(),
 		crossFieldKeys,
 	};
 

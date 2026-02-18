@@ -16,6 +16,7 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
+import { strictEnum, type Values } from "../../util/index.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
@@ -26,7 +27,7 @@ import { makeModularChangeCodecV3 } from "./modularChangeCodecV3.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
 
 export function makeModularChangeCodecFamily(
-	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
+	fieldKindConfigurations: ReadonlyMap<ModularChangeFormatVersion, FieldKindConfiguration>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -40,11 +41,8 @@ export function makeModularChangeCodecFamily(
 	return makeCodecFamily(
 		Array.from(fieldKindConfigurations.entries(), ([version, fieldKinds]) => {
 			switch (version) {
-				case 1:
-				case 2:
-				case 3:
-				case 4:
-				case 6: {
+				case ModularChangeFormatVersion.v3:
+				case ModularChangeFormatVersion.v4: {
 					return [
 						version,
 						makeModularChangeCodecV1(
@@ -56,7 +54,7 @@ export function makeModularChangeCodecFamily(
 						),
 					];
 				}
-				case 5: {
+				case ModularChangeFormatVersion.v5: {
 					return [
 						version,
 						makeModularChangeCodecV2(
@@ -68,7 +66,7 @@ export function makeModularChangeCodecFamily(
 						),
 					];
 				}
-				case 101: {
+				case ModularChangeFormatVersion.vDetachedRoots: {
 					return [
 						version,
 						makeModularChangeCodecV3(
@@ -87,3 +85,31 @@ export function makeModularChangeCodecFamily(
 		}),
 	);
 }
+
+/**
+ * The format version for `ModularChangeset`.
+ */
+export const ModularChangeFormatVersion = strictEnum("ModularChangeFormatVersion", {
+	/**
+	 * Introduced prior to 2.0 and used beyond.
+	 * Reading capability must be maintained for backwards compatibility.
+	 * Writing capability needs to be maintained so long as {@link lowestMinVersionForCollab} is less than 2.2.0.
+	 */
+	v3: 3,
+	/**
+	 * Introduced in 2.2.0.
+	 * Was inadvertently made usable for writing in 2.43.0 (through configuredSharedTree) and remains available.
+	 * Reading capability must be maintained for backwards compatibility.
+	 * Writing capability could be dropped in favor of {@link ModularChangeFormatVersion.v3},
+	 * but doing so would make the pattern of writable versions more complex and gain little
+	 * because the logic for this format is shared with {@link ModularChangeFormatVersion.v3}.
+	 */
+	v4: 4,
+	/**
+	 * Introduced and made available for writing in 2.80.0
+	 * Adds support for "no change" constraints.
+	 */
+	v5: 5,
+	vDetachedRoots: "detached-roots|v0.1",
+});
+export type ModularChangeFormatVersion = Values<typeof ModularChangeFormatVersion>;

@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { FormattedTextAsTree, formattedTreeConfiguration } from "./formattedSchema.js";
-export { FormattedTextEditorFactory } from "./formattedTextEditorFactory.js";
-export { FormattedMainView, type FormattedMainViewProps } from "./quillFormattedView.js";
+export {
+	FormattedTextAsTree,
+	FormattedTextEditorFactory,
+	FormattedMainView,
+	type FormattedMainViewProps,
+} from "./quillFormattedView.js";

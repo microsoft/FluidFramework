@@ -8,12 +8,15 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import { withSchemaValidation } from "../../../codec/index.js";
 import { newChangeAtomIdTransform } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
+import {
+	newChangeAtomIdBTree,
+	type FieldChangeEncodingContext,
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldChangeCodecFactory } from "../../../feature-libraries/sequence-field/sequenceFieldCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { Changeset } from "../../../feature-libraries/sequence-field/types.js";
-import { brand, newTupleBTree, type JsonCompatibleReadOnly } from "../../../util/index.js";
+import { brand, type JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {
@@ -59,7 +62,7 @@ const context: FieldChangeEncodingContext = {
 		value: undefined,
 	}),
 	decodeNode: (node) => TestNodeId.decode(node, baseContext),
-	rootNodeChanges: newTupleBTree(),
+	rootNodeChanges: newChangeAtomIdBTree(),
 	rootRenames: newChangeAtomIdTransform(),
 	decodeRootNodeChange: () => {},
 	decodeRootRename: () => {},
@@ -110,13 +113,9 @@ export function testCodecs(): void {
 				it(`version ${version}`, () => {
 					const codec = sequenceFieldCodec.resolve(version);
 					const jsonCodec =
-						codec.json.encodedSchema === undefined
-							? codec.json
-							: withSchemaValidation(
-									codec.json.encodedSchema,
-									codec.json,
-									FormatValidatorBasic,
-								);
+						codec.encodedSchema === undefined
+							? codec
+							: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 					const actual = jsonCodec.decode(changeset, context);
 					assertChangesetsEqual(actual, expected);
 				});

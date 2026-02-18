@@ -24,7 +24,6 @@ import {
 import {
 	fieldKindConfigurations,
 	fieldKinds,
-	type ModularChangeFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
@@ -35,7 +34,6 @@ import {
 import {
 	makeModularChangeCodecFamily,
 	type FieldEditDescription,
-	type FieldKindConfiguration,
 	type NodeId,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
@@ -562,15 +560,8 @@ const codecOptions: CodecWriteOptions = {
 	minVersionForCollab: currentVersion,
 };
 
-const fieldKindConfiguration: FieldKindConfiguration =
-	fieldKindConfigurations.get(brand(5)) ?? strict.fail("Field kind configuration not found");
-assert(
-	fieldKindConfigurations.get(6 as ModularChangeFormatVersion) === undefined,
-	"There's a newer configuration. It probably should be used.",
-);
-
 const codec = makeModularChangeCodecFamily(
-	new Map([[1, fieldKindConfiguration]]),
+	fieldKindConfigurations,
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,

@@ -198,18 +198,22 @@ export class RangeMap<K, V> {
 	 *
 	 * @param start - The start of the range to delete (inclusive).
 	 * @param length - The length of the range to delete.
+	 * @returns The number of keys/value pairs deleted (integer between 0 and `length`, inclusive).
 	 */
-	public delete(start: K, length: number): void {
+	public delete(start: K, length: number): number {
+		let deleteCount = 0;
 		const lastDeleteKey = this.offsetKey(start, length - 1);
 		for (const { start: key, length: entryLength, value } of this.getIntersectingEntries(
 			start,
 			length,
 		)) {
+			deleteCount += entryLength;
 			this.tree.delete(key);
 			const lengthBefore = this.subtractKeys(start, key);
 			if (lengthBefore > 0) {
 				// A portion of this entry comes before the deletion range, so we reinsert that portion.
 				this.tree.set(key, { length: lengthBefore, value });
+				deleteCount -= lengthBefore;
 			}
 
 			const lastEntryKey = this.offsetKey(key, entryLength - 1);
@@ -222,8 +226,10 @@ export class RangeMap<K, V> {
 					length: lengthAfter,
 					value: this.offsetValue(value, difference),
 				});
+				deleteCount -= lengthAfter;
 			}
 		}
+		return deleteCount;
 	}
 
 	public clone(): RangeMap<K, V> {
@@ -242,6 +248,7 @@ export class RangeMap<K, V> {
 
 	/**
 	 * Returns a new map which contains the entries from both input maps.
+	 * Whenever both maps contain entires for the same keys, the value from map `b` is used in the returned map.
 	 */
 	public static union<K, V>(a: RangeMap<K, V>, b: RangeMap<K, V>): RangeMap<K, V> {
 		assert(
@@ -251,12 +258,8 @@ export class RangeMap<K, V> {
 			0xaae /* Maps should have the same behavior */,
 		);
 
-		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys, a.offsetValue);
-
-		// TODO: Is there a good pattern that lets us make `tree` readonly?
-		merged.tree = a.tree.clone();
+		const merged = a.clone();
 		for (const entry of b.entries()) {
-			// TODO: Handle key collisions
 			merged.set(entry.start, entry.length, entry.value);
 		}
 
