@@ -24,21 +24,14 @@ import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EditManager, SummaryData } from "./editManager.js";
 import type { EditManagerEncodingContext } from "./editManagerCodecs.js";
+import { summaryContentBlobKey as summaryContentBlobKeyV1ToV2 } from "./editManagerSummaryFormatV1ToV2.js";
+import { summaryContentBlobKey as summaryContentBlobKeyV3 } from "./editManagerSummaryFormatV3.js";
 import type {
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "./summaryTypes.js";
 import { VersionedSummarizer } from "./versionedSummarizer.js";
-import { summaryContentBlobKey as summaryContentBlobKeyV1ToV2 } from "./editManagerSummaryFormatV1ToV2.js";
-import { summaryContentBlobKey as summaryContentBlobKeyV3 } from "./editManagerSummaryFormatV3.js";
-
-/**
- * @deprecated Use version-specific blob keys from editManagerSummaryFormatV1toV2.js or editManagerSummaryFormatV3.js instead.
- * This export is maintained for backward compatibility with existing tests.
- * The storage key for EditManager summary content blob used in version 1 and version 2.
- */
-export const stringKey = summaryContentBlobKeyV1ToV2;
 
 /**
  * The versions for the edit manager summary format.
@@ -77,7 +70,7 @@ function minVersionToEditManagerSummaryFormatVersion(
 ): EditManagerSummaryFormatVersion {
 	return getConfigForMinVersionForCollab(version, {
 		[lowestMinVersionForCollab]: EditManagerSummaryFormatVersion.v2,
-		[FluidClientVersion.v2_81]: EditManagerSummaryFormatVersion.v3,
+		[FluidClientVersion.v2_90]: EditManagerSummaryFormatVersion.v3,
 	});
 }
 
