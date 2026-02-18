@@ -146,10 +146,10 @@ export class LocalIntervalCollection {
 	private readonly indexes: Set<SequenceIntervalIndex>;
 
 	constructor(
+		sequence: ISharedSegmentSequence<any>,
 		private readonly client: Client,
 		private readonly label: string,
 		private readonly options: Partial<SequenceOptions>,
-		sequence: ISharedSegmentSequence<any>,
 		/** Callback invoked each time one of the endpoints of an interval slides. */
 		private readonly onPositionChange?: (
 			interval: SequenceIntervalClass,
@@ -1032,7 +1032,7 @@ export class IntervalCollection
 		return { start, end };
 	}
 
-	public attachGraph(client: Client, label: string, sequence: ISharedSegmentSequence<any>) {
+	public attachGraph(sequence: ISharedSegmentSequence<any>, client: Client, label: string) {
 		if (this.attached) {
 			throw new LoggingError("Only supports one Sequence attach");
 		}
@@ -1056,10 +1056,10 @@ export class IntervalCollection
 		}
 
 		this.localCollection = new LocalIntervalCollection(
+			sequence,
 			client,
 			label,
 			this.options,
-			sequence,
 			(interval, previousInterval) => this.emitChange(interval, previousInterval, true, true),
 		);
 		if (this.savedSerializedIntervals) {

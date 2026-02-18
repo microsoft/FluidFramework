@@ -11,6 +11,7 @@ import { TestClient } from "@fluidframework/merge-tree/internal/test";
 
 import { EndpointInRangeIndex, IEndpointInRangeIndex } from "../intervalIndex/index.js";
 import type { SequenceInterval } from "../intervals/index.js";
+import type { ISharedSegmentSequence } from "../sequence.js";
 
 import {
 	assertOrderedSequenceIntervals,
@@ -73,7 +74,9 @@ describe("findIntervalsWithEndpointInRange", () => {
 	beforeEach(() => {
 		client = new TestClient();
 		Array.from({ length: 100 }).forEach(() => client.insertTextLocal(0, "0123456789"));
-		endpointInRangeIndex = new EndpointInRangeIndex(client as any);
+		endpointInRangeIndex = new EndpointInRangeIndex(
+			client as unknown as ISharedSegmentSequence<any>,
+		);
 		createTestInterval = (p1, p2) => createTestSequenceInterval(client, p1, p2);
 	});
 
