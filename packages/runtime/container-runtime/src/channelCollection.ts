@@ -103,6 +103,7 @@ import {
 	type ILocalDetachedFluidDataStoreContextProps,
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
+	PendingStateLocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
 	createAttributesBlob,
 } from "./dataStoreContext.js";
@@ -1740,8 +1741,8 @@ export class ChannelCollection
 				const blobs = new Map<string, ArrayBufferLike>();
 				const snapshotTree = buildSnapshotTree(itree.entries, blobs);
 
-				// Create a LocalFluidDataStoreContext for this datastore
-				const dataStoreContext = new LocalFluidDataStoreContext({
+				// Create a context for this datastore with Detached attach state
+				const dataStoreContext = new PendingStateLocalFluidDataStoreContext({
 					id,
 					pkg: undefined,
 					parentContext: this.wrapContextForInnerChannel(id),

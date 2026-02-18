@@ -54,35 +54,50 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 	}
 
 	async minimize(): Promise<TOperation[]> {
-		const firstError = await this.assertFails();
+		// Suppress stack traces to avoid retaining large scope chains across thousands
+		// of replay iterations. V8 captures CallSiteInfo objects at Error construction
+		// time that hold internal (C++ level) references to the execution context;
+		// even a single frame is enough to cause OOM. With stackTraceLimit=0,
+		// error.message is used for comparison instead of the stack-based call site
+		// extracted by extractMessage(). This is slightly less precise — two different
+		// assertions could produce the same message — but in practice assertion messages
+		// include unique error codes (e.g. 0x14f) that prevent false matches.
+		const originalStackTraceLimit = Error.stackTraceLimit;
+		Error.stackTraceLimit = 0;
+		try {
+			const firstError = await this.assertFails();
 
-		if (!firstError) {
-			throw new Error(
-				"Attempted to minimize fuzz test, but the original case didn't fail. " +
-					"This can happen if the original test failed at operation generation time rather than as part of a reducer. " +
-					"Use the `skipMinimization` option to skip minimization in this case.",
-			);
-		}
-
-		await this.tryDeleteEachOp();
-
-		if (this.transforms.length === 0) {
-			return this.operations;
-		}
-
-		for (let i = 0; i < this.numIterations; i += 1) {
-			await this.applyTransforms();
-			// some minimizations can only occur if two or more ops are modified
-			// at the same time
-			for (let j = 0; j < 50; j++) {
-				await this.applyNRandomTransforms(2);
-				await this.applyNRandomTransforms(3);
+			if (!firstError) {
+				throw new Error(
+					"Attempted to minimize fuzz test, but the original case didn't fail. " +
+						"This can happen if the original test failed at operation generation time rather than as part of a reducer. " +
+						"Use the `skipMinimization` option to skip minimization in this case.",
+				);
 			}
+
+			await this.tryDeleteEachOp();
+
+			if (this.transforms.length === 0) {
+				return this.operations;
+			}
+
+			for (let i = 0; i < this.numIterations; i += 1) {
+				await this.applyTransforms();
+				// some minimizations can only occur if two or more ops are modified
+				// at the same time
+				for (let j = 0; j < 50; j++) {
+					await this.applyNRandomTransforms(2);
+					await this.applyNRandomTransforms(3);
+				}
+				tryGC();
+			}
+
+			await this.tryDeleteEachOp();
+
+			return this.operations;
+		} finally {
+			Error.stackTraceLimit = originalStackTraceLimit;
 		}
-
-		await this.tryDeleteEachOp();
-
-		return this.operations;
 	}
 
 	private async tryDeleteEachOp(): Promise<void> {
@@ -101,6 +116,7 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 
 				idx -= 1;
 			}
+			tryGC();
 		} while (this.operations.length !== previousLength);
 	}
 
@@ -185,7 +201,11 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 	 * Returns whether or not the test still fails with the same error message.
 	 *
 	 * We use the simple heuristic of verifying the error message is the same
-	 * to avoid dealing with transforms that would result in invalid ops
+	 * to avoid dealing with transforms that would result in invalid ops.
+	 *
+	 * When stack frames are available (stackTraceLimit {@literal >} 0), extractMessage()
+	 * is used for more precise call-site comparison. When suppressed
+	 * (stackTraceLimit=0), error.message is used instead.
 	 */
 	private async assertFails(): Promise<boolean> {
 		let lastOp: BaseOperation = { type: "___none___" };
@@ -197,30 +217,61 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 			}
 			return (lastOp = val.value);
 		};
-		try {
-			await this.replayTest(generator);
+		const errorInfo = await getErrorInfo(this.replayTest, generator);
+		if (errorInfo === undefined) {
 			return false;
-		} catch (error: unknown) {
-			if (
-				error === undefined ||
-				!(error instanceof Error) ||
-				error instanceof ReducerPreconditionError ||
-				error.stack === undefined
-			) {
-				return false;
-			}
-
-			const message = extractMessage(error.stack);
-
-			if (this.initialError === undefined) {
-				this.initialError = { message, op: lastOp };
-				return true;
-			}
-
-			return (
-				message === this.initialError.message && this.initialError.op.type === lastOp.type
-			);
 		}
+
+		if (this.initialError === undefined) {
+			this.initialError = { message: errorInfo, op: lastOp };
+			return true;
+		}
+
+		return (
+			errorInfo === this.initialError.message && this.initialError.op.type === lastOp.type
+		);
+	}
+}
+
+/**
+ * Run a replay and return the error identity string if the test fails with a
+ * relevant error, or undefined if it passes / fails with an irrelevant error.
+ *
+ * This is deliberately a standalone function (not a method) so the caught Error
+ * goes out of scope as soon as we return.
+ */
+async function getErrorInfo<TOperation extends BaseOperation>(
+	replayTest: (generator: AsyncGenerator<TOperation, unknown>) => Promise<void>,
+	generator: AsyncGenerator<TOperation, unknown>,
+): Promise<string | undefined> {
+	try {
+		await replayTest(generator);
+		return undefined;
+	} catch (error: unknown) {
+		if (
+			error === undefined ||
+			!(error instanceof Error) ||
+			error instanceof ReducerPreconditionError
+		) {
+			return undefined;
+		}
+		// Use the stack-based call site when available (more precise),
+		// otherwise fall back to error.message (e.g. when stackTraceLimit is 0).
+		return error.stack !== undefined && error.stack.includes("\n    at")
+			? extractMessage(error.stack)
+			: error.message;
+	}
+}
+
+/**
+ * Request garbage collection if the --expose-gc flag is enabled.
+ * This helps prevent OOM during minimization by releasing memory
+ * from disposed test infrastructure between replay iterations.
+ */
+function tryGC(): void {
+	const g = globalThis as unknown as { gc?: () => void };
+	if (typeof g.gc === "function") {
+		g.gc();
 	}
 }
 

@@ -44,7 +44,7 @@ describe("Local Server Stress", () => {
 			// ConsensusOrderedCollection consistency
 			...[54],
 			// SharedMatrix consistency (values differ after convergence)
-			...[1, 45, 139],
+			...[45, 139],
 		],
 		// Use skip, replay, and only properties to control which seeds run.
 	});

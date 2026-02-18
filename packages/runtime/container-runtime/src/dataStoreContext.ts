@@ -1550,6 +1550,18 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
 }
 
 /**
+ * Context for a datastore loaded from pendingAttachmentSummaries (pending local state).
+ * These datastores have snapshot data but were never attached on the original client,
+ * so _attachState must be Detached despite having a snapshotTree (existing = true).
+ */
+export class PendingStateLocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
+	constructor(props: ILocalFluidDataStoreContextProps) {
+		super(props);
+		this._attachState = AttachState.Detached;
+	}
+}
+
+/**
  * Detached context. Data Store runtime will be attached to it by attachRuntime() call
  * Before attachment happens, this context is not associated with particular type of runtime
  * or factory, i.e. it's package path is undefined.
