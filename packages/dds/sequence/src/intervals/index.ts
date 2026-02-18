@@ -19,7 +19,7 @@ export {
 export {
 	SequenceInterval,
 	SequenceIntervalClass,
-	TransientSequenceInterval,
+	BaseSequenceInterval,
 	createSequenceInterval,
 	createPositionReferenceFromSegoff,
 	createTransientIntervalFromSequence,

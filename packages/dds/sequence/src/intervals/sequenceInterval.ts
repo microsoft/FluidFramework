@@ -188,7 +188,7 @@ export interface SequenceInterval extends IInterval {
  * Lightweight interval for index queries (overlap, comparison).
  * Has no Client dependency; cannot serialize or be disposed.
  */
-export class TransientSequenceInterval implements SequenceInterval {
+export class BaseSequenceInterval implements SequenceInterval, ISerializableInterval {
 	readonly #id: string;
 	readonly #properties: PropertySet = createMap<any>();
 
@@ -310,13 +310,21 @@ export class TransientSequenceInterval implements SequenceInterval {
 		throw new UsageError("overlapsPos requires a Client; use SequenceIntervalClass");
 	}
 
+	public clone(): BaseSequenceInterval {
+		throw new UsageError("clone requires a Client; use SequenceIntervalClass");
+	}
+
+	public union(_b: BaseSequenceInterval): BaseSequenceInterval {
+		throw new UsageError("union requires a Client; use SequenceIntervalClass");
+	}
+
 	protected verifyNotDispose(): void {
 		// No-op: transient intervals are not disposable.
 	}
 }
 
 export class SequenceIntervalClass
-	extends TransientSequenceInterval
+	extends BaseSequenceInterval
 	implements ISerializableInterval, IDisposable
 {
 	readonly #props: {
@@ -840,7 +848,7 @@ export function createTransientIntervalFromSequence(
 	start: SequencePlace | undefined,
 	end: SequencePlace | undefined,
 	sequence: ISharedSegmentSequence<any>,
-): TransientSequenceInterval {
+): BaseSequenceInterval {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
 		end ?? "end",
@@ -880,7 +888,7 @@ export function createTransientIntervalFromSequence(
 	startLref.addProperties(rangeProp);
 	endLref.addProperties(rangeProp);
 
-	return new TransientSequenceInterval(
+	return new BaseSequenceInterval(
 		uuid(),
 		startLref,
 		endLref,
