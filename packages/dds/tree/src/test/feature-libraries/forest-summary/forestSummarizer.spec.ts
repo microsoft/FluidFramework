@@ -168,7 +168,7 @@ function validateHandlePathExists(handle: string, summaryTree: ISummaryTree) {
 	// of the summary tree, the second element in the first element's subtree, and so on.
 	const pathParts = handle.split("/");
 	assert.equal(pathParts[0], "");
-	assert(pathParts.length > 1, "");
+	assert(pathParts.length > 1);
 	let currentObject: SummaryObject = summaryTree;
 	for (const part of pathParts.slice(1)) {
 		if (currentObject.type === SummaryType.Tree) {
