@@ -115,6 +115,7 @@ module.exports = {
 		},
 		"depcruise": [],
 		"check:exports": ["api"],
+		"check:exports:bundle-release-tags": ["build:esnext"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],

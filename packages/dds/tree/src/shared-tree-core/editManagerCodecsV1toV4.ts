@@ -10,7 +10,6 @@ import {
 	eraseEncodedType,
 	type ICodecOptions,
 	type IJsonCodec,
-	type IMultiFormatCodec,
 	withSchemaValidation,
 } from "../codec/index.js";
 import type {
@@ -31,7 +30,7 @@ export interface EditManagerEncodingContext {
 }
 
 export function makeV1CodecWithVersion<TChangeset>(
-	changeCodec: IMultiFormatCodec<
+	changeCodec: IJsonCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
@@ -52,7 +51,7 @@ export function makeV1CodecWithVersion<TChangeset>(
 	EditManagerEncodingContext
 > {
 	const format = EncodedEditManager(
-		changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema,
+		changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema,
 	) as TUnsafe<EncodedEditManager<TChangeset>>;
 
 	const codec: IJsonCodec<

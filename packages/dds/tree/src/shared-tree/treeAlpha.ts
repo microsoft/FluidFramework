@@ -226,7 +226,7 @@ export interface TreeIdentifierUtils {
  * There should be a way to provide a source for defaulted identifiers for unhydrated node creation, either via these APIs or some way to add them to its output later.
  * If an option were added to these APIs, it could also be used to enable unknown optional fields.
  *
- * @system @sealed @alpha
+ * @sealed @alpha
  */
 export interface TreeAlpha {
 	/**

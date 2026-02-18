@@ -449,7 +449,7 @@ describe("RecordNode", () => {
 					// @ts-expect-error: Intentionally setting a value of an incompatible type.
 					record.foo = new OtherRecursiveRecord({ x: 100 });
 				},
-				validateUsageError(/Invalid schema for this context/),
+				validateUsageError(/Expected insertable for/),
 			);
 		});
 
