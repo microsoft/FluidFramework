@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -72,7 +72,7 @@
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"@tylerbu/sorted-btree-es6": "^1.8.0",
+		"@tylerbu/sorted-btree-es6": "^2.1.1",
 		"buffer": "^6.0.3",
 		"denque": "^1.5.1",
 		"lru-cache": "^6.0.0",

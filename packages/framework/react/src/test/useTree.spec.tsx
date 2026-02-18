@@ -47,7 +47,9 @@ describe("useTree", () => {
 
 			const InvalidItemParentComponent = ({
 				item,
-			}: { item: PropTreeNode<Item> }): JSX.Element => (
+			}: {
+				item: PropTreeNode<Item>;
+			}): JSX.Element => (
 				// @ts-expect-error PropTreeNode turns this invalidation bug into a compile error
 				<span>{item.text}</span>
 			);

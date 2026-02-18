@@ -2932,6 +2932,7 @@ export class ContainerRuntime
 			}
 			case ConnectionState.CatchingUp: {
 				assert(
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58523 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 					this.getConnectionState !== undefined &&
 						this.getConnectionState() === ConnectionState.CatchingUp,
 					0xc8d /* connection state mismatch between getConnectionState and setConnectionStatus notification */,

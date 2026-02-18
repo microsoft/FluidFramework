@@ -28,7 +28,7 @@ import type { ITreeCheckout } from "./treeCheckout.js";
  * Provides various functions for interacting with {@link TreeNode}s.
  * @remarks
  * This type should only be used via the {@link (Tree:variable)} export.
- * @system @sealed @public
+ * @sealed @public
  */
 export interface Tree extends TreeNodeApi {
 	/**
@@ -467,7 +467,7 @@ function runTransactionInCheckout<TResult>(
 	transaction: () => TResult | typeof rollback,
 	preconditions: readonly TransactionConstraint[],
 ): TResult | typeof rollback {
-	checkout.transaction.start();
+	checkout.transaction.start(false);
 	addConstraintsToTransaction(checkout, false, preconditions);
 
 	let result: ReturnType<typeof transaction>;

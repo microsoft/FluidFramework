@@ -1,5 +1,13 @@
 # @fluid-internal/local-server-stress-tests
 
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
 ## 2.81.0
 
 Dependency updates only.

@@ -6,8 +6,7 @@
 import { type Static, Type } from "@sinclair/typebox";
 
 import { schemaFormatV1 } from "../../core/index.js";
-import { strictEnum, type Values } from "../../util/index.js";
-import { EncodedFieldBatch } from "../chunked-forest/index.js";
+import { strictEnum, type Values, JsonCompatibleReadOnlySchema } from "../../util/index.js";
 
 /**
  * The format version for the forest.
@@ -21,8 +20,8 @@ export type ForestFormatVersion = Values<typeof ForestFormatVersion>;
 
 export const validVersions = new Set([...Object.values(ForestFormatVersion)]);
 
-export const FormatCommon = (
-	version: ForestFormatVersion,
+export const FormatCommon = <const TVersion extends ForestFormatVersion>(
+	version: TVersion,
 	// Return type is intentionally derived.
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
@@ -30,8 +29,10 @@ export const FormatCommon = (
 		{
 			version: Type.Literal(version),
 			keys: Type.Array(schemaFormatV1.FieldKeySchema),
-			fields: EncodedFieldBatch,
+			fields: JsonCompatibleReadOnlySchema, // Uses field batch codec
 		},
 		{ additionalProperties: false },
 	);
-export type Format = Static<ReturnType<typeof FormatCommon>>;
+export type Format<TVersion extends ForestFormatVersion = ForestFormatVersion> = Static<
+	ReturnType<typeof FormatCommon<TVersion>>
+>;
