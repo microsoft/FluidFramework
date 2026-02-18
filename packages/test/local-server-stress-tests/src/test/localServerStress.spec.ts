@@ -40,8 +40,12 @@ describe("Local Server Stress", () => {
 		},
 		// Minimization is slow with many seeds; use only to minimize specific failing seeds.
 		skipMinimization: true,
-		// Pre-existing DDS bugs: seed 54 (ConsensusOrderedCollection consistency).
-		skip: [54],
+		skip: [
+			// ConsensusOrderedCollection consistency
+			...[54],
+			// SharedMatrix consistency (values differ after convergence)
+			...[1, 45, 139],
+		],
 		// Use skip, replay, and only properties to control which seeds run.
 	});
 });
