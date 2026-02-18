@@ -115,8 +115,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"uuid": "^11.1.0",
-		"zod": "^3.25.32"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
