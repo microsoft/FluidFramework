@@ -29,11 +29,7 @@ import {
 	SyntaxKind,
 } from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand.js";
-import {
-	ApiLevel,
-	ensureDevDependencyExists,
-	unscopedPackageNameString,
-} from "../../library/index.js";
+import { ensureDevDependencyExists, unscopedPackageNameString } from "../../library/index.js";
 // AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
 // eslint-disable-next-line import-x/no-internal-modules
 import { getTypesPathFromPackage } from "../../library/packageExports.js";
@@ -52,6 +48,12 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../typeValidator/typeValidatorConfig.js";
 
+/**
+ * Special-cased entry point name to refer to the default (root) entry point of a
+ * package, since a "" value might not be clear in many contexts.
+ */
+const rootEntrypointAlias = "public";
+
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand
 > {
@@ -59,17 +61,9 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 	static readonly flags = {
 		entrypoint: Flags.string({
-			description:
-				'What entrypoint to generate tests for. Use "public" or "" for the default entrypoint. If this flag is provided it will override the typeValidation.entrypoint setting in the package\'s package.json.',
+			description: `What entrypoint to generate tests for. Use "${rootEntrypointAlias}" or "" for the default entrypoint. If this flag is provided it will override the typeValidation.entrypoint setting in the package's package.json.`,
 		}),
 		// Temporary support for back-compat
-		level: Flags.custom<"public">({
-			deprecated: true,
-			description:
-				"Deprecated - use entrypoint flag instead. What API level to generate tests for. If this flag is provided it will override the typeValidation.entrypoint setting in the package's package.json.",
-			// Limit to "public" as that is the only remaining use
-			options: ["public"],
-		})(),
 		outDir: Flags.directory({
 			description: "Where to emit the type tests file.",
 			default: "./src/test/types",
@@ -95,20 +89,13 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	protected defaultSelection = "dir" as const;
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		const {
-			entrypoint: entrypointFlag,
-			level,
-			outDir,
-			outFile,
-			skipVersionOutput,
-		} = this.flags;
+		const { entrypoint: entrypointFlag, outDir, outFile, skipVersionOutput } = this.flags;
 		const pkgJson: PackageWithTypeTestSettings = pkg.packageJson;
 		const entrypoint =
 			entrypointFlag ??
-			level ??
 			pkgJson.typeValidation?.entrypoint ??
 			defaultTypeValidationConfig.entrypoint;
-		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
+		const fallbackLevel = this.flags.publicFallback ? rootEntrypointAlias : undefined;
 
 		this.verbose(
 			`${pkg.nameColored}: Generating type tests for "${entrypoint}" entrypoint with "${fallbackLevel}" as a fallback.`,
@@ -269,14 +256,15 @@ function getTypesPathWithFallback(
 	entrypoint: string,
 	conditions: readonly string[],
 	log: Logger,
-	fallbackEntrypoint?: "public",
+	fallbackEntrypoint?: typeof rootEntrypointAlias,
 ): { typesPath: string; entrypointSpec: string } {
 	// The entrypoint spec is the suffix added to the package name in the import statement.
 	// For example, if entrypoint is "beta" then the import would be from "<PACKAGE>/beta"
 	// and the entrypointSpec would be "/beta".
-	// If entrypoint is "public" or "" then the import would be from "<PACKAGE>" and the
-	// entrypointSpec would be "".
-	const entrypointSpec = entrypoint === "public" ? "" : entrypoint ? `/${entrypoint}` : "";
+	// If entrypoint is "" or rootEntrypointAlias ("public") then the import would be from
+	// "<PACKAGE>" and the entrypointSpec would be "".
+	const entrypointSpec =
+		entrypoint === rootEntrypointAlias ? "" : entrypoint ? `/${entrypoint}` : "";
 	// First try the requested paths, but fall back to public otherwise if configured.
 	const preferredTypesPath = getTypesPathFromPackage(
 		packageJson,
