@@ -96,11 +96,10 @@ import {
 import {
 	Breakable,
 	disposeSymbol,
-	getLast,
 	getOrCreate,
 	hasSome,
 	type JsonCompatibleReadOnly,
-	LabelTree,
+	ValueTreeNode,
 	type WithBreakable,
 } from "../util/index.js";
 
@@ -399,22 +398,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	private transactionLabel?: unknown;
 
 	/**
-	 * Composed label tree auto-built from nested transaction labels.
+	 * Mutable label tree node tracking the current transaction nesting level.
 	 *
 	 * @remarks
-	 * Set by {@link TreeCheckout.popLabelFrame} when the outermost transaction frame is popped.
-	 * Cleared by {@link TreeCheckout.runWithTransactionLabel} after the commit event is emitted.
+	 * Updated in-place as transactions open ({@link TreeCheckout.pushLabelFrame}) and
+	 * close ({@link TreeCheckout.popLabelFrame}). After the outermost transaction commits,
+	 * this points to the root of the composed label tree and is read as the `labels` in
+	 * {@link LocalChangeMetadata}. Cleared by {@link TreeCheckout.runWithTransactionLabel}
+	 * after the commit event is emitted.
 	 */
-	private transactionLabels?: LabelTree;
-
-	/**
-	 * Stack of label frames for composing a {@link LabelTree} from nested transactions.
-	 *
-	 * @remarks
-	 * Each frame tracks the label for that nesting level and the {@link LabelTree} children
-	 * accumulated from completed inner transactions.
-	 */
-	private readonly labelFrameStack: { label: unknown; children: LabelTree[] }[] = [];
+	private currentLabelTreeNode: ValueTreeNode | undefined;
 
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
@@ -468,58 +461,79 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	/**
-	 * Pushes a new label frame for a transaction nesting level.
+	 * Pushes a new label node for a transaction nesting level.
 	 *
-	 * @param label - The label for this transaction frame.
+	 * @param label - The label for this transaction level.
 	 *
 	 * @remarks
-	 * Called at the start of each transaction (including nested ones) to track the label
-	 * for that nesting level. When the transaction completes, {@link TreeCheckout.popLabelFrame}
-	 * composes the labels into a {@link LabelTree}.
+	 * Called at the start of each transaction (including nested ones).
+	 * Creates a new {@link ValueTreeNode} as a child of the current node (if any)
+	 * and moves the cursor down to it. When the transaction completes,
+	 * {@link TreeCheckout.popLabelFrame} moves the cursor back up.
 	 */
 	public pushLabelFrame(label: unknown): void {
-		this.labelFrameStack.push({ label, children: [] });
+		const node = new ValueTreeNode(label, this.currentLabelTreeNode);
+		if (this.currentLabelTreeNode !== undefined) {
+			this.currentLabelTreeNode.children.push(node);
+		}
+		this.currentLabelTreeNode = node;
 	}
 
 	/**
-	 * Pops a label frame and composes the label tree.
+	 * Pops a label node and composes the label tree.
 	 *
 	 * @param committed - Whether the transaction was committed (true) or aborted (false).
 	 *
 	 * @remarks
-	 * When a transaction commits, the label and accumulated children from inner transactions
-	 * are composed into a {@link LabelTree} node. That node is added as a child of the parent
-	 * frame (if nested) or set as {@link TreeCheckout.transactionLabels} (if outermost).
+	 * When a transaction commits, the cursor moves up to the parent node.
+	 * If the current node has no label, its children are promoted to the parent.
+	 * When the outermost transaction commits, {@link TreeCheckout.currentLabelTreeNode}
+	 * is left pointing to the root of the composed tree (or cleared if no labels exist).
 	 *
-	 * When a transaction aborts, the frame is simply discarded.
+	 * When a transaction aborts, the node is removed from its parent and the cursor moves up.
 	 */
 	public popLabelFrame(committed: boolean): void {
-		const frame = this.labelFrameStack.pop();
-		if (frame === undefined) {
+		const current = this.currentLabelTreeNode;
+		if (current === undefined) {
 			return;
 		}
+
+		const parent = current.parent;
 
 		if (!committed) {
+			// Remove aborted node from parent's children.
+			if (parent !== undefined) {
+				const index = parent.children.indexOf(current);
+				if (index >= 0) {
+					parent.children.splice(index, 1);
+				}
+			}
+			this.currentLabelTreeNode = parent;
 			return;
 		}
 
-		const parent = getLast(this.labelFrameStack);
-		if (frame.label !== undefined) {
-			const node = new LabelTree(frame.label, frame.children);
-			if (parent === undefined) {
-				// Outermost level — set the composed tree for the commit metadata.
-				this.transactionLabels = node;
+		if (current.value === undefined) {
+			if (parent !== undefined) {
+				// No label at this level — promote children to parent.
+				const index = parent.children.indexOf(current);
+				if (index >= 0) {
+					parent.children.splice(index, 1, ...current.children);
+				}
+				for (const child of current.children) {
+					child.parent = parent;
+				}
+				this.currentLabelTreeNode = parent;
+			} else if (current.children.length > 0) {
+				// Outermost level with no label but inner labels exist —
+				// leave currentLabelNode pointing to root (undefined root case).
 			} else {
-				parent.children.push(node);
+				// Outermost level with no label and no children — no labels to report.
+				this.currentLabelTreeNode = undefined;
 			}
 		} else if (parent !== undefined) {
-			// No label at this level — promote children to parent.
-			parent.children.push(...frame.children);
-		} else if (frame.children.length > 0) {
-			// Outermost level with no label but inner labels exist —
-			// surface them under an undefined root.
-			this.transactionLabels = new LabelTree(undefined, frame.children);
+			this.currentLabelTreeNode = parent;
 		}
+		// else: outermost level with a label — leave currentLabelNode pointing to root.
 	}
 
 	/**
@@ -547,7 +561,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			return fn(this.transactionLabel as TLabel);
 		} finally {
 			this.transactionLabel = undefined;
-			this.transactionLabels = undefined;
+			// Only clear currentLabelNode when the outermost transaction has completed.
+			// Inner transactions' commits don't fire the "changed" event, so the label tree
+			// must remain intact until the outermost commit reads it.
+			if (!this.transaction.isInProgress()) {
+				this.currentLabelTreeNode = undefined;
+			}
 		}
 	}
 
@@ -690,7 +709,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 					label: this.transactionLabel,
-					labels: this.transactionLabels,
+					labels: this.currentLabelTreeNode,
 				};
 
 				this.#events.emit("changed", metadata, getRevertible);

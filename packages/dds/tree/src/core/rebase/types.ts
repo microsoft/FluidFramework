@@ -14,7 +14,7 @@ import { Type } from "@sinclair/typebox";
 import {
 	type Brand,
 	type JsonCompatibleReadOnly,
-	type LabelTree,
+	type ValueTree,
 	type NestedMap,
 	RangeMap,
 	brand,
@@ -237,15 +237,17 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	readonly label?: unknown;
 
 	/**
-	 * A label tree auto-composed from nested transaction labels.
+	 * A value tree auto-composed from nested transaction labels.
 	 * Each nesting level that provides a {@link RunTransactionParams.label | label} contributes
 	 * a node, with inner transaction labels becoming children of outer ones.
 	 *
 	 * @remarks
-	 * This is only defined when the outermost transaction has a label.
+	 * This is defined whenever at least one transaction in the nested stack has a label.
+	 * If the outermost transaction has no label but the inner transactions do, a {@link ValueTree}
+	 * with an undefined root is created.
 	 * This can be used by undo/redo to hierarchically group or classify edits.
 	 */
-	readonly labels?: LabelTree;
+	readonly labels?: ValueTree;
 }
 
 /**
