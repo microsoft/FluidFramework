@@ -139,10 +139,7 @@ export enum ForestIncrementalSummaryBehavior {
 function validateTrackingSummary(
 	trackedSummaryProperties: TrackedSummaryProperties | undefined,
 ): asserts trackedSummaryProperties is TrackedSummaryProperties {
-	assert(
-		trackedSummaryProperties !== undefined,
-		0xc23 /* Tracked summary properties must be available when tracking a summary */,
-	);
+	assert(trackedSummaryProperties !== undefined, 0xc22 /* Not tracking a summary */);
 }
 
 /**
@@ -152,10 +149,7 @@ function validateTrackingSummary(
 function validateReadyToTrackSummary(
 	trackedSummaryProperties: TrackedSummaryProperties | undefined,
 ): asserts trackedSummaryProperties is undefined {
-	assert(
-		trackedSummaryProperties === undefined,
-		0xc25 /* Tracked summary properties must not be available when ready to track */,
-	);
+	assert(trackedSummaryProperties === undefined, 0xc24 /* Already tracking a summary */);
 }
 
 /* eslint-disable jsdoc/check-indentation */
