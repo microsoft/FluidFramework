@@ -543,6 +543,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		// Track the decoded chunk. This will recreate the tracking state when the summary that this client
 		// is loaded from was generated. This is needed to enable chunk reuse if this client is used to write a summary.
 		setInNestedMap(this.chunkTrackingPropertiesMap, this.initialSequenceNumber, chunk, {
+			referenceId,
 			summaryPath: ChunkLoadProperties.summaryPath,
 		});
 		return chunk;
