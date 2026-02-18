@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/version-compat-tests",
-	"version": "2.82.0",
+	"version": "2.83.0",
 	"description": "Version compat tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
