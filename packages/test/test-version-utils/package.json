@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-version-utils",
-	"version": "2.82.0",
+	"version": "2.90.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -132,6 +132,13 @@
 		"uuid": "^11.1.0",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"check:exports:index": [
+				"build:esnext"
+			]
+		}
 	},
 	"typeValidation": {
 		"disabled": true
