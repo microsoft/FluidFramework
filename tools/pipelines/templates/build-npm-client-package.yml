@@ -823,6 +823,11 @@ extends:
                         set -eu -o pipefail
                         FOUND=0
 
+                        # Sanitize the test name by removing colons and replacing other problematic characters
+                        TEST_NAME="${{ test.name }}"
+                        SAFE_TEST_NAME="${TEST_NAME//:/}"
+                        SAFE_TEST_NAME="${SAFE_TEST_NAME// /_}"
+
                         # Process each tinylicious.log file found in the repo
                         # Uses process substitution (< <(...)) to avoid creating a subshell, which would prevent
                         # the FOUND variable from being updated properly
@@ -837,9 +842,10 @@ extends:
 
                           # Note: Azure DevOps only preserves the filename when uploading, not the directory structure,
                           # so multiple files named "tinylicious.log" would overwrite each other.
-                          # Thus we create a unique name for each log file by using a safe version of its directory path.
-                          # Example: packages/test/foo/tinylicious.log -> packages_test_foo-tinylicious.log
-                          SAFE_NAME="${DIR_PATH//\//_}-${FILENAME}"
+                          # Thus we create a unique name for each log file by using the test name and a safe version of its directory path.
+                          # Example: packages/test/foo/tinylicious.log -> test_tinylicious-packages_test_foo-tinylicious.log
+                          SAFE_DIR="${DIR_PATH//\//_}"
+                          SAFE_NAME="${SAFE_TEST_NAME}-${SAFE_DIR}-${FILENAME}"
 
                           TEMP_LOG="$(Build.SourcesDirectory)/$SAFE_NAME"
                           cp "$LOG" "$TEMP_LOG"
