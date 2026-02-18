@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { NormalizedFieldUpPath, NormalizedUpPath } from "../../core/index.js";
+import type {
+	FieldUpPath,
+	NormalizedFieldUpPath,
+	NormalizedUpPath,
+} from "../../core/index.js";
 
 import type {
 	IDefaultEditBuilder,
@@ -71,5 +75,11 @@ export class MappedEditBuilder<TBase, TAdapted> implements IDefaultEditBuilder<T
 	}
 	public addNoChangeConstraintOnRevert(): void {
 		this.baseBuilder.addNoChangeConstraintOnRevert();
+	}
+	public addShallowChangeConstraint(path: FieldUpPath): void {
+		this.baseBuilder.addShallowChangeConstraint(path);
+	}
+	public addShallowChangeConstraintOnRevert(path: FieldUpPath): void {
+		this.baseBuilder.addShallowChangeConstraintOnRevert(path);
 	}
 }

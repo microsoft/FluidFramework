@@ -27,7 +27,10 @@ export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more 
  * Type for alpha version {@link TransactionConstraint | constraint}s
  * @sealed @alpha
  */
-export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint; // TODO: Add more constraint types here
+export type TransactionConstraintAlpha =
+	| TransactionConstraint
+	| NoChangeConstraint
+	| NoShallowChangeConstraint; // TODO: Add more constraint types here
 
 /**
  * A transaction {@link TransactionConstraint | constraint} which requires that the given node exists in the tree.
@@ -46,6 +49,26 @@ export interface NodeInDocumentConstraint {
  */
 export interface NoChangeConstraint {
 	readonly type: "noChange";
+}
+
+/**
+ * A {@link TransactionConstraintAlpha | constraint} which requires that a specific field must not have shallow changes
+ * when this transaction is rebased over concurrent changes.
+ *
+ * @remarks
+ * For map, record, and object nodes, the constraint targets a specific field identified by the `key` parameter.
+ * The `key` parameter is required for these node types.
+ *
+ * For array nodes, the `key` parameter is ignored if provided.
+ *
+ * Leaf nodes do not have fields and cannot use this constraint.
+ *
+ * @alpha
+ */
+export interface NoShallowChangeConstraint {
+	readonly type: "noShallowChange";
+	readonly node: TreeNode;
+	readonly key?: string;
 }
 
 /**

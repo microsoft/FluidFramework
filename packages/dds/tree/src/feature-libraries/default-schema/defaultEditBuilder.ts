@@ -184,6 +184,19 @@ export interface IDefaultEditBuilder<TContent = TreeChunk> {
 	 * Add a constraint that, for the revert of this change to apply, the document must be in the same state immediately before the revert is applied as it was after this change was applied.
 	 */
 	addNoChangeConstraintOnRevert(): void;
+
+	/**
+	 * Add a constraint that, for this change to apply, the field at the given path must be in the same state it was in before this change was authored
+	 * Shallow changes are changes to the field's immediate structure (e.g., changing a top-level field on a node, insert/remove/move in sequence field)
+	 * @param path - The path to the field that must not have shallow changes.
+	 */
+	addShallowChangeConstraint(path: FieldUpPath): void;
+
+	/**
+	 * Add a constraint that, for the revert of this change to apply, the field at the given path must be in the same state it was in immediately before the revert is applied as it was after this change was applied.
+	 * @param path - The path to the field that must not have shallow changes when reverting a change.
+	 */
+	addShallowChangeConstraintOnRevert(path: FieldUpPath): void;
 }
 
 /**
@@ -228,6 +241,14 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public addNoChangeConstraintOnRevert(): void {
 		this.modularBuilder.addNoChangeConstraintOnRevert(this.mintRevisionTag());
+	}
+
+	public addShallowChangeConstraint(path: FieldUpPath): void {
+		this.modularBuilder.addShallowChangeConstraint(path, this.mintRevisionTag());
+	}
+
+	public addShallowChangeConstraintOnRevert(path: FieldUpPath): void {
+		this.modularBuilder.addShallowChangeConstraintOnRevert(path, this.mintRevisionTag());
 	}
 
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder<TreeChunk> {

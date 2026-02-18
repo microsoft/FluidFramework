@@ -514,6 +514,7 @@ We currently support the following types of constraints:
 
 -   `nodeInDocument`: Targets a specific node that must be in the document (i.e., not removed).
 -   `noChange`: Requires that the document must be in the same state when the transaction is applied as it was before the transaction was authored.
+-   `noShallowChange`: Requires that a given field be in the same state when the transaction is applied as it was before the transaction was authored. Note that this only applies to top-level changes; nested properties do not trigger this constraint
 
 ### Schema Changes
 

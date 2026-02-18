@@ -23,6 +23,7 @@ import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import { makeModularChangeCodecV1 } from "./modularChangeCodecV1.js";
 import { makeModularChangeCodecV2 } from "./modularChangeCodecV2.js";
+import { makeModularChangeCodecVConstraint } from "./modularChangeCodecVConstraint.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
 
 export function makeModularChangeCodecFamily(
@@ -65,6 +66,18 @@ export function makeModularChangeCodecFamily(
 						),
 					];
 				}
+				case 101: {
+					return [
+						version,
+						makeModularChangeCodecVConstraint(
+							fieldKinds,
+							revisionTagCodec,
+							fieldsCodec,
+							codecOptions,
+							chunkCompressionStrategy,
+						),
+					];
+				}
 				default: {
 					fail(0xcc5 /* Unsupported modular change codec version */);
 				}
@@ -97,5 +110,9 @@ export const ModularChangeFormatVersion = strictEnum("ModularChangeFormatVersion
 	 * Adds support for "no change" constraints.
 	 */
 	v5: 5,
+	/**
+	 * Do not use - this is for testing constraints that are not yet stabilized and released.
+	 */
+	vConstraint: 101,
 });
 export type ModularChangeFormatVersion = Values<typeof ModularChangeFormatVersion>;

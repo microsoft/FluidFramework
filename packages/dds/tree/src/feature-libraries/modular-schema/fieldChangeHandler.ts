@@ -115,6 +115,13 @@ export interface FieldChangeHandler<
 	getCrossFieldKeys(change: TChangeset): CrossFieldKeyRange[];
 
 	createEmpty(): TChangeset;
+
+	/**
+	 * Returns whether this field changeset contains shallow changes
+	 * @param change - The field changeset to check
+	 * @returns true if the changeset contains any shallow changes
+	 */
+	containsShallowChanges(change: TChangeset): boolean;
 }
 
 export interface FieldChangeRebaser<TChangeset> {

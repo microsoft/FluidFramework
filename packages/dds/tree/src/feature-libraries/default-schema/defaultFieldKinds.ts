@@ -48,6 +48,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	getNestedChanges: (change: 0) => [],
 	createEmpty: () => 0,
 	getCrossFieldKeys: () => [],
+	containsShallowChanges: (change: 0): boolean => false,
 };
 
 /**
@@ -130,6 +131,16 @@ export const fieldKindConfigurations: ReadonlyMap<
 	],
 	[
 		ModularChangeFormatVersion.v5,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[required.identifier, { kind: required, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 2 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 3 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
+		]),
+	],
+	[
+		ModularChangeFormatVersion.vConstraint,
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],

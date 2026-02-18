@@ -166,6 +166,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0, 0]]),
 	createEmpty: () => undefined,
 	getCrossFieldKeys: (_change) => [],
+	containsShallowChanges: (_change) => false,
 };
 
 const singleNodeField = new FlexFieldKind(
@@ -1508,6 +1509,7 @@ describe("ModularChangeFamily", () => {
 		makeEncodingTestSuite(family.codecs, encodingTestDataForAllVersions, assertEquivalent, [
 			ModularChangeFormatVersion.v3,
 			ModularChangeFormatVersion.v4,
+			ModularChangeFormatVersion.vConstraint,
 		]);
 		makeEncodingTestSuite(family.codecs, encodingTestDataV5Only, assertEquivalent, [
 			ModularChangeFormatVersion.v5,

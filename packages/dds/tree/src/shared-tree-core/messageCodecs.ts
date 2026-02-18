@@ -83,6 +83,12 @@ export function messageFormatVersionSelectorForSharedBranches(
 	return brand(MessageFormatVersion.vSharedBranches);
 }
 
+export function messageFormatVersionSelectorForConstraints(
+	clientVersion: MinimumVersionForCollab,
+): MessageFormatVersion {
+	return brand(MessageFormatVersion.vConstraints);
+}
+
 export function makeMessageCodec<TChangeset>(
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
 	dependentChangeFormatVersion: DependentFormatVersion<MessageFormatVersion>,
@@ -145,7 +151,8 @@ export function makeMessageCodecs<TChangeset>(
 			}
 			case unbrand(MessageFormatVersion.v3):
 			case unbrand(MessageFormatVersion.v4):
-			case unbrand(MessageFormatVersion.v6): {
+			case unbrand(MessageFormatVersion.v6):
+			case unbrand(MessageFormatVersion.vConstraints): {
 				const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
 				return [
 					version,

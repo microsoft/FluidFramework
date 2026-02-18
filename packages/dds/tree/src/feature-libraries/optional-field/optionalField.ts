@@ -736,6 +736,9 @@ export const optionalChangeHandler: FieldChangeHandler<
 
 	createEmpty: () => ({ moves: [], childChanges: [] }),
 	getCrossFieldKeys: (_change) => [],
+
+	containsShallowChanges: (change: OptionalChangeset): boolean =>
+		change.valueReplace !== undefined && isReplaceEffectful(change.valueReplace),
 };
 
 function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
