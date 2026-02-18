@@ -813,6 +813,12 @@ extends:
                     customCommand: 'run test:copyresults'
 
                 - ${{ if contains(test.name, 'tinylicious') }}:
+                  # We upload the log file for the tinylicious server as a preventive troubleshooting mechanism.
+                  # It's not really too relevant unless tests fail, but when they do it's helpful to have it available
+                  # so we can investigate if there were issues on the server side.
+                  # It's also slightly tricky to only upload it conditionally based on things like whether the tests
+                  # failed, because in some scenarios (stress tests in particular) the pipeline steps might not actually fail.
+                  # Since the log files are not extremely huge (they average ~150Mb), we can afford to upload them unconditionally.
                   - task: Bash@3
                     displayName: Upload tinylicious log(s)
                     condition: always()
