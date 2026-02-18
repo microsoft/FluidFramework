@@ -1762,6 +1762,8 @@ export class ContainerRuntime
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				gcOptions_gcGeneration: runtimeOptions.gcOptions[gcGenerationOptionName],
 			}),
+			// New sampleable property
+			sampleable: true
 		});
 
 		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();

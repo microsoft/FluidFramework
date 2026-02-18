@@ -205,6 +205,8 @@ export abstract class SharedObjectCore<
 			{
 				eventName: "ddsOpProcessing",
 				category: "performance",
+				// New property to signal that this is sampleable
+				sampleable: true,
 			},
 			this.logger,
 			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
@@ -218,6 +220,8 @@ export abstract class SharedObjectCore<
 			{
 				eventName: "ddsEventCallbacks",
 				category: "performance",
+				// New property to signal that this is sampleable
+				sampleable: true,
 			},
 			this.logger,
 			this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 1000,
