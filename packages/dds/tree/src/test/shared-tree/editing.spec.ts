@@ -1812,6 +1812,108 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
+		it("can undo/redo a multi-step move", () => {
+			const tree = makeTreeFromJson({ src: ["A"], tmp: [], dst: [] });
+			const { undoStack, redoStack } = createTestUndoRedoStacks(tree.events);
+
+			const srcList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("src"),
+				parentIndex: 0,
+			};
+			const tmpList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("tmp"),
+				parentIndex: 0,
+			};
+			const dstList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("dst"),
+				parentIndex: 0,
+			};
+
+			tree.transaction.start(true);
+			tree.editor.move(
+				{ parent: srcList, field: EmptyKey },
+				0,
+				1,
+				{ parent: tmpList, field: EmptyKey },
+				0,
+			);
+			expectJsonTree(tree, [{ src: [], tmp: ["A"], dst: [] }]);
+			tree.editor.move(
+				{ parent: tmpList, field: EmptyKey },
+				0,
+				1,
+				{ parent: dstList, field: EmptyKey },
+				0,
+			);
+			tree.transaction.commit();
+			expectJsonTree(tree, [{ src: [], tmp: [], dst: ["A"] }]);
+
+			undoStack.pop()?.revert();
+			expectJsonTree(tree, [{ src: ["A"], tmp: [], dst: [] }]);
+
+			redoStack.pop()?.revert();
+			expectJsonTree(tree, [{ src: [], tmp: [], dst: ["A"] }]);
+		});
+
+		it("rebase changes that depend on a multi-step move", () => {
+			const tree = makeTreeFromJson({ src: [{ id: "A" }], tmp: [], dst: [] });
+
+			const srcList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("src"),
+				parentIndex: 0,
+			};
+			const tmpList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("tmp"),
+				parentIndex: 0,
+			};
+			const dstList: NormalizedUpPath = {
+				parent: rootNode,
+				parentField: brand("dst"),
+				parentIndex: 0,
+			};
+
+			const branch = tree.branch();
+			branch.transaction.start(true);
+			branch.editor.addNodeExistsConstraint(tmpList);
+			branch.editor.move(
+				{ parent: srcList, field: EmptyKey },
+				0,
+				1,
+				{ parent: tmpList, field: EmptyKey },
+				0,
+			);
+			expectJsonTree(branch, [{ src: [], tmp: [{ id: "A" }], dst: [] }]);
+			branch.editor.move(
+				{ parent: tmpList, field: EmptyKey },
+				0,
+				1,
+				{ parent: dstList, field: EmptyKey },
+				0,
+			);
+			branch.transaction.commit();
+			expectJsonTree(branch, [{ src: [], tmp: [], dst: [{ id: "A" }] }]);
+
+			branch.editor
+				.valueField({
+					parent: { parent: dstList, parentField: EmptyKey, parentIndex: 0 },
+					field: brand("id"),
+				})
+				.set(chunkFromJsonTrees(["a"]));
+			expectJsonTree(branch, [{ src: [], tmp: [], dst: [{ id: "a" }] }]);
+
+			tree.editor
+				.optionalField({ parent: rootNode, field: brand("tmp") })
+				.set(undefined, false);
+
+			branch.rebaseOnto(tree);
+			expectJsonTree(branch, [{ src: [{ id: "a" }], dst: [] }]);
+		});
+
 		it("rebase changes to field untouched by base", () => {
 			const tree = makeTreeFromJson({ foo: [{ bar: "A" }, { baz: "B" }] });
 			const tree1 = tree.branch();
