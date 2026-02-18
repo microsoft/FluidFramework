@@ -102,7 +102,7 @@ const idForLocalUnattachedClient = undefined;
  *
  * Generally not used directly. A derived type will pass in a backing data type
  * IOrderedCollection that will define the deterministic add/acquire order and snapshot ability.
- * @internal
+ * @legacy @beta
  */
 
 // TODO: #22835 Use undefined instead of any (breaking change)
