@@ -1391,10 +1391,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		return this.initialSnapshotDetailsP;
 	}
 
-	public getAttachSummary(): ISummaryTreeWithStats {
-		throw new Error("Cannot attach remote store");
-	}
-
 	/**
 	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
 	 */
