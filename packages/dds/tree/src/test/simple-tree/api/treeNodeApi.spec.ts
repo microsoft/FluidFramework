@@ -3793,6 +3793,51 @@ describe("treeNodeApi", () => {
 			assert.ok(Tree.is(grandParent.parent?.child, Son));
 		});
 	});
+
+	describe("context", () => {
+		const sf = new SchemaFactory(undefined);
+		class Obj extends sf.object("Test", { n: sf.number }) {}
+
+		it("for hydrated nodes is the branch", () => {
+			const obj = hydrate(Obj, { n: 3 });
+			const branch = TreeAlpha.context(obj);
+			assert(branch.isBranch());
+			// Compile check: `isBranch()` should downcast the context to a branch
+			branch.hasRootSchema(Obj); // This is a method on branches but not on context
+		});
+
+		it("for unhydrated nodes is not a branch", () => {
+			const obj = new Obj({ n: 3 });
+			const context = TreeAlpha.context(obj);
+			assert.ok(!context.isBranch());
+		});
+
+		it("has synchronous transaction APIs for both hydrated and unhydrated nodes", () => {
+			const hydratedObj = hydrate(Obj, { n: 3 });
+			const unhydratedObj = new Obj({ n: 3 });
+			for (const obj of [hydratedObj, unhydratedObj]) {
+				const context = TreeAlpha.context(obj);
+				context.runTransaction(() => (obj.n = 4)); // Transaction with no return value
+				const value = context.runTransaction(() => ({ value: obj.n })); // Transaction with return value
+				assert.ok(value.success);
+				assert.equal(obj.n, value.value);
+			}
+		});
+
+		it("has async transaction APIs for both hydrated and unhydrated nodes", async () => {
+			const hydratedObj = hydrate(Obj, { n: 3 });
+			const unhydratedObj = new Obj({ n: 3 });
+			for (const obj of [hydratedObj, unhydratedObj]) {
+				const context = TreeAlpha.context(obj);
+				await context.runTransactionAsync(async () => {
+					obj.n = 4; // Transaction with no return value
+				});
+				const value = await context.runTransactionAsync(async () => ({ value: obj.n })); // Transaction with return value
+				assert.ok(value.success);
+				assert.equal(obj.n, value.value);
+			}
+		});
+	});
 });
 
 function checkoutWithInitialTree(
