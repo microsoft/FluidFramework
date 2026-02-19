@@ -19,7 +19,7 @@
 		"build:compile": "npm run tsc && npm run build:test",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+		"check:release-tags": "api-extractor run --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint src",
