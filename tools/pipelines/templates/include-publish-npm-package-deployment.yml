@@ -58,35 +58,27 @@ jobs:
           steps:
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-          - template: /tools/pipelines/templates/include-install-pnpm.yml@self
-            parameters:
-              buildDirectory: $(Pipeline.Workspace)
-              enableCache: false
-
           # We can use this step to add overrides that might be necessary to allow for a correct
           # installation of build-tools from the tarball artifacts produced by the build stage.
           # Since this is a lockfile-less install (ideally we should figure out how to change that),
-          # pnpm overrides is our recourse when a dependency releases a new version that causes build-tools installation to break.
+          # npm overrides is our recourse when a dependency releases a new version that causes build-tools installation to break.
           # Current overrides:
           # - @rushstack/node-core-library 5.19.1: version 5.20.0 broke ESM module resolution in Node.
           #   https://github.com/microsoft/rushstack/issues/5644
           - task: Bash@3
             name: CreatePackageJsonForOverrides
-            displayName: Create package.json with pnpm overrides
+            displayName: Create package.json with npm overrides
             inputs:
               targetType: 'inline'
               workingDirectory: '$(Pipeline.Workspace)/buildTools-zip/tarballs'
               script: |
                 set -eu -o pipefail
-                echo "Creating package.json with pnpm overrides"
+                echo "Creating package.json with npm overrides"
                 cat > package.json << 'EOF'
                 {
                   "name": "build-tools-install",
-                  "packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
-                  "pnpm": {
-                    "overrides": {
-                      "@rushstack/node-core-library": "5.19.1"
-                    }
+                  "overrides": {
+                    "@rushstack/node-core-library": "5.19.1"
                   }
                 }
                 EOF
@@ -103,7 +95,7 @@ jobs:
                 echo "Listing files in directory: $(pwd)"
                 ls -la
                 echo "Attempting install of build tools from build tools pipeline artifact tarball"
-                pnpm add ./*.tgz
+                npm i -g ./*.tgz
 
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
