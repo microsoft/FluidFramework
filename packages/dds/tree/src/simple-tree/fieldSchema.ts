@@ -399,7 +399,9 @@ export class FieldSchemaAlpha<
 		Kind extends FieldKind = FieldKind,
 		Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 		TCustomMetadata = unknown,
-		TProps extends FieldPropsAlpha<TCustomMetadata> | undefined = undefined,
+		TProps extends FieldPropsAlpha<TCustomMetadata> | undefined =
+			| FieldPropsAlpha<TCustomMetadata>
+			| undefined,
 	>
 	extends FieldSchema<Kind, Types, TCustomMetadata>
 	implements SimpleFieldSchema<SchemaType.View>

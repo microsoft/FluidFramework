@@ -80,6 +80,7 @@ export {
 	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
 	type SchemaStaticsAlpha,
+	type NodeProvider,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
 	type ScopedSchemaName,

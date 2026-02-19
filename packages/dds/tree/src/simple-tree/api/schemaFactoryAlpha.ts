@@ -10,6 +10,8 @@ import {
 	type ImplicitAllowedTypes,
 	type WithType,
 	normalizeAllowedTypes,
+	type TreeLeafValue,
+	isTreeNode,
 } from "../core/index.js";
 // These imports prevent a large number of type references in the API reports from showing up as *_2.
 /* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
@@ -48,6 +50,7 @@ import {
 } from "./schemaFactory.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 import { schemaStatics } from "./schemaStatics.js";
+import { TreeBeta } from "./treeBeta.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
@@ -56,6 +59,33 @@ import type {
 } from "./typesUnsafe.js";
 import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
+
+/**
+ * A provider for default values in tree nodes.
+ *
+ * @remarks
+ * This type represents two ways to provide default values:
+ *
+ * 1. **A value**: Provide any value directly (number, string, object, array, etc.). When a value is provided,
+ * the data is copied for each use to ensure independence between instances. The value must be of an allowed type for the field.
+ *
+ * 2. **A generator function**: A function that returns a value. The function is called each time a default is needed,
+ * allowing for dynamic defaults or explicit control over value creation. The value must be of an allowed type for the field.
+ *
+ * @example
+ * ```typescript
+ * // Provide a value directly
+ * factory.withDefault(factory.required(factory.string), "default")
+ * factory.withDefault(factory.optional(Person), new Person({ name: "Guest" }))
+ *
+ * // Use a generator function
+ * factory.withDefault(factory.required(factory.string), () => crypto.randomUUID())
+ * factory.withDefault(factory.optional(Person), () => new Person({ name: "Guest" }))
+ * ```
+ *
+ * @alpha @sealed
+ */
+export type NodeProvider<T> = TreeLeafValue | T | (() => T);
 
 /**
  * Stateless APIs exposed via {@link SchemaFactoryBeta} as both instance properties and as statics.
@@ -67,30 +97,36 @@ export interface SchemaStaticsAlpha {
 	 * Creates a field schema with a default value.
 	 *
 	 * @param fieldSchema - The field schema to add a default to (e.g., `factory.required(factory.string)` or `factory.optional(factory.number)`)
-	 * @param defaultValue - The default value to use when the field is not provided. Can be a static value or a function that returns a value.
+	 * @param defaultValue - A {@link NodeProvider} specifying the default value. Can be a value directly (which will be copied for each use) or a generator function.
 	 *
 	 * @remarks
 	 * This function wraps an existing field schema and adds a default value provider to it.
 	 * The default value will be used when constructing nodes if the field is not explicitly provided or set to `undefined`.
 	 *
-	 * **Important**: Currently, only optional fields with defaults are recognized by the type system as optional in constructors.
-	 * Required fields with defaults will still require a value to be provided in the constructor at the type level,
-	 * even though a default will be used at runtime if `undefined` is explicitly passed.
-	 * This is a known limitation tracked by the TODO in objectNode.ts regarding `FieldHasDefault`.
+	 * Fields with defaults (whether required or optional) are recognized by the type system as optional in constructors,
+	 * allowing them to be omitted when creating new nodes.
+	 *
+	 * **Default value handling:**
+	 * - **Values**: When a value is provided directly, the data is copied for each use to ensure independence
+	 * - **Generator functions**: Called each time to produce a fresh value (useful for dynamic defaults)
+	 *
+	 * Defaults are evaluated eagerly during node construction, unlike identifier defaults which require context.
 	 *
 	 * @example
 	 * ```typescript
 	 * const MySchema = factory.objectAlpha("MyObject", {
-	 *     // Optional fields with defaults - can be omitted in constructor
-	 *     name: factory.withDefault(factory.optional(factory.string), "untitled"),
-	 *     count: factory.withDefault(factory.optional(factory.number), 0),
-	 *     timestamp: factory.withDefault(factory.optional(factory.number), () => Date.now()),
+	 *     // Provide values directly
+	 *     name: factory.withDefault(factory.required(factory.string), "untitled"),
+	 *     count: factory.withDefault(factory.required(factory.number), 0),
+	 *     metadata: factory.withDefault(factory.optional(Metadata), new Metadata({ version: 1 })),
+	 *
+	 *     // Use generator functions for dynamic values
+	 *     timestamp: factory.withDefault(factory.required(factory.number), () => Date.now()),
+	 *     id: factory.withDefault(factory.required(factory.string), () => crypto.randomUUID()),
 	 * });
 	 *
-	 * // Can construct with defaults:
-	 * const obj1 = new MySchema({}); // name="untitled", count=0, timestamp=now()
-	 * const obj2 = new MySchema({ name: "custom" }); // name="custom", count=0, timestamp=now()
-	 * const obj3 = new MySchema({ count: undefined }); // count=0 (default applied)
+	 * const obj1 = new MySchema({}); // All defaults applied
+	 * const obj2 = new MySchema({ name: "custom" }); // name="custom", other defaults applied
 	 * ```
 	 */
 	readonly withDefault: <
@@ -99,10 +135,8 @@ export interface SchemaStaticsAlpha {
 		TCustomMetadata = unknown,
 	>(
 		fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>,
-		defaultValue:
-			| InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>
-			| (() => InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>),
-	) => FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
+		defaultValue: NodeProvider<InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>>,
+	) => FieldSchemaAlpha<Kind, Types, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>>;
 }
 
 const withDefault = <
@@ -111,26 +145,42 @@ const withDefault = <
 	TCustomMetadata = unknown,
 >(
 	fieldSchema: FieldSchema<Kind, Types, TCustomMetadata>,
-	defaultValue:
-		| InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>
-		| (() => InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>),
-): FieldSchemaAlpha<Kind, Types, TCustomMetadata> => {
+	defaultValue: NodeProvider<InsertableTreeFieldFromImplicitField<FieldSchema<Kind, Types>>>,
+): FieldSchemaAlpha<Kind, Types, TCustomMetadata, FieldPropsAlpha<TCustomMetadata>> => {
 	const typedFieldSchema = fieldSchema as FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
 
+	// create the default provider function, it is called eagerly during node construction
 	const defaultProvider = getDefaultProvider(() => {
-		// if the default value is a function, call it to get the value, otherwise use it directly
-		const insertableValue =
+		// Resolve the value: if it's a function, call it; otherwise use it directly
+		let insertableValue =
 			typeof defaultValue === "function" ? (defaultValue as () => unknown)() : defaultValue;
+
+		// If the value is an already-constructed TreeNode (e.g., from a generator function that
+		// returns the same instance repeatedly), clone it to ensure each use gets a fresh instance.
+		// This prevents multi-parenting errors.
+		if (isTreeNode(insertableValue)) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			insertableValue = TreeBeta.clone(insertableValue as any);
+		}
+
+		// Convert the insertable value to an unhydrated flex tree.
+		// For insertable data, this creates a fresh tree structure.
 		const allowedTypeSet = normalizeAllowedTypes(typedFieldSchema.allowedTypes).evaluateSet();
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		return [unhydratedFlexTreeFromInsertableNode(insertableValue as any, allowedTypeSet)];
 	});
 
 	// create a new field schema with the default provider
-	return createFieldSchema(typedFieldSchema.kind, typedFieldSchema.allowedTypes, {
+	const propsWithDefault = {
 		...typedFieldSchema.props,
 		defaultProvider,
-	});
+	};
+
+	return createFieldSchema(
+		typedFieldSchema.kind,
+		typedFieldSchema.allowedTypes,
+		propsWithDefault,
+	);
 };
 
 const schemaStaticsAlpha: SchemaStaticsAlpha = {

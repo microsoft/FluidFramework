@@ -192,6 +192,7 @@ export {
 	type AllowedTypesFullFromMixed,
 	type SchemaType,
 	type SchemaStaticsAlpha,
+	type NodeProvider,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,

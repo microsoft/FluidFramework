@@ -115,7 +115,7 @@ describe("withDefault", () => {
 		});
 
 		describe("custom node types", () => {
-			it("nested object with static default", () => {
+			it("nested object with function default", () => {
 				const NestedSchema = factory.objectAlpha("Nested", {
 					x: factory.number,
 					y: factory.number,
@@ -124,7 +124,7 @@ describe("withDefault", () => {
 				const TestSchema = factory.objectAlpha("TestObject", {
 					position: SchemaFactoryAlpha.withDefault(
 						factory.optional(NestedSchema),
-						new NestedSchema({ x: 0, y: 0 }),
+						() => new NestedSchema({ x: 0, y: 0 }),
 					),
 				});
 
@@ -140,13 +140,13 @@ describe("withDefault", () => {
 				assert.equal(obj2.position.y, 20);
 			});
 
-			it("array with static default", () => {
+			it("array with function default", () => {
 				const ArraySchema = factory.arrayAlpha("NumberArray", factory.number);
 
 				const TestSchema = factory.objectAlpha("TestObject", {
 					numbers: SchemaFactoryAlpha.withDefault(
 						factory.optional(ArraySchema),
-						new ArraySchema([]),
+						() => new ArraySchema([]),
 					),
 				});
 
@@ -257,6 +257,94 @@ describe("withDefault", () => {
 				assert.equal(callCount, 2); // Default function not called
 				assert.equal(obj3.id, 999);
 			});
+		});
+	});
+
+	describe("cloning behavior", () => {
+		it("generator function returning same instance is cloned for each use", () => {
+			const NestedSchema = factory.objectAlpha("Nested", {
+				count: factory.number,
+			});
+
+			// Create a single shared instance that the generator returns repeatedly
+			const sharedInstance = new NestedSchema({ count: 50 });
+
+			const TestSchema = factory.objectAlpha("TestObject", {
+				// Even though the function returns the same instance, it should be cloned
+				nested: SchemaFactoryAlpha.withDefault(
+					factory.optional(NestedSchema),
+					() => sharedInstance,
+				),
+			});
+
+			const obj1 = new TestSchema({});
+			const obj2 = new TestSchema({});
+
+			// Each object should get a cloned instance, not the shared one
+			assert(obj1.nested !== undefined);
+			assert(obj2.nested !== undefined);
+			assert(obj1.nested !== obj2.nested, "Each use should get a cloned instance");
+			assert(obj1.nested !== sharedInstance, "Should not be the shared instance");
+			assert(obj2.nested !== sharedInstance, "Should not be the shared instance");
+
+			// Modifying one should not affect the other or the original
+			obj1.nested.count = 75;
+			assert.equal(obj1.nested.count, 75);
+			assert.equal(obj2.nested.count, 50);
+			assert.equal(sharedInstance.count, 50, "Original instance should be unchanged");
+		});
+
+		it("generator function returning same array is cloned for each use", () => {
+			const ArraySchema = factory.arrayAlpha("NumberArray", factory.number);
+
+			// Create a single array that the generator returns repeatedly
+			const sharedArray = new ArraySchema([1, 2, 3]);
+
+			const TestSchema = factory.objectAlpha("TestObject", {
+				numbers: SchemaFactoryAlpha.withDefault(
+					factory.optional(ArraySchema),
+					() => sharedArray,
+				),
+			});
+
+			const obj1 = new TestSchema({});
+			const obj2 = new TestSchema({});
+
+			// Each object should get a cloned array, not the shared one
+			assert(obj1.numbers !== undefined);
+			assert(obj2.numbers !== undefined);
+			assert(obj1.numbers !== obj2.numbers, "Each use should get a cloned array");
+			assert(obj1.numbers !== sharedArray, "Should not be the shared array");
+
+			// Modifying one should not affect the other or the original
+			obj1.numbers.insertAtEnd(4);
+			assert.equal(obj1.numbers.length, 4);
+			assert.equal(obj2.numbers.length, 3, "Modifying obj1 array should not affect obj2");
+			assert.equal(sharedArray.length, 3, "Original array should be unchanged");
+		});
+
+		it("leaf values are safely reused (not cloned)", () => {
+			const TestSchema = factory.objectAlpha("TestObject", {
+				name: SchemaFactoryAlpha.withDefault(factory.optional(factory.string), "shared"),
+				count: SchemaFactoryAlpha.withDefault(factory.optional(factory.number), 42),
+				flag: SchemaFactoryAlpha.withDefault(factory.optional(factory.boolean), true),
+			});
+
+			const obj1 = new TestSchema({});
+			const obj2 = new TestSchema({});
+
+			// Leaf values are immutable, so they can be safely reused
+			assert.equal(obj1.name, "shared");
+			assert.equal(obj2.name, "shared");
+			assert.equal(obj1.count, 42);
+			assert.equal(obj2.count, 42);
+			assert.equal(obj1.flag, true);
+			assert.equal(obj2.flag, true);
+
+			// Values are primitives, not objects that can be mutated
+			assert.equal(typeof obj1.name, "string");
+			assert.equal(typeof obj1.count, "number");
+			assert.equal(typeof obj1.flag, "boolean");
 		});
 	});
 

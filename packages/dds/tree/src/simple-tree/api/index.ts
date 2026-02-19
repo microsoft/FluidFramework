@@ -37,7 +37,11 @@ export {
 	type SchemaFactory_base,
 } from "./schemaFactory.js";
 export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
-export { SchemaFactoryAlpha, type SchemaStaticsAlpha } from "./schemaFactoryAlpha.js";
+export {
+	SchemaFactoryAlpha,
+	type SchemaStaticsAlpha,
+	type NodeProvider,
+} from "./schemaFactoryAlpha.js";
 export {
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,

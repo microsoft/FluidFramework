@@ -153,7 +153,7 @@ type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? 
 
 // @public @system
 type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
-FieldSchema<FieldKind.Optional | FieldKind.Identifier>
+FieldSchema<FieldKind.Optional | FieldKind.Identifier, infer _Types, infer _Meta>
 ] ? true : false;
 
 // @public
