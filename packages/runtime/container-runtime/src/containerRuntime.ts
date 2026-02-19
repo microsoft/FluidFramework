@@ -1285,6 +1285,16 @@ export class ContainerRuntime
 			recentBatchInfo,
 		);
 
+		runtime.sharePendingBlobs();
+
+		// Load pending attachment summaries before entering staging mode and applying ops.
+		// This rehydrates datastores that were referenced but not yet attached,
+		// and must happen before enterStagingMode so all contexts receive the notification.
+		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
+		await runtime.channelCollection.loadPendingAttachmentSummaries(
+			pendingRuntimeState?.pendingAttachmentSummaries,
+		);
+
 		// Enter staging mode if enabled and we have pending local state (and not detached)
 		// This allows the caller to review and commit or discard the pending changes
 		const stageControls =
@@ -1293,15 +1303,6 @@ export class ContainerRuntime
 			context.attachState === AttachState.Detached
 				? undefined
 				: runtime.enterStagingMode();
-
-		runtime.sharePendingBlobs();
-
-		// Load pending attachment summaries before initializing base state and applying ops.
-		// This rehydrates datastores that were referenced but not yet attached.
-		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
-		await runtime.channelCollection.loadPendingAttachmentSummaries(
-			pendingRuntimeState?.pendingAttachmentSummaries,
-		);
 
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState(context.loader);

@@ -1708,9 +1708,9 @@ export class ChannelCollection
 			visitedDataStores.add(datastoreId);
 			const context = this.contexts.get(datastoreId);
 			assert(context !== undefined, "must have context");
-			const summary = context.getAttachSummary();
 
 			if (this.contexts.isNotBound(datastoreId) || channelId) {
+				const summary = context.getAttachSummary();
 				summaries ??= {};
 				summaries[datastoreId] = summary;
 				paths.push(...findAllHandlePaths(summary));
