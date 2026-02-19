@@ -5,7 +5,9 @@
 
 export {
 	type FieldHasDefault,
+	type FieldHasDefaultAlpha,
 	type InsertableObjectFromSchemaRecord,
+	type InsertableObjectFromSchemaRecordAlpha,
 	type ObjectFromSchemaRecord,
 	objectSchema,
 	setField,

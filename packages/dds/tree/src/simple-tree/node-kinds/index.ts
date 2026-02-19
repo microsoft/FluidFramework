@@ -29,6 +29,7 @@ export {
 
 export {
 	type FieldHasDefault,
+	type FieldHasDefaultAlpha,
 	type InsertableObjectFromSchemaRecord,
 	isObjectNodeSchema,
 	type ObjectFromSchemaRecord,

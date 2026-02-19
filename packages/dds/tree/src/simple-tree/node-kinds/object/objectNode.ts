@@ -70,6 +70,7 @@ import {
 	type ContextualFieldProvider,
 	extractFieldProvider,
 	isConstant,
+	type DefaultProvider,
 } from "../../fieldSchema.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
@@ -149,16 +150,44 @@ export type TreeObjectNode<
  * @remarks Yields `false` when unknown.
  *
  * @privateRemarks
- * TODO: Account for field schemas with default value providers.
- * For now, this only captures field kinds that we know always have defaults - optional fields and identifier fields.
+ * This checks for:
+ * 1. Optional fields (which have an implicit undefined default)
+ * 2. Identifier fields (which have auto-generated defaults)
  *
  * @system @public
  */
 export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
-	FieldSchema<FieldKind.Optional | FieldKind.Identifier>,
+	FieldSchema<FieldKind.Optional | FieldKind.Identifier, infer _Types, infer _Meta>,
 ]
 	? true
 	: false;
+
+/**
+ * Type utility for determining if an implicit field schema is known to have a default value.
+ * Supports Alpha field schemas with explicit default providers.
+ *
+ * @remarks Yields `false` when unknown.
+ *
+ * @privateRemarks
+ * This checks for:
+ * 1. Fields with explicit default providers (computed from the props type)
+ * 2. Optional fields (which have an implicit undefined default)
+ * 3. Identifier fields (which have auto-generated defaults)
+ *
+ * @system @alpha
+ */
+export type FieldHasDefaultAlpha<T extends ImplicitFieldSchema> =
+	// Extract Kind and TProps from FieldSchemaAlpha and compute whether it has a default
+	[T] extends [FieldSchemaAlpha<infer Kind, infer _Types, infer _Meta, infer TProps>]
+		? // Inline ComputeHasDefault logic: Optional and Identifier kinds always have defaults
+			Kind extends FieldKind.Optional | FieldKind.Identifier
+			? true
+			: // Check if props has defaultProvider
+				TProps extends { defaultProvider: DefaultProvider }
+				? true
+				: false
+		: // Fallback to base FieldHasDefault for non-Alpha schemas
+			FieldHasDefault<T>;
 
 /**
  * Helper used to produce types for:
@@ -204,6 +233,35 @@ export type InsertableObjectFromSchemaRecord<
 				} & {
 					// Field does not have a known default, make it required:
 					readonly [Property in keyof T as FieldHasDefault<T[Property & string]> extends false
+						? Property
+						: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
+				}
+			>;
+
+/**
+ * Alpha version of {@link InsertableObjectFromSchemaRecord} that supports field defaults.
+ *
+ * @system @alpha
+ */
+export type InsertableObjectFromSchemaRecordAlpha<
+	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+> =
+	RestrictiveStringRecord<ImplicitFieldSchema> extends T
+		? { arbitraryKey: "arbitraryValue" } extends T
+			? // {} case
+				Record<string, never>
+			: // RestrictiveStringRecord<ImplicitFieldSchema> case
+				never
+		: FlattenKeys<
+				{
+					readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<
+						T[Property & string]
+					>;
+				} & {
+					// Field does not have a known default, make it required:
+					readonly [Property in keyof T as FieldHasDefaultAlpha<
+						T[Property & string]
+					> extends false
 						? Property
 						: never]: InsertableTreeFieldFromImplicitField<T[Property & string]>;
 				}
@@ -387,17 +445,16 @@ export class ObjectFieldSchema<
 		Kind extends FieldKind,
 		Types extends ImplicitAllowedTypes,
 		TCustomMetadata = unknown,
+		TProps extends FieldProps<TCustomMetadata> & {
+			readonly key: string;
+		} = FieldProps<TCustomMetadata> & { readonly key: string },
 	>
-	extends FieldSchemaAlpha<Kind, Types, TCustomMetadata>
+	extends FieldSchemaAlpha<Kind, Types, TCustomMetadata, TProps>
 	implements SimpleObjectFieldSchema
 {
 	public readonly storedKey: string;
 
-	public constructor(
-		kind: Kind,
-		allowedTypes: Types,
-		props: FieldProps<TCustomMetadata> & { readonly key: string },
-	) {
+	public constructor(kind: Kind, allowedTypes: Types, props: TProps) {
 		super(kind, allowedTypes, props);
 		this.storedKey = props.key;
 	}
