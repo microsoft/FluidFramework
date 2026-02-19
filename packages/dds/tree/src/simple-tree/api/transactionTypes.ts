@@ -49,22 +49,27 @@ export interface NoChangeConstraint {
 }
 
 /**
+ * An interface representing a value associated with a transaction.
+ * @alpha
+ */
+export interface WithValue<TValue> {
+	/** The user defined value. */
+	value: TValue;
+}
+
+/**
  * The status of the transaction callback in the {@link RunTransaction | RunTransaction} API.
  * @alpha
  */
 export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = (
-	| {
+	| (WithValue<TSuccessValue> & {
 			/** Indicates that the transaction callback ran successfully. */
 			rollback?: false;
-			/** The user defined value when the transaction ran successfully. */
-			value: TSuccessValue;
-	  }
-	| {
+	  })
+	| (WithValue<TFailureValue> & {
 			/** Indicates that the transaction callback failed and the transaction should be rolled back. */
 			rollback: true;
-			/** The user defined value when the transaction failed. */
-			value: TFailureValue;
-	  }
+	  })
 ) & {
 	/**
 	 * An optional list of {@link TransactionConstraintAlpha | constraints} that will be checked when the commit corresponding
@@ -78,7 +83,7 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = (
 
 /**
  * The status of a the transaction callback in the {@link RunTransaction | RunTransaction} API where the transaction doesn't
- * need to return a value. This is the same as {@link TransactionCallbackStatus} but with the `value` field omitted. This
+ * need to return a value. This is the same as {@link TransactionCallbackStatus} but with the `value` field omitted.
  * @alpha
  */
 export type VoidTransactionCallbackStatus = Omit<
@@ -90,22 +95,18 @@ export type VoidTransactionCallbackStatus = Omit<
  * The result of the {@link RunTransaction | RunTransaction} API when it was successful.
  * @alpha
  */
-export interface TransactionResultSuccess<TSuccessValue> {
+export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSuccessValue> {
 	/** Indicates that the transaction was successful. */
 	success: true;
-	/** The user defined value when the transaction was successful. */
-	value: TSuccessValue;
 }
 
 /**
  * The result of the {@link RunTransaction | RunTransaction} API when it failed.
  * @alpha
  */
-export interface TransactionResultFailed<TFailureValue> {
+export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
 	/** Indicates that the transaction failed. */
 	success: false;
-	/** The user defined value when the transaction failed. */
-	value: TFailureValue;
 }
 
 /**

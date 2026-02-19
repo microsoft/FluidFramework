@@ -1,5 +1,48 @@
 # @fluidframework/tree
 
+## 2.83.0
+
+### Minor Changes
+
+- Fix false positive error from FormatValidator ([#26372](https://github.com/microsoft/FluidFramework/pull/26372)) [adad917d30](https://github.com/microsoft/FluidFramework/commit/adad917d30e251f4bfd510e7a1ebc4a73bd1f7ee)
+
+  Users of the alpha API [FormatValidatorBasic](https://fluidframework.com/docs/api/fluid-framework/#formatvalidatorbasic-variable)
+  could hit an "Invalid JSON." error when parsing data.
+  This would occur where the result of evaluating "[MinimumVersionForCollab](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias) \< 2.74.0"
+  differed between the client encoding the data and the client decoding it.
+  For example opening an old document with a new client that sets `MinimumVersionForCollab = 2.74.0` would throw this error.
+  This has been fixed: this case will no longer throw.
+
+- New beta ExtensibleUnionNode API ([#26438](https://github.com/microsoft/FluidFramework/pull/26438)) [05f716ffb5](https://github.com/microsoft/FluidFramework/commit/05f716ffb56e280624e65853dd9291411ee752ff)
+
+  The new `ExtensibleUnionNode` API allows for creation of unions which can tolerate future additions not yet known to the current code.
+
+  ```typescript
+  const sf = new SchemaFactoryBeta("extensibleUnionNodeExample.items");
+  class ItemA extends sf.object("A", { x: sf.string }) {}
+  class ItemB extends sf.object("B", { x: sf.number }) {}
+
+  class AnyItem extends ExtensibleUnionNode.createSchema(
+    [ItemA, ItemB], // Future versions may add more members here
+    sf,
+    "ExtensibleUnion",
+  ) {}
+  // Instances of the union are created using `create`.
+  const anyItem = AnyItem.create(new ItemA({ x: "hello" }));
+  // Reading the content from the union is done via the `union` property,
+  // which can be `undefined` to handle the case where a future version of this schema allows a type unknown to the current version.
+  const childNode: ItemA | ItemB | undefined = anyItem.union;
+  // To determine which member of the union was present, its schema can be inspected:
+  const aSchema = Tree.schema(childNode ?? assert.fail("No child"));
+  assert.equal(aSchema, ItemA);
+  ```
+
+- Improve error messages when failing to construct nodes ([#26433](https://github.com/microsoft/FluidFramework/pull/26433)) [8c612c6f2b](https://github.com/microsoft/FluidFramework/commit/8c612c6f2bc04a1fc1cdc54e620c2180eb73b107)
+
+  The error messages when constructing tree nodes have been improved.
+  Several cases now list not only the schema identifiers, but also schema names which can help when there are identifier collisions and make it easier to find the implementations.
+  Additionally some cases which did not include what schema were encountered and which were allowed now include both.
+
 ## 2.82.0
 
 ### Minor Changes

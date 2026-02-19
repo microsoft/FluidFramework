@@ -4,7 +4,43 @@
  */
 
 import type { InterdependencyRange } from "@fluid-tools/version-tools";
-import type { TaskDefinitionsOnDisk, TaskFileDependencies } from "./fluidTaskDefinitions";
+import type {
+	GitIgnoreSetting,
+	TaskDefinitionsOnDisk,
+	TaskFileDependencies,
+} from "./fluidTaskDefinitions";
+
+/**
+ * Token that can be used in file paths and globs to represent the repository root directory.
+ * This allows configs to reference root-level files without hardcoding relative paths like "../../".
+ *
+ * Example: "${repoRoot}/.eslintrc.cjs" will resolve to the .eslintrc.cjs file at the repository root.
+ */
+export const REPO_ROOT_TOKEN = "${repoRoot}";
+
+const REPO_ROOT_REGEX = /\$\{repoRoot\}/g;
+
+/**
+ * Replace the {@link REPO_ROOT_TOKEN} in a path or glob with the actual repository root path.
+ *
+ * @remarks
+ * The repo root is normalized to forward slashes and trailing separators are removed, so the
+ * result is safe for globbing libraries (fast-glob treats backslashes as escape characters).
+ */
+export function replaceRepoRootToken(pathOrGlob: string, repoRoot: string): string {
+	const normalized = repoRoot.replace(/\\/g, "/").replace(/\/+$/, "");
+	return pathOrGlob.replace(REPO_ROOT_REGEX, normalized);
+}
+
+/**
+ * Replace the {@link REPO_ROOT_TOKEN} in an array of paths or globs.
+ */
+export function replaceRepoRootTokens(
+	pathsOrGlobs: readonly string[],
+	repoRoot: string,
+): string[] {
+	return pathsOrGlobs.map((p) => replaceRepoRootToken(p, repoRoot));
+}
 
 /**
  * The version of the fluidBuild configuration currently used.
@@ -100,8 +136,6 @@ export interface IFluidBuildDirs {
  * changed using the `gitignore` property on the task. See the documentation for that property for details.
  */
 export interface DeclarativeTask extends TaskFileDependencies {}
-
-export type GitIgnoreSetting = ("input" | "output")[];
 
 /**
  * Valid values that can be used in the `gitignore` array setting of a DeclarativeTask.

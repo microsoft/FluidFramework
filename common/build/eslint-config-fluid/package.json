@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "2.83.0",
+	"version": "2.90.0",
 	"private": true,
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -47,6 +47,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
+		"@types/node": "~20.19.30",
 		"@types/sort-json": "^2.0.3",
 		"concurrently": "^9.2.1",
 		"eslint": "~9.39.1",

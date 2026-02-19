@@ -48,9 +48,10 @@ import {
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type {
-	IIdCompressorCore,
-	IdCreationRange,
+import {
+	createIdCompressor,
+	type IIdCompressorCore,
+	type IdCreationRange,
 } from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
@@ -887,7 +888,7 @@ export class MockFluidDataStoreRuntime
 			childLoggerProps.logger = logger;
 		}
 		this.logger = createChildLogger(childLoggerProps);
-		this.idCompressor = overrides?.idCompressor;
+		this.idCompressor = overrides?.idCompressor ?? createIdCompressor();
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 
 		const registry = overrides?.registry;
