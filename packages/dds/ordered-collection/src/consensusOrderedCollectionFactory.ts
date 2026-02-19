@@ -61,15 +61,15 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 }
 
 /**
- * {@inheritDoc ConsensusQueueClass}
+ * {@inheritDoc IConsensusOrderedCollection}
  * @legacy @beta
  */
 export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
 
 /**
- * {@inheritDoc ConsensusQueueClass}
+ * Compatibility alias for {@link IConsensusOrderedCollection}.
  * @legacy @beta
  */
 // TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;
+export type ConsensusQueue<T = any> = IConsensusOrderedCollection<T>;
