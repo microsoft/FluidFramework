@@ -819,6 +819,9 @@ extends:
                   # It's also slightly tricky to only upload it conditionally based on things like whether the tests
                   # failed, because in some scenarios (stress tests in particular) the pipeline steps might not actually fail.
                   # Since the log files are not extremely huge (they average ~150Mb), we can afford to upload them unconditionally.
+                  # Note: these logs are not published as artifacts; to get them, click on "..." -> "Download Logs"
+                  # from the pipeline run page in Azure DevOps and extract the downloaded zip file.
+                  # Note: the full paths to the files can get pretty long, so they might end up truncated.
                   - task: Bash@3
                     displayName: Upload tinylicious log(s)
                     condition: always()
