@@ -37,7 +37,7 @@ export function useFailedSequencedEditTelemetry(tree: ISharedTree): { disable: (
 }
 
 /**
- * Statistics about the health of collaborative edit merging when using {@link (SharedTree:variable)}.
+ * Statistics about the health of collaborative edit merging when using {@link SharedTree}.
  * All of those numbers constitute a tally since the last heartbeat was logged or cleared.
  * @internal
  */

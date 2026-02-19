@@ -136,7 +136,6 @@ export {
 	SharedTreeOptions_0_1_1,
 	SharedTreeFactory,
 	SharedTree,
-	SharedTreeKind,
 	EditCommittedHandler,
 	SequencedEditAppliedHandler,
 	EditCommittedEventArguments,

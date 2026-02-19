@@ -4,10 +4,9 @@
  */
 
 import { Checkout } from './Checkout.js';
-import type { ISharedTree } from './ISharedTree.js';
 import { EditId } from './Identifiers.js';
 import { RevisionView } from './RevisionView.js';
-import { EditCommittedEventArguments } from './SharedTree.js';
+import { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
 import { ValidEditingResult } from './TransactionInternal.js';
 
 /**
@@ -22,7 +21,7 @@ export class LazyCheckout extends Checkout {
 	/**
 	 * @param tree - the tree
 	 */
-	public constructor(tree: ISharedTree) {
+	public constructor(tree: SharedTree) {
 		super(tree, tree.currentView, (args: EditCommittedEventArguments) => {});
 		this.latestView = tree.currentView;
 	}
