@@ -5,7 +5,9 @@
 
 // Lint rule can be disabled once eslint config is upgraded to 5.3.0+
 import { OldestClientObserver } from "@fluid-experimental/oldest-client-observer/legacy";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+// eslint-disable-next-line import-x/no-internal-modules
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject } from "@fluidframework/aqueduct/legacy";
 import { assert } from "@fluidframework/core-utils/legacy";
 
 import type { IDiceRoller } from "./interface.js";

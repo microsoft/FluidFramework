@@ -13,8 +13,9 @@ import {
 	MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedArrayBuilder, type ISharedArray } from "../../index.js";
+import type { ISharedArray } from "../../index.js";
 import {
+	getSharedArrayFactory,
 	verifyEventsEmitted,
 	verifyEntries,
 	getRandomInt,
@@ -31,7 +32,7 @@ describe("SharedArray", () => {
 
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
-		factory = SharedArrayBuilder<number>().getFactory();
+		factory = getSharedArrayFactory<number>();
 		sharedArray = factory.create(dataStoreRuntime, "sharedArray");
 		testData = [1, 2, 3, 4];
 		expectedSharedArray = testData;
@@ -168,7 +169,7 @@ describe("SharedArray", () => {
 			const mockHandle = new MockHandle({});
 
 			beforeEach(() => {
-				handleFactory = SharedArrayBuilder<IFluidHandle>().getFactory();
+				handleFactory = getSharedArrayFactory<IFluidHandle>();
 				sharedArrayIFluidHandle = handleFactory.create(
 					dataStoreRuntime,
 					"sharedArrayIFluidHandle",

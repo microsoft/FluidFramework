@@ -10,7 +10,9 @@ import {
 	SharedTreeShim,
 	SharedTreeShimFactory,
 } from "@fluid-experimental/tree";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+// eslint-disable-next-line import-x/no-internal-modules
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ITree } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";

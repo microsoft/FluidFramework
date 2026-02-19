@@ -20,7 +20,7 @@ import { pkgVersion } from "./packageVersion.js";
  * @privateRemarks
  * TODO: AB#35245: Deprecate and stop exporting this class.
  * @sealed
- * @legacy @beta
+ * @internal
  */
 export class MapFactory implements IChannelFactory<ISharedMap> {
 	/**

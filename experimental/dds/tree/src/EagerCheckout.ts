@@ -11,7 +11,7 @@ import { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
  * Checkout that always stays up to date with the SharedTree.
  * This means that {@link EagerCheckout.waitForPendingUpdates} is always a no-op since EagerCheckout is always up to date.
  * @sealed
- * @alpha
+ * @internal
  */
 export class EagerCheckout extends Checkout {
 	/**

@@ -4,7 +4,9 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+// eslint-disable-next-line import-x/no-internal-modules
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject } from "@fluidframework/aqueduct/legacy";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import { SharedString } from "@fluidframework/sequence/legacy";
 import { v4 as uuid } from "uuid";

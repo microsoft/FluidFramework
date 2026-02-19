@@ -76,14 +76,11 @@ interface ProcessTelemetryProperties {
  * This class implements common behaviors that implementations of {@link ISharedObject} may want to reuse.
  * Even more such behaviors are implemented in the {@link SharedObject} class.
  * @privateRemarks
- * Currently some documentation (like the above) implies that this is supposed to be the only implementation of ISharedObject, which is both package-exported and not `@sealed`.
- * This situation should be clarified to indicate if other implementations of ISharedObject are allowed and just currently don't exist,
- * or if the intention is that no other implementations should exist and creating some might break things.
- * As part of this, any existing implementations of ISharedObject (via SharedObjectCore or otherwise) in use by legacy API users will need to be considered.
+ * Now that this class is `@internal`, external implementations of ISharedObject via custom subclasses
+ * are no longer part of the supported public API surface. Existing external subclasses may continue
+ * to work but are not guaranteed to be compatible across versions.
  *
- * TODO:
- * This class should eventually be made internal, as custom subclasses of it outside this repository are intended to be made unsupported in the future.
- * @legacy @beta
+ * @internal
  */
 export abstract class SharedObjectCore<
 		TEvent extends ISharedObjectEvents = ISharedObjectEvents,
@@ -734,11 +731,10 @@ export abstract class SharedObjectCore<
  * @remarks
  * DDS implementations with async and incremental summarization should extend {@link SharedObjectCore} directly instead.
  * @privateRemarks
- * TODO:
- * This class is badly named.
- * Once it becomes `@internal` "SharedObjectCore" should probably become "SharedObject"
+ * TODO: This class is badly named. Now that these classes are `@internal`,
+ * "SharedObjectCore" should be renamed to "SharedObject"
  * and this class should be renamed to something like "SharedObjectSynchronous".
- * @legacy @beta
+ * @internal
  */
 export abstract class SharedObject<
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,
@@ -920,14 +916,13 @@ export abstract class SharedObject<
  * Used in containers to register a shared object implementation, and to create new instances of a given type of shared object.
  *
  * @remarks
- * For use internally and in the "encapsulated API".
- * See {@link SharedObjectKind} for the type erased version for use in the public declarative API.
+ * See {@link SharedObjectKind} for the type-erased version for use in the public declarative API.
  *
  * @privateRemarks
  * This does not extend {@link SharedObjectKind} since doing so would prevent implementing this interface in type safe code.
  * Any implementation of this can safely be used as a {@link SharedObjectKind} with an explicit type conversion,
  * but doing so is typically not needed as {@link createSharedObjectKind} is used to produce values that are both types simultaneously.
- * @legacy @beta
+ * @internal
  */
 export interface ISharedObjectKind<TSharedObject> {
 	/**

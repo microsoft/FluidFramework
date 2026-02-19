@@ -14,8 +14,12 @@ import {
 import type { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ISharedArray } from "../../index.js";
-import { SharedArrayBuilder } from "../../index.js";
-import { verifyEntries, fillEntries, getRandomInt } from "../utilities.js";
+import {
+	getSharedArrayFactory,
+	verifyEntries,
+	fillEntries,
+	getRandomInt,
+} from "../utilities.js";
 
 describe("SharedArray", () => {
 	let sharedArray: ISharedArray<number>;
@@ -28,7 +32,7 @@ describe("SharedArray", () => {
 
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
-		factory = SharedArrayBuilder<number>().getFactory();
+		factory = getSharedArrayFactory<number>();
 		sharedArray = factory.create(dataStoreRuntime, "sharedArray");
 		testDataOne = [1, 2];
 		testDataTwo = [3, 4];

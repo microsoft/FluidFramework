@@ -9,7 +9,7 @@ import { ChangeNode_0_0_2 } from './persisted-types/index.js';
 
 /**
  * The initial tree.
- * @alpha
+ * @internal
  */
 export const initialTree: ChangeNode_0_0_2 = {
 	traits: {},

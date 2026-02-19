@@ -7,7 +7,6 @@ import type { IChannelStorageService } from "@fluidframework/datastore-definitio
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ISharedObject,
-	type ISharedObjectKind,
 	makeSharedObjectKind,
 	type KernelArgs,
 	type SharedKernelFactory,
@@ -137,14 +136,14 @@ export function configuredSharedTreeBeta(
 }
 
 /**
- * {@link configuredSharedTreeBeta} including the legacy `ISharedObjectKind` type.
+ * {@link configuredSharedTreeBeta} for the legacy API surface.
  * @privateRemarks
  * This is given a different export name (with legacy appended) to avoid the need to do the special reexport with different types from the fluid-framework package.
  * @legacy @beta
  */
 export function configuredSharedTreeBetaLegacy(
 	options: SharedTreeOptionsBeta,
-): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+): SharedObjectKind<ITree> {
 	return configuredSharedTree(options);
 }
 
@@ -183,14 +182,18 @@ export function configuredSharedTreeAlpha(
  */
 export function configuredSharedTree(
 	options: SharedTreeOptions,
-): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+): import("@fluidframework/shared-object-base/internal").ISharedObjectKind<ITree> &
+	SharedObjectKind<ITree> {
 	const internalOptions = resolveOptions(options);
 	return configuredSharedTreeInternal(internalOptions);
 }
 
 export function configuredSharedTreeInternal(
 	options: SharedTreeOptionsInternal,
-): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+): import("@fluidframework/shared-object-base/internal").ISharedObjectKind<ITree> &
+	SharedObjectKind<ITree> {
 	const sharedObjectOptions: SharedObjectOptions<ITree> = {
 		type: SharedTreeFactoryType,
 		attributes: SharedTreeAttributes,

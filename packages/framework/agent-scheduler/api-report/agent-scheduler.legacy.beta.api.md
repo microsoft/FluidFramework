@@ -5,22 +5,6 @@
 ```ts
 
 // @beta @legacy (undocumented)
-export class AgentSchedulerFactory implements IFluidDataStoreFactory {
-    // (undocumented)
-    static createChildInstance(parentContext: IFluidDataStoreContext): Promise<IAgentScheduler>;
-    // (undocumented)
-    get IFluidDataStoreFactory(): AgentSchedulerFactory;
-    // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<FluidDataStoreRuntime>;
-    // (undocumented)
-    static get registryEntry(): NamedFluidDataStoreRegistryEntry;
-    // (undocumented)
-    static readonly type = "_scheduler";
-    // (undocumented)
-    readonly type = "_scheduler";
-}
-
-// @beta @legacy (undocumented)
 export const IAgentScheduler: keyof IProvideAgentScheduler;
 
 // @beta @legacy

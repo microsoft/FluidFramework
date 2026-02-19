@@ -5,48 +5,6 @@
 ```ts
 
 // @beta @legacy
-export const ConsensusRegisterCollection: ISharedObjectKind<IConsensusRegisterCollection<any>> & SharedObjectKind<IConsensusRegisterCollection<any>>;
-
-// @beta @legacy
-export type ConsensusRegisterCollection<T> = IConsensusRegisterCollection<T>;
-
-// @beta @legacy
-export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
-    protected applyStashedOp(content: unknown): void;
-    // (undocumented)
-    keys(): string[];
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    protected onDisconnect(): void;
-    protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
-    read(key: string, readPolicy?: ReadPolicy): T | undefined;
-    // (undocumented)
-    readVersions(key: string): T[] | undefined;
-    // @sealed
-    protected rollback(content: unknown, localOpMetadata: unknown): void;
-    // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    write(key: string, value: T): Promise<boolean>;
-}
-
-// @beta @legacy
-export class ConsensusRegisterCollectionFactory implements IChannelFactory<IConsensusRegisterCollection> {
-    // (undocumented)
-    static readonly Attributes: IChannelAttributes;
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
-    // (undocumented)
-    static Type: string;
-    // (undocumented)
-    get type(): string;
-}
-
-// @beta @legacy
 export interface IConsensusRegisterCollection<T = any> extends ISharedObject<IConsensusRegisterCollectionEvents> {
     keys(): string[];
     read(key: string, policy?: ReadPolicy): T | undefined;
@@ -59,9 +17,6 @@ export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents 
     // (undocumented)
     (event: "atomicChanged" | "versionChanged", listener: (key: string, value: any, local: boolean) => void): any;
 }
-
-// @beta @deprecated @legacy
-export type IConsensusRegisterCollectionFactory = IChannelFactory<IConsensusRegisterCollection>;
 
 // @beta @legacy
 export enum ReadPolicy {

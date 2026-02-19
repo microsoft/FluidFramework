@@ -20,8 +20,9 @@ import type {
 	IRevertible,
 	ISharedArray,
 } from "../../index.js";
-import { SharedArrayBuilder, SharedArrayRevertible } from "../../index.js";
+import { SharedArrayRevertible } from "../../index.js";
 import {
+	getSharedArrayFactory,
 	verifyEventsEmitted,
 	verifyEntries,
 	getRandomInt,
@@ -38,7 +39,7 @@ describe("SharedArray", () => {
 
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
-		factory = SharedArrayBuilder<number>().getFactory();
+		factory = getSharedArrayFactory<number>();
 		sharedArray = factory.create(dataStoreRuntime, "sharedArray");
 		testData = [1, 2, 3, 4];
 		expectedSharedArray = testData;
@@ -563,7 +564,7 @@ describe("SharedArray in connected state with a remote SharedArray with IFluidHa
 	// const mockHandle = new MockHandle({});
 
 	beforeEach(async () => {
-		factory = SharedArrayBuilder<IFluidHandle>().getFactory();
+		factory = getSharedArrayFactory<IFluidHandle>();
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
