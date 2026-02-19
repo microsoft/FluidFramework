@@ -38,7 +38,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
 // @beta @legacy
 export const ConsensusQueue: ISharedObjectKind<IConsensusOrderedCollection<any>> & SharedObjectKind<IConsensusOrderedCollection<any>>;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;
 
 // @beta @deprecated @legacy

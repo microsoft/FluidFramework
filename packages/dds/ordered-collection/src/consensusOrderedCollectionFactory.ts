@@ -71,6 +71,7 @@ export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
 
 /**
  * {@inheritDoc ConsensusQueueClass}
+ * @deprecated Use {@link IConsensusOrderedCollection} for typing instead. This type alias will be removed in a future release.
  * @legacy @beta
  */
 // TODO: #22835 Use undefined instead of any (breaking change)
