@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey } from "../core/index.js";
+import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
 import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	enumFromStrings,
 	eraseSchemaDetails,
+	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
@@ -43,13 +44,31 @@ class TextNode
 			TreeArrayNode.spread(textAtomsFromString(additionalCharacters, this.defaultFormat)),
 		);
 	}
+
 	public removeRange(index: number, length: number): void {
 		this.content.removeRange(index, length);
 	}
+
 	public characters(): Iterable<string> {
 		return mapIterable(this.content, (atom) => atom.content.content);
 	}
+
+	public characterCount(): number {
+		return this.content.length;
+	}
+
 	public fullString(): string {
+		const result = this.content.fullString();
+		debugAssert(
+			() => result === this.fullString_reference() || "invalid fullString optimizations",
+		);
+		return result;
+	}
+
+	/**
+	 * A non-optimized reference implementation of fullString.
+	 */
+	public fullString_reference(): string {
 		return [...this.characters()].join("");
 	}
 
@@ -149,7 +168,53 @@ function textAtomsFromString(
 	return result;
 }
 
-class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.StringAtom]) {}
+class StringArray extends sf.array("StringArray", [() => FormattedTextAsTree.StringAtom]) {
+	public withBorrowedSequenceCursor<T>(f: (cursor: ITreeCursorSynchronous) => T): T {
+		const cursor = getInnerNode(this).borrowCursor();
+		cursor.enterField(EmptyKey);
+		const result = f(cursor);
+		cursor.exitField();
+		return result;
+	}
+
+	public fullString(): string {
+		return this.withBorrowedSequenceCursor((cursor) =>
+			mapCursorField(cursor, () => {
+				debugAssert(
+					() =>
+						cursor.type === FormattedTextAsTree.StringAtom.identifier ||
+						"invalid fullString type optimizations",
+				);
+				cursor.enterField(EmptyKey);
+				cursor.enterNode(0);
+				let content: string;
+				switch (cursor.type) {
+					case FormattedTextAsTree.StringTextAtom.identifier: {
+						cursor.enterField(EmptyKey);
+						cursor.enterNode(0);
+						content = cursor.value as string;
+						debugAssert(
+							() => typeof content === "string" || "invalid fullString type optimizations",
+						);
+						cursor.exitNode();
+						cursor.exitField();
+						break;
+					}
+					case FormattedTextAsTree.StringLineAtom.identifier: {
+						content = "\n";
+						break;
+					}
+					default: {
+						fail("Unsupported node type in text array", () => `${cursor.type}`);
+					}
+				}
+				cursor.exitNode();
+				cursor.exitField();
+				return content;
+			}).join(""),
+		);
+	}
+}
 
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.

@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { EmptyKey } from "../core/index.js";
+import { debugAssert } from "@fluidframework/core-utils/internal";
+
+import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
 import {
 	eraseSchemaDetails,
+	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
@@ -32,7 +35,23 @@ class TextNode
 	public characters(): Iterable<string> {
 		return this.content[Symbol.iterator]();
 	}
+
+	public characterCount(): number {
+		return this.content.length;
+	}
+
 	public fullString(): string {
+		const result = this.content.fullString();
+		debugAssert(
+			() => result === this.fullString_reference() || "invalid fullString optimizations",
+		);
+		return result;
+	}
+
+	/**
+	 * Unoptimized trivially correct implementation of fullString.
+	 */
+	public fullString_reference(): string {
 		return this.content.join("");
 	}
 
@@ -58,7 +77,21 @@ export function charactersFromString(value: string): Iterable<string> {
 	return value;
 }
 
-class StringArray extends sf.array("StringArray", SchemaFactory.string) {}
+class StringArray extends sf.array("StringArray", SchemaFactory.string) {
+	public withBorrowedSequenceCursor<T>(f: (cursor: ITreeCursorSynchronous) => T): T {
+		const cursor = getInnerNode(this).borrowCursor();
+		cursor.enterField(EmptyKey);
+		const result = f(cursor);
+		cursor.exitField();
+		return result;
+	}
+
+	public fullString(): string {
+		return this.withBorrowedSequenceCursor((cursor) =>
+			mapCursorField(cursor, () => cursor.value as string).join(""),
+		);
+	}
+}
 
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
@@ -159,6 +192,15 @@ export namespace TextAsTree {
 		 * This iterator matches the behavior of {@link (TreeArrayNode:interface)} with respect to edits during iteration.
 		 */
 		characters(): Iterable<string>;
+
+		/**
+		 * Gets the number of characters currently in the text.
+		 * @remarks
+		 * The length of {@link TextAsTree.Members.characters}.
+		 * This is not the length of the string returned by {@link TextAsTree.Members.fullString},
+		 * as that string may contain characters which are made up of multiple UTF-16 code units.
+		 */
+		characterCount(): number;
 
 		/**
 		 * Copy the content of this node into a string.

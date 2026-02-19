@@ -7,6 +7,7 @@ import { type PropTreeNode, withMemoizedTreeObservations } from "@fluidframework
 import Quill from "quill";
 import * as React from "react";
 
+import { syncTextToTree } from "./plainUtils.js";
 import type { TextAsTree } from "./schema.js";
 
 /**
@@ -60,20 +61,8 @@ const TextEditorView = withMemoizedTreeObservations(({ root }: { root: TextAsTre
 					isUpdatingRef.current = true;
 
 					// Get plain text from Quill and preserve trailing newline
-					const text = quill.getText();
-
-					// TODO: Once TextAsTree supports character attributes, use quill.getContents()
-					// to get the Delta with formatting info (bold, italic, color, etc.) and store
-					// attributes alongside each character.
-
-					// Clear existing content and insert new text
-					const length = [...root.characters()].length;
-					if (length > 0) {
-						root.removeRange(0, length);
-					}
-					if (text.length > 0) {
-						root.insertAt(0, text);
-					}
+					const newText = quill.getText();
+					syncTextToTree(root, newText);
 
 					isUpdatingRef.current = false;
 				}
