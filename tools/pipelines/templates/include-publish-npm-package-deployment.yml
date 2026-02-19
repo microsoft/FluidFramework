@@ -95,6 +95,7 @@ jobs:
                 set -eu -o pipefail
                 echo "Listing files in directory: $(pwd)"
                 ls -la
+                npm --version
                 echo "Attempting install of build tools from build tools pipeline artifact tarball"
                 npm i -g ./*.tgz
 
