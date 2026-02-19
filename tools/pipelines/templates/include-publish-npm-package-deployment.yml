@@ -63,6 +63,13 @@ jobs:
               buildDirectory: $(Pipeline.Workspace)
               enableCache: false
 
+          # We can use this step to add overrides that might be necessary to allow for a correct
+          # installation of build-tools from the tarball artifacts produced by the build stage.
+          # Since this is a lockfile-less install (ideally we should figure out how to change that),
+          # pnpm overrides is our recourse when a dependency releases a new version that causes build-tools installation to break.
+          # Current overrides:
+          # - @rushstack/node-core-library 5.19.1: version 5.20.0 broke ESM module resolution in Node.
+          #   https://github.com/microsoft/rushstack/issues/5644
           - task: Bash@3
             name: CreatePackageJsonForOverrides
             displayName: Create package.json with pnpm overrides
