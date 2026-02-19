@@ -307,15 +307,15 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 	 * Whether this interval overlaps the provided numerical positions.
 	 */
 	public overlapsPos(_bstart: number, _bend: number): boolean {
-		throw new UsageError("overlapsPos requires a Client; use SequenceIntervalClass");
+		assert(false, "overlapsPos not supported on BaseSequenceInterval");
 	}
 
 	public clone(): BaseSequenceInterval {
-		throw new UsageError("clone requires a Client; use SequenceIntervalClass");
+		assert(false, "clone not supported on BaseSequenceInterval");
 	}
 
 	public union(_b: BaseSequenceInterval): BaseSequenceInterval {
-		throw new UsageError("union requires a Client; use SequenceIntervalClass");
+		assert(false, "union not supported on BaseSequenceInterval");
 	}
 
 	protected verifyNotDispose(): void {
