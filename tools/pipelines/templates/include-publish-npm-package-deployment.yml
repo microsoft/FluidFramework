@@ -58,6 +58,32 @@ jobs:
           steps:
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+          - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+            parameters:
+              buildDirectory: $(Pipeline.Workspace)
+              enableCache: false
+
+          - task: Bash@3
+            name: CreatePackageJsonForOverrides
+            displayName: Create package.json with pnpm overrides
+            inputs:
+              targetType: 'inline'
+              workingDirectory: '$(Pipeline.Workspace)/buildTools-zip/tarballs'
+              script: |
+                set -eu -o pipefail
+                echo "Creating package.json with pnpm overrides"
+                cat > package.json << 'EOF'
+                {
+                  "name": "build-tools-install",
+                  "pnpm": {
+                    "overrides": {
+                      "@rushstack/node-core-library": "5.19.1"
+                    }
+                  }
+                }
+                EOF
+                cat package.json
+
           - task: Bash@3
             name: InstallBuildToolsFromTarball
             displayName: Install Fluid Build Tools from artifact tarball
@@ -69,7 +95,7 @@ jobs:
                 echo "Listing files in directory: $(pwd)"
                 ls -la
                 echo "Attempting install of build tools from build tools pipeline artifact tarball"
-                npm i -g ./*.tgz
+                pnpm add -g ./*.tgz
 
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
