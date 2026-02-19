@@ -41,10 +41,8 @@ describe("Local Server Stress", () => {
 		// Minimization is slow with many seeds; use only to minimize specific failing seeds.
 		skipMinimization: true,
 		skip: [
-			// Pre-existing: ConsensusOrderedCollection consistency (reproduces on main with minimized ops)
-			...[45],
-			// Pre-existing: SharedMatrix consistency (reproduces on main with minimized ops)
-			...[139],
+			45, // ConsensusOrderedCollection eventual consistency after acquire + disconnect
+			139, // SharedMatrix eventual consistency: handle vs numeric value after disconnect + orderSequentially
 		],
 		// Use skip, replay, and only properties to control which seeds run.
 	});
