@@ -377,7 +377,7 @@ extends:
                 inputs:
                   targetType: filePath
                   workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                  filePath: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/scripts/pack-build-output.sh
+                  filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-build-output.sh
 
               - task: CopyFiles@2
                 displayName: Copy build_output_archive to artifact staging directory
@@ -529,19 +529,19 @@ extends:
                   script: |
                     set -eu -o pipefail
                     echo Generating .env
-                    echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/packages/tools/devtools/devtools-browser-extension/.env
+                    echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/.env
 
               - task: Npm@1
                 displayName: Build devtools
                 inputs:
                   command: 'custom'
-                  workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/packages/tools/devtools/devtools-browser-extension/
+                  workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/
                   customCommand: 'run webpack'
 
               - task: 1ES.PublishPipelineArtifact@1
                 displayName: Publish Artifact - Devtools Browser Extension
                 inputs:
-                  targetPath: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/packages/tools/devtools/devtools-browser-extension/dist/bundle/'
+                  targetPath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/tools/devtools/devtools-browser-extension/dist/bundle/'
                   artifactName: 'devtools-extension-bundle_attempt-$(System.JobAttempt)'
                   publishLocation: 'pipeline'
 
