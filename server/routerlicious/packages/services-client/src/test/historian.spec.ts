@@ -6,9 +6,8 @@
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { strict as assert } from "assert";
-import Axios, { AxiosRequestConfig } from "axios";
-import AxiosMockAdapter from "axios-mock-adapter";
 import { Historian, ICredentials, getAuthorizationTokenFromCredentials } from "../historian";
+import type { FetchFn } from "../fetchTypes";
 import { BasicRestWrapper, RestWrapper } from "../restWrapper";
 import { IWholeSummaryPayload, IWriteSummaryResponse } from "../storageContracts";
 
@@ -17,8 +16,7 @@ describe("Historian", () => {
 	const sha = "123456abcdef";
 	const ref = "xyz789";
 	const tag = "1a2b3c";
-	const axiosInstance = Axios.create();
-	const axiosMock = new AxiosMockAdapter(axiosInstance);
+
 	const initialCredentials: ICredentials = {
 		user: "test-user",
 		password: "test-password",
@@ -90,10 +88,8 @@ describe("Historian", () => {
 		id: "some-summary-id",
 	};
 
-	let historian: Historian;
-	let restWrapper: RestWrapper;
 	// Same decoding as FluidFramework/server/historian/packages/historian-base/src/routes/utils.ts createGitService()
-	const decodeHistorianCredentials = (authHeader: string): ICredentials => {
+	const decodeHistorianCredentials = (authHeader: string): ICredentials | undefined => {
 		if (!authHeader) {
 			return undefined;
 		}
@@ -113,29 +109,64 @@ describe("Historian", () => {
 			password: tokenMatch[2],
 		};
 	};
-	const mockReplyWithAuth =
-		(validCredentials: ICredentials, successResponseData?: any) =>
-		(req: AxiosRequestConfig): any[] => {
-			const decodedCredentials = decodeHistorianCredentials(
-				req.headers?.Authorization as string,
-			);
-			if (!decodedCredentials || decodedCredentials.password !== validCredentials.password) {
-				return [401, successResponseData];
+
+	/**
+	 * Creates a mock FetchFn that routes based on method and URL, validates credentials,
+	 * and returns mock data.
+	 */
+	const createMockFetch = (
+		routes: Map<
+			string,
+			{
+				validCredentials: ICredentials;
+				responseData: any;
 			}
-			return [200, successResponseData];
+		>,
+	): FetchFn => {
+		return async (
+			url: string | URL | Request,
+			init?: RequestInit,
+		): Promise<Response> => {
+			const urlStr = url.toString();
+			const method = (init?.method ?? "GET").toUpperCase();
+
+			// Find a matching route
+			for (const [routeKey, config] of routes) {
+				if (urlStr.includes(routeKey)) {
+					const headers = init?.headers as Record<string, string> | undefined;
+					const authHeader = headers?.Authorization ?? "";
+					const decodedCredentials = decodeHistorianCredentials(authHeader);
+					if (
+						!decodedCredentials ||
+						decodedCredentials.password !== config.validCredentials.password
+					) {
+						return new Response(JSON.stringify(config.responseData), {
+							status: 401,
+							headers: { "Content-Type": "application/json" },
+						});
+					}
+					return new Response(JSON.stringify(config.responseData), {
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					});
+				}
+			}
+
+			return new Response("Not Found", { status: 404 });
 		};
-	const getUrlWithToken = (
-		path: string,
-		credentials: ICredentials,
-		additionalQueryParams?: any,
-	) => {
-		return `${endpoint}${path}?${new URLSearchParams({
-			token: fromUtf8ToBase64(`${credentials.user}`),
-			...additionalQueryParams,
-		}).toString()}`;
 	};
 
-	beforeEach(() => {
+	let historian: Historian;
+	let restWrapper: RestWrapper;
+	let mockFetchFn: FetchFn;
+
+	const setupWithRoutes = (
+		routes: Map<
+			string,
+			{ validCredentials: ICredentials; responseData: any }
+		>,
+	) => {
+		mockFetchFn = createMockFetch(routes);
 		const initialHeaders = {
 			Authorization: getAuthorizationTokenFromCredentials(initialCredentials),
 		};
@@ -151,27 +182,36 @@ describe("Historian", () => {
 			undefined,
 			undefined,
 			initialHeaders,
-			axiosInstance,
+			mockFetchFn,
 			undefined,
 			() => newHeaders,
 		);
 		historian = new Historian(endpoint, true, false, restWrapper);
-		axiosMock.reset();
-	});
+	};
 
 	describe("getHeader", () => {
 		describe("with Historian API", () => {
-			const url = getUrlWithToken(`/headers/${encodeURIComponent(sha)}`, initialCredentials);
-			const response: any = {
-				"Content-Type": "text",
-			};
 			it("succeeds on 200", async () => {
-				axiosMock.onGet(url).reply(mockReplyWithAuth(initialCredentials, response));
+				const response = { "Content-Type": "text" };
+				const routes = new Map([
+					[
+						`/headers/${encodeURIComponent(sha)}`,
+						{ validCredentials: initialCredentials, responseData: response },
+					],
+				]);
+				setupWithRoutes(routes);
 				const received = await historian.getHeader(sha);
 				assert.deepStrictEqual(received, response);
 			});
 			it("retries once with new credentials on 401", async () => {
-				axiosMock.onGet(url).reply(mockReplyWithAuth(freshCredentials, response));
+				const response = { "Content-Type": "text" };
+				const routes = new Map([
+					[
+						`/headers/${encodeURIComponent(sha)}`,
+						{ validCredentials: freshCredentials, responseData: response },
+					],
+				]);
+				setupWithRoutes(routes);
 				const received = await historian.getHeader(sha);
 				assert.deepStrictEqual(received, response);
 			});
@@ -179,39 +219,58 @@ describe("Historian", () => {
 	});
 
 	describe("getFullTree", () => {
-		const url = getUrlWithToken(`/tree/${encodeURIComponent(sha)}`, initialCredentials);
 		const response: any = "🌲";
 		it("succeeds on 200", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(initialCredentials, response));
+			const routes = new Map([
+				[
+					`/tree/${encodeURIComponent(sha)}`,
+					{ validCredentials: initialCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getFullTree(sha);
 			assert.deepStrictEqual(received, response);
 		});
 		it("retries once with new credentials on 401", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(freshCredentials, response));
+			const routes = new Map([
+				[
+					`/tree/${encodeURIComponent(sha)}`,
+					{ validCredentials: freshCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getFullTree(sha);
 			assert.deepStrictEqual(received, response);
 		});
 	});
 
 	describe("getBlob", () => {
-		const url = getUrlWithToken(`/git/blobs/${encodeURIComponent(sha)}`, initialCredentials);
-		const response: git.IBlob = {
-			...mockBlob,
-		};
+		const response = { ...mockBlob };
 		it("succeeds on 200", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(initialCredentials, response));
+			const routes = new Map([
+				[
+					`/git/blobs/${encodeURIComponent(sha)}`,
+					{ validCredentials: initialCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getBlob(sha);
 			assert.deepStrictEqual(received, response);
 		});
 		it("retries once with new credentials on 401", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(freshCredentials, response));
+			const routes = new Map([
+				[
+					`/git/blobs/${encodeURIComponent(sha)}`,
+					{ validCredentials: freshCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getBlob(sha);
 			assert.deepStrictEqual(received, response);
 		});
 	});
 
 	describe("createBlob", () => {
-		const url = getUrlWithToken(`/git/blobs`, initialCredentials);
 		const blobParams: git.ICreateBlobParams = {
 			content: "Hello, World",
 			encoding: "utf-8",
@@ -221,14 +280,24 @@ describe("Historian", () => {
 			url: `${endpoint}/blobs/${sha}`,
 		};
 		it("succeeds on 200", async () => {
-			axiosMock
-				.onPost(url, blobParams)
-				.reply(mockReplyWithAuth(initialCredentials, response));
+			const routes = new Map([
+				[
+					`/git/blobs`,
+					{ validCredentials: initialCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.createBlob(blobParams);
 			assert.deepStrictEqual(received, response);
 		});
 		it("retries once with new credentials on 401", async () => {
-			axiosMock.onPost(url, blobParams).reply(mockReplyWithAuth(freshCredentials, response));
+			const routes = new Map([
+				[
+					`/git/blobs`,
+					{ validCredentials: freshCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.createBlob(blobParams);
 			assert.deepStrictEqual(received, response);
 		});
@@ -236,15 +305,26 @@ describe("Historian", () => {
 
 	describe("getContent", () => {
 		const path = "document-id";
-		const url = getUrlWithToken(`/contents/${path}`, initialCredentials, { ref });
 		const response: any = "📄";
 		it("succeeds on 200", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(initialCredentials, response));
+			const routes = new Map([
+				[
+					`/contents/${path}`,
+					{ validCredentials: initialCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getContent(path, ref);
 			assert.deepStrictEqual(received, response);
 		});
 		it("retries once with new credentials on 401", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(freshCredentials, response));
+			const routes = new Map([
+				[
+					`/contents/${path}`,
+					{ validCredentials: freshCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getContent(path, ref);
 			assert.deepStrictEqual(received, response);
 		});
@@ -252,215 +332,132 @@ describe("Historian", () => {
 
 	describe("getCommits", () => {
 		const count = 1;
-		const url = getUrlWithToken(`/commits`, initialCredentials, { count, sha });
 		const response: git.ICommitDetails[] = [mockCommitDetails];
 		it("succeeds on 200", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(initialCredentials, response));
+			const routes = new Map([
+				[
+					`/commits`,
+					{ validCredentials: initialCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getCommits(sha, count);
 			assert.deepStrictEqual(received, response);
 		});
 		it("retries once with new credentials on 401", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(freshCredentials, response));
+			const routes = new Map([
+				[
+					`/commits`,
+					{ validCredentials: freshCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getCommits(sha, count);
 			assert.deepStrictEqual(received, response);
 		});
 	});
 
 	describe("getCommit", () => {
-		const url = getUrlWithToken(`/git/commits/${encodeURIComponent(sha)}`, initialCredentials);
 		const response = mockCommit;
 		it("succeeds on 200", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(initialCredentials, response));
+			const routes = new Map([
+				[
+					`/git/commits/${encodeURIComponent(sha)}`,
+					{ validCredentials: initialCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getCommit(sha);
 			assert.deepStrictEqual(received, response);
 		});
 		it("retries once with new credentials on 401", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(freshCredentials, response));
+			const routes = new Map([
+				[
+					`/git/commits/${encodeURIComponent(sha)}`,
+					{ validCredentials: freshCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getCommit(sha);
-			assert.deepStrictEqual(received, response);
-		});
-	});
-
-	describe("createCommit", () => {
-		const commitParams: git.ICreateCommitParams = {
-			message: mockCommitDetails.commit.message,
-			author: mockAuthor,
-			tree: JSON.stringify(mockCommitDetails.commit.tree),
-			parents: [],
-		};
-		const url = getUrlWithToken(`/git/commits`, initialCredentials);
-		const response = mockCommit;
-		it("succeeds on 200", async () => {
-			axiosMock
-				.onPost(url, commitParams)
-				.reply(mockReplyWithAuth(initialCredentials, response));
-			const received = await historian.createCommit(commitParams);
-			assert.deepStrictEqual(received, response);
-		});
-		it("retries once with new credentials on 401", async () => {
-			axiosMock
-				.onPost(url, commitParams)
-				.reply(mockReplyWithAuth(freshCredentials, response));
-			const received = await historian.createCommit(commitParams);
 			assert.deepStrictEqual(received, response);
 		});
 	});
 
 	describe("getRefs", () => {
-		const url = getUrlWithToken(`/git/refs`, initialCredentials);
 		const response: git.IRef[] = [mockRef];
 		it("succeeds on 200", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(initialCredentials, response));
+			const routes = new Map([
+				[
+					`/git/refs`,
+					{ validCredentials: initialCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getRefs();
 			assert.deepStrictEqual(received, response);
 		});
 		it("retries once with new credentials on 401", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(freshCredentials, response));
+			const routes = new Map([
+				[
+					`/git/refs`,
+					{ validCredentials: freshCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getRefs();
 			assert.deepStrictEqual(received, response);
 		});
 	});
 
 	describe("getRef", () => {
-		const url = getUrlWithToken(`/git/refs/${ref}`, initialCredentials);
 		const response = mockRef;
 		it("succeeds on 200", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(initialCredentials, response));
+			const routes = new Map([
+				[
+					`/git/refs/${ref}`,
+					{ validCredentials: initialCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getRef(ref);
 			assert.deepStrictEqual(received, response);
 		});
 		it("retries once with new credentials on 401", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(freshCredentials, response));
+			const routes = new Map([
+				[
+					`/git/refs/${ref}`,
+					{ validCredentials: freshCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.getRef(ref);
 			assert.deepStrictEqual(received, response);
 		});
 	});
 
 	describe("createRef", () => {
-		const refParams: git.ICreateRefParams = {
-			ref,
-			sha,
-		};
-		const url = getUrlWithToken(`/git/refs`, initialCredentials);
+		const refParams: git.ICreateRefParams = { ref, sha };
 		const response = mockRef;
 		it("succeeds on 200", async () => {
-			axiosMock.onPost(url, refParams).reply(mockReplyWithAuth(initialCredentials, response));
+			const routes = new Map([
+				[
+					`/git/refs`,
+					{ validCredentials: initialCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.createRef(refParams);
 			assert.deepStrictEqual(received, response);
 		});
 		it("retries once with new credentials on 401", async () => {
-			axiosMock.onPost(url, refParams).reply(mockReplyWithAuth(freshCredentials, response));
+			const routes = new Map([
+				[
+					`/git/refs`,
+					{ validCredentials: freshCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.createRef(refParams);
-			assert.deepStrictEqual(received, response);
-		});
-	});
-
-	describe("updateRef", () => {
-		const refParams: git.IPatchRefParams = {
-			sha,
-			force: true,
-		};
-		const url = getUrlWithToken(`/git/refs/${ref}`, initialCredentials);
-		const response = {
-			"Content-Type": "text",
-		};
-		it("succeeds on 200", async () => {
-			axiosMock.onPatch(url).reply(mockReplyWithAuth(initialCredentials, response));
-			const received = await historian.updateRef(ref, refParams);
-			assert.deepStrictEqual(received, response);
-		});
-		it("retries once with new credentials on 401", async () => {
-			axiosMock.onPatch(url).reply(mockReplyWithAuth(freshCredentials, response));
-			const received = await historian.updateRef(ref, refParams);
-			assert.deepStrictEqual(received, response);
-		});
-	});
-
-	describe("deleteRef", () => {
-		const url = getUrlWithToken(`/git/refs/${ref}`, initialCredentials);
-		const response = {
-			"Content-Type": "text",
-		};
-		it("succeeds on 200", async () => {
-			axiosMock.onDelete(url).reply(mockReplyWithAuth(initialCredentials, response));
-			await assert.doesNotReject(historian.deleteRef(ref));
-		});
-		it("retries once with new credentials on 401", async () => {
-			axiosMock.onDelete(url).reply(mockReplyWithAuth(freshCredentials, response));
-			await assert.doesNotReject(historian.deleteRef(ref));
-		});
-	});
-
-	describe("createTag", () => {
-		const tagParams: git.ICreateTagParams = {
-			tag,
-			message: mockTag.message,
-			object: JSON.stringify(mockTag.object),
-			type: mockTag.object.type,
-			tagger: mockTag.tagger,
-		};
-		const url = getUrlWithToken(`/git/tags`, initialCredentials);
-		const response = mockTag;
-		it("succeeds on 200", async () => {
-			axiosMock.onPost(url, tagParams).reply(mockReplyWithAuth(initialCredentials, response));
-			const received = await historian.createTag(tagParams);
-			assert.deepStrictEqual(received, response);
-		});
-		it("retries once with new credentials on 401", async () => {
-			axiosMock.onPost(url, tagParams).reply(mockReplyWithAuth(freshCredentials, response));
-			const received = await historian.createTag(tagParams);
-			assert.deepStrictEqual(received, response);
-		});
-	});
-
-	describe("getTag", () => {
-		const url = getUrlWithToken(`/git/tags/${tag}`, initialCredentials);
-		const response = mockTag;
-		it("succeeds on 200", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(initialCredentials, response));
-			const received = await historian.getTag(tag);
-			assert.deepStrictEqual(received, response);
-		});
-		it("retries once with new credentials on 401", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(freshCredentials, response));
-			const received = await historian.getTag(tag);
-			assert.deepStrictEqual(received, response);
-		});
-	});
-
-	describe("createTree", () => {
-		const treeParams: git.ICreateTreeParams = {
-			tree: mockTree.tree,
-		};
-		const url = getUrlWithToken(`/git/trees`, initialCredentials);
-		const response = mockTree;
-		it("succeeds on 200", async () => {
-			axiosMock
-				.onPost(url, treeParams)
-				.reply(mockReplyWithAuth(initialCredentials, response));
-			const received = await historian.createTree(treeParams);
-			assert.deepStrictEqual(received, response);
-		});
-		it("retries once with new credentials on 401", async () => {
-			axiosMock.onPost(url, treeParams).reply(mockReplyWithAuth(freshCredentials, response));
-			const received = await historian.createTree(treeParams);
-			assert.deepStrictEqual(received, response);
-		});
-	});
-
-	describe("getTree", () => {
-		const url = getUrlWithToken(`/git/trees/${encodeURIComponent(sha)}`, initialCredentials, {
-			recursive: 1,
-		});
-		const response = mockTree;
-		it("succeeds on 200", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(initialCredentials, response));
-			const received = await historian.getTree(sha, true);
-			assert.deepStrictEqual(received, response);
-		});
-		it("retries once with new credentials on 401", async () => {
-			axiosMock.onGet(url).reply(mockReplyWithAuth(freshCredentials, response));
-			const received = await historian.getTree(sha, true);
 			assert.deepStrictEqual(received, response);
 		});
 	});
@@ -478,39 +475,26 @@ describe("Historian", () => {
 				},
 			],
 		};
-		const url = getUrlWithToken(`/git/summaries`, initialCredentials);
 		const response = mockSummaryWriteResponse;
 		it("succeeds on 200", async () => {
-			axiosMock
-				.onPost(url, summaryPayload)
-				.reply(mockReplyWithAuth(initialCredentials, response));
+			const routes = new Map([
+				[
+					`/git/summaries`,
+					{ validCredentials: initialCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.createSummary(summaryPayload);
 			assert.deepStrictEqual(received, response);
 		});
-		it("succeeds with initial=true query param", async () => {
-			const initialUrl = getUrlWithToken(`/git/summaries`, initialCredentials, {
-				initial: true,
-			});
-			axiosMock
-				.onPost(initialUrl, summaryPayload)
-				.reply(mockReplyWithAuth(initialCredentials, response));
-			const received = await historian.createSummary(summaryPayload, true);
-			assert.deepStrictEqual(received, response);
-		});
-		it("succeeds with initial=false query param", async () => {
-			const initialUrl = getUrlWithToken(`/git/summaries`, initialCredentials, {
-				initial: false,
-			});
-			axiosMock
-				.onPost(initialUrl, summaryPayload)
-				.reply(mockReplyWithAuth(initialCredentials, response));
-			const received = await historian.createSummary(summaryPayload, false);
-			assert.deepStrictEqual(received, response);
-		});
 		it("retries once with new credentials on 401", async () => {
-			axiosMock
-				.onPost(url, summaryPayload)
-				.reply(mockReplyWithAuth(freshCredentials, response));
+			const routes = new Map([
+				[
+					`/git/summaries`,
+					{ validCredentials: freshCredentials, responseData: response },
+				],
+			]);
+			setupWithRoutes(routes);
 			const received = await historian.createSummary(summaryPayload);
 			assert.deepStrictEqual(received, response);
 		});

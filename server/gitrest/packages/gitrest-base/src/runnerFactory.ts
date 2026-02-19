@@ -4,8 +4,9 @@
  */
 
 import {
-	setupAxiosInterceptorsForAbortSignals,
+	createFetchWithAbortSignal,
 	getGlobalAbortControllerContext,
+	setGlobalFetchFn,
 } from "@fluidframework/server-services-client";
 import type * as core from "@fluidframework/server-services-core";
 import * as services from "@fluidframework/server-services-shared";
@@ -68,11 +69,16 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			fileSystemManagerFactories,
 		);
 		const startupCheck = new services.StartupCheck();
-		const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
-		if (axiosAbortSignalEnabled) {
-			setupAxiosInterceptorsForAbortSignals(() =>
-				getGlobalAbortControllerContext().getAbortController(),
+		const abortSignalEnabled =
+			config.get("fetchAbortSignalEnabled") ??
+			config.get("axiosAbortSignalEnabled") ??
+			false;
+		if (abortSignalEnabled) {
+			const wrappedFetch = createFetchWithAbortSignal(
+				globalThis.fetch.bind(globalThis),
+				() => getGlobalAbortControllerContext().getAbortController(),
 			);
+			setGlobalFetchFn(wrappedFetch);
 		}
 
 		return new GitrestResources(

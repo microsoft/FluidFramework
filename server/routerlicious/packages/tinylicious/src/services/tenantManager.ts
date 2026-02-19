@@ -18,7 +18,6 @@ import type {
 	ITenantOrderer,
 	ITenantStorage,
 } from "@fluidframework/server-services-core";
-import { default as Axios } from "axios";
 
 export class TinyliciousTenant implements ITenant {
 	private readonly owner = "tinylicious";
@@ -29,16 +28,8 @@ export class TinyliciousTenant implements ITenant {
 		private readonly url: string,
 		private readonly historianUrl: string,
 	) {
-		// Using an explicitly constructed rest wrapper so we can pass the Axios instance whose static defaults
-		// were modified by Tinylicious, and avoid issues if the module that contains BasicRestWrapper depends on a different
-		// version of Axios.
 		const restWrapper = new BasicRestWrapper(
 			historianUrl,
-			undefined /* defaultQueryString */,
-			undefined /* maxBodyLength */,
-			undefined /* maxContentLength */,
-			undefined /* defaultHeaders */,
-			Axios,
 		);
 		const historian = new Historian(historianUrl, false, false, restWrapper);
 

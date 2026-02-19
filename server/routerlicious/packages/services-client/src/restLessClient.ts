@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { AxiosRequestConfig } from "axios";
+import type { RequestConfig } from "./fetchTypes";
 
 /**
  * @internal
@@ -35,7 +35,7 @@ export class RestLessClient {
 	/**
 	 * Translates request from REST to "RestLess" out-of-place.
 	 */
-	public translate(request: AxiosRequestConfig): AxiosRequestConfig {
+	public translate(request: RequestConfig): RequestConfig {
 		const newRequest = { ...request };
 		const body = new URLSearchParams();
 

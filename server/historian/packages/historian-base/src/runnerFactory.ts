@@ -5,8 +5,9 @@
 
 import * as services from "@fluidframework/server-services";
 import {
-	setupAxiosInterceptorsForAbortSignals,
+	createFetchWithAbortSignal,
 	getGlobalAbortControllerContext,
+	setGlobalFetchFn,
 } from "@fluidframework/server-services-client";
 import type * as core from "@fluidframework/server-services-core";
 import type { IDenyList } from "@fluidframework/server-services-core";
@@ -258,11 +259,16 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			documentsDenyListConfig,
 		);
 		const startupCheck = new StartupCheck();
-		const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
-		if (axiosAbortSignalEnabled) {
-			setupAxiosInterceptorsForAbortSignals(() =>
-				getGlobalAbortControllerContext().getAbortController(),
+		const abortSignalEnabled =
+			config.get("fetchAbortSignalEnabled") ??
+			config.get("axiosAbortSignalEnabled") ??
+			false;
+		if (abortSignalEnabled) {
+			const wrappedFetch = createFetchWithAbortSignal(
+				globalThis.fetch.bind(globalThis),
+				() => getGlobalAbortControllerContext().getAbortController(),
 			);
+			setGlobalFetchFn(wrappedFetch);
 		}
 
 		return new HistorianResources(

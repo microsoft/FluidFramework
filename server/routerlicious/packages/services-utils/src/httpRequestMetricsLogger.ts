@@ -4,20 +4,20 @@
  */
 
 import {
-	convertAxiosErrorToNetorkError,
-	type IBasicRestWrapperMetricProps,
+	convertRequestErrorToNetworkError,
+	type IRestWrapperMetricProps,
 } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 
-export const logHttpMetrics = (requestProps: IBasicRestWrapperMetricProps) => {
-	const { axiosError, ...sanitizedRequestProps } = requestProps;
+export const logHttpMetrics = (requestProps: IRestWrapperMetricProps) => {
+	const { requestError, ...sanitizedRequestProps } = requestProps;
 	const httpMetric = Lumberjack.newLumberMetric(
 		LumberEventName.RestWrapper,
 		sanitizedRequestProps,
 	);
-	httpMetric.setProperty("successful", axiosError ? false : true);
-	if (axiosError) {
-		const networkError = convertAxiosErrorToNetorkError(axiosError);
+	httpMetric.setProperty("successful", requestError ? false : true);
+	if (requestError) {
+		const networkError = convertRequestErrorToNetworkError(requestError);
 		httpMetric.error("HttpRequest failed", networkError);
 	} else {
 		httpMetric.success("HttpRequest completed");

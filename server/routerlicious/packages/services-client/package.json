@@ -63,7 +63,6 @@
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
-		"axios": "^1.8.4",
 		"crc-32": "1.2.0",
 		"debug": "^4.3.4",
 		"ipaddr.js": "^2.2.0",
@@ -84,7 +83,6 @@
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.19.39",
-		"axios-mock-adapter": "^1.19.0",
 		"c8": "^10.1.3",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
@@ -95,7 +93,48 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Function_convertAxiosErrorToNetorkError": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Function_setupAxiosInterceptorsForAbortSignals": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Interface_IBasicRestWrapperMetricProps": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Class_BasicRestWrapper": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"ClassStatics_BasicRestWrapper": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Class_RestWrapper": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"ClassStatics_RestWrapper": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Class_RestLessClient": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"ClassStatics_RestLessClient": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Function_getOrCreateRepository": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }

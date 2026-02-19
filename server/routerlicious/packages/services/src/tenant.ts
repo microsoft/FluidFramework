@@ -28,7 +28,7 @@ import {
 	getValidAccessToken,
 	logHttpMetrics,
 } from "@fluidframework/server-services-utils";
-import type { RawAxiosRequestHeaders } from "axios";
+import type { RawRequestHeaders } from "@fluidframework/server-services-client";
 
 import { IsEphemeralContainer } from ".";
 
@@ -38,8 +38,8 @@ export function getRefreshTokenIfNeededCallback(
 	tenantId: string,
 	scopes: ScopeType[],
 	serviceName: string,
-): (authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined> {
-	const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
+): (authorizationHeader: RawRequestHeaders) => Promise<RawRequestHeaders | undefined> {
+	const refreshTokenIfNeeded = async (authorizationHeader: RawRequestHeaders) => {
 		if (typeof authorizationHeader.Authorization === "string") {
 			const currentAccessToken = extractTokenFromHeader(authorizationHeader.Authorization);
 			const props = {
@@ -188,7 +188,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 				password: accessToken,
 				user: tenantId,
 			};
-			const headers: RawAxiosRequestHeaders = {
+			const headers: RawRequestHeaders = {
 				Authorization: getAuthorizationTokenFromCredentials(credentials),
 			};
 			if (storageName !== undefined) {
@@ -203,7 +203,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			return headers;
 		};
 
-		const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
+		const refreshTokenIfNeeded = async (authorizationHeader: RawRequestHeaders) => {
 			if (typeof authorizationHeader.Authorization === "string") {
 				const currentAccessToken = parseToken(tenantId, authorizationHeader.Authorization);
 				if (currentAccessToken !== undefined) {

@@ -9,7 +9,6 @@ import {
 	Lumberjack,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
-import { default as Axios, type RawAxiosRequestHeaders } from "axios";
 import type nconf from "nconf";
 import * as uuid from "uuid";
 
@@ -31,7 +30,7 @@ export class ExternalStorageManager implements IExternalStorageManager {
 		this.endpoint = config.get("externalStorage:endpoint");
 	}
 
-	private getCommonHeaders(): RawAxiosRequestHeaders {
+	private getCommonHeaders(): Record<string, string> {
 		return {
 			"Accept": "application/json",
 			"Content-Type": "application/json",
@@ -48,14 +47,15 @@ export class ExternalStorageManager implements IExternalStorageManager {
 			return false;
 		}
 		let result = true;
-		await Axios.post<void>(`${this.endpoint}/file/${tenantId}/${documentId}`, undefined, {
-			headers: {
-				...this.getCommonHeaders(),
-			},
-		}).catch((error) => {
+		try {
+			await fetch(`${this.endpoint}/file/${tenantId}/${documentId}`, {
+				method: "POST",
+				headers: this.getCommonHeaders(),
+			});
+		} catch (error) {
 			Lumberjack.error("Failed to read document", lumberjackProperties, error);
 			result = false;
-		});
+		}
 
 		return result;
 	}
@@ -71,22 +71,20 @@ export class ExternalStorageManager implements IExternalStorageManager {
 			Lumberjack.info("External storage is not enabled", lumberjackProperties);
 			return;
 		}
-		await Axios.post<void>(
-			`${this.endpoint}/file/${tenantId}`,
-			{
-				ref,
-				sha,
-				update,
-			},
-			{
-				headers: {
-					...this.getCommonHeaders(),
-				},
-			},
-		).catch((error) => {
+		try {
+			await fetch(`${this.endpoint}/file/${tenantId}`, {
+				method: "POST",
+				headers: this.getCommonHeaders(),
+				body: JSON.stringify({
+					ref,
+					sha,
+					update,
+				}),
+			});
+		} catch (error) {
 			Lumberjack.error("Failed to write to file", lumberjackProperties, error);
 			throw error;
-		});
+		}
 	}
 }
 
